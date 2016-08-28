@@ -1,1 +1,3 @@
-This is a modern Day mod 4 HOI4
+Welcome to Modern Day 4 HOI.
+
+If your new visit the WIKi for tutorials & resources.
