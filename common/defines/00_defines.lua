@@ -487,11 +487,11 @@ NMilitary = {
 
 NAir = {
 	AIR_WING_FLIGHT_SPEED_MULT = 0.02,					-- Global speed multiplier for airplanes (affects fe.transferring to another base)
-	AIR_WING_MAX_STATS_ATTACK = 100,					-- Max stats
-	AIR_WING_MAX_STATS_DEFENCE = 100,
-	AIR_WING_MAX_STATS_AGILITY = 100,
-	AIR_WING_MAX_STATS_SPEED = 1500,
-	AIR_WING_MAX_STATS_BOMBING = 100,
+	AIR_WING_MAX_STATS_ATTACK = 200,					-- Max stats
+	AIR_WING_MAX_STATS_DEFENCE = 200,
+	AIR_WING_MAX_STATS_AGILITY = 400,
+	AIR_WING_MAX_STATS_SPEED = 4000,
+	AIR_WING_MAX_STATS_BOMBING = 500,
 	AIR_WING_MAX_SIZE = 1000, 							-- Max amount of airplanes in wing
 	AIR_WING_BOMB_DAMAGE_FACTOR = 2,					-- Used to balance the damage done while bombing.
 	BOMBERS_ENGAGE_PASSES = 1,							-- Combat simulations passes in single fight against the bombers and their escorts (more passes = more bloody)
@@ -519,7 +519,7 @@ NAir = {
 	DETECT_CHANCE_FROM_RADARS = 0.25, 					-- How much the radars in area affects detection chance.
 	DETECT_CHANCE_FROM_AIRCRAFTS_EFFECTIVE_COUNT = 2000, -- Max amount of aircrafts in region to give full detection bonus.
 	DETECT_CHANCE_FROM_AIRCRAFTS = 0.05,				-- How much aircrafts in region improves air detection (up to effective count).
-	DETECT_CHANCE_FROM_NIGHT = -0.2,					-- How much the night can reduce the air detection. (see static modifiers to check how weather affects it too.)
+	DETECT_CHANCE_FROM_NIGHT = 0,					-- How much the night can reduce the air detection. (see static modifiers to check how weather affects it too.)
 	DETECT_EFFICIENCY_BASE = 0.1,						-- Base value for detection efficiency (once something detected, efficiency says how many airplanes was detected).
 	DETECT_EFFICIENCY_FROM_RADAR = 0.7,					-- How much radars affect the efficiency.
 	DETECT_EFFICIENCY_RANDOM_FACTOR = 0.1,				-- How much randomness is in amount of detected aircrafts.
