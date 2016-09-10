@@ -499,15 +499,15 @@ NAir = {
 	COMBAT_ESCORT_PASS_CHANCE_BASE = 0.25, 				-- Base % for chance for passing escorts, and attack directly bombers.
 	COMBAT_ESCORT_PASS_CHANCE_MULT = 0.25,	 			-- How much the difference in airplanes stats (agility+speed) affects the escort passing chance.
 	COMBAT_ESCORT_PASS_CHANCE_LIMIT = 0.95, 			-- So a big difference in airplanes stats never gives 100% chance for passing escorts.
-	COMBAT_STACK_LIMIT = 1,								-- The biggest allowed dogfight combination (1vs1 or 2vs1). Bigger value cause that amount of airplanes matters more then their stats.
+	COMBAT_STACK_LIMIT = 2,								-- The biggest allowed dogfight combination (1vs1 or 2vs1). Bigger value cause that amount of airplanes matters more then their stats.
 	COMBAT_STAT_IMPORTANCE_SPEED = 0.5, 				-- How important is speed when comparing stats.
 	COMBAT_STAT_IMPORTANCE_AGILITY = 2, 				-- How important is agility when comparing stats.
-	BIGGEST_AGILITY_FACTOR_DIFF = 1,					-- biggest factor difference in agility for doing damage (caps to this)
+	BIGGEST_AGILITY_FACTOR_DIFF = 2,					-- biggest factor difference in agility for doing damage (caps to this)
 	COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.6, 		-- How much the better agility (then opponent's) can reduce their damage to us.
 	COMBAT_AMOUNT_DIFF_AFFECT_GANG_CHANCE = 0.4, 		-- More aircrafts increases chance of situation 2vs1.
-	COMBAT_ONE_ON_ONE_CHANCE = 0.8, 					-- Base chance for 1vs1 situation.
-	COMBAT_SITUATION_WIN_CHANCE_FROM_STATS = 4, 		-- How much good stats difference (speed+agility) affects the winning chance (situation win = give a hit, not necessary kill).
-	COMBAT_SITUATION_WIN_CHANCE_FROM_GANG = 0.18, 		-- How much bonus gives the airplanes amount advantage (2vs1), to winning the situation.
+	COMBAT_ONE_ON_ONE_CHANCE = 0.7, 					-- Base chance for 1vs1 situation.
+	COMBAT_SITUATION_WIN_CHANCE_FROM_STATS = 3.5, 		-- How much good stats difference (speed+agility) affects the winning chance (situation win = give a hit, not necessary kill).
+	COMBAT_SITUATION_WIN_CHANCE_FROM_GANG = 0.8, 		-- How much bonus gives the airplanes amount advantage (2vs1), to winning the situation.
 	COMBAT_SITUATION_PASS_CHANCE = 0.05, 				-- Chance for pass. Nobody hits nobody in current situation.
 	COMBAT_MAX_WINGS_AT_ONCE = 2, 						-- Max amount of air wings in one combat simulation. The higher value, the quicker countries may loose their wings. It's a gameplay balance value.
 	COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 30,	        	-- we can really pounce a land strike and escalate
