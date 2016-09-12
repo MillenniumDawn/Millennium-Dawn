@@ -505,7 +505,7 @@ NAir = {
 	BIGGEST_AGILITY_FACTOR_DIFF = 2,					-- biggest factor difference in agility for doing damage (caps to this)
 	COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.6, 		-- How much the better agility (then opponent's) can reduce their damage to us.
 	COMBAT_AMOUNT_DIFF_AFFECT_GANG_CHANCE = 0.4, 		-- More aircrafts increases chance of situation 2vs1.
-	COMBAT_ONE_ON_ONE_CHANCE = 0.7, 					-- Base chance for 1vs1 situation.
+	COMBAT_ONE_ON_ONE_CHANCE = 0.5, 					-- Base chance for 1vs1 situation.
 	COMBAT_SITUATION_WIN_CHANCE_FROM_STATS = 3.5, 		-- How much good stats difference (speed+agility) affects the winning chance (situation win = give a hit, not necessary kill).
 	COMBAT_SITUATION_WIN_CHANCE_FROM_GANG = 0.8, 		-- How much bonus gives the airplanes amount advantage (2vs1), to winning the situation.
 	COMBAT_SITUATION_PASS_CHANCE = 0.05, 				-- Chance for pass. Nobody hits nobody in current situation.
