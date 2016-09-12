@@ -1,0 +1,146 @@
+focus_tree = {
+	id = brazilian_focus
+	
+	country = {
+		factor = 0
+		
+		modifier = {
+			add = 10
+			tag = BRA
+		}
+	}
+	
+	default = no
+	
+	#Anti-Corruption Foci
+	focus = {
+		id = lava_jato
+		icon = GFX_goal_generic_oil_refinery
+		x = 2
+		y = 0
+		cost = 40
+		completion_reward = {
+			add_political_power = 120
+		}
+	}
+	focus = {
+		id = anti_corruption_effort
+		icon = GFX_goal_generic_political_pressure
+		prerequisite = { focus = lava_jato }
+		x = 2
+		y = 1
+		cost = 30
+		completion_reward = {
+			add_ideas = anti_corruption_effort
+		}
+	}
+	focus = {
+		id = public_electoral_campaign_funding
+		icon = GFX_goal_generic_improve_relations
+		prerequisite = { focus = anti_corruption_effort }
+		mutually_exclusive = { focus = private_electoral_campaign_funding }
+		cancel = { has_idea = private_electoral_campaign_funding }
+		x = 1
+		y = 2
+		cost = 10
+		completion_reward = {
+			add_ideas = public_electoral_campaign_funding
+		}
+	}
+	focus = {
+		id = private_electoral_campaign_funding
+		icon = GFX_goal_generic_intelligence_exchange
+		prerequisite = { focus = anti_corruption_effort }
+		cancel = { has_idea = public_electoral_campaign_funding }
+		x = 3
+		y = 2
+		cost = 10
+		completion_reward = {
+			add_ideas = private_electoral_campaign_funding
+		}
+	}
+	focus = {
+		id = political_reform
+		icon = GFX_goal_generic_neutrality_focus
+		prerequisite = { focus = public_electoral_campaign_funding focus = private_electoral_campaign_funding }
+		x = 2
+		y = 3
+		cost = 40
+		completion_reward = {
+			add_ideas = political_reform
+			remove_ideas = private_electoral_campaign_funding
+			remove_ideas = public_electoral_campaign_funding
+		}
+	}
+	focus = {
+		id = tax_reform
+		icon = GFX_goal_generic_positive_trade_relations
+		prerequisite = { focus = political_reform }
+		x = 1
+		y = 4
+		cost = 30
+		completion_reward = {
+			add_ideas = tax_reform
+		}
+	}
+	focus = {
+		id = social_reform
+		icon = GFX_goal_generic_consumer_goods
+		prerequisite = { focus = political_reform }
+		x = 3
+		y = 4
+		cost = 30
+		completion_reward = {
+			add_ideas = social_reform
+		}
+	}
+	focus = {
+		id = cultural_change
+		icon = GFX_goal_generic_national_unity
+		prerequisite = { focus = tax_reform }
+		prerequisite = { focus = social_reform }
+		x = 2
+		y = 5
+		cost = 60
+		completion_reward = {
+			add_political_power = 200
+		}
+	}
+	focus = {
+		id = awoken_giant
+		icon = GFX_goal_generic_demand_territory
+		prerequisite = { focus = cultural_change }
+		x = 2
+		y = 6
+		cost = 30
+		completion_reward = {
+			add_ideas = awoken_giant
+			remove_ideas = brazilian_knack
+			add_popularity = { ideology = communism popularity = 0.3 }
+			#remove_ideas = anti_corruption_effort
+			#remove_ideas = political_reform
+			#remove_ideas = social_reform
+			#remove_ideas = tax_reform
+		}
+	}
+	
+	#Diplomatic Foci
+	focus = {
+		id = barons_legacy
+		icon = GFX_goal_tripartite_pact
+		x = 6
+		y = 0
+		cost = 10
+		completion_reward = {
+			hidden_effect = { add_ideas = barons_legacy }
+			every_country = {
+				limit = {
+					NOT = { tag = BRA }
+					NOT = { has_war_with = BRA }
+					NOT = { has_government = fascism }
+				}
+				add_opinion_modifier = { target = ROOT modifier = barons_legacy }
+			}
+		}
+	}
+}
