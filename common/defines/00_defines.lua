@@ -487,15 +487,15 @@ NMilitary = {
 
 NAir = {
 	AIR_WING_FLIGHT_SPEED_MULT = 0.02,					-- Global speed multiplier for airplanes (affects fe.transferring to another base)
-	AIR_WING_MAX_STATS_ATTACK = 400,					-- Max stats
-	AIR_WING_MAX_STATS_DEFENCE = 400,
-	AIR_WING_MAX_STATS_AGILITY = 800,
+	AIR_WING_MAX_STATS_ATTACK = 200,					-- Max stats
+	AIR_WING_MAX_STATS_DEFENCE = 200,
+	AIR_WING_MAX_STATS_AGILITY = 400,
 	AIR_WING_MAX_STATS_SPEED = 4000,
 	AIR_WING_MAX_STATS_BOMBING = 500,
 	AIR_WING_MAX_SIZE = 1000, 							-- Max amount of airplanes in wing
 	AIR_WING_BOMB_DAMAGE_FACTOR = 2,					-- Used to balance the damage done while bombing.
 	BOMBERS_ENGAGE_PASSES = 1,							-- Combat simulations passes in single fight against the bombers and their escorts (more passes = more bloody)
-	SUPERIORITY_ENGAGE_PASSES = 2,						-- Combat simulations passes in single fight against superiority missions.
+	SUPERIORITY_ENGAGE_PASSES = 1,						-- Combat simulations passes in single fight against superiority missions.
 	COMBAT_ESCORT_PASS_CHANCE_BASE = 0.25, 				-- Base % for chance for passing escorts, and attack directly bombers.
 	COMBAT_ESCORT_PASS_CHANCE_MULT = 0.25,	 			-- How much the difference in airplanes stats (agility+speed) affects the escort passing chance.
 	COMBAT_ESCORT_PASS_CHANCE_LIMIT = 0.95, 			-- So a big difference in airplanes stats never gives 100% chance for passing escorts.
