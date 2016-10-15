@@ -13,6 +13,7 @@ replace_path = "common/national_focus"
 replace_path = "common/countries"
 replace_path = "common/technologies"
 replace_path = "common/units"
+replace_path = "common/ideas"
 replace_path = "common/units/equipment"
 replace_path = "common/units/equipment/upgrades"
 
