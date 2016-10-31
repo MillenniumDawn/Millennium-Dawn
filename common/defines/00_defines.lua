@@ -566,7 +566,7 @@ NAir = {
 	AIR_COMBAT_FINAL_DAMAGE_SCALE = 0.5,                -- % how many max disrupted only planes are alloed to die in a single combat
 	LAST_PLANE_DIE_FACTOR = 0.5,                        -- chance to kill last plane if our damage was too low to kill even one plane (1 = 50% chance if it had 50% dmg)
 	AA_INDUSTRY_AIR_DAMAGE_FACTOR = -0.12,				-- 5x levels = 60% defense from bombing
-	NAVAL_STRIKE_DETECTION_BALANCE_FACTOR = 9.8,		-- Value used to scale the surface_visibility stats to balance the gameplay, so 100% detection chance still won't spam the strikes.
+	NAVAL_STRIKE_DETECTION_BALANCE_FACTOR = 11,		-- Value used to scale the surface_visibility stats to balance the gameplay, so 100% detection chance still won't spam the strikes.
 	LEND_LEASED_EQUIPMENT_EXPERIENCE_GAIN = 0.5,		-- Value used for equipment
 	ANTI_AIR_PLANE_DAMAGE_FACTOR = 0.8,					-- Anti Air Gun Damage factor
 	ANTI_AIR_PLANE_DAMAGE_CHANCE = 0.1,					-- Anti Air Gun hit chance
