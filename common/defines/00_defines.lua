@@ -598,7 +598,7 @@ NNavy = {
 	COMBAT_TORPEDO_ATTACK_USE_CHANCE = 0.25,						-- chance of using torpedo attack (to avoid torpedo spam when at close distance)
 	COMBAT_CLOSE_DISTANCE_MAX_HIT_CHANCE_BONUS = 0.0,				-- max bonus to hit chance when target is near. So if base is 0.5, dist.bonus is 0.1, and we are facing enemy at distance 0, the total hit chance is 0.6 (60%). When enemy is barely at our max shooting range, the bonus is 0.
 	COMBAT_EVASION_TO_HIT_CHANCE = 0.007,							-- we take ship evasion stats, and mult by this value, so it gives hit chance reduction. So if reduction is 0.025 and ship evasion = 10, then there will be 0.25 (25%) lower hit chance. (Fe. 50% base -25% from evasion +10% bcoz it's very close).
-	COMBAT_EVASION_TO_HIT_CHANCE_TORPEDO_MULT = 40.0,				-- the above evasion hit chance is multiplied by 150% if shooting with torpedos. Torpedoes are slow, so evasion matters more.
+	COMBAT_EVASION_TO_HIT_CHANCE_TORPEDO_MULT = 10,				-- the above evasion hit chance is multiplied by 150% if shooting with torpedos. Torpedoes are slow, so evasion matters more.
 	MAX_EVASION_BONUS = 0.1,										-- largest evasion penalty to hitting			COMBAT_LOW_ORG_HIT_CHANCE_PENALTY = -0.8,						-- % of penalty applied to hit chance when ORG is very low.
 	TARGETING_STACKING_HIT_CHANCE_PENALTY = 0.08,                    -- penalty to hit chance for each ship targeting same target
 	COMBAT_LOW_ORG_HIT_CHANCE_PENALTY = -0.8,						-- % of penalty applied to hit chance when ORG is very low.
