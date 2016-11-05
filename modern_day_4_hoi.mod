@@ -3,7 +3,7 @@ path="mod/modern_day_4_hoi/"
 tags={
 	"Alternative History"
 }
-supported_version="1.1.0"
+supported_version="1.2.1"
 
 replace_path = "history/states"
 replace_path = "history/units"

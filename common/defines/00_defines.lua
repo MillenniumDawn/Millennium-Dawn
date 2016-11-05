@@ -1,7 +1,7 @@
 NDefines = {
 
 NGame = {
-	START_DATE = "2017.1.1.12",
+	START_DATE = "2017.1.1.1",
 	END_DATE = "2070.1.1.1",
 	MAP_SCALE_PIXEL_TO_KM = 7.114,	-- Yes, we did the math
 	SAVE_VERSION = 3,
@@ -144,7 +144,7 @@ NCountry = {
 	RESOURCE_LENDLEASE_PRIORITY = 1,				-- Default convoy priority for export lend lease
 	SUPPLY_CONVOY_FACTOR = 0.25,					-- How many convoys each supply needs
 	CONVOY_RANGE_FACTOR = 1,                        -- how much range affects convoy need
-	LOCAL_MANPOWER_ACCESSIBLE_FACTOR = 0.5,         -- accessible recruitable factor base
+	LOCAL_MANPOWER_ACCESSIBLE_FACTOR = 0.05,         -- accessible recruitable factor base
 	LOCAL_MANPOWER_ACCESSIBLE_NON_CORE_FACTOR = 0.02,  -- accessible recruitable factor base
 	STATE_CONTROLLER_VP_RATIO_FLIP = 0.5,			-- If current state controller has less share than this of state total and no armies in it the state changes controller
 	DEFAULT_NATIONAL_UNITY = 0.7,					-- Default national unity if not scripted otherwise.
