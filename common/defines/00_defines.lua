@@ -594,7 +594,7 @@ NNavy = {
 	COMBAT_MIN_WIN_CHANCE_TO_KEEP_FIGHTING_DESPITE_NO_ENGAGE = 10.0,	-- compare our forces with enemy forces. 1.0 is equal win chances. Less then 1.0 is we have low chances. If we have at least X chances, then ships will attept to attack without waiting for the other ships that are on the way.
 	COMBAT_BASE_HIT_CHANCE = 0.1,									-- base chance for hit
 	COMBAT_MIN_HIT_CHANCE = 0.01,									-- never less hit chance then 1%?
-	COMBAT_TORPEDO_ATTACK_MAX_RANGE = 8.0,							-- max range for torpedo attack
+	COMBAT_TORPEDO_ATTACK_MAX_RANGE = 6.0,							-- max range for torpedo attack
 	COMBAT_TORPEDO_ATTACK_USE_CHANCE = 0.2,						-- chance of using torpedo attack (to avoid torpedo spam when at close distance)
 	COMBAT_CLOSE_DISTANCE_MAX_HIT_CHANCE_BONUS = 0.0,				-- max bonus to hit chance when target is near. So if base is 0.5, dist.bonus is 0.1, and we are facing enemy at distance 0, the total hit chance is 0.6 (60%). When enemy is barely at our max shooting range, the bonus is 0.
 	COMBAT_EVASION_TO_HIT_CHANCE = 0.007,							-- we take ship evasion stats, and mult by this value, so it gives hit chance reduction. So if reduction is 0.025 and ship evasion = 10, then there will be 0.25 (25%) lower hit chance. (Fe. 50% base -25% from evasion +10% bcoz it's very close).
