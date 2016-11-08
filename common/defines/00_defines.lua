@@ -594,17 +594,17 @@ NNavy = {
 	COMBAT_MIN_WIN_CHANCE_TO_KEEP_FIGHTING_DESPITE_NO_ENGAGE = 10.0,	-- compare our forces with enemy forces. 1.0 is equal win chances. Less then 1.0 is we have low chances. If we have at least X chances, then ships will attept to attack without waiting for the other ships that are on the way.
 	COMBAT_BASE_HIT_CHANCE = 0.1,									-- base chance for hit
 	COMBAT_MIN_HIT_CHANCE = 0.01,									-- never less hit chance then 1%?
-	COMBAT_TORPEDO_ATTACK_MAX_RANGE = 10.0,							-- max range for torpedo attack
-	COMBAT_TORPEDO_ATTACK_USE_CHANCE = 0.25,						-- chance of using torpedo attack (to avoid torpedo spam when at close distance)
+	COMBAT_TORPEDO_ATTACK_MAX_RANGE = 6.0,							-- max range for torpedo attack
+	COMBAT_TORPEDO_ATTACK_USE_CHANCE = 0.2,						-- chance of using torpedo attack (to avoid torpedo spam when at close distance)
 	COMBAT_CLOSE_DISTANCE_MAX_HIT_CHANCE_BONUS = 0.0,				-- max bonus to hit chance when target is near. So if base is 0.5, dist.bonus is 0.1, and we are facing enemy at distance 0, the total hit chance is 0.6 (60%). When enemy is barely at our max shooting range, the bonus is 0.
 	COMBAT_EVASION_TO_HIT_CHANCE = 0.007,							-- we take ship evasion stats, and mult by this value, so it gives hit chance reduction. So if reduction is 0.025 and ship evasion = 10, then there will be 0.25 (25%) lower hit chance. (Fe. 50% base -25% from evasion +10% bcoz it's very close).
-	COMBAT_EVASION_TO_HIT_CHANCE_TORPEDO_MULT = 10,				-- the above evasion hit chance is multiplied by 150% if shooting with torpedos. Torpedoes are slow, so evasion matters more.
+	COMBAT_EVASION_TO_HIT_CHANCE_TORPEDO_MULT = 45,				-- the above evasion hit chance is multiplied by 150% if shooting with torpedos. Torpedoes are slow, so evasion matters more.
 	MAX_EVASION_BONUS = 0.1,										-- largest evasion penalty to hitting			COMBAT_LOW_ORG_HIT_CHANCE_PENALTY = -0.8,						-- % of penalty applied to hit chance when ORG is very low.
 	TARGETING_STACKING_HIT_CHANCE_PENALTY = 0.08,                    -- penalty to hit chance for each ship targeting same target
 	COMBAT_LOW_ORG_HIT_CHANCE_PENALTY = -0.8,						-- % of penalty applied to hit chance when ORG is very low.
 	COMBAT_DAMAGE_RANDOMNESS = 0.3,								-- random factor in damage. So if max damage is fe. 10, and randomness is 30%, then damage will be between 7-10.
-	COMBAT_TORPEDO_CRITICAL_CHANCE = 0.2,							-- chance for critical hit from torpedo.
-	COMBAT_TORPEDO_CRITICAL_DAMAGE_MULT = 2.0,						-- multiplier to damage when got critical hit from torpedo. (Critical hits are devastating as usualy torpedo_attack are pretty high base values).
+	COMBAT_TORPEDO_CRITICAL_CHANCE = 1,							-- chance for critical hit from torpedo.
+	COMBAT_TORPEDO_CRITICAL_DAMAGE_MULT = 5.0,						-- multiplier to damage when got critical hit from torpedo. (Critical hits are devastating as usualy torpedo_attack are pretty high base values).
 	COMBAT_DAMAGE_TO_STR_FACTOR = 3.5,								-- casting damage value to ship strength multiplier. Use it to balance the game difficulty.
 	COMBAT_DAMAGE_TO_ORG_FACTOR = 3.8,							-- casting damage value to ship organisation multiplier. Use it to balance the game difficulty.
 	COMBAT_DAMAGE_REDUCTION_ON_RETREAT = 0.5,						-- Retreating ships are using their rear cannons, so the damage should be reduced.
