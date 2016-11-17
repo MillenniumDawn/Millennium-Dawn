@@ -16,8 +16,9 @@
 #	}
 #
 
-test22 = {
-	if = { #checks if in war before proceeding. Make sure all If's check for flag
+#Checks if both countries have AB system activated & are at war
+AB_war_test = {
+	if = {
 		limit = {
 			any_country = {
 				has_defensive_war_with = PREV
@@ -31,23 +32,67 @@ test22 = {
 		PREV = {
 			#country_event = { id = anti_bully.1 days = 0 }
 			add_political_power = -100
-			set_country_flag = test
+			set_country_flag = AB_test_passed
 		}
 	}
+}
+
+#Used only to intialize AB system
+AB_init = {
 	
-	if = { #this works
+	if = { 
 		limit = {
-			PREV = {
-				has_country_flag = test
+			this = {
+				has_defensive_war_with = event_target:AB_ATT
+				has_country_flag = AB_deffender
 			}
 		}
-		add_political_power = -300
+		
+		capital_scope = {
+			add_claim_by = event_target:AB_ATT
+		}
+		
+	}
+}
+
+#Used to check if AB System Active and
+#attacker is still at war and assign event targets
+AB_war_test = {
+
+	if = { #checks if in war before proceeding.
+		limit = {
+			any_country = {
+				has_defensive_war_with = PREV
+				has_country_flag = AB_deffender
+				capital_scope = {
+					is_claimed_by = PREV
+				}
+			}
+			PREV = {
+				has_war = yes
+				has_country_flag = AB_attacker
+			}
+		}
+		PREV = {
+			set_country_flag = AB_test_true
+			save_event_target_as = AB_ATT
+		}
+		any_country = {
+			limit = {
+				has_defensive_war_with = PREV
+				has_country_flag = AB_deffender
+				capital_scope = {
+					is_claimed_by = PREV
+				}
+			}
+			save_event_target_as = AB_DEFF
+		}
 	}
 	
 	if = { #if not in war start returning national unity
 		limit = {
 			PREV = {
-				not = { has_country_flag = test}
+				not = { has_country_flag = test }
 			}
 		}
 		#return national unity funcation
@@ -55,16 +100,21 @@ test22 = {
 	
 }
 
-Anti_bully = {
+Anti_bully_l_nu = {
+
+	AB_war_test = yes #Checks to make sure still at war and AB active
+	
 	#Anti Bully loose National Unity #1
 	if = {
 		limit = {
 			not = {
 				has_country_flag = AB_War1_NU1
 			}
+			has_country_flag = AB_test_true
 		}
 		set_country_flag = AB_War1_NU1
 		country_event = { days = 1 id = finland.1 } #Generic event loose National Unity
+		clr_country_flag = AB_test_true
 	}
 	
 	#Anti Bully loose National Unity #2
@@ -73,10 +123,12 @@ Anti_bully = {
 			not = {
 				has_country_flag = AB_War1_NU2
 			}
+			has_country_flag = AB_test_true
 			has_country_flag = AB_War1_NU1
 		}
 		set_country_flag = AB_War1_NU2
 		country_event = { days = 1 id = finland.1 } #Generic event loose National Unity
+		clr_country_flag = AB_test_true
 	}
 	#Anti Bully loose National Unity #3
 	if = {
@@ -84,12 +136,14 @@ Anti_bully = {
 			not = {
 				has_country_flag = AB_War1_NU3
 			}
+			has_country_flag = AB_test_true
 			has_country_flag = AB_War1_NU1
 			has_country_flag = AB_War1_NU2
 			
 		}
 		set_country_flag = AB_War1_NU3
 		country_event = { days = 1 id = finland.1 } #Generic event loose National Unity
+		clr_country_flag = AB_test_true
 	}
 	#Anti Bully loose National Unity #4
 	if = {
@@ -97,6 +151,7 @@ Anti_bully = {
 			not = {
 				has_country_flag = AB_War1_NU4
 			}
+			has_country_flag = AB_test_true
 			has_country_flag = AB_War1_NU1
 			has_country_flag = AB_War1_NU2
 			has_country_flag = AB_War1_NU3
@@ -104,6 +159,7 @@ Anti_bully = {
 		}
 		set_country_flag = AB_War1_NU4
 		country_event = { days = 1 id = finland.1 } #Generic event loose National Unity
+		clr_country_flag = AB_test_true
 	}
 	#Anti Bully loose National Unity #5
 	if = {
@@ -111,6 +167,7 @@ Anti_bully = {
 			not = {
 				has_country_flag = AB_War1_NU5
 			}
+			has_country_flag = AB_test_true
 			has_country_flag = AB_War1_NU1
 			has_country_flag = AB_War1_NU2
 			has_country_flag = AB_War1_NU3
@@ -119,6 +176,7 @@ Anti_bully = {
 		}
 		set_country_flag = AB_War1_NU5
 		country_event = { days = 1 id = finland.1 } #Generic event loose National Unity
+		clr_country_flag = AB_test_true
 	}
 	
 	
