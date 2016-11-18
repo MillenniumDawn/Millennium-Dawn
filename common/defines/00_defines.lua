@@ -112,7 +112,7 @@ NCountry = {
 	SUPPLY_BASE_MULT = 1,							-- multiplier on supply base values
 	SUPPLY_BONUS_FROM_INPUT = 0.25,					-- % of supply bonus from input area.
 	SUPPLY_PATH_MAX_DISTANCE = 15,					-- When supply route reach more than X nodes, the manpower+equipment delivery speed reach 100% penalty.
-	POPULATION_YEARLY_GROWTH_BASE = 0.015,			-- basic population growth per year, used for monthly manpower gain
+	POPULATION_YEARLY_GROWTH_BASE = 0.01,			-- basic population growth per year, used for monthly manpower gain
 	RESISTANCE_STRENGTH_FROM_VP = 0.001,			-- How much strength ticking speed gives each VP score.
 	RESISTANCE_STRENGTH_FROM_UNIT = 0.001,			-- How much strength ticking speed is reduced from each unit in state (multiplies subunit value resistance_suppress)
 	RESISTANCE_STRENGTH_FROM_NEIGHBORS = 0.5, 		-- Multiplies how much resistance can spread from one state to its neighbors, a state will spread whatever is highest of its victorypoints resistance increase or half of any of its neighbors spread, multiplied by this
@@ -134,7 +134,7 @@ NCountry = {
 	NAVY_SCORE_MULTIPLIER = 1.0,					-- Based on number of navies.
 	AIR_SCORE_MULTIPLIER = 0.1,						-- Based on number of planes (which is typically a lot).
 	INDUSTRY_SCORE_MULTIPLIER = 1.0,				-- Based on number of factories.
-	PROVINCE_SCORE_MULTIPLIER = 0.1,				-- Based on number of controlled provinces.
+	PROVINCE_SCORE_MULTIPLIER = 0.01,				-- Based on number of controlled provinces.
 	NUCLEAR_PRODUCTION_SCALE = 365,					-- +1 nuclear_production gives 1 nuke per year
 	NUCLEAR_BOMB_DROP_UNITY_EFFECT_MAX_INFRA = 0.2, -- Reduce enemy national unity on nuking a province, the value scales with infrastructure up to this number
 	NUCLEAR_BOMB_DROP_UNITY_EFFECT_MAX_VP = 3,		-- National unity will be scaled down if there's less VP than this in the province
@@ -230,8 +230,8 @@ NPolitics = {
 },
 
 NBuildings = {
-	MAX_BUILDING_LEVELS = 15,			-- Max levels a building can have.
-	AIRBASE_CAPACITY_MULT = 200,		-- Each level of airbase building multiplied by this, gives capacity (max operational value). Value is int. 1 for each airplane.
+	MAX_BUILDING_LEVELS = 50,			-- Max levels a building can have.
+	AIRBASE_CAPACITY_MULT = 50,		-- Each level of airbase building multiplied by this, gives capacity (max operational value). Value is int. 1 for each airplane.
 	ROCKETSITE_CAPACITY_MULT = 100,		-- Each level of rocketsite building multiplied by this, gives capacity (max operational value). Value is int. 1 for each rocket.
 	NAVALBASE_CAPACITY_MULT = 10.0,		-- Each level of navalbase building multiplied by this, gives max capacity. Value is float. Each ship takes port_capacity_usage space.
 	NAVALBASE_REPAIR_MULT = 0.075,		-- Each level of navalbase building repairs X strength. The value is spread on all ships needed reparation. Fe Navalbase lvl 5 x 0.5 str repair = 2.5 str repaired over 10 ships, so each ship repair hourly 0.25 str.
@@ -246,7 +246,7 @@ NBuildings = {
 	SUPPLY_PORT_LEVEL_THROUGHPUT = 3,   -- supply throughput per level of naval base
 	INFRA_TO_SUPPLY = 2,
  	INFRA_TO_SUPPLY_COEFF = 1,
-	MAX_SHARED_SLOTS = 25,				-- Max slots shared by factories
+	MAX_SHARED_SLOTS = 56,				-- Max slots shared by factories
 	OWNER_CHANGE_EXTRA_SHARED_SLOTS_FACTOR = 0.5, --Scale factor of extra shared slots when state owner change.
 	DESTRUCTION_COOLDOWN_IN_WAR = 30,	-- Number of days cooldown between removal of buildings in war times
 },
