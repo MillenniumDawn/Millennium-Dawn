@@ -855,6 +855,7 @@ NSound = {
 	BATTLE_SOUND_MAX_UNIT_COUNT =  20,
 	BATTLE_SOUND_MIN_VOLUME_MUL = 0.2,
 	BATTLE_SOUND_MAX_VOLUME_MUL = 1.0,
+	VOICE_OVER_COOL_DOWN = 2.8, -- Wait for this many seconds before playing another vo
 },
 
 }
