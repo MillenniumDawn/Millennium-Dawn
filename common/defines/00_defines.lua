@@ -49,7 +49,7 @@ NDiplomacy = {
 	VERY_GOOD_OPINION = 50,							-- Threshold for a country that has a very good opinion of you.
 	VERY_BAD_OPINION = -50,							-- Threshold for a country that has a very bad opinion of you.
 	TRADE_NEUTRAL_OPINION_FACTOR = 0.75,			-- If Both fear and trust are 0, this is the neutral factor for trade
-	TRADE_OPINION_FACTOR_FACTOR = 1.0,				-- How much the factor should effect the possible trade amount. Setting TRADE_NEUTRAL_OPINION_FACTOR to 1.0 and TRADE_OPINION_FACTOR_FACTOR to 0 means opinion does nothing in regards to trade.
+	TRADE_OPINION_FACTOR_FACTOR = 0.5,				-- How much the factor should effect the possible trade amount. Setting TRADE_NEUTRAL_OPINION_FACTOR to 1.0 and TRADE_OPINION_FACTOR_FACTOR to 0 means opinion does nothing in regards to trade.
 	DIPLOMACY_HOURS_BETWEEN_REQUESTS = 24,			-- How long a country must wait before sending a new diplomatic request.
 	TROOP_FEAR = 1, 								-- Impact on troops on borders when deciding how willing a nation is to trade
 	FLEET_FEAR = 1,									-- Impact on troops on borders when deciding how willing a nation is to trade --1
@@ -205,7 +205,7 @@ NCountry = {
 },
 
 NProduction = {
-	MAX_EQUIPMENT_RESOURCES_NEED = 3, 	-- Max number of different strategic resources an equipment can be dependent on.
+	MAX_EQUIPMENT_RESOURCES_NEED = 6, 	-- Max number of different strategic resources an equipment can be dependent on.
 	MAX_FACTORIES_PER_LINE = 15,			-- Max number of factories that can be assigned a single production line.
 	EFFICIENCY_LOSS_PER_UNUSED_DAY = 1,		-- Daily loss of efficiency for unused factory slots ( efficiency is tracked per factory slot in the production line )
 	MAX_LINE_RESOURCE_PENALTY = 90,		-- Max penalty factor for production lines lacking strategic resources in %.
@@ -340,8 +340,8 @@ NMilitary = {
 	COMBAT_MOVEMENT_SPEED = 0.60,	               -- MD4 was 0.33 speed reduction base modifier in combat
 	TACTIC_SWAP_FREQUENCEY = 24,                   -- hours between tactic swaps
 	INITIATIVE_PICK_COUNTER_ADVANTAGE_FACTOR  = 0.35, -- advantage per leader level for picking a counter
-	BASE_COMBAT_WIDTH = 80,                        -- base combat width
-	ADDITIONAL_COMBAT_WIDTH = 40,                  -- more opened up by support attack
+	BASE_COMBAT_WIDTH = 120,                        -- base combat width
+	ADDITIONAL_COMBAT_WIDTH = 60,                  -- more opened up by support attack
 	AMPHIBIOUS_INVADE_MOVEMENT_COST = 24.0,        -- total progress cost of movement while amphibious invading
 	LAND_SPEED_MODIFIER = 0.05,                    -- basic speed control
 	RIVER_CROSSING_PENALTY = -0.3,                 -- small river crossing
@@ -738,7 +738,7 @@ NNavy = {
 },
 
 NTrade = {
-	DISTANCE_TRADE_FACTOR = -0.02,			-- Trade factor is modified by distance times this
+	DISTANCE_TRADE_FACTOR = -0.01,			-- Trade factor is modified by distance times this
 	RELATION_TRADE_FACTOR = 1,				-- Trade factor is modified by Opinion value times this
 	FEAR_TRADE_FACTOR = 1,
 	ALLOW_TRADE_CUT_OFF = 0,				-- If trade factor is less than this, no trade will be allowed
@@ -750,7 +750,7 @@ NTrade = {
 	LACK_OF_CONVOYS_TRADE_FACTOR = -0.1,	-- Every hour without convoys will lower trade factor this much (regain is the same)
 	BASE_LAND_TRADE_RANGE = 1000,
 	PARTY_SUPPORT_TRADE_FACTOR = 50,		-- Trade factor bonus at the other side having 100 % party popularity for my party
-	ANTI_MONOPOLY_TRADE_FACTOR_THRESHOLD = 0.5,		-- What percentage of resources has to be sold to the buyer for the anti-monopoly factor to take effect
+	ANTI_MONOPOLY_TRADE_FACTOR_THRESHOLD = 0.7,		-- What percentage of resources has to be sold to the buyer for the anti-monopoly factor to take effect
 	ANTI_MONOPOLY_TRADE_FACTOR = -100,		-- This is added to the factor value when anti-monopoly threshold is exceeded
 },
 
@@ -794,7 +794,7 @@ NAI = {
 	RESEARCH_AHEAD_OF_TIME_FACTOR = 4.0, 		-- To which extent AI should care about ahead of time penalties to research
 	RESEARCH_BASE_DAYS = 60,					-- AI adds a base number of days when weighting completion time for techs to ensure it doesn't only research quick techs
 	DECLARE_WAR_RELATIVE_FORCE_FACTOR = 0.5,	-- Weight of relative force between nations that consider going to war
-	TRADEABLE_FACTORIES_FRACTION = 0.4,			-- Will at most trade away this fraction of factories.
+	TRADEABLE_FACTORIES_FRACTION = 0.8,			-- MD4 was 0.4 Will at most trade away this fraction of factories.
 	MIN_DELIVERED_TRADE_FRACTION = 0.8,			-- AI will cancel trade deals that are not able to deliver more than this fraction of the agreed amount
 	NAVAL_TRANSPORTS_FACTOR = 2,				-- Factor applied to the relative size of army compared to naval capacity.
 	NAVAL_DOCKYARDS_SHIP_FACTOR = 1.5,			-- The extent to which number of dockyards play into amount of sips a nation wants
@@ -804,7 +804,7 @@ NAI = {
 	NAVAL_THEATRE_PRIO_CAPITAL_SCORE = 100,		-- Weight of capital when calculating naval theatre assignment
 	NAVAL_THEATRE_PRIO_NAVAL_BASE_SCORE = 1,	-- Weight of naval bases when calculating naval theatre assignment
 	NAVAL_THEATRE_PRIO_MIN_DISTANCE = 2000,		-- Minimum distance (in km) between priority theatres for naval assignment, to spread navy out
-	PRODUCTION_UNAVAILABLE_RESORCE_FACTORY_FACTOR = 0.75, -- Assign/queue this proportion of desired factories when resources are short 
+	PRODUCTION_UNAVAILABLE_RESORCE_FACTORY_FACTOR = 0.4, -- Assign/queue this proportion of desired factories when resources are short 
 	PRODUCTION_EQUIPMENT_SURPLUS_FACTOR = 0.25,	-- Base value for how much of currently used equipment the AI will at least strive to have in stock
 	AIR_CONTROLLED_TERRITORY_INTERCEPT_SCORE = 6,-- Interception score per controlled state in mission region
 	AIR_ALLY_TERRITORY_INTERCEPT_SCORE = -400,	-- Interception score per ally controlled state in mission region
