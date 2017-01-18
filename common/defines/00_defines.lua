@@ -563,9 +563,9 @@ NAir = {
 	DETECT_EFFICIENCY_FROM_RADAR = 0.7,					-- How much radars affect the efficiency.
 	DETECT_EFFICIENCY_RANDOM_FACTOR = 0.1,				-- How much randomness is in amount of detected aircrafts.
 	DAY_NIGHT_COVERAGE_FACTOR = 0.5,					-- How much of the land in the region must be covered by night to consider doing night missions. The same with the day.
-	HOURS_DELAY_AFTER_EACH_COMBAT = 8,					-- How many hours needs the wing to be ready for the next combat. Use for tweaking if combats happens too often. (generally used as double because of roundtrip)
-	CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 9,          -- how often carrier planes do battle inside naval combat
-	NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 0.9,			-- Balancing value to convert the naval_strike_targetting equipment stats to chances of how many airplanes managed to do successfull strike.
+	HOURS_DELAY_AFTER_EACH_COMBAT = 4,					-- How many hours needs the wing to be ready for the next combat. Use for tweaking if combats happens too often. (generally used as double because of roundtrip)
+	CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 4,          -- how often carrier planes do battle inside naval combat
+	NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 0.9,			-- MD4 was 0.3 Balancing value to convert the naval_strike_targetting equipment stats to chances of how many airplanes managed to do successfull strike.
 	NAVAL_STRIKE_DAMAGE_TO_STR = 3.0,					-- Balancing value to convert damage ( naval_strike_attack * hits ) to Strength reduction.
 	NAVAL_STRIKE_DAMAGE_TO_ORG = 3.0,					-- Balancing value to convert damage ( naval_strike_attack * hits ) to Organisation reduction.
 	NAVAL_STRIKE_AIR_VS_AIR_PASS_CHANCE = 0.5,			-- Balancing value to control
@@ -577,7 +577,7 @@ NAir = {
 	AIR_EXPERIANCE_FROM_LEND_LEASE = 0.5,				-- How much of the experience gained in the air combat, we get from our equipment sent by lend lease.
 	ACCIDENT_CHANCE_BASE = 0.1,							-- Base chance % (0 - 100) for accident to happen. Reduced with higher reliability stat.
 	ACCIDENT_CHANCE_CARRIER_MULT = 2.0,					-- The total accident chance is scaled up when it happens on the carrier ship.
-	ACCIDENT_CHANCE_BALANCE_MULT = 2.0,					-- Multiplier for balancing how often the air accident really happens. The higher mult, the more often.
+	ACCIDENT_CHANCE_BALANCE_MULT = 0.5,					-- Multiplier for balancing how often the air accident really happens. The higher mult, the more often.
 	ACE_DEATH_CHANCE_BASE = 0.003,						-- Base chance % for ace pilot die when an airplane is shot down in the Ace wing.
 	ACE_DEATH_CHANCE_PLANES_MULT = 0.001,				-- The more airplanes was lost in a single airplanes (more bloody it was) the higher chance of Ace to die.
 	ACE_EARN_CHANCE_BASE = 0.003,						-- Base chance % for ace pilot to be created. Happens only when successfully kill airplane/ship or damage the buildings.
@@ -860,7 +860,7 @@ NAI = {
 	PLAN_ATTACK_MIN_STRENGTH_FACTOR_MED = 0.3,	
 	PLAN_ATTACK_MIN_ORG_FACTOR_HIGH = 0.2,		
 	PLAN_ATTACK_MIN_STRENGTH_FACTOR_HIGH = 0.15,	
-	PLAN_FRONTUNIT_DISTANCE_FACTOR = 4,			-- Factor for candidate units distance to front positions.
+	PLAN_FRONTUNIT_DISTANCE_FACTOR = 20,			-- Factor for candidate units distance to front positions.
 	PLAN_FRONTUNIT_DISTANCE_FACTOR_PEACE = 1.2,	-- Factor for candidate units distance to front positions.
 	PLAN_ATTACK_DEPTH_FACTOR = 0.5,				-- Factor applied to size or enemy being attacked.
 	PLAN_STEP_COST_LIMIT = 11,					-- When stepping to draw a plan this cost makes it break if it hits hard terrain (multiplied by number of desired steps)
@@ -898,7 +898,7 @@ NAI = {
 	ESTIMATED_CONVOYS_PER_DIVISION = 6,			-- Not always correct, but mainly used to make sure AI does not go crazy
 	FRONT_REASSIGN_DISTANCE = 120.0,			-- If a unit is this far away from a front it is not considered to be assigned to it unless the new front is much more important
 	OLD_FRONT_IMPORTANCE_FACTOR = 1.50,			-- If a unit is considered for reassignment, the importance of both new and old front is considered with a weight applied to the old ones score
-	ENTRENCHMENT_WEIGHT = 100.0,				-- AI should favour units with less entrenchment when assigning units around.
+	ENTRENCHMENT_WEIGHT = 2.0,				-- AI should favour units with less entrenchment when assigning units around.
 	FRONT_TERRAIN_DEFENSE_FACTOR = 5.0,			-- Multiplier applied to unit defense modifier for terrain on front province multiplied by terrain importance
 	FRONT_TERRAIN_ATTACK_FACTOR = 5.0,			-- Multiplier applied to unit attack modifier for terrain on enemy front province multiplied by terrain importance
 	
@@ -909,9 +909,9 @@ NAI = {
 	ORG_UNIT_WEAK = 0.15,						-- Organization % for unit to be considered weak
 	STR_UNIT_STRONG = 0.75,						-- Strength (equipment) % for unit to be considered strong
 	STR_UNIT_WEAK = 0.1,						-- Strength (equipment) % for unit to be considered weak
-	PLAN_FACTION_STRONG_TO_EXECUTE = 0.60,		-- % or more of units in an order to consider ececuting the plan
+	PLAN_FACTION_STRONG_TO_EXECUTE = 0.50,		-- % or more of units in an order to consider ececuting the plan
 	PLAN_FACTION_WEAK_TO_ABORT = 0.65,			-- % or more of units in an order to consider ececuting the plan
-	PLAN_AVG_PREPARATION_TO_EXECUTE = 0.7,		-- % or more average plan preparation before executing
+	PLAN_AVG_PREPARATION_TO_EXECUTE = 0.5,		-- % or more average plan preparation before executing
 	STATE_GARRISON_MAX_UNITS = 3,				-- Max units to guard a garrison under normal circumstances (isolated core areas like England has is excempt)
 	
 	REDEPLOY_DISTANCE_VS_ORDER_SIZE = 1.0,		-- Factor applied to the path length of a unit compared to length of an order to determine if it should use strategic redeployment
@@ -1034,7 +1034,7 @@ NAI = {
 	DIVISION_DESIGN_MANPOWER_WEIGHT = 0.005,
 	DIVISION_DESIGN_STOCKPILE_WEIGHT = 0.01,
 	DIVISION_DESIGN_COMBAT_WIDTH_WEIGHT = -3.0,
-	DIVISION_DESIGN_BASE_WEIGHT_SCORE = 100.0,			-- This score is reduced the farther the width is from the target width (if set)
+	DIVISION_DESIGN_BASE_WEIGHT_SCORE = -1000.0,			-- This score is reduced the farther the width is from the target width (if set)
 	DIVISION_DESIGN_MAX_FAILED_DAYS = 60,					-- max days we keep track of since failure of a design update
 	BUILD_ARMOR_BASE_COST_WEIGHT = 200.0,
 	BUILD_ARMOR_STRENGTH_MULTIPLIER_WEIGHT = 100.0,
@@ -1081,7 +1081,7 @@ NAI = {
 	NAVAL_MISSION_ESCORT_NEAR_OWNED = 20000,			-- Extra escort mission score near owned provinces
 	NAVAL_MISSION_PATROL_NEAR_CONTROLLED = 12000,		-- Extra patrol mission score near controlled provinces
 	NAVAL_MISSION_ESCORT_NEAR_CONTROLLED = 5500,		-- Extra escort mission score near controlled provinces
-	NEW_LEADER_EXTRA_PP_FACTOR = 5.0,					-- Country must have at least this many times extra PP to get new admirals or army leaders
+	NEW_LEADER_EXTRA_PP_FACTOR = 2.0,					-- Country must have at least this many times extra PP to get new admirals or army leaders
 	SCARY_LEVEL_AVERAGE_DEFENSE = -0.7,                 -- average front defense modifier to make it consider it as a PITA to go for
 	ATTACK_HEAVILY_DEFENDED_LIMIT = 0.45,				-- AI will not launch attacks against heavily defended fronts unless they consider to have this level of advantage (1.0 = 100%)
 	HOUR_BAD_COMBAT_REEVALUATE = 100,                   -- if we are in combat for this amount and it goes shitty then try skipping it 
@@ -1133,6 +1133,57 @@ NAI = {
 	ORDER_ASSIGNMENT_DISTANCE_FACTOR = 5.0,				-- When the AI assigns units to orders, it attempts to calculate the distance.
 	RELUCTANCE_TO_CHANGE_FRONT_FACTOR = 0.5,			-- Factor for how reluctant the AI is to change a units order group.
 	REVISITED_PROV_PENALTY_FACTOR = 1.5,				-- When the AI picks units for a front, it tries to spread out a bit which units it grabs.
+	--Added in 1.3.2
+	AIR_SCORE_DISTANCE_IMPACT = 0.1,					-- Effect of distance applied to the score calculations
+	
+	NAVAL_AIR_SUPERIORITY_IMPORTANCE = 0.10,			-- Strategic importance of air superiority ( amount of enemy planes in area )
+	NAVAL_SHIP_AIR_IMPORTANCE = 2.0,					-- Naval ship air importance
+	NAVAL_SHIP_IN_PORT_AIR_IMPORTANCE = 6.0,			-- Naval ship in the port air importance
+	NAVAL_COMBAT_AIR_IMPORTANCE = 12.0,					-- Naval combat air importance
+	NAVAL_TRANSFER_AIR_IMPORTANCE = 25.0,				-- Naval transfer air importance
+	NAVAL_COMBAT_TRANSFER_AIR_IMPORTANCE = 50.0,		-- Naval combat involving enemy land units
+	
+	NAVAL_FIGHTERS_PER_PLANE = 1.1,						-- Amounts of air superiority planes requested per enemy plane
+	NAVAL_STRIKE_PLANES_PER_ARMY = 7,					-- MD4 was 15 Amount of planes requested per enemy army
+	NAVAL_STRIKE_PLANES_PER_SHIP = 4,					-- MD4 was 4Amount of bombers requested per enemy ship
+	PORT_STRIKE_PLANES_PER_SHIP = 4,					-- MD4 was 10Amount of bombers request per enemy ship in the port
+	
+	LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 0.10,		-- Strategic importance of air superiority ( amount of enemy planes in area )
+	LAND_DEFENSE_CIVIL_FACTORY_IMPORTANCE = 50,			-- Strategic importance of civil factories
+	LAND_DEFENSE_MILITARY_FACTORY_IMPORTANCE = 70,		-- Strategic importance of military factories
+	LAND_DEFENSE_NAVAL_FACTORY_IMPORTANCE = 30,			-- Strategic importance of naval factories
+	
+	LAND_DEFENSE_MIN_FACTORIES_FOR_AIR_IMPORTANCE = 4,	-- MD4 was 6 If amount of factories is less importance of factories won't apply
+	
+	LAND_DEFENSE_FIGHERS_PER_PLANE = 1.1,				-- Amount of air superiority planes requested per enemy plane
+	LAND_DEFENSE_INTERSEPTORS_PER_BOMBERS = 0.2,		-- Amount of air interceptor planes requested per enemy plane
+	
+	LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 0.20,		-- Strategic importance of air superiority ( amount of enemy planes in area )
+	LAND_COMBAT_OUR_ARMIES_AIR_IMPORTANCE = 12,		-- Strategic importance of our armies
+	LAND_COMBAT_OUR_COMBATS_AIR_IMPORTANCE = 55,		-- Strategic importance of our armies in the combats
+	LAND_COMBAT_FRIEND_ARMIES_AIR_IMPORTANCE = 12,	-- Strategic importance of friendly armies
+	LAND_COMBAT_FRIEND_COMBATS_AIR_IMPORTANCE = 6,		-- Strategic importance of friendly armies in the combat
+	LAND_COMBAT_ENEMY_ARMIES_AIR_IMPORTANCE = 8,		-- Strategic importance of our armies
+	LAND_COMBAT_ENEMY_LAND_FORTS_AIR_IMPORTANCE = 5,	-- Strategic importance of enemy land forts in the region
+	LAND_COMBAT_ENEMY_COASTAL_FORTS_AIR_IMPORTANCE = 3,-- Strategic importance of enemy coastal fronts in the region
+	
+	LAND_COMBAT_FIGHTERS_PER_PLANE = 1.1,				-- Amount of air superiority planes requested per enemy plane
+	LAND_COMBAT_CAS_PER_ENEMY_ARMY = 12,				-- MD4 was 25 Amount of CAS planes requested per enemy army
+	LAND_COMBAT_BOMBERS_PER_LAND_FORT_LEVEL = 7,		-- MD4 was 15 Amount of bomber planes requested per enemy land fort level
+	LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5,	-- MD4 was 10 Amount of bomber planes requested per enemy coastal fort level
+	
+	STR_BOMB_AIR_SUPERIORITY_IMPORTANCE = 0.10,		-- Strategic importance of air superiority ( amount of enemy planes in area )
+	STR_BOMB_CIVIL_FACTORY_IMPORTANCE = 50,			-- Strategic importance of enemy civil factories
+	STR_BOMB_MILITARY_FACTORY_IMPORTANCE = 70,		-- Strategic importance of enemy military factories
+	STR_BOMB_NAVAL_FACTORY_IMPORTANCE = 30,			-- Strategic importance of enemy naval factories
+	
+	STR_BOMB_MIN_ENEMY_FIGHTERS_IN_AREA = 150,		-- If amount of enemy fighters is higher than this mission won't perform
+	STR_BOMB_FIGHTERS_PER_PLANE = 1.1,				-- Amount of air superiority planes requested per enemy plane
+	STR_BOMB_PLANES_PER_CIV_FACTORY = 10,			-- MD4 was 20 Amount of planes requested per enemy civ factory
+	STR_BOMB_PLANES_PER_MIL_FACTORY = 12,			-- MD4 was 25 Amount of planes requested per enemy military factory
+	STR_BOMB_PLANES_PER_NAV_FACTORY = 7,			-- MD4 was 15 Amount of planes requested per enemy naval factory
+
+	
 },
 
 NFocus = {
