@@ -1,8 +1,8 @@
 NDefines_Graphics = {
 	
 NWiki = {
-	BASE_URL = "http://www.hoi4wiki.com/",
-	FORUM_URL = "http://forum.paradoxplaza.com/forum/index.php?link-forums/hearts-of-iron-iv.847/"
+	BASE_URL = "https://gitlab.com/truemikesmith/Modern_Day_4_HOI/issues/",
+	FORUM_URL = "https://gitlab.com/truemikesmith/Modern_Day_4_HOI/issues/"
 },
 
 NMapMode = {
