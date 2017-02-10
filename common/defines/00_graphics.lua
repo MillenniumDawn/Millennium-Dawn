@@ -1,8 +1,8 @@
 NDefines_Graphics = {
 	
 NWiki = {
-	BASE_URL = "https://gitlab.com/truemikesmith/Modern_Day_4_HOI/issues/",
-	FORUM_URL = "https://gitlab.com/truemikesmith/Modern_Day_4_HOI/issues/"
+	BASE_URL = "https://modernday4.gitlab.io/",
+	FORUM_URL = "https://modernday4.gitlab.io/"
 },
 
 NMapMode = {
