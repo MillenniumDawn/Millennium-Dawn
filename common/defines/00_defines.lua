@@ -962,6 +962,8 @@ NAI = {
 	COMMUNISTS_ANTAGONIZE_DEMOCRACIES = 10,
 	COMMUNISTS_ANTAGONIZE_COMMUNISTS = -10,
 	
+	TENSION_MIN_FOR_GUARANTEE_VS_MINOR = 10, -- for non faction people AI will not consider you worth guaranteeing below this
+	
 	NUM_AI_MESSAGES = 10,				-- Set to whatever category has the highest number of messages
 
 	DIPLOMACY_FACTION_WAR_WANTS_HELP = 50,	-- Desire to send to nations to join a faction if you are at war
@@ -1046,9 +1048,10 @@ NAI = {
 	},
 	DIVISION_DESIGN_MANPOWER_WEIGHT = 0.005,
 	DIVISION_DESIGN_STOCKPILE_WEIGHT = 0.01,
-	DIVISION_DESIGN_COMBAT_WIDTH_WEIGHT = -3.0,
-	DIVISION_DESIGN_BASE_WEIGHT_SCORE = -1000.0,			-- This score is reduced the farther the width is from the target width (if set)
+	DIVISION_DESIGN_COMBAT_WIDTH_WEIGHT = -1.0,
+	DIVISION_DESIGN_COMBAT_WIDTH_TARGET_WEIGHT = -200.0,	-- This score is reduced the farther the width is from the target width (if set)
 	DIVISION_DESIGN_MAX_FAILED_DAYS = 60,					-- max days we keep track of since failure of a design update
+	
 	BUILD_ARMOR_BASE_COST_WEIGHT = 200.0,
 	BUILD_ARMOR_STRENGTH_MULTIPLIER_WEIGHT = 100.0,
 	BUILD_ARMOR_ORGANIZATION_MULTIPLIER_WEIGHT = 500.0,
@@ -1077,7 +1080,7 @@ NAI = {
 	MAX_DISTANCE_NALAV_INVASION = 200.0,				-- AI is extremely unwilling to plan naval invasions above this naval distance limit.
 	ENEMY_NAVY_STRENGTH_DONT_BOTHER = 2.5,				-- If the enemy has a navy at least these many times stronger that the own, don't bother invading
 	MIN_SUPPLY_USE_SANITY_CAP = 100,					-- Ignore supply cap if below this value when deciding on how many divisions to produce.
-	MAX_SUPPLY_DIVISOR = 2.5,							-- To make sure the AI does not overdeploy divisions. Higher number means more supply per unit.
+	MAX_SUPPLY_DIVISOR = 1.75,							-- To make sure the AI does not overdeploy divisions. Higher number means more supply per unit.
 	MISSING_CONVOYS_BOOST_FACTOR = 18.0,					-- The more convoys a country is missing, the more resources it diverts to cover this.
 	TRANSPORTS_PER_PARATROOPER = 20,					-- Air transports only duty is to drop paratroopers.
 	MAX_MICRO_ATTACKS_PER_ORDER = 3,					-- AI goes through its orders and checks if there are situations to take advantage of
@@ -1086,11 +1089,11 @@ NAI = {
 	STATE_CONTROL_FOR_AREA_DEFENSE = 0.4,				-- To avoid AI sending area defense to area with very little foothold
 	FORCE_FACTOR_AGAINST_EXTRA_MINOR = 0.15,			-- AI considers generating wargoals against minors below this % of force compared to themselves to get at a bigger enemy.
 	MAX_EXTRA_WARGOAL_GENERATION = 2,					-- AI may want to generate wargoals against weak minors to get at larger enemy, but never more that this at any given time.
-	NAVAL_MISSION_DISTANCE_BASE = 3000,					-- Base value when AI is evaluating distance score to places
-	NAVAL_MISSION_INVASION_BASE = 1200,					-- Base score for region with naval invasion (modified dynamically by prioritizing orders)
+	NAVAL_MISSION_DISTANCE_BASE = 3500,					-- Base value when AI is evaluating distance score to places
+	NAVAL_MISSION_INVASION_BASE = 1000,					-- Base score for region with naval invasion (modified dynamically by prioritizing orders)
 	NAVAL_MISSION_AGGRESSIVE_PATROL_DIVISOR = 1,		-- Divides patrol score when not defending
 	NAVAL_MISSION_AGGRESSIVE_ESCORT_DIVISOR = 2,		-- Divides escort score when not defending
-	NAVAL_MISSION_PATROL_NEAR_OWNED = 30000,			-- Extra patrol mission score near owned provinces
+	NAVAL_MISSION_PATROL_NEAR_OWNED = 50000,			-- Extra patrol mission score near owned provinces
 	NAVAL_MISSION_ESCORT_NEAR_OWNED = 20000,			-- Extra escort mission score near owned provinces
 	NAVAL_MISSION_PATROL_NEAR_CONTROLLED = 12000,		-- Extra patrol mission score near controlled provinces
 	NAVAL_MISSION_ESCORT_NEAR_CONTROLLED = 5500,		-- Extra escort mission score near controlled provinces
@@ -1135,7 +1138,7 @@ NAI = {
 	INVASION_DISTANCE_RANDOMNESS = 300,					-- This higher the value, the more unpredictable the invasions. Compares to actual map distance in pixels.
 	
 	AIR_SUPERIORITY_MISSION_FACTOR = 1.0,				-- AI air superiority mission factor
-	CAS_MISSION_FACTOR = 1.2,							-- AI cas mission factor
+	CAS_MISSION_FACTOR = 1.4,							-- AI cas mission factor
 	INTERCEPTION_MISSION_FACTOR = 0.5,					-- AI interception mission factor
 	STREATEGIC_BOMBER_MISSION_FACTOR = 1.2,				-- AI strategic bombing mission factor
 	NAVAL_BOMBER_MISSION_FACTOR = 0.5,					-- AI naval bombing mission factor
@@ -1146,6 +1149,7 @@ NAI = {
 	INDUSTRY_IC_AIR_IMPORTANCE_FACTOR = 0.02,			-- AI very specific IC cost factor for air missions
 	
 	AIR_SCORE_DISTANCE_IMPACT = 0.3,					-- Effect of distance applied to the score calculations
+	DAYS_BETWEEN_AIR_PRIORITIES_UPDATE = 4,				-- Amount of days between air ai updates priorities for air wings ( from 1 to N )
 	
 	NAVAL_AIR_SUPERIORITY_IMPORTANCE = 0.10,			-- Strategic importance of air superiority ( amount of enemy planes in area )
 	NAVAL_SHIP_AIR_IMPORTANCE = 2.0,					-- Naval ship air importance
