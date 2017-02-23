@@ -1,4 +1,4 @@
-name="Modern Day 4 HOI"
+﻿name="Modern Day 4 HOI"
 path="mod/modern_day_4_hoi/"
 tags={
 	"Alternative History"
@@ -21,4 +21,4 @@ replace_path = "map/strategicregions"
 replace_path = "map/supplyareas"
 replace_path = "history/countries/"
 replace_path = "events/"
-replace_path = "interface/"
+
