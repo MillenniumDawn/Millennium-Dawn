@@ -1,6 +1,6 @@
 Welcome to Modern Day 4 HOI.
 
-If your new visit the WIKi for tutorials & resources.
+If your new visit the [WIKi] (https://gitlab.com/truemikesmith/Modern_Day_4_HOI/wikis/home) for tutorials & resources.
 
 ---
 
