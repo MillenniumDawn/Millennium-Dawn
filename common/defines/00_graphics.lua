@@ -18,9 +18,27 @@ NMapMode = {
 	CONSTRUCTION_MAP_MODE_BUILDING_QUEUED_COLOR = { 1.0, 0.85, 0.0  },				-- Color of states/provinces when building queue contains one or more of a building type.
 	DIPLOMACY_MAP_MODE_CONTROLLER_COLOR_FACTOR = 1.8,							-- If the nation is a controller but not an owner of a state. Larger value = brighter
 	CONSTRUCTION_MAP_MODE_TRANSPARENCY_OVERRIDE = 248, 						-- When you use gradient borders to defeat the purpose of gradient borders. Larger than 248 seems to make the transparency stronger?
-	PEACE_CONFERENCE_CURRENT_SELECTED_SECONDARY_COLOR = { 0, 0, 1, 1 },
-	PEACE_CONFERENCE_SELECTABLE_SECONDARY_COLOR = { 0, 1, 0, 1 },
+	PEACE_CONFERENCE_CURRENT_SELECTED_SECONDARY_COLOR = { 0, 0, 1, 0.25 },
+	PEACE_CONFERENCE_SELECTABLE_SECONDARY_COLOR = { 0, 1, 0, 0.25 },
 	FACTIONS_COLOR_NOT_MEMBER = { 0.6, 0.6, 0.6, 1.0 },
+	STRATEGIC_MODE_COUNTRY_COLOR_STRIPES_TRANSP = 0.0,
+	STRATEGIC_MODE_ENEMY_STRIPES_COLOR = { 0.827, 0.172, 0.184, 0.0 },
+	STRATEGIC_MODE_OUR_STRIPES_COLOR = { 0.427, 0.619, 0.858, 0.0 },
+	STRATEGIC_MODE_ALLY_STRIPES_COLOR = { 0.427, 0.619, 0.858, 0.0 },
+	RADAR_RANGE_STRIPES_COLOR = { 1.0, 1.0, 0.0, 0.14 },
+	RADAR_RANGE_COLOR = { 0.039, 0.627, 0.0, 1.0 },
+	RADAR_RANGE_ALLIED_COLOR = { 0.0, 0.647, 1.0, 1.0 },
+	RADAR_RANGE_SELECTED_COLOR = { 1.0, 1.0, 0.0, 1.0 },
+	RADAR_ROTATION_SPEED = 0.025,
+	AIR_RANGE_CAN_ASSIGN_MISSION_STRIPES_COLOR = { 0, 0.8, 0, 0.0 },				-- Stripes over the regions indicating if the currently selected air wings can have assigned mission there or not.
+	AIR_RANGE_CANNOT_ASSIGN_MISSION_STRIPES_COLOR = { 0.8, 0, 0, 0.5 },
+	AIR_RANGE_INDICATOR_DEFAULT_COLOR = { 1.0, 1.0, 0, 1 },							-- On map circle indicating the air wings range.
+	AIR_RANGE_INDICATOR_NO_WINGS_COLOR = { 1.0, 0, 0, 1 },							-- Same as above, but for air wings with no airplanes.
+	AIR_RANGE_INDICATOR_ROTATION_SPEED = 0.0005,									-- How quickly is that indicator rotating
+	AIR_MISSION_ARROW_ACTIVE_COLOR = { 0, 1.0, 0, 0.5 },							-- Color of the arrow drawn in the strategic air map mode, between the air base and the region for the active missions
+	AIR_MISSION_ARROW_NONACTIVE_COLOR = { 1.0, 1.0, 1.0, 0.2 },						-- Same as above, but for non active missions (when no air wing has any mission active)
+	AIR_MISSION_ARROW_SELECTED_COLOR = { 1.0, 1.0, 0, 0.8 },						-- Same as above, but for currently selected air wings/air bases.
+	AIR_TRANSFER_ARROW_COLOR = { 1, 1, 0, 0.75 }									-- Same as above, but for the arrows drawn between airbases for current transfers
 },
 
 NMapIcons = {
@@ -534,34 +552,34 @@ NGraphics = {
 	GRADIENT_BORDERS_THICKNESS_SUPPLY_AREA_B = 15.0, --20
 	GRADIENT_BORDERS_THICKNESS_STRATEGIC_REGIONS = 50.0, --20
 	GRADIENT_BORDERS_THICKNESS_RESISTANCE = 10.0,
-	GRADIENT_BORDERS_THICKNESS_RADARS = 20.0,
+	GRADIENT_BORDERS_THICKNESS_RADARS = 20.0, -- (OBSOLETE)
 	GRADIENT_BORDERS_THICKNESS_DIPLOMACY = 12.0,
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_COUNTRY = 0.973, -- Magic number to balance cutoff on edges without neighbor
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_STATE = 0.973,
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_SUPPLY_AREA = 0.973,
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_STRATEGIC_REGIONS = 0.973,
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_RESISTANCE = 0.973,
-	GRADIENT_BORDERS_OUTLINE_CUTOFF_RADARS = 0.973,
+	GRADIENT_BORDERS_OUTLINE_CUTOFF_RADARS = 0.973, -- (OBSOLETE)
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_FACTIONS = 0.973,
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_COUNTRY = 0.0, -- 0 to 1 value for override filling when camera zooms in/out. 0 = override disabled
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_STATE = 0.4, 
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_SUPPLY_AREA = 1.0, 
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_STRATEGIC_REGIONS = 1.0, 
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_RESISTANCE = 0.0, 
-	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_RADARS = 0.0, 
+	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_RADARS = 0.0, -- (OBSOLETE)
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_FACTIONS = 0.0, 
 	GRADIENT_BORDERS_OPTIMIZATION_RANGE = 30.0, -- smaller value = faster gradient borders but may have artifacts on large provinces (value to balance)
 	GRADIENT_BORDERS_REFRESH_FREQ = 0.12, -- how frequent is gradient borders repainting (optimization for high-speed gameplay)
 	STRATEGIC_AIR_COLOR_BAD = {0.8, 0, 0, 1}, -- rgb
 	STRATEGIC_AIR_COLOR_GOOD = {0, 0.8, 0, 1},
 	STRATEGIC_AIR_COLOR_AVERAGE = {0.8, 0.8, 0, 1},
-	STRATEGIC_AIR_COLOR_NEUTRAL = {160.0/255, 138.0/255, 104.0/255, 1},
+	STRATEGIC_AIR_COLOR_NEUTRAL = {140.0/255, 131.0/255, 119.0/255, 1},
 	RESISTANCE_COLOR_GOOD = {0.8, 0.8, 0, 1}, -- rgb
 	RESISTANCE_COLOR_AVERAGE = {0.8, 0.4, 0, 1},
 	RESISTANCE_COLOR_BAD = {0.8, 0, 0, 1},
 	CONSTRUCTION_CONVERSION_COLOR = { 0.9, 0.9, 0.3, 1},
 	STRATEGIC_NAVY_COLOR_MISSION = {1.0, 0.7, 0.0, 1},
-	STRATEGIC_NAVY_COLOR_NEUTRAL = {0.1, 0.2, 0.4, 1},
+	STRATEGIC_NAVY_COLOR_NEUTRAL = {0.5, 0.5, 0.5, 1},
 	VIRTUAL_BATTLEPLANS_COLOR = { 0.2, 1.0, 0.2, 1 },
 	ALLIED_BATTLEPLANS_COLOR = { 0.3, 0.4, 1.0, 1 },
 	ORDERS_ARROW_SNAP_MIN_DIST = 20, -- distance in "map pixels" when snapping arrows works
@@ -586,7 +604,8 @@ NGraphics = {
 	VICTORY_POINT_MAP_ICON_TEXT_CUTOFF = {180, 440, 1000},  -- At what camera distance the VP name text disappears.
 	VICTORY_POINTS_DISTANCE_CUTOFF = {180, 440, 1000}, -- At what distance VPs are hidden
 	AIRBASE_ICON_DISTANCE_CUTOFF = 900, -- At what distance air bases are hidden
-	NAVALBASE_ICON_DISTANCE_CUTOFF = 900, -- At what distance naval bases are hi
+	NAVALBASE_ICON_DISTANCE_CUTOFF = 900, -- At what distance naval bases are hidden
+	RADAR_ICON_DISTANCE_CUTOFF = 1100, -- At what distance the radars are hidden
 	RESOURCE_MAP_ICON_TEXT_CUTOFF = 800,  -- At what camera distance the resource name/amount text disappears.
 	PROVINCE_ANIM_TEXT_DISTANCE_CUTOFF = 500, -- 500
 	UNITS_DISTANCE_CUTOFF = 120,
@@ -767,6 +786,11 @@ NInterface = {
 	TOOLTIP_SCREEN_TOP_OFFSET_Y = 0,				-- Tooltip offset on y axism from top screen border
 	TOOLTIP_SCREEN_BOTTOM_OFFSET_Y = 0,				-- Tooltip offset on y axis from bottom screen border
 	
+	NO_COMBATS_COLOR = { 0.0, 0.0, 0.8 },				-- Color for icons if all combats are successful
+	SUCCESFUL_COMBATS_COLOR = { 120.0/360.0, 0.95, 0.86 },				-- Color for icons if all combats are successful
+	MIN_NON_SUCCESSFUL_COMBAT_COLOR = { 100.0/360.0, 0.95, 0.86 },	-- Color for icons if some of combats are not successful
+	MID_NON_SUCCESSFUL_COMBAT_COLOR = { 50.0/360.0, 0.95, 0.86 },
+	MAX_NON_SUCCESSFUL_COMBAT_COLOR = { 00.0/360.0, 0.95, 0.86 },	-- Color for icons if all of combats are not successful	
 },
 
 
@@ -855,7 +879,9 @@ NSound = {
 	BATTLE_SOUND_MAX_UNIT_COUNT =  20,
 	BATTLE_SOUND_MIN_VOLUME_MUL = 0.2,
 	BATTLE_SOUND_MAX_VOLUME_MUL = 1.0,
-	VOICE_OVER_COOL_DOWN = 2.8, -- Wait for this many seconds before playing another vo
+	
+	VOICE_OVER_CATEGORY  = "Voices",
+	VOICE_OVER_COOL_DOWN = 2.8, -- Wait for this many seconds before playing another vo	
 },
 
 }
