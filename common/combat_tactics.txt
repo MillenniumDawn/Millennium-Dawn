@@ -10,6 +10,8 @@ phases = { # phase = no is the standard phase
 	hold_bridge
 }
 
+#base indicates the weight of the tactic
+
 tactic_basic_attack = {
 
 	is_attacker = yes
@@ -23,7 +25,7 @@ tactic_basic_attack = {
 	base = 4
 	picture = attack
 	
-	#countered_by = tactic_counterattack
+	countered_by = tactic_counterattack
 
 	#attacker = 0.05
 }
@@ -40,44 +42,143 @@ tactic_basic_defend = {
 	base = 4
 	picture = defend
 	
-	#defender = 0.05
+	defender = 0.05
 }
 
-# tactic_counterattack = { # counters basic attack, assault
-	# is_attacker = no
-	# trigger = {
-		# is_attacker = no
-		# skill_advantage > 0
-		# phase = no
-	# }
+tactic_counterattack = { # counters basic attack, assault
+	 is_attacker = no
+	 trigger = {
+		is_attacker = no
+		skill_advantage > 0
+		phase = no
+	}
 	
-	# active = yes
+	active = yes
 	
-	# base = 4
-	# picture = counterattack
+	base = 4
+	picture = counterattack
 	
-	# defender = 0.25
-# }
+	defender = 0.25
+}
 
 
-# tactic_assault = { 
-	# is_attacker = yes
-	# trigger = {
-		# is_attacker = yes
-		# phase = no
-	# }
+tactic_assault = { 
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = no
+	}
 	
-	# active = yes
+	active = yes
 	
-	# base = 2 #Revisit ideally this should be more common in urban terrain
+	base = 2 #Revisit ideally this should be more common in urban terrain
 	
-	# picture = assault
-	# countered_by = tactic_counterattack
+	picture = assault
+	countered_by = tactic_counterattack
 	
-	# phase = close_combat #changes phase to close combat
+	phase = close_combat #changes phase to close combat
 	
-	# attacker = 0.25			#attacker gets a bonus to doing damage
-# }
+	attacker = 0.25			#attacker gets a bonus to doing damage
+}
+
+
+#Modern Blitzkrieg
+
+tactic_blitz = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		hardness > 0.5
+		phase = no
+		OR = {
+			skill > 2
+			has_trait = panzer_leader
+			skill_advantage > 1
+		}
+	}
+	
+	active = no
+	
+	base = 4
+	picture = blitz
+	countered_by = tactic_elastic_defense
+	
+	attacker_movement_speed = 0.5
+	attacker = 0.15
+	defender = -0.15
+}
+
+
+tactic_elastic_defense = { #counters blitz
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = no
+		OR = {
+			has_trait = defensive_doctrine
+			skill > 2
+		}
+	}
+	
+	active = no
+	
+	base = 4
+	picture = elastic_defence
+	
+	attacker_movement_speed = -0.25
+	attacker = -0.15
+	defender = 0.10
+}
+
+
+tactic_planned_attack = { #GBP -> Armor attacker tactic
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = no
+	}
+	
+	active = no
+	
+	base = 4
+	picture = tactic_planned_attack
+	
+	attacker = 0.15 
+}
+
+tactic_barrage = { #Superior firepower attacker tactic
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = no
+	}
+	
+	active = no
+	
+	base = 4
+	picture = tactic_barrage
+	
+	attacker = 0.1
+	defender = -0.2	
+}
+
+tactic_infantry_charge = { #Infiltration Assault
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = no
+	}
+	
+	active = no
+	
+	base = 4
+	picture = tactic_infantry_charge
+	
+	attacker = 0.1 
+	defender = -0.05
+}
+
+
 ##close combat tactics here
 # tactic_cc_attack = { 
 	# is_attacker = yes
@@ -369,51 +470,7 @@ tactic_basic_defend = {
 	# attacker = -0.25
 # }
 
-# tactic_blitz = {
-	# is_attacker = yes
-	# trigger = {
-		# is_attacker = yes
-		# hardness > 0.5
-		# phase = no
-		# OR = {
-			# skill > 2
-			# has_trait = panzer_leader
-			# skill_advantage > 1
-		# }
-	# }
-	
-	# active = no
-	
-	# base = 4
-	# picture = blitz
-	# countered_by = tactic_elastic_defense
-	
-	# attacker_movement_speed = 0.5
-	# attacker = 0.15
-	# defender = -0.15
-# }
 
-
-# tactic_elastic_defense = { #counters blitz
-	# is_attacker = no
-	# trigger = {
-		# is_attacker = no
-		# phase = no
-		# OR = {
-			# has_trait = defensive_doctrine
-			# skill > 2
-		# }
-	# }
-	
-	# active = no
-	
-	# base = 4
-	# picture = elastic_defence
-	
-	# attacker_movement_speed = -0.25
-	# attacker = -0.15
-	# defender = 0.10
-# }
 
 # tactic_backhand_blow = { #counters breakthrough
 	# is_attacker = no
@@ -711,36 +768,6 @@ tactic_basic_defend = {
 	# defender = 0.1
 # }
 
-# tactic_infantry_charge = { #GBP -> Infantry attacker tactic
-	# is_attacker = yes
-	# trigger = {
-		# is_attacker = yes
-		# phase = no
-	# }
-	
-	# active = no
-	
-	# base = 4
-	# picture = tactic_infantry_charge
-	
-	# attacker = 0.1 
-	# defender = -0.05
-# }
-
-# tactic_planned_attack = { #GBP -> Armor attacker tactic
-	# is_attacker = yes
-	# trigger = {
-		# is_attacker = yes
-		# phase = no
-	# }
-	
-	# active = no
-	
-	# base = 4
-	# picture = tactic_planned_attack
-	
-	# attacker = 0.15 
-# }
 
 # tactic_relentless_assault = { #Deep battle attacker tactic
 	# is_attacker = yes
@@ -789,20 +816,4 @@ tactic_basic_defend = {
 	
 	# attacker = -0.1
 	# defender = 0.1
-# }
-
-# tactic_barrage = { #Superior firepower attacker tactic
-	# is_attacker = yes
-	# trigger = {
-		# is_attacker = yes
-		# phase = no
-	# }
-	
-	# active = no
-	
-	# base = 4
-	# picture = tactic_barrage
-	
-	# attacker = 0.1
-	# defender = -0.2	
 # }
