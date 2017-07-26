@@ -3,7 +3,7 @@ import os
 
 #Parameters
 tagList = ['ABK', 'AFG', 'AGL', 'ALB', 'ALG', 'AQY', 'ARG', 'ARM', 'AST', 'AUS', 'AZE', 'BAH', 'BAN', 'BAR', 'BEL', 'BEN', 'BFA', 'BHR', 'BHU', 'BLR', 'BLZ', 'BOL', 'BOS', 'BOT', 'BRA', 'BRM', 'BRU', 'BUL', 'BUR', 'CAM', 'CAN', 'CAR', 'CBD', 'CDI', 'CHA', 'CHI', 'CHL', 'CNG', 'CNR', 'COL', 'COM', 'COS', 'CRE', 'CRO', 'CUB', 'CYP', 'CZH', 'DEN', 'DJI', 'DMI', 'DOM', 'DRC', 'ECU', 'EGU', 'EGY', 'ELS', 'ENG', 'ERI', 'EST', 'ETH', 'FIJ', 'FIN', 'FRA', 'FSA', 'FYR', 'GAB', 'GAH', 'GAM', 'GEO', 'GER', 'GNA', 'GNC', 'GRA', 'GRE', 'GUA', 'GUB', 'GUI', 'GUY', 'GXC', 'HAI', 'HAM', 'HEZ', 'HKG', 'HOL', 'HON', 'HOR', 'HOU', 'HUN', 'ICE', 'IND', 'IRE', 'IRQ', 'ISI', 'ISR', 'ITA', 'JAM', 'JAP', 'JOR', 'KAZ', 'KEN', 'KOR', 'KOS', 'KUR', 'KUW', 'KYR', 'LAO', 'LAT', 'LBA', 'LEB', 'LES', 'LIB', 'LIT', 'LUX', 'MAD', 'MAL', 'MAU', 'MAY', 'MEX', 'MIC', 'MLD', 'MLT', 'MLV', 'MLW', 'MNT', 'MON', 'MOR', 'MOZ', 'MRT', 'NAM', 'NCY', 'NEP', 'NGR', 'NIC', 'NIG', 'NKO', 'NOR', 'NOV', 'NUS', 'NZL', 'OMA', 'PAK', 'PAL', 'PAN', 'PAP', 'PAR', 'PAU', 'PER', 'PHI', 'PLY', 'PMR', 'POL', 'POR', 'PRU', 'QAT', 'RAJ', 'ROJ', 'ROM', 'RWA', 'SAF', 'SAO', 'SAU', 'SCL', 'SCO', 'SEN', 'SER', 'SEY', 'SHA', 'SIA', 'SIE', 'SIN', 'SLO', 'SLV', 'SML', 'SOL', 'SOM', 'SOO', 'SOV', 'SPR', 'SRI', 'SSU', 'STH', 'STK', 'STL', 'STV', 'SUD', 'SUR', 'SWA', 'SWE', 'SWI', 'SYR', 'TAI', 'TAJ', 'TAL', 'TIB', 'TIM', 'TNZ', 'TOG', 'TRI', 'TRK', 'TTP', 'TUA', 'TUN', 'TUR', 'UAE', 'UGA', 'UKR', 'URG', 'USA', 'UZB', 'VEN', 'VER', 'VIE', 'WAS', 'YEM', 'ZAM', 'ZIM']
-excludeTags = []
+excludeTags = ['']
 
 setPrefix = "MD4_"
 setName = 'AI_NoAllienace_Global'
@@ -136,7 +136,7 @@ for tagA in tagList:
         if (makeForTag == tagA) and ( includeTagInStatement == "true"):
             makeLogEntry("INFO","{0} do not need to {1} them self. Skipping to next tag.".format(tagA,setType),0)
             continue
-        if tagB in excludeTags
+        if tagA in excludeTags and excludeTags != "":
             makeLogEntry("INFO","{0} is set to be excluded. Skipping to next tag.".format(tagB),0)
             continue
         for setType, setValue in zip(setTypeList,setValueList):
@@ -152,7 +152,7 @@ for tagA in tagList:
             if (tagB == tagA) and ( includeTagInStatement == "true"):
                 makeLogEntry("INFO","{0} do not need to {1} them self. Skipping to next tag.".format(tagB,setType),0)
                 continue
-            if tagB in excludeTags
+            if tagB in excludeTags and excludeTags != "":
                 makeLogEntry("INFO","{0} is set to be excluded. Skipping to next tag.".format(tagB),0)
                 continue
             for setType, setValue in zip(setTypeList,setValueList):
