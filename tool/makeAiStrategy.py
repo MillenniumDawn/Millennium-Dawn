@@ -14,7 +14,7 @@ setValueList = ['150','100']
 enableParam =  'OR = {\n\t\t\thas_government = democratic\n\t\t\thas_government = communism\n\t\t}\n\t\t'              # Define enable Param for each ai_strategy for each NEW line use: "\n\t\t"
 abortParam  =  'not = { has_government = fachist }'    # Define enable Param for each ai_strategy for each NEW line use: "\n\t\t"
 
-makeForTag = 'SAU'                  # Leave empty if it's for everyone.            
+makeForTag = 'USA'                  # Leave empty if it's for everyone.            
 includeTagInStatement = 'false'     # Include original_tag for each nation new ai_strategy in the enable parameter. Is ignored if makeForTag is set.
 makeTagPerTag = 'true'              # Not created yet.
 
@@ -157,9 +157,9 @@ for tagA in tagList:
                 continue
             for setType, setValue in zip(setTypeList,setValueList):
                 f.writelines ("\tai_strategy = {\n")
-                f.writelines ("\t\ttype = {0}\n".format(setTypeValue))
+                f.writelines ("\t\ttype = {0}\n".format(setType))
                 f.writelines ('\t\tid = "{0}"\n'.format(tagB))
-                f.writelines ("\t\tvalue = {0}\n".format(setTypeValue))
+                f.writelines ("\t\tvalue = {0}\n".format(setValue))
                 f.writelines ("\t}\n")
 
     f.writelines("}\n")
