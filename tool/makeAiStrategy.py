@@ -1,8 +1,18 @@
 from sysDebug import makeLogEntry
+from sysGetTags import GetTags
 import os
+# Information
+print ('This script will generate a file containg ai_strategy for blocks of nations.\n')
+print ('Status of file import:') 
+# GetTags
+FilePath = "..\\common\\country_tags\\00_countries.txt" # Make Sure to use double backslashes !
 
+###################################################################################################
 #Parameters
-tagList = ['ABK', 'AFG', 'AGL', 'ALB', 'ALG', 'AQY', 'ARG', 'ARM', 'AST', 'AUS', 'AZE', 'BAH', 'BAN', 'BAR', 'BEL', 'BEN', 'BFA', 'BHR', 'BHU', 'BLR', 'BLZ', 'BOL', 'BOS', 'BOT', 'BRA', 'BRM', 'BRU', 'BUL', 'BUR', 'CAM', 'CAN', 'CAR', 'CBD', 'CDI', 'CHA', 'CHI', 'CHL', 'CNG', 'CNR', 'COL', 'COM', 'COS', 'CRE', 'CRO', 'CUB', 'CYP', 'CZH', 'DEN', 'DJI', 'DMI', 'DOM', 'DRC', 'ECU', 'EGU', 'EGY', 'ELS', 'ENG', 'ERI', 'EST', 'ETH', 'FIJ', 'FIN', 'FRA', 'FSA', 'FYR', 'GAB', 'GAH', 'GAM', 'GEO', 'GER', 'GNA', 'GNC', 'GRA', 'GRE', 'GUA', 'GUB', 'GUI', 'GUY', 'GXC', 'HAI', 'HAM', 'HEZ', 'HKG', 'HOL', 'HON', 'HOR', 'HOU', 'HUN', 'ICE', 'IND', 'IRE', 'IRQ', 'ISI', 'ISR', 'ITA', 'JAM', 'JAP', 'JOR', 'KAZ', 'KEN', 'KOR', 'KOS', 'KUR', 'KUW', 'KYR', 'LAO', 'LAT', 'LBA', 'LEB', 'LES', 'LIB', 'LIT', 'LUX', 'MAD', 'MAL', 'MAU', 'MAY', 'MEX', 'MIC', 'MLD', 'MLT', 'MLV', 'MLW', 'MNT', 'MON', 'MOR', 'MOZ', 'MRT', 'NAM', 'NCY', 'NEP', 'NGR', 'NIC', 'NIG', 'NKO', 'NOR', 'NOV', 'NUS', 'NZL', 'OMA', 'PAK', 'PAL', 'PAN', 'PAP', 'PAR', 'PAU', 'PER', 'PHI', 'PLY', 'PMR', 'POL', 'POR', 'PRU', 'QAT', 'RAJ', 'ROJ', 'ROM', 'RWA', 'SAF', 'SAO', 'SAU', 'SCL', 'SCO', 'SEN', 'SER', 'SEY', 'SHA', 'SIA', 'SIE', 'SIN', 'SLO', 'SLV', 'SML', 'SOL', 'SOM', 'SOO', 'SOV', 'SPR', 'SRI', 'SSU', 'STH', 'STK', 'STL', 'STV', 'SUD', 'SUR', 'SWA', 'SWE', 'SWI', 'SYR', 'TAI', 'TAJ', 'TAL', 'TIB', 'TIM', 'TNZ', 'TOG', 'TRI', 'TRK', 'TTP', 'TUA', 'TUN', 'TUR', 'UAE', 'UGA', 'UKR', 'URG', 'USA', 'UZB', 'VEN', 'VER', 'VIE', 'WAS', 'YEM', 'ZAM', 'ZIM']
+
+
+
+tagList = GetTags(FilePath)
 excludeTags = ['']
 
 setPrefix = "MD4_"
@@ -22,11 +32,11 @@ makeTagPerTag = 'true'              # Not created yet.
 
 
 ###################################################################################################
+
 #Print information Text
-print ('This script will generate a file containg ai_strategy for blocks of nations.\n')
-print ('Parameters:')
-print ('   Tags:               {0}'.format(len(tagList)))
-print ('   Output Filename:    {1}{0}.txt'.format(setName,setPrefix))
+print ('\nParameters:')
+print ('   Tags:                {0}'.format(len(tagList)))
+print ('   Output Filename:     {1}{0}.txt'.format(setName,setPrefix))
 
 print ('   ai_strategy Types:   {0}'.format(setTypeList))
 print ('   ai_strategy Values:  {0}\n'.format(setValueList))
@@ -58,6 +68,8 @@ if (setName == ''):
     majorIssue = 1
 if (makeForTag not in tagList) and makeForTag != "":
     print ("   [WARNING] makeForTag tag {0} is not a used tag.".format(makeForTag))
+if (len(tagList) < 1 ):
+    print ("   [WARNING] something is wrong with importing 00_countries.txt.".format(makeForTag))
 if (enableParam == '') and (includeTagInStatement != "true"):
     print ("   [WARNING] no enable statement defined. 'always = yes' will be set.".format(makeForTag))
 if (abortParam == ''):
