@@ -1,6 +1,9 @@
 from sysDebug import makeLogEntry
 from sysGetTags import GetTags
+
 import os
+import configparser
+
 # Information
 print ('This script will generate a file containg ai_strategy for blocks of nations.\n')
 print ('Status of file import:') 
@@ -8,34 +11,77 @@ print ('Status of file import:')
 FilePath = "..\\common\\country_tags\\00_countries.txt" # Make Sure to use double backslashes !
 
 ###################################################################################################
-#Parameters
-
-
-
+# Global
 tagList = GetTags(FilePath)
-excludeTags = ['']
+print ('Tags found: {0}'.format(len(tagList)))
 
-setPrefix = "MD4_"
-setName = 'AI_NoAllienace_Global'
+excludeTags = []
 
-setTypeList  = ['antaganize','allie']
-setValueList = ['150','100']
+setPrefix = ''
+setName = ''
 
-enableParam =  'OR = {\n\t\t\thas_government = democratic\n\t\t\thas_government = communism\n\t\t}\n\t\t'              # Define enable Param for each ai_strategy for each NEW line use: "\n\t\t"
-abortParam  =  'not = { has_government = fachist }'    # Define enable Param for each ai_strategy for each NEW line use: "\n\t\t"
+setTypeList  = []
+setValueList = []
 
-makeForTag = 'USA'                  # Leave empty if it's for everyone.            
-includeTagInStatement = 'false'     # Include original_tag for each nation new ai_strategy in the enable parameter. Is ignored if makeForTag is set.
-makeTagPerTag = 'true'              # Not created yet.
+enableParam =  ''
+abortParam  =  ''
 
+makeForTag = ''
+includeTagInStatement = 'false'
+makeTagPerTag = 'false'
 
+###################################################################################################
+# CONFIG FILE
+make_target = "DEFAULT" # Which section in make.cfg to use for the build
 
+make_root = os.path.dirname(os.path.realpath(__file__))
+make_root_parent = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+os.chdir(make_root)
+cfg = configparser.ConfigParser();
+try:
+    cfg.read(os.path.join(make_root, "makeAiStrategy.cfg"))
+
+    excludeTags = cfg.get(make_target, "excludeTags", fallback=None)
+    if excludeTags:
+        excludeTags = [x.strip() for x in excludeTags.split(',')]
+    else:
+        excludeTags = ['']
+
+    setPrefix = cfg.get(make_target, "setPrefix", fallback="MD4_")
+    
+    setName = cfg.get(make_target, "setName", fallback="")
+    
+    setTypeList = cfg.get(make_target, "setTypeList", fallback="")
+    if setTypeList:
+        setTypeList = [x.strip() for x in setTypeList.split(',')]
+    else:
+        setTypeList = []
+    
+    setValueList = cfg.get(make_target, "setValueList", fallback="")
+    if setValueList:
+        setValueList = [x.strip() for x in setValueList.split(',')]
+    else:
+        setValueList = []
+    
+    enableParam = cfg.get(make_target, "enableParam", fallback="")
+
+    abortParam = cfg.get(make_target, "abortParam", fallback="")
+    
+    makeForTag = cfg.get(make_target, "makeForTag", fallback="")
+    
+    includeTagInStatement = cfg.get(make_target, "includeTagInStatement", fallback="false")
+    
+    makeTagPerTag = cfg.get(make_target, "makeTagPerTag", fallback="false")
+except:
+    raise
+    print_error("Could not parse makeAiStrategy.cfg.")
+    sys.exit(1)
 
 ###################################################################################################
 
 #Print information Text
 print ('\nParameters:')
-print ('   Tags:                {0}'.format(len(tagList)))
+print ('   Excluding tag:       {0}'.format(excludeTags))
 print ('   Output Filename:     {1}{0}.txt'.format(setName,setPrefix))
 
 print ('   ai_strategy Types:   {0}'.format(setTypeList))
@@ -75,9 +121,9 @@ if (enableParam == '') and (includeTagInStatement != "true"):
 if (abortParam == ''):
     print ("   [WARNING] no abort statement defined. 'always = no' will be set.".format(makeForTag))
 if ((makeForTag != "") and (includeTagInStatement == 'true')):
-    print ("   [WARNING] makeForTag have been defined {0}!\n             This will make the script to only generate ai_strategy for that given contry.".format(makeForTag))
+    print ("   [WARNING] makeForTag have been defined {0}!\n             This will make the script to only generate ai_strategy for that given country.".format(makeForTag))
 if (majorIssue == 1):
-    print ("\n All errors need to be resolved befor continuing.")
+    print ("\n All errors need to be resolved before continuing.")
     exit()
 print ("\n")
 
