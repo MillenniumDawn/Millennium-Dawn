@@ -29,4 +29,5 @@ replace_path = "events/"
 replace_path = "portraits/"
 replace_path = "common/scripted_triggers"
 replace_path = "music"
+replace_path = "dlc/music"
 
