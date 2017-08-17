@@ -1,7 +1,4 @@
 ﻿add_namespace = random_diplo_start
-add_namespace = random_diplo_esc
-add_namespace = random_diplo_end
-add_namespace = random_diplo_news
 
 # Start
 country_event = {   # Incident 1: The Meh did Meh
@@ -10,8 +7,8 @@ country_event = {   # Incident 1: The Meh did Meh
 	desc = random_diplo_start.0.d
 	picture = GFX_report_event_worker_protests
 	
-    emidiet = {
-        set_country_flag = incident_1_flag
+    immediate   = {
+        set_country_flag = random_dip_0_incident_flag
     }
     
 	mean_time_to_happen = {
@@ -42,23 +39,28 @@ country_event = {   # Incident 1: The Meh did Meh
         NOT = { original_tag = TAL }
         NOT = { original_tag = TTP }
         NOT = { original_tag = NUS }
-        NOT = { has_opinion_modifier = random_diplo_start_angry }
+        NOT = { has_opinion_modifier = random_dip_1_incident_flag }
 	}
 
 	option = {  # Eh. thats nothing.
 		name = random_diplo_start.0.a
         ai_chance = { factor = 20 }
         if = {
-            limit = { has_government = communism }
+            limit = {
+                has_government = communism
+                FROM = { NOT = { has_government = communism } }
+            }
             add_popularity = { ideology = communism popularity = 0.025 }
         }
         if = {
-            limit = { has_government = neutrality }
+            limit = {
+                has_government = neutrality
+            }
             add_popularity = { ideology = neutrality popularity = 0.025 }
         }
         if = {
             limit = { has_government = Nationalist }
-            add_popularity = { ideology = Nationalist popularity = 0.025 }
+            add_popularity = { ideology = Nationalist popularity = 0.05 }
         }
         random_country = {
             limit = {
@@ -70,6 +72,10 @@ country_event = {   # Incident 1: The Meh did Meh
 				NOT = { original_tag = NUS }
                 FROM = { has_war = no }
                 has_opinion = { target = FROM value > -20 }
+                OR = {
+                    NOT = { has_opinion_modifier = random_dip_0_incident_flag }
+                    NOT = { has_opinion_modifier = random_dip_1_incident_flag }
+                }
             }
             country_event = { days = 1 id = random_diplo_start.1 }
         }
@@ -78,24 +84,49 @@ country_event = {   # Incident 1: The Meh did Meh
 		name = random_diplo_start.0.b
         ai_chance = { factor = 80 }
         if = {
-            limit = { has_government = democratic }
+            limit = {
+                has_government = democratic
+                FROM = { has_government = democratic }
+            }
             add_popularity = { ideology = democratic popularity = -0.025 }
         }
         if = {
-            limit = { has_government = communism }
+            limit = {
+                has_government = communism
+                FROM = { has_government = communism }
+            }
             add_popularity = { ideology = communism popularity = -0.025 }
         }
         if = {
-            limit = { has_government = neutrality }
+            limit = {
+                has_government = neutrality
+                FROM = { has_government = neutrality }
+            }
             add_popularity = { ideology = neutrality popularity = -0.025 }
         }
         if = {
-            limit = { has_government = Nationalist }
+            limit = {
+                has_government = Nationalist
+                FROM = { has_government = Nationalist }
+            }
             add_popularity = { ideology = Nationalist popularity = -0.025 }
         }
         
         random_country = {
-            NOT = { has_government = fascism }
+            limit = {
+				NOT = { original_tag = ISI }
+				NOT = { original_tag = SHB }
+				NOT = { original_tag = AQY }
+				NOT = { original_tag = TAL }
+				NOT = { original_tag = TTP }
+				NOT = { original_tag = NUS }
+                FROM = { has_war = no }
+                has_opinion = { target = FROM value > -20 }'
+                OR = {
+                    NOT = { has_opinion_modifier = random_dip_0_incident_flag }
+                    NOT = { has_opinion_modifier = random_dip_1_incident_flag }
+                }
+            }
             country_event = { days = 1 id = random_diplo_start.1 }
         }
 	}
@@ -108,25 +139,29 @@ country_event = {   # Incident 1 Meh did Meh against us!
 	
     is_triggered_only = yes
 
+    immediate   = {
+        set_country_flag = random_dip_1_incident_flag
+    }
+    
 	option = { # Unacceptable!
 		name = random_diplo_start.1.a
         ai_chance = { factor = 80 }
-        # if = {
-            # limit = { has_government = democratic }
-            # add_popularity = { ideology = democratic popularity = 0.005 }
-        # }
-        # if = {
-            # limit = { has_government = communism }
-            # add_popularity = { ideology = communism popularity = 0.005 }
-        # }
-        # if = {
-            # limit = { has_government = neutrality }
-            # add_popularity = { ideology = neutrality popularity = 0.005 }
-        # }
-        # if = {
-            # limit = { has_government = Nationalist }
-            # add_popularity = { ideology = Nationalist popularity = 0.005 }
-        # }
+        if = {
+            limit = { has_government = democratic }
+            add_popularity = { ideology = democratic popularity = 0.0025 }
+        }
+        if = {
+            limit = { has_government = communism }
+            add_popularity = { ideology = communism popularity = 0.0025 }
+        }
+        if = {
+            limit = { has_government = neutrality }
+            add_popularity = { ideology = neutrality popularity = 0.0025 }
+        }
+        if = {
+            limit = { has_government = Nationalist }
+            add_popularity = { ideology = Nationalist popularity = 0.0025 }
+        }
         add_political_power = 10
         add_opinion_modifier = { target = FROM modifier = random_diplo_start_angry }
         FROM = { country_event = { days = 1 id = random_diplo_esc.0 } }
@@ -157,6 +192,6 @@ country_event = {   # Incident 1 Meh did Meh against us!
             limit = { has_government = neutrality }
             add_popularity = { ideology = neutrality popularity = -0.025 }
         }
-        FROM = { country_event = { days = 1 id = random_diplo_end.0 } }
+        FROM = { country_event = { days = 1 id = random_diplo_esc.2 } }
 	}
 }
