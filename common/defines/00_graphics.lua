@@ -1,8 +1,8 @@
 NDefines_Graphics = {
 	
 NWiki = {
-	BASE_URL = "http://www.hoi4wiki.com/",
-	FORUM_URL = "http://forum.paradoxplaza.com/forum/index.php?link-forums/hearts-of-iron-iv.847/"
+	BASE_URL = "https://modernday4.gitlab.io/",
+	FORUM_URL = "https://modernday4.gitlab.io/"
 },
 
 NMapMode = {
@@ -18,9 +18,27 @@ NMapMode = {
 	CONSTRUCTION_MAP_MODE_BUILDING_QUEUED_COLOR = { 1.0, 0.85, 0.0  },				-- Color of states/provinces when building queue contains one or more of a building type.
 	DIPLOMACY_MAP_MODE_CONTROLLER_COLOR_FACTOR = 1.8,							-- If the nation is a controller but not an owner of a state. Larger value = brighter
 	CONSTRUCTION_MAP_MODE_TRANSPARENCY_OVERRIDE = 248, 						-- When you use gradient borders to defeat the purpose of gradient borders. Larger than 248 seems to make the transparency stronger?
-	PEACE_CONFERENCE_CURRENT_SELECTED_SECONDARY_COLOR = { 0, 0, 1, 1 },
-	PEACE_CONFERENCE_SELECTABLE_SECONDARY_COLOR = { 0, 1, 0, 1 },
+	PEACE_CONFERENCE_CURRENT_SELECTED_SECONDARY_COLOR = { 0, 0, 1, 0.25 },
+	PEACE_CONFERENCE_SELECTABLE_SECONDARY_COLOR = { 0, 1, 0, 0.25 },
 	FACTIONS_COLOR_NOT_MEMBER = { 0.6, 0.6, 0.6, 1.0 },
+	STRATEGIC_MODE_COUNTRY_COLOR_STRIPES_TRANSP = 0.0,
+	STRATEGIC_MODE_ENEMY_STRIPES_COLOR = { 0.827, 0.172, 0.184, 0.0 },
+	STRATEGIC_MODE_OUR_STRIPES_COLOR = { 0.427, 0.619, 0.858, 0.0 },
+	STRATEGIC_MODE_ALLY_STRIPES_COLOR = { 0.427, 0.619, 0.858, 0.0 },
+	RADAR_RANGE_STRIPES_COLOR = { 1.0, 1.0, 0.0, 0.14 },
+	RADAR_RANGE_COLOR = { 0.039, 0.627, 0.0, 1.0 },
+	RADAR_RANGE_ALLIED_COLOR = { 0.0, 0.647, 1.0, 1.0 },
+	RADAR_RANGE_SELECTED_COLOR = { 1.0, 1.0, 0.0, 1.0 },
+	RADAR_ROTATION_SPEED = 0.025,
+	AIR_RANGE_CAN_ASSIGN_MISSION_STRIPES_COLOR = { 0, 0.8, 0, 0.0 },				-- Stripes over the regions indicating if the currently selected air wings can have assigned mission there or not.
+	AIR_RANGE_CANNOT_ASSIGN_MISSION_STRIPES_COLOR = { 0.8, 0, 0, 0.5 },
+	AIR_RANGE_INDICATOR_DEFAULT_COLOR = { 1.0, 1.0, 0, 1 },							-- On map circle indicating the air wings range.
+	AIR_RANGE_INDICATOR_NO_WINGS_COLOR = { 1.0, 0, 0, 1 },							-- Same as above, but for air wings with no airplanes.
+	AIR_RANGE_INDICATOR_ROTATION_SPEED = 0.0005,									-- How quickly is that indicator rotating
+	AIR_MISSION_ARROW_ACTIVE_COLOR = { 0, 1.0, 0, 0.5 },							-- Color of the arrow drawn in the strategic air map mode, between the air base and the region for the active missions
+	AIR_MISSION_ARROW_NONACTIVE_COLOR = { 1.0, 1.0, 1.0, 0.2 },						-- Same as above, but for non active missions (when no air wing has any mission active)
+	AIR_MISSION_ARROW_SELECTED_COLOR = { 1.0, 1.0, 0, 0.8 },						-- Same as above, but for currently selected air wings/air bases.
+	AIR_TRANSFER_ARROW_COLOR = { 1, 1, 0, 0.75 }									-- Same as above, but for the arrows drawn between airbases for current transfers
 },
 
 NMapIcons = {
@@ -45,7 +63,7 @@ NMapIcons = {
 		
 		STATES_PRIORITY_UNITS_STACK = 10,
 		STATES_PRIORITY_UNITS_STACK_GROUP = 11,
-		STATES_PRIORITY_VICTORY_POINTS = 5,
+		STATES_PRIORITY_VICTORY_POINTS = 0, --5
 		STATES_PRIORITY_RESOURCE = 10,
 		STATES_PRIORITY_CONSTRUCTION_INFO = 3,
 		STATES_PRIORITY_AIR_BASE = 3,
@@ -433,7 +451,7 @@ NGraphics = {
 	MAP_BUILDINGS_SHRINK_DISTANCE = 180,				
 	CITY_SPRAWL_SHRINK_DISTANCE = 220.0, 			-- Start shrinking at this distance
 	CITY_SPRAWL_DRAW_DISTANCE = 250.0, 				-- Remove at this distance
-	CITY_SPRAWL_AMOUNT = 3.0, 						-- Size of cities, higher gives larger cities
+	CITY_SPRAWL_AMOUNT = 20.0, 						-- Size of cities, higher gives larger cities #3
 	DRAW_MAP_OBJECTS_CUTOFF = 550.0,					-- Remove map objects at this distance
 	CITY_SPRAWL_NUDGE_TAX_VALUE = 50, 				-- Debug flag
 	PROVINCE_NAME_DRAW_DISTANCE = 500.0, 			-- Remove province names beyond this distance
@@ -472,7 +490,7 @@ NGraphics = {
 	SNAPPED_OFF_FRONT_SMOOTHEN_PASSES = 2,
 	ROOT_FRONT_SMOOTHNESS = 0.5,
 	ROOT_FRONT_SMOOTHEN_PASSES = 1,
-	ROOT_FRONT_OFFSET = 1.5,							-- How far the defensive line is offset from the front.
+	ROOT_FRONT_OFFSET = 2.0,							-- How far the defensive line is offset from the front.
 	ROOT_FRONT_MAX_INTERSECTION_TESTS_FRONT = 30,		-- How many points before the current one to check for intersections against (optimization)
 	ROOT_FRONT_MAX_INTERSECTION_TESTS_ORDER = 25,		-- How many points before the current one to check for intersections against (optimization)
 	ORDER_FRONT_MAX_OFFSETS = 4,						-- Max amount, the overlapping defensive lines can offset from the border.
@@ -526,42 +544,42 @@ NGraphics = {
 	GRADIENT_BORDERS_FIELD_COUNTRY_REFRESH = 10, -- When country changes it's size by X provinces, then it refresh it's thickness and rebuilds all provinces
 	GRADIENT_BORDERS_FIELD_COUNTRY_LOW = 300.0, -- country area in sum of pixels ...
 	GRADIENT_BORDERS_FIELD_COUNTRY_HIGH = 9000.0, -- ... the value is squared, so fe. country of size 100x100pix = 10000
-	GRADIENT_BORDERS_THICKNESS_COUNTRY_LOW = 5.0, -- thickness in pixels
-	GRADIENT_BORDERS_COUNTRY_CENTER_THICKNESS = 2.0, -- The center gradient is linear 1/255 per pixel for this many pixels
-	GRADIENT_BORDERS_THICKNESS_COUNTRY_HIGH = 25.0,
-	GRADIENT_BORDERS_THICKNESS_STATE = 11.0,
-	GRADIENT_BORDERS_THICKNESS_SUPPLY_AREA_A = 2.0,
-	GRADIENT_BORDERS_THICKNESS_SUPPLY_AREA_B = 20.0,
-	GRADIENT_BORDERS_THICKNESS_STRATEGIC_REGIONS = 20.0,
+	GRADIENT_BORDERS_THICKNESS_COUNTRY_LOW = 10.0, -- thickness in pixels -- 5
+	GRADIENT_BORDERS_COUNTRY_CENTER_THICKNESS = 1.0, -- The center gradient is linear 1/255 per pixel for this many pixels --2
+	GRADIENT_BORDERS_THICKNESS_COUNTRY_HIGH = 25.0, 
+	GRADIENT_BORDERS_THICKNESS_STATE = 45.0, --11
+	GRADIENT_BORDERS_THICKNESS_SUPPLY_AREA_A = 2.0, --2
+	GRADIENT_BORDERS_THICKNESS_SUPPLY_AREA_B = 15.0, --20
+	GRADIENT_BORDERS_THICKNESS_STRATEGIC_REGIONS = 50.0, --20
 	GRADIENT_BORDERS_THICKNESS_RESISTANCE = 10.0,
-	GRADIENT_BORDERS_THICKNESS_RADARS = 20.0,
+	GRADIENT_BORDERS_THICKNESS_RADARS = 20.0, -- (OBSOLETE)
 	GRADIENT_BORDERS_THICKNESS_DIPLOMACY = 12.0,
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_COUNTRY = 0.973, -- Magic number to balance cutoff on edges without neighbor
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_STATE = 0.973,
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_SUPPLY_AREA = 0.973,
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_STRATEGIC_REGIONS = 0.973,
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_RESISTANCE = 0.973,
-	GRADIENT_BORDERS_OUTLINE_CUTOFF_RADARS = 0.973,
+	GRADIENT_BORDERS_OUTLINE_CUTOFF_RADARS = 0.973, -- (OBSOLETE)
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_FACTIONS = 0.973,
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_COUNTRY = 0.0, -- 0 to 1 value for override filling when camera zooms in/out. 0 = override disabled
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_STATE = 0.4, 
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_SUPPLY_AREA = 1.0, 
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_STRATEGIC_REGIONS = 1.0, 
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_RESISTANCE = 0.0, 
-	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_RADARS = 0.0, 
+	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_RADARS = 0.0, -- (OBSOLETE)
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_FACTIONS = 0.0, 
 	GRADIENT_BORDERS_OPTIMIZATION_RANGE = 30.0, -- smaller value = faster gradient borders but may have artifacts on large provinces (value to balance)
 	GRADIENT_BORDERS_REFRESH_FREQ = 0.12, -- how frequent is gradient borders repainting (optimization for high-speed gameplay)
 	STRATEGIC_AIR_COLOR_BAD = {0.8, 0, 0, 1}, -- rgb
 	STRATEGIC_AIR_COLOR_GOOD = {0, 0.8, 0, 1},
 	STRATEGIC_AIR_COLOR_AVERAGE = {0.8, 0.8, 0, 1},
-	STRATEGIC_AIR_COLOR_NEUTRAL = {160.0/255, 138.0/255, 104.0/255, 1},
+	STRATEGIC_AIR_COLOR_NEUTRAL = {140.0/255, 131.0/255, 119.0/255, 1},
 	RESISTANCE_COLOR_GOOD = {0.8, 0.8, 0, 1}, -- rgb
 	RESISTANCE_COLOR_AVERAGE = {0.8, 0.4, 0, 1},
 	RESISTANCE_COLOR_BAD = {0.8, 0, 0, 1},
 	CONSTRUCTION_CONVERSION_COLOR = { 0.9, 0.9, 0.3, 1},
 	STRATEGIC_NAVY_COLOR_MISSION = {1.0, 0.7, 0.0, 1},
-	STRATEGIC_NAVY_COLOR_NEUTRAL = {0.1, 0.2, 0.4, 1},
+	STRATEGIC_NAVY_COLOR_NEUTRAL = {0.5, 0.5, 0.5, 1},
 	VIRTUAL_BATTLEPLANS_COLOR = { 0.2, 1.0, 0.2, 1 },
 	ALLIED_BATTLEPLANS_COLOR = { 0.3, 0.4, 1.0, 1 },
 	ORDERS_ARROW_SNAP_MIN_DIST = 20, -- distance in "map pixels" when snapping arrows works
@@ -576,19 +594,20 @@ NGraphics = {
 	COUNTRY_FLAG_SMALL_TEX_WIDTH = 10,
 	COUNTRY_FLAG_SMALL_TEX_HEIGHT = 7,
 	COUNTRY_FLAG_TEX_MAX_SIZE = 256, -- Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
-	COUNTRY_FLAG_SMALL_TEX_MAX_SIZE = 64, -- Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
+	COUNTRY_FLAG_SMALL_TEX_MAX_SIZE = 256, -- Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
 	COUNTRY_FLAG_STRIPE_TEX_MAX_WIDTH = 10,
-	COUNTRY_FLAG_STRIPE_TEX_MAX_HEIGHT = 1024,
+	COUNTRY_FLAG_STRIPE_TEX_MAX_HEIGHT = 1750,
 	COUNTRY_FLAG_LARGE_STRIPE_MAX_WIDTH = 41,
-	COUNTRY_FLAG_LARGE_STRIPE_MAX_HEIGHT = 3000,
+	COUNTRY_FLAG_LARGE_STRIPE_MAX_HEIGHT = 6500,
 	VICTORY_POINT_LEVELS = 2,
 	VICTORY_POINT_MAP_ICON_AFTER = {0, 4}, -- After this amount of VP the map icon becomes bigger dot.
-	VICTORY_POINT_MAP_ICON_TEXT_CUTOFF = {180, 500, 1000},  -- At what camera distance the VP name text disappears.
-	VICTORY_POINTS_DISTANCE_CUTOFF = {180, 500, 1000}, -- At what distance VPs are hidden
-	AIRBASE_ICON_DISTANCE_CUTOFF = 1100, -- At what distance air bases are hidden
-	NAVALBASE_ICON_DISTANCE_CUTOFF = 1300, -- At what distance naval bases are hi
+	VICTORY_POINT_MAP_ICON_TEXT_CUTOFF = {180, 440, 1000},  -- At what camera distance the VP name text disappears.
+	VICTORY_POINTS_DISTANCE_CUTOFF = {180, 440, 1000}, -- At what distance VPs are hidden
+	AIRBASE_ICON_DISTANCE_CUTOFF = 900, -- At what distance air bases are hidden
+	NAVALBASE_ICON_DISTANCE_CUTOFF = 900, -- At what distance naval bases are hidden
+	RADAR_ICON_DISTANCE_CUTOFF = 1100, -- At what distance the radars are hidden
 	RESOURCE_MAP_ICON_TEXT_CUTOFF = 800,  -- At what camera distance the resource name/amount text disappears.
-	PROVINCE_ANIM_TEXT_DISTANCE_CUTOFF = 500,
+	PROVINCE_ANIM_TEXT_DISTANCE_CUTOFF = 500, -- 500
 	UNITS_DISTANCE_CUTOFF = 120,
 	SHIPS_DISTANCE_CUTOFF = 240,
 	UNIT_ARROW_DISTANCE_CUTOFF = 1000,
@@ -600,16 +619,16 @@ NGraphics = {
 	PROV_CONSTRUCTION_ICON_DISTANCE_CUTOFF = 400,
 	STATE_CONSTRUCTION_ICON_DISTANCE_CUTOFF = 800,
 	MAP_ICONS_GROUP_MAX_SIZE = 15, -- max size in screen pixels of the group of merged icons
-	MAP_ICONS_GROUP_CAM_DISTANCE = 90.0, -- camera distance at which the icons begin to group up
-	MAP_ICONS_STATE_GROUP_CAM_DISTANCE = 180.0, -- Camera distance at which the icons begin to group up on state level
-	MAP_ICONS_STRATEGIC_GROUP_CAM_DISTANCE = 350, -- second camera distance at which the icons begin to group up
+	MAP_ICONS_GROUP_CAM_DISTANCE = 120.0, -- camera distance at which the icons begin to group up
+	MAP_ICONS_STATE_GROUP_CAM_DISTANCE = 330.0, -- Camera distance at which the icons begin to group up on state level
+	MAP_ICONS_STRATEGIC_GROUP_CAM_DISTANCE = 600, -- second camera distance at which the icons begin to group up
 	MAP_ICONS_STRATEGIC_AREA_HUGE = 220,
 	MAP_ICONS_STATE_HUGE = 100,
 	MAPICON_GROUP_PASSES = 20, -- how many mapicons get processed per frame for grouping. more = quicker response, fewer = better performance
-	MAPICON_GROUP_STRATEGIC_SIZE = 1000, -- for strategic areas of this size or bigger we dont do strategic area grouping
+	MAPICON_GROUP_STRATEGIC_SIZE = 600, -- for strategic areas of this size or bigger we dont do strategic area grouping
 	MAP_ICONS_GROUP_SPLIT_SELECTED_LIMIT = 8,   -- Maximum number of units selected that will cause icon stacks to split
-	MAP_ICONS_COARSE_COUNTRY_GROUPING_DISTANCE = 350, -- Distance at which icon grouping becomes very coarse and merges different types of units
-	MAP_ICONS_COARSE_COUNTRY_GROUPING_DISTANCE_STRATEGIC = 350, -- Distance at which icon grouping becomes very coarse and merges different types of units for strategic mapmodes
+	MAP_ICONS_COARSE_COUNTRY_GROUPING_DISTANCE = 200, -- Distance at which icon grouping becomes very coarse and merges different types of units
+	MAP_ICONS_COARSE_COUNTRY_GROUPING_DISTANCE_STRATEGIC = 0, -- Distance at which icon grouping becomes very coarse and merges different types of units for strategic mapmodes
 	RIVER_FADE_FROM = 20.0, -- the last river endings got faded out, X distance from the ending...
 	RIVER_FADE_TO = 3.0,
 	TOOLTIP_DELAYED_DELAY = 1, 						--How long before showing delayed tooltip.
@@ -698,9 +717,9 @@ NGraphics = {
 	ENEMY_COLOR   = {1.0, 0.7, 0.7}, 
 	NEUTRAL_COLOR = {1.0, 1.0, 1.0},
 
-	COUNTRY_COLOR_HUE_MODIFIER = 0.0,
-	COUNTRY_COLOR_SATURATION_MODIFIER = 0.6,
-	COUNTRY_COLOR_BRIGHTNESS_MODIFIER = 0.8,
+	COUNTRY_COLOR_HUE_MODIFIER = 0.0, -- 0.0
+	COUNTRY_COLOR_SATURATION_MODIFIER = 0.7, -- 0.6
+	COUNTRY_COLOR_BRIGHTNESS_MODIFIER = 0.8, -- 0.8
 	COUNTRY_UI_COLOR_HUE_MODIFIER = 0.0,
 	COUNTRY_UI_COLOR_SATURATION_MODIFIER = 1.0,
 	COUNTRY_UI_COLOR_BRIGHTNESS_MODIFIER = 1.0,
@@ -723,7 +742,7 @@ NGraphics = {
 
 	CAMERA_ZOOM_SPEED = 50,
 	CAMERA_ZOOM_KEY_SCALE = 0.02,
-	CAMERA_ZOOM_SPEED_DISTANCE_MULT = 6.0,				-- Zoom speed multiplier. When camera is max zoome out, the zooming in speed will get 100% of CAMERA_ZOOM_SPEED_DISTANCE_MULT zooming speed.
+	CAMERA_ZOOM_SPEED_DISTANCE_MULT = 15.0,				-- Zoom speed multiplier. When camera is max zoome out, the zooming in speed will get 100% of CAMERA_ZOOM_SPEED_DISTANCE_MULT zooming speed.
 	
 	ORDERS_MOUSE_INTERSECT_DISTANCE_MULT = 2.6, 		-- For balancing the collision distance with painted arrows and fronts.
 	FRONTS_MOUSE_INTERSECT_DISTANCE_MULT = 6.6, 		-- For balancing the collision distance with painted arrows and fronts.
@@ -767,6 +786,11 @@ NInterface = {
 	TOOLTIP_SCREEN_TOP_OFFSET_Y = 0,				-- Tooltip offset on y axism from top screen border
 	TOOLTIP_SCREEN_BOTTOM_OFFSET_Y = 0,				-- Tooltip offset on y axis from bottom screen border
 	
+	NO_COMBATS_COLOR = { 0.0, 0.0, 0.8 },				-- Color for icons if all combats are successful
+	SUCCESFUL_COMBATS_COLOR = { 120.0/360.0, 0.95, 0.86 },				-- Color for icons if all combats are successful
+	MIN_NON_SUCCESSFUL_COMBAT_COLOR = { 100.0/360.0, 0.95, 0.86 },	-- Color for icons if some of combats are not successful
+	MID_NON_SUCCESSFUL_COMBAT_COLOR = { 50.0/360.0, 0.95, 0.86 },
+	MAX_NON_SUCCESSFUL_COMBAT_COLOR = { 00.0/360.0, 0.95, 0.86 },	-- Color for icons if all of combats are not successful	
 },
 
 
@@ -855,6 +879,9 @@ NSound = {
 	BATTLE_SOUND_MAX_UNIT_COUNT =  20,
 	BATTLE_SOUND_MIN_VOLUME_MUL = 0.2,
 	BATTLE_SOUND_MAX_VOLUME_MUL = 1.0,
+	
+	VOICE_OVER_CATEGORY  = "Voices",
+	VOICE_OVER_COOL_DOWN = 2.8, -- Wait for this many seconds before playing another vo	
 },
 
 }
