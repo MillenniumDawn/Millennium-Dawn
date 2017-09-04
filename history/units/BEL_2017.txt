@@ -4,8 +4,8 @@ division_template = {
 	
 	regiments = {
 		Mech_Inf_Bat = { x = 0 y = 0 }
-		Mot_Inf_Bat = { x = 0 y = 1 }
-		L_Engi_Bat = { x = 0 y = 2 }
+		Mech_Inf_Bat = { x = 0 y = 1 }
+		Mech_Recce_Bat = { x = 0 y = 2 }
 		Mot_Inf_Bat = { x = 1 y = 0 }
 		Mot_Inf_Bat = { x = 1 y = 1 }
 	}
@@ -13,6 +13,7 @@ division_template = {
 	support = {
 		Mech_Recce_Comp = { x = 0 y = 0 } 
 		Arty_Battery = { x = 0 y = 1 }
+		L_Engi_Comp = { x = 0 y = 2 }
 	}
 	
 }
@@ -21,9 +22,7 @@ division_template = {
 	name = "Light Brigade"
 	
 	regiments = {
-		L_Inf_Bat = { x = 0 y = 0 }
-		Special_Forces = { x = 0 y = 1 }
-		L_Engi_Bat = { x = 0 y = 2 }
+		Special_Forces = { x = 0 y = 0 }
 		L_Air_Inf_Bat = { x = 1 y = 0 }
 		L_Air_Inf_Bat = { x = 1 y = 1 }
 	}
@@ -31,6 +30,7 @@ division_template = {
 	support = {
 		Mech_Recce_Comp = { x = 0 y = 0 }
 		Arty_Battery = { x = 0 y = 1 }
+		L_Engi_Comp = { x = 0 y = 2 }
 	}
 }
 
@@ -47,7 +47,7 @@ units = {
 	division= {	
 		name = "Light Brigade"
 		location = 11407		#Marche-en-Famenne
-		division_template = "Mechanised Brigade"
+		division_template = "Light Brigade"
 		start_experience_factor = 0.75
 		start_equipment_factor = 0.01
 	}
@@ -56,8 +56,8 @@ units = {
 		name = "Belgian Navy"
 		base = 6446
 		location = 6446
-		ship = { name = "Leopold I" definition = frigate equipment = { missile_frigate_1 = { amount = 1 owner = BEL } } }
-		ship = { name = "Louise-Marie" definition = frigate equipment = { missile_frigate_1 = { amount = 1 owner = BEL } } }
+		ship = { name = "Leopold I" definition = frigate experience = 75 equipment = { missile_frigate_1 = { amount = 1 owner = BEL creator = HOL } } }
+		ship = { name = "Louise-Marie" definition = frigate experience = 75 equipment = { missile_frigate_1 = { amount = 1 owner = BEL creator = HOL } } }
 	}		
 
 }
@@ -132,7 +132,7 @@ instant_effect = {
 
 	add_equipment_to_stockpile = {
 		type = command_control_equipment_3		
-		amount = 200
+		amount = 250
 		producer = BEL 
 	}
 
@@ -149,6 +149,34 @@ instant_effect = {
 		producer = USA 
 	}
 	
-	#8xNH90
+	add_equipment_to_stockpile = {
+		type = transport_helicopter_equipment_4			#NH-90
+		amount = 8
+		producer = FRA 
+	}
+	
+	if = {
+		limit = { has_dlc = "Death or Dishonor" }
+		HOL = {
+			create_production_license = {
+				target = BEL
+				equipment = {
+					type = missile_frigate_1			#Karel Doorman-Class
+				}
+				cost_factor = 0
+			}
+		}
+		else = {
+			add_equipment_production = {
+				equipment = {
+					type = missile_frigate_1
+					creator = "HOL"
+				}
+				requested_factories = 1
+				progress = 0.2
+				efficiency = 50
+			}
+		}
+	}
 	
 }
