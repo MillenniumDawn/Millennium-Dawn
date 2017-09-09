@@ -252,6 +252,7 @@ NProduction = {
 	INFRA_MAX_CONSTRUCTION_COST_EFFECT = 1, 		-- Building in a state with higher infrastructure will reduce the cost of shared buildings.
 	PRODUCTION_RESOURCE_LACK_PENALTY = -0.05,			-- Penalty decrease while lack of resource per factory
 	MIN_LICENSE_ACTIVE_DAYS = 30,						-- Min days for license to be active
+	BASE_LICENSE_IC_COST = 1.0,							-- Base IC cost for lended license #1
 	LICENSE_IC_COST_YEAR_INCREASE = 1,					-- IC cost equipment for every year of equipment after 1936
 	LICENSE_EQUIPMENT_BASE_SPEED = -0.25,				-- base MIC speed modifier for licensed equipment
 	LICENSE_EQUIPMENT_TECH_SPEED_PER_YEAR = -0.01,		-- MIC speed modifier for licensed equipment for each year of difference between actual and latest equipment #-0.05
@@ -483,6 +484,7 @@ NMilitary = {
 	
 	PLAN_PROVINCE_LOW_VP_IMPORTANCE_AREA = 2.0,     -- Used when calculating the calue of defense area in the battle plan system
 	PLAN_PROVINCE_MEDIUM_VP_IMPORTANCE_AREA = 5.0,  -- Used when calculating the calue of defense area in the battle plan system
+	PLAN_PROVINCE_HIGH_VP_IMPORTANCE_AREA = 50.0,   -- Used when calculating the calue of defense area in the battle plan system #50
 	
 	PLAN_PROVINCE_LOW_VP_IMPORTANCE_FRONT = 2.0,    -- Used when calculating the calue of fronts in the battle plan system
 	PLAN_PROVINCE_MEDIUM_VP_IMPORTANCE_FRONT = 3.0, -- Used when calculating the calue of fronts in the battle plan system
@@ -813,6 +815,7 @@ NTrade = {
 },
 
 NAI = {
+	GARRISON_FRACTION = 0.0, 					-- How large part of a front should always be holding the line rather than advancing at the enemy #0.0
 	
 	DIPLOMATIC_ACTION_GOOD_BAD_RATIO_THRESHOLD = 1,
 	BASE_RELUCTANCE = 20, 						-- Base reluctance applied to all diplomatic offers
@@ -941,6 +944,7 @@ NAI = {
 	IRRATIONALITY_LAMBDA = 200,					-- Lambda given to Poisson Random function determining if a leader should act a bit irrational 											
 												-- Value of 200 should give 0.3% chance of Stalin going for instance crazy and conquering all of America
 	GENERATE_WARGOAL_THREAT_BASELINE = 1.0,	-- The baseline for what the AI considers the world is getting dangerous and we want to generate wargoals	
+	RESERVE_TO_COMMITTED_BALANCE = 0.1,			-- How many reserves compared to number of committed divisions in a combat (1.0 = as many as reserves as committed) #0.1
 	DIPLOMACY_COMMUNIST_NOT_NEIGHBOUR = -10,	-- Communists want to stay consolidated with their influence
 	MAIN_ENEMY_FRONT_IMPORTANCE = 4.0,			-- How much extra focus the AI should put on who it considers to be its current main enemy.
 	EASY_TARGET_FRONT_IMPORTANCE = 7.5,			-- How much extra focus the AI should put on who it considers to be the easiest target.
