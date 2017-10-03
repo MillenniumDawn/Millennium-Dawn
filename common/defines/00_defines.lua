@@ -966,10 +966,10 @@ NAI = {
 	
 	ORG_UNIT_STRONG = 0.9,						-- Organization % for unit to be considered strong
 	ORG_UNIT_WEAK = 0.35,						-- Organization % for unit to be considered weak #0.15
-	STR_UNIT_STRONG = 0.8,						-- Strength (equipment) % for unit to be considered strong
-	STR_UNIT_WEAK = 0.5,						-- Strength (equipment) % for unit to be considered weak
-	PLAN_FACTION_STRONG_TO_EXECUTE = 0.7,		-- % or more of units in an order to consider ececuting the plan #0.5
-	PLAN_FACTION_WEAK_TO_ABORT = 0.35,			-- % or more of units in an order to consider ececuting the plan #0.65
+	STR_UNIT_STRONG = 0.75,						-- Strength (equipment) % for unit to be considered strong
+	STR_UNIT_WEAK = 0.2,						-- Strength (equipment) % for unit to be considered weak
+	PLAN_FACTION_STRONG_TO_EXECUTE = 0.50,		-- % or more of units in an order to consider ececuting the plan #0.5
+	PLAN_FACTION_WEAK_TO_ABORT = 0.65,			-- % or more of units in an order to consider ececuting the plan #0.65
 	PLAN_AVG_PREPARATION_TO_EXECUTE = 0.5,		-- % or more average plan preparation before executing
 	STATE_GARRISON_MAX_UNITS = 3,				-- Max units to guard a garrison under normal circumstances (isolated core areas like England has is excempt)
 	
