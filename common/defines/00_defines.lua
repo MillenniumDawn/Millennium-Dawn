@@ -59,9 +59,9 @@ NDiplomacy = {
 	TROOP_FEAR = 1, 								-- Impact on troops on borders when deciding how willing a nation is to trade
 	FLEET_FEAR = 1,									-- Impact on troops on borders when deciding how willing a nation is to trade --1
 	IC_TO_EQUIPMENT_COUP_RATIO = 0.3,				-- Ratio for calculating cost of staging coup --0.1
-	VOLUNTEERS_PER_TARGET_PROVINCE = 0.05,			-- Each province owned by the target country contributes this amount of volunteers to the limit.
+	VOLUNTEERS_PER_TARGET_PROVINCE = 0.01,			-- Each province owned by the target country contributes this amount of volunteers to the limit.
 	VOLUNTEERS_PER_COUNTRY_ARMY = 0.05,				-- Each army unit owned by the source country contributes this amount of volunteers to the limit.
-	VOLUNTEERS_RETURN_EQUIPMENT = 0.75,				-- Returning volunteers keep this much equipment
+	VOLUNTEERS_RETURN_EQUIPMENT = 0.80,				-- Returning volunteers keep this much equipment
 	VOLUNTEERS_TRANSFER_SPEED = 14,					-- days to transfer a unit to another nation
 	VOLUNTEERS_DIVISIONS_REQUIRED = 10,				-- This many divisons are required for the country to be able to send volunteers. --30
 	TENSION_STATE_VALUE = 10,						-- Tension value gained by annexing one state
@@ -877,7 +877,7 @@ NAI = {
 	AIR_WING_SIZE_FACTOR = 1.0,					-- Impact on air score of assigning wings to mission
 	AIR_MISSION_MIN_COVEREAGE = 0.2,			-- Between 0 and 1, limit for % coverage for air mission to be considered
 	AIR_BASE_PRIORITY_DISTANCE_FACTOR = 25.0,	-- Weight of distance between region and airbase for airbase priority score
-	MAX_VOLUNTEER_ARMY_FRACTION = 0.1,			-- Countries will not send more than their forces time this number to aid another country
+	MAX_VOLUNTEER_ARMY_FRACTION = 0.5,			-- Countries will not send more than their forces time this number to aid another country
 	WANTED_UNITS_INDUSTRY_FACTORY = 1.0, 		-- How many units a country wants is partially based on how much military industry that is available
 	DEPLOY_MIN_TRAINING_PEACE_FACTOR = 0.95,		-- Required percentage of training (1.0 = 100%) for AI to deploy unit in peacetime
 	DEPLOY_MIN_TRAINING_WAR_FACTOR = 0.25,		-- Required percentage of training (1.0 = 100%) for AI to deploy unit in wartime
