@@ -212,7 +212,7 @@ NCountry = {
 	STATE_VALUE_BUILDING_SLOTS_MULT = 3.0,			-- The Value of each building slot in a state ( Value is used to determine costs in peace conference and PP cost to occupy )
 	STATE_VALUE_RESEOURCE_MULT = 0.4,				-- The Value of each resource in a state ( Value is used to determine costs in peace conference and PP cost to occupy)
 	STATE_OCCUPATION_COST_MULTIPLIER = 0.01,		-- Multiplier for state value to PP cost for occupation
-	STATE_VALUE_NON_CORE_STATE_FRACTION = 0.5,		-- If a state is not a core we assume we will get 50% of the factory slots
+	STATE_VALUE_NON_CORE_STATE_FRACTION = 1.0,		-- If a state is not a core we assume we will get 50% of the factory slots
 	INVASION_REPORT_EXPERATION_DAYS = 30,			-- Invasion experation days
 	MIN_FOCUSES_FOR_CONTINUOUS = 10,				-- Focuses needed to unlock continuous focuses
 	AUTONOMOUS_TOTAL_SCORE = 4000,					-- Total score for autonomous scale
@@ -249,7 +249,7 @@ NProduction = {
 	MIN_POSSIBLE_TRAINING_MANPOWER = 100000,	-- How many deployment lines minimum can be training
 	MIN_FIELD_TO_TRAINING_MANPOWER_RATIO = 0.75,	-- Ratio which % of army in field can be trained
 	CAPITULATE_STOCKPILES_RATIO = 0.75, -- How much equipment from deployed divisions will be transferred on capitulation
-	INFRA_MAX_CONSTRUCTION_COST_EFFECT = 1, 		-- Building in a state with higher infrastructure will reduce the cost of shared buildings.
+	INFRA_MAX_CONSTRUCTION_COST_EFFECT = 0.75, 		-- Building in a state with higher infrastructure will reduce the cost of shared buildings.
 	PRODUCTION_RESOURCE_LACK_PENALTY = -0.05,			-- Penalty decrease while lack of resource per factory
 	MIN_LICENSE_ACTIVE_DAYS = 30,						-- Min days for license to be active
 	BASE_LICENSE_IC_COST = 1.0,							-- Base IC cost for lended license #1
@@ -448,7 +448,7 @@ NMilitary = {
 	EQUIPMENT_COMBAT_LOSS_FACTOR = 0.25,	 	       -- % of equipment lost to strength ratio in combat, so some % is returned if below 1 #1 #0.25 = test
 	SUPPLY_USE_FACTOR_MOVING = 1.5,                -- supply use when moving/fighting vs inactive
 	SUPPLY_USE_FACTOR_INACTIVE = 0.95,
-	SUPPLY_GRACE = 120,		-- troops always carry 5 days of food and supply
+	SUPPLY_GRACE = 504,		-- troops always carry 5 days of food and supply #72
 	MAX_OUT_OF_SUPPLY_DAYS = 30, 				   -- how many days of shitty supply until max penalty achieved
 	OUT_OF_SUPPLY_ATTRITION = 0.3,                 -- max attrition when out of supply
 	OUT_OF_SUPPLY_SPEED = -0.8,                    -- max speed reduction from supply
@@ -474,7 +474,7 @@ NMilitary = {
 	CIVILWAR_ORGANIZATION_FACTOR = 1.0,			  	-- Multiplier of org for both sides when civilwar. #0.3
 	LAND_COMBAT_ATTACKER_WINNING = 0.65,		  	-- Above this means attacker is winning
 	LAND_COMBAT_DEFENDER_WINNING = 0.35,		  	-- Below this means defender is winning
-	PLAN_CONSIDERED_GOOD = 0.25,					-- Plan evaluations above this value are considered more or less safe
+	PLAN_CONSIDERED_GOOD = 2.5,					-- Plan evaluations above this value are considered more or less safe
 	PLAN_CONSIDERED_BAD = -0.25,					-- Plan evaluations below this value are considered unsafe
 	PLAN_MIN_AUTOMATED_EMPTY_POCKET_SIZE = 2,		-- The battle plan system will only automatically attack provinces in pockets that has no resistance and are no bigger than these many provinces
 	PLAN_SPREAD_ATTACK_WEIGHT = 13.0,				-- The higher the value, the less it should crowd provinces with multiple attacks.
@@ -530,7 +530,7 @@ NMilitary = {
 	PARADROP_PENALTY = -0.3, 						-- Combat penalty when recently paradropped
 	PARADROP_HOURS = 48,							-- time paratroopers suffer penalties in combat
 	COMBAT_SUPPLY_LACK_IMPACT = -0.33,				-- combat penalty if out of supply
-	COMBAT_STACKING_START = 8,						-- at what nr of divisions stacking penalty starts
+	COMBAT_STACKING_START = 12,						-- at what nr of divisions stacking penalty starts
 	COMBAT_STACKING_EXTRA = 4,                      -- extra stacking from directions
 	COMBAT_STACKING_PENALTY = -0.02,                -- how much stackign penalty per division
 	COMBAT_OVER_WIDTH_PENALTY = -1,					-- over combat width penalty per %.
@@ -753,7 +753,7 @@ NNavy = {
 	LEADER_EXPERIENCE_SCALE = 1.0,
 	BATTLE_NAME_VP_FACTOR = 100,									-- Name is given by ((VP value) * BATTLE_NAME_VP_FACTOR) / (Distance VP -> battle)
 	BATTLE_NAME_VP_CUTOFF = 1.0,									-- If best score of above calculation is below this, name will be that of region.
-	AMPHIBIOUS_LANDING_PENALTY = -0.7,								-- amphibious landing penalty
+	AMPHIBIOUS_LANDING_PENALTY = -0.3,								-- amphibious landing penalty
 	AMPHIBIOUS_INVADE_SPEED_BASE = 0.5, 							-- every hour movement progress on amphibious invasion
 	AMPHIBIOUS_INVADE_MOVEMENT_COST = 24.0, 						-- total progress cost of movement while amphibious invading
 	AMPHIBIOUS_INVADE_ATTACK_LOW = 0.2, 							-- low and high cap of attack modifier scale. Scale interpolated by invasion progress.
@@ -941,7 +941,7 @@ NAI = {
 	GIVE_STATE_CONTROL_NEIGHBOR_OTHER_SCORE = 5, -- Diplo score for each neighboring state controlled by someone else
 	GIVE_STATE_CONTROL_MAX_SCORE_DIST = 600,	-- A State that is closer to the recipient capital than this gets a score bonus based on the below value
 	GIVE_STATE_CONTROL_DIST_SCORE_MULT = 0.2,	-- Multiplier for the score gained from distance ( GIVE_STATE_CONTROL_MAX_SCORE_DIST - distance ) * this
-	IRRATIONALITY_LAMBDA = 200,					-- Lambda given to Poisson Random function determining if a leader should act a bit irrational 											
+	IRRATIONALITY_LAMBDA = 400,					-- Lambda given to Poisson Random function determining if a leader should act a bit irrational 	#200										
 												-- Value of 200 should give 0.3% chance of Stalin going for instance crazy and conquering all of America
 	GENERATE_WARGOAL_THREAT_BASELINE = 1.0,	-- The baseline for what the AI considers the world is getting dangerous and we want to generate wargoals	
 	RESERVE_TO_COMMITTED_BALANCE = 0.1,			-- How many reserves compared to number of committed divisions in a combat (1.0 = as many as reserves as committed) #0.1
@@ -962,13 +962,13 @@ NAI = {
 	FRONT_TERRAIN_ATTACK_FACTOR = 5.0,			-- Multiplier applied to unit attack modifier for terrain on enemy front province multiplied by terrain importance
 	
 	BASE_DISTANCE_TO_CARE = 300.0,				-- Countries that are too far away are less interesting in diplomacy #600
-	MIN_FORCE_RATIO_TO_PROTECT = 0.5,			-- Tiny countries should not feel protective or really large ones
+	MIN_FORCE_RATIO_TO_PROTECT = 1.5,			-- Tiny countries should not feel protective or really large ones #0,5
 	
 	ORG_UNIT_STRONG = 0.9,						-- Organization % for unit to be considered strong
 	ORG_UNIT_WEAK = 0.35,						-- Organization % for unit to be considered weak #0.15
-	STR_UNIT_STRONG = 0.8,						-- Strength (equipment) % for unit to be considered strong
-	STR_UNIT_WEAK = 0.5,						-- Strength (equipment) % for unit to be considered weak
-	PLAN_FACTION_STRONG_TO_EXECUTE = 0.7,		-- % or more of units in an order to consider ececuting the plan #0.5
+	STR_UNIT_STRONG = 0.75,						-- Strength (equipment) % for unit to be considered strong
+	STR_UNIT_WEAK = 0.3,						-- Strength (equipment) % for unit to be considered weak
+	PLAN_FACTION_STRONG_TO_EXECUTE = 0.55,		-- % or more of units in an order to consider ececuting the plan #0.5
 	PLAN_FACTION_WEAK_TO_ABORT = 0.35,			-- % or more of units in an order to consider ececuting the plan #0.65
 	PLAN_AVG_PREPARATION_TO_EXECUTE = 0.5,		-- % or more average plan preparation before executing
 	STATE_GARRISON_MAX_UNITS = 3,				-- Max units to guard a garrison under normal circumstances (isolated core areas like England has is excempt)
@@ -980,7 +980,7 @@ NAI = {
 	
 	SUPPLY_CRISIS_LIMIT = 0.9,					-- If a unit is standing in an area with 
 	
-	MAX_ALLOWED_NAVAL_DANGER = 80,				-- AI will ignore naval paths that has danger value of above this threshold while assigning units
+	MAX_ALLOWED_NAVAL_DANGER = 80,				-- AI will ignore naval paths that has danger value of above this threshold while assigning units #80
 	TRANSFER_DANGER_HOSTILE_SHIPS = 50, 		-- max danger from complete enemy naval supriority over ai in an area	
 
 	FASCISTS_BEFRIEND_FASCISTS = 10,
@@ -1128,7 +1128,7 @@ NAI = {
 
 	COMBINED_ARMS_LEVEL = 1,							-- 0 = Never, 1 = Infantry/Artillery, 2 = Go wild
 	MAX_DISTANCE_NALAV_INVASION = 200.0,				-- AI is extremely unwilling to plan naval invasions above this naval distance limit.
-	ENEMY_NAVY_STRENGTH_DONT_BOTHER = 2.5,				-- If the enemy has a navy at least these many times stronger that the own, don't bother invading
+	ENEMY_NAVY_STRENGTH_DONT_BOTHER = 1.5,				-- If the enemy has a navy at least these many times stronger that the own, don't bother invading
 	MIN_SUPPLY_USE_SANITY_CAP = 100,					-- Ignore supply cap if below this value when deciding on how many divisions to produce.
 	MAX_SUPPLY_DIVISOR = 1.75,							-- To make sure the AI does not overdeploy divisions. Higher number means more supply per unit.
 	MISSING_CONVOYS_BOOST_FACTOR = 18.0,					-- The more convoys a country is missing, the more resources it diverts to cover this.
@@ -1136,11 +1136,11 @@ NAI = {
 	MAX_MICRO_ATTACKS_PER_ORDER = 3,					-- AI goes through its orders and checks if there are situations to take advantage of
 	FALLBACK_LOSING_FACTOR = 1.0,						-- The lower this number, the longer the AI will hold the line before sending them to the fallback line
 	PRODUCTION_MAX_PROGRESS_TTO_SWITCH_NAVAL = 0.3,		-- AI will not replace ships being built by newer types if progress is above this
-	STATE_CONTROL_FOR_AREA_DEFENSE = 0.4,				-- To avoid AI sending area defense to area with very little foothold
+	STATE_CONTROL_FOR_AREA_DEFENSE = 0.2,				-- To avoid AI sending area defense to area with very little foothold
 	FORCE_FACTOR_AGAINST_EXTRA_MINOR = 0.15,			-- AI considers generating wargoals against minors below this % of force compared to themselves to get at a bigger enemy.
 	MAX_EXTRA_WARGOAL_GENERATION = 2,					-- AI may want to generate wargoals against weak minors to get at larger enemy, but never more that this at any given time.
 	NAVAL_MISSION_DISTANCE_BASE = 3500,					-- Base value when AI is evaluating distance score to places
-	NAVAL_MISSION_INVASION_BASE = 1000,					-- Base score for region with naval invasion (modified dynamically by prioritizing orders)
+	NAVAL_MISSION_INVASION_BASE = 5000,					-- Base score for region with naval invasion (modified dynamically by prioritizing orders)
 	NAVAL_MISSION_AGGRESSIVE_PATROL_DIVISOR = 1,		-- Divides patrol score when not defending
 	NAVAL_MISSION_AGGRESSIVE_ESCORT_DIVISOR = 2,		-- Divides escort score when not defending
 	NAVAL_MISSION_PATROL_NEAR_OWNED = 50000,			-- Extra patrol mission score near owned provinces
@@ -1267,7 +1267,7 @@ NAI = {
 	REVISITED_PROV_PENALTY_FACTOR = 1.5,				-- When the AI picks units for a front, it tries to spread out a bit which units it grabs.
 	
 	PLAN_ACTIVATION_SUPERIORITY_AGGRO = 1.0,			-- How aggressive a country is in activating a plan based on how superiour their force is.
-	WAIT_YEARS_BEFORE_FREER_BUILDING = 3,				-- The AI will skip considering certain buildings during the buildup phase, after htese many years it starts building them regardless of threat.
+	WAIT_YEARS_BEFORE_FREER_BUILDING = 6,				-- The AI will skip considering certain buildings during the buildup phase, after htese many years it starts building them regardless of threat.
 	
 	STRIKE_FLEET_MAX_DISTANCE_TO_COMBAT = 500.0,		-- The strike fleet will not attempt to intervene in combats further away than this.
 	
