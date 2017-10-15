@@ -1,0 +1,61 @@
+﻿# Random_Diplo_00_Init
+# How to and how does this work
+#   This is a event chain framework that is easily expanded.
+#   The event chain have 4 parts
+#    Init   - The init starts the chain and make sure that the
+#              correct nation gets the event in the chain. Also 
+#              in order to get the correct nation names.
+#    Start  - Start event contain unique events. They have two 
+#              parts; First initializes were the nation gets
+#              information about the upcoming incident.
+#              The second one is the information the other nation
+#              that the first nation f*t up.
+#    Event  - Event contain the main escalation chain. This is
+#              generic in nature.
+#    News   - This is the end event and is called by the Event
+#              part and is called by event random_diplo_end.0
+add_namespace = random_diplo_init
+
+country_event = {   # Event chain init
+	id = random_diplo_init.0
+	title = random_diplo_init.0.t
+	desc = random_diplo_init.0.d
+    
+	is_triggered_only = yes
+    hidden = yes
+    
+	trigger = {
+        has_war = no
+        NOT = { original_tag = ISI }
+        NOT = { original_tag = SHB }
+        NOT = { original_tag = AQY }
+        NOT = { original_tag = TAL }
+        NOT = { original_tag = TTP }
+        NOT = { original_tag = NUS }
+
+        OR = {
+            NOT = { has_country_flag = random_dip_0_incident_flag }
+            NOT = { has_country_flag = random_dip_1_incident_flag }
+        }
+	}
+    
+	option = {
+        random_neighbor_country = {
+            limit = {
+				NOT = { original_tag = ISI }
+				NOT = { original_tag = SHB }
+				NOT = { original_tag = AQY }
+				NOT = { original_tag = TAL }
+				NOT = { original_tag = TTP }
+				NOT = { original_tag = NUS }
+                has_opinion = { target = FROM value > -20 }
+                
+                OR = {
+                    NOT = { has_country_flag = random_dip_0_incident_flag }
+                    NOT = { has_country_flag = random_dip_1_incident_flag }
+                }
+            }
+            country_event = { days = 1 id = random_diplo_start.0 }
+        }
+	}
+}
