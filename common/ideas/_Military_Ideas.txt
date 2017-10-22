@@ -368,10 +368,10 @@ ideas = {
 			}
 			
 			available = {
-				
+			
 			}
 				
-			cost = 150
+			cost = 300
 			removal_cost = -1
 			level = 4
 			
@@ -387,9 +387,12 @@ ideas = {
 			ai_will_do = {
 				factor = 0
 				modifier = {
-					#If we have no military industry, no need for military
+					#If we have no military industry and have someone to protect us, no need for military 
 					add = 1
-					num_of_military_factories < 1
+					AND = {
+						num_of_military_factories < 1
+						is_in_faction = yes
+					}
 				}
 			}
 			
@@ -407,7 +410,7 @@ ideas = {
 
 			}
 			
-			cost = 150
+			cost = 300
 			removal_cost = -1
 			level = 3
 			
@@ -422,6 +425,37 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				##When to downgrade to volunteer army
+				modifier = {
+					#If we are in a faction, we don't need as big of an army
+					add = 1
+					AND = {
+						has_idea = partial_draft_army
+						is_in_faction = yes
+					}
+				}
+				modifier = {
+					#Major's less likely to downgrade their military
+					add = -1
+					is_major = yes
+				}
+				##When to switch to volunteers from having no military
+				modifier = {
+					#We want to switch to having an army if tensions are high
+					add = 1
+					AND = {
+						has_idea = no_military
+						threat > 0.3
+					}
+				}
+				modifier = {
+					#Nationalists want an army
+					add = 1
+					AND = {
+						has_idea = no_military
+						has_government = Nationalist
+					}
+				}
 			}
 			
 			default = yes
@@ -440,7 +474,7 @@ ideas = {
 
 			}
 			
-			cost = 150
+			cost = 300
 			removal_cost = -1
 			level = 2
 			
@@ -455,6 +489,48 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				##When to downgrade to partial draft
+				modifier = {
+					#If we are in a faction, we don't need as big of an army
+					add = 1
+					AND = {
+						has_idea = draft_army
+						is_in_faction = yes
+					}
+				}
+				modifier = {
+					#Major's less likely to downgrade their military
+					add = -1
+					is_major = yes
+				}
+				##When to switch from having volunteers to a limited draft
+				modifier = {
+					#We want to switch to a limited draft when in a big war
+					add = 1
+					AND = {
+						has_war = yes
+						has_manpower < 10000
+					}
+				}
+				modifier = {
+					#We might want to consider draft is tension is high
+					add = 1
+					AND = {
+						has_idea = volunteer_army
+						threat > 0.5
+					}					
+				}
+				modifier = {
+					#These ideologies want bigger armies
+					add = 1
+					AND = {
+						has_idea = volunteer_army
+						OR = {
+							has_government = Nationalist
+							has_government = fascism
+						}
+					}
+				}
 			}
 			
 			cancel_if_invalid = no
@@ -468,10 +544,10 @@ ideas = {
 			}
 			
 			available = {
-
+				
 			}
 			
-			cost = 150
+			cost = 300
 			removal_cost = -1
 			level = 1
 			
@@ -486,6 +562,54 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				#When to switch from partial draft to full draft
+				modifier = {
+					#We want to switch to a limited draft when in a big war
+					add = 1
+					AND = {
+						has_war = yes
+						has_manpower < 10000
+					}
+				}
+				modifier = {
+					#We might want to consider draft is tension is high
+					add = 1
+					AND = {
+						has_idea = partial_draft_army
+						threat > 0.7
+					}					
+				}
+				modifier = {
+					#These ideologies want bigger armies
+					add = 1
+					AND = {
+						has_idea = volunteer_army
+						OR = {
+							has_government = Nationalist
+							has_government = fascism
+						}
+					}
+				}
+				modifier = {
+					#Being next to big scary countries
+					add = 1
+					any_neighbor_country = {
+						NOT = { is_in_faction_with = ROOT }
+						strength_ratio = { tag = ROOT ratio > 2 }
+					}
+				}
+				modifier = {
+					#Being next to possible war targets
+					add = 1
+					any_neighbor_country = {
+						any_owned_state = {
+							OR = {
+								is_claimed_by = ROOT
+								is_core_of = ROOT
+							}
+						}
+					}
+				}
 			}
 			
 			cancel_if_invalid = no
@@ -518,6 +642,11 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				modifier = {
+					#Salafists don't want women in the army
+					add = 1
+					has_government = fascism
+				}
 			}
 			
 			cancel_if_invalid = no
@@ -531,7 +660,7 @@ ideas = {
 			}
 			
 			available = {
-			
+				
 			}
 			
 			cost = 150
@@ -544,6 +673,11 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				modifier = {
+					#Most countries want here
+					add = 1
+					NOT = { has_government = fascism }
+				}
 			}
 			
 			default = yes
@@ -559,7 +693,10 @@ ideas = {
 			}
 			
 			available = {
-			
+				OR = {
+					has_idea = partial_draft_army
+					has_idea = draft_army
+				}
 			}
 			
 			cost = 150
@@ -572,9 +709,16 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				modifier = {
+					#Surrounded by hostile nations (mainly for Israel)
+					add = 2
+					every_neighbor_country = {
+						has_opinion = { target = ROOT value < 0 }
+					}
+				}
 			}
 			
-			cancel_if_invalid = no
+			cancel_if_invalid = yes
 			
 		}
 	}
