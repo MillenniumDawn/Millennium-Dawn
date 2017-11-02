@@ -605,8 +605,8 @@ NAir = {
 	HOURS_DELAY_AFTER_EACH_COMBAT = 4,					-- How many hours needs the wing to be ready for the next combat. Use for tweaking if combats happens too often. (generally used as double because of roundtrip)
 	CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 3,          -- how often carrier planes do battle inside naval combat
 	NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 2.5,			-- MD4 was 0.3 Balancing value to convert the naval_strike_targetting equipment stats to chances of how many airplanes managed to do successfull strike.
-	NAVAL_STRIKE_DAMAGE_TO_STR = 18,					-- Balancing value to convert damage ( naval_strike_attack * hits ) to Strength reduction.
-	NAVAL_STRIKE_DAMAGE_TO_ORG = 18,					-- Balancing value to convert damage ( naval_strike_attack * hits ) to Organisation reduction.
+	NAVAL_STRIKE_DAMAGE_TO_STR = 9,					-- Balancing value to convert damage ( naval_strike_attack * hits ) to Strength reduction.
+	NAVAL_STRIKE_DAMAGE_TO_ORG = 9,					-- Balancing value to convert damage ( naval_strike_attack * hits ) to Organisation reduction.
 	NAVAL_STRIKE_AIR_VS_AIR_PASS_CHANCE = 0.5,			-- Balancing value to control
 	FIELD_EXPERIENCE_SCALE = 0.003,
 	FIELD_EXPERIENCE_MAX_PER_DAY = 2,					-- Most xp you can gain per day
@@ -644,8 +644,8 @@ NAir = {
 	AA_INDUSTRY_AIR_DAMAGE_FACTOR = -0.12,				-- 5x levels = 60% defense from bombing
 	NAVAL_STRIKE_DETECTION_BALANCE_FACTOR = 0.7,		-- Value used to scale the surface_visibility stats to balance the gameplay, so 100% detection chance still won't spam the strikes.
 	LEND_LEASED_EQUIPMENT_EXPERIENCE_GAIN = 0.5,		-- Value used for equipment
-	ANTI_AIR_PLANE_DAMAGE_FACTOR = 0.8,					-- ANTI AIR BUILDING Anti Air Gun Damage factor
-	ANTI_AIR_PLANE_DAMAGE_CHANCE = 0.1,					-- ANTI AIR BUILDING Anti Air Gun hit chance
+	ANTI_AIR_PLANE_DAMAGE_FACTOR = 0.001,					-- ANTI AIR BUILDING Anti Air Gun Damage factor
+	ANTI_AIR_PLANE_DAMAGE_CHANCE = 0.001,					-- ANTI AIR BUILDING Anti Air Gun hit chance
 	AIR_DEPLOYMENT_DAYS = 5,							-- Days to deploy one air wing
 	PORT_STRIKE_ENEMY_SUPERIORITY_LIMIT = 0.3,			-- Min air superiority for performing of naval strike		
 	NAVAL_STRIKE_BASE_STR_TO_PLANES_RATIO = 0.1,		-- Max airbombers to do port strike comparing to strength		
@@ -740,7 +740,7 @@ NNavy = {
 	CONVOY_EFFICIENCY_REGAIN_BASE_SPEED = 0.04,						-- How much efficiency regains every day.
 	CONVOY_EFFICIENCY_INTERPOLATION_SPEED = 0.35,					-- To avoid values going up/down really quick we slowly interpolate efficiency, this is how smooth it happens.
 	CONVOY_EFFICIENCY_MIN_VALUE = 0.1,								-- To avoid complete 0% efficiency, set the lower limit.
-	ANTI_AIR_TARGETTING_TO_CHANCE = 0.1,							-- Balancing value to convert averaged equipment stats (anti_air_targetting and naval_strike_agility) to probability chances of airplane being hit by navies AA.
+	ANTI_AIR_TARGETTING_TO_CHANCE = 0.01,							-- Balancing value to convert averaged equipment stats (anti_air_targetting and naval_strike_agility) to probability chances of airplane being hit by navies AA.
 	ANTI_AIR_ATTACK_TO_AMOUNT = 0.01,								-- Balancing value to convert equipment stat anti_air_attack to the random % value of airplanes being hit.
 	NO_LEADER_MAX_SHIPS = 5,										-- Max amount of ships that can be used in the unit
 	UNIT_EXPERIENCE_PER_COMBAT_HOUR = 10,
@@ -785,7 +785,7 @@ NNavy = {
 	SUBMARINE_REVEALED_TIMEOUT = 12,								-- Amount of in-game-hours that makes the submarine visible if it is on the defender side.		
 	SUBMARINE_REVEAL_BASE_CHANCE = 0.05,							-- Base chance for submarine detection. It's modified by the difference of a spootter's submarines detection vs submarine visibility. Use this variable for game balancing.
 	SHORE_BOMBARDMENT_CAP = 0.25,
-	ANTI_AIR_TARGETING = 2.7,                                       -- how good ships are at hitting aircraft
+	ANTI_AIR_TARGETING = 20.7,                                       -- how good ships are at hitting aircraft
 	MISSION_CONVOY_RAIDING_SPREAD_BASE = 0.32,
 	MISSION_CONVOY_ESCORT_SPREAD_BASE = 0.1,
 	MISSION_DEFAULT_SPREAD_BASE = 0.8,
@@ -1083,7 +1083,7 @@ NAI = {
 		0.0, -- air_ground_attack
 		0.0, -- air_visibility_factor
 		-- Common Values
-		1.0, -- max_organisation
+		2.0, -- max_organisation
 		1.0, -- max_strength
 		-0.5, -- build_cost_ic
 		1.0, -- maximum_speed
@@ -1106,7 +1106,7 @@ NAI = {
 	BUILD_ARMOR_STRENGTH_MULTIPLIER_WEIGHT = 100.0,
 	BUILD_ARMOR_ORGANIZATION_MULTIPLIER_WEIGHT = 500.0,
 
-	UPGRADE_DIVISION_RELUCTANCE = 7,					-- How often to consider upgrading to new templates for units in the field
+	UPGRADE_DIVISION_RELUCTANCE = 30,					-- How often to consider upgrading to new templates for units in the field
 	UPGRADE_PERCENTAGE_OF_FORCES = 0.1,					-- How big part of the army that should be considered for upgrading
 
 	STRATEGIC_BOMBING_DEFENCE_IMPORTANCE = 500.0,
