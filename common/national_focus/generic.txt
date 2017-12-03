@@ -50,12 +50,8 @@ focus_tree = {
 		ai_will_do = {
 			factor = 100
 			modifier = {
-				factor = 1.5
+				factor = 1.8
 				has_government = democratic
-			}
-			modifier = {
-				factor = 0.1
-				not = { has_government = democratic }
 			}
 		}
 
@@ -146,6 +142,10 @@ focus_tree = {
 		}	
 
 		available_if_capitulated = yes
+		
+		ai_will_do = {
+			factor = 100
+		}
 
 		completion_reward = {
 			add_political_power = 150
@@ -169,6 +169,10 @@ focus_tree = {
 		}	
 
 		available_if_capitulated = yes
+		
+		ai_will_do = {
+			factor = 100
+		}
 
 		completion_reward = {
 			custom_effect_tooltip = free_trade_agreement_tt
@@ -439,12 +443,8 @@ focus_tree = {
 		ai_will_do = {
 			factor = 100
 			modifier = {
-				factor = 1.5
+				factor = 1.8
 				has_government = communism
-			}
-			modifier = {
-				factor = 0.1
-				not = { has_government = communism }
 			}
 		}
 
@@ -578,12 +578,8 @@ focus_tree = {
 		ai_will_do = {
 			factor = 100
 			modifier = {
-				factor = 1.5
+				factor = 1.8
 				has_government = neutrality
-			}
-			modifier = {
-				factor = 0.1
-				not = { has_government = neutrality }
 			}
 			
 		}
@@ -768,23 +764,8 @@ focus_tree = {
 		ai_will_do = {
 			factor = 100
 			modifier = {
-				factor = 1.5
+				factor = 1.8
 				has_government = Nationalist
-			}
-			modifier = {
-				factor = 0.1
-				not = { has_government = Nationalist }
-			}
-			modifier = {
-				factor = 1.2
-				any_neighbor_country = {
-					any_owned_state = {
-						OR = {
-							is_core_of = ROOT
-							is_claimed_by = ROOT
-						}
-					}
-				}
 			}
 		}
 
@@ -1031,7 +1012,7 @@ focus_tree = {
 				}
 			}
 			modifier = {
-				factor = 1.5
+				factor = 1.8
 				has_government = fascism
 			}
 		}
@@ -1111,10 +1092,6 @@ focus_tree = {
 				factor = 2
 				tag = ISI
 			}
-			modifier = {
-				factor = 0
-				NOT = { country_exists = ISI }		#If ISIS is defeated
-			}
 		}
 
         bypass = { 
@@ -1122,27 +1099,61 @@ focus_tree = {
         }
         
 		completion_reward = {
-			random_country = {
+			if = {				#If ISIS exists, get puppeted by ISIS
 				limit = {
-					OR = {
-						AND = {
-							tag = ISI
-							exists = yes
-						}
-						AND = {
+					country_exists = ISI		
+				}
+				ISI = {
+					puppet = ROOT
+					add_to_faction = ROOT
+				}
+				ROOT = {
+					add_ai_strategy = {
+						type = alliance
+						id = "ISI"
+						value = 200
+					}
+				}
+			}
+			if = {
+				limit = {
+					NOT = { country_exists = ISI }
+				}
+				if = {			#If ISIS doesn't exist, get puppeted by new ISIS
+					limit = {
+						any_country = {
 							exists = yes
 							has_country_flag = new_ISIS
 						}
 					}
-				}	
-				puppet = ROOT
-				add_to_faction = ROOT
-			}
-			ROOT = {
-				add_ai_strategy = {
-					type = alliance
-					id = "ISI"
-					value = 200
+					random_country = {
+						limit = {
+							exists = yes
+							has_country_flag = new_ISIS
+						}
+						puppet = ROOT
+						add_to_faction = ROOT
+					}
+				}
+				if = {			#If ISIS doesn't exist, and noboy has taken the mantle, become new ISIS
+					limit = {
+						NOT = {
+							any_country = {
+								exists = yes
+								has_country_flag = new_ISIS
+							}
+						}
+					}
+					custom_effect_tooltip = become_new_isis
+					set_politics = {
+						ruling_party = fascism
+					}
+					set_political_party = {
+						ideology = fascism
+						popularity = 0.7
+					}
+					set_country_flag = new_ISIS
+					set_cosmetic_tag = ISI
 				}
 			}
 		}
@@ -1219,17 +1230,19 @@ focus_tree = {
 
 		completion_reward = {
 			custom_effect_tooltip = justification_for_islamic_conquest		#We get wargoals on other countries
-			every_other_country = {
-				limit = {
-					OR = {
-						has_idea = sunni
-						has_idea = shia
+			hidden_effect = {
+				every_other_country = {
+					limit = {
+						OR = {
+							has_idea = sunni
+							has_idea = shia
+						}
 					}
-				}
-				PREV = {
-					create_wargoal = {
-						type = annex_everything
-						target = PREV
+					PREV = {
+						create_wargoal = {
+							type = annex_everything
+							target = PREV
+						}
 					}
 				}
 			}
