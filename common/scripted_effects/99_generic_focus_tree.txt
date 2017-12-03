@@ -1,17 +1,336 @@
-#	Example:
-# 
-#	example_effect = {
-#		add_political_power = 66
-#		add_popularity = {
-#			ideology = fascism
-#			popularity = 0.33
-#		}
-#	}
-#
-#
-#	In a script file:
-#
-#	effect = {
-#		example_effect = yes
-#	}
-#
+#List of Scripted Triggers
+#add_infra_random				Adds one level of infra to a random state (country scope)
+#add_CIC_random					Adds one level of CIC to a random state (country scope)
+#add_MIC_random 				Adds one level of MIC to a random state (country scope)
+#add_influence 					Adds ideology drift of PREV to target	(country scope)		WIP
+#set_random_ideology			Sets random ideology (country scope)
+#set_random_ideology_no_islam	Sets random ideology for non-muslims (country scope)
+
+#Adds one level of infra in a random state (in country scope)
+add_infra_random = {
+	random_owned_state = {
+		limit = {
+			free_building_slots = {
+				building = infrastructure
+				size > 0
+			}
+			OR = {
+				is_in_home_area = yes
+				NOT = {
+					owner = {
+						any_owned_state = {
+							free_building_slots = {
+								building = infrastructure
+									size > 0
+								}
+								is_in_home_area = yes
+						}
+					}
+				}
+			}
+		}
+		add_building_construction = {
+			type = infrastructure
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+
+#Adds one level of civilian industry in a random state (in country scope)
+add_CIC_random = {
+	random_owned_state = {
+		limit = {
+			free_building_slots = {
+				building = industrial_complex
+					size > 0
+					include_locked = yes
+			}
+			OR = {
+				is_in_home_area = yes
+				NOT = {
+					owner = {
+						any_owned_state = {
+							free_building_slots = {
+								building = industrial_complex
+								size > 0
+								include_locked = yes
+							}
+							is_in_home_area = yes
+						}
+					}
+				}
+			}
+		}
+		add_extra_state_shared_building_slots = 1
+		add_building_construction = {
+			type = industrial_complex
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+
+#Adds CIC relative to existing CIC
+add_CIC_relative = {
+	if = {
+		limit = { num_of_civilian_factories < 30 }
+		add_CIC_random = yes			
+	}
+	if = {
+		limit = { AND = { num_of_civilian_factories > 29 num_of_civilian_factories < 50 } }
+		add_CIC_random = yes
+		add_CIC_random = yes
+	}
+	if = {
+		limit = { AND = { num_of_civilian_factories > 49 num_of_civilian_factories < 70 } }
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+	}
+	if = {
+		limit = { AND = { num_of_civilian_factories > 69 num_of_civilian_factories < 90 } }
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+	}
+	if = {
+		limit = { AND = { num_of_civilian_factories > 89 num_of_civilian_factories < 110 } }
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+	}
+	if = {
+		limit = { AND = { num_of_civilian_factories > 109 num_of_civilian_factories < 130 } }
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+	}
+	if = {
+		limit = { AND = { num_of_civilian_factories > 129 num_of_civilian_factories < 150 } }
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+	}
+	if = {
+		limit = { AND = { num_of_civilian_factories > 149 num_of_civilian_factories < 170 } }
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+	}
+	if = {
+		limit = { AND = { num_of_civilian_factories > 169 num_of_civilian_factories < 190 } }
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+	}
+	if = {
+		limit = { AND = { num_of_civilian_factories > 189 } }
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+		add_CIC_random = yes
+	}
+}
+
+#Adds one level of military factory in a random state (in country scope)
+add_MIC_random = {
+	random_owned_state = {
+		limit = {
+			free_building_slots = {
+				building = arms_factory
+				size > 0
+				include_locked = yes
+			}
+			OR = {
+				is_in_home_area = yes
+				NOT = {
+					owner = {
+						any_owned_state = {
+							free_building_slots = {
+								building = arms_factory
+								size > 0
+								include_locked = yes
+							}
+						is_in_home_area = yes
+						}
+					}
+				}
+			}	
+		}
+		add_extra_state_shared_building_slots = 1
+		add_building_construction = {
+			type = arms_factory
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+
+#Add ideology influence (in target country scope)
+# add_influence = {
+	# if = {
+		# limit = { 
+			# PREV = { has_government = democratic }
+		# }
+		# add_ideas = democratic_influence
+	# }
+	# if = {
+		# limit = { 
+			# PREV = { has_government = neutrality }
+		# }
+		# add_ideas = neutral_influence
+	# }
+	# if = {
+		# limit = { 
+			# PREV = { has_government = authoritarianism }
+		# }
+		# add_ideas = nationalist_influence
+	# }
+	# if = {
+		# limit = { 
+			# PREV = { has_government = fascism }
+		# }
+		# add_ideas = far_right_influence
+	# }
+	# if = {
+		# limit = { 
+			# PREV = { has_government = communism }
+		# }
+		# add_ideas = communist_influence
+	# }
+	# if = {
+		# limit = { 
+			# PREV = { has_government = radical_islam }
+		# }
+		# add_ideas = radical_islam_influence
+	# }
+# }
+		
+#Set random ideology (Country Scope)
+set_random_ideology = {
+	random_list = {
+		20 = {
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.3
+			}
+		}
+		20 = {
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.3
+			}
+		}
+		20 = {
+			set_politics = {
+				ruling_party = Nationalist
+				elections_allowed = yes
+			}
+			add_popularity = {
+				ideology = Nationalist
+				popularity = 0.3
+			}
+		}
+		20 = {
+			set_politics = {
+				ruling_party = fascism
+				elections_allowed = no
+			}
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.3
+			}
+		}
+		20 = {
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+			add_popularity = {
+				ideology = communism
+				popularity = 0.3
+			}
+		}
+	}
+}
+
+#Set random ideology without radical islam (Country Scope)
+set_random_ideology_no_islam = {
+	random_list = {
+		25 = {
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.3
+			}
+		}
+		25 = {
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.3
+			}
+		}
+		25 = {
+			set_politics = {
+				ruling_party = Nationalist
+				elections_allowed = yes
+			}
+			add_popularity = {
+				ideology = Nationalist
+				popularity = 0.3
+			}
+		}
+		25 = {
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+			add_popularity = {
+				ideology = communism
+				popularity = 0.3
+			}
+		}
+	}
+}
