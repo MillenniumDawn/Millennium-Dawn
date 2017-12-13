@@ -1,4 +1,5 @@
 ﻿add_namespace = Syria
+add_namespace = SyriaNews
 
 ### Syrian Civil War End ###
 
@@ -112,7 +113,7 @@ news_event = {
 				remove_core_of = ISI
 				remove_core_of = NUS
 			}
-			556 = {			#Aleppo
+			566 = {			#Aleppo
 				remove_core_of = SYR
 				remove_core_of = FSA
 				remove_core_of = ISI
@@ -142,6 +143,12 @@ news_event = {
 				remove_core_of = ISI
 				remove_core_of = NUS
 			}
+			557 = {			#North Anbar
+				remove_core_of = ISI
+			}
+			166 = {			#Nineveh
+				remove_core_of = ISI
+			}
 			add_state_core = 587
 			add_state_core = 184
 			add_state_core = 185
@@ -152,7 +159,7 @@ news_event = {
 			add_state_core = 189
 			add_state_core = 192
 			add_state_core = 191
-			add_state_core = 556
+			add_state_core = 566
 			add_state_core = 190
 			add_state_core = 193
 			add_state_core = 571
@@ -174,6 +181,7 @@ news_event = {
 		name = "Syria.1.a"
 		ai_chance = { factor = 100 }
 		set_global_flag = Syria_Civil_War_Over
+		hidden_effect = { news_event = { id = SyriaNews.1 hours = 6 } }
 	}
 	
 }
@@ -259,6 +267,7 @@ country_event = {
 			}
 		}
 		create_wargoal = { type = annex_everything target = NUS }
+		hidden_effect = { news_event = { id = SyriaNews.2 hours = 6 } }
 	}
 }
 
@@ -315,6 +324,7 @@ country_event = {
 		annex_country = { target = NUS transfer_troops = yes }
 		add_popularity = { ideology = fascism popularity = 0.1 }
 		add_national_unity = -0.10
+		hidden_effect = { news_event = { id = SyriaNews.3 hours = 6 } }
 	}
 	
 }
@@ -333,6 +343,7 @@ country_event = {
 		name = Syria.5.a
 		ai_chance = { factor = 100 }
 		create_wargoal = { type = annex_everything target = NUS }
+		hidden_effect = { news_event = { id = SyriaNews.2 hours = 6 } }
 	}
 	
 }
@@ -390,6 +401,7 @@ country_event = {
 		remove_state_core = 193
 		remove_state_core = 571
 		remove_state_core = 575
+		hidden_effect = { news_event = { id = SyriaNews.4 hours = 6 } }
 	}
 }
 
@@ -451,6 +463,7 @@ country_event = {
 		remove_state_core = 193
 		remove_state_core = 571
 		remove_state_core = 575
+		hidden_effect = { news_event = { id = SyriaNews.7 hours = 6 } }
 	}
 	option = {
 		name = Syria.8.b		#Let them go
@@ -464,6 +477,7 @@ country_event = {
 		add_state_claim = 193
 		add_state_claim = 571
 		add_state_claim = 575		
+		hidden_effect = { news_event = { id = SyriaNews.4 hours = 6 } }
 	}
 }
 
@@ -481,6 +495,7 @@ country_event = {
 		name = Syria.9.a		#Huzzah
 		ai_chance = { factor = 100 }
 		annex_country = { target = ROJ }
+		hidden_effect = { news_event = { id = SyriaNews.5 hours = 6 } }
 	}
 
 }
@@ -525,6 +540,12 @@ country_event = {
 	option = {
 		name = Syria.11.a		#Huzzah
 		ai_chance = { factor = 100 }
+		every_owned_state = {
+			limit = {
+				is_core_of = ROJ
+			}
+			ROJ = { transfer_state = PREV }
+		}
 		if = { 
 			limit = { has_dlc = "Death or Dishonor" }
 			set_autonomy = { target = ROJ autonomy_state = autonomy_dominion }
@@ -532,6 +553,7 @@ country_event = {
 				puppet = ROJ
 			}
 		}
+		hidden_effect = { news_event = { id = SyriaNews.6 hours = 6 } }
 	}
 }
 
@@ -596,14 +618,16 @@ country_event = {
 	
 	id = Syria.13
 	title = Syria.13.t
-	desc = {
-		text = Syria.13.Keep.desc
-		trigger = { FROM = { has_country_flag = Opinion_On_SSNP_Keep }
-	}
-	desc = {
-		text = Syria.13.Purge.desc
-		trigger = { FROM = { has_country_flag = Opinion_On_SSNP_Purge }
-	}
+    desc = {
+        text = Syria.13.Keep.desc
+    	trigger = { FROM = { has_country_flag = Opinion_On_SSNP_Keep }
+    	}
+    }
+    desc = {
+    	text = Syria.13.Purge.desc
+    	trigger = { FROM = { has_country_flag = Opinion_On_SSNP_Purge }
+    	}
+    }
 	picture = GFX_Syrian_Social_Nationalist_Party
 	
 	is_triggered_only = yes
@@ -614,3 +638,223 @@ country_event = {
 	}
 }
 
+#Fate of Rojava (dynamic version before implementation of Syrian focus tree)
+country_event = {
+	
+	id = Syria.14
+	title = Syria.14.t
+	desc = Syria.14.desc
+	picture = GFX_Rojava
+	
+	trigger = {
+		country_exists = ROJ
+		NOT = { ROJ = { is_subject_of = ROOT } }
+		NOT = { has_country_flag = Rojava_Question_Solved }
+		OR = {
+			AND = {
+				tag = SYR
+				NOT = {
+					country_exists = NUS
+					country_exists = FSA
+				}
+			}
+			AND = {
+				tag = NUS
+				NOT = {
+					country_exists = SYR
+					country_exists = FSA
+				}
+			}
+			AND = {
+				tag = FSA
+				NOT = {
+					country_exists = SYR
+					country_exists = NUS
+				}
+			}
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = Syria.6.a		#The area belongs to Syria
+		ai_chance = {
+			factor = 75
+			modifier = {
+				factor = 0.8
+				tag = FSA
+			}
+		}
+		ROJ = { country_event = { days = 5 id = Syria.7 } }
+		set_country_flag = Rojava_Question_Solved
+	}
+	option = {
+		name = Syria.6.b		#Offer them federal status
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 0
+				tag = NUS
+			}
+			modifier = {
+				factor = 1.5
+				tag = FSA
+			}
+		}
+		ROJ = { country_event = { days = 5 id = Syria.10 } }
+		set_country_flag = Rojava_Question_Solved
+	}
+	option = {
+		name = Syria.6.c		#Let them be independent
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 0
+				tag = NUS
+			}
+			modifier = {
+				factor = 2
+				tag = FSA
+			}
+		}
+		add_political_power = -50
+		remove_state_core = 193
+		remove_state_core = 571
+		remove_state_core = 575
+		set_country_flag = Rojava_Question_Solved
+		hidden_effect = { news_event = { id = SyriaNews.4 hours = 6 } }
+	}
+}
+
+### Syrian News Events ###
+
+#End of civil war
+news_event = {
+
+	id = SyriaNews.1
+	title = SyriaNews.1.t
+	desc = SyriaNews.1.d
+	picture = GFX_Syria_Civil_War_Victory
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = {		#These get their own event
+			tag = SYR
+			tag = FSA
+			tag = NUS
+		}
+	}
+	
+	option = {
+		name = SyriaNews.1.a
+	}
+	
+}
+
+#FSA and Al-Nusra hostile towards each other
+news_event = {
+	
+	id = SyriaNews.2
+	title = SyriaNews.2.t
+	desc = SyriaNews.2.d
+	picture = GFX_news_fsa_and_al_nusra
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.2.a
+	}
+}
+
+#FSA and Al-Nusra friendly towards each other
+news_event = {
+	
+	id = SyriaNews.3
+	title = SyriaNews.3.t
+	desc = SyriaNews.3.d
+	picture = GFX_news_fsa_and_al_nusra
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.3.a
+	}
+}
+
+#Rojava allowed to be independent
+news_event = {
+	
+	id = SyriaNews.4
+	title = SyriaNews.4.t
+	desc = SyriaNews.4.d
+	picture = GFX_news_rojava_victory
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.4.a
+	}
+}
+
+#Rojava annexed
+news_event = {
+	
+	id = SyriaNews.5
+	title = SyriaNews.5.t
+	desc = SyriaNews.5.d
+	picture = GFX_news_rojava_victory
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.5.a
+	}
+}
+
+#Rojava puppeted
+news_event = {
+	
+	id = SyriaNews.6
+	title = SyriaNews.6.t
+	desc = SyriaNews.6.d
+	picture = GFX_news_rojava_victory
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.6.a
+	}
+}
+
+#Rojava resists
+news_event = {
+	
+	id = SyriaNews.7
+	title = SyriaNews.7.t
+	desc = SyriaNews.7.d
+	picture = GFX_news_rojava_victory
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.7.a
+	}
+}
