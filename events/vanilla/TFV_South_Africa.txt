@@ -1,0 +1,1562 @@
+﻿###########################
+# South-African TFV events Events
+###########################
+
+add_namespace = tfv_south_africa
+
+# SAF_secure_interests_in_africa completed
+# South-African National focus
+country_event = {
+	id = tfv_south_africa.1
+	title = tfv_south_africa.1.t	# Ask ENG for control over british South-East Africa strip. 
+	desc = tfv_south_africa.1.d		#
+	picture = GFX_report_event_saf_soldiers					#
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.1.a	# ENG accepts the proposal
+		
+		ai_chance = {
+			base = 80
+
+		}
+		
+		effect_tooltip = {
+			SAF = {
+				transfer_state = 542
+				transfer_state = 545
+				transfer_state = 546
+				transfer_state = 547
+				transfer_state = 548
+			}
+		}
+		hidden_effect = {
+			SAF = {
+				country_event = { id = tfv_south_africa.2 }
+			}
+		}
+	}
+	
+	option = {
+		name = tfv_south_africa.1.b # ENG refuses the proposal
+		
+		ai_chance = {
+			base = 0
+		}
+		
+		hidden_effect = {
+			SAF = {
+				country_event = { id = tfv_south_africa.3 }
+			}
+		}
+	}
+	option = {
+		name = tfv_south_africa.1.c # ENG compromises
+		trigger = {
+		KEN = { exists = no }
+		ZIM = { exists = no }
+
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0 #don't do this if we are historical!
+			}
+			modifier = {
+				SAF = { NOT = { has_government = democratic} }
+				factor = 4
+			}
+		}
+		effect_tooltip = {
+			custom_effect_tooltip = SAF_colonies_tt
+		}
+		hidden_effect = {
+			SAF = {
+				country_event = { id = tfv_south_africa.4 }
+			}
+		}
+	}
+}
+
+#ENG transfers colonies
+country_event = {
+	id = tfv_south_africa.2
+	title = tfv_south_africa.2.t	#
+	desc = tfv_south_africa.2.d		#
+	picture = GFX_report_event_saf_soldiers_2
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.2.a
+
+		if = {
+			limit = { 
+				ZIM = { exists = no }	
+					}
+			transfer_state = 545
+		}
+
+		if = {
+			limit = { 
+				ZIM = { exists = yes }	
+					}
+			puppet = ZIM
+		}
+
+		if = {
+			limit = { 
+				KEN = { exists = no } 
+					}
+			transfer_state = 546
+			transfer_state = 547
+			transfer_state = 548
+		}
+
+		if = {
+			limit = { 
+				KEN = { exists = yes } 
+			}
+			puppet = KEN
+		}
+		transfer_state = 542
+		hidden_effect = {
+			news_event = { id = news.260 hours = 6 }
+					}
+	}
+		
+	
+}
+#ENG refuses
+country_event = {
+	id = tfv_south_africa.3
+	title = tfv_south_africa.3.t	#
+	desc = tfv_south_africa.3.d		#
+	picture = GFX_report_event_saf_soldiers_3
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.3.a
+	}
+}
+#ENG compromises
+country_event = {
+	id = tfv_south_africa.4
+	title = tfv_south_africa.4.t	#
+	desc = tfv_south_africa.4.d		#
+	picture = GFX_report_event_saf_soldiers					#
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.4.a
+
+		if = {
+		limit = { 
+			ZIM = { exists = no }	
+			}
+
+			ZIM = { transfer_state = 545 }
+
+			ENG = {
+			puppet = ZIM 
+				}
+			}
+
+		if = {
+		limit = { 
+			KEN = { exists = no } 
+				}
+			KEN = {
+				transfer_state = 546
+				transfer_state = 547
+				transfer_state = 548
+				}
+			
+			ENG = { 
+				puppet = KEN 
+				}
+			}
+
+		SAF = { transfer_state = 542 }
+		hidden_effect = {
+			news_event = { id = news.261 hours = 6 }
+			}
+		}
+
+		
+	}
+
+
+# SAF_support_the_german_coup completed
+# South-African national focus
+country_event = {
+	id = tfv_south_africa.10
+	title = tfv_south_africa.10.t	# SAF Civil war. Ask HOL or GER for support?
+	desc = tfv_south_africa.10.desc	#
+	picture = GFX_report_event_saf_coup
+	
+	fire_only_once = yes
+
+	trigger = {
+		has_completed_focus = SAF_support_the_german_coup
+		has_government = fascism
+		original_tag = SAF
+		has_civil_war = yes
+		OR = {
+			GER = {
+				NOT = { has_war_with = SAF }
+				has_government = fascism
+			}		
+			HOL = {
+				has_government = fascism
+				NOT = { has_war_with = SAF }
+			}		
+		}
+	}
+
+	mean_time_to_happen = { days = 2 }
+	
+	option = {
+		name = tfv_south_africa.10.a # Ask GER for support
+		trigger = {
+			GER = {
+				NOT = { has_war_with = SAF }
+				has_government = fascism
+			}			
+		}
+		
+		ai_chance = {
+			base = 100
+			modifier = {
+				GER = { NOT = { has_government = fascism } }
+				factor = 0.1
+			}
+		}
+		
+		set_country_flag = asked_GER_for_support
+		
+		GER = { country_event = { id = tfv_south_africa.11 days = 1 } }
+	}
+	
+	option = {
+		name = tfv_south_africa.10.b # Ask HOL for support
+		trigger = {
+			HOL = {
+				has_government = fascism
+				NOT = { has_war_with = SAF }
+			}			
+		}
+
+		ai_chance = {
+			base = 30
+			modifier = {
+				GER = { 
+					has_government = fascism 
+					has_war = no
+				} 
+				factor = 0
+			}
+		}
+		
+		set_country_flag = asked_HOL_for_support
+		
+		HOL = { country_event = { id = tfv_south_africa.12 days = 1 } }
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.11
+	title = tfv_south_africa.11.t	# GER is asked to help in the SAF civil war.
+	desc = tfv_south_africa.11.desc
+	picture = GFX_report_event_generic_lend_lease
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_government = fascism
+		SAF = {
+			has_civil_war = yes
+			has_government = fascism
+		}
+		NOT = { has_war_with = SAF }
+	}
+	
+	option = {
+		name = tfv_south_africa.11.a # Send a bunch of airplanes
+		
+		ai_chance = {
+			base = 10
+		}
+		
+		trigger = {
+			OR = {
+				is_ai = yes
+				has_equipment = {
+					fighter_equipment_1 > 19
+				}
+			}
+		}
+		
+		SAF = { 
+			set_country_flag = GER_sent_support
+			set_country_flag = shipment_of_airplanes
+			
+			country_event = { id = tfv_south_africa.15 }
+		}
+		
+		effect_tooltip = {
+			SAF_german_coup_equipment_GER_fighters_20 = yes
+		}
+		
+		SAF_send_equipment_flag_counter = yes
+		if = {
+			limit = {
+				NOT = { has_country_flag = SAF_sent_equipment_3 }
+			}
+			# repeat event within 21-28 days
+			country_event = { id = tfv_south_africa.11 days = 21 random = 168 } 
+			
+			else = {
+				clr_country_flag = SAF_sent_equipment_1
+				clr_country_flag = SAF_sent_equipment_2
+				clr_country_flag = SAF_sent_equipment_3
+			}
+		}
+	}
+	
+	option = {
+		name = tfv_south_africa.11.b # Give them panzers
+		
+		ai_chance = {
+			base = 10
+		}
+		
+		trigger = {
+			OR = {
+				is_ai = yes
+				has_equipment = {
+					light_tank_equipment_1 > 19
+				}
+			}
+		}
+		
+		SAF = {
+			set_country_flag = GER_sent_support
+			set_country_flag = shipment_of_tanks
+			
+			country_event = { id = tfv_south_africa.15 }
+		}
+		
+		effect_tooltip = {			
+			SAF_german_coup_equipment_GER_light_tank_20 = yes
+		}
+		
+		SAF_send_equipment_flag_counter = yes
+		if = {
+			limit = {
+				NOT = { has_country_flag = SAF_sent_equipment_3 }
+			}
+			# repeat event within 21-28 days
+			country_event = { id = tfv_south_africa.11 days = 21 random = 168 } 
+			
+			else = {
+				clr_country_flag = SAF_sent_equipment_1
+				clr_country_flag = SAF_sent_equipment_2
+				clr_country_flag = SAF_sent_equipment_3
+			}
+		}
+	}
+	
+	option = {
+		name = tfv_south_africa.11.c # Send infantry equipment
+		
+		ai_chance = {
+			base = 50
+		}
+		
+		trigger = {
+			OR = {
+				is_ai = yes
+				AND = {
+					has_equipment = {
+						infantry_equipment_1 > 199
+					}
+					has_equipment = {
+						artillery_equipment_1 > 9
+					}
+				}
+			}
+		}
+		
+		SAF = { 
+			set_country_flag = GER_sent_support
+			
+			country_event = { id = tfv_south_africa.15 }
+		}
+		
+		effect_tooltip = {
+			SAF_german_coup_inf_GER_equipment_200 = yes
+		}
+		
+		SAF_send_equipment_flag_counter = yes
+		if = {
+			limit = {
+				NOT = { has_country_flag = SAF_sent_equipment_3 }
+			}
+			# repeat event within 21-28 days
+			country_event = { id = tfv_south_africa.11 days = 21 random = 168 } 
+			
+			else = {
+				clr_country_flag = SAF_sent_equipment_1
+				clr_country_flag = SAF_sent_equipment_2
+				clr_country_flag = SAF_sent_equipment_3
+			}
+		}
+	}
+	
+	option = {
+		name = tfv_south_africa.11.e # We can't spare anything
+		
+		ai_chance = {
+			base = 0
+			
+			modifier = {
+				add = 0
+				NOT = {
+					OR = {
+						has_equipment = {
+							artillery_equipment_1 > 9
+						}
+						has_equipment = {
+							infantry_equipment_1 > 199
+						}
+					}
+					has_equipment = {
+						light_tank_equipment_1 > 19
+					}
+					has_equipment = {
+						fighter_equipment_1 > 19
+					}
+				}
+			}
+		}
+		
+		SAF = { country_event = { id = tfv_south_africa.13 } }
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.12
+	title = tfv_south_africa.12.t	# HOL is asked to help in the SAF civil war.
+	desc = tfv_south_africa.12.desc
+	picture = GFX_report_event_generic_lend_lease
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_government = fascism
+		SAF = {
+			has_civil_war = yes
+			has_government = fascism
+		}
+		NOT = { has_war_with = SAF }
+	}
+	
+	option = {
+		name = tfv_south_africa.12.a # Send a bunch of airplanes
+		
+		ai_chance = {
+			base = 10
+		}
+		
+		trigger = {
+			OR = {
+				is_ai = yes
+				has_equipment = {
+					fighter_equipment_1 > 19
+				}
+			}
+		}
+		
+		SAF = { 
+			set_country_flag = HOL_sent_support
+			set_country_flag = shipment_of_airplanes
+			
+			country_event = { id = tfv_south_africa.16 }
+		}
+		
+		effect_tooltip = {
+			SAF_german_coup_equipment_HOL_fighters_20 = yes
+		}
+		
+		SAF_send_equipment_flag_counter = yes
+		if = {
+			limit = {
+				NOT = { has_country_flag = SAF_sent_equipment_3 }
+			}
+			# repeat event within 21-28 days
+			country_event = { id = tfv_south_africa.12 days = 21 random = 168 } 
+			
+			else = {
+				clr_country_flag = SAF_sent_equipment_1
+				clr_country_flag = SAF_sent_equipment_2
+				clr_country_flag = SAF_sent_equipment_3
+			}
+		}
+	}
+	
+	option = {
+		name = tfv_south_africa.12.b # Give them panzers
+		
+		ai_chance = {
+			base = 10
+		}
+		
+		trigger = {
+			OR = {
+				is_ai = yes
+				has_equipment = {
+					light_tank_equipment_1 > 19
+				}
+			}
+		}
+		
+		SAF = { 
+			set_country_flag = HOL_sent_support
+			set_country_flag = shipment_of_tanks
+			
+			country_event = { id = tfv_south_africa.16 }
+		}
+		
+		effect_tooltip = {
+			SAF_german_coup_equipment_HOL_light_tank_20 = yes
+		}
+		
+		SAF_send_equipment_flag_counter = yes
+		if = {
+			limit = {
+				NOT = { has_country_flag = SAF_sent_equipment_3 }
+			}
+			# repeat event within 21-28 days
+			country_event = { id = tfv_south_africa.12 days = 21 random = 168 } 
+			
+			else = {
+				clr_country_flag = SAF_sent_equipment_1
+				clr_country_flag = SAF_sent_equipment_2
+				clr_country_flag = SAF_sent_equipment_3
+			}
+		}
+	}
+	
+	option = {
+		name = tfv_south_africa.12.c # Send infantry equipment
+		
+		ai_chance = {
+			base = 10
+		}
+		
+		trigger = {
+			OR = {
+				is_ai = yes
+				AND = {
+					has_equipment = {
+						infantry_equipment_1 > 199
+					}
+					has_equipment = {
+						artillery_equipment_1 > 9
+					}
+				}
+			}
+		}
+		
+		SAF = { 
+			set_country_flag = HOL_sent_support
+			
+			country_event = { id = tfv_south_africa.16 }
+		}
+		
+		effect_tooltip = {
+			SAF_german_coup_inf_HOL_equipment_200 = yes
+		}
+		
+		SAF_send_equipment_flag_counter = yes
+		if = {
+			limit = {
+				NOT = { has_country_flag = SAF_sent_equipment_3 }
+			}
+			# repeat event within 21-28 days
+			country_event = { id = tfv_south_africa.12 days = 21 random = 168 } 
+			
+			else = {
+				clr_country_flag = SAF_sent_equipment_1
+				clr_country_flag = SAF_sent_equipment_2
+				clr_country_flag = SAF_sent_equipment_3
+			}
+		}
+	}
+	
+	
+	option = {
+		name = tfv_south_africa.12.e # We can't spare anything
+		
+		ai_chance = {
+			base = 0
+			
+			modifier = {
+				add = 100
+				NOT = {
+					OR = {
+						has_equipment = {
+							artillery_equipment_1 > 9
+						}
+						has_equipment = {
+							infantry_equipment_1 > 199
+						}
+					}
+					has_equipment = {
+						light_tank_equipment_1 > 19
+					}
+					has_equipment = {
+						fighter_equipment_1 > 19
+					}
+				}
+			}
+		}
+		
+		SAF = { country_event = { id = tfv_south_africa.14 } }
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.13
+	title = tfv_south_africa.13.t
+	desc = {
+		text = tfv_south_africa.13.desc.a # GER denies support
+		trigger = { NOT = { has_country_flag = GER_sent_support } }
+	}
+	desc = {
+		text = tfv_south_africa.13.desc.b # GER stops support
+		trigger = { has_country_flag = GER_sent_support }
+	}
+	picture = GFX_report_event_military_planning
+	
+	is_triggered_only = yes
+	
+	option = {
+		ai_chance = {
+			base = 100
+			modifier = {
+				NOT = { has_government = fascism }
+				factor = 0
+			}
+		}
+		name = tfv_south_africa.13.a # Ask HOL instead
+		trigger = {
+			NOT = { has_country_flag = GER_sent_support }
+			NOT = { has_country_flag = asked_HOL_for_support }
+			HOL = {
+				OR = {
+					fascism > 0.25
+					has_government = fascism
+				}
+			}
+		}
+		
+		HOL = { country_event = { id = tfv_south_africa.12 hours = 48 } }
+	}
+	
+	option = {
+		name = tfv_south_africa.13.b # We're on our own
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+}
+
+country_event = {
+	id = tfv_south_africa.14
+	title = tfv_south_africa.14.t
+	desc = {
+		text = tfv_south_africa.14.desc.a # HOL denies support
+		trigger = { NOT = { has_country_flag = HOL_sent_support } }
+	}
+	desc = {
+		text = tfv_south_africa.14.desc.b # HOL stops support
+		trigger = { has_country_flag = HOL_sent_support }
+	}
+	picture = GFX_report_event_generic_factory
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.14.a # Ask HOL instead
+		trigger = {
+			NOT = { has_country_flag = HOL_sent_support }
+			NOT = { has_country_flag = asked_GER_for_support }			
+			GER = {
+				has_war = no
+				has_government = fascism
+			}
+		}
+		
+		GER = { country_event = { id = tfv_south_africa.11 hours = 48 } }
+	}
+	
+	option = {
+		name = tfv_south_africa.14.b # We're on our own
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.15
+	title = tfv_south_africa.15.t # Germany sent equipment
+	desc = {
+		text = tfv_south_africa.15.desc.a
+		trigger = { has_country_flag = shipment_of_airplanes }
+	}
+	desc = {
+		text = tfv_south_africa.15.desc.b
+		trigger = { has_country_flag = shipment_of_tanks }
+	}
+	desc = {
+		text = tfv_south_africa.15.desc.c
+	}
+	picture = GFX_report_event_merchant_ship_01
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.15.a # received planes
+		trigger = { has_country_flag = shipment_of_airplanes }
+		
+		clr_country_flag = shipment_of_airplanes
+		GER = { SAF_german_coup_equipment_GER_fighters_20 = yes }		
+	}
+	
+	option = {
+		name = tfv_south_africa.15.b # received tanks
+		trigger = { has_country_flag = shipment_of_tanks }
+		
+		clr_country_flag = shipment_of_tanks
+		
+		GER = { SAF_german_coup_equipment_GER_light_tank_20 = yes }		
+	}
+	
+	option = {
+		name = tfv_south_africa.15.c # received rifles
+		trigger = {
+			NOT = { has_country_flag = shipment_of_airplanes }
+			NOT = { has_country_flag = shipment_of_tanks }
+		}
+		GER = { SAF_german_coup_inf_GER_equipment_200 = yes }
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.16
+	title = tfv_south_africa.16.t # Netherlands sent equipment
+	desc = {
+		text = tfv_south_africa.16.desc.a
+		trigger = { has_country_flag = shipment_of_airplanes }
+	}
+	desc = {
+		text = tfv_south_africa.16.desc.b
+		trigger = { has_country_flag = shipment_of_tanks }
+	}
+	desc = {
+		text = tfv_south_africa.16.desc.c
+	}
+	picture = GFX_report_event_merchant_ship_01
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.16.a # received planes
+		trigger = { has_country_flag = shipment_of_airplanes }
+
+		clr_country_flag = shipment_of_airplanes
+		
+		HOL = { SAF_german_coup_equipment_HOL_fighters_20 = yes }
+	}
+	
+	option = {
+		name = tfv_south_africa.16.b # received tanks
+		trigger = { has_country_flag = shipment_of_tanks }
+		
+		clr_country_flag = shipment_of_tanks	
+		HOL = { SAF_german_coup_equipment_HOL_light_tank_20 = yes }
+	}
+	
+	option = {
+		name = tfv_south_africa.16.c # received rifles
+		trigger = {
+			NOT = { has_country_flag = shipment_of_airplanes }
+			NOT = { has_country_flag = shipment_of_tanks }
+		}
+		HOL = { SAF_german_coup_inf_HOL_equipment_200 = yes }
+	}
+}
+
+
+
+# SAF_join_comintern completed
+# South-African national focus
+country_event = {
+	id = tfv_south_africa.20
+	title = tfv_south_africa.20.t	# SAF asks SOV for membership in comintern
+	desc = tfv_south_africa.20.d	#
+	picture = GFX_report_event_stalin_meeting
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.20.a # SOV accepts SAF as a member of comintern
+		
+		ai_chance = {
+			base = 100
+		}
+		
+		effect_tooltip = {
+			add_to_faction = SAF
+		}
+		
+		hidden_effect = {
+			SAF = {
+				country_event = { id = tfv_south_africa.21 }
+			}
+		}
+	}
+	
+	option = {
+		name = tfv_south_africa.20.b # SOV denies SAF membership
+		
+		ai_chance = {
+			base = 0
+		}
+		
+		hidden_effect = {
+			SAF = {
+				country_event = { id = tfv_south_africa.22 }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.21
+	title = tfv_south_africa.21.t	# SOV accepts SAF as a member of comintern
+	desc = tfv_south_africa.21.d	#
+	picture = GFX_report_event_stalin_meeting
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.21.a
+		
+		SOV = {
+			add_to_faction = SAF
+		}
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.22
+	title = tfv_south_africa.22.t	# SOV denies SAF membership
+	desc = tfv_south_africa.22.d	#
+	picture = GFX_report_event_stalin_meeting
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.22.a
+	}
+}
+
+# SAF_demand_madagascar completed
+# South-African national focus
+
+country_event = {
+	id = tfv_south_africa.30
+	title = tfv_south_africa.30.t	# SAF demands Madagascar
+	desc = tfv_south_africa.30.d	#
+	picture = GFX_report_event_generic_panzer_attack
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.30.a # FRA accepts
+		
+		ai_chance = {
+			base = 70
+			modifier = {
+				has_government = fascism 
+				add = -50
+			}
+		}
+		
+		effect_tooltip = {
+			
+		}
+		
+		hidden_effect = {
+			SAF = {
+				country_event = { id = tfv_south_africa.31 }
+			}
+		}
+	}
+	
+	option = {
+		name = tfv_south_africa.30.b # FRA refuses
+		
+		ai_chance = {
+			base = 30
+		}
+		
+		hidden_effect = {
+			SAF = {
+				country_event = { id = tfv_south_africa.32 }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.31
+	title = tfv_south_africa.31.t	# FRA accepts demands
+	desc = tfv_south_africa.31.d	#
+	picture = GFX_report_event_saf_soldiers_2
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.31.a
+		
+		transfer_state = 543
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.32
+	title = tfv_south_africa.32.t	# FRA refuses demands, wargoal offered
+	desc = tfv_south_africa.32.d	#
+	picture = GFX_report_event_saf_soldiers_2
+	
+	is_triggered_only = yes
+	
+	option = { # option to go to war
+		name = tfv_south_africa.32.a
+		ai_chance = {
+			base = 80
+		}
+		
+		create_wargoal = {
+					type = take_state_focus
+					target = FRA
+					generator = { 543 }
+					}
+	}
+	option = { #back down if you are a coward
+		name = tfv_south_africa.32.b
+		ai_chance = {
+			base = 20
+		}
+		
+	}
+}
+#SOV/SAF research treaty
+country_event = {
+	id = tfv_south_africa.40
+	title = tfv_south_africa.40.t	# SAF offers treaty
+	desc = tfv_south_africa.40.d	#
+	picture = GFX_report_event_generic_research_lab
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.40.a # SOV offers support 
+		
+		ai_chance = {
+			base = 100
+		}
+		
+		effect_tooltip = {
+			
+		}
+		
+		hidden_effect = {
+			SAF = {
+				country_event = { id = tfv_south_africa.41 }
+			}
+		}
+	}
+	
+	option = {
+		name = tfv_south_africa.40.b # SOV refuses
+		
+		ai_chance = {
+			base = 0
+		}
+		
+		hidden_effect = {
+			SAF = {
+				country_event = { id = tfv_south_africa.42 }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.41
+	title = tfv_south_africa.41.t	# SOV helps with research
+	desc = tfv_south_africa.41.d	#
+	picture = GFX_report_event_generic_research_lab
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.41.a
+		SOV = { add_to_tech_sharing_group = comintern_research }
+		add_to_tech_sharing_group = comintern_research
+	}
+}
+
+
+country_event = {
+	id = tfv_south_africa.42
+	title = tfv_south_africa.42.t	# SOV refuses
+	desc = tfv_south_africa.42.d	#
+	picture = GFX_report_event_generic_research_lab
+	
+	is_triggered_only = yes
+	
+	option = { # oh well
+		name = tfv_south_africa.42.a
+		
+		
+	}
+	
+}
+#SAF support for spain
+country_event = {
+	id = tfv_south_africa.50
+	title = tfv_south_africa.50.t	# 
+	desc = tfv_south_africa.50.d	#
+	picture = GFX_report_event_german_volunteers
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.50.a # SAF offers "volunteers"
+		
+		ai_chance = {
+			base = 45
+		}
+		
+		effect_tooltip = {
+			set_rule = { can_send_volunteers = yes }
+		}
+		
+		hidden_effect = {
+			SAF = {
+				set_rule = { can_send_volunteers = yes }
+				set_country_flag = SAF_spanish_volunteers
+				add_ideas = { SAF_support_spain }
+			}
+		}
+	}
+	
+	option = {
+		name = tfv_south_africa.50.b # SAF offers volunteers
+		trigger = {
+			
+			has_war = no	
+			has_manpower > 5000
+		}
+		ai_chance = {
+			base = 45
+		}
+
+		effect_tooltip = { add_manpower = -5000 }
+		
+		hidden_effect = {
+			SAF = {
+				add_manpower = -5000
+				set_country_flag = SAF_spanish_volunteers
+				random_other_country = {
+					limit = {
+						original_tag = SPR
+						has_government = communism
+							}
+					country_event = { id = tfv_south_africa.51 hours = 6 }
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = tfv_south_africa.50.c # SAF decides not to
+		
+		ai_chance = {
+			base = 0
+		}
+		
+		hidden_effect = {
+			
+		}
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.51
+	title = tfv_south_africa.51.t	# SAF sends volunteers to Spain
+	desc = tfv_south_africa.51.d	#
+	picture = GFX_report_event_german_volunteers
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = tfv_south_africa.51.a
+		add_manpower = 5000		
+	}
+}
+
+country_event = {
+	id = tfv_south_africa.52
+	title = tfv_south_africa.52.t	# SAF volunteers return
+	desc = tfv_south_africa.52.d	#
+	picture = GFX_report_event_saf_soldiers_2
+	
+	fire_only_once = yes
+
+	trigger = {
+	tag = SAF
+	has_global_flag = scw_over
+	has_country_flag = SAF_spanish_volunteers
+	}
+
+	mean_time_to_happen = { days = 30 }
+	
+	option = { 
+		name = tfv_south_africa.52.a
+		add_ideas = {
+			SAF_scw_veterans
+			}
+		clr_country_flag = SAF_spanish_volunteers		
+		}
+	
+}
+
+#European Colonies Liberation Events (not to be confused with Liberation Events for European Colonies!)
+country_event = {
+	id = tfv_south_africa.60
+	title = tfv_south_africa.60.t	# Freedom for ANG
+	desc = tfv_south_africa.60.d	#
+	picture = GFX_report_event_african_soldiers
+	
+	trigger = {
+		tag = SAF
+		has_completed_focus = SAF_anti_colonialist_crusade
+		AND = {
+			SAF = {
+				controls_state = 540
+			}
+			ANG = { exists = no }
+		}
+	
+	}
+
+	mean_time_to_happen = { days = 180 }
+	
+	option = { #puppet new state
+		name = tfv_south_africa.60.a
+		ai_chance = {
+			base = 100
+		}
+			ANG = { 
+				if = {
+				limit = { 
+					SAF = { controls_state = 540 } 
+						}
+					transfer_state = 540
+					}
+				}
+			SAF = { puppet = ANG }
+			set_country_flag = SAF_released_ANG
+	}
+
+	option = { #full freedom
+		name = tfv_south_africa.60.b
+		ai_chance = {
+			base = 0
+		}
+		ANG = { 
+			if = {
+				limit = { 
+					SAF = { controls_state = 540 } 
+				}
+				transfer_state = 540
+			}
+			hidden_effect = {
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+				}
+				add_popularity = {
+						ideology = communism
+						popularity = 0.75
+				}
+			}
+		}
+		set_country_flag = SAF_released_ANG
+		SAF = { add_to_faction = ANG }
+	}
+
+	option = { #refuse them because of reasons
+		name = tfv_south_africa.60.c
+		ai_chance = {
+			base = 0
+		}
+		add_political_power = -70
+		}		
+	}
+	
+	country_event = {
+	id = tfv_south_africa.61
+	title = tfv_south_africa.61.t	# Freedom for MZB
+	desc = tfv_south_africa.61.d	#
+	picture = GFX_report_event_african_soldiers
+	
+	trigger = {
+		tag = SAF
+		has_completed_focus = SAF_anti_colonialist_crusade
+		AND = {
+			SAF = {
+			controls_state = 544
+			}
+			MZB = { exists = no }
+		}
+	
+	}
+
+	mean_time_to_happen = { days = 180 }
+	
+	option = { #puppet new state
+		name = tfv_south_africa.61.a
+		ai_chance = {
+			base = 100
+		}
+			MZB = { 
+				if = {
+				limit = { 
+					SAF = { controls_state = 544 } 
+						}
+					transfer_state = 544
+					}
+				}
+			SAF = { puppet = MZB }
+			set_country_flag = SAF_released_MZB
+	}
+
+	option = { #full freedom
+		name = tfv_south_africa.61.b
+		ai_chance = {
+			base = 0
+		}
+			MZB = { 
+				if = {
+					limit = { 
+						SAF = { controls_state = 544 } 
+					}
+					transfer_state = 544
+				}
+				hidden_effect = {
+					set_politics = {
+						ruling_party = communism
+						elections_allowed = no
+					}
+					add_popularity = {
+						ideology = communism
+						popularity = 0.75
+					}
+				}
+			}
+
+		set_country_flag = SAF_released_MZB
+		SAF = { add_to_faction = MZB }		
+	}
+
+	option = { #refuse them because of reasons
+		name = tfv_south_africa.61.c
+		ai_chance = {
+			base = 0
+		}
+		add_political_power = -70
+		}		
+	}
+
+	country_event = {
+	id = tfv_south_africa.62
+	title = tfv_south_africa.62.t	# Freedom for COG
+	desc = tfv_south_africa.62.d	#
+	picture = GFX_report_event_african_soldiers
+	
+	trigger = {
+		tag = SAF
+		has_completed_focus = SAF_anti_colonialist_crusade
+		AND = {
+			SAF = {
+				controls_state = 295
+				controls_state = 718
+				controls_state = 538
+			}
+			COG = { exists = no }
+		}
+	
+	}
+
+	mean_time_to_happen = { days = 180 }
+	
+	option = { #puppet new state
+		name = tfv_south_africa.61.a
+		ai_chance = {
+			base = 100
+		}
+			COG = { 
+				if = {
+					limit = { 
+						SAF = { 
+							controls_state = 295 
+							controls_state = 538 
+							controls_state = 718 
+							} 
+
+						}
+							transfer_state = 295
+							transfer_state = 538
+							transfer_state = 718
+					}
+				}
+			SAF = { puppet = COG }
+			set_country_flag = SAF_released_COG
+	}
+
+	option = { #full freedom
+		name = tfv_south_africa.61.b
+		ai_chance = {
+			base = 0
+		}
+			COG = { 
+				if = {
+					limit = { 
+						SAF = { 
+							controls_state = 295 
+							controls_state = 538 
+							controls_state = 718 
+							} 
+
+						}
+						transfer_state = 295
+						transfer_state = 538
+						transfer_state = 718
+					}
+				hidden_effect = {
+					set_politics = {
+						ruling_party = communism
+						elections_allowed = no
+					}
+					add_popularity = {
+						ideology = communism
+						popularity = 0.75
+					}
+				}	
+			}
+						
+			set_country_flag = SAF_released_COG
+			SAF = { add_to_faction = COG }		
+	}
+
+	option = { #refuse them because of reasons
+		name = tfv_south_africa.61.c
+		ai_chance = {
+			base = 0
+		}
+		add_political_power = -70
+		}		
+	}
+
+	country_event = {
+	id = tfv_south_africa.63
+	title = tfv_south_africa.63.t	# Freedom for ZIM
+	desc = tfv_south_africa.63.d	#
+	picture = GFX_report_event_african_soldiers
+	
+	trigger = {
+		tag = SAF
+		has_completed_focus = SAF_anti_colonialist_crusade
+		AND = {
+			SAF = {
+				controls_state = 545
+			}
+			ZIM = { exists = no }
+		}
+	
+	}
+
+	mean_time_to_happen = { days = 180 }
+	
+	option = { #puppet new state
+		name = tfv_south_africa.63.a
+		ai_chance = {
+			base = 100
+		}
+			ZIM = { 
+				if = {
+				limit = { 
+					SAF = { 
+						controls_state = 545  
+						} 
+
+					}
+						transfer_state = 545
+					}
+				}
+			SAF = { puppet = ZIM }
+			set_country_flag = SAF_released_ZIM
+	}
+
+	option = { #full freedom
+		name = tfv_south_africa.63.b
+		ai_chance = {
+			base = 0
+		}
+			ZIM = { 
+				if = {
+					limit = { 
+						SAF = { 
+							controls_state = 545 
+							
+							} 
+
+						}
+						transfer_state = 545
+						
+					}
+				hidden_effect = {
+					set_politics = {
+						ruling_party = communism
+						elections_allowed = no
+					}
+					add_popularity = {
+						ideology = communism
+						popularity = 0.75
+					}
+				}
+			}
+
+			set_country_flag = SAF_released_ZIM
+			SAF = { add_to_faction = ZIM }		
+	}
+
+	option = { #refuse them because of reasons
+		name = tfv_south_africa.63.c
+		ai_chance = {
+			base = 0
+		}
+		add_political_power = -70
+		}		
+	}
+
+	country_event = {
+	id = tfv_south_africa.64
+	title = tfv_south_africa.64.t	# Freedom for KEN
+	desc = tfv_south_africa.64.d	#
+	picture = GFX_report_event_african_soldiers
+	
+	trigger = {
+		tag = SAF
+		has_completed_focus = SAF_anti_colonialist_crusade
+		AND = {
+			SAF = {
+				controls_state = 546
+				controls_state = 547
+				controls_state = 548
+			}
+			KEN = { exists = no }
+		}
+	
+	}
+
+	mean_time_to_happen = { days = 180 }
+	
+	option = { #puppet new state
+		name = tfv_south_africa.64.a
+		ai_chance = {
+			base = 100
+		}
+			KEN = { 
+				if = {
+				limit = { 
+					SAF = { 
+						controls_state = 546
+						controls_state = 547
+						controls_state = 548 
+						} 
+
+					}
+						transfer_state = 546
+						transfer_state = 547
+						transfer_state = 548
+					}
+				}
+			SAF = { puppet = KEN }
+			set_country_flag = SAF_released_KEN
+	}
+
+	option = { #full freedom
+		name = tfv_south_africa.64.b
+		ai_chance = {
+			base = 0
+		}
+			KEN = { 
+				if = {
+					limit = { 
+						SAF = { 
+							controls_state = 546 
+							controls_state = 547 
+							controls_state = 548 
+							} 
+
+						}
+						transfer_state = 546
+						transfer_state = 547
+						transfer_state = 548
+					}
+				hidden_effect = {
+					set_politics = {
+						ruling_party = communism
+						elections_allowed = no
+					}
+					add_popularity = {
+						ideology = communism
+						popularity = 0.75
+					}
+				}
+			}			
+			set_country_flag = SAF_released_KEN
+			SAF = { add_to_faction = KEN }		
+	}
+
+	option = { #refuse them because of reasons
+		name = tfv_south_africa.64.c
+		ai_chance = {
+			base = 0
+		}
+		add_political_power = -70
+		}		
+	}

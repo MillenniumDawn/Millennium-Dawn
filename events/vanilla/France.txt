@@ -1,0 +1,1262 @@
+﻿###########################
+# French Events
+###########################
+
+add_namespace = france
+
+# Japan demands Indochina
+country_event = {
+	id = france.1
+	title = france.1.t
+	desc = france.1.d
+	picture = GFX_report_event_japan_army_mountainside
+	
+	is_triggered_only = yes
+	
+	option = { # Accept demands
+		name = france.1.a
+		ai_chance = {
+			factor = 25 
+			modifier = {
+				factor = 50
+				has_war = yes
+				any_enemy_country = {
+					strength_ratio = { 
+						tag = ROOT 
+						ratio < 0.4
+					}
+				}
+			}
+			modifier = {
+				factor = 75
+				16 = { NOT = { is_controlled_by = FRA } } #Paris	
+			}
+		} 
+		JAP = {
+			country_event = { days = 5 id = japan.6 }
+		}
+	}
+	option = { # Refuse
+		name = france.1.b
+		ai_chance = { factor = 25 }
+		JAP = {
+			country_event = { days = 5 id = japan.7 }
+		}
+	}
+}
+
+# Maginot Line Extension
+country_event = {
+	id = france.2
+	title = france.2.t
+	desc = france.2.d
+	picture = GFX_report_event_bunker_01
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = france.2.a
+		18 = {
+			add_building_construction = {
+				type = bunker
+				province = 5291
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = bunker
+				province = 3560
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = bunker
+				province = 9472
+				level = 2
+				instant_build = yes
+			}
+		}
+		29 = {
+			add_building_construction = {
+				type = bunker
+				province = 3447
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = bunker
+				province = 11606
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = bunker
+				province = 11483
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = bunker
+				province = 575
+				level = 2
+				instant_build = yes
+			}
+		}
+	}
+}
+
+# Alpine Line Extension
+country_event = {
+	id = france.3
+	title = france.3.t
+	desc = france.3.d
+	picture = GFX_report_event_bunker_01
+
+	is_triggered_only = yes
+	
+	option = {
+		name = france.3.a
+		735 = {
+			add_building_construction = {
+				type = bunker
+				province = 764
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = bunker
+				province = 9909
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = bunker
+				province = 3959
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = bunker
+				province = 6975
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = bunker
+				province = 3764
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = bunker
+				province = 9745
+				level = 2
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = bunker
+				province = 778
+				level = 2
+				instant_build = yes
+			}
+		}
+	}
+}
+
+### The Fall of France
+
+# The Battle is Lost
+country_event = {
+	id = france.10
+	title = france.10.t
+	desc = france.10.d
+	picture = GFX_report_event_german_parade_paris
+	
+	fire_only_once = yes
+	
+	trigger = {
+		tag = FRA
+		has_war_with = GER
+		16 = { is_controlled_by = GER }
+		is_in_faction_with = ENG
+		ENG = { has_war_with = GER }
+		surrender_progress > 0.7
+		GER = {
+			is_faction_leader = yes
+		}
+		NOT = {
+			has_civil_war = yes
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+
+	immediate = {
+		set_global_flag = achievement_france_surrender
+	}
+	
+	option = { # Become Vichy
+		name = france.10.a
+		trigger = { is_ai = no }
+		set_country_flag = become_vichy
+		set_global_flag = fall_of_france
+		GER = { country_event = france.14 }
+		custom_effect_tooltip = france.10.a_tt
+		# Switches to Vichy if GER accepts
+	}
+	option = { # Become Free French
+		name = france.10.b
+		ai_chance = {
+			factor = 85
+		}
+		set_global_flag = fall_of_france
+		GER = { country_event = france.14 }
+		custom_effect_tooltip = france.10.b_tt
+	}
+	option = { # Ask for British Union
+		name = france.10.c
+		ai_chance = {
+			factor = 15
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+		ENG = {
+			country_event = france.11
+			effect_tooltip = {
+				annex_country = { target = FRA transfer_troops = yes }
+			}
+		}
+		custom_effect_tooltip = GAME_OVER_TT
+	}
+}
+
+# France suggests a Union (Britain)
+country_event = {
+	id = france.11
+	title = france.11.t
+	desc = france.11.d
+	picture = GFX_report_event_degaulle_churchill
+	
+	is_triggered_only = yes
+	
+	option = { # Refuse Union
+		name = france.11.a
+		ai_chance = {
+			factor = 10
+		}
+		FRA = {
+			country_event = { hours = 6 id = france.13 }
+		}
+	}
+	option = { # Agree to Union
+		name = france.11.b
+		ai_chance = {
+			factor = 90
+		}
+		FRA = {
+			country_event = { hours = 6 id = france.12 }
+		}
+	}
+}
+
+# Britain agrees to Union (France)
+country_event = {
+	id = france.12
+	title = france.12.t
+	desc = france.12.d
+	picture = GFX_report_event_chamberlain_announce
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = france.12.a
+		# Franco-British Union created
+		set_global_flag = fall_of_france
+		hidden_effect = {
+			every_state = {
+				limit = {
+					is_core_of = FRA
+				}
+				ENG = {
+					add_state_core = PREV
+				}
+			}
+		}
+		ENG = {
+			annex_country = { target = FRA transfer_troops = yes }
+		}
+		custom_effect_tooltip = FRA_franco_british_cores
+		hidden_effect = {
+			ENG = { set_cosmetic_tag = FRA_UK }
+			GER = { 
+				country_event = { hours = 6 id = news.35 }
+			}
+		}
+	}
+}
+
+# Britain refuses Union (France)
+country_event = {
+	id = france.13
+	title = france.13.t
+	desc = france.13.d
+	picture = GFX_report_event_pierre_laval
+	
+	is_triggered_only = yes
+	
+	option = { # Become Vichy
+		name = france.13.a
+		trigger = { is_ai = no }
+		set_country_flag = become_vichy
+		set_global_flag = fall_of_france
+		GER = { country_event = france.14 }
+		custom_effect_tooltip = france.10.a_tt
+		# Switches to Vichy if GER accepts
+	}
+	option = { # Become Free France
+		name = france.13.b
+		GER = { country_event = france.14 }
+		custom_effect_tooltip = france.10.b_tt
+		set_global_flag = fall_of_france
+	}
+}
+
+# France wants Armistice (Germany)
+country_event = {
+	id = france.14
+	title = france.14.t
+	desc = france.14.d
+	picture = GFX_report_event_german_parade_paris
+	
+	is_triggered_only = yes
+	
+	option = { # Agree
+		name = france.14.a
+		ai_chance = {
+			factor = 50
+		}
+		#Set same cosmetic tag they would get on capitulation
+		FRA = {
+			set_cosmetic_tag = FRA_FREE
+		}
+		# German Occupation Zone
+		if = {
+			limit = { 28 = { owner = { original_tag = FRA } } }
+			set_state_controller = 28
+		}
+		if = {
+			limit = { 17 = { owner = { original_tag = FRA } } }
+			set_state_controller = 17
+		}
+		if = {
+			limit = { 27 = { owner = { original_tag = FRA } } }
+			set_state_controller = 27
+		}
+		if = {
+			limit = { 18 = { owner = { original_tag = FRA } } }
+			set_state_controller = 18
+		}
+		if = {
+			limit = { 29 = { owner = { original_tag = FRA } } }
+			set_state_controller = 29
+		}
+		if = {
+			limit = { 15 = { owner = { original_tag = FRA } } }
+			set_state_controller = 15
+		}
+		if = {
+			limit = { 16 = { owner = { original_tag = FRA } } }
+			set_state_controller = 16
+		}
+		if = {
+			limit = { 24 = { owner = { original_tag = FRA } } }
+			set_state_controller = 24
+		}
+		if = {
+			limit = { 30 = { owner = { original_tag = FRA } } }
+			set_state_controller = 30
+		}
+		if = {
+			limit = { 14 = { owner = { original_tag = FRA } } }
+			set_state_controller = 14
+		}
+		if = {
+			limit = { 23 = { owner = { original_tag = FRA } } }
+			set_state_controller = 23
+		}
+		if = {
+			limit = { 19 = { owner = { original_tag = FRA } } }
+			set_state_controller = 19
+		}
+		# Italian Occupation Zone (if they did well)
+		if = { #if Italy did really well, they get an extra bonus state (but only if that doesn't lead to bordergore)
+			limit = {
+				AND = {
+					735 = { #Savoy
+						owner = { original_tag = FRA }
+						is_controlled_by = ITA
+					}
+					21 = { #Provence
+						owner = { original_tag = FRA }
+						is_controlled_by = ITA
+					}
+					32 = { #Alpes
+						owner = { original_tag = FRA }
+						is_controlled_by = ITA
+					}
+				}
+			}
+			ITA = { transfer_state = 32 }
+		}
+		if = {
+			limit = {
+				AND = {
+					21 = { #Provence
+						owner = { original_tag = FRA }
+						is_controlled_by = ITA
+					}
+				}
+			}
+			ITA = { transfer_state = 21 }
+		}
+		if = {
+			limit = {
+				AND = {
+					1 = { #Corsica
+						owner = { original_tag = FRA }
+						is_controlled_by = ITA
+					}
+				}
+			}
+			ITA = { transfer_state = 1 }
+		}
+		if = {
+			limit = {
+				AND = {
+					735 = { #Savoy
+						owner = { original_tag = FRA }
+						is_controlled_by = ITA
+					}
+				}
+			}
+			ITA = { transfer_state = 735 }
+		}
+		
+		#Spanish occupation zone
+		if = {
+			limit = {
+				31 = { #Midi-Pyrinees
+					owner = { original_tag = FRA }
+					is_controlled_by = SPR
+				}
+			}
+			SPR = {
+				transfer_state = 31
+			}
+		}
+		FRA = {
+			set_capital = 539
+			hidden_effect = {
+					set_state_controller = 26
+					set_state_controller = 22
+					set_state_controller = 25
+					set_state_controller = 20
+					set_state_controller = 33
+
+					#tunisia
+					if = {
+						limit = {
+							458 = {
+								owner = { original_tag = FRA }
+								controller = { 
+									original_tag = FRA
+								}
+							}
+						}
+						set_state_controller = 458
+					}					
+
+					#syria
+					if = {
+						limit = {
+							677 = {
+								owner = { original_tag = FRA }
+								controller = { 
+									original_tag = FRA
+								}
+							}
+						}
+						set_state_controller = 677
+					}
+					if = {
+						limit = {
+							680 = {
+								owner = { original_tag = FRA }
+								controller = { 
+									original_tag = FRA
+								}
+							}
+						}
+						set_state_controller = 680
+					}
+					if = {
+						limit = {
+							554 = {
+								owner = { original_tag = FRA }
+								controller = { 
+									original_tag = FRA
+								}
+							}
+						}
+						set_state_controller = 554 
+					}
+
+					if = {
+						limit = {
+							1 = {
+								owner = { original_tag = FRA }
+							}
+						}
+						set_state_controller = 1
+					}
+					if = {
+						limit = {
+							32 = {
+								owner = { original_tag = FRA }
+							}
+						}
+						set_state_controller = 32
+					}
+					if = {
+						limit = {
+							735 = {
+								owner = { original_tag = FRA }
+							}
+						}
+						set_state_controller = 735
+					}
+					if = {
+						limit = {
+							21 = {
+								owner = { original_tag = FRA }
+							}
+						}
+						set_state_controller = 21
+					}
+					if = {
+						limit = {
+							31 = {
+								owner = { original_tag = FRA }
+							}
+						}
+						set_state_controller = 31
+					}
+			}
+			start_civil_war = {
+				ideology = fascism
+				size = 0.5
+				capital = 26
+				states = { 26 21 22 31 25 20 32 33 1 735 677 680 554 458 }
+				states_filter = {
+					owner = { original_tag = FRA }
+					OR = {
+
+						# lets not involve syria or tunisia in civil war flip if occupied by other party
+						AND = {
+							OR = {
+								state = 554
+								state = 680
+								state = 677
+								state = 458
+							}
+							controller = { # FRA not controller
+								original_tag = FRA
+							}
+						}
+						NOT = {
+							OR = {
+								state = 554
+								state = 680
+								state = 677
+								state = 458
+							}						
+						}
+					}					
+				}
+			}
+		}
+		random_other_country = {
+			limit = { original_tag = FRA has_government = fascism }
+			ROOT = { puppet = PREV }
+			set_capital = 26
+			set_politics = {
+				ruling_party = fascism
+				elections_allowed = no
+				parties = {
+					democratic = { 
+						popularity = 22
+					}
+
+					fascism = {
+						popularity = 76
+					}
+					
+					communism = {
+						popularity = 2
+					}
+				}
+			}
+			# FRA Player Switches to Vichy
+			if = {
+				limit = { FRA = { has_country_flag = become_vichy } }
+				change_tag_from = FRA
+			}
+		}
+		country_event = { hours = 6 id = news.34 }
+		hidden_effect =  {
+			FRA = { news_event = { id = france.20 days = 1 } }
+		}
+	}
+	option = { # Conquer everything!
+		name = france.14.b
+		ai_chance = { 
+			factor = 50 
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+		}
+		FRA = {
+			country_event = { hours = 6 id = france.15 }
+		}
+	}
+}
+
+# Germany refuses armistice! (France)
+country_event = {
+	id = france.15
+	title = france.15.t
+	desc = france.15.d
+	picture = GFX_report_event_french_resistance_01
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = france.15.a
+	}
+}
+
+#Capital captured by non french faction
+country_event = {
+	id = france.16
+	title = france.16.t
+	desc = france.16.d
+	picture = GFX_report_event_french_resistance_02
+
+	fire_only_once = yes
+
+	trigger = {
+		TAG = FRA
+		16 = { controller = { NOT = { TAG = FRA } } }
+		#16 = { is_owned_by = FRA }
+	}
+	
+	mean_time_to_happen = {
+		days = 4
+	}
+
+	option = {
+		name = france.16.a
+		remove_ideas = FRA_victors_of_wwi
+		remove_ideas = FRA_disjointed_government
+		remove_ideas = FRA_protected_by_the_maginot_line
+	}
+}
+
+# Invitation to French Faction
+country_event = {
+	id = france.17
+	title = france.17.t
+	desc = france.17.d
+	picture = GFX_report_event_worried_french
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = france.17.a
+		ai_chance = { factor = 90 }
+		FRA = {
+			country_event = france.18
+			add_to_faction = ROOT
+		}
+		add_ai_strategy = {
+			type = alliance
+			id = "FRA"
+			value = 200
+		}
+	}
+
+	option = {
+		name = france.17.b
+		ai_chance = { factor = 10 }
+		FRA = { country_event = france.19 }
+	}
+}
+
+# [Country] Accepts
+country_event = {
+	id = france.18
+	title = france.18.t
+	desc = france.18.d
+	picture = GFX_report_event_soldiers_in_france
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = france.18.a
+		effect_tooltip = {
+			add_to_faction = FROM
+		}
+	}
+}
+
+# [Country] Refuses
+country_event = {
+	id = france.19
+	title = france.19.t
+	desc = france.19.d
+	picture = GFX_report_event_finnish_letter
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = france.19.a
+	}
+}
+
+# De Gaulle becomes leader
+country_event = {
+	id = france.20
+	title = france.20.t
+	desc = france.20.d
+	picture = GFX_report_event_degaulle_churchill
+	
+	is_triggered_only = yes
+	
+	option = {
+		custom_effect_tooltip = france.20.a_tt
+		set_country_flag = france_de_gaulle
+		hidden_effect =  {
+			retire_country_leader = yes
+		}
+		name = france.20.a
+	}
+}
+
+# French strikes
+country_event = {
+	id = france.21
+	title = france.21.t
+	desc = france.21.d
+	picture = GFX_report_event_worker_protests
+	
+	trigger = {
+		NOT = { has_government = communism }
+		tag = FRA
+		date > 1936.4.1
+		date < 1938.1.1
+	}
+
+	fire_only_once = yes
+	
+	mean_time_to_happen = {	days = 60	}
+
+	option = {
+		ai_chance = {
+			base = 15
+		}
+		name = france.21.a
+		add_timed_idea = {
+			idea = FRA_factory_strikes
+			days = 90
+		}
+		set_country_flag = france.21.a_chosen
+	}
+	option = {
+		ai_chance = {
+			base = 85
+		}
+		name = france.21.b
+		add_timed_idea = {
+			idea = FRA_matignon_agreements
+			days = 365
+		}
+		add_popularity = {
+			ideology = communism
+			popularity = 0.07
+		}		
+	}
+}
+# Revoke Worker rights
+country_event = {
+	id = france.22
+	title = france.22.t
+	desc = france.22.d
+	picture = GFX_report_event_airplane_factory
+	
+	trigger = {
+		NOT = { has_government = communism }
+		has_idea = FRA_matignon_agreements
+		date > 1936.7.1
+	}
+
+	fire_only_once = yes
+
+	mean_time_to_happen = {	days = 90	}
+	option = {
+		ai_chance = {
+			factor = 2
+		}
+		add_national_unity = 0.05
+		name = france.22.a
+	}
+	option = {
+		name = france.22.b
+		ai_chance = { 
+			factor = 10
+			modifier = {
+				factor = 0
+				communism > 0.4
+			}
+		}
+		remove_ideas =  FRA_matignon_agreements
+		add_popularity = {
+			ideology = communism
+			popularity = 0.05
+		}
+	}	
+}
+# Strikes are over
+country_event = {
+	id = france.23
+	title = france.23.t
+	desc = france.23.d
+	picture = GFX_report_event_airplane_factory
+
+
+	trigger = {
+		NOT = { has_idea = FRA_factory_strikes }
+		has_country_flag = france.21.a_chosen
+	}
+
+	fire_only_once = yes
+	
+	mean_time_to_happen = {	days = 2	}
+
+	option = {
+		name = france.23.a
+	}
+}
+
+# French ban on communism
+country_event = {
+	id = france.24
+	title = france.24.t
+	desc = france.24.d
+	picture = GFX_report_event_molotov_ribentrop_handshake
+
+
+	trigger = {
+		tag = FRA
+		SOV = { has_government = communism }
+		has_government = democratic
+		communism < 0.5
+		has_global_flag = sov_yes_pact
+	}
+
+	fire_only_once = yes
+	
+	mean_time_to_happen = {	days = 2	}
+
+	option = {
+		ai_chance = {	factor = 10 }
+		add_political_power = -20
+		name = france.24.a
+		add_popularity = {
+			ideology = communism
+			popularity = -0.3
+		}
+		add_ideas = FRA_communism_banned
+
+		add_opinion_modifier = {
+			target = SOV
+			modifier = FRA_ban_communism
+		}
+		
+		every_other_country = {
+			limit = { 
+				has_government = communism
+			}
+			add_opinion_modifier = {
+				target = FRA
+				modifier = FRA_ban_communism
+			}
+		}
+		hidden_effect = {
+			news_event = { id = news.161 hours = 6 }
+		}
+
+	}
+	option = {
+		ai_chance = {	factor = 0 }
+		name = france.24.b
+	}
+}
+
+# British abandon yugoslavia
+country_event = {
+	id = france.25
+	title = france.25.t
+	desc = france.25.d
+	picture = GFX_report_event_hitler_croatia_handshake
+
+	is_triggered_only	= yes	
+	option = { # Follow Britain's lead
+		name = france.25.a
+		ai_chance = {
+			factor = 90
+			modifier = {
+				factor = 0
+				is_in_faction_with = YUG
+			}
+		}
+		if = {
+			limit = { 
+				ITA = {
+					OR = {
+						NOT = { has_completed_focus = ITA_yugoslavia_friend }						
+						is_in_faction_with = GER
+					}
+				}
+			}
+			YUG = {
+				add_opinion_modifier = { target = FRA modifier = western_betrayal }
+				country_event = { id = yugoslavia.5 hours = 6 }
+			}			
+		}
+		if = {
+			limit = { 
+				ITA = {
+					has_completed_focus = ITA_yugoslavia_friend
+					NOT = { is_in_faction_with = GER }
+					NOT = { has_war_with = YUG }
+				}
+			}
+			ITA = { country_event = { id = italy.12 } }
+		}
+	}
+	option = { # Support the Yugoslavs alone
+		name = france.25.b
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				is_in_faction_with = GER
+			}
+		}
+		add_political_power = -200
+		add_opinion_modifier = { target = GER modifier = condemn_aggression }
+		YUG = { 
+			country_event = { id = yugoslavia.4 days = 1 }
+			add_opinion_modifier = { target = FRA modifier = offered_support }
+		}
+		GER = {
+			country_event = { id = germany.97 hours = 6 } #Generate wargoal
+			effect_tooltip = {
+				create_wargoal = {
+					type = take_state_focus
+					target = YUG
+					generator = { 102 }
+				}
+			}
+		}
+		if = {
+			limit = { is_in_faction_with = ENG }
+			ENG = { 
+				country_event = { id = britain.15 hours = 6 }
+				remove_from_faction = FRA
+			}
+		}
+		if = {
+			limit = { is_in_faction_with = GER }
+			GER = { 
+				remove_from_faction = FRA
+			}
+		}
+		if = {
+			limit = {
+				is_in_faction = yes
+				is_faction_leader = yes
+				NOT = { is_in_faction_with = ENG }
+				NOT = { is_in_faction_with = GER }
+			}
+			add_to_faction = YUG
+			YUG = {
+				add_ai_strategy = {
+					type = alliance
+					id = "FRA"
+					value = 200
+				}
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					is_in_faction = no
+					is_faction_leader = no
+					is_in_faction_with = ENG
+					is_in_faction_with = GER
+				}
+			}
+			create_faction = "french_alliance"
+			add_to_faction = YUG
+			YUG = {
+				add_ai_strategy = {
+					type = alliance
+					id = "FRA"
+					value = 200
+				}
+			}
+		}
+		if = {
+			limit = { NOT = { has_completed_focus = FRA_little_entente } }
+			add_national_unity = 0.05
+		}
+	}
+}
+
+# British support yugoslavia
+country_event = {
+	id = france.26
+	title = france.26.t
+	desc = france.26.d
+	picture = GFX_report_event_hitler_croatia_handshake
+
+	is_triggered_only	= yes
+
+	option = {
+		name = france.26.a
+		ai_chance = {
+			factor = 90
+			modifier = {
+				factor = 0
+				is_in_faction_with = GER
+			}
+		}
+		if = {
+			limit = {
+				is_in_faction = yes
+				NOT = { is_in_faction_with = ENG }
+			}
+			remove_from_faction = FRA
+		}
+		if = {
+			limit = { NOT = { is_in_faction_with = ENG } }
+			ENG = { add_to_faction = FRA }
+			FRA = {
+				add_ai_strategy = {
+					type = alliance
+					id = "ENG"
+					value = 200
+				}
+			}
+		}
+		add_opinion_modifier = { target = GER modifier = condemn_aggression }
+		YUG = { 
+			country_event = { id = yugoslavia.3 days = 1 }
+			add_opinion_modifier = { target = FRA modifier = offered_support }
+		}
+		GER = {
+			country_event = { id = germany.93 hours = 6 } #Generate wargoal
+			effect_tooltip = {
+				create_wargoal = {
+					type = take_state_focus
+					target = YUG
+					generator = { 102 }
+				}
+			}
+		}		
+	}
+
+	#Abandon
+	option = {
+		name = france.26.b
+		trigger = { NOT = { is_in_faction_with = ENG } }
+		ai_chance = { factor = 10 }
+		set_global_flag = FRA_abandoned_yugoslavia
+		YUG = {
+			country_event = { id = yugoslavia.3 hours = 6 }
+			add_opinion_modifier = { target = FRA modifier = western_betrayal }
+		}
+	}	
+}
+
+# Vichy France: Germany is handing over some of our land
+country_event = {
+	id = france.27
+	title = france.27.t
+	desc = { 
+		text = france.27.d_1_state 
+		trigger = {
+			OR = {
+				NOT = { has_global_flag = ITA_claims_on_france_735 }
+				has_global_flag = ITA_claims_on_france_1
+			}
+			OR = {
+				has_global_flag = ITA_claims_on_france_735
+				NOT = { has_global_flag = ITA_claims_on_france_1 }
+			}
+		} 
+	}
+	desc = { 
+		text = france.27.d_both
+		trigger = { 
+			has_global_flag = ITA_claims_on_france_735 
+			has_global_flag = ITA_claims_on_france_1
+		} 
+	}
+	picture = GFX_report_event_worried_french
+
+	is_triggered_only	= yes
+
+	option = {
+		name = france.27.a
+		
+		effect_tooltip = {
+			if = {
+				limit = { has_global_flag = ITA_claims_on_france_735 }
+				ITA = { transfer_state = 735 }
+			}
+			if = {
+				limit = { has_global_flag = ITA_claims_on_france_1 }
+				ITA = { transfer_state = 1 }
+			}
+		}
+
+		if = {
+			limit = {
+				has_global_flag = ITA_claims_on_france_735
+				has_global_flag = ITA_claims_on_france_1
+				OR = {
+					owns_state = 554
+					owns_state = 677
+					owns_state = 680
+				}
+
+			}
+			random_other_country = {
+				limit = {
+					original_tag = FRA
+					has_government = democratic
+				}
+				if = {
+					limit = { ROOT = { owns_state = 554 } }
+					transfer_state = 554
+				}
+				if = {
+					limit = { ROOT = { owns_state = 677 } }
+					transfer_state = 677
+				}
+				if = {
+					limit = { ROOT = { owns_state = 680 } }
+					transfer_state = 680
+				}
+				country_event = france.28
+			}
+		}
+	}
+
+}
+
+# France - Syria defects to us
+country_event = {
+	id = france.28
+	title = france.28.t
+	desc = france.28.d
+	picture = GFX_report_event_worried_french
+
+	is_triggered_only	= yes
+
+	option = {
+		name = france.28.a
+	}
+
+}
+
+# France - Britain accepts Ally request
+country_event = {
+	id = france.29
+	title = france.29.t
+	desc = france.29.d
+	picture = GFX_report_event_sign_treaty2
+
+	is_triggered_only	= yes
+
+	option = {
+		name = france.29.a
+	}
+}
+
+# France - Britain denies Ally request
+country_event = {
+	id = france.30
+	title = france.30.t
+	desc = france.30.d
+	picture = GFX_report_event_chamberlain
+
+	is_triggered_only	= yes
+
+	option = {
+		name = france.30.a
+	}
+}
+
+# Édouard Daladier Resigns
+country_event = {
+    id = france.31
+    title = france.31.t
+    desc = france.31.d
+    picture = GFX_report_event_german_parade_paris
+ 
+    fire_only_once = yes
+ 
+    trigger = {
+        original_tag = FRA
+        has_government = democratic
+        has_global_flag = fall_of_france
+        NOT = { has_country_flag = france_de_gaulle }
+    } 
+
+    mean_time_to_happen = {
+        days = 7
+    }
+
+    option = {
+        name = france.31.a
+        retire_country_leader = yes
+        create_country_leader = {
+        	name = "Paul Reynaud"
+        	desc = "POLITICS_PAUL_REYNAUD_DESC"
+        	picture = "Portrait_France_Paul_Reynaud.dds"
+        	expire = "1965.1.1"
+        	ideology = liberalism
+        	traits = {
+        	      }
+            }
+        set_country_flag = daladier_resigned
+      }
+}

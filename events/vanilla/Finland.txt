@@ -1,0 +1,386 @@
+﻿###########################
+# Finland Events
+###########################
+
+add_namespace = finland
+
+# Soviet Ultimatum
+country_event = {
+	id = finland.1
+	title = finland.1.t
+	desc = finland.1.d
+	picture = GFX_report_event_soviet_tanks_snow
+	
+	is_triggered_only = yes
+	
+	option = { # Accept demands
+		name = finland.1.a
+		ai_chance = { 
+		factor = 25
+		modifier = { # Don't accept if in a faction that can protect them
+				factor = 0
+				OR = {
+					is_in_faction_with = ENG
+					is_in_faction_with = FRA
+					is_in_faction_with = GER
+				}
+			}
+		}
+		SOV = {
+			country_event = { days = 5 id = soviet.12 }
+			effect_tooltip = {
+				transfer_state = 146
+			}
+		}
+	}
+	option = { # Refuse
+		name = finland.1.b
+		ai_chance = { factor = 75 }
+		SOV = {
+			country_event = { days = 5 id = soviet.13 }
+			effect_tooltip = {
+				create_wargoal = {
+					type = take_state
+					target = FIN
+					generator = { 146 }
+				}
+			}
+		}
+	}
+}
+
+# Request Swedish Assistance?
+country_event = {
+	id = finland.2
+	title = finland.2.t
+	desc = finland.2.d
+	picture = GFX_report_event_soviet_finnish_pact
+	
+	fire_only_once = yes
+
+	trigger = {
+		tag = FIN
+		has_war_with = SOV
+		SWE = {
+			NOT = { has_war_with = FIN }
+			NOT = { is_in_faction_with = SOV }
+			exists = yes
+		}
+	}
+
+	mean_time_to_happen = {
+		days = 1
+	}
+
+	option = {
+		name = finland.2.a
+		SWE = {
+			country_event = { id = finland.3 }
+		}
+	}
+
+	option = {
+		name = finland.2.b
+	}
+}
+
+# Swedish Support in Winter War
+country_event = {
+	id = finland.3
+	title = finland.3.t
+	desc = finland.3.d
+	picture = GFX_report_event_finnish_letter
+	
+	is_triggered_only = yes
+
+	option = {
+		name = finland.3.a
+
+		ai_chance = {
+			factor = 10 
+			modifier = {
+				factor = 10
+				OR = {
+					has_war = yes
+					has_government = communism
+				}
+			}
+		}
+
+		FIN = {
+			country_event = { id = finland.4 days = 3 }
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = refused_help
+			}
+		}
+	}
+
+	option = {
+		name = finland.3.b
+
+		ai_chance = {
+			factor = 25
+			modifier = {
+				factor = 5							
+				has_government = democratic
+				FIN = {
+				 has_government = democratic
+				}
+			}
+		}
+
+		trigger = {
+			AND = {
+				has_war = no
+				NOT = {
+					has_government = communism
+				}
+			}	
+			has_manpower > 8402
+		}
+		add_manpower = -8402
+		if = {
+			limit = {
+				has_equipment = {
+					infantry_equipment > 500
+				}
+			}
+			send_equipment = {
+				target = FIN
+				type = infantry_equipment
+				amount = 500
+			}
+		}
+		if = {
+			limit = {
+				has_equipment = {
+					artillery_equipment > 250
+				}
+			}
+			send_equipment = {
+				target = FIN
+				type = artillery_equipment
+				amount = 250
+			}
+		}
+		FIN = {
+			country_event = { id = finland.5 days = 3 }
+		}
+	}
+
+	option = {
+		name = finland.3.c
+
+		ai_chance = {
+
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 100
+				has_war = no
+				has_government = democratic
+				strength_ratio = {
+					tag = SOV
+					ratio > 0.2
+				}
+				FIN = {
+					has_government = democratic
+					strength_ratio = {
+						tag = SOV 
+						ratio > 0.3
+					}
+				}
+			}			
+		}
+
+		declare_war_on = {
+			target = SOV
+			type = take_state
+			generator = { 195 208 } # Leningrand and Luga
+		}
+		FIN = {
+			country_event = { id = finland.6 days = 3 }
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = took_stand_for_us
+			}
+		}
+	}
+}
+
+country_event = {
+	id = finland.4
+	title = finland.4.t
+	desc = finland.4.d
+	picture = GFX_report_event_finnish_soldiers_snow
+	
+	is_triggered_only = yes
+
+	option = {
+		name = finland.4.a
+	}
+}
+
+country_event = {
+	id = finland.5
+	title = finland.5.t
+	desc = finland.5.d
+	picture = GFX_report_event_swedish_soldier
+	
+	is_triggered_only = yes
+
+	option = {
+		name = finland.5.a
+		add_manpower = 8402
+		effect_tooltip = {
+			SWE = {
+				add_manpower = -8402
+				if = {
+					limit = {
+						has_equipment = {
+							infantry_equipment > 500
+						}
+					}
+					send_equipment = {
+						target = FIN
+						type = infantry_equipment
+						amount = 500
+					}
+				}
+				if = {
+					limit = {
+						has_equipment = {
+							artillery_equipment > 250
+						}
+					}
+					send_equipment = {
+						target = FIN
+						type = artillery_equipment
+						amount = 250
+					}
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = finland.6
+	title = finland.6.t
+	desc = finland.6.d
+	picture = GFX_report_event_swedish_soldier
+	
+	is_triggered_only = yes
+
+	option = {
+		name = finland.6.a
+	}
+}
+
+#Surrender when Soviet has taken too much land
+country_event = {
+	id = finland.7
+	title = finland.7.t
+	desc = finland.7.d
+	picture = GFX_report_event_soviet_tanks_snow
+	
+	trigger = {
+		tag = FIN
+		has_war_with = SOV
+		surrender_progress > 0.25
+		has_civil_war = no
+		is_in_faction = no
+	}
+
+	mean_time_to_happen = { days = 20 }
+
+	fire_only_once = yes
+
+	#Surrender and offer territory
+	option = {
+		name = finland.7.a
+		ai_chance = {
+			base = 8
+		}
+		SOV = {
+			country_event = { id = finland.8 }
+		}
+		custom_effect_tooltip = finland.7.a_tt
+		effect_tooltip = {
+			SOV = { 
+				white_peace = {
+					tag = FIN 
+					message = FIN_agree_peace 
+				} 
+			}
+			transfer_state = 146
+			transfer_state = 147
+			transfer_state = 722
+		}
+	}
+
+	#Never give up!
+	option = {
+		name = finland.7.b
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+#Soviet response to Finish surrender
+country_event = {
+	id = finland.8
+	title = finland.8.t
+	desc = finland.8.d
+	picture = GFX_report_event_finnish_soldiers_snow
+	
+	is_triggered_only = yes
+
+	#Accept surrender
+	option = {
+		name = finland.8.a
+		ai_chance = {
+			base = 9
+		}
+		white_peace = FIN
+		transfer_state = 146
+		transfer_state = 147
+		transfer_state = 722
+	}
+
+	#Take it all
+	option = {
+		name = finland.8.b
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}			
+		}
+		FIN = { country_event = { id = finland.9 } }
+	}
+}
+
+#Soviet says no!
+country_event = {
+	id = finland.9
+	title = finland.9.t
+	desc = finland.9.d
+	picture = GFX_report_event_finnish_soldiers_snow
+	
+	is_triggered_only = yes
+
+	option = {
+		name = finland.9.a
+	}
+}
