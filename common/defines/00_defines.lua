@@ -320,7 +320,7 @@ NMilitary = {
 	COMBAT_VALUE_ORG_IMPORTANCE = 1,		-- Multiplier on TotalOrganisation when determining the combat value of a division
 	COMBAT_VALUE_STR_IMPORTANCE = 1,		-- Multiplier on TotalStrength when determining the combat value of a division
 	
-	HOURLY_ORG_MOVEMENT_IMPACT = -0.2,		-- how much org is lost every hour while moving an army.
+	HOURLY_ORG_MOVEMENT_IMPACT = -0.05,		-- how much org is lost every hour while moving an army.
 	ZERO_ORG_MOVEMENT_MODIFIER = -0.4,		-- speed impact at 0 org.
 	INFRA_ORG_IMPACT = 0.5,				-- scale factor of infra on org regain.
 
@@ -444,8 +444,8 @@ NMilitary = {
 	IS_AMPHIBIOUS_LIMNIT = 0.0,					   -- If the amphibious movement is _above_ this limit it is considered amphibious
 	EXILE_EQUIPMENT = 1.0,						   -- Amount of equipment to keep
 	EXILE_ORG = 0.0,							   -- Amount of org to keep
-	EXPERIENCE_LOSS_FACTOR = 1.00,                 -- percentage of experienced solders who die when manpower is removed #1.0
-	EQUIPMENT_COMBAT_LOSS_FACTOR = 0.18,	 	       -- % of equipment lost to strength ratio in combat, so some % is returned if below 1 #1 #0.25 = test
+	EXPERIENCE_LOSS_FACTOR = 0.80,                 -- percentage of experienced solders who die when manpower is removed #1.0
+	EQUIPMENT_COMBAT_LOSS_FACTOR = 0.25,	 	       -- % of equipment lost to strength ratio in combat, so some % is returned if below 1 #1 #0.25 = test
 	SUPPLY_USE_FACTOR_MOVING = 1.5,                -- supply use when moving/fighting vs inactive
 	SUPPLY_USE_FACTOR_INACTIVE = 0.95,
 	SUPPLY_GRACE = 504,		-- troops always carry 5 days of food and supply #72
@@ -453,7 +453,7 @@ NMilitary = {
 	OUT_OF_SUPPLY_ATTRITION = 0.3,                 -- max attrition when out of supply
 	OUT_OF_SUPPLY_SPEED = -0.8,                    -- max speed reduction from supply
 	NON_CORE_SUPPLY_SPEED = -0.5,				   -- we are not running on our own VP supply so need to steal stuff along the way
-	OUT_OF_SUPPLY_MORALE = -0.3,                   -- max org regain reduction from supply
+	OUT_OF_SUPPLY_MORALE = -0.2,                   -- max org regain reduction from supply
 	TRAINING_ATTRITION = 0.06,		  			   -- amount of extra attrition from being in training
 	TRAINING_MIN_STRENGTH = 0.1,					-- if strength is less than this, the unit will pause training until it's been reinforced
 	AIR_SUPPORT_BASE = 0.3,                        -- base ground bonus to troops when active planes helping them
@@ -536,8 +536,8 @@ NMilitary = {
 	COMBAT_OVER_WIDTH_PENALTY = -1,					-- over combat width penalty per %.
 	COMBAT_OVER_WIDTH_PENALTY_MAX = -0.66,			-- over combat width max (when you cant join no more).
 	RETREAT_SPEED_FACTOR = 1.0,                    -- speed bonus when retreating #0.25
-	STRATEGIC_SPEED_BASE = 15.0,                 	-- Speed of strategic redeployment
-	STRATEGIC_INFRA_SPEED = 10.0,                   -- Max of additional speed gained trouh=gh level for strategic redeployment per infra
+	STRATEGIC_SPEED_BASE = 20.0,                 	-- Speed of strategic redeployment
+	STRATEGIC_INFRA_SPEED = 8.0,                   -- Max of additional speed gained trouh=gh level for strategic redeployment per infra
 	STRATEGIC_REDEPLOY_ORG_RATIO = 0.1,				-- Ratio of max org while strategic redeployment
 	BATALION_NOT_CHANGED_EXPERIENCE_DROP = 0.0,		-- Division experience drop if unit has same batalion
 	BATALION_CHANGED_EXPERIENCE_DROP = 0.5,			-- Division experience drop if unit has different batalion
