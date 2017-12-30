@@ -320,11 +320,11 @@ NMilitary = {
 	COMBAT_VALUE_ORG_IMPORTANCE = 1,		-- Multiplier on TotalOrganisation when determining the combat value of a division
 	COMBAT_VALUE_STR_IMPORTANCE = 1,		-- Multiplier on TotalStrength when determining the combat value of a division
 	
-	HOURLY_ORG_MOVEMENT_IMPACT = -0.05,		-- how much org is lost every hour while moving an army.
+	HOURLY_ORG_MOVEMENT_IMPACT = -0.25,		-- how much org is lost every hour while moving an army.
 	ZERO_ORG_MOVEMENT_MODIFIER = -0.4,		-- speed impact at 0 org.
 	INFRA_ORG_IMPACT = 0.5,				-- scale factor of infra on org regain.
 
-	INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.03,	-- speed penalty per infrastucture below maximum.
+	INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02,	-- speed penalty per infrastucture below maximum.
 
 	WAR_SCORE_LOSSES_RATIO = 0.2,				-- Scale how much losses will affect warscore ( per 1000 losses ).
 	WAR_SCORE_LOSSES_MULT_IF_CAPITULATED = 0.5, -- How much your losses count towards warscore if you have capitulated.
@@ -351,7 +351,7 @@ NMilitary = {
 	MAX_NAVY_EXPERIENCE = 500,			--Max navy experience a country can store
 	MAX_AIR_EXPERIENCE = 500,				--Max air experience a country can store
 	
-	COMBAT_MINIMUM_TIME = 4,			-- Shortest time possible for a combat in hours
+	COMBAT_MINIMUM_TIME = 8,			-- Shortest time possible for a combat in hours
 	SPOTTING_QUALITY_DROP_HOURS = 4, 	-- Each X hours the intel quality drops after unit was spotted.
 	LEADER_GROUP_MAX_SIZE = 1000, --5,			-- Max slots for leader groups.
 
@@ -374,7 +374,7 @@ NMilitary = {
 	ATTRITION_WHILE_MOVING_FACTOR = 1,
 	BASE_CHANCE_TO_AVOID_HIT = 90,                 -- Base chance to avoid hit if defences left.
 	CHANCE_TO_AVOID_HIT_AT_NO_DEF = 50,	           -- chance to avoid hit if no defences left.
-	COMBAT_MOVEMENT_SPEED = 0.50,	               -- MD4 was 0.33 speed reduction base modifier in combat
+	COMBAT_MOVEMENT_SPEED = -0.95,	               -- MD4 was 0.33 speed reduction base modifier in combat
 	TACTIC_SWAP_FREQUENCEY = 24,                   -- hours between tactic swaps
 	INITIATIVE_PICK_COUNTER_ADVANTAGE_FACTOR  = 0.35, -- advantage per leader level for picking a counter
 	BASE_COMBAT_WIDTH = 120,                        -- base combat width
@@ -383,8 +383,8 @@ NMilitary = {
 	LAND_SPEED_MODIFIER = 0.01,                    -- basic speed control - 0.05
 	RIVER_CROSSING_PENALTY = -0.3,                 -- small river crossing
 	RIVER_CROSSING_PENALTY_LARGE = -0.6,           -- large river crossing
-	RIVER_CROSSING_SPEED_PENALTY = -0.20,           -- small river crossing
-	RIVER_CROSSING_SPEED_PENALTY_LARGE = -0.40,     -- large river crossing
+	RIVER_CROSSING_SPEED_PENALTY = -0.15,           -- small river crossing
+	RIVER_CROSSING_SPEED_PENALTY_LARGE = -0.30,     -- large river crossing
 	RIVER_SMALL_START_INDEX = 0,                   -- color indices for rivers
 	RIVER_SMALL_STOP_INDEX = 6,
 	RIVER_LARGE_STOP_INDEX = 11,
@@ -420,7 +420,7 @@ NMilitary = {
 	EXPEDITIONARY_FIELD_EXPERIENCE_SCALE = 0.5,		-- reduction factor in Xp from expeditionary forces
 	LEND_LEASE_FIELD_EXPERIENCE_SCALE = 0.005,		-- Experience scale for lend leased equipment used in combat.
 	LEADER_EXPERIENCE_SCALE = 0.5,                  -- 1.0
-	SLOWEST_SPEED = 4,								-- Default speed of units if no speed is defined
+	SLOWEST_SPEED = 8,								-- Default speed of units if no speed is defined
 	REINFORCEMENT_REQUEST_MAX_WAITING_DAYS = 14,   -- Every X days the equipment will be sent, regardless if still didn't produced all that has been requested.
 	REINFORCEMENT_REQUEST_DAYS_FREQUENCY = 7,	   -- How many days must pass until we may give another reinforcement request
 	EXPERIENCE_COMBAT_FACTOR = 0.25,
