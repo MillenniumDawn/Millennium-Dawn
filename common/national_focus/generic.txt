@@ -48,9 +48,9 @@ focus_tree = {
 		available_if_capitulated = yes
 
 		ai_will_do = {
-			factor = 100
+			factor = 10
 			modifier = {
-				factor = 1.8
+				factor = 10.8
 				has_government = democratic
 			}
 		}
@@ -441,9 +441,9 @@ focus_tree = {
 		available_if_capitulated = yes
 		
 		ai_will_do = {
-			factor = 100
+			factor = 10
 			modifier = {
-				factor = 1.8
+				factor = 10.8
 				has_government = communism
 			}
 		}
@@ -577,9 +577,9 @@ focus_tree = {
 		available_if_capitulated = yes
 		
 		ai_will_do = {
-			factor = 100
+			factor = 10
 			modifier = {
-				factor = 1.8
+				factor = 10.8
 				has_government = neutrality
 			}
 			
@@ -760,9 +760,9 @@ focus_tree = {
 		available_if_capitulated = yes
 
 		ai_will_do = {
-			factor = 100
+			factor = 10
 			modifier = {
-				factor = 1.8
+				factor = 10.8
 				has_government = Nationalist
 			}
 		}
@@ -1000,7 +1000,7 @@ focus_tree = {
 		available_if_capitulated = yes
 		
 		ai_will_do = {
-			factor = 100
+			factor = 10
 			modifier = {
 				factor = 2
 				OR = {
@@ -1013,7 +1013,7 @@ focus_tree = {
 				}
 			}
 			modifier = {
-				factor = 1.8
+				factor = 10.8
 				has_government = fascism
 			}
 		}
@@ -1038,15 +1038,19 @@ focus_tree = {
 		available_if_capitulated = yes
 		
 		ai_will_do = {
-			factor = 100
+			factor = 10
 			modifier = {
-				factor = 2
+				factor = 10
 				OR = {
 					tag = AQY
 					tag = TAL
 					tag = TTP
 					tag = SHB
 				}
+			}
+			modifier = {
+				factor = 0
+				tag = ISI
 			}
 		}
 
@@ -1075,9 +1079,9 @@ focus_tree = {
 		available_if_capitulated = yes
 		
 		ai_will_do = {
-			factor = 100
+			factor = 10
 			modifier = {
-				factor = 2
+				factor = 10
 				tag = ISI
 			}
 		}
@@ -1092,8 +1096,14 @@ focus_tree = {
 					country_exists = ISI		
 				}
 				ISI = {
-					puppet = ROOT
-					add_to_faction = ROOT
+					if = {
+						limit = { has_dlc = "Death or Dishonor"	}
+						set_autonomy = { target = ROOT autonomy_state = autonomy_satellite }
+						else = {
+							puppet = ROOT
+						}
+					}
+					#add_to_faction = ROOT
 				}
 				ROOT = {
 					add_ai_strategy = {
@@ -1121,8 +1131,14 @@ focus_tree = {
 							has_country_flag = new_ISIS
 							is_subject = no
 						}
-						puppet = ROOT
-						add_to_faction = ROOT
+						if = {
+							limit = { has_dlc = "Death or Dishonor"	}
+							set_autonomy = { target = ROOT autonomy_state = autonomy_satellite }
+							else = {
+								puppet = ROOT
+							}
+						}
+						#add_to_faction = ROOT
 					}
 				}
 				if = {			#If ISIS doesn't exist, and noboy has taken the mantle, become new ISIS
@@ -1132,6 +1148,19 @@ focus_tree = {
 								exists = yes
 								has_country_flag = new_ISIS
 							}
+						}
+					}
+					if = {		#If we are part of a faction, we leave
+						limit = {
+							is_in_faction = yes
+							is_faction_leader = no
+						}
+						random_country = {
+							limit = {
+								is_in_faction_with = ROOT
+								is_faction_leader = yes
+							}
+							remove_from_faction = ROOT
 						}
 					}
 					custom_effect_tooltip = become_new_isis
@@ -1163,15 +1192,19 @@ focus_tree = {
 		available_if_capitulated = yes
 		
 		ai_will_do = {
-			factor = 100
+			factor = 10
 			modifier = {
-				factor = 2
+				factor = 10
 				OR = {
 					tag = SAU
 					tag = BHR
 					tag = UAE
 					tag = QAT
 				}
+			}
+			modifier = {
+				factor = 0 
+				tag = ISI
 			}
 		}
 		
@@ -1221,7 +1254,7 @@ focus_tree = {
 		completion_reward = {
 			custom_effect_tooltip = justification_for_islamic_conquest		#We get wargoals on other countries
 			hidden_effect = {
-				every_other_country = {
+				every_neighbor_country = {
 					limit = {
 						OR = {
 							has_idea = sunni
