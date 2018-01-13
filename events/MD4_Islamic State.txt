@@ -1,0 +1,202 @@
+﻿##########################
+#  Islamic State Events  #
+##########################
+
+add_namespace = isis
+add_namespace = isisNews
+
+# Remove Idea Cybercaliphate
+news_event = {
+	id = isis.1
+	title = isis.1.t
+	desc = isis.1.d
+	picture = GFX_Tahrir_Al_Sham
+	
+	major = yes
+	fire_only_once = yes
+	
+	trigger = {
+		NOT = { country_exists = ISI }
+	}
+	
+	option = {
+		name = isis.1.a
+			if = { limit = { has_idea = cybercaliphate } remove_ideas = { cybercaliphate }
+		}
+	}
+}
+#Infiltrate Tahrir al-Sham
+country_event = {
+    id = isis.2
+	title = isis.2.t
+	desc = isis.2.d
+	picture = GFX_Tahrir_Al_Sham
+	
+    fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 60
+	}
+	
+	trigger = {
+		tag = ISI
+		date > 2017.2.1
+		ISI = {
+			is_neighbor_of = NUS
+			NOT = { has_war_with = NUS }
+			surrender_progress < 0.6
+			}
+		NUS = {
+			surrender_progress < 0.5
+			}
+	}
+	
+	#Do it
+    option = {
+        name = isis.2.a
+		ai_chance = { factor = 100 }
+		random_list = {
+			70 = {
+				ISI = { country_event = { days = 28 id = isis.4 } }
+				hidden_effect = { 
+					NUS = { country_event = { days = 30 id = isis.3 } }
+					}
+				
+			}
+			30 = {
+				custom_effect_tooltip = isis.2.a_tt
+				
+			}
+		}
+    }
+	#avoid provokations
+	option = {
+        name = isis.2.b
+		ai_chance = {
+			factor = 0
+			}
+    }
+}
+
+#Defections from Tahrir al-Sham
+country_event = {
+    id = isis.3
+	title = isis.3.t
+	desc = isis.3.d
+	picture = GFX_Tahrir_Al_Sham
+	
+    is_triggered_only = yes
+	
+	immediate = {
+	    add_manpower = -6000
+		add_national_unity = -0.05
+	}
+	
+	#Fight back!
+    option = {
+        name = isis.3.a
+		ai_chance = { factor = 50 }
+		create_wargoal = { type = annex_everything target = ISI }
+    }
+	
+	#Do nothing
+	option = {
+        name = isis.3.b
+		ai_chance = { factor = 50 }
+		hidden_effect = { 
+					ISI = { country_event = { days = 7 id = isis.5 } }
+					}
+    }
+}
+
+#Add units to ISIS
+country_event = {
+    id = isis.4
+	title = isis.4.t
+	desc = isis.4.d
+	picture = GFX_Tahrir_Al_Sham
+	
+    is_triggered_only = yes
+
+    option = {
+        name = isis.4.a
+		ai_chance = { factor = 100 }
+		custom_effect_tooltip = isis.4.a_tt
+		hidden_effect = {
+					ISI = {
+						load_oob = ISI_Defection
+						}
+		}
+    }
+}
+
+#ISIS senses weakness in Tahrir al-Sham
+country_event = {
+    id = isis.5
+	title = isis.5.t
+	desc = isis.5.d
+	picture = GFX_Tahrir_Al_Sham
+	
+    is_triggered_only = yes
+	
+	#Attack
+    option = {
+        name = isis.5.a
+		ai_chance = { factor = 70 }
+		create_wargoal = { type = annex_everything target = NUS }
+    }
+	
+	#Do nothing
+	option = {
+        name = isis.5.b
+		ai_chance = { factor = 30 }
+    }
+}
+
+#ISIS is alive, but Tahrir al Sham is close to defeat
+#Makes Tahrir al Sham defect to ISIS
+country_event = {
+    id = isis.6
+	title = isis.6.t
+	desc = isis.6.d
+	picture = GFX_Tahrir_Al_Sham
+	
+    mean_time_to_happen = {
+		days = 3
+	}
+	
+	trigger = {
+		tag = ISI
+		country_exists = ISI
+		NUS = { is_ai = yes }
+		ISI = {
+			surrender_progress < 0.8
+			}
+		NUS = {
+			surrender_progress > 0.9
+			}
+	}
+
+    option = {
+        name = isis.6.a
+		ai_chance = { factor = 100 }
+		annex_country = { target = NUS transfer_troops = yes }
+		hidden_effect = { news_event = { id = isisNews.1 hours = 6 } }
+    }
+}
+
+#ISIS annexes Tahrir al Sham
+news_event = {
+	id = isisNews.1
+	title = isisNews.1.t
+	desc = isisNews.1.d
+	picture = GFX_news_rise_of_taliban
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = isisNews.1.a
+	}
+}
