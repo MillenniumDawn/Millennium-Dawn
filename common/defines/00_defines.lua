@@ -137,7 +137,7 @@ NDiplomacy = {
 
 NCountry = {
 	EVENT_PROCESS_OFFSET = 20,						-- Events are checked every X day per character or province (1 is ideal, but CPU heavy)
-	BASE_RESEARCH_SLOTS = 2,						-- Base number of research slots per country.
+	BASE_RESEARCH_SLOTS = 1,						-- Base number of research slots per country.
 	VP_TO_SUPPLY_BASE = 0.1,							-- Bonus to supply from a VP, no matter the level --1
 	VP_TO_SUPPLY_BONUS_CONVERSION = 0.2,			-- Bonus to supply local supplies from Victory Points, multiplied by this aspect and rounded to closest integer --0.1
 	SUPPLY_FROM_DAMAGED_INFRA = 0.3,                -- damaged infrastructure counts as this in supply calcs
@@ -266,8 +266,8 @@ NProduction = {
 NTechnology = {
 	MAX_SUBTECHS = 5,						-- Max number of sub technologies a technology can have.
 	BASE_RESEARCH_POINTS_SAVED = 30.0,		-- Base amount of research points a country can save per slot.
-	BASE_YEAR_AHEAD_PENALTY_FACTOR = 1,	-- Base year ahead penalty
-	BASE_TECH_COST = 150,				-- base cost for a tech. multiplied with tech cost and ahead of time penalties
+	BASE_YEAR_AHEAD_PENALTY_FACTOR = 0.5,	-- Base year ahead penalty
+	BASE_TECH_COST = 300,				-- base cost for a tech. multiplied with tech cost and ahead of time penalties
 	MAX_TECH_SHARING_BONUS = 0.5, 			-- Max technology sharing bonus that can be applied instantly
 	LICENSE_PRODUCTION_TECH_BONUS = 0.2,	-- License production tech bonus
 },
@@ -320,8 +320,8 @@ NMilitary = {
 	COMBAT_VALUE_ORG_IMPORTANCE = 1,		-- Multiplier on TotalOrganisation when determining the combat value of a division
 	COMBAT_VALUE_STR_IMPORTANCE = 1,		-- Multiplier on TotalStrength when determining the combat value of a division
 	
-	HOURLY_ORG_MOVEMENT_IMPACT = -0.25,		-- how much org is lost every hour while moving an army.
-	ZERO_ORG_MOVEMENT_MODIFIER = -0.4,		-- speed impact at 0 org.
+	HOURLY_ORG_MOVEMENT_IMPACT = -0.1,		-- how much org is lost every hour while moving an army.
+	ZERO_ORG_MOVEMENT_MODIFIER = -0.25,		-- speed impact at 0 org. #-0.4
 	INFRA_ORG_IMPACT = 0.5,				-- scale factor of infra on org regain.
 
 	INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02,	-- speed penalty per infrastucture below maximum.
@@ -332,7 +332,7 @@ NMilitary = {
 	WAR_SCORE_AIR_WORTH_CAP = 1000,				-- the warscore limit we get from strategic bombing
 	WAR_SCORE_AIR_MONTHLY_FALLOFF = 10,			-- how much the warscore we got from the strategic bombing falls off every month.
 	
-	CORPS_COMMANDER_CAP = 24,			-- how many a corps commander is limited to.
+	CORPS_COMMANDER_CAP = 18,			-- how many a corps commander is limited to.
 	FIELD_MARSHALL_CAP = 0,			-- how many a marshall is limited to. 0 = inf
 	UNIT_LEADER_GENERATION_CAPITAL_CONTINENT_FACTOR = 100, --Integer factor to multiply manpower.
 
@@ -451,7 +451,7 @@ NMilitary = {
 	SUPPLY_GRACE = 504,		-- troops always carry 5 days of food and supply #72
 	MAX_OUT_OF_SUPPLY_DAYS = 30, 				   -- how many days of shitty supply until max penalty achieved
 	OUT_OF_SUPPLY_ATTRITION = 0.3,                 -- max attrition when out of supply
-	OUT_OF_SUPPLY_SPEED = -0.8,                    -- max speed reduction from supply
+	OUT_OF_SUPPLY_SPEED = -0.6,                    -- max speed reduction from supply
 	NON_CORE_SUPPLY_SPEED = -0.25,				   -- we are not running on our own VP supply so need to steal stuff along the way
 	OUT_OF_SUPPLY_MORALE = -0.2,                   -- max org regain reduction from supply
 	TRAINING_ATTRITION = 0.06,		  			   -- amount of extra attrition from being in training
@@ -852,7 +852,7 @@ NAI = {
 	RESEARCH_BONUS_FACTOR = 0.9, 				-- To which extent AI should care about bonuses to research
 	MAX_AHEAD_RESEARCH_PENALTY = 2,             -- max ahead of tiem penalty ai will pick ever
 	RESEARCH_AHEAD_OF_TIME_FACTOR = 4.0, 		-- To which extent AI should care about ahead of time penalties to research
-	RESEARCH_BASE_DAYS = 60,					-- AI adds a base number of days when weighting completion time for techs to ensure it doesn't only research quick techs
+	RESEARCH_BASE_DAYS = 220,					-- AI adds a base number of days when weighting completion time for techs to ensure it doesn't only research quick techs
 	DECLARE_WAR_RELATIVE_FORCE_FACTOR = 0.5,	-- Weight of relative force between nations that consider going to war
 	TRADEABLE_FACTORIES_FRACTION = 0.8,			-- MD4 was 0.4 Will at most trade away this fraction of factories.
 	MIN_DELIVERED_TRADE_FRACTION = 0.6,			-- AI will cancel trade deals that are not able to deliver more than this fraction of the agreed amount
@@ -1175,8 +1175,8 @@ NAI = {
 	
 	REQUEST_LEND_LEASE_PROTECT_VALUE = 75,				-- Limit for protect enemy desire for reducing lend lease desire
 	REQUEST_LEND_LEASE_CONTAINS_VALUE = 100,			-- Limit of contain enemy desire for boosting friendly help
-	REQUEST_LEND_LEASE_STOCKPILE_RATIO_LAND = 0.3,		-- Ratio to send stockpile from equipment
-	REQUEST_LEND_LEASE_PRODUCTION_DAYS_LAND = 28,		-- Count of daily production amount of equipment to send
+	REQUEST_LEND_LEASE_STOCKPILE_RATIO_LAND = 0.5,		-- Ratio to send stockpile from equipment #0.3
+	REQUEST_LEND_LEASE_PRODUCTION_DAYS_LAND = 300,		-- Count of daily production amount of equipment to send #28 test
 	REQUEST_LEND_LEASE_STOCKPILE_RATIO_AIR = 0.3,		-- Ratio to send stockpile from equipment
 	REQUEST_LEND_LEASE_PRODUCTION_DAYS_AIR = 10,		-- Count of daily production amount of equipment to send
 	REQUEST_LEND_LEASE_STOCKPILE_RATIO_NAVAL = 0.3,		-- Ratio to send stockpile from equipment
