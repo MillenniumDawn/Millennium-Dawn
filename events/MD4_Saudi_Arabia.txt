@@ -1,5 +1,6 @@
 ﻿add_namespace = SAU_YEM
 add_namespace = SAU_2017_Riyadh_Summit
+add_namespace = SAU_GCC_CRISIS
 
 country_event = {
 	id = SAU_2017_Riyadh_Summit.0
@@ -10,7 +11,7 @@ country_event = {
 	fire_only_once = yes
 	is_triggered_only = yes
 
-	option = {
+	option = { #Host It
 		name = SAU_2017_Riyadh_Summit.0.a
 		news_event = { id = SAU_2017_Riyadh_Summit.1 }
 		if = {
@@ -97,34 +98,180 @@ country_event = {
 				}
 			}
 		}
-		hidden_effect = { news_event = { id = SAU_YEM.0 days = 200} }
+		hidden_effect = {
+			news_event = { id = SAU_YEM.0 days = 200} 
+			USA = { news_event = { id = USA_Trump_First_Trip.1 days = 3 } }
+			SAU = { news_event = { id = USA_Trump_First_Trip.1 days = 3 } }
+		}
 	}
-	option = {
+	option = { #Don't host it
 		name = SAU_2017_Riyadh_Summit.0.b
 	}
 }
 
-news_event = {
-	id = SAU_2017_Riyadh_Summit.1
-	title = SAU_2017_Riyadh_Summit.1.t
-	desc = SAU_2017_Riyadh_Summit.1.d
-	picture = GFX_SAU_2017_Riyadh_Summit
+#Start of GCC Crisis
+country_event = {
+	id = SAU_GCC_CRISIS.0
+	title = SAU_GCC_CRISIS.0.t
+	desc = SAU_GCC_CRISIS.0.d
 
 	#fire_only_once = yes
-	major = yes
 	is_triggered_only = yes
 
-	option = {
-		name = SAU_2017_Riyadh_Summit.1.a
-		if = {
-			limit = { Is_2017_Riyadh_Summit_Member = yes }
-			2017_Riyadh_Summit = yes
+	option = { #Preasure QAT
+		name = SAU_GCC_CRISIS.0.a
+		add_political_power = -200
+		every_country = {
+			limit = { 
+				tag = BAH tag = CHA tag = COM tag = EGY tag = MAL tag = MAU tag = SEN tag = UAE
+				tag = YEM
+			}
+			country_event = { id = SAU_GCC_CRISIS.1 }
 		}
+		
+	}
+	option = { #don't do it
+		name = SAU_GCC_CRISIS.0.b
+	}
+	
+}
+
+#Join Blockade Against Qatar
+country_event = {
+	id = SAU_GCC_CRISIS.1
+	title = SAU_GCC_CRISIS.1.t
+	desc = SAU_GCC_CRISIS.1.d
+
+	#fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #join
+		name = SAU_GCC_CRISIS.1.a
+		add_opinion_modifier = { target = QAT modifier = Blockade_QAT }
+		add_opinion_modifier = { target = QAT modifier = Blockade_QAT_Trade }
+	}
+	option = { #Don't join
+		name = SAU_GCC_CRISIS.1.b
+		add_political_power = -25
+		add_opinion_modifier = { target = SAU modifier = Decline_Blockade_QAT }
+	}
+	
+}
+#Trump support or don't support blockade
+country_event = {
+	id = SAU_GCC_CRISIS.2
+	title = SAU_GCC_CRISIS.2.t
+	desc = SAU_GCC_CRISIS.2.d
+
+	#fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #join
+		name = SAU_GCC_CRISIS.2.a
+		SAU = { 
+			add_opinion_modifier = { target = USA modifier = Trump_Support_Blockade_QAT }
+			set_country_flag = USA_SUPPORT_QAT_BLOCKADE
+		}
+		add_political_power = 25
+		hidden_effect = { news_event = { id = SAU_GCC_CRISIS.3 } }
+	}
+	option = { #Don't join
+		name = SAU_GCC_CRISIS.2.b
+		add_political_power = -25
+		hidden_effect = { news_event = { id = SAU_GCC_CRISIS.3 } }
+	}
+	
+}
+#Qatar blockade announced
+news_event = {
+	id = SAU_GCC_CRISIS.3
+	title = SAU_GCC_CRISIS.3.t
+	
+	desc = { text = SAU_GCC_CRISIS.3.d.1 trigger = { not = { SAU = { has_country_flag = Trump_Support_Blockade_QAT } } } }
+	desc = { text = SAU_GCC_CRISIS.3.d.2 trigger = { SAU = { has_country_flag = Trump_Support_Blockade_QAT } } }
+	
+	#fire_only_once = yes
+	is_triggered_only = yes
+	major = yes
+	
+	option = { #Initial statement, Don't accept demands
+		name = SAU_GCC_CRISIS.3.a
+		trigger = { tag = QAT }
 		if = {
-			limit = { or = { has_idea = GCC_member tag = USA } }
-			USA_GCC_2017_Riyadh_Summit = yes
+			limit = { SAU = { has_country_flag = Trump_Support_Blockade_QAT } }
+			country_event = { id = SAU_GCC_CRISIS.4 } #Preasure USA to reverse stance
+			else = {
+				country_event = { id = SAU_GCC_CRISIS.5 } #Preasure USA to reverse stance
+			}
 		}
 	}
+	option = { #Accept initial demands
+		name = SAU_GCC_CRISIS.3.b
+		trigger = { tag = QAT }
+		
+	}
+	option = { #interesting
+		name = SAU_GCC_CRISIS.3.b
+		trigger = { not = { tag = QAT } }
+		
+	}
+	
+	
+}
+#Qatar pressure USA to reverse stance
+country_event = {
+	id = SAU_GCC_CRISIS.4
+	title = SAU_GCC_CRISIS.4.t
+	desc = SAU_GCC_CRISIS.4.d
+	
+	#fire_only_once = yes
+	is_triggered_only = yes
+	#major = yes
+	
+	option = { #Threaten to remove US license for bases in QAT
+		name = SAU_GCC_CRISIS.4.a
+	}
+	option = { #Leave the US out of this
+		name = SAU_GCC_CRISIS.4.a
+	}
+	
+	
+}
+#US response to QAT Pressure
+country_event = {
+	id = SAU_GCC_CRISIS.5
+	title = SAU_GCC_CRISIS.5.t
+	desc = SAU_GCC_CRISIS.5.d
+	
+	#fire_only_once = yes
+	is_triggered_only = yes
+	#major = yes
+	
+	option = { #Reverse stance
+		name = SAU_GCC_CRISIS.5.a
+		news_event = { id = SAU_GCC_CRISIS.6 }
+	}
+	option = { #Keep stance
+		name = SAU_GCC_CRISIS.5.b
+	}
+	
+	
+}
+#US reverse stance announcement
+news_event = {
+	id = SAU_GCC_CRISIS.6
+	title = SAU_GCC_CRISIS.6.t
+	desc = SAU_GCC_CRISIS.6.d
+	
+	#fire_only_once = yes
+	is_triggered_only = yes
+	major = yes
+	
+	option = { #interesting
+		name = SAU_GCC_CRISIS.6.a
+	}
+	
+	
 }
 
 #Yemen Fires Missile 
