@@ -95,9 +95,6 @@ country_event = {
 		add_national_unity = 0.05
 		set_global_flag = KUR_demand_independence
 		IRQ = { country_event = { id = Kurdistan.4 hours = 12 } }
-		hidden_effect = {	
-			news_event = { id = KurdistanNews.3 hours = 6 }
-		}
 	}
 	option = {
 		name = Kurdistan.3.b		#Demand more autonomy
@@ -107,9 +104,6 @@ country_event = {
 		add_national_unity = 0.05
 		set_global_flag = KUR_demand_more_autonomy
 		IRQ = { country_event = { id = Kurdistan.5 hours = 12 } }
-		hidden_effect = {
-			news_event = { id = KurdistanNews.4 hours = 6 }
-		}
 	}
 }
 
@@ -135,16 +129,18 @@ country_event = {
 		ai_chance = {
 			factor = 5
 		}
+		KUR = { country_event = { id = Kurdistan.7 days = 3 } }
 	}
 	option = {
 		name = Kurdistan.4.c	#Let them go
 		ai_chance = {
 			factor = 5
 		}
+		KUR = { country_event = { id = Kurdistan.6 days = 3 } }
 	}
 }
 
-#Kurdistan demands full independence
+#Kurdistan demands more autonomy
 country_event = {
 
 	id = Kurdistan.5
@@ -166,14 +162,409 @@ country_event = {
 		ai_chance = {
 			factor = 10
 		}
+		KUR = { country_event = { id = Kurdistan.7 days = 3 } }
 	}
 	option = {
-		name = Kurdistan.5.c	#Let them go
+		name = Kurdistan.5.c	#Agree
 		ai_chance = {
 			factor = 10
 		}
+		KUR = { country_event = { id = Kurdistan.6 days = 3 } }
 	}
 }
+
+#Iraq agrees to demands
+country_event = {
+
+	id = Kurdistan.6
+	
+	title = Kurdistan.6.t
+	desc = Kurdistan.6.d
+	picture = GFX_kurdistan_referendum
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Kurdistan.6.a
+		ai_chance = {
+			factor = 100
+		}
+		if = {
+			limit = { has_global_flag = KUR_demand_independence }
+			add_political_power = 50
+			hidden_effect = {
+				news_event = { id = KurdistanNews.3 hours = 6 }
+			}
+		}
+		if = {
+			limit = { has_global_flag = KUR_demand_more_autonomy }
+			if = {
+				limit = { has_dlc = "Death or Dishonor"	}
+				IRQ = {
+					set_autonomy = {
+						target = KUR
+						autonomy_state = autonomy_dominion
+					}
+				}
+				else = {
+					IRQ = { puppet = KUR }
+				}
+			}
+			hidden_effect = {
+				news_event = { id = KurdistanNews.4 hours = 6 }
+			}
+		}
+	}
+	
+}
+
+#Iraq demands Kirkuk
+country_event = {
+
+	id = Kurdistan.7
+	
+	title = Kurdistan.7.t
+	desc = Kurdistan.7.d
+	picture = GFX_kirkuk
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Kurdistan.7.a		#Give Kirkuk
+		ai_chance = {
+			factor = 50
+		}
+		country_event = { id = Kurdistan.6 hours = 6 }
+		IRQ = { transfer_state = 165 }
+	}
+	option = {
+		name = Kurdistan.7.b		#Never
+		ai_chance = {
+			factor = 50
+		}
+		IRQ = { country_event = { id = Kurdistan.8 hours = 6 } }
+		set_country_flag = KUR_negotiations_broken_down
+	}
+	
+}
+
+#Kurdistan refuses to cede Kirkuk
+country_event = {
+	
+	id = Kurdistan.8
+	
+	title = Kurdistan.8.t
+	desc = Kurdistan.8.d
+	picture = GFX_kirkuk
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Kurdistan.8.a
+		ai_chance = {
+			factor = 100
+		}
+	}
+}
+
+#Future of Kurdistan?
+country_event = {
+	
+	id = Kurdistan.9
+	
+	title = Kurdistan.9.t
+	desc = Kurdistan.9.d
+	picture = GFX_kurdistan
+	
+	fire_only_once = yes
+	
+	trigger = {
+		has_country_flag = KUR_negotiations_broken_down
+	}
+	
+	mean_time_to_happen = {
+		days = 30
+	}
+	
+	option = {
+		name = Kurdistan.9.a		#Declare full independence
+		ai_chance = {
+			factor = 80
+		}
+		IRQ = { country_event = { id = Kurdistan.10 days = 3 } }
+	}
+	option = {
+		name = Kurdistan.9.b		#Return to Iraq
+		ai_chance = {
+			factor = 20
+		}
+		IRQ = { country_event = { id = Kurdistan.2 days = 3 } }
+	}
+}
+
+#Kurdistan tries to go independent
+country_event = {
+	
+	id = Kurdistan.10
+	
+	title = Kurdistan.10.t
+	desc = Kurdistan.10.d
+	picture = GFX_kurdistan
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Kurdistan.10.a		#Prepare operations
+		ai_chance = {
+			factor = 95
+		}
+		KUR = { country_event = { id = Kurdistan.11 hours = 3 } }
+		set_global_flag = battle_of_kirkuk_phase_1
+	}
+	option = {
+		name = Kurdistan.10.b		#Let them go
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+
+#Iraq prepares operations against Kirkuk
+country_event = {
+
+	id = Kurdistan.11
+	
+	title = Kurdistan.11.t
+	desc = Kurdistan.11.d
+	picture = GFX_kirkuk
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Kurdistan.11.a		#Prepare of battle
+		ai_chance = {
+			factor = 50
+		}
+		custom_effect_tooltip = battle_for_kirkuk_tt
+		set_global_flag = KUR_fight_for_kirkuk
+	}
+	option = {
+		name = Kurdistan.11.b		#Retreat
+		ai_chance = {
+			factor = 50
+		}
+		set_global_flag = KUR_retreat_from_kirkuk
+	}
+}
+
+#Battle of Kirkuk
+country_event = {
+	
+	id = Kurdistan.12
+	
+	hidden = yes
+	
+	fire_only_once = yes
+	
+	trigger = {
+		has_global_flag = battle_of_kirkuk_phase_1
+	}
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	immediate = {
+		if = {
+			limit = { has_global_flag = KUR_retreat_from_kirkuk }
+			IRQ = { transfer_state = 165 }
+			news_event = KurdistanNews.5
+		}
+		if = {
+			limit = { has_global_flag = KUR_fight_for_kirkuk }
+			random_list = {
+				75 = {			#Iraqi victory
+					IRQ = { transfer_state = 165 }
+					news_event = KurdistanNews.6
+				}
+				25 = {			#Kurdish victory
+					news_event = KurdistanNews.7
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = Kurdistan.12.a
+		ai_chance = { factor = 100 }
+	}
+}
+
+#Kirkuk occupied
+country_event = {
+
+	id = Kurdistan.13
+	
+	title = Kurdistan.13.t
+	desc = Kurdistan.13.d
+	picture = GFX_kirkuk
+	
+	fire_only_once = yes
+	
+	trigger = {	
+		has_global_flag = battle_of_kirkuk_phase_2
+		NOT = { has_global_flag = KUR_victory_kirkuk }
+	}
+	
+	mean_time_to_happen = {
+		days = 30
+	}
+	
+	option = {
+		name = Kurdistan.13.a		#Demand submission
+		ai_chance = {
+			factor = 100
+		}
+		KUR = { country_event = { id = Kurdistan.14 days = 3 } }
+	}
+}
+
+#Iraq demands submission
+country_event = {
+
+	id = Kurdistan.14
+	
+	title = Kurdistan.14.t
+	desc = Kurdistan.14.d
+	picture = GFX_kurdistan
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Kurdistan.14.a		#Submit
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 2
+				has_global_flag = IRQ_victory_kirkuk
+			}
+		}
+		if = {
+			limit = { has_global_flag = IRQ_victory_kirkuk }
+			custom_effect_tooltip = GAME_OVER_TT
+		}
+		IRQ = { country_event = { id = Kurdistan.15 days = 3 } }
+	}
+	option = {
+		name = Kurdistan.14.b		#Resist
+		ai_chance = {
+			factor = 80
+			modifier = {
+				factor = 0.5
+				has_global_flag = IRQ_victory_kirkuk
+			}
+		}
+		IRQ = { country_event = { id = Kurdistan.16 days = 3 } }
+	}
+}
+
+#Kurdistan submits
+country_event = {
+
+	id = Kurdistan.15
+
+	title = Kurdistan.15.t
+	desc = Kurdistan.15.d
+	picture = GFX_kurdistan
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Kurdistan.15.a
+		ai_chance = {
+			factor = 100
+		}
+		if = {
+			limit = { has_global_flag = IRQ_victory_kirkuk }
+			annex_country = { target = KUR }
+			else = {
+				if = {
+					limit = { has_dlc = "Death or Dishonor"	}
+					set_autonomy = { target = KUR autonomy_state = autonomy_integrated_puppet }
+					else = {
+						annex_country = { target = KUR }
+					}
+				}
+			}
+		}
+		hidden_effect = { news_event = { id = KurdistanNews.8 hours = 6 } }
+	}
+}
+
+#Kurdistan doesn't submit
+country_event = {
+
+	id = Kurdistan.16
+	
+	title = Kurdistan.16.t
+	desc = Kurdistan.16.d
+	picture = GFX_kurdistan
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Kurdistan.16.a
+		ai_chance = {
+			factor = 100
+		}
+		create_wargoal = {
+			type = annex_everything
+			target = KUR
+		}
+		hidden_effect = { news_event = { id = KurdistanNews.9 hours = 6 } }
+	}
+}
+
+#Kirkuk operation fails
+country_event = {
+
+	id = Kurdistan.17
+	
+	title = Kurdistan.17.t
+	desc = Kurdistan.17.d
+	picture = GFX_kurdistan
+	
+	fire_only_once = yes
+	
+	trigger = {	
+		has_global_flag = battle_of_kirkuk_phase_2
+		has_global_flag = KUR_victory_kirkuk
+	}
+	
+	mean_time_to_happen = {
+		days = 30
+	}
+	
+	option = {
+		name = Kurdistan.17.a		#Prepare for War
+		ai_chance = {
+			factor = 70
+		}
+		create_wargoal = {
+			type = annex_everything
+			target = KUR
+		}
+		hidden_effect = { news_event = { id = KurdistanNews.10 hours = 6 } }
+	}
+	option = {
+		name = Kurdistan.17.b		#We can't do anything
+		ai_chance = {
+			factor = 30
+		}
+		hidden_effect = { news_event = { id = KurdistanNews.11 hours = 6 } }
+	}
+}
+		
 
 ### News Events About Kurdistan ###
 
@@ -325,4 +716,161 @@ news_event = {
 	}				
 	
 }
+
+#Iraq captures Kirkuk - no fighting
+news_event = {
+	
+	id = KurdistanNews.5
+	
+	title = KurdistanNews.5.t
+	desc = KurdistanNews.5.d
+	picture = GFX_battle_of_kirkuk
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = KurdistanNews.5.a
+		ai_chance = { factor = 100 }
+		effect_tooltip = {
+			IRQ = { transfer_state = 165 }
+		}
+		set_global_flag = battle_of_kirkuk_phase_2
+	}				
+	
+}
+
+#Battle of Kirkuk - Iraqi victory
+news_event = {
+	
+	id = KurdistanNews.6
+	
+	title = KurdistanNews.6.t
+	desc = KurdistanNews.6.d
+	picture = GFX_battle_of_kirkuk
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = KurdistanNews.6.a
+		ai_chance = { factor = 100 }
+		effect_tooltip = {
+			IRQ = { transfer_state = 165 }
+		}
+		if = {
+			limit = { tag = KUR }
+			add_national_unity = -0.10
+			add_popularity = { ideology = neutrality popularity = -0.10 }
+		}
+		set_global_flag = battle_of_kirkuk_phase_2
+		set_global_flag = IRQ_victory_kirkuk
+	}				
+	
+}
+
+#Battle of Kirkuk - Kurdish victory
+news_event = {
+	
+	id = KurdistanNews.7
+	
+	title = KurdistanNews.7.t
+	desc = KurdistanNews.7.d
+	picture = GFX_battle_of_kirkuk
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = KurdistanNews.7.a
+		ai_chance = { factor = 100 }
+		set_global_flag = battle_of_kirkuk_phase_2
+		set_global_flag = KUR_victory_kirkuk
+	}				
+	
+}
+
+#Kurdistan folds after Kirkuk
+news_event = {
+	
+	id = KurdistanNews.8
+	
+	title = KurdistanNews.8.t
+	desc = KurdistanNews.8.d
+	picture = GFX_fate_of_iraq
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = KurdistanNews.8.a
+		ai_chance = { factor = 100 }
+	}				
+	
+}
+
+#Kurdistan doesn't fold after Kirkuk
+news_event = {
+	
+	id = KurdistanNews.9
+	
+	title = KurdistanNews.9.t
+	desc = KurdistanNews.9.d
+	picture = GFX_fate_of_iraq
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = KurdistanNews.9.a
+		ai_chance = { factor = 100 }
+	}				
+	
+}
+
+#Iraq resumes hostilities with Kurdistan
+news_event = {
+	
+	id = KurdistanNews.10
+	
+	title = KurdistanNews.10.t
+	desc = KurdistanNews.10.d
+	picture = GFX_fate_of_iraq
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = KurdistanNews.10.a
+		ai_chance = { factor = 100 }
+	}				
+	
+}
+
+#Iraq abandons unification
+news_event = {
+	
+	id = KurdistanNews.11
+	
+	title = KurdistanNews.11.t
+	desc = KurdistanNews.11.d
+	picture = GFX_fate_of_iraq
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = KurdistanNews.11.a
+		ai_chance = { factor = 100 }
+	}				
+	
+}
+
 		
