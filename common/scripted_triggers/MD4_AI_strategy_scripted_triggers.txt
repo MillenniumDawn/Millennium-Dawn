@@ -1,0 +1,305 @@
+#Scripted triggers				Scope				Explanation													
+#in_different_faction			COUNTRY SCOPE		TRUE if SCOPE COUNTRY and FROM in different factions		
+#war_with_us					COUNTRY SCOPE		TRUE if SCOPE COUNTRY is at war with FROM
+#same_ideology					COUNTRY SCOPE		TRUE if SCOPE COUNTRY and FROM have same ideology
+#western_vs_emerging			COUNTRY SCOPE		TRUE if SCOPE COUNTRY and FROM are on opposide sides; western vs emerging
+#is_bad_salafist				COUNTRY SCOPE		TRUE if SCOPE COUNTRY is salafist and FROM is not
+#Has_higher_mil_spending_by_2	COUNTRY SCOPE		TRUE if SCOPE COUNTRY is 2 levels or more higher in MIL spending than neighbours + retard checks
+#neighbor_has_higher_mil_spending_by_2	COUNTRY SCOPE		TRUE if SCOPE COUNTRY neighbour MIL spending is 2 levels or more than neighbours + retard checks
+
+#Checks if countries are in different factions
+in_different_faction = {
+	FROM = { is_in_faction = yes }
+	THIS = { NOT = { is_in_faction_with = FROM } }
+	THIS = { is_in_faction = yes }
+}
+
+#Checks if two countries are at war (yes, we have this in-game already, but more clear script)
+war_with_us = {
+	THIS = { has_war_with = FROM }
+}
+
+#Checks if two countries have the same ideology
+same_ideology = {
+	OR = {
+		AND = {
+			THIS = { has_government = democratic }
+			FROM = { has_government = democratic }
+		}
+		AND = {
+			THIS = { has_government = communism }
+			FROM = { has_government = communism }
+		}
+		AND = {
+			THIS = { has_government = neutrality }
+			FROM = { has_government = neutrality }
+		}
+		AND = {
+			THIS = { has_government = fascism }
+			FROM = { has_government = fascism }
+		}
+		AND = {
+			THIS = { has_government = Nationalist }
+			FROM = { has_government = Nationalist }
+		}
+	}
+}
+
+western_vs_emerging = { 
+	OR = {
+		AND = {
+			THIS = { has_government = democratic }
+			FROM = { has_government = communism }
+		}
+		AND = {
+			THIS = { has_government = communism }
+			FROM = { has_government = democratic }
+		}
+	}
+}
+
+#Checks if target country is a salafist and we are not
+is_bad_salafist = {
+	has_government = fascism
+	FROM = { NOT = { has_government = fascism } }
+}
+
+#Check if target Mil spending is 2 levels higher than neighbours
+Has_higher_mil_spending_by_2 = {
+	
+	or = {
+		and = {
+			has_idea = defence_09
+			any_neighbor_country = {
+				or = {
+					has_idea = defence_00
+					has_idea = defence_01
+					has_idea = defence_02
+					has_idea = defence_03
+					has_idea = defence_04
+					has_idea = defence_05
+					has_idea = defence_06
+				}
+				
+			}
+		}
+		and = {
+			has_idea = defence_08
+			any_neighbor_country = {
+				or = {
+					has_idea = defence_00
+					has_idea = defence_01
+					has_idea = defence_02
+					has_idea = defence_03
+					has_idea = defence_04
+					has_idea = defence_05
+				}
+			}
+		}
+		and = {
+			has_idea = defence_07
+			any_neighbor_country = {
+				or = {
+					has_idea = defence_00
+					has_idea = defence_01
+					has_idea = defence_02
+					has_idea = defence_03
+					has_idea = defence_04
+				}
+			}
+		}
+		and = {
+			has_idea = defence_06
+			any_neighbor_country = {
+				or = {
+					has_idea = defence_00
+					has_idea = defence_01
+					has_idea = defence_02
+					has_idea = defence_03
+				}
+			}
+		}
+		and = {
+			has_idea = defence_05
+			any_neighbor_country = {
+				or = {
+					has_idea = defence_00
+					has_idea = defence_01
+					has_idea = defence_02
+				}
+			}
+		}
+		and = {
+			has_idea = defence_04
+			any_neighbor_country = {
+				or = {
+					has_idea = defence_00
+					has_idea = defence_01
+				}
+			}
+		}
+		and = {
+			has_idea = defence_03
+			any_neighbor_country = {
+				or = {
+					has_idea = defence_00
+				}
+			}
+		}
+		
+		
+	}
+	
+}
+
+#Check if any neighbours Mil spending is 2 levels higher than ours
+#Is not in the same faction or guaranteeing us
+#And make sure their army isn't 4x larger than ours
+neighbor_has_higher_mil_spending_by_2 = {
+	or = {
+		and = {
+			or = {
+				has_idea = defence_00
+				has_idea = defence_01
+				has_idea = defence_02
+				has_idea = defence_03
+				has_idea = defence_04
+				has_idea = defence_05
+				has_idea = defence_06
+			}
+			any_neighbor_country = {
+				has_idea = defence_09
+				not = {
+					or = {
+						has_guaranteed = THIS
+						is_in_faction_with = THIS
+					}
+					strength_ratio = { tag = THIS ratio > 4.0 }# 4x stronger than THIS
+					ic_ratio = { tag = THIS ratio > 4 } #4 more IC than THIS
+				}
+				has_war = no
+				
+			}
+		}
+		and = {
+			or = {
+				has_idea = defence_00
+				has_idea = defence_01
+				has_idea = defence_02
+				has_idea = defence_03
+				has_idea = defence_04
+				has_idea = defence_05
+			}
+			any_neighbor_country = {
+				has_idea = defence_08
+				not = {
+					or = {
+						has_guaranteed = THIS
+						is_in_faction_with = THIS
+					}
+					strength_ratio = { tag = THIS ratio > 4.0 }# 4x stronger than THIS
+					ic_ratio = { tag = THIS ratio > 4 } #4 more IC than THIS
+				}
+				has_war = no
+				
+			}
+		}
+		and = {
+			or = {
+				has_idea = defence_00
+				has_idea = defence_01
+				has_idea = defence_02
+				has_idea = defence_03
+				has_idea = defence_04
+			}
+			any_neighbor_country = {
+				has_idea = defence_07
+				not = {
+					or = {
+						has_guaranteed = THIS
+						is_in_faction_with = THIS
+					}
+					strength_ratio = { tag = THIS ratio > 4.0 }# 4x stronger than THIS
+					ic_ratio = { tag = THIS ratio > 4 } #4 more IC than THIS
+				}
+				has_war = no
+			}
+		}
+		and = {
+			or = {
+				has_idea = defence_00
+				has_idea = defence_01
+				has_idea = defence_02
+				has_idea = defence_03
+			}
+			any_neighbor_country = {
+				has_idea = defence_06
+				not = {
+					or = {
+						has_guaranteed = THIS
+						is_in_faction_with = THIS
+					}
+					strength_ratio = { tag = THIS ratio > 4.0 }# 4x stronger than THIS
+					ic_ratio = { tag = THIS ratio > 4 } #4 more IC than THIS
+				}
+				has_war = no
+			}
+		}
+		and = {
+			or = {
+				has_idea = defence_00
+				has_idea = defence_01
+				has_idea = defence_02
+			}
+			any_neighbor_country = {
+				has_idea = defence_05
+				not = {
+					or = {
+						has_guaranteed = THIS
+						is_in_faction_with = THIS
+					}
+					strength_ratio = { tag = THIS ratio > 4.0 }# 4x stronger than THIS
+					ic_ratio = { tag = THIS ratio > 4 } #4 more IC than THIS
+				}
+				has_war = no
+			}
+		}
+		and = {
+			or = {
+				has_idea = defence_00
+				has_idea = defence_01
+			}
+			any_neighbor_country = {
+				has_idea = defence_04
+				not = {
+					or = {
+						has_guaranteed = THIS
+						is_in_faction_with = THIS
+					}
+					strength_ratio = { tag = THIS ratio > 4.0 }# 4x stronger than THIS
+					ic_ratio = { tag = THIS ratio > 4 } #4 more IC than THIS
+				}
+				has_war = no
+			}
+		}
+		and = {
+			or = {
+				has_idea = defence_00
+			}
+			any_neighbor_country = {
+				has_idea = defence_03
+				not = {
+					or = {
+						has_guaranteed = THIS
+						is_in_faction_with = THIS
+					}
+					strength_ratio = { tag = THIS ratio > 4.0 }# 4x stronger than THIS
+					ic_ratio = { tag = THIS ratio > 4 } #4 more IC than THIS
+				}
+				has_war = no
+			}
+		}
+			
+	}
+}
+
