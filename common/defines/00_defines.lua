@@ -321,7 +321,7 @@ NMilitary = {
 	COMBAT_VALUE_STR_IMPORTANCE = 1,		-- Multiplier on TotalStrength when determining the combat value of a division
 	
 	HOURLY_ORG_MOVEMENT_IMPACT = -0.1,		-- how much org is lost every hour while moving an army.
-	ZERO_ORG_MOVEMENT_MODIFIER = -0.25,		-- speed impact at 0 org. #-0.4
+	ZERO_ORG_MOVEMENT_MODIFIER = -0.2,		-- speed impact at 0 org. #-0.4
 	INFRA_ORG_IMPACT = 0.5,				-- scale factor of infra on org regain.
 
 	INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02,	-- speed penalty per infrastucture below maximum.
@@ -345,7 +345,7 @@ NMilitary = {
 	
 	BASE_DIVISION_BRIGADE_GROUP_COST = 20, 	--Base cost to unlock a regiment slot,
 	BASE_DIVISION_BRIGADE_CHANGE_COST = 5,	--Base cost to change a regiment column.
-	BASE_DIVISION_SUPPORT_SLOT_COST = 10, 	--Base cost to unlock a support slot
+	BASE_DIVISION_SUPPORT_SLOT_COST = 5, 	--Base cost to unlock a support slot
 	
 	MAX_ARMY_EXPERIENCE = 500,			--Max army experience a country can store
 	MAX_NAVY_EXPERIENCE = 500,			--Max navy experience a country can store
@@ -357,13 +357,13 @@ NMilitary = {
 
 	LAND_COMBAT_ORG_DICE_SIZE = 2,                 -- nr of damage dice
 	LAND_COMBAT_STR_DICE_SIZE = 6,                 -- nr of damage dice
-	LAND_COMBAT_STR_DAMAGE_MODIFIER = 0.008,        -- global damage modifier... but some equipment is returned at end of battles see : EQUIPMENT_COMBAT_LOSS_FACTOR
-	LAND_COMBAT_ORG_DAMAGE_MODIFIER = 0.048,        -- global damage modifier
+	LAND_COMBAT_STR_DAMAGE_MODIFIER = 0.004,        --8 global damage modifier... but some equipment is returned at end of battles see : EQUIPMENT_COMBAT_LOSS_FACTOR
+	LAND_COMBAT_ORG_DAMAGE_MODIFIER = 0.024,        -- global damage modifier #48
 	LAND_AIR_COMBAT_STR_DAMAGE_MODIFIER = 0.01,    -- air global damage modifier
 	LAND_AIR_COMBAT_ORG_DAMAGE_MODIFIER = 0.06,    -- global damage modifier
 	LAND_AIR_COMBAT_MAX_PLANES_PER_ENEMY_WIDTH = 3, -- how many CAS/TAC can enter a combat depending on enemy width there
-	LAND_COMBAT_STR_ARMOR_ON_SOFT_DICE_SIZE = 2,   -- extra damage dice if our armor outclasses enemy
-	LAND_COMBAT_ORG_ARMOR_ON_SOFT_DICE_SIZE = 6,   -- extra damage dice if our armor outclasses enemy
+	LAND_COMBAT_STR_ARMOR_ON_SOFT_DICE_SIZE = 2,   -- extra damage dice if our armor outclasses enemy #2
+	LAND_COMBAT_ORG_ARMOR_ON_SOFT_DICE_SIZE = 6,   -- extra damage dice if our armor outclasses enemy #6
 	LAND_COMBAT_STR_ARMOR_DEFLECTION_FACTOR = 0.5, -- damage reduction if armor outclassing enemy
 	LAND_COMBAT_ORG_ARMOR_DEFLECTION_FACTOR = 0.5, -- damage reduction if armor outclassing enemy
 	LAND_COMBAT_COLLATERAL_FACTOR = 0.02,		   -- Factor to scale collateral damage to infra and forts with.
@@ -374,8 +374,8 @@ NMilitary = {
 	ATTRITION_WHILE_MOVING_FACTOR = 1,
 	BASE_CHANCE_TO_AVOID_HIT = 90,                 -- Base chance to avoid hit if defences left.
 	CHANCE_TO_AVOID_HIT_AT_NO_DEF = 50,	           -- chance to avoid hit if no defences left.
-	COMBAT_MOVEMENT_SPEED = -0.75,	               -- MD4 was 0.33 speed reduction base modifier in combat
-	TACTIC_SWAP_FREQUENCEY = 24,                   -- hours between tactic swaps
+	COMBAT_MOVEMENT_SPEED = -0.5,	               -- MD4 was 0.33 speed reduction base modifier in combat
+	TACTIC_SWAP_FREQUENCEY = 36,                   -- hours between tactic swaps
 	INITIATIVE_PICK_COUNTER_ADVANTAGE_FACTOR  = 0.35, -- advantage per leader level for picking a counter
 	BASE_COMBAT_WIDTH = 120,                        -- base combat width
 	ADDITIONAL_COMBAT_WIDTH = 60,                  -- more opened up by support attack --60
@@ -453,7 +453,7 @@ NMilitary = {
 	OUT_OF_SUPPLY_ATTRITION = 0.3,                 -- max attrition when out of supply
 	OUT_OF_SUPPLY_SPEED = -0.6,                    -- max speed reduction from supply
 	NON_CORE_SUPPLY_SPEED = -0.25,				   -- we are not running on our own VP supply so need to steal stuff along the way
-	OUT_OF_SUPPLY_MORALE = -0.2,                   -- max org regain reduction from supply
+	OUT_OF_SUPPLY_MORALE = -0.15,                   -- max org regain reduction from supply
 	TRAINING_ATTRITION = 0.06,		  			   -- amount of extra attrition from being in training
 	TRAINING_MIN_STRENGTH = 0.1,					-- if strength is less than this, the unit will pause training until it's been reinforced
 	AIR_SUPPORT_BASE = 0.3,                        -- base ground bonus to troops when active planes helping them
@@ -533,12 +533,12 @@ NMilitary = {
 	COMBAT_STACKING_START = 12,						-- at what nr of divisions stacking penalty starts
 	COMBAT_STACKING_EXTRA = 4,                      -- extra stacking from directions
 	COMBAT_STACKING_PENALTY = -0.02,                -- how much stackign penalty per division
-	COMBAT_OVER_WIDTH_PENALTY = -1,					-- over combat width penalty per %.
+	COMBAT_OVER_WIDTH_PENALTY = -0.5,					-- over combat width penalty per %.
 	COMBAT_OVER_WIDTH_PENALTY_MAX = -0.66,			-- over combat width max (when you cant join no more).
 	RETREAT_SPEED_FACTOR = 1.0,                    -- speed bonus when retreating #0.25
-	STRATEGIC_SPEED_BASE = 20.0,                 	-- Speed of strategic redeployment
-	STRATEGIC_INFRA_SPEED = 8.0,                   -- Max of additional speed gained trouh=gh level for strategic redeployment per infra
-	STRATEGIC_REDEPLOY_ORG_RATIO = 0.1,				-- Ratio of max org while strategic redeployment
+	STRATEGIC_SPEED_BASE = 25.0,                 	-- Speed of strategic redeployment
+	STRATEGIC_INFRA_SPEED = 9.0,                   -- Max of additional speed gained trouh=gh level for strategic redeployment per infra
+	STRATEGIC_REDEPLOY_ORG_RATIO = 0.3,				-- Ratio of max org while strategic redeployment
 	BATALION_NOT_CHANGED_EXPERIENCE_DROP = 0.0,		-- Division experience drop if unit has same batalion
 	BATALION_CHANGED_EXPERIENCE_DROP = 0.5,			-- Division experience drop if unit has different batalion
 	ARMOR_VS_AVERAGE = 0.3,			                -- how to weight in highest armor & pen vs the division average
