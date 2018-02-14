@@ -374,11 +374,13 @@ NMilitary = {
 	ATTRITION_WHILE_MOVING_FACTOR = 1,
 	BASE_CHANCE_TO_AVOID_HIT = 90,                 -- Base chance to avoid hit if defences left.
 	CHANCE_TO_AVOID_HIT_AT_NO_DEF = 50,	           -- chance to avoid hit if no defences left.
+	COMBAT_MOVEMENT_SPEED = -0.40,	               -- MD4 was 0.33 speed reduction base modifier in combat
 	TACTIC_SWAP_FREQUENCEY = 36,                   -- hours between tactic swaps
 	INITIATIVE_PICK_COUNTER_ADVANTAGE_FACTOR  = 0.35, -- advantage per leader level for picking a counter
 	BASE_COMBAT_WIDTH = 120,                        -- base combat width
 	ADDITIONAL_COMBAT_WIDTH = 60,                  -- more opened up by support attack --60
 	AMPHIBIOUS_INVADE_MOVEMENT_COST = 24.0,        -- total progress cost of movement while amphibious invading
+	LAND_SPEED_MODIFIER = 0.010,                    -- basic speed control - 0.05
 	RIVER_CROSSING_PENALTY = -0.2,                 -- small river crossing
 	RIVER_CROSSING_PENALTY_LARGE = -0.4,           -- large river crossing
 	RIVER_CROSSING_SPEED_PENALTY = -0.15,           -- small river crossing
@@ -499,6 +501,7 @@ NMilitary = {
 	
 	-- These need to result in province value > 1.0 for it to matter.
 	PLAN_AREA_DEFENSE_ENEMY_CONTROLLER_SCORE = 15.0,-- Score applied to provinces in the defense area order controlled by enemies
+	PLAN_AREA_DEFENSE_ENEMY_UNIT_FACTOR = -3.0,		-- Factor applied to province score in area defense order per enemy unit in that province
 	PLAN_AREA_DEFENSE_FORT_IMPORTANCE = 0.25,		-- Used when calculating the calue of defense area provinces for the battle plan system, works as multipliers on the rest
 	PLAN_AREA_DEFENSE_COASTAL_FORT_IMPORTANCE = 5.0,-- Used when calculating the calue of defense area provinces for the battle plan system
 	PLAN_AREA_DEFENSE_COAST_NO_FORT_IMPORTANCE = 2.0,-- Used when calculating the calue of defense area provinces for the battle plan system
