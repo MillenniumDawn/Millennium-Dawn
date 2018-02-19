@@ -145,7 +145,7 @@ NCountry = {
 	SUPPLY_BONUS_FROM_INPUT = 0.25,					-- % of supply bonus from input area. --0.25
 	SUPPLY_PATH_MAX_DISTANCE = 20,					-- When supply route reach more than X nodes, the manpower+equipment delivery speed reach 100% penalty. --15
 	POPULATION_YEARLY_GROWTH_BASE = 0.01,			-- basic population growth per year, used for monthly manpower gain
-	RESISTANCE_STRENGTH_FROM_VP = 0.010,			-- How much strength ticking speed gives each VP score. #10x
+	RESISTANCE_STRENGTH_FROM_VP = 0.001,			-- How much strength ticking speed gives each VP score. #1x
 	RESISTANCE_STRENGTH_FROM_UNIT = 0.002,			-- How much strength ticking speed is reduced from each unit in state (multiplies subunit value resistance_suppress) --0.002
 	RESISTANCE_STRENGTH_FROM_NEIGHBORS = 0.5, 		-- Multiplies how much resistance can spread from one state to its neighbors, a state will spread whatever is highest of its victorypoints resistance increase or half of any of its neighbors spread, multiplied by this
 	RESISTANCE_DECAY_WHEN_NO_GROWTH = 0.005,		-- Resistance will fall by this much each day if there is nothing increasing it ( no VPs and no spread from neighbors )
@@ -506,7 +506,7 @@ NMilitary = {
 	PLAN_AREA_DEFENSE_COASTAL_FORT_IMPORTANCE = 5.0,-- Used when calculating the calue of defense area provinces for the battle plan system
 	PLAN_AREA_DEFENSE_COAST_NO_FORT_IMPORTANCE = 2.0,-- Used when calculating the calue of defense area provinces for the battle plan system
 	
-	PLAN_STICKINESS_FACTOR = 120.0,					-- Factor used in unitcontroller when prioritizing units for locations
+	PLAN_STICKINESS_FACTOR = 100.0,					-- Factor used in unitcontroller when prioritizing units for locations
 	
 	PLAN_PROVINCE_PRIO_DISTRIBUTION_MIN = 0.8,		-- Lowest fraction of divisions that will be distributed based on province priority
 	PLAN_PROVINCE_PRIO_DISTRIBUTION_MAX = 1.0,		-- Highest fraction of divisions that will be distributed based on province priority
