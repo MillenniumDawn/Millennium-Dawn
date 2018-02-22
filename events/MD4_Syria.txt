@@ -49,11 +49,22 @@ news_event = {
 	fire_only_once = yes
 	
 	mean_time_to_happen = {
-		days = 1
+		days = 2
 	}
 	
 	immediate = {
 		hidden_effect = {
+			#Remove ISIS
+			every_state = {
+				limit = {
+					OR = {
+						is_core_of = ISI
+						is_claimed_by = ISI
+					}
+				}
+				remove_claim_by = ISI
+				remove_core_of = ISI
+			}
 			#Reset Core Status
 			587 = {			#Golan
 				remove_core_of = SYR
@@ -62,92 +73,72 @@ news_event = {
 			184 = {			#Daraa
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			185 = {			#Suwayda
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			186 = {			#Damascus
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			187 = {			#Southern Desert
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			561 = {			#Central Desert
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			188 = {			#Homs
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			189 = {			#Latakia
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			192 = {			#Deir Ez Zor
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			191 = {			#Raqqa
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			566 = {			#Aleppo
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			190 = {			#Idlib
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			193 = {			#Hasakah
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			571 = {			#North Aleppo
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
 			}
 			575 = {			#Afrin
 				remove_core_of = SYR
 				remove_core_of = FSA
-				remove_core_of = ISI
 				remove_core_of = NUS
-			}
-			557 = {			#North Anbar
-				remove_core_of = ISI
-			}
-			166 = {			#Nineveh
-				remove_core_of = ISI
 			}
 			add_state_core = 587
 			add_state_core = 184
@@ -203,7 +194,7 @@ country_event = {
 	}
 	
 	mean_time_to_happen = {
-		days = 1
+		days = 2
 	}
 	
 	fire_only_once = yes
@@ -211,7 +202,7 @@ country_event = {
 	option = {
 		name = Syria.2.a		#Offer them representation
 		ai_chance = {
-			factor = 25
+			factor = 10
 			modifier = {
 				factor = 1.5			
 				AND = {
@@ -242,7 +233,7 @@ country_event = {
 	option = {
 		name = Syria.2.b		#Take them out
 		ai_chance = {
-			factor = 75
+			factor = 90
 			modifier = {
 				factor = 0.8
 				AND = {
@@ -726,6 +717,111 @@ country_event = {
 		remove_state_core = 575
 		set_country_flag = Rojava_Question_Solved
 		hidden_effect = { news_event = { id = SyriaNews.4 hours = 6 } }
+	}
+}
+
+#FSA is alive, but Tahrir al Sham is close to defeat
+#Makes Tahrir al Sham defect to FSA
+country_event = {
+    id = Syria.15
+	title = Syria.15.t
+	desc = Syria.15.d
+	picture = GFX_Tahrir_Al_Sham
+	
+    mean_time_to_happen = {
+		days = 2
+	}
+	
+	trigger = {
+		tag = FSA
+		country_exists = FSA
+		country_exists = NUS
+		country_exists = SYR
+		NOT = { country_exists = ISI }
+		NOT = { SYR = { surrender_progress > 0.4 } }
+		NUS = { is_ai = yes }
+		FSA = {
+			surrender_progress < 0.4
+			}
+		NUS = {
+			surrender_progress > 0.6
+			}
+	}
+
+    option = {
+        name = Syria.15.a
+		ai_chance = { factor = 100 }
+		annex_country = { target = NUS transfer_troops = yes }
+		add_popularity = { ideology = fascism popularity = 0.1 }
+		hidden_effect = { news_event = { id = SyriaNews.8 hours = 6 } }
+    }
+}
+
+#FSA annexes Tahrir al Sham
+news_event = {
+	id = SyriaNews.8
+	title = SyriaNews.8.t
+	desc = SyriaNews.8.d
+	picture = GFX_news_rise_of_taliban
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.8.a
+	}
+}
+
+#reverse version
+country_event = {
+    id = Syria.16
+	title = Syria.16.t
+	desc = Syria.16.d
+	picture = GFX_Tahrir_Al_Sham
+	
+    mean_time_to_happen = {
+		days = 2
+	}
+	
+	trigger = {
+		tag = NUS
+		country_exists = FSA
+		country_exists = NUS
+		country_exists = SYR
+		NOT = { country_exists = ISI }
+		NOT = { SYR = { surrender_progress > 0.4 } }
+		FSA = { is_ai = yes }
+		NUS = {
+			surrender_progress < 0.6
+			}
+		FSA = {
+			surrender_progress > 0.45
+			}
+	}
+
+    option = {
+        name = Syria.16.a
+		ai_chance = { factor = 100 }
+		annex_country = { target = FSA transfer_troops = yes }
+		add_popularity = { ideology = neutrality popularity = 0.1 }
+		hidden_effect = { news_event = { id = SyriaNews.9 hours = 6 } }
+    }
+}
+
+#NUS annexes FSA
+news_event = {
+	id = SyriaNews.9
+	title = SyriaNews.9.t
+	desc = SyriaNews.9.d
+	picture = GFX_news_rise_of_taliban
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.9.a
 	}
 }
 

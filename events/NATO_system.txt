@@ -1,0 +1,207 @@
+﻿add_namespace = NATO
+
+#Warning event when justifying against a NATO country
+country_event = {
+
+	id = NATO.1
+	title = NATO.1.t
+	desc = NATO.1.d
+	
+	picture = GFX_NATO_picture
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = {	has_country_flag = Justifying_against_@FROM }
+		FROM = {
+			has_idea = NATO_member
+		}
+	}
+	
+	immediate = {
+		set_country_flag = Justifying_against_@FROM
+	}
+	
+	option = {
+		name = NATO.1.a
+		ai_chance = { factor = 100 }
+	}
+}
+
+#NATO call to arms
+country_event = {
+
+	id = NATO.2
+	title = NATO.2.t
+	desc = NATO.2.d
+	
+	picture = GFX_NATO_picture
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = NATO.2.a 	#Call NATO
+		ai_chance = { 
+			factor = 100
+			modifier = {				#If we are attacked by a weak country, don't call people
+				factor = 0.20			
+				any_country = {
+					has_war_with = ROOT
+					has_country_flag = Attacked_NATO
+					strength_ratio = { tag = ROOT ratio < 0.6 }
+				}
+			}
+		}
+		create_faction = NATO
+		set_global_flag = NATO_called_to_arms
+		set_country_flag = Leader_of_NATO
+		every_other_country = {
+			limit = {
+				has_idea = NATO_member
+				NOT = { has_war_with = ROOT }		#Just in case someone starts a war between NATO countries
+			}
+			country_event = NATO.3
+		}
+	}
+	option = {
+		name = NATO.2.b		#We can handle this
+		ai_chance = { 
+			factor = 0 
+			modifier = {				#If we are attacked by a weak country, don't call people
+				add = 80
+				any_country = {
+					has_war_with = ROOT
+					has_country_flag = Attacked_NATO
+					strength_ratio = { tag = ROOT ratio < 0.6 }
+				}
+			}
+		}
+	}
+}
+
+#NATO member response
+country_event = {
+	
+	id = NATO.3
+	title = NATO.3.t
+	desc = NATO.3.d
+	
+	picture = GFX_NATO_picture
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = NATO.3.a		#Respect call to arms
+		ai_chance = { 
+			factor = 95
+			modifier = {		#We'll definitely join if already at war with the attacker
+				factor = 100
+				any_country = {
+					has_war_with = FROM
+					has_war_with = ROOT
+					has_country_flag = Attacked_NATO
+				}
+			}
+			modifier = {		#If the attacker is weak, less reluctant to join
+				factor = 0.3
+				any_country = {
+					has_war_with = FROM
+					has_country_flag = Attacked_NATO
+					strength_ratio = { tag = FROM ratio < 0.6 }
+				}
+			}
+		}
+		FROM = { add_to_faction = ROOT }
+	}
+	option = {
+		name = NATO.3.b		#Stay out of it
+		ai_chance = { 
+			factor = 5 
+			modifier = {		#We'll definitely join if already at war with the attacker
+				factor = 0
+				any_country = {
+					has_war_with = FROM
+					has_war_with = ROOT
+				}
+			}
+			modifier = {		#If the attacker is weak, less reluctant to join
+				factor = 14
+				any_country = {
+					has_war_with = FROM
+					has_country_flag = Attacked_NATO
+					strength_ratio = { tag = FROM ratio < 0.6 }
+				}
+			}
+		}
+		FROM = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = faction_traitor 
+			}
+		}
+	}
+}
+
+#Disband NATO once war is over
+country_event = {
+
+	id = NATO.4
+	title = NATO.4.t
+	desc = NATO.4.d
+	
+	picture = GFX_NATO_picture
+	
+	trigger = {
+		has_country_flag = Leader_of_NATO
+		NOT = {
+			any_country = {
+				has_country_flag = Attacked_NATO
+				has_war_with = ROOT
+			}
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	immediate = {
+		hidden_effect = {
+			clr_country_flag = Leader_of_NATO
+			clr_global_flag = NATO_called_to_arms
+			dismantle_faction = yes
+			every_country = {
+				limit = { 
+					has_country_flag = Attacked_NATO
+					NOT = { has_war_with = ROOT }
+				}
+				clr_country_flag = Attacked_NATO
+			}
+		}
+	}
+	
+	option = {
+		name = NATO.4.a
+		ai_chance = { factor = 100 }
+		custom_effect_tooltip = TT_NATO_DISBANDED
+		every_other_country = {
+			limit = { has_idea = NATO_member }
+			country_event = { id = NATO.5 hours = 6 }
+		}
+	}
+}
+country_event = {
+
+	id = NATO.5
+	title = NATO.5.t
+	desc = NATO.5.d
+	
+	picture = GFX_NATO_picture
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = NATO.5.a
+		ai_chance = { factor = 100 }
+	}
+}
