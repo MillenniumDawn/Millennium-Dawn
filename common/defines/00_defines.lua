@@ -1011,6 +1011,7 @@ NAI = {
 	COMMUNISTS_ANTAGONIZE_DEMOCRACIES = 50,
 	COMMUNISTS_ANTAGONIZE_COMMUNISTS = -50,
 
+	TENSION_MIN_FOR_GUARANTEE_VS_MINOR = 30, -- for non faction people AI will not consider you worth guaranteeing below this #10
 	
 	NUM_AI_MESSAGES = 10,				-- Set to whatever category has the highest number of messages
 
@@ -1026,6 +1027,7 @@ NAI = {
 	SHIPS_PRODUCTION_BASE_COST = 10000,					-- Used by the AI to normalize IC values when picking what ship to build.
 	NEEDED_NAVAL_FACTORIES_EXPENSIVE_SHIP_BONUS = 12,   -- Amount of naval yards you need to get a bonus to building really expensive ships
 
+	AIR_WING_REINFORCEMENT_LIMIT = 24,					-- This is the size of the air wing that a country will use. The same number is used for all countries #24
 	AIR_BASE_DANGER_ZONE_WEIGHT = 100,					-- Score used per province taken by enemy in a state to determine how dangerous it is to use an air base
 
 	MANPOWER_FREE_USAGE_THRESHOLD = 500000,			-- If AI has this much manpower he doesn't care about the percentage
