@@ -1,7 +1,7 @@
 NDefines_Graphics = {
 	
 NWiki = {
-	BASE_URL = "https://modernday4.gitlab.io/",
+	BASE_URL = "",
 	FORUM_URL = "https://modernday4.gitlab.io/"
 },
 
