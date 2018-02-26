@@ -544,9 +544,9 @@ NGraphics = {
 	GRADIENT_BORDERS_FIELD_COUNTRY_REFRESH = 10, -- When country changes it's size by X provinces, then it refresh it's thickness and rebuilds all provinces
 	GRADIENT_BORDERS_FIELD_COUNTRY_LOW = 300.0, -- country area in sum of pixels ...
 	GRADIENT_BORDERS_FIELD_COUNTRY_HIGH = 9000.0, -- ... the value is squared, so fe. country of size 100x100pix = 10000
-	GRADIENT_BORDERS_THICKNESS_COUNTRY_LOW = 5.0, -- thickness in pixels -- 10
+	GRADIENT_BORDERS_THICKNESS_COUNTRY_LOW = 4.0, -- thickness in pixels -- 10
 	GRADIENT_BORDERS_COUNTRY_CENTER_THICKNESS = 1, -- The center gradient is linear 1/255 per pixel for this many pixels --1
-	GRADIENT_BORDERS_THICKNESS_COUNTRY_HIGH = 16.0, --25
+	GRADIENT_BORDERS_THICKNESS_COUNTRY_HIGH = 14.0, --25
 	GRADIENT_BORDERS_THICKNESS_STATE = 45.0, --11
 	GRADIENT_BORDERS_THICKNESS_SUPPLY_AREA_A = 2.0, --2
 	GRADIENT_BORDERS_THICKNESS_SUPPLY_AREA_B = 15.0, --20
@@ -584,7 +584,7 @@ NGraphics = {
 	ALLIED_BATTLEPLANS_COLOR = { 0.3, 0.4, 1.0, 1 },
 	ORDERS_ARROW_SNAP_MIN_DIST = 20, -- distance in "map pixels" when snapping arrows works
 	GMT_OFFSET = 2793, -- X position on map, of Greenwitch GMT+0 (see also in shader daynight.fxh)
-	DAY_NIGHT_FEATHER = 0.024, -- Feather value between complete darkness and the day (see also in shader daynight.fxh)
+	DAY_NIGHT_FEATHER = 0.096, -- Feather value between complete darkness and the day (see also in shader daynight.fxh)
 	SOUTH_POLE_OFFSET = 0.17, -- Our map is missing big parts of globe on north and south (see also in shader daynight.fxh)
 	NORTH_POLE_OFFSET = 0.93,
 	COUNTRY_FLAG_TEX_WIDTH = 82, -- Expected texture size
@@ -661,16 +661,16 @@ NGraphics = {
 	LAND_COMBAT_WINNING_COLOR_VALUE = 0.70,
 
 	-- bloom configuration
-	BLOOM_WIDTH = 1.5,
+	BLOOM_WIDTH = 1.0,
 	--BLOOM_WIDTH = 1.0, -- night
-	BLOOM_SCALE = 0.9,
+	BLOOM_SCALE = 3.0,
 	--BLOOM_SCALE = 3.0, -- night
-	BRIGHT_THRESHOLD = 0.4,
+	BRIGHT_THRESHOLD = 0.9,
 	--BRIGHT_THRESHOLD = 0.9, -- night
 	EMISSIVE_BLOOM_STRENGTH = 1.0,
 	MIN_HDR_ADJUSTMENT = 0.5,     --0.18 0.5  är hur mkt den anpassar sig till mörka områden, mindre värde -> mer mörkerseen
-	MAX_HDR_ADJUSTMENT = 1.0,      --0.8 0.8 jätte högt värde så ser du bra trots att du står inuti solen och tittar. 
-	HDR_ADJUSTMENT_SPEED = 15.0, -- 6
+	MAX_HDR_ADJUSTMENT = 0.8,      --0.8 0.8 jätte högt värde så ser du bra trots att du står inuti solen och tittar. 
+	HDR_ADJUSTMENT_SPEED = 6.0, -- 6
 	TONE_MAP_MIDDLE_GREY = 0.5, --0.7
 	TONE_MAP_LUMINANCE_WHITE = 1.0, --
 	MOON_HEIGHT = 600, -- higher means softer shadows and more intense light
@@ -691,7 +691,7 @@ NGraphics = {
 	AMBIENT_LIGHT_NEG_Z = { 0.55, 0.1, 0.9 }, -- bottom
 
 	SUN_DIFFUSE_COLOR   = {0.14, 0.0, 1.0},
-	SUN_INTENSITY 		= 1.0; -- 0.4
+	SUN_INTENSITY 		= 0.9; -- 0.4
 	MOON_DIFFUSE_COLOR  = {0.58, 0.5, 1.0},
 	MOON_INTENSITY 		= 2.5;
 
