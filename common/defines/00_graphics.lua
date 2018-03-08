@@ -425,16 +425,19 @@ NAirGfx = {
 	AIRPLANES_3_BOMBER_BOMBING_ANIM = 3, 			-- Number of bombers needed for a single instance of this animation
 	AIRPLANES_1_FIGHTER_VS_1_FIGHTER_ANIM = 1, 		-- Number of fighters needed per side for a single instance of this animation
 	AIRPLANES_3_FIGHTER_VS_3_FIGHTER_ANIM = 3,		-- Number of bombers needed per side for a single instance of this animation
-	
+	AIRPLANES_1_TRANSPORT_SUPPLY_ANIM = 1,			-- Number of planes needed for a single instance of this animation
+	AIRPLANES_3_TRANSPORT_SUPPLY_ANIM = 3,			-- Number of planes needed for a single instance of this animation	
 	ROCKET_SPEED = 15.0,							-- Speed of rockets launched from rocket sites
 	
 	BOMBERS_DIVISION_FACTOR = 60,					-- Number of effective bombers in a strategic region will be divided by this factor.
 	MISSILES_DIVISION_FACTOR = 60,					-- Number of missiles shown in a strategic region will be divided by this factor.
 	FIGHTERS_DIVISION_FACTOR = 60,					-- Number of missiles shown in a strategic region will be divided by this factor.
+	TRANSPORT_DIVISION_FACTOR = 60,
 	MAX_MISSILE_BOMBING_SCENARIOS = 2,				-- Max number of missile bombing scenarios in a strategic region.
 	MAX_PATROL_SCENARIOS = 2,						-- Max number of patrol scenarios in a strategic region.
 	MAX_BOMBING_SCENARIOS = 2,						-- Max number of bombings scenarios in a strategic region.
 	MAX_DOGFIGHTS_SCENARIOS = 2,					-- Max number of dogfight scenarios in a strategic region.
+	MAX_TRANSPORT_SCENARIOS = 2,					-- Max number of transport scenarios in a strategic region
 },
 
 NGraphics = {
@@ -536,6 +539,14 @@ NGraphics = {
 	BORDER_COLOR_DEMILITARIZED_G = 0.06,
 	BORDER_COLOR_DEMILITARIZED_B = 0.0,
 	BORDER_COLOR_DEMILITARIZED_A = 0.9,
+	BORDER_COLOR_BORDER_CONFLICT_EDGE_R = 1.0,
+	BORDER_COLOR_BORDER_CONFLICT_EDGE_G = 0.2,
+	BORDER_COLOR_BORDER_CONFLICT_EDGE_B = 0.0,
+	BORDER_COLOR_BORDER_CONFLICT_EDGE_A = 1.0,
+	BORDER_COLOR_BORDER_CONFLICT_NON_EDGE_R = 0.7,
+	BORDER_COLOR_BORDER_CONFLICT_NON_EDGE_G = 1.0,
+	BORDER_COLOR_BORDER_CONFLICT_NON_EDGE_B = 0.0,
+	BORDER_COLOR_BORDER_CONFLICT_NON_EDGE_A = 0.9,
 	DRAW_REFRACTIONS_CUTOFF = 250,
 	DRAW_SHADOWS_CUTOFF = 200, --400
 	DRAW_SHADOWS_FADE_LENGTH = 80, --50
@@ -582,6 +593,8 @@ NGraphics = {
 	STRATEGIC_NAVY_COLOR_NEUTRAL = {0.5, 0.5, 0.5, 1},
 	VIRTUAL_BATTLEPLANS_COLOR = { 0.2, 1.0, 0.2, 1 },
 	ALLIED_BATTLEPLANS_COLOR = { 0.3, 0.4, 1.0, 1 },
+	OFFENSIVE_PING_CIRCLE_COLOR = { 0.64, 0.48, 0.35 },
+	DEFENSIVE_PING_CIRCLE_COLOR = { 0.4, 0.55, 0.66 },
 	ORDERS_ARROW_SNAP_MIN_DIST = 20, -- distance in "map pixels" when snapping arrows works
 	GMT_OFFSET = 2793, -- X position on map, of Greenwitch GMT+0 (see also in shader daynight.fxh)
 	DAY_NIGHT_FEATHER = 0.096, -- Feather value between complete darkness and the day (see also in shader daynight.fxh)
@@ -607,6 +620,7 @@ NGraphics = {
 	NAVALBASE_ICON_DISTANCE_CUTOFF = 900, -- At what distance naval bases are hidden
 	RADAR_ICON_DISTANCE_CUTOFF = 1100, -- At what distance the radars are hidden
 	RESOURCE_MAP_ICON_TEXT_CUTOFF = 800,  -- At what camera distance the resource name/amount text disappears.
+	CAPITAL_ICON_CUTOFF = 1500,	-- At what camera distance capital icons disappears
 	PROVINCE_ANIM_TEXT_DISTANCE_CUTOFF = 500, -- 500
 	UNITS_DISTANCE_CUTOFF = 120,
 	SHIPS_DISTANCE_CUTOFF = 240,
@@ -635,6 +649,8 @@ NGraphics = {
 	TOOLTIP_SHOW_DELAY = 0.05, 						--How long before showing delayed tooltip.
 	TOOLTIP_HIDE_DELAY = 0.05, 						--How long before showing delayed tooltip.
 	MAP_ORDERS_MIN_LINE_POINTS = 8, -- Minimum number of points that an arrow/line must have to be valid (it's a fix to avoid being able to draw empty invisible orders) - use debug_lines console command to debug it and tweak.
+	
+	DIVISION_NAMES_GROUP_MAX_TOOLTIP_ENTRIES = 15,	-- Max entries to display the names in the tooltip, when mouse over the division-names-group in the division template designer.
 	
 	WEATHER_DISTANCE_CUTOFF = 1500, -- At what distance weather effects are hidden
 	WEATHER_DISTANCE_FADE_LENGTH = 400, -- How far the fade out distance should be
@@ -706,11 +722,33 @@ NGraphics = {
 	TRADE_ROUTE_CONVOY_SLEEP_TIME = 3.0,
 	TRADE_ROUTE_CONVOY_ROUTE_OFFSET = 0.5,
 	SHIP_IN_MISSION_SPEED = 2.5,
-	SHIP_IN_MISSION_TURN_RADIUS = 10.0,
+	SHIP_IN_MISSION_TURN_RADIUS = 5.0,
 	SHIP_IN_MISSION_TARGET_SIZE = 0.5,
-	SHIP_IN_MISSION_SCALE = 1.0,
+	SHIP_IN_MISSION_SCALE = 0.6,
 	TRADE_ROUTE_LINE_OFFSET = 0.5,
 	TRADE_ROUTE_MAX_LINES = 6,
+	TRADE_ROUTE_BAD_EFFICIENCY_THRESHOLD = 0.8,
+	TRADE_ROUTE_REGIONAL_BAD_EFFICIENCY_THRESHOLD = 0.9,
+	TRADE_ROUTE_BAD_EFFICIENCY_ROUTE_COLOR = { 1.0, 0.7, 0.5, 0.75 },
+	TRADE_ROUTE_BAD_EFFICIENCY_HOTSPOT_COLOR = { 1.0, 0.0, 0.0, 0.75 },
+	TRADE_ROUTE_PRODUCTION_TRANSFER_COLOR = { 0.0, 0.5, 1.0, 0.75 },
+	TRADE_ROUTE_SUPPLIES_TRANSFER_COLOR = { 1.0, 1.0, 1.0, 0.75 },
+	TRADE_ROUTE_RESOURCE_EXPORT_COLOR = { 0.5, 0.5, 1.0, 0.75 },
+	TRADE_ROUTE_RESOURCE_IMPORT_COLOR = { 0.5, 0.5, 1.0, 0.75 },
+	TRADE_ROUTE_LEND_LEASE_EXPORT_COLOR = { 0.5, 1.0, 0.0, 0.75 },
+	TRADE_ROUTE_LEND_LEASE_IMPORT_COLOR = { 0.5, 1.0, 0.0, 0.75 },
+	
+	TRAIT_GRID_COLUMN_SHIFTS = {
+		3,
+		211,
+		419,
+		3,
+		211
+	},
+	TRAIT_GRID_ROW_SHIFT = 48,
+	
+	TRAIT_LINE_ASSIGNED_COLOR = { 0.47, 0.93, 0.65 },
+	TRAIT_LINE_NON_ASSIGNED_COLOR = { 0.67, 0.75, 0.93 },
 	
 	-- unit on-map interface modulate colors
 	FRIEND_COLOR  = {0.7, 0.9, 0.7},
@@ -763,9 +801,14 @@ NGraphics = {
 	ARROW_PARADROP_HEIGHT_MAX = 11.0,
 	ARROW_MIN_TEXT_POINTS_LIMIT = 10,				-- Amount of points when arrow gets first detailed text
 	ARROW_EXT_TEXT_POINTS_LIMIT = 20,				-- Amount of points when arrow gets extended detailed text
+	ARMY_DEFENSIVE_LINE_BUTTON_SIZE = 0.7,			-- The size of the "edit" button drawn at the endings of the def.lines (for army)
+	ARMY_GROUP_DEFENSIVE_LINE_BUTTON_SIZE = 0.9,	-- The size of the "edit" button drawn at the endings of the def.lines (for army group)
 	
 	SHOW_FOREIGN_SUPPLY_BELOW = 300.0,				-- Below this camera height all supply icons will be shown
 	SHOW_ONLY_PATH_ABOVE = 500.0,					-- Above this only supply icons in the currently shown path are shown
+
+	ACCLIMATIZATION_CAMO_SHOW_AT = 0.5,				-- The moment at which the division gains enough acclimatization to change it's model to the camouflage one.
+	ACCLIMATIZATION_CAMO_SHOW_WHEN_IN_STATE = 0.2	-- The troops camouflage can swap (to the one from acclim.) not only when snow/desert is in the location we are in, but also when % of provinces in current state has snow/desert.
 },
 
 NInterface = {
@@ -791,6 +834,28 @@ NInterface = {
 	MIN_NON_SUCCESSFUL_COMBAT_COLOR = { 100.0/360.0, 0.95, 0.86 },	-- Color for icons if some of combats are not successful
 	MID_NON_SUCCESSFUL_COMBAT_COLOR = { 50.0/360.0, 0.95, 0.86 },
 	MAX_NON_SUCCESSFUL_COMBAT_COLOR = { 00.0/360.0, 0.95, 0.86 },	-- Color for icons if all of combats are not successful	
+	
+	UNIT_SELECT_DOUBLE_CLICK_TIME = 0.1,				-- Delay before double click event for unit selection
+	
+	MINIMAP_TOGGLE_DURATION = 0.5,				-- Delay for minimap toggle
+	MINIMAP_TOGGLE_SHIFT = 270,				-- horizontal shift for minimap to close it
+	
+	TIMED_MESSAGE_TIMEOUT = 0.35,					-- Timeout for timed message
+	
+	MINIMAP_PING_DURATION = 12.0, 				-- timeout for pings
+	MINIMAP_PING_SPEEDUP_ON_SCREEN = 2.0,		-- speed up for timeout if ping is visible on screen
+	MINIMAP_PING_DELAY_BETWEEN_PINGS = 0.3,     -- delay between consecative pings
+
+	DRAG_AND_DROP_SCROLLING_SENSITIVITY = 12.5,	-- Speed multiplier for components scrolling while drag'n dropping elements
+	GRIDBOX_ELEMENTS_INTERPOLATION_SPEED = 0.5, -- A value used to determine how fast the elements within the gridbox are interpolating while drag'n dropping.
+
+	ARMY_GROUP_PORTRAIT_SPACING = 6,			-- Extra space added between portraits of different army groups
+	ARMY_GROUP_FIRST_MEMBER_SPACING = 5,		-- Extra spacing between the army group portrait and the first member of the army group
+	ARMY_GROUP_COLLAPSE_EXTRA_SPACING = 5,		-- Extra spacing between the army group portrait when army group is collapsed
+	
+	ARMY_LIST_BOTTOM_PADDING = 145,				-- Bottom padding for army list on left
+
+	MILITARY_FACTORIES_SCALE = { 1, 5, 10 }
 },
 
 
@@ -868,15 +933,11 @@ NSound = {
 	HEIGHT_SOUND_MIN_VOLUME   =    0.2,
 	HEIGHT_SOUND_MAX_VOLUME   =    1.0,
 
-	BATTLE_SOUND_NAME           = "amb_battle_distant_01",
-	BATTLE_SOUND_INIT_RADIUS    =   9.0,
-	BATTLE_SOUND_FADE_TIME      =    1.0,
-	BATTLE_SOUND_FALLOFF_MUL    =    0.5,
-	BATTLE_SOUND_FALLOFF_EXTRA  =  100.0,
-	BATTLE_SOUND_FALLOFF_HEIGHT = 200.0,
+	BATTLE_SOUND_NAME            = "amb_battle_distant",
+	BATTLE_SOUND_INIT_RADIUS     =   9.0,
+	BATTLE_SOUND_FALLOFF_DEFAULT = 100.0,
 
 	BATTLE_SOUND_MIN_UNIT_COUNT =   6,
-	BATTLE_SOUND_MAX_UNIT_COUNT =  20,
 	BATTLE_SOUND_MIN_VOLUME_MUL = 0.2,
 	BATTLE_SOUND_MAX_VOLUME_MUL = 1.0,
 	
