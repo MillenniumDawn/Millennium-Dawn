@@ -601,7 +601,7 @@ NMilitary = {
 	RETREAT_SPEED_FACTOR = 1.0,                    -- speed bonus when retreating #0.25
 	WITHDRAWING_SPEED_FACTOR = 0.15,				-- speed bonus when withdrawing
 	STRATEGIC_SPEED_BASE = 25.0,                 	-- Speed of strategic redeployment
-	STRATEGIC_INFRA_SPEED = 9.0,                   -- Max of additional speed gained trouh=gh level for strategic redeployment per infra
+	STRATEGIC_INFRA_SPEED = 9.0,                   -- Max of additional speed gained trough level for strategic redeployment per infra
 	STRATEGIC_REDEPLOY_ORG_RATIO = 0.3,				-- Ratio of max org while strategic redeployment
 	BATALION_NOT_CHANGED_EXPERIENCE_DROP = 0.0,		-- Division experience drop if unit has same batalion
 	BATALION_CHANGED_EXPERIENCE_DROP = 0.5,			-- Division experience drop if unit has different batalion
@@ -777,7 +777,7 @@ NAir = {
 	LEND_LEASED_EQUIPMENT_EXPERIENCE_GAIN = 0.5,		-- Value used for equipment
 	ANTI_AIR_PLANE_DAMAGE_FACTOR = 0.001,					-- ANTI AIR BUILDING Anti Air Gun Damage factor
 	ANTI_AIR_PLANE_DAMAGE_CHANCE = 0.001,					-- ANTI AIR BUILDING Anti Air Gun hit chance
-	AIR_DEPLOYMENT_DAYS = 2,							-- Days to deploy one air wing
+	AIR_DEPLOYMENT_DAYS = 1,							-- Days to deploy one air wing
 	PORT_STRIKE_ENEMY_SUPERIORITY_LIMIT = 0.3,			-- Min air superiority for performing of naval strike		
 	NAVAL_STRIKE_BASE_STR_TO_PLANES_RATIO = 0.1,		-- Max airbombers to do port strike comparing to strength		
 	NAVAL_COMBAT_EXTERNAL_PLANES_JOIN_RATIO = 0.05,		-- Max planes that can join a combat comparing to the total strength of the ships
