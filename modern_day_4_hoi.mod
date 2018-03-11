@@ -7,5 +7,5 @@ tags={
 	"Graphics"
 }
 remote_file_id="1241177173"
-supported_version="1.4.2"
+supported_version="1.5.1"
 picture = "thumbnail.png"
