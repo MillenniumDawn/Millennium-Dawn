@@ -44,8 +44,8 @@ NDiplomacy = {
 	BASE_IMPROVE_RELATION_COST = 10,                -- Political power cost to initiate relation improvement --10
 	BASE_IMPROVE_RELATION_SAME_IDEOLOGY_GROUP_MAINTAIN_COST = 0.25, -- Political power cost each update when boosting relations with nation of same ideology
 	BASE_IMPROVE_RELATION_DIFFERENT_IDEOLOGY_GROUP_MAINTAIN_COST = 0.5,    -- Political power cost each update when boosting relations with nation of different ideology
-	BASE_SEND_ATTACHE_COST = 100,					-- Political power cost to send attache
-	BASE_SEND_ATTACHE_CP_COST = 50.0,				-- Command Power sent attache usage cost
+	BASE_SEND_ATTACHE_COST = 80,					-- Political power cost to send attache
+	BASE_SEND_ATTACHE_CP_COST = 40.0,				-- Command Power sent attache usage cost
 	BASE_SEND_ATTACHE_MAINTAIN_COST = 0,			-- Political power cost each update when sending the attache to another country
 	BASE_GENERATE_WARGOAL_DAILY_PP = 0.2,	-- Daily pp cost for generation of wargoals
 	WARGOAL_VERSUS_MAJOR_AT_WAR_REDUCTION = -0.75, 	-- reduction of pp cost for wargoal vs major at war.
@@ -385,7 +385,7 @@ NMilitary = {
 	WAR_SCORE_AIR_WORTH_CAP = 1000,				-- the warscore limit we get from strategic bombing
 	WAR_SCORE_AIR_MONTHLY_FALLOFF = 10,			-- how much the warscore we got from the strategic bombing falls off every month.
 	
-	CORPS_COMMANDER_DIVISIONS_CAP = 12,			-- how many divisions a corps commander is limited to. 0 = inf, < 0 = blocked
+	CORPS_COMMANDER_DIVISIONS_CAP = 24,			-- how many divisions a corps commander is limited to. 0 = inf, < 0 = blocked
 	CORPS_COMMANDER_ARMIES_CAP = -1,			-- how many armies a corps commander is limited to. 0 = inf, < 0 = blocked
 	FIELD_MARSHAL_DIVISIONS_CAP = 24,			-- how many divisions a field marshall is limited to. 0 = inf, < 0 = blocked
 	FIELD_MARSHAL_ARMIES_CAP = 5,				-- how many armies a field marshall is limited to. 0 = inf, < 0 = blocked
