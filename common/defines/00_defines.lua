@@ -360,7 +360,7 @@ NBuildings = {
 	OWNER_CHANGE_EXTRA_SHARED_SLOTS_FACTOR = 0.5, --Scale factor of extra shared slots when state owner change.
 	DESTRUCTION_COOLDOWN_IN_WAR = 30,	-- Number of days cooldown between removal of buildings in war times
 	
-	INFRASTRUCTURE_RESOURCE_BONUS = 0.1, -- multiplactive resource bonus for each level of (non damaged) infrastructure
+	INFRASTRUCTURE_RESOURCE_BONUS = 0.02, -- multiplactive resource bonus for each level of (non damaged) infrastructure
 },
 
 NDeployment = {
