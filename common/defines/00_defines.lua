@@ -360,7 +360,7 @@ NBuildings = {
 	OWNER_CHANGE_EXTRA_SHARED_SLOTS_FACTOR = 0.5, --Scale factor of extra shared slots when state owner change.
 	DESTRUCTION_COOLDOWN_IN_WAR = 30,	-- Number of days cooldown between removal of buildings in war times
 	
-	INFRASTRUCTURE_RESOURCE_BONUS = 0.1, -- multiplactive resource bonus for each level of (non damaged) infrastructure
+	INFRASTRUCTURE_RESOURCE_BONUS = 0.02, -- multiplactive resource bonus for each level of (non damaged) infrastructure
 },
 
 NDeployment = {
@@ -385,7 +385,7 @@ NMilitary = {
 	WAR_SCORE_AIR_WORTH_CAP = 1000,				-- the warscore limit we get from strategic bombing
 	WAR_SCORE_AIR_MONTHLY_FALLOFF = 10,			-- how much the warscore we got from the strategic bombing falls off every month.
 	
-	CORPS_COMMANDER_DIVISIONS_CAP = 12,			-- how many divisions a corps commander is limited to. 0 = inf, < 0 = blocked
+	CORPS_COMMANDER_DIVISIONS_CAP = 24,			-- how many divisions a corps commander is limited to. 0 = inf, < 0 = blocked
 	CORPS_COMMANDER_ARMIES_CAP = -1,			-- how many armies a corps commander is limited to. 0 = inf, < 0 = blocked
 	FIELD_MARSHAL_DIVISIONS_CAP = 24,			-- how many divisions a field marshall is limited to. 0 = inf, < 0 = blocked
 	FIELD_MARSHAL_ARMIES_CAP = 5,				-- how many armies a field marshall is limited to. 0 = inf, < 0 = blocked
@@ -449,6 +449,8 @@ NMilitary = {
 	MULTIPLE_COMBATS_PENALTY = -0.5,               -- defender penalty if attacked from multiple directions
 	DIG_IN_FACTOR = 0.02,						   -- bonus factor for each dug-in level
 	LEADER_SKILL_FACTOR = 0.05,                    -- bonus per skill level of leader
+	ARMY_LEADER_XP_GAIN_PER_UNIT_IN_COMBAT = 0.12,  -- XP gain per unit in combat
+	CONSTANT_XP_RATIO_FOR_MULTIPLE_LEADERS_IN_SAME_COMBAT = 0.5, -- if there are multiple leaders in same combat, each one gets thisratio + 1-thisratio/num leaders. it scales 1 0.75 0.66 etc
 	BASE_LEADER_TRAIT_GAIN_XP = 0.5,				   -- Base xp gain for traits per hour.
 	MAX_NUM_TRAITS = 6,					-- cant have more
 	ENEMY_AIR_SUPERIORITY_IMPACT = -0.5,           -- effect on defense due to enemy air superiorty
