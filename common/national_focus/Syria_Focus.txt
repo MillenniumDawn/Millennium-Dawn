@@ -19,7 +19,7 @@ focus_tree = {
 		id = SYR_civil_war_victory
 		icon = GFX_goal_generic_allies_build_infantry
 		cost = 5
-		x = 8
+		x = 9
 		y = 1
 		
 		ai_will_do = {
@@ -71,7 +71,10 @@ focus_tree = {
 		}
 		
 		bypass = {
-			NOT = { country_exists = ROJ }
+			OR = {
+				NOT = { country_exists = ROJ }
+				ROJ = { is_subject_of = ROOT }
+			}			
 		}
 		
 		cancel_if_invalid = yes
@@ -82,7 +85,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			country_event = Syria.6
+			country_event = SyriaFocus.0
 		}
 
 	}
@@ -93,7 +96,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SYR_kurdish_question
 		}
-		x = -4
+		x = -5
 		y = 2
 		relative_position_id = SYR_civil_war_victory
 		
@@ -102,6 +105,7 @@ focus_tree = {
 		}
 		
 		available = {
+			tag = SYR
 			has_civil_war = no
 		}
 		
@@ -118,6 +122,7 @@ focus_tree = {
 		completion_reward = {
 			add_political_power = 100
 			add_popularity = { ideology = communism popularity = 0.1 }
+			relative_change_pos_10 = yes
 		}
 
 	}
@@ -131,18 +136,18 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = SYR_ssnp_traitors
 		}
-		x = -5
+		x = -6
 		y = 3
 		relative_position_id = SYR_civil_war_victory
 		
 		ai_will_do = {
-			factor = 110
+			factor = 15
 			modifier = {
-				add = 15
+				factor = 1.2
 				SOV = { has_country_flag = Opinion_On_SSNP_Keep }
 			}
 			modifier = {
-				add = 15
+				factor = 1.2
 				PER = { has_country_flag = Opinion_On_SSNP_Keep }
 			}
 		}
@@ -167,20 +172,29 @@ focus_tree = {
 				limit = {
 					has_country_flag = Opinion_On_SSNP_Purge
 				}
-				add_opinion_modifier = { target = THIS modifier = insult }
+				add_opinion_modifier = { target = SYR modifier = insult }
+				if = {
+					limit = { has_country_flag = SYR_Against_Our_Wishes_2 }
+					clr_country_flag = SYR_Against_Our_Wishes_2
+					set_country_flag = SYR_Broken_Relations
+				}
 				if = {
 					limit = { has_country_flag = SYR_Against_Our_Wishes_1 }
 					clr_country_flag = SYR_Against_Our_Wishes_1
 					set_country_flag = SYR_Against_Our_Wishes_2
 				}
 				if = {
-					limit = { has_country_flag = SYR_Against_Our_Wishes_2 }
-					clr_country_flag = SYR_Against_Our_Wishes_2
-					set_country_flag = SYR_Broken_Relations
+					limit = { 
+						NOT = {
+							has_country_flag = SYR_Against_Our_Wishes_2
+							has_country_flag = SYR_Against_Our_Wishes_1
+						}
+					}
+					set_country_flag = SYR_Against_Our_Wishes_1
 				}
 			}
 		}
-
+		
 	}
 	focus = {
 		id = SYR_ssnp_traitors
@@ -192,18 +206,18 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = SYR_incorporate_ssnp
 		}
-		x = -3
+		x = -4
 		y = 3
 		relative_position_id = SYR_civil_war_victory
 		
 		ai_will_do = {
-			factor = 100
+			factor = 10
 			modifier = {
-				add = 15
+				add = 1.2
 				SOV = { has_country_flag = Opinion_On_SSNP_Purge }
 			}
 			modifier = {
-				add = 15
+				add = 1.2
 				PER = { has_country_flag = Opinion_On_SSNP_Purge }
 			}
 		}
@@ -229,21 +243,456 @@ focus_tree = {
 				limit = {
 					has_country_flag = Opinion_On_SSNP_Keep
 				}
-				add_opinion_modifier = { target = THIS modifier = insult }
+				add_opinion_modifier = { target = SYR modifier = insult }
+				if = {
+					limit = { has_country_flag = SYR_Against_Our_Wishes_2 }
+					clr_country_flag = SYR_Against_Our_Wishes_2
+					set_country_flag = SYR_Broken_Relations
+				}
 				if = {
 					limit = { has_country_flag = SYR_Against_Our_Wishes_1 }
 					clr_country_flag = SYR_Against_Our_Wishes_1
 					set_country_flag = SYR_Against_Our_Wishes_2
 				}
 				if = {
+					limit = { 
+						NOT = {
+							has_country_flag = SYR_Against_Our_Wishes_2
+							has_country_flag = SYR_Against_Our_Wishes_1
+						}
+					}
+					set_country_flag = SYR_Against_Our_Wishes_1
+				}
+			}
+			hidden_effect = {
+				random_list = { 
+					30 = { set_country_flag = SSNP_Coup_Incoming } 
+					70 = { }
+				}
+			}
+		}
+
+	}	
+	focus = {
+		id = SYR_integrate_palestinians
+		icon = GFX_goal_unknown
+		cost = 10
+		prerequisite = {
+			focus = SYR_incorporate_ssnp
+			focus = SYR_ssnp_traitors
+		}
+		mutually_exclusive = {
+			focus = SYR_expel_palestinians
+		}
+		x = -6
+		y = 4
+		relative_position_id = SYR_civil_war_victory
+		
+		ai_will_do = {
+			factor = 15
+			modifier = {
+				factor = 1.2
+				SOV = { has_country_flag = Opinion_On_Palestinian_Groups_Keep }
+			}
+			modifier = {
+				factor = 1.2
+				PER = { has_country_flag = Opinion_On_Palestinian_Groups_Keep }
+			}
+		}
+		
+		available = {
+			has_civil_war = no
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		complete_tooltip = {
+		
+		}
+		
+		completion_reward = {
+			#set_division_template_lock = { division_template = "Elite Militia Battalion" is_locked = no }
+			#set_division_template_lock = { division_template = "Militia Brigade" is_locked = no }
+			swap_ideas = { remove_idea = palestine_liberation_groups add_idea = palestine_liberation_groups_integrated }
+			every_country = {
+				limit = {
+					has_country_flag = Opinion_On_Palestinian_Groups_Purge
+				}
+				add_opinion_modifier = { target = SYR modifier = insult }
+				if = {
 					limit = { has_country_flag = SYR_Against_Our_Wishes_2 }
 					clr_country_flag = SYR_Against_Our_Wishes_2
 					set_country_flag = SYR_Broken_Relations
+				}
+				if = {
+					limit = { has_country_flag = SYR_Against_Our_Wishes_1 }
+					clr_country_flag = SYR_Against_Our_Wishes_1
+					set_country_flag = SYR_Against_Our_Wishes_2
+				}
+				if = {
+					limit = { 
+						NOT = {
+							has_country_flag = SYR_Against_Our_Wishes_2
+							has_country_flag = SYR_Against_Our_Wishes_1
+						}
+					}
+					set_country_flag = SYR_Against_Our_Wishes_1
 				}
 			}
 		}
 
 	}
+	focus = {
+		id = SYR_expel_palestinians
+		icon = GFX_goal_unknown
+		cost = 10
+		prerequisite = {
+			focus = SYR_ssnp_traitors
+			focus = SYR_incorporate_ssnp
+		}
+		mutually_exclusive = {
+			focus = SYR_integrate_palestinians
+		}
+		x = -4
+		y = 4
+		relative_position_id = SYR_civil_war_victory
+		
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 1.2
+				SOV = { has_country_flag = Opinion_On_Palestinian_Groups_Purge}
+			}
+			modifier = {
+				factor = 1.2
+				PER = { has_country_flag = Opinion_On_Palestinian_Groups_Purge }
+			}
+		}
+		
+		available = {
+			has_civil_war = no
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		complete_tooltip = {
+		
+		}
+		
+		completion_reward = {
+			delete_unit_template_and_units = { division_template = "Elite Militia Battalion" }
+			delete_unit_template_and_units = { division_template = "Militia Brigade" }
+			remove_ideas = palestine_liberation_groups
+			custom_effect_tooltip = TT_SYR_EXPEL_PALESTINIANS
+			hidden_effect = {
+				#1/4 of starting equipment of above units
+				add_equipment_to_stockpile = {
+					type = command_control_equipment_0
+					amount = 20
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = AA_Equipment_0			#Strela
+					amount = 36
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = L_AT_Equipment_1			#MILAN
+					amount = 18
+					producer = FRA
+				}
+				add_equipment_to_stockpile = {
+					type = L_AT_Equipment_0			#Malyutka
+					amount = 18
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = H_AT_Equipment_1			#Konkurs
+					amount = 9
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = H_AT_Equipment_1			#HOT
+					amount = 9
+					producer = FRA
+				}
+				add_equipment_to_stockpile = {
+					type = SP_arty_equipment_0			#Akatsiya
+					amount = 6
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = Inf_equipment_0			#AKM
+					amount = 1080
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = Inf_equipment_1			#AK-74
+					amount = 360
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = MBT_Equipment_2			#T-72
+					amount = 56
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = util_vehicle_equipment_1			#Safir
+					amount = 360
+					producer = PER
+				}
+			}			
+			HAM = { add_opinion_modifier = { target = SYR modifier = insult } }
+			ISR = { add_opinion_modifier = { target = SYR modifier = gratitude } }
+			every_country = {
+				limit = {
+					has_country_flag = Opinion_On_Palestinian_Groups_Keep
+				}
+				add_opinion_modifier = { target = SYR modifier = insult }
+				if = {
+					limit = { has_country_flag = SYR_Against_Our_Wishes_2 }
+					clr_country_flag = SYR_Against_Our_Wishes_2
+					set_country_flag = SYR_Broken_Relations
+				}
+				if = {
+					limit = { has_country_flag = SYR_Against_Our_Wishes_1 }
+					clr_country_flag = SYR_Against_Our_Wishes_1
+					set_country_flag = SYR_Against_Our_Wishes_2
+				}
+				if = {
+					limit = { 
+						NOT = {
+							has_country_flag = SYR_Against_Our_Wishes_2
+							has_country_flag = SYR_Against_Our_Wishes_1
+						}
+					}
+					set_country_flag = SYR_Against_Our_Wishes_1
+				}
+			}
+		}
+
+	}
+	focus = {
+		id = SYR_formalise_shia_militias
+		icon = GFX_goal_unknown
+		cost = 10
+		prerequisite = {
+			focus = SYR_integrate_palestinians
+			focus = SYR_expel_palestinians
+		}
+		mutually_exclusive = {
+			focus = SYR_disarm_militias
+		}
+		x = -6
+		y = 5
+		relative_position_id = SYR_civil_war_victory
+		
+		ai_will_do = {
+			factor = 15
+			modifier = {
+				factor = 1.2
+				SOV = { has_country_flag = Opinion_On_Palestinian_Groups_Purge}
+			}
+			modifier = {
+				factor = 1.2
+				PER = { has_country_flag = Opinion_On_Palestinian_Groups_Purge }
+			}
+		}
+		
+		available = {
+			has_civil_war = no
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		complete_tooltip = {
+		
+		}
+		
+		completion_reward = {
+			#set_division_template_lock = { division_template = "Militia Battalion" is_locked = no }
+			#set_division_template_lock = { division_template = "Militia Division" is_locked = no }
+			#set_division_template_lock = { division_template = "Local Defence Battalion" is_locked = no }
+			swap_ideas = { remove_idea = syrian_shiite add_idea = syrian_shiite_integrated }
+			every_country = {
+				limit = {
+					has_country_flag = Opinion_On_Shiite_Groups_Purge
+				}
+				add_opinion_modifier = { target = SYR modifier = insult }
+				if = {
+					limit = { has_country_flag = SYR_Against_Our_Wishes_2 }
+					clr_country_flag = SYR_Against_Our_Wishes_2
+					set_country_flag = SYR_Broken_Relations
+				}
+				if = {
+					limit = { has_country_flag = SYR_Against_Our_Wishes_1 }
+					clr_country_flag = SYR_Against_Our_Wishes_1
+					set_country_flag = SYR_Against_Our_Wishes_2
+				}
+				if = {
+					limit = { 
+						NOT = {
+							has_country_flag = SYR_Against_Our_Wishes_2
+							has_country_flag = SYR_Against_Our_Wishes_1
+						}
+					}
+					set_country_flag = SYR_Against_Our_Wishes_1
+				}
+			}
+		}
+
+	}
+	focus = {
+		id = SYR_disarm_militias
+		icon = GFX_goal_unknown
+		cost = 10
+		prerequisite = {
+			focus = SYR_expel_palestinians
+			focus = SYR_integrate_palestinians
+		}
+		mutually_exclusive = {
+			focus = SYR_formalise_shia_militias
+		}
+		x = -4
+		y = 5
+		relative_position_id = SYR_civil_war_victory
+		
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 1.2
+				SOV = { has_country_flag = Opinion_On_Palestinian_Groups_Purge}
+			}
+			modifier = {
+				factor = 1.2
+				PER = { has_country_flag = Opinion_On_Palestinian_Groups_Purge }
+			}
+		}
+		
+		available = {
+			has_civil_war = no
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		complete_tooltip = {
+		
+		}
+		
+		completion_reward = {
+			delete_unit_template_and_units = { division_template = "Militia Battalion" }
+			delete_unit_template_and_units = { division_template = "Militia Division" }
+			delete_unit_template_and_units = { division_template = "Local Defence Battalion" }
+			remove_ideas = syrian_shiite
+			custom_effect_tooltip = TT_SYR_EXPEL_PALESTINIANS
+			hidden_effect = {
+				#1/4 of starting equipment of above units
+				add_equipment_to_stockpile = {
+					type = command_control_equipment_0
+					amount = 5
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = AA_Equipment_0			#Strela
+					amount = 36
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = L_AT_Equipment_1			#MILAN
+					amount = 24
+					producer = FRA
+				}
+				add_equipment_to_stockpile = {
+					type = L_AT_Equipment_0			#Malyutka
+					amount = 12
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = H_AT_Equipment_1			#Konkurs
+					amount = 8
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = H_AT_Equipment_1			#HOT
+					amount = 6
+					producer = FRA
+				}
+				add_equipment_to_stockpile = {
+					type = SP_arty_equipment_0			#Akatsiya
+					amount = 4
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = Inf_equipment_0			#AKM
+					amount = 840
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = Inf_equipment_1			#AK-74
+					amount = 600
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = MBT_Equipment_2			#T-72
+					amount = 10
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = util_vehicle_equipment_1			#Safir
+					amount = 150
+					producer = PER
+				}
+				add_equipment_to_stockpile = {
+					type = util_vehicle_equipment_1			#UAZ-469
+					amount = 120
+					producer = SOV
+				}
+			}	
+			every_country = {
+				limit = {
+					has_country_flag = Opinion_On_Shiite_Groups_Keep
+				}
+				add_opinion_modifier = { target = SYR modifier = insult }
+				if = {
+					limit = { has_country_flag = SYR_Against_Our_Wishes_2 }
+					clr_country_flag = SYR_Against_Our_Wishes_2
+					set_country_flag = SYR_Broken_Relations
+				}
+				if = {
+					limit = { has_country_flag = SYR_Against_Our_Wishes_1 }
+					clr_country_flag = SYR_Against_Our_Wishes_1
+					set_country_flag = SYR_Against_Our_Wishes_2
+				}
+				if = {
+					limit = { 
+						NOT = {
+							has_country_flag = SYR_Against_Our_Wishes_2
+							has_country_flag = SYR_Against_Our_Wishes_1
+						}
+					}
+					set_country_flag = SYR_Against_Our_Wishes_1
+				}
+			}
+		}
+
+	}
+	
 	focus = {
 		id = SYR_ssnp_coup
 		icon = GFX_goal_demand_sudetenland
@@ -251,26 +700,25 @@ focus_tree = {
 		prerequisite = {
 			focus = SYR_incorporate_ssnp
 		}
-		x = -7
-		y = 4
+		prerequisite = {
+			focus = SYR_formalise_shia_militias
+			focus = SYR_disarm_militias
+		}
+		mutually_exclusive = {
+			focus = SYR_russian_tool
+			focus = SYR_iranian_puppet
+		}
+		x = -8
+		y = 6
 		relative_position_id = SYR_civil_war_victory
 		
 		ai_will_do = {
-			factor = 100
-			modifier = {
-				add = 15
-				SOV = { has_country_flag = Opinion_On_SSNP_Purge }
-			}
-			modifier = {
-				add = 15
-				PER = { has_country_flag = Opinion_On_SSNP_Purge }
-			}
+			factor = 5
 		}
 		
 		available = {
 			has_civil_war = no
 			Nationalist > 0.10
-			NOT = { has_completed_focus = SYR_greater_syria }
 		}
 		
 		bypass = {
@@ -295,13 +743,13 @@ focus_tree = {
 				}
 			    add_popularity = { ideology = Nationalist popularity = 0.30 }
 				random_list = {
-					70 = {
+					60 = {
 						start_civil_war = {
 							ideology = communism
 							size = 0.7
 						}
 					}
-					30 = {
+					40 = {
 					}
 				}
 			}
@@ -316,13 +764,13 @@ focus_tree = {
 				}
 				add_popularity = { ideology = Nationalist popularity = 0.30 }
 				random_list = {
-					50 = {
+					40 = {
 						start_civil_war = {
 							ideology = communism
 							size = 0.7
 						}
 					}
-					50 = {
+					60 = {
 					}
 				}
 			}
@@ -338,12 +786,144 @@ focus_tree = {
 			}						
 		}
 
+	}	
+	focus = {
+		id = SYR_russian_tool
+		icon = GFX_goal_unknown
+		cost = 10
+		prerequisite = {
+			focus = SYR_formalise_shia_militias
+			focus = SYR_disarm_militias
+		}
+		mutually_exclusive = {
+			focus = SYR_iranian_puppet
+			focus = SYR_ssnp_coup
+		}
+		x = -6
+		y = 6
+		relative_position_id = SYR_civil_war_victory
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_civil_war = no
+			custom_trigger_tooltip = {
+				tooltip = TT_SYR_BROKEN_RELATIONS_SOV
+				NOT = { SOV = { has_country_flag = SYR_Broken_Relations } }
+			}
+			SOV = { exists = yes }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		complete_tooltip = {
+			
+		}
+		
+		completion_reward = {
+			SOV = { country_event = SyriaFocus.16 }
+		}
+
 	}
-	
-	
-	
-	
-	
+	focus = {
+		id = SYR_iranian_puppet
+		icon = GFX_goal_unknown
+		cost = 10
+		prerequisite = {
+			focus = SYR_disarm_militias
+			focus = SYR_formalise_shia_militias
+		}
+		mutually_exclusive = {
+			focus = SYR_russian_tool
+			focus = SYR_ssnp_coup
+		}
+		x = -4
+		y = 6
+		relative_position_id = SYR_civil_war_victory
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_civil_war = no
+			custom_trigger_tooltip = {
+				tooltip = TT_SYR_BROKEN_RELATIONS_PER
+				NOT = { PER = { has_country_flag = SYR_Broken_Relations } }
+			}
+			PER = { exists = yes }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		complete_tooltip = {
+			
+		}
+		
+		completion_reward = {
+			PER = { country_event = SyriaFocus.16 }
+		}
+
+	}
+	focus = {
+		id = SYR_on_our_own
+		icon = GFX_goal_unknown
+		cost = 10
+		prerequisite = {
+			focus = SYR_disarm_militias
+			focus = SYR_formalise_shia_militias
+		}
+		mutually_exclusive = {
+			focus = SYR_ssnp_coup
+		}
+		x = -2
+		y = 6
+		relative_position_id = SYR_civil_war_victory
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_civil_war = no
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = TT_SYR_BROKEN_RELATIONS_BOTH
+					PER = { has_country_flag = SYR_Broken_Relations }
+					SOV = { has_country_flag = SYR_Broken_Relations }
+				}
+				custom_trigger_tooltip = {
+					tooltip = TT_SYR_REQUESTS_REJECTED
+					has_country_flag = SYR_Request_Rejected
+				}
+			}
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		complete_tooltip = {
+			
+		}
+		
+		completion_reward = {
+			add_political_power = 100
+		}
+
+	}
 	
 	focus = {
 		id = SYR_greater_syria
@@ -380,7 +960,7 @@ focus_tree = {
 		id = SYR_reestablish_diplomacy
 		icon = GFX_goal_generic_intelligence_exchange
 		cost = 10
-		x = 22
+		x = 23
 		y = 1
 		
 		ai_will_do = {
@@ -540,7 +1120,12 @@ focus_tree = {
 		}
 		x = 0
 		y = 2
+	
 		relative_position_id = SYR_civil_war_victory
+		
+		available = {
+			tag = FSA
+		}
 
 	}
 	focus = {
@@ -688,6 +1273,10 @@ focus_tree = {
 		x = 4
 		y = 2
 		relative_position_id = SYR_civil_war_victory
+		
+		available = {
+			tag = NUS
+		}
 
 	}
 	focus = {
@@ -1030,102 +1619,6 @@ focus_tree = {
 		x = -6
 		y = 4
 		relative_position_id = SYR_reestablish_diplomacy
-
-	}
-	focus = {
-		id = SYR_integrate_palestinians
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_incorporate_ssnp
-			focus = SYR_ssnp_traitors
-		}
-		mutually_exclusive = {
-			focus = SYR_expel_palestinians
-		}
-		x = -5
-		y = 4
-		relative_position_id = SYR_civil_war_victory
-
-	}
-	focus = {
-		id = SYR_expel_palestinians
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_ssnp_traitors
-			focus = SYR_incorporate_ssnp
-		}
-		mutually_exclusive = {
-			focus = SYR_integrate_palestinians
-		}
-		x = -3
-		y = 4
-		relative_position_id = SYR_civil_war_victory
-
-	}
-	focus = {
-		id = SYR_formalise_shia_militias
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_integrate_palestinians
-			focus = SYR_expel_palestinians
-		}
-		mutually_exclusive = {
-			focus = SYR_disarm_militias
-		}
-		x = -5
-		y = 5
-		relative_position_id = SYR_civil_war_victory
-
-	}
-	focus = {
-		id = SYR_disarm_militias
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_expel_palestinians
-			focus = SYR_integrate_palestinians
-		}
-		mutually_exclusive = {
-			focus = SYR_formalise_shia_militias
-		}
-		x = -3
-		y = 5
-		relative_position_id = SYR_civil_war_victory
-
-	}
-	focus = {
-		id = SYR_russian_tool
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_formalise_shia_militias
-			focus = SYR_disarm_militias
-		}
-		mutually_exclusive = {
-			focus = SYR_iranian_puppet
-		}
-		x = -5
-		y = 6
-		relative_position_id = SYR_civil_war_victory
-
-	}
-	focus = {
-		id = SYR_iranian_puppet
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_disarm_militias
-			focus = SYR_formalise_shia_militias
-		}
-		mutually_exclusive = {
-			focus = SYR_russian_tool
-		}
-		x = -3
-		y = 6
-		relative_position_id = SYR_civil_war_victory
 
 	}
 	focus = {
