@@ -1,0 +1,189 @@
+AB_calculate_penalty_increase = { #Calculate rate of AB penalty increase & apply it
+	if = {
+		limit = {
+			and = {
+				has_country_flag = { flag = total_AB_wars value > 0 } #Has 1 AB wars
+				has_country_flag = { flag = total_AB_wars value < 2 }
+			}
+		}
+		AB_penalty_increase = yes
+		
+	}
+	if = {
+		limit = {
+			and = {
+				has_country_flag = { flag = total_AB_wars value > 1 } #Has 2 AB wars
+				has_country_flag = { flag = total_AB_wars value < 3 }
+			}
+		}
+		AB_penalty_increase = yes
+		AB_penalty_increase = yes
+		
+	}
+	if = {
+		limit = {
+			and = {
+				has_country_flag = { flag = total_AB_wars value > 2 } #Has 3 AB wars
+				has_country_flag = { flag = total_AB_wars value < 4 }
+			}
+		}
+		AB_penalty_increase = yes
+		AB_penalty_increase = yes
+		AB_penalty_increase = yes
+		
+	}
+	if = {
+		limit = {
+			and = {
+				has_country_flag = { flag = total_AB_wars value > 3 } #Has 4 AB wars
+				has_country_flag = { flag = total_AB_wars value < 5 }
+			}
+		}
+		AB_penalty_increase = yes
+		AB_penalty_increase = yes
+		AB_penalty_increase = yes
+		AB_penalty_increase = yes
+		
+	}
+}
+
+AB_penalty_increase = { #Increase AB penlty - triggered in AB_calculate_penalty_increase
+	if = {
+		limit = {
+			has_idea = AB_penalty_8
+		}
+		swap_idea = { remove_idea = AB_penalty_8 add_idea = AB_penalty_9 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_7
+		}
+		swap_idea = { remove_idea = AB_penalty_7 add_idea = AB_penalty_8 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_6
+		}
+		swap_idea = { remove_idea = AB_penalty_6 add_idea = AB_penalty_7 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_5
+		}
+		swap_idea = { remove_idea = AB_penalty_5 add_idea = AB_penalty_6 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_4
+		}
+		swap_idea = { remove_idea = AB_penalty_4 add_idea = AB_penalty_5 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_3
+		}
+		swap_idea = { remove_idea = AB_penalty_3 add_idea = AB_penalty_4 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_2
+		}
+		swap_idea = { remove_idea = AB_penalty_2 add_idea = AB_penalty_3 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_1
+		}
+		swap_idea = { remove_idea = AB_penalty_1 add_idea = AB_penalty_2 }
+	}
+	
+}
+
+AB_calculate_penalty_decrease ={ #Calculate rate of AB penalty decrease & apply it
+	AB_Decrease_penalty = yes
+	#country_event = { id = AB_war. days = 30 } #delay the next decrease in AB penalty for x days
+}
+
+AB_Decrease_penalty = { #Decrase AB penalty - triggered in AB_calculate_penalty_decrease
+	
+	if = {
+		limit = {
+			has_idea = AB_penalty_1
+		}
+		remove_idea = AB_penalty_1
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_2
+		}
+		swap_idea = { remove_idea = AB_penalty_2 add_idea = AB_penalty_7 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_3
+		}
+		swap_idea = { remove_idea = AB_penalty_3 add_idea = AB_penalty_7 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_4
+		}
+		swap_idea = { remove_idea = AB_penalty_4 add_idea = AB_penalty_7 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_5
+		}
+		swap_idea = { remove_idea = AB_penalty_5 add_idea = AB_penalty_7 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_6
+		}
+		swap_idea = { remove_idea = AB_penalty_6 add_idea = AB_penalty_7 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_7
+		}
+		swap_idea = { remove_idea = AB_penalty_7 add_idea = AB_penalty_7 }
+	}
+	if = {
+		limit = {
+			has_idea = AB_penalty_8
+		}
+		swap_idea = { remove_idea = AB_penalty_8 add_idea = AB_penalty_7 }
+	}
+}
+
+#Is triggered for the first anti bully war. It will only trigger again when another anti bully war starts
+#and there is no other active anti bully war at the time of the second anti bully war
+AB_war_main = {
+	
+	if = { #If you have an AB war continue to increase penalty
+		limit = {
+			has_an_AB_war = yes
+		}
+		AB_calculate_penalty_increase = yes
+		
+		else = { #Else begin to decrease penalty
+			AB_calculate_penalty_decrease = yes
+		}
+	}
+		
+	
+}
+
+#Second function that runs for every AB war. Will decrease total_AB_wars flag when each AB war is over
+#When total_AB_wars is 0 AB_war_main will begin to decrease AB war penalty
+AB_war_second = { 
+	
+	if = {
+		limit = {
+			still_in_this_AB_war = no
+		}
+		modify_country_flag = { flag = total_AB_wars value = -1 }
+	}
+		
+	
+}
