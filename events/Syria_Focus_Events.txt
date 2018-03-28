@@ -120,6 +120,7 @@ country_event = {
 		remove_state_core = 571
 		remove_state_core = 575
 		hidden_effect = { news_event = { id = SyriaFocusNews.3 hours = 6 } }
+		set_country_flag = SYR_Rojava_go_to_war
 	}
 	option = {
 		name = SyriaFocus.2.b		#Let them go
@@ -753,6 +754,183 @@ country_event = {
 		}
 	}
 }
+
+#Fate of the Syrian Arab Army
+country_event = {
+	
+	id = SyriaFocus.19
+	title = SyriaFocus.19.t
+	desc = SyriaFocus.19.d
+	
+	picture = GFX_syrian_arab_army
+	
+	trigger = {
+		tag = FSA
+		focus_progress = { focus = SYR_syrian_arab_army progress > 0.1 }
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = SyriaFocus.19.a				#Integrate them
+		ai_chance = { 
+			factor = 25
+			modifier = {
+				factor = 3			
+				num_divisions < 15			#If we took heavy casualties, integrate
+			}
+		}
+		set_country_flag = FSA_Syrian_Arab_Army_Decision
+		add_popularity = { ideology = communism popularity = 0.1 }
+		relative_change_neg_8 = yes
+		if = {
+			limit = { has_idea = the_military }
+			set_country_flag = current_the_military
+			increase_internal_faction_opinion = yes
+		}
+		custom_effect_tooltip = TT_SYRIAN_ARAB_ARMY_REMNANTS
+		load_oob = Syrian_Arab_Army_Remnants
+	}
+	option = {
+		name = SyriaFocus.19.b				#Disband them
+		ai_chance = { 
+			factor = 75
+			modifier = {
+				factor = 0.3
+				num_divisions < 15
+			}
+		}
+		set_country_flag = FSA_Syrian_Arab_Army_Decision
+	}
+}
+
+#Fate of ex-SAA generals
+country_event = {
+	
+	id = SyriaFocus.20
+	title = SyriaFocus.20.t
+	desc = SyriaFocus.20.d
+	
+	picture = GFX_syrian_arab_army
+	
+	trigger = {
+		tag = FSA
+		has_country_flag = FSA_Syrian_Arab_Army_Decision
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = SyriaFocus.20.a				#Let them join
+		ai_chance = { factor = 30 }
+		add_popularity = { ideology = communism popularity = 0.05 }
+		relative_change_neg_4 = yes
+		if = {
+			limit = { has_idea = the_military }
+			set_country_flag = current_the_military
+			increase_internal_faction_opinion = yes
+		}
+		create_corps_commander = {
+			name = "Ali Abdullah Ayyoub"
+			picture = "gfx/leaders/SYR/Portrait_Ali_Ayyoub.dds"
+			traits = { trait_engineer }
+			skill = 4
+		}
+		create_corps_commander = {
+			name = "Abdel Fatah Qudsiyeh"
+			picture = "Portrait_Abdel_Fatah_Qudsiyeh.dds"
+			traits = { trait_engineer }
+			skill = 2
+		}
+	}
+	option = {
+		name = SyriaFocus.20.b				#Put them in prison
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		name = SyriaFocus.20.c				#Send them to the hangman
+		ai_chance = { factor = 10 }
+		add_popularity = { ideology = fascism popularity = 0.05 }
+		relative_change_pos_4 = yes		
+		if = { limit = { USA = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}		
+		if = { limit = { ENG = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+		if = { limit = { FRA = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+		if = { limit = { GER = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+		random_country = {
+			limit = {
+				NOT = {
+					tag = USA
+					tag = ENG
+					tag = FRA
+					tag = GER
+				}
+				has_government = democratic
+			}
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+	}
+}
+
+### Political plurality ###
+#Baath Party
+country_event = {
+
+	id = SyriaFocus.21
+	title = SyriaFocus.21.t
+	desc = SyriaFocus.21.d
+	picture = GFX_baath_party
+	
+	trigger = {
+		tag = FSA
+		focus_progress = { focus = SYR_political_plurality progress > 0.1 }
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = SyriaFocus.21.a		#Ban them
+		ai_chance = { factor = 80 }
+		add_ideas = baath_party_banned
+		if = {
+			limit = { has_idea = oligarchs }
+			set_country_flag = current_oligarchs
+			decrease_internal_faction_opinion = yes
+		}
+	}
+	option = {
+		name = SyriaFocus.21.b		#Allow them
+		ai_chance = { factor = 20 }
+		relative_change_neg_10 = yes
+		if = {
+			limit = { has_idea = oligarchs }
+			set_country_flag = current_oligarchs
+			increase_internal_faction_opinion = yes
+		}
+	}
+}
+
+#SSNP
+
 
 ###################
 ### News Events ###

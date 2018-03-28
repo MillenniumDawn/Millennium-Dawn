@@ -89,3 +89,85 @@ country_event = {
 		}
 	}
 }
+# Internal Faction Interactive events
+add_namespace = internal_faction_events
+add_namespace = farmers_events
+
+#####################
+### Farmers ###
+#####################
+
+#Peasant farmers resist Neoclassical doctrines of agrarian change.  
+
+	country_event = {
+	id = farmers_events.0
+	title = farmers_events.0.t
+	desc = farmers_events.0.d
+	#picture = WIP
+	
+	trigger = {
+		has_idea = farmers
+		NOT = { has_country_flag = positive_farmers}
+	}
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = farmers_events.0.a #Implement bottom up dev policies
+		relative_change_pos_6 = yes
+		newline = yes
+		add_timed_idea = { idea = internal_faction_decreased_investments days = 360 }
+		visually_display_opinion_rise_farmers = yes
+		set_country_flag = current_farmers
+		increase_internal_faction_opinion = yes
+		if = { limit = { has_idea = international_bankers }
+			visually_display_opinion_fall_international_bankers = yes
+			set_country_flag = current_international_bankers
+			decrease_internal_faction_opinion = yes
+		}
+	}
+	option = {
+		name = farmers_events.0.b #Only implment Pro-Poor growth
+		add_political_power = -100
+		add_timed_idea = { idea = internal_faction_decreased_investments days = 120 }
+	}
+	option = {
+		name = farmers_events.0.c			#Status quo 
+		relative_change_neg_6 = yes
+		newline = yes
+		if = { limit = { NOT = { has_government = communism } }
+			add_popularity = { ideology = communism popularity = 0.05 }
+			else = {
+				add_popularity = { ideology = communism popularity = -0.05 }
+			}
+		}
+		visually_display_opinion_fall_farmers = yes
+		set_country_flag = current_farmers
+		decrease_internal_faction_opinion = yes
+	}
+	option = {
+		name = farmers_events.0.dd	#Furthur Neoclassical Doctrines
+		trigger = {
+			OR = {
+				has_idea = depression 
+				has_idea = recession 
+			}
+		}
+		relative_change_neg_12 = yes
+		newline = yes
+		if = { limit = { has_idea = recession }
+			swap_ideas = { remove_idea = recession add_idea = stagnation  }
+		}
+		if = { limit = { has_idea = depression }
+			swap_ideas = { remove_idea = depression add_idea = recession }
+		}
+		set_country_flag = current_farmers
+		decrease_internal_faction_opinion = yes
+		if = { limit = { has_idea = international_bankers }
+			visually_display_opinion_rise_international_bankers = yes
+			set_country_flag = current_international_bankers
+			increase_internal_faction_opinion = yes
+		}
+	}
+}
+
