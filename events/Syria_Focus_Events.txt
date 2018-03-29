@@ -1,0 +1,1038 @@
+﻿add_namespace = SyriaFocus
+add_namespace = SyriaFocusNews
+
+#Fate of Rojava
+country_event = {
+	
+	id = SyriaFocus.0
+	title = SyriaFocus.0.t
+	desc = SyriaFocus.0.desc
+	picture = GFX_Rojava
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.0.a		#The area belongs to Syria
+		ai_chance = {
+			factor = 75
+			modifier = {
+				factor = 0.8
+				tag = FSA
+			}
+		}
+		ROJ = { country_event = { days = 5 id = SyriaFocus.1 } }
+		set_country_flag = Rojava_Question_Solved
+	}
+	option = {
+		name = SyriaFocus.0.b		#Offer them federal status
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 0
+				tag = NUS
+			}
+			modifier = {
+				factor = 1.5
+				tag = FSA
+			}
+		}
+		ROJ = { country_event = { days = 5 id = SyriaFocus.4 } }
+		set_country_flag = Rojava_Question_Solved
+	}
+	option = {
+		name = SyriaFocus.0.c		#Let them be independent
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 0
+				tag = NUS
+			}
+			modifier = {
+				factor = 2
+				tag = FSA
+			}
+		}
+		add_political_power = -50
+		remove_state_core = 193
+		remove_state_core = 571
+		remove_state_core = 575
+		set_country_flag = Rojava_Question_Solved
+		hidden_effect = { news_event = { id = SyriaFocusNews.0 hours = 6 } }
+	}
+}
+
+#Try to subjugate Rojava
+country_event = {
+
+	id = SyriaFocus.1
+	title = SyriaFocus.1.t
+	desc = SyriaFocus.1.desc
+	picture = GFX_Rojava
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.1.a		#Reject demands
+		ai_chance = {
+			factor = 80
+			modifier = {
+				factor = 0.875
+				FROM = { tag = FSA }
+			}
+		}
+		FROM = { country_event = { days = 5 id = SyriaFocus.2 } }
+	}
+	option = {
+		name = SyriaFocus.1.b		#Agree
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 0
+				FROM = { tag = NUS }
+			}
+			modifier = {
+				factor = 1.5
+				FROM = { tag = FSA }
+			}
+		}
+		custom_effect_tooltip = GAME_OVER_TT
+		FROM = { country_event = { days = 5 id = SyriaFocus.3 } }
+	}
+}
+	
+#Demands refused
+country_event = {
+
+	id = SyriaFocus.2
+	title = SyriaFocus.2.t
+	desc = SyriaFocus.2.desc
+	picture = GFX_Rojava
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.2.a		#Damn them
+		ai_chance = {
+			factor = 90
+		}
+		create_wargoal = { type = annex_everything target = ROJ }
+		remove_state_core = 193
+		remove_state_core = 571
+		remove_state_core = 575
+		hidden_effect = { news_event = { id = SyriaFocusNews.3 hours = 6 } }
+		set_country_flag = SYR_Rojava_go_to_war
+	}
+	option = {
+		name = SyriaFocus.2.b		#Let them go
+		ai_chance = {
+			factor = 10
+		}
+		add_political_power = -100
+		remove_state_core = 193
+		remove_state_core = 571
+		remove_state_core = 575	
+		add_state_claim = 193
+		add_state_claim = 571
+		add_state_claim = 575		
+		hidden_effect = { news_event = { id = SyriaFocusNews.0 hours = 6 } }
+	}
+}
+
+#Demands met
+country_event = {
+
+	id = SyriaFocus.3
+	title = SyriaFocus.3.t
+	desc = SyriaFocus.3.desc
+	picture = GFX_Rojava
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.3.a		#Huzzah
+		ai_chance = { factor = 100 }
+		annex_country = { target = ROJ }
+		hidden_effect = { news_event = { id = SyriaFocusNews.1 hours = 6 } }
+	}
+
+}
+	
+#Federal Status offered
+country_event = {
+	
+	id = SyriaFocus.4
+	title = SyriaFocus.4.t
+	desc = SyriaFocus.4.desc
+	picture = GFX_Rojava
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.4.a		#This is what we wanted
+		ai_chance = {
+			factor = 80
+		}
+		FROM = { country_event = { days = 5 id = SyriaFocus.5 } }
+		FROM = { set_country_flag = Promised_Federated_Syria }
+	}
+	option = {
+		name = SyriaFocus.4.b		#We have new goals
+		ai_chance = {
+			factor = 20
+		}
+		FROM = { country_event = { days = 5 id = SyriaFocus.2 } }
+	}
+}
+
+#Federal Status accepted
+country_event = {
+	
+	id = SyriaFocus.5
+	title = SyriaFocus.5.t
+	desc = SyriaFocus.5.desc
+	picture = GFX_Rojava
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.5.a		#Huzzah
+		ai_chance = { factor = 100 }
+		every_owned_state = {
+			limit = {
+				is_core_of = ROJ
+			}
+			ROJ = { transfer_state = PREV }
+		}
+		if = { 
+			limit = { has_dlc = "Death or Dishonor" }
+			set_autonomy = { target = ROJ autonomy_state = autonomy_dominion }
+			else = {
+				puppet = ROJ
+			}
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.2 hours = 6 } }
+	}
+}
+
+#Russian and Iranian opinion on SSNP
+country_event = {
+	
+	id = SyriaFocus.6
+	title = SyriaFocus.6.t
+	desc = SyriaFocus.6.desc
+	picture = GFX_SYR_ssnp
+	
+	trigger = {
+		OR = {
+			tag = SOV
+			tag = PER
+		}
+		NOT = { has_country_flag = Opinion_On_SSNP }
+		SYR = { focus_progress = { focus = SYR_assad_day progress > 0.1 } }
+	}
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = SyriaFocus.6.a		#Keep SSNP around
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 1.5
+				tag = SOV
+			}
+			modifier = {
+				factor = 0.5
+				tag = PER
+			}
+		}
+		set_country_flag = Opinion_On_SSNP
+		set_country_flag = Opinion_On_SSNP_Keep
+		SYR = { country_event = SyriaFocus.7 }
+	}
+	option = {
+		name = SyriaFocus.6.b		#Purge SSNP
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 0.5
+				tag = SOV
+			}
+			modifier = {
+				factor = 1.5
+				tag = PER
+			}
+		}
+		set_country_flag = Opinion_On_SSNP
+		set_country_flag = Opinion_On_SSNP_Purge
+		SYR = {country_event = SyriaFocus.7 }
+	}
+}
+
+country_event = {
+	
+	id = SyriaFocus.7
+	title = SyriaFocus.7.t
+    desc = {
+        text = SyriaFocus.7.Keep.desc
+    	trigger = { FROM = { has_country_flag = Opinion_On_SSNP_Keep }
+    	}
+    }
+    desc = {
+    	text = SyriaFocus.7.Purge.desc
+    	trigger = { FROM = { has_country_flag = Opinion_On_SSNP_Purge }
+    	}
+    }
+	picture = GFX_SYR_ssnp
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.7.a		#Noted
+		ai_chance = { factor = 100 }
+	}
+}
+
+#SSNP Coup
+country_event = {
+
+	id = SyriaFocus.8
+	
+	hidden = yes
+	
+	trigger = {
+		tag = SYR
+		has_country_flag = SSNP_Coup_Incoming
+	}
+	
+	mean_time_to_happen = {
+		days = 60
+	}
+	
+	fire_only_once = yes
+	
+	immediate = {
+		random_list = {
+			10 = { country_event = SyriaFocus.9 }		#Assad dies, strong civil war
+			70 = { country_event = SyriaFocus.10 }		#Medium civil war
+			20 = { country_event = SyriaFocus.11 }		#Low scale civil war
+		}
+	}
+	
+	option = {
+		name = SyriaFocus.8.a
+		ai_chance = { factor = 100 }
+	}
+}
+
+country_event = {
+
+	id = SyriaFocus.9
+	title = SyriaFocus.9.t
+	desc = SyriaFocus.9.d
+	picture = GFX_Assad_parade
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.9.a
+		ai_chance = { factor = 100 }
+		kill_country_leader = yes
+		set_global_flag = Al_Assad_Dead
+		if = {
+			limit = { 
+				Nationalist > 40
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.80
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = { 
+				Nationalist > 30
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.60
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = { 
+				Nationalist > 20
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.40
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = { 
+				Nationalist > 10
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.20
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = { 
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.10
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+	}
+}
+
+country_event = {
+
+	id = SyriaFocus.10
+	title = SyriaFocus.10.t
+	desc = SyriaFocus.10.d
+	picture = GFX_SYR_ssnp
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.10.a
+		ai_chance = { factor = 100 }
+		if = {
+			limit = { 
+				Nationalist > 40
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.40
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = { 
+				Nationalist > 30
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.30
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = { 
+				Nationalist > 20
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.20
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = { 
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.10
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+	}
+}
+
+country_event = {
+
+	id = SyriaFocus.11
+	title = SyriaFocus.11.t
+	desc = SyriaFocus.11.d
+	picture = GFX_SYR_ssnp
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.11.a
+		ai_chance = { factor = 100 }
+		if = {
+			limit = { 
+				Nationalist > 40
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.20
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = { 
+				Nationalist > 30
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.15
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+		if = {
+			limit = { 
+				NOT = { has_country_flag = Second_Syrian_Civil_War }
+			}
+			start_civil_war = {
+				ideology = Nationalist
+				size = 0.10
+			}
+			set_country_flag = Second_Syrian_Civil_War
+		}
+	}
+}
+
+#Russian and Iranian opinion on Palestinian Groups
+country_event = {
+	
+	id = SyriaFocus.12
+	title = SyriaFocus.12.t
+	desc = SyriaFocus.12.desc
+	picture = GFX_palestinians_in_syria
+	
+	trigger = {
+		OR = {
+			tag = SOV
+			tag = PER
+		}
+		NOT = { has_country_flag = Opinion_On_Palestinian_Groups }
+		SYR = { 
+			OR = {
+				focus_progress = { focus = SYR_ssnp_traitors progress > 0.1 }
+				focus_progress = { focus = SYR_incorporate_ssnp progress > 0.1 } 
+			}
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = SyriaFocus.12.a		#Keep Palestinian groups around
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 1.5
+				tag = PER
+			}
+			modifier = {
+				factor = 0.5
+				tag = SOV
+			}
+		}
+		set_country_flag = Opinion_On_Palestinian_Groups
+		set_country_flag = Opinion_On_Palestinian_Groups_Keep
+		SYR = { country_event = SyriaFocus.13 }
+	}
+	option = {
+		name = SyriaFocus.12.b		#Purge Palestinian groups
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 0.5
+				tag = PER
+			}
+			modifier = {
+				factor = 1.5
+				tag = SOV
+			}
+		}
+		set_country_flag = Opinion_On_Palestinian_Groups
+		set_country_flag = Opinion_On_Palestinian_Groups_Purge
+		SYR = {country_event = SyriaFocus.13 }
+	}
+}
+
+country_event = {
+	
+	id = SyriaFocus.13
+	title = SyriaFocus.13.t
+    desc = {
+        text = SyriaFocus.13.Keep.desc
+    	trigger = { FROM = { has_country_flag = Opinion_On_Palestinian_Groups_Keep }
+    	}
+    }
+    desc = {
+    	text = SyriaFocus.13.Purge.desc
+    	trigger = { FROM = { has_country_flag = Opinion_On_Palestinian_Groups_Purge }
+    	}
+    }
+	picture = GFX_palestinians_in_syria
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.13.a		#Noted
+		ai_chance = { factor = 100 }
+	}
+}
+
+#Russian and Iranian opinion on Shiite Groups
+country_event = {
+	
+	id = SyriaFocus.14
+	title = SyriaFocus.14.t
+	desc = SyriaFocus.14.desc
+	picture = GFX_palestinians_in_syria
+	
+	trigger = {
+		OR = {
+			tag = SOV
+			tag = PER
+		}
+		NOT = { has_country_flag = Opinion_On_Shiite_Groups }
+		SYR = { 
+			OR = {
+				focus_progress = { focus = SYR_integrate_palestinians progress > 0.1 }
+				focus_progress = { focus = SYR_expel_palestinians progress > 0.1 } 
+			}
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = SyriaFocus.14.a		#Keep Shiite groups around
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 1.8
+				tag = PER
+			}
+			modifier = {
+				factor = 0.8
+				tag = SOV
+			}
+		}
+		set_country_flag = Opinion_On_Shiite_Groups
+		set_country_flag = Opinion_On_Shiite_Groups_Keep
+		SYR = { country_event = SyriaFocus.15 }
+	}
+	option = {
+		name = SyriaFocus.14.b		#Purge Shiite groups
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 0.8
+				tag = PER
+			}
+			modifier = {
+				factor = 1.8
+				tag = SOV
+			}
+		}
+		set_country_flag = Opinion_On_Shiite_Groups
+		set_country_flag = Opinion_On_Shiite_Groups_Purge
+		SYR = {country_event = SyriaFocus.15 }
+	}
+}
+
+country_event = {
+	
+	id = SyriaFocus.15
+	title = SyriaFocus.15.t
+    desc = {
+        text = SyriaFocus.15.Keep.desc
+    	trigger = { FROM = { has_country_flag = Opinion_On_Shiite_Groups_Keep }
+    	}
+    }
+    desc = {
+    	text = SyriaFocus.15.Purge.desc
+    	trigger = { FROM = { has_country_flag = Opinion_On_Shiite_Groups_Purge }
+    	}
+    }
+	picture = GFX_palestinians_in_syria
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.15.a		#Noted
+		ai_chance = { factor = 100 }
+	}
+}
+
+#Syria asks for protection
+country_event = {
+	
+	id = SyriaFocus.16
+	title = SyriaFocus.16.t
+    desc = SyriaFocus.16.d
+
+	picture = GFX_Assad_parade
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.16.a		#Agree to their request
+		ai_chance = { factor = 90 }
+		if = {
+			limit = { has_dlc = "Together for Victory" }
+			set_autonomy = {
+				target = SYR
+				autonomy_state = autonomy_dominion
+			}
+			else = {
+				puppet = SYR
+			}
+		}
+		SYR = { set_country_flag = SYR_Post_War_Tree_Finished }
+		SYR = { country_event = SyriaFocus.17 }
+	}
+	option = {
+		name = SyriaFocus.16.b		#Agree to their request
+		ai_chance = { factor = 10 }
+		SYR = { set_country_flag = SYR_Request_Rejected }
+		SYR = { country_event = SyriaFocus.18 }
+	}
+}
+
+country_event = {
+	
+	id = SyriaFocus.17
+	title = SyriaFocus.17.t
+    desc = SyriaFocus.17.d
+
+	picture = GFX_Assad_parade
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.17.a		#Noted
+		ai_chance = { factor = 100 }
+		if = { 
+			limit = {
+				has_idea = iranian_aid 
+			}
+			remove_ideas = iranian_aid 
+		}
+	}
+}
+
+country_event = {
+	
+	id = SyriaFocus.18
+	title = SyriaFocus.18.t
+    desc = SyriaFocus.18.d
+
+	picture = GFX_Assad_parade
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocus.18.a		#Noted
+		ai_chance = { factor = 100 }
+		if = { 
+			limit = {
+				FROM = { tag = PER }
+				has_idea = iranian_aid 
+			}
+			remove_ideas = iranian_aid 
+		}
+	}
+}
+
+#Fate of the Syrian Arab Army
+country_event = {
+	
+	id = SyriaFocus.19
+	title = SyriaFocus.19.t
+	desc = SyriaFocus.19.d
+	
+	picture = GFX_syrian_arab_army
+	
+	trigger = {
+		tag = FSA
+		focus_progress = { focus = SYR_syrian_arab_army progress > 0.1 }
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = SyriaFocus.19.a				#Integrate them
+		ai_chance = { 
+			factor = 25
+			modifier = {
+				factor = 3			
+				num_divisions < 15			#If we took heavy casualties, integrate
+			}
+		}
+		set_country_flag = FSA_Syrian_Arab_Army_Decision
+		add_popularity = { ideology = communism popularity = 0.1 }
+		relative_change_neg_8 = yes
+		if = {
+			limit = { has_idea = the_military }
+			set_country_flag = current_the_military
+			increase_internal_faction_opinion = yes
+		}
+		custom_effect_tooltip = TT_SYRIAN_ARAB_ARMY_REMNANTS
+		load_oob = Syrian_Arab_Army_Remnants
+	}
+	option = {
+		name = SyriaFocus.19.b				#Disband them
+		ai_chance = { 
+			factor = 75
+			modifier = {
+				factor = 0.3
+				num_divisions < 15
+			}
+		}
+		set_country_flag = FSA_Syrian_Arab_Army_Decision
+	}
+}
+
+#Fate of ex-SAA generals
+country_event = {
+	
+	id = SyriaFocus.20
+	title = SyriaFocus.20.t
+	desc = SyriaFocus.20.d
+	
+	picture = GFX_syrian_arab_army
+	
+	trigger = {
+		tag = FSA
+		has_country_flag = FSA_Syrian_Arab_Army_Decision
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = SyriaFocus.20.a				#Let them join
+		ai_chance = { factor = 30 }
+		add_popularity = { ideology = communism popularity = 0.05 }
+		relative_change_neg_4 = yes
+		if = {
+			limit = { has_idea = the_military }
+			set_country_flag = current_the_military
+			increase_internal_faction_opinion = yes
+		}
+		create_corps_commander = {
+			name = "Ali Abdullah Ayyoub"
+			picture = "gfx/leaders/SYR/Portrait_Ali_Ayyoub.dds"
+			traits = { trait_engineer }
+			skill = 4
+		}
+		create_corps_commander = {
+			name = "Abdel Fatah Qudsiyeh"
+			picture = "Portrait_Abdel_Fatah_Qudsiyeh.dds"
+			traits = { trait_engineer }
+			skill = 2
+		}
+	}
+	option = {
+		name = SyriaFocus.20.b				#Put them in prison
+		ai_chance = { factor = 60 }
+	}
+	option = {
+		name = SyriaFocus.20.c				#Send them to the hangman
+		ai_chance = { factor = 10 }
+		add_popularity = { ideology = fascism popularity = 0.05 }
+		relative_change_pos_4 = yes		
+		if = { limit = { USA = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}		
+		if = { limit = { ENG = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+		if = { limit = { FRA = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+		if = { limit = { GER = { has_government = democratic } }
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+		random_country = {
+			limit = {
+				NOT = {
+					tag = USA
+					tag = ENG
+					tag = FRA
+					tag = GER
+				}
+				has_government = democratic
+			}
+			add_opinion_modifier = { target = FSA modifier = barbarian_practices }
+		}
+	}
+}
+
+### Political plurality ###
+#Baath Party
+country_event = {
+
+	id = SyriaFocus.21
+	title = SyriaFocus.21.t
+	desc = SyriaFocus.21.d
+	picture = GFX_baath_party
+	
+	trigger = {
+		tag = FSA
+		focus_progress = { focus = SYR_political_plurality progress > 0.1 }
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = SyriaFocus.21.a		#Ban them
+		ai_chance = { factor = 80 }
+		add_ideas = baath_party_banned
+		if = {
+			limit = { has_idea = oligarchs }
+			set_country_flag = current_oligarchs
+			decrease_internal_faction_opinion = yes
+		}
+	}
+	option = {
+		name = SyriaFocus.21.b		#Allow them
+		ai_chance = { factor = 20 }
+		relative_change_neg_10 = yes
+		if = {
+			limit = { has_idea = oligarchs }
+			set_country_flag = current_oligarchs
+			increase_internal_faction_opinion = yes
+		}
+	}
+}
+
+#SSNP
+
+
+###################
+### News Events ###
+###################
+
+#Rojava allowed to be independent
+news_event = {
+	
+	id = SyriaFocusNews.0
+	title = SyriaFocusNews.0.t
+	desc = SyriaFocusNews.0.d
+	picture = GFX_news_rojava_victory
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocusNews.0.a
+		ai_chance = { factor = 100 }
+	}
+}
+
+#Rojava annexed
+news_event = {
+	
+	id = SyriaFocusNews.1
+	title = SyriaFocusNews.1.t
+	desc = SyriaFocusNews.1.d
+	picture = GFX_news_rojava_victory
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocusNews.1.a
+		ai_chance = { factor = 100 }
+	}
+}
+
+#Rojava puppeted
+news_event = {
+	
+	id = SyriaFocusNews.2
+	title = SyriaFocusNews.2.t
+	desc = SyriaFocusNews.2.d
+	picture = GFX_news_rojava_victory
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocusNews.2.a
+		ai_chance = { factor = 100 }
+	}
+}
+
+#Rojava resists
+news_event = {
+	
+	id = SyriaFocusNews.3
+	title = SyriaFocusNews.3.t
+	desc = SyriaFocusNews.3.d
+	picture = GFX_news_rojava_victory
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaFocusNews.3.a
+		ai_chance = { factor = 100 }
+	}
+}
+
+#Attempted SSNP coup
+news_event = {
+	
+	id = SyriaFocusNews.4
+	title = SyriaFocusNews.4.t
+	desc = {
+		text = SyriaFocusNews.4.d1
+		trigger = { SYR = { has_country_flag = Al_Assad_Dead } }
+	}
+	desc = {
+		text = SyriaFocusNews.4.d2
+		trigger = { SYR = { NOT = { has_country_flag = Al_Assad_Dead } } }
+	}
+	picture = GFX_news_SSNP
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = { tag = SYR }
+	}
+	
+	option = {
+		name = SyriaFocusNews.3.a
+		ai_chance = { factor = 100 }
+	}
+}
