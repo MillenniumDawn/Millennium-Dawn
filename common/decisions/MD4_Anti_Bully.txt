@@ -15,38 +15,37 @@ Anti_Bully = {
 				from = { surrender_progress > 0.49 }
 			}
 			not = { has_idea = three_months_of_war }
-			#always = yes
 		}
 
 		visible = {
 			has_offensive_war_with = FROM #attacker
-			
-			# if = {
-				#If you're in a faction, not a major and not the leader
-				# limit = {
-					# is_in_faction = yes
-					# is_faction_leader = no
-					# is_major = no
-				# }
-				# any_country = { #Faction leader must have capitulated for me to see this decision
-					# is_in_faction_with = ROOT
-					# has_war_together_with = ROOT
-					# is_faction_leader = yes
-					# has_capitulated = yes
-				# }
-			# }
-			# if = {
-				#If you're in NATO
-				# limit = {
-					# has_idea = NATO_member
-				# }
-				# has_country_flag = Leader_of_NATO #You must be the leader to offer a stalemate
-			# }
-
 		}
 		
 		complete_effect = {
-			from = { country_event = { id = anti_bully.5 days = 1 } }
+			hidden_effect = { save_event_target_as = AB_event_target }
+			from = {
+				hidden_effect = { set_country_flag = stalemate@ROOT }
+				country_event = { id = anti_bully.5 days = 1 }  
+			}
+			effect_tooltip = {
+				if = {
+					limit = { #If you're in a faction, not a major and not the leader
+						is_in_faction = yes
+						is_faction_leader = no
+						any_country = { #Faction leader must have capitulated for me to see this decision
+							is_in_faction_with = ROOT
+							has_war_together_with = ROOT
+							is_faction_leader = yes
+							has_capitulated = no
+						}
+					}
+					leave_faction = yes
+					if = {
+						limit = { has_idea = NATO_member }
+						remove_ideas = NATO_member
+					}
+				}
+			}
 		}
 
 	}
@@ -68,11 +67,12 @@ Anti_Bully = {
 			}
 			not = { has_idea = three_months_of_war }
 			#always = yes
+			hidden_trigger = { has_country_flag = stalemate@FROM }
 		}
 
 		visible = {
 			has_defensive_war_with = FROM #attacker
-			
+			#not = { tag = from }
 			# if = {
 				#If you're in a faction, not a major and not the leader
 				# limit = {
@@ -97,7 +97,29 @@ Anti_Bully = {
 
 		}
 		complete_effect = {
-			from = { country_event = { id = anti_bully.5 days = 1 } }
+			hidden_effect = { save_event_target_as = AB_event_target }
+			from = {
+				country_event = { id = anti_bully.5 days = 1 }  
+			}
+			effect_tooltip = {
+				if = {
+					limit = { #If you're in a faction, not a major and not the leader
+						is_in_faction = yes
+						is_faction_leader = no
+						any_country = { #Faction leader must have capitulated for me to see this decision
+							is_in_faction_with = ROOT
+							has_war_together_with = ROOT
+							is_faction_leader = yes
+							has_capitulated = no
+						}
+					}
+					leave_faction = yes
+					if = {
+						limit = { has_idea = NATO_member }
+						remove_ideas = NATO_member
+					}
+				}
+			}
 		}
 		
 		#Ask for territory, puppet, change goverment, gain influence
