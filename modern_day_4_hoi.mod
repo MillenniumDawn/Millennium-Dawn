@@ -1,4 +1,4 @@
-﻿name="Modern Day 4"
+﻿name="Modern Day 4 DEV"
 path="mod/modern_day_4_hoi/"
 tags={
 	"Alternative History"
