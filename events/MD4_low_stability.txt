@@ -1,0 +1,29 @@
+# Outlook drift based on neighbors
+#by Hiddengearz based off of Killerrabit Neighbor Drift
+
+add_namespace = low_stability
+
+#Pulse fired from init
+#Will give each country one idea per outlook which country they border
+#Effect is stronger from majors
+
+country_event = {
+    id = low_stability.1
+    
+    hidden = yes
+    is_triggered_only = yes
+	
+	immediate  = {
+		set_country_flag = { flag = LS_neighbor_count value = 0 }
+		every_neighbor_country = {
+			limit = { 
+				or = { is_target_of_coup = yes has_civil_war = yes has_stability < 0.31 }
+			}
+			PREV = { modify_country_flag = { flag = LS_neighbor_count value = 1 } }
+		}
+		update_unstable_neighbors = yes
+		clr_country_flag = LS_neighbor_count
+		country_event = { id = low_stability.1 days = 90 }
+	}
+	
+}
