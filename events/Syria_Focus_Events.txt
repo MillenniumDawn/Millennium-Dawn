@@ -930,6 +930,275 @@ country_event = {
 }
 
 #SSNP
+country_event = {
+
+	id = SyriaFocus.22
+	title = SyriaFocus.22.t
+	desc = SyriaFocus.22.d
+	picture = GFX_SYR_ssnp
+	
+	trigger = {
+		tag = FSA
+		focus_progress = { focus = SYR_political_plurality progress > 0.1 }
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = SyriaFocus.22.a		#Ban them
+		ai_chance = { factor = 70 }
+		add_ideas = ssnp_party_banned
+		if = {
+			limit = { has_idea = the_military }
+			set_country_flag = current_the_military
+			decrease_internal_faction_opinion = yes
+		}
+	}
+	option = {
+		name = SyriaFocus.22.b		#Allow them
+		ai_chance = { factor = 30 }
+		relative_change_neg_6 = yes
+		if = {
+			limit = { has_idea = the_military }
+			set_country_flag = current_the_military
+			increase_internal_faction_opinion = yes
+		}
+	}
+}
+
+#Salafist parties
+country_event = {
+
+	id = SyriaFocus.23
+	title = SyriaFocus.23.t
+	desc = SyriaFocus.23.d
+	picture = GFX_Tahrir_Al_Sham
+	
+	trigger = {
+		tag = FSA
+		focus_progress = { focus = SYR_political_plurality progress > 0.1 }
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = SyriaFocus.23.a		#Ban them
+		ai_chance = { factor = 70 }
+		add_ideas = salafist_party_banned
+		if = {
+			limit = { has_idea = The_Ulema }
+			set_country_flag = current_The_Ulema
+			decrease_internal_faction_opinion = yes
+		}
+		if = {
+			limit = { has_country_flag = Promised_Representation_NUS }
+			custom_effect_tooltip = TT_SYR_PROMISED_REPRESENTATION_NUS
+			start_civil_war = { ideology = fascism }
+		}
+	}
+	option = {
+		name = SyriaFocus.23.b		#Allow them
+		ai_chance = { factor = 30 }
+		relative_change_neg_4 = yes
+		if = {
+			limit = { has_idea = The_Ulema }
+			set_country_flag = current_The_Ulema
+			increase_internal_faction_opinion = yes
+		}
+	}
+}
+
+### 2nd Civil War due to betraying Rojava ###
+#Initial starter
+country_event = {
+
+	id = SyriaFocus.24
+	title = SyriaFocus.24.t
+	desc = SyriaFocus.24.d
+	picture = GFX_Rojava
+	
+	trigger = {
+		tag = FSA
+		has_country_flag = SYR_federation_promise_broken
+		ROJ = {
+			OR = {
+				exists = no
+				is_subject_of = FSA
+			}
+		}
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 30
+	}
+	
+	option = {
+		name = SyriaFocus.24
+		ai_chance = { factor = 100 }
+		hidden_effect = {
+			if = {
+				limit = { ROJ = { exists = no } }
+				release = ROJ
+				ROJ = { load_oob = ROJ_2017 }
+			}
+			if = {
+				limit = { ROJ = { is_subject_of = ROOT } }
+				set_autonomy = {
+					target = ROJ
+					autonomy_state = autonomy_free
+				}
+			}
+		}
+		declare_war_on = {
+			target = ROJ
+			type = annex_everything
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.6 hours = 6 } }
+	}
+	
+}
+
+#Druze rise up
+country_event = {
+
+	id = SyriaFocus.25
+	title = SyriaFocus.25.t
+	desc = SyriaFocus.25.d
+	picture = GFX_Druze
+	
+	trigger = {
+		tag = FSA
+		has_country_flag = SYR_federation_promise_broken
+		has_war_with = ROJ
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 30
+	}
+	
+	option = {
+		name = SyriaFocus.25
+		ai_chance = { factor = 100 }
+		hidden_effect = {
+			if = {
+				limit = { DRU = { exists = no } }
+				release = DRU
+				DRU = { load_oob = DRU_2017 }
+			}
+			if = {
+				limit = { DRU = { is_subject_of = ROOT } }
+				set_autonomy = {
+					target = DRU
+					autonomy_state = autonomy_free
+				}
+			}
+			#Set a random ideology
+			DRU = {
+				random_list = {
+					10 = {
+						set_politics = { ruling_party = democratic elections_allowed = yes }
+						add_popularity = { ideology = democratic popularity = 0.6 }
+					}
+					20 = {
+						set_politics = { ruling_party = communism elections_allowed = yes }
+						add_popularity = { ideology = communism popularity = 0.6 }
+					}
+					40 = {
+						set_politics = { ruling_party = neutrality elections_allowed = yes }
+						add_popularity = { ideology = neutrality popularity = 0.6 }
+					}
+					10 = {
+						set_politics = { ruling_party = Nationalist elections_allowed = no }
+						add_popularity = { ideology = Nationalist popularity = 0.6 }
+					}
+				}
+			}
+		}
+		declare_war_on = {
+			target = DRU
+			type = annex_everything
+		}
+	}
+	
+}
+
+#Alawites rise up
+country_event = {
+
+	id = SyriaFocus.26
+	title = SyriaFocus.26.t
+	desc = SyriaFocus.26.d
+	picture = GFX_Alawites
+	
+	trigger = {
+		tag = FSA
+		has_country_flag = SYR_federation_promise_broken
+		has_war_with = ROJ
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 30
+	}
+	
+	option = {
+		name = SyriaFocus.26
+		ai_chance = { factor = 100 }
+		hidden_effect = {
+			if = {
+				limit = { ALA = { exists = no } }
+				release = ALA
+				ALA = { load_oob = ALA_2017 }
+			}
+			if = {
+				limit = { ALA = { is_subject_of = ROOT } }
+				set_autonomy = {
+					target = ALA
+					autonomy_state = autonomy_free
+				}
+			}
+			#Set a random ideology
+			ALA = {
+				random_list = {
+					5 = {
+						set_politics = { ruling_party = democratic elections_allowed = yes }
+						add_popularity = { ideology = democratic popularity = 0.6 }
+					}
+					40 = {
+						set_politics = { ruling_party = communism elections_allowed = yes }
+						add_popularity = { ideology = communism popularity = 0.6 }
+					}
+					20 = {
+						set_politics = { ruling_party = neutrality elections_allowed = yes }
+						add_popularity = { ideology = neutrality popularity = 0.6 }
+					}
+					20 = {
+						set_politics = { ruling_party = Nationalist elections_allowed = no }
+						add_popularity = { ideology = Nationalist popularity = 0.6 }
+					}
+				}
+			}
+		}
+		declare_war_on = {
+			target = ALA
+			type = annex_everything
+		}
+	}
+	
+}
 
 
 ###################
@@ -1032,7 +1301,51 @@ news_event = {
 	}
 	
 	option = {
-		name = SyriaFocusNews.3.a
+		name = SyriaFocusNews.4.a
+		ai_chance = { factor = 100 }
+	}
+}
+
+#Syria Federal Republic formed
+news_event = {
+
+	id = SyriaFocusNews.5
+	title = SyriaFocusNews.5.t
+	desc = SyriaFocusNews.5.d
+	picture = GFX_news_Syria_federal_republic
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = { tag = FSA }
+	}
+	
+	option = {
+		name = SyriaFocusNews.5.a
+		ai_chance = { factor = 100 }
+	}
+}
+
+#Ethnic conflict in Syria
+news_event = {
+
+	id = SyriaFocusNews.6
+	title = SyriaFocusNews.6.t
+	desc = SyriaFocusNews.6.d
+	picture = GFX_news_event_war
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = { tag = FSA }
+	}
+	
+	option = {
+		name = SyriaFocusNews.6.a
 		ai_chance = { factor = 100 }
 	}
 }

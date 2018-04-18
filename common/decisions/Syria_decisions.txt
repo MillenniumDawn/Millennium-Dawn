@@ -1,0 +1,199 @@
+Syria_decisions = {
+
+	hire_PMC = {
+
+		visible = {
+			original_tag = SYR
+			has_government = communism
+			check_variable = { SYR_hired_PMCs < 3 }
+			hidden_trigger = {
+				NOT = { has_global_flag = Syria_Civil_War_Over }
+			}
+		}
+	
+		available = {
+			original_tag = SYR
+			has_government = communism
+			custom_trigger_tooltip = {
+				tooltip = TT_HIRE_PMCS_LIMIT
+				OR = {
+					NOT = { has_variable = SYR_hired_PMCs } 
+					check_variable = { SYR_hired_PMCs < 3 }
+				}
+			}
+		}
+		
+		cost = 200
+		
+		days_remove = 30
+		days_re_enable = 120
+		
+		complete_effect = {
+			add_popularity = { ideology = communism popularity = -0.05 }
+		}
+
+		remove_effect = {
+			hidden_effect = { add_manpower = 4000 }
+			if = {
+				limit = { check_variable = { SYR_hired_PMCs > 2 } }
+				186 = {
+					create_unit = {
+						division = " name = \"Pride of Syria\" division_template = \"Private Military Company\" start_experience_factor = 0.5"
+						owner = ROOT
+						prioritize_location = 4111
+					}
+				}
+				add_to_variable = { SYR_hired_PMCs = 1 }
+			}
+			if = {
+				limit = { check_variable = { SYR_hired_PMCs > 1 } }
+				186 = {
+					create_unit = {
+						division = " name = \"Damascus Shield\" division_template = \"Private Military Company\" start_experience_factor = 0.5"
+						owner = ROOT
+						prioritize_location = 4111
+					}
+				}
+				add_to_variable = { SYR_hired_PMCs = 1 }
+			}
+			if = {
+				limit = { NOT = { has_variable = SYR_hired_PMCs } }
+				186 = {
+					create_unit = {
+						division = " name = \"Hawk Brigade\" division_template = \"Private Military Company\" start_experience_factor = 0.5"
+						owner = ROOT
+						prioritize_location = 4111
+					}
+				}
+				set_variable = { SYR_hired_PMCs = 1 }
+			}
+		}
+		
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 0
+				num_divisions > 50
+			}
+		}
+	}
+
+	renounce_claims_on_golan = {
+	
+		visible = {
+			OR = {
+				original_tag = FSA
+				original_tag = DRU
+			}
+			587 = {
+				OR = {
+					is_core_of = ROOT
+					is_claimed_by = ROOT
+				}
+			}
+			NOT = { has_country_flag = Golan_Negotiations }
+			ISR = {	owns_state = 587 }
+		}
+		
+		cost = 150
+		
+		complete_effect = {
+			set_country_flag = Golan_Negotiations
+			random_country = {
+				limit = { original_tag = ISR }
+				country_event = { id = SyriaDecisions.0 days = 3 }
+			}
+			relative_change_neg_20 = yes
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 50
+				original_tag = DRU
+				surrender_progress > 0.1
+			}
+			modifier = {
+				add = 50
+				original_tag = FSA
+				any_other_country = {
+					original_tag = ISR
+					same_ideology = yes
+				}
+			}
+		}
+	}
+
+	renounce_claims_on_hatay = {
+		
+		visible = {
+			original_tag = ALA
+			158 = {
+				OR = {
+					is_core_of = ROOT
+					is_claimed_by = ROOT
+				}
+			}
+			NOT = { has_country_flag = Hatay_Negotiations }
+			TUR = {	owns_state = 158 }
+		}
+		
+		cost = 150
+		
+		complete_effect = {
+			set_country_flag = Hatay_Negotiations
+			random_country = {
+				limit = { original_tag = TUR }
+				country_event = { id = SyriaDecisions.3 days = 3 }
+			}
+			relative_change_neg_20 = yes
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 50
+				surrender_progress > 0.1
+			}
+		}
+		
+	}
+
+	guarantee_rojava_independence = {
+		
+		visible = {
+			OR = {
+				original_tag = SYR
+				original_tag = FSA
+			}
+			OR = {
+				has_war_with = SYR
+				has_war_with = FSA
+				has_war_with = NUS
+			}
+			ROJ = { exists = yes }
+			NOT = { has_country_flag = Rojava_Negotiations }
+		}
+		
+		cost = 250
+		
+		complete_effect = {
+			set_country_flag = Rojava_Negotiations
+			random_country = {
+				limit = { original_tag = ROJ }
+				country_event = { id = SyriaDecisions.6 days = 3 } 
+			}
+			relative_change_neg_20 = yes
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 50
+				surrender_progress > 0.8
+			}
+		}
+	}
+		
+	
+}
