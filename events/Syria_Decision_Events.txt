@@ -330,6 +330,230 @@ country_event = {
 	}
 }
 
+#Hezbollah discovers Syrian spies
+country_event = {
+
+	id = SyriaDecisions.9
+	
+	title = SyriaDecisions.9.t
+	desc = SyriaDecisions.9.desc
+	picture = GFX_Hezbollah_Spies
+	
+	trigger = {
+		original_tag = HEZ
+		has_country_flag = HEZ_Infiltrated_by_SYR
+		NOT = { is_subject_of = SYR }
+		NOT = { is_subject_of = FSA }
+		NOT = { is_subject_of = NUS }
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		months = 6
+		modifier = {
+			factor = 1.2
+			any_country = {			#Infiltrator having intelligence community faction is better at infiltration
+				has_country_flag = HEZ_Infiltrated_by_SYR
+				NOT = { original_tag = HEZ }
+				has_idea = intelligence_community
+			}
+		}
+	}
+	
+	option = {
+		name = SyriaDecisions.9.a		#Execute them and strike back
+		ai_chance = { factor = 80 }
+		random_country = {
+			limit = {
+				NOT = { original_tag = HEZ }
+				has_country_flag = HEZ_Infiltrated_by_SYR
+			}
+			country_event = SyriaDecisions.10
+			clr_country_flag = HEZ_Infiltrated_by_SYR
+		}
+		start_border_war = {
+			change_state_after_war = yes
+			attacker = {
+				state = 553
+				num_of_provinces = 1
+			}
+			defender = {
+				state = 184
+				num_of_provinces = 1
+			}
+		}
+		clr_country_flag = HEZ_Infiltrated_by_SYR
+		hidden_effect = { news_event = { id = SyriaDecisionsNews.3 hours = 6 } }
+	}
+	option = {
+		name = SyriaDecisions.9.b		#Return them and request compensation
+		ai_chance = { factor = 20 }
+		random_country = {
+			limit = {
+				NOT = { original_tag = HEZ }
+				has_country_flag = HEZ_Infiltrated_by_SYR
+			}
+			country_event = SyriaDecisions.11
+			clr_country_flag = HEZ_Infiltrated_by_SYR
+		}
+		clr_country_flag = HEZ_Infiltrated_by_SYR
+	}	
+		
+}
+#Hezbollah attacks
+country_event = {
+
+	id = SyriaDecisions.10
+	
+	title = SyriaDecisions.10.t
+	desc = SyriaDecisions.10.desc
+	picture = GFX_Hezbollah_Spies
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaDecisions.10.a		#Damn
+		ai_chance = { factor = 100 }
+	}
+
+}
+#Hezbollah demands ransom for spies
+country_event = {
+
+	id = SyriaDecisions.11
+	
+	title = SyriaDecisions.11.t
+	desc = SyriaDecisions.11.desc
+	picture = GFX_Hezbollah_Spies
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaDecisions.11.a		#Pay up
+		ai_chance = { factor = 80 }
+		# CHANGE THIS TO MONEY AT SOME POINT!
+		add_political_power = -100
+		FROM = { country_event = SyriaDecisions.12 }
+	}
+	option = {
+		name = SyriaDecisions.11.b		#Don't pay
+		ai_chance = { factor = 20 }
+		FROM = { country_event = SyriaDecisions.13 }
+		if = {
+			limit = { has_idea = intelligence_community }
+			visually_display_opinion_fall_intelligence_community = yes
+			set_country_flag = current_intelligence_community
+			decrease_internal_faction_opinion = yes
+		}	
+	}
+
+}
+#Syria pays
+country_event = {
+
+	id = SyriaDecisions.12
+	
+	title = SyriaDecisions.12.t
+	desc = SyriaDecisions.12.desc
+	picture = GFX_Hezbollah_Spies
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaDecisions.12.a		#Good
+		ai_chance = { factor = 100 }
+		add_political_power = 100
+	}
+
+}
+#Syria refuses to pay
+country_event = {
+
+	id = SyriaDecisions.13
+	
+	title = SyriaDecisions.13.t
+	desc = SyriaDecisions.13.desc
+	picture = GFX_Hezbollah_Spies
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaDecisions.13.a		#Attack
+		ai_chance = { factor = 80 }
+		start_border_war = {
+			change_state_after_war = yes
+			attacker = {
+				state = 553
+				num_of_provinces = 1
+			}
+			defender = {
+				state = 184
+				num_of_provinces = 1
+			}
+		}
+		hidden_effect = { news_event = { id = SyriaDecisionsNews.3 hours = 6 } }
+	}
+	option = {
+		name = SyriaDecisions.13.b		#Back down
+		ai_chance = { factor = 20 }
+		relative_change_neg_10 = yes
+	}
+
+}
+
+#Corruption in Hezbollah
+country_event = {
+
+	id = SyriaDecisions.14
+	
+	title = SyriaDecisions.14.t
+	desc = SyriaDecisions.14.desc
+	picture = GFX_Hezbollah_Spies
+	
+	trigger = {
+		original_tag = HEZ
+		has_country_flag = Discord_Between_HEZ_PER
+		NOT = { is_subject_of = SYR }
+		NOT = { is_subject_of = FSA }
+		NOT = { is_subject_of = NUS }
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		months = 12
+		modifier = {
+			factor = 0.8
+			any_country = {			#Infiltrator having intelligence community faction is better at infiltration
+				has_country_flag = Discord_Between_HEZ_PER
+				NOT = { original_tag = HEZ }
+				has_idea = intelligence_community
+			}
+		}
+	}
+	
+	immediate = {
+		hidden_effect = {
+			retire_country_leader = yes
+		}
+	}
+	
+	option = {
+		name = SyriaDecisions.14.a		#Very suspicious
+		ai_chance = { factor = 100 }
+		clr_country_flag = Discord_Between_HEZ_PER
+		leave_faction = ROOT
+		hidden_effect = {
+			random_country = {
+				limit = { has_country_flag = Discord_Between_HEZ_PER }
+				clr_country_flag = Discord_Between_HEZ_PER
+			}
+		}
+	}
+
+}
+
 #Golan deal
 news_event = {
 	id = SyriaDecisionsNews.0
@@ -378,5 +602,22 @@ news_event = {
 	option = {
 		name = SyriaDecisionsNews.2.a
 		log = "[GetDateText]: [This.GetName]: SyriaDecisionsNews.2.a executed"
+	}
+}
+
+#Border war between Hezbollah and Syria
+news_event = {
+	id = SyriaDecisionsNews.3
+	title = SyriaDecisionsNews.3.t
+	desc = SyriaDecisionsNews.3.d
+	picture = GFX_news_Hezbollah_Syria
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaDecisionsNews.3.a
+		log = "[GetDateText]: [This.GetName]: SyriaDecisionsNews.3.a executed"
 	}
 }
