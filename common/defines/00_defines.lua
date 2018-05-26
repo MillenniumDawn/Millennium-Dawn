@@ -1,7 +1,7 @@
 NDefines = {
 
 NGame = {
-	START_DATE = "2017.1.1.12",
+	START_DATE = "2000.1.1.12",
 	END_DATE = "2070.1.1.1",
 	MAP_SCALE_PIXEL_TO_KM = 7.114,	-- Yes, we did the math
 	SAVE_VERSION = 4,
@@ -88,8 +88,8 @@ NDiplomacy = {
 	TENSION_VOLUNTEER_FORCE_DIVISION = 0.8,			-- Amount of tension generated for each sent division --0.5
 	TENSION_DECAY = 0.1,							-- Each months tension decays this much	--0.07
 	TENSION_SIZE_FACTOR = 1.0,						-- All action tension values are multiplied by this value
-	TENSION_TIME_SCALE_START_DATE = "2017.1.1.12",	-- Starting at this date, the tension values will be scaled down (will be equal to 1 before that)
-	TENSION_TIME_SCALE_MONTHLY_FACTOR = -0.005,		-- Timed tension scale will be modified by this amount starting with TENSION_TIME_SCALE_START_DATE
+	TENSION_TIME_SCALE_START_DATE = "2000.1.1.12",	-- Starting at this date, the tension values will be scaled down (will be equal to 1 before that)
+	TENSION_TIME_SCALE_MONTHLY_FACTOR = 0,			-- Timed tension scale will be modified by this amount starting with TENSION_TIME_SCALE_START_DATE
 	TENSION_TIME_SCALE_MIN = 0.25,					-- Timed tension scale won't decrease under this value
 	TENSION_GUARANTEE = -10,
 	TENSION_FACTION_JOIN = 5,

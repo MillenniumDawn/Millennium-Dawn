@@ -1567,6 +1567,18 @@ focus_tree = {
 		
 		completion_reward = {
 			add_political_power = 100
+			hidden_effect = {
+				activate_targeted_decision = { target = LEB decision = SYR_support_baathism }
+				activate_targeted_decision = { target = HEZ decision = SYR_support_baathism }
+				activate_targeted_decision = { target = LEB decision = SYR_support_western_ideals }
+				activate_targeted_decision = { target = HEZ decision = SYR_support_western_ideals }
+				activate_targeted_decision = { target = LEB decision = SYR_support_salafism }
+				activate_targeted_decision = { target = HEZ decision = SYR_support_salafism }
+				activate_targeted_decision = { target = LEB decision = SYR_support_muslim_brotherhood }
+				activate_targeted_decision = { target = HEZ decision = SYR_support_muslim_brotherhood }
+				activate_targeted_decision = { target = LEB decision = SYR_support_ssnp }
+				activate_targeted_decision = { target = HEZ decision = SYR_support_ssnp }
+			}
 		}		
 
 	}
@@ -1736,6 +1748,7 @@ focus_tree = {
 		available = {
 			country_exists = LEB
 			LEB = { NOT = { is_subject_of = ROOT } }
+			HEZ = { exists = no }
 		}
 		
 		bypass = {
@@ -1948,6 +1961,7 @@ focus_tree = {
 			country_exists = HEZ
 			NOT = { is_subject_of = PER }
 			HEZ = { is_subject = no }
+			LEB = { exists = no }
 		}
 		
 		cancel_if_invalid = yes
@@ -1964,6 +1978,132 @@ focus_tree = {
 			set_country_flag = Insulted_Iran
 		}
 	
+	}
+	#Diplomacy towards South
+	focus = {
+		id = SYR_jordan_diplomacy
+		icon = GFX_goal_unknown
+		cost = 10
+		prerequisite = {
+			focus = SYR_reestablish_diplomacy
+		}
+		x = 0
+		y = 1
+		relative_position_id = SYR_reestablish_diplomacy
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			country_exists = JOR
+		}
+		
+		bypass = {
+			NOT = { country_exists = JOR }
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			custom_effect_tooltip = TT_SYR_JOR_DIPLOMACY
+			hidden_effect = {
+				activate_targeted_decision = { target = JOR decision = SYR_support_baathism }
+				activate_targeted_decision = { target = JOR decision = SYR_support_western_ideals }
+				activate_targeted_decision = { target = JOR decision = SYR_support_salafism }
+				activate_targeted_decision = { target = JOR decision = SYR_support_muslim_brotherhood }
+				activate_targeted_decision = { target = JOR decision = SYR_support_ssnp }
+				activate_targeted_decision = { target = SAU decision = SYR_support_baathism }
+				activate_targeted_decision = { target = SAU decision = SYR_support_western_ideals }
+				activate_targeted_decision = { target = SAU decision = SYR_support_salafism }
+				activate_targeted_decision = { target = SAU decision = SYR_support_muslim_brotherhood }
+				activate_targeted_decision = { target = SAU decision = SYR_support_ssnp }
+			}
+		}
+
+	}
+	focus = {
+		id = SYR_golan_question_renounce
+		icon = GFX_goal_unknown
+		cost = 10
+		prerequisite = {
+			focus = SYR_jordan_diplomacy
+		}
+		mutually_exclusive = {
+			focus = SYR_golan_question_claim
+		}
+		x = -1
+		y = 2
+		relative_position_id = SYR_reestablish_diplomacy
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			ISR = { owns_state = 587 }
+		}
+		
+		bypass = {
+			OR = {
+				ISR = { not = { owns_state = 587 } }
+				AND = {
+					NOT = { 587 = { is_claimed_by = ROOT } }
+					NOT = { 587 = { is_core_of = ROOT } }
+				}
+			}
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			remove_state_claim = 587
+			remove_state_core = 587
+			relative_change_neg_10 = yes
+			set_country_flag = Relinquished_Golan
+			hidden_effect = {
+				news_event = { id = SyriaFocusNews.10 hours = 6 }
+			}
+		}
+
+	}
+	focus = {
+		id = SYR_golan_question_claim
+		icon = GFX_goal_unknown
+		cost = 10
+		prerequisite = {
+			focus = SYR_jordan_diplomacy
+		}
+		mutually_exclusive = {
+			focus = SYR_golan_question_renounce
+		}
+		x = 1
+		y = 2
+		relative_position_id = SYR_reestablish_diplomacy
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			ISR = { owns_state = 587 }
+		}
+		
+		bypass = {
+			ISR = { not = { owns_state = 587 } }
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			add_state_core = 587
+			clr_country_flag = Relinquished_Golan
+			ISR = { country_event = { id = SyriaFocus.38 hours = 3 } }
+		}
+
 	}
 	
 	focus = {
@@ -2094,7 +2234,7 @@ focus_tree = {
 		id = SYR_rebuild_economy
 		icon = GFX_goal_generic_construct_civ_factory
 		cost = 10
-		x = 38
+		x = 39
 		y = 1
 		
 		ai_will_do = {
@@ -2152,7 +2292,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SYR_reestablish_diplomacy
 		}
-		x = 2
+		x = 3
 		y = 1
 		relative_position_id = SYR_reestablish_diplomacy
 
@@ -2164,7 +2304,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SYR_iraq_diplomacy
 		}
-		x = 2
+		x = 3
 		y = 2
 		relative_position_id = SYR_reestablish_diplomacy
 
@@ -2200,7 +2340,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SYR_reestablish_diplomacy
 		}
-		x = 4
+		x = 5
 		y = 1
 		relative_position_id = SYR_reestablish_diplomacy
 
@@ -2258,7 +2398,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SYR_reestablish_diplomacy
 		}
-		x = 7
+		x = 8
 		y = 1
 		relative_position_id = SYR_reestablish_diplomacy
 
@@ -2270,7 +2410,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SYR_stance_west
 		}
-		x = 6
+		x = 7
 		y = 2
 		relative_position_id = SYR_reestablish_diplomacy
 
@@ -2306,7 +2446,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SYR_stance_west
 		}
-		x = 7
+		x = 8
 		y = 3
 		relative_position_id = SYR_reestablish_diplomacy
 
@@ -2318,7 +2458,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SYR_stance_west
 		}
-		x = 8
+		x = 9
 		y = 2
 		relative_position_id = SYR_reestablish_diplomacy
 
@@ -2360,30 +2500,6 @@ focus_tree = {
 
 	}
 	focus = {
-		id = SYR_golan_question
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_jordan_diplomacy
-		}
-		x = -1
-		y = 2
-		relative_position_id = SYR_reestablish_diplomacy
-
-	}
-	focus = {
-		id = SYR_jordan_diplomacy
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_reestablish_diplomacy
-		}
-		x = -1
-		y = 1
-		relative_position_id = SYR_reestablish_diplomacy
-
-	}
-	focus = {
 		id = SYR_two_state_solution
 		icon = GFX_goal_unknown
 		cost = 10
@@ -2420,7 +2536,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SYR_hatay_question
 		}
-		x = 4
+		x = 5
 		y = 2
 		relative_position_id = SYR_reestablish_diplomacy
 

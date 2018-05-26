@@ -1,5 +1,5 @@
-﻿name="Modern Day 4 DEV"
-path="mod/modern_day_4_hoi/"
+﻿name="Millennium_Dawn DEV"
+path="mod/Millennium_Dawn/"
 tags={
 	"Alternative History"
 	"Gameplay"
