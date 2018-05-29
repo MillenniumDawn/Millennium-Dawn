@@ -34,4 +34,5 @@ People who join the project, but who are totally inactive will be removed.
 
 Inactive profiles of people who have made contributions before will be kept for a long time, because they are always welcome to return. If the person has joined another modern day project the profile may be removed regardless.
 
-This is not a full 'rules' for the mod project. Hopefully we never have to actually spell them out. Just use common sense and decency and all will be fine. 
+This is not a full 'rules' for the mod project. Hopefully we never have to actually spell them out. Just use common sense and decency and all will be fine.
+
