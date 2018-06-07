@@ -1,0 +1,85 @@
+still_in_this_AB_war = {
+
+	event_target:AB_DEFF = {
+		has_defensive_war_with = event_target:AB_ATT
+		# capital_scope = {
+			# is_claimed_by = event_target:AB_ATT
+		# }
+	}
+	event_target:AB_ATT = {
+		has_offensive_war_with = event_target:AB_DEFF
+	}
+
+}
+has_an_AB_war = {
+	has_country_flag = { flag = total_AB_wars value > 0 } #Has atleast 1 AB wars
+
+}
+is_scary = {
+	or = {#We have low opinion of each other
+		FROM = { has_opinion = { target = this value < 10 } }
+		this = { has_opinion = { target = FROM value < 10 } }
+	}
+	if = { #Not the same ideology as us - Western
+		limit = { FROM = { has_government = democratic } }
+		not = { has_government = democratic }
+	}
+	if = { #Not the same ideology as us - Emerging
+		limit = { FROM = { has_government = communism } }
+		not = { has_government = communism }
+	}
+	#Other ideologies can declare war on each other
+	
+	or = {
+		has_added_tension_amount > 0.01 #test value
+		has_relative_high_mil_spending = yes
+		and = {
+			not = { strength_ratio = { tag = FROM ratio > 4.0 } } #not 4x stronger than FROM
+			strength_ratio = { tag = FROM ratio > 1.5 } #atleast 1.5x stronger than FROM
+		}
+		and = {
+			not = { ic_ratio = { tag = ROOT ratio > 4 } #Econemy isn't 4x stronger than us
+			ic_ratio = { tag = ROOT ratio > 1.5 } } #atleast 1.5x richer than us
+		}
+		
+	}
+	
+}
+
+#If we have x military spending you shouldn't have Y or it scares us
+has_relative_high_mil_spending = {
+	if = {
+		limit = { FROM = { or = { has_idea = defence_00 has_idea = defence_01 has_idea = defence_02  } } }
+		not = {
+			or = { 
+				has_idea = defence_05 has_idea = defence_06 has_idea = defence_07 has_idea = defence_08
+				has_idea = defence_09
+			}
+		}
+	}
+	if = {
+		limit = { FROM = {has_idea = defence_03 } }
+		not = {
+			or = { has_idea = defence_06 has_idea = defence_07 has_idea = defence_08 has_idea = defence_09 }
+		}
+	}
+	if = {
+		limit = { FROM = {has_idea = defence_04 } }
+		not = {
+			or = { has_idea = defence_07 has_idea = defence_08 has_idea = defence_09 }
+		}
+	}
+	if = {
+		limit = { FROM = {has_idea = defence_05 } }
+		not = {
+			or = { has_idea = defence_08 has_idea = defence_09 }
+		}
+	}
+	if = {
+		limit = { FROM = {has_idea = defence_06 } }
+		not = {
+			or = { has_idea = defence_09 }
+		}
+	}
+	
+}

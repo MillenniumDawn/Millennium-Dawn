@@ -2,6 +2,7 @@
 
 add_namespace = war
 add_namespace = anti_bully
+add_namespace = Def_Spending_Warning
 
 news_event = {
 	id = war.0
@@ -15,6 +16,7 @@ news_event = {
 
 	option = {
 		name = war.0.a
+		log = "[GetDateText]: [This.GetName]: war.0.a executed"
 	
 	}
 }
@@ -30,6 +32,7 @@ news_event = {
 
 	option = {
 		name = war.1.a
+		log = "[GetDateText]: [This.GetName]: war.1.a executed"
 	
 	}
 }
@@ -47,18 +50,18 @@ country_event = {
 	is_triggered_only = yes
 	
 	immediate  = {
-		
 		country_event = { id = anti_bully.2 days = 1 }
 	}
 	option = {
 		name = anti_bully.1.a
+		log = "[GetDateText]: [This.GetName]: anti_bully.1.a executed"
 		#this = {gearz_test = yes}
 	}
 	
 	
 }
 
-#starts Anti Bully system - sent to deffender
+#starts Anti Bully system - sent to attacker
 country_event = {
 	id = anti_bully.2
 	title = anti_bully.2.t
@@ -71,73 +74,58 @@ country_event = {
 	
 	trigger = {
 		this = {
-			has_defensive_war_with = event_target:AB_ATT
+			has_offensive_war_with = event_target:AB_DEFF
 		}
 	}
 	
 	immediate  = {
-		event_target:AB_DEFF = {
-			AB_init = yes #Initializes logic for anti-bully system
+		
+		if = {
+			limit = { has_country_flag = { flag = total_AB_wars value = 0 } } #Has 0 AB wars
+			event_target:AB_ATT = {
+				modify_country_flag = { flag = total_AB_wars value = 1 }
+				AB_war_main = yes
+			}
+			else = {
+				event_target:AB_ATT = {
+					modify_country_flag = { flag = total_AB_wars value = 1 }
+				}
+			}
 		}
 		event_target:AB_ATT = {
-			Anti_bully_l_nu = yes #Begins event chain for attacker to loose NU
+			AB_war_second = yes
 		}
 		
 	}
 		
-	option = { #Tells deffender their unter attack and that anti-bully system has been activated
+	option = {
 		name = anti_bully.2.a
-		#this = {gearz_test = yes}
+		log = "[GetDateText]: [This.GetName]: anti_bully.2.a executed"
 	}
 	
 	
 }
 
-#Continues Anti-Bully cycle
+#
 country_event = {
 	id = anti_bully.3
 	title = anti_bully.3.t
 	desc = anti_bully.3.d
 	
-	#hidden = yes
+	hidden = yes
 	#fire_only_once = yes
 	
 	is_triggered_only = yes
 	
 	
 	immediate  = {
-		if = { #If at war continue anti bully cycle
-			limit = {
-				event_target:AB_ATT = {
-					has_offensive_war_with = event_target:AB_DEFF
-				}
-			}
-		
-			event_target:AB_ATT = {
-				clr_country_flag = AB_war1_pause
-				Anti_bully_l_nu = yes
-			}
-		}
-		if = { #If not at war start regaining national unity
-			limit = {
-				event_target:AB_ATT = {
-					not = { has_offensive_war_with = event_target:AB_DEFF }
-				}
-			}
-		
-			event_target:AB_ATT = {
-				clr_country_flag = AB_war1_pause
-				set_country_flag = AB_end_war1
-				AB_regain_NU_war1 = yes
-			}
-		}
-		
+		AB_war_main = yes
 	}
 		
 	option = {
-		name = anti_bully.3.a #We have lost national unity
-		#this = {gearz_test = yes}
-		custom_effect_tooltip = anti_bully_tooltip_L_NU.1 #You lost NU
+		name = anti_bully.3.a
+		log = "[GetDateText]: [This.GetName]: anti_bully.3.a executed" #We have lost national unity
+		
 	}
 	
 	
@@ -149,50 +137,20 @@ country_event = {
 	title = anti_bully.4.t
 	desc = anti_bully.4.d
 	
-	#hidden = yes
+	hidden = yes
 	#fire_only_once = yes
 	
 	is_triggered_only = yes
-		
+	
+	immediate  = {
+		AB_war_second = yes
+	}
+	
 	option = { #attacker offers white peace
 		name = anti_bully.4.a
-		event_target:AB_DEFF = { country_event = { days = 1 id = anti_bully.5 } }
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_ATT = {
-					or = {
-						any_war_score < 0.5
-						has_national_unity < 0.5
-					}
-				}
-			}		
-		}
-	}
-	
-	option = { #attacker continues fighting
-		name = anti_bully.4.b
-		event_target:AB_ATT = {
-			clr_country_flag = AB_end_war1
-			clr_country_flag = AB_war1_pause
-			Anti_bully_l_nu = yes
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_ATT = {
-					or = {
-						any_war_score > 0.5
-						has_national_unity > 0.5
-					}
-				}
-			}		
-		}
+		log = "[GetDateText]: [This.GetName]: anti_bully.4.a executed"
 		
 	}
-	
 	
 }
 
@@ -208,542 +166,112 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-		name = anti_bully.5.a #Accept & war ends
-		event_target:AB_ATT = {
-			set_country_flag = AB_end_war1
-			clr_country_flag = AB_war1_pause
-			AB_white_peace = yes
+		name = anti_bully.5.a
+		log = "[GetDateText]: [This.GetName]: anti_bully.5.a executed" #Accept & war ends
+		every_state = {
+			limit = {
+				is_owned_by = this
+				is_controlled_by = FROM
+			}
+			FROM = { transfer_state = PREV }
 		}
+		white_peace = FROM
+		hidden_effect = { clr_country_flag = stalemate@FROM }
 		ai_chance = {
-			factor = 0			
+			factor = 10			
 			modifier = {
-				factor = 100
-				event_target:AB_DEFF = {
-					any_war_score < 0.5
-				}
-			}		
-		}
-	}
-	
-	option = { #Decline and war continues
-		name = anti_bully.4.b
-		event_target:AB_ATT = {
-			clr_country_flag = AB_war1_pause
-			clr_country_flag = AB_end_war1
-			country_event = { days = 1 id = anti_bully.6 }
-			
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_DEFF = {
-					any_war_score > 0.5
+				factor = 10
+				or = {
+					strength_ratio = { tag = FROM ratio > 1.5 }
+					has_stability > 0.35
 				}
 			}		
 		}
 		
-	}
-	
-	
-}
-
-#Event letting you know they declined
-country_event = {
-	id = anti_bully.6
-	title = anti_bully.6.t
-	desc = anti_bully.6.d
-	desc = {
-		text = anti_bully.6.d
-		trigger = {
-			event_target:AB_ATT = {
-				not = { has_country_flag = AB_War1_NU8 }
-			}
-		}
-	}
-	desc = {
-		text = anti_bully.6.d2
-		trigger = {
-			event_target:AB_ATT = {
-				has_country_flag = AB_War1_NU8
-			}
-		}
-	}
-	#hidden = yes
-	#fire_only_once = yes
-	
-	is_triggered_only = yes
-	
-		
-	option = { #Deffender declined white peace
-		name = anti_bully.6.a #"They'll regret it"
-		trigger = {
-			event_target:AB_ATT = {
-				not = { has_country_flag = AB_War1_NU8 } #If this isn't the 2nd white peace attempt
-			}
-		}
-		hidden_effect = {
-			event_target:AB_ATT = {
-				Anti_bully_l_nu = yes
-			}
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_ATT = {
-					or = {
-						any_war_score > 0.5
-						has_national_unity > 0.5
-					}
+		if = {
+			limit = { #If you're in a faction, not a major and not the leader
+				event_target:AB_event_target = {
+					is_in_faction = yes
+					is_faction_leader = no
 				}
-			}		
-		}
-	}
-	option = { #To stop deffender exploiting AB system, if he declines 2nd white peace AB system turns off
-		name = anti_bully.6.b #"Time for full out war" #need a custom tooltip
-		trigger = {
-			event_target:AB_ATT = {
-				has_country_flag = AB_War1_NU8 #If this is the 2nd white peace attempt
-			}
-		}
-		custom_effect_tooltip = anti_bully.6.b_tt
-		hidden_effect = {
-			event_target:AB_ATT = {
-				set_country_flag = AB_end_war1
-				AB_regain_NU_war1 = yes
-			}
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_ATT = {
-					or = {
-						any_war_score > 0.5
-						has_national_unity > 0.5
-					}
+				any_country = { #Faction leader must have capitulated for me to see this decision
+					is_in_faction_with = event_target:AB_event_target
+					has_war_together_with = event_target:AB_event_target
+					is_faction_leader = yes
+					has_capitulated = no
 				}
-			}		
-		}
-	}
-	
-	option = { #Since this is an overseas war we can always just withdraw from the war. Maybe give deffender CB?
-		name = anti_bully.6.c #"We can always withdraw"
-		trigger = {
-			event_target:AB_ATT = {
-				not = { is_neighbor_of = event_target:AB_DEFF } 
 			}
-		}
-		event_target:AB_ATT = {
-			add_national_unity = -0.05
-			set_country_flag = AB_end_war1
-			clr_country_flag = AB_war1_pause
-			AB_white_peace = yes
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_ATT = {
-					or = {
-						any_war_score < 0.5
-						has_national_unity < 0.5
-					}
-				}
-			}		
-		}
-		
-	}
-	
-	
-}
-
-#Clears AB_war1_pause, continues chain to regain National Unity - war1
-country_event = {
-	id = anti_bully.7
-	title = anti_bully.7.t
-	desc = anti_bully.7.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
-	is_triggered_only = yes
-	
-		
-	option = {
-		name = anti_bully.7.a #"We've begun to recover from the war"
-		hidden_effect = {
-			event_target:AB_ATT = {
-				clr_country_flag = AB_war1_pause
-				AB_regain_NU_war1 = yes
+			event_target:AB_event_target = { leave_faction = yes }
+			if = {
+				limit = { event_target:AB_event_target = { has_idea = NATO_member } }
+				event_target:AB_event_target = { remove_ideas = NATO_member }
 			}
-		}
-	}
-	
-}
-
-#Event used to continue chain when AB system has reached its max -NU %
-country_event = {
-	id = anti_bully.8
-	title = anti_bully.8.t
-	desc = anti_bully.8.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
-	is_triggered_only = yes
-	
-		
-	option = {
-		name =  anti_bully.8.a #"What a long war"
-		hidden_effect = {
-			event_target:AB_ATT = {
-				clr_country_flag = AB_war1_pause
-				Anti_bully_l_nu = yes
-			}
-		}
-	}
-	
-}
-
-#Event that lets you know your country NU is back to normal
-country_event = {
-	id = anti_bully.9
-	title = anti_bully.9.t
-	desc = anti_bully.9.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
-	is_triggered_only = yes
-	
-		
-	option = {
-		name = anti_bully.9.a #"Back to normal"
-		
-	}
-	
-}
-
-######################### War 2 #################################################
-#triggers event 11, event 10 doesnt seem to work imediately via on action
-country_event = {
-	id = anti_bully.10
-	title = anti_bully.10.t
-	desc = anti_bully.10.d
-	
-	hidden = yes
-	#fire_only_once = yes
-	
-	is_triggered_only = yes
-	
-	immediate  = {
-		
-		country_event = { id = anti_bully.11 days = 1 }
-		event_target:AB_ATT = {
 		}
 	}
 	option = {
-		name = "test"
-		#this = {gearz_test = yes}
+		name = anti_bully.5.b
+		log = "[GetDateText]: [This.GetName]: anti_bully.5.b executed" #nothing
+		ai_chance = {
+			factor = 10			
+			modifier = {
+				factor = 10
+				or = {
+					not = { strength_ratio = { tag = FROM ratio > 1.5 } }
+					not = { has_stability > 0.35 }
+				}
+			}		
+		}
 	}
-	
 	
 }
 
-#starts Anti Bully system
+
 country_event = {
-	id = anti_bully.11
-	title = anti_bully.11.t
-	desc = anti_bully.11.d
+	id = Def_Spending_Warning.0
+	title = Def_Spending_Warning.0.t
+	desc = Def_Spending_Warning.0.d
 	
 	#hidden = yes
 	#fire_only_once = yes
 	
 	is_triggered_only = yes
+	major = yes
+		
+	option = {
+		name = Def_Spending_Warning.0.a
+		log = "[GetDateText]: [This.GetName]: Def_Spending_Warning.0.a executed"
+		
+	}
+	
+}
+#For testing
+country_event = {
+	id = Def_Spending_Warning.1
+	title = Def_Spending_Warning.1.t
+	desc = Def_Spending_Warning.1.d
+	
+	#hidden = yes
+	#fire_only_once = yes
 	
 	trigger = {
-		this = {
-			has_defensive_war_with = event_target:AB_ATT
-		}
+		neighbor_has_higher_mil_spending_by_2 = yes
 	}
 	
-	immediate  = {
-		event_target:AB_DEFF = {
-			AB_init = yes
-		}
-		event_target:AB_ATT = {
-			Anti_bully_2_nu = yes
-		}
-		
-	}
+	is_triggered_only = yes
+	
 		
 	option = {
-		name = "test"
-		#this = {gearz_test = yes}
+		name = Def_Spending_Warning.1.a
+		log = "[GetDateText]: [This.GetName]: Def_Spending_Warning.1.a executed"
+		
 	}
-	
 	
 }
-
-#Continues Anti-Bully cycle
+#For testing
 country_event = {
-	id = anti_bully.12
-	title = anti_bully.12.t
-	desc = anti_bully.12.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
-	is_triggered_only = yes
-	
-	
-	immediate  = {
-		if = { #If at war continue anti bully cycle
-			limit = {
-				event_target:AB_ATT = {
-					has_offensive_war_with = event_target:AB_DEFF
-				}
-			}
-		
-			event_target:AB_ATT = {
-				clr_country_flag = AB_war2_pause
-				Anti_bully_2_nu = yes
-			}
-		}
-		if = { #If not at war start regaining national unity
-			limit = {
-				event_target:AB_ATT = {
-					not = { has_offensive_war_with = event_target:AB_DEFF }
-				}
-			}
-		
-			event_target:AB_ATT = {
-				clr_country_flag = AB_war2_pause
-				set_country_flag = AB_end_war2
-				AB_regain_NU_war2 = yes
-			}
-		}
-		
-	}
-		
-	option = {
-		name = "test"
-		#this = {gearz_test = yes}
-	}
-	
-	
-}
-
-#Attacker offers white peace
-country_event = {
-	id = anti_bully.13
-	title = anti_bully.13.t
-	desc = anti_bully.13.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
-	is_triggered_only = yes
-		
-	option = { #attacker offers white peace
-		name = "White peace"
-		event_target:AB_DEFF = {
-			country_event = { days = 1 id = anti_bully.14 }
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_ATT = {
-					or = {
-						any_war_score < 0.5
-						has_national_unity < 0.5
-					}
-				}
-			}		
-		}
-	}
-	
-	option = { #attacker continues fighting
-		name = "Continue war"
-		event_target:AB_ATT = {
-			clr_country_flag = AB_end_war2
-			clr_country_flag = AB_war2_pause
-			Anti_bully_2_nu = yes
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_ATT = {
-					or = {
-						any_war_score > 0.5
-						has_national_unity > 0.5
-					}
-				}
-			}		
-		}
-		
-	}
-	
-	
-}
-
-#Deffender accepts/declines white peace
-country_event = {
-	id = anti_bully.14
-	title = anti_bully.14.t
-	desc = anti_bully.14.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
-	is_triggered_only = yes
-
-	option = {
-		name = "Accept" #Accept & war ends
-		event_target:AB_ATT = {
-			set_country_flag = AB_end_war2
-			clr_country_flag = AB_war2_pause
-			AB_white_peace = yes
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_DEFF = {
-					any_war_score < 0.5
-				}
-			}		
-		}
-	}
-	
-	option = { #Decline and war continues
-		name = "Decline"
-		event_target:AB_ATT = {
-			clr_country_flag = AB_war2_pause
-			clr_country_flag = AB_end_war2
-			country_event = { days = 1 id = anti_bully.15 }
-			
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_DEFF = {
-					any_war_score > 0.5
-				}
-			}		
-		}
-		
-		
-	}
-	
-	
-}
-
-#Event letting you know they declined
-country_event = {
-	id = anti_bully.15
-	title = anti_bully.15.t
-	desc = anti_bully.15.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
-	is_triggered_only = yes
-	
-		
-	option = { #Deffender declined white peace this option isn't available if it's the 2nd white peace
-		name = "They'll regret it"
-		trigger = {
-			event_target:AB_ATT = {
-				not = { has_country_flag = AB_War2_NU8 }
-			}
-		}
-		hidden_effect = {
-			event_target:AB_ATT = {
-				Anti_bully_2_nu = yes
-			}
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_ATT = {
-					or = {
-						any_war_score > 0.5
-						has_national_unity > 0.5
-					}
-				}
-			}		
-		}
-	}
-	option = { #To stop deffender exploiting AB system, if he declines 2nd white peace AB system turns off
-		name = "Time for full out war" #need a custom tooltip
-		trigger = {
-			event_target:AB_ATT = {
-				has_country_flag = AB_War2_NU8
-			}
-		}
-		custom_effect_tooltip = anti_bully.6.b_tt
-		hidden_effect = {
-			event_target:AB_ATT = {
-				set_country_flag = AB_end_war2
-				AB_regain_NU_war2 = yes
-			}
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_ATT = {
-					or = {
-						any_war_score > 0.5
-						has_national_unity > 0.5
-					}
-				}
-			}		
-		}
-	}
-	
-	option = { #Since this is an overseas war we can always just withdraw from the war. Maybe give deffender CB?
-		name = "We can always withdraw"
-		trigger = { #Available if you aren't neighbors
-			event_target:AB_ATT = {
-				not = { is_neighbor_of = event_target:AB_DEFF }
-			}
-		}
-		event_target:AB_ATT = {
-			add_national_unity = -0.05
-			set_country_flag = AB_end_war2
-			clr_country_flag = AB_war2_pause
-			AB_white_peace = yes
-		}
-		ai_chance = {
-			factor = 0			
-			modifier = {
-				factor = 100
-				event_target:AB_ATT = {
-					or = {
-						any_war_score < 0.5
-						has_national_unity < 0.5
-					}
-				}
-			}		
-		}
-	}
-	
-	
-}
-
-#Clears AB_war1_pause, continues chain to regain National Unity - war1
-country_event = {
-	id = anti_bully.16
-	title = anti_bully.16.t
-	desc = anti_bully.16.d
+	id = Def_Spending_Warning.2
+	title = Def_Spending_Warning.2.t
+	desc = Def_Spending_Warning.2.d
 	
 	#hidden = yes
 	#fire_only_once = yes
@@ -752,55 +280,11 @@ country_event = {
 	
 		
 	option = {
-		name = "We've begun to recover from the war"
-		hidden_effect = {
-			event_target:AB_ATT = {
-				clr_country_flag = AB_war2_pause
-				AB_regain_NU_war2 = yes
-			}
+		name = Def_Spending_Warning.2.a
+		log = "[GetDateText]: [This.GetName]: Def_Spending_Warning.2.a executed"
+		GUA = {
+			swap_ideas = { remove_idea = defence_01 add_idea = defence_06 }
 		}
-	}
-	
-}
-
-#Event used to continue chain when AB system has reached its max -NU %
-country_event = {
-	id = anti_bully.17
-	title = anti_bully.17.t
-	desc = anti_bully.17.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
-	is_triggered_only = yes
-	
-		
-	option = {
-		name = "What a long war"
-		hidden_effect = {
-			event_target:AB_ATT = {
-				clr_country_flag = AB_war1_pause
-				Anti_bully_2_nu = yes
-			}
-		}
-	}
-	
-}
-
-#Event that lets you know your country NU is back to normal
-country_event = {
-	id = anti_bully.18
-	title = anti_bully.18.t
-	desc = anti_bully.18.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
-	is_triggered_only = yes
-	
-		
-	option = {
-		name = "Back to normal"
 		
 	}
 	

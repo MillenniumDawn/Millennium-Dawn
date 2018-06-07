@@ -1,0 +1,100 @@
+﻿#########################################
+Using the internal faction opinion guide. (Killerrabbit)
+#########################################
+
+The following is if you are setting it in init:
+
+###### Increasing or decreasing opinion #######
+There are two effects to use:
+
+decrease_internal_faction_opinion = yes #decreases internal faction opinion
+increase_internal_faction_opinion = yes #increases internal faction opinion
+
+They update everything needed for any internal factions, and include scripts to show the changes visually for the player. 
+
+But first the commands need to know which internal factions first they should apply to! 
+To do this, use an command to set flag(s) first:
+
+set_country_flag = current_small_medium_business_owners
+set_country_flag = current_the_donju
+set_country_flag = current_the_bazaar
+set_country_flag = current_international_bankers
+set_country_flag = current_wall_street
+increase_internal_faction_opinion = yes
+
+This will make it increase those opinions (if they are active) and list the changes for the player. It will not change opinions of non-active factions.
+increase_internal_faction_opinion will auto-delete current_factionname type flags, so no need to do that afterwards. This is also possible:
+
+set_country_flag = current_international_bankers
+increase_internal_faction_opinion = yes
+set_country_flag = current_labour_unions
+decrease_internal_faction_opinion = yes
+
+It will increase bankers opinions and decrease labor union opinions.
+
+#Available factions:
+set_country_flag = current_small_medium_business_owners
+set_country_flag = current_the_donju
+set_country_flag = current_the_bazaar
+set_country_flag = current_IRGC
+set_country_flag = current_foreign_jihadis
+set_country_flag = current_iranian_quds_force
+set_country_flag = current_saudi_royal_family
+set_country_flag = current_wahabi_ulema
+set_country_flag = current_the_priesthood
+set_country_flag = current_The_Clergy
+set_country_flag = current_The_Ulema
+set_country_flag = current_communist_cadres
+set_country_flag = current_farmers
+set_country_flag = current_landowners
+set_country_flag = current_labour_unions
+set_country_flag = current_VEVAK
+set_country_flag = current_isi_pakistan
+set_country_flag = current_intelligence_community
+set_country_flag = current_the_military
+set_country_flag = current_Defense_Industry
+set_country_flag = current_maritime_industry
+set_country_flag = current_oligarchs
+set_country_flag = current_chaebols
+set_country_flag = current_industrial_conglomerates
+set_country_flag = current_Fossil_fuel_industry
+set_country_flag = current_wall_street
+set_country_flag = current_international_bankers
+
+###### Using opinions as triggers #######
+
+Each active internal faction has it's own opinion-flags.
+
+hostile_
+negative_
+indifferent_
+positive_
+enthusiastic_
+
+Is the 5 possible prefixes. Use it like this:
+
+has_country_flag = hostile_wall_street
+
+I will probably add generalized checks that can look for any hostile etc active faction in the future. 
+Or functions that returns a flagvalue of overall active faction's happyness. 
+
+##### Having opinion change in different event options ######
+
+Since the game does not know which internal faction to change until a set_country_flag = current_ has been set, if this ilag is set in a option, it will not display a tooltip since the effect has not processed yet!
+
+To remedy this, use: 
+visually_display_opinion_fall_faction_name = yes
+Example: visually_display_opinion_fall_small_medium_business_owners = yes
+
+For a rise use:
+visually_display_opinion_rise_small_medium_business_owners = yes
+
+Example of use (together with sanity check of actually having the faction):
+
+if = { limit = { has_idea = small_medium_business_owners }
+			visually_display_opinion_fall_small_medium_business_owners = yes
+			set_country_flag = current_small_medium_business_owners
+			decrease_internal_faction_opinion = yes
+		}
+
+If you are just affecting a single internal faction, or treat all affected factions the same way; the current_ flag can just be set in immediate, and then having increases or decreases in the event options. 

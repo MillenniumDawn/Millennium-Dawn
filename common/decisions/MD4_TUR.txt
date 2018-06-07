@@ -1,0 +1,517 @@
+##### Kurdish Activism
+TUR_kurd_rallies = {
+
+    #Stop the rallies
+	TUR_stop_rallies = {
+
+		icon = generic_political_discourse
+
+		allowed = {
+		original_tag = TUR 
+		}
+
+		available = {
+		TUR = {
+		    controls_state = 162
+			has_idea = multi_ethnic_state_idea
+		    }
+		PKK = {
+	        exists = no	
+		    }
+		}
+
+		cost = 50
+		fire_only_once = yes
+
+		visible = {
+		has_country_flag = kurd_rally1
+		has_country_flag = kurd_activism
+		}
+		
+		complete_effect = {
+		add_stability = -0.1
+		clr_country_flag = kurd_rally1
+		hidden_effect = {
+	    country_event = { id = kurd_rally.3 days = 3 } 
+	        }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	
+	#Increase Security Level
+	TUR_security_increase = {
+
+		icon = generic_political_discourse
+
+		allowed = {
+		original_tag = TUR 
+		}
+
+		available = {
+		TUR = {
+		    controls_state = 162
+			has_idea = multi_ethnic_state_idea
+		    }
+		PKK = {
+	        exists = no	
+		    }
+		NOT = {
+		    has_country_flag = pkk_win
+		    }
+		}
+
+		cost = 150
+		fire_only_once = yes
+
+		visible = {
+		has_country_flag = kurd_activism
+		NOT = { 
+		    has_country_flag = pkk_win
+		    }
+		}
+
+		complete_effect = {
+		add_manpower = -1000
+		set_country_flag = tur_security_increase
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	
+	#Open up talks with the Kurds
+	TUR_kurd_talks = {
+		icon = generic_political_discourse
+		
+		fire_only_once = yes
+		cost = 50
+		
+		allowed = {
+		original_tag = TUR 
+		}
+		
+		visible = {
+		has_country_flag = kurd_activism
+		}
+		
+		available = {
+		TUR = {
+		    controls_state = 162
+			has_idea = multi_ethnic_state_idea
+		    }
+		PKK = {
+	        exists = no	
+		    }
+		}
+		
+		ai_will_do = {
+		factor = 1 
+		}
+
+		complete_effect = {
+		clr_country_flag = kurd_rally1
+		}
+	}
+
+}
+
+##### Syrian Civil War
+TUR_SYR = {
+
+	tur_intervene_SYR = {
+		allowed = { tag = TUR }
+
+
+		available = {
+			or = {
+				SYR = { has_volunteers_amount_from = { tag = TUR count > 0 } }
+				FSA = { has_volunteers_amount_from = { tag = TUR count > 0 } }
+				NUS = { has_volunteers_amount_from = { tag = TUR count > 0 } }
+				ISI = { has_volunteers_amount_from = { tag = TUR count > 0 } }
+			}
+			
+		}
+
+
+		activation = {
+			SYR = {
+				or = {
+					has_war_with = ISI
+					has_war_with = FSA
+					has_war_with = NUS
+					has_war_with = ROJ
+				}
+			}
+		}
+
+
+		Is_good = yes
+
+		selectable_mission = yes
+		days_mission_timeout = 60
+		days_remove = 5
+
+		fire_only_once = yes
+
+
+		timeout_effect = {
+
+			add_political_power = -25
+
+		}
+
+
+		complete_effect = {
+
+			add_political_power = 25
+
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+##################################### CANCEROUS BORDER WAR SETUP #########################################
+##################################### CANCEROUS BORDER WAR SETUP #########################################
+##################################### CANCEROUS BORDER WAR SETUP #########################################
+	
+@border_incident_escalation_countdown = 30
+@border_conflict_incident_forgotten_timer = 30
+@border_conflict_escalate_to_war_countdown = 45
+@border_conflict_time_until_cancelled = 360
+
+	#Operation Olive Branch
+	TUR_afrin = {
+		icon = border_war		
+
+		available = {
+			575 = {
+				is_owned_and_controlled_by = ROJ
+				any_neighbor_state = {
+					is_fully_controlled_by = TUR
+					set_temp_variable = { var:attacker_state_temp = id }
+					has_ROOT_at_least_1_div_in_current_state_scope = yes
+					hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
+				}
+				NOT = { has_state_flag = border_incident_active }
+			}
+			NOT = { has_non_aggression_pact_with = ROJ }
+		}
+
+		visible = {
+		    NOT = { has_war_with = ROJ }
+			ROJ = {
+			exists = yes 
+			has_not_initiated_border_incident_with_ROOT = yes
+			NOT = {
+					is_subject_of = TUR
+					is_in_faction_with = TUR
+				}
+			}
+			
+			575 = {
+				is_owned_and_controlled_by = ROJ
+				OR = {
+					AND = {
+						TUR = { is_ai = yes }
+						ROJ = { is_ai = yes }
+						OR = {
+							is_core_of = TUR
+							is_claimed_by = TUR
+						}
+						
+						TUR = { has_opinion = { target = ROJ value < 50 } }
+						TUR = { is_major = no }
+					}
+					
+					TUR = { is_ai = no }
+				}
+				
+				any_neighbor_state = {
+					is_fully_controlled_by = TUR
+				}
+			}
+			
+			NOT = {
+				is_subject_of = ROJ
+			}
+
+			OR = {
+				NOT = { has_border_war_with = ROJ }
+				any_state = {
+					is_owned_and_controlled_by = ROJ
+					hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
+					any_neighbor_state = {
+						hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
+						is_fully_controlled_by = TUR
+					}
+				}
+			}
+		}
+
+		highlight_states = {
+		    state = 575
+		}
+
+		ai_will_do = {
+			base = 0.2
+			modifier = {
+				OR = {
+					NOT = {
+						ROJ = {
+							any_owned_state = {
+								OR = {
+									is_core_of = TUR
+									is_claimed_by = TUR
+								}
+							}
+						}
+					}
+					
+					TUR = { has_government = democratic }
+				}
+				factor = 0
+			}
+			
+			modifier = {
+				ROJ = {
+					any_owned_state = {
+						is_core_of = TUR
+					}
+				}
+				
+				factor = 0.5
+			}
+			
+			modifier = {
+				NOT = { TUR = { has_government = fascism } }
+				
+				factor = 0.1
+			}
+			
+			modifier = {
+				TUR = { strength_ratio = { tag = ROJ ratio > 0.8 } }
+				
+				factor = 0
+			}
+		}
+
+		cost = 100
+
+		fire_only_once = yes
+
+		days_remove = @border_incident_escalation_countdown
+		days_re_enable = 180
+
+		war_with_target_on_remove = yes
+
+		complete_effect = {
+			ROJ = {
+			add_opinion_modifier = {
+				target = TUR 
+				modifier = border_conflict_started 
+				#days_remove = 365 
+			}
+			country_event = { id = TUR_ob_warn.1 hours = 1 }
+			activate_targeted_decision = { target = TUR decision = TUR_afrin_d }
+			}
+			custom_effect_tooltip = WTT_border_incident_delay_until_new_incident_180
+			hidden_effect = {
+			random_state = {
+					limit = {
+						is_fully_controlled_by = TUR
+						hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
+						has_ROOT_at_least_1_div_in_current_state_scope = yes
+						any_neighbor_state = {
+							state = 575
+						}
+					}
+					save_event_target_as = attacker_state
+					set_variable = { FROM.attacker_state_vs_@ROOT = id }
+					set_temp_variable = { attacker_state_temp = id }
+					set_state_flag = border_incident_active
+				}
+			}
+		}
+		
+		remove_effect = {
+		hidden_effect = {
+		var:FROM.attacker_state_vs_@ROOT = {
+					save_event_target_as = attacker_state 
+				}
+			}
+		random_state = {
+					limit = {
+						is_fully_controlled_by = TUR
+						hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
+						has_ROOT_at_least_1_div_in_current_state_scope = yes
+						any_neighbor_state = {
+							state = 575
+						}
+					}
+					set_temp_variable = { attacker_state_temp = id }
+				}
+			activate_targeted_decision = { target = ROJ decision = TUR_afrin2 }
+		}
+	}
+
+	#Mission for defender warning that a conflict with Turkey is coming
+	 TUR_afrin_d = {
+		icon = border_war
+
+		allowed = { always = no } #Activated from effect
+
+		available = {
+			hidden_trigger = { always = no }
+		}
+
+		highlight_states = {
+		    state = 575
+		}
+
+		war_with_target_on_timeout = yes
+		ai_will_do = {
+			base = 1
+			modifier = {
+			}
+		}
+
+		days_mission_timeout = @border_incident_escalation_countdown
+
+		fire_only_once = yes
+
+		is_good = no
+		
+		timeout_effect = {
+			custom_effect_tooltip = escalation_possible_tooltip_for_defender
+			custom_effect_tooltip = effects_if_border_conflict_is_lost
+			effect_tooltip = {
+				add_political_power = -100
+				TUR = {
+				transfer_state = 575
+				}
+			}
+			hidden_effect = {
+				remove_targeted_decision = { target = ROJ decision = TUR_afrin_d }
+				activate_targeted_decision = { target = ROJ decision = TUR_afrin_d2 }
+			}
+		}
+	}
+
+	#Mission for defender warning Turkey can escalate to war at any point is coming
+	 TUR_afrin_d2 = {
+	 icon = border_war
+
+		allowed = { always = no } #Activated from effect
+
+		available = {
+			hidden_trigger = { always = no }
+		}
+
+		highlight_states = {
+			state = 575
+		}
+
+		war_with_target_on_timeout = yes
+		ai_will_do = {
+			base = 0
+			modifier = {
+			}
+		}
+
+		days_mission_timeout = @border_conflict_incident_forgotten_timer
+
+		fire_only_once = yes
+
+		is_good = no
+
+		timeout_effect = {
+			custom_effect_tooltip = from_cannot_escalate
+			custom_effect_tooltip = effects_if_border_conflict_is_lost
+			TUR = {
+				transfer_state = 575
+			}
+		}		
+	}
+
+	#Mission for attacker to escalate or incident is forgotten
+	#Decision to escalate incident on border with Turkey to border conflict
+	 TUR_afrin2 = {
+	 icon = border_war
+
+		allowed = { always = no } #Activated from effect
+
+		available = {
+			var:FROM.attacker_state_vs_@ROOT = {
+				is_fully_controlled_by = TUR
+			}
+			divisions_in_border_state = {
+				state = var:FROM.attacker_state_vs_@ROOT
+				border_state = 575
+				size > 0
+			}
+		}
+
+		highlight_states = {
+			state = 575		
+		}
+
+		ai_will_do = {
+			base = 200
+			modifier = {
+				
+			}
+		}
+		
+		cancel_trigger = {
+			is_in_faction_with = ROJ
+		}
+
+		selectable_mission = yes
+
+		fire_only_once = yes #Reactivation handled in effect
+
+		days_mission_timeout = @border_conflict_incident_forgotten_timer
+
+		timeout_effect = {
+			custom_effect_tooltip = WTT_border_incident_delay_until_new_incident_120
+			hidden_effect = {
+				ROJ = { remove_targeted_decision = { target = TUR decision = TUR_afrin_d2 } }
+			}
+		}
+
+		complete_effect = {
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = var:FROM.attacker_state_vs_@ROOT
+					num_provinces = 4
+					on_win = wtt_border_conflict_won_attacker.1
+					on_lose = wtt_border_conflict_lost_attacker.1
+					on_cancel = wtt_border_conflict_canceled_attacker.1
+				}
+				
+				defender = {
+					state = 575
+					num_provinces = 1
+					on_win = wtt_border_conflict_won_defender.1
+					on_lose = wtt_border_conflict_lost_defender.1
+					on_cancel = wtt_border_conflict_canceled_defender.1
+				}
+			}
+			ROJ = {
+				activate_targeted_decision = { target = TUR decision = WTT_border_conflict_escalate_conflict }
+				activate_targeted_decision = { target = TUR decision = WTT_border_conflict_time_until_cancelled }
+			}
+			activate_targeted_decision = { target = TUR decision = WTT_border_conflict_escalate_conflict }
+			activate_targeted_decision = { target = TUR decision = WTT_border_conflict_time_until_cancelled }
+		}
+	}
+
+##################################### ^ CANCEROUS BORDER WAR SETUP ^ #########################################
+##################################### ^ CANCEROUS BORDER WAR SETUP ^ #########################################
+##################################### ^ CANCEROUS BORDER WAR SETUP ^ #########################################

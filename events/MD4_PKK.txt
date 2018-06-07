@@ -1,0 +1,265 @@
+﻿add_namespace = kurd_rally
+add_namespace = kurd_riot
+add_namespace = pkk_attack
+
+### INITIAL KURD RALLIES ###
+
+#Kurds rally for autonomy
+#country_event = {
+#    id = kurd_rally.1
+#    title = kurd_rally.1.t
+#    desc = kurd_rally.1.d
+#	picture = GFX_kurd_rally
+#	
+#	fire_only_once = yes
+#	
+#	trigger = {
+#	tag = TUR
+#	    TUR = {
+#	    controls_state = 162
+#	    has_idea = multi_ethnic_state_idea
+#            NOT = {
+#            has_country_flag = kurd_rally1
+#            }
+#        }
+#	    PKK = {
+#	    exists = no
+#	    }
+#	}
+#
+#		mean_time_to_happen = {
+#		days = 2
+#	}
+#
+#	#Ignore them
+#    option = {
+#    name = kurd_rally.1.a
+#	add_stability = -0.05
+#	custom_effect_tooltip = kurd_rally_tt.1
+#	hidden_effect = {
+#	    TUR = {
+#		    set_country_flag = kurd_rally1
+#			set_country_flag = kurd_activism
+#		    }
+#	    }
+#    }
+#}
+
+#Kurdish Activism Continues
+country_event = {
+    id = kurd_rally.2
+    title = kurd_rally.2.t
+    desc = kurd_rally.2.d
+	picture = GFX_kurd_rally
+	
+	trigger = {
+	tag = TUR
+	AND = {
+	    TUR = {
+	        controls_state = 162
+	        has_idea = multi_ethnic_state_idea
+	        has_country_flag = kurd_rally1
+	    	has_country_flag = kurd_activism
+	           }
+	        PKK = {
+	        exists = no
+	        }
+	    }
+	}
+
+		mean_time_to_happen = {
+		days = 2
+	}
+
+	#Ignore them
+    option = {
+    name = kurd_rally.2.a
+    log = "[GetDateText]: [This.GetName]: kurd_rally.2.a executed"
+	add_stability = -0.01
+	custom_effect_tooltip = kurd_rally_tt.2
+    }
+}
+
+### \/ LEADS TO TURKISH DECISION ON WHETHER OR NOT THEY SHOULD ATTEMPT TO STOP THE RALLIES \/ ###
+
+#Kurds are Supressed
+country_event = {
+    id = kurd_rally.3
+    title = kurd_rally.3.t
+    desc = kurd_rally.3.d
+	picture = GFX_kurd_riot
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Good - trigger riot and PKK attack
+    option = {
+    name = kurd_rally.3.a
+    log = "[GetDateText]: [This.GetName]: kurd_rally.3.a executed"
+	custom_effect_tooltip = kurd_rally_tt.4
+	hidden_effect = {
+	set_country_flag = kurd_riot1
+	    if = {
+    		limit = {
+			    NOT = {
+    	            TUR = {
+    	        	    has_country_flag = tur_security_increase
+    	                }
+    	            }
+				}
+				TUR = {
+    	    	    set_country_flag = pkk_attack_win
+    	            }
+    	    }
+	    if = {
+    		limit = {
+    	        TUR = {
+    	    	    has_country_flag = tur_security_increase
+    	            }
+    	        }
+				TUR = {
+    	    	    set_country_flag = pkk_attack_lose
+    	            }
+    	    }
+        }
+    }
+}
+
+### \/ LEADS TO RIOTS AND PKK ATTACK \/ ###
+
+#PKK Ambush - Successful
+country_event = {
+    id = pkk_attack.1
+    title = pkk_attack.1.t
+    desc = pkk_attack.1.d
+	picture = GFX_pkk_ambush
+	
+	fire_only_once = yes
+	
+	trigger = {
+	tag = TUR
+	OR = {
+	    AND = {
+	        TUR = {
+	            controls_state = 162
+	            has_idea = multi_ethnic_state_idea
+	            has_country_flag = pkk_attack_win
+	        	has_country_flag = kurd_activism
+	               }
+	            PKK = {
+	            exists = no
+	            }
+	        }
+	    AND = {
+		    TUR = {
+	            controls_state = 162
+	            has_idea = multi_ethnic_state_idea
+	        	has_country_flag = kurd_activism
+				has_stability < 0.5
+	               }
+	            PKK = {
+	            exists = no
+	            }
+		    }
+	    }
+	}
+
+		mean_time_to_happen = {
+		days = 80
+	}
+	
+	immediate = {
+	set_country_flag = pkk_win
+	}
+
+	#Investigate
+    option = {
+    name = pkk_attack.1.a
+    log = "[GetDateText]: [This.GetName]: pkk_attack.1.a executed"
+    }
+}
+
+#PKK Ambush - Failure
+country_event = {
+    id = pkk_attack.2
+    title = pkk_attack.2.t
+    desc = pkk_attack.2.d
+	picture = GFX_news_pkk_ambush_lose
+	
+	fire_only_once = yes
+	
+	trigger = {
+	tag = TUR
+	TUR = {
+	    controls_state = 162
+	    has_idea = multi_ethnic_state_idea
+	    has_country_flag = pkk_attack_lose
+		has_country_flag = kurd_activism
+	       }
+	    PKK = {
+	    exists = no
+	    }
+	}
+
+		mean_time_to_happen = {
+		days = 40
+	}
+
+	#Investigate
+    option = {
+    name = pkk_attack.2.a
+    log = "[GetDateText]: [This.GetName]: pkk_attack.2.a executed"
+    }
+}
+
+#Kurdish Riot
+country_event = {
+    id = kurd_riot.1
+    title = kurd_riot.1.t
+    desc = kurd_riot.1.d
+	picture = GFX_kurd_riot
+	
+	fire_only_once = yes
+	
+	trigger = {
+	tag = TUR
+	OR = {
+	    AND= {
+	        TUR = {
+	            controls_state = 162
+	            has_idea = multi_ethnic_state_idea
+	            has_country_flag = kurd_riot1
+	        	has_country_flag = kurd_activism
+	               }
+	            PKK = {
+	            exists = no
+	            }
+	    	}
+		AND= {
+	        TUR = {
+	            controls_state = 162
+	            has_idea = multi_ethnic_state_idea
+	        	has_country_flag = kurd_activism
+				has_stability < 0.5
+	               }
+	            PKK = {
+	            exists = no
+	            }
+	    	}
+	    }
+	}
+	
+	immediate = {
+	clr_country_flag = kurd_rally1
+	}
+
+		mean_time_to_happen = {
+		days = 31
+	}
+
+	#Force them off the streets
+    option = {
+    name = kurd_riot.1.a
+    log = "[GetDateText]: [This.GetName]: kurd_riot.1.a executed"
+    }
+}

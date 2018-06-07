@@ -1,0 +1,95 @@
+# Logic for non-aligned AI on how to deal in peace conferences
+#By Niko92
+
+#General rule for non-aligned countries
+#1. Always take cores and claims
+#2. Occasionally annex new territory
+#3.1 If the owner has capitulated (is occupied), puppet
+#3.2 If the owner has not capitulated (not occupied), just change government
+
+Western_peace = {
+	enable = {
+		has_government = neutrality
+	}
+
+	annex_randomness = 0
+	liberate_randomness = 0
+	puppet_randomness = 0
+	take_states_randomness = 0
+	force_government_randomness = 0
+	
+	#Annex means annex a whole country - FROM is loser, ROOT is winner
+	annex = {
+		factor = 0	
+	}
+
+	#Liberate makes a country independent (!DOESN'T CHANGE POLITICS OF LIBERATED COUNTRY!) - FROM is country to be liberated
+	liberate = {
+		factor = 0
+	}
+
+	#Makes country puppet - FROM is target
+	puppet = {
+		factor = 1500
+		
+		modifier = {
+			factor = 0
+			FROM = {
+				NOT = {
+					any_owned_state = {
+						is_controlled_by = ROOT
+					}
+				}
+			}
+		}
+		
+		modifier = { #Don't puppet nations in civil war... this is too buggy.
+			factor = 0
+			FROM = { has_civil_war = yes }
+		}
+	}
+
+	#ROOT = Taker, FROM = State
+	take_states = {
+		factor = 5000
+		
+		modifier = {
+			factor = 0
+			NOT = {
+				FROM = {
+					OR = {
+						is_claimed_by = ROOT
+						is_core_of = ROOT
+					}
+				}
+			}
+		}	
+		modifier = {	#Make Rojava get as much territory as possible in Syrian civil war
+			add = 5000
+			ROOT = {
+				original_tag = ROJ
+			}
+			FROM = {
+				OR = {
+					is_core_of = SYR
+					is_core_of = NUS
+					is_core_of = FSA
+				}
+			}
+		}
+	}
+
+	#Changes government of country - FROM is target
+	force_government = {
+		factor = 1500
+
+		modifier = {
+			factor = 0
+			FROM = {
+				any_owned_state = {
+					is_controlled_by = ROOT
+				}
+			}
+		}
+	}
+}

@@ -9,41 +9,43 @@ country_event = {
 	id = Kurdistan.1
 	
 	title = Kurdistan.1.t
-	desc = Kurdistan.1.desc
+	desc = Kurdistan.1.d
 	picture = GFX_kurdistan_referendum
 	
 	trigger = {
 		tag = KUR
 		is_subject = no
-		NOT = { country_exists = ISI }
+		#NOT = { country_exists = ISI }
 		ISI = {
 			NOT = {
 				controls_state = 166
-				controls_state = 557
+				controls_state = 168
 			}
 		}
 		country_exists = IRQ
 	}
 	
-	mean_time_to_happen = {
-		days = 1
-	}
-	
 	fire_only_once = yes
 	
+	mean_time_to_happen = {
+		days = 20 #Changed to 20 as it triggers very quickly after Mosul falls even if IRQ at war with ISI - Gearz
+	}
+	
 	option = {
-		name = Kurdistan.1.a		#Hold referendum	
+		name = Kurdistan.1.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.1.a executed"		#Hold referendum	
 		ai_chance = {
-			factor = 90
+			factor = 95
 		}
 		set_global_flag = Hold_Kurdish_Referendum
 		country_event = { id = Kurdistan.3 days = 60 }
 		hidden_effect = { news_event = { id = KurdistanNews.2 hours = 6 } }
 	}
 	option = {
-		name = Kurdistan.1.b		#Rejoin Iraq
+		name = Kurdistan.1.b
+		log = "[GetDateText]: [This.GetName]: Kurdistan.1.b executed"		#Rejoin Iraq
 		ai_chance = {
-			factor = 10
+			factor = 5
 		}
 		IRQ = { country_event = { id = Kurdistan.2 days = 3 } }
     }
@@ -55,23 +57,19 @@ country_event = {
 	id = Kurdistan.2
 	
 	title = Kurdistan.2.t
-	desc = Kurdistan.2.desc
+	desc = Kurdistan.2.d
 	picture = GFX_Rojava
 	
 	is_triggered_only = yes
 	
 	option = {
 		name = Kurdistan.2.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.2.a executed"
 		ai_chance = {
 			factor = 100
 		}
-		if = {
-			limit = { has_dlc = "Death or Dishonor"	}
-			set_autonomy = { target = KUR autonomy_state = autonomy_integrated_puppet }
-			else = {
-				annex_country = { target = KUR }
-			}
-		}
+		set_autonomy = { target = KUR autonomy_state = autonomy_autonomous_state }
+		hidden_effect = { KUR = { add_ideas = subject_neutral } }
 		hidden_effect = { news_event = { id = KurdistanNews.1 hours = 6 } }
 	}
 }
@@ -88,20 +86,22 @@ country_event = {
 	is_triggered_only = yes
 	
 	option = {
-		name = Kurdistan.3.a		#Declare full independence
+		name = Kurdistan.3.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.3.a executed"		#Declare full independence
 		ai_chance = {
 			factor = 80
 		}
-		add_national_unity = 0.05
+		add_stability = 0.05
 		set_global_flag = KUR_demand_independence
 		IRQ = { country_event = { id = Kurdistan.4 hours = 12 } }
 	}
 	option = {
-		name = Kurdistan.3.b		#Demand more autonomy
+		name = Kurdistan.3.b
+		log = "[GetDateText]: [This.GetName]: Kurdistan.3.b executed"		#Demand more autonomy
 		ai_chance = {
 			factor = 20
 		}
-		add_national_unity = 0.05
+		add_stability = 0.05
 		set_global_flag = KUR_demand_more_autonomy
 		IRQ = { country_event = { id = Kurdistan.5 hours = 12 } }
 	}
@@ -119,22 +119,26 @@ country_event = {
 	is_triggered_only = yes
 	
 	option = {
-		name = Kurdistan.4.a	#No
+		name = Kurdistan.4.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.4.a executed"	#No
 		ai_chance = {
 			factor = 90
 		}
+		KUR = { set_country_flag = KUR_negotiations_broken_down }
 	}
 	option = {
-		name = Kurdistan.4.b	#In exchange for Kirkuk
+		name = Kurdistan.4.b
+		log = "[GetDateText]: [This.GetName]: Kurdistan.4.b executed"	#In exchange for Kirkuk
 		ai_chance = {
-			factor = 5
+			factor = 9
 		}
 		KUR = { country_event = { id = Kurdistan.7 days = 3 } }
 	}
 	option = {
-		name = Kurdistan.4.c	#Let them go
+		name = Kurdistan.4.c
+		log = "[GetDateText]: [This.GetName]: Kurdistan.4.c executed"	#Let them go
 		ai_chance = {
-			factor = 5
+			factor = 1
 		}
 		KUR = { country_event = { id = Kurdistan.6 days = 3 } }
 	}
@@ -152,20 +156,24 @@ country_event = {
 	is_triggered_only = yes
 	
 	option = {
-		name = Kurdistan.5.a	#No
+		name = Kurdistan.5.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.5.a executed"	#No
 		ai_chance = {
 			factor = 80
 		}
+		KUR = { set_country_flag = KUR_negotiations_broken_down }
 	}
 	option = {
-		name = Kurdistan.5.b	#In exchange for Kirkuk
+		name = Kurdistan.5.b
+		log = "[GetDateText]: [This.GetName]: Kurdistan.5.b executed"	#In exchange for Kirkuk
 		ai_chance = {
 			factor = 10
 		}
 		KUR = { country_event = { id = Kurdistan.7 days = 3 } }
 	}
 	option = {
-		name = Kurdistan.5.c	#Agree
+		name = Kurdistan.5.c
+		log = "[GetDateText]: [This.GetName]: Kurdistan.5.c executed"	#Agree
 		ai_chance = {
 			factor = 10
 		}
@@ -186,6 +194,7 @@ country_event = {
 	
 	option = {
 		name = Kurdistan.6.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.6.a executed"
 		ai_chance = {
 			factor = 100
 		}
@@ -198,18 +207,13 @@ country_event = {
 		}
 		if = {
 			limit = { has_global_flag = KUR_demand_more_autonomy }
-			if = {
-				limit = { has_dlc = "Death or Dishonor"	}
-				IRQ = {
-					set_autonomy = {
-						target = KUR
-						autonomy_state = autonomy_dominion
-					}
-				}
-				else = {
-					IRQ = { puppet = KUR }
+			IRQ = {
+				set_autonomy = {
+					target = KUR
+					autonomy_state = autonomy_puppet_state
 				}
 			}
+			hidden_effect = { KUR = { add_ideas = subject_neutral } }
 			hidden_effect = {
 				news_event = { id = KurdistanNews.4 hours = 6 }
 			}
@@ -230,15 +234,18 @@ country_event = {
 	is_triggered_only = yes
 	
 	option = {
-		name = Kurdistan.7.a		#Give Kirkuk
+		name = Kurdistan.7.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.7.a executed"		#Give Kirkuk
 		ai_chance = {
 			factor = 50
 		}
 		country_event = { id = Kurdistan.6 hours = 6 }
 		IRQ = { transfer_state = 165 }
+		IRQ = { transfer_state = 935 }
 	}
 	option = {
-		name = Kurdistan.7.b		#Never
+		name = Kurdistan.7.b
+		log = "[GetDateText]: [This.GetName]: Kurdistan.7.b executed"		#Never
 		ai_chance = {
 			factor = 50
 		}
@@ -261,6 +268,7 @@ country_event = {
 	
 	option = {
 		name = Kurdistan.8.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.8.a executed"
 		ai_chance = {
 			factor = 100
 		}
@@ -287,14 +295,19 @@ country_event = {
 	}
 	
 	option = {
-		name = Kurdistan.9.a		#Declare full independence
+		name = Kurdistan.9.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.9.a executed"		#Declare full independence
 		ai_chance = {
 			factor = 80
+		}
+		hidden_effect = {
+			IRQ = {	remove_state_core = 164 }
 		}
 		IRQ = { country_event = { id = Kurdistan.10 days = 3 } }
 	}
 	option = {
-		name = Kurdistan.9.b		#Return to Iraq
+		name = Kurdistan.9.b
+		log = "[GetDateText]: [This.GetName]: Kurdistan.9.b executed"		#Return to Iraq
 		ai_chance = {
 			factor = 20
 		}
@@ -314,15 +327,20 @@ country_event = {
 	is_triggered_only = yes
 	
 	option = {
-		name = Kurdistan.10.a		#Prepare operations
+		name = Kurdistan.10.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.10.a executed"		#Prepare operations
 		ai_chance = {
 			factor = 95
 		}
 		KUR = { country_event = { id = Kurdistan.11 hours = 3 } }
 		set_global_flag = battle_of_kirkuk_phase_1
+		hidden_effect = {
+			add_state_claim = 164
+		}
 	}
 	option = {
-		name = Kurdistan.10.b		#Let them go
+		name = Kurdistan.10.b
+		log = "[GetDateText]: [This.GetName]: Kurdistan.10.b executed"		#Let them go
 		ai_chance = {
 			factor = 5
 		}
@@ -341,7 +359,8 @@ country_event = {
 	is_triggered_only = yes
 	
 	option = {
-		name = Kurdistan.11.a		#Prepare of battle
+		name = Kurdistan.11.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.11.a executed"		#Prepare of battle
 		ai_chance = {
 			factor = 50
 		}
@@ -349,7 +368,8 @@ country_event = {
 		set_global_flag = KUR_fight_for_kirkuk
 	}
 	option = {
-		name = Kurdistan.11.b		#Retreat
+		name = Kurdistan.11.b
+		log = "[GetDateText]: [This.GetName]: Kurdistan.11.b executed"		#Retreat
 		ai_chance = {
 			factor = 50
 		}
@@ -396,6 +416,7 @@ country_event = {
 	
 	option = {
 		name = Kurdistan.12.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.12.a executed"
 		ai_chance = { factor = 100 }
 	}
 }
@@ -414,6 +435,7 @@ country_event = {
 	trigger = {	
 		has_global_flag = battle_of_kirkuk_phase_2
 		NOT = { has_global_flag = KUR_victory_kirkuk }
+		tag = IRQ
 	}
 	
 	mean_time_to_happen = {
@@ -421,7 +443,8 @@ country_event = {
 	}
 	
 	option = {
-		name = Kurdistan.13.a		#Demand submission
+		name = Kurdistan.13.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.13.a executed"		#Demand submission
 		ai_chance = {
 			factor = 100
 		}
@@ -441,7 +464,8 @@ country_event = {
 	is_triggered_only = yes
 	
 	option = {
-		name = Kurdistan.14.a		#Submit
+		name = Kurdistan.14.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.14.a executed"		#Submit
 		ai_chance = {
 			factor = 20
 			modifier = {
@@ -456,7 +480,8 @@ country_event = {
 		IRQ = { country_event = { id = Kurdistan.15 days = 3 } }
 	}
 	option = {
-		name = Kurdistan.14.b		#Resist
+		name = Kurdistan.14.b
+		log = "[GetDateText]: [This.GetName]: Kurdistan.14.b executed"		#Resist
 		ai_chance = {
 			factor = 80
 			modifier = {
@@ -481,6 +506,7 @@ country_event = {
 	
 	option = {
 		name = Kurdistan.15.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.15.a executed"
 		ai_chance = {
 			factor = 100
 		}
@@ -488,16 +514,15 @@ country_event = {
 			limit = { has_global_flag = IRQ_victory_kirkuk }
 			annex_country = { target = KUR }
 			else = {
-				if = {
-					limit = { has_dlc = "Death or Dishonor"	}
-					set_autonomy = { target = KUR autonomy_state = autonomy_integrated_puppet }
-					else = {
-						annex_country = { target = KUR }
-					}
-				}
+				set_autonomy = { target = KUR autonomy_state = autonomy_autonomous_state }
+				hidden_effect = { KUR = { add_ideas = subject_neutral } }
 			}
 		}
 		hidden_effect = { news_event = { id = KurdistanNews.8 hours = 6 } }
+		hidden_effect = { 
+			remove_state_claim = 164
+			add_state_core = 164 
+		}
 	}
 }
 
@@ -514,6 +539,7 @@ country_event = {
 	
 	option = {
 		name = Kurdistan.16.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.16.a executed"
 		ai_chance = {
 			factor = 100
 		}
@@ -539,6 +565,7 @@ country_event = {
 	trigger = {	
 		has_global_flag = battle_of_kirkuk_phase_2
 		has_global_flag = KUR_victory_kirkuk
+		tag = IRQ
 	}
 	
 	mean_time_to_happen = {
@@ -546,7 +573,8 @@ country_event = {
 	}
 	
 	option = {
-		name = Kurdistan.17.a		#Prepare for War
+		name = Kurdistan.17.a
+		log = "[GetDateText]: [This.GetName]: Kurdistan.17.a executed"		#Prepare for War
 		ai_chance = {
 			factor = 70
 		}
@@ -557,11 +585,15 @@ country_event = {
 		hidden_effect = { news_event = { id = KurdistanNews.10 hours = 6 } }
 	}
 	option = {
-		name = Kurdistan.17.b		#We can't do anything
+		name = Kurdistan.17.b
+		log = "[GetDateText]: [This.GetName]: Kurdistan.17.b executed"		#We can't do anything
 		ai_chance = {
 			factor = 30
 		}
 		hidden_effect = { news_event = { id = KurdistanNews.11 hours = 6 } }
+		hidden_effect = {
+			remove_state_claim = 164
+		}
 	}
 }
 		
@@ -583,6 +615,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.1.a
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.1.a executed"
 		ai_chance = { factor = 100 }
 	}
 	
@@ -603,6 +636,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.2.a
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.2.a executed"
 		trigger = {
 			OR = {
 				tag = IRQ
@@ -616,6 +650,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.2.b
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.2.b executed"
 		trigger = {
 			NOT = {
 				OR = {
@@ -646,6 +681,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.3.a
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.3.a executed"
 		trigger = {
 			OR = {
 				tag = IRQ
@@ -659,6 +695,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.3.b
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.3.b executed"
 		trigger = {
 			NOT = {
 				OR = {
@@ -689,6 +726,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.4.a
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.4.a executed"
 		trigger = {
 			OR = {
 				tag = IRQ
@@ -702,6 +740,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.4.b
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.4.b executed"
 		trigger = {
 			NOT = {
 				OR = {
@@ -724,7 +763,7 @@ news_event = {
 	
 	title = KurdistanNews.5.t
 	desc = KurdistanNews.5.d
-	picture = GFX_battle_of_kirkuk
+	picture = GFX_news_battle_of_kirkuk
 	
 	major = yes
 	
@@ -732,6 +771,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.5.a
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.5.a executed"
 		ai_chance = { factor = 100 }
 		effect_tooltip = {
 			IRQ = { transfer_state = 165 }
@@ -748,7 +788,7 @@ news_event = {
 	
 	title = KurdistanNews.6.t
 	desc = KurdistanNews.6.d
-	picture = GFX_battle_of_kirkuk
+	picture = GFX_news_battle_of_kirkuk
 	
 	major = yes
 	
@@ -756,13 +796,14 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.6.a
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.6.a executed"
 		ai_chance = { factor = 100 }
 		effect_tooltip = {
 			IRQ = { transfer_state = 165 }
 		}
 		if = {
 			limit = { tag = KUR }
-			add_national_unity = -0.10
+			add_stability = -0.10
 			add_popularity = { ideology = neutrality popularity = -0.10 }
 		}
 		set_global_flag = battle_of_kirkuk_phase_2
@@ -778,7 +819,7 @@ news_event = {
 	
 	title = KurdistanNews.7.t
 	desc = KurdistanNews.7.d
-	picture = GFX_battle_of_kirkuk
+	picture = GFX_news_battle_of_kirkuk
 	
 	major = yes
 	
@@ -786,6 +827,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.7.a
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.7.a executed"
 		ai_chance = { factor = 100 }
 		set_global_flag = battle_of_kirkuk_phase_2
 		set_global_flag = KUR_victory_kirkuk
@@ -800,7 +842,7 @@ news_event = {
 	
 	title = KurdistanNews.8.t
 	desc = KurdistanNews.8.d
-	picture = GFX_fate_of_iraq
+	picture = GFX_news_fate_of_iraq
 	
 	major = yes
 	
@@ -808,6 +850,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.8.a
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.8.a executed"
 		ai_chance = { factor = 100 }
 	}				
 	
@@ -820,7 +863,7 @@ news_event = {
 	
 	title = KurdistanNews.9.t
 	desc = KurdistanNews.9.d
-	picture = GFX_fate_of_iraq
+	picture = GFX_news_fate_of_iraq
 	
 	major = yes
 	
@@ -828,6 +871,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.9.a
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.9.a executed"
 		ai_chance = { factor = 100 }
 	}				
 	
@@ -840,7 +884,7 @@ news_event = {
 	
 	title = KurdistanNews.10.t
 	desc = KurdistanNews.10.d
-	picture = GFX_fate_of_iraq
+	picture = GFX_news_fate_of_iraq
 	
 	major = yes
 	
@@ -848,6 +892,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.10.a
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.10.a executed"
 		ai_chance = { factor = 100 }
 	}				
 	
@@ -860,7 +905,7 @@ news_event = {
 	
 	title = KurdistanNews.11.t
 	desc = KurdistanNews.11.d
-	picture = GFX_fate_of_iraq
+	picture = GFX_news_fate_of_iraq
 	
 	major = yes
 	
@@ -868,6 +913,7 @@ news_event = {
 	
 	option = {
 		name = KurdistanNews.11.a
+		log = "[GetDateText]: [This.GetName]: KurdistanNews.11.a executed"
 		ai_chance = { factor = 100 }
 	}				
 	
