@@ -1,0 +1,817 @@
+############################################################################################################
+#	AC mod - scripted gui
+############################################################################################################
+
+# BUILDING PP COSTS
+
+@PP_COST_INF = 5
+@PP_COST_AIR = 2.5
+@PP_COST_AA = 2.5
+@PP_COST_RAD = 10
+@PP_COST_MIC = 10
+@PP_COST_CIC = 15
+@PP_COST_NIC = 10
+@PP_COST_REF = 20
+
+scripted_gui = {
+
+	AC_allied_construction_window = {
+
+		context_type = selected_state_context
+
+		window_name = "AC_allied_construction_window"
+
+		parent_window_token = selected_state_view
+
+		visible = {
+			CONTROLLER = {
+				NOT = { tag = ROOT }
+				OR = {
+					is_in_faction_with = ROOT
+					is_subject_of = ROOT
+					ROOT = { is_subject_of = PREV }
+				}
+			}
+		}
+
+		properties = {
+			AC_building_infra_button = {
+				image = "[AC_GetInfraButtonTexture]"
+			}
+			
+			AC_building_airbase_button = {
+				image = "[AC_GetAirbaseButtonTexture]"
+			}
+			
+			AC_building_antiair_button = {
+				image = "[AC_GetAntiairButtonTexture]"
+			}
+			
+			AC_building_radar_button = {
+				image = "[AC_GetRadarButtonTexture]"
+			}
+
+			AC_building_mic_button = {
+				image = "[AC_GetMicButtonTexture]"
+			}
+			
+			AC_building_cic_button = {
+				image = "[AC_GetCicButtonTexture]"
+			}
+			
+			AC_building_nic_button = {
+				image = "[AC_GetNicButtonTexture]"
+			}
+			
+			AC_building_ref_button = {
+				image = "[AC_GetRefButtonTexture]"
+			}
+		}
+
+		effects = {
+			AC_build_button_click = {
+				if = {
+					limit = { NOT = { ROOT = { has_country_flag = AC_construction_project_active } } }
+
+					AC_start_project = yes
+				}
+				else = {
+					ROOT = { AC_end_project = yes }
+				}
+			}
+			
+			###
+
+			AC_assist_repair_button_click = {
+				THIS = {
+					CONTROLLER = {
+						add_timed_idea = { idea = AC_assist_repair_target_idea days = 180 }
+
+						set_country_flag = { flag = AC_assist_repair_target_by_@ROOT days = 180 value = 1 }
+					}
+				}
+
+				ROOT = {
+					activate_decision =  AC_assist_repair_decision
+				}
+			}
+
+			AC_assist_repair_cancel_button_click = {
+				every_country = {
+					limit = {
+						has_country_flag = AC_assist_repair_target_by_@ROOT
+					}
+
+					remove_ideas = AC_assist_repair_target_idea
+
+					clr_country_flag = AC_assist_repair_target_by_@ROOT
+				}
+			}
+
+			###
+
+			AC_assigned_factories_increase_button_click = {
+				ROOT = {
+					if = { limit = { check_variable = { AC_assigned_factories < 15 } }
+						add_to_variable = { AC_assigned_factories = 1 }
+					}
+					else = {
+						set_variable = { AC_assigned_factories = 1 }
+					}
+				}
+			}
+
+			AC_assigned_factories_increase_button_shift_click = {
+				ROOT = {
+					if = { limit = { check_variable = { AC_assigned_factories < 11 } }
+						add_to_variable = { AC_assigned_factories = 5 }
+					}
+					else = {
+						set_variable = { AC_assigned_factories = 15 }
+					}
+				}
+			}
+
+			AC_assigned_factories_decrease_button_click = {
+				ROOT = {
+					if = { limit = { check_variable = { AC_assigned_factories > 1 } }
+						add_to_variable = { AC_assigned_factories = -1 }
+					}
+					else = {
+						set_variable = { AC_assigned_factories = 15 }
+					}
+				}
+			}
+
+			AC_assigned_factories_decrease_button_shift_click = {
+				ROOT = {
+					if = { limit = { check_variable = { AC_assigned_factories > 5 } }
+						add_to_variable = { AC_assigned_factories = -5 }
+					}
+					else = {
+						set_variable = { AC_assigned_factories = 1 }
+					}
+				}
+			}
+
+			###
+
+			AC_building_amount_increase_button_click = {
+				ROOT = {
+					### max amount depends on the selected building
+				
+					if = { limit = { check_variable = { AC_building_type_selected = 3 } }
+
+						if = { limit = { check_variable = { AC_build_amount < 5 } }
+							add_to_variable = { AC_build_amount = 1 }
+
+							else = {
+								set_variable = { AC_build_amount = 1 }
+							}
+						}
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
+
+						if = { limit = { check_variable = { AC_build_amount < 5 } }
+							add_to_variable = { AC_build_amount = 1 }
+
+							else = {
+								set_variable = { AC_build_amount = 1 }
+							}
+						}
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
+
+						if = { limit = { check_variable = { AC_build_amount < 3 } }
+							add_to_variable = { AC_build_amount = 1 }
+
+							else = {
+								set_variable = { AC_build_amount = 1 }
+							}
+						}
+					}
+					else = {
+
+						if = { limit = { check_variable = { AC_build_amount < 10 } }
+							add_to_variable = { AC_build_amount = 1 }
+
+							else = {
+								set_variable = { AC_build_amount = 1 }
+							}
+						}
+					}
+					
+					### calculate pp cost for selected building
+
+					if = { limit = { check_variable = { AC_building_type_selected = 1 } }
+						set_variable = { AC_political_power_cost = @PP_COST_INF }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 2 } }
+						set_variable = { AC_political_power_cost = @PP_COST_AIR }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 3 } }
+						set_variable = { AC_political_power_cost = @PP_COST_AA }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
+						set_variable = { AC_political_power_cost = @PP_COST_RAD }
+					}
+
+					else_if = { limit = { check_variable = { AC_building_type_selected = 5 } }
+						set_variable = { AC_political_power_cost = @PP_COST_MIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 6 } }
+						set_variable = { AC_political_power_cost = @PP_COST_CIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 7 } }
+						set_variable = { AC_political_power_cost = @PP_COST_NIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
+						set_variable = { AC_political_power_cost = @PP_COST_REF }
+					}
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+
+			AC_building_amount_increase_button_shift_click = {
+				ROOT = {
+					### max amount depends on the selected building
+				
+					if = { limit = { check_variable = { AC_building_type_selected = 3 } }
+
+						set_variable = { AC_build_amount = 5 }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
+
+						set_variable = { AC_build_amount = 5 }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
+
+						set_variable = { AC_build_amount = 3 }
+					}
+					else = {
+
+						if = { limit = { check_variable = { AC_build_amount < 6 } }
+							add_to_variable = { AC_build_amount = 5 }
+
+							else = {
+								set_variable = { AC_build_amount = 10 }
+							}
+						}
+					}
+					
+					### calculate pp cost for selected building
+
+					if = { limit = { check_variable = { AC_building_type_selected = 1 } }
+						set_variable = { AC_political_power_cost = @PP_COST_INF }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 2 } }
+						set_variable = { AC_political_power_cost = @PP_COST_AIR }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 3 } }
+						set_variable = { AC_political_power_cost = @PP_COST_AA }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
+						set_variable = { AC_political_power_cost = @PP_COST_RAD }
+					}
+
+					else_if = { limit = { check_variable = { AC_building_type_selected = 5 } }
+						set_variable = { AC_political_power_cost = @PP_COST_MIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 6 } }
+						set_variable = { AC_political_power_cost = @PP_COST_CIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 7 } }
+						set_variable = { AC_political_power_cost = @PP_COST_NIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
+						set_variable = { AC_political_power_cost = @PP_COST_REF }
+					}
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+
+			AC_building_amount_decrease_button_click = {
+				ROOT = {
+					### max amount depends on the selected building
+				
+					if = { limit = { check_variable = { AC_building_type_selected = 3 } }
+
+						if = { limit = { check_variable = { AC_build_amount > 1 } }
+							add_to_variable = { AC_build_amount = -1 }
+
+							else = {
+								set_variable = { AC_build_amount = 5 }
+							}
+						}
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
+
+						if = { limit = { check_variable = { AC_build_amount > 1 } }
+							add_to_variable = { AC_build_amount = -1 }
+
+							else = {
+								set_variable = { AC_build_amount = 5 }
+							}
+						}
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
+
+						if = { limit = { check_variable = { AC_build_amount > 1 } }
+							add_to_variable = { AC_build_amount = -1 }
+
+							else = {
+								set_variable = { AC_build_amount = 3 }
+							}
+						}
+					}
+					else = {
+
+						if = { limit = { check_variable = { AC_build_amount > 1 } }
+							add_to_variable = { AC_build_amount = -1 }
+
+							else = {
+								set_variable = { AC_build_amount = 10 }
+							}
+						}
+					}
+					
+					### calculate pp cost for selected building
+
+					if = { limit = { check_variable = { AC_building_type_selected = 1 } }
+						set_variable = { AC_political_power_cost = @PP_COST_INF }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 2 } }
+						set_variable = { AC_political_power_cost = @PP_COST_AIR }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 3 } }
+						set_variable = { AC_political_power_cost = @PP_COST_AA }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
+						set_variable = { AC_political_power_cost = @PP_COST_RAD }
+					}
+
+					else_if = { limit = { check_variable = { AC_building_type_selected = 5 } }
+						set_variable = { AC_political_power_cost = @PP_COST_MIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 6 } }
+						set_variable = { AC_political_power_cost = @PP_COST_CIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 7 } }
+						set_variable = { AC_political_power_cost = @PP_COST_NIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
+						set_variable = { AC_political_power_cost = @PP_COST_REF }
+					}
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+
+			AC_building_amount_decrease_button_shift_click = {
+				ROOT = {
+					### max amount depends on the selected building
+				
+					if = { limit = { check_variable = { AC_building_type_selected = 3 } }
+
+						set_variable = { AC_build_amount = 1 }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
+
+						set_variable = { AC_build_amount = 1 }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
+
+						set_variable = { AC_build_amount = 1 }
+					}
+					else = {
+
+						if = { limit = { check_variable = { AC_build_amount > 5 } }
+							add_to_variable = { AC_build_amount = -5 }
+
+							else = {
+								set_variable = { AC_build_amount = 1 }
+							}
+						}
+					}
+					
+					### calculate pp cost for selected building
+
+					if = { limit = { check_variable = { AC_building_type_selected = 1 } }
+						set_variable = { AC_political_power_cost = @PP_COST_INF }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 2 } }
+						set_variable = { AC_political_power_cost = @PP_COST_AIR }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 3 } }
+						set_variable = { AC_political_power_cost = @PP_COST_AA }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
+						set_variable = { AC_political_power_cost = @PP_COST_RAD }
+					}
+
+					else_if = { limit = { check_variable = { AC_building_type_selected = 5 } }
+						set_variable = { AC_political_power_cost = @PP_COST_MIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 6 } }
+						set_variable = { AC_political_power_cost = @PP_COST_CIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 7 } }
+						set_variable = { AC_political_power_cost = @PP_COST_NIC }
+					}
+					else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
+						set_variable = { AC_political_power_cost = @PP_COST_REF }
+					}
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+
+			######### STATE BUILDINGS
+
+			AC_building_infra_button_click = {
+
+				ROOT = {
+					set_variable = { AC_building_type_selected = 1 }
+
+					set_variable = { AC_political_power_cost = @PP_COST_INF }
+					
+					### calculate pp cost for selected building
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+
+			AC_building_airbase_button_click = {
+				ROOT = {
+					set_variable = { AC_building_type_selected = 2 }
+
+					set_variable = { AC_political_power_cost = @PP_COST_AIR }
+					
+					### calculate pp cost for selected building
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+
+			AC_building_antiair_button_click = {
+				ROOT = {
+					set_variable = { AC_building_type_selected = 3 }
+
+					set_variable = { AC_political_power_cost = @PP_COST_AA }
+					
+					### calculate pp cost for selected building
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+
+			AC_building_radar_button_click = {
+				ROOT = {
+					set_variable = { AC_building_type_selected = 4 }
+
+					set_variable = { AC_political_power_cost = @PP_COST_RAD }
+					
+					### calculate pp cost for selected building
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+
+			######### SHARED BUILDINGS
+
+			AC_building_mic_button_click = {
+				ROOT = {
+					set_variable = { AC_building_type_selected = 5 }
+
+					set_variable = { AC_political_power_cost = @PP_COST_MIC }
+					
+					### calculate pp cost for selected building
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+
+			AC_building_cic_button_click = {
+				ROOT = {
+					set_variable = { AC_building_type_selected = 6 }
+
+					set_variable = { AC_political_power_cost = @PP_COST_CIC }
+					
+					### calculate pp cost for selected building
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+
+			AC_building_nic_button_click = {
+				ROOT = {
+					set_variable = { AC_building_type_selected = 7 }
+
+					set_variable = { AC_political_power_cost = @PP_COST_NIC }
+					
+					### calculate pp cost for selected building
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+
+			AC_building_ref_button_click = {
+				ROOT = {
+					set_variable = { AC_building_type_selected = 8 }
+
+					set_variable = { AC_political_power_cost = @PP_COST_REF }
+					
+					### calculate pp cost for selected building
+
+					multiply_variable = { AC_political_power_cost = AC_build_amount }
+					set_variable = { AC_political_power_cost_effect = AC_political_power_cost }
+					multiply_variable = { AC_political_power_cost_effect = -1 }
+				}
+			}
+		}
+
+		triggers = {
+			AC_build_button_click_enabled = {
+				if = {
+					limit = { NOT = { ROOT = { has_country_flag = AC_construction_project_active } } }
+					
+					THIS = { # block multiple players creating a project in the same state
+						NOT = { 
+							any_country = { PREV = { has_state_flag = AC_construction_target_state_@PREV } } 
+						}
+					}
+
+					ROOT = {
+						AC_project_not_active = yes
+
+						### variables are set
+
+						has_variable = AC_building_type_selected
+						has_variable = AC_build_amount
+						has_variable = AC_assigned_factories
+
+						### has enough civs
+
+						NOT = { check_variable = { num_of_civilian_factories_available_for_projects < AC_assigned_factories } }
+
+						### political power cost
+
+						NOT = { check_variable = { political_power < AC_political_power_cost } }
+
+						######### STATE BUILDINGS
+
+						if = { limit = { check_variable = { AC_building_type_selected = 1 } }
+
+							PREV = {
+								AC_building_infra_available = yes
+							}
+						}
+
+						if = { limit = { check_variable = { AC_building_type_selected = 2 } }
+
+							PREV = {
+								AC_building_airbase_available = yes
+							}
+						}
+
+						if = { limit = { check_variable = { AC_building_type_selected = 3 } }
+
+							PREV = {
+								AC_building_antiair_available = yes
+							}
+						}
+
+						if = { limit = { check_variable = { AC_building_type_selected = 4 } }
+
+							PREV = {
+								AC_building_radar_available = yes
+							}
+						}
+
+						######### SHARED BUILDINGS
+
+						if = { limit = { check_variable = { AC_building_type_selected = 5 } }
+
+							PREV = {
+								AC_building_mic_available = yes
+							}
+						}
+
+						if = { limit = { check_variable = { AC_building_type_selected = 6 } }
+
+							PREV = {
+								AC_building_cic_available = yes
+							}
+						}
+
+						if = { limit = { check_variable = { AC_building_type_selected = 7 } }
+
+							PREV = {
+								AC_building_nic_available = yes
+							}
+						}
+
+						if = { limit = { check_variable = { AC_building_type_selected = 8 } }
+
+							PREV = {
+								AC_building_ref_available = yes
+							}
+						}
+					}
+				}
+			}
+
+			###
+
+			AC_assist_repair_button_click_enabled = {
+				NOT = {
+					AND = {
+						ROOT = { has_decision = AC_assist_repair_decision }
+
+						NOT = {
+							any_country = {
+								has_country_flag = AC_assist_repair_target_by_@ROOT
+							}
+						}
+					}
+				}
+				THIS = {
+					CONTROLLER = {
+						OR = {
+							NOT = { 
+								has_idea = AC_assist_repair_target_idea 
+							}
+							has_country_flag = AC_assist_repair_target_by_@ROOT
+						}
+					}
+				}
+			}
+
+			AC_assist_repair__button_visible = {
+				NOT = {
+					any_country = {
+						has_country_flag = AC_assist_repair_target_by_@ROOT
+					}
+				}
+			}
+
+			AC_assist_repair_cancel_button_visible = {
+				any_country = {
+					has_country_flag = AC_assist_repair_target_by_@ROOT
+				}
+			}
+
+			###
+
+			AC_assigned_factories_increase_button_click_enabled = {
+				ROOT = {
+					AC_project_not_active = yes
+				}
+			}
+
+			AC_assigned_factories_decrease_button_click_enabled = {
+				ROOT = {
+					AC_project_not_active = yes
+				}
+			}
+
+			###
+
+			AC_building_amount_increase_button_click_enabled = {
+				ROOT = {
+					AC_project_not_active = yes
+				}
+			}
+
+			AC_building_amount_decrease_button_click_enabled = {
+				ROOT = {
+					AC_project_not_active = yes
+				}
+			}
+
+			######### STATE BUILDINGS
+
+			AC_building_infra_button_click_enabled = {
+				ROOT = {
+					NOT = { check_variable = { num_of_civilian_factories_available_for_projects < AC_assigned_factories } }
+
+					AC_project_not_active = yes
+				}
+
+				THIS = {
+					AC_building_infra_available = yes
+				}
+			}
+
+			AC_building_airbase_button_click_enabled = {
+				ROOT = {
+					NOT = { check_variable = { num_of_civilian_factories_available_for_projects < AC_assigned_factories } }
+
+					AC_project_not_active = yes
+				}
+
+				THIS = {
+					AC_building_airbase_available = yes
+				}
+			}
+
+			AC_building_antiair_button_click_enabled = {
+				ROOT = {
+					NOT = { check_variable = { num_of_civilian_factories_available_for_projects < AC_assigned_factories } }
+
+					AC_project_not_active = yes
+				}
+
+				THIS = {
+					AC_building_antiair_available = yes
+				}
+			}
+
+			AC_building_radar_button_click_enabled = {
+				ROOT = {
+					NOT = { check_variable = { num_of_civilian_factories_available_for_projects < AC_assigned_factories } }
+
+					AC_project_not_active = yes
+				}
+
+				THIS = {
+					AC_building_radar_available = yes
+				}
+			}
+
+			######### SHARED BUILDINGS
+
+			AC_building_mic_button_click_enabled = {
+				ROOT = {
+					NOT = { check_variable = { num_of_civilian_factories_available_for_projects < AC_assigned_factories } }
+
+					AC_project_not_active = yes
+				}
+
+				THIS = {
+					AC_building_mic_available = yes
+				}
+			}
+
+			AC_building_cic_button_click_enabled = {
+				ROOT = {
+					NOT = { check_variable = { num_of_civilian_factories_available_for_projects < AC_assigned_factories } }
+
+					AC_project_not_active = yes
+				}
+
+				THIS = {
+					AC_building_cic_available = yes
+				}
+			}
+
+			AC_building_nic_button_click_enabled = {
+				ROOT = {
+					NOT = { check_variable = { num_of_civilian_factories_available_for_projects < AC_assigned_factories } }
+
+					AC_project_not_active = yes
+				}
+
+				THIS = {
+					AC_building_nic_available = yes
+				}
+			}
+
+			AC_building_ref_button_click_enabled = {
+				ROOT = {
+					NOT = { check_variable = { num_of_civilian_factories_available_for_projects < AC_assigned_factories } }
+
+					AC_project_not_active = yes
+				}
+
+				THIS = {
+					AC_building_ref_available = yes
+				}
+			}
+		}
+	}
+}

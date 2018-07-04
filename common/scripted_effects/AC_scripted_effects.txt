@@ -1,0 +1,346 @@
+############################################################################################################
+#	AC mod - scripted effects
+############################################################################################################
+
+# BUILDING CONSTRUCTION COSTS
+
+@BUILD_COST_INFRASTRUCTURE = 3000
+@BUILD_COST_AIRBASE = 1250
+@BUILD_COST_ANTIAIR = 2500
+@BUILD_COST_RADAR = 3375
+@BUILD_COST_MILITARY_FACTORY = 7200
+@BUILD_COST_CIVILIAN_FACTORY = 10800
+@BUILD_COST_DOCKYARD = 6400
+@BUILD_COST_REFINERY = 13000
+
+# match these with scripted gui file values
+
+@PP_COST_INF = -5
+@PP_COST_AIR = -2.5
+@PP_COST_AA = -2.5
+@PP_COST_RAD = -10
+@PP_COST_MIC = -10
+@PP_COST_CIC = -15
+@PP_COST_NIC = -10
+@PP_COST_REF = -20
+
+AC_start_project = {
+	ROOT = {
+		### get construction speed modifiers and set building cost
+
+		set_variable = { AC_construction_speed = 1 }
+
+		AC_get_building_values_for_gui = yes
+
+		add_to_variable = { AC_construction_speed = modifier@production_speed_buildings_factor }
+	}
+
+	THIS = {
+		### get infrastructure level, set target state
+
+		set_variable = { ROOT.AC_target_state_infra_speed = infrastructure_level }
+
+		set_state_flag = AC_construction_target_state_@ROOT
+	}
+
+	ROOT = {
+		### infrastructure effect (5-8 use infrastructure effect)
+
+		if = { limit = { check_variable = { AC_building_type_selected > 4 } }
+
+			multiply_variable = { AC_target_state_infra_speed = 0.1 }
+
+			add_to_variable = { AC_target_state_infra_speed = 1 }
+
+			multiply_variable = { AC_construction_speed = AC_target_state_infra_speed }
+		}
+
+		### construction speed penalty for projects
+
+		multiply_variable = { AC_construction_speed = 0.75 }
+
+		### decision tooltip
+
+		set_variable = { AC_construction_speed_display = AC_construction_speed }
+
+		### total factory output
+
+		multiply_variable = { AC_construction_speed = 5 }
+
+		multiply_variable = { AC_construction_speed = AC_assigned_factories }
+
+		### days to build
+
+		divide_variable = { AC_building_cost = AC_construction_speed }
+
+		set_variable = { AC_construction_duration = AC_building_cost }
+
+		round_variable = AC_construction_duration
+
+		### decision tooltip
+
+		set_variable = { AC_total_construction_duration = AC_construction_duration }
+
+		multiply_variable = { AC_total_construction_duration = AC_build_amount }
+
+		### queue size
+
+		set_variable = { AC_build_amount_queue = AC_build_amount }
+
+		### active project building type
+
+		if = { limit = { check_variable = { AC_building_type_selected = 1 } } set_variable = { AC_active_project_building_type = 1 } }
+		if = { limit = { check_variable = { AC_building_type_selected = 2 } } set_variable = { AC_active_project_building_type = 2 } }
+		if = { limit = { check_variable = { AC_building_type_selected = 3 } } set_variable = { AC_active_project_building_type = 3 } }
+		if = { limit = { check_variable = { AC_building_type_selected = 4 } } set_variable = { AC_active_project_building_type = 4 } }
+
+		if = { limit = { check_variable = { AC_building_type_selected = 5 } } set_variable = { AC_active_project_building_type = 5 } }
+		if = { limit = { check_variable = { AC_building_type_selected = 6 } } set_variable = { AC_active_project_building_type = 6 } }
+		if = { limit = { check_variable = { AC_building_type_selected = 7 } } set_variable = { AC_active_project_building_type = 7 } }
+		if = { limit = { check_variable = { AC_building_type_selected = 8 } } set_variable = { AC_active_project_building_type = 8 } }
+
+		### send permission request to target
+
+		set_country_flag = AC_requesting_permission
+
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = AC_event.1 }
+		}
+	}
+}
+
+AC_get_building_values_for_decision = {
+	if = { limit = { check_variable = { AC_active_project_building_type = 1 } } 
+		
+		set_variable = { AC_building_cost = @BUILD_COST_INFRASTRUCTURE } 
+		add_to_variable = { AC_construction_speed = modifier@production_speed_infrastructure_factor } 
+	}
+	
+	if = { limit = { check_variable = { AC_active_project_building_type = 2 } } 
+		
+		set_variable = { AC_building_cost = @BUILD_COST_AIRBASE } 
+		add_to_variable = { AC_construction_speed = modifier@production_speed_air_base_factor } 
+	}
+	
+	if = { limit = { check_variable = { AC_active_project_building_type = 3 } } 
+		
+		set_variable = { AC_building_cost = @BUILD_COST_ANTIAIR } 
+		add_to_variable = { AC_construction_speed = modifier@production_speed_anti_air_building_factor } 
+	}
+	
+	if = { limit = { check_variable = { AC_active_project_building_type = 4 } } 
+		
+		set_variable = { AC_building_cost = @BUILD_COST_RADAR } 
+		add_to_variable = { AC_construction_speed = modifier@production_speed_radar_station_factor } 
+	}
+
+	if = { limit = { check_variable = { AC_active_project_building_type = 5 } } 
+		
+		set_variable = { AC_building_cost = @BUILD_COST_MILITARY_FACTORY } 
+		add_to_variable = { AC_construction_speed = modifier@production_speed_arms_factory_factor } 
+	}
+	
+	if = { limit = { check_variable = { AC_active_project_building_type = 6 } } 
+		
+		set_variable = { AC_building_cost = @BUILD_COST_CIVILIAN_FACTORY } 
+		add_to_variable = { AC_construction_speed = modifier@production_speed_industrial_complex_factor } 
+	}
+	
+	if = { limit = { check_variable = { AC_active_project_building_type = 7 } } 
+		
+		set_variable = { AC_building_cost = @BUILD_COST_DOCKYARD } 
+		add_to_variable = { AC_construction_speed = modifier@production_speed_dockyard_factor } 
+	}
+	
+	if = { limit = { check_variable = { AC_active_project_building_type = 8 } } 
+		
+		set_variable = { AC_building_cost = @BUILD_COST_REFINERY } 
+		add_to_variable = { AC_construction_speed = modifier@production_speed_synthetic_refinery_factor } 
+	}
+}
+
+AC_get_building_values_for_gui = {
+	if = { limit = { check_variable = { AC_building_type_selected = 1 } }
+
+		set_variable = { AC_building_cost = @BUILD_COST_INFRASTRUCTURE }
+		add_to_variable = { AC_construction_speed = modifier@production_speed_infrastructure_factor }
+	}
+	
+	if = { limit = { check_variable = { AC_building_type_selected = 2 } }
+
+		set_variable = { AC_building_cost = @BUILD_COST_AIRBASE }
+		add_to_variable = { AC_construction_speed = modifier@production_speed_air_base_factor }
+	}
+	
+	if = { limit = { check_variable = { AC_building_type_selected = 3 } }
+
+		set_variable = { AC_building_cost = @BUILD_COST_ANTIAIR }
+		add_to_variable = { AC_construction_speed = modifier@production_speed_anti_air_building_factor }
+	}
+	
+	if = { limit = { check_variable = { AC_building_type_selected = 4 } }
+
+		set_variable = { AC_building_cost = @BUILD_COST_RADAR }
+		add_to_variable = { AC_construction_speed = modifier@production_speed_radar_station_factor }
+	}
+
+	if = { limit = { check_variable = { AC_building_type_selected = 5 } }
+
+		set_variable = { AC_building_cost = @BUILD_COST_MILITARY_FACTORY }
+		add_to_variable = { AC_construction_speed = modifier@production_speed_arms_factory_factor }
+	}
+	
+	if = { limit = { check_variable = { AC_building_type_selected = 6 } }
+
+		set_variable = { AC_building_cost = @BUILD_COST_CIVILIAN_FACTORY }
+		add_to_variable = { AC_construction_speed = modifier@production_speed_industrial_complex_factor }
+	}
+	
+	if = { limit = { check_variable = { AC_building_type_selected = 7 } }
+
+		set_variable = { AC_building_cost = @BUILD_COST_DOCKYARD }
+		add_to_variable = { AC_construction_speed = modifier@production_speed_dockyard_factor }
+	}
+	
+	if = { limit = { check_variable = { AC_building_type_selected = 8 } }
+
+		set_variable = { AC_building_cost = @BUILD_COST_REFINERY }
+		add_to_variable = { AC_construction_speed = modifier@production_speed_synthetic_refinery_factor }
+	}
+}
+
+AC_add_finished_building = {
+	if = { limit = { ROOT = { check_variable = { AC_active_project_building_type = 1 } } }
+
+		add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+		ROOT = { add_to_variable = { AC_political_power_cost = @PP_COST_INF } }
+	}
+
+	if = { limit = { ROOT = { check_variable = { AC_active_project_building_type = 2 } } }
+
+		add_building_construction = { type = air_base level = 1 instant_build = yes }
+		ROOT = { add_to_variable = { AC_political_power_cost = @PP_COST_AIR } }
+	}
+
+	if = { limit = { ROOT = { check_variable = { AC_active_project_building_type = 3 } } }
+
+		add_building_construction = { type = anti_air_building level = 1 instant_build = yes }
+		ROOT = { add_to_variable = { AC_political_power_cost = @PP_COST_AA } }
+	}
+
+	if = { limit = { ROOT = { check_variable = { AC_active_project_building_type = 4 } } }
+
+		add_building_construction = { type = radar_station level = 1 instant_build = yes }
+		ROOT = { add_to_variable = { AC_political_power_cost = @PP_COST_RAD } }
+	}
+
+	if = { limit = { ROOT = { check_variable = { AC_active_project_building_type = 5 } } }
+
+		add_building_construction = { type = arms_factory level = 1 instant_build = yes }
+		ROOT = { add_to_variable = { AC_political_power_cost = @PP_COST_MIC } }
+	}
+
+	if = { limit = { ROOT = { check_variable = { AC_active_project_building_type = 6 } } }
+
+		add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+		ROOT = { add_to_variable = { AC_political_power_cost = @PP_COST_CIC } }
+	}
+
+	if = { limit = { ROOT = { check_variable = { AC_active_project_building_type = 7 } } }
+
+		add_building_construction = { type = dockyard level = 1 instant_build = yes }
+		ROOT = { add_to_variable = { AC_political_power_cost = @PP_COST_NIC } }
+	}
+
+	if = { limit = { ROOT = { check_variable = { AC_active_project_building_type = 8 } } }
+
+		add_building_construction = { type = synthetic_refinery level = 1 instant_build = yes }
+		ROOT = { add_to_variable = { AC_political_power_cost = @PP_COST_REF } }
+	}
+	
+	### add a positive opinion modifier to target for construction
+	
+	CONTROLLER = {
+		add_opinion_modifier = { target = ROOT modifier = AC_construction_opinion }
+	}
+}
+
+AC_recalculate_construction_duration = {
+	### get construction speed modifiers and set building cost
+
+	set_variable = { AC_construction_speed = 1 }
+
+	AC_get_building_values_for_decision = yes
+
+	add_to_variable = { AC_construction_speed = modifier@production_speed_buildings_factor }
+
+	### get infrastructure level
+
+	every_state = {
+		limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+		set_variable = { ROOT.AC_target_state_infra_speed = infrastructure_level }
+	}
+
+	### infrastructure effect (5-8 use infrastructure effect)
+
+	if = { limit = { check_variable = { AC_active_project_building_type > 4 } }
+
+		multiply_variable = { AC_target_state_infra_speed = 0.1 }
+
+		add_to_variable = { AC_target_state_infra_speed = 1 }
+
+		multiply_variable = { AC_construction_speed = AC_target_state_infra_speed }
+	}
+
+	### construction speed penalty for projects
+
+	multiply_variable = { AC_construction_speed = 0.75 }
+
+	### decision tooltip
+
+	set_variable = { AC_construction_speed_display = AC_construction_speed }
+
+	### total factory output
+
+	multiply_variable = { AC_construction_speed = 5 }
+
+	multiply_variable = { AC_construction_speed = AC_assigned_factories }
+
+	### days to build
+
+	divide_variable = { AC_building_cost = AC_construction_speed }
+
+	set_variable = { AC_construction_duration = AC_building_cost }
+
+	round_variable = AC_construction_duration
+
+	### decision tooltip
+
+	set_variable = { AC_total_construction_duration = AC_construction_duration }
+
+	multiply_variable = { AC_total_construction_duration = AC_build_amount_queue }
+}
+
+AC_end_project = {
+	every_state = {
+		limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+		clr_state_flag = AC_construction_target_state_@ROOT
+
+		CONTROLLER = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision } }
+	}
+
+	clear_variable = AC_build_amount_queue
+
+	clear_variable = AC_active_project_building_type
+
+	clr_country_flag = AC_construction_project_active
+
+	### refund remaining PP cost
+
+	if = { limit = { check_variable = { AC_political_power_cost > 0 } }
+		add_political_power = AC_political_power_cost
+	}
+}

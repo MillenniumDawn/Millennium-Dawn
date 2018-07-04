@@ -1,0 +1,1760 @@
+############################################################################################################
+#	AC mod - decisions
+############################################################################################################
+
+AC_DECISIONS = {
+
+	AC_assist_repair_decision = {
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			CONTROLLER = {
+				has_country_flag = AC_assist_repair_target_by_@ROOT
+			}
+		}
+
+		visible = {
+			has_decision = AC_assist_repair_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_country = {
+						has_country_flag = AC_assist_repair_target_by_@ROOT
+					}
+				}
+			}
+		}
+
+		modifier = {
+			political_power_gain = -1
+		}
+
+		cost = 0
+
+		days_remove = 180
+
+		remove_effect = {
+			every_country = {
+				limit = { has_country_flag = AC_assist_repair_target_by_@ROOT }
+
+				remove_ideas = AC_assist_repair_target_idea
+
+				clr_country_flag = AC_assist_repair_target_by_@ROOT
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_assist_repair_CANCEL_decision = {
+		icon = GFX_decision_category_generic_crisis
+
+		visible = {
+			has_decision = AC_assist_repair_decision
+		}
+
+		cost = 0
+
+		complete_effect = {
+			every_country = {
+				limit = { has_country_flag = AC_assist_repair_target_by_@ROOT }
+
+				remove_ideas = AC_assist_repair_target_idea
+
+				clr_country_flag = AC_assist_repair_target_by_@ROOT
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	###################################################
+
+	AC_construction_CICx1_decision = { # 1x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx1_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 1
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx1_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx2_decision = { # 2x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx2_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 2
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx2_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx3_decision = { # 3x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx3_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 3
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx3_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx4_decision = { # 4x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx4_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 4
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx4_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx5_decision = { # 5x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx5_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 5
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx5_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx6_decision = { # 1x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx6_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 6
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx6_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx7_decision = { # 1x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx7_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 7
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx7_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx8_decision = { # 1x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx8_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 8
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx8_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx9_decision = { # 1x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx9_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 9
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx9_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx10_decision = { # 10x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx10_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 10
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx10_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx11_decision = { # 1x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx11_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 11
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx11_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx12_decision = { # 1x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx12_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 12
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx12_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx13_decision = { # 1x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx13_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 13
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx13_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx14_decision = { # 1x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx14_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 14
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = { 
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx14_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CICx15_decision = { # 15x civilian factories
+		icon = GFX_decision_category_generic
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@ROOT
+		}
+
+		visible = {
+			has_decision = AC_construction_CICx15_decision
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+					}
+				}
+			}
+		}
+
+		cost = 0
+
+		days_remove = AC_construction_duration
+
+		modifier = {
+			civilian_factory_use = 15
+		}
+
+		remove_effect = {
+			if = { # check state eligibility
+				limit = {
+					any_state = {
+						has_state_flag = AC_construction_target_state_@ROOT
+
+						CONTROLLER = {
+							OR = {
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = ROOT
+							}
+						}
+					}
+
+					AC_building_slot_available = yes
+				}
+				
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					AC_add_finished_building = yes
+				}
+
+				hidden_effect = { # repeat until queue is finished
+					if = {
+						limit = {
+							check_variable = { AC_build_amount_queue > 1 }
+							
+							AC_building_slot_available = yes
+						}
+
+						### reduce queue
+
+						add_to_variable = { AC_build_amount_queue = -1 }
+						
+						### recalculate building speed
+
+						AC_recalculate_construction_duration = yes
+
+						### reactivate project
+
+						activate_decision = AC_construction_CICx15_decision
+
+						random_state = { # reactivate target project
+							limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+							CONTROLLER = {
+								set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
+
+								remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+
+								activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision }
+							}
+						}
+
+						else = {
+							AC_end_project = yes
+						}
+					}
+				}
+			}
+			else = { # failure
+				hidden_effect = {
+					AC_end_project = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AC_construction_CANCEL_decision = {
+		icon = GFX_decision_category_generic_crisis
+
+		visible = {
+			OR = {
+				has_decision = AC_construction_CICx1_decision
+				has_decision = AC_construction_CICx2_decision
+				has_decision = AC_construction_CICx3_decision
+				has_decision = AC_construction_CICx4_decision
+				has_decision = AC_construction_CICx5_decision
+				has_decision = AC_construction_CICx6_decision
+				has_decision = AC_construction_CICx7_decision
+				has_decision = AC_construction_CICx8_decision
+				has_decision = AC_construction_CICx9_decision
+				has_decision = AC_construction_CICx10_decision
+				has_decision = AC_construction_CICx11_decision
+				has_decision = AC_construction_CICx12_decision
+				has_decision = AC_construction_CICx13_decision
+				has_decision = AC_construction_CICx14_decision
+				has_decision = AC_construction_CICx15_decision
+			}
+		}
+
+		cost = 0
+
+		complete_effect = {
+			add_political_power = AC_political_power_cost
+
+			hidden_effect = {
+				clr_country_flag = AC_construction_project_active
+
+				every_state = {
+					limit = { has_state_flag = AC_construction_target_state_@ROOT }
+
+					clr_state_flag = AC_construction_target_state_@ROOT
+
+					CONTROLLER = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision } }
+				}
+
+				clear_variable = AC_build_amount_queue
+
+				clear_variable = AC_active_project_building_type
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+}
+
+AC_target_country_DECISIONS = {
+
+	AC_construction_target_decision = {
+
+		allowed = { always = no }
+
+		available = {
+			
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_state = {
+						is_controlled_by = ROOT
+					
+						has_state_flag = AC_construction_target_state_@FROM
+					}
+				}
+			}
+		}
+
+		highlight_states = {
+			has_state_flag = AC_construction_target_state_@FROM
+		}
+
+		is_good = yes
+
+		selectable_mission = yes
+
+		days_mission_timeout = AC_target_construction_duration
+
+		cost = 10
+
+		remove_effect = {
+
+		}
+
+		timeout_effect = {
+
+		}
+
+		complete_effect = { # cancel
+			remove_targeted_decision = { target = FROM decision = AC_construction_target_decision }
+
+			FROM = {
+				hidden_effect = {
+					country_event = AC_event.3
+
+					clr_country_flag = AC_construction_project_active
+
+					add_political_power = AC_political_power_cost
+
+					every_state = {
+						limit = { has_state_flag = AC_construction_target_state_@PREV }
+
+						clr_state_flag = AC_construction_target_state_@PREV
+					}
+
+					clear_variable = AC_build_amount_queue
+
+					clear_variable = AC_active_project_building_type
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+}

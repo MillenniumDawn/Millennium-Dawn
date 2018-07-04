@@ -1,0 +1,83 @@
+############################################################################################################
+#	AC mod - on actions
+############################################################################################################
+
+on_actions = {
+	on_startup = {
+		effect = {
+			every_country = {
+				limit = { is_ai = no }
+				set_variable = { AC_assigned_factories = 1 }
+				set_variable = { AC_build_amount = 1 }
+			}
+		}
+	}
+
+	#ROOT = nation being puppeted, FROM = overlord
+	on_puppet = {
+		effect = {
+			if = {
+				limit = {
+					any_country = {
+						ROOT = { has_country_flag = AC_assist_repair_target_by_@PREV }
+					}
+				}
+				
+				every_country = {
+					limit = {
+						ROOT = { has_country_flag = AC_assist_repair_target_by_@PREV }
+					}
+
+					ROOT = { 
+						clr_country_flag = AC_assist_repair_target_by_@PREV 
+						remove_ideas = AC_assist_repair_target_idea
+					}
+				}
+			}
+		}
+	}
+
+	#ROOT is new controller #FROM is old controller #FROM.FROM is state ID
+	on_state_control_changed = {
+		effect = {
+			if = { #cancel project on controller change
+				limit = {
+					any_country = {
+						FROM.FROM = { has_state_flag = AC_construction_target_state_@PREV }
+
+						ROOT = {
+							NOT = {
+								is_in_faction_with = PREV
+								is_subject_of = PREV
+								PREV = { is_subject_of = ROOT }
+								tag = PREV
+							}
+						}
+					}
+				}
+
+				every_country = {
+					limit = {
+						FROM.FROM = { has_state_flag = AC_construction_target_state_@PREV }
+					}
+
+					FROM.FROM = { clr_state_flag = AC_construction_target_state_@PREV }
+
+					FROM = { remove_targeted_decision = { target = PREV decision = AC_construction_target_decision } }
+
+					clear_variable = AC_build_amount_queue
+
+					clear_variable = AC_active_project_building_type
+
+					clr_country_flag = AC_construction_project_active
+
+					### refund remaining PP cost
+
+					if = { limit = { check_variable = { AC_political_power_cost > 0 } }
+						add_political_power = AC_political_power_cost
+					}
+				}
+			}
+		}
+	}
+}

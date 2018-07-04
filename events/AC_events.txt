@@ -1,0 +1,241 @@
+﻿############################################################################################################
+#	AC mod - events
+############################################################################################################
+
+add_namespace = AC_event
+
+country_event = {
+	id = AC_event.1
+	title = AC_event.1.t
+	desc = AC_event.1.d
+	picture = GFX_report_event_generic_factory
+
+	is_triggered_only = yes
+
+	option = { name = AC_event.1.o1
+
+		ai_chance = {
+			base = 0
+
+			modifier = { add = 1 NOT = { has_opinion = { target = FROM value < 0 } } }
+		}
+
+		hidden_effect = {
+			FROM = {
+				### activate project
+
+				clr_country_flag = AC_requesting_permission
+
+				set_country_flag = AC_construction_project_active
+
+				if = { limit = { check_variable = { AC_assigned_factories = 1 } }
+					activate_decision = AC_construction_CICx1_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 2 } }
+					activate_decision = AC_construction_CICx2_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 3 } }
+					activate_decision = AC_construction_CICx3_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 4 } }
+					activate_decision = AC_construction_CICx4_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 5 } }
+					activate_decision = AC_construction_CICx5_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 6 } }
+					activate_decision = AC_construction_CICx6_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 7 } }
+					activate_decision = AC_construction_CICx7_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 8 } }
+					activate_decision = AC_construction_CICx8_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 9 } }
+					activate_decision = AC_construction_CICx9_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 10 } }
+					activate_decision = AC_construction_CICx10_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 11 } }
+					activate_decision = AC_construction_CICx11_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 12 } }
+					activate_decision = AC_construction_CICx12_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 13 } }
+					activate_decision = AC_construction_CICx13_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 14 } }
+					activate_decision = AC_construction_CICx14_decision
+				}
+				else_if = { limit = { check_variable = { AC_assigned_factories = 15 } }
+					activate_decision = AC_construction_CICx15_decision
+				}
+
+				### political power cost
+
+				add_political_power = AC_political_power_cost_effect
+
+				### reset selected build ammount
+
+				set_variable = { AC_build_amount = 1 }
+			}
+
+			### show construction project for target
+			
+			set_variable = { AC_target_construction_duration = From.AC_construction_duration }
+
+			activate_targeted_decision = { target = FROM decision = AC_construction_target_decision }
+		}
+	}
+
+	option = { name = AC_event.1.o2 # refuse
+
+		ai_chance = {
+			base = 0
+
+			modifier = { add = 1 has_opinion = { target = FROM value < 0 } }
+		}
+
+		hidden_effect = {
+			FROM = {
+				clr_country_flag = AC_requesting_permission
+
+				clear_variable = AC_active_project_building_type
+
+				event_target:AC_state_event_target = {
+					clr_state_flag = AC_construction_target_state_@FROM
+				}
+
+				clear_variable = AC_build_amount_queue
+
+				clear_variable = AC_active_project_building_type
+
+				set_country_flag = { flag = AC_refused_project_@FROM days = 60 value = 1 }
+
+				country_event = AC_event.2
+			}
+		}
+	}
+}
+
+country_event = {
+	id = AC_event.2
+	title = AC_event.2.t
+	desc = AC_event.2.d
+	picture = GFX_report_event_generic_factory
+
+	is_triggered_only = yes
+
+	option = { name = AC_event.2.o1 }
+}
+
+country_event = {
+	id = AC_event.3
+	title = AC_event.3.t
+	desc = AC_event.3.d
+	picture = GFX_report_event_generic_factory
+
+	is_triggered_only = yes
+
+	option = { name = AC_event.3.o1 }
+}
+
+############################################################################################################
+#	AC mod - ai events
+############################################################################################################
+
+add_namespace = AC_ai_event
+
+country_event = { # RADAR construction
+	id = AC_ai_event.1
+	hidden = yes
+	
+	mean_time_to_happen = { days = 40 }
+
+	trigger = {
+		is_ai = yes
+
+		threat > 0.5
+
+		num_of_civilian_factories_available_for_projects > 10
+
+		AC_project_not_active = yes
+
+		any_state = {
+			CONTROLLER = {
+				NOT = { tag = ROOT }
+				OR = {
+					is_in_faction_with = ROOT
+					is_subject_of = ROOT
+					ROOT = { is_subject_of = PREV }
+				}
+				NOT = { has_country_flag = AC_refused_project }
+			}
+
+			AC_radar_location = yes
+
+			OR = {
+				AND = { ROOT = { has_tech = radio_detection } 				radar_station < 1 }
+				AND = { ROOT = { has_tech = decimetric_radar } 				radar_station < 2 }
+				AND = { ROOT = { has_tech = improved_decimetric_radar } 	radar_station < 3 }
+				AND = { ROOT = { has_tech = centimetric_radar } 			radar_station < 4 }
+				AND = { ROOT = { has_tech = improved_centimetric_radar } 	radar_station < 5 }
+			}
+
+			NOT = { 
+				any_country = { PREV = { has_state_flag = AC_construction_target_state_@PREV } } 
+			}
+		}
+	}
+
+	immediate = {
+		random_state = {
+			limit = {
+				CONTROLLER = {
+					NOT = { tag = ROOT }
+					OR = {
+						is_in_faction_with = ROOT
+						is_subject_of = ROOT
+						ROOT = { is_subject_of = PREV }
+					}
+					NOT = { has_country_flag = AC_refused_project }
+				}
+
+				AC_radar_location = yes
+
+				OR = {
+					AND = { ROOT = { has_tech = radio_detection } 				radar_station < 1 }
+					AND = { ROOT = { has_tech = decimetric_radar } 				radar_station < 2 }
+					AND = { ROOT = { has_tech = improved_decimetric_radar } 	radar_station < 3 }
+					AND = { ROOT = { has_tech = centimetric_radar } 			radar_station < 4 }
+					AND = { ROOT = { has_tech = improved_centimetric_radar } 	radar_station < 5 }
+				}
+
+				NOT = { 
+					any_country = { PREV = { has_state_flag = AC_construction_target_state_@PREV } } 
+				}
+			}
+
+			ROOT = {
+				set_variable = { AC_building_type_selected = 4 }
+
+				set_variable = { AC_political_power_cost_effect = -10 }
+
+				set_variable = { AC_political_power_cost = 10 }
+
+				set_variable = { AC_assigned_factories = num_of_civilian_factories_available_for_projects }
+
+				clamp_variable = { var = AC_assigned_factories min = 1 max = 15 }
+
+				set_variable = { AC_build_amount = 1 }
+			}
+
+			AC_start_project = yes
+		}
+	}
+
+	option = {}
+}
