@@ -93,13 +93,11 @@ AC_DECISIONS = {
 		}
 
 		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_state = {
-						has_state_flag = AC_construction_CIC_target_state_@ROOT
-					}
-				}
-			}
+			#hidden_trigger = {
+				#NOT = {
+				#	FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state_@ROOT } }
+				#}
+			#}
 		}
 
 		cost = 0
@@ -113,29 +111,19 @@ AC_DECISIONS = {
 		remove_effect = {
 			if = { # check state eligibility
 				limit = {
-					any_state = {
-						has_state_flag = AC_construction_CIC_target_state_@ROOT
-
-						CONTROLLER = {
-							OR = {
-								is_in_faction_with = ROOT
-								is_subject_of = ROOT
-								ROOT = { is_subject_of = PREV }
-								tag = event_target:AC_state_event_target
-							}
-						}
-					}
-
+					FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } } }
+					check_variable = { AC_active_project_building_type_6_@ROOT.ROOT = 1 }
 					#AC_building_slot_available = yes
 				}
-				
-				every_state = {
-					limit = { has_state_flag = AC_construction_CIC_target_state_@ROOT }
+				FROM = {
+					every_owned_state = {
+						limit = { has_state_flag = AC_construction_CIC_target_state_@ROOT }
 
-					AC_add_finished_building = yes
+						AC_add_finished_building = yes
+					}
 				}
 
-				hidden_effect = { # repeat until queue is finished
+				#hidden_effect = { # repeat until queue is finished
 					if = {
 						limit = {
 							check_variable = { AC_build_amount_queue > 1 }
@@ -171,7 +159,7 @@ AC_DECISIONS = {
 							AC_end_project = yes
 						}
 					}
-				}
+				#}
 			}
 			else = { # failure
 				hidden_effect = {
