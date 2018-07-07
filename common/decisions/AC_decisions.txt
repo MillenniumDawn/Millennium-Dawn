@@ -80,17 +80,22 @@ AC_DECISIONS = {
 		icon = GFX_decision_category_generic
 
 		highlight_states = {
+			is_owned_by = FROM
 			has_state_flag = AC_construction_CIC_target_state_@ROOT
+		}
+		target_trigger = {
+			exists = yes
+			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state_@ROOT } }
 		}
 
 		visible = {
-			has_decision = AC_construction_CICx1_decision
+			has_decision = AC_construction_CIC_decision
 		}
 
 		cancel_trigger = {
 			hidden_trigger = {
 				NOT = {
-					any_owned_state = {
+					any_state = {
 						has_state_flag = AC_construction_CIC_target_state_@ROOT
 					}
 				}
@@ -107,21 +112,21 @@ AC_DECISIONS = {
 
 		remove_effect = {
 			if = { # check state eligibility
-				limit = { 
-					any_owned_state = {
+				limit = {
+					any_state = {
 						has_state_flag = AC_construction_CIC_target_state_@ROOT
 
 						CONTROLLER = {
 							OR = {
-								# is_in_faction_with = ROOT
-								# is_subject_of = ROOT
-								# ROOT = { is_subject_of = PREV }
-								tag = ROOT
+								is_in_faction_with = ROOT
+								is_subject_of = ROOT
+								ROOT = { is_subject_of = PREV }
+								tag = event_target:AC_state_event_target
 							}
 						}
 					}
 
-					AC_building_slot_available = yes
+					#AC_building_slot_available = yes
 				}
 				
 				every_state = {
@@ -148,7 +153,7 @@ AC_DECISIONS = {
 
 						### reactivate project
 
-						activate_decision = AC_construction_CICx1_decision
+						activate_decision = AC_construction_CIC_decision
 
 						random_state = { # reactivate target project
 							limit = { has_state_flag = AC_construction_CIC_target_state_@ROOT }
