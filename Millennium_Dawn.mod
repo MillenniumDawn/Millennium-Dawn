@@ -7,7 +7,7 @@ tags={
 	"Graphics"
 }
 remote_file_id="1241177173"
-supported_version="1.5.3"
+supported_version="1.5.4"
 picture = "thumbnail.png"
 
 replace_path = "history/states"
@@ -16,6 +16,7 @@ replace_path = "history/countries"
 replace_path = "events"
 replace_path = "common/ai_strategy"
 replace_path = "common/ai_templates"
+replace_path = "common/ai_peace"
 replace_path = "common/wargoals"
 replace_path = "common/national_focus"
 replace_path = "common/countries"

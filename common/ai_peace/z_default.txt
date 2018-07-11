@@ -1,383 +1,172 @@
-# Default Logic behaviour that the AI will fallback on if no other fits the bill
-# Should just be "good enough" to make sure the AI acts smart in the war
-# Written by Henrik "Groogy" Hansson
+#Logic for peace AI
+#Written by Niko92
 
-#Adjustments
-#Default AI (ie neutral AI) will act like a mix between democratic and fascist, but in general way more conservative and mostly interested in obtaining cores and the status quo. If they have enough warscore, they will puppet/liberate neighbors as well.
-#Neutral AI in general do not directly annex other nations.
-#The plan is to eventually make individualized AI for every country in the game.
+#General rules
+#1. Always take cored and claimed states
+#2. Western and Emerging will liberate annexed countries of the same ideology
+#3. Puppet rest
+#(4. Special cases for islands to act as bases [Diego Garcia, Caribbean etc.])
+
+#Only factors are available, "add" doesn't work 
+#AI does option with the highest factor first
 
 default_peace = {
 	enable = {
 		always = yes
 	}
 
-	annex_randomness = 0 #350
-	liberate_randomness = 0 #100
-	puppet_randomness = 0 #200
-	take_states_randomness = 0 #150
-	force_government_randomness = 0 #50
+	annex_randomness = 0
+	liberate_randomness = 0
+	puppet_randomness = 0
+	take_states_randomness = 0
+	force_government_randomness = 0
 	
-	# ROOT = Taker, FROM = Giver
+	#Annex means annex a whole country - FROM is loser, ROOT is winner. This is poop, use take_states instead
 	annex = {
-		factor = 80
+		factor = 0
+	}
 
-		modifier = {
-			factor = 0
-			NOT = {
-				has_annex_war_goal = FROM
+	#ROOT = Taker, FROM = State
+	take_states = {
+		factor = 1
+		
+		modifier = {	#If not core/claim, don't take
+			factor = 5000
+			FROM = {
+				OR = {
+					is_claimed_by = ROOT
+					is_core_of = ROOT
+				}
+			}
+		}		
+		modifier = {	#Make Rojava get as much territory as possible in Syrian civil war
+			factor = 5000
+			ROOT = {
+				original_tag = ROJ
+			}
+			# FROM = {
+				# OR = {
+					# is_core_of = SYR
+					# is_core_of = NUS
+					# is_core_of = FSA
+				# }
+			# }
+		}
+		modifier = {	#Kurds always want to take lands from ISIS
+			factor = 5000
+			ROOT = {
+				OR = {
+					original_tag = ROJ
+					original_tag = KUR
+					original_tag = PKK
+				}
 			}
 			FROM = {
-				any_owned_state = {
-					NOT = {
-						OR = { 
-							is_claimed_by = ROOT
-							is_core_of = ROOT
-							has_claimed_state_in_peace_conference = ROOT
+				is_owned_by = ISI
+			}
+		}
+		modifier = {	#Have to have this because peace AI is garbage
+			factor = 0
+			NOT = {
+				FROM = { is_claimed_by = ROOT }
+				FROM = { is_core_of = ROOT }
+			}
+			NOT = {
+				AND = {
+					ROOT = {
+						original_tag = ROJ
+					}
+					FROM = {
+						OR = {
+							is_core_of = SYR
+							is_core_of = NUS
+							is_core_of = FSA
 						}
 					}
 				}
 			}
-			OR = {
-				NOT = {
-					has_annex_war_goal = FROM
+			NOT = {
+				AND = {
+					ROOT = {
+						OR = {
+							original_tag = ROJ
+							original_tag = KUR
+							original_tag = PKK
+						}
+					}
+					FROM = {
+						is_owned_by = ISI
+					}
 				}
-				NOT = {
-					is_owner_neighbor_of = FROM
-				}
-			}
-		}
-		
-		# Israel Palestine
-		modifier = {
-			factor = 1000
-			tag = PAL
-			PAL = { has_war_with = ISR }
-		}
-		modifier = {
-			factor = 1000
-            tag = HAM
-			HAM = { has_war_with = ISR }
-		}
-		modifier = {
-			factor = 1000
-			tag = ISR
-			LEB = { has_army_manpower = { size < 40001 } }
-			HEZ = { has_army_manpower = { size < 40001 } }
-			JOR = { has_army_manpower = { size < 40001 } }
-			SYR = { has_army_manpower = { size < 40001 } }
-			EGY = { has_army_manpower = { size < 40001 } }
-			PER = { has_army_manpower = { size < 40001 } }
-			SAU = { has_army_manpower = { size < 40001 } }
-			QAT = { has_army_manpower = { size < 40001 } }
-			UAE = { has_army_manpower = { size < 40001 } }
-			OR = {
-				ISR = { has_war_with = HAM }
-				ISR = { has_war_with = PAL }
-			}
-		}
-		modifier = {
-			factor = 0
-			tag = ISR
-			LEB = { has_army_manpower = { size > 40000 } }
-			HEZ = { has_army_manpower = { size > 40000 } }
-			JOR = { has_army_manpower = { size > 40000 } }
-			SYR = { has_army_manpower = { size > 40000 } }
-			EGY = { has_army_manpower = { size > 40000 } }
-			PER = { has_army_manpower = { size > 40000 } }
-			SAU = { has_army_manpower = { size > 40000 } }
-			QAT = { has_army_manpower = { size > 40000 } }
-			UAE = { has_army_manpower = { size > 40000 } }
-			OR = {
-				ISR = { has_war_with = HAM }
-				ISR = { has_war_with = PAL }
 			}
 		}
 	}
-
+	
 	# ROOT = Taker, FROM = Liberated
 	liberate = {
-		factor = 100 #100
-		modifier = {
+		factor = 1
+		modifier = {		#Western and Emerging will liberate annexed countries of same ideology
+			factor = 4000
+			OR = {
+				AND = {
+					ROOT = { has_government = democratic }
+					FROM = { has_government = democratic }
+				}
+				AND = {
+					ROOT = { has_government = communism }
+					FROM = { has_government = communism }
+				}
+			}
+		}
+		modifier = {	#Have to have this because peace AI is garbage
 			factor = 0
-	
 			NOT = {
-				ai_liberate_desire = {
-					target = FROM
-					value > 0
+				OR = {
+					AND = {
+						ROOT = { has_government = democratic }
+						FROM = { has_government = democratic }
+					}
+					AND = {
+						ROOT = { has_government = communism }
+						FROM = { has_government = communism }
+					}
 				}
 			}
 		}
 	}
 
-	# ROOT = Taker, FROM = Giver
+	#Makes country puppet - FROM is target, ROOT puppeter
 	puppet = {
-		factor = 0 #200
-		modifier = { #Don't puppet nations in civil war... this is too buggy.
+		factor = 3000
+		modifier = {	#Don't puppet nations in civil war... this is too buggy.
 			factor = 0
 			FROM = { has_civil_war = yes }
 		}
-		modifier = {
-			factor = 0.2 #Strip colonies/liberate first - important vs GER and JAP
-			FROM = {
-				any_owned_state = { NOT = { is_core_of = FROM } }
-			}
-		}
-		modifier = { #Not if we claim anything
+		modifier = {	#Don't puppet if target is super strong
 			factor = 0
 			FROM = {
-				any_owned_state = { 
-					is_claimed_by = ROOT
-					NOT = { has_claimed_state_in_peace_conference = ROOT }
+				ic_ratio = {
+					tag = ROOT
+					ratio > 2
 				}
 			}
 		}
-		
-		# Israel Palestine
-		modifier = {
+		modifier = {	#Don't puppet ISIS
 			factor = 0
-			tag = ISR
-			LEB = { has_army_manpower = { size > 40000 } }
-			HEZ = { has_army_manpower = { size > 40000 } }
-			JOR = { has_army_manpower = { size > 40000 } }
-			SYR = { has_army_manpower = { size > 40000 } }
-			EGY = { has_army_manpower = { size > 40000 } }
-			PER = { has_army_manpower = { size > 40000 } }
-			SAU = { has_army_manpower = { size > 40000 } }
-			QAT = { has_army_manpower = { size > 40000 } }
-			UAE = { has_army_manpower = { size > 40000 } }
-			OR = {
-				ISR = { has_war_with = HAM }
-				ISR = { has_war_with = PAL }
+			FROM = {
+				original_tag = ISI
 			}
 		}
 	}
 
-	# ROOT = Taker, FROM = State
-	take_states = {
-		factor = 500
-
-		modifier = {
-			factor = 0
-			FROM = {
-				NOT = {
-					OR = {
-						is_claimed_by = ROOT
-						is_core_of = ROOT
-					}
-				}
-			}
-			and = {
-				not = { tag = ROJ }
-				FROM = {
-					is_core_of = SYR	
-				}
-			}
-		}
-		modifier = { #Do not take human held lands...
-			factor = 0
-			NOT = { 
-				FROM = {				
-					OR = {
-						is_claimed_by = ROOT
-						is_core_of = ROOT
-					}
-				} 
-			}
-			FROM = {
-				controller = { 
-					is_ai = no 
-					has_capitulated = no 
-					is_puppet = no 
-				}
-			}
-		}
-		modifier = {
-			factor = 1.25
-
-			capital_scope = {
-				distance_to = {
-					target = FROM
-					value < 100
-				}
-			}
-		}
-
-		modifier = {
-			factor = 1.25
-
-			capital_scope = {
-				distance_to = {
-					target = FROM
-					value < 200
-				}
-			}
-		}
-
-		modifier = {
-			factor = 1.25
-
-			capital_scope = {
-				distance_to = {
-					target = FROM
-					value < 300
-				}
-			}
-		}
-
-		modifier = {
-			factor = 1.25
-
-			capital_scope = {
-				distance_to = {
-					target = FROM
-					value < 400
-				}
-			}
-		}
-
-		modifier = {
-			factor = 1.5
-			FROM = {
-				OR = {
-					num_owned_neighbour_states = {
-						count > 1
-						owner = ROOT
-					}
-					num_claimed_peace_conference_neighbour_states = {
-						count > 1
-						owner = ROOT
-					}
-				}
-			}
-		}
-
-		modifier = {
-			factor = 1.5
-			FROM = {
-				OR = {
-					num_owned_neighbour_states = {
-						count > 2
-						owner = ROOT
-					}
-					num_claimed_peace_conference_neighbour_states = {
-						count > 2
-						owner = ROOT
-					}
-				}
-			}
-		}
-
-		modifier = {
-			factor = 1.5
-			FROM = {
-				OR = {
-					num_owned_neighbour_states = {
-						count > 3
-						owner = ROOT
-					}
-					num_claimed_peace_conference_neighbour_states = {
-						count > 3
-						owner = ROOT
-					}
-				}
-			}
-		}
-
-		modifier = {
-			factor = 1.5
-			FROM = {
-				OR = {
-					num_owned_neighbour_states = {
-						count > 4
-						owner = ROOT
-					}
-					num_claimed_peace_conference_neighbour_states = {
-						count > 4
-						owner = ROOT
-					}
-				}
-			}
-		}
-
-		modifier = {
-			factor = 1.5
-			FROM = {
-				OR = {
-					num_owned_neighbour_states = {
-						count > 5
-						owner = ROOT
-					}
-					num_claimed_peace_conference_neighbour_states = {
-						count > 5
-						owner = ROOT
-					}
-				}
-			}
-		}
-
-		modifier = {
-			factor = 0		
-			NOT = { FROM = { is_claimed_by = ROOT } }
-			NOT = {
-				FROM = {
-					any_neighbor_state = {
-						OR = {
-							owner = { tag = ROOT }
-							has_claimed_state_in_peace_conference = ROOT
-						}
-					}
-				}
-			}
-			OR = {
-				NOT = {
-					FROM = { 
-						OR = {
-							is_island_state = yes
-							is_coastal = yes
-						}
-					}
-				}
-				NOT = { any_owned_state = { is_coastal = yes } }
-			}
-
-		}
-
-		modifier = { #Only take claimed/core land if a puppet.
-			factor = 0
-			is_puppet = yes
-			FROM = {
-				NOT = {
-					OR = { 
-						is_claimed_by = ROOT
-						is_core_of = ROOT
-					}
-				}
-			}
-		}
-		# Israel Palestine
-		modifier = {
-			factor = 0
-			tag = ISR
-			LEB = { has_army_manpower = { size > 40000 } }
-			HEZ = { has_army_manpower = { size > 40000 } }
-			JOR = { has_army_manpower = { size > 40000 } }
-			SYR = { has_army_manpower = { size > 40000 } }
-			EGY = { has_army_manpower = { size > 40000 } }
-			PER = { has_army_manpower = { size > 40000 } }
-			SAU = { has_army_manpower = { size > 40000 } }
-			QAT = { has_army_manpower = { size > 40000 } }
-			UAE = { has_army_manpower = { size > 40000 } }
-			OR = {
-				ISR = { has_war_with = HAM }
-				ISR = { has_war_with = PAL }
-			}
-		}
-		
-	}
-
-	# ROOT = Taker, FROM = Giver
+	#Changes ideology of target - FROM is target, ROOT winner
 	force_government = {
-		factor = 90 #10 - neutrals should never do this
+		factor = 2000
+		modifier = {	#Don't do this to ISIS
+			factor = 0
+			FROM = {
+				original_tag = ISI
+			}
+		}
 	}
 }
