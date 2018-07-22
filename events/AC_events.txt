@@ -23,9 +23,6 @@ country_event = {
 		hidden_effect = {
 			FROM = {
 				### activate project
-				clr_country_flag = AC_requesting_permission
-
-				set_country_flag = AC_construction_project_active
 				if = {
 					limit = { 
 						check_variable = { AC_building_type_selected = 6 } 
@@ -34,53 +31,48 @@ country_event = {
 						limit = {
 							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state1_@FROM }
 						}
-						activate_decision = AC_construction_CIC_decision1
+						activate_targeted_decision = { target = PREV decision = AC_construction_CIC_decision1 }
+						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_decision1 } }
 					}
 					else_if = {
 						limit = {
 							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state2_@FROM }
 						}
-						activate_decision = AC_construction_CIC_decision2
+						activate_targeted_decision = { target = PREV decision = AC_construction_CIC_decision2 }
+						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_decision2 } }
 					}
 					else_if = {
 						limit = {
 							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state3_@FROM }
 						}
-						activate_decision = AC_construction_CIC_decision3
+						activate_targeted_decision = { target = PREV decision = AC_construction_CIC_decision3 }
+						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_decision3 } }
 						
 					}
 					else_if = {
 						limit = {
 							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state4_@FROM }
 						}
-						activate_decision = AC_construction_CIC_decision4
+						activate_targeted_decision = { target = PREV decision = AC_construction_CIC_decision4 }
+						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_decision4 } }
 						
 					}
 					else_if = {
 						limit = {
 							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state5_@FROM }
 						}
-						activate_decision = AC_construction_CIC_decision5
+						activate_targeted_decision = { target = PREV decision = AC_construction_CIC_decision5 }
+						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_decision5 } }
 						
 					}
 					
 					
 				}
-				
-				### political power cost
-
-				#add_political_power = AC_political_power_cost_effect
-
+				PREV = { clr_state_flag = Investment_pause_@FROM }
 				### reset selected build ammount
-
 				set_variable = { AC_build_amount = 1 }
 			}
-
-			### show construction project for target
 			
-			set_variable = { AC_target_construction_duration = From.AC_construction_duration }
-
-			activate_targeted_decision = { target = CONTROLLER decision = AC_construction_target_decision }
 		}
 	}
 
@@ -93,21 +85,11 @@ country_event = {
 		}
 
 		hidden_effect = {
+			event_target:AC_state_event_target = { AC_clear_state_flag = yes }
+			clr_state_flag = Investment_pause_@FROM
 			FROM = {
-				clr_country_flag = AC_requesting_permission
-
-				clear_variable = AC_active_project_building_type_@PREV
-
-				event_target:AC_state_event_target = {
-					clr_state_flag = AC_construction_target_state_@FROM
-				}
-
-				clear_variable = AC_build_amount_queue
-
-				clear_variable = AC_active_project_building_type_@PREV
-
-				set_country_flag = { flag = AC_refused_project_@FROM days = 60 value = 1 }
-
+				set_variable = { AC_build_amount = 1 }
+				#clear_variable = AC_build_amount
 				country_event = AC_event.2
 			}
 		}

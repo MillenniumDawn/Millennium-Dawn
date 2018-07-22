@@ -78,110 +78,55 @@ AC_DECISIONS = {
 
 	AC_construction_CIC_decision1 = { #civilian factories
 		icon = GFX_decision_category_generic
-
+		
+		allowed = { FROM = { not = { tag = ROOT } } }
+		
 		highlight_states = {
 			is_owned_by = FROM
 			has_state_flag = AC_construction_CIC_target_state1_@ROOT
 		}
-		target_trigger = {
-			exists = yes
-			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state1_@ROOT } }
+		available = {
+			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state1_@ROOT } } }
+			hidden_trigger = { FROM = { not = { tag = ROOT } } }
 		}
 
 		visible = {
-			has_decision = AC_construction_CIC_decision1
+			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state1_@ROOT } }
+			FROM = { not = { tag = ROOT } }
 		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					FROM = { not = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state1_@ROOT } } }
-				}
-			}
-		}
-
+		
 		cost = 0
-
-		days_remove = AC_construction_duration
-
+		
+		Is_good = yes
+		days_mission_timeout = AC_construction_duration
+		days_remove = 3
+		cancel_if_not_visible = yes
+		
 		modifier = {
 			#civilian_factory_use = 1
 		}
-
-		remove_effect = {
+		
+		timeout_effect = {
 			if = { # check state eligibility
 				limit = {
 					FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state1_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } } }
-					#check_variable = { AC_active_project_building_type_6_@ROOT.ROOT = 1 }
 					#AC_building_slot_available = yes
 				}
 				FROM = {
 					random_owned_state = {
 						limit = { has_state_flag = AC_construction_CIC_target_state1_@ROOT }
 
-						add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+						AC_add_CIC_building = yes
 						save_event_target_as = AC_state_event_target
+						clr_state_flag = AC_construction_CIC_target_state1_@ROOT
+						set_variable = { AC_build_amount = 1 }
 					}
 				}
-
-				#hidden_effect = { # repeat until queue is finished
-					if = {
-						limit = {
-							check_variable = { AC_build_amount_queue > 1 }
-							
-							FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state1_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } } }
-						}
-
-						### reduce queue
-
-						add_to_variable = { AC_build_amount_queue = -1 }
-						
-						### recalculate building speed
-
-						AC_recalculate_CIC_construction_duration = yes
-
-						### reactivate project
-
-						activate_decision = AC_construction_CIC_decision1
-						FROM = {
-							random_owned_state = { # reactivate target project
-								limit = { has_state_flag = AC_construction_CIC_target_state1_@ROOT }
-
-								CONTROLLER = {
-									set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
-
-									remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision3 }
-
-									activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision3 }
-								}
-							}
-						}
-
-						else = {
-							FROM = {
-								random_owned_state = {
-									limit = { has_state_flag = AC_construction_CIC_target_state1_@ROOT }
-
-									clr_state_flag = AC_construction_CIC_target_state1_@ROOT
-									clear_variable = AC_build_amount_queue
-								}
-								country_event = { id = AC_event.3 }
-							}
-						}
-					}
-				#}
-			}
-			else = { # failure
-				hidden_effect = {
-					FROM = {
-						random_owned_state = {
-							limit = { has_state_flag = AC_construction_CIC_target_state1_@ROOT }
-
-							clr_state_flag = AC_construction_CIC_target_state1_@ROOT
-							clear_variable = AC_build_amount_queue
-						}
-					}
+				hidden_effect = { 
+					remove_targeted_decision = { target = FROM decision = AC_construction_CIC_decision1 }
+					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision1 } }
 				}
+				
 			}
 		}
 
@@ -191,110 +136,54 @@ AC_DECISIONS = {
 	}
 	AC_construction_CIC_decision2 = { #civilian factories
 		icon = GFX_decision_category_generic
-
+		
+		allowed = { FROM = { not = { tag = ROOT } } }
+		
 		highlight_states = {
 			is_owned_by = FROM
 			has_state_flag = AC_construction_CIC_target_state2_@ROOT
 		}
-		target_trigger = {
-			exists = yes
-			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state2_@ROOT } }
+		available = {
+			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state2_@ROOT } } }
+			hidden_trigger = { FROM = { not = { tag = ROOT } } }
 		}
 
 		visible = {
-			has_decision = AC_construction_CIC_decision2
+			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state2_@ROOT } }
+			FROM = { not = { tag = ROOT } }
 		}
-
-		cancel_trigger = {
-			#hidden_trigger = {
-				#NOT = {
-				#	FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state1_@ROOT } }
-				#}
-			#}
-		}
-
+		
 		cost = 0
-
-		days_remove = AC_construction_duration
-
-		modifier = {
-			#civilian_factory_use = 1
-		}
-
-		remove_effect = {
+		
+		Is_good = yes
+		days_mission_timeout = AC_construction_duration
+		days_remove = 3
+		cancel_if_not_visible = yes
+		
+		
+		
+		timeout_effect = {
 			if = { # check state eligibility
 				limit = {
 					FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state2_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } } }
-					#check_variable = { AC_active_project_building_type_6_@ROOT.ROOT = 1 }
+					
 					#AC_building_slot_available = yes
 				}
 				FROM = {
 					random_owned_state = {
 						limit = { has_state_flag = AC_construction_CIC_target_state2_@ROOT }
 
-						add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+						AC_add_CIC_building = yes
 						save_event_target_as = AC_state_event_target
+						clr_state_flag = AC_construction_CIC_target_state2_@ROOT
+						set_variable = { AC_build_amount = 1 }
 					}
 				}
-
-				#hidden_effect = { # repeat until queue is finished
-					if = {
-						limit = {
-							check_variable = { AC_build_amount_queue > 1 }
-							
-							FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state2_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } } }
-						}
-
-						### reduce queue
-
-						add_to_variable = { AC_build_amount_queue = -1 }
-						
-						### recalculate building speed
-
-						AC_recalculate_CIC_construction_duration = yes
-
-						### reactivate project
-
-						activate_decision = AC_construction_CIC_decision2
-						FROM = {
-							random_owned_state = { # reactivate target project
-								limit = { has_state_flag = AC_construction_CIC_target_state2_@ROOT }
-
-								CONTROLLER = {
-									set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
-
-									remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision2 }
-
-									activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision2 }
-								}
-							}
-						}
-
-						else = {
-							FROM = {
-								random_owned_state = {
-									limit = { has_state_flag = AC_construction_CIC_target_state2_@ROOT }
-
-									clr_state_flag = AC_construction_CIC_target_state2_@ROOT
-									clear_variable = AC_build_amount_queue
-								}
-								country_event = { id = AC_event.3 }
-							}
-						}
-					}
-				#}
-			}
-			else = { # failure
-				hidden_effect = {
-					FROM = {
-						random_owned_state = {
-							limit = { has_state_flag = AC_construction_CIC_target_state2_@ROOT }
-
-							clr_state_flag = AC_construction_CIC_target_state2_@ROOT
-							clear_variable = AC_build_amount_queue
-						}
-					}
+				hidden_effect = { 
+					remove_targeted_decision = { target = FROM decision = AC_construction_CIC_decision2 }
+					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision2 } }
 				}
+				
 			}
 		}
 
@@ -304,110 +193,53 @@ AC_DECISIONS = {
 	}
 	AC_construction_CIC_decision3 = { #civilian factories
 		icon = GFX_decision_category_generic
-
+		
+		allowed = { FROM = { not = { tag = ROOT } } }
+		
 		highlight_states = {
 			is_owned_by = FROM
 			has_state_flag = AC_construction_CIC_target_state3_@ROOT
 		}
-		target_trigger = {
-			exists = yes
-			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state3_@ROOT } }
+		available = {
+			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state3_@ROOT } } }
+			hidden_trigger = { FROM = { not = { tag = ROOT } } }
 		}
 
 		visible = {
-			has_decision = AC_construction_CIC_decision3
+			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state3_@ROOT } }
+			FROM = { not = { tag = ROOT } }
 		}
-
-		cancel_trigger = {
-			#hidden_trigger = {
-				#NOT = {
-				#	FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state3_@ROOT } }
-				#}
-			#}
-		}
-
+		
 		cost = 0
-
-		days_remove = AC_construction_duration
-
-		modifier = {
-			#civilian_factory_use = 1
-		}
-
-		remove_effect = {
+		
+		Is_good = yes
+		days_mission_timeout = AC_construction_duration
+		days_remove = 3
+		cancel_if_not_visible = yes
+		
+		
+		
+		timeout_effect = {
 			if = { # check state eligibility
 				limit = {
 					FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state3_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } } }
-					#check_variable = { AC_active_project_building_type_6_@ROOT.ROOT = 1 }
 					#AC_building_slot_available = yes
 				}
 				FROM = {
 					random_owned_state = {
 						limit = { has_state_flag = AC_construction_CIC_target_state3_@ROOT }
 
-						add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+						AC_add_CIC_building = yes
 						save_event_target_as = AC_state_event_target
+						clr_state_flag = AC_construction_CIC_target_state3_@ROOT
+						set_variable = { AC_build_amount = 1 }
 					}
 				}
-
-				#hidden_effect = { # repeat until queue is finished
-					if = {
-						limit = {
-							check_variable = { AC_build_amount_queue > 1 }
-							
-							FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state3_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } } }
-						}
-
-						### reduce queue
-
-						add_to_variable = { AC_build_amount_queue = -1 }
-						
-						### recalculate building speed
-
-						AC_recalculate_CIC_construction_duration = yes
-
-						### reactivate project
-
-						activate_decision = AC_construction_CIC_decision3
-						FROM = {
-							random_owned_state = { # reactivate target project
-								limit = { has_state_flag = AC_construction_CIC_target_state3_@ROOT }
-
-								CONTROLLER = {
-									set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
-
-									remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision3 }
-
-									activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision3 }
-								}
-							}
-						}
-
-						else = {
-							FROM = {
-								random_owned_state = {
-									limit = { has_state_flag = AC_construction_CIC_target_state3_@ROOT }
-
-									clr_state_flag = AC_construction_CIC_target_state3_@ROOT
-									clear_variable = AC_build_amount_queue
-								}
-								country_event = { id = AC_event.3 }
-							}
-						}
-					}
-				#}
-			}
-			else = { # failure
-				hidden_effect = {
-					FROM = {
-						random_owned_state = {
-							limit = { has_state_flag = AC_construction_CIC_target_state3_@ROOT }
-
-							clr_state_flag = AC_construction_CIC_target_state3_@ROOT
-							clear_variable = AC_build_amount_queue
-						}
-					}
+				hidden_effect = { 
+					remove_targeted_decision = { target = FROM decision = AC_construction_CIC_decision3 }
+					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision3 } }
 				}
+				
 			}
 		}
 
@@ -417,110 +249,53 @@ AC_DECISIONS = {
 	}
 	AC_construction_CIC_decision4 = { #civilian factories
 		icon = GFX_decision_category_generic
-
+		
+		allowed = { FROM = { not = { tag = ROOT } } }
+		
 		highlight_states = {
 			is_owned_by = FROM
 			has_state_flag = AC_construction_CIC_target_state4_@ROOT
 		}
-		target_trigger = {
-			exists = yes
-			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state4_@ROOT } }
+		available = {
+			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state4_@ROOT } } }
+			hidden_trigger = { FROM = { not = { tag = ROOT } } }
 		}
 
 		visible = {
-			has_decision = AC_construction_CIC_decision4
+			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state4_@ROOT } }
+			FROM = { not = { tag = ROOT } }
 		}
-
-		cancel_trigger = {
-			#hidden_trigger = {
-				#NOT = {
-				#	FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state4_@ROOT } }
-				#}
-			#}
-		}
-
+		
 		cost = 0
-
-		days_remove = AC_construction_duration
-
-		modifier = {
-			#civilian_factory_use = 1
-		}
-
-		remove_effect = {
+		
+		Is_good = yes
+		days_mission_timeout = AC_construction_duration
+		days_remove = 4
+		cancel_if_not_visible = yes
+		
+		
+		
+		timeout_effect = {
 			if = { # check state eligibility
 				limit = {
 					FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state4_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } } }
-					#check_variable = { AC_active_project_building_type_6_@ROOT.ROOT = 1 }
 					#AC_building_slot_available = yes
 				}
 				FROM = {
 					random_owned_state = {
 						limit = { has_state_flag = AC_construction_CIC_target_state4_@ROOT }
 
-						add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+						AC_add_CIC_building = yes
 						save_event_target_as = AC_state_event_target
+						clr_state_flag = AC_construction_CIC_target_state4_@ROOT
+						set_variable = { AC_build_amount = 1 }
 					}
 				}
-
-				#hidden_effect = { # repeat until queue is finished
-					if = {
-						limit = {
-							check_variable = { AC_build_amount_queue > 1 }
-							
-							FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state4_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } } }
-						}
-
-						### reduce queue
-
-						add_to_variable = { AC_build_amount_queue = -1 }
-						
-						### recalculate building speed
-
-						AC_recalculate_CIC_construction_duration = yes
-
-						### reactivate project
-
-						activate_decision = AC_construction_CIC_decision4
-						FROM = {
-							random_owned_state = { # reactivate target project
-								limit = { has_state_flag = AC_construction_CIC_target_state4_@ROOT }
-
-								CONTROLLER = {
-									set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
-
-									remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision4 }
-
-									activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision4 }
-								}
-							}
-						}
-
-						else = {
-							FROM = {
-								random_owned_state = {
-									limit = { has_state_flag = AC_construction_CIC_target_state4_@ROOT }
-
-									clr_state_flag = AC_construction_CIC_target_state4_@ROOT
-									clear_variable = AC_build_amount_queue
-								}
-								country_event = { id = AC_event.3 }
-							}
-						}
-					}
-				#}
-			}
-			else = { # failure
-				hidden_effect = {
-					FROM = {
-						random_owned_state = {
-							limit = { has_state_flag = AC_construction_CIC_target_state4_@ROOT }
-
-							clr_state_flag = AC_construction_CIC_target_state4_@ROOT
-							clear_variable = AC_build_amount_queue
-						}
-					}
+				hidden_effect = { 
+					remove_targeted_decision = { target = FROM decision = AC_construction_CIC_decision4 }
+					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision4 } }
 				}
+				
 			}
 		}
 
@@ -530,110 +305,53 @@ AC_DECISIONS = {
 	}
 	AC_construction_CIC_decision5 = { #civilian factories
 		icon = GFX_decision_category_generic
-
+		
+		allowed = { FROM = { not = { tag = ROOT } } }
+		
 		highlight_states = {
 			is_owned_by = FROM
 			has_state_flag = AC_construction_CIC_target_state5_@ROOT
 		}
-		target_trigger = {
-			exists = yes
-			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state5_@ROOT } }
+		available = {
+			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state5_@ROOT } } }
+			hidden_trigger = { FROM = { not = { tag = ROOT } } }
 		}
 
 		visible = {
-			has_decision = AC_construction_CIC_decision5
+			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state5_@ROOT } }
+			FROM = { not = { tag = ROOT } }
 		}
-
-		cancel_trigger = {
-			#hidden_trigger = {
-				#NOT = {
-				#	FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state5_@ROOT } }
-				#}
-			#}
-		}
-
+		
 		cost = 0
-
-		days_remove = AC_construction_duration
-
-		modifier = {
-			#civilian_factory_use = 1
-		}
-
-		remove_effect = {
+		
+		Is_good = yes
+		days_mission_timeout = AC_construction_duration
+		days_remove = 5
+		cancel_if_not_visible = yes
+		
+		
+		
+		timeout_effect = {
 			if = { # check state eligibility
 				limit = {
 					FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state5_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } } }
-					#check_variable = { AC_active_project_building_type_6_@ROOT.ROOT = 1 }
 					#AC_building_slot_available = yes
 				}
 				FROM = {
 					random_owned_state = {
 						limit = { has_state_flag = AC_construction_CIC_target_state5_@ROOT }
 
-						add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+						AC_add_CIC_building = yes
 						save_event_target_as = AC_state_event_target
+						clr_state_flag = AC_construction_CIC_target_state5_@ROOT
+						set_variable = { AC_build_amount = 1 }
 					}
 				}
-
-				#hidden_effect = { # repeat until queue is finished
-					if = {
-						limit = {
-							check_variable = { AC_build_amount_queue > 1 }
-							
-							FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state5_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } } }
-						}
-
-						### reduce queue
-
-						add_to_variable = { AC_build_amount_queue = -1 }
-						
-						### recalculate building speed
-
-						AC_recalculate_CIC_construction_duration = yes
-
-						### reactivate project
-
-						activate_decision = AC_construction_CIC_decision5
-						FROM = {
-							random_owned_state = { # reactivate target project
-								limit = { has_state_flag = AC_construction_CIC_target_state5_@ROOT }
-
-								CONTROLLER = {
-									set_variable = { AC_target_construction_duration = Root.AC_construction_duration }
-
-									remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision5 }
-
-									activate_targeted_decision = { target = ROOT decision = AC_construction_target_decision5 }
-								}
-							}
-						}
-
-						else = {
-							FROM = {
-								random_owned_state = {
-									limit = { has_state_flag = AC_construction_CIC_target_state5_@ROOT }
-
-									clr_state_flag = AC_construction_CIC_target_state5_@ROOT
-									clear_variable = AC_build_amount_queue
-								}
-								country_event = { id = AC_event.3 }
-							}
-						}
-					}
-				#}
-			}
-			else = { # failure
-				hidden_effect = {
-					FROM = {
-						random_owned_state = {
-							limit = { has_state_flag = AC_construction_CIC_target_state5_@ROOT }
-
-							clr_state_flag = AC_construction_CIC_target_state5_@ROOT
-							clear_variable = AC_build_amount_queue
-						}
-					}
+				hidden_effect = { 
+					remove_targeted_decision = { target = FROM decision = AC_construction_CIC_decision5 }
+					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_decision5 } }
 				}
+				
 			}
 		}
 
@@ -641,8 +359,6 @@ AC_DECISIONS = {
 			factor = 0
 		}
 	}
-	
-	
 }
 
 AC_target_country_DECISIONS = {
@@ -677,8 +393,9 @@ AC_target_country_DECISIONS = {
 		selectable_mission = yes
 
 		days_mission_timeout = AC_target_construction_duration
+		days_remove = 3
 
-		cost = 10
+		cost = 0
 
 		remove_effect = {
 
@@ -689,21 +406,21 @@ AC_target_country_DECISIONS = {
 		}
 
 		complete_effect = { # cancel
-			remove_targeted_decision = { target = FROM decision = AC_construction_target_decision1 }
-
+			custom_effect_tooltip = AC_cancel_investment_tt
+			random_owned_state = {
+				limit = { has_state_flag = AC_construction_CIC_target_state1_@FROM }
+				
+				effect_tooltip = { AC_add_CIC_building2 = yes }
+				clr_state_flag = AC_construction_CIC_target_state1_@FROM
+			}
+			hidden_effect = {
+				remove_targeted_decision = { target = FROM decision = AC_construction_target_decision1 }
+				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_CIC_decision1 } }
+			}
 			FROM = {
 				hidden_effect = {
 					country_event = AC_event.3
-
-					every_state = {
-						limit = { has_state_flag = AC_construction_CIC_target_state1_@PREV }
-
-						clr_state_flag = AC_construction_CIC_target_state1_@PREV
-					}
-
-					clear_variable = AC_build_amount_queue
-
-					clear_variable = AC_active_project_building_type_@PREV
+					set_variable = { AC_build_amount = 1 }
 				}
 			}
 		}
@@ -723,7 +440,7 @@ AC_target_country_DECISIONS = {
 		cancel_trigger = {
 			hidden_trigger = {
 				NOT = {
-					any_state = {
+					any_owned_state = {
 						is_controlled_by = ROOT
 					
 						has_state_flag = AC_construction_CIC_target_state2_@FROM
@@ -742,8 +459,9 @@ AC_target_country_DECISIONS = {
 		selectable_mission = yes
 
 		days_mission_timeout = AC_target_construction_duration
+		days_remove = 3
 
-		cost = 10
+		cost = 0
 
 		remove_effect = {
 
@@ -754,23 +472,21 @@ AC_target_country_DECISIONS = {
 		}
 
 		complete_effect = { # cancel
-			remove_targeted_decision = { target = FROM decision = AC_construction_target_decision2 }
-
+			custom_effect_tooltip = AC_cancel_investment_tt
+			random_owned_state = {
+				limit = { has_state_flag = AC_construction_CIC_target_state2_@FROM }
+				
+				effect_tooltip = { AC_add_CIC_building2 = yes }
+				clr_state_flag = AC_construction_CIC_target_state2_@FROM
+			}
+			hidden_effect = {
+				remove_targeted_decision = { target = FROM decision = AC_construction_target_decision2 }
+				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_CIC_decision2 } }
+			}
 			FROM = {
 				hidden_effect = {
 					country_event = AC_event.3
-
-					add_political_power = AC_political_power_cost
-
-					every_state = {
-						limit = { has_state_flag = AC_construction_CIC_target_state2_@PREV }
-
-						clr_state_flag = AC_construction_CIC_target_state2_@PREV
-					}
-
-					clear_variable = AC_build_amount_queue
-
-					clear_variable = AC_active_project_building_type_@PREV
+					set_variable = { AC_build_amount = 1 }
 				}
 			}
 		}
@@ -779,4 +495,203 @@ AC_target_country_DECISIONS = {
 			factor = 0
 		}
 	}
+	AC_construction_target_decision3 = {
+
+		allowed = { always = no }
+
+		available = {
+			
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_owned_state = {
+						is_controlled_by = ROOT
+					
+						has_state_flag = AC_construction_CIC_target_state3_@FROM
+					}
+				}
+			}
+		}
+
+		highlight_states = {
+			is_controlled_by = ROOT
+			has_state_flag = AC_construction_CIC_target_state3_@FROM
+		}
+
+		is_good = yes
+
+		selectable_mission = yes
+
+		days_mission_timeout = AC_target_construction_duration
+		days_remove = 3
+
+		cost = 0
+
+		remove_effect = {
+
+		}
+
+		timeout_effect = {
+
+		}
+
+		complete_effect = { # cancel
+			custom_effect_tooltip = AC_cancel_investment_tt
+			random_owned_state = {
+				limit = { has_state_flag = AC_construction_CIC_target_state3_@FROM }
+				
+				effect_tooltip = { AC_add_CIC_building2 = yes }
+				clr_state_flag = AC_construction_CIC_target_state3_@FROM
+			}
+			hidden_effect = {
+				remove_targeted_decision = { target = FROM decision = AC_construction_target_decision3 }
+				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_CIC_decision3 } }
+			}
+			FROM = {
+				hidden_effect = {
+					country_event = AC_event.3
+					set_variable = { AC_build_amount = 1 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	AC_construction_target_decision4 = {
+
+		allowed = { always = no }
+
+		available = {
+			
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_owned_state = {
+						is_controlled_by = ROOT
+					
+						has_state_flag = AC_construction_CIC_target_state4_@FROM
+					}
+				}
+			}
+		}
+
+		highlight_states = {
+			is_controlled_by = ROOT
+			has_state_flag = AC_construction_CIC_target_state4_@FROM
+		}
+
+		is_good = yes
+
+		selectable_mission = yes
+
+		days_mission_timeout = AC_target_construction_duration
+		days_remove = 3
+
+		cost = 0
+
+		remove_effect = {
+
+		}
+
+		timeout_effect = {
+
+		}
+
+		complete_effect = { # cancel
+			custom_effect_tooltip = AC_cancel_investment_tt
+			random_owned_state = {
+				limit = { has_state_flag = AC_construction_CIC_target_state4_@FROM }
+				
+				effect_tooltip = { AC_add_CIC_building2 = yes }
+				clr_state_flag = AC_construction_CIC_target_state3_@FROM
+			}
+			hidden_effect = {
+				remove_targeted_decision = { target = FROM decision = AC_construction_target_decision4 }
+				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_CIC_decision4 } }
+			}
+			FROM = {
+				hidden_effect = {
+					country_event = AC_event.3
+					set_variable = { AC_build_amount = 1 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	AC_construction_target_decision5 = {
+
+		allowed = { always = no }
+
+		available = {
+			
+		}
+
+		cancel_trigger = {
+			hidden_trigger = {
+				NOT = {
+					any_owned_state = {
+						is_controlled_by = ROOT
+					
+						has_state_flag = AC_construction_CIC_target_state5_@FROM
+					}
+				}
+			}
+		}
+
+		highlight_states = {
+			is_controlled_by = ROOT
+			has_state_flag = AC_construction_CIC_target_state5_@FROM
+		}
+
+		is_good = yes
+
+		selectable_mission = yes
+
+		days_mission_timeout = AC_target_construction_duration
+		days_remove = 3
+
+		cost = 0
+
+		remove_effect = {
+
+		}
+
+		timeout_effect = {
+
+		}
+
+		complete_effect = { # cancel
+			custom_effect_tooltip = AC_cancel_investment_tt
+			random_owned_state = {
+				limit = { has_state_flag = AC_construction_CIC_target_state5_@FROM }
+				
+				effect_tooltip = { AC_add_CIC_building2 = yes }
+				clr_state_flag = AC_construction_CIC_target_state3_@FROM
+			}
+			hidden_effect = {
+				remove_targeted_decision = { target = FROM decision = AC_construction_target_decision5 }
+				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_CIC_decision5 } }
+			}
+			FROM = {
+				hidden_effect = {
+					country_event = AC_event.3
+					set_variable = { AC_build_amount = 1 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	
 }
