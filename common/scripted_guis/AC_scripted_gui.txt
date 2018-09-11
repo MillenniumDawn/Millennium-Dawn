@@ -22,14 +22,7 @@ scripted_gui = {
 		parent_window_token = selected_state_view
 
 		visible = {
-			CONTROLLER = {
-				NOT = { tag = ROOT }
-				# OR = {
-					# is_in_faction_with = ROOT
-					# is_subject_of = ROOT
-					# ROOT = { is_subject_of = PREV }
-				# }
-			}
+			NOT = { is_owned_by = ROOT }
 		}
 
 		properties = {
@@ -72,7 +65,7 @@ scripted_gui = {
 					limit = {  ROOT = { AC_project_type_not_active = yes } }
 
 					AC_start_project = yes
-					set_variable = { test = 1 }
+					
 				}
 				else = {
 					ROOT = { AC_end_project = yes }
@@ -216,6 +209,12 @@ scripted_gui = {
 					set_variable = { AC_building_type_selected = 1 }
 					AC_update_build_cost = yes
 				}
+				if = {
+					limit = {  ROOT = { is_ai = yes AC_project_type_not_active = yes } }
+
+					AC_start_project = yes
+					
+				}
 			}
 
 			AC_building_airbase_button_click = {
@@ -257,6 +256,12 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { AC_building_type_selected = 6 }
 					AC_update_build_cost = yes
+				}
+				if = {
+					limit = {  ROOT = { is_ai = yes AC_project_type_not_active = yes } }
+
+					AC_start_project = yes
+					
 				}
 			}
 
@@ -358,8 +363,15 @@ scripted_gui = {
 
 			AC_building_infra_button_click_enabled = {
 				AC_building_infra_available = yes
-				ROOT = {
-					#AC_has_INF_state_flag = yes
+				if = {
+					limit = { ROOT = { is_ai = yes } }
+					
+					not = { has_state_flag = Investment_pause_@ROOT }
+					if = {
+						limit = { AC_project_type_not_active2 = yes }
+						CONTROLLER = { not = { AC_has_max_investments = yes } }
+						ROOT = { check_variable = { treasury > AC_build_cost } }
+					}
 				}
 			}
 
@@ -379,30 +391,27 @@ scripted_gui = {
 
 			AC_building_radar_button_click_enabled = {
 				AC_building_radar_available = yes
-				ROOT = {
-					#AC_has_RAD_state_flag = yes
-				}
 			}
 
 			######### SHARED BUILDINGS
 
 			AC_building_mic_button_click_enabled = {
-				
 				AC_building_mic_available = yes
-				
-				ROOT = {
-					#AC_has_MIC_state_flag = yes
-				}
 			}
 
 			AC_building_cic_button_click_enabled = {
-				
 				AC_building_cic_available = yes
-				############################THIS IS HOW IT NEEDS TO BE DONE FOR THE REST##############
-				ROOT = {
-					#AC_has_CIC_state_flag = yes
+				if = {
+					limit = { ROOT = { is_ai = yes } }
 					
+					not = { has_state_flag = Investment_pause_@ROOT }
+					if = {
+						limit = { AC_project_type_not_active2 = yes }
+						CONTROLLER = { not = { AC_has_max_investments = yes } }
+						ROOT = { check_variable = { treasury > AC_build_cost } }
+					}
 				}
+				
 			}
 
 			AC_building_nic_button_click_enabled = {
@@ -419,5 +428,47 @@ scripted_gui = {
 				}
 			}
 		}
+		ai_enabled = {
+            always = yes
+        }
+		
+		ai_check = {
+			ROOT = { check_variable = { treasury > 150 } }
+		}
+		
+		ai_test_scopes = test_neighbouring_states
+		ai_test_scopes = test_neighbouring_ally_states
+		ai_test_scopes = test_ally_owned_states
+		ai_test_scopes = test_our_neighbouring_states
+		ai_test_scopes = test_our_neighbouring_states_against_allies
+		
+		ai_check_scope = {
+			# ROOT = {
+				# has_opinion = { target = PREV value > 10 }
+			# }
+		}
+		
+		ai_test_parent = ""
+		
+		ai_test_interval = 120
+		ai_test_variance = 0.1
+		ai_max_weight_taken_per_test = 1
+		
+		ai_weights = {
+			AC_building_cic_button_click = {
+				weight = 1
+				ai_will_do = {
+					factor = 999
+				}
+			}
+			AC_building_infra_button_click = {
+				weight = 1
+				ai_will_do = {
+					factor = 999
+				}
+			}
+			
+		}
+		
 	}
 }
