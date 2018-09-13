@@ -1,0 +1,208 @@
+﻿add_namespace = Liberia
+add_namespace = LiberiaNews
+
+### Liberian civil war cleanup events ###
+
+#Give the winner LIB cosmetic tag
+country_event = {
+	id = Liberia.0
+	
+	hidden = yes
+	
+	trigger = {
+		OR = {
+			AND = {
+				tag = LIB
+				NOT = {	country_exists = LUR }
+			}
+			AND = {
+				tag = LUR
+				NOT = {	country_exists = LIB }
+			}
+		}
+		NOT = { has_global_flag = Liberia_Civil_War_Over }
+	}
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+	
+	immediate = {
+		#Civil war is over
+		set_global_flag = Liberia_Civil_War_Over
+		#Clear core status
+		356 = {
+			remove_core_of = LUR
+			remove_core_of = LIB
+		}
+		355 = {
+			remove_core_of = LIB
+			remove_core_of = LUR
+		}
+		#Make the winner Liberia
+		random_country = {
+			limit = {
+				tag = LUR
+			}
+			set_cosmetic_tag = LIB
+		}
+		add_state_core = 356
+		add_state_core = 355
+		set_capital = 356
+	}
+	
+	option = {
+		name = Liberia.0.a
+		hidden_effect = { news_event = { id = LiberiaNews.1 hours = 6 } }
+		if = { 
+			limit = { tag = LIB }			
+			"GUI" = { country_event = { id = Liberia.2 days = 3 } }
+		}
+		log = "[GetDateText]: [This.GetName]: Liberia.0.a executed"
+	}
+}
+
+#Recreate Liberia in case Liberia is annexed
+country_event = {
+	id = Liberia.1
+	
+	hidden = yes
+	
+	trigger = {
+		NOT = {
+			country_exists = LIB
+			country_exists = LUR
+		}
+		NOT = { 358 = { is_core_of = LIB } }
+	}
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+	
+	immediate = {
+		#Clear core status
+		356 = {
+			remove_core_of = LIB
+			remove_core_of = LUR
+		}
+		355 = {
+			remove_core_of = LIB
+			remove_core_of = LUR
+		}
+		LIB = {
+			add_state_core = 356
+			add_state_core = 355
+			set_capital = 356
+		}
+	}
+	
+	option = {
+		name = Liberia.1.a
+		log = "[GetDateText]: [This.GetName]: Liberia.1.a executed"
+	}
+}
+
+#Guinea gets an opportunity for peace if Liberian rebels fall
+country_event = {
+
+	id = Liberia.2
+	title = Liberia.2.t
+	desc = Liberia.2.d
+	picture = GFX_liberian_civil_war
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Liberia.2.a			#Negotiate peace
+		ai_chance = { factor = 80 }
+		LIB = { country_event = { id = Liberia.3 days = 3 } }
+	}
+	option = {
+		name = Liberia.2.b			#Keep fighting
+		ai_chance = { factor = 20 }
+		add_political_power = -100
+	}
+}
+
+#Liberia Response
+country_event = {
+
+	id = Liberia.3
+	title = Liberia.3.t
+	desc = Liberia.3.d
+	picture = GFX_liberian_civil_war
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Liberia.3.a			#Negotiate peace
+		ai_chance = { factor = 60 }
+		FROM = { country_event = { id = Liberia.4 } }
+	}
+	option = {
+		name = Liberia.3.b			#Keep fighting
+		ai_chance = { factor = 40 }
+		add_political_power = -50
+		FROM = { country_event = { id = Liberia.5 } }
+	}
+}
+
+#Liberia agrees to truce
+country_event = {
+
+	id = Liberia.4
+	title = Liberia.4.t
+	desc = Liberia.4.d
+	picture = GFX_liberian_civil_war
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Liberia.4.a
+		ai_chance = { factor = 100 }
+		white_peace = FROM
+	}
+}
+
+#Liberia doesn't agree to truce
+country_event = {
+
+	id = Liberia.5
+	title = Liberia.5.t
+	desc = Liberia.5.d
+	picture = GFX_liberian_civil_war
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Liberia.5.a
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {
+
+	id = LiberiaNews.1
+	title = LiberiaNews.1.t
+	desc = {
+		text = LiberiaNews.1.LIB.d
+		trigger = { FROM = { original_tag = LIB } }
+	}
+	desc = {
+		text = LiberiaNews.1.LUR.d
+		trigger = { FROM = { original_tag = LUR } }
+	}
+	picture = GFX_news_liberian_civil_war
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = LiberiaNews.1.a
+		log = "[GetDateText]: [This.GetName]: LiberiaNews.1.a executed"
+	}
+	
+}
+			
