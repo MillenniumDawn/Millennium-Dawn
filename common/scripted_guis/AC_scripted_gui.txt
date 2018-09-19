@@ -12,7 +12,25 @@
 @BUILD_COST_REFINERY = 10
 
 scripted_gui = {
-
+	
+	AC_show_Investment_window = {
+		context_type = selected_state_context		
+		window_name = "AC_show_Investment_window"
+		
+		parent_window_token = selected_state_view
+		
+		
+		visible = {
+			ROOT = { has_country_flag = AC_hide_investment_window }
+		}
+		
+		effects = {
+			AC_up_arrow_click = {
+				ROOT = { clr_country_flag = AC_hide_investment_window }
+			}
+		}
+	}
+	
 	AC_allied_construction_window = {
 
 		context_type = selected_state_context
@@ -22,14 +40,8 @@ scripted_gui = {
 		parent_window_token = selected_state_view
 
 		visible = {
-			CONTROLLER = {
-				NOT = { tag = ROOT }
-				# OR = {
-					# is_in_faction_with = ROOT
-					# is_subject_of = ROOT
-					# ROOT = { is_subject_of = PREV }
-				# }
-			}
+			NOT = { is_owned_by = ROOT }
+			ROOT = { not = { has_country_flag = AC_hide_investment_window } }
 		}
 
 		properties = {
@@ -67,12 +79,16 @@ scripted_gui = {
 		}
 
 		effects = {
+			AC_down_arrow_click = {
+				ROOT = { set_country_flag = AC_hide_investment_window }
+			}
+			
 			AC_build_button_click = {
 				if = {
 					limit = {  ROOT = { AC_project_type_not_active = yes } }
 
 					AC_start_project = yes
-					set_variable = { test = 1 }
+					
 				}
 				else = {
 					ROOT = { AC_end_project = yes }
@@ -80,39 +96,12 @@ scripted_gui = {
 			}
 			
 			###
-
-			AC_assist_repair_button_click = {
-				THIS = {
-					CONTROLLER = {
-						add_timed_idea = { idea = AC_assist_repair_target_idea days = 180 }
-
-						set_country_flag = { flag = AC_assist_repair_target_by_@ROOT days = 180 value = 1 }
-					}
-				}
-
-				ROOT = {
-					activate_decision =  AC_assist_repair_decision
-				}
-			}
-
-			AC_assist_repair_cancel_button_click = {
-				every_country = {
-					limit = {
-						has_country_flag = AC_assist_repair_target_by_@ROOT
-					}
-
-					remove_ideas = AC_assist_repair_target_idea
-
-					clr_country_flag = AC_assist_repair_target_by_@ROOT
-				}
-			}
-
 			###
 
 			###
 
 			AC_building_amount_increase_button_click = {
-				THIS = { set_variable = { ROOT.AC_Selected_state = this } }
+				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					
 					### max amount depends on the selected building
@@ -158,10 +147,11 @@ scripted_gui = {
 						}
 					}
 					AC_update_build_cost = yes
+					AC_update_build_time = yes
 				}
 			}
 			AC_building_amount_decrease_button_click = {
-				THIS = { set_variable = { ROOT.AC_Selected_state = this } }
+				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					### max amount depends on the selected building
 				
@@ -206,80 +196,101 @@ scripted_gui = {
 						}
 					}
 					AC_update_build_cost = yes
+					AC_update_build_time = yes
 				}
 			}
 			######### STATE BUILDINGS
 
 			AC_building_infra_button_click = {
-				THIS = { set_variable = { ROOT.AC_Selected_state = this } }
+				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					set_variable = { AC_building_type_selected = 1 }
 					AC_update_build_cost = yes
+					AC_update_build_time = yes
+				}
+				if = {
+					limit = {  ROOT = { is_ai = yes AC_project_type_not_active = yes } }
+
+					AC_start_project = yes
+					
 				}
 			}
 
 			AC_building_airbase_button_click = {
-				THIS = { set_variable = { ROOT.AC_Selected_state = this } }
+				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					set_variable = { AC_building_type_selected = 2 }
 					AC_update_build_cost = yes
+					AC_update_build_time = yes
 				}
 			}
 
 			AC_building_antiair_button_click = {
-				THIS = { set_variable = { ROOT.AC_Selected_state = this } }
+				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					set_variable = { AC_building_type_selected = 3 }
 					AC_update_build_cost = yes
+					AC_update_build_time = yes
 				}
 			}
 
 			AC_building_radar_button_click = {
-				THIS = { set_variable = { ROOT.AC_Selected_state = this } }
+				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					set_variable = { AC_building_type_selected = 4 }
 					AC_update_build_cost = yes
+					AC_update_build_time = yes
 				}
 			}
 
 			######### SHARED BUILDINGS
 
 			AC_building_mic_button_click = {
-				THIS = { set_variable = { ROOT.AC_Selected_state = this } }
+				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					set_variable = { AC_building_type_selected = 5 }
 					AC_update_build_cost = yes
+					AC_update_build_time = yes
 				}
 			}
 
 			AC_building_cic_button_click = {
-				THIS = { set_variable = { ROOT.AC_Selected_state = this } }
+				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					set_variable = { AC_building_type_selected = 6 }
 					AC_update_build_cost = yes
+					AC_update_build_time = yes
+				}
+				if = {
+					limit = {  ROOT = { is_ai = yes AC_project_type_not_active = yes } }
+
+					AC_start_project = yes
+					
 				}
 			}
 
 			AC_building_nic_button_click = {
-				THIS = { set_variable = { ROOT.AC_Selected_state = this } }
+				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					set_variable = { AC_building_type_selected = 7 }
 					AC_update_build_cost = yes
+					AC_update_build_time = yes
 				}
 			}
 
 			AC_building_ref_button_click = {
-				THIS = { set_variable = { ROOT.AC_Selected_state = this } }
+				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					set_variable = { AC_building_type_selected = 8 }
 					AC_update_build_cost = yes
+					AC_update_build_time = yes
 				}
 			}
 		}
 
 		triggers = {
 			AC_build_button_click_enabled = {
-				THIS = { check_variable = { ROOT.AC_Selected_state = this } }
+				ROOT = { check_variable = { AC_Selected_state = PREV.id } }
 				
 				#Must have a building selected
 				ROOT = { check_variable = { AC_building_type_selected > 0 } }
@@ -297,45 +308,7 @@ scripted_gui = {
 
 			###
 
-			AC_assist_repair_button_click_enabled = {
-				NOT = {
-					AND = {
-						ROOT = { has_decision = AC_assist_repair_decision }
-
-						NOT = {
-							any_country = {
-								has_country_flag = AC_assist_repair_target_by_@ROOT
-							}
-						}
-					}
-				}
-				THIS = {
-					CONTROLLER = {
-						OR = {
-							NOT = { 
-								has_idea = AC_assist_repair_target_idea 
-							}
-							has_country_flag = AC_assist_repair_target_by_@ROOT
-						}
-					}
-				}
-			}
-
-			AC_assist_repair__button_visible = {
-				NOT = {
-					any_country = {
-						has_country_flag = AC_assist_repair_target_by_@ROOT
-					}
-				}
-			}
-
-			AC_assist_repair_cancel_button_visible = {
-				any_country = {
-					has_country_flag = AC_assist_repair_target_by_@ROOT
-				}
-			}
-
-			###
+				###
 
 			AC_building_amount_increase_button_click_enabled = {
 				
@@ -358,8 +331,15 @@ scripted_gui = {
 
 			AC_building_infra_button_click_enabled = {
 				AC_building_infra_available = yes
-				ROOT = {
-					#AC_has_INF_state_flag = yes
+				if = {
+					limit = { ROOT = { is_ai = yes } }
+					
+					not = { has_state_flag = Investment_pause_@ROOT }
+					if = {
+						limit = { AC_project_type_not_active2 = yes }
+						CONTROLLER = { not = { AC_has_max_investments = yes } }
+						ROOT = { check_variable = { treasury > AC_build_cost } }
+					}
 				}
 			}
 
@@ -379,30 +359,27 @@ scripted_gui = {
 
 			AC_building_radar_button_click_enabled = {
 				AC_building_radar_available = yes
-				ROOT = {
-					#AC_has_RAD_state_flag = yes
-				}
 			}
 
 			######### SHARED BUILDINGS
 
 			AC_building_mic_button_click_enabled = {
-				
 				AC_building_mic_available = yes
-				
-				ROOT = {
-					#AC_has_MIC_state_flag = yes
-				}
 			}
 
 			AC_building_cic_button_click_enabled = {
-				
 				AC_building_cic_available = yes
-				############################THIS IS HOW IT NEEDS TO BE DONE FOR THE REST##############
-				ROOT = {
-					#AC_has_CIC_state_flag = yes
+				if = {
+					limit = { ROOT = { is_ai = yes } }
 					
+					not = { has_state_flag = Investment_pause_@ROOT }
+					if = {
+						limit = { AC_project_type_not_active2 = yes }
+						CONTROLLER = { not = { AC_has_max_investments = yes } }
+						ROOT = { check_variable = { treasury > AC_build_cost } }
+					}
 				}
+				
 			}
 
 			AC_building_nic_button_click_enabled = {
@@ -419,5 +396,55 @@ scripted_gui = {
 				}
 			}
 		}
+		ai_enabled = {
+            always = yes
+        }
+		
+		ai_check = {
+			ROOT = { check_variable = { treasury > 150 } }
+		}
+		if = { limit = { tag = CHI }
+			ai_test_scopes = test_neighbouring_states
+		}
+		if = { limit = { tag = USA }
+			ai_test_scopes = test_neighbouring_states
+			ai_test_scopes = test_ally_owned_states
+		}
+			
+		
+		
+		ai_test_scopes = test_neighbouring_ally_states
+		ai_test_scopes = test_ally_owned_states
+		ai_test_scopes = test_our_neighbouring_states
+		ai_test_scopes = test_our_neighbouring_states_against_allies
+		
+		ai_check_scope = {
+			# ROOT = {
+				# has_opinion = { target = PREV value > 10 }
+			# }
+		}
+		
+		ai_test_parent = ""
+		
+		ai_test_interval = 120
+		ai_test_variance = 0.1
+		ai_max_weight_taken_per_test = 1
+		
+		ai_weights = {
+			AC_building_cic_button_click = {
+				weight = 1
+				ai_will_do = {
+					factor = 999
+				}
+			}
+			AC_building_infra_button_click = {
+				weight = 1
+				ai_will_do = {
+					factor = 999
+				}
+			}
+			
+		}
+		
 	}
 }
