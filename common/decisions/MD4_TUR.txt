@@ -1,125 +1,5 @@
 ##### Kurdish Activism
-TUR_kurd_rallies = {
 
-    #Stop the rallies
-	TUR_stop_rallies = {
-
-		icon = generic_political_discourse
-
-		allowed = {
-		original_tag = TUR 
-		}
-
-		available = {
-		TUR = {
-		    controls_state = 162
-			has_idea = multi_ethnic_state_idea
-		}
-		
-		PKK = {
-			exists = no	
-			}
-		}
-
-		cost = 50
-		fire_only_once = yes
-
-		visible = {
-		has_country_flag = kurd_rally1
-		has_country_flag = kurd_activism
-		}
-		
-		complete_effect = {
-		add_stability = -0.1
-		clr_country_flag = kurd_rally1
-		hidden_effect = {
-	    country_event = { id = kurd_rally.3 days = 3 } 
-	        }
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	
-	#Increase Security Level
-	TUR_security_increase = {
-
-		icon = generic_political_discourse
-
-		allowed = {
-		original_tag = TUR 
-		}
-
-		available = {
-		TUR = {
-		    controls_state = 162
-			has_idea = multi_ethnic_state_idea
-		    }
-		PKK = {
-	        exists = no	
-		    }
-		NOT = {
-		    has_country_flag = pkk_win
-		    }
-		}
-
-		cost = 150
-		fire_only_once = yes
-
-		visible = {
-		has_country_flag = kurd_activism
-		NOT = { 
-		    has_country_flag = pkk_win
-		    }
-		}
-
-		complete_effect = {
-		add_manpower = -1000
-		set_country_flag = tur_security_increase
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	
-	#Open up talks with the Kurds
-	TUR_kurd_talks = {
-	
-		icon = generic_political_discourse
-		
-		fire_only_once = yes
-		cost = 50
-		
-		allowed = {
-		original_tag = TUR 
-		}
-		
-		visible = {
-		has_country_flag = kurd_activism
-		}
-		
-		available = {
-		TUR = {
-		    controls_state = 162
-			has_idea = multi_ethnic_state_idea
-		    }
-		PKK = {
-	        exists = no	
-		    }
-		}
-		
-		ai_will_do = {
-		factor = 1 
-		}
-
-		complete_effect = {
-		clr_country_flag = kurd_rally1
-		}
-	}
-
-}
 
 ##### Syrian Civil War
 TUR_SYR = {
@@ -129,7 +9,7 @@ TUR_SYR = {
 
 
 		available = {
-			or = {
+			OR = {
 				SYR = { has_volunteers_amount_from = { tag = TUR count > 0 } }
 				FSA = { has_volunteers_amount_from = { tag = TUR count > 0 } }
 				NUS = { has_volunteers_amount_from = { tag = TUR count > 0 } }
@@ -141,7 +21,7 @@ TUR_SYR = {
 
 		activation = {
 			SYR = {
-				or = {
+				OR = {
 					has_war_with = ISI
 					has_war_with = FSA
 					has_war_with = NUS
@@ -526,7 +406,7 @@ TUR_SYR = {
 ### Feel free to use for other nations if you want to							###
 ###################################################################################
 
-counter_terrorism_mil = {
+TUR_counter_terrorism_mil = {
 
 	strenghten_outposts_1 = {
 	
@@ -837,7 +717,7 @@ counter_terrorism_mil = {
 		
 		available = {
 			num_of_civilian_factories_available_for_projects > 5
-			check_variable = { var = air_strike_material value = 50 compare = less_than }
+			check_variable = { var = air_strike_material value = 500 compare = less_than custom_effect_tooltip = stockpile_not_full}
 		}
 			
 		visible = {
@@ -849,8 +729,7 @@ counter_terrorism_mil = {
 			has_idea = pkk_terror_idea
 		}
 		
-		cost = 100
-		days_remove = 100
+		days_remove = 1
 
 		modifier = {
 			civilian_factory_use = 5
@@ -861,7 +740,17 @@ counter_terrorism_mil = {
 		}
 		
 		remove_effect = {
-				add_to_variable = { var = air_strike_material value = 5 }
+			random_list = {
+			
+				51 = { 
+				add_to_variable = { var = air_strike_material value = 5 } 
+				}
+				
+				49 = { 
+				add_to_variable = { var = air_strike_material value = 10 } 
+				}
+				
+				}
 		}
 	}
 	
@@ -874,7 +763,7 @@ counter_terrorism_mil = {
 		available = {
 			NOT = { has_country_flag = doing_counter_terror_op_mil }
 			NOT = { has_idea = air_strike_cooldown }
-			check_variable = { var = air_strike_material value = 0 compare = greater_than }
+			check_variable = { var = air_strike_material value = 0 compare = greater_than custom_effect_tooltip = got_missiles }
 		}
 			
 		visible = {
@@ -886,8 +775,7 @@ counter_terrorism_mil = {
 			has_idea = pkk_terror_idea
 		}
 		
-		cost = 150
-		days_remove = 10
+		days_remove = 1
 			
 		ai_will_do = {
 			factor = 10
@@ -897,21 +785,35 @@ counter_terrorism_mil = {
 				hidden_effect = {
 					set_country_flag = doing_counter_terror_op_mil
 								}
+		random_list = {
+		
+				60 = {
+					 subtract_from_variable = { var = pkk_presence value = 2 } custom_effect_tooltip = reduce_2_pkk
+				}
+				
+				39 = {
+					 subtract_from_variable = { var = pkk_presence value = 5 } custom_effect_tooltip = reduce_5_pkk
+				}
+				
+				1 = {
+					 subtract_from_variable = { var = pkk_presence value = 20 } custom_effect_tooltip = reduce_20_pkk
+				}
+				
+				}
+				clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+				subtract_from_variable = { var = air_strike_material value = 1 }
 		}
 				
 		remove_effect = {
-				subtract_from_variable = { var = pkk_presence value = 5 }
-				clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
-				subtract_from_variable = { var = air_strike_material value = 1 }
 				hidden_effect = {
 					clr_country_flag = doing_counter_terror_op_mil
-					add_timed_idea = { idea = air_strike_cooldown days = 2 }
+					#add_timed_idea = { idea = air_strike_cooldown days = 2 }
 								}
 		}
 	}
 }
 
-counter_terrorism_civ = {
+TUR_counter_terrorism_civ = {
 	
 	college_professors = {
 	
