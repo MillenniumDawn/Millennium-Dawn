@@ -438,7 +438,7 @@ TUR_counter_terrorism_mil = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			factor = 0
 		}
 		
 						
@@ -485,7 +485,7 @@ TUR_counter_terrorism_mil = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			factor = 0
 		}
 		
 		complete_effect = {
@@ -536,7 +536,7 @@ TUR_counter_terrorism_mil = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			factor = 0
 		}
 		
 		complete_effect = {
@@ -587,7 +587,7 @@ TUR_counter_terrorism_mil = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			factor = 0
 		}
 		
 		complete_effect = {
@@ -638,7 +638,7 @@ TUR_counter_terrorism_mil = {
 		
 		cost = 50
 		ai_will_do = {
-			factor = 10
+			factor = 0
 		}
 		
 		complete_effect = {
@@ -689,7 +689,7 @@ TUR_counter_terrorism_mil = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			factor = 0
 		}
 		
 		complete_effect = {
@@ -731,25 +731,34 @@ TUR_counter_terrorism_mil = {
 			has_idea = pkk_terror_idea
 		}
 		
-		days_remove = 0
+		days_remove = 1
 
 		modifier = {
 			civilian_factory_use = 5
 		}
 
 		ai_will_do = {
-			factor = 10
+			factor = 0
 		}
 		
-		remove_effect = {
-			custom_effect_tooltip = airstrike_prepare_tooltip
+		complete_effect = {
 			hidden_effect = {
-				add_to_variable = { var = air_strike_material value = 20 }
-				random_list = {
-					50 = { add_to_variable = { air_strike_material = 30 } }
-					50 = { }
-					}
+				set_variable = { airstrike_prepare_odds = random }
 				}
+			}
+		
+		remove_effect = {
+			#custom_effect_tooltip = airstrike_prepare_tooltip
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { var = airstrike_prepare_odds value = 0.5 compare = less_than_or_equals } }
+					add_to_variable = { var = air_strike_material value = 2 }
+				}
+				else = {
+					add_to_variable = { var = air_strike_material value = 3 }
+				}
+				clear_variable = airstrike_prepare_odds
+			}
 		}
 	}
 	
@@ -762,7 +771,7 @@ TUR_counter_terrorism_mil = {
 		available = {
 			NOT = { has_country_flag = doing_counter_terror_op_mil }
 			NOT = { has_idea = air_strike_cooldown }
-			check_variable = { var = air_strike_material value = 0 compare = greater_than custom_effect_tooltip = got_missiles }
+			#check_variable = { var = air_strike_material value = 0 compare = greater_than custom_effect_tooltip = got_missiles }
 		}
 			
 		visible = {
@@ -774,30 +783,72 @@ TUR_counter_terrorism_mil = {
 			has_idea = pkk_terror_idea
 		}
 		
-		days_remove = 0
+		days_remove = 1
 			
 		ai_will_do = {
-			factor = 10
+			factor = 0
 		}
 		
 		complete_effect = {
-				hidden_effect = {
-					set_country_flag = doing_counter_terror_op_mil
+			hidden_effect = {
+				set_country_flag = doing_counter_terror_op_mil
+				set_variable = { airstrike_thingy_odds = random }
+				set_variable = { airstrike_thingy_assassinate = random }
 								}
-				subtract_from_variable = { var = air_strike_material value = 1 }
+			subtract_from_variable = { var = air_strike_material value = 1 }
 		}
 				
 		remove_effect = {
-				custom_effect_tooltip = airstrike_thingy_tooltip
-				hidden_effect = {
-					clr_country_flag = doing_counter_terror_op_mil
-					#add_timed_idea = { idea = air_strike_cooldown days = 2 }
+			#custom_effect_tooltip = airstrike_thingy_tooltip
+			hidden_effect = {
+				clr_country_flag = doing_counter_terror_op_mil
+				#add_timed_idea = { idea = air_strike_cooldown days = 5 }
+					
+				if = {
+					limit= { check_variable = { var = airstrike_thingy_odds value = 0.5 compare = less_than_or_equals } }
 					subtract_from_variable = { var = pkk_presence value = 2 }
-					random = { 4 = { subtract_from_variable = { var = pkk_presence value = 3 } } }
-					random = { 1 = { subtract_from_variable = { var = pkk_presence value = 20 } } }
-					clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
-				}
+					}
+				else = {
+					subtract_from_variable = { var = pkk_presence value = 3 }
+					}
+					
+				if = {
+					limit = {
+						AND = {
+							check_variable = { var = airstrike_thingy_assassinate value = 0.1 compare = less_than_or_equals }
+						}
+					}
+					subtract_from_variable = { var = pkk_presence value = 5 }
+					}
+			#clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+			clear_variable = airstrike_thingy_odds
+			clear_variable = airstrike_thingy_assassinate
+			}
 		}
+	}
+	
+	add_power_to_pkk = { #for testing, obviously
+	
+		icon = GFX_decision_generic_air
+		
+		fire_only_once = no
+		
+		available = {
+		}
+			
+		visible = {
+			tag = TUR
+		}
+		
+		days_remove = 0
+			
+		ai_will_do = {
+			factor = 0
+		}
+	
+		remove_effect = {
+			add_to_variable = { var = pkk_presence value = 100 }
+			}
 	}
 	
 	internal_security = {
@@ -823,7 +874,7 @@ TUR_counter_terrorism_mil = {
 		days_remove = 0
 			
 		ai_will_do = {
-			factor = 10
+			factor = 0
 		}
 		
 		complete_effect = {
@@ -864,7 +915,7 @@ TUR_counter_terrorism_mil = {
 		days_remove = 0
 			
 		ai_will_do = {
-			factor = 10
+			factor = 0
 		}
 		
 		complete_effect = {
@@ -912,7 +963,7 @@ TUR_counter_terrorism_civ = {
 		days_remove = 1
 
 		ai_will_do = {
-			factor = 3
+			factor = 0
 		}
 		
 		remove_effect = {
@@ -946,8 +997,8 @@ TUR_counter_terrorism_civ = {
 		days_remove = 1
 
 		ai_will_do = {
-			factor = 3
-					}
+			factor = 0
+		}
 		
 		complete_effect = {
 				hidden_effect = {
@@ -989,7 +1040,7 @@ TUR_counter_terrorism_civ = {
 		days_remove = 1
 
 		ai_will_do = {
-			factor = 3
+			factor = 0
 		}
 		
 		complete_effect = {
@@ -1033,7 +1084,7 @@ TUR_counter_terrorism_civ = {
 		days_remove = 1
 
 		ai_will_do = {
-			factor = 3
+			factor = 0
 		}
 		
 		complete_effect = {
@@ -1077,7 +1128,7 @@ TUR_counter_terrorism_civ = {
 		days_remove = 1
 
 		ai_will_do = {
-			factor = 3
+			factor = 0
 		}
 		
 		complete_effect = {
