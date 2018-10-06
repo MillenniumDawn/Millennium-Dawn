@@ -705,9 +705,7 @@ TUR_counter_terrorism_mil = {
 					}
 				subtract_from_variable = { var = pkk_presence_max value = 10 }
 				clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
-				hidden_effect = {
-					clr_country_flag = doing_counter_terror_op_mil
-								}
+				clr_country_flag = doing_counter_terror_op_mil
 		}
 	}
 	
@@ -719,7 +717,7 @@ TUR_counter_terrorism_mil = {
 		
 		available = {
 			num_of_civilian_factories_available_for_projects > 5
-			#check_variable = { var = air_strike_material value = 50 compare = less_than custom_effect_tooltip = stockpile_not_full}
+			check_variable = { var = air_strike_material value = 50 compare = less_than custom_effect_tooltip = stockpile_not_full}
 		}
 			
 		visible = {
@@ -748,14 +746,14 @@ TUR_counter_terrorism_mil = {
 			}
 		
 		remove_effect = {
-			#custom_effect_tooltip = airstrike_prepare_tooltip
+			custom_effect_tooltip = airstrike_prepare_tooltip
 			hidden_effect = {
 				if = {
-					limit = { check_variable = { var = airstrike_prepare_odds value = 0.5 compare = less_than_or_equals } }
-					add_to_variable = { var = air_strike_material value = 2 }
+					limit = { check_variable = { var = airstrike_prepare_odds value = 0.6 compare = less_than_or_equals } }
+					add_to_variable = { var = air_strike_material value = 3 }
 				}
 				else = {
-					add_to_variable = { var = air_strike_material value = 3 }
+					add_to_variable = { var = air_strike_material value = 5 }
 				}
 				clear_variable = airstrike_prepare_odds
 			}
@@ -771,7 +769,7 @@ TUR_counter_terrorism_mil = {
 		available = {
 			NOT = { has_country_flag = doing_counter_terror_op_mil }
 			NOT = { has_idea = air_strike_cooldown }
-			#check_variable = { var = air_strike_material value = 0 compare = greater_than custom_effect_tooltip = got_missiles }
+			check_variable = { var = air_strike_material value = 0 compare = greater_than custom_effect_tooltip = got_missiles }
 		}
 			
 		visible = {
@@ -790,65 +788,67 @@ TUR_counter_terrorism_mil = {
 		}
 		
 		complete_effect = {
-			hidden_effect = {
 				set_country_flag = doing_counter_terror_op_mil
-				set_variable = { airstrike_thingy_odds = random }
-				set_variable = { airstrike_thingy_assassinate = random }
-								}
-			subtract_from_variable = { var = air_strike_material value = 1 }
+				set_variable = { airstrike_thingy_if = random }				# if the airstike is succesful
+				set_variable = { airstrike_thingy_odds = random }			# how much damage it will do
+				set_variable = { airstrike_thingy_assassinate = random }	# for a small chance, one of their leaders will be killed thus further decrease of power
+				set_variable = { airstrike_thingy_consume = random }		# how much missiles will be consumed
+				set_variable = { airstrike_thingy_crowd = random }			# if your airstrke is succesful, it may or may not give party pop
+			if = {
+				limit = {
+					check_variable = { var = airstrike_thingy_consume value = 0.7 compare = less_than_or_equals }
+					}
+				subtract_from_variable = { var = air_strike_material value = 1 }
+				}
+			else = {
+				subtract_from_variable = { var = air_strike_material value = 2 }
+				}
 		}
 				
 		remove_effect = {
-			#custom_effect_tooltip = airstrike_thingy_tooltip
-			hidden_effect = {
-				clr_country_flag = doing_counter_terror_op_mil
+			custom_effect_tooltip = airstrike_thingy_tooltip
+			clr_country_flag = doing_counter_terror_op_mil
+			hidden_effect= {
 				#add_timed_idea = { idea = air_strike_cooldown days = 5 }
-					
-				if = {
-					limit= { check_variable = { var = airstrike_thingy_odds value = 0.5 compare = less_than_or_equals } }
-					subtract_from_variable = { var = pkk_presence value = 2 }
+				}
+				
+			if = {
+				limit= {
+					check_variable = { var = airstrike_thingy_if value = 0.2 compare = greater_than_or_equals }
 					}
-				else = {
-					subtract_from_variable = { var = pkk_presence value = 3 }
-					}
-					
-				if = {
-					limit = {
-						AND = {
-							check_variable = { var = airstrike_thingy_assassinate value = 0.1 compare = less_than_or_equals }
+					if = {
+						limit = {
+							check_variable = { var = airstrike_thingy_odds value = 0.7 compare = less_than_or_equals }
+							}
+						subtract_from_variable = { var = pkk_presence value = 2 }
 						}
+					else = {
+						subtract_from_variable = { var = pkk_presence value = 5 }
+						}
+					if = {
+						limit = {
+							check_variable = { var = airstrike_thingy_assassinate value = 0.05 compare = less_than_or_equals }
+							}
+						subtract_from_variable = { var = pkk_presence value = 10 }
+						}
+			
+					if = {
+						limit = {
+							check_variable = { var = airstrike_thingy_crowd value = 0.3 compare = less_than_or_equals }
+							}
+						hidden_effect = {
+							airstrike_add_popularity = yes
+							relative_change_pos_2 = yes
+							}
 					}
-					subtract_from_variable = { var = pkk_presence value = 5 }
-					}
-			#clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+			}
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
 			clear_variable = airstrike_thingy_odds
 			clear_variable = airstrike_thingy_assassinate
-			}
+			clear_variable = airstrike_thingy_consume
+			clear_variable = airstrike_thingy_crowd
+			clear_variable = airstrike_thingy_if
 		}
-	}
-	
-	add_power_to_pkk = { #for testing, obviously
-	
-		icon = GFX_decision_generic_air
-		
-		fire_only_once = no
-		
-		available = {
-		}
-			
-		visible = {
-			tag = TUR
-		}
-		
-		days_remove = 0
-			
-		ai_will_do = {
-			factor = 0
-		}
-	
-		remove_effect = {
-			add_to_variable = { var = pkk_presence value = 100 }
-			}
 	}
 	
 	internal_security = {
@@ -878,17 +878,18 @@ TUR_counter_terrorism_mil = {
 		}
 		
 		complete_effect = {
-				hidden_effect = {
-					set_country_flag = doing_counter_terror_op_mil
-								}
+			hidden_effect = {
+				set_country_flag = doing_counter_terror_op_mil
+							}
 		}
 				
 		remove_effect = {
-				hidden_effect = {
-					clr_country_flag = doing_counter_terror_op_mil
+			hidden_effect = {
+				clr_country_flag = doing_counter_terror_op_mil
 								}
-					#add_timed_idea = { idea = security_cooldown days = 2 }
-					subtract_from_variable = { var = pkk_presence value = 5 } custom_effect_tooltip = decrease_5_pkk
+			#add_timed_idea = { idea = security_cooldown days = 2 }
+			subtract_from_variable = { var = pkk_presence value = 5 } custom_effect_tooltip = decrease_5_pkk
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
 		}
 	}
 	
@@ -925,12 +926,37 @@ TUR_counter_terrorism_mil = {
 		}
 				
 		remove_effect = {
-				hidden_effect = {
+			hidden_effect = {
 					clr_country_flag = doing_counter_terror_op_mil
 								}
-					#add_timed_idea = { idea = security_cooldown days = 2 }
-					subtract_from_variable = { var = pkk_presence value = 5 } custom_effect_tooltip = decrease_5_pkk
+			#add_timed_idea = { idea = security_cooldown days = 2 }
+			subtract_from_variable = { var = pkk_presence value = 5 } custom_effect_tooltip = decrease_5_pkk
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
 		}
+	}
+	
+	add_power_to_pkk = { #for testing, obviously
+	
+		icon = GFX_decision_generic_air
+		
+		fire_only_once = no
+		
+		available = {
+		}
+			
+		visible = {
+			tag = TUR
+		}
+		
+		days_remove = 0
+			
+		ai_will_do = {
+			factor = 0
+		}
+	
+		remove_effect = {
+			add_to_variable = { var = pkk_presence value = 100 }
+			}
 	}
 }
 
