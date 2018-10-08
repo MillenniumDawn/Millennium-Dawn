@@ -1,0 +1,88 @@
+﻿add_namespace = pkk_attack
+
+country_event = {
+
+	id = pkk_attack.0 	#I haven't stolen any code but can't deny that i got inspired by Kaiserreich's terrorism events in India
+						#Subject to change, needs balancing
+	
+	title = pkk_attack.0.t
+	desc = pkk_attack.0.d
+	picture = GFX_Golan #placeholder
+	
+	fire_only_once = no
+	
+	trigger = {
+		tag = TUR
+		has_idea = pkk_terror_idea
+		TUR = {
+			AND = {
+				owns_state = 161
+				controls_state = 161
+				owns_state = 162
+				controls_state = 162
+				}
+			}
+		}
+	
+	mean_time_to_happen = {
+		days = 100
+		modifier = {
+			factor = 0.25
+			check_variable = { var = pkk_presence value = 0 compare = greater_than }
+			check_variable = { var = pkk_presence value = 25 compare = less_than }
+			}
+		modifier = {
+			factor = 0.50
+			check_variable = { var = pkk_presence value = 25 compare = greater_than }
+			check_variable = { var = pkk_presence value = 50 compare = less_than }
+			}
+		modifier = {
+			factor = 0.75
+			check_variable = { var = pkk_presence value = 50 compare = greater_than }
+			check_variable = { var = pkk_presence value = 75 compare = less_than }
+			}
+		modifier = {
+			factor = 1
+			check_variable = { var = pkk_presence value = 75 compare = greater_than }
+			check_variable = { var = pkk_presence value = 100 compare = less_than }
+			}
+		}
+		
+	immediate = {
+		set_variable = { pkk_target_odds = random }
+		}
+	
+	option = {
+		name = pkk_attack.0.a
+		event_target:pkk_attack_thingy = {
+			if = {
+				limit = {
+					check_variable = { var = pkk_target_odds value = 0.5 compare = greater_than }
+					}
+				161 = {
+					damage_building = { type = infrastructure damage = 2 }
+					}
+				}
+			if = {
+				limit = {
+					check_variable = { var = pkk_target_odds value = 0.25 compare = greater_than }
+					check_variable = { var = pkk_target_odds value = 0.5 compare = less_than_or_equals }
+					}
+				161 = {
+					damage_building = { type = industrial_complex damage = 1 }
+					}
+				}
+			if = {
+				limit = {
+					check_variable = { var = pkk_target_odds value = 0.25 compare = less_than_or_equals }
+						}
+				161 = {
+					add_manpower = -20
+					}
+				add_stability = -0.02
+				custom_effect_tooltip = pkk_target_civillian
+				}
+			}
+		clear_variable = pkk_target_odds
+		}
+	}
