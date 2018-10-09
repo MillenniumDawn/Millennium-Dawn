@@ -1,9 +1,15 @@
-﻿add_namespace = pkk_attack
+﻿#######################################################################################################
+###		PKK attack events Written by Ahmeteris, linked to PKK Counter Terrorism Decision System		###
+###		Feel free to use for any nation in MD														###
+###		Feel free to use in any mod with crediting me												###
+#######################################################################################################
+
+
+add_namespace = pkk_attack
 
 country_event = {
 
-	id = pkk_attack.0 	#I haven't stolen any code but can't deny that i got inspired by Kaiserreich's terrorism events in India
-						#Subject to change, needs balancing
+	id = pkk_attack.0
 	
 	title = pkk_attack.0.t
 	desc = pkk_attack.0.d
@@ -16,73 +22,88 @@ country_event = {
 		has_idea = pkk_terror_idea
 		TUR = {
 			AND = {
-				owns_state = 161
-				controls_state = 161
+				owns_state = 163
+				controls_state = 163
 				owns_state = 162
 				controls_state = 162
-				}
 			}
 		}
+	}
 	
 	mean_time_to_happen = {
 		days = 100
 		modifier = {
-			factor = 0.25
+			factor = 1 #lower the value, event becomes more scarce
 			check_variable = { var = pkk_presence value = 0 compare = greater_than }
 			check_variable = { var = pkk_presence value = 25 compare = less_than }
 			}
 		modifier = {
-			factor = 0.50
+			factor = 0.75
 			check_variable = { var = pkk_presence value = 25 compare = greater_than }
 			check_variable = { var = pkk_presence value = 50 compare = less_than }
 			}
 		modifier = {
-			factor = 0.75
+			factor = 0.50
 			check_variable = { var = pkk_presence value = 50 compare = greater_than }
 			check_variable = { var = pkk_presence value = 75 compare = less_than }
 			}
 		modifier = {
-			factor = 1
+			factor = 0.25 #higher the value, event becomes more frequent
 			check_variable = { var = pkk_presence value = 75 compare = greater_than }
 			check_variable = { var = pkk_presence value = 100 compare = less_than }
 			}
 		}
 		
 	immediate = {
-		set_variable = { pkk_target_odds = random }
+		set_temp_variable = { pkk_target_odds = random }
+		save_event_target_as = pkk_attack_thingy
 		}
 	
 	option = {
 		name = pkk_attack.0.a
 		event_target:pkk_attack_thingy = {
-			if = {
-				limit = {
-					check_variable = { var = pkk_target_odds value = 0.5 compare = greater_than }
+			random_list = {
+				20 = {
+					custom_effect_tooltip = pkk_attack_failure
 					}
-				161 = {
-					damage_building = { type = infrastructure damage = 2 }
-					}
-				}
-			if = {
-				limit = {
-					check_variable = { var = pkk_target_odds value = 0.25 compare = greater_than }
-					check_variable = { var = pkk_target_odds value = 0.5 compare = less_than_or_equals }
-					}
-				161 = {
-					damage_building = { type = industrial_complex damage = 1 }
-					}
-				}
-			if = {
-				limit = {
-					check_variable = { var = pkk_target_odds value = 0.25 compare = less_than_or_equals }
+				80 = {
+					custom_effect_tooltip = pkk_attack_success
+					hidden_effect = {
+						random_list = {
+							40 = {
+								random_list = {
+									60 = {
+										162 = { damage_building = { type = infrastructure damage = 0.3 } }
+										add_stability = -0.01
+										}
+									40 = {
+										163 = { damage_building = { type = infrastructure damage = 0.3 } }
+										add_stability = -0.01
+										}
+								}
+							}
+							35 = {
+								random_list = {
+									60 = {
+										162 = { damage_building = { type = industrial_complex damage = 0.3 } }
+										add_stability = -0.01
+										}
+									40 = {
+										163 = { damage_building = { type = industrial_complex damage = 0.3 } }
+										add_stability = -0.01
+										}
+								}
+							}
+							25 = {
+								TUR = {
+								add_manpower = -20
+								add_stability = -0.01
+								}
+							}
 						}
-				161 = {
-					add_manpower = -20
 					}
-				add_stability = -0.02
-				custom_effect_tooltip = pkk_target_civillian
 				}
-			}
-		clear_variable = pkk_target_odds
-		}
+			}				#Sorry about this horrible amounts of interchanging brackets
+		}					#But it works and i think it's sexy
 	}
+}
