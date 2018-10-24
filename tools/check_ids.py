@@ -90,14 +90,14 @@ def main():
     # FEATHING EVENT IDS
     print('Checking event ID\'s:')
     # getting event directory
-    test_path = '{}\\events'.format(projectpath)
+    test_path = '{}/events'.format(projectpath)
     content_list = listFolderFiles(test_path)
     content_list = content_list[1]
 
     # collecting ID
     event_files_list = []
     for f in content_list:
-        path = '{}\\{}'.format(test_path,f)
+        path = '{}/{}'.format(test_path,f)
         blacklist = ['country_event', 'news_event','#']
         event_line = read(path, "id =", blacklist, 'id =')
         event_files_list.append(event_line)
