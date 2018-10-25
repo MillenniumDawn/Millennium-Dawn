@@ -148,4 +148,4 @@ def main():
     return bad_count
     
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
