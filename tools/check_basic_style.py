@@ -39,12 +39,12 @@ def check_basic_style(filepath):
                 lastIsCurlyBrace = False
             if c == '\n': # Keeping track of our line numbers
                 lineNumber += 1 # so we can print accurate line number information when we detect a possible error
+                checkIfInComment = False
             if (isInString): # while we are in a string, we can ignore everything else, except the end of the string
                 if (c == inStringType):
                     isInString = False
             # if we are not in a comment block, we will check if we are at the start of one or count the () {} and []
-            elif (isInCommentBlock == False):
-
+            elif (checkIfInComment == False):
                 # This means we have encountered a /, so we are now checking if this is an inline comment or a comment block
                 if (checkIfInComment):
                     checkIfInComment = False
@@ -58,11 +58,12 @@ def check_basic_style(filepath):
                         if (c == '\n'):
                             ignoreTillEndOfLine = False
                     else: # validate brackets
-                        if (c == '"' or c == "'"):
-                            isInString = True
-                            inStringType = c
-                        elif (c == '#'):
+                        if (c == '#'):
                             checkIfInComment = True
+                        # elif (c == '"' or c == "'"):
+                        #     isInString = True
+                        #     inStringType = c
+                        #     print(c)
                         elif (c == '('):
                             brackets_list.append('(')
                         elif (c == ')'):
@@ -127,13 +128,13 @@ def main():
         for filename in fnmatch.filter(filenames, '*.txt'):
             files_list.append(os.path.join(root, filename))
 
-    # for root, dirnames, filenames in os.walk(rootDir + '/'+ 'events' + '/'):
-    #     for filename in fnmatch.filter(filenames, '*.txt'):
-    #         files_list.append(os.path.join(root, filename))
+    for root, dirnames, filenames in os.walk(rootDir + '/'+ 'events' + '/'):
+        for filename in fnmatch.filter(filenames, '*.txt'):
+            files_list.append(os.path.join(root, filename))
 
-    # for root, dirnames, filenames in os.walk(rootDir + '/'+ 'history' + '/'):
-    #     for filename in fnmatch.filter(filenames, '*.txt'):
-    #         files_list.append(os.path.join(root, filename))
+    for root, dirnames, filenames in os.walk(rootDir + '/'+ 'history' + '/'):
+        for filename in fnmatch.filter(filenames, '*.txt'):
+            files_list.append(os.path.join(root, filename))
 
     for filename in files_list:
         bad_count = bad_count + check_basic_style(filename)
@@ -147,4 +148,4 @@ def main():
     return bad_count
     
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
