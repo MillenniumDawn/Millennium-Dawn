@@ -6,6 +6,31 @@
 
 
 add_namespace = pkk_attack
+add_namespace = pkk_test
+add_namespace = pkk_increase
+
+country_event = {
+
+	id = pkk_test.1
+	
+	title = pkk_test.1.t
+	desc = pkk_test.1.d
+	
+	mean_time_to_happen = {
+	}
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = pkk_test.1.a
+		add_to_variable = { var = pkk_presence value = 100 }
+		clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+	}
+	
+	option = {
+		name = pkk_test.1.b
+	}
+}
 
 country_event = {
 
@@ -83,9 +108,10 @@ country_event = {
 			check_variable = { var = pkk_presence value = 100 compare = less_than_or_equals }
 		}
 	}
-		
+	
 	immediate = {
 		save_event_target_as = pkk_attack_thingy
+		log = "[GetDateText]: [Root.GetName] pkk attack happened"
 	}
 	
 	option = {
@@ -93,12 +119,13 @@ country_event = {
 		event_target:pkk_attack_thingy = {
 			hidden_effect = {
 				random_list = {
-					40 = {
+					40 = { #attack repelled
 					}
-					60 = {
+					60 = { #attack succeded
 						random_list = {
-							45 = {
-								random_list = {
+							45 = { #infrastructure got attacked
+								set_country_flag = pkk_inf_attack
+								random_list = { #decides which state got attacked and the amount of damage
 									60 = {
 										random_list = {
 											40 = {
@@ -189,7 +216,8 @@ country_event = {
 									}
 								}
 							}
-							30 = {
+							30 = { #civ factory got attacked
+								set_country_flag = pkk_civ_attack
 								random_list = {
 									60 = {
 										random_list = {
@@ -281,7 +309,8 @@ country_event = {
 									}
 								}
 							}
-							5 = {
+							5 = { #mil factory got attacked
+								set_country_flag = pkk_mil_attack
 								random_list = {
 									60 = {
 										random_list = {
@@ -373,7 +402,8 @@ country_event = {
 									}
 								}
 							}
-							20 = {
+							20 = { #citizens got attacked
+								set_country_flag = pkk_cit_attack
 								TUR = {
 									random_list = {
 										30 = {
@@ -483,6 +513,239 @@ country_event = {
 					}
 				}
 			}
+		}
+	}
+}
+
+country_event = {
+
+	id = pkk_attack.2
+	
+	title = pkk_attack.2.t
+	desc = pkk_attack.2.d
+	picture = GFX_pkk_ambush
+	
+	fire_only_once = no
+	
+	trigger = {
+		tag = TUR
+		has_idea = pkk_terror_idea
+		has_country_flag = pkk_inf_attack
+		TUR = {
+			AND = {
+				owns_state = 163
+				controls_state = 163
+				owns_state = 162
+				controls_state = 162
+			}
+		}
+	}
+	
+	immediate = {
+		log = "[GetDateText]: [Root.GetName] pkk inf attack happened"
+		clr_country_flag = pkk_inf_attack
+	}
+	
+	mean_time_to_happen = { days = 1 }
+	
+	option = {
+		name = pkk_attack.2.a
+		#activate_decision = airstrike_thingy
+	}
+	
+	option = {
+		name = pkk_attack.2.b
+		relative_change_pos_2 = yes
+		add_timed_idea = { idea = treat_wounds days = 3 }
+	}
+}
+
+country_event = {
+
+	id = pkk_attack.3
+	
+	title = pkk_attack.3.t
+	desc = pkk_attack.3.d
+	picture = GFX_pkk_ambush
+	
+	fire_only_once = no
+	
+	trigger = {
+		tag = TUR
+		has_idea = pkk_terror_idea
+		has_country_flag = pkk_civ_attack
+		TUR = {
+			AND = {
+				owns_state = 163
+				controls_state = 163
+				owns_state = 162
+				controls_state = 162
+			}
+		}
+	}
+	
+	immediate = {
+		log = "[GetDateText]: [Root.GetName] pkk civ attack happened"
+		clr_country_flag = pkk_civ_attack
+	}
+	
+	mean_time_to_happen = { days = 1 }
+	
+	option = {
+		name = pkk_attack.3.a
+		#activate_decision = airstrike_thingy
+	}
+	
+	option = {
+		name = pkk_attack.3.b
+		relative_change_pos_2 = yes
+		add_timed_idea = { idea = treat_wounds days = 3 }
+	}
+}
+
+country_event = {
+
+	id = pkk_attack.4
+	
+	title = pkk_attack.4.t
+	desc = pkk_attack.4.d
+	picture = GFX_pkk_ambush
+	
+	fire_only_once = no
+	
+	trigger = {
+		tag = TUR
+		has_idea = pkk_terror_idea
+		has_country_flag = pkk_mil_attack
+		TUR = {
+			AND = {
+				owns_state = 163
+				controls_state = 163
+				owns_state = 162
+				controls_state = 162
+			}
+		}
+	}
+	
+	immediate = {
+		log = "[GetDateText]: [Root.GetName] pkk mil attack happened"
+		clr_country_flag = pkk_mil_attack
+	}
+	
+	mean_time_to_happen = { days = 1 }
+	
+	option = {
+		name = pkk_attack.4.a
+		#activate_decision = airstrike_thingy
+	}
+	
+	option = {
+		name = pkk_attack.4.b
+		relative_change_pos_2 = yes
+		add_timed_idea = { idea = treat_wounds days = 3 }
+	}
+}
+
+country_event = {
+
+	id = pkk_attack.5
+	
+	title = pkk_attack.5.t
+	desc = pkk_attack.5.d
+	picture = GFX_pkk_ambush
+	
+	fire_only_once = no
+	
+	trigger = {
+		tag = TUR
+		has_idea = pkk_terror_idea
+		has_country_flag = pkk_cit_attack
+		TUR = {
+			AND = {
+				owns_state = 163
+				controls_state = 163
+				owns_state = 162
+				controls_state = 162
+			}
+		}
+	}
+	
+	immediate = {
+		log = "[GetDateText]: [Root.GetName] pkk cit attack happened"
+		clr_country_flag = pkk_cit_attack
+	}
+	
+	mean_time_to_happen = { days = 1 }
+	
+	option = {
+		name = pkk_attack.5.a
+		#activate_decision = airstrike_thingy
+	}
+	
+	option = {
+		name = pkk_attack.5.b
+		relative_change_pos_2 = yes
+	}
+}
+
+country_event = { #hidden event that increases pkk power if you haven't done 3 or more counter terror operations that month
+
+	id = pkk_increase.1
+	
+	fire_only_once = no
+	
+	hidden = yes
+	
+	trigger = {
+		has_idea = pkk_terror_idea
+	}
+	
+	mean_time_to_happen = { days = 30 }
+	
+	is_triggered_only = no
+	
+	immediate = {
+		if= {
+			limit = { check_variable = { var = ct_op_count_1 value = 2 compare = less_than_or_equals } }
+			add_to_variable = { var = pkk_presence value = 5 }
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+			clear_variable = ct_op_count_1
+			log = "[GetDateText]: [Root.GetName] pkk power increased"
+		}
+		else = {
+			clear_variable = ct_op_count_1
+			log = "[GetDateText]: [Root.GetName] pkk power stays"
+		}
+	}
+}
+
+country_event = { #hidden event that increases pkk power even more if you haven't done any operations in the last 3 months
+
+	id = pkk_increase.2
+	
+	fire_only_once = no
+	
+	hidden = yes
+	
+	trigger = {
+		has_idea = pkk_terror_idea
+	}
+	
+	mean_time_to_happen = { days = 90 }
+	
+	is_triggered_only = no
+	
+	immediate = {
+		if= {
+			limit = { check_variable = { var = ct_op_count_2 value = 1 compare = less_than } }
+			add_to_variable = { var = pkk_presence value = 10 }
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+			clear_variable = ct_op_count_2
+			log = "[GetDateText]: [Root.GetName] pkk power increased a lot"
+		}
+		else = {
+			clear_variable = ct_op_count_2
+			log = "[GetDateText]: [Root.GetName] pkk power stays"
 		}
 	}
 }
