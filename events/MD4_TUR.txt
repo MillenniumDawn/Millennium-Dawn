@@ -16,6 +16,9 @@ country_event = {
 	title = pkk_test.1.t
 	desc = pkk_test.1.d
 	
+	mean_time_to_happen = {
+	}
+	
 	is_triggered_only = yes
 	
 	option = {
@@ -540,22 +543,20 @@ country_event = {
 	
 	immediate = {
 		log = "[GetDateText]: [Root.GetName] pkk inf attack happened"
+		clr_country_flag = pkk_inf_attack
 	}
 	
-	is_triggered_only = yes
 	mean_time_to_happen = { days = 1 }
 	
 	option = {
 		name = pkk_attack.2.a
 		#activate_decision = airstrike_thingy
-		clr_country_flag = pkk_inf_attack
 	}
 	
 	option = {
 		name = pkk_attack.2.b
 		relative_change_pos_2 = yes
-		add_timed_idea = { idea = treat_wounds days = 5 }
-		clr_country_flag = pkk_inf_attack
+		add_timed_idea = { idea = treat_wounds days = 3 }
 	}
 }
 
@@ -585,22 +586,20 @@ country_event = {
 	
 	immediate = {
 		log = "[GetDateText]: [Root.GetName] pkk civ attack happened"
+		clr_country_flag = pkk_civ_attack
 	}
 	
-	is_triggered_only = yes
 	mean_time_to_happen = { days = 1 }
 	
 	option = {
 		name = pkk_attack.3.a
 		#activate_decision = airstrike_thingy
-		clr_country_flag = pkk_civ_attack
 	}
 	
 	option = {
 		name = pkk_attack.3.b
 		relative_change_pos_2 = yes
-		add_timed_idea = { idea = treat_wounds days = 5 }
-		clr_country_flag = pkk_civ_attack
+		add_timed_idea = { idea = treat_wounds days = 3 }
 	}
 }
 
@@ -630,22 +629,20 @@ country_event = {
 	
 	immediate = {
 		log = "[GetDateText]: [Root.GetName] pkk mil attack happened"
+		clr_country_flag = pkk_mil_attack
 	}
 	
-	is_triggered_only = yes
 	mean_time_to_happen = { days = 1 }
 	
 	option = {
 		name = pkk_attack.4.a
 		#activate_decision = airstrike_thingy
-		clr_country_flag = pkk_mil_attack
 	}
 	
 	option = {
 		name = pkk_attack.4.b
 		relative_change_pos_2 = yes
-		add_timed_idea = { idea = treat_wounds days = 5 }
-		clr_country_flag = pkk_mil_attack
+		add_timed_idea = { idea = treat_wounds days = 3 }
 	}
 }
 
@@ -675,21 +672,19 @@ country_event = {
 	
 	immediate = {
 		log = "[GetDateText]: [Root.GetName] pkk cit attack happened"
+		clr_country_flag = pkk_cit_attack
 	}
 	
-	is_triggered_only = yes
 	mean_time_to_happen = { days = 1 }
 	
 	option = {
 		name = pkk_attack.5.a
 		#activate_decision = airstrike_thingy
-		clr_country_flag = pkk_cit_attack
 	}
 	
 	option = {
 		name = pkk_attack.5.b
 		relative_change_pos_2 = yes
-		clr_country_flag = pkk_cit_attack
 	}
 }
 
@@ -702,6 +697,7 @@ country_event = { #hidden event that increases pkk power if you haven't done 3 o
 	hidden = yes
 	
 	trigger = {
+		has_idea = pkk_terror_idea
 	}
 	
 	mean_time_to_happen = { days = 30 }
@@ -710,13 +706,45 @@ country_event = { #hidden event that increases pkk power if you haven't done 3 o
 	
 	immediate = {
 		if= {
-			limit = { check_variable = { var = ct_op_count value = 2 compare = less_than_or_equals } }
+			limit = { check_variable = { var = ct_op_count_1 value = 2 compare = less_than_or_equals } }
 			add_to_variable = { var = pkk_presence value = 5 }
-			clear_variable = ct_op_count
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+			clear_variable = ct_op_count_1
 			log = "[GetDateText]: [Root.GetName] pkk power increased"
 		}
 		else = {
-			clear_variable = ct_op_count
+			clear_variable = ct_op_count_1
+			log = "[GetDateText]: [Root.GetName] pkk power stays"
+		}
+	}
+}
+
+country_event = { #hidden event that increases pkk power even more if you haven't done any operations in the last 3 months
+
+	id = pkk_increase.2
+	
+	fire_only_once = no
+	
+	hidden = yes
+	
+	trigger = {
+		has_idea = pkk_terror_idea
+	}
+	
+	mean_time_to_happen = { days = 90 }
+	
+	is_triggered_only = no
+	
+	immediate = {
+		if= {
+			limit = { check_variable = { var = ct_op_count_2 value = 1 compare = less_than } }
+			add_to_variable = { var = pkk_presence value = 10 }
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+			clear_variable = ct_op_count_2
+			log = "[GetDateText]: [Root.GetName] pkk power increased a lot"
+		}
+		else = {
+			clear_variable = ct_op_count_2
 			log = "[GetDateText]: [Root.GetName] pkk power stays"
 		}
 	}
