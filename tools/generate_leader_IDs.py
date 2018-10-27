@@ -8,7 +8,7 @@ def main():
 
     files_list = []
     leaderID = 1
-    fileNumber = 0
+    idRange = 0
 
     # Allow running from root directory as well as from inside the tools directory
     scriptDir = os.path.realpath(__file__)
@@ -49,8 +49,8 @@ def main():
             file.write(newContent)
             print("Updated: ", filename, "/n")
         file.close()
-        fileNumber +=3
-        leaderID = (fileNumber*100)
+        idRange +=300
+        leaderID = (idRange)
         #input("Press Enter to continue...")
 
     print ("Generation completed")
