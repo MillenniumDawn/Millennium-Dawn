@@ -3,54 +3,12 @@ import os, sys, fnmatch, re
 
 __version__ = 1.0
 
-
-def check_basic_style(filepath):
-    bad_count_file = 0
-
-    with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
-        content = file.readlines()
-        lineNum = 0
-        openBraces = [0, 0]
-        for line in content:
-            lineNum += 1
-            hasComment = re.search(r'#.*?[{}]+?', line, re.M | re.I)  # If comment at the start or before bracket
-            hasOpenBrace = re.search(r'{', line, re.M | re.I)
-            hasCloseBrace = re.search(r'}', line, re.M | re.I)
-            if not hasComment:  # Don't waste cycles comment if comment at the start or before open bracket
-                # print ("comment at line: ", lineNum)
-                if hasOpenBrace:
-                    openBraces[0] += len(re.findall('{', line))
-                    openBraces[1] = lineNum
-                # print ("OPEN brace on line:", lineNum, "open brace = ", openbraces)
-
-                if hasCloseBrace:
-                    openBraces[0] += -len(re.findall('}', line))
-                # print ("CLOSE brace on line:", lineNum, "open brace = ", openbraces)
-
-                if openBraces[0] <= -1:
-                    print(filepath);
-                    print("ERROR: Closing bracket on line:", lineNum, "with no matching opening bracket")
-                    openBraces[0] = 0
-                    bad_count_file += 1
-                # input("Press Enter to continue...")
-        else:
-            if openBraces[0] < 0:
-                print(filepath);
-                print("Closing bracket on line:", lineNum, "with no matching opening bracket")
-                bad_count_file += 1
-            elif openBraces[0] > 0:
-                print(filepath);
-                print("Open bracket on line:", openBraces[1], "has no matching closing bracket")
-    # input("Press Enter to continue...")
-
-    return bad_count_file
-
-
 def main():
     print("Validating Basic Style")
 
     files_list = []
-    leaderID = 0
+    leaderID = 1
+    fileNumber = 0
 
     # Allow running from root directory as well as from inside the tools directory
     scriptDir = os.path.realpath(__file__)
@@ -62,14 +20,36 @@ def main():
             print(filename)
 
     for filename in files_list:
+        newContent = ""
         with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
             content = file.readlines()
+
+            writeSkill = 1
             for line in content:
                 hasSkill = re.search(r'([ \t]+)skill[ \t]+?=[ \t]+?([0-9]+)', line, re.M | re.I)
-                if hasSkill:
-                    leaderID+=1
-                    print (leaderID)
+                hasNavyLeader = re.search(r'[ \t]+?create_navy_leader', line, re.M | re.I)
 
+                if hasNavyLeader:
+                    writeSkill = 0
+
+                if hasSkill:
+                    newContent += hasSkill.group(1)+ "id = " + str(leaderID) + "\n"
+                    leaderID += 1
+                    if writeSkill == 1:
+                        newContent += hasSkill.group(1)+ "skill = " + hasSkill.group(2) + "\n"
+                        newContent += hasSkill.group(1)+ "attack_skill = " + hasSkill.group(2)+ "\n"
+                        newContent += hasSkill.group(1)+ "defense_skill = " + hasSkill.group(2)+ "\n"
+                        newContent += hasSkill.group(1)+ "planning_skill = " + hasSkill.group(2)+ "\n"
+                        newContent += hasSkill.group(1)+ "logistics_skill = " + hasSkill.group(2)+ "\n"
+                    writeSkill = 1
+                else:
+                    newContent += line
+        print(newContent)
+        file.close()
+        with open(filename, 'w', encoding='utf-8', errors='ignore') as file:
+            file.write(newContent)
+        file.close()
+        input("Press Enter to continue...")
 
 if __name__ == "__main__":
     sys.exit(main())
