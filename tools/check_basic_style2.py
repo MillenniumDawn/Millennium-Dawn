@@ -9,7 +9,7 @@ def check_basic_style(filepath):
     with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.readlines()
         lineNum = 0
-        openBraces = 0
+        openBraces = [0, 0]
         for line in content:
             lineNum +=1
             hasComment = re.search(r'#.*?[{}]+?', line, re.M | re.I) #If comment at the start or before bracket
@@ -18,25 +18,30 @@ def check_basic_style(filepath):
             if not hasComment: #Don't waste cycles comment if comment at the start or before open bracket
                 #print ("comment at line: ", lineNum)
                 if hasOpenBrace:
-                    openBraces += len(re.findall('{', line))
+                    openBraces[0] += len(re.findall('{', line))
+                    openBraces[1]=lineNum
                    # print ("OPEN brace on line:", lineNum, "open brace = ", openbraces)
 
                 if hasCloseBrace:
-                    openBraces += -len(re.findall('}', line))
+                    openBraces[0] += -len(re.findall('}', line))
                    # print ("CLOSE brace on line:", lineNum, "open brace = ", openbraces)
 
-                if openBraces <= -1:
+                if openBraces[0] <= -1:
                     print(filepath);
                     print("ERROR: Closing bracket on line:", lineNum, "with no matching opening bracket")
-                    openBraces = 0
+                    openBraces[0] = 0
                     bad_count_file +=1
                 #input("Press Enter to continue...")
         else:
-            if openBraces != 0:
+            if openBraces[0] < 0:
                 print(filepath);
-                print("TEST: Closing bracket on line:", lineNum, "with no matching opening bracket")
+                print("Closing bracket on line:", lineNum, "with no matching opening bracket")
                 bad_count_file += 1
-       # input("Press Enter to continue...")
+            elif openBraces[0] > 0:
+                print(filepath);
+                print("Open bracket on line:", openBraces[1], "has no matching closing bracket")
+        #input("Press Enter to continue...")
+        file.close()
 
     return bad_count_file
 
