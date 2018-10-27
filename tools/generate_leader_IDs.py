@@ -14,7 +14,7 @@ def main():
     scriptDir = os.path.realpath(__file__)
     rootDir = os.path.dirname(os.path.dirname(scriptDir))
 
-    for root, dirnames, filenames in os.walk(rootDir + '/' + 'history/countries/test/'):
+    for root, dirnames, filenames in os.walk(rootDir + '/' + 'history/countries/'):
         for filename in fnmatch.filter(filenames, '*.txt'):
             files_list.append(os.path.join(root, filename))
             print(filename)
