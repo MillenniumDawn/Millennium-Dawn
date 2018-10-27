@@ -23,7 +23,6 @@ def main():
         newContent = ""
         with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
             content = file.readlines()
-
             writeSkill = 1
             for line in content:
                 hasSkill = re.search(r'([ \t]+)skill[ \t]+?=[ \t]+?([0-9]+)', line, re.M | re.I)
@@ -49,7 +48,10 @@ def main():
         with open(filename, 'w', encoding='utf-8', errors='ignore') as file:
             file.write(newContent)
         file.close()
-        input("Press Enter to continue...")
+        fileNumber +=3
+        leaderID = (fileNumber*100)
+        #input("Press Enter to continue...")
+
 
 if __name__ == "__main__":
     sys.exit(main())
