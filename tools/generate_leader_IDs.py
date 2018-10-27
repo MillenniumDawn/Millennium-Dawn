@@ -43,15 +43,17 @@ def main():
                     writeSkill = 1
                 else:
                     newContent += line
-        print(newContent)
+        #print(newContent)
         file.close()
         with open(filename, 'w', encoding='utf-8', errors='ignore') as file:
             file.write(newContent)
+            print("Updated: ", filename, "/n")
         file.close()
         fileNumber +=3
         leaderID = (fileNumber*100)
         #input("Press Enter to continue...")
 
+    print ("Generation completed")
 
 if __name__ == "__main__":
     sys.exit(main())
