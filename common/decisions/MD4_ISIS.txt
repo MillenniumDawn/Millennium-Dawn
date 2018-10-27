@@ -4,24 +4,25 @@ sleeper_cell_decisions = {
 	build_sleeper_cells = {
 	
 		allowed = {
-			always = yes
 		}
 	
 		visible = {
 			tag = ISI
 			NOT = {
 				FROM = {
-					has_idea = Isis_sleeper_cell_idea
+					has_idea = isis_sleeper_cell_idea
 				}
 			}
 		}
 		
+		ai_will_do = { factor = 10 }
+		
 		target_trigger = {
 			exists = yes
 			FROM = {
-				AND = {
+				OR = {
 					NOT = { tag = ISI }
-					NOT = { has_idea = Isis_sleeper_cell_idea }
+					NOT = { has_idea = isis_sleeper_cell_idea }
 					NOT = { is_puppet_of = ISI }
 					NOT = { is_in_faction_with = ISI }
 				}
@@ -30,11 +31,69 @@ sleeper_cell_decisions = {
 		
 		remove_effect = {
 			FROM = {
-				add_ideas = Isis_sleeper_cell_idea
+				add_ideas = isis_sleeper_cell_idea
 			}
 		}
 		
-		days_remove = 1
+		#cost = 200
+		days_remove = 1 # will be 90 or so when testing finishes
 		fire_only_once = no
+	}
+}
+
+counter_sleeper_cell_operations = {
+	crackdown_on_khawarij = {
+	
+		allowed = {
+		}
+		
+		visible = {
+			has_idea = isis_sleeper_cell_idea
+		}
+		
+		ai_will_do = { factor = 20 }
+		
+		complete_effect = {
+			set_variable = { odds_of_success = random }
+		}
+		
+		#cost = 90
+		days_remove = 1 # will be 60 or so when testing finishes
+		
+		remove_effect = {
+			if = {
+				limit = {
+					ROOT = {
+						OR = {
+							has_idea = sunni
+							has_idea = shia
+							has_idea = ibadi
+							has_idea = sufi_islam
+						}
+					}
+				}
+				if = {
+					limit = { check_variable = { var = odds_of_success value = 0.4 compare = greater_than } }
+					remove_idea = isis_sleeper_cell_idea
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						OR = {
+							NOT = { has_idea = sunni }
+							NOT = { has_idea = shia }
+							NOT = { has_idea = ibadi }
+							NOT = { has_idea = sufi_islam }
+						}
+					}
+				}
+				if = {
+					limit = { check_variable = { var = odds_of_success value = 0.3 compare = greater_than } }
+					remove_idea = isis_sleeper_cell_idea
+				}
+			}
+		clear_variable = odds_of_success
+		}
 	}
 }
