@@ -660,8 +660,8 @@ NMilitary = {
 	COMMANDER_LEVEL_UP_STAT_COUNT = 3, 				-- num stats gained on level up
 	
 	UNIT_LEADER_INITIAL_TRAIT_SLOT = { 				-- trait slot for 0 level leader
-		1.0, -- field marshal
-		0.0, -- corps commander
+		0.0, -- field marshal
+		1.0, -- corps commander
 		0.0  -- navy general
 	}, 
 	
@@ -685,12 +685,14 @@ NMilitary = {
 	},
 	
 	NEW_COMMANDER_RANDOM_BASIC_TRAIT_CHANCES = {  -- chances to gain a basic trait for new generals
+		1
 	},
 	
 	NEW_COMMANDER_RANDOM_STATUS_TRAIT_CHANCES = {  -- chances to gain a status trait for new generals
 	},
 	
 	NEW_COMMANDER_RANDOM_SKILL_CHANCES = {  -- chances to give a random stat skill for new generals
+		0.25
 	},
 	
 	UNIT_LEADER_MODIFIER_COOLDOWN_ON_GROUP_CHANGE = 15,		-- time in days for a unit leader to regain its modifiers
