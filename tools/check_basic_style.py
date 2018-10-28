@@ -13,7 +13,7 @@ def check_basic_style(filepath):
         brackets_list = []
         indent_List = []
 
-        # To check if we are in a comment block
+        # To check if we are in a comment block.
         checkIfInComment = False
         # Used in case we are in a line comment (//)
         ignoreTillEndOfLine = False
