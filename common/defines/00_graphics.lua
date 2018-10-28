@@ -684,8 +684,8 @@ NGraphics = {
 	BRIGHT_THRESHOLD = 0.9,
 	--BRIGHT_THRESHOLD = 0.9, -- night
 	EMISSIVE_BLOOM_STRENGTH = 0.85, --1.0
-	MIN_HDR_ADJUSTMENT = 0.52,     --0.18 0.5  är hur mkt den anpassar sig till mörka områden, mindre värde -> mer mörkerseen
-	MAX_HDR_ADJUSTMENT = 0.72,      --0.8 0.8 jätte högt värde så ser du bra trots att du står inuti solen och tittar. 
+	MIN_HDR_ADJUSTMENT = 0.52,	--0.18 0.5  är hur mkt den anpassar sig till mörka områden, mindre värde -> mer mörkerseen
+	MAX_HDR_ADJUSTMENT = 0.72,	 --0.8 0.8 jätte högt värde så ser du bra trots att du står inuti solen och tittar. 
 	HDR_ADJUSTMENT_SPEED = 5.0, -- 6
 	TONE_MAP_MIDDLE_GREY = 0.7, --0.7 was 0.5
 	TONE_MAP_LUMINANCE_WHITE = 1.0, --
@@ -792,7 +792,7 @@ NGraphics = {
 	NATIONAL_FOCUS_SHINE_DISTANCE_SCALE = 0.03,
 	NATIONAL_FOCUS_PULSE_BASE =	10.0,
 	NATIONAL_FOCUS_PULSE_RANDOM = 10.0,
-	POLITICAL_GRID_SMALL_BOX_LIMIT = 6,              	-- Limit for gridbox in political view before it will be replaced with extended gridbox
+	POLITICAL_GRID_SMALL_BOX_LIMIT = 6,		    	-- Limit for gridbox in political view before it will be replaced with extended gridbox
 	SETUP_SPIRIT_GRID_BOX_LIMIT = 3,					-- Limit for gridbox in game setup before it will be replaced with extended gridbox 
 	POLITICAL_PULSE_BASE =	10.0,
 	POLITICAL_PULSE_RANDOM = 10.0,
@@ -822,7 +822,7 @@ NInterface = {
 	COMBAT_SOME_ARMOR = 0.4,					-- How many % of enemy units have to be unable to pierce the unit in order for the some armor icon to be displayed
 	COMBAT_GOOD_ARMOR = 0.8,					-- How many % of enemy units have to be unable to pierce the unit in order for the good armor icon to be displayed
 	
-	SWITCH_EQUIPMENT_DIALOG_TRESHOLD = 7,       -- Confirm dialog that shows up when you switch equipment for a production line if you lose more than x days of progress.
+	SWITCH_EQUIPMENT_DIALOG_TRESHOLD = 7,	  -- Confirm dialog that shows up when you switch equipment for a production line if you lose more than x days of progress.
 	
 	TOOLTIP_SCREEN_LEFT_OFFSET_X = 0,				-- Tooltip offset on x axis from left screen border
 	TOOLTIP_SCREEN_RIGHT_OFFSET_X = 0,				-- Tooltip offset on x axis from right screen border
@@ -844,7 +844,7 @@ NInterface = {
 	
 	MINIMAP_PING_DURATION = 12.0, 				-- timeout for pings
 	MINIMAP_PING_SPEEDUP_ON_SCREEN = 2.0,		-- speed up for timeout if ping is visible on screen
-	MINIMAP_PING_DELAY_BETWEEN_PINGS = 0.3,     -- delay between consecative pings
+	MINIMAP_PING_DELAY_BETWEEN_PINGS = 0.3,	-- delay between consecative pings
 
 	DRAG_AND_DROP_SCROLLING_SENSITIVITY = 12.5,	-- Speed multiplier for components scrolling while drag'n dropping elements
 	GRIDBOX_ELEMENTS_INTERPOLATION_SPEED = 0.5, -- A value used to determine how fast the elements within the gridbox are interpolating while drag'n dropping.
@@ -868,7 +868,7 @@ NFrontend = {
 	CAMERA_LOOKAT_SETTINGS_Z = 1519.0,
 	CAMERA_START_X = 2958.0,						-- Initial position in main menu -- 2958.0
 	CAMERA_START_Y = 800,							-- Y is height
-	CAMERA_START_Z = 1400.0,                        -- 1400.0
+	CAMERA_START_Z = 1400.0,				    -- 1400.0
 	CAMERA_END_X = 2958.0,							-- Move to position in main menu
 	CAMERA_END_Y = 900.0,
 	CAMERA_END_Z = 1400.0,
@@ -927,14 +927,14 @@ NFrontend = {
 
 NSound = {
 	-- The volume of sounds in this category vary with camera altitude.
-	HEIGHT_SOUND_CATEGORY     = "Atmosphere",  -- Name of the sound category
-	HEIGHT_SOUND_MIN_ALTITUDE =  100.0,        -- Below this altitude the minimum volume will be used
-	HEIGHT_SOUND_MAX_ALTITUDE = 2000.0,        -- Above this altitude the maximum volume will be used
+	HEIGHT_SOUND_CATEGORY	= "Atmosphere",  -- Name of the sound category
+	HEIGHT_SOUND_MIN_ALTITUDE =  100.0,	   -- Below this altitude the minimum volume will be used
+	HEIGHT_SOUND_MAX_ALTITUDE = 2000.0,	   -- Above this altitude the maximum volume will be used
 	HEIGHT_SOUND_MIN_VOLUME   =    0.2,
 	HEIGHT_SOUND_MAX_VOLUME   =    1.0,
 
-	BATTLE_SOUND_NAME            = "amb_battle_distant",
-	BATTLE_SOUND_INIT_RADIUS     =   9.0,
+	BATTLE_SOUND_NAME		  = "amb_battle_distant",
+	BATTLE_SOUND_INIT_RADIUS	=   9.0,
 	BATTLE_SOUND_FALLOFF_DEFAULT = 100.0,
 
 	BATTLE_SOUND_MIN_UNIT_COUNT =   6,
