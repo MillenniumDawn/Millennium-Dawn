@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 import os, sys, fnmatch, re
+import time
+
+#startTime = time.time()
 
 __version__ = 1.0
 
@@ -71,6 +74,8 @@ def main():
     else:
         print("File validation FAILED")
 
+    #print ('The script took {0} second!'.format(time.time() - startTime))
+    
     return bad_count
     
 if __name__ == "__main__":
