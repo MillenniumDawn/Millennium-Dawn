@@ -27,7 +27,7 @@ tactic_basic_attack = {
 	base = { factor = 4 }
 	picture = attack
 	
-	countered_by = tactic_counterattack
+	countered_by = tactic_counterattack #You can only be countered by 1 tactic
 
 	attacker = 0.05
 }
@@ -44,6 +44,7 @@ tactic_basic_defend = {
 	picture = defend
 	
 	defender = 0.05
+	countered_by = tactic_insurgent_assault
 }
 tactic_counterattack = { # counters basic attack, assault
 	is_attacker = no
@@ -78,6 +79,72 @@ tactic_assault = { #starts close_combat phase
 	
 	attacker = 0.25			#attacker gets a bonus to doing damage
 }
+
+tactic_breakthrough = { #counters ambush
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = no
+		OR = {
+			hardness > 0.5
+			skill_advantage > 1
+		}
+	}
+	
+	active = no
+	
+	base = { factor = 4 }
+	picture = breakthrough
+	
+	countered_by = tactic_backhand_blow
+	
+	attacker_movement_speed = 0.5
+	attacker = 0.25
+	defender = -0.15
+}
+tactic_ambush = { #counters shock
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = no
+		OR = {
+			skill_advantage > 1
+			skill > 2
+			has_trait = trickster
+		}
+	}
+	
+	active = yes
+	
+	base = { factor = 4 }
+	picture = ambush
+	countered_by = tactic_breakthrough
+	
+	attacker = -0.25
+}
+tactic_backhand_blow = { #counters breakthrough
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = no
+		OR = {
+			skill > 4
+			AND = {
+				has_trait = defensive_doctrine
+				skill > 3
+			}
+		}
+	}
+	
+	base = { factor = 4 }
+	picture = backhand_blow
+	
+	attacker_movement_speed = -0.3
+	attacker = -0.2
+	defender = 0.25
+}
+
+
 
 #close combat tactics here
 tactic_cc_attack = { 
@@ -322,74 +389,6 @@ tactic_tw_intercept = { #changes phase to no
 	defender = -0.1
 }
 
-tactic_breakthrough = { #counters ambush
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = no
-		OR = {
-			hardness > 0.5
-			skill_advantage > 1
-		}
-	}
-	
-	active = no
-	
-	base = { factor = 4 }
-	picture = breakthrough
-	
-	countered_by = tactic_backhand_blow
-	
-	attacker_movement_speed = 0.5
-	attacker = 0.25
-	defender = -0.15
-}
-
-tactic_ambush = { #counters shock
-	is_attacker = no
-	trigger = {
-		is_attacker = no
-		phase = no
-		OR = {
-			skill_advantage > 1
-			skill > 2
-			has_trait = trickster
-		}
-	}
-	
-	active = yes
-	
-	base = { factor = 4 }
-	picture = ambush
-	countered_by = tactic_breakthrough
-	
-	attacker = -0.25
-}
-
-
-tactic_backhand_blow = { #counters breakthrough
-	is_attacker = no
-	trigger = {
-		is_attacker = no
-		phase = no
-		OR = {
-			skill > 4
-			AND = {
-				has_trait = defensive_doctrine
-				skill > 3
-			}
-		}
-	}
-	
-	base = { factor = 4 }
-	picture = backhand_blow
-	
-	attacker_movement_speed = -0.3
-	attacker = -0.2
-	defender = 0.25
-}
-
-
 #Siege bridge phase
 tactic_seize_bridge = { 
 	is_attacker = yes
@@ -498,7 +497,6 @@ tactic_defender_sb_retake_bridge = {
 	attacker = 0.1
 	defender = -0.05
 }
-
 tactic_hold_bridge = { 
 	is_attacker = no
 	trigger = {
@@ -726,6 +724,49 @@ tactic_elastic_defense = { #phase = no, no counter
 
 
 
+tactic_danger_close_combat = { #People's army defender tactic. also for German volksturm branch.
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = close_combat
+		OR = {
+			skill > 2
+			has_trait = trickster
+		}
+	}
+	
+	active = no
+	
+	base = { factor = 12 }
+	picture = tactic_guerrilla_tactics
+	
+	combat_width = -0.5
+	attacker = -0.7
+	defender = -0.6
+}
+tactic_tunnel_warfare = { #People's army defender tactic. also for German volksturm branch.
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = no
+		OR = {
+			not = { is_fighting_in_terrain = marsh }
+		}
+		OR = {
+			skill > 2
+			has_trait = trickster
+		}
+	}
+	
+	active = no
+	
+	base = { factor = 12 }
+	picture = tactic_guerrilla_tactics
+	
+	combat_width = -0.5
+	attacker = -0.7
+	defender = -0.6
+}
 tactic_guerrilla_tactics = { #People's army defender tactic. also for German volksturm branch.
 	is_attacker = no
 	trigger = {
@@ -739,12 +780,31 @@ tactic_guerrilla_tactics = { #People's army defender tactic. also for German vol
 	
 	active = no
 	
-	base = { factor = 4 }
+	base = { factor = 12 }
 	picture = tactic_guerrilla_tactics
-	
 	combat_width = -0.5
 	attacker = -0.7
 	defender = -0.6
+	
+}
+tactic_insurgent_assault = { #People's army defender tactic. also for German volksturm branch.
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = no
+		OR = {
+			skill > 2
+			has_trait = trickster
+		}
+	}
+	
+	active = no
+	
+	base = { factor = 12 }
+	picture = tactic_guerrilla_tactics
+	
+	
+	attacker = 0.25
 }
 
 tactic_human_wave_tactics = { #People's army attacker tactic
