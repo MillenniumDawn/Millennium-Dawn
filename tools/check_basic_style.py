@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 import os, sys, fnmatch
+import time
+
+#startTime = time.time()
 
 __version__ = 1.0
 
@@ -11,9 +14,9 @@ def check_basic_style(filepath):
 
         # Store all brackets we find in this file, so we can validate everything on the end
         brackets_list = []
+        indent_List = []
 
-        # To check if we are in a comment block
-        isInCommentBlock = False
+        # To check if we are in a comment block.
         checkIfInComment = False
         # Used in case we are in a line comment (//)
         ignoreTillEndOfLine = False
@@ -21,13 +24,7 @@ def check_basic_style(filepath):
         # If the next character is a /, it means we end our comment block.
         checkIfNextIsClosingBlock = False
 
-        # We ignore everything inside a string
-        isInString = False
-        # Used to store the starting type of a string, so we can match that to the end of a string
-        inStringType = ''
-
         lastIsCurlyBrace = False
-        checkForSemiColumn = False
 
         # Extra information so we know what line we find errors at
         lineNumber = 1
@@ -39,67 +36,45 @@ def check_basic_style(filepath):
                 lastIsCurlyBrace = False
             if c == '\n': # Keeping track of our line numbers
                 lineNumber += 1 # so we can print accurate line number information when we detect a possible error
-                checkIfInComment = False
-            if (isInString): # while we are in a string, we can ignore everything else, except the end of the string
-                if (c == inStringType):
-                    isInString = False
+            if c != ' ':
+                indent_List = []
             # if we are not in a comment block, we will check if we are at the start of one or count the () {} and []
             elif (checkIfInComment == False):
-                # This means we have encountered a /, so we are now checking if this is an inline comment or a comment block
-                if (checkIfInComment):
-                    checkIfInComment = False
-                    if c == '*': # if the next character after / is a *, we are at the start of a comment block
-                        isInCommentBlock = True
-                    elif (c == '/'): # Otherwise, will check if we are in an line comment
-                        ignoreTillEndOfLine = True # and an line comment is a / followed by another / (//) We won't care about anything that comes after it
+                if (ignoreTillEndOfLine): # we are in a line comment, just continue going through the characters until we find an end of line
+                    if (c == '\n'):
+                        ignoreTillEndOfLine = False
+                else: # validate brackets
+                    if (c == '#'):
+                        ignoreTillEndOfLine = True
+                    elif (c == '('):
+                        brackets_list.append('(')
+                    elif (c == ')'):
+                        if (len(brackets_list) > 0 and brackets_list[-1] in ['{', '[']):
+                            print("ERROR: Possible missing round bracket ')' detected at {0} Line number: {1}".format(filepath,lineNumber))
+                            bad_count_file += 1
+                        brackets_list.append(')')
+                    elif (c == '['):
+                        brackets_list.append('[')
+                    elif (c == ']'):
+                        if (len(brackets_list) > 0 and brackets_list[-1] in ['{', '(']):
+                            print("ERROR: Possible missing square bracket ']' detected at {0} Line number: {1}".format(filepath,lineNumber))
+                            bad_count_file += 1
+                        brackets_list.append(']')
+                    elif (c == '{'):
+                        brackets_list.append('{')
+                    elif (c == '}'):
+                        lastIsCurlyBrace = True
+                        if (len(brackets_list) > 0 and brackets_list[-1] in ['(', '[']):
+                            print("ERROR: Possible missing curly brace '}}' detected at {0} Line number: {1}".format(filepath,lineNumber))
+                            bad_count_file += 1
+                        brackets_list.append('}')
 
-                if (isInCommentBlock == False):
-                    if (ignoreTillEndOfLine): # we are in a line comment, just continue going through the characters until we find an end of line
-                        if (c == '\n'):
-                            ignoreTillEndOfLine = False
-                    else: # validate brackets
-                        if (c == '#'):
-                            checkIfInComment = True
-                        # elif (c == '"' or c == "'"):
-                        #     isInString = True
-                        #     inStringType = c
-                        #     print(c)
-                        elif (c == '('):
-                            brackets_list.append('(')
-                        elif (c == ')'):
-                            if (len(brackets_list) > 0 and brackets_list[-1] in ['{', '[']):
-                                print("ERROR: Possible missing round bracket ')' detected at {0} Line number: {1}".format(filepath,lineNumber))
-                                bad_count_file += 1
-                            brackets_list.append(')')
-                        elif (c == '['):
-                            brackets_list.append('[')
-                        elif (c == ']'):
-                            if (len(brackets_list) > 0 and brackets_list[-1] in ['{', '(']):
-                                print("ERROR: Possible missing square bracket ']' detected at {0} Line number: {1}".format(filepath,lineNumber))
-                                bad_count_file += 1
-                            brackets_list.append(']')
-                        elif (c == '{'):
-                            brackets_list.append('{')
-                        elif (c == '}'):
-                            lastIsCurlyBrace = True
-                            if (len(brackets_list) > 0 and brackets_list[-1] in ['(', '[']):
-                                print("ERROR: Possible missing curly brace '}}' detected at {0} Line number: {1}".format(filepath,lineNumber))
-                                bad_count_file += 1
-                            brackets_list.append('}')
-                        elif (c== '    '):
-                            print("ERROR: spaces indent (4) detected at {0} Line number: {1}".format(filepath,lineNumber))
+                    elif (c == ' '): # checking indent
+                        indent_List.append('space')
+                        if (len(indent_List) == 4):
+                            print("ERROR: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(filepath,lineNumber))
                             bad_count_file += 1
-                        elif (c== '  '):
-                            print("ERROR: spaces indent (2) detected at {0} Line number: {1}".format(filepath,lineNumber))
-                            bad_count_file += 1
-            else: # Look for the end of our comment block
-                if (c == '*'):
-                    checkIfNextIsClosingBlock = True
-                elif (checkIfNextIsClosingBlock):
-                    if (c == '/'):
-                        isInCommentBlock = False
-                    elif (c != '*'):
-                        checkIfNextIsClosingBlock = False
+
             indexOfCharacter += 1
 
         if brackets_list.count('[') != brackets_list.count(']'):
@@ -111,6 +86,7 @@ def check_basic_style(filepath):
         if brackets_list.count('{') != brackets_list.count('}'):
             print("ERROR: A possible missing curly brace {{ or }} in file {0} {{ = {1} }} = {2}".format(filepath,brackets_list.count('{'),brackets_list.count('}')))
             bad_count_file += 1
+
     return bad_count_file
 
 
@@ -144,6 +120,8 @@ def main():
         print("File validation PASSED")
     else:
         print("File validation FAILED")
+
+    #print ('The script took {0} second!'.format(time.time() - startTime))
 
     return bad_count
     
