@@ -729,7 +729,7 @@ TUR_counter_terrorism_mil = {
 			custom_effect_tooltip = airstrike_prepare_tooltip
 			hidden_effect = {
 				if = {
-					limit = { check_variable = { var = airstrike_prepare_odds value = 0.6 compare = less_than_or_equals } }
+					limit = { check_variable = { var = airstrike_prepare_odds value = 0.4 compare = greater_than_or_equals } }
 					add_to_variable = { var = air_strike_material value = 2 }
 				}
 				else = {
@@ -749,7 +749,9 @@ TUR_counter_terrorism_mil = {
 		available = {
 			NOT = { has_country_flag = doing_counter_terror_op_mil }
 			NOT = { has_idea = air_strike_cooldown }
-			custom_trigger_tooltip = { tooltip = got_missiles
+			NOT = { has_idea = protest_thingy }
+			custom_trigger_tooltip = {
+				tooltip = got_missiles
 				check_variable = { var = air_strike_material value = 0 compare = greater_than }
 			}
 		}
@@ -780,13 +782,13 @@ TUR_counter_terrorism_mil = {
 			set_variable = { airstrike_thingy_crowd = random }			# if your airstrke is succesful, it may or may not give party pop
 			if = {
 				limit = {
-					check_variable = { var = airstrike_thingy_consume value = 0.7 compare = less_than_or_equals }
-					}
-				subtract_from_variable = { var = air_strike_material value = 1 }
+					check_variable = { var = airstrike_thingy_consume value = 0.3 compare = greater_than_or_equals }
 				}
+				subtract_from_variable = { var = air_strike_material value = 1 }
+			}
 			else = {
 				subtract_from_variable = { var = air_strike_material value = 2 }
-				}
+			}
 			clamp_variable = { var = air_strike_material min = 0 }
 			add_to_variable = { var = ct_op_count_1 value = 1 }
 			add_to_variable = { var = ct_op_count_2 value = 1 }
@@ -795,36 +797,33 @@ TUR_counter_terrorism_mil = {
 		remove_effect = {
 			custom_effect_tooltip = airstrike_thingy_tooltip
 			clr_country_flag = doing_counter_terror_op_mil
-			add_timed_idea = { idea = air_strike_cooldown days = 5 }
+			add_timed_idea = { idea = air_strike_cooldown days = 10 } #to prevent spamming and planes needs maintaining etc
 				
 			if = {
-				limit= {
-					check_variable = { var = airstrike_thingy_if value = 0.2 compare = greater_than_or_equals }
+				limit = {
+					check_variable = { var = airstrike_thingy_if value = 0.2 compare = greater_than_or_equals } # %80 chance of success
+				}
+					if = {
+						limit = {
+							check_variable = { var = airstrike_thingy_odds value = 0.4 compare = greater_than_or_equals } # %60 chance of reducing it by 3
+						}
+						subtract_from_variable = { var = pkk_presence value = 3 }
+					}
+					else = {
+						subtract_from_variable = { var = pkk_presence value = 1 }
 					}
 					if = {
 						limit = {
-							check_variable = { var = airstrike_thingy_odds value = 0.7 compare = less_than_or_equals }
-							}
-						subtract_from_variable = { var = pkk_presence value = 1 }
+							check_variable = { var = airstrike_thingy_assassinate value = 0.95 compare = greater_than_or_equals } # %5 chance of assassinating a field commander of theirs
 						}
-					else = {
-						subtract_from_variable = { var = pkk_presence value = 3 }
-						}
-					if = {
-						limit = {
-							check_variable = { var = airstrike_thingy_assassinate value = 0.05 compare = less_than_or_equals }
-							}
 						subtract_from_variable = { var = pkk_presence value = 5 }
-						}
-			
+					}
 					if = {
 						limit = {
-							check_variable = { var = airstrike_thingy_crowd value = 0.2 compare = less_than_or_equals }
-							}
-						hidden_effect = {
-							airstrike_add_popularity = yes
-							relative_change_pos_2 = yes
-							}
+							check_variable = { var = airstrike_thingy_crowd value = 0.85 compare = greater_than_or_equals } # %15 chance of making a good propaganda out of a successful airstrike and gaining approval rating
+						}
+						airstrike_add_popularity = yes
+						relative_change_pos_2 = yes
 					}
 			}
 			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
@@ -845,6 +844,7 @@ TUR_counter_terrorism_mil = {
 		available = {
 			NOT = { has_country_flag = doing_counter_terror_op_mil }
 			NOT = { has_idea = security_cooldown }
+			NOT = { has_idea = protest_thingy }
 		}
 			
 		visible = {
@@ -867,13 +867,64 @@ TUR_counter_terrorism_mil = {
 			set_country_flag = doing_counter_terror_op_mil
 			add_to_variable = { var = ct_op_count_1 value = 1 }
 			add_to_variable = { var = ct_op_count_2 value = 1 }
+			set_variable = { internal_security_if = random }
+			set_variable = { internal_security_odds = random }
+			set_variable = { internal_security_crowd = random }
+			set_variable = { internal_security_protest_odds = random }
 		}
 				
 		remove_effect = {
 			clr_country_flag = doing_counter_terror_op_mil
 			add_timed_idea = { idea = security_cooldown days = 30 }
-			subtract_from_variable = { var = pkk_presence value = 3 } custom_effect_tooltip = decrease_5_pkk
+			if = {
+				limit = {
+					check_variable = { var = internal_security_if value = 0.5 compare = greater_than_or_equals } # %50 chance of success
+				}
+					if = {
+						limit = {
+							check_variable = { var = internal_security_odds value = 0.4 compare = greater_than_or_equals } # %60 chance of reducing it by 5
+						}
+						subtract_from_variable = { var = pkk_presence value = 5 }
+					}
+					else = {
+						subtract_from_variable = { var = pkk_presence value = 2 }
+					}
+					if = {
+						limit = {
+							check_variable = { var = internal_security_assassinate value = 0.90 compare = greater_than_or_equals } # %10 chance of assassinating a field commander of theirs
+						}
+						subtract_from_variable = { var = pkk_presence value = 5 }
+					}
+					if = {
+						limit = {
+							check_variable = { var = internal_security_crowd value = 0.85 compare = greater_than_or_equals } # %15 chance of making a good propaganda out of a successful airstrike and gaining approval rating
+						}
+						airstrike_add_popularity = yes
+						relative_change_pos_2 = yes
+					}
+			}
 			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+			clear_variable = internal_security_if
+			clear_variable = internal_security_odds
+			clear_variable = internal_security_crowd
+			if = {
+				limit = {
+					check_variable = { var = internal_security_protest_odds value = 0.7 compare = greater_than_or_equals } # %30 chance of a western or kurdish country protest our operation and claim we are committing a massacre
+				}
+				random_country = {
+					limit = {
+						original_tag = GER
+						original_tag = USA
+						original_tag = FRA
+						original_tag = ENG
+						original_tag = SOV
+						original_tag = KUR
+						original_tag = ROJ
+					}
+					country_event = { id = western_protest.1 days = 2 }
+				}
+			}
+			clear_variable = internal_security_protest_odds
 		}
 	}
 	
@@ -886,6 +937,7 @@ TUR_counter_terrorism_mil = {
 		available = {
 			NOT = { has_country_flag = doing_counter_terror_op_mil }
 			NOT = { has_idea = security_cooldown }
+			NOT = { has_idea = protest_thingy }
 		}
 			
 		visible = {
@@ -908,17 +960,69 @@ TUR_counter_terrorism_mil = {
 			set_country_flag = doing_counter_terror_op_mil
 			add_to_variable = { var = ct_op_count_1 value = 1 }
 			add_to_variable = { var = ct_op_count_2 value = 1 }
+			set_variable = { external_security_if = random }
+			set_variable = { external_security_odds = random }
+			set_variable = { external_security_crowd = random }
+			set_variable = { external_security_protest_odds = random }
 		}
 				
 		remove_effect = {
 			clr_country_flag = doing_counter_terror_op_mil
 			add_timed_idea = { idea = security_cooldown days = 30 }
-			subtract_from_variable = { var = pkk_presence value = 3 } custom_effect_tooltip = decrease_5_pkk
+			if = {
+				limit = {
+					check_variable = { var = external_security_if value = 0.5 compare = greater_than_or_equals } # %50 chance of success
+				}
+					if = {
+						limit = {
+							check_variable = { var = external_security_odds value = 0.4 compare = greater_than_or_equals } # %60 chance of reducing it by 5
+						}
+						subtract_from_variable = { var = pkk_presence value = 5 }
+					}
+					else = {
+						subtract_from_variable = { var = pkk_presence value = 2 }
+					}
+					if = {
+						limit = {
+							check_variable = { var = external_security_assassinate value = 0.85 compare = greater_than_or_equals } # %15 chance of assassinating a field commander of theirs
+						}
+						subtract_from_variable = { var = pkk_presence value = 5 }
+					}
+					if = {
+						limit = {
+							check_variable = { var = external_security_crowd value = 0.85 compare = greater_than_or_equals } # %15 chance of making a good propaganda out of a successful airstrike and gaining approval rating and party popularity
+						}
+						airstrike_add_popularity = yes
+						relative_change_pos_2 = yes
+					}
+			}
 			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+			clear_variable = external_security_if
+			clear_variable = external_security_odds
+			clear_variable = external_security_crowd
+			if = {
+				limit = {
+					check_variable = { var = internal_security_protest_odds value = 0.6 compare = greater_than_or_equals } # %40 chance of a western or kurdish country protest our operation and claim we are committing a massacre
+				}
+				random_country = {
+					limit = {
+						original_tag = GER
+						original_tag = USA
+						original_tag = FRA
+						original_tag = ENG
+						original_tag = SOV
+						original_tag = KUR
+						original_tag = ROJ
+					}
+					country_event = { id = western_protest.1 days = 2 }
+				}
+			}
+			clear_variable = external_security_protest_odds
 		}
 	}
 	
-	add_power_to_pkk = { #for testing, obviously
+	add_power_to_pkk = {	#for testing, obviously
+							#haters that abusing this will be reported to Erdogan
 	
 		icon = GFX_decision_generic_air
 		
