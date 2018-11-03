@@ -6,8 +6,9 @@
 
 
 add_namespace = pkk_attack
-add_namespace = pkk_test
+add_namespace = pkk_test #needs to be removed before release
 add_namespace = pkk_increase
+add_namespace = western_protest
 
 country_event = {
 
@@ -29,6 +30,12 @@ country_event = {
 	
 	option = {
 		name = pkk_test.1.b
+		subtract_from_variable = { var = pkk_presence value = 10 }
+		clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+	}
+	
+	option = {
+		name = pkk_test.1.c
 	}
 }
 
@@ -125,6 +132,7 @@ country_event = {
 						random_list = {
 							45 = { #infrastructure got attacked
 								country_event = { id = pkk_attack.2 hours = 6 }
+								set_country_flag = pkk_inf_attack
 								random_list = { #decides which state got attacked and the amount of damage
 									60 = {
 										random_list = {
@@ -218,6 +226,7 @@ country_event = {
 							}
 							30 = { #civ factory got attacked
 								country_event = { id = pkk_attack.3 hours = 6 }
+								set_country_flag = pkk_civ_attack
 								random_list = {
 									60 = {
 										random_list = {
@@ -311,6 +320,7 @@ country_event = {
 							}
 							5 = { #mil factory got attacked
 								country_event = { id = pkk_attack.4 hours = 6 }
+								set_country_flag = pkk_mil_attack
 								random_list = {
 									60 = {
 										random_list = {
@@ -404,6 +414,7 @@ country_event = {
 							}
 							20 = { #citizens got attacked
 								country_event = { id = pkk_attack.5 hours = 6 }
+								set_country_flag = pkk_cit_attack
 								TUR = {
 									random_list = {
 										30 = {
@@ -530,6 +541,7 @@ country_event = {
 	trigger = {
 		tag = TUR
 		has_idea = pkk_terror_idea
+		has_country_flag = pkk_inf_attack
 		TUR = {
 			AND = {
 				owns_state = 163
@@ -544,17 +556,25 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName] pkk inf attack happened"
 	}
 	
-	mean_time_to_happen = { days = 1 }
+	mean_time_to_happen = {
+		days = 1
+		modifier = {
+			factor = 0.25
+			tag = TUR
+		}
+	}
 	
 	option = {
 		name = pkk_attack.2.a
 		#activate_decision = airstrike_thingy
+		clr_country_flag = pkk_inf_attack
 	}
 	
 	option = {
 		name = pkk_attack.2.b
 		relative_change_pos_2 = yes
 		add_timed_idea = { idea = treat_wounds days = 3 }
+		clr_country_flag = pkk_inf_attack
 	}
 }
 
@@ -571,6 +591,7 @@ country_event = {
 	trigger = {
 		tag = TUR
 		has_idea = pkk_terror_idea
+		has_country_flag = pkk_civ_attack
 		TUR = {
 			AND = {
 				owns_state = 163
@@ -585,17 +606,25 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName] pkk civ attack happened"
 	}
 	
-	mean_time_to_happen = { days = 1 }
+	mean_time_to_happen = {
+		days = 1
+		modifier = {
+			factor = 0.25
+			tag = TUR
+		}
+	}
 	
 	option = {
 		name = pkk_attack.3.a
 		#activate_decision = airstrike_thingy
+		clr_country_flag = pkk_civ_attack
 	}
 	
 	option = {
 		name = pkk_attack.3.b
 		relative_change_pos_2 = yes
 		add_timed_idea = { idea = treat_wounds days = 3 }
+		clr_country_flag = pkk_civ_attack
 	}
 }
 
@@ -612,6 +641,7 @@ country_event = {
 	trigger = {
 		tag = TUR
 		has_idea = pkk_terror_idea
+		has_country_flag = pkk_mil_attack
 		TUR = {
 			AND = {
 				owns_state = 163
@@ -626,17 +656,25 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName] pkk mil attack happened"
 	}
 	
-	mean_time_to_happen = { days = 1 }
+	mean_time_to_happen = {
+		days = 1
+		modifier = {
+			factor = 0.25
+			tag = TUR
+		}
+	}
 	
 	option = {
 		name = pkk_attack.4.a
 		#activate_decision = airstrike_thingy
+		clr_country_flag = pkk_mil_attack
 	}
 	
 	option = {
 		name = pkk_attack.4.b
 		relative_change_pos_2 = yes
 		add_timed_idea = { idea = treat_wounds days = 3 }
+		clr_country_flag = pkk_mil_attack
 	}
 }
 
@@ -653,6 +691,7 @@ country_event = {
 	trigger = {
 		tag = TUR
 		has_idea = pkk_terror_idea
+		has_country_flag = pkk_cit_attack
 		TUR = {
 			AND = {
 				owns_state = 163
@@ -667,16 +706,24 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName] pkk cit attack happened"
 	}
 	
-	mean_time_to_happen = { days = 1 }
+	mean_time_to_happen = {
+		days = 1
+		modifier = {
+			factor = 0.25
+			tag = TUR
+		}
+	}
 	
 	option = {
 		name = pkk_attack.5.a
 		#activate_decision = airstrike_thingy
+		clr_country_flag = pkk_cit_attack
 	}
 	
 	option = {
 		name = pkk_attack.5.b
 		relative_change_pos_2 = yes
+		clr_country_flag = pkk_cit_attack
 	}
 }
 
@@ -739,5 +786,38 @@ country_event = { #hidden event that increases pkk power even more if you haven'
 			clear_variable = ct_op_count_2
 			log = "[GetDateText]: [Root.GetName] pkk power stays"
 		}
+	}
+}
+
+country_event = {
+
+	id = western_protest.1
+	
+	title = western_protest.1.t
+	desc = western_protest.1.d
+	
+	mean_time_to_happen = { days = 2 }
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = { tag = TUR }
+	}
+	
+	option = {
+		name = western_protest.1.a
+		TUR = { add_timed_idea = { idea = protest_thingy days = 100 } }
+		ai_chance = {
+			factor = 100
+		}
+		log = "[GetDateText]: [Root.GetName] country protested"
+	}
+	
+	option = {
+		name = western_protest.1.b
+		ai_chance = {
+			factor = 0
+		}
+		log = "[GetDateText]: [Root.GetName] country didnt protested"
 	}
 }
