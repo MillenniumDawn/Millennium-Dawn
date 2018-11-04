@@ -12,46 +12,6 @@ initial_money_setup = {
 	calculate_tax_gain = yes
 	init_expenses = yes
 }
-	
-calculate_interest_rate = {
-	if = { limit = { has_idea = gdp_1 }
-		set_variable = { var = interest_rate value = 10 }
-		
-		else = { if = { limit = { has_idea = gdp_2 }
-			set_variable = { var = interest_rate value = 9 }
-			
-			else = { if = { limit = { has_idea = gdp_3 }
-				set_variable = { var = interest_rate value = 8 }
-				
-				else = { if = { limit = { has_idea = gdp_4 }
-					set_variable = { var = interest_rate value = 7 }
-					
-					else = { if = { limit = { has_idea = gdp_5 }
-						set_variable = { var = interest_rate value = 6 }
-						
-						else = { if = { limit = { has_idea = gdp_6 }
-							set_variable = { var = interest_rate value = 5 }
-							
-							else = { if = { limit = { or = { has_idea = gdp_7 has_idea = gdp_8 has_idea = gdp_9 } }
-								set_variable = { var = interest_rate value = 4 }
-								
-								else = { if = { limit = { or = { has_idea = gdp_10 has_idea = gdp_11 has_idea = gdp_12 } }
-								set_variable = { var = interest_rate value = 3 }
-								}}
-							}}
-						}}
-					}}
-				}}
-			}}
-		}}
-	}
-	if = {
-		limit = {
-			or = { has_idea = wall_street has_idea = international_bankers } 
-		}
-		subtract_from_variable = { var = interest_rate value = 1 }
-	}
-}
 
 init_calculate_size_modifier = {
 			set_variable = { size_modifier = num_of_civilian_factories }
@@ -191,7 +151,78 @@ calculate_tax_gain = {
 	set_variable = { var = tax_gain value = tax_rate }
 	multiply_variable = { var = tax_gain value = size_modifier }
 	divide_variable = { var = tax_gain value = 100 }
+	if = { limit = { has_idea = depression }
+		multiply_variable = { var = tax_gain value = 0.6 }
+		
+		else = { if = { limit = { has_idea = recession }
+			multiply_variable = { var = tax_gain value = 0.8 }
+				
+			else = { if = { limit = { has_idea = stagnation }
+				multiply_variable = { var = tax_gain value = 0.9 }
+							
+				else = { if = { limit = { has_idea = fast_growth }
+					multiply_variable = { var = tax_gain value = 1.05 }
+									
+					else = { if = { limit = { has_idea = economic_boom }
+						multiply_variable = { var = tax_gain value = 1.1 }
+					}}
+				}}
+			}}
+		}}
+	}
 	add_to_variable = { var = treasury_rate value = tax_gain }
+}
+
+calculate_interest_rate = {
+	set_variable = { var = interest_rate value = debt }
+	divide_variable = { var = interest_rate value = size_modifier }
+	divide_variable = { var = interest_rate value = 365 }
+	if = { limit = { has_idea = gdp_1 }
+		multiply_variable = { var = interest_rate value = 22 }
+		
+		else = { if = { limit = { has_idea = gdp_2 }
+			multiply_variable = { var = interest_rate value = 18 }
+				
+			else = { if = { limit = { has_idea = gdp_3 }
+				multiply_variable = { var = interest_rate value = 15 }
+							
+				else = { if = { limit = { has_idea = gdp_4 }
+					multiply_variable = { var = interest_rate value = 12 }
+					
+					else = { if = { limit = { has_idea = gdp_5 }
+						multiply_variable = { var = interest_rate value = 10 }
+						
+						else = { if = { limit = { has_idea = gdp_6 }
+							multiply_variable = { var = interest_rate value = 8 }
+							
+							else = { if = { limit = { has_idea = gdp_7 }
+								multiply_variable = { var = interest_rate value = 7 }
+								
+								else = { if = { limit = { has_idea = gdp_8 }
+									multiply_variable = { var = interest_rate value = 6 }
+									
+									else = { multiply_variable = { var = interest_rate value = 5 } }
+								}}
+							}}			
+						}}									
+					}}
+				}}
+			}}
+		}}
+	}
+	if = {
+		limit = { has_idea = petro_dollar }
+		subtract_from_variable = { var = interest_rate value = 2 }
+	}
+	if = {
+		limit = { or = { has_idea = wall_street has_idea = international_bankers } }
+		subtract_from_variable = { var = interest_rate value = 1 }
+	}
+	clamp_variable = {
+		var = interest_rate
+		min = 1
+		max = 50
+	}
 }
 
 calculate_debt_rate = {
@@ -295,9 +326,9 @@ increase_tax_cost = {
 		swap_ideas = { remove_idea = tax_cost_40 add_idea = tax_cost_41 }
 		else = { if = { limit = { check_variable = { tax_rate = 42 } }
 		swap_ideas = { remove_idea = tax_cost_41 add_idea = tax_cost_42 }
-		else = { if = { limit = { check_variable = { tax_rate = 3 } }
+		else = { if = { limit = { check_variable = { tax_rate = 43 } }
 		swap_ideas = { remove_idea = tax_cost_42 add_idea = tax_cost_43 }
-		else = { if = { limit = { check_variable = { tax_rate = 4 } }
+		else = { if = { limit = { check_variable = { tax_rate = 44 } }
 		swap_ideas = { remove_idea = tax_cost_43 add_idea = tax_cost_44 }
 		else = { if = { limit = { check_variable = { tax_rate = 45 } }
 		swap_ideas = { remove_idea = tax_cost_44 add_idea = tax_cost_45 }
@@ -404,9 +435,9 @@ decrease_tax_cost = {
 		swap_ideas = { remove_idea = tax_cost_42 add_idea = tax_cost_41 }
 		else = { if = { limit = { check_variable = { tax_rate = 42 } }
 		swap_ideas = { remove_idea = tax_cost_43 add_idea = tax_cost_42 }
-		else = { if = { limit = { check_variable = { tax_rate = 3 } }
+		else = { if = { limit = { check_variable = { tax_rate = 43 } }
 		swap_ideas = { remove_idea = tax_cost_44 add_idea = tax_cost_43 }
-		else = { if = { limit = { check_variable = { tax_rate = 4 } }
+		else = { if = { limit = { check_variable = { tax_rate = 44 } }
 		swap_ideas = { remove_idea = tax_cost_45 add_idea = tax_cost_44 }
 		else = { if = { limit = { check_variable = { tax_rate = 45 } }
 		swap_ideas = { remove_idea = tax_cost_46 add_idea = tax_cost_45 }
@@ -576,7 +607,7 @@ init_expenses = {
 					else = { if = { limit = { has_idea = health_05 }
 						multiply_variable = { var = health_gain value = 0.079 }
 						
-						else = { if = { limit = { has_idea = health_05 }
+						else = { if = { limit = { has_idea = health_06 }
 							multiply_variable = { var = health_gain value = 0.10 }
 						}}
 					}}
@@ -604,7 +635,7 @@ init_expenses = {
 					else = { if = { limit = { has_idea = social_05 }
 						multiply_variable = { var = welfare_gain value = 0.13 }
 						
-						else = { if = { limit = { has_idea = social_05 }
+						else = { if = { limit = { has_idea = social_06 }
 							multiply_variable = { var = welfare_gain value = 0.165 }
 						}}
 					}}
