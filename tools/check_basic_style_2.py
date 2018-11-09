@@ -13,30 +13,23 @@ def check_basic_style(filepath):
         content = file.readlines()
         lineNum = 0
         openBraces = [0, 0]
-
-
         for line in content:
-            #print(line)
-            #input("Press Enter to continue...")
             lineNum +=1
-            if not line.startswith("#"):
-                if "{" in line:
-                    hasComment = re.search(r'#.*[{}]+', line, re.M | re.I)  # If comment at the start or before bracket
-                    if not hasComment:  # Don't waste cycles comment if comment at the start or before open bracket
-                        openBraces[0] += line.count('{')
-                        # openBraces[1]= lineNum
-                if "}" in line:
-                    hasComment = re.search(r'#.*[{}]+', line, re.M | re.I)  # If comment at the start or before bracket
-                    if not hasComment:  # Don't waste cycles comment if comment at the start or before open bracket
-                     openBraces[0] += -line.count('}')
-                if "    " in line:
-                    print("ERROR: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(filepath,lineNum))
-                    bad_count_file += 1
+            hasComment = re.search(r'#.*?[{}]+?', line, re.M | re.I) #If comment at the start or before bracket
+            hasOpenBrace = re.search(r'{', line, re.M | re.I)
+            hasCloseBrace = re.search(r'}', line, re.M | re.I)
+            if not hasComment: #Don't waste cycles comment if comment at the start or before open bracket
+                if hasOpenBrace:
+                    openBraces[0] += len(re.findall('{', line))
+                    openBraces[1]=lineNum
+
+                if hasCloseBrace:
+                    openBraces[0] += -len(re.findall('}', line))
+
                 if openBraces[0] <= -1:
                     print("ERROR: A possible missing curly brace {{ in file {} {{line {}}}".format(filepath, lineNum))
                     openBraces[0] = 0
                     bad_count_file +=1
-                #print (openBraces[0])
                 #input("Press Enter to continue...")
         else:
             if openBraces[0] < 0:
@@ -45,7 +38,7 @@ def check_basic_style(filepath):
             elif openBraces[0] > 0:
                 print("ERROR: A possible missing curly brace {{ in file {} has no matching closing bracket".format(filepath, lineNum))
                 bad_count_file += 1
-    file.close()
+        file.close()
 
     return bad_count_file
 
