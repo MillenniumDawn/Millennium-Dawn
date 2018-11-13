@@ -802,7 +802,7 @@ country_event = {
 	}
 }
 
-country_event = { #hidden event that increases pkk power if you haven't done 3 or more counter terror operations that month
+country_event = { #hidden event that increases pkk power if you haven't done 4 or more counter terror operations last 2 months
 
 	id = pkk_increase.1
 	
@@ -815,26 +815,26 @@ country_event = { #hidden event that increases pkk power if you haven't done 3 o
 		tag = TUR
 	}
 	
-	mean_time_to_happen = { days = 30 }
+	mean_time_to_happen = { days = 60 }
 	
 	is_triggered_only = no
 	
 	immediate = {
-		if= {
-			limit = { check_variable = { var = ct_op_count_1 value = 2 compare = less_than_or_equals } }
+		if = {
+			limit = { check_variable = { var = ct_op_count_1 value = 4 compare = less_than } }
 			add_to_variable = { var = pkk_presence value = 5 }
-			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
-			clear_variable = ct_op_count_1
+			clamp_variable = { var = pkk_presence max = pkk_presence_max }
+			set_variable = { var = ct_op_count_1 value = 0 }
 			log = "[GetDateText]: [Root.GetName] pkk power increased"
 		}
 		else = {
-			clear_variable = ct_op_count_1
+			set_variable = { var = ct_op_count_1 value = 0 }
 			log = "[GetDateText]: [Root.GetName] pkk power stays"
 		}
 	}
 }
 
-country_event = { #hidden event that increases pkk power even more if you haven't done any operations in the last 3 months
+country_event = { #hidden event that increases pkk power even more if you haven't done any operations in the last 5 months
 
 	id = pkk_increase.2
 	
@@ -847,20 +847,20 @@ country_event = { #hidden event that increases pkk power even more if you haven'
 		tag = TUR
 	}
 	
-	mean_time_to_happen = { days = 90 }
+	mean_time_to_happen = { days = 150 }
 	
 	is_triggered_only = no
 	
 	immediate = {
-		if= {
-			limit = { check_variable = { var = ct_op_count_2 value = 1 compare = less_than } }
+		if = {
+			limit = { check_variable = { var = ct_op_count_2 value = 0 compare = equals } }
 			add_to_variable = { var = pkk_presence value = 10 }
-			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
-			clear_variable = ct_op_count_2
+			clamp_variable = { var = pkk_presence max = pkk_presence_max }
+			set_variable = { var = ct_op_count_2 value = 0 }
 			log = "[GetDateText]: [Root.GetName] pkk power increased a lot"
 		}
 		else = {
-			clear_variable = ct_op_count_2
+			set_variable = { var = ct_op_count_2 value = 0 }
 			log = "[GetDateText]: [Root.GetName] pkk power stays"
 		}
 	}
@@ -885,7 +885,7 @@ country_event = { #pkk will increase by 3 every month no matter what, because we
 	
 	immediate = {
 		add_to_variable = { var = pkk_presence value = 3 }
-		clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+		clamp_variable = { var = pkk_presence max = pkk_presence_max }
 	}
 }
 
@@ -935,9 +935,18 @@ country_event = {
 	option = {
 		name = western_protest.1.a
 		clr_country_flag = they_hatin
-		TUR = { add_timed_idea = { idea = protest_thingy days = 100 } }
+		TUR = { add_timed_idea = { idea = protest_thingy days = 90 } }
 		ai_chance = {
-			factor = 50
+			factor = 1
+			modifier = {
+				factor = 2
+				ROOT = { 
+					has_opinion = {
+						target = TUR
+						value < 40 #more likely to protest if relations are bad
+					}
+				}
+			}
 		}
 		log = "[GetDateText]: [Root.GetName] country protested"
 	}
@@ -946,7 +955,16 @@ country_event = {
 		name = western_protest.1.b
 		clr_country_flag = they_hatin
 		ai_chance = {
-			factor = 50
+			factor = 1
+			modifier = {
+				factor = 0
+				ROOT = { 
+					has_opinion = {
+						target = TUR
+						value > 40 #less likely to protest if relations are good
+					}
+				}
+			}
 		}
 		log = "[GetDateText]: [Root.GetName] country didnt protested"
 	}
