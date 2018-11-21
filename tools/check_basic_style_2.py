@@ -2,13 +2,13 @@
 import os, sys, fnmatch, re
 import time
 
-#startTime = time.time()
+startTime = time.time()
 
 __version__ = 1.0
 
 def check_basic_style(filepath):
-    bad_count_file = 0
 
+    bad_count_file = 0
     with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.readlines()
         lineNum = 0
@@ -19,24 +19,61 @@ def check_basic_style(filepath):
             #print(line)
             #input("Press Enter to continue...")
             lineNum +=1
-            if not line.startswith("#"):
-                if "{" in line:
-                    hasComment = re.search(r'#.*[{}]+', line, re.M | re.I)  # If comment at the start or before bracket
-                    if not hasComment:  # Don't waste cycles comment if comment at the start or before open bracket
+            if not line.startswith("#"): #If the line doesn't start with a comment
+                if "{" in line: #if there is an open brace in this line
+                    hasComment = re.search(r'#.*[{}]+', line, re.M | re.I)  # If comment at the start or before {
+                    if not hasComment:  #if the line doesn't have a comment before the open brace
                         openBraces[0] += line.count('{')
-                        # openBraces[1]= lineNum
-                if "}" in line:
-                    hasComment = re.search(r'#.*[{}]+', line, re.M | re.I)  # If comment at the start or before bracket
-                    if not hasComment:  # Don't waste cycles comment if comment at the start or before open bracket
-                     openBraces[0] += -line.count('}')
-                if "    " in line:
+                        bad_count_file += 1
+                        #count total open braces and subtract open braces that are easy to find and used correctly
+                        closingBraces = line.count('{') - line.count(' {\n') - line.count(' { ')
+
+                        #if there are braces we couldn't find using efficient .count, use powerful inefficient regex
+                        if closingBraces > 0:
+                            hasNoSpace = re.search(r'([^\s]+){|{([^\s]+)', line, re.M | re.I)  # If no space before or after brace
+                            if hasNoSpace: #If regex finds open braces not styled correctly
+                                print("ERROR: Missing an space before or after open brace at {0} Line number: {1}".format(filepath, lineNum))
+                                #input("Press Enter to continue...")
+                                bad_count_file += 1
+
+                if "}" in line: #if there is an close brace in this line
+                    hasComment = re.search(r'#.*[{}]+', line, re.M | re.I)  # If comment at the start or before {
+                    if not hasComment: #if the line doesn't have a comment before the open brace
+                        openBraces[0] += -line.count('}')
+                        bad_count_file += 1
+                        # count total close braces and subtract open braces that are easy to find and used correctly
+                        openingingBraces = line.count('}') - line.count(' }\n') - line.count(' } ')
+
+                        # if there are braces we couldn't find using efficient .count, use powerful inefficient regex
+                        if openingingBraces > 0:
+                            hasNoSpace = re.search(r'([^\s]+)}|}([^\s]+)', line,re.M | re.I)   # If no space before or after brace
+                            if hasNoSpace: #If regex finds open braces not styled correctly
+                                print("ERROR: Missing an space before or after close brace at {0} Line number: {1}".format(filepath, lineNum))
+                                # input("Press Enter to continue...")
+                                bad_count_file += 1
+                if "\"" in line: #if the line has a qoute
+                    if (line.count('\"') % 2) !=0: #if there are an odd number of qoutes on this line
+                        hasComment = re.search(r'#.*[\"]+', line, re.M | re.I)  # If comment at the start or before "
+                        if not hasComment: #if there is no comment before the qoute
+                            print("ERROR: Missing an quotation sign at {0} Line number: {1}".format(filepath,lineNum))
+                            #input("Press Enter to continue...")
+                            bad_count_file += 1
+
+                if "=" in line: #if the line has an equal sign
+                    equalSign = 0
+                    #count total equal signs that are easy to find and used correctly
+                    equalSign = line.count('=') - line.count(' = ') - line.count(' =\n')
+                   if equalSign != 0: #if there are equal signs that aren't used correctly
+                        print("ERROR: Missing an space before or after an equal sign at {0} Line number: {1}".format(filepath,lineNum))
+                        #input("Press Enter to continue...")
+                        bad_count_file += 1
+                if "    " in line: #if 4 spaces in the line
                     print("ERROR: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(filepath,lineNum))
                     bad_count_file += 1
                 if openBraces[0] <= -1:
                     print("ERROR: A possible missing curly brace {{ in file {} {{line {}}}".format(filepath, lineNum))
                     openBraces[0] = 0
                     bad_count_file +=1
-                #print (openBraces[0])
                 #input("Press Enter to continue...")
         else:
             if openBraces[0] < 0:
@@ -81,7 +118,7 @@ def main():
     else:
         print("File validation FAILED")
 
-    #print ('The script took {0} second!'.format(time.time() - startTime))
+    print ('The script took {0} second!'.format(time.time() - startTime))
     
     return bad_count
     
