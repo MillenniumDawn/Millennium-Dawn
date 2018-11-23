@@ -318,10 +318,10 @@ PixelShader =
 	static const float MOON_FEATHER_MIN = -0.01f;
 	static const float MOON_FEATHER_MAX = 0.01;
 	static const float NIGHT_OPACITY = 0.88f; //0.85
-	static const float NIGHT_DARKNESS = 0.4f; //0.5
+	static const float NIGHT_DARKNESS = 0.55f; //0.5
 	static const float SOUTH_POLE_OFFSET = 0.17f; // Our map is missing big parts of globe on north and south
 	static const float NORTH_POLE_OFFSET = 0.93f;
-	static const float GLOBE_NORMAL_LIMIT = 0.8f;
+	static const float GLOBE_NORMAL_LIMIT = 0.7f; //0.8
 
 
 	float3 GlobeNormalToMapNormal( float3 vGlobeNormal, float3 vNormal )
