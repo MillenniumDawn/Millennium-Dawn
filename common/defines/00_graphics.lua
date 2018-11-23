@@ -579,8 +579,8 @@ NGraphics = {
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_RESISTANCE = 0.0, 
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_RADARS = 0.0, -- (OBSOLETE)
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_FACTIONS = 0.0, 
-	GRADIENT_BORDERS_OPTIMIZATION_RANGE = 30.0, -- smaller value = faster gradient borders but may have artifacts on large provinces (value to balance)
-	GRADIENT_BORDERS_REFRESH_FREQ = 0.12, -- how frequent is gradient borders repainting (optimization for high-speed gameplay)
+	GRADIENT_BORDERS_OPTIMIZATION_RANGE = 530.0, -- smaller value = faster gradient borders but may have artifacts on large provinces (value to balance)
+	GRADIENT_BORDERS_REFRESH_FREQ = 0.912, -- how frequent is gradient borders repainting (optimization for high-speed gameplay)
 	STRATEGIC_AIR_COLOR_BAD = {0.8, 0, 0, 1}, -- rgb
 	STRATEGIC_AIR_COLOR_GOOD = {0, 0.8, 0, 1},
 	STRATEGIC_AIR_COLOR_AVERAGE = {0.8, 0.8, 0, 1},
@@ -614,13 +614,13 @@ NGraphics = {
 	COUNTRY_FLAG_LARGE_STRIPE_MAX_HEIGHT = 6500,
 	VICTORY_POINT_LEVELS = 2,
 	VICTORY_POINT_MAP_ICON_AFTER = {0, 4}, -- After this amount of VP the map icon becomes bigger dot.
-	VICTORY_POINT_MAP_ICON_TEXT_CUTOFF = {180, 440, 1000},  -- At what camera distance the VP name text disappears.
-	VICTORY_POINTS_DISTANCE_CUTOFF = {180, 440, 1000}, -- At what distance VPs are hidden
+	VICTORY_POINT_MAP_ICON_TEXT_CUTOFF = {180, 420, 1000},  -- At what camera distance the VP name text disappears.
+	VICTORY_POINTS_DISTANCE_CUTOFF = {180, 420, 1000}, -- At what distance VPs are hidden
 	AIRBASE_ICON_DISTANCE_CUTOFF = 900, -- At what distance air bases are hidden
 	NAVALBASE_ICON_DISTANCE_CUTOFF = 900, -- At what distance naval bases are hidden
 	RADAR_ICON_DISTANCE_CUTOFF = 1100, -- At what distance the radars are hidden
 	RESOURCE_MAP_ICON_TEXT_CUTOFF = 800,  -- At what camera distance the resource name/amount text disappears.
-	CAPITAL_ICON_CUTOFF = 1500,	-- At what camera distance capital icons disappears
+	CAPITAL_ICON_CUTOFF = 1000,	-- 1500 At what camera distance capital icons disappears
 	PROVINCE_ANIM_TEXT_DISTANCE_CUTOFF = 500, -- 500
 	UNITS_DISTANCE_CUTOFF = 120,
 	SHIPS_DISTANCE_CUTOFF = 240,
@@ -638,7 +638,7 @@ NGraphics = {
 	MAP_ICONS_STRATEGIC_GROUP_CAM_DISTANCE = 600, -- second camera distance at which the icons begin to group up
 	MAP_ICONS_STRATEGIC_AREA_HUGE = 220,
 	MAP_ICONS_STATE_HUGE = 100,
-	MAPICON_GROUP_PASSES = 20, -- how many mapicons get processed per frame for grouping. more = quicker response, fewer = better performance
+	MAPICON_GROUP_PASSES = 15, -- 20 how many mapicons get processed per frame for grouping. more = quicker response, fewer = better performance
 	MAPICON_GROUP_STRATEGIC_SIZE = 600, -- for strategic areas of this size or bigger we dont do strategic area grouping
 	MAP_ICONS_GROUP_SPLIT_SELECTED_LIMIT = 8,   -- Maximum number of units selected that will cause icon stacks to split
 	MAP_ICONS_COARSE_COUNTRY_GROUPING_DISTANCE = 200, -- Distance at which icon grouping becomes very coarse and merges different types of units
@@ -661,7 +661,7 @@ NGraphics = {
 	WEATHER_PLAYBACK_RATE_CUTOFF = 500, -- Playback rate maximum distance
 	WEATHER_PLAYBACK_RATE_LENGTH = 200, -- For how long to fade between normal playback rate and maximum distance playback rate
 	
-	POSTEFFECT_PER_PROVINCE_MIN_SNOW = 0.1,
+	POSTEFFECT_PER_PROVINCE_MIN_SNOW = 0.05, -- 0.1
 	POSTEFFECT_PER_PROVINCE_MAX_SNOW = 0.2,
 	POSTEFFECT_TOTAL_MIN_SNOW = 0.0,
 	POSTEFFECT_TOTAL_MAX_SNOW = 0.05,
@@ -684,9 +684,9 @@ NGraphics = {
 	BRIGHT_THRESHOLD = 0.9,
 	--BRIGHT_THRESHOLD = 0.9, -- night
 	EMISSIVE_BLOOM_STRENGTH = 0.85, --1.0
-	MIN_HDR_ADJUSTMENT = 0.52,	--0.18 0.5  är hur mkt den anpassar sig till mörka områden, mindre värde -> mer mörkerseen
-	MAX_HDR_ADJUSTMENT = 0.72,	 --0.8 0.8 jätte högt värde så ser du bra trots att du står inuti solen och tittar. 
-	HDR_ADJUSTMENT_SPEED = 5.0, -- 6
+	MIN_HDR_ADJUSTMENT = 0.55,	--0.18 0.5  är hur mkt den anpassar sig till mörka områden, mindre värde -> mer mörkerseen
+	MAX_HDR_ADJUSTMENT = 0.68,	 --0.8 0.8 jätte högt värde så ser du bra trots att du står inuti solen och tittar. 
+	HDR_ADJUSTMENT_SPEED = 6.0, -- 6
 	TONE_MAP_MIDDLE_GREY = 0.7, --0.7 was 0.5
 	TONE_MAP_LUMINANCE_WHITE = 1.0, --
 	MOON_HEIGHT = 600, -- higher means softer shadows and more intense light
@@ -775,12 +775,12 @@ NGraphics = {
 		180.0/360.0, 0.95, 0.86
 	},
 	
-	CAMERA_OUTSIDE_MAP_DISTANCE_TOP = 200.0,
-	CAMERA_OUTSIDE_MAP_DISTANCE_BOTTOM = 200.0,
+	CAMERA_OUTSIDE_MAP_DISTANCE_TOP = 100.0, --200
+	CAMERA_OUTSIDE_MAP_DISTANCE_BOTTOM = 100.0, --200
 
-	CAMERA_ZOOM_SPEED = 20,
-	CAMERA_ZOOM_KEY_SCALE = 0.02,
-	CAMERA_ZOOM_SPEED_DISTANCE_MULT = 60.0,				-- Zoom speed multiplier. When camera is max zoome out, the zooming in speed will get 100% of CAMERA_ZOOM_SPEED_DISTANCE_MULT zooming speed.
+	CAMERA_ZOOM_SPEED = 12, --20
+	CAMERA_ZOOM_KEY_SCALE = 0.01,
+	CAMERA_ZOOM_SPEED_DISTANCE_MULT = 50.0,				-- 60 Zoom speed multiplier. When camera is max zoome out, the zooming in speed will get 100% of CAMERA_ZOOM_SPEED_DISTANCE_MULT zooming speed.
 	
 	ORDERS_MOUSE_INTERSECT_DISTANCE_MULT = 2.6, 		-- For balancing the collision distance with painted arrows and fronts.
 	FRONTS_MOUSE_INTERSECT_DISTANCE_MULT = 6.6, 		-- For balancing the collision distance with painted arrows and fronts.
