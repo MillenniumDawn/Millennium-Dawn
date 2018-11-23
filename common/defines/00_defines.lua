@@ -15,7 +15,7 @@ NGame = {
 	MISSION_REMOVE_FROM_INTERFACE_DEFAULT = 13,		-- Default days before a mission is removed from the interface after having failed or completed
 	DECISION_ALERT_TIMEOUT_DAYS = 30,				-- Days left when player will be alerted about timing out events or decisions
 	NAVAL_COMBAT_CONVOY_SIZE = 0.20,				-- Size of a convoy in a naval battle. Used to determine the size of the fleet when intercepting convoy.
-},
+} ,
 
 NDiplomacy = {
 	DIPLOMACY_REQUEST_EXPIRY_DAYS = 30,
@@ -148,7 +148,7 @@ NDiplomacy = {
 	LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 2, 		-- Acceptance modifier for each year of technology difference.
 	LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 10,	-- Acceptance base for tech difference
 	LICENSE_ACCEPTANCE_SAME_FACTION = 20,			-- Acceptance modifier for being in the same faction
-},
+} ,
 
 NCountry = {
 	EVENT_PROCESS_OFFSET = 20,						-- Events are checked every X day per country or state (1 is ideal, but CPU heavy)
@@ -233,7 +233,7 @@ NCountry = {
 	THEATRES_BIND_BORDER_DISTANCE = 25000,			-- Map distance (before sqrt) between the center of the borders that determines if theatres should be bound or not.
 	POLITICAL_POWER_CAP = 2000.0,					-- Max amount of political power country should have
 	RESISTANCE_IMPORTANT_LEVEL = 0.05,				-- Level when resistance becomes dangerous
-	MIN_MAJOR_COUNTRIES	= 7,						-- MIN_MAJOR_COUNTRIES countries with most factories will be considered as major countries
+	MIN_MAJOR_COUNTRIES = 7,						-- MIN_MAJOR_COUNTRIES countries with most factories will be considered as major countries
 	ADDITIONAL_MAJOR_COUNTRIES_IC_RATIO = 0.7,		-- Countries will also be considered major when having more factories that the average of top MIN_MAJOR_COUNTRIES countries' factories times ADDITIONAL_MAJOR_COUNTRIES_IC_RATIO
 	BASE_TENSION_MAJOR_COUNTRY_INDEX = 1,			-- Which major country should be considered the base country when scaling generated world tension. 0 is the country with the most factories, 1 is the second most-factories country etc. This number has to be lower than MIN_MAJOR_COUNTRIES
 	MIN_NAVAL_SUPPLY_EFFICIENCY = 0.1,				-- Min ratio when supplies will be considered delivered from the capital by naval path
@@ -269,7 +269,7 @@ NCountry = {
 	SPECIAL_FORCES_CAP_BASE = 0.075,					-- Max ammount of special forces battalions is total number of non-special forces battalions multiplied by this and modified by a country modifier
 	SPECIAL_FORCES_CAP_MIN = 6,						-- was 24, You can have a minimum of this many special forces battalions, regardless of the number of non-special forces battalions you have, this can also be modified by a country modifier
 	DAYS_OF_WAR_BEFORE_SURRENDER = 7,				-- Number of days a war has to have existed before anyone can surrender in it
-},
+} ,
 
 NProduction = {
 	MAX_EQUIPMENT_RESOURCES_NEED = 4, 	-- Max number of different strategic resources an equipment can be dependent on.
@@ -311,7 +311,7 @@ NProduction = {
 	LICENSE_EQUIPMENT_UPGRADE_XP_FACTOR = 2.0,			-- XP cost for upgrading licensed equipment
 	LICENSE_EQUIPMENT_SPEED_NO_LICENSE = -0.50,			-- Penalty for producing non licensed equipment
 	CONVERSION_SPEED_BONUS = 2.0,						-- Modifier to the production speed when converting equipment
-},
+} ,
 
 NTechnology = {
 	MAX_SUBTECHS = 5,						-- Max number of sub technologies a technology can have.
@@ -320,7 +320,7 @@ NTechnology = {
 	BASE_TECH_COST = 300,				-- base cost for a tech. multiplied with tech cost and ahead of time penalties
 	MAX_TECH_SHARING_BONUS = 0.5, 			-- Max technology sharing bonus that can be applied instantly
 	LICENSE_PRODUCTION_TECH_BONUS = 0.2,	-- License production tech bonus
-},
+} ,
 
 NPolitics = {
 	BASE_LEADER_TRAITS = 3,				-- Base amount of leader traits.
@@ -336,7 +336,7 @@ NPolitics = {
 	DEFAULT_OCCUPATION_POLICY = 1,		-- Defaullt value for occupation policy
 	INSTANT_WIN_REVOLTER_POPULARITY_RATIO = 0.4, -- Min party popularity for instant win in one province state
 	INSTANT_WIN_POPULARITY_WIN = 50, -- New party popularity
-},
+} ,
 
 NBuildings = {
 	ANTI_AIR_SUPERIORITY_MULT = 5.0,	-- How much air superiority reduction to the enemy does our AA guns? Normally each building level = -1 reduction. With this multiplier.
@@ -362,11 +362,11 @@ NBuildings = {
 	DESTRUCTION_COOLDOWN_IN_WAR = 30,	-- Number of days cooldown between removal of buildings in war times
 	
 	INFRASTRUCTURE_RESOURCE_BONUS = 0.02, -- multiplactive resource bonus for each level of (non damaged) infrastructure
-},
+} ,
 
 NDeployment = {
 	BASE_DEPLOYMENT_TRAINING = 1,		-- Base training done each day during deployment.
-},
+} ,
 
 NMilitary = {
 	COMBAT_VALUE_ORG_IMPORTANCE = 1,		-- Multiplier on TotalOrganisation when determining the combat value of a division
@@ -435,7 +435,7 @@ NMilitary = {
 	CHANCE_TO_AVOID_HIT_AT_NO_DEF = 50,			 -- chance to avoid hit if no defences left.
 	COMBAT_MOVEMENT_SPEED = -0.40,				-- MD4 was 0.33 speed reduction base modifier in combat ---vanilla is 0.33(not negative)
 	TACTIC_SWAP_FREQUENCEY = 36,				-- hours between tactic swaps
-	INITIATIVE_PICK_COUNTER_ADVANTAGE_FACTOR  = 0.35, -- advantage per leader level for picking a counter
+	INITIATIVE_PICK_COUNTER_ADVANTAGE_FACTOR = 0.35, -- advantage per leader level for picking a counter
 	BASE_COMBAT_WIDTH = 120,					-- base combat width
 	ADDITIONAL_COMBAT_WIDTH = 60,			   -- more opened up by support attack --60
 	AMPHIBIOUS_INVADE_MOVEMENT_COST = 24.0,	   -- total progress cost of movement while amphibious invading
@@ -475,7 +475,7 @@ NMilitary = {
 	TRAINING_EXPERIENCE_SCALE = 62.0,
 	TRAINING_ORG = 0.2,
 	ARMY_EXP_BASE_LEVEL = 1,
-	UNIT_EXP_LEVELS = { 0.1, 0.3, 0.75, 0.9 },		-- Experience needed to progress to the next level
+	UNIT_EXP_LEVELS = { 0.1, 0.3, 0.75, 0.9 } ,		-- Experience needed to progress to the next level
 	FIELD_EXPERIENCE_SCALE = 0.006,			  -- 0.002
 	FIELD_EXPERIENCE_MAX_PER_DAY = 3,				-- Most xp you can gain per day
 	EXPEDITIONARY_FIELD_EXPERIENCE_SCALE = 0.5,		-- reduction factor in Xp from expeditionary forces
@@ -655,7 +655,7 @@ NMilitary = {
 	GARRISON_ORDER_ARMY_CAP_FACTOR = 3.0,			-- armies gets increased cap when they are garrisoned
 	
 	COMMANDER_LEVEL_UP_STAT_COUNT = 3, 				-- num stats gained on level up
-	COMMANDER_LEVEL_UP_STAT_WEIGHTS = { 5, 5, 5, 5 }, -- level up stat random base weights attack, defense, planning, logistics
+	COMMANDER_LEVEL_UP_STAT_WEIGHTS = { 5, 5, 5, 5 } , -- level up stat random base weights attack, defense, planning, logistics
 	
 	COMMANDER_LEVEL_UP_STAT_COUNT = 3, 				-- num stats gained on level up
 	
@@ -663,35 +663,35 @@ NMilitary = {
 		1.0, -- field marshal
 		0.0, -- corps commander
 		0.0  -- navy general
-	}, 
+	} , 
 	
 	UNIT_LEADER_TRAIT_SLOT_PER_LEVEL = { 			-- num extra traits on each level
 		0.5, -- field marshal
 		0.5, -- corps commander
 		0.0  -- navy general
-	}, 
+	} , 
 	
 	UNIT_LEADER_PERK_SLOT_PER_LEVEL = { 			-- num extra traits on each level
 		0.5, -- field marshal
 		0.5, -- corps commander
 		0.0  -- navy general
-	}, 
+	} , 
 	
 	HOURS_REQ_REJOIN_BORDER_WAR_FOR_INJURED_UNITS = 336, -- minimum hours required for units to rejoin border wars
 	
 	NEW_COMMANDER_RANDOM_PERSONALITY_TRAIT_CHANCES = {  -- chances to gain a personality trait for new generals
 		0.5, -- 50% for first trait
 		0.15  -- 15% for second trait after that
-	},
+	} ,
 	
 	NEW_COMMANDER_RANDOM_BASIC_TRAIT_CHANCES = {  -- chances to gain a basic trait for new generals
-	},
+	} ,
 	
 	NEW_COMMANDER_RANDOM_STATUS_TRAIT_CHANCES = {  -- chances to gain a status trait for new generals
-	},
+	} ,
 	
 	NEW_COMMANDER_RANDOM_SKILL_CHANCES = {  -- chances to give a random stat skill for new generals
-	},
+	} ,
 	
 	UNIT_LEADER_MODIFIER_COOLDOWN_ON_GROUP_CHANGE = 15,		-- time in days for a unit leader to regain its modifiers
 	UNIT_LEADER_ASSIGN_TRAIT_COST = 15.0,					-- cost to assign a new trait to a unit leader
@@ -708,7 +708,7 @@ NMilitary = {
 	
 	XP_GAIN_PER_OVERRUN_UNIT = 30.0,						-- fixed XP gain per overrun unit
 	XP_GAIN_FOR_SHATTERING = 10.0,					 -- extra multiplier on XP gain on shattering an encircled enemy
-},
+} ,
 
 
 NAir = {
@@ -777,7 +777,7 @@ NAir = {
 	BASE_STRATEGIC_BOMBING_HIT_PLANE_CHANCE = 0.5,		-- Chance to hit a plane in airbase when it is bombed.
 	BASE_STRATEGIC_BOMBING_HIT_PLANE_DAMAGE_FACTOR = 50,
 	STRATEGIC_BOMBER_NUKE_AIR_SUPERIORITY = 0.75,		-- How much air superiority is needed for a tactical bomber to be able to nuke a province
-	AGGRESSION_THRESHOLD = { 0.0, 0.25, 0.5 },			-- Threshold levels for mission aggressivity for air
+	AGGRESSION_THRESHOLD = { 0.0, 0.25, 0.5 } ,			-- Threshold levels for mission aggressivity for air
 	ACE_WING_SIZE =	100,								-- size of wing ace bonuses are set up for. if lower more bonus, if higher less bonus
 	ACE_WING_SIZE_MAX_BONUS = 10,				   -- biggest bonus we can get from having a small wing with an ace on
 	NO_SEARCH_MISSION_DETECT_FACTOR = -0.5,				-- value of planes not on active search missions for detection
@@ -840,13 +840,13 @@ NAir = {
 		0.0, -- NAVAL_KAMIKAZE	
 	   0.0, -- PORT_STRIKE		
 		0.3, -- AIR_SUPPLY		
-	},
+	} ,
 	
 	BOMBING_TARGETING_RANDOM_FACTOR = 0.10,							-- % of picking the wrong target #Was 0.25
 	BOMBING_PROV_BUILD_PRIO_SCALE = 1.5,							-- Scale of the selected priority for provincial buildings
 	BOMBING_STATE_BUILD_PRIO_SCALE = 1.5,							-- Scale of the selected priority for state buildings
 	BOMBING_INFRA_PRIO_SCALE = 0.7,									-- Scale of the selected priority for infastryctyre
-},
+} ,
 
 NNavy = {
 	DETECTION_CHANCE_MULT_BASE = 0.04,								-- base multiplier value for detection chance. Later the chance is an average between our detection and enemy visibility, mult by surface/sub detection chance in the following defines.
@@ -975,7 +975,7 @@ NNavy = {
 	DISBAND_MANPOWER_LOSS = 0.0,
 	
 	XP_GAIN_FACTOR = 1.0,	   			   							-- xp gain factor for navy
-},
+} ,
 
 NTrade = {
 	DISTANCE_TRADE_FACTOR = -0.03,			-- Trade factor is modified by distance times this
@@ -992,7 +992,7 @@ NTrade = {
 	PARTY_SUPPORT_TRADE_FACTOR = 50,		-- Trade factor bonus at the other side having 100 % party popularity for my party
 	ANTI_MONOPOLY_TRADE_FACTOR_THRESHOLD = 0.7,		-- What percentage of resources has to be sold to the buyer for the anti-monopoly factor to take effect
 	ANTI_MONOPOLY_TRADE_FACTOR = -100,		-- This is added to the factor value when anti-monopoly threshold is exceeded
-},
+} ,
 
 NAI = {
 	GARRISON_FRACTION = 0.0, 					-- How large part of a front should always be holding the line rather than advancing at the enemy #0.0
@@ -1301,7 +1301,7 @@ NAI = {
 		0.0, -- acclimatization hot gain
 		0.0, -- acclimatization cold gain
 		-0.5, -- build_cost_ic
-	},
+	} ,
 	DIVISION_DESIGN_MANPOWER_WEIGHT = 0.005,
 	DIVISION_DESIGN_STOCKPILE_WEIGHT = 0.01,
 	DIVISION_DESIGN_COMBAT_WIDTH_WEIGHT = -1.0,				-- This score is reduced the higher width is when comparing pure changes with no target
@@ -1512,14 +1512,14 @@ NAI = {
 	
 	MANPOWER_RATIO_REQUIRED_TO_PRIO_MOBILIZATION_LAW = 0.4,		-- percentage of manpower in field is desired to be buffered for AI when it has upcoming wars or already at war. if it has less manpower, it will prio manpower laws
 	UPGRADES_DEFICIT_LIMIT_DAYS = 40,					  -- Ai will avoid upgrading units in the field to new templates if it takes longer than this to fullfill their equipment need
-},
+} ,
 
 NFocus = {
 	FOCUS_POINT_DAYS = 7,						-- Each point takes a week
 	FOCUS_PROGRESS_PEACE = 1,					-- Progress during peace
 	FOCUS_PROGRESS_WAR = 1,					-- Progress during war
 	MAX_SAVED_FOCUS_PROGRESS = 10,				-- This much progress can be saved while not having a focus selected
-	},
+	} ,
 }
 
 

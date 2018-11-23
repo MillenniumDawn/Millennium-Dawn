@@ -24,7 +24,6 @@ def check_basic_style(filepath):
                     hasComment = re.search(r'#.*[{}]+', line, re.M | re.I)  # If comment at the start or before {
                     if not hasComment:  #if the line doesn't have a comment before the open brace
                         openBraces[0] += line.count('{')
-                        bad_count_file += 1
                         #count total open braces and subtract open braces that are easy to find and used correctly
                         closingBraces = line.count('{') - line.count(' {\n') - line.count(' { ')
 
@@ -40,7 +39,6 @@ def check_basic_style(filepath):
                     hasComment = re.search(r'#.*[{}]+', line, re.M | re.I)  # If comment at the start or before {
                     if not hasComment: #if the line doesn't have a comment before the open brace
                         openBraces[0] += -line.count('}')
-                        bad_count_file += 1
                         # count total close braces and subtract open braces that are easy to find and used correctly
                         openingingBraces = line.count('}') - line.count(' }\n') - line.count(' } ')
 
@@ -63,6 +61,11 @@ def check_basic_style(filepath):
                     equalSign = 0
                     #count total equal signs that are easy to find and used correctly
                     equalSign = line.count('=') - line.count(' = ') - line.count(' =\n')
+
+                    if (line.count('  =') > 0) or (line.count('=  ') > 0) :
+                        print("ERROR: Two spaces before or after an equal sign at {0} Line number: {1}".format(filepath, lineNum))
+                        equalSign = equalSign - line.count('  =') - line.count('=  ')
+                        bad_count_file += 1
                     if equalSign != 0: #if there are equal signs that aren't used correctly
                         print("ERROR: Missing an space before or after an equal sign at {0} Line number: {1}".format(filepath,lineNum))
                         #input("Press Enter to continue...")
