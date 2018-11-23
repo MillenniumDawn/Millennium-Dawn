@@ -581,16 +581,16 @@ NGraphics = {
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_FACTIONS = 0.0, 
 	GRADIENT_BORDERS_OPTIMIZATION_RANGE = 30.0, -- smaller value = faster gradient borders but may have artifacts on large provinces (value to balance)
 	GRADIENT_BORDERS_REFRESH_FREQ = 0.12, -- how frequent is gradient borders repainting (optimization for high-speed gameplay)
-	STRATEGIC_AIR_COLOR_BAD = {0.8, 0, 0, 1 }, -- rgb
-	STRATEGIC_AIR_COLOR_GOOD = {0, 0.8, 0, 1 },
-	STRATEGIC_AIR_COLOR_AVERAGE = {0.8, 0.8, 0, 1 },
-	STRATEGIC_AIR_COLOR_NEUTRAL = {140.0/255, 131.0/255, 119.0/255, 1 },
-	RESISTANCE_COLOR_GOOD = {0.8, 0.8, 0, 1 }, -- rgb
-	RESISTANCE_COLOR_AVERAGE = {0.8, 0.4, 0, 1 },
-	RESISTANCE_COLOR_BAD = {0.8, 0, 0, 1 },
+	STRATEGIC_AIR_COLOR_BAD = { 0.8, 0, 0, 1 }, -- rgb
+	STRATEGIC_AIR_COLOR_GOOD = { 0, 0.8, 0, 1 },
+	STRATEGIC_AIR_COLOR_AVERAGE = { 0.8, 0.8, 0, 1 },
+	STRATEGIC_AIR_COLOR_NEUTRAL = { 140.0/255, 131.0/255, 119.0/255, 1 },
+	RESISTANCE_COLOR_GOOD = { 0.8, 0.8, 0, 1 }, -- rgb
+	RESISTANCE_COLOR_AVERAGE = { 0.8, 0.4, 0, 1 },
+	RESISTANCE_COLOR_BAD = { 0.8, 0, 0, 1 },
 	CONSTRUCTION_CONVERSION_COLOR = { 0.9, 0.9, 0.3, 1 },
-	STRATEGIC_NAVY_COLOR_MISSION = {1.0, 0.7, 0.0, 1 },
-	STRATEGIC_NAVY_COLOR_NEUTRAL = {0.5, 0.5, 0.5, 1 },
+	STRATEGIC_NAVY_COLOR_MISSION = { 1.0, 0.7, 0.0, 1 },
+	STRATEGIC_NAVY_COLOR_NEUTRAL = { 0.5, 0.5, 0.5, 1 },
 	VIRTUAL_BATTLEPLANS_COLOR = { 0.2, 1.0, 0.2, 1 },
 	ALLIED_BATTLEPLANS_COLOR = { 0.3, 0.4, 1.0, 1 },
 	OFFENSIVE_PING_CIRCLE_COLOR = { 0.64, 0.48, 0.35 },
@@ -613,9 +613,9 @@ NGraphics = {
 	COUNTRY_FLAG_LARGE_STRIPE_MAX_WIDTH = 41,
 	COUNTRY_FLAG_LARGE_STRIPE_MAX_HEIGHT = 6500,
 	VICTORY_POINT_LEVELS = 2,
-	VICTORY_POINT_MAP_ICON_AFTER = {0, 4 }, -- After this amount of VP the map icon becomes bigger dot.
-	VICTORY_POINT_MAP_ICON_TEXT_CUTOFF = {180, 440, 1000 },  -- At what camera distance the VP name text disappears.
-	VICTORY_POINTS_DISTANCE_CUTOFF = {180, 440, 1000 }, -- At what distance VPs are hidden
+	VICTORY_POINT_MAP_ICON_AFTER = { 0, 4 }, -- After this amount of VP the map icon becomes bigger dot.
+	VICTORY_POINT_MAP_ICON_TEXT_CUTOFF = { 180, 440, 1000 },  -- At what camera distance the VP name text disappears.
+	VICTORY_POINTS_DISTANCE_CUTOFF = { 180, 440, 1000 }, -- At what distance VPs are hidden
 	AIRBASE_ICON_DISTANCE_CUTOFF = 900, -- At what distance air bases are hidden
 	NAVALBASE_ICON_DISTANCE_CUTOFF = 900, -- At what distance naval bases are hidden
 	RADAR_ICON_DISTANCE_CUTOFF = 1100, -- At what distance the radars are hidden
@@ -706,9 +706,9 @@ NGraphics = {
 	AMBIENT_LIGHT_POS_Z = { 0.6,  0.2, 0.924 }, -- top
 	AMBIENT_LIGHT_NEG_Z = { 0.55, 0.1, 0.9 }, -- bottom
 
-	SUN_DIFFUSE_COLOR   = {0.14, 0.0, 1.0 },
+	SUN_DIFFUSE_COLOR   = { 0.14, 0.0, 1.0 },
 	SUN_INTENSITY 		= 0.7; -- 0.4
-	MOON_DIFFUSE_COLOR  = {0.58, 0.5, 1.0 },
+	MOON_DIFFUSE_COLOR  = { 0.58, 0.5, 1.0 },
 	MOON_INTENSITY 		= 2.5;
 
 	CUBEMAP_INTENSITY = 1.0,
@@ -751,9 +751,9 @@ NGraphics = {
 	TRAIT_LINE_NON_ASSIGNED_COLOR = { 0.67, 0.75, 0.93 },
 	
 	-- unit on-map interface modulate colors
-	FRIEND_COLOR  = {0.7, 0.9, 0.7 },
-	ENEMY_COLOR   = {1.0, 0.7, 0.7 }, 
-	NEUTRAL_COLOR = {1.0, 1.0, 1.0 },
+	FRIEND_COLOR  = { 0.7, 0.9, 0.7 },
+	ENEMY_COLOR   = { 1.0, 0.7, 0.7 }, 
+	NEUTRAL_COLOR = { 1.0, 1.0, 1.0 },
 
 	COUNTRY_COLOR_HUE_MODIFIER = 0.0, -- 0.0
 	COUNTRY_COLOR_SATURATION_MODIFIER = 0.7, -- 0.6
