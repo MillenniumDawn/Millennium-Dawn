@@ -63,7 +63,7 @@ def check_basic_style(filepath):
                     equalSign = 0
                     #count total equal signs that are easy to find and used correctly
                     equalSign = line.count('=') - line.count(' = ') - line.count(' =\n')
-                   if equalSign != 0: #if there are equal signs that aren't used correctly
+                    if equalSign != 0: #if there are equal signs that aren't used correctly
                         print("ERROR: Missing an space before or after an equal sign at {0} Line number: {1}".format(filepath,lineNum))
                         #input("Press Enter to continue...")
                         bad_count_file += 1
