@@ -3,43 +3,43 @@ NDefines_Graphics = {
 NWiki = {
 	BASE_URL = "",
 	FORUM_URL = "https://modernday4.gitlab.io/"
-},
+} ,
 
 NMapMode = {
-	FABRICATE_CLAIM_SELECTED_SECONDARY_COLOR = { 0, 1, 0, 1 },
-	FABRICATE_CLAIM_TARGET_COUNTRY_SECONDARY_COLOR = { 0, 0, 0, 0 },
-	FABRICATE_CLAIM_NON_TARGET_COUNTRY_SECONDARY_COLOR = { 0, 0, 0, 0 },
-	FABRICATE_CLAIM_ALREADY_CLAIM_SECONDARY_COLOR = { 0.5, 0, 0, 1 },
-	FABRICATE_CLAIM_ALREADY_CORE_SECONDARY_COLOR = { 0.5, 0, 0, 1 },
-	FABRICATE_CLAIM_ALREADY_FABRICATING_SECONDARY_COLOR = { 0.5, 0, 0, 1 },
-	CONSTRUCTION_MAP_MODE_BUILDING_DEFAULT_COLOR = { 0.43, 0.43, 0.43 }, 			-- Color of states/provinces that can't be built on
-	CONSTRUCTION_MAP_MODE_BUILDING_MAX_LEVEL_COLOR = { 0.0, 0.0, 1.0  }, 			-- Color of states/provinces where current building level is maxed out (max is current max level, not final max level) of a building type
-	CONSTRUCTION_MAP_MODE_BUILDING_MAX_AMOUNT_QUEUED_COLOR = { 0.0, 0.0, 1.0  }, 	-- Color of states/provinces when building queue is maxed of a building type
-	CONSTRUCTION_MAP_MODE_BUILDING_QUEUED_COLOR = { 1.0, 0.85, 0.0  },				-- Color of states/provinces when building queue contains one or more of a building type.
+	FABRICATE_CLAIM_SELECTED_SECONDARY_COLOR = { 0, 1, 0, 1 } ,
+	FABRICATE_CLAIM_TARGET_COUNTRY_SECONDARY_COLOR = { 0, 0, 0, 0 } ,
+	FABRICATE_CLAIM_NON_TARGET_COUNTRY_SECONDARY_COLOR = { 0, 0, 0, 0 } ,
+	FABRICATE_CLAIM_ALREADY_CLAIM_SECONDARY_COLOR = { 0.5, 0, 0, 1 } ,
+	FABRICATE_CLAIM_ALREADY_CORE_SECONDARY_COLOR = { 0.5, 0, 0, 1 } ,
+	FABRICATE_CLAIM_ALREADY_FABRICATING_SECONDARY_COLOR = { 0.5, 0, 0, 1 } ,
+	CONSTRUCTION_MAP_MODE_BUILDING_DEFAULT_COLOR = { 0.43, 0.43, 0.43 } , 			-- Color of states/provinces that can't be built on
+	CONSTRUCTION_MAP_MODE_BUILDING_MAX_LEVEL_COLOR = { 0.0, 0.0, 1.0  } , 			-- Color of states/provinces where current building level is maxed out (max is current max level, not final max level) of a building type
+	CONSTRUCTION_MAP_MODE_BUILDING_MAX_AMOUNT_QUEUED_COLOR = { 0.0, 0.0, 1.0  } , 	-- Color of states/provinces when building queue is maxed of a building type
+	CONSTRUCTION_MAP_MODE_BUILDING_QUEUED_COLOR = { 1.0, 0.85, 0.0  } ,				-- Color of states/provinces when building queue contains one or more of a building type.
 	DIPLOMACY_MAP_MODE_CONTROLLER_COLOR_FACTOR = 1.8,							-- If the nation is a controller but not an owner of a state. Larger value = brighter
 	CONSTRUCTION_MAP_MODE_TRANSPARENCY_OVERRIDE = 248, 						-- When you use gradient borders to defeat the purpose of gradient borders. Larger than 248 seems to make the transparency stronger?
-	PEACE_CONFERENCE_CURRENT_SELECTED_SECONDARY_COLOR = { 0, 0, 1, 0.25 },
-	PEACE_CONFERENCE_SELECTABLE_SECONDARY_COLOR = { 0, 1, 0, 0.25 },
-	FACTIONS_COLOR_NOT_MEMBER = { 0.6, 0.6, 0.6, 1.0 },
+	PEACE_CONFERENCE_CURRENT_SELECTED_SECONDARY_COLOR = { 0, 0, 1, 0.25 } ,
+	PEACE_CONFERENCE_SELECTABLE_SECONDARY_COLOR = { 0, 1, 0, 0.25 } ,
+	FACTIONS_COLOR_NOT_MEMBER = { 0.6, 0.6, 0.6, 1.0 } ,
 	STRATEGIC_MODE_COUNTRY_COLOR_STRIPES_TRANSP = 0.0,
-	STRATEGIC_MODE_ENEMY_STRIPES_COLOR = { 0.827, 0.172, 0.184, 0.0 },
-	STRATEGIC_MODE_OUR_STRIPES_COLOR = { 0.427, 0.619, 0.858, 0.0 },
-	STRATEGIC_MODE_ALLY_STRIPES_COLOR = { 0.427, 0.619, 0.858, 0.0 },
-	RADAR_RANGE_STRIPES_COLOR = { 1.0, 1.0, 0.0, 0.14 },
-	RADAR_RANGE_COLOR = { 0.039, 0.627, 0.0, 1.0 },
-	RADAR_RANGE_ALLIED_COLOR = { 0.0, 0.647, 1.0, 1.0 },
-	RADAR_RANGE_SELECTED_COLOR = { 1.0, 1.0, 0.0, 1.0 },
+	STRATEGIC_MODE_ENEMY_STRIPES_COLOR = { 0.827, 0.172, 0.184, 0.0 } ,
+	STRATEGIC_MODE_OUR_STRIPES_COLOR = { 0.427, 0.619, 0.858, 0.0 } ,
+	STRATEGIC_MODE_ALLY_STRIPES_COLOR = { 0.427, 0.619, 0.858, 0.0 } ,
+	RADAR_RANGE_STRIPES_COLOR = { 1.0, 1.0, 0.0, 0.14 } ,
+	RADAR_RANGE_COLOR = { 0.039, 0.627, 0.0, 1.0 } ,
+	RADAR_RANGE_ALLIED_COLOR = { 0.0, 0.647, 1.0, 1.0 } ,
+	RADAR_RANGE_SELECTED_COLOR = { 1.0, 1.0, 0.0, 1.0 } ,
 	RADAR_ROTATION_SPEED = 0.025,
-	AIR_RANGE_CAN_ASSIGN_MISSION_STRIPES_COLOR = { 0, 0.8, 0, 0.0 },				-- Stripes over the regions indicating if the currently selected air wings can have assigned mission there or not.
-	AIR_RANGE_CANNOT_ASSIGN_MISSION_STRIPES_COLOR = { 0.8, 0, 0, 0.5 },
-	AIR_RANGE_INDICATOR_DEFAULT_COLOR = { 1.0, 1.0, 0, 1 },							-- On map circle indicating the air wings range.
-	AIR_RANGE_INDICATOR_NO_WINGS_COLOR = { 1.0, 0, 0, 1 },							-- Same as above, but for air wings with no airplanes.
+	AIR_RANGE_CAN_ASSIGN_MISSION_STRIPES_COLOR = { 0, 0.8, 0, 0.0 } ,				-- Stripes over the regions indicating if the currently selected air wings can have assigned mission there or not.
+	AIR_RANGE_CANNOT_ASSIGN_MISSION_STRIPES_COLOR = { 0.8, 0, 0, 0.5 } ,
+	AIR_RANGE_INDICATOR_DEFAULT_COLOR = { 1.0, 1.0, 0, 1 } ,							-- On map circle indicating the air wings range.
+	AIR_RANGE_INDICATOR_NO_WINGS_COLOR = { 1.0, 0, 0, 1 } ,							-- Same as above, but for air wings with no airplanes.
 	AIR_RANGE_INDICATOR_ROTATION_SPEED = 0.0005,									-- How quickly is that indicator rotating
-	AIR_MISSION_ARROW_ACTIVE_COLOR = { 0, 1.0, 0, 0.5 },							-- Color of the arrow drawn in the strategic air map mode, between the air base and the region for the active missions
-	AIR_MISSION_ARROW_NONACTIVE_COLOR = { 1.0, 1.0, 1.0, 0.2 },						-- Same as above, but for non active missions (when no air wing has any mission active)
-	AIR_MISSION_ARROW_SELECTED_COLOR = { 1.0, 1.0, 0, 0.8 },						-- Same as above, but for currently selected air wings/air bases.
+	AIR_MISSION_ARROW_ACTIVE_COLOR = { 0, 1.0, 0, 0.5 } ,							-- Color of the arrow drawn in the strategic air map mode, between the air base and the region for the active missions
+	AIR_MISSION_ARROW_NONACTIVE_COLOR = { 1.0, 1.0, 1.0, 0.2 } ,						-- Same as above, but for non active missions (when no air wing has any mission active)
+	AIR_MISSION_ARROW_SELECTED_COLOR = { 1.0, 1.0, 0, 0.8 } ,						-- Same as above, but for currently selected air wings/air bases.
 	AIR_TRANSFER_ARROW_COLOR = { 1, 1, 0, 0.75 }									-- Same as above, but for the arrows drawn between airbases for current transfers
-},
+} ,
 
 NMapIcons = {
 		INTERPOLATION_SNAP_DISTANCE = 0.3,
@@ -402,10 +402,10 @@ NMapIcons = {
 		PLAYERS_PRIORITY_CAPITAL = 5,
 		PLAYERS_PRIORITY_PEACE_COST = 3,
 		PLAYERS_PRIORITY_ADJACENCY_RULE = 3,
-},
+} ,
 
 NAirGfx = {
-	AIRPLANES_ANIMATION_GLOBAL_SPEED_PER_GAMESPEED = { 0.3, 0.35, 0.40, 0.45, 0.50, 0.55 }, -- Speed factor for each game speed (begin with paused). Larger value = faster animation.
+	AIRPLANES_ANIMATION_GLOBAL_SPEED_PER_GAMESPEED = { 0.3, 0.35, 0.40, 0.45, 0.50, 0.55 } , -- Speed factor for each game speed (begin with paused). Larger value = faster animation.
 	AIRPLANES_CURVE_POINT_DENSITY = 5.0, 			-- Higher value = more midpoints in the flight path.
 	AIRPLANES_CURVE_MAX_EXTRAPOLATION = 30.0, 		-- It's the limit value that avoid making gigantic curves that may happen when flight path is very long.
 	AIRPLANES_CURVE_MIN_ELEVATION = 4.0, 			-- Minimum height above the ground that the curve will generate it's points. Excludes first and last point (takeoff/landing).
@@ -438,13 +438,13 @@ NAirGfx = {
 	MAX_BOMBING_SCENARIOS = 2,						-- Max number of bombings scenarios in a strategic region.
 	MAX_DOGFIGHTS_SCENARIOS = 2,					-- Max number of dogfight scenarios in a strategic region.
 	MAX_TRANSPORT_SCENARIOS = 2,					-- Max number of transport scenarios in a strategic region
-},
+} ,
 
 NGraphics = {
-	COUNTER_MODE_ALLEGIANCE_OURS = { 0.32, 0.71, 0.39, 1.0 },
-	COUNTER_MODE_ALLEGIANCE_ALLIED = { 0.31, 0.65, 0.94, 1.0 },
-	COUNTER_MODE_ALLEGIANCE_ENEMY = { 0.91, 0.30, 0.30, 1.0 },
-	COUNTER_MODE_ALLEGIANCE_OTHER = { 0.8, 0.8, 0.8, 1.0 },
+	COUNTER_MODE_ALLEGIANCE_OURS = { 0.32, 0.71, 0.39, 1.0 } ,
+	COUNTER_MODE_ALLEGIANCE_ALLIED = { 0.31, 0.65, 0.94, 1.0 } ,
+	COUNTER_MODE_ALLEGIANCE_ENEMY = { 0.91, 0.30, 0.30, 1.0 } ,
+	COUNTER_MODE_ALLEGIANCE_OTHER = { 0.8, 0.8, 0.8, 1.0 } ,
 	MAX_MESHES_LOADED_PER_FRAME = 10,
 	MESH_POPUP_SCALE_UP_SPEED = 5.0,
 	MESH_POPUP_SCALE_DOWN_SPEED = 2.1,
@@ -670,9 +670,9 @@ NGraphics = {
 	POSTEFFECT_FEATHER_AT_MIN = 0.03,
 	POSTEFFECT_FEATHER_AT_MAX = 0.80,
 
-	LAND_COMBAT_BALANCED_COLOR = { 1.0, 1.0, 0.0, 1.0 },
-	LAND_COMBAT_LOSING_COLOR = { 1.0, 0.0, 0.0, 1.0 },
-	LAND_COMBAT_WINNING_COLOR = { 0.0, 1.0, 0.0, 1.0 },	
+	LAND_COMBAT_BALANCED_COLOR = { 1.0, 1.0, 0.0, 1.0 } ,
+	LAND_COMBAT_LOSING_COLOR = { 1.0, 0.0, 0.0, 1.0 } ,
+	LAND_COMBAT_WINNING_COLOR = { 0.0, 1.0, 0.0, 1.0 } ,	
 	LAND_COMBAT_LOSING_COLOR_VALUE = 0.40,
 	LAND_COMBAT_WINNING_COLOR_VALUE = 0.70,
 
@@ -690,26 +690,26 @@ NGraphics = {
 	TONE_MAP_MIDDLE_GREY = 0.7, --0.7 was 0.5
 	TONE_MAP_LUMINANCE_WHITE = 1.0, --
 	MOON_HEIGHT = 600, -- higher means softer shadows and more intense light
-	SUN_HEIGHT  = 600, -- higher means softer shadows and more intense light
+	SUN_HEIGHT = 600, -- higher means softer shadows and more intense light
 	MOON_HEIGHT_WATER = 550,   -- higher means softer shadows and more intense light
-	SUN_HEIGHT_WATER  = 5000,  -- higher means softer shadows and more intense light
+	SUN_HEIGHT_WATER = 5000,  -- higher means softer shadows and more intense light
 	MOON_LATITUDE = 0, -- NOT USED
-	SUN_LATITUDE  = 848,
+	SUN_LATITUDE = 848,
 	SECOND_MOON_LATITUDE = 100, -- Used to put a "fake" sun/moon on the other side of the globe to hide the seem that would otherwise appear there
 	SECOND_SUN_LATITUDE = 100,
 
 	-- hsv color ambient light
-	AMBIENT_LIGHT_POS_X = { 0.2,  0.2, 0.2 }, -- right
-	AMBIENT_LIGHT_NEG_X = { 0.4,  0.1, 0.6 }, -- left
-	AMBIENT_LIGHT_POS_Y = { 0.0,  0.0, 0.0 },-- kills everything
-	AMBIENT_LIGHT_NEG_Y = { 0.35, 0.2, 0.0 },-- from under
-	AMBIENT_LIGHT_POS_Z = { 0.6,  0.2, 0.924 }, -- top
-	AMBIENT_LIGHT_NEG_Z = { 0.55, 0.1, 0.9 }, -- bottom
+	AMBIENT_LIGHT_POS_X = { 0.2,  0.2, 0.2 } , -- right
+	AMBIENT_LIGHT_NEG_X = { 0.4,  0.1, 0.6 } , -- left
+	AMBIENT_LIGHT_POS_Y = { 0.0,  0.0, 0.0 } ,-- kills everything
+	AMBIENT_LIGHT_NEG_Y = { 0.35, 0.2, 0.0 } ,-- from under
+	AMBIENT_LIGHT_POS_Z = { 0.6,  0.2, 0.924 } , -- top
+	AMBIENT_LIGHT_NEG_Z = { 0.55, 0.1, 0.9 } , -- bottom
 
-	SUN_DIFFUSE_COLOR   = {0.14, 0.0, 1.0},
-	SUN_INTENSITY 		= 0.7; -- 0.4
-	MOON_DIFFUSE_COLOR  = {0.58, 0.5, 1.0},
-	MOON_INTENSITY 		= 2.5;
+	SUN_DIFFUSE_COLOR = { 0.14, 0.0, 1.0 } ,
+	SUN_INTENSITY = 0.7; -- 0.4
+	MOON_DIFFUSE_COLOR = { 0.58, 0.5, 1.0 } ,
+	MOON_INTENSITY = 2.5;
 
 	CUBEMAP_INTENSITY = 1.0,
 	
@@ -729,14 +729,14 @@ NGraphics = {
 	TRADE_ROUTE_MAX_LINES = 6,
 	TRADE_ROUTE_BAD_EFFICIENCY_THRESHOLD = 0.8,
 	TRADE_ROUTE_REGIONAL_BAD_EFFICIENCY_THRESHOLD = 0.9,
-	TRADE_ROUTE_BAD_EFFICIENCY_ROUTE_COLOR = { 1.0, 0.7, 0.5, 0.75 },
-	TRADE_ROUTE_BAD_EFFICIENCY_HOTSPOT_COLOR = { 1.0, 0.0, 0.0, 0.75 },
-	TRADE_ROUTE_PRODUCTION_TRANSFER_COLOR = { 0.0, 0.5, 1.0, 0.75 },
-	TRADE_ROUTE_SUPPLIES_TRANSFER_COLOR = { 1.0, 1.0, 1.0, 0.75 },
-	TRADE_ROUTE_RESOURCE_EXPORT_COLOR = { 0.5, 0.5, 1.0, 0.75 },
-	TRADE_ROUTE_RESOURCE_IMPORT_COLOR = { 0.5, 0.5, 1.0, 0.75 },
-	TRADE_ROUTE_LEND_LEASE_EXPORT_COLOR = { 0.5, 1.0, 0.0, 0.75 },
-	TRADE_ROUTE_LEND_LEASE_IMPORT_COLOR = { 0.5, 1.0, 0.0, 0.75 },
+	TRADE_ROUTE_BAD_EFFICIENCY_ROUTE_COLOR = { 1.0, 0.7, 0.5, 0.75 } ,
+	TRADE_ROUTE_BAD_EFFICIENCY_HOTSPOT_COLOR = { 1.0, 0.0, 0.0, 0.75 } ,
+	TRADE_ROUTE_PRODUCTION_TRANSFER_COLOR = { 0.0, 0.5, 1.0, 0.75 } ,
+	TRADE_ROUTE_SUPPLIES_TRANSFER_COLOR = { 1.0, 1.0, 1.0, 0.75 } ,
+	TRADE_ROUTE_RESOURCE_EXPORT_COLOR = { 0.5, 0.5, 1.0, 0.75 } ,
+	TRADE_ROUTE_RESOURCE_IMPORT_COLOR = { 0.5, 0.5, 1.0, 0.75 } ,
+	TRADE_ROUTE_LEND_LEASE_EXPORT_COLOR = { 0.5, 1.0, 0.0, 0.75 } ,
+	TRADE_ROUTE_LEND_LEASE_IMPORT_COLOR = { 0.5, 1.0, 0.0, 0.75 } ,
 	
 	TRAIT_GRID_COLUMN_SHIFTS = {
 		3,
@@ -744,16 +744,16 @@ NGraphics = {
 		419,
 		3,
 		211
-	},
+	} ,
 	TRAIT_GRID_ROW_SHIFT = 48,
 	
-	TRAIT_LINE_ASSIGNED_COLOR = { 0.47, 0.93, 0.65 },
-	TRAIT_LINE_NON_ASSIGNED_COLOR = { 0.67, 0.75, 0.93 },
+	TRAIT_LINE_ASSIGNED_COLOR = { 0.47, 0.93, 0.65 } ,
+	TRAIT_LINE_NON_ASSIGNED_COLOR = { 0.67, 0.75, 0.93 } ,
 	
 	-- unit on-map interface modulate colors
-	FRIEND_COLOR  = {0.7, 0.9, 0.7},
-	ENEMY_COLOR   = {1.0, 0.7, 0.7}, 
-	NEUTRAL_COLOR = {1.0, 1.0, 1.0},
+	FRIEND_COLOR = { 0.7, 0.9, 0.7 } ,
+	ENEMY_COLOR = { 1.0, 0.7, 0.7 } , 
+	NEUTRAL_COLOR = { 1.0, 1.0, 1.0 } ,
 
 	COUNTRY_COLOR_HUE_MODIFIER = 0.0, -- 0.0
 	COUNTRY_COLOR_SATURATION_MODIFIER = 0.7, -- 0.6
@@ -773,7 +773,7 @@ NGraphics = {
 		240.0/360.0, 0.95, 0.86,
 		210.0/360.0, 0.95, 0.86,
 		180.0/360.0, 0.95, 0.86
-	},
+	} ,
 	
 	CAMERA_OUTSIDE_MAP_DISTANCE_TOP = 100.0, --200
 	CAMERA_OUTSIDE_MAP_DISTANCE_BOTTOM = 100.0, --200
@@ -809,7 +809,7 @@ NGraphics = {
 
 	ACCLIMATIZATION_CAMO_SHOW_AT = 0.5,				-- The moment at which the division gains enough acclimatization to change it's model to the camouflage one.
 	ACCLIMATIZATION_CAMO_SHOW_WHEN_IN_STATE = 0.2	-- The troops camouflage can swap (to the one from acclim.) not only when snow/desert is in the location we are in, but also when % of provinces in current state has snow/desert.
-},
+} ,
 
 NInterface = {
 	MAX_NO_FACTION_FILTER_BUTTONS = 40,			-- Max number of faction filter buttons that can be generated in diplomacy view.
@@ -829,11 +829,11 @@ NInterface = {
 	TOOLTIP_SCREEN_TOP_OFFSET_Y = 0,				-- Tooltip offset on y axism from top screen border
 	TOOLTIP_SCREEN_BOTTOM_OFFSET_Y = 0,				-- Tooltip offset on y axis from bottom screen border
 	
-	NO_COMBATS_COLOR = { 0.0, 0.0, 0.8 },				-- Color for icons if all combats are successful
-	SUCCESFUL_COMBATS_COLOR = { 120.0/360.0, 0.95, 0.86 },				-- Color for icons if all combats are successful
-	MIN_NON_SUCCESSFUL_COMBAT_COLOR = { 100.0/360.0, 0.95, 0.86 },	-- Color for icons if some of combats are not successful
-	MID_NON_SUCCESSFUL_COMBAT_COLOR = { 50.0/360.0, 0.95, 0.86 },
-	MAX_NON_SUCCESSFUL_COMBAT_COLOR = { 00.0/360.0, 0.95, 0.86 },	-- Color for icons if all of combats are not successful	
+	NO_COMBATS_COLOR = { 0.0, 0.0, 0.8 } ,				-- Color for icons if all combats are successful
+	SUCCESFUL_COMBATS_COLOR = { 120.0/360.0, 0.95, 0.86 } ,				-- Color for icons if all combats are successful
+	MIN_NON_SUCCESSFUL_COMBAT_COLOR = { 100.0/360.0, 0.95, 0.86 } ,	-- Color for icons if some of combats are not successful
+	MID_NON_SUCCESSFUL_COMBAT_COLOR = { 50.0/360.0, 0.95, 0.86 } ,
+	MAX_NON_SUCCESSFUL_COMBAT_COLOR = { 00.0/360.0, 0.95, 0.86 } ,	-- Color for icons if all of combats are not successful	
 	
 	UNIT_SELECT_DOUBLE_CLICK_TIME = 0.1,				-- Delay before double click event for unit selection
 	
@@ -856,7 +856,7 @@ NInterface = {
 	ARMY_LIST_BOTTOM_PADDING = 145,				-- Bottom padding for army list on left
 
 	MILITARY_FACTORIES_SCALE = { 1, 5, 10 }
-},
+} ,
 
 
 NFrontend = {
@@ -923,17 +923,17 @@ NFrontend = {
 	CREDITS_LOOK_X = 2958.0,
 	CREDITS_LOOK_Y = 0.0,	
 	CREDITS_LOOK_Z = 1519.0,
-},	
+} ,	
 
 NSound = {
 	-- The volume of sounds in this category vary with camera altitude.
-	HEIGHT_SOUND_CATEGORY	= "Atmosphere",  -- Name of the sound category
-	HEIGHT_SOUND_MIN_ALTITUDE =  100.0,	   -- Below this altitude the minimum volume will be used
+	HEIGHT_SOUND_CATEGORY = "Atmosphere",  -- Name of the sound category
+	HEIGHT_SOUND_MIN_ALTITUDE = 100.0,	   -- Below this altitude the minimum volume will be used
 	HEIGHT_SOUND_MAX_ALTITUDE = 2000.0,	   -- Above this altitude the maximum volume will be used
-	HEIGHT_SOUND_MIN_VOLUME   =	0.2,
-	HEIGHT_SOUND_MAX_VOLUME   =	1.0,
+	HEIGHT_SOUND_MIN_VOLUME  =	0.2,
+	HEIGHT_SOUND_MAX_VOLUME  =	1.0,
 
-	BATTLE_SOUND_NAME		  = "amb_battle_distant",
+	BATTLE_SOUND_NAME = "amb_battle_distant",
 	BATTLE_SOUND_INIT_RADIUS	=   9.0,
 	BATTLE_SOUND_FALLOFF_DEFAULT = 100.0,
 
@@ -941,9 +941,9 @@ NSound = {
 	BATTLE_SOUND_MIN_VOLUME_MUL = 0.2,
 	BATTLE_SOUND_MAX_VOLUME_MUL = 1.0,
 	
-	VOICE_OVER_CATEGORY  = "Voices",
+	VOICE_OVER_CATEGORY = "Voices",
 	VOICE_OVER_COOL_DOWN = 2.8, -- Wait for this many seconds before playing another vo	
-},
+} ,
 
 }
 
