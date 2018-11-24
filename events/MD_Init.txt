@@ -11,8 +11,8 @@ country_event = {
 	#fire_only_once = yes
 	is_triggered_only = yes
 	
-	immediate  = {
-		country_event = {id = init.1} #Initial Pop up at the start of the game
+	immediate = {
+		country_event = { id = init.1 } #Initial Pop up at the start of the game
 		log = "[GetDateText]: [This.GetName]: init.0 completed"
 		###DON't PUT ANY OTHER EFFECTS HERE###
 	}	
@@ -42,7 +42,7 @@ country_event = {
 	is_triggered_only = yes
 	
 	
-	immediate  = {
+	immediate = {
 		hidden_effect = {
 			#Executes PP & NU system just incase they don't click both option A & B
 			#set_pp_gain = yes
@@ -50,12 +50,12 @@ country_event = {
 			# GER = {
 				# activate_decision = MD4_init
 			# }
-			country_event = {id = brotherhood.0 } #Sets muslim_brotherhood relations
-			country_event = {id = brotherhood.2 }
+			country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
+			country_event = { id = brotherhood.2 }
 			set_country_flag = { flag = total_AB_wars value = 0 }
 			country_event = { id = neighbor_drift.1 } #outlook drift values
 			country_event = { id = neighbor_drift.2 }
-			#country_event = { id = low_stability.1} #Executed via decission at start of game instead of here,
+			#country_event = { id = low_stability.1 } #Executed via decission at start of game instead of here,
 			country_event = { id = init_approval_rating.1 }
 			country_event = { id = state_update.2 } #states debuff 
 			#country_event = { id = GDPC_Update.0 days = 90 } #Auto-update GDP/C 
@@ -64,6 +64,8 @@ country_event = {
 			country_event = { id = set_spirit.3 days = 3 } #sets economy flags for approval rating
 			news_event = { id = USA_Russia_Investigation.0 days = 35 }
 			country_event = low_stability.1
+			country_event = ai_strategy.1 #don't build units
+			country_event = ai_strategy.2 #sets african relations ai strategy on init
 			log = "[GetDateText]: [This.GetName]: init.1 completed"
 		}
 	}
@@ -85,15 +87,42 @@ country_event = {
 	
 	is_triggered_only = yes
 	
-	immediate  = {
+	immediate = {
 		#set_pp_gain = yes
 		#set_NU_gain = yes
 		
 		country_event = { id = neighbor_drift.1 } #outlook drift values
-		country_event = { id = neighbor_drift.2 }country_event = { id = state_update.2 } #states debuff 
+		country_event = { id = neighbor_drift.2 } country_event = { id = state_update.2 } #states debuff 
 		country_event = { id = set_spirit.1 } #sets multi-ethnic spirit
 		country_event = { id = set_spirit.2 } #sets internal faction flags
 		country_event = { id = set_spirit.3 days = 3 } #sets economy flags for approval rating
+		if = {
+			limit = {
+				or = {
+					any_other_country = {
+						OR = {
+							not = {
+								is_justifying_wargoal_against = this
+								has_wargoal_against = this
+							}
+						}
+					}
+					has_war = no
+					threat < 0.30
+					is_bad_salafist = no
+				}
+			}
+			set_country_flag = ai_no_unit_build
+			add_ai_strategy = { type = role_ratio id = L_Inf value = -500 }
+			add_ai_strategy = { type = role_ratio id = infantry value = -500 }
+			add_ai_strategy = { type = role_ratio id = garrison value = -500 }
+			add_ai_strategy = { type = role_ratio id = mechanized value = -500 }
+			add_ai_strategy = { type = role_ratio id = armor value = -500 }
+			add_ai_strategy = { type = role_ratio id = marines value = -500 }
+			add_ai_strategy = { type = role_ratio id = Air_assault value = -500 }
+			add_ai_strategy = { type = role_ratio id = Air_Inf value = -500 }
+			add_ai_strategy = { type = role_ratio id = Special_Forces value = -500 }
+		}
 		log = "[GetDateText]: [This.GetName]: init.2 completed"
 	}
 	
@@ -119,6 +148,6 @@ country_event = {
 #		name = init.3.a
 #		log = "[GetDateText]: [This.GetName]: init.3.a executed"
 #		log = "[GetDateText]: [This.GetName]: init.3 completed"
-#		#this = {gearz_test = yes}
+#		#this = { gearz_test = yes }
 #	}
-#}
+# }
