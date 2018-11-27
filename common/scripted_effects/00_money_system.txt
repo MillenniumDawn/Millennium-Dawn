@@ -11,79 +11,39 @@ initial_money_setup = {
 	#init_calculate_size_modifier = yes
 	calculate_tax_gain = yes
 	init_expenses = yes
-}
-	
-calculate_interest_rate = {
-	if = { limit = { has_idea = gdp_1 }
-		set_variable = { var = interest_rate value = 10 }
-		
-		else = { if = { limit = { has_idea = gdp_2 }
-			set_variable = { var = interest_rate value = 9 }
-			
-			else = { if = { limit = { has_idea = gdp_3 }
-				set_variable = { var = interest_rate value = 8 }
-				
-				else = { if = { limit = { has_idea = gdp_4 }
-					set_variable = { var = interest_rate value = 7 }
-					
-					else = { if = { limit = { has_idea = gdp_5 }
-						set_variable = { var = interest_rate value = 6 }
-						
-						else = { if = { limit = { has_idea = gdp_6 }
-							set_variable = { var = interest_rate value = 5 }
-							
-							else = { if = { limit = { or = { has_idea = gdp_7 has_idea = gdp_8 has_idea = gdp_9 } }
-								set_variable = { var = interest_rate value = 4 }
-								
-								else = { if = { limit = { or = { has_idea = gdp_10 has_idea = gdp_11 has_idea = gdp_12 } }
-								set_variable = { var = interest_rate value = 3 }
-								}}
-							}}
-						}}
-					}}
-				}}
-			}}
-		}}
-	}
-	if = {
-		limit = {
-			or = { has_idea = wall_street has_idea = international_bankers } 
-		}
-		subtract_from_variable = { var = interest_rate value = 1 }
-	}
+	set_variable = { econ_cycle_upg_cost = 7 }
+	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
 }
 
 init_calculate_size_modifier = {
-			set_variable = { size_modifier = num_of_civilian_factories }
-			
-			if = { limit = { check_variable = { size_modifier = 0 } }
-				add_to_variable = { var = size_modifier value = 0.03 }
-				
-				else = { multiply_variable = { var = size_modifier value = 0.22 }
-					if = { limit = { check_variable = { size_modifier > 1.1 } }
-						subtract_from_variable = { var = size_modifier value = 0.58 }
-				
+	set_variable = { size_modifier = num_of_civilian_factories }
+	
+	if = { limit = { check_variable = { size_modifier = 0 } }
+		add_to_variable = { var = size_modifier value = 0.03 }
+		
+		else = { multiply_variable = { var = size_modifier value = 0.22 }
+			if = { limit = { check_variable = { size_modifier > 1.1 } }
+				subtract_from_variable = { var = size_modifier value = 0.58 }
+		
+				else = {
+					if = { limit = { check_variable = { size_modifier = 0.22 } }
+						subtract_from_variable = { var = size_modifier value = 0.14 }
+					
 						else = {
-							if = { limit = { check_variable = { size_modifier = 0.22 } }
-								subtract_from_variable = { var = size_modifier value = 0.14 }
-							
+							if = { limit = { check_variable = { size_modifier = 0.44 } }
+								subtract_from_variable = { var = size_modifier value = 0.30 }
+								
 								else = {
-									if = { limit = { check_variable = { size_modifier = 0.44 } }
-										subtract_from_variable = { var = size_modifier value = 0.30 }
+									if = { limit = { check_variable = { size_modifier = 0.66 } }
+										subtract_from_variable = { var = size_modifier value = 0.43 }
 										
 										else = {
-											if = { limit = { check_variable = { size_modifier = 0.66 } }
-												subtract_from_variable = { var = size_modifier value = 0.43 }
+											if = { limit = { check_variable = { size_modifier = 0.88 } }
+												subtract_from_variable = { var = size_modifier value = 0.50 }
 												
 												else = {
-													if = { limit = { check_variable = { size_modifier = 0.88 } }
-														subtract_from_variable = { var = size_modifier value = 0.50 }
-														
-														else = {
-															if = { limit = { check_variable = { size_modifier = 1.1 } }
-																subtract_from_variable = { var = size_modifier value = 0.56 }
-															}
-														}
+													if = { limit = { check_variable = { size_modifier = 1.1 } }
+														subtract_from_variable = { var = size_modifier value = 0.56 }
 													}
 												}
 											}
@@ -95,6 +55,8 @@ init_calculate_size_modifier = {
 					}
 				}
 			}
+		}
+	}
 }
 
 
@@ -123,11 +85,11 @@ ingame_calculate_size_modifier = {
 							
 						else = { if = { limit = { check_variable = { size_mod_check = 1.1 } }
 							subtract_from_temp_variable = { size_mod_check = 0.56 }
-						}}
-					}}
-				}}
-			}}
-		}}
+						} }
+					} }
+				} }
+			} }
+		} }
 	}
 	### Does it if no new civilian factories has been added
 	if = { limit = { check_variable = { var = size_modifier value = size_mod_check compare = not_equals } }
@@ -142,6 +104,7 @@ ingame_calculate_size_modifier = {
 			divide_variable = { var = welfare_gain value = size_modifier }
 			divide_variable = { var = expense_gain value = size_modifier }
 			divide_variable = { var = tax_gain value = size_modifier }
+			divide_variable = { var = econ_cycle_upg_cost value = size_modifier }
 			
 			set_variable = { size_modifier = num_of_civilian_factories }
 			
@@ -166,12 +129,12 @@ ingame_calculate_size_modifier = {
 														
 									else = { if = { limit = { check_variable = { size_modifier = 1.1 } }
 										subtract_from_variable = { var = size_modifier value = 0.56 }
-									}}
-								}}
-							}}
-						}}
-					}}
-				}}
+									} }
+								} }
+							} }
+						} }
+					} }
+				} }
 			}
 		multiply_variable = { var = bureaucracy_gain value = size_modifier }
 		multiply_variable = { var = defence_gain value = size_modifier }
@@ -181,6 +144,7 @@ ingame_calculate_size_modifier = {
 		multiply_variable = { var = welfare_gain value = size_modifier }
 		multiply_variable = { var = expense_gain value = size_modifier }
 		multiply_variable = { var = tax_gain value = size_modifier }
+		multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
 		subtract_from_variable = { var = treasury_rate value = expense_gain }
 		add_to_variable = { var = treasury_rate value = tax_gain }
 	}
@@ -191,7 +155,78 @@ calculate_tax_gain = {
 	set_variable = { var = tax_gain value = tax_rate }
 	multiply_variable = { var = tax_gain value = size_modifier }
 	divide_variable = { var = tax_gain value = 100 }
+	if = { limit = { has_idea = depression }
+		multiply_variable = { var = tax_gain value = 0.6 }
+		
+		else = { if = { limit = { has_idea = recession }
+			multiply_variable = { var = tax_gain value = 0.8 }
+				
+			else = { if = { limit = { has_idea = stagnation }
+				multiply_variable = { var = tax_gain value = 0.9 }
+							
+				else = { if = { limit = { has_idea = fast_growth }
+					multiply_variable = { var = tax_gain value = 1.05 }
+									
+					else = { if = { limit = { has_idea = economic_boom }
+						multiply_variable = { var = tax_gain value = 1.1 }
+					} }
+				} }
+			} }
+		} }
+	}
 	add_to_variable = { var = treasury_rate value = tax_gain }
+}
+
+calculate_interest_rate = {
+	set_variable = { var = interest_rate value = debt }
+	divide_variable = { var = interest_rate value = size_modifier }
+	divide_variable = { var = interest_rate value = 365 }
+	if = { limit = { has_idea = gdp_1 }
+		multiply_variable = { var = interest_rate value = 22 }
+		
+		else = { if = { limit = { has_idea = gdp_2 }
+			multiply_variable = { var = interest_rate value = 18 }
+				
+			else = { if = { limit = { has_idea = gdp_3 }
+				multiply_variable = { var = interest_rate value = 15 }
+							
+				else = { if = { limit = { has_idea = gdp_4 }
+					multiply_variable = { var = interest_rate value = 12 }
+					
+					else = { if = { limit = { has_idea = gdp_5 }
+						multiply_variable = { var = interest_rate value = 10 }
+						
+						else = { if = { limit = { has_idea = gdp_6 }
+							multiply_variable = { var = interest_rate value = 8 }
+							
+							else = { if = { limit = { has_idea = gdp_7 }
+								multiply_variable = { var = interest_rate value = 7 }
+								
+								else = { if = { limit = { has_idea = gdp_8 }
+									multiply_variable = { var = interest_rate value = 6 }
+									
+									else = { multiply_variable = { var = interest_rate value = 5 } }
+								} }
+							} }			
+						} }									
+					} }
+				} }
+			} }
+		} }
+	}
+	if = {
+		limit = { has_idea = petro_dollar }
+		subtract_from_variable = { var = interest_rate value = 2 }
+	}
+	if = {
+		limit = { or = { has_idea = wall_street has_idea = international_bankers } }
+		subtract_from_variable = { var = interest_rate value = 1 }
+	}
+	clamp_variable = {
+		var = interest_rate
+		min = 1
+		max = 50
+	}
 }
 
 calculate_debt_rate = {
@@ -295,9 +330,9 @@ increase_tax_cost = {
 		swap_ideas = { remove_idea = tax_cost_40 add_idea = tax_cost_41 }
 		else = { if = { limit = { check_variable = { tax_rate = 42 } }
 		swap_ideas = { remove_idea = tax_cost_41 add_idea = tax_cost_42 }
-		else = { if = { limit = { check_variable = { tax_rate = 3 } }
+		else = { if = { limit = { check_variable = { tax_rate = 43 } }
 		swap_ideas = { remove_idea = tax_cost_42 add_idea = tax_cost_43 }
-		else = { if = { limit = { check_variable = { tax_rate = 4 } }
+		else = { if = { limit = { check_variable = { tax_rate = 44 } }
 		swap_ideas = { remove_idea = tax_cost_43 add_idea = tax_cost_44 }
 		else = { if = { limit = { check_variable = { tax_rate = 45 } }
 		swap_ideas = { remove_idea = tax_cost_44 add_idea = tax_cost_45 }
@@ -311,8 +346,8 @@ increase_tax_cost = {
 		swap_ideas = { remove_idea = tax_cost_48 add_idea = tax_cost_49 }
 		else = { if = { limit = { check_variable = { tax_rate = 50 } }
 		swap_ideas = { remove_idea = tax_cost_49 add_idea = tax_cost_50 }
-		}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
-		}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
+		} } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } }
+		} } } } } } } } } } } } } } } } } } } } } } } } } } } } } }
 	}
 }
 
@@ -404,9 +439,9 @@ decrease_tax_cost = {
 		swap_ideas = { remove_idea = tax_cost_42 add_idea = tax_cost_41 }
 		else = { if = { limit = { check_variable = { tax_rate = 42 } }
 		swap_ideas = { remove_idea = tax_cost_43 add_idea = tax_cost_42 }
-		else = { if = { limit = { check_variable = { tax_rate = 3 } }
+		else = { if = { limit = { check_variable = { tax_rate = 43 } }
 		swap_ideas = { remove_idea = tax_cost_44 add_idea = tax_cost_43 }
-		else = { if = { limit = { check_variable = { tax_rate = 4 } }
+		else = { if = { limit = { check_variable = { tax_rate = 44 } }
 		swap_ideas = { remove_idea = tax_cost_45 add_idea = tax_cost_44 }
 		else = { if = { limit = { check_variable = { tax_rate = 45 } }
 		swap_ideas = { remove_idea = tax_cost_46 add_idea = tax_cost_45 }
@@ -418,8 +453,8 @@ decrease_tax_cost = {
 		swap_ideas = { remove_idea = tax_cost_49 add_idea = tax_cost_48 }
 		else = { if = { limit = { check_variable = { tax_rate = 49 } }
 		swap_ideas = { remove_idea = tax_cost_50 add_idea = tax_cost_49 }
-		}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
-		}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
+		} } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } }
+		} } } } } } } } } } } } } } } } } } } } } } } } } } } } } }
 	}
 }
 	
@@ -455,15 +490,15 @@ init_expenses = {
 									
 										else = { if = { limit = { has_idea = defence_09 }
 											multiply_variable = { var = defence_gain value = 0.4 }
-										}}
-									}}
-								}}
-							}}
-						}}
-					}}
-				}}
-			}}
-		}}
+										} }
+									} }
+								} }
+							} }
+						} }
+					} }
+				} }
+			} }
+		} }
 	}
 	add_to_variable = { var = expense_gain value = defence_gain }
 	subtract_from_variable = { var = treasury_rate value = defence_gain }
@@ -484,10 +519,10 @@ init_expenses = {
 					
 					else = { if = { limit = { has_idea = bureau_05 }
 						multiply_variable = { var = bureaucracy_gain value = 0.05 }
-					}}
-				}}
-			}}
-		}}
+					} }
+				} }
+			} }
+		} }
 	}
 	add_to_variable = { var = expense_gain value = bureaucracy_gain }
 	subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
@@ -508,10 +543,10 @@ init_expenses = {
 					
 					else = { if = { limit = { has_idea = police_05 }
 						multiply_variable = { var = security_gain value = 0.04 }
-					}}
-				}}
-			}}
-		}}
+					} }
+				} }
+			} }
+		} }
 	}
 	add_to_variable = { var = expense_gain value = security_gain }
 	subtract_from_variable = { var = treasury_rate value = security_gain }
@@ -531,11 +566,11 @@ init_expenses = {
 					multiply_variable = { var = education_gain value = 0.08 }
 					
 					else = { if = { limit = { has_idea = edu_05 }
-						multiply_variable = { var = education_gain value = 0.10}
-					}}
-				}}
-			}}
-		}}
+						multiply_variable = { var = education_gain value = 0.10 }
+					} }
+				} }
+			} }
+		} }
 	}
 	if = { limit = { has_idea = gdp_1 }
 		multiply_variable = { var = education_gain value = 2.25 }
@@ -551,10 +586,10 @@ init_expenses = {
 					
 					else = { if = { limit = { has_idea = gdp_5 }
 						multiply_variable = { var = education_gain value = 1.25 }
-					}}
-				}}
-			}}
-		}}
+					} }
+				} }
+			} }
+		} }
 	}
 	add_to_variable = { var = expense_gain value = education_gain }
 	subtract_from_variable = { var = treasury_rate value = education_gain }
@@ -576,13 +611,13 @@ init_expenses = {
 					else = { if = { limit = { has_idea = health_05 }
 						multiply_variable = { var = health_gain value = 0.079 }
 						
-						else = { if = { limit = { has_idea = health_05 }
+						else = { if = { limit = { has_idea = health_06 }
 							multiply_variable = { var = health_gain value = 0.10 }
-						}}
-					}}
-				}}
-			}}
-		}}
+						} }
+					} }
+				} }
+			} }
+		} }
 	}
 	add_to_variable = { var = expense_gain value = health_gain }
 	subtract_from_variable = { var = treasury_rate value = health_gain }
@@ -604,13 +639,13 @@ init_expenses = {
 					else = { if = { limit = { has_idea = social_05 }
 						multiply_variable = { var = welfare_gain value = 0.13 }
 						
-						else = { if = { limit = { has_idea = social_05 }
+						else = { if = { limit = { has_idea = social_06 }
 							multiply_variable = { var = welfare_gain value = 0.165 }
-						}}
-					}}
-				}}
-			}}
-		}}
+						} }
+					} }
+				} }
+			} }
+		} }
 	}
 	add_to_variable = { var = expense_gain value = welfare_gain }
 	subtract_from_variable = { var = treasury_rate value = welfare_gain }

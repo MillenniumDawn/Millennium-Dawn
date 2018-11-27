@@ -712,7 +712,6 @@ TUR_counter_terrorism_mil = {
 			owns_state = 163
 			controls_state = 163
 			has_idea = pkk_terror_idea
-			NOT = { has_country_flag = airstrike_ready }
 		}
 		
 		cost = 10
@@ -726,7 +725,7 @@ TUR_counter_terrorism_mil = {
 			factor = 11
 			modifier = {
 				factor = 0.1
-			check_variable = { var = air_strike_material value = 7 compare = greater_than_or_equals }
+				check_variable = { var = air_strike_material value = 7 compare = greater_than_or_equals }
 			}
 			modifier = {
 				factor = 2
@@ -740,14 +739,13 @@ TUR_counter_terrorism_mil = {
 		
 		remove_effect = {
 			custom_effect_tooltip = airstrike_prepare_tooltip
-			set_country_flag = airstrike_ready
 			hidden_effect = {
 				if = {
-					limit = { check_variable = { var = airstrike_prepare_odds value = 0.6 compare = less_than_or_equals } }
-					add_to_variable = { var = air_strike_material value = 2 }
+					limit = { check_variable = { var = airstrike_prepare_odds value = 0.4 compare = greater_than_or_equals } }
+					add_to_variable = { var = air_strike_material value = 3 }
 				}
 				else = {
-					add_to_variable = { var = air_strike_material value = 3 }
+					add_to_variable = { var = air_strike_material value = 4 }
 				}
 				clear_variable = airstrike_prepare_odds
 			}
@@ -777,11 +775,11 @@ TUR_counter_terrorism_mil = {
 			owns_state = 163
 			controls_state = 163
 			has_idea = pkk_terror_idea
-			has_country_flag = airstrike_ready
 		}
 		
 		cost = 20
 		days_remove = 3
+		days_re_enable = 5
 			
 		ai_will_do = {
 			factor = 13
@@ -796,13 +794,13 @@ TUR_counter_terrorism_mil = {
 			set_variable = { airstrike_thingy_crowd = random }			# if your airstrke is succesful, it may or may not give party pop
 			if = {
 				limit = {
-					check_variable = { var = airstrike_thingy_consume value = 0.7 compare = less_than_or_equals }
-					}
-				subtract_from_variable = { var = air_strike_material value = 1 }
+					check_variable = { var = airstrike_thingy_consume value = 0.3 compare = greater_than_or_equals }
 				}
+				subtract_from_variable = { var = air_strike_material value = 1 }
+			}
 			else = {
 				subtract_from_variable = { var = air_strike_material value = 2 }
-				}
+			}
 			clamp_variable = { var = air_strike_material min = 0 }
 			add_to_variable = { var = ct_op_count_1 value = 1 }
 			add_to_variable = { var = ct_op_count_2 value = 1 }
@@ -811,27 +809,26 @@ TUR_counter_terrorism_mil = {
 		remove_effect = {
 			custom_effect_tooltip = airstrike_thingy_tooltip
 			clr_country_flag = doing_counter_terror_op_mil
-			clr_country_flag = airstrike_ready
+				
 			if = {
-				limit= {
-					check_variable = { var = airstrike_thingy_if value = 0.2 compare = greater_than_or_equals }
+				limit = {
+					check_variable = { var = airstrike_thingy_if value = 0.2 compare = greater_than_or_equals } # %80 chance of success
+				}
+					if = {
+						limit = {
+							check_variable = { var = airstrike_thingy_odds value = 0.4 compare = greater_than_or_equals } # %60 chance of reducing it by 1
+						}
+						subtract_from_variable = { var = pkk_presence value = 1 }
+					}
+					else = {
+						subtract_from_variable = { var = pkk_presence value = 3 }
 					}
 					if = {
 						limit = {
-							check_variable = { var = airstrike_thingy_odds value = 0.7 compare = less_than_or_equals }
-							}
-						subtract_from_variable = { var = pkk_presence value = 1 }
+							check_variable = { var = airstrike_thingy_assassinate value = 0.95 compare = greater_than_or_equals } # %5 chance of assassinating a field commander of theirs
 						}
-					else = {
-						subtract_from_variable = { var = pkk_presence value = 3 }
-						}
-					if = {
-						limit = {
-							check_variable = { var = airstrike_thingy_assassinate value = 0.05 compare = less_than_or_equals }
-							}
 						subtract_from_variable = { var = pkk_presence value = 5 }
-						}
-			
+					}
 					if = {
 						limit = {
 							check_variable = { var = airstrike_thingy_crowd value = 0.85 compare = greater_than_or_equals } # %15 chance of making a good propaganda out of a successful airstrike and gaining approval rating
@@ -858,6 +855,7 @@ TUR_counter_terrorism_mil = {
 		available = {
 			has_idea = pkk_terror_idea
 			NOT = { has_country_flag = doing_int_sec }
+			NOT = { has_country_flag = prepping_int }
 		}
 			
 		visible = {
@@ -885,8 +883,15 @@ TUR_counter_terrorism_mil = {
 			consumer_goods_factor = 0.01
 		}
 		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_int
+			}
+		}
+		
 		remove_effect = {
 			set_country_flag = the_good
+			custom_effect_tooltip = operation_thingy
 		}
 	}
 	
@@ -899,6 +904,7 @@ TUR_counter_terrorism_mil = {
 		available = {
 			has_idea = pkk_terror_idea
 			NOT = { has_country_flag = doing_int_sec }
+			NOT = { has_country_flag = prepping_int }
 		}
 			
 		visible = {
@@ -927,8 +933,15 @@ TUR_counter_terrorism_mil = {
 			consumer_goods_factor = 0.02
 		}
 		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_int
+			}
+		}
+		
 		remove_effect = {
 			set_country_flag = the_bad
+			custom_effect_tooltip = operation_thingy
 		}
 	}
 	
@@ -941,6 +954,7 @@ TUR_counter_terrorism_mil = {
 		available = {
 			has_idea = pkk_terror_idea
 			NOT = { has_country_flag = doing_int_sec }
+			NOT = { has_country_flag = prepping_int }
 		}
 			
 		visible = {
@@ -968,8 +982,15 @@ TUR_counter_terrorism_mil = {
 			consumer_goods_factor = 0.03
 		}
 		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_int
+			}
+		}
+		
 		remove_effect = {
 			set_country_flag = the_ugly
+			custom_effect_tooltip = operation_thingy
 		}
 	}
 			
@@ -1013,6 +1034,10 @@ TUR_counter_terrorism_mil = {
 			set_country_flag = doing_int_sec
 			add_to_variable = { var = ct_op_count_1 value = 1 }
 			add_to_variable = { var = ct_op_count_2 value = 1 }
+			set_variable = { internal_security_if = random }
+			set_variable = { internal_security_odds = random }
+			set_variable = { internal_security_crowd = random }
+			set_variable = { internal_security_protest_odds = random }
 		}
 		
 		modifier = {
@@ -1099,6 +1124,15 @@ TUR_counter_terrorism_mil = {
 		available = {
 			has_idea = pkk_terror_idea
 			NOT = { has_country_flag = doing_ext_sec }
+			NOT = { has_country_flag = prepping_ext }
+			OR = {
+				193 = { NOT = { is_owned_by = TUR } }
+				935 = { NOT = { is_owned_by = TUR } }
+				939 = { NOT = { is_owned_by = TUR } }
+				164 = { NOT = { is_owned_by = TUR } }
+				408 = { NOT = { is_owned_by = TUR } }
+				407 = { NOT = { is_owned_by = TUR } }
+			}
 		}
 			
 		visible = {
@@ -1111,14 +1145,6 @@ TUR_counter_terrorism_mil = {
 			NOT = { has_country_flag = dean_winchester }
 			NOT = { has_country_flag = sam_winchester }
 			NOT = { has_country_flag = castiel }
-			OR = {
-				193 = { NOT = { is_owned_by = TUR } }
-				935 = { NOT = { is_owned_by = TUR } }
-				939 = { NOT = { is_owned_by = TUR } }
-				164 = { NOT = { is_owned_by = TUR } }
-				408 = { NOT = { is_owned_by = TUR } }
-				407 = { NOT = { is_owned_by = TUR } }
-			}
 		}
 		
 		ai_will_do = {
@@ -1134,8 +1160,15 @@ TUR_counter_terrorism_mil = {
 			consumer_goods_factor = 0.02
 		}
 		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_ext
+			}
+		}
+		
 		remove_effect = {
 			set_country_flag = dean_winchester
+			custom_effect_tooltip = operation_thingy
 		}
 	}
 	
@@ -1148,6 +1181,15 @@ TUR_counter_terrorism_mil = {
 		available = {
 			has_idea = pkk_terror_idea
 			NOT = { has_country_flag = doing_ext_sec }
+			NOT = { has_country_flag = prepping_ext }
+			OR = {
+				193 = { NOT = { is_owned_by = TUR } }
+				935 = { NOT = { is_owned_by = TUR } }
+				939 = { NOT = { is_owned_by = TUR } }
+				164 = { NOT = { is_owned_by = TUR } }
+				408 = { NOT = { is_owned_by = TUR } }
+				407 = { NOT = { is_owned_by = TUR } }
+			}
 		}
 			
 		visible = {
@@ -1160,14 +1202,6 @@ TUR_counter_terrorism_mil = {
 			NOT = { has_country_flag = dean_winchester }
 			NOT = { has_country_flag = sam_winchester }
 			NOT = { has_country_flag = castiel }
-			OR = {
-				193 = { NOT = { is_owned_by = TUR } }
-				935 = { NOT = { is_owned_by = TUR } }
-				939 = { NOT = { is_owned_by = TUR } }
-				164 = { NOT = { is_owned_by = TUR } }
-				408 = { NOT = { is_owned_by = TUR } }
-				407 = { NOT = { is_owned_by = TUR } }
-			}
 		}
 		
 		ai_will_do = {
@@ -1183,8 +1217,15 @@ TUR_counter_terrorism_mil = {
 			consumer_goods_factor = 0.04
 		}
 		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_ext
+			}
+		}
+		
 		remove_effect = {
 			set_country_flag = sam_winchester
+			custom_effect_tooltip = operation_thingy
 		}
 	}
 	
@@ -1197,6 +1238,15 @@ TUR_counter_terrorism_mil = {
 		available = {
 			has_idea = pkk_terror_idea
 			NOT = { has_country_flag = doing_ext_sec }
+			NOT = { has_country_flag = prepping_ext }
+			OR = {
+				193 = { NOT = { is_owned_by = TUR } }
+				935 = { NOT = { is_owned_by = TUR } }
+				939 = { NOT = { is_owned_by = TUR } }
+				164 = { NOT = { is_owned_by = TUR } }
+				408 = { NOT = { is_owned_by = TUR } }
+				407 = { NOT = { is_owned_by = TUR } }
+			}
 		}
 			
 		visible = {
@@ -1209,14 +1259,6 @@ TUR_counter_terrorism_mil = {
 			NOT = { has_country_flag = dean_winchester }
 			NOT = { has_country_flag = sam_winchester }
 			NOT = { has_country_flag = castiel }
-			OR = {
-				193 = { NOT = { is_owned_by = TUR } }
-				935 = { NOT = { is_owned_by = TUR } }
-				939 = { NOT = { is_owned_by = TUR } }
-				164 = { NOT = { is_owned_by = TUR } }
-				408 = { NOT = { is_owned_by = TUR } }
-				407 = { NOT = { is_owned_by = TUR } }
-			}
 		}
 		
 		ai_will_do = {
@@ -1232,8 +1274,15 @@ TUR_counter_terrorism_mil = {
 			consumer_goods_factor = 0.06
 		}
 		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_ext
+			}
+		}
+		
 		remove_effect = {
 			set_country_flag = castiel
+			custom_effect_tooltip = operation_thingy
 		}
 	}
 	
@@ -1248,6 +1297,14 @@ TUR_counter_terrorism_mil = {
 			NOT = { has_country_flag = doing_counter_terror_op_mil }
 			NOT = { has_idea = protest_thingy }
 			NOT = { has_country_flag = doing_ext_sec }
+			OR = {
+				193 = { NOT = { is_owned_by = TUR } }
+				935 = { NOT = { is_owned_by = TUR } }
+				939 = { NOT = { is_owned_by = TUR } }
+				164 = { NOT = { is_owned_by = TUR } }
+				408 = { NOT = { is_owned_by = TUR } }
+				407 = { NOT = { is_owned_by = TUR } }
+			}
 		}
 			
 		visible = {
@@ -1261,14 +1318,6 @@ TUR_counter_terrorism_mil = {
 				has_country_flag = dean_winchester
 				has_country_flag = sam_winchester
 				has_country_flag = castiel
-			}
-			OR = {
-				193 = { NOT = { is_owned_by = TUR } }
-				935 = { NOT = { is_owned_by = TUR } }
-				939 = { NOT = { is_owned_by = TUR } }
-				164 = { NOT = { is_owned_by = TUR } }
-				408 = { NOT = { is_owned_by = TUR } }
-				407 = { NOT = { is_owned_by = TUR } }
 			}
 		}
 		
@@ -1284,6 +1333,10 @@ TUR_counter_terrorism_mil = {
 			set_country_flag = doing_ext_sec
 			add_to_variable = { var = ct_op_count_1 value = 1 }
 			add_to_variable = { var = ct_op_count_2 value = 1 }
+			set_variable = { external_security_if = random }
+			set_variable = { external_security_odds = random }
+			set_variable = { external_security_crowd = random }
+			set_variable = { external_security_protest_odds = random }
 		}
 		
 		modifier = {
@@ -1360,7 +1413,8 @@ TUR_counter_terrorism_mil = {
 		}
 	}
 	
-	add_power_to_pkk = { #for testing, obviously
+	add_power_to_pkk = {	#for testing, obviously
+							#haters that abusing this will be reported to Erdogan
 	
 		icon = GFX_decision_generic_air
 		
@@ -1476,7 +1530,7 @@ TUR_counter_terrorism_civ = {
 	
 	kurdish_language_2 = {
 	
-		icon = decision_generic_nationalism
+		icon = GFX_decision_generic_nationalism
 		
 		fire_only_once = yes
 	
@@ -1517,7 +1571,7 @@ TUR_counter_terrorism_civ = {
 	
 	kurdish_language_3 = {
 	
-		icon = decision_generic_nationalism
+		icon = GFX_decision_generic_nationalism
 		
 		fire_only_once = yes
 	
@@ -1558,7 +1612,7 @@ TUR_counter_terrorism_civ = {
 	
 	kurdish_language_4 = {
 	
-		icon = decision_generic_nationalism
+		icon = GFX_decision_generic_nationalism
 		
 		fire_only_once = yes
 	
@@ -1597,9 +1651,50 @@ TUR_counter_terrorism_civ = {
 		}
 	}
 	
+	kurdish_language_5 = {
+	
+		icon = GFX_decision_generic_nationalism
+		
+		fire_only_once = yes
+	
+		available = {
+			NOT = { has_country_flag = doing_counter_terror_op_civ }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = kurdish_language_solutions_4
+		}
+			
+		cost = 20
+		days_remove = 30
+
+		ai_will_do = {
+			factor = 10
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_civ
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+			
+		remove_effect = {
+			swap_ideas = {
+				remove_idea = kurdish_language_solutions_4
+				add_idea = kurdish_language_solutions_5
+			}
+			clr_country_flag = doing_counter_terror_op_civ
+		}
+	}
+	
 	investment_propaganda_1 = {
 	
-		icon = decision_generic_operation
+		icon = GFX_decision_generic_operation
 		
 		fire_only_once = yes
 	
@@ -1634,18 +1729,21 @@ TUR_counter_terrorism_civ = {
 		}
 			
 		remove_effect = {
-			relative_change_pos_2 = yes
-			add_1_popularity = yes
-			subtract_from_variable = { var = pkk_presence value = 10 }
-			subtract_from_variable = { var = pkk_presence_max value = 5 }
-			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
-			clr_country_flag = doing_counter_terror_op_civ
+			custom_effect_tooltip = investment_propaganda_1_tooltip
+			hidden_effect = {
+				relative_change_pos_2 = yes
+				add_1_popularity = yes
+				subtract_from_variable = { var = pkk_presence value = 10 }
+				subtract_from_variable = { var = pkk_presence_max value = 5 }
+				clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+				clr_country_flag = doing_counter_terror_op_civ
+			}
 		}
 	}
 	
 	investment_propaganda_2 = {
 	
-		icon = decision_generic_industry
+		icon = GFX_decision_generic_industry
 		
 		fire_only_once = yes
 	
@@ -1680,12 +1778,15 @@ TUR_counter_terrorism_civ = {
 		}
 			
 		remove_effect = {
-			relative_change_pos_4 = yes
-			add_2_popularity = yes
-			subtract_from_variable = { var = pkk_presence value = 15 }
-			subtract_from_variable = { var = pkk_presence_max value = 5 }
-			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
-			clr_country_flag = doing_counter_terror_op_civ
+			custom_effect_tooltip = investment_propaganda_2_tooltip
+			hidden_effect = {
+				relative_change_pos_4 = yes
+				add_2_popularity = yes
+				subtract_from_variable = { var = pkk_presence value = 15 }
+				subtract_from_variable = { var = pkk_presence_max value = 5 }
+				clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+				clr_country_flag = doing_counter_terror_op_civ
+			}
 		}
 	}
 }
