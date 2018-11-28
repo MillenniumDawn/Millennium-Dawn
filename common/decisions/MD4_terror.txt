@@ -1,4 +1,25 @@
 terror_decisions = {
+
+	embrace_terrorism = {
+	
+		icon = decision_fortification
+		
+		fire_only_once = yes
+	
+		available = {
+		}
+			
+		visible = {
+			has_government = fascism
+		}
+	
+		complete_effect = {
+			add_ideas = terrorist_nation
+		}
+		
+		cost = 150
+		
+		}
 	
 	infiltrate_infidels = {
 	
@@ -7,8 +28,8 @@ terror_decisions = {
 		fire_only_once = no
 	
 		available = {
-			has_manpower > 2
-			has_equipment = { Inf_equipment > 2 }
+			custom_trigger_tooltip = { tooltip = manpower_requirement has_manpower > 2 }
+			custom_trigger_tooltip = { tooltip = weapon_requirement has_equipment = { Inf_equipment > 2 } }
 		}
 			
 		visible = {
@@ -25,18 +46,19 @@ terror_decisions = {
 					}
 					OR = {
 						tag = AFG # alphabetical
-						tag = ALG # youre welcome
-						tag = CHE
+						tag = CHE # youre welcome
 						tag = EGY
 						tag = ENG
 						tag = FRA
 						tag = FSA
 						tag = GER
+						tag = HEZ
 						tag = IRQ
 						tag = ISR
 						tag = ISI
 						tag = JOR
 						tag = KUR
+						tag = LEB
 						tag = NUS
 						tag = PAK
 						tag = PAL
@@ -66,6 +88,10 @@ terror_decisions = {
 			factor = 10
 		}
 		
+		modifier = {
+			consumer_goods_factor = 0.01
+		}
+		
 		complete_effect = {
 			ROOT = { add_manpower = -3 }
 			add_equipment_to_stockpile = {
@@ -76,21 +102,46 @@ terror_decisions = {
 		}
 				
 		remove_effect = {
-			if = {
+			if = { #if you are infiltrating that country for the first time, its harder
 				limit = {
-					check_variable = { var = terror_ods value = 0.6 compare = bigger_than_or_equals }
+					FROM = {
+						NOT = { has_country_flag = infiltrated_before }
+					}
 				}
-				FROM = {
-					add_ideas = terror_sleeper_cells
+				if = {
+					limit = {
+						check_variable = { var = terror_ods value = 0.4 compare = bigger_than_or_equals }
+					}
+					FROM = {
+						add_ideas = terror_sleeper_cells
+						set_country_flag = infiltrated_before_@ROOT
+					}
+				}
+				else = {
+					ROOT = { add_manpower = 3 }
+					add_equipment_to_stockpile = {
+						type = infantry_equipment
+						amount = 3
+					}
 				}
 			}
-			else = {
-				ROOT = { add_manpower = 3 }
-				add_equipment_to_stockpile = {
-					type = infantry_equipment
-					amount = 3
+			else = { #if you have infiltrated them before but they got rid of it, infiltrating for the second time is easier
+				if = {
+					limit = {
+						check_variable = { var = terror_ods value = 0.6 compare = bigger_than_or_equals }
+					}
+					FROM = {
+						add_ideas = terror_sleeper_cells
+					}
 				}
-			}
+				else = {
+					ROOT = { add_manpower = 3 }
+					add_equipment_to_stockpile = {
+						type = infantry_equipment
+						amount = 3
+					}
+				}
+			}	
 			clear_variable = terror_ods
 		}
 	}
