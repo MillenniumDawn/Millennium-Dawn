@@ -31,9 +31,9 @@ def check_basic_style(filepath):
                         if closingBraces > 0:
                             hasNoSpace = re.search(r'([^\s]+){|{([^\s]+)', line, re.M | re.I)  # If no space before or after brace
                             if hasNoSpace: #If regex finds open braces not styled correctly
-                                print("ERROR: Missing an space before or after open brace at {0} Line number: {1}".format(filepath, lineNum))
+                               # print("ERROR: Missing an space before or after open brace at {0} Line number: {1}".format(filepath, lineNum))
                                 #input("Press Enter to continue...")
-                                bad_count_file += 1
+                                #bad_count_file += 1
 
                 if "}" in line: #if there is an close brace in this line
                     hasComment = re.search(r'#.*[{}]+', line, re.M | re.I)  # If comment at the start or before {
@@ -46,7 +46,7 @@ def check_basic_style(filepath):
                         if openingingBraces > 0:
                             hasNoSpace = re.search(r'([^\s]+)}|}([^\s]+)', line,re.M | re.I)   # If no space before or after brace
                             if hasNoSpace: #If regex finds open braces not styled correctly
-                                print("ERROR: Missing an space before or after close brace at {0} Line number: {1}".format(filepath, lineNum))
+                                #print("ERROR: Missing an space before or after close brace at {0} Line number: {1}".format(filepath, lineNum))
                                 # input("Press Enter to continue...")
                                 #bad_count_file += 1
                 if "\"" in line: #if the line has a qoute
