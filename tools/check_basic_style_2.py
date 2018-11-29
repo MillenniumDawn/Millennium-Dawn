@@ -25,13 +25,13 @@ def check_basic_style(filepath):
                     if not hasComment:  #if the line doesn't have a comment before the open brace
                         openBraces[0] += line.count('{')
                         #count total open braces and subtract open braces that are easy to find and used correctly
-                        closingBraces = line.count('{') - line.count(' {\n') - line.count(' { ')
+                        #closingBraces = line.count('{') - line.count(' {\n') - line.count(' { ')
 
                         #if there are braces we couldn't find using efficient .count, use powerful inefficient regex
-                        if closingBraces > 0:
-                            hasNoSpace = re.search(r'([^\s]+){|{([^\s]+)', line, re.M | re.I)  # If no space before or after brace
-                            if hasNoSpace: #If regex finds open braces not styled correctly
-                               # print("ERROR: Missing an space before or after open brace at {0} Line number: {1}".format(filepath, lineNum))
+                        #if closingBraces > 0:
+                            #hasNoSpace = re.search(r'([^\s]+){|{([^\s]+)', line, re.M | re.I)  # If no space before or after brace
+                            #if hasNoSpace: #If regex finds open braces not styled correctly
+                                #print("ERROR: Missing an space before or after open brace at {0} Line number: {1}".format(filepath, lineNum))
                                 #input("Press Enter to continue...")
                                 #bad_count_file += 1
 
@@ -40,13 +40,13 @@ def check_basic_style(filepath):
                     if not hasComment: #if the line doesn't have a comment before the open brace
                         openBraces[0] += -line.count('}')
                         # count total close braces and subtract open braces that are easy to find and used correctly
-                        openingingBraces = line.count('}') - line.count(' }\n') - line.count(' } ')
+                        #openingingBraces = line.count('}') - line.count(' }\n') - line.count(' } ')
 
                         # if there are braces we couldn't find using efficient .count, use powerful inefficient regex
-                        if openingingBraces > 0:
-                            hasNoSpace = re.search(r'([^\s]+)}|}([^\s]+)', line,re.M | re.I)   # If no space before or after brace
-                            if hasNoSpace: #If regex finds open braces not styled correctly
-                                #print("ERROR: Missing an space before or after close brace at {0} Line number: {1}".format(filepath, lineNum))
+                        #if openingingBraces > 0:
+                        #    hasNoSpace = re.search(r'([^\s]+)}|}([^\s]+)', line,re.M | re.I)   # If no space before or after brace
+                        #    if hasNoSpace: #If regex finds open braces not styled correctly
+                        #        print("ERROR: Missing an space before or after close brace at {0} Line number: {1}".format(filepath, lineNum))
                                 # input("Press Enter to continue...")
                                 #bad_count_file += 1
                 if "\"" in line: #if the line has a qoute
@@ -55,19 +55,19 @@ def check_basic_style(filepath):
                         if not hasComment: #if there is no comment before the qoute
                             print("ERROR: Missing an quotation sign at {0} Line number: {1}".format(filepath,lineNum))
                             #input("Press Enter to continue...")
-                            #bad_count_file += 1
+                            bad_count_file += 1
 
                 if "=" in line: #if the line has an equal sign
                     equalSign = 0
                     #count total equal signs that are easy to find and used correctly
-                    equalSign = line.count('=') - line.count(' = ') - line.count(' =\n')
+                    #equalSign = line.count('=') - line.count(' = ') - line.count(' =\n')
 
-                    if (line.count('  =') > 0) or (line.count('=  ') > 0) :
-                        print("ERROR: Two spaces before or after an equal sign at {0} Line number: {1}".format(filepath, lineNum))
-                        equalSign = equalSign - line.count('  =') - line.count('=  ')
+                    #if (line.count('  =') > 0) or (line.count('=  ') > 0) :
+                     #   print("ERROR: Two spaces before or after an equal sign at {0} Line number: {1}".format(filepath, lineNum))
+                    #    equalSign = equalSign - line.count('  =') - line.count('=  ')
                         #bad_count_file += 1
-                    if equalSign != 0: #if there are equal signs that aren't used correctly
-                        print("ERROR: Missing an space before or after an equal sign at {0} Line number: {1}".format(filepath,lineNum))
+                    #if equalSign != 0: #if there are equal signs that aren't used correctly
+                     #   print("ERROR: Missing an space before or after an equal sign at {0} Line number: {1}".format(filepath,lineNum))
                         #input("Press Enter to continue...")
                         #bad_count_file += 1
                 if "    " in line: #if 4 spaces in the line
