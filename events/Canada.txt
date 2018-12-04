@@ -2,16 +2,43 @@
 # 	  Canadian Events	  #
 ###########################
 
+#Author: Captain Gen
+
 add_namespace = canada
+
+#Hidden event to trigger random events
+country_event = {
+	id = canada.4
+	title = canada.4.t
+	desc = canada.4.d
+	picture = GFX_Canadian_elections
+	
+	fire_only_once = yes
+	
+	hidden = yes
+	
+	trigger = {
+		tag = CAN
+	}
+	
+	option = { #now?
+		name = canada.0.a
+		hidden_effect = {
+			
+		}
+	}
+}
+
 
 # Prepare for the Elections (2019) 
 country_event = {
 	id = canada.0
 	title = canada.0.t
 	desc = canada.0.d
-	picture = GFX_Yeezy_2020
+	picture = GFX_Canadian_elections
 	
 	fire_only_once = yes
+	is_triggered_only = yes
 	
 	trigger = {
 		tag = CAN
@@ -21,11 +48,17 @@ country_event = {
 		name = canada.0.a
 		add_political_power = -75
 		complete_national_focus = CAN_elections
+		hidden_effect = {
+			set_country_flag = CAN_campaigning_early
+			country_event = { id = canada.3 days = 100 }
+		}
 	}
 	
 	option = { #or spring?
 		name = canada.0.b
-		country_event = { id = canada.1 days = 100 }
+		hidden_effect = {
+			country_event = { id = canada.1 days = 100 }
+		}
 		add_political_power = 25
 	}
 }
@@ -35,9 +68,10 @@ country_event = {
 	id = canada.1
 	title = canada.1.t
 	desc = canada.1.d
-	picture = GFX_Yeezy_2020
+	picture = GFX_Canadian_elections
 	
 	fire_only_once = yes
+	is_triggered_only = yes
 	
 	trigger = {
 		tag = CAN
@@ -47,11 +81,17 @@ country_event = {
 		name = canada.1.a
 		add_political_power = -50
 		complete_national_focus = CAN_elections
+		hidden_effect = {
+			set_country_flag = CAN_campaigning_normal
+			country_event = { id = canada.3 days = 50 }
+		}
 	}
 	
 	option = { #Maybe even later
 		name = canada.1.b
-		country_event = { id = canada.2 days = 100 }
+		hidden_effect = {
+			country_event = { id = canada.2 days = 50 }
+		}
 		add_political_power = 15
 	}
 }
@@ -61,9 +101,10 @@ country_event = {
 	id = canada.2
 	title = canada.2.t
 	desc = canada.2.d
-	picture = GFX_Yeezy_2020
+	picture = GFX_Canadian_elections
 	
 	fire_only_once = yes
+	is_triggered_only = yes
 	
 	trigger = {
 		tag = CAN
@@ -73,5 +114,351 @@ country_event = {
 		name = canada.2.a
 		add_political_power = -25
 		complete_national_focus = CAN_elections
+		hidden_effect = {
+			set_country_flag = CAN_campaigning_late
+			country_event = { id = canada.3 days = 7 }
+		}
+	}
+}
+
+# Statistics for highest funding
+country_event = {
+	id = canada.3
+	title = canada.3.t
+	desc = canada.3.d
+	picture = GFX_Canadian_elections
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	trigger = {
+		tag = CAN
+	}
+	
+	option = { # Conservatives
+		name = canada.3.a
+		trigger = {
+			has_country_flag = CAN_helped_conservatives_2019
+		}
+		add_political_power = 10
+		newline = yes
+		custom_effect_tooltip = CAN_c_helped_tt
+	}
+	
+	option = { # Liberals
+		name = canada.3.b
+		trigger = {
+			has_country_flag = CAN_helped_liberals_2019
+		}
+		add_political_power = 15
+		newline = yes
+		custom_effect_tooltip = CAN_l_helped_tt
+	}
+	
+	option = { # NDP
+		name = canada.3.c
+		trigger = {
+			has_country_flag = CAN_helped_ndp_2019
+		}
+		add_political_power = 10
+		newline = yes
+		custom_effect_tooltip = CAN_n_helped_tt
+	}
+	
+	option = { # NDP
+		name = canada.3.e
+		trigger = {
+			NOT = {
+				OR = {
+					has_country_flag = CAN_helped_conservatives_2019
+					has_country_flag = CAN_helped_liberals_2019
+					has_country_flag = CAN_helped_ndp_2019
+				}
+			}
+		}
+		add_political_power = -20
+		set_country_flag = CAN_noonehelped
+		newline = yes
+		custom_effect_tooltip = CAN_helped_no_one_yet_tt
+	}
+}
+
+#Very Low French Canadian Happiness
+country_event = {
+	id = canada.5
+	title = canada.5.t
+	desc = canada.5.d
+	picture = GFX_Canadian_elections
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		tag = CAN
+	}
+	
+	option = { #try to fix the situation
+		name = canada.5.a
+		add_political_power = -100
+		add_stability = 0.03
+		custom_effect_tooltip = CAN_try_fix_happiness_tt
+		hidden_effect = {
+			set_country_flag = CAN_try_fix_happiness_flag
+			#country_event = { id = canada.x days = 7 }
+			random_list = {
+					5 = {
+						add_to_variable = { french_happiness_var = 2 }
+					}
+					55 = {
+						add_to_variable = { french_happiness_var = 6 }
+					}
+					35 = {
+						add_to_variable = { french_happiness_var = 9 }
+					}
+					5 = {
+						add_to_variable = { french_happiness_var = 12 }
+					}
+				}
+			CAN_update_french_happiness = yes
+		}
+	}
+	
+	option = { #do nothing
+		name = canada.5.b
+		add_political_power = 20
+		custom_effect_tooltip = CAN_did_nothing_happiness_tt
+		hidden_effect = {
+			set_country_flag = CAN_did_nothing_happiness_flag
+			if = {
+				limit = {
+					check_variable = {
+						var = french_happiness_var
+						value = 11
+						compare = greater_than_or_equals
+					}
+					check_variable = {
+						var = french_happiness_var
+						value = 20
+						compare = less_than_or_equals
+					}
+				}
+			country_event = { id = canada.6 days = 7 }
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = french_happiness_var
+						value = 0
+						compare = greater_than_or_equals
+					}
+					check_variable = {
+						var = french_happiness_var
+						value = 10
+						compare = less_than_or_equals
+					}
+				}
+			country_event = { id = canada.7 days = 7 }
+			}
+			random_list = {
+					5 = {
+						add_to_variable = { french_happiness_var = 0 }
+					}
+					55 = {
+						add_to_variable = { french_happiness_var = -1 }
+					}
+					35 = {
+						add_to_variable = { french_happiness_var = -3 }
+					}
+					5 = {
+						add_to_variable = { french_happiness_var = -6 }
+					}
+				}
+			CAN_update_french_happiness = yes
+		}
+	}
+}
+
+#French Canadians Protest
+country_event = {
+	id = canada.6
+	title = canada.6.t
+	desc = canada.6.d
+	picture = GFX_Canadian_elections
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		tag = CAN
+	}
+	
+	option = { #Protect the Protesters
+		name = canada.6.a
+		
+		hidden_effect = {
+			country_event = canada.8
+			random_list = {
+					25 = {
+						add_to_variable = { french_happiness_var = 2 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = 4 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = 6 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = 8 }
+					}
+			}
+			CAN_update_french_happiness = yes
+		}
+	}
+	
+	option = { #Disallow the protest
+		name = canada.6.b
+		
+		hidden_effect = {
+			random_list = {
+					25 = {
+						add_to_variable = { french_happiness_var = -2 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = -4 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = -6 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = -8 }
+					}
+			}
+		CAN_update_french_happiness = yes
+		}
+	}
+}
+
+#French Canadians Revolt
+country_event = {
+	id = canada.7
+	title = canada.7.t
+	desc = canada.7.d
+	picture = GFX_Canadian_elections
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		tag = CAN
+	}
+	
+	option = { #Try to stop it
+		name = canada.7.a
+		trigger = {
+			has_political_power > 100
+			has_stability > 0.5
+			NOT = {
+				has_country_flag = CAN_rejected_quebec_proposal_flag
+			}
+		}
+		country_event = canada.8
+		hidden_effect = {
+			random_list = {
+					25 = {
+						add_to_variable = { french_happiness_var = 2 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = 4 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = 6 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = 8 }
+					}
+			}
+			CAN_update_french_happiness = yes
+		}
+	}
+	
+	option = { #War
+		name = canada.7.b
+		custom_effect_tooltip = CAN_quebec_revolts_tt
+		hidden_effect = {
+			release = QUE
+			QUE = {
+				set_province_controller = 10621
+				set_province_controller = 4784
+				load_oob = QUE_revolt
+			}
+			CAN = {
+				declare_war_on = {
+					target = QUE
+					type = annex_everything
+				}
+			}
+		}
+	}
+}
+
+#French Canadians Ask for autonomy
+country_event = {
+	id = canada.8
+	title = canada.8.t
+	desc = canada.8.d
+	picture = GFX_Canadian_elections
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		tag = CAN
+	}
+	
+	option = { #Yes
+		name = canada.8.a
+		release_puppet = QUE
+		custom_effect_tooltip = CAN_quebec_autonomous_tt
+		hidden_effect = {
+			set_autonomy = {
+				target = QUE
+				autonomy_state = autonomy_autonomous_state
+			}
+			set_variable = { french_happiness_var = 90 }
+			CAN_update_french_happiness = yes
+		}
+	}
+	
+	option = { #No
+		name = canada.8.b
+		if = {
+				limit = {
+					check_variable = {
+						var = french_happiness_var
+						value = 0
+						compare = greater_than_or_equals
+					}
+					check_variable = {
+						var = french_happiness_var
+						value = 10
+						compare = less_than_or_equals
+					}
+				}
+			country_event = { id = canada.7 days = 7 }
+		}
+		hidden_effect = {
+			set_country_flag = CAN_rejected_quebec_proposal_flag
+			random_list = {
+					25 = {
+						add_to_variable = { french_happiness_var = -2 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = -4 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = -6 }
+					}
+					25 = {
+						add_to_variable = { french_happiness_var = -8 }
+					}
+			}
+			CAN_update_french_happiness = yes
+		}
 	}
 }

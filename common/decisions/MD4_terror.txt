@@ -1,4 +1,26 @@
 terror_decisions = {
+
+	embrace_terrorism = {
+	
+		icon = decision_fortification
+		
+		fire_only_once = yes
+	
+		available = {
+		}
+			
+		visible = {
+			NOT = { has_idea = terrorist_nation }
+			has_government = fascism
+		}
+	
+		complete_effect = {
+			add_ideas = terrorist_nation
+		}
+		
+		cost = 150
+		
+		}
 	
 	infiltrate_infidels = {
 	
@@ -7,8 +29,8 @@ terror_decisions = {
 		fire_only_once = no
 	
 		available = {
-			has_manpower > 2
-			has_equipment = { Inf_equipment > 2 }
+			custom_trigger_tooltip = { tooltip = manpower_requirement has_manpower > 2 }
+			custom_trigger_tooltip = { tooltip = weapon_requirement has_equipment = { Inf_equipment > 2 } }
 		}
 			
 		visible = {
@@ -22,21 +44,23 @@ terror_decisions = {
 					OR = {
 						NOT = { is_puppet_of = ROOT }
 						NOT = { is_in_faction_with = ROOT }
+						NOT = { has_idea = terror_sleeper_cells }
 					}
 					OR = {
 						tag = AFG # alphabetical
-						tag = ALG # youre welcome
-						tag = CHE
+						tag = CHE # youre welcome
 						tag = EGY
 						tag = ENG
 						tag = FRA
 						tag = FSA
 						tag = GER
+						tag = HEZ
 						tag = IRQ
 						tag = ISR
 						tag = ISI
 						tag = JOR
 						tag = KUR
+						tag = LEB
 						tag = NUS
 						tag = PAK
 						tag = PAL
@@ -59,18 +83,43 @@ terror_decisions = {
 			}
 		}
 		
-		cost = 100
-		days_remove = 90
+		cost = 1
+		days_remove = 1
 		
 		ai_will_do = {
-			factor = 10
+			factor = 0
+			modifier = {
+				add = 10
+				ROOT = { tag = ISI }
+			}
+			modifier = {
+				add = 10
+				ROOT = { tag = TAL } #think of it like AQ central command
+			}
+			modifier = {
+				add = 10
+				AND = {
+					ROOT = { tag = CHE }
+					OR = {
+						FROM = { tag = SOV }
+						FROM = { tag = GEO }
+					}
+				}
+			}
+		}
+		
+		modifier = {
+			consumer_goods_factor = 0.01
 		}
 		
 		complete_effect = {
-			ROOT = { add_manpower = -3 }
-			add_equipment_to_stockpile = {
-				type = infantry_equipment
-				amount = -3
+			ROOT = {
+				add_manpower = -3
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = -3
+					producer = ISI
+				}
 			}
 			set_variable = { terror_ods = random }
 		}
@@ -78,17 +127,20 @@ terror_decisions = {
 		remove_effect = {
 			if = {
 				limit = {
-					check_variable = { var = terror_ods value = 0.6 compare = bigger_than_or_equals }
+					check_variable = { var = terror_ods value = 0.2 compare = bigger_than_or_equals }
 				}
 				FROM = {
 					add_ideas = terror_sleeper_cells
 				}
 			}
 			else = {
-				ROOT = { add_manpower = 3 }
-				add_equipment_to_stockpile = {
-					type = infantry_equipment
-					amount = 3
+				ROOT = {
+					add_manpower = 3
+					add_equipment_to_stockpile = {
+						type = Inf_equipment
+						amount = 3
+						producer = ISI
+					}
 				}
 			}
 			clear_variable = terror_ods
