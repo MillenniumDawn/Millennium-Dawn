@@ -6,7 +6,8 @@ startTime = time.time()
 
 __version__ = 1.0
 
-def get_tags (rootDir):
+
+def get_tags(rootDir):
     tags = []
     with open(rootDir, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.readlines()
@@ -18,51 +19,266 @@ def get_tags (rootDir):
     return tags
 
 
-def check_focus_tree_file_name (focus_tree_files):
+def checkFocuses(filepath):
     bad_count_file = 0
-    for file in focus_tree_files:
-        rightFormet = re.match(r'^[A-Z]{3}_.*', file, re.M | re.I)  # If it's a tag
-        if not rightFormet:
-            bad_count_file += 1
-            #print ("ERROR: The filename of " + file + " does not meet our standards. Rename the file to TAG_focus_name.txt")
-
-    return bad_count_file
-
-
-def check_ideas (filename):
-    bad_count_file = 0
-    notanidea = ["allowed", "modifier", "country", "allowed_civil_war", "OR", "AND", "ideas", "NOT", "CANCEL",
-        "on_add", "available", "ai_will_do", "rule"]
-
-    notanidea = [element.lower() for element in notanidea]
-    with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
+    lineNum = 0;
+    with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.readlines()
         for line in content:
+            lineNum += 1
             if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
-                hasIdea = re.search(r'([A-Za-z0-9_-]+) = {', line, re.M | re.I)  # If it's a tag
-                if hasIdea:
-                    idea = hasIdea.group(1)
-                    #if str.lower(hasIdea.group(1)) not in notanidea:
-                        #print (hasIdea.group(1))
+                if "id =" in line or "id=" in line:
+                    hasFocus = re.match(r'[ \t]+id\s?=\s?([A-za-z0-9-?_?]+)', line, re.M | re.I)  # If it's a tag
+                    if hasFocus:
+                        #print(hasFocus.group(1))
+                        hasFocusFormet = re.match(r'[ \t]+id\s?=\s?([A-Z]{3}_[a-z0-9_-]+)', line, re.M | re.U )  # If it's a tag
+                        if not hasFocusFormet:
+                            print("ERROR: " + hasFocus.group(1) + " is formatted incorrectly, must be TAG_focus_name  {0} Line number: {1}".format(filepath, lineNum ))
+                            #print(hasFocus.group(1))
+                            bad_count_file +=1
 
     return bad_count_file
 
 
-def findPdxSyntax (filename):
+def check_ideas(filepath):
+    bad_count_file = 0
+    lineNum = 0
+    pdxIdeaCode = ["allowed", "modifier", "country", "allowed_civil_war", "OR", "AND", "ideas", "NOT", "CANCEL",
+                 "on_add", "available", "ai_will_do", "rule", "do_effect"]
+
+    pdxIdeaCode = [element.lower() for element in pdxIdeaCode]
+    with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
+        content = file.readlines()
+        braces = 0
+        for line in content:
+            lineNum +=1
+            if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
+                if "{" in line:
+                    braces +=1
+                if braces == 3:
+                    hasIdea = re.search(r'([A-Za-z0-9_-]+)\s?=\s?{', line, re.M | re.I)  # If it's a tag
+                    if hasIdea:
+                        countryIdea = re.search(r'([A-Z]{3}_[a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
+                        #if countryIdea:
+                            #print(countryIdea.group(1))
+                            #input()
+                        genericIdea = re.search(r'(generic_[a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
+                        if not countryIdea or not genericIdea:
+                            print("ERROR: " + hasIdea.group(
+                                1) + " is formatted incorrectly, must be TAG_idea_name or generic_idea_name {0} Line number: {1}".format(
+                                filepath, lineNum))
+                            bad_count_file +=1
+                            # print(hasFocus.group(1))
+                            #print("wrong: " + hasIdea.group(1))
+                if "}" in line:
+                    braces -=1
+
+    return bad_count_file
+
+
+def findPdxSyntax(filename):
     with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.readlines()
-        typeOfCode = 0 #1 = trigger, 2 = effects
+        typeOfCode = 0  # 1 = trigger, 2 = effects
+        pdxTriggers = []
+        pdxEffects = []
+        # 0 0 0 = trigger name
+        # 0 1 x = scopes
+        # 0 2 x = targets
+        # 0 3 x = examples
+        triggerNum = 0
+        EffectrNum = 0
+
         for line in content:
-            if "TRIGGER DOCUMENTATION" in line: #check for triggers
-                typeOfCode = 1
-                print(typeOfCode)
+            if "==" in line:  # check for triggers
+                if "TRIGGER DOCUMENTATION" in line:
+                    typeOfCode = 1
+                    # print(typeOfCode)
+                elif "EFFECT DOCUMENTATION" in line:
+                    typeOfCode = 2
+
             if typeOfCode == 1:
-                isTrigger = re.search(r'^([A-Z_-]+)', line, re.M | re.I)  # If it's a tag
-                #print ("test")
-                print(isTrigger.group(1))
+                if "Supported scopes:" in line:
+                    if "state" in line:
+                        pdxTriggers[triggerNum - 1].append(["state"])
+                        #print("scope: " + pdxTriggers[triggerNum-1][1][0])
+                    elif "country" in line:
+                        pdxTriggers[triggerNum - 1].append(["country"])
+                        #print("scope: " + pdxTriggers[triggerNum-1][1][0])
+                    elif "Supported scopes: ???" == line:
+                        pdxTriggers[triggerNum - 1].append(["N/A"])
+                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
+                    elif "Supported scopes:\n" == line:
+                        pdxTriggers[triggerNum - 1].append(["N/A"])
+                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
+
+                elif "Supported targets:" in line:
+                    if "none" in line:
+                        pdxTriggers[triggerNum - 1].append(["none"])
+                        # print("scope: " + pdxTriggers[triggerNum-1][2][0])
+                    elif "Supported targets:\n" == line:
+                        pdxTriggers[triggerNum - 1].append(["N/A"])
+                        # print("scope: " + pdxTriggers[triggerNum-1][2][0])
+
+                elif "" != line:
+                    isTrigger = re.search(r'^([A-Z_?-?]+) -', line, re.M | re.I)  # If it's a tag
+                    if isTrigger:
+                        isTrigger = re.search(r'^([A-Z_?-?]+) -', line, re.M | re.I)  # If it's a tag
+                        pdxTriggers.append([[isTrigger.group(1)]])
+                        triggerNum += 1
 
 
-    return typeOfCode
+            if typeOfCode == 2:
+                if "Supported scopes:" in line:
+                    if "state" in line:
+                        pdxEffects[EffectrNum - 1].append(["state"])
+                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
+                    elif "country" in line:
+                        pdxEffects[EffectrNum - 1].append(["country"])
+                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
+                    elif "Supported scopes: ???" == line:
+                        pdxEffects[EffectrNum - 1].append(["N/A"])
+                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
+                    elif "Supported scopes:\n" == line:
+                        pdxEffects[EffectrNum - 1].append(["N/A"])
+                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
+                elif "Supported targets:" in line:
+                    if "none" in line:
+                        pdxEffects[EffectrNum - 1].append(["none"])
+                        # print("scope: " + pdxTriggers[triggerNum-1][2][0])
+                    elif "country" in line:
+                        pdxEffects[EffectrNum - 1].append(["country"])
+                        # print("scope: " + pdxTriggers[triggerNum-1][2][0])
+                    elif "Supported targets: none\n" == line:
+                        pdxEffects[EffectrNum - 1].append(["N/A"])
+                        #print("scope: " + pdxTriggers[triggerNum-1][2][0])
+                        #print(content)
+                        #input()
+
+                elif "" != line:
+                    isEffect = re.search(r'^([A-Z_?-?]+) -', line, re.M | re.I)  # If it's a tag
+                    if isEffect:
+                        isEffect = re.search(r'^([A-Z_?-?]+) -', line, re.M | re.I)  # If it's a tag
+                        pdxEffects.append([[isEffect.group(1)]])
+                        EffectrNum += 1
+
+    return pdxTriggers, pdxEffects
+
+def getCountryTriggers (allTriggers):
+    countryTriggers = []
+    for x in allTriggers:
+        # print("x = " + str(len(x)))
+        for y in x:
+            for z in y:
+                if z == "country":
+                    countryTriggers.append(x)
+    #for x in countryTriggers:
+    #    # print("x = " + str(len(x)))
+     #   for y in x:
+     #       for z in y:
+     #           print("x = " + str(x))
+     #           print("y = " + str(y))
+     #           print("z = " + str(z))
+
+
+    return countryTriggers
+
+def getStateTriggers (allTriggers):
+    stateTriggers = []
+    for x in allTriggers:
+        # print("x = " + str(len(x)))
+        for y in x:
+            for z in y:
+                if z == "state":
+                    stateTriggers.append(x)
+    #for x in stateTriggers:
+    #   # print("x = " + str(len(x)))
+    #    for y in x:
+    #        for z in y:
+    #            print("x = " + str(x))
+    #            print("y = " + str(y))
+    #            print("z = " + str(z))
+
+
+    return stateTriggers
+
+def getUnkownTriggers (allTriggers):
+    #print ("test")
+    unkownTriggers = []
+    for x in allTriggers:
+        #print("x = " + str(x))
+        for y in x:
+            for z in y:
+                #print(z)
+                if z == "N/A":
+                    unkownTriggers.append(x)
+    #for x in unkownTriggers:
+       # print("x = " + str(len(x)))
+    #    for y in x:
+    #        for z in y:
+    #           print("x = " + str(x))
+    #            print("y = " + str(y))
+    #            print("z = " + str(z))
+
+
+    return unkownTriggers
+
+def getCountryEffects (allEffects):
+    countryEffects = []
+    for x in allEffects:
+        # print("x = " + str(len(x)))
+        for y in x:
+            for z in y:
+                if z == "country":
+                    countryEffects.append(x)
+    #for x in countryEffects:
+    #    # print("x = " + str(len(x)))
+    #    for y in x:
+     #       for z in y:
+    #            print("x = " + str(x))
+     #           print("y = " + str(y))
+     #           print("z = " + str(z))
+
+
+    return countryEffects
+
+def getStateEffects (allEffects):
+    stateEffects = []
+    for x in allEffects:
+        # print("x = " + str(len(x)))
+        for y in x:
+            for z in y:
+                if z == "state":
+                    stateEffects.append(x)
+    #for x in stateEffects:
+        # print("x = " + str(len(x)))
+        #for y in x:
+        #   for z in y:
+        #        print("x = " + str(x))
+        #       print("y = " + str(y))
+        #        print("z = " + str(z))
+
+
+    return stateEffects
+def getUnkownEffects (allEffects):
+    unkownEffects = []
+    for x in allEffects:
+        # print("x = " + str(len(x)))
+        for y in x:
+            for z in y:
+                if z == "N/A":
+                    unkownEffects.append(x)
+    #for x in unkownEffects:
+        # print("x = " + str(len(x)))
+        #for y in x:
+        #   for z in y:
+        #        print("x = " + str(x))
+        #       print("y = " + str(y))
+        #        print("z = " + str(z))
+
+
+    return unkownEffects
+
 def main():
     print("Validating Basic Style - Secondary Check")
 
@@ -71,46 +287,48 @@ def main():
     idea_files = []
     bad_count = 0
     tags = []
-    global countryTriggers
-    global stateTriggers
+
 
     # Allow running from root directory as well as from inside the tools directory
     scriptDir = os.path.realpath(__file__)
     rootDir = os.path.dirname(os.path.dirname(scriptDir))
 
     tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
-    findPdxSyntax(rootDir + "/Modding resources/List of triggers and effects 1_5_4.txt")
-    #for i in tags:
-    #   print(i)
+    allTriggers, allEffects = findPdxSyntax(rootDir + "/Modding resources/List of triggers and effects 1_5_4.txt")
+    countryTriggers = getCountryTriggers(allTriggers)
+    stateTriggers = getStateTriggers(allTriggers)
+    unkownTriggers = getUnkownTriggers(allTriggers)
+    countryEffects = getCountryEffects(allEffects)
+    stateEffects = getStateEffects(allEffects)
+    unkownEffects = getUnkownEffects(allEffects)
 
 
-
-    for root, dirnames, filenames in os.walk(rootDir + '/'+ 'common' + '/national_focus' + '/'):
+    for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/national_focus' + '/'):
         for filename in fnmatch.filter(filenames, '*.txt'):
-            nation_focus_files.append(os.path.join(root, filename))
-    bad_count = bad_count + check_focus_tree_file_name(nation_focus_files)
+            if filename != "generic.txt":
+                bad_count = bad_count + checkFocuses(os.path.join(root, filename))
 
     for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/ideas' + '/'):
         for filename in fnmatch.filter(filenames, '*.txt'):
             bad_count = bad_count + check_ideas(os.path.join(root, filename))
-    #bad_count = bad_count + check_focus_tree_file_name(nation_focus_files)
+    # bad_count = bad_count + check_focus_tree_file_name(nation_focus_files)
 
-    #for root, dirnames, filenames in os.walk(rootDir + '/'+ 'common' + '/' + 'national_focus' + '/'):
+    # for root, dirnames, filenames in os.walk(rootDir + '/'+ 'common' + '/' + 'national_focus' + '/'):
     #    for filename in fnmatch.filter(filenames, '*.txt'):
-     #       files_list.append(os.path.join(root, filename))
-    #for root, dirnames, filenames in os.walk(rootDir + '/'+ 'common' + '/' + 'national_focus' + '/'):
+    #       files_list.append(os.path.join(root, filename))
+    # for root, dirnames, filenames in os.walk(rootDir + '/'+ 'common' + '/' + 'national_focus' + '/'):
     #   for filename in fnmatch.filter(filenames, '*.txt'):
     #       files_list.append(os.path.join(root, filename))
 
-    #for root, dirnames, filenames in os.walk(rootDir + '/'+ 'events' + '/'):
+    # for root, dirnames, filenames in os.walk(rootDir + '/'+ 'events' + '/'):
     #    for filename in fnmatch.filter(filenames, '*.txt'):
     #        files_list.append(os.path.join(root, filename))
 
-    #for root, dirnames, filenames in os.walk(rootDir + '/'+ 'history' + '/'):
-     #   for filename in fnmatch.filter(filenames, '*.txt'):
-     #       files_list.append(os.path.join(root, filename))
+    # for root, dirnames, filenames in os.walk(rootDir + '/'+ 'history' + '/'):
+    #   for filename in fnmatch.filter(filenames, '*.txt'):
+    #       files_list.append(os.path.join(root, filename))
 
-    #for filename in files_list:
+    # for filename in files_list:
     #    bad_count = bad_count + check_basic_style(filename)
 
     print("------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count))
@@ -119,9 +337,10 @@ def main():
     else:
         print("File validation FAILED")
 
-    print ('The script took {0} second!'.format(time.time() - startTime))
-    
+    print('The script took {0} second!'.format(time.time() - startTime))
+
     return bad_count
-    
+
+
 if __name__ == "__main__":
     sys.exit(main())
