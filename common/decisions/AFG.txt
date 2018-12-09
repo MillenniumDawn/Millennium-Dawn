@@ -3,10 +3,8 @@ Afghanistan_pashtunistan_decisions = {
 	claim_pashtunistan = {
 
 		visible = {
-			PAK = { has_civil_war = yes }
 			any_country = {
 				original_tag = PAK
-				has_government = fascism
 				OR = {
 					owns_state = 417
 					owns_state = 418
@@ -14,10 +12,25 @@ Afghanistan_pashtunistan_decisions = {
 					owns_state = 957
 				}
 			}
+			NOT = {
+				417 = { is_claimed_by = ROOT }
+				418 = { is_claimed_by = ROOT }
+				419 = { is_claimed_by = ROOT }
+				957 = { is_claimed_by = ROOT }
+			}
 		}
 	
 		available = {
-			NOT = { is_in_faction_with = PAK }
+			PAK = { has_civil_war = yes }
+			custom_trigger_tooltip = {
+				tooltip = TT_AFG_NOT_FACTION_WITH_PAK
+				NOT = { 
+					any_country = {
+						original_tag = PAK
+						is_in_faction_with = ROOT
+					}
+				}
+			}
 		}
 		
 		cost = 100
@@ -27,6 +40,12 @@ Afghanistan_pashtunistan_decisions = {
 			add_state_claim = 418
 			add_state_claim = 419
 			add_state_claim = 957
+			hidden_effect = { news_event = { id = AfghanistanNews.2 hours = 6 } }
+			add_ai_strategy = {
+				type = antagonize
+				id = PAK
+				value = 50
+			}
 		}
 
 		remove_effect = {
@@ -34,10 +53,6 @@ Afghanistan_pashtunistan_decisions = {
 		
 		ai_will_do = {
 			factor = 10
-			modifier = {
-				factor = 0		#Salafists don't attack salafists
-				has_government = fascism
-			}
 			modifier = {
 				factor = 0		#Don't be dick to people on your side
 				OR = {
@@ -55,6 +70,13 @@ Afghanistan_pashtunistan_decisions = {
 							has_government = communism
 						}
 					}
+					AND = {
+						has_government = fascism
+						any_country = {
+							original_tag = PAK
+							has_government = fascism
+						}
+					}
 				}
 			}
 			modifier = {
@@ -63,4 +85,502 @@ Afghanistan_pashtunistan_decisions = {
 			}
 		}
 	}
+	
+	claim_baluchistan = {
+	
+		visible = {
+			OR = {
+				417 = { is_claimed_by = ROOT }
+				418 = { is_claimed_by = ROOT }
+				419 = { is_claimed_by = ROOT }
+				957 = { is_claimed_by = ROOT }
+			}
+			NOT = {
+				416 = { is_claimed_by = ROOT }
+			}
+		}
+		
+		allowed = {
+			any_country = {
+				original_tag = PAK
+				owns_state = 416
+			}
+		}
+		
+		cost = 150
+		
+		complete_effect = {
+			add_named_threat = {
+				threat = 5
+				name = AFG_Baluchistan
+			}
+			add_state_claim = 416
+			hidden_effect = { news_event = { id = AfghanistanNews.3 hours = 6 } }
+		}
+		
+		ai_will_do = {
+			factor = 0		#Nationalist and Salafist more aggressive
+			modifier = {
+				add = 10
+				OR = {
+					has_government = fascism
+					has_government = nationalist
+				}
+			}
+			modifier = {
+				add = 20	#If we are already at war, might as well
+				any_country = {
+					original_tag = PAK
+					has_war_with = ROOT
+				}
+			}
+			modifier = {
+				add = 10	#If world already burns, what do we care?
+				threat > 0.75
+			}
+		}
+	}		
+	
+	afg_claims_advance_to_baluchistan = {
+	
+		icon = border_war
+		
+		visible = {
+			417 = { is_claimed_by = ROOT }
+			owns_state = 415
+			NOT = { owns_state = 417 }
+		}
+		
+		available = {
+			PAK = { has_civil_war = yes }
+			NOT = { has_border_war = yes }
+			417 = {
+				OWNER = {
+					NOT = { has_war_with = ROOT }
+				}
+			}
+		}
+		
+		highlight_states = {
+			state = 417
+		}
+		
+		cost = 25
+		
+		days_remove = 15
+		
+		war_with_target_on_remove = yes
+		
+		complete_effect = {
+			set_country_flag = AFG_attacking_417
+			ROOT = { save_global_event_target_as = AFG_ATTACKER }
+			FROM = { save_global_event_target_as = AFG_DEFENDER }
+		}
+		
+		remove_effect = {
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 415
+					num_provinces = 2
+					on_win = AfghanistanBorderWars.1
+					on_lose = AfghanistanBorderWars.2
+				}
+				defender = {
+					state = 417
+					num_of_provinces = 1
+					on_win = AfghanistanBorderWars.2
+					on_lose = AfghanistanBorderWars.1
+				}
+			}
+			custom_effect_tooltip = TT_AFG_BORDER_WAR_WARN_OF_WAR
+		}
+		
+	}		
+	
+	afg_claims_advance_to_the_sea = {
+	
+		icon = border_war
+		
+		visible = {
+			416 = { is_claimed_by = ROOT }
+			owns_state = 417
+			NOT = { owns_state = 416 }
+		}
+		
+		available = {
+			PAK = { has_civil_war = yes }
+			NOT = { has_border_war = yes }
+			416 = {
+				OWNER = {
+					NOT = { has_war_with = ROOT }
+				}
+			}
+		}
+		
+		highlight_states = {
+			state = 416
+		}
+		
+		cost = 25
+		
+		days_remove = 15
+		
+		war_with_target_on_remove = yes
+		
+		complete_effect = {
+			set_country_flag = AFG_attacking_416
+			ROOT = { save_global_event_target_as = AFG_ATTACKER }
+			FROM = { save_global_event_target_as = AFG_DEFENDER }
+		}
+		
+		remove_effect = {
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 417
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.1
+					on_lose = AfghanistanBorderWars.2
+				}
+				defender = {
+					state = 416
+					num_of_provinces = 3
+					on_win = AfghanistanBorderWars.2
+					on_lose = AfghanistanBorderWars.1
+				}
+			}
+			custom_effect_tooltip = TT_AFG_BORDER_WAR_WARN_OF_WAR
+		}
+		
+	}
+	
+	afg_claims_advance_into_tribal_areas = {
+	
+		icon = border_war
+		
+		visible = {
+			957 = { is_claimed_by = ROOT }
+			owns_state = 414
+			NOT = { owns_state = 957 }
+		}
+		
+		available = {
+			PAK = { has_civil_war = yes }
+			NOT = { has_border_war = yes }
+			957 = {
+				OWNER = {
+					NOT = { has_war_with = ROOT }
+				}
+			}
+		}
+		
+		highlight_states = {
+			state = 957
+		}
+		
+		cost = 25
+		
+		days_remove = 15
+		
+		war_with_target_on_remove = yes
+		
+		complete_effect = {
+			set_country_flag = AFG_attacking_957
+			ROOT = { save_global_event_target_as = AFG_ATTACKER }
+			FROM = { save_global_event_target_as = AFG_DEFENDER }
+		}
+		
+		remove_effect = {
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 414
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.1
+					on_lose = AfghanistanBorderWars.2
+				}
+				defender = {
+					state = 957
+					num_of_provinces = 4
+					on_win = AfghanistanBorderWars.2
+					on_lose = AfghanistanBorderWars.1
+				}
+			}
+			custom_effect_tooltip = TT_AFG_BORDER_WAR_WARN_OF_WAR
+		}
+		
+	}
+	
+	afg_claims_clear_tribal_areas = {
+	
+		icon = border_war
+		
+		visible = {
+			419 = { is_claimed_by = ROOT }
+			owns_state = 957
+			NOT = { owns_state = 419 }
+		}
+		
+		available = {
+			PAK = { has_civil_war = yes }
+			NOT = { has_border_war = yes }
+			419 = {
+				OWNER = {
+					NOT = { has_war_with = ROOT }
+				}
+			}
+		}
+		
+		highlight_states = {
+			state = 419
+		}
+		
+		cost = 25
+		
+		days_remove = 15
+		
+		war_with_target_on_remove = yes
+		
+		complete_effect = {
+			set_country_flag = AFG_attacking_419
+			ROOT = { save_global_event_target_as = AFG_ATTACKER }
+			FROM = { save_global_event_target_as = AFG_DEFENDER }
+		}
+		
+		remove_effect = {
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 957
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.1
+					on_lose = AfghanistanBorderWars.2
+				}
+				defender = {
+					state = 419
+					num_of_provinces = 2
+					on_win = AfghanistanBorderWars.2
+					on_lose = AfghanistanBorderWars.1
+				}
+			}
+			custom_effect_tooltip = TT_AFG_BORDER_WAR_WARN_OF_WAR
+		}
+		
+	}
+	
+	afg_claims_invade_peshawar = {
+	
+		icon = border_war
+		
+		visible = {
+			418 = { is_claimed_by = ROOT }
+			owns_state = 419
+			NOT = { owns_state = 418 }
+		}
+		
+		available = {
+			PAK = { has_civil_war = yes }
+			NOT = { has_border_war = yes }
+			418 = {
+				OWNER = {
+					NOT = { has_war_with = ROOT }
+				}
+			}
+		}
+		
+		highlight_states = {
+			state = 418
+		}
+		
+		cost = 25
+		
+		days_remove = 15
+		
+		war_with_target_on_remove = yes
+		
+		complete_effect = {
+			set_country_flag = AFG_attacking_418
+			ROOT = { save_global_event_target_as = AFG_ATTACKER }
+			FROM = { save_global_event_target_as = AFG_DEFENDER }
+		}
+		
+		remove_effect = {
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 419
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.1
+					on_lose = AfghanistanBorderWars.2
+				}
+				defender = {
+					state = 418
+					num_of_provinces = 3
+					on_win = AfghanistanBorderWars.2
+					on_lose = AfghanistanBorderWars.1
+				}
+			}
+			custom_effect_tooltip = TT_AFG_BORDER_WAR_WARN_OF_WAR
+		}
+		
+	}
+	
+	afg_invade_pakistan = {
+	
+		visible = {
+			OR = {
+				417 = { is_claimed_by = ROOT }
+				418 = { is_claimed_by = ROOT }
+				419 = { is_claimed_by = ROOT }
+				957 = { is_claimed_by = ROOT }
+			}
+			NOT = {
+				owns_state = 417
+				owns_state = 418
+				owns_state = 419
+				owns_state = 957
+			}
+		}
+		
+		available = {
+			PAK = { has_civil_war = yes }
+			NOT = { has_border_war = yes }
+		}
+		
+		cost = 75
+		
+		war_with_target_on_remove = yes
+		
+		days_remove = 45
+		
+		complete_effect = {
+			if = {
+				limit = { has_variable = AFG_fail_meter }
+				clear_variable = AFG_fail_meter
+			}
+		}
+		
+		remove_effect = {
+			add_named_threat = {
+				threat = 5
+				name = AFG_invasion
+			}
+			every_country = {
+				limit = { original_tag = PAK }
+				ROOT = {
+					declare_war_on = {
+						target = PREV
+						type = annex_everything
+					}
+				}
+			}
+			hidden_effect = { news_event = { id = AfghanistanNews.4 hours = 6 } }
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 20
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
+			modifier = {
+				add = 10
+				strength_ratio = {
+					tag = PAK
+					ratio > 2
+				}
+			}
+			modifier = {
+				add = 10
+				check_variable = {
+					var = AFG_fail_meter
+					value = 1
+					compare = greater_than
+				}
+			}
+		}
+	}
+	
+	afg_integrate_pashtunistan = {
+	
+		visible = {
+			OR = {
+				AND = {
+					owns_state = 417
+					NOT = { 417 = { is_core_of = ROOT } }
+				}
+				AND = {
+					owns_state = 418
+					NOT = { 418 = { is_core_of = ROOT } }
+				}
+				AND = {
+					owns_state = 419
+					NOT = { 419 = { is_core_of = ROOT } }
+				}
+				AND = {
+					owns_state = 957
+					NOT = { 957 = { is_core_of = ROOT } }
+				}
+			}
+		}
+		
+		days_remove = 480
+		
+		modifier = { 
+			political_power_gain = -0.50
+			consumer_goods_factor = 0.05
+		}
+		
+		remove_effect = {
+			add_state_core = 417
+			add_state_core = 418
+			add_state_core = 419
+			add_state_core = 957
+		}
+		
+	}
+	
+	unite_with_pakistan_taliban = {
+	
+		visible = {
+			original_tag = TAL
+			has_government = fascism
+			any_country = {
+				original_tag = PAK
+				has_government = fascism
+				NOT = { has_war_with = ROOT }
+			}
+			TTP = { is_ai = yes }
+		}
+		
+		available = {
+			PAK = { has_civil_war = yes }
+		}
+		
+		complete_effect = {
+			random_country = {
+				limit = {
+					original_tag = PAK
+					has_government = fascism
+				}
+				ROOT = {
+					add_to_war = {
+						targeted_alliance = PREV
+						enemy = PAK
+					}
+					annex_country  = {
+						target = PREV
+						transfer_troops = yes
+					}
+				}
+			}
+			hidden_effect = { news_event = { id = AfghanistanNews.5 hours = 6 } }
+		}
+		
+	}
+		
 }
