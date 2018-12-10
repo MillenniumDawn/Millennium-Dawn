@@ -32,10 +32,10 @@ def checkFocuses(filepath):
                     if hasFocus:
                         #print(hasFocus.group(1))
                         hasFocusFormet = re.match(r'[ \t]+id\s?=\s?([A-Z]{3}_[a-z0-9_-]+)', line, re.M | re.U )  # If it's a tag
-                        if not hasFocusFormet:
-                            print("ERROR: " + hasFocus.group(1) + " is formatted incorrectly, must be TAG_focus_name  {0} Line number: {1}".format(filepath, lineNum ))
+                        #if not hasFocusFormet:
+                            #print("ERROR: " + hasFocus.group(1) + " is formatted incorrectly, must be TAG_focus_name  {0} Line number: {1}".format(filepath, lineNum ))
                             #print(hasFocus.group(1))
-                            bad_count_file +=1
+                            #bad_count_file +=1
 
     return bad_count_file
 
@@ -63,7 +63,7 @@ def check_ideas(filepath):
                             #print(countryIdea.group(1))
                             #input()
                         genericIdea = re.search(r'(generic_[a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
-                        if not countryIdea or not genericIdea:
+                        if not countryIdea and not genericIdea:
                             print("ERROR: " + hasIdea.group(
                                 1) + " is formatted incorrectly, must be TAG_idea_name or generic_idea_name {0} Line number: {1}".format(
                                 filepath, lineNum))
