@@ -64,9 +64,9 @@ def check_ideas(filepath):
                             #input()
                         genericIdea = re.search(r'(generic_[a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
                         if not countryIdea and not genericIdea:
-                            print("ERROR: " + hasIdea.group(
-                                1) + " is formatted incorrectly, must be TAG_idea_name or generic_idea_name {0} Line number: {1}".format(
-                                filepath, lineNum))
+                           # print("ERROR: " + hasIdea.group(
+                            #    1) + " is formatted incorrectly, must be TAG_idea_name or generic_idea_name {0} Line number: {1}".format(
+                             #   filepath, lineNum))
                             bad_count_file +=1
                             # print(hasFocus.group(1))
                             #print("wrong: " + hasIdea.group(1))
@@ -75,6 +75,63 @@ def check_ideas(filepath):
 
     return bad_count_file
 
+def check_Flags(filepath):
+    bad_count_file = 0
+    lineNum = 0
+
+    with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
+        content = file.readlines()
+        advFlag = 0
+        isGlobalFlag = 0
+        countryFlags = []
+        globalFlags = []
+        for line in content:
+            lineNum +=1
+            if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
+                if "set_country_flag" in line or "has_country_flag" in line or "set_global_flag" in line or "has_global_flag" in line:
+                    #print("here: " + filepath + str(lineNum))
+                    if advFlag == 0:
+                        hasSimpleFlag = re.search(r'[a-z_]+_flag\s?=\s?([A-Za-z0-9-_]+)', line, re.M )  # If it's a tag
+                        hasAdvFlag = re.search(r'[a-z_]+_flag\s?=\s?{', line, re.M | re.I)  # If it's a tag
+                        if hasAdvFlag:
+                            advFlag = 1
+                            if "global_flag" in line:
+                                isGlobalFlag = 1
+                            #print("Test: " + str(lineNum))
+                        elif hasSimpleFlag:
+                            simpleFlagFormat = re.search(r'([a-z_]+_flag\s?=\s?)([A-Z0-9]{1}([a-z0-9]+)?_[A-Z0-9]{1}([a-z0-9]+)?)(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?$', line, re.M | re.I)
+                            if not hasSimpleFlag:
+                                print("ERROR: " + hasSimpleFlag.group(
+                                    1) + " is formatted incorrectly, must be The_Flags_Name {0} Line number: {1}".format(
+                                    filepath, lineNum))
+                                bad_count_file += 1
+                            else:
+                                if "global_flag" in line:
+                                    globalFlags.append(hasSimpleFlag.group(1))
+                                else:
+                                    countryFlags.append(hasSimpleFlag.group(1))
+
+                if advFlag == 1 and ("flag=" or "flag =" in line):
+                    hasAdvFlag2 = re.search(r'flag\s?=\s([a-zA-Z0-9\-\_]+)', line, re.M )  # If it's a tag
+                    #print("Test2: " + str(lineNum))
+                    if hasAdvFlag2:
+                        advFlag = 0
+                        #print("Test3: " + str(lineNum))
+                        advFlagFormat = re.search(
+                            r'flag\s?=\s?(([A-Z0-9]{1}([a-z0-9]+)?_[A-Z0-9]{1}([a-z0-9]+)?)(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?$)',
+                           line, re.M)
+                        if not advFlagFormat:
+                            print("ERROR: " + hasAdvFlag2.group(
+                                1) + " is formatted incorrectly, must be The_Flags_Name {0} Line number: {1}".format(
+                                filepath, lineNum))
+                            bad_count_file += 1
+                        else:
+                            if isGlobalFlag ==1:
+                                globalFlags.append(hasSimpleFlag.group(1))
+                                isGlobalFlag = 0
+                            else:
+                                countryFlags.append(hasSimpleFlag.group(1))
+    return bad_count_file, globalFlags, countryFlags
 
 def findPdxSyntax(filename):
     with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
@@ -301,7 +358,8 @@ def main():
     countryEffects = getCountryEffects(allEffects)
     stateEffects = getStateEffects(allEffects)
     unkownEffects = getUnkownEffects(allEffects)
-
+    globalFlags = []
+    countryFlags = []
 
     for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/national_focus' + '/'):
         for filename in fnmatch.filter(filenames, '*.txt'):
@@ -311,6 +369,28 @@ def main():
     for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/ideas' + '/'):
         for filename in fnmatch.filter(filenames, '*.txt'):
             bad_count = bad_count + check_ideas(os.path.join(root, filename))
+
+
+    for root, dirnames, filenames in os.walk(rootDir + '/' + 'common/'):
+        for filename in fnmatch.filter(filenames, '*.txt'):
+            temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
+            bad_count += temp
+            globalFlags += temp1
+            countryFlags += temp1
+    for root, dirnames, filenames in os.walk(rootDir + '/' + 'events/'):
+        for filename in fnmatch.filter(filenames, '*.txt'):
+            temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
+            bad_count += temp
+            globalFlags += temp1
+            countryFlags += temp1
+    for root, dirnames, filenames in os.walk(rootDir + '/' + 'history/'):
+        for filename in fnmatch.filter(filenames, '*.txt'):
+            temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
+            bad_count += temp
+            globalFlags += temp1
+            countryFlags += temp1
+
+    #input()
     # bad_count = bad_count + check_focus_tree_file_name(nation_focus_files)
 
     # for root, dirnames, filenames in os.walk(rootDir + '/'+ 'common' + '/' + 'national_focus' + '/'):
