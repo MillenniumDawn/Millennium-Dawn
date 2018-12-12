@@ -59,16 +59,16 @@ def check_ideas(filepath):
                     hasIdea = re.search(r'([A-Za-z0-9_-]+)\s?=\s?{', line, re.M | re.I)  # If it's a tag
                     if hasIdea:
                         countryIdea = re.search(r'([A-Z]{3}_[a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
-                        #if countryIdea:
-                            #print(countryIdea.group(1))
-                            #input()
+                        if countryIdea:
+                            print(countryIdea.group(1))
+                            input()
                         genericIdea = re.search(r'(generic_[a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
                         if not countryIdea and not genericIdea:
-                           # print("ERROR: " + hasIdea.group(
-                            #    1) + " is formatted incorrectly, must be TAG_idea_name or generic_idea_name {0} Line number: {1}".format(
-                             #   filepath, lineNum))
+                            print("ERROR: " + hasIdea.group(
+                                1) + " is formatted incorrectly, must be TAG_idea_name or generic_idea_name {0} Line number: {1}".format(
+                               filepath, lineNum))
                             bad_count_file +=1
-                            # print(hasFocus.group(1))
+                            #print(hasFocus.group(1))
                             #print("wrong: " + hasIdea.group(1))
                 if "}" in line:
                     braces -=1
@@ -371,24 +371,24 @@ def main():
             bad_count = bad_count + check_ideas(os.path.join(root, filename))
 
 
-    for root, dirnames, filenames in os.walk(rootDir + '/' + 'common/'):
-        for filename in fnmatch.filter(filenames, '*.txt'):
-            temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
-            bad_count += temp
-            globalFlags += temp1
-            countryFlags += temp1
-    for root, dirnames, filenames in os.walk(rootDir + '/' + 'events/'):
-        for filename in fnmatch.filter(filenames, '*.txt'):
-            temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
-            bad_count += temp
-            globalFlags += temp1
-            countryFlags += temp1
-    for root, dirnames, filenames in os.walk(rootDir + '/' + 'history/'):
-        for filename in fnmatch.filter(filenames, '*.txt'):
-            temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
-            bad_count += temp
-            globalFlags += temp1
-            countryFlags += temp1
+    #for root, dirnames, filenames in os.walk(rootDir + '/' + 'common/'):
+        #for filename in fnmatch.filter(filenames, '*.txt'):
+            #temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
+            #bad_count += temp
+            #globalFlags += temp1
+            #countryFlags += temp1
+    #for root, dirnames, filenames in os.walk(rootDir + '/' + 'events/'):
+        #for filename in fnmatch.filter(filenames, '*.txt'):
+            #temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
+
+            # globalFlags += temp1
+            # countryFlags += temp1
+    #for root, dirnames, filenames in os.walk(rootDir + '/' + 'history/'):
+        #for filename in fnmatch.filter(filenames, '*.txt'):
+            # temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
+            # bad_count += temp
+            # globalFlags += temp1
+            # countryFlags += temp1
 
     #input()
     # bad_count = bad_count + check_focus_tree_file_name(nation_focus_files)
