@@ -59,9 +59,9 @@ def check_ideas(filepath):
                     hasIdea = re.search(r'([A-Za-z0-9_-]+)\s?=\s?{', line, re.M | re.I)  # If it's a tag
                     if hasIdea:
                         countryIdea = re.search(r'([A-Z]{3}_[a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
-                        if countryIdea:
-                            print(countryIdea.group(1))
-                            input()
+                        #if countryIdea:
+                            #print(countryIdea.group(1))
+                            #input()
                         genericIdea = re.search(r'(generic_[a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
                         if not countryIdea and not genericIdea:
                             print("ERROR: " + hasIdea.group(
