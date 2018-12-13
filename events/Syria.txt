@@ -1,0 +1,622 @@
+﻿add_namespace = Syria
+add_namespace = SyriaNews
+
+### Syrian Civil War End ###
+
+#Victory for a faction
+news_event = {
+	
+	id = Syria.1
+
+	title = Syria.1.t
+	desc = {
+		text = Syria.1.SYR.desc
+		trigger = { tag = SYR }
+	}
+	desc = {
+		text = Syria.1.FSA.desc
+		trigger = { tag = FSA }
+	}
+	desc = {
+		text = Syria.1.NUS.desc
+		trigger = { tag = NUS }
+	}
+	
+	picture = GFX_Syria_Civil_War_Victory
+	
+	trigger = {
+		OR = {
+			AND = {
+				tag = SYR
+				NOT = { country_exists = FSA }
+				NOT = { country_exists = NUS }
+			}
+			AND = {
+				tag = FSA
+				NOT = { country_exists = SYR }
+				NOT = { country_exists = NUS }
+			}
+			AND = {
+				tag = NUS
+				NOT = { country_exists = SYR }
+				NOT = { country_exists = FSA }
+			}
+		}
+		NOT = { country_exists = ISI }
+		NOT = { has_global_flag = Syria_Civil_War_Over }
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+	
+	immediate = {
+		hidden_effect = {
+			#Remove ISIS
+			every_state = {
+				limit = {
+					OR = {
+						is_core_of = ISI
+						is_claimed_by = ISI
+					}
+				}
+				remove_claim_by = ISI
+				remove_core_of = ISI
+			}
+			#Reset Core Status
+			587 = {			#Golan
+				remove_core_of = SYR
+				remove_core_of = FSA
+			}
+			184 = {			#Daraa
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			185 = {			#Suwayda
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			186 = {			#Damascus
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			561 = {			#Central Desert
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			188 = {			#Homs
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			189 = {			#Latakia
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			192 = {			#Deir Ez Zor
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			191 = {			#Raqqa
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			566 = {			#Aleppo
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			190 = {			#Idlib
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			158 = {			#Hatay
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			193 = {			#Hasakah
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			571 = {			#North Aleppo
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			575 = {			#Afrin
+				remove_core_of = SYR
+				remove_core_of = FSA
+				remove_core_of = NUS
+			}
+			if = {
+				limit = { NOT = { has_country_flag = Relinquished_Golan } }
+				add_state_core = 587
+			}
+			add_state_core = 184
+			add_state_core = 185
+			add_state_core = 186
+			add_state_core = 561
+			add_state_core = 188
+			add_state_core = 189
+			add_state_core = 192
+			add_state_core = 191
+			add_state_core = 566
+			add_state_core = 190
+			add_state_core = 158
+			if = {
+				limit = { NOT = { has_country_flag = Deal_With_Rojava } }
+				add_state_core = 193
+			}
+			if = {
+				limit = { NOT = { has_country_flag = Deal_With_Rojava } }
+				add_state_core = 571
+			}
+			if = {
+				limit = { NOT = { has_country_flag = Deal_With_Rojava } }
+				add_state_core = 575
+			}
+			set_capital = 186
+			if = {
+				limit = {
+					OR = {
+						tag = NUS
+						tag = FSA
+					}
+				}
+				set_cosmetic_tag = SYR
+				add_ideas = divided_syria
+			}
+		}
+	}
+	
+	option = {
+		name = "Syria.1.a"
+		ai_chance = { factor = 100 }
+		set_global_flag = Syria_Civil_War_Over
+		hidden_effect = { news_event = { id = SyriaNews.1 hours = 6 } }
+	}
+	
+}
+
+#Situation with Tahrir Al-Sham and FSA
+country_event = {
+	
+	id = Syria.2
+	
+	title = Syria.2.t
+	desc = Syria.2.desc
+	picture = GFX_Tahrir_Al_Sham
+	
+	trigger = {
+		tag = FSA
+		country_exists = NUS
+		NOT = { country_exists = SYR }
+		NOT = { has_war_with = NUS }
+	}
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+	
+	fire_only_once = yes
+	
+	option = {
+		name = Syria.2.a
+		log = "[GetDateText]: [This.GetName]: Syria.2.a executed"		#Offer them representation
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 1.5			
+				AND = {
+					fascism > 20
+					fascism < 30
+				}
+			}
+			modifier = {
+				factor = 2			
+				AND = {
+					fascism > 30
+					fascism < 40
+				}
+			}
+			modifier = {
+				factor = 3			
+				fascism > 40
+			}
+			modifier = {
+				factor = 4
+				has_government = fascism
+			}
+		}				
+		add_political_power = -50
+		NUS = { country_event = { days = 3 id = Syria.3 } }
+	}
+	option = {
+		name = Syria.2.b
+		log = "[GetDateText]: [This.GetName]: Syria.2.b executed"		#Take them out
+		ai_chance = {
+			factor = 90
+			modifier = {
+				factor = 0.8
+				AND = {
+					fascism > 20
+					fascism < 30
+				}
+			}
+			modifier = {
+				factor = 0.65			
+				AND = {
+					fascism > 30
+					fascism < 40
+				}
+			}
+			modifier = {
+				factor = 0.35			
+				fascism > 40
+			}
+			modifier = {
+				factor = 0			
+				has_government = fascism
+			}
+		}
+		create_wargoal = { type = annex_everything target = NUS }
+		hidden_effect = { news_event = { id = SyriaNews.2 hours = 6 } }
+	}
+}
+
+#FSA offers representation
+country_event = {
+	
+	id = Syria.3
+	title = Syria.3.t
+	desc = Syria.3.desc
+	picture = GFX_Tahrir_Al_Sham
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Syria.3.a
+		log = "[GetDateText]: [This.GetName]: Syria.3.a executed"			#Agree
+		ai_chance = {
+			factor = 25
+			modifier = {
+				factor = 4			
+				FSA = { same_ideology = yes }
+			}
+		}
+		FSA = { country_event = { days = 3 id = Syria.4 } }
+		FSA = { set_country_flag = Promised_Representation_NUS }
+		custom_effect_tooltip = GAME_OVER_TT
+	}
+	option = {
+		name = Syria.3.b
+		log = "[GetDateText]: [This.GetName]: Syria.3.b executed"			#Refuse
+		ai_chance = {
+			factor = 75
+			modifier = {
+				factor = 0			
+				FSA = { same_ideology = yes }
+			}
+		}
+		FSA = { country_event = { days = 3 id = Syria.5 } }
+		create_wargoal = { type = annex_everything target = FSA }
+	}
+}
+
+#NUS agrees
+country_event = {
+	
+	id = Syria.4
+	title = Syria.4.t
+	desc = Syria.4.desc
+	picture = GFX_Tahrir_Al_Sham
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Syria.4.a
+		log = "[GetDateText]: [This.GetName]: Syria.4.a executed"
+		ai_chance = { factor = 100 }
+		annex_country = { target = NUS transfer_troops = yes }
+		add_popularity = { ideology = fascism popularity = 0.1 }
+		hidden_effect = { news_event = { id = SyriaNews.3 hours = 6 } }
+	}
+	
+}
+
+#NUS refuses
+country_event = {
+	
+	id = Syria.5
+	title = Syria.5.t
+	desc = Syria.5.desc
+	picture = GFX_Tahrir_Al_Sham
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Syria.5.a
+		log = "[GetDateText]: [This.GetName]: Syria.5.a executed"
+		ai_chance = { factor = 100 }
+		create_wargoal = { type = annex_everything target = NUS }
+		hidden_effect = { news_event = { id = SyriaNews.2 hours = 6 } }
+	}
+	
+}
+
+#Fate of Rojava (dynamic version before implementation of Syrian focus tree)
+# country_event = {
+	
+	# id = Syria.14
+	# title = Syria.14.t
+	# desc = Syria.14.desc
+	# picture = GFX_Rojava
+	
+	# trigger = {
+		# country_exists = ROJ
+		# NOT = { ROJ = { is_subject_of = ROOT } }
+		# NOT = { has_country_flag = Rojava_Question_Solved }
+		# OR = {
+			# AND = {
+				# tag = SYR
+				# NOT = {
+					# country_exists = NUS
+					# country_exists = FSA
+				# }
+			# }
+			# AND = {
+				# tag = NUS
+				# NOT = {
+					# country_exists = SYR
+					# country_exists = FSA
+				# }
+			# }
+			# AND = {
+				# tag = FSA
+				# NOT = {
+					# country_exists = SYR
+					# country_exists = NUS
+				# }
+			# }
+		# }
+	# }
+	
+	# mean_time_to_happen = {
+		# days = 7
+	# }
+	
+	# option = {
+		# name = Syria.6.a		#The area belongs to Syria
+		# ai_chance = {
+			# factor = 75
+			# modifier = {
+				# factor = 0.8
+				# tag = FSA
+			# }
+		# }
+		# ROJ = { country_event = { days = 5 id = Syria.7 } }
+		# set_country_flag = Rojava_Question_Solved
+	# }
+	# option = {
+		# name = Syria.6.b		#Offer them federal status
+		# ai_chance = {
+			# factor = 20
+			# modifier = {
+				# factor = 0
+				# tag = NUS
+			# }
+			# modifier = {
+				# factor = 1.5
+				# tag = FSA
+			# }
+		# }
+		# ROJ = { country_event = { days = 5 id = Syria.10 } }
+		# set_country_flag = Rojava_Question_Solved
+	# }
+	# option = {
+		# name = Syria.6.c		#Let them be independent
+		# ai_chance = {
+			# factor = 5
+			# modifier = {
+				# factor = 0
+				# tag = NUS
+			# }
+			# modifier = {
+				# factor = 2
+				# tag = FSA
+			# }
+		# }
+		# add_political_power = -50
+		# remove_state_core = 193
+		# remove_state_core = 571
+		# remove_state_core = 575
+		# set_country_flag = Rojava_Question_Solved
+		# hidden_effect = { news_event = { id = SyriaNews.4 hours = 6 } }
+	# }
+# }
+
+#FSA is alive, but Tahrir al Sham is close to defeat
+#Makes Tahrir al Sham defect to FSA
+country_event = {
+	id = Syria.15
+	title = Syria.15.t
+	desc = Syria.15.d
+	picture = GFX_Tahrir_Al_Sham
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+	
+	trigger = {
+		tag = FSA
+		country_exists = FSA
+		country_exists = NUS
+		country_exists = SYR
+		NOT = { country_exists = ISI }
+		NOT = { SYR = { surrender_progress > 0.4 } }
+		NUS = { is_ai = yes }
+		FSA = {
+			surrender_progress < 0.4
+			}
+		NUS = {
+			surrender_progress > 0.6
+			}
+	}
+
+	option = {
+		name = Syria.15.a
+		log = "[GetDateText]: [This.GetName]: Syria.15.a executed"
+		ai_chance = { factor = 100 }
+		annex_country = { target = NUS transfer_troops = yes }
+		add_popularity = { ideology = fascism popularity = 0.1 }
+		hidden_effect = { news_event = { id = SyriaNews.8 hours = 6 } }
+	}
+}
+
+#reverse version
+country_event = {
+	id = Syria.16
+	title = Syria.16.t
+	desc = Syria.16.d
+	picture = GFX_Tahrir_Al_Sham
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+	
+	trigger = {
+		tag = NUS
+		country_exists = FSA
+		country_exists = NUS
+		country_exists = SYR
+		NOT = { country_exists = ISI }
+		NOT = { SYR = { surrender_progress > 0.4 } }
+		FSA = { is_ai = yes }
+		NUS = {
+			surrender_progress < 0.6
+			}
+		FSA = {
+			surrender_progress > 0.45
+			}
+	}
+
+	option = {
+		name = Syria.16.a
+		log = "[GetDateText]: [This.GetName]: Syria.16.a executed"
+		ai_chance = { factor = 100 }
+		annex_country = { target = FSA transfer_troops = yes }
+		add_popularity = { ideology = neutrality popularity = 0.1 }
+		hidden_effect = { news_event = { id = SyriaNews.9 hours = 6 } }
+	}
+}
+
+### Syrian News Events ###
+
+#End of civil war
+news_event = {
+
+	id = SyriaNews.1
+	title = SyriaNews.1.t
+	desc = SyriaNews.1.d
+	picture = GFX_Syria_Civil_War_Victory
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = {		#These get their own event
+			tag = SYR
+			tag = FSA
+			tag = NUS
+		}
+	}
+	
+	option = {
+		name = SyriaNews.1.a
+		log = "[GetDateText]: [This.GetName]: SyriaNews.1.a executed"
+	}
+	
+}
+
+#FSA and Al-Nusra hostile towards each other
+news_event = {
+	
+	id = SyriaNews.2
+	title = SyriaNews.2.t
+	desc = SyriaNews.2.d
+	picture = GFX_news_fsa_and_al_nusra
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.2.a
+		log = "[GetDateText]: [This.GetName]: SyriaNews.2.a executed"
+	}
+}
+
+#FSA and Al-Nusra friendly towards each other
+news_event = {
+	
+	id = SyriaNews.3
+	title = SyriaNews.3.t
+	desc = SyriaNews.3.d
+	picture = GFX_news_fsa_and_al_nusra
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.3.a
+		log = "[GetDateText]: [This.GetName]: SyriaNews.3.a executed"
+	}
+}
+
+#FSA annexes Tahrir al Sham
+news_event = {
+	id = SyriaNews.8
+	title = SyriaNews.8.t
+	desc = SyriaNews.8.d
+	picture = GFX_news_rise_of_taliban
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.8.a
+		log = "[GetDateText]: [This.GetName]: SyriaNews.8.a executed"
+	}
+}
+
+#NUS annexes FSA
+news_event = {
+	id = SyriaNews.9
+	title = SyriaNews.9.t
+	desc = SyriaNews.9.d
+	picture = GFX_news_rise_of_taliban
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SyriaNews.9.a
+		log = "[GetDateText]: [This.GetName]: SyriaNews.9.a executed"
+	}
+}
