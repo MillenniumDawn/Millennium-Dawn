@@ -1,7 +1,7 @@
 stages:
   - StandardsTest
   - StylingTest
-  - CleanUpTest
+  - FixErrors
   - Deploy
   
 CodingStandards:
@@ -23,20 +23,12 @@ FixingStyling:
   image: python:3.6
   script:
     - python3 tools/fix_styling.py
-    
-  when: on_failure
-
-CommitFixes:
-  stage: Deploy
-  image: python:3.6
-  script:
+  after_script:
     - git config --global user.email "x-mike-x_@live.com"
     - git config --global user.name "MD4GitBot"
     - git config --global push.default simple
     - git git push origin HEAD:$CI_COMMIT_REF_NAME
-  when: on_success
-
-
-  
-
+    - python3 tools/check_basic_style.py
+    - python3 tools/check_basic_style_2.py
     
+  when: on_failure
