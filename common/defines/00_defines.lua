@@ -386,10 +386,10 @@ NMilitary = {
 	WAR_SCORE_AIR_WORTH_CAP = 1000,				-- the warscore limit we get from strategic bombing
 	WAR_SCORE_AIR_MONTHLY_FALLOFF = 10,			-- how much the warscore we got from the strategic bombing falls off every month.
 	
-	CORPS_COMMANDER_DIVISIONS_CAP = 24,			-- how many divisions a corps commander is limited to. 0 = inf, < 0 = blocked
+	CORPS_COMMANDER_DIVISIONS_CAP = 15,			-- how many divisions a corps commander is limited to. 0 = inf, < 0 = blocked
 	CORPS_COMMANDER_ARMIES_CAP = -1,			-- how many armies a corps commander is limited to. 0 = inf, < 0 = blocked
-	FIELD_MARSHAL_DIVISIONS_CAP = 24,			-- how many divisions a field marshall is limited to. 0 = inf, < 0 = blocked
-	FIELD_MARSHAL_ARMIES_CAP = 5,				-- how many armies a field marshall is limited to. 0 = inf, < 0 = blocked
+	FIELD_MARSHAL_DIVISIONS_CAP = 15,			-- how many divisions a field marshall is limited to. 0 = inf, < 0 = blocked
+	FIELD_MARSHAL_ARMIES_CAP = 3,				-- how many armies a field marshall is limited to. 0 = inf, < 0 = blocked
 
 	UNIT_LEADER_GENERATION_CAPITAL_CONTINENT_FACTOR = 100, --Integer factor to multiply manpower.
 
@@ -452,7 +452,7 @@ NMilitary = {
 	MULTIPLE_COMBATS_PENALTY = -0.5,			-- defender penalty if attacked from multiple directions
 	DIG_IN_FACTOR = 0.02,						   -- bonus factor for each dug-in level
 	LEADER_SKILL_FACTOR = 0.05,				-- bonus per skill level of leader
-	ARMY_LEADER_XP_GAIN_PER_UNIT_IN_COMBAT = 0.12,  -- XP gain per unit in combat
+	ARMY_LEADER_XP_GAIN_PER_UNIT_IN_COMBAT = 0.06,  -- XP gain per unit in combat --was 0.12
 	CONSTANT_XP_RATIO_FOR_MULTIPLE_LEADERS_IN_SAME_COMBAT = 0.5, -- if there are multiple leaders in same combat, each one gets thisratio + 1-thisratio/num leaders. it scales 1 0.75 0.66 etc
 	BASE_LEADER_TRAIT_GAIN_XP = 0.5,				   -- Base xp gain for traits per hour.
 	MAX_NUM_TRAITS = -1,					-- cant have more
@@ -652,7 +652,7 @@ NMilitary = {
 	
 	FIELD_MARSHAL_XP_RATIO = 0.25,					-- xp gain ratio for army group leaders
 	
-	GARRISON_ORDER_ARMY_CAP_FACTOR = 3.0,			-- armies gets increased cap when they are garrisoned
+	GARRISON_ORDER_ARMY_CAP_FACTOR = 2.0,			-- armies gets increased cap when they are garrisoned
 	
 	COMMANDER_LEVEL_UP_STAT_COUNT = 3, 				-- num stats gained on level up
 	COMMANDER_LEVEL_UP_STAT_WEIGHTS = { 5, 5, 5, 5 } , -- level up stat random base weights attack, defense, planning, logistics
@@ -694,7 +694,7 @@ NMilitary = {
 	} ,
 	
 	UNIT_LEADER_MODIFIER_COOLDOWN_ON_GROUP_CHANGE = 15,		-- time in days for a unit leader to regain its modifiers
-	UNIT_LEADER_ASSIGN_TRAIT_COST = 15.0,					-- cost to assign a new trait to a unit leader
+	UNIT_LEADER_ASSIGN_TRAIT_COST = 25.0,					-- cost to assign a new trait to a unit leader -- was 15
 	ATTACHED_WINGS_ORDER_UPDATE_DAYS = 5,					-- Days untill the attached wing will update the order
 	
 	BORDER_WAR_WIN_DAYS_AGAINST_EMPTY_OPPONENTS = 21,		-- border wars will be automatically won if no opponent shows up for this duration #14
