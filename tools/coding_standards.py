@@ -62,7 +62,7 @@ def check_ideas(filepath):
                         #if countryIdea:
                             #print(countryIdea.group(1))
                             #input()
-                        genericIdea = re.search(r'(generic_[a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
+                        genericIdea = re.search(r'([a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
                         if not countryIdea and not genericIdea:
                             print("ERROR: " + hasIdea.group(
                                 1) + " is formatted incorrectly, must be TAG_idea_name or generic_idea_name {0} Line number: {1}".format(
@@ -72,6 +72,46 @@ def check_ideas(filepath):
                             #print("wrong: " + hasIdea.group(1))
                 if "}" in line:
                     braces -=1
+
+    return bad_count_file
+
+def check_event_for_logs(filepath):
+    bad_count_file = 0
+    lineNum = 0
+    hasLog = 0
+    optionFound = 0
+    optionName = ""
+
+    with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
+        content = file.readlines()
+        braces = 0
+        for line in content:
+            lineNum +=1
+            if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
+                if "option" in line and "=" in line:
+                    optionFound = 1
+                    optionLine = lineNum
+                    hasLog = 0
+                if optionFound == 1:
+                    if "name" in line and "=" in line:
+                        hasName = re.search(r'name\s?=\s([a-zA-Z0-9-_.]+)', line, re.M | re.I)  # If it's a tag
+                        if hasName:
+                            optionName = hasName.group(1)
+                    if "{" in line:
+                        braces += line.count("{")
+                    if "}" in line:
+                        braces -= line.count("}")
+                    if braces > 0 and hasLog == 0 and "log" in line:
+                        hasLog = 1
+                        optionFound = 0
+                        braces = 0
+                    if braces == 0 and hasLog == 0:
+                        print("ERROR: Event " + optionName + " doesn't have logging {0} Line number: {1}".format(
+                            filepath, optionLine))
+                        optionFound = 0
+                        braces = 0
+                        hasLog = 0
+                        bad_count_file += 1
 
     return bad_count_file
 
@@ -365,10 +405,12 @@ def main():
         for filename in fnmatch.filter(filenames, '*.txt'):
             if filename != "generic.txt":
                 bad_count = bad_count + checkFocuses(os.path.join(root, filename))
+                files_list.append(os.path.join(root, filename))
 
     for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/ideas' + '/'):
         for filename in fnmatch.filter(filenames, '*.txt'):
             bad_count = bad_count + check_ideas(os.path.join(root, filename))
+            files_list.append(os.path.join(root, filename))
 
 
     #for root, dirnames, filenames in os.walk(rootDir + '/' + 'common/'):
@@ -389,6 +431,10 @@ def main():
             # bad_count += temp
             # globalFlags += temp1
             # countryFlags += temp1
+    for root, dirnames, filenames in os.walk(rootDir + '/' + 'events/'):
+        for filename in fnmatch.filter(filenames, '*.txt'):
+            bad_count = bad_count + check_event_for_logs(os.path.join(root, filename))
+            files_list.append(os.path.join(root, filename))
 
     #input()
     # bad_count = bad_count + check_focus_tree_file_name(nation_focus_files)
