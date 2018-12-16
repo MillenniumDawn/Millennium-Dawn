@@ -62,7 +62,7 @@ def check_ideas(filepath):
                         #if countryIdea:
                             #print(countryIdea.group(1))
                             #input()
-                        genericIdea = re.search(r'(generic_[a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
+                        genericIdea = re.search(r'([a-z0-9_-]+)\s?=\s?{', line, re.M )  # If it's a tag
                         if not countryIdea and not genericIdea:
                             print("ERROR: " + hasIdea.group(
                                 1) + " is formatted incorrectly, must be TAG_idea_name or generic_idea_name {0} Line number: {1}".format(
@@ -111,10 +111,9 @@ def check_event_for_logs(filepath):
                         optionFound = 0
                         braces = 0
                         hasLog = 0
+                        bad_count_file += 1
 
     return bad_count_file
-
-
 
 def check_Flags(filepath):
     bad_count_file = 0
@@ -406,10 +405,12 @@ def main():
         for filename in fnmatch.filter(filenames, '*.txt'):
             if filename != "generic.txt":
                 bad_count = bad_count + checkFocuses(os.path.join(root, filename))
+                files_list.append(os.path.join(root, filename))
 
     for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/ideas' + '/'):
         for filename in fnmatch.filter(filenames, '*.txt'):
             bad_count = bad_count + check_ideas(os.path.join(root, filename))
+            files_list.append(os.path.join(root, filename))
 
 
     #for root, dirnames, filenames in os.walk(rootDir + '/' + 'common/'):
@@ -433,6 +434,7 @@ def main():
     for root, dirnames, filenames in os.walk(rootDir + '/' + 'events/'):
         for filename in fnmatch.filter(filenames, '*.txt'):
             bad_count = bad_count + check_event_for_logs(os.path.join(root, filename))
+            files_list.append(os.path.join(root, filename))
 
     #input()
     # bad_count = bad_count + check_focus_tree_file_name(nation_focus_files)
