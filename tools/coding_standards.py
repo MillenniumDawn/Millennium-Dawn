@@ -99,12 +99,13 @@ def check_event_for_logs(filepath):
                             optionName = hasName.group(1)
                     if "{" in line:
                         braces += line.count("{")
-                    if "}" in line:
-                        braces -= line.count("}")
+
                     if braces > 0 and hasLog == 0 and "log" in line:
                         hasLog = 1
                         optionFound = 0
                         braces = 0
+                    if "}" in line:
+                        braces -= line.count("}")
                     if braces == 0 and hasLog == 0:
                         print("ERROR: Event " + optionName + " doesn't have logging {0} Line number: {1}".format(
                             filepath, optionLine))
