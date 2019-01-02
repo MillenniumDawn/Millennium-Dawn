@@ -1,0 +1,520 @@
+Syria_decisions = {
+
+	hire_PMC = {
+
+		visible = {
+			original_tag = SYR
+			has_government = communism
+			check_variable = { SYR_hired_PMCs < 3 }
+			hidden_trigger = {
+				NOT = { has_global_flag = Syria_Civil_War_Over }
+			}
+		}
+	
+		available = {
+			original_tag = SYR
+			has_government = communism
+			custom_trigger_tooltip = {
+				tooltip = TT_HIRE_PMCS_LIMIT
+				OR = {
+					NOT = { has_variable = SYR_hired_PMCs } 
+					check_variable = { SYR_hired_PMCs < 3 }
+				}
+			}
+		}
+		
+		cost = 200
+		
+		days_remove = 30
+		days_re_enable = 120
+		
+		complete_effect = {
+			add_popularity = { ideology = communism popularity = -0.05 }
+		}
+
+		remove_effect = {
+			hidden_effect = { add_manpower = 4000 }
+			if = {
+				limit = { check_variable = { SYR_hired_PMCs > 2 } }
+				186 = {
+					create_unit = {
+						division = " name = \"Pride of Syria\" division_template = \"Private Military Company\" start_experience_factor = 0.5"
+						owner = ROOT
+						prioritize_location = 4111
+					}
+				}
+				add_to_variable = { SYR_hired_PMCs = 1 }
+			}
+			if = {
+				limit = { check_variable = { SYR_hired_PMCs > 1 } }
+				186 = {
+					create_unit = {
+						division = " name = \"Damascus Shield\" division_template = \"Private Military Company\" start_experience_factor = 0.5"
+						owner = ROOT
+						prioritize_location = 4111
+					}
+				}
+				add_to_variable = { SYR_hired_PMCs = 1 }
+			}
+			if = {
+				limit = { NOT = { has_variable = SYR_hired_PMCs } }
+				186 = {
+					create_unit = {
+						division = " name = \"Hawk Brigade\" division_template = \"Private Military Company\" start_experience_factor = 0.5"
+						owner = ROOT
+						prioritize_location = 4111
+					}
+				}
+				set_variable = { SYR_hired_PMCs = 1 }
+			}
+		}
+		
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 0
+				num_divisions > 50
+			}
+		}
+	}
+
+	renounce_claims_on_golan = {
+	
+		visible = {
+			OR = {
+				original_tag = FSA
+				original_tag = DRU
+			}
+			587 = {
+				OR = {
+					is_core_of = ROOT
+					is_claimed_by = ROOT
+				}
+			}
+			NOT = { has_country_flag = Golan_Negotiations }
+			ISR = {	owns_state = 587 }
+		}
+		
+		cost = 100
+		
+		complete_effect = {
+			set_country_flag = Golan_Negotiations
+			random_country = {
+				limit = { original_tag = ISR }
+				country_event = { id = SyriaDecisions.0 days = 3 }
+			}
+			relative_change_neg_20 = yes
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 50
+				original_tag = DRU
+				surrender_progress > 0.1
+			}
+			modifier = {
+				add = 50
+				original_tag = FSA
+				any_other_country = {
+					original_tag = ISR
+					same_ideology = yes
+				}
+			}
+		}
+	}
+
+	renounce_claims_on_hatay = {
+		
+		visible = {
+		  AND = {
+			OR = {
+			original_tag = ALA
+			original_tag = SYR
+			original_tag = NUS
+			original_tag = FSA
+			}
+			158 = {
+				OR = {
+					is_core_of = ROOT
+					is_claimed_by = ROOT
+				}
+			}
+			NOT = { has_country_flag = Hatay_Negotiations }
+			TUR = {	owns_state = 158 }
+		}
+		}
+		cost = 50
+		
+		complete_effect = {
+			set_country_flag = Hatay_Negotiations
+			random_country = {
+				limit = { original_tag = TUR }
+				country_event = { id = SyriaDecisions.3 days = 3 }
+			}
+			relative_change_neg_2 = yes
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 0
+				tag = SYR
+			}
+			modifier = {
+			  add = 20
+			  tag = FSA
+			  }
+			modifier = {
+			  add = 20
+			  tag = HTS
+			}
+		}
+		
+	}
+
+	guarantee_rojava_independence = {
+		
+		visible = {
+			OR = {
+				original_tag = SYR
+				original_tag = FSA
+			}
+			OR = {
+				has_war_with = SYR
+				has_war_with = FSA
+				has_war_with = NUS
+			}
+			ROJ = { exists = yes }
+			NOT = { has_country_flag = Rojava_Negotiations }
+		}
+		
+		cost = 100
+		
+		complete_effect = {
+			set_country_flag = Rojava_Negotiations
+			random_country = {
+				limit = { original_tag = ROJ }
+				country_event = { id = SyriaDecisions.6 days = 3 } 
+			}
+			relative_change_neg_20 = yes
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 50
+				surrender_progress > 0.8
+			}
+		}
+	}
+		
+	
+}
+
+Syria_foreign_policy = {
+
+	#Hezbollah related
+	infiltrate_hezbollah = {
+	
+		visible = {
+			has_completed_focus = SYR_against_hezbollah
+			country_exists = HEZ
+			NOT = { has_country_flag = HEZ_Infiltrated_by_SYR }
+		}
+		
+		allowed = {
+			NOT = { is_in_faction_with = HEZ }
+			NOT = { HEZ = { is_subject_of = ROOT } }
+		}
+		
+		cost = 200
+		
+		complete_effect = {
+			custom_effect_tooltip = TT_SYR_INFILTRATE_HEZ
+			hidden_effect = {
+				HEZ = { set_country_flag = HEZ_Infiltrated_by_SYR }
+				set_country_flag = HEZ_Infiltrated_by_SYR
+			}
+			add_ideas = infiltrate_hezbollah_idea
+			if = {
+				limit = { has_idea = intelligence_community }
+				visually_display_opinion_rise_intelligence_community = yes
+				set_country_flag = current_intelligence_community
+				increase_internal_faction_opinion = yes
+			}				
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+	}
+	
+	sow_discord_between_HEZ_and_PER = {
+	
+		visible = {
+			has_completed_focus = SYR_against_hezbollah
+			country_exists = HEZ
+			NOT = { has_country_flag = Discord_Between_HEZ_PER }
+			HEZ = { is_in_faction_with = PER }
+		}
+		
+		allowed = {
+			NOT = { is_in_faction_with = HEZ }
+			NOT = { HEZ = { is_subject_of = ROOT } }
+		}
+		
+		cost = 200
+		
+		complete_effect = {
+			custom_effect_tooltip = TT_SYR_DISCORD_HEZ
+			hidden_effect = {
+				HEZ = { set_country_flag = Discord_Between_HEZ_PER }
+				set_country_flag = Discord_Between_HEZ_PER
+			}
+			if = {
+				limit = { has_idea = intelligence_community }
+				visually_display_opinion_rise_intelligence_community = yes
+				set_country_flag = current_intelligence_community
+				increase_internal_faction_opinion = yes
+			}	
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	
+	}
+	
+	SYR_support_baathism = {
+		
+		visible = {
+			has_government = communism
+			FROM = { exists = yes }
+		}
+		
+		target_trigger = {
+			NOT = { original_tag = ROOT }
+		}
+		
+		days_re_enable = 360
+		
+		cost = 200
+		
+		complete_effect = {
+			if = {
+				limit = { ic_ratio = { tag = FROM ratio > 1.5 } }
+				FROM = {
+					add_timed_idea = {
+						idea = generic_major_emerging_influence
+						days = 360
+					}
+				}
+				else = {
+					FROM = {
+						add_timed_idea = {
+							idea = minor_emerging_influence
+							days = 360
+						}
+					}
+				}
+			}
+		}
+		
+	}
+	
+	SYR_support_western_ideals = {
+		
+		visible = {
+			has_government = democratic
+			FROM = { exists = yes }
+		}
+		
+		target_trigger = {
+			NOT = { original_tag = ROOT }
+		}
+		
+		days_re_enable = 360
+		
+		cost = 200
+		
+		complete_effect = {
+			if = {
+				limit = { ic_ratio = { tag = FROM ratio > 1.5 } }
+				FROM = {
+					add_timed_idea = {
+						idea = generic_major_western_influence
+						days = 360
+					}
+				}
+				else = {
+					FROM = {
+						add_timed_idea = {
+							idea = minor_western_influence
+							days = 360
+						}
+					}
+				}
+			}
+		}
+		
+	}
+	
+	SYR_support_salafism = {
+		
+		visible = {
+			has_government = fascism
+			FROM = { exists = yes }
+		}
+		
+		target_trigger = {
+			NOT = { original_tag = ROOT }
+		}
+		
+		days_re_enable = 360
+		
+		cost = 200
+		
+		complete_effect = {
+			if = {
+				limit = { ic_ratio = { tag = FROM ratio > 1.5 } }
+				FROM = {
+					add_timed_idea = {
+						idea = generic_major_salafist_influence
+						days = 360
+					}
+				}
+				else = {
+					FROM = {
+						add_timed_idea = {
+							idea = minor_salafist_influence
+							days = 360
+						}
+					}
+				}
+			}
+		}
+		
+	}
+	
+	SYR_support_muslim_brotherhood = {
+		
+		visible = {
+			has_government = neutrality
+			FROM = { exists = yes }
+		}
+		
+		target_trigger = {
+			NOT = { original_tag = ROOT }
+		}
+		
+		days_re_enable = 360
+		
+		cost = 200
+		
+		complete_effect = {
+			if = {
+				limit = { ic_ratio = { tag = FROM ratio > 1.5 } }
+				FROM = {
+					add_timed_idea = {
+						idea = generic_major_nonaligned_influence
+						days = 360
+					}
+				}
+				else = {
+					FROM = {
+						add_timed_idea = {
+							idea = minor_nonaligned_influence
+							days = 360
+						}
+					}
+				}
+			}
+		}
+		
+	}
+	
+	SYR_support_ssnp = {
+		
+		visible = {
+			has_government = nationalist
+			FROM = { exists = yes }
+		}
+		
+		target_trigger = {
+			NOT = { original_tag = ROOT }
+		}
+		
+		days_re_enable = 360
+		
+		cost = 200
+		
+		complete_effect = {
+			if = {
+				limit = { ic_ratio = { tag = FROM ratio > 1.5 } }
+				FROM = {
+					add_timed_idea = {
+						idea = generic_major_nationalist_influence
+						days = 360
+					}
+				}
+				else = {
+					FROM = {
+						add_timed_idea = {
+							idea = minor_nationalist_influence
+							days = 360
+						}
+					}
+				}
+			}
+		}
+		
+	}
+
+}
+
+Syria_external_countries = {
+
+	#Hezbollah gains ground
+	intervene_against_hezbollah = {
+		
+		visible = {
+			tag = ISR
+			HEZ = { owns_state = 184 }
+			NOT = { is_in_faction_with = HEZ }
+			NOT = { has_country_flag = ISR_Destroy_HEZ }
+		}
+		
+		allowed = {
+			always = yes
+		}
+		
+		complete_effect = {
+			hidden_effect = {
+				add_state_claim = 201
+			}
+			create_wargoal = {
+				type = annex_everything
+				target = HEZ
+			}
+			set_country_flag = ISR_Destroy_HEZ 
+		}
+		
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+			modifier = {
+				factor = 0
+				HEZ = {
+					is_subject_of = PER
+				}
+			}
+		}
+		
+	}
+
+}
