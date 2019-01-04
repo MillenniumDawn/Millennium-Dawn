@@ -1,20 +1,16 @@
 ﻿add_namespace = init
 
-#PUT ANY EFFECTS YOU WANT TO HAPPEN ON INIT, in init.1 not init.0
-#For whatever reason, anything outside of triggering an event doesn't actually work in init.0
-#USE INIT.1
+#Fires up init.1, any effects in init.0 don't work
 country_event = {
 	id = init.0
 	
-	#major = yes
 	hidden = yes
-	#fire_only_once = yes
 	is_triggered_only = yes
 	
 	immediate = {
-		country_event = { id = init.1 } #Initial Pop up at the start of the game
+		country_event = { id = init.1 }
 		log = "[GetDateText]: [This.GetName]: init.0 completed"
-		###DON't PUT ANY OTHER EFFECTS HERE###
+		###USE INIT.1###
 	}	
 }
 
@@ -23,9 +19,11 @@ country_event = {
 	id = init.1
 	title = init.1.t
 	
+	is_triggered_only = yes
+	
 	desc = {
 		text = init.1.d
-		trigger = { not = { tag = SYR tag = FSA tag = NUS tag = ROJ tag = TUR tag = KUR tag = IRQ has_idea = GCC_member tag = PER } }
+		trigger = { NOT = { tag = SYR tag = FSA tag = NUS tag = ROJ tag = TUR tag = KUR tag = IRQ has_idea = GCC_member tag = PER } }
 	}
 	desc = { text = init.1.d_Syria trigger = { tag = SYR } }
 	desc = { text = init.1.d_FSA trigger = { tag = FSA } }
@@ -39,43 +37,28 @@ country_event = {
 	desc = { text = init.1.d_USA trigger = { tag = USA } }
 	desc = { text = init.1.d_SOV trigger = { tag = SOV } }
 	
-	is_triggered_only = yes
-	
-	
 	immediate = {
 		hidden_effect = {
-			#Executes PP & NU system just incase they don't click both option A & B
-			#set_pp_gain = yes
-			#set_NU_gain = yes	
-			# GER = {
-				# activate_decision = MD4_init
-			# }
+			set_country_flag = { flag = total_AB_wars value = 0 }
+			news_event = { id = USA_Russia_Investigation.0 days = 35 }
 			country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
 			country_event = { id = brotherhood.2 }
-			set_country_flag = { flag = total_AB_wars value = 0 }
 			country_event = { id = neighbor_drift.1 } #outlook drift values
 			country_event = { id = neighbor_drift.2 }
-			#country_event = { id = low_stability.1 } #Executed via decission at start of game instead of here,
 			country_event = { id = init_approval_rating.1 }
 			country_event = { id = state_update.2 } #states debuff 
-			#country_event = { id = GDPC_Update.0 days = 90 } #Auto-update GDP/C 
-			country_event = { id = set_spirit.1 } #sets multi-ethnic spirit
 			country_event = { id = set_spirit.2 } #sets internal faction flags
-			country_event = { id = set_spirit.3 days = 3 } #sets economy flags for approval rating
-			news_event = { id = USA_Russia_Investigation.0 days = 35 }
-			country_event = low_stability.1
-			country_event = ai_strategy.1 #don't build units
-			country_event = ai_strategy.2 #sets african relations ai strategy on init
+			country_event = { id = set_spirit.3 } #sets economy flags for approval rating
+			country_event = { id = ai_strategy.1 } #don't build units
+			country_event = { id = ai_strategy.2 } #sets African relations AI strategy on init
 			log = "[GetDateText]: [This.GetName]: init.1 completed"
 		}
 	}
 	
-	 option = {
-		 name = init.1.e
+	option = {
+		name = init.1.e
 		# log = "[GetDateText]: [This.GetName]: init.1.e executed"
-	 }
-	
-	
+	}
 }
 
 #This is only fired for newly formed countries created mid game e.g released nations. There is no reason to trigger this for every country
@@ -83,14 +66,9 @@ country_event = {
 	id = init.2
 	
 	hidden = yes
-	#fire_only_once = yes
-	
 	is_triggered_only = yes
 	
 	immediate = {
-		#set_pp_gain = yes
-		#set_NU_gain = yes
-		
 		country_event = { id = neighbor_drift.1 } #outlook drift values
 		country_event = { id = neighbor_drift.2 } country_event = { id = state_update.2 } #states debuff 
 		country_event = { id = set_spirit.1 } #sets multi-ethnic spirit
@@ -98,10 +76,10 @@ country_event = {
 		country_event = { id = set_spirit.3 days = 3 } #sets economy flags for approval rating
 		if = {
 			limit = {
-				or = {
+				OR = {
 					any_other_country = {
 						OR = {
-							not = {
+							NOT = {
 								is_justifying_wargoal_against = this
 								has_wargoal_against = this
 							}
@@ -126,28 +104,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: init.2 completed"
 	}
 	
-	 option = {
-		 name = init.2.a
+	option = {
+		name = init.2.a
 		# log = "[GetDateText]: [This.GetName]: init.2.a executed"
-	 }
+	}
 }
-#version 0.1 warning only 2 years of gameplay
-#news_event = {
-#	id = init.3
-#	title = init.3.t
-#	desc = init.3.d
-#	picture = GFX_news_md4
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
-#	is_triggered_only = yes
-	
-	
-#	option = {
-#		name = init.3.a
-#		log = "[GetDateText]: [This.GetName]: init.3.a executed"
-#		log = "[GetDateText]: [This.GetName]: init.3 completed"
-#		#this = { gearz_test = yes }
-#	}
-# }
