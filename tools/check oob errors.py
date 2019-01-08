@@ -21,7 +21,7 @@ def get_tags(rootDir):
     #input()
     return tags
 
-def get_tech(rootDir, tags):
+def get_tech(rootDir, tags, tagPos):
     with open(rootDir, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.readlines()
         foundTech = 0
@@ -40,11 +40,11 @@ def get_tech(rootDir, tags):
                     if "set_technology" in line:
                         foundTech = 1
                     if foundTech ==1:
-                        if "{" in line:
+                         if "{" in line:
                             openBrace =1
-                        if "}" in line:
+                         if "}" in line:
                             openBrace = 0
-                            foundTech = 0
+                            foundTech =0
 
                     if openBrace ==1:
                         hasTech = re.search(r'[ \t]+(.*)\s=\s1', line, re.M | re.I)  # If it's a tag
@@ -75,7 +75,7 @@ def get_tech(rootDir, tags):
         #input()
     return updatedTags
 
-def get_variants(rootDir, tags):
+def get_variants(rootDir, tags, tagPos):
     with open(rootDir, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.readlines()
         foundVariant = 0
@@ -105,7 +105,7 @@ def get_variants(rootDir, tags):
                         variantName = re.search(r'name\s=\s\"(.*)\"', line, re.M | re.I)  # If it's a tag
                         variantType = re.search(r'type\s=\s(.*)', line, re.M | re.I)  # If it's a tag
                         if variantName:
-                            variants[tagPos][3][0].append([variantName.group(1)])
+                            variants[tagPos][3][0].append(variantName.group(1))
                             variantCount +=1
                         if variantType:
                             variants[tagPos][3][0].append(variantType.group(1))
@@ -133,28 +133,127 @@ def get_variants(rootDir, tags):
                             variants[tagPos][4][0].append(variantType.group(1))
     return variants
 
-def analyzeMyVariants(tags):
-    variants = tags
-    for pos, x in enumerate(tags[tagPos]):
-        if pos ==0:
-            print("~~~~tag:~~~~")
-        if pos ==1:
-            print("~~~2000 tech:~~~")
-        if pos ==2:
-            print("~~~2017 tech:~~~")
-        if pos ==3:
-            print("~~~2000 var:~~~")
-        if pos ==4:
-            print("~~~2017 var:~~~")
+def get_tagPos(text, tags):
+    isValidTag = re.match(r'^([A-Z]{3})\s.*-', text, re.M | re.I)  # If filename has a tag in it
+    tagPos = -1
+    if isValidTag:
+        for pos, x in enumerate(tags):
+            for y in x:
+                # pos = 0
+                for z in y:
+                    if z == isValidTag.group(1):
+                        tagPos = pos
+                        return tagPos
 
-        for y in x:
-            if pos != 3 and pos != 4:
-                print (y)
-            else:
-                #input()
-                for pos1, z in enumerate(y):
-                    print(z)
-                input()
+
+def get_tagPos2(text, tags):
+    isValidTag = re.match(r'([A-Z]{3})', text, re.M | re.I)  # If filename has a tag in it
+    tagPos = -1
+    if isValidTag:
+        for pos, x in enumerate(tags):
+            for y in x:
+                # pos = 0
+                for z in y:
+                    if z == isValidTag.group(1):
+                        tagPos = pos
+                        return tagPos
+
+def analyzeMyVariants(tags, rootDir, fileName):
+    variants = tags
+    # tagPos = get_tagPos2("SOV", tags)
+    # for pos, x in enumerate(tags[tagPos]):
+    #     if pos ==0:
+    #         print("~~~~tag:~~~~")
+    #     if pos ==1:
+    #         print("~~~2000 tech:~~~")
+    #     if pos ==2:
+    #         print("~~~2017 tech:~~~")
+    #     if pos ==3:
+    #         print("~~~2000 var:~~~")
+    #     if pos ==4:
+    #         print("~~~2017 var:~~~")
+    #
+    #     for y in x:
+    #         if pos != 3 and pos != 4:
+    #             print (y)
+    #         else:
+    #             #input()
+    #             for pos1, z in enumerate(y):
+    #                 print(z)
+    # input()
+
+    startDate = 0
+    has2kStart = re.search(r'2000', rootDir, re.I)  # If it's a tag
+    has2k17Start = re.search(r'2017', rootDir, re.I)  # If it's a tag
+    if has2kStart:
+        startDate = 1
+    elif has2k17Start:
+        startDate = 2
+
+    with open(rootDir, 'r', encoding='utf-8', errors='ignore') as file:
+        content = file.readlines()
+
+        startReading = 0
+        openBrace = 0
+        creator = ""
+        version_name = ""
+        tagPos = -1
+
+        for line in content:
+            if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
+                if "ship" in line:
+                    startReading = 1
+                if startReading ==1:
+                    if "{" in line:
+                        openBrace += 1
+
+                    if openBrace > 0 and startReading == 1:
+                        hasCreator = re.search(r'creator\s=\s([A-Z]{3})', line, re.M | re.I)  # If it's a tag
+                        hasVersion = re.search(r'version_name\s=\s\"(.*)\"', line, re.M | re.I)  # If it's a tag
+                        if hasCreator:
+                            creator = hasCreator.group(1)
+                        if hasVersion:
+                            version_name = hasVersion.group(1)
+
+                    if creator and hasVersion:
+                        tagPos = get_tagPos2(creator, tags)
+                        #print("creator: " + creator)
+                        #print("version name: " + version_name)
+                        #input()
+                        if tagPos != -1 and creator == tags[tagPos][0][0]:
+                            #print(tags[tagPos][0][0])
+                            #print(tags[tagPos][0][1])
+                            #print(tags[tagPos][0][2])
+                            #input()
+                            foundVar = 0
+                            if startDate ==1 or startDate ==2:
+                                for x in tags[tagPos][3]:
+                                    for y in x:
+                                        #print(y)
+                                        if version_name == y:
+                                            foundVar = 1
+
+                            if startDate ==2:
+                                for x in tags[tagPos][4]:
+                                    for y in x:
+                                        #print(y)
+                                        if version_name == y:
+                                            foundVar = 1
+
+                            if foundVar == 0:
+                                #print(startDate)
+                                print("ERROR: " + version_name + " from " + creator +" was used in " + fileName + " but doesn't exist")
+                                #input()
+
+                    if "}" in line:
+                        openBrace -=1
+                    if openBrace == 0:
+                        startReading = 0
+                        creator = ""
+                        version_name = ""
+
+
+
     return variants
 
 def main():
@@ -164,7 +263,6 @@ def main():
     bad_count = 0
     tags = []
     hasAirBases = []
-    global tagPos
     tagPos = -1
     # Allow running from root directory as well as from inside the tools directory
     scriptDir = os.path.realpath(__file__)
@@ -174,20 +272,17 @@ def main():
 
     for root, dirnames, filenames in os.walk(rootDir + '/' + 'history' + '/countries' + '/'):
         for filename in fnmatch.filter(filenames, '*.txt'):
-            isValidTag = re.match(r'^([A-Z]{3})\s.*-', filename, re.M | re.I)  # If filename has a tag in it
+            tagPos = -1
+            tagPos = get_tagPos(filename, tags)
+            if tagPos != -1:
+                tags = get_tech((os.path.join(root, filename)), tags, tagPos)
+                tags = get_variants((os.path.join(root, filename)), tags, tagPos)
+                #tags = analyzeMyVariants(tags)
+                #tagPos = get_tagPos2("SOV", tags)
 
-            if isValidTag:
-                tagPos = -1
-                for pos, x in enumerate(tags):
-                    for y in x:
-                        #pos = 0
-                        for z in y:
-                            if z == isValidTag.group(1):
-                                tagPos = pos
-                                tags = get_tech((os.path.join(root, filename)), tags)
-                                tags = get_variants((os.path.join(root, filename)), tags)
-                                tags = analyzeMyVariants(tags)
-
+    for root, dirnames, filenames in os.walk(rootDir + '/' + 'history' + '/units' + '/'):
+        for filename in fnmatch.filter(filenames, '*.txt'):
+            analyzeMyVariants(tags, os.path.join(root, filename), filename)
 
 
 
