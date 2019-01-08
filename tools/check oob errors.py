@@ -47,7 +47,7 @@ def get_tech(rootDir, tags, tagPos):
                             foundTech =0
 
                     if openBrace ==1:
-                        hasTech = re.search(r'[ \t]+(.*)\s=\s1', line, re.M | re.I)  # If it's a tag
+                        hasTech = re.search(r'[ \t]+([A-Za-z0-9_\-]+)\s?=\s?1', line, re.M | re.I)  # If it's a tag
                         if hasTech:
                            #updatedTags[tagPos].append([])
                            updatedTags[tagPos][1].append(hasTech.group(1))
@@ -65,7 +65,7 @@ def get_tech(rootDir, tags, tagPos):
                             foundTech = 0
 
                     if openBrace ==1:
-                        hasTech = re.search(r'[ \t]+(.*)\s=\s1', line, re.M | re.I)  # If it's a tag
+                        hasTech = re.search(r'[ \t]+([A-Za-z0-9_\-]+)\s?=\s?1', line, re.M | re.I)  # If it's a tag
                         if hasTech:
                             #updatedTags[tagPos].append([])
                             updatedTags[tagPos][2].append(hasTech.group(1))
@@ -102,8 +102,9 @@ def get_variants(rootDir, tags, tagPos):
                         foundVariant = 0
 
                     if openBrace ==1 and ("name" in line or "type" in line):
-                        variantName = re.search(r'name\s=\s\"(.*)\"', line, re.M | re.I)  # If it's a tag
-                        variantType = re.search(r'type\s=\s(.*)', line, re.M | re.I)  # If it's a tag
+                        variantName = re.search(r'name\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
+                        variantType = re.search(r'type\s?=\s?(.*)', line, re.M | re.I)  # If it's a tag
+
                         if variantName:
                             variants[tagPos][3][0].append(variantName.group(1))
                             variantCount +=1
@@ -124,8 +125,8 @@ def get_variants(rootDir, tags, tagPos):
                         foundVariant = 0
 
                     if openBrace ==1 and ("name" in line or "type" in line):
-                        variantName = re.search(r'name\s=\s\"(.*)\"', line, re.M | re.I)  # If it's a tag
-                        variantType = re.search(r'type\s=\s(.*)', line, re.M | re.I)  # If it's a tag
+                        variantName = re.search(r'name\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
+                        variantType = re.search(r'type\s?=\s?(.*)', line, re.M | re.I)  # If it's a tag
                         if variantName:
                             variants[tagPos][4][0].append(variantName.group(1))
                             variantCount += 1
@@ -197,64 +198,136 @@ def analyzeMyVariants(tags, rootDir, fileName):
         openBrace = 0
         creator = ""
         version_name = ""
+        equipment_name = ""
         tagPos = -1
+        stockpile = 0
+        production = 0
+        ship = 0
 
         for line in content:
             if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
                 if "ship" in line:
+                    ship = 1
+                    startReading = 1
+                if "add_equipment_to_stockpile" in line:
+                    stockpile = 1
+                    startReading = 1
+                if "add_equipment_production" in line:
+                    production = 1
                     startReading = 1
                 if startReading ==1:
                     if "{" in line:
                         openBrace += 1
-
-                    if openBrace > 0 and startReading == 1:
-                        hasCreator = re.search(r'creator\s=\s([A-Z]{3})', line, re.M | re.I)  # If it's a tag
-                        hasVersion = re.search(r'version_name\s=\s\"(.*)\"', line, re.M | re.I)  # If it's a tag
+                    if ship ==1:
+                        hasEquipment = re.search(r'equipment\s?=\s?{\s?([A-Za-z0-9_\-]+)\s?=', line, re.M | re.I)  # If it's a tag
+                        hasVersion = re.search(r'version_name\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
+                        hasCreator = re.search(r'creator\s?=\s?([A-Z]{3})', line, re.M | re.I)  # If it's a tag
+                        hasOwner = re.search(r'owner\s?=\s?([A-Z]{3})', line, re.M | re.I)  # If it's a tag
                         if hasCreator:
                             creator = hasCreator.group(1)
                         if hasVersion:
                             version_name = hasVersion.group(1)
+                        if hasEquipment:
+                            equipment_name = hasEquipment.group(1)
+                        if not hasCreator and hasOwner:
+                            creator = hasOwner.group(1)
+                        if not hasVersion and hasOwner:
+                            hasVersion = "yes"
+                            version_name = "yes"
+                            ship = 2
+                    if stockpile ==5: #change to 1, set at 5 as I need to fix techs
+                        hasEquipment = re.search(r'type\s?=\s?([A-Za-z0-9_\-]+)', line, re.M | re.I)  # If it's a tag
+                        hasVersion = re.search(r'version_name\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
+                        hasCreator = re.search(r'producer\s?=\s?([A-Z]{3})', line, re.M | re.I)  # If it's a tag
+                        hasOwner = re.search(r'([A-Z]{3})_', fileName, re.M | re.I)  # If it's a tag
+                        if hasCreator:
+                            creator = hasCreator.group(1)
+                        if hasVersion:
+                            version_name = hasVersion.group(1)
+                        if hasEquipment:
+                            equipment_name = hasEquipment.group(1)
+                        if not hasCreator and hasOwner:
+                            creator = hasOwner.group(1)
+                        if not hasVersion and hasOwner:
+                            hasVersion = "yes"
+                            version_name = "yes"
+                            ship = 2
+                    if production ==5: #change to 1, set at 5 as I need to fix techs
+                        hasEquipment = re.search(r'type\s?=\s?([A-Za-z0-9_\-]+)', line, re.M | re.I)  # If it's a tag
+                        hasVersion = re.search(r'version_name\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
+                        hasCreator = re.search(r'creator\s?=\s?\"([A-Z]{3})\"', line, re.M | re.I)  # If it's a tag
+                        hasOwner = re.search(r'([A-Z]{3})_', fileName, re.M | re.I)  # If it's a tag
+                        if hasCreator:
+                            creator = hasCreator.group(1)
+                        if hasVersion:
+                            version_name = hasVersion.group(1)
+                        if hasEquipment:
+                            equipment_name = hasEquipment.group(1)
+                        if creator == hasOwner.group(1):
+                            creator = hasOwner.group(1)
+                        if not hasVersion and hasCreator:
+                            hasVersion = "yes"
+                            version_name = "yes"
+                            production = 2
 
-                    if creator and hasVersion:
-                        tagPos = get_tagPos2(creator, tags)
-                        #print("creator: " + creator)
-                        #print("version name: " + version_name)
-                        #input()
-                        if tagPos != -1 and creator == tags[tagPos][0][0]:
-                            #print(tags[tagPos][0][0])
-                            #print(tags[tagPos][0][1])
-                            #print(tags[tagPos][0][2])
+
+                    if creator and version_name and equipment_name:
+                        foundVar, foundTech = check_variant(creator, version_name, equipment_name, startDate, tags)
+                        if foundVar == 0 and (ship == 1 or production == 1):
+                            #print(startDate)
+                            print("ERROR: " + version_name + " " + equipment_name + " from " + creator +" was used in " + fileName + " but doesn't exist")
                             #input()
-                            foundVar = 0
-                            if startDate ==1 or startDate ==2:
-                                for x in tags[tagPos][3]:
-                                    for y in x:
-                                        #print(y)
-                                        if version_name == y:
-                                            foundVar = 1
-
-                            if startDate ==2:
-                                for x in tags[tagPos][4]:
-                                    for y in x:
-                                        #print(y)
-                                        if version_name == y:
-                                            foundVar = 1
-
-                            if foundVar == 0:
-                                #print(startDate)
-                                print("ERROR: " + version_name + " from " + creator +" was used in " + fileName + " but doesn't exist")
-                                #input()
+                        if foundTech == 0:
+                            #print(startDate)
+                            print("ERROR: " + equipment_name + " from " + creator +" was used in " + fileName + " but " + creator + " doesn't have this tech unlocked")
+                            #input()
 
                     if "}" in line:
                         openBrace -=1
                     if openBrace == 0:
+                        ship = 0
+                        stockpile = 0
+                        production = 0
                         startReading = 0
                         creator = ""
                         version_name = ""
+                        equipment_name = ""
 
 
 
     return variants
+
+def check_variant (creator, version_name, equipment_name, startDate, tags):
+    foundVar = 0
+    foundTech = 0
+
+    tagPos = get_tagPos2(creator, tags)
+    if tagPos != -1 and creator == tags[tagPos][0][0]:
+        foundVar = 0
+        if startDate == 1 or startDate == 2:
+            for x in tags[tagPos][3]:
+                for y in x:
+                    # print(y)
+                    if version_name == y:
+                        foundVar = 1
+            for x in tags[tagPos][1]:
+                #print (x)
+                #input()
+                if equipment_name == x:
+                    foundTech = 1
+
+        if foundVar == 0 and startDate == 2:
+            for x in tags[tagPos][4]:
+                for y in x:
+                    # print(y)
+                    if version_name == y:
+                        foundVar = 1
+            for x in tags[tagPos][2]:
+                if equipment_name == x:
+                    foundTech = 1
+
+    return foundVar, foundTech
+
 
 def main():
     files_list = []
