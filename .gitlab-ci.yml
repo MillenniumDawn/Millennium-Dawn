@@ -1,12 +1,36 @@
 stages:
-  - test
-
-CIT_Test:
-  stage: test
+  - StandardsTest
+  - StylingTest
+  - FixStyling
+  
+CodingStandards:
+  stage: StandardsTest
   image: python:3.6
-  before_script:
-    - apt-get update -q -y
-    - apt-get install -y python3-dev python3-setuptools
+  script:
+    - python3 tools/coding_standards.py
+  allow_failure: true
+
+Styling:
+  stage: StylingTest
+  image: python:3.6
   script:
     - python3 tools/check_basic_style.py
     - python3 tools/check_basic_style_2.py
+
+FixingStyling:
+  stage: FixStyling
+  image: python:3.6
+  script:
+    - python3 tools/fix_styling.py
+  after_script:
+    - git config --global user.email "x-mike-x_@live.com"
+    - git config --global user.name "MD4GitBot"
+    - git config --global push.default simple
+    - git remote set-url origin https://MD4GitBot:YWpC6KJzp2cKnPZdGLYV@gitlab.com/Millennium_Dawn/Millennium_Dawn.git
+    - git add -A
+    - git commit -m 'Fixed Styling for you'
+    - git push -u origin HEAD:$CI_COMMIT_REF_NAME
+    - python3 tools/check_basic_style.py
+    - python3 tools/check_basic_style_2.py
+    
+  when: on_failure

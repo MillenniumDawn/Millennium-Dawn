@@ -1,0 +1,1792 @@
+##### Kurdish Activism
+
+
+##### Syrian Civil War
+TUR_SYR = {
+
+	tur_intervene_SYR = {
+		allowed = { tag = TUR }
+
+
+		available = {
+			OR = {
+				SYR = { has_volunteers_amount_from = { tag = TUR count > 0 } }
+				FSA = { has_volunteers_amount_from = { tag = TUR count > 0 } }
+				NUS = { has_volunteers_amount_from = { tag = TUR count > 0 } }
+				ISI = { has_volunteers_amount_from = { tag = TUR count > 0 } }
+			}
+			
+		}
+
+
+		activation = {
+			SYR = {
+				OR = {
+					has_war_with = ISI
+					has_war_with = FSA
+					has_war_with = NUS
+					has_war_with = ROJ
+				}
+			}
+		}
+
+
+		Is_good = yes
+
+		selectable_mission = yes
+		days_mission_timeout = 60
+		days_remove = 5
+
+		fire_only_once = yes
+
+
+		timeout_effect = {
+
+			add_political_power = -25
+
+		}
+
+
+		complete_effect = {
+
+			add_political_power = 25
+
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+##################################### CANCEROUS BORDER WAR SETUP #########################################
+##################################### CANCEROUS BORDER WAR SETUP #########################################
+##################################### CANCEROUS BORDER WAR SETUP #########################################
+	
+@border_incident_escalation_countdown = 30
+@border_conflict_incident_forgotten_timer = 30
+@border_conflict_escalate_to_war_countdown = 45
+@border_conflict_time_until_cancelled = 360
+
+	#Operation Olive Branch
+	TUR_afrin = {
+		icon = border_war		
+
+		available = {
+			575 = {
+				is_owned_and_controlled_by = ROJ
+				any_neighbor_state = {
+					is_fully_controlled_by = TUR
+					set_temp_variable = { var:attacker_state_temp = id }
+					has_ROOT_at_least_1_div_in_current_state_scope = yes
+					hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
+				}
+				NOT = { has_state_flag = border_incident_active }
+			}
+			NOT = { has_non_aggression_pact_with = ROJ }
+		}
+
+		visible = {
+			NOT = { has_war_with = ROJ }
+			ROJ = {
+			exists = yes 
+			has_not_initiated_border_incident_with_ROOT = yes
+			NOT = {
+					is_subject_of = TUR
+					is_in_faction_with = TUR
+				}
+			}
+			
+			575 = {
+				is_owned_and_controlled_by = ROJ
+				OR = {
+					AND = {
+						TUR = { is_ai = yes }
+						ROJ = { is_ai = yes }
+						OR = {
+							is_core_of = TUR
+							is_claimed_by = TUR
+						}
+						
+						TUR = { has_opinion = { target = ROJ value < 50 } }
+						TUR = { is_major = no }
+					}
+					
+					TUR = { is_ai = no }
+				}
+				
+				any_neighbor_state = {
+					is_fully_controlled_by = TUR
+				}
+			}
+			
+			NOT = {
+				is_subject_of = ROJ
+			}
+
+			OR = {
+				NOT = { has_border_war_with = ROJ }
+				any_state = {
+					is_owned_and_controlled_by = ROJ
+					hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
+					any_neighbor_state = {
+						hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
+						is_fully_controlled_by = TUR
+					}
+				}
+			}
+		}
+
+		highlight_states = {
+			state = 575
+		}
+
+		ai_will_do = {
+			base = 0.2
+			modifier = {
+				OR = {
+					NOT = {
+						ROJ = {
+							any_owned_state = {
+								OR = {
+									is_core_of = TUR
+									is_claimed_by = TUR
+								}
+							}
+						}
+					}
+					
+					TUR = { has_government = democratic }
+				}
+				factor = 0
+			}
+			
+			modifier = {
+				ROJ = {
+					any_owned_state = {
+						is_core_of = TUR
+					}
+				}
+				
+				factor = 0.5
+			}
+			
+			modifier = {
+				NOT = { TUR = { has_government = fascism } }
+				
+				factor = 0.1
+			}
+			
+			modifier = {
+				TUR = { strength_ratio = { tag = ROJ ratio > 0.8 } }
+				
+				factor = 0
+			}
+		}
+
+		cost = 100
+		days_remove = 365 
+
+		fire_only_once = yes
+
+		days_remove = @border_incident_escalation_countdown
+		days_re_enable = 180
+
+		war_with_target_on_remove = yes
+
+		complete_effect = {
+			ROJ = {
+			add_opinion_modifier = {
+				target = TUR 
+				modifier = border_conflict_started 
+			}
+			country_event = { id = TUR_ob_warn.1 hours = 1 }
+			activate_targeted_decision = { target = TUR decision = TUR_afrin_d }
+			}
+			custom_effect_tooltip = WTT_border_incident_delay_until_new_incident_180
+			hidden_effect = {
+			random_state = {
+					limit = {
+						is_fully_controlled_by = TUR
+						hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
+						has_ROOT_at_least_1_div_in_current_state_scope = yes
+						any_neighbor_state = {
+							state = 575
+						}
+					}
+					save_event_target_as = attacker_state
+					set_variable = { FROM.attacker_state_vs_@ROOT = id }
+					set_temp_variable = { attacker_state_temp = id }
+					set_state_flag = border_incident_active
+				}
+			}
+		}
+		
+		remove_effect = {
+		hidden_effect = {
+		var:FROM.attacker_state_vs_@ROOT = {
+					save_event_target_as = attacker_state 
+				}
+			}
+		random_state = {
+					limit = {
+						is_fully_controlled_by = TUR
+						hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
+						has_ROOT_at_least_1_div_in_current_state_scope = yes
+						any_neighbor_state = {
+							state = 575
+						}
+					}
+					set_temp_variable = { attacker_state_temp = id }
+				}
+			activate_targeted_decision = { target = ROJ decision = TUR_afrin2 }
+		}
+	}
+
+	#Mission for defender warning that a conflict with Turkey is coming
+	 TUR_afrin_d = {
+		icon = border_war
+
+		allowed = { always = no } #Activated from effect
+
+		available = {
+			hidden_trigger = { always = no }
+		}
+
+		highlight_states = {
+			state = 575
+		}
+
+		war_with_target_on_timeout = yes
+		ai_will_do = {
+			base = 1
+			modifier = {
+			}
+		}
+
+		days_mission_timeout = @border_incident_escalation_countdown
+
+		fire_only_once = yes
+
+		is_good = no
+		
+		timeout_effect = {
+			custom_effect_tooltip = escalation_possible_tooltip_for_defender
+			custom_effect_tooltip = effects_if_border_conflict_is_lost
+			effect_tooltip = {
+				add_political_power = -100
+				TUR = {
+				transfer_state = 575
+				}
+			}
+			hidden_effect = {
+				remove_targeted_decision = { target = ROJ decision = TUR_afrin_d }
+				activate_targeted_decision = { target = ROJ decision = TUR_afrin_d2 }
+			}
+		}
+	}
+
+	#Mission for defender warning Turkey can escalate to war at any point is coming
+	 TUR_afrin_d2 = {
+	 icon = border_war
+
+		allowed = { always = no } #Activated from effect
+
+		available = {
+			hidden_trigger = { always = no }
+		}
+
+		highlight_states = {
+			state = 575
+		}
+
+		war_with_target_on_timeout = yes
+		ai_will_do = {
+			base = 0
+			modifier = {
+			}
+		}
+
+		days_mission_timeout = @border_conflict_incident_forgotten_timer
+
+		fire_only_once = yes
+
+		is_good = no
+
+		timeout_effect = {
+			custom_effect_tooltip = from_cannot_escalate
+			custom_effect_tooltip = effects_if_border_conflict_is_lost
+			TUR = {
+				transfer_state = 575
+			}
+		}		
+	}
+
+	#Mission for attacker to escalate or incident is forgotten
+	#Decision to escalate incident on border with Turkey to border conflict
+	 TUR_afrin2 = {
+	 icon = border_war
+
+		allowed = { always = no } #Activated from effect
+
+		available = {
+			var:FROM.attacker_state_vs_@ROOT = {
+				is_fully_controlled_by = TUR
+			}
+			divisions_in_border_state = {
+				state = var:FROM.attacker_state_vs_@ROOT
+				border_state = 575
+				size > 0
+			}
+		}
+
+		highlight_states = {
+			state = 575		
+		}
+
+		ai_will_do = {
+			base = 200
+			modifier = {
+				
+			}
+		}
+		
+		cancel_trigger = {
+			is_in_faction_with = ROJ
+		}
+
+		selectable_mission = yes
+
+		fire_only_once = yes #Reactivation handled in effect
+
+		days_mission_timeout = @border_conflict_incident_forgotten_timer
+
+		timeout_effect = {
+			custom_effect_tooltip = WTT_border_incident_delay_until_new_incident_120
+			hidden_effect = {
+				ROJ = { remove_targeted_decision = { target = TUR decision = TUR_afrin_d2 } }
+			}
+		}
+
+		complete_effect = {
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = var:FROM.attacker_state_vs_@ROOT
+					num_provinces = 4
+					#on_win = wtt_border_conflict_won_attacker.1
+					#on_lose = wtt_border_conflict_lost_attacker.1
+					#on_cancel = wtt_border_conflict_canceled_attacker.1
+				}
+				
+				defender = {
+					state = 575
+					num_provinces = 1
+					#on_win = wtt_border_conflict_won_defender.1
+					#on_lose = wtt_border_conflict_lost_defender.1
+					#on_cancel = wtt_border_conflict_canceled_defender.1
+				}
+			}
+			ROJ = {
+				#activate_targeted_decision = { target = TUR decision = WTT_border_conflict_escalate_conflict }
+				#activate_targeted_decision = { target = TUR decision = WTT_border_conflict_time_until_cancelled }
+			}
+			#activate_targeted_decision = { target = TUR decision = WTT_border_conflict_escalate_conflict }
+			#activate_targeted_decision = { target = TUR decision = WTT_border_conflict_time_until_cancelled }
+		}
+	}
+
+##################################### ^  BORDER WAR SETUP ^ #########################################
+##################################### ^  BORDER WAR SETUP ^ #########################################
+##################################### ^  BORDER WAR SETUP ^ #########################################
+
+}
+
+###################################################################################
+### Counter terrorism decision system for PKK conflict written by Ahmeteris		###
+### Currently work in progress (WIP)											###
+### Feel free to use for other nations if you want to							###
+###################################################################################
+
+### MILITARY BRANCH ###
+
+TUR_counter_terrorism_mil = {
+
+	strenghten_outposts_1 = {
+	
+		icon = decision_fortification
+		
+		fire_only_once = yes
+	
+		available = {
+			has_idea = pkk_terror_idea
+			num_of_civilian_factories_available_for_projects > 3
+			has_idea = outposts_problem
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			NOT = { has_idea = outposts_strenghtened_4 }
+			NOT = { has_idea = outposts_strenghtened_5 }
+			NOT = { has_idea = outposts_strenghtened_6 }
+		}
+		
+		cost = 30
+		days_remove = 100
+
+		modifier = {
+			civilian_factory_use = 4
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+						
+		complete_effect = {
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+						
+		remove_effect = {
+			add_ideas = outposts_strenghtened_1
+		}
+	}
+	
+	strenghten_outposts_2 = {
+	
+		icon = decision_fortification
+		
+		fire_only_once = yes
+	
+		available = {
+			has_idea = pkk_terror_idea
+			num_of_civilian_factories_available_for_projects > 2
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			has_idea = outposts_strenghtened_1
+		}
+		
+		cost = 40
+		days_remove = 60
+
+		modifier = {
+			civilian_factory_use = 3
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+		
+		complete_effect = {
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+				
+		remove_effect = {
+			swap_ideas = {
+				remove_idea = outposts_strenghtened_1
+				add_idea = outposts_strenghtened_2
+			}
+			subtract_from_variable = { var = pkk_presence_max value = 5 }
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+		}
+	}
+	
+	strenghten_outposts_3 = {
+	
+		icon = decision_fortification
+		
+		fire_only_once = yes
+	
+		available = {
+			has_idea = pkk_terror_idea
+			num_of_civilian_factories_available_for_projects > 2
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			has_idea = outposts_strenghtened_2
+		}
+		
+		cost = 50
+		days_remove = 60
+
+		modifier = {
+			civilian_factory_use = 3
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+		
+		complete_effect = {
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+				
+		remove_effect = {
+			swap_ideas = {
+				remove_idea = outposts_strenghtened_2
+				add_idea = outposts_strenghtened_3
+			}
+			subtract_from_variable = { var = pkk_presence_max value = 5 }
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+		}
+	}
+	
+	strenghten_outposts_4 = {
+	
+		icon = decision_fortification
+		
+		fire_only_once = yes
+	
+		available = {
+			has_idea = pkk_terror_idea
+			num_of_civilian_factories_available_for_projects > 3
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			has_idea = outposts_strenghtened_3
+		}
+		
+		cost = 60
+		days_remove = 80
+
+		modifier = {
+			civilian_factory_use = 4
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+		
+		complete_effect = {
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+				
+		remove_effect = {
+			swap_ideas = {
+				remove_idea = outposts_strenghtened_3
+				add_idea = outposts_strenghtened_4
+			}
+			subtract_from_variable = { var = pkk_presence_max value = 5 }
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+		}
+	}
+	
+	strenghten_outposts_5 = {
+	
+		icon = decision_fortification
+		
+		fire_only_once = yes
+	
+		available = {
+			has_idea = pkk_terror_idea
+			num_of_civilian_factories_available_for_projects > 3
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			has_idea = outposts_strenghtened_4
+		}
+		
+		cost = 70
+		days_remove = 80
+
+		modifier = {
+			civilian_factory_use = 4
+		}
+		
+		ai_will_do = {
+			factor = 5
+		}
+		
+		complete_effect = {
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+				
+		remove_effect = {
+			swap_ideas = {
+				remove_idea = outposts_strenghtened_4
+				add_idea = outposts_strenghtened_5
+			}
+			subtract_from_variable = { var = pkk_presence_max value = 10 }
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+		}
+	}
+	
+	strenghten_outposts_6 = {
+	
+		icon = decision_fortification
+		
+		fire_only_once = yes
+	
+		available = {
+			has_idea = pkk_terror_idea
+			num_of_civilian_factories_available_for_projects > 4
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			has_idea = outposts_strenghtened_5
+		}
+		
+		cost = 60
+		days_remove = 30
+
+		modifier = {
+			civilian_factory_use = 5
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+		
+		complete_effect = {
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+				
+		remove_effect = {
+			remove_ideas = outposts_problem
+			swap_ideas = {
+				remove_idea = outposts_strenghtened_5
+				add_idea = outposts_strenghtened_6
+					}
+			subtract_from_variable = { var = pkk_presence_max value = 10 }
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+		}
+	}
+	
+	airstrike_prepare = {
+	
+		icon = GFX_decision_ger_military_buildup
+		
+		fire_only_once = no
+		
+		available = {
+			has_idea = pkk_terror_idea
+			num_of_civilian_factories_available_for_projects > 1
+			custom_trigger_tooltip = { tooltip = stockpile_not_full
+				check_variable = { var = air_strike_material value = 50 compare = less_than }
+			}
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+		}
+		
+		cost = 10
+		days_remove = 10
+
+		modifier = {
+			civilian_factory_use = 2
+		}
+
+		ai_will_do = {
+			factor = 11
+			modifier = {
+				factor = 0.1
+				check_variable = { var = air_strike_material value = 7 compare = greater_than_or_equals }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { var = air_strike_material value = 2 compare = less_than_or_equals }
+			}
+		}
+		
+		complete_effect = {
+			set_variable = { airstrike_prepare_odds = random }
+		}
+		
+		remove_effect = {
+			custom_effect_tooltip = airstrike_prepare_tooltip
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { var = airstrike_prepare_odds value = 0.4 compare = greater_than_or_equals } }
+					add_to_variable = { var = air_strike_material value = 3 }
+				}
+				else = {
+					add_to_variable = { var = air_strike_material value = 4 }
+				}
+				clear_variable = airstrike_prepare_odds
+			}
+		}
+	}
+	
+	airstrike_thingy = {
+	
+		icon = GFX_decision_air
+		
+		fire_only_once = no
+		
+		available = {
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = doing_counter_terror_op_mil }
+			NOT = { has_idea = protest_thingy }
+			custom_trigger_tooltip = {
+				tooltip = got_missiles
+				check_variable = { var = air_strike_material value = 0 compare = greater_than }
+			}
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+		}
+		
+		cost = 20
+		days_remove = 3
+		days_re_enable = 5
+			
+		ai_will_do = {
+			factor = 13
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_mil
+			set_variable = { airstrike_thingy_if = random }				# if the airstike is succesful
+			set_variable = { airstrike_thingy_odds = random }			# how much damage it will do
+			set_variable = { airstrike_thingy_assassinate = random }	# for a small chance, one of their leaders will be killed thus further decrease of power
+			set_variable = { airstrike_thingy_consume = random }		# how much missiles will be consumed
+			set_variable = { airstrike_thingy_crowd = random }			# if your airstrke is succesful, it may or may not give party pop
+			if = {
+				limit = {
+					check_variable = { var = airstrike_thingy_consume value = 0.3 compare = greater_than_or_equals }
+				}
+				subtract_from_variable = { var = air_strike_material value = 1 }
+			}
+			else = {
+				subtract_from_variable = { var = air_strike_material value = 2 }
+			}
+			clamp_variable = { var = air_strike_material min = 0 }
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+				
+		remove_effect = {
+			custom_effect_tooltip = airstrike_thingy_tooltip
+			clr_country_flag = doing_counter_terror_op_mil
+				
+			if = {
+				limit = {
+					check_variable = { var = airstrike_thingy_if value = 0.2 compare = greater_than_or_equals } # %80 chance of success
+				}
+					if = {
+						limit = {
+							check_variable = { var = airstrike_thingy_odds value = 0.4 compare = greater_than_or_equals } # %60 chance of reducing it by 1
+						}
+						subtract_from_variable = { var = pkk_presence value = 1 }
+					}
+					else = {
+						subtract_from_variable = { var = pkk_presence value = 3 }
+					}
+					if = {
+						limit = {
+							check_variable = { var = airstrike_thingy_assassinate value = 0.95 compare = greater_than_or_equals } # %5 chance of assassinating a field commander of theirs
+						}
+						subtract_from_variable = { var = pkk_presence value = 5 }
+					}
+					if = {
+						limit = {
+							check_variable = { var = airstrike_thingy_crowd value = 0.85 compare = greater_than_or_equals } # %15 chance of making a good propaganda out of a successful airstrike and gaining approval rating
+						}
+						add_1_popularity = yes
+						relative_change_pos_2 = yes
+					}
+			}
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+			clear_variable = airstrike_thingy_odds
+			clear_variable = airstrike_thingy_assassinate
+			clear_variable = airstrike_thingy_consume
+			clear_variable = airstrike_thingy_crowd
+			clear_variable = airstrike_thingy_if
+		}
+	}
+	
+	internal_preparation_1 = {
+	
+		icon = GFX_decision_prepare_civil_war
+		
+		fire_only_once = no
+		
+		available = {
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = doing_int_sec }
+			NOT = { has_country_flag = prepping_int }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = the_good }
+			NOT = { has_country_flag = the_bad }
+			NOT = { has_country_flag = the_ugly }
+		}
+		
+		ai_will_do = {
+			factor = 9
+		}
+		
+		cost = 10
+		days_remove = 30
+		
+		modifier = {
+			max_planning = -0.02
+			army_org_Factor = -0.02
+			consumer_goods_factor = 0.01
+		}
+		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_int
+			}
+		}
+		
+		remove_effect = {
+			set_country_flag = the_good
+			custom_effect_tooltip = operation_thingy
+		}
+	}
+	
+	internal_preparation_2 = {
+	
+		icon = GFX_decision_prepare_civil_war
+		
+		fire_only_once = no
+		
+		available = {
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = doing_int_sec }
+			NOT = { has_country_flag = prepping_int }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = the_good }
+			NOT = { has_country_flag = the_bad }
+			NOT = { has_country_flag = the_ugly }
+		}
+		
+		ai_will_do = {
+			factor = 10
+			factor = 10
+		}
+		
+		cost = 15
+		days_remove = 40
+		
+		modifier = {
+			max_planning = -0.04
+			army_org_Factor = -0.04
+			consumer_goods_factor = 0.02
+		}
+		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_int
+			}
+		}
+		
+		remove_effect = {
+			set_country_flag = the_bad
+			custom_effect_tooltip = operation_thingy
+		}
+	}
+	
+	internal_preparation_3 = {
+	
+		icon = GFX_decision_prepare_civil_war
+		
+		fire_only_once = no
+		
+		available = {
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = doing_int_sec }
+			NOT = { has_country_flag = prepping_int }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = the_good }
+			NOT = { has_country_flag = the_bad }
+			NOT = { has_country_flag = the_ugly }
+		}
+		
+		ai_will_do = {
+			factor = 11
+		}
+		
+		cost = 20
+		days_remove = 50
+		
+		modifier = {
+			max_planning = -0.06
+			army_org_Factor = -0.06
+			consumer_goods_factor = 0.03
+		}
+		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_int
+			}
+		}
+		
+		remove_effect = {
+			set_country_flag = the_ugly
+			custom_effect_tooltip = operation_thingy
+		}
+	}
+			
+	
+	internal_security = {
+	
+		icon = GFX_decision_tank
+		
+		fire_only_once = no
+		
+		available = {
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = doing_counter_terror_op_mil }
+			NOT = { has_idea = protest_thingy }
+			NOT = { has_country_flag = doing_ext_sec }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			OR = {
+				has_country_flag = the_good
+				has_country_flag = the_bad
+				has_country_flag = the_ugly
+			}
+		}
+		
+		cost = 20
+		days_remove = 20
+			
+		ai_will_do = {
+			factor = 11
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_mil
+			set_country_flag = doing_int_sec
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+			set_variable = { internal_security_if = random }
+			set_variable = { internal_security_odds = random }
+			set_variable = { internal_security_crowd = random }
+			set_variable = { internal_security_protest_odds = random }
+		}
+		
+		modifier = {
+			war_support_factor = 0.1
+		}
+		
+		remove_effect = {
+			clr_country_flag = doing_counter_terror_op_mil
+			clr_country_flag = doing_int_sec
+			if = {
+				limit = {
+					if = {
+						limit = { has_country_flag = the_good }
+						check_variable = { var = internal_security_if value = 0.6 compare = greater_than_or_equals } # %40 chance of success
+					}
+					else_if = {
+						limit = { has_country_flag = the_bad }
+						check_variable = { var = internal_security_if value = 0.5 compare = greater_than_or_equals } # %50 chance of success
+					}
+					else_if = {
+						limit = { has_country_flag = the_ugly }
+						check_variable = { var = internal_security_if value = 0.4 compare = greater_than_or_equals } # %60 chance of success
+					}
+					#overall, the good is more cost efficient but the ugly packs a more powerful punch
+				}
+					if = {
+						limit = {
+							check_variable = { var = internal_security_odds value = 0.4 compare = greater_than_or_equals } # %60 chance of reducing it by 2
+						}
+						subtract_from_variable = { var = pkk_presence value = 2 }
+					}
+					else = {
+						subtract_from_variable = { var = pkk_presence value = 4 }
+					}
+					if = {
+						limit = {
+							check_variable = { var = internal_security_assassinate value = 0.90 compare = greater_than_or_equals } # %10 chance of assassinating a field commander of theirs
+						}
+						subtract_from_variable = { var = pkk_presence value = 5 }
+					}
+					if = {
+						limit = {
+							check_variable = { var = internal_security_crowd value = 0.80 compare = greater_than_or_equals } # %20 chance of making a good propaganda out of a successful airstrike and gaining approval rating
+						}
+						add_1_popularity = yes
+						relative_change_pos_2 = yes
+					}
+			}
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+			clear_variable = internal_security_if
+			clear_variable = internal_security_odds
+			clear_variable = internal_security_crowd
+			clr_country_flag = the_good
+			clr_country_flag = the_bad
+			clr_country_flag = the_ugly
+			if = {
+				limit = {
+					check_variable = { var = internal_security_protest_odds value = 0.7 compare = greater_than_or_equals } # %20 chance of a western or kurdish country protest our operation and claim we are committing a massacre
+				}
+				set_country_flag = they_hatin
+				random_country = {
+					limit = {
+						original_tag = GER
+						original_tag = USA
+						original_tag = FRA
+						original_tag = ENG
+						original_tag = SOV
+						original_tag = KUR
+						original_tag = ROJ
+					}
+					country_event = { id = western_protest.1 days = 2 }
+				}
+			}
+			clear_variable = internal_security_protest_odds
+		}
+	}
+	
+	external_preparation_1 = {
+	
+		icon = GFX_decision_nationalism
+		
+		fire_only_once = no
+		
+		available = {
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = doing_ext_sec }
+			NOT = { has_country_flag = prepping_ext }
+			OR = {
+				193 = { NOT = { is_owned_by = TUR } }
+				935 = { NOT = { is_owned_by = TUR } }
+				939 = { NOT = { is_owned_by = TUR } }
+				164 = { NOT = { is_owned_by = TUR } }
+				408 = { NOT = { is_owned_by = TUR } }
+				407 = { NOT = { is_owned_by = TUR } }
+			}
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = dean_winchester }
+			NOT = { has_country_flag = sam_winchester }
+			NOT = { has_country_flag = castiel }
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		cost = 10
+		days_remove = 35
+		
+		modifier = {
+			max_planning = -0.03
+			army_org_Factor = -0.03
+			consumer_goods_factor = 0.02
+		}
+		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_ext
+			}
+		}
+		
+		remove_effect = {
+			set_country_flag = dean_winchester
+			custom_effect_tooltip = operation_thingy
+		}
+	}
+	
+	external_preparation_2 = {
+	
+		icon = GFX_decision_nationalism
+		
+		fire_only_once = no
+		
+		available = {
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = doing_ext_sec }
+			NOT = { has_country_flag = prepping_ext }
+			OR = {
+				193 = { NOT = { is_owned_by = TUR } }
+				935 = { NOT = { is_owned_by = TUR } }
+				939 = { NOT = { is_owned_by = TUR } }
+				164 = { NOT = { is_owned_by = TUR } }
+				408 = { NOT = { is_owned_by = TUR } }
+				407 = { NOT = { is_owned_by = TUR } }
+			}
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = dean_winchester }
+			NOT = { has_country_flag = sam_winchester }
+			NOT = { has_country_flag = castiel }
+		}
+		
+		ai_will_do = {
+			factor = 11
+		}
+		
+		cost = 15
+		days_remove = 45
+		
+		modifier = {
+			max_planning = -0.06
+			army_org_Factor = -0.06
+			consumer_goods_factor = 0.04
+		}
+		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_ext
+			}
+		}
+		
+		remove_effect = {
+			set_country_flag = sam_winchester
+			custom_effect_tooltip = operation_thingy
+		}
+	}
+	
+	external_preparation_3 = {
+	
+		icon = GFX_decision_nationalism
+		
+		fire_only_once = no
+		
+		available = {
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = doing_ext_sec }
+			NOT = { has_country_flag = prepping_ext }
+			OR = {
+				193 = { NOT = { is_owned_by = TUR } }
+				935 = { NOT = { is_owned_by = TUR } }
+				939 = { NOT = { is_owned_by = TUR } }
+				164 = { NOT = { is_owned_by = TUR } }
+				408 = { NOT = { is_owned_by = TUR } }
+				407 = { NOT = { is_owned_by = TUR } }
+			}
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = dean_winchester }
+			NOT = { has_country_flag = sam_winchester }
+			NOT = { has_country_flag = castiel }
+		}
+		
+		ai_will_do = {
+			factor = 12
+		}
+		
+		cost = 20
+		days_remove = 55
+		
+		modifier = {
+			max_planning = -0.09
+			army_org_Factor = -0.09
+			consumer_goods_factor = 0.06
+		}
+		
+		complete_effect = {
+			hidden_effect = {
+				set_country_flag = prepping_ext
+			}
+		}
+		
+		remove_effect = {
+			set_country_flag = castiel
+			custom_effect_tooltip = operation_thingy
+		}
+	}
+	
+	external_security = {
+	
+		icon = GFX_decision_infiltrate_state
+		
+		fire_only_once = no
+		
+		available = {
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = doing_counter_terror_op_mil }
+			NOT = { has_idea = protest_thingy }
+			NOT = { has_country_flag = doing_ext_sec }
+			OR = {
+				193 = { NOT = { is_owned_by = TUR } }
+				935 = { NOT = { is_owned_by = TUR } }
+				939 = { NOT = { is_owned_by = TUR } }
+				164 = { NOT = { is_owned_by = TUR } }
+				408 = { NOT = { is_owned_by = TUR } }
+				407 = { NOT = { is_owned_by = TUR } }
+			}
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			OR = {
+				has_country_flag = dean_winchester
+				has_country_flag = sam_winchester
+				has_country_flag = castiel
+			}
+		}
+		
+		cost = 20
+		days_remove = 30
+			
+		ai_will_do = {
+			factor = 12
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_mil
+			set_country_flag = doing_ext_sec
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+			set_variable = { external_security_if = random }
+			set_variable = { external_security_odds = random }
+			set_variable = { external_security_crowd = random }
+			set_variable = { external_security_protest_odds = random }
+		}
+		
+		modifier = {
+			war_support_factor = 0.15
+		}
+				
+		remove_effect = {
+			clr_country_flag = doing_counter_terror_op_mil
+			clr_country_flag = doing_ext_sec
+			if = {
+				limit = {
+					if = {
+						limit = { has_country_flag = dean_winchester }
+						check_variable = { var = internal_security_if value = 0.6 compare = greater_than_or_equals } # %40 chance of success
+					}
+					else_if = {
+						limit = { has_country_flag = sam_winchester }
+						check_variable = { var = internal_security_if value = 0.5 compare = greater_than_or_equals } # %50 chance of success
+					}
+					else_if = {
+						limit = { has_country_flag = castiel }
+						check_variable = { var = internal_security_if value = 0.4 compare = greater_than_or_equals } # %60 chance of success
+					}
+				}
+					if = {
+						limit = {
+							check_variable = { var = external_security_odds value = 0.4 compare = greater_than_or_equals } # %60 chance of reducing it by 2
+						}
+						subtract_from_variable = { var = pkk_presence value = 3 }
+					}
+					else = {
+						subtract_from_variable = { var = pkk_presence value = 5 }
+					}
+					if = {
+						limit = {
+							check_variable = { var = external_security_assassinate value = 0.85 compare = greater_than_or_equals } # %15 chance of assassinating a field commander of theirs
+						}
+						subtract_from_variable = { var = pkk_presence value = 5 }
+					}
+					if = {
+						limit = {
+							check_variable = { var = external_security_crowd value = 0.85 compare = greater_than_or_equals } # %15 chance of making a good propaganda out of a successful airstrike and gaining approval rating and party popularity
+						}
+						add_1_popularity = yes
+						relative_change_pos_2 = yes
+					}
+			}
+			clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+			clear_variable = external_security_if
+			clear_variable = external_security_odds
+			clear_variable = external_security_crowd
+			clr_country_flag = dean_winchester
+			clr_country_flag = sam_winchester
+			clr_country_flag = castiel
+			if = {
+				limit = {
+					check_variable = { var = internal_security_protest_odds value = 0.6 compare = greater_than_or_equals } # %30 chance of a western or kurdish country protest our operation and claim we are committing a massacre
+				}
+				set_country_flag = they_hatin
+				random_country = {
+					limit = {
+						original_tag = GER
+						original_tag = USA
+						original_tag = FRA
+						original_tag = ENG
+						original_tag = SOV
+						original_tag = KUR
+						original_tag = ROJ
+					}
+					country_event = { id = western_protest.1 days = 2 }
+				}
+			}
+			clear_variable = external_security_protest_odds
+		}
+	}
+	
+	add_power_to_pkk = {	#for testing, obviously
+							#haters that abusing this will be reported to Erdogan
+	
+		icon = GFX_decision_air
+		
+		fire_only_once = no
+		
+		available = {
+		}
+			
+		visible = {
+			tag = TUR
+		}
+		
+		days_remove = 0
+			
+		ai_will_do = {
+			factor = 0
+		}
+	
+		complete_effect = {
+			country_event = { id = pkk_test.1 }
+		}
+	}
+}
+
+### CIVILLIAN BRANCH ###
+
+TUR_counter_terrorism_civ = {
+	
+	deal_with_college_professors = {
+	
+		icon = GFX_decision_research
+		
+		fire_only_once = yes
+	
+		available = {
+			has_idea = pkk_terror_idea
+			NOT = { has_country_flag = doing_counter_terror_op_civ }
+			has_idea = sympathetic_professors
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = pkk_terror_idea
+			NOT = { has_idea = sympathetic_professors_dealt_with }
+		}
+			
+		cost = 70
+		days_remove = 10
+
+		ai_will_do = {
+			factor = 10
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_civ
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+		
+		remove_effect = {
+			swap_ideas = {
+				remove_idea = sympathetic_professors
+				add_idea = sympathetic_professors_dealt_with
+			}
+			clr_country_flag = doing_counter_terror_op_civ
+		}
+	}
+	
+	kurdish_language_1 = {
+	
+		icon = GFX_decision_nationalism
+		
+		fire_only_once = yes
+	
+		available = {
+			NOT = { has_country_flag = doing_counter_terror_op_civ }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = kurdish_language_problem
+		}
+			
+		cost = 20
+		days_remove = 30
+
+		ai_will_do = {
+			factor = 10
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_civ
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+			
+		remove_effect = {
+			swap_ideas = {
+				remove_idea = kurdish_language_problem
+				add_idea = kurdish_language_solutions_1
+			}
+			clr_country_flag = doing_counter_terror_op_civ
+		}
+	}
+	
+	kurdish_language_2 = {
+	
+		icon = GFX_decision_nationalism
+		
+		fire_only_once = yes
+	
+		available = {
+			NOT = { has_country_flag = doing_counter_terror_op_civ }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = kurdish_language_solutions_1
+		}
+			
+		cost = 20
+		days_remove = 30
+
+		ai_will_do = {
+			factor = 10
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_civ
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+			
+		remove_effect = {
+			swap_ideas = {
+				remove_idea = kurdish_language_solutions_1
+				add_idea = kurdish_language_solutions_2
+			}
+			clr_country_flag = doing_counter_terror_op_civ
+		}
+	}
+	
+	kurdish_language_3 = {
+	
+		icon = GFX_decision_nationalism
+		
+		fire_only_once = yes
+	
+		available = {
+			NOT = { has_country_flag = doing_counter_terror_op_civ }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = kurdish_language_solutions_2
+		}
+			
+		cost = 20
+		days_remove = 30
+
+		ai_will_do = {
+			factor = 10
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_civ
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+			
+		remove_effect = {
+			swap_ideas = {
+				remove_idea = kurdish_language_solutions_2
+				add_idea = kurdish_language_solutions_3
+			}
+			clr_country_flag = doing_counter_terror_op_civ
+		}
+	}
+	
+	kurdish_language_4 = {
+	
+		icon = GFX_decision_nationalism
+		
+		fire_only_once = yes
+	
+		available = {
+			NOT = { has_country_flag = doing_counter_terror_op_civ }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = kurdish_language_solutions_3
+		}
+			
+		cost = 20
+		days_remove = 30
+
+		ai_will_do = {
+			factor = 10
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_civ
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+			
+		remove_effect = {
+			swap_ideas = {
+				remove_idea = kurdish_language_solutions_3
+				add_idea = kurdish_language_solutions_4
+			}
+			clr_country_flag = doing_counter_terror_op_civ
+		}
+	}
+	
+	kurdish_language_5 = {
+	
+		icon = GFX_decision_nationalism
+		
+		fire_only_once = yes
+	
+		available = {
+			NOT = { has_country_flag = doing_counter_terror_op_civ }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+			has_idea = kurdish_language_solutions_4
+		}
+			
+		cost = 20
+		days_remove = 30
+
+		ai_will_do = {
+			factor = 10
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_civ
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+			
+		remove_effect = {
+			swap_ideas = {
+				remove_idea = kurdish_language_solutions_4
+				add_idea = kurdish_language_solutions_5
+			}
+			clr_country_flag = doing_counter_terror_op_civ
+		}
+	}
+	
+	investment_propaganda_1 = {
+	
+		icon = GFX_decision_operation
+		
+		fire_only_once = yes
+	
+		available = {
+			NOT = { has_country_flag = doing_counter_terror_op_civ }
+			161 = { infrastructure > 3 }
+			162 = { infrastructure > 3 }
+			163 = { infrastructure > 3 }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 161
+			controls_state = 161
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+		}
+			
+		cost = 50
+		days_remove = 20
+
+		ai_will_do = {
+			factor = 10
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_civ
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+			
+		remove_effect = {
+			custom_effect_tooltip = investment_propaganda_1_tooltip
+			hidden_effect = {
+				relative_change_pos_2 = yes
+				add_1_popularity = yes
+				subtract_from_variable = { var = pkk_presence value = 10 }
+				subtract_from_variable = { var = pkk_presence_max value = 5 }
+				clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+				clr_country_flag = doing_counter_terror_op_civ
+			}
+		}
+	}
+	
+	investment_propaganda_2 = {
+	
+		icon = GFX_decision_industry
+		
+		fire_only_once = yes
+	
+		available = {
+			NOT = { has_country_flag = doing_counter_terror_op_civ }
+			161 = { industrial_complex > 3 }
+			162 = { industrial_complex > 3 }
+			163 = { industrial_complex > 2 }
+		}
+			
+		visible = {
+			tag = TUR
+			owns_state = 161
+			controls_state = 161
+			owns_state = 162
+			controls_state = 162
+			owns_state = 163
+			controls_state = 163
+		}
+			
+		cost = 50
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 10
+		}
+		
+		complete_effect = {
+			set_country_flag = doing_counter_terror_op_civ
+			add_to_variable = { var = ct_op_count_1 value = 1 }
+			add_to_variable = { var = ct_op_count_2 value = 1 }
+		}
+			
+		remove_effect = {
+			custom_effect_tooltip = investment_propaganda_2_tooltip
+			hidden_effect = {
+				relative_change_pos_4 = yes
+				add_2_popularity = yes
+				subtract_from_variable = { var = pkk_presence value = 15 }
+				subtract_from_variable = { var = pkk_presence_max value = 5 }
+				clamp_variable = { var = pkk_presence min = pkk_presence_min max = pkk_presence_max }
+				clr_country_flag = doing_counter_terror_op_civ
+			}
+		}
+	}
+}

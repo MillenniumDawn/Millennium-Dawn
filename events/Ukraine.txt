@@ -1,0 +1,386 @@
+﻿add_namespace = ukraine
+add_namespace = ukraine_news
+add_namespace = ukraine_hidden
+add_namespace = ukraine_debates
+
+### Constitutional referendum
+
+news_event = {
+	id = ukraine_news.1
+	title = ukraine_news.1.t
+	desc = ukraine_news.1.d
+	picture = GFX_ukrainian_referendum
+	
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine_news.1.a
+	}
+}
+
+### Referendum results implementation (news)
+
+news_event = {
+	id = ukraine_news.2
+	title = ukraine_news.2.t
+	desc = ukraine_news.2.d
+	picture = GFX_verkhovna_rada
+	
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine_news.2.a
+		country_event = { id = ukraine_debates.1 days = 42 }
+	}
+}
+
+#(debates 1)
+country_event = {
+	id = ukraine_debates.1
+	title = ukraine_debates.1.t
+	desc = ukraine_debates.1.d
+	picture = GFX_negotiations
+	
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine_debates.1.a
+		set_country_flag = debates.1.agree
+		
+		add_political_power = -25
+		
+		add_timed_idea = {
+			idea = UKR_political_support
+			days = 180
+		}
+		
+		custom_effect_tooltip = debates_agree_tt
+		
+		country_event = { id = ukraine_debates.2 days = 14 }
+	}
+	
+	option = {
+		name = ukraine_debates.1.b
+		set_country_flag = debates.1.disagree
+		
+		custom_effect_tooltip = debates_disagree_tt
+		
+		country_event = { id = ukraine_debates.2 days = 14 }
+	}
+}
+
+#(debates 2)
+country_event = {
+	id = ukraine_debates.2
+	title = ukraine_debates.2.t
+	desc = ukraine_debates.2.d
+	picture = GFX_negotiations
+	
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine_debates.2.a
+		set_country_flag = debates.2.agree
+		
+		add_political_power = -50
+		
+		add_timed_idea = {
+			idea = UKR_neglect_of_state_interests
+			days = 180
+		}
+		
+		custom_effect_tooltip = debates_agree_tt
+		
+		country_event = { id = ukraine_debates.3 days = 14 }
+	}
+	
+	option = {
+		name = ukraine_debates.2.b
+		set_country_flag = debates.2.disagree
+		
+		custom_effect_tooltip = debates_disagree_tt
+		
+		country_event = { id = ukraine_debates.3 days = 14 }
+	}
+}
+
+#(debates 3)
+country_event = {
+	id = ukraine_debates.3
+	title = ukraine_debates.3.t
+	desc = ukraine_debates.3.d
+	picture = GFX_negotiations
+	
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine_debates.3.a
+		set_country_flag = debates.3.agree
+		
+		add_political_power = -75
+		
+		add_timed_idea = {
+			idea = UKR_eco_factories
+			days = 180
+		}
+		
+		custom_effect_tooltip = debates_agree_tt
+	}
+	
+	option = {
+		name = ukraine_debates.3.b
+		set_country_flag = debates.3.disagree
+		
+		custom_effect_tooltip = debates_disagree_tt
+	}
+}
+
+### Votes
+news_event = {
+	id = ukraine_news.3
+	title = ukraine_news.3.t
+	desc = ukraine_news.3.d
+	picture = GFX_verkhovna_rada
+	
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine_news.3.a
+		country_event = { id = ukraine_hidden.1 days = 1 }
+	}
+}
+
+#(debates 4) Final result (hidden)
+country_event = {
+	id = ukraine_hidden.1
+	
+	is_triggered_only = yes
+	
+	hidden = yes
+		
+	option = {
+		name = ukraine_hidden.1.a # < 2/3 agree
+		trigger = {
+			if = {
+				limit = {
+					has_country_flag = ukraine_debates.1.agree
+					has_country_flag = ukraine_debates.2.agree
+				}
+			}
+			if = { 
+				limit = {
+					has_country_flag = ukraine_debates.1.agree
+					has_country_flag = ukraine_debates.3.agree
+				}
+			}
+			if = { 
+				limit = {
+					has_country_flag = ukraine_debates.2.agree
+					has_country_flag = ukraine_debates.3.agree
+				}
+			}
+		}
+		
+		UKR = { country_event = { id = ukraine.1 days = 1 } }
+		
+		clr_country_flag = ukraine_debates.1.agree
+		clr_country_flag = ukraine_debates.2.agree
+		clr_country_flag = ukraine_debates.3.agree
+		
+		clr_country_flag = ukraine_debates.1.disagree
+		clr_country_flag = ukraine_debates.2.disagree
+		clr_country_flag = ukraine_debates.3.disagree
+	}
+	
+	option = {
+		name = ukraine_hidden.1.b # < 2/3 disagree
+		trigger = {
+			if = {
+				limit = {
+					has_country_flag = ukraine_debates.1.disagree
+					has_country_flag = ukraine_debates.2.disagree
+				}
+			}
+			if = { 
+				limit = {
+					has_country_flag = ukraine_debates.1.disagree
+					has_country_flag = ukraine_debates.3.disagree
+				}
+			}
+			if = { 
+				limit = {
+					has_country_flag = ukraine_debates.2.disagree
+					has_country_flag = ukraine_debates.3.disagree
+				}
+			}
+		}
+		
+		UKR = { country_event = { id = ukraine.2 days = 1 } }
+		
+		clr_country_flag = ukraine_debates.1.agree
+		clr_country_flag = ukraine_debates.2.agree
+		clr_country_flag = ukraine_debates.3.agree
+		
+		clr_country_flag = ukraine_debates.1.disagree
+		clr_country_flag = ukraine_debates.2.disagree
+		clr_country_flag = ukraine_debates.3.disagree
+	}
+}
+
+### Law pass
+country_event = {
+	id = ukraine.1
+	title = ukraine.1.t
+	desc = ukraine.1.d
+	picture = GFX_verkhovna_rada_vote
+	
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine.1.a
+		add_ideas = UKR_constitutional_changes
+	}
+}
+
+### Law failed
+country_event = {
+	id = ukraine.2
+	title = ukraine.2.t
+	desc = ukraine.2.d
+	picture = GFX_verkhovna_rada_vote
+	
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine.2.a
+		add_stability = -0.10
+	}
+}
+
+### Deal with Gongadze
+country_event = {
+	id = ukraine.3
+	title = ukraine.3.t
+	desc = ukraine.3.d
+	#picture = GFX_verkhovna_rada
+	
+	fire_only_once = yes
+	
+	trigger = {
+		tag = UKR
+		date < 2000.8.15
+		date > 2000.9.15
+	}
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine.3.a
+		country_event = { id = ukraine_news.4 days = 90 }
+	}
+	
+	option = {
+		name = ukraine.3.b
+		country_event = { id = ukraine.4 days = 90 }
+	}
+}
+
+### Cassette Scandal (lead to 2001's protests)
+news_event = {
+	id = ukraine_news.4
+	title = ukraine_news.4.t
+	desc = ukraine_news.4.d
+	#picture = GFX_verkhovna_rada
+	
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine_news.4.a
+		set_country_flag = UKR_cassette_scandal
+		
+		add_political_power = -100
+		
+		country_event = { id = ukraine_news.5 days = 28 }
+	}
+}
+
+### Publishing of anti-gov news
+news_event = {
+	id = ukraine.4
+	title = ukraine.4.t
+	desc = ukraine.4.d
+	#picture = GFX_verkhovna_rada
+	
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine.4.a
+		add_political_power = -25
+		
+		add_ideas = UKR_anti_gov_news
+	}
+}
+
+### Ukraine without Kuchma (2001's protests)
+news_event = {
+	id = ukraine_news.5
+	title = ukraine_news.5.t
+	desc = ukraine_news.5.d
+	#picture = GFX_verkhovna_rada
+	
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+		
+	option = {
+		name = ukraine_news.4.a
+		
+		add_stability = -10
+		
+		add_ideas = UKR_ukraine_without_kuchma
+	}
+}
