@@ -218,7 +218,9 @@ def analyzeMyVariants(tags, rootDir, fileName):
                 if startReading ==1:
                     if "{" in line:
                         openBrace += 1
-                    if ship ==1:
+                    if "}" in line:
+                        openBrace -=1
+                    if ship ==6:
                         hasEquipment = re.search(r'equipment\s?=\s?{\s?([A-Za-z0-9_\-]+)\s?=', line, re.M | re.I)  # If it's a tag
                         hasVersion = re.search(r'version_name\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
                         hasCreator = re.search(r'creator\s?=\s?([A-Z]{3})', line, re.M | re.I)  # If it's a tag
@@ -235,7 +237,7 @@ def analyzeMyVariants(tags, rootDir, fileName):
                             hasVersion = "yes"
                             version_name = "yes"
                             ship = 2
-                    if stockpile ==5: #change to 1, set at 5 as I need to fix techs
+                    if stockpile ==1: #change to 1, set at 5 as I need to fix techs
                         hasEquipment = re.search(r'type\s?=\s?([A-Za-z0-9_\-]+)', line, re.M | re.I)  # If it's a tag
                         hasVersion = re.search(r'version_name\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
                         hasCreator = re.search(r'producer\s?=\s?([A-Z]{3})', line, re.M | re.I)  # If it's a tag
@@ -246,7 +248,7 @@ def analyzeMyVariants(tags, rootDir, fileName):
                             version_name = hasVersion.group(1)
                         if hasEquipment:
                             equipment_name = hasEquipment.group(1)
-                        if not hasCreator and hasOwner:
+                        if not hasCreator and hasOwner and openBrace ==0:
                             creator = hasOwner.group(1)
                         if not hasVersion and hasOwner:
                             hasVersion = "yes"
@@ -271,19 +273,33 @@ def analyzeMyVariants(tags, rootDir, fileName):
                             production = 2
 
 
+
                     if creator and version_name and equipment_name:
                         foundVar, foundTech = check_variant(creator, version_name, equipment_name, startDate, tags)
                         if foundVar == 0 and (ship == 1 or production == 1):
                             #print(startDate)
                             print("ERROR: " + version_name + " " + equipment_name + " from " + creator +" was used in " + fileName + " but doesn't exist")
                             #input()
+                            ship = 0
+                            stockpile = 0
+                            production = 0
+                            startReading = 0
+                            creator = ""
+                            version_name = ""
+                            equipment_name = ""
                         if foundTech == 0:
                             #print(startDate)
                             print("ERROR: " + equipment_name + " from " + creator +" was used in " + fileName + " but " + creator + " doesn't have this tech unlocked")
                             #input()
+                            ship = 0
+                            stockpile = 0
+                            production = 0
+                            startReading = 0
+                            creator = ""
+                            version_name = ""
+                            equipment_name = ""
 
-                    if "}" in line:
-                        openBrace -=1
+
                     if openBrace == 0:
                         ship = 0
                         stockpile = 0
