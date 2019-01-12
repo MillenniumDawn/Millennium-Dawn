@@ -206,13 +206,13 @@ def analyzeMyVariants(tags, rootDir, fileName):
 
         for line in content:
             if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
-                if "ship" in line:
+                if "ship" in line and "#ship" not in line:
                     ship = 1
                     startReading = 1
-                if "add_equipment_to_stockpile" in line:
+                if "add_equipment_to_stockpile" in line and "#add_equipment_to_stockpile" not in line:
                     stockpile = 1
                     startReading = 1
-                if "add_equipment_production" in line:
+                if "add_equipment_production" in line and "#add_equipment_production" not in line:
                     production = 1
                     startReading = 1
                 if startReading ==1:
