@@ -191,6 +191,8 @@ def analyzeMyVariants(tags, rootDir, fileName):
     elif has2k17Start:
         startDate = 2
 
+    global totalErrors
+
     with open(rootDir, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.readlines()
 
@@ -220,7 +222,7 @@ def analyzeMyVariants(tags, rootDir, fileName):
                         openBrace += 1
                     if "}" in line:
                         openBrace -=1
-                    if ship ==6:
+                    if ship ==1:
                         hasEquipment = re.search(r'equipment\s?=\s?{\s?([A-Za-z0-9_\-]+)\s?=', line, re.M | re.I)  # If it's a tag
                         hasVersion = re.search(r'version_name\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
                         hasCreator = re.search(r'creator\s?=\s?([A-Z]{3})', line, re.M | re.I)  # If it's a tag
@@ -248,13 +250,13 @@ def analyzeMyVariants(tags, rootDir, fileName):
                             version_name = hasVersion.group(1)
                         if hasEquipment:
                             equipment_name = hasEquipment.group(1)
-                        if not hasCreator and hasOwner and openBrace ==0:
+                        if not creator and hasOwner and openBrace ==0:
                             creator = hasOwner.group(1)
                         if not hasVersion and hasOwner:
                             hasVersion = "yes"
                             version_name = "yes"
                             ship = 2
-                    if production ==5: #change to 1, set at 5 as I need to fix techs
+                    if production ==1: #change to 1, set at 5 as I need to fix techs
                         hasEquipment = re.search(r'type\s?=\s?([A-Za-z0-9_\-]+)', line, re.M | re.I)  # If it's a tag
                         hasVersion = re.search(r'version_name\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
                         hasCreator = re.search(r'creator\s?=\s?\"([A-Z]{3})\"', line, re.M | re.I)  # If it's a tag
@@ -267,7 +269,7 @@ def analyzeMyVariants(tags, rootDir, fileName):
                             equipment_name = hasEquipment.group(1)
                         if creator == hasOwner.group(1):
                             creator = hasOwner.group(1)
-                        if not hasVersion and hasCreator:
+                        if not version_name and creator:
                             hasVersion = "yes"
                             version_name = "yes"
                             production = 2
@@ -276,28 +278,30 @@ def analyzeMyVariants(tags, rootDir, fileName):
 
                     if creator and version_name and equipment_name:
                         foundVar, foundTech = check_variant(creator, version_name, equipment_name, startDate, tags)
-                        if foundVar == 0 and (ship == 1 or production == 1):
+
+                        if version_name != "yes" and foundVar == 0 and (ship == 1 or production == 1):
                             #print(startDate)
                             print("ERROR: " + version_name + " " + equipment_name + " from " + creator +" was used in " + fileName + " but doesn't exist")
+                            totalErrors += 1
                             #input()
                             ship = 0
                             stockpile = 0
                             production = 0
                             startReading = 0
-                            creator = ""
-                            version_name = ""
-                            equipment_name = ""
                         if foundTech == 0:
                             #print(startDate)
                             print("ERROR: " + equipment_name + " from " + creator +" was used in " + fileName + " but " + creator + " doesn't have this tech unlocked")
+                            #print(equipment_name)
+                            #print(creator)
+                            totalErrors += 1
                             #input()
                             ship = 0
                             stockpile = 0
                             production = 0
                             startReading = 0
-                            creator = ""
-                            version_name = ""
-                            equipment_name = ""
+                        creator = ""
+                        version_name = ""
+                        equipment_name = ""
 
 
                     if openBrace == 0:
@@ -356,6 +360,8 @@ def main():
     # Allow running from root directory as well as from inside the tools directory
     scriptDir = os.path.realpath(__file__)
     rootDir = os.path.dirname(os.path.dirname(scriptDir))
+    global totalErrors
+    totalErrors = 0
 
     tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
 
@@ -376,7 +382,7 @@ def main():
 
 
 
-    print('The script took {0} second!'.format(time.time() - startTime))
+    print('The script took {0} second!'.format(time.time() - startTime) + " therea are a total of: " + str(totalErrors) + " errors.")
 
     return bad_count
 
