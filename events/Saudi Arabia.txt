@@ -1,0 +1,384 @@
+﻿add_namespace = SAU_YEM
+add_namespace = SAU_2017_Riyadh_Summit
+add_namespace = SAU_GCC_CRISIS
+
+country_event = {
+	id = SAU_2017_Riyadh_Summit.0
+	title = SAU_2017_Riyadh_Summit.0.t
+	desc = SAU_2017_Riyadh_Summit.0.d
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Host It
+		name = SAU_2017_Riyadh_Summit.0.a
+		log = "[GetDateText]: [This.GetName]: SAU_2017_Riyadh_Summit.0.a executed"
+		news_event = { id = SAU_2017_Riyadh_Summit.1 } #new event improving relations among attendees
+		if = {
+			limit = { has_dlc = "Death or Dishonor" }
+			USA = {
+				create_production_license = {
+					target = SAU 
+					equipment = {
+						type = missile_frigate_4 #Freedom-Class Block II
+						version_name = "Freedom-Class Block II"
+					}
+					cost_factor = 0
+				}
+				create_production_license = {
+					target = SAU 
+					equipment = {
+						type = MBT_4 #"M1A2 Abrams
+					}
+					cost_factor = 0
+				}
+				create_production_license = {
+					target = SAU 
+					equipment = {
+						type = transport_helicopter3 #Boeing CH-47F Chinook
+					}
+					cost_factor = 0
+				}
+			}
+			else = {
+				add_equipment_production = { 
+					equipment = {
+						type = AS_Fighter3 #EF-2000 Typhoon
+						version_name = "Freedom-Class Block II"
+						creator = "USA"
+					}
+					requested_factories = 1
+					progress = 0.5
+					efficiency = 100
+					amount = 4
+				}
+				add_equipment_production = { 
+					equipment = {
+						type = MBT_4 #"M1A2 Abrams
+						creator = "USA"
+					}
+					requested_factories = 1
+					progress = 0.5
+					efficiency = 50
+					amount = 4
+				}
+				add_equipment_production = { 
+					equipment = {
+						type = transport_helicopter3 #Boeing CH-47F Chinook
+						creator = "USA"
+					}
+					requested_factories = 1
+					progress = 0.5
+					efficiency = 50
+					amount = 4
+				}
+			}
+			176 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_controlled_state = {
+				limit = {
+					free_building_slots = {
+						building = infrastructure
+						size > 0
+					}
+					free_building_slots = { # avoid wastelands
+						building = industrial_complex
+						size > 0
+					}
+				}
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		hidden_effect = {
+			USA = { news_event = { id = USA_Trump_First_Trip.1 days = 3 } } #Trump tweets support for SAU
+			SAU = { news_event = { id = USA_Trump_First_Trip.1 days = 3 } } #Trump tweets support for SAU
+		}
+		ai_chance = { factor = 50 }
+	}
+	option = { #Don't host it
+		name = SAU_2017_Riyadh_Summit.0.b
+		log = "[GetDateText]: [This.GetName]: SAU_2017_Riyadh_Summit.0.b executed"
+		ai_chance = {
+			factor = 20 
+			modifier = {
+				factor = 100
+				has_opinion = { target = USA value < -10 }
+			}
+		
+		}
+		
+	}
+}
+
+#Improves relations among attendees
+news_event = {
+	id = SAU_2017_Riyadh_Summit.1
+	title = SAU_2017_Riyadh_Summit.1.t
+	desc = SAU_2017_Riyadh_Summit.1.d
+	picture = GFX_SAU_2017_Riyadh_Summit
+
+	#fire_only_once = yes
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = SAU_2017_Riyadh_Summit.1.a
+		log = "[GetDateText]: [This.GetName]: SAU_2017_Riyadh_Summit.1.a executed"
+		custom_effect_tooltip = SAU_Riyadh_Summit_tt
+		
+		hidden_effect = {
+		if = {
+			limit = { Is_2017_Riyadh_Summit_Member = yes }
+			2017_Riyadh_Summit = yes #Improves relations among attendees
+		}
+		if = {
+			limit = { or = { has_idea = GCC_member tag = USA } }
+			USA_GCC_2017_Riyadh_Summit = yes #Improves relations among USA AND GCC
+			}
+		}
+	}
+}
+
+#Start of GCC Crisis
+country_event = {
+	id = SAU_GCC_CRISIS.0
+	title = SAU_GCC_CRISIS.0.t
+	desc = SAU_GCC_CRISIS.0.d
+
+	#fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Pressure QAT
+		name = SAU_GCC_CRISIS.0.a
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.0.a executed"
+		add_political_power = -50
+		add_war_support = 0.05
+		every_country = {
+			limit = { 
+				or = {
+					tag = BAH 
+					tag = CHA 
+					tag = COM 
+					tag = EGY 
+					tag = MLD 
+					tag = MAU 
+					tag = SEN 
+					tag = UAE
+					tag = YEM
+				}
+			}
+			country_event = { id = SAU_GCC_CRISIS.1 }
+		}
+		USA = { country_event = { id = SAU_GCC_CRISIS.2 days = 5 } }
+		add_opinion_modifier = { target = QAT modifier = Blockade_QAT }
+		add_opinion_modifier = { target = QAT modifier = Blockade_QAT_Trade }
+		ai_chance = { factor = 50 }
+	}
+		option = { #Don't do it
+		name = SAU_GCC_CRISIS.0.b
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.0.b executed"
+		add_stability = 0.05
+		ai_chance = { factor = 50 }
+	}
+
+}
+#Join Blockade Against Qatar
+country_event = {
+	id = SAU_GCC_CRISIS.1
+	title = SAU_GCC_CRISIS.1.t
+	desc = SAU_GCC_CRISIS.1.d
+
+	#fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #join
+		name = SAU_GCC_CRISIS.1.a
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.1.a executed"
+		add_opinion_modifier = { target = QAT modifier = Blockade_QAT }
+		add_opinion_modifier = { target = QAT modifier = Blockade_QAT_Trade }
+		ai_chance = { factor = 50 }
+	}
+	option = { #Don't join
+		name = SAU_GCC_CRISIS.1.b
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.1.b executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = SAU modifier = Decline_Blockade_QAT }
+		#ai_chance = { factor = 50 }
+	}
+
+}
+#Trump support or don't support blockade
+country_event = {
+	id = SAU_GCC_CRISIS.2
+	title = SAU_GCC_CRISIS.2.t
+	desc = SAU_GCC_CRISIS.2.d
+
+	#fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Support them
+		name = SAU_GCC_CRISIS.2.a
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.2.a executed"
+		SAU = { 
+			add_opinion_modifier = { target = USA modifier = Trump_Support_Blockade_QAT }
+			set_country_flag = USA_SUPPORT_QAT_BLOCKADE
+		}
+		add_political_power = 25
+		hidden_effect = { news_event = { id = SAU_GCC_CRISIS.3 days = 5 } }
+		ai_chance = { factor = 50 }
+	}
+	option = { #None of our business
+		name = SAU_GCC_CRISIS.2.b
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.2.b executed"
+		add_political_power = -25
+		hidden_effect = { news_event = { id = SAU_GCC_CRISIS.3 days = 5 } }
+		ai_chance = { factor = 50 }
+	}
+
+}
+#Qatar blockade announced
+news_event = {
+	id = SAU_GCC_CRISIS.3
+	title = SAU_GCC_CRISIS.3.t
+	picture = GFX_SAU_QAT_CRISIS
+	
+	desc = { text = SAU_GCC_CRISIS.3.d.1 trigger = { not = { SAU = { has_country_flag = USA_SUPPORT_QAT_BLOCKADE } } } }
+	desc = { text = SAU_GCC_CRISIS.3.d.2 trigger = { SAU = { has_country_flag = USA_SUPPORT_QAT_BLOCKADE } } }
+	
+	#fire_only_once = yes
+	is_triggered_only = yes
+	major = yes
+	
+	option = { #Initial statement, Don't accept demands
+		name = SAU_GCC_CRISIS.3.a
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.3.a executed"
+		trigger = { original_tag = QAT }
+		if = {
+			limit = { SAU = { has_country_flag = USA_SUPPORT_QAT_BLOCKADE } }
+			country_event = { id = SAU_GCC_CRISIS.4 days = 5 } #Preasure USA to reverse stance
+			else = {
+				news_event = { id = SAU_GCC_CRISIS.7 days = 10 } #Qatar Declines
+			}
+		}
+		ai_chance = { factor = 50 }
+	}
+	option = { #Accept initial demands
+		name = SAU_GCC_CRISIS.3.b
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.3.b executed"
+		trigger = { original_tag = QAT }
+		news_event = { id = SAU_GCC_CRISIS.8 days = 5 }
+		ai_chance = { factor = 50 }
+		
+	}
+	option = { #interesting
+		name = SAU_GCC_CRISIS.3.c
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.3.c executed"
+		trigger = { not = { original_tag = QAT } }
+		
+	}
+}
+#Qatar pressure USA to reverse stance
+country_event = {
+	id = SAU_GCC_CRISIS.4
+	title = SAU_GCC_CRISIS.4.t
+	desc = SAU_GCC_CRISIS.4.d
+	
+	#fire_only_once = yes
+	is_triggered_only = yes
+	#major = yes
+	
+	option = { #Threaten to remove US license for bases in QAT
+		name = SAU_GCC_CRISIS.4.a
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.4.a executed"
+		country_event = { id = SAU_GCC_CRISIS.5 days = 5 }
+		ai_chance = { factor = 50 }
+	}
+	option = { #Leave the US out of this
+		name = SAU_GCC_CRISIS.4.b
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.4.b executed"
+		country_event = { id = SAU_GCC_CRISIS.7 days = 5 }
+	}
+
+}
+#US response to QAT Pressure
+country_event = {
+	id = SAU_GCC_CRISIS.5
+	title = SAU_GCC_CRISIS.5.t
+	desc = SAU_GCC_CRISIS.5.d
+	
+	#fire_only_once = yes
+	is_triggered_only = yes
+	#major = yes
+	
+	option = { #Reverse stance
+		name = SAU_GCC_CRISIS.5.a
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.5.a executed"
+		news_event = { id = SAU_GCC_CRISIS.6 }
+		hidden_effect = { news_event = { id = SAU_GCC_CRISIS.7 } }
+		ai_chance = { factor = 50 }
+	}
+	option = { #Keep stance
+		name = SAU_GCC_CRISIS.5.b
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.5.b executed"
+	}
+
+}
+#US reverse stance announcement
+news_event = {
+	id = SAU_GCC_CRISIS.6
+	title = SAU_GCC_CRISIS.6.t
+	desc = SAU_GCC_CRISIS.6.d
+	picture = GFX_USA_REVERSE_QAT_STANCE
+	
+	#fire_only_once = yes
+	is_triggered_only = yes
+	major = yes
+	
+	option = { #interesting
+		name = SAU_GCC_CRISIS.6.a
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.6.a executed"
+	}
+}
+#Qatar Declines offer
+news_event = {
+	id = SAU_GCC_CRISIS.7
+	title = SAU_GCC_CRISIS.7.t
+	desc = SAU_GCC_CRISIS.7.d
+	picture = GFX_SAU_QAT_CRISIS_QAT_RESPONSE
+	
+	#fire_only_once = yes
+	is_triggered_only = yes
+	major = yes
+	
+	option = { #interesting
+		name = SAU_GCC_CRISIS.7.a
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.7.a executed"
+	}
+
+}
+#Qatar Accepts offer
+news_event = {
+	id = SAU_GCC_CRISIS.8
+	title = SAU_GCC_CRISIS.8.t
+	desc = SAU_GCC_CRISIS.8.d
+	picture = GFX_SAU_QAT_CRISIS_QAT_RESPONSE
+	
+	#fire_only_once = yes
+	is_triggered_only = yes
+	major = yes
+	
+	option = { #interesting
+		name = SAU_GCC_CRISIS.8.a
+		log = "[GetDateText]: [This.GetName]: SAU_GCC_CRISIS.8.a executed"
+	}
+
+}
