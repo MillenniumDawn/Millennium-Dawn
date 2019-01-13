@@ -345,7 +345,6 @@ def check_variant (creator, version_name, equipment_name, startDate, tags):
             for x in tags[tagPos][2]:
                 if equipment_name == x:
                     foundTech = 1
-
     return foundVar, foundTech
 
 
