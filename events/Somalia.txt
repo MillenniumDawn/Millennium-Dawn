@@ -107,7 +107,7 @@ country_event = {
 			country_exists = SOM
 			country_exists = SHB
 		}
-		NOT = { 240 = { is_core_of = SOM } }
+		NOT = { 956 = { is_core_of = SOM } }
 	}
 	
 	mean_time_to_happen = {
@@ -162,6 +162,135 @@ country_event = {
 	}
 }
 
+#Give the winner SOM cosmetic tag - 2000 civil war version
+country_event = {
+	id = Somalia.2
+	
+	hidden = yes
+	
+	trigger = {
+		has_start_date < 2016.1.1
+		OR = {
+			AND = {				#government victory
+				tag = SOM		
+				NOT = { country_exists = SNA }
+				OR = {
+					NOT = { country_exists = SWS }
+					NOT = { has_war_with = SWS }
+				}
+				OR = {
+					NOT = { country_exists = JUB }
+					NOT = { has_war_with = JUB }
+				}
+			}
+			AND = {				#rebel victory
+				tag = SNA		
+				NOT = { country_exists = SOM }
+				OR = {
+					NOT = { country_exists = SWS }
+					NOT = { has_war_with = SWS }
+				}
+				OR = {
+					NOT = { country_exists = JUB }
+					NOT = { has_war_with = JUB }
+				}
+			}
+			AND = {				#somalia is fucked
+				OR = {
+					tag = JUB
+					tag = SWS
+				}
+				OR = {
+					NOT = { country_exists = SOM }
+					SOM = { is_subject_of = ROOT }
+				}
+				OR = {
+					NOT = { country_exists = SNA }
+					SNA = { is_subject_of = ROOT }
+				}
+			}					
+		}
+		NOT = { has_global_flag = Somalia_Civil_War_Over }
+	}
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+	
+	immediate = {
+		#Civil war is over
+		set_global_flag = Somalia_Civil_War_Over
+		#Clear core status
+		240 = {
+			remove_core_of = SOM
+			remove_core_of = SNA
+		}
+		239 = {
+			remove_core_of = SOM
+			remove_core_of = SNA
+		}
+		238 = {
+			remove_core_of = SOM
+			remove_core_of = SNA
+		}
+		237 = {
+			remove_core_of = SOM
+			remove_core_of = SNA
+		}
+		954 = {
+			remove_core_of = SOM
+			remove_core_of = SNA
+		}
+		955 = {
+			remove_core_of = SOM
+			remove_core_of = SNA
+		}
+		956 = {
+			remove_core_of = SOM
+			remove_core_of = SNA
+		}
+		#Make the winner Somalia
+		if = {
+			limit = { tag = SNA	}
+			set_cosmetic_tag = SOM
+		}
+		if = {
+			limit = {
+				OR = {
+					tag = SNA
+					tag = SOM
+				}
+			}
+			add_state_core = 240
+			add_state_core = 239
+			add_state_core = 238
+			add_state_core = 237
+			add_state_core = 954
+			add_state_core = 955
+			add_state_core = 956
+			set_capital = 956
+		}
+		else = {
+			SOM = {
+				add_state_core = 240
+				add_state_core = 239
+				add_state_core = 238
+				add_state_core = 237
+				add_state_core = 954
+				add_state_core = 955
+				add_state_core = 956
+				set_capital = 956
+			}
+		}
+		news_event = { id = SomaliaNews.2 hours = 6 }
+	}
+	
+	option = {
+		name = Somalia.2.a
+		log = "[GetDateText]: [This.GetName]: Somalia.2.a executed"
+	}
+}
+
 #Al-Shabaab victory
 news_event = {
 
@@ -213,6 +342,45 @@ news_event = {
 		name = SomaliaNews.1.b
 		log = "[GetDateText]: [This.GetName]: SomaliaNews.1.b executed"
 		trigger = {	has_government = fascism }
+		ai_chance = { factor = 100 }
+	}
+	
+}
+
+#Government victory
+news_event = {
+
+	id = SomaliaNews.2
+	title = SomaliaNews.2.t
+	desc = {
+		text = SomaliaNews.2.SOM.d
+		trigger = { FROM = { original_tag = SOM } }
+	}
+	desc = {
+		text = SomaliaNews.2.SNA.d
+		trigger = { FROM = { original_tag = SNA } }
+	}
+	desc = {
+		text = SomaliaNews.2.Separatist.d
+		trigger = { 
+			FROM = { 
+				OR = {
+					original_tag = SWS 
+					original_tag = JUB
+				} 
+			}
+		}
+	}
+	
+	picture = GFX_news_somalia_civil_war
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = SomaliaNews.2.a
+		log = "[GetDateText]: [This.GetName]: SomaliaNews.2.a executed"
 		ai_chance = { factor = 100 }
 	}
 	
