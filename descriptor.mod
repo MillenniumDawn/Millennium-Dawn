@@ -1,5 +1,5 @@
 ﻿name="Millennium_Dawn DEV"
-path="mod/Millennium_Dawn/"
+path="Millennium_Dawn"
 tags={
 	"Alternative History"
 	"Gameplay"
