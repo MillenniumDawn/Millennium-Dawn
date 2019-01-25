@@ -321,7 +321,7 @@ PixelShader =
 	static const float NIGHT_DARKNESS = 0.5f; //0.5
 	static const float SOUTH_POLE_OFFSET = 0.17f; // Our map is missing big parts of globe on north and south
 	static const float NORTH_POLE_OFFSET = 0.93f;
-	static const float GLOBE_NORMAL_LIMIT = 0.8f; //was0.7
+	static const float GLOBE_NORMAL_LIMIT = 0.7f; //was0.7
 
 
 	float3 GlobeNormalToMapNormal( float3 vGlobeNormal, float3 vNormal )
