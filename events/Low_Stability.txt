@@ -1,0 +1,68 @@
+﻿# Outlook drift based on neighbors
+#by Hiddengearz based off of Killerrabit Neighbor Drift
+
+add_namespace = low_stability
+
+#Pulse fired from init
+#Will give each country one idea per outlook which country they border
+#Effect is stronger from majors
+
+country_event = {
+	id = low_stability.1
+	title = low_stability.1.t
+	desc = low_stability.1.d
+	
+	hidden = yes
+	
+	mean_time_to_happen = { 
+		days = 30 
+	}
+	
+	trigger = {
+		any_neighbor_country = { or = { has_stability < 0.36 is_target_of_coup = yes has_civil_war = yes } } #triggers for unstable countries
+	}
+	
+	immediate = {
+		log = "[GetDateText]: [From.GetName]: triggered low_stability.1 for [This.GetName]: "
+		set_country_flag = { flag = LS_neighbor_count value = 0 }
+		every_neighbor_country = { #Unstable neighbors
+			limit = {
+				or = { has_stability < 0.36 is_target_of_coup = yes has_civil_war = yes }
+				any_owned_state = {
+					is_core_of = this
+					any_neighbor_state = {
+						is_core_of = PREV
+					}
+				}
+			}
+			PREV = { modify_country_flag = { flag = LS_neighbor_count value = 1 } }
+		}
+		update_unstable_neighbors = yes
+		clr_country_flag = LS_neighbor_count
+		
+	}
+	
+	option = {
+		name = low_stability.1.a
+		log = "[GetDateText]: [This.GetName]: low_stability.1.a completed"
+	}
+}
+
+country_event = {
+	id = low_stability.2
+	title = low_stability.2.t
+	desc = low_stability.2.d
+	
+	hidden = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		GER = {
+			#limit = { is_ai = yes has_war = no }
+			set_country_flag = MD4_init
+			#activate_decision = MD4_init
+		}
+		log = "[GetDateText]: [From.GetName]: triggered low_stability.2 for [This.GetName]: "
+	}
+	
+}

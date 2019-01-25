@@ -1,0 +1,111 @@
+﻿add_namespace = init
+
+#Fires up init.1, any effects in init.0 don't work
+country_event = {
+	id = init.0
+	
+	hidden = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		country_event = { id = init.1 }
+		log = "[GetDateText]: [This.GetName]: init.0 completed"
+		###USE INIT.1###
+	}	
+}
+
+#Creates the pop up at the start of the game that explains things
+country_event = {
+	id = init.1
+	title = init.1.t
+	
+	is_triggered_only = yes
+	
+	desc = {
+		text = init.1.d
+		trigger = { NOT = { tag = SYR tag = FSA tag = NUS tag = ROJ tag = TUR tag = KUR tag = IRQ has_idea = GCC_member tag = PER } }
+	}
+	desc = { text = init.1.d_Syria trigger = { tag = SYR } }
+	desc = { text = init.1.d_FSA trigger = { tag = FSA } }
+	desc = { text = init.1.d_AL_NUSRA trigger = { tag = NUS } }
+	desc = { text = init.1.d_ROJ trigger = { tag = ROJ } }
+	desc = { text = init.1.d_TUR trigger = { tag = TUR } }
+	desc = { text = init.1.d_KUR trigger = { tag = KUR } }
+	desc = { text = init.1.d_IRQ trigger = { tag = IRQ } }
+	desc = { text = init.1.d_GCC trigger = { has_idea = GCC_member } }
+	desc = { text = init.1.d_PER trigger = { tag = PER } }
+	desc = { text = init.1.d_USA trigger = { tag = USA } }
+	desc = { text = init.1.d_SOV trigger = { tag = SOV } }
+	
+	immediate = {
+		hidden_effect = {
+			set_country_flag = { flag = total_AB_wars value = 0 }
+			news_event = { id = USA_Russia_Investigation.0 days = 35 }
+			country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
+			country_event = { id = brotherhood.2 }
+			country_event = { id = neighbor_drift.1 } #outlook drift values
+			country_event = { id = neighbor_drift.2 }
+			country_event = { id = init_approval_rating.1 }
+			country_event = { id = state_update.2 } #states debuff 
+			country_event = { id = set_spirit.2 } #sets internal faction flags
+			country_event = { id = set_spirit.3 } #sets economy flags for approval rating
+			country_event = { id = ai_strategy.1 } #don't build units
+			country_event = { id = ai_strategy.2 } #sets African relations AI strategy on init
+			log = "[GetDateText]: [This.GetName]: init.1 completed"
+		}
+	}
+	
+	option = {
+		name = init.1.e
+		# log = "[GetDateText]: [This.GetName]: init.1.e executed"
+	}
+}
+
+#This is only fired for newly formed countries created mid game e.g released nations. There is no reason to trigger this for every country
+country_event = {
+	id = init.2
+	
+	hidden = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		country_event = { id = neighbor_drift.1 } #outlook drift values
+		country_event = { id = neighbor_drift.2 } country_event = { id = state_update.2 } #states debuff 
+		country_event = { id = set_spirit.1 } #sets multi-ethnic spirit
+		country_event = { id = set_spirit.2 } #sets internal faction flags
+		country_event = { id = set_spirit.3 days = 3 } #sets economy flags for approval rating
+		if = {
+			limit = {
+				OR = {
+					any_other_country = {
+						OR = {
+							NOT = {
+								is_justifying_wargoal_against = this
+								has_wargoal_against = this
+							}
+						}
+					}
+					has_war = no
+					threat < 0.30
+					is_bad_salafist = no
+				}
+			}
+			set_country_flag = ai_no_unit_build
+			add_ai_strategy = { type = role_ratio id = L_Inf value = -500 }
+			add_ai_strategy = { type = role_ratio id = infantry value = -500 }
+			add_ai_strategy = { type = role_ratio id = garrison value = -500 }
+			add_ai_strategy = { type = role_ratio id = mechanized value = -500 }
+			add_ai_strategy = { type = role_ratio id = armor value = -500 }
+			add_ai_strategy = { type = role_ratio id = marines value = -500 }
+			add_ai_strategy = { type = role_ratio id = Air_assault value = -500 }
+			add_ai_strategy = { type = role_ratio id = Air_Inf value = -500 }
+			add_ai_strategy = { type = role_ratio id = Special_Forces value = -500 }
+		}
+		log = "[GetDateText]: [This.GetName]: init.2 completed"
+	}
+	
+	option = {
+		name = init.2.a
+		# log = "[GetDateText]: [This.GetName]: init.2.a executed"
+	}
+}
