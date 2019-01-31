@@ -498,6 +498,10 @@ def createSubIdeologyValues (rootDir, sheet, filepath):
             content += "\t\t\tpopularity = " + str(round ((100 * nationalist),2)) + " \n"
             content += "\t\t}\n"
             content += "\t}\n"
+            content += "\truling_party = \n"
+            content += "\tlast_election = \"\"\n"
+            content += "\telection_frequency = \"\"\n"
+            content += "\telections_allowed = \"\"\n"
             content += "}\n"
             #western
             content += "set_variable = { conservatism_pop = " + subIdeology[0] + " }\n"
