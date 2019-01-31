@@ -403,6 +403,132 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t\tnationalist_Monarchist\n"
                             content += "\t}\n"
                             content += "}\n"
+def createSubIdeologyValues (rootDir, sheet, filepath):
+    content = ""
+    for a, b in enumerate(sheet[0]):
+        if b != "" or a != 0:
+            subIdeology = []
+            content += "###" + b + "###\n"
+            for c in range(0,30):
+                if c not in [1,6,13,16,26]:
+                    if c > 36:
+                        break
+                    d = sheet[c][a]
+                    #print(d)
+                    #input()
+                    #western
+                    if c == 2 and d != "" and not d.isspace():
+                       subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 3 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 4 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 5 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    #Emerging
+                    elif c == 7 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 8 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 9 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 10 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 11 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 12 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    #Salafist
+                    elif c == 14 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 15 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    #Non-Alligned
+                    elif c == 17 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 18 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 19 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 20 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 21 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 22 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 23 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 24 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    #Nationalist
+                    elif c == 26 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 27 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 28 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    elif c == 29 and d != "" and not d.isspace():
+                        subIdeology.append(str(round((0.01 * float(d)),3)))
+                    else:
+                        subIdeology.append("0")
+
+            del subIdeology[0]
+            democratic = float(subIdeology[0]) + float(subIdeology[1]) + float(subIdeology[2]) + float(subIdeology[3])
+            communism = float(subIdeology[4]) + float(subIdeology[4]) + float(subIdeology[5]) + float(subIdeology[6]) + float(subIdeology[7]) + float(subIdeology[8]) + float(subIdeology[9])
+            Salafist = float(subIdeology[10]) + float(subIdeology[11])
+            neutrality = float(subIdeology[12]) + float(subIdeology[13]) + float(subIdeology[14]) + float(subIdeology[15]) \
+                         + float(subIdeology[16]) + float(subIdeology[17]) + float(subIdeology[18]) + float(subIdeology[19])
+            nationalist = float(subIdeology[20]) + float(subIdeology[21]) + float(subIdeology[22]) + float(subIdeology[23])
+
+            content += "set_politics = {\n"
+            content += "\tparties = {\n"
+            content += "\t\tdemocratic = { #western\n"
+            content += "\t\t\tpopularity = " + str(round ((100 * democratic),2)) + " \n"
+            content += "\t\t}\n"
+            content += "\t\tcommunism = { #Emerging\n"
+            content += "\t\t\tpopularity = " + str(round ((100 * communism),2)) + " \n"
+            content += "\t\t}\n"
+            content += "\t\tfascism = { #Salafist\n"
+            content += "\t\t\tpopularity = " + str(round ((100 * Salafist),2)) + " \n"
+            content += "\t\t}\n"
+            content += "\t\tneutrality = { #neutrality\n"
+            content += "\t\t\tpopularity = " + str(round ((100 * neutrality),2)) + " \n"
+            content += "\t\t}\n"
+            content += "\t\tnationalist = { #nationalist\n"
+            content += "\t\t\tpopularity = " + str(round ((100 * nationalist),2)) + " \n"
+            content += "\t\t}\n"
+            content += "\t}\n"
+            content += "}\n"
+            #western
+            content += "set_variable = { conservatism_pop = " + subIdeology[0] + " }\n"
+            content += "set_variable = { liberalism_pop = " + subIdeology[1] + " }\n"
+            content += "set_variable = { socialism_pop = " + subIdeology[2] + " }\n"
+            content += "set_variable = { Western_Autocracy_pop = " + subIdeology[3] + " }\n"
+            #emerging
+            content += "set_variable = { Communist-State = " + subIdeology[4] + " }\n"
+            content += "set_variable = { Conservative_pop = " + subIdeology[5] + " }\n"
+            content += "set_variable = { Autocracy_pop = " + subIdeology[6] + " }\n"
+            content += "set_variable = { Vilayat_e_Faqih_pop = " + subIdeology[7] + " }\n"
+            content += "set_variable = { Mod_Vilayat_e_Faqih_pop = " + subIdeology[8] + " }\n"
+            content += "set_variable = { anarchist_communism_pop = " + subIdeology[9] + " }\n"
+            #salafist
+            content += "set_variable = { Caliphate_pop = " + subIdeology[10] + " }\n"
+            content += "set_variable = { Kingdom_pop = " + subIdeology[11] + " }\n"
+            #non-alligned
+            content += "set_variable = { Neutral_conservatism_pop = " + subIdeology[12] + " }\n"
+            content += "set_variable = { oligarchism_pop = " + subIdeology[13] + " }\n"
+            content += "set_variable = { neutral_Social_pop = " + subIdeology[14] + " }\n"
+            content += "set_variable = { Neutral_Libertarian_pop = " + subIdeology[15] + " }\n"
+            content += "set_variable = { Neutral_Autocracy_pop = " + subIdeology[16] + " }\n"
+            content += "set_variable = { Neutral_Communism_pop = " + subIdeology[17] + " }\n"
+            content += "set_variable = { Neutral_Muslim_Brotherhood_pop = " + subIdeology[18] + " }\n"
+            #nationalist
+            content += "set_variable = { Neutral_Green_pop = " + subIdeology[19] + " }\n"
+            content += "set_variable = { Nat_Autocracy_pop = " + subIdeology[20] + " }\n"
+            content += "set_variable = { Nat_Fascism_pop = " + subIdeology[21] + " }\n"
+            content += "set_variable = { Nat_Populism_pop = " + subIdeology[22] + " }\n"
+            content += "set_variable = { Monarchist_pop = " + subIdeology[23] + " }\n"
+            content += "recalculate_party = yes\n\n\n"
 
 
 
@@ -447,6 +573,10 @@ def main():
     worksheet = sheet.worksheet('Party Leader 2017')
     content = worksheet.get_all_values()
     createPartyLeaders(rootDir, content,(rootDir + "/history/generated_2017_leaders.txt"))
+
+    worksheet = sheet.worksheet('Vote Share 2017')
+    content = worksheet.get_all_values()
+    createSubIdeologyValues(rootDir, content,(rootDir + "/history/generated_2017_politics.txt"))
 
     #print(len(sheet.row_values(1)))
     #data = sheet.get_all_records()
