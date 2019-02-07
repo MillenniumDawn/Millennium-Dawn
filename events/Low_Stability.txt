@@ -19,26 +19,28 @@ country_event = {
 	}
 	
 	trigger = {
-		any_neighbor_country = { or = { has_stability < 0.36 is_target_of_coup = yes has_civil_war = yes } } #triggers for unstable countries
+		has_stability < 0.36
 	}
 	
 	immediate = {
-		log = "[GetDateText]: [From.GetName]: triggered low_stability.1 for [This.GetName]: "
-		set_country_flag = { flag = LS_neighbor_count value = 0 }
-		every_neighbor_country = { #Unstable neighbors
-			limit = {
-				or = { has_stability < 0.36 is_target_of_coup = yes has_civil_war = yes }
-				any_owned_state = {
-					is_core_of = this
-					any_neighbor_state = {
-						is_core_of = PREV
+		every_neighbor_country = {
+			log = "[GetDateText]: [From.GetName]: triggered low_stability.1 for [This.GetName]: "
+			set_country_flag = { flag = LS_neighbor_count value = 0 }
+			every_neighbor_country = { #Unstable neighbors
+				limit = {
+					or = { has_stability < 0.36 is_target_of_coup = yes has_civil_war = yes }
+					any_owned_state = {
+						is_core_of = this
+						any_neighbor_state = {
+							is_core_of = PREV
+						}
 					}
 				}
+				PREV = { modify_country_flag = { flag = LS_neighbor_count value = 1 } }
 			}
-			PREV = { modify_country_flag = { flag = LS_neighbor_count value = 1 } }
+			update_unstable_neighbors = yes
+			clr_country_flag = LS_neighbor_count
 		}
-		update_unstable_neighbors = yes
-		clr_country_flag = LS_neighbor_count
 		
 	}
 	
@@ -65,4 +67,83 @@ country_event = {
 		log = "[GetDateText]: [From.GetName]: triggered low_stability.2 for [This.GetName]: "
 	}
 	
+}
+
+#triggered via on_action on_stage_coup. Instead of adding is_target_of_coup in low_stability.1 its better to have an on action trigger this
+country_event = {
+	id = low_stability.3
+	title = low_stability.3.t
+	desc = low_stability.3.d
+	
+	hidden = yes
+	
+	mean_time_to_happen = { 
+		days = 1
+	}
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		log = "[GetDateText]: [From.GetName]: triggered low_stability.3 imediate effect for [This.GetName]: "
+		set_country_flag = { flag = LS_neighbor_count value = 0 }
+		every_neighbor_country = { #Unstable neighbors
+			limit = {
+				or = { has_civil_war = yes }
+				any_owned_state = {
+					is_core_of = this
+					any_neighbor_state = {
+						is_core_of = PREV
+					}
+				}
+			}
+			PREV = { modify_country_flag = { flag = LS_neighbor_count value = 1 } }
+		}
+		update_unstable_neighbors = yes
+		clr_country_flag = LS_neighbor_count
+		
+	}
+	
+	option = {
+		name = low_stability.3.a
+		log = "[GetDateText]: [This.GetName]: low_stability.3.a option completed"
+	}
+}
+#triggered via on_action on_declare_war. Instead of adding is_target_of_coup in low_stability.1 its better to have an on action trigger this
+country_event = {
+	id = low_stability.4
+	title = low_stability.4.t
+	desc = low_stability.4.d
+	
+	hidden = yes
+	
+	mean_time_to_happen = { 
+		days = 1
+	}
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		log = "[GetDateText]: [From.GetName]: triggered low_stability.4 imediate effect for [This.GetName]: "
+		set_country_flag = { flag = LS_neighbor_count value = 0 }
+		every_neighbor_country = { #Unstable neighbors
+			limit = {
+				or = { has_stability < 0.36 is_target_of_coup = yes has_civil_war = yes }
+				any_owned_state = {
+					is_core_of = this
+					any_neighbor_state = {
+						is_core_of = PREV
+					}
+				}
+			}
+			PREV = { modify_country_flag = { flag = LS_neighbor_count value = 1 } }
+		}
+		update_unstable_neighbors = yes
+		clr_country_flag = LS_neighbor_count
+		
+	}
+	
+	option = {
+		name = low_stability.4.a
+		log = "[GetDateText]: [This.GetName]: low_stability.4.a option completed"
+	}
 }
