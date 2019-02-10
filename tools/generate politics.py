@@ -139,6 +139,7 @@ def createPartNameLoc (rootDir, sheet):
 
 
                     #input()
+
     f = open(filepath, "w")
     with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
         file.write(content)
@@ -152,7 +153,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
             content += "###" + b + "###\n"
             for c in range(0,31):
 
-                if c not in [1,8,15,18,27]:
+                if c not in [0,1,6,13,16,25]:
                     if c > 36:
                         break
                     d = sheet[c][a]
@@ -160,7 +161,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                     #input()
                     #western
                     if not d.isspace():
-                        if c == 4 and d != "":
+                        if c == 2 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -169,7 +170,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t\twestern_conservatism\n"
                             content += "\t}\n"
                             content += "}\n"
-                        elif c == 5 and d != "":
+                        elif c == 3 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -178,7 +179,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t\twestern_liberalism\n"
                             content += "\t}\n"
                             content += "}\n"
-                        elif c == 6 and d != "":
+                        elif c == 4 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -188,7 +189,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 7 and d != "":
+                        elif c == 5 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -199,7 +200,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "}\n"
 
                         #Emerging
-                        elif c == 10 and d != "":
+                        elif c == 7 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -209,7 +210,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 11 and d != "":
+                        elif c == 8 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -219,7 +220,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 12 and d != "":
+                        elif c == 9 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -229,7 +230,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 13 and d != "":
+                        elif c == 10 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -239,7 +240,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 14 and d != "":
+                        elif c == 11 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -249,7 +250,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 15 and d != "":
+                        elif c == 12 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -260,7 +261,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "}\n"
 
                         #Salafist
-                        elif c == 18 and d != "":
+                        elif c == 14 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -270,7 +271,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 19 and d != "":
+                        elif c == 15 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -282,7 +283,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
 
 
                         #Non-Alligned
-                        elif c == 22 and d != "":
+                        elif c == 17 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -292,7 +293,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 23 and d != "":
+                        elif c == 18 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -302,7 +303,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 24 and d != "":
+                        elif c == 19 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -312,7 +313,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 25 and d != "":
+                        elif c == 20 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -322,7 +323,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 26 and d != "":
+                        elif c == 21 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -332,7 +333,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 27 and d != "":
+                        elif c == 22 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -342,7 +343,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 28 and d != "":
+                        elif c == 23 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -352,7 +353,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 29 and d != "":
+                        elif c == 24 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -364,7 +365,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
 
 
                         #Nationalist
-                        elif c == 32 and d != "":
+                        elif c == 26 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -374,7 +375,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 33 and d != "":
+                        elif c == 27 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -384,7 +385,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 34 and d != "":
+                        elif c == 28 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -394,7 +395,7 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 35 and d != "":
+                        elif c == 29 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
                             content += "\tpicture = \"\"\n"
@@ -403,6 +404,11 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t\tnationalist_Monarchist\n"
                             content += "\t}\n"
                             content += "}\n"
+
+    f = open(filepath, "w")
+    with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
+        file.write(content)
+
 def createSubIdeologyValues (rootDir, sheet, filepath):
     content = ""
     for a, b in enumerate(sheet[0]):
@@ -572,15 +578,15 @@ def main():
 
     worksheet = sheet.worksheet('Party Leader 2000')
     content = worksheet.get_all_values()
-    createPartyLeaders(rootDir, content,(rootDir + "/history/generated_2000_leaders.txt"))
+    createPartyLeaders(rootDir, content,(rootDir + "/Modding resources/generated/generated_2000_leaders.txt"))
 
     worksheet = sheet.worksheet('Party Leader 2017')
     content = worksheet.get_all_values()
-    createPartyLeaders(rootDir, content,(rootDir + "/history/generated_2017_leaders.txt"))
+    createPartyLeaders(rootDir, content,(rootDir + "/Modding resources/generated/generated_2017_leaders.txt"))
 
     worksheet = sheet.worksheet('Vote Share 2017')
     content = worksheet.get_all_values()
-    createSubIdeologyValues(rootDir, content,(rootDir + "/history/generated_2017_politics.txt"))
+    createSubIdeologyValues(rootDir, content,(rootDir + "/Modding resources/generated/generated_2017_politics.txt"))
 
     #print(len(sheet.row_values(1)))
     #data = sheet.get_all_records()
