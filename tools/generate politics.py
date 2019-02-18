@@ -2,6 +2,8 @@
 import os, sys, fnmatch, re
 import time
 import gspread
+import unidecode
+from pathlib import Path
 from oauth2client.service_account import ServiceAccountCredentials
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
@@ -139,6 +141,7 @@ def createPartNameLoc (rootDir, sheet):
 
 
                     #input()
+
     f = open(filepath, "w")
     with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
         file.write(content)
@@ -152,46 +155,59 @@ def createPartyLeaders (rootDir, sheet, filepath):
             content += "###" + b + "###\n"
             for c in range(0,31):
 
-                if c not in [1,8,15,18,27]:
+                if c not in [0,1,6,13,16,25]:
                     if c > 36:
                         break
                     d = sheet[c][a]
                     #print(d)
                     #input()
                     #western
-                    if not d.isspace():
-                        if c == 4 and d != "":
+                    if not d.isspace() and d != "":
+                        d = d.replace('\r','')
+                        d = d.replace('\n','')
+                        d = d.replace('\t','')
+                        picName = d.replace('.','')
+                        picName = picName.replace(',','')
+                        picName = picName.replace('-','_')
+                        picName = picName.replace('’','')
+                        picName = unidecode.unidecode(picName)
+                        picName = picName.replace(' ','_')+ ".dds"
+                        filePic = Path(rootDir + "/gfx/leaders/" + b + "/" + picName)
+                        if not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
+                            print("Expected a picture for " + b + " leader " + d + " named " + "/gfx/leaders/"+b+"/"+picName)
+
+                        if c == 2 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = conservatism\n"
                             content += "\ttraits = {\n"
                             content += "\t\twestern_conservatism\n"
                             content += "\t}\n"
                             content += "}\n"
-                        elif c == 5 and d != "":
+                        elif c == 3 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = liberalism\n"
                             content += "\ttraits = {\n"
                             content += "\t\twestern_liberalism\n"
                             content += "\t}\n"
                             content += "}\n"
-                        elif c == 6 and d != "":
+                        elif c == 4 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = socialism\n"
                             content += "\ttraits = {\n"
                             content += "\t\twestern_socialism\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 7 and d != "":
+                        elif c == 5 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Western_Autocracy\n"
                             content += "\ttraits = {\n"
                             content += "\t\twestern_Western_Autocracy\n"
@@ -199,60 +215,60 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "}\n"
 
                         #Emerging
-                        elif c == 10 and d != "":
+                        elif c == 7 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Communist-State\n"
                             content += "\ttraits = {\n"
                             content += "\t\temerging_Communist-State\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 11 and d != "":
+                        elif c == 8 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Conservative\n"
                             content += "\ttraits = {\n"
                             content += "\t\temerging_Conservative\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 12 and d != "":
+                        elif c == 9 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Autocracy\n"
                             content += "\ttraits = {\n"
                             content += "\t\temerging_Autocracy\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 13 and d != "":
+                        elif c == 10 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Vilayat_e_Faqih\n"
                             content += "\ttraits = {\n"
                             content += "\t\temerging_Vilayat_e_Faqih\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 14 and d != "":
+                        elif c == 11 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Mod_Vilayat_e_Faqih\n"
                             content += "\ttraits = {\n"
                             content += "\t\temerging_Vilayat_e_Faqih_ref\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 15 and d != "":
+                        elif c == 12 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = anarchist_communism\n"
                             content += "\ttraits = {\n"
                             content += "\t\temerging_anarchist_communism\n"
@@ -260,20 +276,20 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "}\n"
 
                         #Salafist
-                        elif c == 18 and d != "":
+                        elif c == 14 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Caliphate\n"
                             content += "\ttraits = {\n"
                             content += "\t\tsalafist_Caliphate\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 19 and d != "":
+                        elif c == 15 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Kingdom\n"
                             content += "\ttraits = {\n"
                             content += "\t\tsalafist_Kingdom\n"
@@ -282,80 +298,80 @@ def createPartyLeaders (rootDir, sheet, filepath):
 
 
                         #Non-Alligned
-                        elif c == 22 and d != "":
+                        elif c == 17 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Neutral_conservatism\n"
                             content += "\ttraits = {\n"
                             content += "\t\tneutrality_Neutral_conservatism\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 23 and d != "":
+                        elif c == 18 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = oligarchism\n"
                             content += "\ttraits = {\n"
                             content += "\t\tneutrality_oligarchism\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 24 and d != "":
+                        elif c == 19 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = neutral_Social\n"
                             content += "\ttraits = {\n"
                             content += "\t\tneutrality_neutral_Social\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 25 and d != "":
+                        elif c == 20 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Neutral_Libertarian\n"
                             content += "\ttraits = {\n"
                             content += "\t\tneutrality_Neutral_Libertarian\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 26 and d != "":
+                        elif c == 21 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Neutral_Autocracy\n"
                             content += "\ttraits = {\n"
                             content += "\t\tneutrality_Neutral_Autocracy\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 27 and d != "":
+                        elif c == 22 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Neutral_Communism\n"
                             content += "\ttraits = {\n"
                             content += "\t\tneutrality_Neutral_Communism\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 28 and d != "":
+                        elif c == 23 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Neutral_Muslim_Brotherhood\n"
                             content += "\ttraits = {\n"
                             content += "\t\tneutrality_Neutral_Muslim_Brotherhood\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 29 and d != "":
+                        elif c == 24 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Neutral_green\n"
                             content += "\ttraits = {\n"
                             content += "\t\tneutrality_Neutral_green\n"
@@ -364,45 +380,50 @@ def createPartyLeaders (rootDir, sheet, filepath):
 
 
                         #Nationalist
-                        elif c == 32 and d != "":
+                        elif c == 26 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Nat_Autocracy\n"
                             content += "\ttraits = {\n"
                             content += "\t\tnationalist_Nat_Autocracy\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 33 and d != "":
+                        elif c == 27 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Nat_Fascism\n"
                             content += "\ttraits = {\n"
                             content += "\t\tnationalist_Nat_Fascism\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 34 and d != "":
+                        elif c == 28 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Nat_Populism\n"
                             content += "\ttraits = {\n"
                             content += "\t\tnationalist_Nat_Populism\n"
                             content += "\t}\n"
                             content += "}\n"
 
-                        elif c == 35 and d != "":
+                        elif c == 29 and d != "":
                             content += "create_country_leader = {\n"
                             content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"\"\n"
+                            content += "\tpicture = \"" + picName + "\"\n"
                             content += "\tideology = Monarchist\n"
                             content += "\ttraits = {\n"
                             content += "\t\tnationalist_Monarchist\n"
                             content += "\t}\n"
                             content += "}\n"
+
+    f = open(filepath, "w")
+    with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
+        file.write(content)
+
 def createSubIdeologyValues (rootDir, sheet, filepath):
     content = ""
     for a, b in enumerate(sheet[0]):
@@ -572,15 +593,15 @@ def main():
 
     worksheet = sheet.worksheet('Party Leader 2000')
     content = worksheet.get_all_values()
-    createPartyLeaders(rootDir, content,(rootDir + "/history/generated_2000_leaders.txt"))
+    createPartyLeaders(rootDir, content,(rootDir + "/Modding resources/generated/generated_2000_leaders.txt"))
 
     worksheet = sheet.worksheet('Party Leader 2017')
     content = worksheet.get_all_values()
-    createPartyLeaders(rootDir, content,(rootDir + "/history/generated_2017_leaders.txt"))
+    createPartyLeaders(rootDir, content,(rootDir + "/Modding resources/generated/generated_2017_leaders.txt"))
 
     worksheet = sheet.worksheet('Vote Share 2017')
     content = worksheet.get_all_values()
-    createSubIdeologyValues(rootDir, content,(rootDir + "/history/generated_2017_politics.txt"))
+    createSubIdeologyValues(rootDir, content,(rootDir + "/Modding resources/generated/generated_2017_politics.txt"))
 
     #print(len(sheet.row_values(1)))
     #data = sheet.get_all_records()
