@@ -181,6 +181,8 @@ def createPartyLeaders (rootDir, sheet, filepath,worksheet):
                         d = d.replace('\r','')
                         d = d.replace('\n','')
                         d = d.replace('\t','')
+                        d = d.lstrip()
+                        d = d.rstrip()
                         picName = d.replace('.','')
                         picName = picName.replace(',','')
                         picName = picName.replace('-','_')
@@ -446,7 +448,7 @@ def createPartyLeaders (rootDir, sheet, filepath,worksheet):
                     picList.append("")
 
             blank = 0
-            if a & 1 and blank == 999:
+            if a & 1:
                 #print(a)
                # print(num_to_col_letters(int(a+2)))
                 print("Updating portrait file names in spreadsheet for " + b)
