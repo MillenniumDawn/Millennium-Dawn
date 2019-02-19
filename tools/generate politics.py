@@ -168,7 +168,7 @@ def createPartyLeaders (rootDir, sheet, filepath,worksheet):
             content += "###" + b + "###\n"
             for c in range(0,31):
 
-                if c not in [0,1,6,13,16,25]:
+                if len(b) ==3 and c not in [0,1,6,13,16,25]:
                     if c > 36:
                         break
                     d = sheet[c][a]
@@ -193,8 +193,8 @@ def createPartyLeaders (rootDir, sheet, filepath,worksheet):
                             picList.append(picName.lower())
 
                         filePic = Path(rootDir + "/gfx/leaders/" + b + "/" + picName)
-                        #if not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
-                            #print("Expected a picture for " + b + " leader " + d + " named " + "/gfx/leaders/"+b+"/"+picName)
+                        if picName != ".dds" and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
+                            print("Expected a picture for " + b + " leader " + d + " named " + "/gfx/leaders/"+b+"/"+picName)
 
 
 
@@ -445,14 +445,15 @@ def createPartyLeaders (rootDir, sheet, filepath,worksheet):
                 elif c in [1,6,13,16,25]:
                     picList.append("")
 
-            if a & 1:
-                print(a)
-                print(num_to_col_letters(int(a+2)))
-
+            blank = 0
+            if a & 1 and blank == 999:
+                #print(a)
+               # print(num_to_col_letters(int(a+2)))
+                print("Updating portrait file names in spreadsheet for " + b)
                 z = 0
-                blank = 0
+
                 for x in picList:
-                    print(str(z) + ": " + x)
+                    #print(str(z) + ": " + x)
                     z+=1
                     if x != "":
                         blank = 1
@@ -461,7 +462,7 @@ def createPartyLeaders (rootDir, sheet, filepath,worksheet):
                     cellTop = str(num_to_col_letters(int(a+2))) + "2"
                     cellBot = str(num_to_col_letters(int(a+2))) + "30"
 
-                    print(cellTop + ":" + cellBot)
+                    #print(cellTop + ":" + cellBot)
                     ## Select a cell range
                     cell_list = worksheet.range(cellTop + ":" + cellBot)
 
