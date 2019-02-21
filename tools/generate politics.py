@@ -23,7 +23,7 @@ def get_tags(rootDir):
             if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
                 hasTag = re.match(r'^[A-Z]{3}', line, re.M | re.I)  # If it's a tag
                 if hasTag:
-                    tags.append(hasTag.group())
+                    tags.append([[[hasTag.group()]]])
                     pos +=1
     #input()
     return tags
@@ -44,6 +44,30 @@ def num_to_col_letters(num):
         letters += chr(mod + 65)
         num = (num - 1) // 26
     return ''.join(reversed(letters))
+
+def get_tagPos(text, tags):
+    isValidTag = re.match(r'^([A-Z]{3})\s.*-', text, re.M | re.I)  # If filename has a tag in it
+    tagPos = -1
+    if isValidTag:
+        for pos, x in enumerate(tags):
+            for y in x:
+                # pos = 0
+                for z in y:
+                    for b in z:
+                        if b == isValidTag.group(1):
+                            tagPos = pos
+                            return tagPos, b
+
+def get_tagPos2(tag,tags):
+    for pos, x in enumerate(tags):
+        for y in x:
+            # pos = 0
+            for z in y:
+                for b in z:
+                    if b == tag:
+                        tagPos = pos
+                        return tagPos
+
 
 def createPartNameLoc (rootDir, sheet):
     content = ""
@@ -156,7 +180,7 @@ def createPartNameLoc (rootDir, sheet):
         file.write(content)
 
 
-def createPartyLeaders (rootDir, sheet, filepath,worksheet):
+def createPartyLeaders (rootDir, sheet, filepath, worksheet, extraLeaders, tags):
     content = ""
     content = "l_english:\n"
     #sheetLength = (len(sheet[0]))
@@ -195,10 +219,39 @@ def createPartyLeaders (rootDir, sheet, filepath,worksheet):
                             picList.append(picName.lower())
 
                         filePic = Path(rootDir + "/gfx/leaders/" + b + "/" + picName)
-                        if picName != ".dds" and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
-                            print("Expected a picture for " + b + " leader " + d + " named " + "/gfx/leaders/"+b+"/"+picName)
+                        #if picName != ".dds" and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
+                            #print("Expected a picture for " + b + " leader " + d + " named " + "/gfx/leaders/"+b+"/"+picName)
 
+                        tagPos = get_tagPos2(b,tags)
+                        found = 0
+                        #print(b)
+                        #print(tagPos)
+                        if tagPos is not None and d != "":
+                            found = 0
+                            for pos, x in enumerate(extraLeaders[tagPos]):
+                                #print("tag pos: " + str(tagPos))
+                                #print("pos: " + str(pos))
 
+                                for pos2, y in enumerate(x):
+                                    if found == 0:
+                                        for pos3, z in enumerate(y):
+                                            #print(y)
+                                            #print(z)
+                                            #input()
+                                            if pos2 == 1:
+                                                #print(x)
+                                                #input()
+                                                #print(b)
+                                                #print("looking for: " + d)
+                                                if z == d:
+                                                    print("Found a duplicate leader in extra leaders: " + z)
+                                                    #input()
+                                                    found =1
+                                                    break
+                                    else:
+                                        break
+                                if found == 1:
+                                    break
 
                         if c == 2 and d != "":
                             content += "create_country_leader = {\n"
@@ -448,7 +501,7 @@ def createPartyLeaders (rootDir, sheet, filepath,worksheet):
                     picList.append("")
 
             blank = 0
-            if a & 1:
+            if a & 1 and blank == 999:
                 #print(a)
                # print(num_to_col_letters(int(a+2)))
                 print("Updating portrait file names in spreadsheet for " + b)
@@ -625,33 +678,158 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet):
     with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
         file.write(content)
 
+def getExtraLeaders(rootDir, tags, tagPos, tag):
+    with open(rootDir, 'r', encoding='utf-8', errors='ignore') as file:
+        content = file.readlines()
+        foundLeader = 0
+        openBrace = 0
+        startDate = 0
+        leaders = tags
+
+        #leaders[tagPos].append([[]]) #LeaderPictures
+        #leaders[tagPos].append([[]]) #LeaderExpire
+        #leaders[tagPos].append([[]]) #leaderIdeology
+        #leaders[tagPos].append([[]]) #leaderTraits
+        leaderCount = -1
+
+        for line in content:
+            if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
+                if "2000.1.1" in line:
+                    startDate = 1
+                if startDate == 1:
+                    if "create_country_leader" in line:
+                        foundLeader = 1
+                        hasTraits = 0
+                        traits = []
+                        hasTraits = 0
+                        leaderCount += 1
+                        leaders[tagPos][leaderCount].append([])
+                        leaders[tagPos][leaderCount].append([])
+                        leaders[tagPos][leaderCount].append([])
+                        leaders[tagPos][leaderCount].append([])
+                        leaders[tagPos][leaderCount].append([])
+                        leaders[tagPos][leaderCount].append([])
+
+                    if foundLeader ==1:
+                        if "{" in line:
+                            openBrace +=1
+                        if "}" in line:
+                            openBrace -= 1
+                    if openBrace ==0 and foundLeader == 1 :
+                        foundLeader = 0
+                        leaders[tagPos].append([])
+                        if traits:
+                            leaders[tagPos][leaderCount][5].append(traits)
+
+                    if openBrace ==1:
+                        #and ("name" in line or "type" in line):
+                        leaderName = re.search(r'name\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
+                        leaderPicture = re.search(r'picture\s?=\s?(.*)', line, re.M | re.I)  # If it's a tag
+                        leaderExpire = re.search(r'expire\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
+                        leaderIdeology = re.search(r'ideology\s?=\s?\b(.*)\b', line, re.M | re.I)  # If it's a tag
+
+                        if leaderName:
+                            leaders[tagPos][leaderCount][1].append(leaderName.group(1))
+                            newtag = [tag]
+                            leaders[tagPos][leaderCount][0] = newtag
+
+
+                        if leaderPicture:
+                            leaders[tagPos][leaderCount][2].append(leaderPicture.group(1))
+                            #print(leaderPicture.group(1))
+                            #input()
+                        if leaderExpire:
+                            leaders[tagPos][leaderCount][3].append(leaderExpire.group(1))
+                            #print(leaderExpire.group(1))
+                            #input()
+                        if leaderIdeology:
+                           # print(leaders[tagPos])
+                            leaders[tagPos][leaderCount][4].append(leaderIdeology.group(1))
+                            #print(leaderIdeology.group(1))
+                            #input()
+
+
+                    if openBrace == 2:
+
+                        if hasTraits ==1:
+                            #print("has traits")
+                            leaderTraits = re.search(r'\s\b(.*)\b', line, re.M | re.I)  # If it's a tag
+                            if leaderTraits:
+                                traits.append(leaderTraits.group(1))
+                                #print(leaderTraits.group(1))
+                                #input()
+                        if "traits" in line:
+                            hasTraits = 1
+
+
+    return leaders
 
 def main():
-    sheet = gc.open('Politics')
+    sheet = gc.open('Copy of Politics')
     worksheet = sheet.worksheet('Party Name')
     content = worksheet.get_all_values()
 
     scriptDir = os.path.realpath(__file__)
     rootDir = os.path.dirname(os.path.dirname(scriptDir))
     tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
-    sheetTags =  get_sheet_tags(content)
+    sheetTags = get_sheet_tags(content)
+    extraLeaders = []
 
-    #print(content)
+    for root, dirnames, filenames in os.walk(rootDir + '/' + 'history' + '/countries' + '/'):
+        for filename in fnmatch.filter(filenames, '*.txt'):
+            tagPos, tag = get_tagPos(filename, tags)
+            if tagPos != -1:
+                #print(filename)
+                extraLeaders += getExtraLeaders(os.path.join(root, filename), tags, tagPos, tag)
+    #print(extraLeaders[0][0][0])
+    #print(extraLeaders[0][1][0])
+    #print(extraLeaders[0][2][0])
+    #print(extraLeaders[0][3][0])
+    #print(extraLeaders[0][4][0])
+    #print(extraLeaders[0][4][0])
     #input()
 
-    #print(content)
-    #input()
+    worksheet = sheet.worksheet('Party Leader 2000')
+    content = worksheet.get_all_values()
+    createPartyLeaders(rootDir, content, (rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),
+                       worksheet, extraLeaders, tags)
 
+    #for pos, x in enumerate(extraLeaders):
+        #for pos2, y in enumerate(x):
+            #for pos3, z in enumerate(y):
+                #for pos4, zz in enumerate(z):
+                  #if pos3 == 0:
+                #print("~~~~tag:~~~~")
+                        #if pos3 == 1:
+                #print("~~~~Leader:~~~~")
+                        #if pos3 == 2:
+                #print("~~~~picture:~~~~")
+                        #if pos3 == 3:
+                #print("~~~~expire:~~~~")
+                        #if pos3 == 4:
+                #print("~~~~ideology:~~~~")
+                        #if pos3 == 5:
+                #print("~~~~traits:~~~~")
+                        #for zzz in zz:
+                    #print(zzz)
+                            #input()
+                        #if pos3 != 5:
+                    #print(zz)
+
+
+
+    print("pause")
+    input()
+    input()
+
+
+    #need to fix
     for x in tags:
          if x not in sheetTags:
             print (str(x) + " is a country in game but wasn't found in the politics partyname sheet")
 
     #input()
     createPartNameLoc(rootDir, content)
-
-    worksheet = sheet.worksheet('Party Leader 2000')
-    content = worksheet.get_all_values()
-    createPartyLeaders(rootDir, content,(rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),worksheet)
 
     worksheet = sheet.worksheet('Party Leader 2017')
     content = worksheet.get_all_values()
