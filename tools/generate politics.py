@@ -3,6 +3,7 @@ import os, sys, fnmatch, re
 import time
 import gspread
 import unidecode
+import string
 from pathlib import Path
 from oauth2client.service_account import ServiceAccountCredentials
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -35,6 +36,14 @@ def get_sheet_tags (sheet):
             sheet_tags.append(x)
 
     return sheet_tags
+
+def num_to_col_letters(num):
+    letters = ''
+    while num:
+        mod = (num - 1) % 26
+        letters += chr(mod + 65)
+        num = (num - 1) // 26
+    return ''.join(reversed(letters))
 
 def createPartNameLoc (rootDir, sheet):
     content = ""
@@ -147,34 +156,49 @@ def createPartNameLoc (rootDir, sheet):
         file.write(content)
 
 
-def createPartyLeaders (rootDir, sheet, filepath):
+def createPartyLeaders (rootDir, sheet, filepath,worksheet):
     content = ""
     content = "l_english:\n"
+    #sheetLength = (len(sheet[0]))
+    #print(num_to_col_letters(int(sheetLength)))
+    #input()
     for a, b in enumerate(sheet[0]):
         if b != "" or a != 0:
+            picList = []
             content += "###" + b + "###\n"
             for c in range(0,31):
 
-                if c not in [0,1,6,13,16,25]:
+                if len(b) ==3 and c not in [0,1,6,13,16,25]:
                     if c > 36:
                         break
                     d = sheet[c][a]
                     #print(d)
                     #input()
                     #western
-                    if not d.isspace() and d != "":
+                    if d.isspace() and d == "":
+                        picList.append("")
+                    else:
                         d = d.replace('\r','')
                         d = d.replace('\n','')
                         d = d.replace('\t','')
+                        d = d.lstrip()
+                        d = d.rstrip()
                         picName = d.replace('.','')
                         picName = picName.replace(',','')
                         picName = picName.replace('-','_')
                         picName = picName.replace('’','')
                         picName = unidecode.unidecode(picName)
                         picName = picName.replace(' ','_')+ ".dds"
+                        if picName == ".dds":
+                            picList.append("")
+                        else:
+                            picList.append(picName.lower())
+
                         filePic = Path(rootDir + "/gfx/leaders/" + b + "/" + picName)
-                        if not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
+                        if picName != ".dds" and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
                             print("Expected a picture for " + b + " leader " + d + " named " + "/gfx/leaders/"+b+"/"+picName)
+
+
 
                         if c == 2 and d != "":
                             content += "create_country_leader = {\n"
@@ -420,11 +444,45 @@ def createPartyLeaders (rootDir, sheet, filepath):
                             content += "\t}\n"
                             content += "}\n"
 
+                elif c in [1,6,13,16,25]:
+                    picList.append("")
+
+            blank = 0
+            if a & 1:
+                #print(a)
+               # print(num_to_col_letters(int(a+2)))
+                print("Updating portrait file names in spreadsheet for " + b)
+                z = 0
+
+                for x in picList:
+                    #print(str(z) + ": " + x)
+                    z+=1
+                    if x != "":
+                        blank = 1
+
+                if blank == 1:
+                    cellTop = str(num_to_col_letters(int(a+2))) + "2"
+                    cellBot = str(num_to_col_letters(int(a+2))) + "30"
+
+                    #print(cellTop + ":" + cellBot)
+                    ## Select a cell range
+                    cell_list = worksheet.range(cellTop + ":" + cellBot)
+
+                    # Update values
+                    g = 0
+                    for cell in cell_list:
+                        cell.value = picList[g]
+                        g += 1
+
+                    # Send update in batch mode
+                    worksheet.update_cells(cell_list)
+                    time.sleep(1.5)
+
     f = open(filepath, "w")
     with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
         file.write(content)
 
-def createSubIdeologyValues (rootDir, sheet, filepath):
+def createSubIdeologyValues (rootDir, sheet, filepath, worksheet):
     content = ""
     for a, b in enumerate(sheet[0]):
         if b != "" or a != 0:
@@ -593,15 +651,19 @@ def main():
 
     worksheet = sheet.worksheet('Party Leader 2000')
     content = worksheet.get_all_values()
-    createPartyLeaders(rootDir, content,(rootDir + "/Modding resources/generated/generated_2000_leaders.txt"))
+    createPartyLeaders(rootDir, content,(rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),worksheet)
 
     worksheet = sheet.worksheet('Party Leader 2017')
     content = worksheet.get_all_values()
-    createPartyLeaders(rootDir, content,(rootDir + "/Modding resources/generated/generated_2017_leaders.txt"))
+    createPartyLeaders(rootDir, content,(rootDir + "/Modding resources/generated/generated_2017_leaders.txt"),worksheet)
+
+    worksheet = sheet.worksheet('Vote Share 2000')
+    content = worksheet.get_all_values()
+    createSubIdeologyValues(rootDir, content,(rootDir + "/Modding resources/generated/generated_2000_politics.txt"),worksheet)
 
     worksheet = sheet.worksheet('Vote Share 2017')
     content = worksheet.get_all_values()
-    createSubIdeologyValues(rootDir, content,(rootDir + "/Modding resources/generated/generated_2017_politics.txt"))
+    createSubIdeologyValues(rootDir, content,(rootDir + "/Modding resources/generated/generated_2017_politics.txt"),worksheet)
 
     #print(len(sheet.row_values(1)))
     #data = sheet.get_all_records()
