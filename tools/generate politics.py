@@ -180,356 +180,492 @@ def createPartNameLoc (rootDir, sheet):
         file.write(content)
 
 
-def createPartyLeaders (rootDir, sheet, filepath, worksheet, extraLeaders, tags):
-    content = ""
-    content = "l_english:\n"
-    #sheetLength = (len(sheet[0]))
-    #print(num_to_col_letters(int(sheetLength)))
-    #input()
+
+def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
+    ideology = ""
+    if c == 2:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = conservatism\n"
+            content += "\ttraits = {\n"
+            content += "\t\twestern_conservatism\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "conservatism"
+        subIdeology = "western_conservatism"
+
+    elif c == 3:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = liberalism\n"
+            content += "\ttraits = {\n"
+            content += "\t\twestern_liberalism\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "liberalism"
+        subIdeology = "western_liberalism"
+
+    elif c == 4:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = socialism\n"
+            content += "\ttraits = {\n"
+            content += "\t\twestern_socialism\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "socialism"
+        subIdeology = "western_socialism"
+
+    elif c == 5:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Western_Autocracy\n"
+            content += "\ttraits = {\n"
+            content += "\t\twestern_Western_Autocracy\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Western_Autocracy"
+        subIdeology = "western_Western_Autocracy"
+
+    # Emerging
+    elif c == 7:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Communist-State\n"
+            content += "\ttraits = {\n"
+            content += "\t\temerging_Communist-State\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Communist-State"
+        subIdeology = "emerging_Communist"
+
+    elif c == 8:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Conservative\n"
+            content += "\ttraits = {\n"
+            content += "\t\temerging_Conservative\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "emerging_Conservative"
+        subIdeology = "Monarchist"
+
+    elif c == 9:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Autocracy\n"
+            content += "\ttraits = {\n"
+            content += "\t\temerging_Autocracy\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Autocracy"
+        subIdeology = "emerging_Autocracy"
+
+    elif c == 10:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Vilayat_e_Faqih\n"
+            content += "\ttraits = {\n"
+            content += "\t\temerging_Vilayat_e_Faqih\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Vilayat_e_Faqih"
+        subIdeology = "emerging_Vilayat_e_Faqih"
+
+    elif c == 11:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Mod_Vilayat_e_Faqih\n"
+            content += "\ttraits = {\n"
+            content += "\t\temerging_Vilayat_e_Faqih_ref\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Mod_Vilayat_e_Faqih"
+        subIdeology = "emerging_Vilayat_e_Faqih_ref"
+
+    elif c == 12:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = anarchist_communism\n"
+            content += "\ttraits = {\n"
+            content += "\t\temerging_anarchist_communism\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "anarchist_communism"
+        subIdeology = "emerging_anarchist_communism"
+
+    # Salafist
+    elif c == 14:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Caliphate\n"
+            content += "\ttraits = {\n"
+            content += "\t\tsalafist_Caliphate\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Caliphate"
+        subIdeology = "salafist_Caliphate"
+
+    elif c == 15:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Kingdom\n"
+            content += "\ttraits = {\n"
+            content += "\t\tsalafist_Kingdom\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Kingdom"
+        subIdeology = "salafist_Kingdom"
+
+
+    # Non-Alligned
+    elif c == 17:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Neutral_conservatism\n"
+            content += "\ttraits = {\n"
+            content += "\t\tneutrality_Neutral_conservatism\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Neutral_conservatism"
+        subIdeology = "neutrality_Neutral_conservatism"
+
+    elif c == 18:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = oligarchism\n"
+            content += "\ttraits = {\n"
+            content += "\t\tneutrality_oligarchism\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "oligarchism"
+        subIdeology = "neutrality_oligarchism"
+
+    elif c == 19:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = neutral_Social\n"
+            content += "\ttraits = {\n"
+            content += "\t\tneutrality_neutral_Social\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "neutral_Social"
+        subIdeology = "neutrality_neutral_Social"
+
+    elif c == 20:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Neutral_Libertarian\n"
+            content += "\ttraits = {\n"
+            content += "\t\tneutrality_Neutral_Libertarian\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Neutral_Libertarian"
+        subIdeology = "neutrality_Neutral_Libertarian"
+
+    elif c == 21:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Neutral_Autocracy\n"
+            content += "\ttraits = {\n"
+            content += "\t\tneutrality_Neutral_Autocracy\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Neutral_Autocracy"
+        subIdeology = "neutrality_Neutral_Autocracy"
+
+    elif c == 22:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Neutral_Communism\n"
+            content += "\ttraits = {\n"
+            content += "\t\tneutrality_Neutral_Communism\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Neutral_Communism"
+        subIdeology = "neutrality_Neutral_Communism"
+
+    elif c == 23:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Neutral_Muslim_Brotherhood\n"
+            content += "\ttraits = {\n"
+            content += "\t\tneutrality_Neutral_Muslim_Brotherhood\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Neutral_Muslim_Brotherhood"
+        subIdeology = "neutrality_Neutral_Muslim_Brotherhood"
+
+    elif c == 24:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Neutral_green\n"
+            content += "\ttraits = {\n"
+            content += "\t\tneutrality_Neutral_green\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Neutral_green"
+        subIdeology = "neutrality_Neutral_green"
+
+
+    # Nationalist
+    elif c == 26:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Nat_Autocracy\n"
+            content += "\ttraits = {\n"
+            content += "\t\tnationalist_Nat_Autocracy\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Nat_Autocracy"
+        subIdeology = "nationalist_Nat_Autocracy"
+
+    elif c == 27:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Nat_Fascism\n"
+            content += "\ttraits = {\n"
+            content += "\t\tnationalist_Nat_Fascism\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Nat_Fascism"
+        subIdeology = "nationalist_Nat_Fascism"
+
+    elif c == 28:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Nat_Populism\n"
+            content += "\ttraits = {\n"
+            content += "\t\tnationalist_Nat_Populism\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Nat_Populism"
+        subIdeology = "nationalist_Nat_Populism"
+
+    elif c == 29:
+        if d != "":
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + d + "\"\n"
+            content += "\tpicture = \"" + picName + "\"\n"
+            content += "\tideology = Monarchist\n"
+            content += "\ttraits = {\n"
+            content += "\t\tnationalist_Monarchist\n"
+            content += "\t}\n"
+            content += "}\n"
+        ideology = "Monarchist"
+        subIdeology = "nationalist_Monarchist"
+
+    #content = generateLeaderContent(content, c, d, picName, extraLeaders, tagPos)
+
+    if ideology != "" and tagPos is not None:
+        found = 0
+        extraLeaderName = ""
+        extraLeaderPic = ""
+        for pos, x in enumerate(extraLeaders[tagPos]):
+            for pos2, y in enumerate(x):
+                if found == 0:
+                    for pos3, z in enumerate(y):
+                        #print(z)
+                        #input()
+                        if pos2 == 1:
+                            print(z)
+                        if pos2 == 4:
+                            print(z)
+                            print(d + " " + ideology)
+                            if z == ideology:
+                                print("###Duplicate ideology " + z)
+                                #print(extraLeaders[tagPos][pos][1][0])
+                                #input()
+                                found = 1
+                                try:
+
+                                    extraLeaderName = extraLeaders[tagPos][pos][1][0]
+                                except:
+                                    time.sleep(0)
+                                try:
+                                    extraLeaderPic = extraLeaders[tagPos][pos][2][0]
+                                except:
+                                    time.sleep(0)
+
+                                content += "create_country_leader = {\n"
+                                content += "\tname = \"" + extraLeaderName + "\"\n"
+                                content += "\tpicture = " + extraLeaderPic + "\n"
+                                content += "\tideology = " + ideology + "\n"
+                                content += "\ttraits = {\n"
+                                content += "\t\t" + subIdeology + "\n"
+                                content += "\t}\n"
+                                content += "}\n"
+
+        #input()
+    return content, extraLeaders
+
+
+def generateLeaderPic(d, picList):
+    if d.isspace() and d == "":
+        picList.append("")
+    else:
+        d = d.replace('\r', '')
+        d = d.replace('\n', '')
+        d = d.replace('\t', '')
+        d = d.lstrip()
+        d = d.rstrip()
+        picName = d.replace('.', '')
+        picName = picName.replace(',', '')
+        picName = picName.replace('-', '_')
+        picName = picName.replace('’', '')
+        picName = unidecode.unidecode(picName)
+        picName = picName.replace(' ', '_') + ".dds"
+        if picName == ".dds":
+            picList.append("")
+        else:
+            picList.append(picName.lower())
+
+    return d, picList, picName
+
+
+def leadersToSheet(a, b, blank, picList, worksheet):
+    if a & 1:
+        # print(a)
+        # print(num_to_col_letters(int(a+2)))
+        print("Updating portrait file names in spreadsheet for " + b)
+        z = 0
+
+        for x in picList:
+            # print(str(z) + ": " + x)
+            z += 1
+            if x != "":
+                blank = 1
+
+        if blank == 1:
+            cellTop = str(num_to_col_letters(int(a + 2))) + "2"
+            cellBot = str(num_to_col_letters(int(a + 2))) + "30"
+
+            # print(cellTop + ":" + cellBot)
+            ## Select a cell range
+            cell_list = worksheet.range(cellTop + ":" + cellBot)
+
+            # Update values
+            g = 0
+            for cell in cell_list:
+                cell.value = picList[g]
+                g += 1
+
+            # Send update in batch mode
+            worksheet.update_cells(cell_list)
+            time.sleep(1.5)
+
+def delExtraLeaders(sheet, extraLeaders, tags):
     for a, b in enumerate(sheet[0]):
         if b != "" or a != 0:
-            picList = []
-            content += "###" + b + "###\n"
             for c in range(0,31):
 
                 if len(b) ==3 and c not in [0,1,6,13,16,25]:
                     if c > 36:
                         break
                     d = sheet[c][a]
-                    #print(d)
-                    #input()
-                    #western
-                    if d.isspace() and d == "":
-                        picList.append("")
-                    else:
-                        d = d.replace('\r','')
-                        d = d.replace('\n','')
-                        d = d.replace('\t','')
-                        d = d.lstrip()
-                        d = d.rstrip()
-                        picName = d.replace('.','')
-                        picName = picName.replace(',','')
-                        picName = picName.replace('-','_')
-                        picName = picName.replace('’','')
-                        picName = unidecode.unidecode(picName)
-                        picName = picName.replace(' ','_')+ ".dds"
-                        if picName == ".dds":
-                            picList.append("")
-                        else:
-                            picList.append(picName.lower())
-
-                        filePic = Path(rootDir + "/gfx/leaders/" + b + "/" + picName)
-                        #if picName != ".dds" and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
-                            #print("Expected a picture for " + b + " leader " + d + " named " + "/gfx/leaders/"+b+"/"+picName)
-
-                        tagPos = get_tagPos2(b,tags)
+                    tagPos = get_tagPos2(b,tags)
+                    found = 0
+                    if tagPos is not None and d != "":
                         found = 0
-                        #print(b)
-                        #print(tagPos)
-                        if tagPos is not None and d != "":
-                            found = 0
-                            for pos, x in enumerate(extraLeaders[tagPos]):
-                                #print("tag pos: " + str(tagPos))
-                                #print("pos: " + str(pos))
-
-                                for pos2, y in enumerate(x):
-                                    if found == 0:
-                                        for pos3, z in enumerate(y):
-                                            #print(y)
-                                            #print(z)
-                                            #input()
-                                            if pos2 == 1:
-                                                #print(x)
-                                                #input()
-                                                #print(b)
-                                                #print("looking for: " + d)
-                                                if z == d:
-                                                    print("Found a duplicate leader in extra leaders: " + z)
-                                                    #input()
-                                                    found =1
-                                                    break
-                                    else:
-                                        break
-                                if found == 1:
+                        for pos, x in enumerate(extraLeaders[tagPos]):
+                            for pos2, y in enumerate(x):
+                                if found == 0:
+                                    for pos3, z in enumerate(y):
+                                        if pos2 == 1:
+                                            if z == d:
+                                                print("Found a duplicate leader in extra leaders: " + z)
+                                                found =1
+                                                try:
+                                                    del extraLeaders[tagPos][pos2][0:6]
+                                                except:
+                                                    time.sleep(0)
+                                                break
+                                else:
                                     break
+                            if found == 1:
+                                break
+    return extraLeaders
 
-                        if c == 2 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = conservatism\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\twestern_conservatism\n"
-                            content += "\t}\n"
-                            content += "}\n"
-                        elif c == 3 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = liberalism\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\twestern_liberalism\n"
-                            content += "\t}\n"
-                            content += "}\n"
-                        elif c == 4 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = socialism\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\twestern_socialism\n"
-                            content += "\t}\n"
-                            content += "}\n"
+def createPartyLeaders (rootDir, sheet, filepath, worksheet, extraLeaders, tags):
+    extraLeaders = delExtraLeaders(sheet, extraLeaders, tags)
+    content = ""
+    for a, b in enumerate(sheet[0]):
+        if (b != "" or a != 0) and len(b) == 3:
+            picList = []
+            content += "###" + b + "###\n"
+            for c in range(0,31):
 
-                        elif c == 5 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Western_Autocracy\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\twestern_Western_Autocracy\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        #Emerging
-                        elif c == 7 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Communist-State\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\temerging_Communist-State\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 8 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Conservative\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\temerging_Conservative\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 9 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Autocracy\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\temerging_Autocracy\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 10 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Vilayat_e_Faqih\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\temerging_Vilayat_e_Faqih\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 11 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Mod_Vilayat_e_Faqih\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\temerging_Vilayat_e_Faqih_ref\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 12 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = anarchist_communism\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\temerging_anarchist_communism\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        #Salafist
-                        elif c == 14 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Caliphate\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tsalafist_Caliphate\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 15 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Kingdom\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tsalafist_Kingdom\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-
-                        #Non-Alligned
-                        elif c == 17 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Neutral_conservatism\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tneutrality_Neutral_conservatism\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 18 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = oligarchism\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tneutrality_oligarchism\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 19 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = neutral_Social\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tneutrality_neutral_Social\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 20 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Neutral_Libertarian\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tneutrality_Neutral_Libertarian\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 21 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Neutral_Autocracy\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tneutrality_Neutral_Autocracy\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 22 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Neutral_Communism\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tneutrality_Neutral_Communism\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 23 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Neutral_Muslim_Brotherhood\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tneutrality_Neutral_Muslim_Brotherhood\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 24 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Neutral_green\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tneutrality_Neutral_green\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-
-                        #Nationalist
-                        elif c == 26 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Nat_Autocracy\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tnationalist_Nat_Autocracy\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 27 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Nat_Fascism\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tnationalist_Nat_Fascism\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 28 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Nat_Populism\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tnationalist_Nat_Populism\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
-                        elif c == 29 and d != "":
-                            content += "create_country_leader = {\n"
-                            content += "\tname = \"" + d + "\"\n"
-                            content += "\tpicture = \"" + picName + "\"\n"
-                            content += "\tideology = Monarchist\n"
-                            content += "\ttraits = {\n"
-                            content += "\t\tnationalist_Monarchist\n"
-                            content += "\t}\n"
-                            content += "}\n"
-
+                if c not in [0,1,6,13,16,25]:
+                    if c > 36:
+                        break
+                    d = sheet[c][a]
+                    d, picList, picName = generateLeaderPic(d, picList)
+                    filePic = Path(rootDir + "/gfx/leaders/" + b + "/" + picName)
+                    #if picName != ".dds" and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
+                        #print("Expected a picture for " + b + " leader " + d + " named " + "/gfx/leaders/"+b+"/"+picName)
+                    tagPos = get_tagPos2(b,tags)
+                    content, extraLeaders = generateLeaderContent(content, c, d, picName, extraLeaders, tagPos)
+                    #print("done here")
+                    #input()
                 elif c in [1,6,13,16,25]:
                     picList.append("")
 
             blank = 0
-            if a & 1 and blank == 999:
-                #print(a)
-               # print(num_to_col_letters(int(a+2)))
-                print("Updating portrait file names in spreadsheet for " + b)
-                z = 0
+            #leadersToSheet(a, b, blank, picList, worksheet)
 
-                for x in picList:
-                    #print(str(z) + ": " + x)
-                    z+=1
-                    if x != "":
-                        blank = 1
 
-                if blank == 1:
-                    cellTop = str(num_to_col_letters(int(a+2))) + "2"
-                    cellBot = str(num_to_col_letters(int(a+2))) + "30"
 
-                    #print(cellTop + ":" + cellBot)
-                    ## Select a cell range
-                    cell_list = worksheet.range(cellTop + ":" + cellBot)
 
-                    # Update values
-                    g = 0
-                    for cell in cell_list:
-                        cell.value = picList[g]
-                        g += 1
 
-                    # Send update in batch mode
-                    worksheet.update_cells(cell_list)
-                    time.sleep(1.5)
+    #worksheet = sheet.worksheet('Extra Leaders')
+
+
 
     f = open(filepath, "w")
     with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
@@ -760,19 +896,90 @@ def getExtraLeaders(rootDir, tags, tagPos, tag):
                                 #input()
                         if "traits" in line:
                             hasTraits = 1
+                if "2017.1.1" in line:
+                    startDate = 2
+                if startDate == 2:
+                    if "create_country_leader" in line:
+                        foundLeader = 1
+                        hasTraits = 0
+                        traits = []
+                        hasTraits = 0
+                        leaderCount += 1
+                        leaders[tagPos][leaderCount].append([])
+                        leaders[tagPos][leaderCount].append([])
+                        leaders[tagPos][leaderCount].append([])
+                        leaders[tagPos][leaderCount].append([])
+                        leaders[tagPos][leaderCount].append([])
+                        leaders[tagPos][leaderCount].append([])
+
+                    if foundLeader ==1:
+                        if "{" in line:
+                            openBrace +=1
+                        if "}" in line:
+                            openBrace -= 1
+                    if openBrace ==0 and foundLeader == 1 :
+                        foundLeader = 0
+                        leaders[tagPos].append([])
+                        if traits:
+                            leaders[tagPos][leaderCount][5].append(traits)
+
+                    if openBrace ==1:
+                        #and ("name" in line or "type" in line):
+                        leaderName = re.search(r'name\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
+                        leaderPicture = re.search(r'picture\s?=\s?(.*)', line, re.M | re.I)  # If it's a tag
+                        leaderExpire = re.search(r'expire\s?=\s?\"(.*)\"', line, re.M | re.I)  # If it's a tag
+                        leaderIdeology = re.search(r'ideology\s?=\s?\b(.*)\b', line, re.M | re.I)  # If it's a tag
+
+                        if leaderName:
+                            leaders[tagPos][leaderCount][1].append(leaderName.group(1))
+                            newtag = [tag]
+                            leaders[tagPos][leaderCount][0] = newtag
+
+
+                        if leaderPicture:
+                            leaders[tagPos][leaderCount][2].append(leaderPicture.group(1))
+                            #print(leaderPicture.group(1))
+                            #input()
+                        if leaderExpire:
+                            leaders[tagPos][leaderCount][3].append(leaderExpire.group(1))
+                            #print(leaderExpire.group(1))
+                            #input()
+                        if leaderIdeology:
+                           # print(leaders[tagPos])
+                            leaders[tagPos][leaderCount][4].append(leaderIdeology.group(1))
+                            #print(leaderIdeology.group(1))
+                            #input()
+
+
+                    if openBrace == 2:
+
+                        if hasTraits ==1:
+                            #print("has traits")
+                            leaderTraits = re.search(r'\s\b(.*)\b', line, re.M | re.I)  # If it's a tag
+                            if leaderTraits:
+                                traits.append(leaderTraits.group(1))
+                                #print(leaderTraits.group(1))
+                                #input()
+                        if "traits" in line:
+                            hasTraits = 1
+
 
 
     return leaders
 
 def main():
-    sheet = gc.open('Copy of Politics')
+    sheet = gc.open('Politics')
     worksheet = sheet.worksheet('Party Name')
     content = worksheet.get_all_values()
+
 
     scriptDir = os.path.realpath(__file__)
     rootDir = os.path.dirname(os.path.dirname(scriptDir))
     tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
     sheetTags = get_sheet_tags(content)
+
+    createPartNameLoc(rootDir, content)
+
     extraLeaders = []
 
     for root, dirnames, filenames in os.walk(rootDir + '/' + 'history' + '/countries' + '/'):
@@ -781,47 +988,11 @@ def main():
             if tagPos != -1:
                 #print(filename)
                 extraLeaders += getExtraLeaders(os.path.join(root, filename), tags, tagPos, tag)
-    #print(extraLeaders[0][0][0])
-    #print(extraLeaders[0][1][0])
-    #print(extraLeaders[0][2][0])
-    #print(extraLeaders[0][3][0])
-    #print(extraLeaders[0][4][0])
-    #print(extraLeaders[0][4][0])
-    #input()
 
     worksheet = sheet.worksheet('Party Leader 2000')
     content = worksheet.get_all_values()
     createPartyLeaders(rootDir, content, (rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),
                        worksheet, extraLeaders, tags)
-
-    #for pos, x in enumerate(extraLeaders):
-        #for pos2, y in enumerate(x):
-            #for pos3, z in enumerate(y):
-                #for pos4, zz in enumerate(z):
-                  #if pos3 == 0:
-                #print("~~~~tag:~~~~")
-                        #if pos3 == 1:
-                #print("~~~~Leader:~~~~")
-                        #if pos3 == 2:
-                #print("~~~~picture:~~~~")
-                        #if pos3 == 3:
-                #print("~~~~expire:~~~~")
-                        #if pos3 == 4:
-                #print("~~~~ideology:~~~~")
-                        #if pos3 == 5:
-                #print("~~~~traits:~~~~")
-                        #for zzz in zz:
-                    #print(zzz)
-                            #input()
-                        #if pos3 != 5:
-                    #print(zz)
-
-
-
-    print("pause")
-    input()
-    input()
-
 
     #need to fix
     for x in tags:
@@ -829,11 +1000,17 @@ def main():
             print (str(x) + " is a country in game but wasn't found in the politics partyname sheet")
 
     #input()
-    createPartNameLoc(rootDir, content)
-
+    extraLeaders = []
+    for root, dirnames, filenames in os.walk(rootDir + '/' + 'history' + '/countries' + '/'):
+        for filename in fnmatch.filter(filenames, '*.txt'):
+            tagPos, tag = get_tagPos(filename, tags)
+            if tagPos != -1:
+                #print(filename)
+                extraLeaders += getExtraLeaders(os.path.join(root, filename), tags, tagPos, tag)
     worksheet = sheet.worksheet('Party Leader 2017')
     content = worksheet.get_all_values()
-    createPartyLeaders(rootDir, content,(rootDir + "/Modding resources/generated/generated_2017_leaders.txt"),worksheet)
+    createPartyLeaders(rootDir, content, (rootDir + "/Modding resources/generated/generated_2017_leaders.txt"),
+                       worksheet, extraLeaders, tags)
 
     worksheet = sheet.worksheet('Vote Share 2000')
     content = worksheet.get_all_values()
