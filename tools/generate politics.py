@@ -513,13 +513,13 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
                     for pos3, z in enumerate(y):
                         #print(z)
                         #input()
-                        if pos2 == 1:
-                            print(z)
-                        if pos2 == 4:
-                            print(z)
-                            print(d + " " + ideology)
+                        #if pos2 == 1:
+                            #print(z)
+                        #if pos2 == 4:
+                            #print(z)
+                            #print(d + " " + ideology)
                             if z == ideology:
-                                print("###Duplicate ideology " + z)
+                                #print("###Duplicate ideology " + z)
                                 #print(extraLeaders[tagPos][pos][1][0])
                                 #input()
                                 found = 1
@@ -559,21 +559,26 @@ def generateLeaderPic(d, picList):
         picName = picName.replace(',', '')
         picName = picName.replace('-', '_')
         picName = picName.replace('’', '')
+        picName = picName.replace('Dr', '')
+        picName = picName.replace('Adm', '')
+        picName = picName.replace('Sir', '')
         picName = unidecode.unidecode(picName)
         picName = picName.replace(' ', '_') + ".dds"
+        picName = picName.lstrip('_')
+        picName = picName.rstrip('_')
         if picName == ".dds":
             picList.append("")
         else:
             picList.append(picName.lower())
 
-    return d, picList, picName
+    return d
 
 
 def leadersToSheet(a, b, blank, picList, worksheet):
     if a & 1:
         # print(a)
         # print(num_to_col_letters(int(a+2)))
-        print("Updating portrait file names in spreadsheet for " + b)
+        #print("Updating portrait file names in spreadsheet for " + b)
         z = 0
 
         for x in picList:
@@ -619,7 +624,7 @@ def delExtraLeaders(sheet, extraLeaders, tags):
                                     for pos3, z in enumerate(y):
                                         if pos2 == 1:
                                             if z == d:
-                                                print("Found a duplicate leader in extra leaders: " + z)
+                                               # print("Found a duplicate leader in extra leaders: " + z)
                                                 found =1
                                                 try:
                                                     del extraLeaders[tagPos][pos2][0:6]
@@ -631,6 +636,10 @@ def delExtraLeaders(sheet, extraLeaders, tags):
                             if found == 1:
                                 break
     return extraLeaders
+
+#def extraLeadersToSheet():
+
+
 
 def createPartyLeaders (rootDir, sheet, filepath, worksheet, extraLeaders, tags):
     extraLeaders = delExtraLeaders(sheet, extraLeaders, tags)
@@ -645,10 +654,14 @@ def createPartyLeaders (rootDir, sheet, filepath, worksheet, extraLeaders, tags)
                     if c > 36:
                         break
                     d = sheet[c][a]
-                    d, picList, picName = generateLeaderPic(d, picList)
+                    try:
+                        picName = sheet[c][a+1]
+                    except:
+                        picName = ""
+                    d = generateLeaderPic(d, picList)
                     filePic = Path(rootDir + "/gfx/leaders/" + b + "/" + picName)
-                    #if picName != ".dds" and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
-                        #print("Expected a picture for " + b + " leader " + d + " named " + "/gfx/leaders/"+b+"/"+picName)
+                    if picName != "" and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
+                        print("Expected a picture for " + b + " leader " + d + " named " + "/gfx/leaders/"+b+"/"+picName)
                     tagPos = get_tagPos2(b,tags)
                     content, extraLeaders = generateLeaderContent(content, c, d, picName, extraLeaders, tagPos)
                     #print("done here")
@@ -972,7 +985,6 @@ def main():
     worksheet = sheet.worksheet('Party Name')
     content = worksheet.get_all_values()
 
-
     scriptDir = os.path.realpath(__file__)
     rootDir = os.path.dirname(os.path.dirname(scriptDir))
     tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
@@ -995,9 +1007,9 @@ def main():
                        worksheet, extraLeaders, tags)
 
     #need to fix
-    for x in tags:
-         if x not in sheetTags:
-            print (str(x) + " is a country in game but wasn't found in the politics partyname sheet")
+    #for x in tags:
+         #if x not in sheetTags:
+           #print (str(x) + " is a country in game but wasn't found in the politics partyname sheet")
 
     #input()
     extraLeaders = []
