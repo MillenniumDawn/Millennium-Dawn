@@ -725,8 +725,12 @@ def extraLeadersToSheet(extraLeaders, sheet, sheetName, tags):
                         else:
                             #print(extraLeaders[a][pos][pos2 + 5][pos3][0])
                             #input()
-                            text = extraLeaders[a][pos][pos2 + 5][pos3][0]
-                            text = text.replace('"', '')
+                            text = ""
+                            for x in extraLeaders[a][pos][pos2 + 5][pos3]:
+                                text += x + " "
+                                #print(x)
+                            print(extraLeaders[a][pos][pos2 + 1][pos3])
+                            print(text)
                             traits.append(text)
 
     #print(rows)
@@ -734,7 +738,7 @@ def extraLeadersToSheet(extraLeaders, sheet, sheetName, tags):
 
     worksheet = sheet.worksheet(sheetName)
     #worksheet = sheet.add_worksheet(title=sheetName, rows=rows, cols="20")
-    for x in range(1,6):
+    for x in range(1,7):
         cellTop = str(num_to_col_letters(int(x))) + "1"
         cellBot = str(num_to_col_letters(int(x))) + str(rows)
 
