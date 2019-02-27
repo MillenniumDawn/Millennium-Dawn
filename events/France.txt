@@ -1,0 +1,982 @@
+﻿add_namespace = France
+
+#					Buy British Railways						#
+###France purchase British Railway system (Network Rail) - FRANCE
+country_event = {
+	id = France.1
+	title = France.1.t
+	desc = France.1.d
+	picture = broken_infrastructure
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Provoke a Train collision to lower the price
+	option = {
+		name = France.1.o1
+		log = "[GetDateText]: [This.GetName]: France.1.o1 executed"
+
+		add_political_power = -30
+		custom_effect_tooltip = France.1.o1.tt
+		ENG = { country_event = { id = France.2 days = 1 } }
+		ai_chance = {
+			factor = 10
+			modifier = {
+				Or = {
+					has_government = nationalist
+					has_government = communism
+				}
+				factor = 40
+			}
+		}
+
+	}
+	
+	#Buy all Network Rail
+	option = {
+		name = France.1.o2
+		log = "[GetDateText]: [This.GetName]: France.1.o2 executed"
+
+		
+		ENG = { 
+			add_to_variable = { influencer1_amount = 30 }
+			recalculate_influence = yes
+			country_event = { id = France.3 days = 1 }		
+		}
+		add_to_variable = { treasury = -5 }
+		add_political_power = -10	
+
+		ai_chance = {
+			factor = 20
+		}
+	}
+	
+	#Buy share of Network Rail
+	option = {
+		name = France.1.o3
+		log = "[GetDateText]: [This.GetName]: France.1.o3 executed"
+		
+		ENG = { 
+			add_to_variable = { influencer1_amount = 15 }
+			recalculate_influence = yes
+			country_event = { id = France.3 days = 1 }
+		}
+		add_to_variable = { treasury = -3 }
+		add_political_power = -10
+
+	
+		ai_chance = {
+			factor = 40
+		}
+	}
+	
+	#Not now
+	option = {
+		name = France.1.o4
+		log = "[GetDateText]: [This.GetName]: France.1.o4 executed"
+			add_political_power = 50
+			
+			
+		ai_chance = {
+			factor = 10
+		}
+	}
+}
+
+###Train Derailment - UK
+country_event = {
+	id = France.2
+	title = France.2.t
+	desc = France.2.d
+	picture = train_collision	
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Pray for them
+	option = {
+	name = France.2.o1
+	log = "[GetDateText]: [This.GetName]: France.2.o1 executed"
+		hidden_effect = {
+		news_event = { id = France.news.1 days = 1 }
+			random_list = {
+				#Works well
+				30 = {
+					hidden_effect = {
+						ENG = { 
+							country_event = { id = France.7 days = 1 }
+							add_to_variable = { influencer1_amount = 30 }
+							recalculate_influence = yes
+						}
+						FRA = { 
+							country_event = { id = France.8 days = 2 }
+						}
+					}
+					add_stability = -0.02
+				}
+				#Works correctly
+				40 = {
+					hidden_effect = {
+						ENG = { 
+							country_event = { id = France.7 days = 1 }
+							add_to_variable = { influencer1_amount = 20 }
+							recalculate_influence = yes
+						}
+						FRA = { 
+							country_event = { id = France.8 days = 2 }
+						}
+					}
+					add_stability = -0.02
+				}
+				#Works badly
+				20 = {
+					hidden_effect = {
+						ENG = { 
+							country_event = { id = France.4 days = 1 }
+							add_to_variable = { influencer1_amount = 10 }
+							recalculate_influence = yes
+						}
+					}
+					add_stability = -0.02
+
+				}
+			}
+		}
+	}
+}
+
+###French bought our Railway company - UK
+country_event = {
+	id = France.3
+	title = France.3.t
+	desc = France.3.d
+	picture = train_collision
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+		option = {
+			name = France.3.o1
+			log = "[GetDateText]: [This.GetName]: France.3.o1 executed"
+			
+			ai_chance = {
+					factor = 10
+			}
+		}
+}
+
+###Train Collision proof - UK
+country_event = {
+	id = France.4
+	title = France.4.t
+	desc = France.4.d
+	picture = train_collision
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Relation dammaged
+	option = {
+	name = France.4.o1
+	log = "[GetDateText]: [This.GetName]: France.4.o1 executed"
+	FRA = { 
+		country_event = { id = France.5 days = 1 }
+		}
+	}
+	add_stability = 0.04
+	ai_chance = {
+			factor = 10
+	}
+}
+
+###Train Collision French Response - FRANCE
+country_event = {
+	id = France.5
+	title = France.5.t
+	desc = France.5.d
+	picture = train_collision
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Relation dammaged
+	option = {
+	name = France.5.o1
+	log = "[GetDateText]: [This.GetName]: France.5.o1 executed"
+		ENG = { 
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = FRA_Train_Bombing
+			}
+		}
+		hidden_effect = {
+		news_event = { id = France.news.2 days = 1 }
+		}
+		ai_chance = {
+				factor = 10
+		}
+	}
+	#Repay britains
+	option = {
+	name = France.5.o2
+	log = "[GetDateText]: [This.GetName]: France.5.o1 executed"
+	add_opinion_modifier = {
+		target = ROOT
+		modifier = FRA_Train_Bombing_lowered
+	}
+	add_political_power = -20
+	add_to_variable = { treasury = -1 }
+	ENG = { 	add_to_variable = { treasury = 1 } 
+	country_event = { id = France.6 days = 1 }
+	}
+	
+		hidden_effect = {
+		news_event = { id = France.news.2 days = 1 }
+		country_event = { id = France.9 days = 2 }
+		}
+		ai_chance = {
+			factor = 20
+			modifier = {
+				has_government = democratic
+				factor = 40
+			}
+		}
+	}
+}
+
+###Train Collision French Response - UK
+country_event = {
+	id = France.6
+	title = France.6.t
+	desc = France.6.d
+	picture = train_collision
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Well
+	option = {
+	name = France.6.o1
+	log = "[GetDateText]: [This.GetName]: France.6.o1 executed"
+
+		ai_chance = {
+				factor = 10
+		}
+	}
+}
+
+###France Bought train company after derailment - UK
+country_event = {
+	id = France.7
+	title = France.7.t
+	desc = France.7.d
+	picture = train_collision
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Well
+	option = {
+	name = France.7.o1
+	log = "[GetDateText]: [This.GetName]: France.7.o1 executed"
+
+		ai_chance = {
+				factor = 10
+		}
+	}
+}
+
+###France Bought train company after derailment - FRANCE
+country_event = {
+	id = France.8
+	title = France.8.t
+	desc = France.8.d
+	picture = train_collision
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Well
+	option = {
+	name = France.8.o1
+	log = "[GetDateText]: [This.GetName]: France.8.o1 executed"
+	add_to_variable = { treasury = -2 }
+		ai_chance = {
+				factor = 10
+		}
+	}
+}
+
+###Repays britains - FRANCE
+country_event = {
+	id = France.9
+	title = France.9.t
+	desc = France.9.d
+	picture = train_collision
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Well
+	option = {
+	name = France.9.o1
+	log = "[GetDateText]: [This.GetName]: France.9.o1 executed"
+
+		ai_chance = {
+				factor = 10
+		}
+	}
+}
+
+
+#						SNCE						#
+
+### EU member build infrastructure with SNCF - FRANCE
+country_event = {
+	id = France.10
+	title = France.10.t
+	desc = France.10.d
+	picture = 
+	
+	is_triggered_only = yes
+	
+	#Well
+	option = {
+	name = France.10.o1
+	log = "[GetDateText]: [This.GetName]: France.10.o1 executed"
+
+	FROM = {
+		country_event = { id = France.11 days = 1 }
+	}
+		ai_chance = {
+				factor = 10
+		}
+	}
+}
+
+### EU member build infrastructure with SNCF - European member
+country_event = {
+	id = France.11
+	title = France.11.t
+	desc = France.11.d
+	picture = 
+	
+	is_triggered_only = yes
+	
+	#Well
+	option = {
+	name = France.11.o1
+	log = "[GetDateText]: [This.GetName]: France.11.o1 executed"
+
+
+		ai_chance = {
+				factor = 10
+		}
+	}
+}
+
+#						SAO PAULO						#
+
+#France Decision to sell
+country_event = {
+	id = France.101
+	title = France.101.t
+	desc = France.101.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = no
+	fire_only_once = yes
+	trigger = {
+		tag = FRA
+		date > 2000.2.10
+		date < 2001.1.1
+		has_navy_size = {
+			size > 0
+			type = carrier
+		}
+	}
+
+	mean_time_to_happen = {
+		days = 1
+	}
+	
+	#Yes
+	option = {
+		name = France.101.o1
+		log = "[GetDateText]: [This.GetName]: France.101.o1 executed"
+		BRA = {
+			country_event = { id = France.103 days = 1 }
+		}
+		
+		ai_chance = {
+			factor = 85
+		}
+	}
+	
+	#No scrapp it
+	option = {
+		name = France.101.o2
+		log = "[GetDateText]: [This.GetName]: France.101.o2 executed"
+		destroy_ships = {
+					type = carrier_0
+					count = 1
+		}
+		
+		ai_chance = {
+			factor = 10
+		}
+	}
+	
+	#No Modernize it !
+	option = {
+		name = France.101.o3
+		log = "[GetDateText]: [This.GetName]: France.101.o2 executed"
+		add_political_power = -25
+		custom_effect_tooltip = France.101.o3.tt
+		hidden_effect = {
+		destroy_ships = {
+			type = carrier_0
+			count = 1
+		}
+		country_event = { id = France.102 days = 240 }
+		}
+		add_to_variable = { treasury = -3 }
+		
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+
+#Modernization Foch
+country_event = {
+	id = France.102
+	title = France.102.t
+	desc = France.102.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Finished !
+	option = {
+		name = France.102.o1
+		log = "[GetDateText]: [This.GetName]: France.102.o1 executed"
+		custom_effect_tooltip = France.102.o1.tt
+		hidden_effect = {
+		load_oob = "FRA_Foch_Modernize"
+		}
+		ai_chance = {
+			factor = 100
+		}
+	}
+}
+
+#Brazilian offer
+country_event = {
+	id = France.103
+	title = France.103.t
+	desc = France.103.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Yes
+	option = {
+		name = France.103.o1
+		log = "[GetDateText]: [This.GetName]: France.103.o1 executed"
+		FROM = {
+			country_event = { id = France.104 days = 1 }
+		}
+		
+		ai_chance = {
+			factor = 45
+		}
+	}
+	
+	#Yes for a good price only
+	option = {
+		name = France.103.o2
+		log = "[GetDateText]: [This.GetName]: France.103.o2 executed"
+		FROM = {
+			country_event = { id = France.105 days = 1 }
+		}
+		
+		ai_chance = {
+			factor = 45
+		}
+	}
+	
+	#No
+	option = {
+		name = France.103.o3
+		log = "[GetDateText]: [This.GetName]: France.103.o3 executed"
+		FROM = {
+			country_event = { id = France.106 days = 1 }
+		}
+		
+		ai_chance = {
+			factor = 10
+		}
+	}
+}
+
+#Brazil Agreed
+country_event = {
+	id = France.104
+	title = France.104.t
+	desc = France.104.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Finished !
+	option = {
+		name = France.104.o1
+		log = "[GetDateText]: [This.GetName]: France.104.o1 executed"
+		
+		add_political_power = 25
+		custom_effect_tooltip = France.104.o1.tt
+		hidden_effect = {
+		BRA = { load_oob = "BRA_Sao_Paulo" 
+		set_country_flag = BRA_Sao_Paulo
+		add_to_variable = { influencer2_amount = 15 }
+		add_to_variable = { treasury = -0.1 }
+		}
+		FRA = {
+			destroy_ships = {
+						type = carrier_0
+						count = 1
+			}
+		add_to_variable = { treasury = 0.1 }
+		}
+		}
+		
+		ai_chance = {
+			factor = 100
+		}
+	}
+}
+
+#Brazil want a good price
+country_event = {
+	id = France.105
+	title = France.105.t
+	desc = France.105.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Well for friendship !
+	option = {
+		name = France.105.o1
+		log = "[GetDateText]: [This.GetName]: France.105.o1 executed"
+		
+		custom_effect_tooltip = France.105.o1.tt
+		FRA = { 
+		add_political_power = 15	
+		hidden_effect = {
+			destroy_ships = {
+						type = carrier_0
+						count = 1
+			}
+			add_to_variable = { treasury = 0.03 }	
+		}
+		}			
+		BRA = { 
+		add_political_power = 25
+		hidden_effect = {
+			load_oob = "BRA_Sao_Paulo" 
+			set_country_flag = BRA_Sao_Paulo
+			add_to_variable = { influencer2_amount = 30 }
+			add_to_variable = { treasury = -0.03 }
+		}
+	
+
+		}
+
+		ai_chance = {
+			factor = 70
+		}
+	}
+	#Never !
+	option = {
+		name = France.105.o2
+		log = "[GetDateText]: [This.GetName]: France.105.o2 executed"
+		
+		RAJ = { country_event = { id = France.107 days = 1 } }
+		
+		ai_chance = {
+			factor = 30
+		}
+	}
+}
+
+#Brazil Refused
+country_event = {
+	id = France.106
+	title = France.106.t
+	desc = France.106.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Try with the Raj
+	option = {
+		name = France.106.o1
+		log = "[GetDateText]: [This.GetName]: France.106.o1 executed"
+		
+		RAJ = { country_event = { id = France.107 days = 1 } }
+		
+		ai_chance = {
+			factor = 70
+		}
+	}
+	#Scrapp it !
+	option = {
+		name = France.106.o2
+		log = "[GetDateText]: [This.GetName]: France.106.o2 executed"
+		FRA = {
+			destroy_ships = {
+				type = carrier_0
+				count = 1
+			}
+		}
+		
+		ai_chance = {
+			factor = 30
+		}
+	}
+}
+
+#India offer
+country_event = {
+	id = France.107
+	title = France.107.t
+	desc = France.107.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Yes
+	option = {
+		name = France.107.o1
+		log = "[GetDateText]: [This.GetName]: France.107.o1 executed"
+		FROM = {
+			country_event = { id = France.108 hours = 1 }
+		}
+		
+		ai_chance = {
+			factor = 90
+		}
+	}
+	
+	#No
+	option = {
+		name = France.107.o2
+		log = "[GetDateText]: [This.GetName]: France.107.o2 executed"
+		FROM = {
+			country_event = { id = France.109 hours = 1 }
+		}
+		
+		ai_chance = {
+			factor = 10
+		}
+	}
+}
+
+#RAJ Agreed
+country_event = {
+	id = France.108
+	title = France.108.t
+	desc = France.108.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Finished !
+	option = {
+		name = France.108.o1
+		log = "[GetDateText]: [This.GetName]: France.108.o1 executed"
+		
+		add_political_power = 25
+		custom_effect_tooltip = France.108.o1.tt
+		hidden_effect = {
+			FROM = { load_oob = "RAJ_Saritbalavattara" 
+			set_country_flag = RAJ_Saritbalavattara
+			add_to_variable = { influencer6_amount = 15 }
+			add_to_variable = { treasury = -0.1 }
+			}
+			FRA = {
+				destroy_ships = {
+							type = carrier_0
+							count = 1
+				}
+				add_to_variable = { treasury = 0.1 }
+			}
+		}
+
+		ai_chance = {
+			factor = 100
+		}
+	}
+}
+
+#RAJ Refused
+country_event = {
+	id = France.109
+	title = France.109.t
+	desc = France.109.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Scrapp it !
+	option = {
+		name = France.109.o1
+		log = "[GetDateText]: [This.GetName]: France.109.o2 executed"
+		FRA = {
+			destroy_ships = {
+				type = carrier_0
+				count = 1
+			}
+		}
+		
+		ai_chance = {
+			factor = 100
+		}
+	}
+}
+
+
+#Prolongate the Sao Paulo
+country_event = {
+	id = France.110
+	title = France.110.t
+	desc = France.110.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = no
+	fire_only_once = yes
+	trigger = {
+		tag = BRA
+		date > 2016.9.10
+		has_country_flag = BRA_Sao_Paulo
+		has_navy_size = {
+			size > 0
+		type = carrier
+		}
+	}
+
+	mean_time_to_happen = {
+		days = 1
+	}
+	
+	#Yes Scrapp it !
+	option = {
+		name = France.110.o1
+		log = "[GetDateText]: [This.GetName]: France.110.o1 executed"
+		
+		BRA = {
+			destroy_ships = {
+					type = carrier_0
+					count = 1
+			}
+		}
+		
+		ai_chance = {
+			factor = 60
+		}
+	}
+	
+	#We need it on active duty
+	option = {
+		name = France.110.o2
+		log = "[GetDateText]: [This.GetName]: France.110.o2 executed"
+		add_political_power = -25
+		
+		ai_chance = {
+			factor = 25
+		}
+	}
+	
+	#No Modernize it !
+	option = {
+		name = France.110.o3
+		log = "[GetDateText]: [This.GetName]: France.110.o2 executed"
+		
+		add_political_power = -50
+		custom_effect_tooltip = France.110.o3.tt
+		hidden_effect = {
+		BRA = {
+			destroy_ships = {
+				type = carrier_0
+				count = 1
+			}
+			country_event = { id = France.111 days = 240 }
+			add_to_variable = { treasury = -4 }
+		}
+		}
+		ai_chance = {
+			factor = 15
+		}
+	}
+}
+
+#Modernization Sao Paulo
+country_event = {
+	id = France.111
+	title = France.111.t
+	desc = France.111.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Finished !
+	option = {
+		name = France.111.o1
+		log = "[GetDateText]: [This.GetName]: France.111.o1 executed"
+		custom_effect_tooltip = France.111.o1.tt
+		hidden_effect = {
+		load_oob = "FRA_Sao_Paulo_Modernize"
+		}
+		ai_chance = {
+			factor = 100
+		}
+	}
+}
+
+#Prolongate the Saritbalavattara
+country_event = {
+	id = France.112
+	title = France.112.t
+	desc = France.112.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = no
+	fire_only_once = yes
+	trigger = {
+		tag = RAJ
+		date > 2016.9.10
+		date < 2016.12.30
+		has_country_flag = RAJ_Saritbalavattara
+		has_navy_size = {
+			size > 1
+			type = carrier
+		}
+	}
+
+	mean_time_to_happen = {
+		days = 1
+	}
+	
+	#Yes Scrapp them !
+	option = {
+		name = France.112.o1
+		log = "[GetDateText]: [This.GetName]: France.112.o1 executed"
+		
+		RAJ = {
+			destroy_ships = {
+				type = carrier_0
+				count = 2
+			}
+		}
+		
+		ai_chance = {
+			factor = 60
+		}
+	}
+	
+	#We need them on active duty
+	option = {
+		name = France.112.o2
+		log = "[GetDateText]: [This.GetName]: France.112.o2 executed"
+		add_political_power = -40
+		
+		ai_chance = {
+			factor = 25
+		}
+	}
+	
+	#Modernize the Saritbalavattara !
+	option = {
+		name = France.112.o3
+		log = "[GetDateText]: [This.GetName]: France.112.o2 executed"
+		
+		add_political_power = -60
+		custom_effect_tooltip = France.112.o3.tt
+		hidden_effect = {
+		RAJ = {
+			destroy_ships = {
+				type = carrier_0
+				count = 2
+			}
+			country_event = { id = France.113 days = 240 }
+			country_event = { id = France.114 days = 30 }
+			add_to_variable = { treasury = -5 }
+			
+		}
+		}
+		
+		ai_chance = {
+			factor = 15
+		}
+	}
+}
+
+#Modernization Saritbalavattara
+country_event = {
+	id = France.113
+	title = France.113.t
+	desc = France.113.d
+	picture = Sao_Paulo
+	
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Finished !
+	option = {
+		name = France.113.o1
+		log = "[GetDateText]: [This.GetName]: France.113.o1 executed"
+		custom_effect_tooltip = France.113.o1.tt
+		hidden_effect = {
+		load_oob = "RAJ_Saritbalavattara_Modernize"
+		}
+		ai_chance = {
+			factor = 100
+		}
+	}
+}
+
+#Modernization Viraat
+country_event = {
+	id = France.114
+	title = France.114.t
+	desc = France.114.d
+	picture = Sao_Paulo
+	
+	#hidden = yes
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	#Finished !
+	option = {
+		name = France.114.o1
+		log = "[GetDateText]: [This.GetName]: France.114.o1 executed"
+		custom_effect_tooltip = France.114.o1.tt
+		hidden_effect = {
+		load_oob = "RAJ_Viraat"
+		}
+		ai_chance = {
+			factor = 100
+		}
+	}
+}
