@@ -1,0 +1,425 @@
+﻿add_namespace = donald_trump
+add_namespace = donald_trump_news
+
+#Dealing with ISIS
+country_event = {
+	id = donald_trump.500
+	title = donald_trump.500.t
+	desc = donald_trump.500.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Suspend US Intevention
+		name = donald_trump.500.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.500.o1 executed"
+		ISI = {
+			add_ideas = free_operations
+			every_neighbor_country = {
+				limit = {
+					AND = {
+						original_tag = SYR
+						has_government = communism
+					}
+				}
+				USA = {
+					reverse_add_opinion_modifier = {
+						target = PREV
+						modifier = USA_withdrew_from_region
+					}
+				}
+			}
+		}
+		set_country_flag = dealing_with_isis_suspend_us_intervention
+		news_event = donald_trump_news.0
+		hidden_effect = {
+			ISI = {
+				country_event = donald_trump.503
+			}
+		}
+		ai_chance = {
+			factor = 33
+			modifier = {
+				factor = 2
+				ISI = {
+					is_ai = yes
+				}
+			}
+			modifier = {
+				factor = 5
+				ISI = {
+					surrender_progress > 0.5
+				}
+			}
+		}
+	}
+	option = { #Continue Operations
+		name = donald_trump.500.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump.500.o2 executed"
+		custom_effect_tooltip = 10_billion_expense_tt
+		subtract_from_variable = {
+			var = treasury
+			value = 10
+		}
+		add_political_power = 100
+		set_country_flag = dealing_with_isis_continue_operations
+		hidden_effect = {
+			ISI = {
+				every_neighbor_country = {
+					country_event = { id = donald_trump.501 days = 5 }
+				}
+			}
+			country_event = { id = donald_trump.502 days = 30 }
+		}
+		#TODO -- news_event = flavor news event for US player only
+		ai_chance = {
+			factor = 55
+		}
+	}
+	option = { #Escalate the Campaign
+		name = donald_trump.500.o3
+		log = "[GetDateText]: [This.GetName]: donald_trump.500.o3 executed"
+		custom_effect_tooltip = 20_billion_expense_tt
+		subtract_from_variable = {
+			var = treasury
+			value = 20
+		}
+		ISI = {
+			add_ideas = us_extensive_bombing_campaign
+			every_neighbor_country = {
+				limit = {
+					NOT = {
+						AND = {
+							original_tag = SYR
+							has_government = communism
+						}
+					}
+				}
+				USA = {
+					reverse_add_opinion_modifier = {
+						target = PREV
+						modifier = USA_intervention_into_our_region
+					}
+				}
+			}
+		}
+		set_country_flag = dealing_with_isis_escalate_the_campaign
+		news_event = donald_trump_news.1
+		hidden_effect = {
+			ISI = {
+				country_event = donald_trump.504
+				every_neighbor_country = {
+					country_event = { id = donald_trump.501 days = 5 }
+				}
+			}
+		}
+		ai_chance = {
+			factor = 12
+			modifier = {
+				factor = 3
+				ISI = {
+					is_ai = no
+				}
+			}
+			modifier = {
+				factor = 5
+				ISI = {
+					surrender_progress < 0.05
+				}
+			}
+			modifier = {
+				factor = 0
+				ISI = {
+					surrender_progress > 0.5
+				}
+			}
+		}
+	}
+}
+
+#Subsidies to the US for fighting ISIS
+country_event = {
+	id = donald_trump.501
+	title = donald_trump.501.t
+	desc = donald_trump.501.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Subsidize their efforts
+		name = donald_trump.501.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.501.o1 executed"
+		if = {
+			limit = {
+				num_of_factories < 4
+			}
+			add_to_variable = {
+				var = USA.isis_subsidies
+				value = 0.5
+			}
+			subtract_from_variable = {
+				var = treasury
+				value = 0.5
+			}
+			custom_effect_tooltip = 0.5_billion_expense_tt
+		}
+		if = {
+			limit = {
+				num_of_factories > 3
+				num_of_factories < 8
+			}
+			add_to_variable = {
+				var = USA.isis_subsidies
+				value = 1
+			}
+			subtract_from_variable = {
+				var = treasury
+				value = 1
+			}
+			custom_effect_tooltip = 1_billion_expense_tt
+		}
+		if = {
+			limit = {
+				num_of_factories > 7
+			}
+			add_to_variable = {
+				var = USA.isis_subsidies
+				value = 2
+			}
+			subtract_from_variable = {
+				var = treasury
+				value = 2
+			}
+			custom_effect_tooltip = 2_billion_expense_tt
+		}
+		reverse_add_opinion_modifier = {
+			target = USA
+			modifier = USA_given_subsidies
+		}
+		add_popularity = { ideology = democratic popularity = 0.02 }
+		recalculate_party = yes
+		ai_chance = {
+			factor = 40
+			modifier = {
+				factor = 2
+				USA = {
+					is_ai = no
+				}
+			}
+			modifier = {
+				factor = 2
+				USA = {
+					has_country_flag = dealing_with_isis_escalate_the_campaign
+				}
+			}
+			modifier = {
+				factor = 0
+				AND = {
+					original_tag = SYR
+					has_government = communism
+				}
+			}
+		}
+	}
+	option = { #We can't afford it
+		name = donald_trump.501.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump.501.o2 executed"
+		ai_chance = {
+			factor = 60
+		}
+	}
+}
+
+#Subsidies for the War on ISIS
+country_event = {
+	id = donald_trump.502
+	title = donald_trump.502.t
+	desc = donald_trump.502.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Excellent!
+		name = donald_trump.502.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.502.o1 executed"
+		custom_effect_tooltip = isis_subsidies_tt
+		add_to_variable = {
+			var = treasury
+			value = isis_subsidies
+		}
+		trigger = {
+			check_variable = {
+				var = isis_subsidies
+				value = 0
+				compare = not_equals
+			}
+		}
+	}
+	option = { #This is... Unfortunate
+		name = donald_trump.502.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump.502.o2 executed"
+		add_political_power = -10
+		trigger = {
+			check_variable = {
+				var = isis_subsidies
+				value = 0
+				compare = equals
+			}
+		}
+	}
+}
+
+#US Retracts from War Against Us!
+country_event = {
+	id = donald_trump.503
+	title = donald_trump.503.t
+	desc = donald_trump.503.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Allah has blessed us
+		name = donald_trump.503.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.503.o1 executed"
+		add_ideas = free_operations
+	}
+}
+
+#US Steps Up War Against Us!
+country_event = {
+	id = donald_trump.504
+	title = donald_trump.504.t
+	desc = donald_trump.504.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Allah will reign down terror upon our enemies!
+		name = donald_trump.504.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.504.o1 executed"
+		add_ideas = us_extensive_bombing_campaign
+	}
+}
+####################################################### NEWS #######################################################
+
+#US Suspends War Against ISIS
+news_event = {
+	id = donald_trump_news.0
+	title = donald_trump_news.0.t
+	desc = donald_trump_news.0.d
+	picture = GFX_USA_TRUMP_JCPOA
+	
+	major = yes
+
+	fire_only_once = yes
+
+	option = { #The job has been done
+		trigger = {
+			original_tag = USA
+		}
+		name = donald_trump_news.0.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.0.o1 executed"
+	}
+	option = { #Are we supposed to fight terror on our own now?
+		trigger = {
+			OR = {
+				original_tag = SOV
+				original_tag = IRQ
+				original_tag = SYR
+				original_tag = TUR
+				original_tag = SYR
+			}
+		}
+		name = donald_trump_news.0.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.0.o2 executed"
+	}
+	option = { #This is a relief
+		trigger = {
+			original_tag = ISI
+		}
+		name = donald_trump_news.0.o3
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.0.o3 executed"
+	}
+	option = { #Interesting
+		trigger = {
+			NOT = {
+				OR = {
+					original_tag = USA
+					original_tag = SOV
+					original_tag = IRQ
+					original_tag = SYR
+					original_tag = TUR
+					original_tag = SYR
+				}
+			}
+		}
+		name = donald_trump_news.0.o4
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.0.o4 executed"
+	}
+}
+
+#US Expands War Against ISIS
+news_event = {
+	id = donald_trump_news.1
+	title = donald_trump_news.1.t
+	desc = donald_trump_news.1.d
+	picture = GFX_USA_TRUMP_JCPOA
+	
+	major = yes
+
+	fire_only_once = yes
+
+	option = { #We are strong in the face of evil
+		trigger = {
+			original_tag = USA
+		}
+		name = donald_trump_news.1.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.1.o1 executed"
+	}
+	option = { #This is a relief
+		trigger = {
+			OR = {
+				original_tag = SOV
+				original_tag = IRQ
+				original_tag = SYR
+				original_tag = TUR
+				original_tag = SYR
+			}
+		}
+		name = donald_trump_news.1.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.1.o2 executed"
+	}
+	option = { #Uh Oh...
+		trigger = {
+			original_tag = ISI
+		}
+		name = donald_trump_news.1.o3
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.1.o3 executed"
+	}
+	option = { #Interesting
+		trigger = {
+			NOT = {
+				OR = {
+					original_tag = USA
+					original_tag = SOV
+					original_tag = IRQ
+					original_tag = SYR
+					original_tag = TUR
+					original_tag = SYR
+				}
+			}
+		}
+		name = donald_trump_news.1.o4
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.1.o4 executed"
+	}
+}

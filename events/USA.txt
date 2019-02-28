@@ -1,0 +1,1410 @@
+﻿add_namespace = USA
+
+#New Years - Intro Event
+country_event = {
+	id = USA.1
+	title = USA.1.t
+	desc = USA.1.d
+	picture = GFX_new_years_2017_usa
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = USA.1.a
+		log = "[GetDateText]: [This.GetName]: USA.1.a executed"
+		add_political_power = 5
+	}
+}
+#Inaguration
+country_event = {
+	id = USA.2
+	title = USA.2.t
+	desc = USA.2.d
+	picture = GFX_Trump_Inaug
+	
+	fire_only_once = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.2.a
+		log = "[GetDateText]: [This.GetName]: USA.2.a executed"
+		ai_chance = { factor = 100 }
+		add_popularity = { ideology = nationalist popularity = 0.05 }
+		add_popularity = { ideology = democratic popularity = -0.05 }
+		create_country_leader = {
+		  name = "Donald Trump"
+		  desc = "POLITICS_FRANKLIN_DELANO_ROOSEVELT_DESC"
+		  picture = "Donald_Trump.dds"
+		  expire = "2068.1.1"
+		  ideology = conservatism
+		  traits = {
+			 businessman
+			 western_conservatism
+			 narcissist
+			 greedy
+			 likeable
+			 emotional
+		  }
+		}
+	}
+}
+
+#berkley riots
+country_event = {
+	id = USA.3
+	title = USA.3.t
+	desc = USA.3.d
+	picture = GFX_Berkley_Riot
+	
+	fire_only_once = yes
+	
+	trigger = {
+		tag = USA
+		date > 2017.2.1
+		date < 2017.4.27
+	
+		has_country_leader = {
+		  ruling_only = yes
+		  name = "Donald Trump" 
+		} 
+	}
+	
+	option = {
+		name = USA.3.a
+		log = "[GetDateText]: [This.GetName]: USA.3.a executed"
+		add_political_power = -5
+	}
+}
+#SuperBowl
+country_event = {
+	id = USA.4
+	title = USA.4.t
+	desc = USA.4.d
+	picture = GFX_Super_Bowl_LI
+	
+	fire_only_once = yes
+	
+	trigger = {
+		tag = USA
+		date > 2017.2.4
+		date < 2017.2.6
+	}
+	
+	option = {
+		name = USA.4.a
+		log = "[GetDateText]: [This.GetName]: USA.4.a executed"
+	}
+}
+#Major Industry stays in the US
+country_event = {
+	id = USA.5
+	title = USA.5.t
+	desc = USA.5.d
+	picture = GFX_Trump_Thumbs_Up
+	
+	fire_only_once = yes
+	
+	trigger = {
+		tag = USA
+		has_government = nationalist
+		date > 2017.2.1
+		date < 2017.2.10
+	}
+	
+	option = {
+		name = USA.5.a
+		log = "[GetDateText]: [This.GetName]: USA.5.a executed"
+		ai_chance = { factor = 100 }
+		random_owned_state = { add_extra_state_shared_building_slots = 1 }
+
+	}
+}
+
+#Agressor against Rio-pact member - hidden event no need for localisation/pics
+country_event = {
+	id = USA.6
+	title = USA.6.t
+	desc = USA.6.d
+	#picture = GFX_USA_6
+	
+	is_triggered_only = yes
+	hidden = yes
+	
+	immediate = {
+		save_event_target_as = being_attacked
+		FROM = { save_event_target_as = agressor }
+		every_country = {
+			limit = {
+				has_idea = rio_pact_member
+			}
+			country_event = { id = USA.7 }
+		}
+	}
+	
+	option = {
+		name = USA.6.a
+		log = "[GetDateText]: [This.GetName]: USA.6.a executed"
+		
+	}
+}
+
+#RIO-Pact members decide to intervene or not
+country_event = {
+	id = USA.7
+	title = USA.7.t
+	desc = USA.7.d
+	#picture = GFX_USA_7
+
+	is_triggered_only = yes
+	
+	#Intervene, send an ultimatum peace out or war
+	option = {
+		name = USA.7.a
+		log = "[GetDateText]: [This.GetName]: USA.7.a executed"
+	
+		#Need to use FROM FROM scope since the one sending the event is the nation under attack
+		ai_chance = {
+			factor = 20			
+			modifier = {
+				factor = 0.2
+				event_target:agressor = {
+					strength_ratio = {
+						tag = this
+						ratio > 0.8
+					}
+				}
+			}		
+		}
+		set_country_flag = RIO_Pact_War_Member
+		#event_target:agressor = { country_event = { id = USA.8 days = 2 } }
+	}
+
+	#Don't Intervene - leave rio-pact
+	option = {
+		name = USA.17.b
+		log = "[GetDateText]: [This.GetName]: USA.17.b executed"
+		remove_ideas = rio_pact_member
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 0
+				event_target:agressor = {
+					strength_ratio = {
+						tag = this
+						ratio < 0.8
+					}
+				}
+			}
+		}
+	}
+}
+# Agressors response to RIO-Pact members intervening - occours aproximately 20 days after the war starts
+country_event = {
+	id = USA.8
+	title = USA.8.t
+	desc = USA.8.d
+	#picture = GFX_report_event_soldiers_marching
+
+	is_triggered_only = yes
+	
+	trigger = {
+		any_country = {
+			has_country_flag = RIO_Pact_War_Member
+		}
+	}
+	
+	
+	#Go to war with RIO-Pact members
+	option = { 
+		name = USA.8.a
+		log = "[GetDateText]: [This.GetName]: USA.8.a executed"
+
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0.5
+				strength_ratio = {
+					tag = FROM
+					ratio < 0.7
+				}
+				is_in_faction = yes
+			}
+			modifier = {
+				factor = 5
+				strength_ratio = {
+					tag = FROM
+					ratio > 0.7
+				}
+			}
+		}
+
+		event_target:being_attacked = {
+			every_country = {
+				limit = { has_country_flag = RIO_Pact_War_Member }
+				add_to_war = {
+					targeted_alliance = PREV
+					enemy = ROOT
+				}
+				clr_country_flag = RIO_Pact_War_Member
+			}
+		}
+		
+		# hidden_effect = {
+			# news_event = { id = news.157 days = 2 }
+		# }
+	}
+
+	#Back down & white peace RIO Pact members
+	option = {
+		name = USA.8.b
+		log = "[GetDateText]: [This.GetName]: USA.8.b executed"
+
+		ai_chance = { 
+			factor = 10
+			modifier = {
+				factor = 10
+				strength_ratio = {
+					tag = USA
+					ratio < 0.5
+				}
+				is_in_faction = no
+			}			
+		}
+		event_target:being_attacked = { white_peace = event_target:agressor
+			hidden_effect = {
+				every_country = {
+					limit = { has_country_flag = RIO_Pact_War_Member }
+					clr_country_flag = RIO_Pact_War_Member
+				}
+			}
+		}
+	}
+}
+
+#MLS Cup
+country_event = {
+	id = USA.9
+	title = USA.9.t
+	desc = USA.9.d
+	picture = GFX_MLS_2017
+	
+	fire_only_once = yes
+	
+	trigger = {
+	or = {
+		tag = USA
+		tag = CAN
+		}
+		date > 2017.12.4
+		date < 2017.12.14
+	}
+	
+	option = {
+		name = USA.9.a
+		log = "[GetDateText]: [This.GetName]: USA.9.a executed"
+		trigger = {
+		tag = USA
+		}
+	}
+	
+	option = {
+		name = USA.9.b
+		log = "[GetDateText]: [This.GetName]: USA.9.b executed"
+		trigger = {
+		tag = CAN
+		}
+	}
+}
+
+#The Karzai Administration
+country_event = {
+	id = USA.10
+	title = USA.10.t
+	desc = USA.10.d
+	picture = GFX_report_event_hamid_karzai
+	
+	fire_only_once = yes
+	
+	trigger = {
+		original_tag = USA
+		is_puppet = no
+		has_government = democratic
+		date < 2017.01.01
+		AFG = {
+			controls_state = 409
+			controls_state = 410
+			controls_state = 411
+			controls_state = 412
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+	
+	option = {
+		name = usa.10.a
+		log = "[GetDateText]: [This.GetName]: USA.10.a executed"
+		AFG = {
+			set_country_flag = the_karzai_administration
+			country_event = Afghanistan.2
+		}
+		add_political_power = 100
+	}
+}
+
+#Shepherdstown Peace Talks
+country_event = {
+	id = USA.11
+	title = USA.11.t
+	desc = USA.11.d
+	picture = GFX_political_deal
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.11.a
+		log = "[GetDateText]: [This.GetName]: USA.11.a executed"
+		add_political_power = 5
+		SYR = { country_event = USA.12 }
+		ISR = { country_event = USA.13 }
+	}
+}
+
+#Syria: Shepherdstown Peace Talks
+country_event = {
+	id = USA.12
+	title = USA.12.t
+	desc = USA.12.d
+	picture = GFX_political_deal
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.12.a
+		log = "[GetDateText]: [This.GetName]: USA.12.a executed"
+		add_opinion_modifier = {
+			target = ISR
+			modifier = peace_talks
+		}
+	}
+}
+
+#Israel: Shepherdstown Peace Talks
+country_event = {
+	id = USA.13
+	title = USA.13.t
+	desc = USA.13.d
+	picture = GFX_political_deal
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.13.a
+		log = "[GetDateText]: [This.GetName]: USA.13.a executed"
+		add_opinion_modifier = {
+			target = SYR
+			modifier = peace_talks
+		}
+	}
+}
+
+#Southern Illinois Incident
+country_event = {
+	id = USA.14
+	title = USA.14.t
+	desc = USA.14.d
+	picture = GFX_ufo
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_full_control_of_state = 778	#Illinois
+	}
+	
+	option = {
+		name = USA.14.a
+		log = "[GetDateText]: [This.GetName]: USA.14.a executed"
+		add_political_power = -1
+	}
+}
+
+#Microsoft acquires Visio
+country_event = {
+	id = USA.15
+	title = USA.15.t
+	desc = USA.15.d
+	picture = GFX_stock_market
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = { has_government = communism }
+	}
+	
+	option = {
+		name = USA.15.a
+		log = "[GetDateText]: [This.GetName]: USA.15.a executed"
+		add_political_power = 5
+	}
+	
+	option = {
+		name = USA.15.b
+		log = "[GetDateText]: [This.GetName]: USA.15.b executed"
+		add_popularity = {
+			ideology = communism
+			popularity = 0.02
+		}
+		add_to_variable = { Communist-State_pop = 0.0002 }
+		recalculate_party = yes
+		add_stability = -0.02
+	}
+}
+
+#America Online merges with Time Warner
+country_event = {
+	id = USA.16
+	title = USA.16.t
+	desc = USA.16.d
+	picture = GFX_stock_market
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = { has_government = communism }
+	}
+	
+	option = {
+		name = USA.16.a
+		log = "[GetDateText]: [This.GetName]: USA.16.a executed"
+		add_political_power = 30
+	}
+	
+	option = {
+		name = USA.16.b
+		log = "[GetDateText]: [This.GetName]: USA.16.b executed"
+		add_popularity = {
+			ideology = communism
+			popularity = 0.04
+		}
+		add_to_variable = { Communist-State_pop = 0.0004 }
+		recalculate_party = yes
+		add_stability = -0.03
+	}
+}
+
+#Elian Gonzalez Affair
+country_event = {
+	id = USA.17
+	title = USA.17.t
+	desc = USA.17.d
+	picture = GFX_elian_gonzalez
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		country_exists = CUB
+		NOT = { has_government = communism }
+		CUB = { has_government = communism }
+	}
+	
+	option = {	#Send the boy back
+		name = USA.17.a
+		log = "[GetDateText]: [This.GetName]: USA.17.a executed"
+		add_political_power = 25
+		
+		hidden_effect = {
+			country_event = {
+				id = USA.18
+				days = 102
+			}
+		}
+		
+		ai_chance = {
+			factor = 10
+		}
+	}
+	
+	option = {	#Keep him here
+		name = USA.17.b
+		log = "[GetDateText]: [This.GetName]: USA.17.b executed"
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.01
+		}
+		add_popularity = {
+			ideology = communism
+			popularity = -0.02
+		}
+		add_to_variable = { socialism_pop = 0.0001 }
+		add_to_variable = { Communist-State_pop = -0.0002 }
+		recalculate_party = yes
+		add_stability = 0.01
+		
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+#Elian Gonzalez seized by Federal Agents
+country_event = {
+	id = USA.18
+	title = USA.18.t
+	desc = USA.18.d
+	picture = GFX_elian_gonzalez
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_government = democratic
+	}
+	
+	option = {	#The establishment is right.
+		name = USA.18.a
+		log = "[GetDateText]: [This.GetName]: USA.18.a executed"
+		add_popularity = {
+			ideology = democratic
+			popularity = -0.03
+		}
+		add_to_variable = { socialism_pop = -0.0003 }
+		recalculate_party = yes
+	}
+}
+
+#January 2000 North American Blizzard
+country_event = {
+	id = USA.19
+	title = USA.19.t
+	desc = USA.19.d
+	picture = GFX_blizzard
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.19.a
+		log = "[GetDateText]: [This.GetName]: USA.19.a executed"
+		add_political_power = -15
+		add_stability = -0.04
+		ai_chance = { factor = 0 }
+	}
+	
+	option = {
+		name = USA.19.b
+		log = "[GetDateText]: [This.GetName]: USA.19.b executed"
+		add_political_power = -60
+		add_stability = -0.01
+		ai_chance = { factor = 100 }
+	}
+}
+
+#Alaska Airlines Flight 261
+country_event = {
+	id = USA.20
+	title = USA.20.t
+	desc = USA.20.d
+	picture = GFX_plane_crash
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.20.a
+		log = "[GetDateText]: [This.GetName]: USA.20.a executed"
+		add_political_power = -20
+	}
+}
+
+#End of the Peanuts
+country_event = {
+	id = USA.21
+	title = USA.21.t
+	desc = USA.21.d
+	picture = GFX_comic_artist
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.21.a
+		log = "[GetDateText]: [This.GetName]: USA.21.a executed"
+		add_political_power = 5
+	}
+}
+
+#Shooting of Kayla Rolland
+country_event = {
+	id = USA.22
+	title = USA.22.t
+	desc = USA.22.d
+	picture = GFX_handgun
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_full_control_of_state = 777 #Michigan
+	}
+	
+	option = {
+		name = USA.22.a
+		log = "[GetDateText]: [This.GetName]: USA.22.a executed"
+		add_political_power = -10
+		add_stability = -0.001
+	}
+}
+
+#2000 Phillips Explosion
+country_event = {
+	id = USA.23
+	title = USA.23.t
+	desc = USA.23.d
+	picture = GFX_burning_oil_refinery
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_full_control_of_state = 800	#Texas
+	}
+	
+	option = {
+		name = USA.23.a
+		log = "[GetDateText]: [This.GetName]: USA.23.a executed"
+		add_political_power = -5
+		add_stability = -0.01
+		
+		ai_chance = {
+			factor = 0
+		}
+	}
+	
+	option = {
+		name = USA.23.b
+		log = "[GetDateText]: [This.GetName]: USA.23.b executed"
+		add_political_power = -25
+		
+		ai_chance = {
+			factor = 100
+		}
+	}
+}
+
+#Fort Worth Tornado
+country_event = {
+	id = USA.24
+	title = USA.24.t
+	desc = USA.24.d
+	picture = GFX_tornado
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_full_control_of_state = 801	#Texas
+	}
+	
+	option = {
+		name = USA.24.a
+		log = "[GetDateText]: [This.GetName]: USA.24.a executed"
+		add_stability = -0.01
+	}
+}
+
+#2000 U.S. Census
+country_event = {
+	id = USA.25
+	title = USA.25.t
+	desc = USA.25.d
+	picture = GFX_election_rally
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.25.a
+		log = "[GetDateText]: [This.GetName]: USA.25.a executed"
+		add_political_power = 10
+		add_stability = 0.01
+	}
+}
+
+#Marine Corps aircraft crash near Marana, Arizona
+country_event = {
+	id = USA.26
+	title = USA.26.t
+	desc = USA.26.d
+	picture = GFX_plane_crash
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_full_control_of_state = 806	#Arizona
+	}
+	
+	option = {
+		name = USA.26.a
+		log = "[GetDateText]: [This.GetName]: USA.26.a executed"
+		add_political_power = -25
+		navy_experience = 2
+		air_experience = 2
+	}
+}
+
+#Anti-Globalization Protests in Washington
+country_event = {
+	id = USA.27
+	title = USA.27.t
+	desc = USA.27.d
+	picture = GFX_political_activist
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_full_control_of_state = 772	#Maryland/DC
+		has_government = democratic
+	}
+	
+	option = {	#The establishment is right.
+		name = USA.27.a
+		log = "[GetDateText]: [This.GetName]: USA.27.a executed"
+		add_political_power = 10
+		ai_chance = { factor = 90 }
+	}
+	
+	option = {	#The environmentalists are right.
+		name = USA.27.b
+		log = "[GetDateText]: [This.GetName]: USA.27.b executed"
+		add_political_power = -10
+		add_popularity = {
+			ideology = neutrality
+			popularity = 1
+		}
+		add_to_variable = { Neutral_Green_pop = 0.01 }
+		recalculate_party = yes
+		ai_chance = { factor = 5 }
+	}
+	
+	option = {	#Perhaps we should listen to the nationalists?
+		name = USA.27.c
+		log = "[GetDateText]: [This.GetName]: USA.27.c executed"
+		add_political_power = -10
+		add_popularity = {
+			ideology = nationalist
+			popularity = 1
+		}
+		recalculate_party = yes
+		ai_chance = { factor = 5 }
+	}
+}
+
+#Datapoint files for Chapter 11 bankruptcy
+country_event = {
+	id = USA.28
+	title = USA.28.t
+	desc = USA.28.d
+	picture = GFX_computer
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.28.a
+		log = "[GetDateText]: [This.GetName]: USA.28.a executed"
+		add_political_power = -10
+	}
+	
+	option = {
+		name = USA.28.b
+		log = "[GetDateText]: [This.GetName]: USA.28.b executed"
+		trigger = { has_government = democratic }
+		add_political_power = -100
+		add_stability = 0.01
+	}
+}
+
+#Republican National Convention 2000
+country_event = {
+	id = USA.29
+	title = USA.29.t
+	desc = USA.29.d
+	picture = GFX_republican_national_convention
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_government = democratic
+	}
+	
+	option = {
+		name = USA.29.a
+		log = "[GetDateText]: [This.GetName]: USA.29.a executed"
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.03
+		}
+		add_to_variable = { conservatism_pop = 0.0003 }
+		recalculate_party = yes
+	}
+}
+
+#DeviantART launched
+country_event = {
+	id = USA.30
+	title = USA.30.t
+	desc = USA.30.d
+	picture = GFX_computer
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_government = democratic
+	}
+	
+	option = {
+		name = USA.30.a
+		log = "[GetDateText]: [This.GetName]: USA.30.a executed"
+		add_political_power = 3
+	}
+}
+
+#H.L. Hunley
+country_event = {
+	id = USA.31
+	title = USA.31.t
+	desc = USA.31.d
+	picture = GFX_submarine
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.31.a
+		log = "[GetDateText]: [This.GetName]: USA.31.a executed"
+		add_political_power = 10
+	}
+}
+
+#Democratic National Convention 2000
+country_event = {
+	id = USA.32
+	title = USA.32.t
+	desc = USA.32.d
+	picture = GFX_democratic_national_convention
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_government = democratic
+	}
+	
+	option = {
+		name = USA.32.a
+		log = "[GetDateText]: [This.GetName]: USA.32.a executed"
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.03
+		}
+		add_to_variable = { liberalism_pop = 0.0003 }
+		recalculate_party = yes
+	}
+}
+
+#Mac OS X
+country_event = {
+	id = USA.33
+	title = USA.33.t
+	desc = USA.33.d
+	picture = GFX_computer
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.33.a
+		log = "[GetDateText]: [This.GetName]: USA.33.a executed"
+		add_political_power = 3
+	}
+}
+
+#Martin County Oil Spill
+country_event = {
+	id = USA.34
+	title = USA.34.t
+	desc = USA.34.d
+	picture = GFX_burning_oil_refinery
+	
+	trigger = {
+		has_full_control_of_state = 782	#Kentucky
+	}
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.34.a
+		log = "[GetDateText]: [This.GetName]: USA.34.a executed"
+		add_political_power = -20
+	}
+	
+	option = {
+		name = USA.34.b
+		log = "[GetDateText]: [This.GetName]: USA.34.b executed"
+		add_stability = -0.01
+	}
+}
+
+#USS Cole Attacks
+country_event = {
+	id = USA.35
+	title = USA.35.t
+	desc = USA.35.d
+	picture = GFX_cole_attack
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.35.a
+		log = "[GetDateText]: [This.GetName]: USA.35.a executed"
+		news_event = {
+			hours = 6
+			id = news.3
+		}
+		navy_experience = 2
+		add_political_power = -10
+	}
+}
+
+#Gus Hall dies
+country_event = {
+	id = USA.36
+	title = USA.36.t
+	desc = USA.36.d
+	picture = GFX_fathers_of_communism
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.36.a
+		log = "[GetDateText]: [This.GetName]: USA.36.a executed"
+		ai_chance = { factor = 95 }
+	}
+	
+	option = {
+		name = USA.36.b
+		log = "[GetDateText]: [This.GetName]: USA.36.b executed"
+		add_political_power = -50
+		add_stability = -0.02
+		add_popularity = {
+			ideology = communism
+			popularity = 1.05
+		}
+		add_to_variable = { Communist-State_pop = 0.0105 }
+		recalculate_party = yes
+		hidden_effect = { country_event = { id = USA.37 days = 1000 } }
+		
+		ai_chance = { factor = 5 }
+	}
+}
+
+#Hall State
+country_event = {
+	id = USA.37
+	title = USA.37.t
+	desc = USA.37.d
+	picture = GFX_communism
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_government = communism
+	}
+	
+	option = {
+		name = USA.37.a
+		log = "[GetDateText]: [This.GetName]: USA.37.a executed"
+		add_political_power = 20
+		add_popularity = {
+			ideology = communism
+			popularity = 0.01
+		}
+		add_to_variable = { Communist-State_pop = 0.01 }
+		recalculate_party = yes
+		#State Names
+		809 = { set_state_name = "Halberg" }		#Washington			#Arvo Kustaa Halberg (Gus Hall)
+		790 = { set_state_name = "Vladimir" }		#North Carolina		#Vladimir Lenin
+		791 = { set_state_name = "Marx" }			#South Carolina		#Karl Marx
+		797 = { set_state_name = "Delescluze" }		#Louisiana			#Louis Charles Delescluze
+		773 = { set_state_name = "Josephia" }		#Virginia			#Joseph Stalin
+		774 = { set_state_name = "Zedong" }			#West Virginia		#Mao Zedong
+		792 = { set_state_name = "Malcolm" }		#Georgia			#Malcolm X
+		803 = { set_state_name = "Manabendra" }		#New Mexico			#Manabendra Nath Roy
+		765 = { set_state_name = "Inkpin" }			#New Hampshire		#Albert Inkpin
+		770 = { set_state_name = "Browder" }		#New Jersey			#Earl Browder
+		772 = { set_state_name = "Margot" }			#Maryland			#Margot Honecker
+		771 = { set_state_name = "Eugene" }			#Pennsylvania		#Eugene Debs
+		769 = { set_state_name = "Engels" }			#New York			#Friedrich Engels
+		#Province Names
+		set_province_name = { id = 3957 name = "Gus Hall City, D.M." }
+		ai_chance = { factor = 100 }
+	}
+	
+	option = {
+		name = USA.37.b
+		log = "[GetDateText]: [This.GetName]: USA.37.b executed"
+		ai_chance = { factor = 0 }
+	}
+}
+
+#Greeneville sinks Ehime-Maru
+country_event = {
+	id = USA.38
+	title = USA.38.t
+	desc = USA.38.d
+	picture = GFX_submarine
+	
+	is_triggered_only = yes
+	
+	option = {	#Apologize
+		name = USA.38.a
+		log = "[GetDateText]: [This.GetName]: USA.38.a executed"
+		add_stability = -0.01
+	}
+	
+	option = {	#It's their fault
+		name = USA.38.b
+		log = "[GetDateText]: [This.GetName]: USA.38.b executed"
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.03
+		}
+		recalculate_party = yes
+		add_stability = 0.01
+		add_named_threat = { 
+			threat = 0.3
+			name = USA.38.t 
+		}
+	}
+}
+
+#September 11 Attacks
+country_event = {
+	id = USA.39
+	title = USA.39.t
+	desc = USA.39.d
+	picture = GFX_nine_eleven
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = { has_government = fascism }
+	}
+	
+	immediate = {
+		hidden_effect = {
+			country_event = USA.40
+		}
+	}
+	
+	option = {
+		name = USA.39.a
+		log = "[GetDateText]: [This.GetName]: USA.39.a executed"
+		news_event = {
+			hours = 6
+			id = usa_news.1
+		}
+	}
+}
+
+## AFGHANISTAN WAR ##
+#Central Timeline Management Event
+country_event = {
+	id = USA.40
+	hidden = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		log = "[GetDateText]: [This.GetName]: USA.40 executed"
+		#The event triggers on September 11th, 2001.
+		#2001#
+		country_event = { id = USA.41 days = 2 }	#September 13th: Hillary Clinton backs the post-9/11 efforts
+		country_event = { id = USA.42 days = 3 }	#September 14th: National Prayer Service
+		country_event = { id = USA.43 days = 4 }	#September 15th: Murder of Balbir Singh Sondhi
+		country_event = { id = USA.44 days = 7 }	#September 18th: Anthrax Attacks
+		country_event = { id = USA.45 days = 9 }	#September 20th: The War on Terror Speech
+		country_event = { id = USA.46 days = 25 }	#October 6th: Announcement of the Invasion to Congress
+		country_event = { id = USA.47 days = 26 }	#October 7th: The Invasion of Afghanistan
+		country_event = { id = USA.48 days = 27 }	#October 8th: The Homeland Security
+		#2003
+		country_event = { id = USA.49 days = 555 }			#March 20th: Invasion of Iraq
+		ENG = { country_event = { id = USA.49 days = 555 } }	#March 20th: Invasion of Iraq
+		AST = { country_event = { id = USA.49 days = 555 } }	#March 20th: Invasion of Iraq
+		POL = { country_event = { id = USA.49 days = 555 } }	#March 20th: Invasion of Iraq
+	}
+}
+
+#Hillary Clinton backs the government
+country_event = {
+	id = USA.41
+	title = USA.41.t
+	desc = USA.41.d
+	picture = GFX_hillary_clinton_young
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_government = democratic
+	}
+	
+	option = {	#We stand united
+		name = USA.41.a
+		log = "[GetDateText]: [This.GetName]: USA.41.a executed"
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.015
+		}
+		add_to_variable = { conservatism_pop = 0.0001 }
+		add_to_variable = { liberalism_pop = 0.00005 }
+		recalculate_party = yes
+		add_political_power = 25
+		add_stability = 0.03
+		
+		hidden_effect = {
+			news_event = {
+				id = news.5
+				hours = 6
+			}
+		}
+	}
+}
+
+#National Prayer Service
+country_event = {
+	id = USA.42
+	title = USA.42.t
+	desc = USA.42.d
+	picture = GFX_national_prayer_service_2001
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.42.a
+		log = "[GetDateText]: [This.GetName]: USA.42.a executed"
+		add_political_power = 10
+		add_stability = 0.025
+		
+		hidden_effect = {
+			news_event = {
+				id = USA.6
+				hours = 6
+			}
+		}
+	}
+}
+
+#Murder of Balbir Singh Sodhi
+country_event = {
+	id = USA.43
+	title = USA.43.t
+	desc = USA.43.d
+	picture = GFX_balbir_singh_sodhi
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.43.a
+		add_political_power = -5
+		log = "[GetDateText]: [This.GetName]: USA.43.a executed"
+		hidden_effect = {
+			news_event = {
+				id = news.7
+				hours = 6
+			}
+		}
+	}
+}
+
+#Anthrax Attacks
+country_event = {
+	id = USA.44
+	title = USA.44.t
+	desc = USA.44.d
+	picture = GFX_fbi
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.44.a
+		log = "[GetDateText]: [This.GetName]: USA.44.a executed"
+		add_stability = -0.002
+		add_political_power = -5
+		
+		hidden_effect = {
+			news_event = {
+				id = news.8
+				hours = 6
+			}
+		}
+	}
+}
+
+#The War on Terror Speech
+country_event = {
+	id = USA.45
+	title = USA.45.t
+	desc = USA.45.d
+	picture = GFX_george_w_bush
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.45.a
+		log = "[GetDateText]: [This.GetName]: USA.45.a executed"
+		add_stability = 0.045
+		
+		hidden_effect = {
+			news_event = {
+				id = news.9
+				hours = 6
+			}
+		}
+	}
+}
+
+#Announcement of the Afghanistan Invasion
+country_event = {
+	id = USA.46
+	title = USA.46.t
+	desc = USA.46.d
+	picture = GFX_george_w_bush
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		TAL = { has_government = fascism }
+	}
+	
+	option = {
+		name = USA.46.a
+		log = "[GetDateText]: [This.GetName]: USA.46.a executed"
+		add_political_power = 20
+		add_stability = 0.01
+		army_experience = 10
+		hidden_effect = {
+			news_event = {
+				id = news.10
+				hours = 6
+			}
+		}
+	}
+}
+
+#Invasion of Afghanistan
+country_event = {
+	id = USA.47
+	title = USA.47.t
+	desc = USA.47.d
+	picture = GFX_afghanistan_war
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		TAL = { 
+			exists = yes
+			is_puppet = no 
+			has_government = fascism 
+		}
+	}
+	
+	option = {
+		name = USA.47.a
+		log = "[GetDateText]: [This.GetName]: USA.47.a executed"
+		declare_war_on = {
+			target = TAL
+			type = puppet_wargoal_focus
+		}
+		AFG = {
+			diplomatic_relation = {
+				country = USA
+				relation = non_aggression_pact
+				active = yes
+			}
+		}
+		give_military_access = AFG
+		hidden_effect = {
+			load_oob = "USA_invading_force_TAL"
+			ENG = { country_event = { id = USA.50 } }
+			CAN = { country_event = { id = USA.50 } }
+			AST = { country_event = { id = USA.50 } }
+		}
+		
+	}
+}
+
+#The Homeland Security
+country_event = {
+	id = USA.48
+	title = USA.48.t
+	desc = USA.48.d
+	picture = GFX_homeland_security
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = USA.48.a
+		log = "[GetDateText]: [This.GetName]: USA.48.a executed"
+		add_political_power = -25
+		add_stability = 0.01
+	}
+	
+	option = {
+		name = USA.48.b
+		log = "[GetDateText]: [This.GetName]: USA.48.b executed"
+		add_political_power = -5
+	}
+}
+
+#Invasion of Iraq
+country_event = {
+	id = USA.49
+	title = USA.49.t
+	desc = USA.49.d
+	picture = GFX_report_event_iraq_war3
+
+	is_triggered_only = yes
+
+	option = {
+		name = USA.49.a
+		log = "[GetDateText]: [This.GetName]: USA.49.a executed"
+		declare_war_on = {
+			target = IRQ
+			type = puppet_wargoal_focus
+		}
+		give_military_access = KUW
+	}
+}
+
+#Invasion of Afghanistan
+country_event = {
+	id = USA.50
+	title = USA.47.t
+	desc = USA.47.d
+	picture = GFX_afghanistan_war
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		TAL = { 
+			exists = yes
+			is_puppet = no 
+			has_government = fascism 
+		}
+	}
+	
+	option = {
+		name = USA.47.a
+		log = "[GetDateText]: [This.GetName]: USA.47.a executed"
+		declare_war_on = {
+			target = TAL
+			type = puppet_wargoal_focus
+		}
+	}
+}

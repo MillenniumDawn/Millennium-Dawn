@@ -1,0 +1,410 @@
+﻿add_namespace = Afghanistan
+add_namespace = AfghanistanNews
+add_namespace = AfghanistanBorderWars
+
+### Afghanistan civil war cleanup events ###
+
+#Give the winner AFG cosmetic tag
+country_event = {
+	id = Afghanistan.0
+	
+	hidden = yes
+	
+	trigger = {
+		OR = {
+			AND = {
+				tag = AFG
+				NOT = {
+					country_exists = TAL
+				}
+			}
+			AND = {
+				tag = TAL
+				NOT = {
+					country_exists = AFG
+				}
+			}
+		}
+		NOT = { has_global_flag = Afghanistan_Civil_War_Over }
+	}
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+	
+	immediate = {
+		#Civil war is over
+		set_global_flag = Afghanistan_Civil_War_Over
+		#Clear core status
+		409 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		410 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		411 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		412 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		414 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		415 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		#Make the winner Afghanistan
+		if = {
+			limit = {
+				tag = TAL
+			}
+			set_cosmetic_tag = AFG
+		}
+		add_state_core = 409
+		add_state_core = 410
+		add_state_core = 411
+		add_state_core = 412
+		add_state_core = 414
+		add_state_core = 415
+		set_capital = 414
+	}
+	
+	option = {
+		name = Afghanistan.0.a
+		hidden_effect = { news_event = { id = AfghanistanNews.1 hours = 6 } }
+		log = "[GetDateText]: [This.GetName]: Afghanistan.0.a executed"
+	}
+}
+
+#Recreate Afghanistan in case it has been annexed
+country_event = {
+	id = Afghanistan.1
+	
+	hidden = yes
+	
+	trigger = {
+		NOT = {
+			country_exists = AFG
+			country_exists = TAL
+		}
+		NOT = { 414 = { is_core_of = AFG } }
+	}
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+	
+	immediate = {
+		#Clear core status
+		409 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		410 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		411 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		412 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		414 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		415 = {
+			remove_core_of = AFG
+			remove_core_of = TAL
+		}
+		AFG = {
+			add_state_core = 409
+			add_state_core = 410
+			add_state_core = 411
+			add_state_core = 412
+			add_state_core = 414
+			add_state_core = 415
+			set_capital = 414
+		}
+	}
+	
+	option = {
+		name = Afghanistan.1.a
+		log = "[GetDateText]: [This.GetName]: Afghanistan.1.a executed"
+	}
+}
+
+#Afghanistan wins border war
+country_event = {
+
+	id = AfghanistanBorderWars.1
+	title = AfghanistanBorderWars.1.t
+	desc = AfghanistanBorderWars.1.d
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		event_target:AFG_ATTACKER = {
+			if = {
+				limit = { has_country_flag = AFG_attacking_417 }
+				transfer_state = 417
+				clr_country_flag = AFG_attacking_417
+			}
+			if = {
+				limit = { has_country_flag = AFG_attacking_418 }
+				transfer_state = 418
+				clr_country_flag = AFG_attacking_418
+			}
+			if = {
+				limit = { has_country_flag = AFG_attacking_419 }
+				transfer_state = 419
+				clr_country_flag = AFG_attacking_419
+			}
+			if = {
+				limit = { has_country_flag = AFG_attacking_957 }
+				transfer_state = 957
+				clr_country_flag = AFG_attacking_957
+			}
+			if = {
+				limit = { has_country_flag = AFG_attacking_416 }
+				transfer_state = 416
+				clr_country_flag = AFG_attacking_416
+			}
+		}
+	}
+	
+	option = {
+		name = AfghanistanBorderWars.1.a
+		trigger = { tag = event_target:AFG_ATTACKER }
+		log = "[GetDateText]: [This.GetName]: AfghanistanBorderWars.1.a executed"
+	}
+	option = {
+		name = AfghanistanBorderWars.1.b
+		trigger = { tag = event_target:AFG_ATTACKER }
+		log = "[GetDateText]: [This.GetName]: AfghanistanBorderWars.1.b executed"
+		ai_chance = {
+			factor = 20
+		}
+		relative_change_neg_8 = yes
+		decrease_popularity_5 = yes
+	}
+	option = {
+		name = AfghanistanBorderWars.1.c
+		trigger = { tag = event_target:AFG_ATTACKER }
+		log = "[GetDateText]: [This.GetName]: AfghanistanBorderWars.1.c executed"
+		ai_chance = {
+			factor = 80
+		}
+		declare_war_on = {
+			target = event_target:AFG_ATTACKER
+			type = annex_everything
+		}
+		random_country = {
+			limit = {
+				original_tag = PAK
+				NOT = { tag = event_target:AFG_ATTACKER }
+			}
+			declare_war_on = {
+				target = event_target:AFG_ATTACKER
+				type = annex_everything
+			}
+		}
+	}
+}
+
+#Afghanistan loses border war
+country_event = {
+
+	id = AfghanistanBorderWars.2
+	title = AfghanistanBorderWars.2.t
+	desc = AfghanistanBorderWars.2.d
+	
+	is_triggered_only = yes
+	
+	
+	option = {
+		name = AfghanistanBorderWars.2.a
+		trigger = { tag = event_target:AFG_ATTACKER }
+		log = "[GetDateText]: [This.GetName]: AfghanistanBorderWars.2.a executed"
+	}
+	option = {
+		name = AfghanistanBorderWars.2.b
+		trigger = { tag = event_target:AFG_ATTACKER }
+		log = "[GetDateText]: [This.GetName]: AfghanistanBorderWars.2.b executed"
+		if = {
+			limit = { has_variable = AFG_fail_meter }
+			add_to_variable = {
+				var = AFG_fail_meter
+				value = 1
+			}
+		}
+		else = {
+			set_variable = {
+				var = AFG_fail_meter
+				value = 1
+			}
+		}
+		relative_change_neg_6 = yes
+		decrease_popularity_5 = yes
+	}
+}
+
+news_event = {
+
+	id = AfghanistanNews.1
+	title = AfghanistanNews.1.t
+	desc = {
+		text = AfghanistanNews.1.TAL.d
+		trigger = { FROM = { original_tag = TAL } }
+	}
+	desc = {
+		text = AfghanistanNews.1.AFG.d
+		trigger = { FROM = { original_tag = AFG } }
+	}
+	picture = GFX_news_rise_of_taliban
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = AfghanistanNews.1.a
+		log = "[GetDateText]: [This.GetName]: AfghanistanNews.1.a executed"
+	}
+	
+}	
+
+news_event = {
+
+	id = AfghanistanNews.2
+	title = AfghanistanNews.2.t
+	desc = AfghanistanNews.2.d
+	picture = GFX_news_afghanistan_pakistan
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = AfghanistanNews.2.a
+		log = "[GetDateText]: [This.GetName]: AfghanistanNews.2.a executed"
+	}
+	
+}		
+
+news_event = {
+
+	id = AfghanistanNews.3
+	title = AfghanistanNews.3.t
+	desc = AfghanistanNews.3.d
+	picture = GFX_news_afghanistan_pakistan
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = AfghanistanNews.3.a
+		log = "[GetDateText]: [This.GetName]: AfghanistanNews.3.a executed"
+	}
+	
+}		
+
+news_event = {
+
+	id = AfghanistanNews.4
+	title = AfghanistanNews.4.t
+	desc = AfghanistanNews.4.d
+	picture = GFX_news_afghanistan_pakistan
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = AfghanistanNews.4.a
+		log = "[GetDateText]: [This.GetName]: AfghanistanNews.4.a executed"
+	}
+	
+}		
+
+news_event = {
+
+	id = AfghanistanNews.5
+	title = AfghanistanNews.5.t
+	desc = AfghanistanNews.5.d
+	picture = GFX_news_rise_of_taliban
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = AfghanistanNews.5.a
+		log = "[GetDateText]: [This.GetName]: AfghanistanNews.5.a executed"
+	}
+	
+}
+
+#The Karzai Administration
+country_event = {
+	id = Afghanistan.2
+	title = Afghanistan.2.t
+	desc = Afghanistan.2.d
+	picture = GFX_report_event_hamid_karzai
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Afghanistan.2.a
+		log = "[GetDateText]: [This.GetName]: Afghanistan.2.a executed"
+		add_political_power = 100
+		add_stability = 0.05
+		set_politics = {
+			parties = {
+				democratic = {
+					popularity = 69
+				}
+				communism = {
+					popularity = 5
+				}
+				neutrality = {
+					popularity = 26
+				}
+				fascism = {
+					popularity = 0
+				}
+				nationalist = {
+					popularity = 0
+				}
+			}
+			ruling_party = democratic
+			election_frequency = 60
+		}
+		set_variable = { conservatism_pop = 0.60 }
+		set_variable = { Neutral_Muslim_Brotherhood_pop = 0.26 }
+		set_variable = { socialism_pop = 0.09 }
+		set_variable = { Communist-State_pop = 0.05 }
+		set_country_flag = col_leader_conservatism
+		recalculate_party = yes
+		create_country_leader = {
+			name = "Hamid Karzai"
+			picture = "Hamid_Karzai.dds"
+			expire = "2050.1.1"
+			ideology = conservatism
+			traits = {
+				
+			}
+		}
+	}
+}
