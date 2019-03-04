@@ -5,6 +5,7 @@
 inital_AI_NO_WANT_DEBT_set_up = {
 	set_variable = { var = AI_NO_WANT_DEBT value = 0 }
 	set_variable = { var = AI_VOLUNTEERS value = 0 }
+	set_variable = { var = IS_MAJOR value = 0 }
 }
 
 update_AI_NO_WANT_DEBT = {
@@ -12,12 +13,19 @@ update_AI_NO_WANT_DEBT = {
 	set_variable = { var = temp value = AI_NO_WANT_DEBT }
 
 	set_variable = { var = AI_WAR_SPEND_RATIO value = 0.5 }
+	#Debug!
+	#if = { limit = { any_enemy_country = { check_variable = { var = IS_MAJOR value = 1 } } }
+		#set_variable = { var = AT_WAR_WITH_BIG_GUY value = 1 }
+	#}
 	
 	divide_variable = { var = temp value = 75 }
 	subtract_from_variable = { var = AI_WAR_SPEND_RATIO value = temp }
-	
+	if = { limit = { num_of_military_factories > 40 }
+		set_variable = { var = IS_MAJOR value = 1 }
+	}
 	if = { limit = { has_war = yes } 
 		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 1000 }
+		ai_update_build_units = yes
 	} 
 	
 	if { limit = { is_in_faction = yes }
@@ -32,12 +40,13 @@ update_AI_NO_WANT_DEBT = {
 		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.1 }
 	}
 	
-	if = { limit = { is_major = yes } 
+	if = { limit = { IS_MAJOR = yes } 
 		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.25 }
 	}
 	
 	if = { limit = { any_other_country = { is_justifying_wargoal_against = ROOT } }
 		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 1000 }
+		ai_update_build_units = yes
 	}
 	
 	if = { limit = { check_variable = { var = AI_VOLUNTEERS = 1 } }
