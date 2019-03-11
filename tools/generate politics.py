@@ -151,7 +151,7 @@ def createPartNameLoc (rootDir, sheet):
                             content += " " + b +"."+"Neutral_Muslim_Brotherhood:0 \"£muslim_brotherhood_small "+d +"\"\n"
                             content += " " + b +"."+"Neutral_Muslim_Brotherhood_desc:0 \"" +"\"\n"
                         elif c == 29 and d != "":
-                            content += " " + b +"."+"Neutral_Green:0 \"£generic_Neutral_Green_small "+d +"\"\n"
+                            content += " " + b +"."+"Neutral_green:0 \"£generic_Neutral_Green_small "+d +"\"\n"
                             content += " " + b +"."+"Neutral_Green_desc:0 \"" +"\"\n"
 
                         #Nationalist
