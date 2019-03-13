@@ -14,6 +14,7 @@ startTime = time.time()
 
 __version__ = 1.0
 
+#returns all tags from /common/country_tags/00_countries.txt
 def get_tags(rootDir):
     tags = []
     pos =0
@@ -28,6 +29,7 @@ def get_tags(rootDir):
     #input()
     return tags
 
+#returns all sheet tags - may need to be fixed after picture fields were added
 def get_sheet_tags (sheet):
     sheet_tags = []
 
@@ -37,6 +39,7 @@ def get_sheet_tags (sheet):
 
     return sheet_tags
 
+#turns row numbers into excel/sheets drive row numbers e.g column 3 = column c in excel/sheets
 def num_to_col_letters(num):
     letters = ''
     while num:
@@ -45,6 +48,7 @@ def num_to_col_letters(num):
         num = (num - 1) // 26
     return ''.join(reversed(letters))
 
+#Retrieves the tag from a filename (e/g ENG - United Kingdom.txt) and returns the index of said tag in the tag list
 def get_tagPos(text, tags):
     isValidTag = re.match(r'^([A-Z]{3})\s.*-', text, re.M | re.I)  # If filename has a tag in it
     tagPos = -1
@@ -59,6 +63,7 @@ def get_tagPos(text, tags):
                             tagPos = pos
                             return tagPos, b
 
+#Returns the index of the tag in the tag list
 def get_tagPos2(tag,tags):
     tagPos = -1
     for pos, x in enumerate(tags):
@@ -70,7 +75,7 @@ def get_tagPos2(tag,tags):
                         tagPos = pos
                         return tagPos
 
-
+#Creates the localisation for the party names
 def createPartNameLoc (rootDir, sheet):
     content = ""
     filepath = rootDir + "/localisation/MD_subideology_names.yml"
@@ -181,14 +186,13 @@ def createPartNameLoc (rootDir, sheet):
     with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
         file.write(content)
 
-
-
-def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
+#Called by createPartyLeaders and Returns the country_leader = {... content
+def generateLeaderContent(content, rowInSheet, leaderName, picName, extraLeaders, tagPos):
     ideology = ""
-    if c == 2:
-        if d != "":
+    if rowInSheet == 2:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = conservatism\n"
             content += "\ttraits = {\n"
@@ -198,10 +202,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "conservatism"
         subIdeology = "western_conservatism"
 
-    elif c == 3:
-        if d != "":
+    elif rowInSheet == 3:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = liberalism\n"
             content += "\ttraits = {\n"
@@ -211,10 +215,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "liberalism"
         subIdeology = "western_liberalism"
 
-    elif c == 4:
-        if d != "":
+    elif rowInSheet == 4:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = socialism\n"
             content += "\ttraits = {\n"
@@ -224,10 +228,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "socialism"
         subIdeology = "western_socialism"
 
-    elif c == 5:
-        if d != "":
+    elif rowInSheet == 5:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Western_Autocracy\n"
             content += "\ttraits = {\n"
@@ -238,10 +242,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         subIdeology = "western_Western_Autocracy"
 
     # Emerging
-    elif c == 7:
-        if d != "":
+    elif rowInSheet == 7:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Communist-State\n"
             content += "\ttraits = {\n"
@@ -251,10 +255,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Communist-State"
         subIdeology = "emerging_Communist"
 
-    elif c == 8:
-        if d != "":
+    elif rowInSheet == 8:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Conservative\n"
             content += "\ttraits = {\n"
@@ -264,10 +268,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "emerging_Conservative"
         subIdeology = "Monarchist"
 
-    elif c == 9:
-        if d != "":
+    elif rowInSheet == 9:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Autocracy\n"
             content += "\ttraits = {\n"
@@ -277,10 +281,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Autocracy"
         subIdeology = "emerging_Autocracy"
 
-    elif c == 10:
-        if d != "":
+    elif rowInSheet == 10:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Vilayat_e_Faqih\n"
             content += "\ttraits = {\n"
@@ -290,10 +294,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Vilayat_e_Faqih"
         subIdeology = "emerging_Vilayat_e_Faqih"
 
-    elif c == 11:
-        if d != "":
+    elif rowInSheet == 11:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Mod_Vilayat_e_Faqih\n"
             content += "\ttraits = {\n"
@@ -303,10 +307,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Mod_Vilayat_e_Faqih"
         subIdeology = "emerging_Vilayat_e_Faqih_ref"
 
-    elif c == 12:
-        if d != "":
+    elif rowInSheet == 12:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = anarchist_communism\n"
             content += "\ttraits = {\n"
@@ -317,10 +321,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         subIdeology = "emerging_anarchist_communism"
 
     # Salafist
-    elif c == 14:
-        if d != "":
+    elif rowInSheet == 14:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Caliphate\n"
             content += "\ttraits = {\n"
@@ -330,10 +334,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Caliphate"
         subIdeology = "salafist_Caliphate"
 
-    elif c == 15:
-        if d != "":
+    elif rowInSheet == 15:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Kingdom\n"
             content += "\ttraits = {\n"
@@ -345,10 +349,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
 
 
     # Non-Alligned
-    elif c == 17:
-        if d != "":
+    elif rowInSheet == 17:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Neutral_conservatism\n"
             content += "\ttraits = {\n"
@@ -358,10 +362,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Neutral_conservatism"
         subIdeology = "neutrality_Neutral_conservatism"
 
-    elif c == 18:
-        if d != "":
+    elif rowInSheet == 18:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = oligarchism\n"
             content += "\ttraits = {\n"
@@ -371,10 +375,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "oligarchism"
         subIdeology = "neutrality_oligarchism"
 
-    elif c == 19:
-        if d != "":
+    elif rowInSheet == 19:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = neutral_Social\n"
             content += "\ttraits = {\n"
@@ -384,10 +388,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "neutral_Social"
         subIdeology = "neutrality_neutral_Social"
 
-    elif c == 20:
-        if d != "":
+    elif rowInSheet == 20:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Neutral_Libertarian\n"
             content += "\ttraits = {\n"
@@ -397,10 +401,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Neutral_Libertarian"
         subIdeology = "neutrality_Neutral_Libertarian"
 
-    elif c == 21:
-        if d != "":
+    elif rowInSheet == 21:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Neutral_Autocracy\n"
             content += "\ttraits = {\n"
@@ -410,10 +414,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Neutral_Autocracy"
         subIdeology = "neutrality_Neutral_Autocracy"
 
-    elif c == 22:
-        if d != "":
+    elif rowInSheet == 22:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Neutral_Communism\n"
             content += "\ttraits = {\n"
@@ -423,10 +427,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Neutral_Communism"
         subIdeology = "neutrality_Neutral_Communism"
 
-    elif c == 23:
-        if d != "":
+    elif rowInSheet == 23:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Neutral_Muslim_Brotherhood\n"
             content += "\ttraits = {\n"
@@ -436,10 +440,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Neutral_Muslim_Brotherhood"
         subIdeology = "neutrality_Neutral_Muslim_Brotherhood"
 
-    elif c == 24:
-        if d != "":
+    elif rowInSheet == 24:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Neutral_green\n"
             content += "\ttraits = {\n"
@@ -451,10 +455,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
 
 
     # Nationalist
-    elif c == 26:
-        if d != "":
+    elif rowInSheet == 26:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Nat_Autocracy\n"
             content += "\ttraits = {\n"
@@ -464,10 +468,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Nat_Autocracy"
         subIdeology = "nationalist_Nat_Autocracy"
 
-    elif c == 27:
-        if d != "":
+    elif rowInSheet == 27:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Nat_Fascism\n"
             content += "\ttraits = {\n"
@@ -477,10 +481,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Nat_Fascism"
         subIdeology = "nationalist_Nat_Fascism"
 
-    elif c == 28:
-        if d != "":
+    elif rowInSheet == 28:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Nat_Populism\n"
             content += "\ttraits = {\n"
@@ -490,10 +494,10 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Nat_Populism"
         subIdeology = "nationalist_Nat_Populism"
 
-    elif c == 29:
-        if d != "":
+    elif rowInSheet == 29:
+        if leaderName != "":
             content += "create_country_leader = {\n"
-            content += "\tname = \"" + d + "\"\n"
+            content += "\tname = \"" + leaderName + "\"\n"
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Monarchist\n"
             content += "\ttraits = {\n"
@@ -503,7 +507,7 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
         ideology = "Monarchist"
         subIdeology = "nationalist_Monarchist"
 
-    #content = generateLeaderContent(content, c, d, picName, extraLeaders, tagPos)
+    #content = generateLeaderContent(content, rowInSheet, leaderName, picName, extraLeaders, tagPos)
 
     if ideology != "" and tagPos is not None:
         found = 0
@@ -545,19 +549,19 @@ def generateLeaderContent(content, c, d, picName, extraLeaders, tagPos):
                                 content += "}\n"
 
         #input()
-    return content, extraLeaders
+    return content
 
-
-def generateLeaderPic(d, picList):
-    if d.isspace() and d == "":
+#Returns correctly formated leader name (e.g removing accents) and returns leaderpics list
+def generateLeaderPic(leaderName, picList):
+    if leaderName.isspace() and leaderName == "":
         picList.append("")
     else:
-        d = d.replace('\r', '')
-        d = d.replace('\n', '')
-        d = d.replace('\t', '')
-        d = d.lstrip()
-        d = d.rstrip()
-        picName = d.replace('.', '')
+        leaderName = leaderName.replace('\r', '')
+        leaderName = leaderName.replace('\n', '')
+        leaderName = leaderName.replace('\t', '')
+        leaderName = leaderName.lstrip()
+        leaderName = leaderName.rstrip()
+        picName = leaderName.replace('.', '')
         picName = picName.replace(',', '')
         picName = picName.replace('-', '_')
         picName = picName.replace('’', '')
@@ -573,9 +577,9 @@ def generateLeaderPic(d, picList):
         else:
             picList.append(picName.lower())
 
-    return d
+    return leaderName, picList
 
-
+#Writes the formatted leaderNames and leaderPics to the excel sheet. No longer used, was used at start of project
 def leadersToSheet(a, b, blank, picList, worksheet):
     if a & 1:
         # print(a)
@@ -607,6 +611,8 @@ def leadersToSheet(a, b, blank, picList, worksheet):
             worksheet.update_cells(cell_list)
             time.sleep(1.5)
 
+#Will check the leaders pulled from game files vs the leaders in the spreadsheet and removes extra's from the
+#Extra leaders list
 def delExtraLeaders(sheet, extraLeaders, tags):
     for a, b in enumerate(sheet[0]):
         if b != "" or a != 0:
@@ -644,6 +650,7 @@ def delExtraLeaders(sheet, extraLeaders, tags):
 
     return extraLeaders
 
+#Writes the extra leaders to the sheet
 def extraLeadersToSheet(extraLeaders, sheet, sheetName, tags):
     rows = 0
     country = []
@@ -781,7 +788,8 @@ def extraLeadersToSheet(extraLeaders, sheet, sheetName, tags):
     print("done updating")
     return extraLeaders
 
-def createPartyLeaders (rootDir, sheet, filepath, worksheet, extraLeaders, tags):
+###Main Function used to begin writting leaders to in game text files###
+def createPartyLeaders (rootDir, sheet, filepath, extraLeaders, tags):
     extraLeaders = delExtraLeaders(sheet, extraLeaders, tags)
     content = ""
     for a, b in enumerate(sheet[0]):
@@ -793,23 +801,24 @@ def createPartyLeaders (rootDir, sheet, filepath, worksheet, extraLeaders, tags)
                 if c not in [0,1,6,13,16,25]:
                     if c > 36:
                         break
-                    d = sheet[c][a]
+                    leaderName = sheet[c][a]
                     try:
                         picName = sheet[c][a+1]
                     except:
                         picName = ""
-                    d = generateLeaderPic(d, picList)
+                    leaderName, picList = generateLeaderPic(leaderName, picList)
                     filePic = Path(rootDir + "/gfx/leaders/" + b + "/" + picName)
                     if picName != "" and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
-                        print("Expected a picture for " + b + " leader " + d + " named " + "/gfx/leaders/"+b+"/"+picName)
+                        print("Expected a picture for " + b + " leader " + leaderName + " named " + "/gfx/leaders/"+b+"/"+picName)
                     tagPos = get_tagPos2(b,tags)
-                    content, extraLeaders = generateLeaderContent(content, c, d, picName, extraLeaders, tagPos)
+                    content = generateLeaderContent(content, c, leaderName, picName, extraLeaders, tagPos)
                     #print("done here")
                     #input()
                 elif c in [1,6,13,16,25]:
                     picList.append("")
 
             blank = 0
+            #
             #leadersToSheet(a, b, blank, picList, worksheet)
 
 
@@ -826,6 +835,7 @@ def createPartyLeaders (rootDir, sheet, filepath, worksheet, extraLeaders, tags)
 
     return extraLeaders
 
+###Main Function used to pull spreadsheet voter popularity & turn it into subideology values & write to ingame txt file
 def createSubIdeologyValues (rootDir, sheet, filepath, worksheet):
     content = ""
     for a, b in enumerate(sheet[0]):
@@ -969,6 +979,7 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet):
     with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
         file.write(content)
 
+#Pulls extra 2000 leaders from in game history/country files, formats them & creates new list
 def getExtraLeaders2000(rootDir, tags, tagPos, tag):
     with open(rootDir, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.readlines()
@@ -1060,6 +1071,8 @@ def getExtraLeaders2000(rootDir, tags, tagPos, tag):
 
 
     return leaders
+
+#Pulls extra 2017 leaders from in game history/country files, formats them & creates new list
 def getExtraLeaders2017(rootDir, tags, tagPos, tag):
     with open(rootDir, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.readlines()
@@ -1146,17 +1159,269 @@ def getExtraLeaders2017(rootDir, tags, tagPos, tag):
 
     return leaders
 
+#Returns the ideology and trait dependent on the row in the spreadsheet, similar to what is used in generateLeaderContent
+def getIdeology(c):
+    ideology = ""
+    traits = ""
+
+    if c == 2:
+        ideology = "conservatism"
+        traits = "western_conservatism"
+
+    elif c == 3:
+        ideology = "liberalism"
+        traits = "western_liberalism"
+
+    elif c == 4:
+        ideology = "socialism"
+        traits = "western_socialism"
+
+    elif c == 5:
+        ideology = "Western_Autocracy"
+        traits = "western_Western_Autocracy"
+
+    # Emerging
+    elif c == 7:
+        ideology = "Communist-State"
+        traits = "emerging_Communist"
+
+    elif c == 8:
+        ideology = "emerging_Conservative"
+        traits = "Monarchist"
+
+    elif c == 9:
+        ideology = "Autocracy"
+        traits = "emerging_Autocracy"
+
+    elif c == 10:
+        ideology = "Vilayat_e_Faqih"
+        traits = "emerging_Vilayat_e_Faqih"
+
+    elif c == 11:
+        ideology = "Mod_Vilayat_e_Faqih"
+        traits = "emerging_Vilayat_e_Faqih_ref"
+
+    elif c == 12:
+        ideology = "anarchist_communism"
+        traits = "emerging_anarchist_communism"
+
+        # Salafist
+    elif c == 14:
+        ideology = "Caliphate"
+        traits = "salafist_Caliphate"
+
+    elif c == 15:
+        ideology = "Kingdom"
+        traits = "salafist_Kingdom"
+
+        # Non-Alligned
+    elif c == 17:
+        ideology = "Neutral_conservatism"
+        traits = "neutrality_Neutral_conservatism"
+
+    elif c == 18:
+        ideology = "oligarchism"
+        traits = "neutrality_oligarchism"
+
+    elif c == 19:
+        ideology = "neutral_Social"
+        traits = "neutrality_neutral_Social"
+
+    elif c == 20:
+        ideology = "Neutral_Libertarian"
+        traits = "neutrality_Neutral_Libertarian"
+
+    elif c == 21:
+        ideology = "Neutral_Autocracy"
+        traits = "neutrality_Neutral_Autocracy"
+
+    elif c == 22:
+        ideology = "Neutral_Communism"
+        traits = "neutrality_Neutral_Communism"
+
+    elif c == 23:
+        ideology = "Neutral_Muslim_Brotherhood"
+        traits = "neutrality_Neutral_Muslim_Brotherhood"
+
+    elif c == 24:
+        ideology = "Neutral_green"
+        traits = "neutrality_Neutral_green"
+
+        # Nationalist
+    elif c == 26:
+        ideology = "Nat_Autocracy"
+        traits = "nationalist_Nat_Autocracy"
+
+    elif c == 27:
+        ideology = "Nat_Fascism"
+        traits = "nationalist_Nat_Fascism"
+
+    elif c == 28:
+        ideology = "Nat_Populism"
+        traits = "nationalist_Nat_Populism"
+
+    elif c == 29:
+        ideology = "Monarchist"
+        traits = "nationalist_Monarchist"
+    else:
+        ideology = "ERROR"
+        traits = "ERROR"
+
+    return ideology, traits
+
+#Will return the index of the tag in the organizedLeader list
+def getTagPos3(organizedLeaders, tag, startDate):
+    lastPos = 0
+
+    for pos, a in enumerate(organizedLeaders):
+        #print(organizedLeaders[pos][1][0])
+        #print(organizedLeaders[pos][0][0])
+        #print(tag)
+        if organizedLeaders[pos][0][0] == tag:
+            #print(organizedLeaders[pos][0][0])
+            #print(tag)
+            #input()
+            lastPos = pos
+            if organizedLeaders[pos][1][0] == startDate:
+                lastPos = pos
+            #if startDate == "2017":
+                #print("get tag pos3")
+                #print(organizedLeaders[pos][1][0])
+                #print(organizedLeaders[pos][0][0])
+                #print(tag)
+                #print(pos)
+                #print("end of get tag pos 3")
+
+    #print(tag)
+    #print(len(organizedLeaders))
+    #print(pos)
+    #input()
+    #print(lastPos)
+    #input()
+    return lastPos
+
+#Sorts and organizes all leaders into a new organized list
+def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, organizedLeaders):
+
+
+
+
+    for a, b in enumerate(leaders2000[0]):
+        if (b != "" or a != 0) and len(b) == 3:
+            for c in range(0, 31):
+                if c not in [0, 1, 6, 13, 16, 25]:
+                    if c > 36:
+                        break
+                    leaderName = leaders2000[c][a]
+                    if leaders2000[c][a+1] != "":
+                        leaderPic = leaders2000[c][a+1]
+                    else:
+                        leaderPic = "generic.dds"
+
+                    ideology, traits = getIdeology(c)
+
+
+                    if leaderName != "":
+                        organizedLeaders.append([[b], ["2000"] ,[leaderName],[leaderPic], [ideology],[traits]])
+
+    for a, b in enumerate(extraLeaders2000):
+        if extraLeaders2000[a][1] != "":
+            startDate = "2000"
+            tag = extraLeaders2000[a][0]
+            leaderName = extraLeaders2000[a][1]
+            if extraLeaders2000[a][2] != "":
+                leaderPic = extraLeaders2000[a][2]
+            else:
+                leaderPic = "generic.dds"
+            if extraLeaders2000[a][4] != "":
+                ideology = extraLeaders2000[a][4]
+            else:
+                ideology = "ERROR"
+            if extraLeaders2000[a][5] != "":
+                hasTraits = re.findall(r'[A-Za-z0-9_]+', extraLeaders2000[a][5])
+                traits = hasTraits
+                #input()
+            else:
+                traits = "ERROR"
+
+            pos = getTagPos3(organizedLeaders, tag, startDate)
+            if pos == 0:
+
+                organizedLeaders.insert(len(organizedLeaders) +1, [[tag], [startDate], [leaderName], [leaderPic], [ideology], [traits]])
+                #print(len(organizedLeaders))
+                #print("ERROR")
+                #input()
+            else:
+                organizedLeaders.insert(pos+1,[[tag],[startDate],[leaderName],[leaderPic],[ideology],[traits]])
+                #print(pos)
+                #print(leaderName)
+                #print(organizedLeaders[pos])
+                #print(organizedLeaders[pos+1])
+                #input()
+
+
+    for a, b in enumerate(leaders2017[0]):
+        if (b != "" or a != 0) and len(b) == 3:
+            for c in range(0, 31):
+                if c not in [0, 1, 6, 13, 16, 25]:
+                    if c > 36:
+                        break
+                    leaderName = leaders2017[c][a]
+                    if leaders2017[c][a+1] != "":
+                        leaderPic = leaders2017[c][a+1]
+                    else:
+                        leaderPic = "generic.dds"
+
+                    ideology, traits = getIdeology(c)
+
+
+                    if leaderName != "":
+                        startDate = "2017"
+                        tag = b
+                        pos = getTagPos3(organizedLeaders, tag, startDate)
+                        if pos == 0:
+
+                            organizedLeaders.insert(len(organizedLeaders) + 1,
+                                                    [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
+                            print("ERROR")
+                            print(len(organizedLeaders))
+                            print(pos)
+                            print(organizedLeaders[-2])
+                            print(organizedLeaders[-1])
+                            input()
+                        else:
+                            organizedLeaders.insert(pos + 1, [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
+                            #print(len(organizedLeaders))
+                           # print(pos)
+                            #print(leaderName)
+                            #print(organizedLeaders[pos])
+                            #print(organizedLeaders[pos + 1])
+                            #input()
+
+
+
+    print("done")
+    input()
+    return organizedLeaders
+
 def main():
-    sheet = gc.open('Politics')
-    worksheet = sheet.worksheet('Party Name')
-    content = worksheet.get_all_values()
+    sheet = gc.open('Politics') #Opens the politics sheet
+    worksheet = sheet.worksheet('Party Name') #sets active worksheet as party Name
+    content = worksheet.get_all_values() #downloads content of worksheet
 
     scriptDir = os.path.realpath(__file__)
     rootDir = os.path.dirname(os.path.dirname(scriptDir))
+
+    # Retrieves all in game tags
     tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
+
+    # Retrieves all sheet tags
     sheetTags = get_sheet_tags(content)
 
+    # Create party name localiastion
     createPartNameLoc(rootDir, content)
+
+    organizedLeaders = []
 
     extraLeaders = []
 
@@ -1169,8 +1434,22 @@ def main():
 
     worksheet = sheet.worksheet('Party Leader 2000')
     content = worksheet.get_all_values()
+    leaders2000 = worksheet.get_all_values()
+    worksheet = sheet.worksheet('Party Leader 2017')
+    leaders2017 = worksheet.get_all_values()
+    worksheet = sheet.worksheet('2000 Extra Leaders')
+    extraLeaders2000 = worksheet.get_all_values()
+    worksheet = sheet.worksheet('2017 Extra Leaders')
+    extraLeaders2017 = worksheet.get_all_values()
+    organizedLeaders = sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, organizedLeaders)
+
     extraLeaders = createPartyLeaders(rootDir, content, (rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),
-                       worksheet, extraLeaders, tags)
+                       extraLeaders, tags)
+
+    print("done")
+    input()
+    input()
+    input()
 
     sheetName = "2000 Extra Leaders"
     extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
@@ -1189,7 +1468,7 @@ def main():
     worksheet = sheet.worksheet('Party Leader 2017')
     content = worksheet.get_all_values()
     extraLeaders = createPartyLeaders(rootDir, content, (rootDir + "/Modding resources/generated/generated_2017_leaders.txt"),
-                       worksheet, extraLeaders, tags)
+                       extraLeaders, tags)
 
     sheetName = "2017 Extra Leaders"
     extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
