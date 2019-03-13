@@ -1146,6 +1146,196 @@ def getExtraLeaders2017(rootDir, tags, tagPos, tag):
 
     return leaders
 
+def getIdeology(c):
+    ideology = ""
+    traits = ""
+
+    if c == 2:
+        ideology = "conservatism"
+        traits = "western_conservatism"
+
+    elif c == 3:
+        ideology = "liberalism"
+        traits = "western_liberalism"
+
+    elif c == 4:
+        ideology = "socialism"
+        traits = "western_socialism"
+
+    elif c == 5:
+        ideology = "Western_Autocracy"
+        traits = "western_Western_Autocracy"
+
+    # Emerging
+    elif c == 7:
+        ideology = "Communist-State"
+        traits = "emerging_Communist"
+
+    elif c == 8:
+        ideology = "emerging_Conservative"
+        traits = "Monarchist"
+
+    elif c == 9:
+        ideology = "Autocracy"
+        traits = "emerging_Autocracy"
+
+    elif c == 10:
+        ideology = "Vilayat_e_Faqih"
+        traits = "emerging_Vilayat_e_Faqih"
+
+    elif c == 11:
+        ideology = "Mod_Vilayat_e_Faqih"
+        traits = "emerging_Vilayat_e_Faqih_ref"
+
+    elif c == 12:
+        ideology = "anarchist_communism"
+        traits = "emerging_anarchist_communism"
+
+        # Salafist
+    elif c == 14:
+        ideology = "Caliphate"
+        traits = "salafist_Caliphate"
+
+    elif c == 15:
+        ideology = "Kingdom"
+        traits = "salafist_Kingdom"
+
+        # Non-Alligned
+    elif c == 17:
+        ideology = "Neutral_conservatism"
+        traits = "neutrality_Neutral_conservatism"
+
+    elif c == 18:
+        ideology = "oligarchism"
+        traits = "neutrality_oligarchism"
+
+    elif c == 19:
+        ideology = "neutral_Social"
+        traits = "neutrality_neutral_Social"
+
+    elif c == 20:
+        ideology = "Neutral_Libertarian"
+        traits = "neutrality_Neutral_Libertarian"
+
+    elif c == 21:
+        ideology = "Neutral_Autocracy"
+        traits = "neutrality_Neutral_Autocracy"
+
+    elif c == 22:
+        ideology = "Neutral_Communism"
+        traits = "neutrality_Neutral_Communism"
+
+    elif c == 23:
+        ideology = "Neutral_Muslim_Brotherhood"
+        traits = "neutrality_Neutral_Muslim_Brotherhood"
+
+    elif c == 24:
+        ideology = "Neutral_green"
+        traits = "neutrality_Neutral_green"
+
+        # Nationalist
+    elif c == 26:
+        ideology = "Nat_Autocracy"
+        traits = "nationalist_Nat_Autocracy"
+
+    elif c == 27:
+        ideology = "Nat_Fascism"
+        traits = "nationalist_Nat_Fascism"
+
+    elif c == 28:
+        ideology = "Nat_Populism"
+        traits = "nationalist_Nat_Populism"
+
+    elif c == 29:
+        ideology = "Monarchist"
+        traits = "nationalist_Monarchist"
+    else:
+        ideology = "ERROR"
+        traits = "ERROR"
+
+    return ideology, traits
+
+def getTagPos3(organizedLeaders, tag, startDate):
+    lastPos = 0
+
+    for pos, a in enumerate(organizedLeaders):
+        #print(organizedLeaders[pos][1][0])
+        #print(organizedLeaders[pos][0][0])
+        #print(tag)
+        if organizedLeaders[pos][0][0] == tag:
+            #print(organizedLeaders[pos][0][0])
+            #print(tag)
+            #input()
+            if organizedLeaders[pos][1][0] == startDate:
+                lastPos = pos
+    #print(lastPos)
+    #input()
+    return lastPos
+
+def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, organizedLeaders):
+
+
+
+
+    for a, b in enumerate(leaders2000[0]):
+        if (b != "" or a != 0) and len(b) == 3:
+            for c in range(0, 31):
+                if c not in [0, 1, 6, 13, 16, 25]:
+                    if c > 36:
+                        break
+                    leaderName = leaders2000[c][a]
+                    if leaders2000[c][a+1] != "":
+                        leaderPic = leaders2000[c][a+1]
+                    else:
+                        leaderPic = "generic.dds"
+
+                    ideology, traits = getIdeology(c)
+
+
+                    if leaderName != "":
+                        organizedLeaders.append([[b], ["2000"] ,[leaderName],[leaderPic], [ideology],[traits]])
+
+    for a, b in enumerate(extraLeaders2000):
+        if extraLeaders2000[a][1] != "":
+            startDate = "2000"
+            tag = extraLeaders2000[a][0]
+            leaderName = extraLeaders2000[a][1]
+            if extraLeaders2000[a][2] != "":
+                leaderPic = extraLeaders2000[a][2]
+            else:
+                leaderPic = "generic.dds"
+            if extraLeaders2000[a][4] != "":
+                ideology = extraLeaders2000[a][4]
+            else:
+                ideology = "ERROR"
+            if extraLeaders2000[a][5] != "":
+                hasTraits = re.findall(r'[A-Za-z0-9_]+', extraLeaders2000[a][5])
+                traits = hasTraits
+                #input()
+            else:
+                traits = "ERROR"
+
+            pos = getTagPos3(organizedLeaders, tag, startDate)
+            if pos == 0:
+
+                organizedLeaders.insert(len(organizedLeaders) +1, [[tag], [startDate], [leaderName], [leaderPic], [ideology], [traits]])
+                print(len(organizedLeaders))
+                print("ERROR")
+                #input()
+            else:
+                organizedLeaders.insert(pos+1,[[tag],[startDate],[leaderName],[leaderPic],[ideology],[traits]])
+                print(pos)
+                print(leaderName)
+                print(organizedLeaders[pos])
+                print(organizedLeaders[pos+1])
+                input()
+
+
+
+    print("done")
+    input()
+    return organizedLeaders
+
 def main():
     sheet = gc.open('Politics')
     worksheet = sheet.worksheet('Party Name')
@@ -1158,6 +1348,8 @@ def main():
 
     createPartNameLoc(rootDir, content)
 
+    organizedLeaders = []
+
     extraLeaders = []
 
     for root, dirnames, filenames in os.walk(rootDir + '/' + 'history' + '/countries' + '/'):
@@ -1169,6 +1361,15 @@ def main():
 
     worksheet = sheet.worksheet('Party Leader 2000')
     content = worksheet.get_all_values()
+    leaders2000 = worksheet.get_all_values()
+    worksheet = sheet.worksheet('Party Leader 2017')
+    leaders2017 = worksheet.get_all_values()
+    worksheet = sheet.worksheet('2000 Extra Leaders')
+    extraLeaders2000 = worksheet.get_all_values()
+    worksheet = sheet.worksheet('2017 Extra Leaders')
+    extraLeaders2017 = worksheet.get_all_values()
+    organizedLeaders = sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, organizedLeaders)
+
     extraLeaders = createPartyLeaders(rootDir, content, (rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),
                        worksheet, extraLeaders, tags)
 
