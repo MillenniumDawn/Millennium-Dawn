@@ -1159,6 +1159,82 @@ def getExtraLeaders2017(rootDir, tags, tagPos, tag):
 
     return leaders
 
+def createPartyContent2 (organizedLeaders, tag, ideology):
+    content = ""
+    leader = 1
+    leaderCounter2 = 0
+    for pos2, b in enumerate(organizedLeaders):
+        if organizedLeaders[pos2][0][0] == tag:
+            #print ("here")
+            if organizedLeaders[pos2][4][0] == ideology:
+                #print("here2")
+                if leader ==1:
+                    content += "\t\tif = { limit = { check_variable = { " + ideology + "_leader = " + str(leader - 1) + " } }\n"
+                else:
+                    content += "\t\tif = { limit = { check_variable = { " + ideology + "_leader = " + str(leader - 1) + " NOT = { check_variable = { b = 1 } } } }\n"
+                content += "\t\t\tset_variable = { " + ideology + "_leader = 1 }\n"
+                content += "\t\t\tkill_country_leader = yes\n\n"
+                content += "\t\t\tcreate_country_leader = {\n"
+                content += "\t\t\t\tname = \"" + organizedLeaders[pos2][2][0] + "\"\n"
+                content += "\t\t\t\tpicture = \"" + organizedLeaders[pos2][3][0] + "\"\n"
+                content += "\t\t\t\tideology = " + organizedLeaders[pos2][4][0] + "\n"
+                content += "\t\t\t\ttraits = {\n"
+                content += ""
+                content += "\t\t\t\t}\n"
+                content += "\t\t\t}\n\n"
+                content += "\t\t\tif = { limit = { has_country_flag = do_not_retire } subtract_from_variable = {" + ideology + "_leader = 1 } }\n"
+                if organizedLeaders[pos2][1][0] == "2017":
+                    content += "\t\t\tset_temp_variable = { b = 1 }\n"
+                else:
+                    content += "\t\t\tif = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017\n"
+                content += "\t\t}\n"
+
+                leader += 1
+                try:
+                    del organizedLeaders[pos2][0:5]
+                except:
+                    time.sleep(0)
+                #print("here3")
+    content += "\t}\n"
+
+    return content
+
+def createPartyLeaders2 (rootDir, organizedLeaders):
+    inGameTags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
+
+    for tag in inGameTags:
+        content = ""
+        count = 1
+        for pos, a in enumerate(organizedLeaders):
+            #print(tag[0][0][0])
+            #print(organizedLeaders[pos][0][0])
+            #input()
+
+            if tag[0][0][0] == organizedLeaders[pos][0][0]:
+                ideology = organizedLeaders[pos][4][0]
+
+                if count != 1 and ideology == organizedLeaders[pos][4][0]:
+                    content += "\telse_if = { limit = { has_country_flag = set_" + ideology + " }\n"
+                    content += createPartyContent2(organizedLeaders, tag[0][0][0], ideology)
+                    #print(organizedLeaders[pos])
+
+                if count ==1:
+                    count += 1
+
+
+                    #print("hello")
+                    content += "set_leader_" + tag[0][0][0] +" = {\n\n"
+                    content += "\tif = { limit = { has_country_flag = set_" + ideology + " }\n\n"
+
+                    content += createPartyContent2( organizedLeaders, tag[0][0][0], ideology)
+
+        content += "}"
+        print(content)
+        input()
+
+
+    return "hello"
+
 #Returns the ideology and trait dependent on the row in the spreadsheet, similar to what is used in generateLeaderContent
 def getIdeology(c):
     ideology = ""
@@ -1383,12 +1459,12 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
 
                             organizedLeaders.insert(len(organizedLeaders) + 1,
                                                     [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
-                            print("ERROR")
-                            print(len(organizedLeaders))
-                            print(pos)
-                            print(organizedLeaders[-2])
-                            print(organizedLeaders[-1])
-                            input()
+                            #print("ERROR")
+                            #print(len(organizedLeaders))
+                            #print(pos)
+                            #print(organizedLeaders[-2])
+                            #print(organizedLeaders[-1])
+                            #input()
                         else:
                             organizedLeaders.insert(pos + 1, [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
                             #print(len(organizedLeaders))
@@ -1401,7 +1477,7 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
 
 
     print("done")
-    input()
+    #input()
     return organizedLeaders
 
 def main():
@@ -1443,6 +1519,9 @@ def main():
     extraLeaders2017 = worksheet.get_all_values()
     organizedLeaders = sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, organizedLeaders)
 
+    createPartyLeaders2(rootDir, organizedLeaders)
+    print("fini")
+    input()
     extraLeaders = createPartyLeaders(rootDir, content, (rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),
                        extraLeaders, tags)
 
