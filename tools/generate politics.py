@@ -1159,7 +1159,7 @@ def getExtraLeaders2017(rootDir, tags, tagPos, tag):
 
     return leaders
 
-def createCustomElectionEffect (hasCustomElections, tag):
+def createCustomElectionEffect (hasCustomElections, tag, rootDir):
     content = "set_leader = {\n\n"
     content += "\t#will set correct outlook to place the newly generated leader in\n"
     content += "\thidden_effect = {\n"
@@ -1169,9 +1169,9 @@ def createCustomElectionEffect (hasCustomElections, tag):
     content += "\t#script per country\n"
     for pos, tag in enumerate(hasCustomElections):
         if pos == 0:
-            content += "\tif = { limit = { TAG = " + tag + " } set_leader_" + tag + " = yes }\n"
+            content += "\tif = { limit = { TAG = " + tag[0] + " } set_leader_" + tag[0] + " = yes }\n"
         else:
-            content += "\telse_if = { limit = { TAG = " + tag + " } set_leader_" + tag + " = yes }\n"
+            content += "\telse_if = { limit = { TAG = " + tag[0] + " } set_leader_" + tag[0] + " = yes }\n"
 
     content += "\t# We need to remove the current leader for the game to use random generation.\n"
     content += "\t#It's OK if no leader was created in script!\n\n"
@@ -1182,6 +1182,11 @@ def createCustomElectionEffect (hasCustomElections, tag):
     content += "\t\tremove_set_ideology_flag = yes\n"
     content += "\t}\n"
     content += "}\n"
+
+    filepath = rootDir + "/common/scripted_effects/generated/election_effects.txt"
+    f = open(filepath, "w")
+    with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
+        file.write(content)
 
     return "hello"
 
@@ -1241,7 +1246,7 @@ def createPartyLeaders2 (rootDir, organizedLeaders):
             if tag[0][0][0] == organizedLeaders[pos][0][0]:
                 ideology = organizedLeaders[pos][4][0]
                 writeToFile = 1
-                hasCustomElections.append([tag[0][0][0]])
+
                 if count != 1 and ideology == organizedLeaders[pos][4][0]:
                     content += "\telse_if = { limit = { has_country_flag = set_" + ideology + " }\n"
                     content += createPartyContent2(organizedLeaders, tag[0][0][0], ideology)
@@ -1249,7 +1254,7 @@ def createPartyLeaders2 (rootDir, organizedLeaders):
 
                 if count ==1:
                     count += 1
-
+                    hasCustomElections.append([tag[0][0][0]])
 
                     #print("hello")
                     content += "set_leader_" + tag[0][0][0] +" = {\n\n"
@@ -1258,16 +1263,18 @@ def createPartyLeaders2 (rootDir, organizedLeaders):
                     content += createPartyContent2( organizedLeaders, tag[0][0][0], ideology)
 
         content += "}"
-        print(content)
+        #print(content)
         if writeToFile == 1:
             filepath = rootDir + "/common/scripted_effects/generated/" + tag[0][0][0] + "_political_leaders.txt"
             f = open(filepath, "w")
             with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
                 file.write(content)
-        input()
 
-    createCustomElectionEffect(hasCustomElections, tag[0][0][0])
+    createCustomElectionEffect(hasCustomElections, tag[0][0][0], rootDir)
 
+
+    print("WOOT")
+    input()
     return "hello"
 
 #Returns the ideology and trait dependent on the row in the spreadsheet, similar to what is used in generateLeaderContent
