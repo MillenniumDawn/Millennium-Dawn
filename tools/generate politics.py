@@ -1187,6 +1187,7 @@ def createCustomElectionEffect (hasCustomElections, tag, rootDir):
     f = open(filepath, "w")
     with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
         file.write(content)
+        file.close()
 
     return "hello"
 
@@ -1210,7 +1211,11 @@ def createPartyContent2 (organizedLeaders, tag, ideology):
                 content += "\t\t\t\tpicture = \"" + organizedLeaders[pos2][3][0] + "\"\n"
                 content += "\t\t\t\tideology = " + organizedLeaders[pos2][4][0] + "\n"
                 content += "\t\t\t\ttraits = {\n"
-                content += ""
+                if isinstance(organizedLeaders[pos2][5][0], (list,)):
+                    for trait in organizedLeaders[pos2][5][0]:
+                     content += "\t\t\t\t\t" + trait + "\n"
+                else:
+                    content += "\t\t\t\t\t" + organizedLeaders[pos2][5][0] + "\n"
                 content += "\t\t\t\t}\n"
                 content += "\t\t\t}\n\n"
                 content += "\t\t\tif = { limit = { has_country_flag = do_not_retire } subtract_from_variable = {" + ideology + "_leader = 1 } }\n"
@@ -1269,7 +1274,7 @@ def createPartyLeaders2 (rootDir, organizedLeaders):
             f = open(filepath, "w")
             with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
                 file.write(content)
-
+                file.close()
     createCustomElectionEffect(hasCustomElections, tag[0][0][0], rootDir)
 
 
@@ -1516,7 +1521,40 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                             #print(organizedLeaders[pos + 1])
                             #input()
 
+    for a, b in enumerate(extraLeaders2017):
+        if extraLeaders2017[a][1] != "":
+            startDate = "2017"
+            tag = extraLeaders2017[a][0]
+            leaderName = extraLeaders2017[a][1]
+            if extraLeaders2017[a][2] != "":
+                leaderPic = extraLeaders2017[a][2]
+            else:
+                leaderPic = "generic.dds"
+            if extraLeaders2017[a][4] != "":
+                ideology = extraLeaders2017[a][4]
+            else:
+                ideology = "ERROR"
+            if extraLeaders2017[a][5] != "":
+                hasTraits = re.findall(r'[A-Za-z0-9_]+', extraLeaders2017[a][5])
+                traits = hasTraits
+                #input()
+            else:
+                traits = "ERROR"
 
+            pos = getTagPos3(organizedLeaders, tag, startDate)
+            if pos == 0:
+
+                organizedLeaders.insert(len(organizedLeaders) +1, [[tag], [startDate], [leaderName], [leaderPic], [ideology], [traits]])
+                #print(len(organizedLeaders))
+                #print("ERROR")
+                #input()
+            else:
+                organizedLeaders.insert(pos+1,[[tag],[startDate],[leaderName],[leaderPic],[ideology],[traits]])
+                #print(pos)
+                #print(leaderName)
+                #print(organizedLeaders[pos])
+                #print(organizedLeaders[pos+1])
+                #input()
 
     print("done")
     #input()
