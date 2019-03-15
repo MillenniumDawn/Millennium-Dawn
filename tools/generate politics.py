@@ -253,7 +253,7 @@ def generateLeaderContent(content, rowInSheet, leaderName, picName, extraLeaders
             content += "\t}\n"
             content += "}\n"
         ideology = "Communist-State"
-        subIdeology = "emerging_Communist"
+        subIdeology = "emerging_Communist-State"
 
     elif rowInSheet == 8:
         if leaderName != "":
@@ -1284,8 +1284,7 @@ def createPartyLeaders2 (rootDir, organizedLeaders):
 
 #Returns the ideology and trait dependent on the row in the spreadsheet, similar to what is used in generateLeaderContent
 def getIdeology(c):
-    ideology = ""
-    traits = ""
+
 
     if c == 2:
         ideology = "conservatism"
@@ -1306,11 +1305,11 @@ def getIdeology(c):
     # Emerging
     elif c == 7:
         ideology = "Communist-State"
-        traits = "emerging_Communist"
+        traits = "emerging_Communist-State"
 
     elif c == 8:
-        ideology = "emerging_Conservative"
-        traits = "Monarchist"
+        ideology = "Conservative"
+        traits = "emerging_Conservative"
 
     elif c == 9:
         ideology = "Autocracy"
@@ -1390,7 +1389,95 @@ def getIdeology(c):
         ideology = "ERROR"
         traits = "ERROR"
 
+
     return ideology, traits
+
+def makeIdeology(ideology):
+    traits = ""
+
+    if ideology.lower() == str("conservatism").lower():
+        traits = "western_conservatism"
+
+    elif ideology.lower() == "liberalism".lower():
+        traits = "western_liberalism"
+
+    elif ideology.lower() == "socialism".lower():
+        traits = "western_socialism"
+
+    elif ideology.lower() == "Western_Autocracy".lower():
+        traits = "western_Western_Autocracy"
+
+    # Emerging
+    elif ideology.lower() == "Communist-State".lower():
+        traits = "emerging_Communist-State"
+
+    elif ideology.lower() == "Conservative".lower():
+        traits = "emerging_Conservative"
+
+    elif ideology.lower() == "Autocracy".lower():
+        traits = "emerging_Autocracy"
+
+    elif ideology.lower() == "Vilayat_e_Faqih".lower():
+        traits = "emerging_Vilayat_e_Faqih"
+
+    elif ideology.lower() == "Mod_Vilayat_e_Faqih".lower():
+        traits = "emerging_Vilayat_e_Faqih_ref"
+
+    elif ideology.lower() == "anarchist_communism".lower():
+        traits = "emerging_anarchist_communism"
+
+    # Salafist
+    elif ideology.lower() == "Caliphate".lower():
+        traits = "salafist_Caliphate"
+
+    elif ideology.lower() == "Kingdom".lower():
+        traits = "salafist_Kingdom"
+
+    # Non-Alligned
+    elif ideology.lower() == "Neutral_conservatism".lower():
+        traits = "neutrality_Neutral_conservatism"
+
+    elif ideology.lower() == "oligarchism".lower():
+        traits = "neutrality_oligarchism"
+
+    elif ideology.lower() == "neutral_Social".lower():
+        traits = "neutrality_neutral_Social"
+
+    elif ideology.lower() == "Neutral_Libertarian".lower():
+        traits = "neutrality_Neutral_Libertarian"
+
+    elif ideology.lower() == "Neutral_Autocracy".lower():
+        traits = "neutrality_Neutral_Autocracy"
+
+    elif ideology.lower() == "Neutral_Communism".lower():
+        traits = "neutrality_Neutral_Communism"
+
+    elif ideology.lower() == "Neutral_Muslim_Brotherhood".lower():
+        traits = "neutrality_Neutral_Muslim_Brotherhood"
+
+    elif ideology.lower() == "Neutral_green".lower():
+        traits = "neutrality_Neutral_green"
+
+    # Nationalist
+    elif ideology.lower() == "Nat_Autocracy".lower():
+        traits = "nationalist_Nat_Autocracy"
+
+    elif ideology.lower() == "Nat_Fascism".lower():
+        traits = "nationalist_Nat_Fascism"
+
+    elif ideology.lower() == "Nat_Populism".lower():
+        traits = "nationalist_Nat_Populism"
+
+    elif ideology.lower() == "Monarchist".lower():
+        traits = "nationalist_Monarchist"
+    else:
+        print(ideology)
+        print(ideology.lower())
+        input()
+        traits = "ERROR"
+    #print("trait = " + traits)
+    #input()
+    return traits
 
 #Will return the index of the tag in the organizedLeader list
 def getTagPos3(organizedLeaders, tag, startDate):
@@ -1436,15 +1523,14 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                     if c > 36:
                         break
                     leaderName = leaders2000[c][a]
-                    if leaders2000[c][a+1] != "":
-                        leaderPic = leaders2000[c][a+1]
-                    else:
-                        leaderPic = "generic.dds"
-
-                    ideology, traits = getIdeology(c)
-
-
                     if leaderName != "":
+                        if leaders2000[c][a+1] != "":
+                            leaderPic = leaders2000[c][a+1]
+                        else:
+                            leaderPic = "generic.dds"
+
+                        ideology, traits = getIdeology(c)
+
                         organizedLeaders.append([[b], ["2000"] ,[leaderName],[leaderPic], [ideology],[traits]])
 
     for a, b in enumerate(extraLeaders2000):
@@ -1461,11 +1547,11 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
             else:
                 ideology = "ERROR"
             if extraLeaders2000[a][5] != "":
-                hasTraits = re.findall(r'[A-Za-z0-9_]+', extraLeaders2000[a][5])
+                hasTraits = re.findall(r'[A-Za-z0-9\_\-]+', extraLeaders2000[a][5])
                 traits = hasTraits
                 #input()
             else:
-                traits = "ERROR"
+                traits = makeIdeology(ideology)
 
             pos = getTagPos3(organizedLeaders, tag, startDate)
             if pos == 0:
@@ -1495,6 +1581,7 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                     else:
                         leaderPic = "generic.dds"
 
+                    #print(leaders2017[c])
                     ideology, traits = getIdeology(c)
 
 
@@ -1535,11 +1622,11 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
             else:
                 ideology = "ERROR"
             if extraLeaders2017[a][5] != "":
-                hasTraits = re.findall(r'[A-Za-z0-9_]+', extraLeaders2017[a][5])
+                hasTraits = re.findall(r'[A-Za-z0-9\_\-]+', extraLeaders2017[a][5])
                 traits = hasTraits
                 #input()
             else:
-                traits = "ERROR"
+                traits = makeIdeology(ideology)
 
             pos = getTagPos3(organizedLeaders, tag, startDate)
             if pos == 0:
