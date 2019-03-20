@@ -111,6 +111,9 @@ def main():
     for root, dirnames, filenames in os.walk(rootDir + '/'+ 'history' + '/'):
         for filename in fnmatch.filter(filenames, '*.txt'):
             files_list.append(os.path.join(root, filename))
+    for root, dirnames, filenames in os.walk(rootDir + '/'+ 'interface' + '/'):
+        for filename in fnmatch.filter(filenames, '*.txt'):
+            files_list.append(os.path.join(root, filename))
 
     for filename in files_list:
         bad_count = bad_count + check_basic_style(filename)

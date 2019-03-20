@@ -11,8 +11,69 @@ initial_money_setup = {
 	#calculate_resource_sale_rate = yes #no exports at start
 	calculate_tax_gain = yes
 	init_expenses = yes
-	set_variable = { econ_cycle_upg_cost = 7 }
+	#update_military_rate = yes
+	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
+	update_AI_NO_WANT_DEBT = yes
+}
+
+#only for released nations
+startup_extra_setup = {
+	firsttime_calculate_size_modifier = yes
+	calculate_interest_rate = yes
+	calculate_debt_rate = yes
+	calculate_int_investments_rate = yes
+	calculate_resource_sale_rate = yes
+	calculate_tax_gain = yes
+	init_expenses = yes
+	update_military_rate = yes
+	set_variable = { econ_cycle_upg_cost = 6 }
+	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
+	update_AI_NO_WANT_DEBT = yes
+
+}
+
+#only for released nations
+firsttime_calculate_size_modifier = {
+
+	set_variable = { resource_exports = resource_exported@steel }
+	add_to_variable = { resource_exports = resource_exported@oil }
+	add_to_variable = { resource_exports = resource_exported@aluminium }
+	add_to_variable = { resource_exports = resource_exported@tungsten }
+	multiply_variable = { resource_exports = 0.166 }
+	round_variable = resource_exports
+
+	set_variable = { size_modifier = num_of_civilian_factories }
+	#subtract_from_variable = { size_modifier = resource_exports }
+	
+	if = { limit = { check_variable = { size_modifier = 0 } }
+		add_to_variable = { var = size_modifier value = 0.03 }
+		else = { multiply_variable = { var = size_modifier value = 0.22 }
+	
+		if = { limit = { check_variable = { size_modifier > 1.1 } }
+			subtract_from_variable = { var = size_modifier value = 0.58 }
+			
+			else = { if = { limit = { check_variable = { size_modifier = 0.22 } }
+				subtract_from_variable = { var = size_modifier value = 0.14 }
+					
+				else = { if = { limit = { check_variable = { size_modifier = 0.44 } }
+					subtract_from_variable = { var = size_modifier value = 0.30 }
+								
+					else = { if = { limit = { check_variable = { size_modifier = 0.66 } }
+						subtract_from_variable = { var = size_modifier value = 0.43 }
+										
+						else = { if = { limit = { check_variable = { size_modifier = 0.88 } }
+							subtract_from_variable = { var = size_modifier value = 0.50 }
+												
+							else = { if = { limit = { check_variable = { size_modifier = 1.1 } }
+								subtract_from_variable = { var = size_modifier value = 0.56 }
+							} }
+						} }
+					} }
+				} }
+			} }
+		} }
+	}
 }
 
 ingame_calculate_size_modifier = {
@@ -53,7 +114,6 @@ ingame_calculate_size_modifier = {
 		add_to_variable = { var = treasury_rate value = expense_gain }
 		subtract_from_variable = { var = treasury_rate value = tax_gain }
 		divide_variable = { var = bureaucracy_gain value = size_modifier }
-		divide_variable = { var = defence_gain value = size_modifier }
 		divide_variable = { var = security_gain value = size_modifier }
 		divide_variable = { var = education_gain value = size_modifier }
 		divide_variable = { var = health_gain value = size_modifier }
@@ -101,7 +161,6 @@ ingame_calculate_size_modifier = {
 			} }
 		}
 		multiply_variable = { var = bureaucracy_gain value = size_modifier }
-		multiply_variable = { var = defence_gain value = size_modifier }
 		multiply_variable = { var = security_gain value = size_modifier }
 		multiply_variable = { var = education_gain value = size_modifier }
 		multiply_variable = { var = health_gain value = size_modifier }
@@ -112,8 +171,9 @@ ingame_calculate_size_modifier = {
 		subtract_from_variable = { var = treasury_rate value = expense_gain }
 		add_to_variable = { var = treasury_rate value = tax_gain }
 		update_display_income = yes
-		update_display_expense = yes
 	}
+	
+		update_display_expense = yes #will do this always for consistency
 }
 
 calculate_tax_gain = {
@@ -149,30 +209,30 @@ calculate_interest_rate = {
 	divide_variable = { var = interest_rate value = size_modifier }
 	divide_variable = { var = interest_rate value = 365 }
 	if = { limit = { has_idea = gdp_1 }
-		multiply_variable = { var = interest_rate value = 22 }
+		multiply_variable = { var = interest_rate value = 20 }
 		
 		else = { if = { limit = { has_idea = gdp_2 }
-			multiply_variable = { var = interest_rate value = 18 }
+			multiply_variable = { var = interest_rate value = 17 }
 				
 			else = { if = { limit = { has_idea = gdp_3 }
-				multiply_variable = { var = interest_rate value = 15 }
+				multiply_variable = { var = interest_rate value = 14 }
 							
 				else = { if = { limit = { has_idea = gdp_4 }
-					multiply_variable = { var = interest_rate value = 12 }
+					multiply_variable = { var = interest_rate value = 11 }
 					
 					else = { if = { limit = { has_idea = gdp_5 }
-						multiply_variable = { var = interest_rate value = 10 }
+						multiply_variable = { var = interest_rate value = 9 }
 						
 						else = { if = { limit = { has_idea = gdp_6 }
-							multiply_variable = { var = interest_rate value = 8 }
+							multiply_variable = { var = interest_rate value = 7 }
 							
 							else = { if = { limit = { has_idea = gdp_7 }
-								multiply_variable = { var = interest_rate value = 7 }
+								multiply_variable = { var = interest_rate value = 5 }
 								
 								else = { if = { limit = { has_idea = gdp_8 }
-									multiply_variable = { var = interest_rate value = 6 }
+									multiply_variable = { var = interest_rate value = 4.2 }
 									
-									else = { multiply_variable = { var = interest_rate value = 5 } }
+									else = { multiply_variable = { var = interest_rate value = 3.5 } }
 								} }
 							} }			
 						} }									
@@ -183,7 +243,15 @@ calculate_interest_rate = {
 	}
 	if = {
 		limit = { has_idea = petro_dollar }
-		subtract_from_variable = { var = interest_rate value = 2 }
+		subtract_from_variable = { var = interest_rate value = 1 }
+	}
+	if = {
+		limit = { has_idea = EU_member }
+		subtract_from_variable = { var = interest_rate value = 1 }
+	}
+	if = {
+		limit = { has_idea = JAP_deflation }
+		subtract_from_variable = { var = interest_rate value = 6 }
 	}
 	if = {
 		limit = { or = { has_idea = wall_street has_idea = international_bankers } }
@@ -191,9 +259,10 @@ calculate_interest_rate = {
 	}
 	clamp_variable = {
 		var = interest_rate
-		min = 1
+		min = 0.5
 		max = 50
 	}
+	update_AI_NO_WANT_DEBT = yes
 }
 
 calculate_debt_rate = {
@@ -203,6 +272,267 @@ calculate_debt_rate = {
 	divide_variable = { var = debt_rate value = 36500 }
 	subtract_from_variable = { var = treasury_rate value = debt_rate }
 	update_display_expense = yes
+}
+
+update_military_rate = {
+	### Defence spending ###
+	set_temp_variable = { temp_defence_spend = num_of_military_factories }
+	add_to_temp_variable = { temp_defence_spend = num_of_naval_factories }
+	
+	if = { limit = { has_idea = defence_00 }
+		divide_temp_variable = { temp_defence_spend = 3000 }
+		
+		else = { if = { limit = { has_idea = defence_01 }
+			divide_temp_variable = { temp_defence_spend = 300 }
+			
+			else = { if = { limit = { has_idea = defence_02 }
+				divide_temp_variable = { temp_defence_spend = 150 }
+				
+				else = { if = { limit = { has_idea = defence_03 }
+					divide_temp_variable = { temp_defence_spend = 100 }
+					
+					else = { if = { limit = { has_idea = defence_04 }
+						divide_temp_variable = { temp_defence_spend = 75 }
+						
+						else = { if = { limit = { has_idea = defence_05 }
+							divide_temp_variable = { temp_defence_spend = 50 }
+							
+							else = { if = { limit = { has_idea = defence_06 }
+								divide_temp_variable = { temp_defence_spend = 37 }
+								
+								else = { if = { limit = { has_idea = defence_07 }
+									divide_temp_variable = { temp_defence_spend = 30 }
+								
+									else = { if = { limit = { has_idea = defence_08 }
+										divide_temp_variable = { temp_defence_spend = 24 }
+									
+										else = { if = { limit = { has_idea = defence_09 }
+											divide_temp_variable = { temp_defence_spend = 15 }
+										} }
+									} }
+								} }
+							} }
+						} }
+					} }
+				} }
+			} }
+		} }
+	}
+	### Land ###
+	set_temp_variable = { special_btn = num_of_battalions_with_type@Special_Forces }
+
+	set_temp_variable = { elite_btn = num_of_battalions_with_type@L_Air_assault_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Arm_Air_assault_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@L_Air_Inf_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Mot_Air_Inf_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Mech_Air_Inf_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Arm_Air_Inf_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@L_Marine_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Mot_Marine_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Mech_Marine_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Arm_Marine_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@SP_AA_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@L_Engi_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@H_Engi_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@L_Recce_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Mot_Recce_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Mech_Recce_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Arm_Recce_Bat }
+	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@armor_Recce_Bat }
+
+	set_temp_variable = { regular_btn = num_of_battalions_with_type@L_Inf_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Mot_Inf_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Mech_Inf_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Arm_Inf_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@armor_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Arty_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@SP_Arty_Bat }
+
+	set_temp_variable = { irregular_btn = num_of_battalions_with_type@Militia_Bat }
+	add_to_temp_variable = { irregular_btn = num_of_battalions_with_type@Mot_Militia_Bat }
+
+	multiply_temp_variable = { special_btn = 5 }
+	set_temp_variable = { land_count = special_btn }
+	multiply_temp_variable = { elite_btn = 3 }
+	add_to_temp_variable = { land_count = elite_btn }
+	multiply_temp_variable = { regular_btn = 2 }
+	add_to_temp_variable = { land_count = regular_btn }
+	add_to_temp_variable = { land_count = irregular_btn }
+
+	divide_temp_variable = { land_count = 5 } #control factor
+
+	### Navy ###
+	set_temp_variable = { carrier_count = num_ships_with_type@Nuclear_carrier }
+	add_to_temp_variable = { carrier_count = num_ships_with_type@carrier }
+
+	set_temp_variable = { capital_count = num_ships_with_type@nuclear_cruiser }
+	add_to_temp_variable = { capital_count = num_ships_with_type@cruiser }
+	add_to_temp_variable = { capital_count = num_ships_with_type@LHA }
+	add_to_temp_variable = { capital_count = num_ships_with_type@LPD }
+	add_to_temp_variable = { capital_count = num_ships_with_type@attack_submarine }
+	add_to_temp_variable = { capital_count = num_ships_with_type@missile_submarine }
+
+	set_temp_variable = { destroyer_count = num_ships_with_type@destroyer }
+
+	set_temp_variable = { minor_count = num_ships_with_type@frigate }
+	add_to_temp_variable = { minor_count = num_ships_with_type@corvette }
+	add_to_temp_variable = { minor_count = num_ships_with_type@diesel_attack_submarine }
+
+	multiply_temp_variable = { carrier_count = 20 }
+	set_temp_variable = { navy_count = carrier_count }
+	multiply_temp_variable = { capital_count = 4 }
+	add_to_temp_variable = { navy_count = capital_count }
+	multiply_temp_variable = { destroyer_count = 2 }
+	add_to_temp_variable = { navy_count = destroyer_count }
+	add_to_temp_variable = { navy_count = minor_count }
+
+	### Airforce ###
+	set_temp_variable = { cheap_airforce = num_equipment@attack_helicopter_equipment }
+	add_to_temp_variable = { cheap_airforce = num_equipment@L_Strike_fighter_equipment }
+	add_to_temp_variable = { cheap_airforce = num_equipment@CV_L_Strike_fighter_equipment }
+	set_temp_variable = { airforce_count = cheap_airforce }
+
+	set_temp_variable = { regular_airforce = num_equipment@MR_Fighter_equipment }
+	add_to_temp_variable = { regular_airforce = num_equipment@CV_MR_Fighter_equipment }
+	add_to_temp_variable = { regular_airforce = num_equipment@AS_Fighter_equipment }
+	add_to_temp_variable = { regular_airforce = num_equipment@Strike_fighter_equipment }
+	add_to_temp_variable = { regular_airforce = num_equipment@Int_Fighter_equipment }
+	add_to_temp_variable = { regular_airforce = num_equipment@Air_UAV_equipment }
+	add_to_temp_variable = { regular_airforce = num_equipment@CAS_equipment }
+	multiply_temp_variable = { regular_airforce = 3 }
+	add_to_temp_variable = { airforce_count = regular_airforce }
+
+	set_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
+	add_to_temp_variable = { expensive_airforce = num_equipment@nav_plane_equipment }
+	multiply_temp_variable = { expensive_airforce = 6 }
+	add_to_temp_variable = { airforce_count = expensive_airforce }
+
+	set_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
+	multiply_temp_variable = { strategic_airforce = 20 }
+	add_to_temp_variable = { airforce_count = strategic_airforce }
+
+	divide_temp_variable = { airforce_count = 10 } #control factor
+
+	### Prevent exploit
+	set_temp_variable = { army_extra = num_equipment@command_control_equipment } #to prevent disband exploit
+	divide_temp_variable = { army_extra = 30 } #control factor
+
+	### Add up armed forces
+	set_temp_variable = { personnel_cost = land_count }
+	add_to_temp_variable = { personnel_cost = army_extra }
+	add_to_temp_variable = { personnel_cost = navy_count }
+	add_to_temp_variable = { personnel_cost = airforce_count }
+
+	if = { limit = { has_idea = partial_draft_army }
+		divide_temp_variable = { personnel_cost = 1.4 }
+		
+		else = { if = { limit = { has_idea = draft_army }
+			divide_temp_variable = { personnel_cost = 1.8 }
+			
+			else = { if = { limit = { has_idea = no_military }
+				divide_temp_variable = { personnel_cost = 1.8 }
+			} }
+		} }
+	}
+
+	if = { limit = { has_idea = officer_baptism_by_fire }
+			#do nothing
+		else = { if = { limit = { has_idea = officer_basic_training }
+			multiply_temp_variable = { personnel_cost = 1.05 }
+			
+			else = { if = { limit = { has_idea = officer_advanced_training }
+				multiply_temp_variable = { personnel_cost = 1.1 }
+				
+				else = { if = { limit = { has_idea = officer_military_school }
+					multiply_temp_variable = { personnel_cost = 1.15 }
+					
+					else = { if = { limit = { has_idea = officer_military_academy }
+						multiply_temp_variable = { personnel_cost = 1.2 }
+						
+						else = { if = { limit = { has_idea = officer_international_education }
+							multiply_temp_variable = { personnel_cost = 1.25 }
+						} }
+					} }
+				} }
+			} }
+		} }
+	}
+
+	divide_temp_variable = { personnel_cost = 500 } #control factor
+
+	if = { limit = { has_idea = gdp_12 }
+		multiply_temp_variable = { personnel_cost = 0.9 }
+		
+			else = { if = { limit = { has_idea = gdp_11 }
+				multiply_temp_variable = { personnel_cost = 0.665 }
+				divide_temp_variable = { temp_defence_spend = 1.6 }
+				
+				else = { if = { limit = { has_idea = gdp_10 }
+					multiply_temp_variable = { personnel_cost = 0.45 }
+					divide_temp_variable = { temp_defence_spend = 1.6 }
+								
+					else = { if = { limit = { has_idea = gdp_9 }
+						multiply_temp_variable = { personnel_cost = 0.35 }
+						divide_temp_variable = { temp_defence_spend = 2 }
+						
+						else = { if = { limit = { has_idea = gdp_8 }
+							multiply_temp_variable = { personnel_cost = 0.255 }
+							divide_temp_variable = { temp_defence_spend = 2.5 }
+							
+							else = { if = { limit = { has_idea = gdp_7 }
+								multiply_temp_variable = { personnel_cost = 0.21 }
+								divide_temp_variable = { temp_defence_spend = 3 }
+								
+								else = { if = { limit = { has_idea = gdp_6 }
+									multiply_temp_variable = { personnel_cost = 0.18 }
+									divide_temp_variable = { temp_defence_spend = 3.6 }
+									
+									else = { if = { limit = { has_idea = gdp_5 }
+										multiply_temp_variable = { personnel_cost = 0.145 }
+										divide_temp_variable = { temp_defence_spend = 4.2 }
+
+										else = { if = { limit = { has_idea = gdp_4 }
+											multiply_temp_variable = { personnel_cost = 0.115 }
+											divide_temp_variable = { temp_defence_spend = 4.9 }
+											
+											else = { if = { limit = { has_idea = gdp_3 }
+												multiply_temp_variable = { personnel_cost = 0.078 }
+												divide_temp_variable = { temp_defence_spend = 5.7 }
+												
+												else = { if = { limit = { has_idea = gdp_2 }
+													multiply_temp_variable = { personnel_cost = 0.044 }
+													divide_temp_variable = { temp_defence_spend = 6.7 }
+													
+													else = { if = { limit = { has_idea = gdp_1 }
+														multiply_temp_variable = { personnel_cost = 0.025 }
+														divide_temp_variable = { temp_defence_spend = 7.8 }
+													} }
+												} }
+											} }
+										} }
+									} }
+								} }
+							} }
+						} }
+					} }
+				} }
+			}
+		}
+	}
+	set_variable = { var = tooltip_personnel_cost value = personnel_cost }
+	add_to_temp_variable = { personnel_cost = temp_defence_spend }
+	
+	if = { limit = { check_variable = { var = defence_gain value = personnel_cost compare = not_equals } }
+		
+		subtract_from_variable = { var = expense_gain value = defence_gain }
+		add_to_variable = { var = treasury_rate value = defence_gain }
+		
+		set_variable = { var = defence_gain value = personnel_cost }
+		
+		add_to_variable = { var = expense_gain value = defence_gain }
+		subtract_from_variable = { var = treasury_rate value = defence_gain }
+		update_display_expense = yes
+	}
 }
 
 calculate_int_investments_rate = {
@@ -215,11 +545,21 @@ calculate_int_investments_rate = {
 
 calculate_resource_sale_rate = {
 	subtract_from_variable = { var = treasury_rate value = resource_sale_rate }
+	
+	set_variable = { resource_exports = resource_exported@steel }
+	add_to_variable = { resource_exports = resource_exported@oil }
+	add_to_variable = { resource_exports = resource_exported@aluminium }
+	add_to_variable = { resource_exports = resource_exported@tungsten }
+	multiply_variable = { resource_exports = 0.166 }
+	round_variable = resource_exports
+	
 	set_variable = { var = resource_sale_rate value = resource_exports }
-	divide_variable = { var = resource_sale_rate value = 100 }
+	divide_variable = { var = resource_sale_rate value = 60 }
+	
 	add_to_variable = { var = treasury_rate value = resource_sale_rate }
 	update_display_income = yes
 }
+		
 
 update_display_expense = {
 	set_variable = { var = display_expense value = expense_gain }
@@ -448,48 +788,6 @@ decrease_tax_cost = {
 	
 init_expenses = {
 	#Defence spending
-	set_variable = { var = defence_gain value = size_modifier }
-	if = { limit = { has_idea = defence_00 }
-		multiply_variable = { var = defence_gain value = 0.002 }
-		
-		else = { if = { limit = { has_idea = defence_01 }
-			multiply_variable = { var = defence_gain value = 0.02 }
-			
-			else = { if = { limit = { has_idea = defence_02 }
-				multiply_variable = { var = defence_gain value = 0.04 }
-				
-				else = { if = { limit = { has_idea = defence_03 }
-					multiply_variable = { var = defence_gain value = 0.06 }
-					
-					else = { if = { limit = { has_idea = defence_04 }
-						multiply_variable = { var = defence_gain value = 0.08 }
-						
-						else = { if = { limit = { has_idea = defence_05 }
-							multiply_variable = { var = defence_gain value = 0.12 }
-							
-							else = { if = { limit = { has_idea = defence_06 }
-								multiply_variable = { var = defence_gain value = 0.16 }
-								
-								else = { if = { limit = { has_idea = defence_07 }
-									multiply_variable = { var = defence_gain value = 0.20 }
-								
-									else = { if = { limit = { has_idea = defence_08 }
-										multiply_variable = { var = defence_gain value = 0.25 }
-									
-										else = { if = { limit = { has_idea = defence_09 }
-											multiply_variable = { var = defence_gain value = 0.4 }
-										} }
-									} }
-								} }
-							} }
-						} }
-					} }
-				} }
-			} }
-		} }
-	}
-	add_to_variable = { var = expense_gain value = defence_gain }
-	subtract_from_variable = { var = treasury_rate value = defence_gain }
 	
 	#bueraucracy
 	set_variable = { var = bureaucracy_gain value = size_modifier }
