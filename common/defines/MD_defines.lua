@@ -93,7 +93,7 @@
 	NDefines.NTechnology.BASE_TECH_COST = 300
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
-	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 50
+	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 100
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 24
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
 	NDefines.NBuildings.BASE_FACTORY_REPAIR = 0.25
