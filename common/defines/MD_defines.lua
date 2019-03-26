@@ -333,8 +333,8 @@
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
 	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 6				-- 3
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
-	NDefines.NAI.UEL_CONSUMPTION_MULT_FOR_FUEL_SAVING_MODE = 1.0			-- fuel consumptions will be limited by this ratio in fuel saving mode
-	NDefines.NAI.FUEL_CONSUMPTION_MULT_REGULAR_FUEL_MODE = 1.0				-- fuel consumptions will be limited by this ratio in regular fuel mode
+	NDefines.NAI.UEL_CONSUMPTION_MULT_FOR_FUEL_SAVING_MODE = 10.0			-- fuel consumptions will be limited by this ratio in fuel saving mode
+	NDefines.NAI.FUEL_CONSUMPTION_MULT_REGULAR_FUEL_MODE = 10.0				-- fuel consumptions will be limited by this ratio in regular fuel mode
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_AGRESSIVE_FUEL_MODE = 300.0				-- fuel consumptions will be limited by this ratio in aggressive fuel usage mode
 	
 	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE = 1				-- countries will enter fuel saving mode if they will be out of fuel in this number of days and their fuel ratio is below next define
