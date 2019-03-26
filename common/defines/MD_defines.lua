@@ -349,4 +349,6 @@
 	NDefines.NAI.WANTED_MAX_FUEL_BUFFER_IN_DAYS_FOR_AIR_MAX_CONSUMPTION  = 1  -- AI will try to buffer at least this amount of days on max consumption, will trade if necesarry and will go into fuel saving mode/aggresive mode using this buffer
 	NDefines.NAI.WANTED_MAX_FUEL_BUFFER_IN_DAYS_FOR_NAVY_MAX_CONSUMPTION = 1  -- AI will try to buffer at least this amount of days on max consumption, will trade if necesarry and will go into fuel saving mode/aggresive mode using this buffer
 	NDefines.NAI.MIN_WANTED_MAX_FUEL = 1	
-	
+	NDefines.NCountry.BASE_FUEL_CAPACITY = 500000
+	NDefines.NAI.NAVY_ACTUAL_FUEL_USAGE_WEIGHT_ON_OIL_REQUEST = 0.1 					-- weight of actual fuel usage of ships compared to what is being asked for missions while calculating oil needed for trade
+	NDefines.NAI.AIR_ACTUAL_FUEL_USAGE_WEIGHT_ON_OIL_REQUEST = 0.1 						-- weight of actual fuel usage of planes compared to what is being asked for missions while calculating oil needed for trade
