@@ -145,6 +145,8 @@ def get_tagPos(text, tags):
                     if z == isValidTag.group(1):
                         tagPos = pos
                         return tagPos
+    else:
+        print("No tag found named: " + text)
 
 
 def get_tagPos2(text, tags):
@@ -158,6 +160,8 @@ def get_tagPos2(text, tags):
                     if z == isValidTag.group(1):
                         tagPos = pos
                         return tagPos
+    else:
+        print("No tag found named: " + text)
 
 def analyzeMyVariants(tags, rootDir, fileName):
     variants = tags

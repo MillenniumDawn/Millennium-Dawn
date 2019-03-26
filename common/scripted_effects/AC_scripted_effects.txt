@@ -1,6 +1,15 @@
 ############################################################################################################
 #	AC mod - scripted effects
 ############################################################################################################
+#Written by hiddengearz
+#Inspired by the original Allied Construction Project https://steamcommunity.com/sharedfiles/filedetails/?id=1368202826
+#This reworked system allows you to have 5 of each project active per country.
+#So you can have 5 CIC projects, 5 INF projects, 5 MIC projects etc in every country in the game
+#There are 8 project types * 5 of each allowed per country = 40 investments possibile in one country * 210 countries the player can invest in = 8400 possibile investments for the player
+#Now if the AI also does the same that's 210 * 8400 = 1,764,000 possibile investments possibile
+
+
+
 
 # BUILDING CONSTRUCTION COSTS
 
@@ -13,11 +22,11 @@
 @BUILD_COST_DOCKYARD = 10
 @BUILD_COST_REFINERY = 10
 
-
+#Used to calculate how long it will take to build the building - called in the scripted gui
 AC_update_build_time = {
 
 	ROOT = {
-		### get construction speed modifiers and set building cost
+		###construction speed default is 100%
 
 		set_variable = { AC_construction_speed = 1 }
 
@@ -27,40 +36,46 @@ AC_update_build_time = {
 		add_to_variable = { AC_construction_speed = modifier@production_speed_buildings_factor }
 		multiply_variable = { AC_construction_speed = AC_target_state_infra_speed }
 		
-		### construction speed penalty for projects
-
+		### construction speed penalty for investments, they're just 25% slower
 		multiply_variable = { AC_construction_speed = 0.75 }
 
 		### total factory output
-
 		multiply_variable = { AC_construction_speed = 5 }
 
 		### days to build
 
-		set_variable = { AC_construction_duration = AC_build_cost }
+		set_variable = { AC_construction_duration = AC_build_cost } #build cost set by AC_update_build_cost, which is called in scripted gui
 		divide_variable = { AC_construction_duration = AC_construction_speed }
 		round_variable = AC_construction_duration
 		
+		#If you have one of these internal factions investments are 25% faster
+		#If you change this update the tooltip for these internal factions
 		if = { limit = { or = { has_idea = industrial_conglomerates has_idea = chaebols } }
 			multiply_variable = { AC_construction_duration = 0.75 }
 		}
 		round_variable = AC_construction_duration
 	}
 }
+
+#starts the project, called in scripted gui
 AC_start_project = {
 	
 	#AC_update_build_time = yes
 
 	ROOT = {
 		
+		#Sets construction duration variable that was created in AC_update_build_time for the investor onto the country being invested in
+		#Needed so the investe can see how long until the investors construction is complete
 		PREV = { CONTROLLER = { set_variable = { AC_target_construction_duration = FROM.FROM.AC_construction_duration } } }
 		
+		#Update money
 		subtract_from_variable = { treasury = AC_build_cost }
 		add_to_variable = { int_investments = AC_build_cost }
 		calculate_int_investments_rate = yes
 		
 		
 		### active project building type
+		#These state flags set 1)How many of said building your making 2) If you have 1 of 5 allowed projects per coutry
 		if = {
 			limit = { 
 				check_variable = { AC_building_type_selected = 1 } 
@@ -1527,6 +1542,7 @@ AC_start_project = {
 	}
 }
 
+#I don't think this is used, leftover from allied construction project will check later
 AC_get_building_values_for_gui = {
 	if = { limit = { check_variable = { AC_building_type_selected = 1 } }
 
@@ -1577,6 +1593,11 @@ AC_get_building_values_for_gui = {
 	}
 }
 
+#######################################################################################################################
+###All of the AC_add_XXX_building effects are used in decissions to add the building to the correct lcoation and etc
+###All of the AC_add_XXX_building2 effects are used in the decission seen by the country being invested in to show them
+###what will happen when the investment is finished, they're basically just tooltips
+#######################################################################################################################
 AC_add_INF_building = {
 	
 	if = {
@@ -7473,15 +7494,16 @@ AC_add_REF_building2 = {
 	}
 }
 
-
+###Only used in the scripted gui when the investor decides to cancel the project via the scripted gui.
+#Projects can also be canceled via decissions but uses slightly different code
 AC_end_project = {
-	
+	#Depending on the building selected in the gui will begin the cancelation process
 	if = {
 		limit = {
-			check_variable = { AC_building_type_selected = 1 } 
+			check_variable = { AC_building_type_selected = 1 } #Infastructure value
 		}
-		AC_Return_money_INF = yes
-		if = {
+		AC_Return_money_INF = yes #Return effect
+		if = { #Removes the state flag so it can be reused & removes the decission
 			limit = {
 				PREV = { has_state_flag = AC_construction_INF_target_state1_@ROOT }
 			}			
@@ -7853,6 +7875,134 @@ AC_end_project = {
 			
 }
 
+#Should be identical to AC_update_build_cost (except for scopes) as that sets the original cost, this is a copy but with changed scopes
+#and returns money instead of removing it
+#Used in AC_Return_money_XXX effect
+AC_Calculate_money_to_return = {
+	multiply_variable = { Temp_AC_build_cost = Temp_AC_build_amount }
+	PREV = {
+		### get infrastructure level from target country
+		set_temp_variable = { ROOT.Temp_AC_target_state_infra_speed = infrastructure_level }
+	}
+	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
+
+		multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 }
+		multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 }
+		
+		add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 }
+		
+	# }
+	multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } #Infrastructure changes cost
+	
+	if = {
+		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
+		multiply_variable = { Temp_AC_build_cost = 1.45 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
+		multiply_variable = { Temp_AC_build_cost = 1.40 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
+		multiply_variable = { Temp_AC_build_cost = 1.35 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
+		multiply_variable = { Temp_AC_build_cost = 1.30 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
+		multiply_variable = { Temp_AC_build_cost = 1.25 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
+		multiply_variable = { Temp_AC_build_cost = 1.20 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
+		multiply_variable = { Temp_AC_build_cost = 1.15 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
+		multiply_variable = { Temp_AC_build_cost = 1.10 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
+		multiply_variable = { Temp_AC_build_cost = 1.05 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = negligible_corruption } } }
+		multiply_variable = { Temp_AC_build_cost = 1 }
+	}
+	round_variable = Temp_AC_build_cost
+	add_to_variable = { treasury = Temp_AC_build_cost }
+	subtract_from_variable = { int_investments = Temp_AC_build_cost }
+	calculate_int_investments_rate = yes
+}
+
+#Should be identical to AC_update_build_cost (except for scopes) as that sets the original cost, this is a copy but with changed scopes
+#and returns money instead of removing it
+##Used in AC_Return_money_XXX2 effect
+AC_Calculate_money_to_return2 = {
+	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_build_amount } }
+	### get infrastructure level from target country
+	set_temp_variable = { FROM.Temp_AC_target_state_infra_speed = infrastructure_level }
+	
+	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
+
+		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 } }
+		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 } }
+		
+		FROM = { add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 } }
+		
+	# }
+	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } } #Infrastructure changes cost
+	
+	if = {
+		limit = { CONTROLLER = { has_idea = paralyzing_corruption } }
+		multiply_variable = { Temp_AC_build_cost = 1.45 }
+	}
+	else_if = {
+		limit = { CONTROLLER = { has_idea = crippling_corruption } }
+		multiply_variable = { Temp_AC_build_cost = 1.40 }
+	}
+	else_if = {
+		limit = { CONTROLLER = { has_idea = rampant_corruption } }
+		multiply_variable = { Temp_AC_build_cost = 1.35 }
+	}
+	else_if = {
+		limit = { CONTROLLER = { has_idea = unrestrained_corruption } }
+		multiply_variable = { Temp_AC_build_cost = 1.30 }
+	}
+	else_if = {
+		limit = { CONTROLLER = { has_idea = systematic_corruption } }
+		multiply_variable = { Temp_AC_build_cost = 1.25 }
+	}
+	else_if = {
+		limit = { CONTROLLER = { has_idea = widespread_corruption } }
+		multiply_variable = { Temp_AC_build_cost = 1.20 }
+	}
+	else_if = {
+		limit = { CONTROLLER = { has_idea = medium_corruption } }
+		multiply_variable = { Temp_AC_build_cost = 1.15 }
+	}
+	else_if = {
+		limit = { CONTROLLER = { has_idea = modest_corruption } }
+		multiply_variable = { Temp_AC_build_cost = 1.10 }
+	}
+	else_if = {
+		limit = { CONTROLLER = { has_idea = slight_corruption } }
+		multiply_variable = { Temp_AC_build_cost = 1.05 }
+	}
+	else_if = {
+		limit = { CONTROLLER = { has_idea = negligible_corruption } }
+		multiply_variable = { Temp_AC_build_cost = 1 }
+	}
+	round_variable = Temp_AC_build_cost
+}
+
+#AC_Return_money_XXX checks for what flag is in state and how many buildings were invested, then calls
+#AC_Calculate_money_to_return. Only used in AC_end_project
 AC_Return_money_INF = {
 	if = {
 		limit = { PREV = { has_state_flag = AC_construction_INF_target_state1_@ROOT } }
@@ -8170,66 +8320,11 @@ AC_Return_money_INF = {
 			set_temp_variable = { Temp_AC_build_amount = 10 }
 		}
 	}
-	multiply_variable = { Temp_AC_build_cost = Temp_AC_build_amount }
-	PREV = {
-		### get infrastructure level from target country
-		set_temp_variable = { ROOT.Temp_AC_target_state_infra_speed = infrastructure_level }
-	}
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 }
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 }
-		
-		add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 }
-		
-	# }
-	multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } #Infrastructure changes cost
-	
-	if = {
-		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = negligible_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
-	add_to_variable = { treasury = Temp_AC_build_cost }
-	subtract_from_variable = { int_investments = Temp_AC_build_cost }
-	calculate_int_investments_rate = yes
+	AC_Calculate_money_to_return = yes
 }
+
+#AC_Return_money_XXX2  checks for what flag is in state and how many buildings were invested, then calls
+#AC_Calculate_money_to_return. Only used in decissions if the invested country cancels the investment via decissions
 AC_Return_money_INF2 = {
 	if = {
 		limit = { has_state_flag = AC_construction_INF_target_state1_@FROM }
@@ -8547,61 +8642,7 @@ AC_Return_money_INF2 = {
 			FROM = { set_temp_variable = { Temp_AC_build_amount = 10 } }
 		}
 	}
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_build_amount } }
-	### get infrastructure level from target country
-	set_temp_variable = { FROM.Temp_AC_target_state_infra_speed = infrastructure_level }
-	
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 } }
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 } }
-		
-		FROM = { add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 } }
-		
-	# }
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } } #Infrastructure changes cost
-	
-	if = {
-		limit = { CONTROLLER = { has_idea = paralyzing_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = crippling_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = rampant_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = unrestrained_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = systematic_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = widespread_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = medium_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = modest_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = slight_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = negligible_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
+	AC_Calculate_money_to_return2 = yes
 }
 
 
@@ -8922,65 +8963,7 @@ AC_Return_money_AB = {
 			set_temp_variable = { Temp_AC_build_amount = 10 }
 		}
 	}
-	multiply_variable = { Temp_AC_build_cost = Temp_AC_build_amount }
-	PREV = {
-		### get infrastructure level from target country
-		set_temp_variable = { ROOT.Temp_AC_target_state_infra_speed = infrastructure_level }
-	}
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 }
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 }
-		
-		add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 }
-		
-	# }
-	multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } #Infrastructure changes cost
-	
-	if = {
-		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = negligible_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
-	add_to_variable = { treasury = Temp_AC_build_cost }
-	subtract_from_variable = { int_investments = Temp_AC_build_cost }
-	calculate_int_investments_rate = yes
+	AC_Calculate_money_to_return = yes
 }
 AC_Return_money_AB2 = {
 	if = {
@@ -9299,61 +9282,7 @@ AC_Return_money_AB2 = {
 			FROM = { set_temp_variable = { Temp_AC_build_amount = 10 } }
 		}
 	}
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_build_amount } }
-	### get infrastructure level from target country
-	set_temp_variable = { FROM.Temp_AC_target_state_infra_speed = infrastructure_level }
-	
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 } }
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 } }
-		
-		FROM = { add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 } }
-		
-	# }
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } } #Infrastructure changes cost
-	
-	if = {
-		limit = { CONTROLLER = { has_idea = paralyzing_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = crippling_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = rampant_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = unrestrained_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = systematic_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = widespread_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = medium_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = modest_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = slight_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = negligible_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
+	AC_Calculate_money_to_return2 = yes
 }
 
 AC_Return_money_AA = {
@@ -9673,65 +9602,7 @@ AC_Return_money_AA = {
 			set_temp_variable = { Temp_AC_build_amount = 10 }
 		}
 	}
-	multiply_variable = { Temp_AC_build_cost = Temp_AC_build_amount }
-	PREV = {
-		### get infrastructure level from target country
-		set_temp_variable = { ROOT.Temp_AC_target_state_infra_speed = infrastructure_level }
-	}
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 }
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 }
-		
-		add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 }
-		
-	# }
-	multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } #Infrastructure changes cost
-	
-	if = {
-		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = negligible_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
-	add_to_variable = { treasury = Temp_AC_build_cost }
-	subtract_from_variable = { int_investments = Temp_AC_build_cost }
-	calculate_int_investments_rate = yes
+	AC_Calculate_money_to_return = yes
 }
 AC_Return_money_AA2 = {
 	if = {
@@ -10050,61 +9921,7 @@ AC_Return_money_AA2 = {
 			FROM = { set_temp_variable = { Temp_AC_build_amount = 10 } }
 		}
 	}
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_build_amount } }
-	### get infrastructure level from target country
-	set_temp_variable = { FROM.Temp_AC_target_state_infra_speed = infrastructure_level }
-	
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 } }
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 } }
-		
-		FROM = { add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 } }
-		
-	# }
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } } #Infrastructure changes cost
-	
-	if = {
-		limit = { CONTROLLER = { has_idea = paralyzing_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = crippling_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = rampant_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = unrestrained_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = systematic_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = widespread_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = medium_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = modest_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = slight_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = negligible_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
+	AC_Calculate_money_to_return2 = yes
 }
 
 AC_Return_money_RAD = {
@@ -10424,65 +10241,7 @@ AC_Return_money_RAD = {
 			set_temp_variable = { Temp_AC_build_amount = 10 }
 		}
 	}
-	multiply_variable = { Temp_AC_build_cost = Temp_AC_build_amount }
-	PREV = {
-		### get infrastructure level from target country
-		set_temp_variable = { ROOT.Temp_AC_target_state_infra_speed = infrastructure_level }
-	}
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 }
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 }
-		
-		add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 }
-		
-	# }
-	multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } #Infrastructure changes cost
-	
-	if = {
-		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = negligible_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
-	add_to_variable = { treasury = Temp_AC_build_cost }
-	subtract_from_variable = { int_investments = Temp_AC_build_cost }
-	calculate_int_investments_rate = yes
+	AC_Calculate_money_to_return = yes
 }
 AC_Return_money_RAD2 = {
 	if = {
@@ -10801,61 +10560,7 @@ AC_Return_money_RAD2 = {
 			FROM = { set_temp_variable = { Temp_AC_build_amount = 10 } }
 		}
 	}
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_build_amount } }
-	### get infrastructure level from target country
-	set_temp_variable = { FROM.Temp_AC_target_state_infra_speed = infrastructure_level }
-	
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 } }
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 } }
-		
-		FROM = { add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 } }
-		
-	# }
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } } #Infrastructure changes cost
-	
-	if = {
-		limit = { CONTROLLER = { has_idea = paralyzing_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = crippling_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = rampant_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = unrestrained_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = systematic_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = widespread_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = medium_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = modest_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = slight_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = negligible_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
+	AC_Calculate_money_to_return2 = yes
 }
 
 AC_Return_money_MIC = {
@@ -11175,65 +10880,7 @@ AC_Return_money_MIC = {
 			set_temp_variable = { Temp_AC_build_amount = 10 }
 		}
 	}
-	multiply_variable = { Temp_AC_build_cost = Temp_AC_build_amount }
-	PREV = {
-		### get infrastructure level from target country
-		set_temp_variable = { ROOT.Temp_AC_target_state_infra_speed = infrastructure_level }
-	}
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 }
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 }
-		
-		add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 }
-		
-	# }
-	multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } #Infrastructure changes cost
-	
-	if = {
-		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = negligible_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
-	add_to_variable = { treasury = Temp_AC_build_cost }
-	subtract_from_variable = { int_investments = Temp_AC_build_cost }
-	calculate_int_investments_rate = yes
+	AC_Calculate_money_to_return = yes
 }
 AC_Return_money_MIC2 = {
 	if = {
@@ -11552,61 +11199,7 @@ AC_Return_money_MIC2 = {
 			FROM = { set_temp_variable = { Temp_AC_build_amount = 10 } }
 		}
 	}
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_build_amount } }
-	### get infrastructure level from target country
-	set_temp_variable = { FROM.Temp_AC_target_state_infra_speed = infrastructure_level }
-	
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 } }
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 } }
-		
-		FROM = { add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 } }
-		
-	# }
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } } #Infrastructure changes cost
-	
-	if = {
-		limit = { CONTROLLER = { has_idea = paralyzing_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = crippling_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = rampant_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = unrestrained_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = systematic_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = widespread_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = medium_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = modest_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = slight_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = negligible_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
+	AC_Calculate_money_to_return2 = yes
 }
 
 AC_Return_money_CIC = {
@@ -11926,65 +11519,7 @@ AC_Return_money_CIC = {
 			set_temp_variable = { Temp_AC_build_amount = 10 }
 		}
 	}
-	multiply_variable = { Temp_AC_build_cost = Temp_AC_build_amount }
-	PREV = {
-		### get infrastructure level from target country
-		set_temp_variable = { ROOT.Temp_AC_target_state_infra_speed = infrastructure_level }
-	}
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 }
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 }
-		
-		add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 }
-		
-	# }
-	multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } #Infrastructure changes cost
-	
-	if = {
-		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = negligible_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
-	add_to_variable = { treasury = Temp_AC_build_cost }
-	subtract_from_variable = { int_investments = Temp_AC_build_cost }
-	calculate_int_investments_rate = yes
+	AC_Calculate_money_to_return = yes
 }
 AC_Return_money_CIC2 = {
 	if = {
@@ -12303,61 +11838,7 @@ AC_Return_money_CIC2 = {
 			FROM = { set_temp_variable = { Temp_AC_build_amount = 10 } }
 		}
 	}
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_build_amount } }
-	### get infrastructure level from target country
-	set_temp_variable = { FROM.Temp_AC_target_state_infra_speed = infrastructure_level }
-	
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 } }
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 } }
-		
-		FROM = { add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 } }
-		
-	# }
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } } #Infrastructure changes cost
-	
-	if = {
-		limit = { CONTROLLER = { has_idea = paralyzing_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = crippling_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = rampant_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = unrestrained_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = systematic_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = widespread_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = medium_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = modest_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = slight_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = negligible_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
+	AC_Calculate_money_to_return2 = yes
 }
 
 AC_Return_money_NIC = {
@@ -12677,65 +12158,7 @@ AC_Return_money_NIC = {
 			set_temp_variable = { Temp_AC_build_amount = 10 }
 		}
 	}
-	multiply_variable = { Temp_AC_build_cost = Temp_AC_build_amount }
-	PREV = {
-		### get infrastructure level from target country
-		set_temp_variable = { ROOT.Temp_AC_target_state_infra_speed = infrastructure_level }
-	}
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 }
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 }
-		
-		add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 }
-		
-	# }
-	multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } #Infrastructure changes cost
-	
-	if = {
-		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = negligible_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
-	add_to_variable = { treasury = Temp_AC_build_cost }
-	subtract_from_variable = { int_investments = Temp_AC_build_cost }
-	calculate_int_investments_rate = yes
+	AC_Calculate_money_to_return = yes
 }
 AC_Return_money_NIC2 = {
 	if = {
@@ -13054,61 +12477,7 @@ AC_Return_money_NIC2 = {
 			FROM = { set_temp_variable = { Temp_AC_build_amount = 10 } }
 		}
 	}
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_build_amount } }
-	### get infrastructure level from target country
-	set_temp_variable = { FROM.Temp_AC_target_state_infra_speed = infrastructure_level }
-	
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 } }
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 } }
-		
-		FROM = { add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 } }
-		
-	# }
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } } #Infrastructure changes cost
-	
-	if = {
-		limit = { CONTROLLER = { has_idea = paralyzing_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = crippling_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = rampant_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = unrestrained_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = systematic_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = widespread_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = medium_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = modest_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = slight_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = negligible_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
+	AC_Calculate_money_to_return2 = yes
 }
 
 AC_Return_money_REF = {
@@ -13428,65 +12797,7 @@ AC_Return_money_REF = {
 			set_temp_variable = { Temp_AC_build_amount = 10 }
 		}
 	}
-	multiply_variable = { Temp_AC_build_cost = Temp_AC_build_amount }
-	PREV = {
-		### get infrastructure level from target country
-		set_temp_variable = { ROOT.Temp_AC_target_state_infra_speed = infrastructure_level }
-	}
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 }
-		multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 }
-		
-		add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 }
-		
-	# }
-	multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } #Infrastructure changes cost
-	
-	if = {
-		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = negligible_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
-	add_to_variable = { treasury = Temp_AC_build_cost }
-	subtract_from_variable = { int_investments = Temp_AC_build_cost }
-	calculate_int_investments_rate = yes
+	AC_Calculate_money_to_return = yes
 }
 AC_Return_money_REF2 = {
 	if = {
@@ -13805,63 +13116,10 @@ AC_Return_money_REF2 = {
 			FROM = { set_temp_variable = { Temp_AC_build_amount = 10 } }
 		}
 	}
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_build_amount } }
-	### get infrastructure level from target country
-	set_temp_variable = { FROM.Temp_AC_target_state_infra_speed = infrastructure_level }
-	
-	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
-
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = 0.1 } }
-		FROM = { multiply_temp_variable = { Temp_AC_target_state_infra_speed = -1 } }
-		
-		FROM = { add_to_temp_variable = { Temp_AC_target_state_infra_speed = 2 } }
-		
-	# }
-	FROM = { multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } } #Infrastructure changes cost
-	
-	if = {
-		limit = { CONTROLLER = { has_idea = paralyzing_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = crippling_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = rampant_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = unrestrained_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = systematic_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = widespread_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = medium_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = modest_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = slight_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
-	}
-	else_if = {
-		limit = { CONTROLLER = { has_idea = negligible_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
-	}
-	round_variable = Temp_AC_build_cost
+	AC_Calculate_money_to_return2 = yes
 }
 
+#Sets the investment/build cost, called only in the scripted gui before starting the project
 AC_update_build_cost = {
 	if = { limit = { check_variable = { AC_building_type_selected = 1 } }
 		set_variable = { AC_build_cost = @BUILD_COST_INFRASTRUCTURE }
@@ -13949,6 +13207,8 @@ AC_update_build_cost = {
 	
 }
 
+#Clears state flags if a state changes owners before an investment is don via AC_on_actions.txt on_state_control_changed
+#Definitely need to check this for performance issues in 1.6. This might be doable with just decissions may not need this...
 AC_clear_state_flag = {
 	if = {
 		limit = {
