@@ -341,7 +341,6 @@
 	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE_FUEL_RATIO = 0
 	
 	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0.01 					-- countries will exit fuel saving mode if they have more fuel ratio than this
-	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 1
 	NDefines.NAI.LAND_COMBAT_CAS_WINGS_PER_ENEMY_ARMY_LIMIT = 10	-- Limit of CAS wings requested by enemy armies
 	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- Amount of CAS planes requested per enemy army
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 20
