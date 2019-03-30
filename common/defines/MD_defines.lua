@@ -333,25 +333,25 @@
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
 	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 6				-- 3
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
-	NDefines.NAI.UEL_CONSUMPTION_MULT_FOR_FUEL_SAVING_MODE = 10.0			-- fuel consumptions will be limited by this ratio in fuel saving mode
-	NDefines.NAI.FUEL_CONSUMPTION_MULT_REGULAR_FUEL_MODE = 100.0				-- fuel consumptions will be limited by this ratio in regular fuel mode
+	NDefines.NAI.UEL_CONSUMPTION_MULT_FOR_FUEL_SAVING_MODE = 50.0			-- fuel consumptions will be limited by this ratio in fuel saving mode
+	NDefines.NAI.FUEL_CONSUMPTION_MULT_REGULAR_FUEL_MODE = 1000.0				-- fuel consumptions will be limited by this ratio in regular fuel mode
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_AGRESSIVE_FUEL_MODE = 300.0				-- fuel consumptions will be limited by this ratio in aggressive fuel usage mode
 	
 	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE = 1				-- countries will enter fuel saving mode if they will be out of fuel in this number of days and their fuel ratio is below next define
 	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE_FUEL_RATIO = 0
 	
 	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0.01 					-- countries will exit fuel saving mode if they have more fuel ratio than this
-	
-	
-	
-
-	NDefines.NAI.WANTED_MAX_FUEL_BUFFER_IN_DAYS_FOR_ARMY_MAX_CONSUMPTION = 1  -- AI will try to buffer at least this amount of days on max consumption, will trade if necesarry and will go into fuel saving mode/aggresive mode using this buffer 
-	NDefines.NAI.WANTED_MAX_FUEL_BUFFER_IN_DAYS_FOR_AIR_MAX_CONSUMPTION  = 1  -- AI will try to buffer at least this amount of days on max consumption, will trade if necesarry and will go into fuel saving mode/aggresive mode using this buffer
-	NDefines.NAI.WANTED_MAX_FUEL_BUFFER_IN_DAYS_FOR_NAVY_MAX_CONSUMPTION = 1  -- AI will try to buffer at least this amount of days on max consumption, will trade if necesarry and will go into fuel saving mode/aggresive mode using this buffer
+	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 1
+	NDefines.NAI.LAND_COMBAT_CAS_WINGS_PER_ENEMY_ARMY_LIMIT = 10	-- Limit of CAS wings requested by enemy armies
+	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- Amount of CAS planes requested per enemy army
+	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 20
+	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 100
 	NDefines.NAI.MIN_WANTED_MAX_FUEL = 1	
-	
+	NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 10.0
+	NDefines.NAI.STR_BOMB_MIN_EXCORT_WINGS = 5
+	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 100
 	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
 	NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 10						-- base amount of fuel gained hourly per excess oil
-	NDefines.NCountry.BASE_FUEL_GAIN = 5.0							-- base amount of fuel gained hourly, independent of excess oil
+	NDefines.NCountry.BASE_FUEL_GAIN = 3.0							-- base amount of fuel gained hourly, independent of excess oil
 	NDefines.NCountry.BASE_FUEL_CAPACITY = 5000000
 	
