@@ -318,7 +318,7 @@
 	NDefines.NAI.DEMOCRATIC_AI_FACTION_KICKING_PLAYER_THREAT_DIFFERENCE = 0.0 -- 6
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_LAND_FORT_LEVEL = 7			-- 15
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5		-- 10
-
+	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.2
 	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 4					-- 20
 	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 4					-- 25
 	NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 4					-- 25
@@ -332,25 +332,30 @@
 	NDefines.NAI.AIR_SUPERIORITY_FACTOR = 2.7
 	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE = 1				-- countries will enter fuel saving mode if they will be out of fuel in this number of days and their fuel ratio is below next define
 	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE_FUEL_RATIO = 0.01
---	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.0001
 	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0.01 					-- countries will exit fuel saving mode if they have more fuel ratio than this
-	NDefines.NAI.LAND_COMBAT_CAS_WINGS_PER_ENEMY_ARMY_LIMIT = 20	-- Limit of CAS wings requested by enemy armies
-	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 10				-- Amount of CAS planes requested per enemy army
+	NDefines.NAI.LAND_COMBAT_CAS_WINGS_PER_ENEMY_ARMY_LIMIT = 5	-- Limit of CAS wings requested by enemy armies
+	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- Amount of CAS planes requested per enemy army
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 50
-	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 5
+	--`NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 5
+	NDefines.NAI.LLAND_COMBAT_MIN_EXCORT_WINGS = 2
 	NDefines.NAI.MIN_WANTED_MAX_FUEL = 0.1	
 	--NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 10.0
 	NDefines.NAI.STR_BOMB_MIN_EXCORT_WINGS = 1
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
 	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
-	NDefines.NCountry.BASE_FUEL_GAIN = 3.0							-- base amount of fuel gained hourly, independent of excess oil
+	--NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 10						-- base amount of fuel gained hourly per excess oil
+	--NDefines.NCountry.BASE_FUEL_GAIN = 3.0							-- base amount of fuel gained hourly, independent of excess oil
 	NDefines.NCountry.BASE_FUEL_CAPACITY = 500000
-	NDefines.NAI.LAND_COMBAT_OUR_ARMIES_AIR_IMPORTANCE = 50
+	NDefines.NAI.LAND_COMBAT_OUR_ARMIES_AIR_IMPORTANCE = 100
 	NDefines.NAI.LAND_COMBAT_OUR_COMBATS_AIR_IMPORTANCE = 200		-- Strategic importance of our armies in the combats
-	NDefines.NAI.LAND_COMBAT_FRIEND_ARMIES_AIR_IMPORTANCE = 50
+	NDefines.NAI.LAND_COMBAT_FRIEND_ARMIES_AIR_IMPORTANCE = 25
 	
-	NDefines.NAI.AIR_AI_ENEMY_PROV_RATIO_FOR_COMBAT_REGION = 0.001
 	NDefines.NAI.NUM_AI_MESSAGES = 50
+	NDefines.NAI.AIR_ACTUAL_FUEL_USAGE_WEIGHT_ON_OIL_REQUEST = 0.05
+	NDefines.NAI.LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 0.5
+	NDefines.NAI.LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 0.7
+	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.2
+	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of pirority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
 		'arms_factory',
 		'industrial_complex',
