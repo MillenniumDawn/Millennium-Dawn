@@ -186,6 +186,247 @@ def createPartNameLoc (rootDir, sheet):
     with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
         file.write(content)
 
+#Creates the localisation for the party names
+def createPartNameScriptedLoc (rootDir, sheet):
+    content = ""
+    filepath = rootDir + "/common/scripted_localisation/subideology_party_scripted_localisation.txt"
+    c = 4
+    for c in range (0, 37):
+
+        if c == 4:
+            content += "defined_text = {\n"
+            content += "\tname = conservatism_L\n"
+        if c == 5:
+            content += "defined_text = {\n"
+            content += "\tname = liberalism_L\n"
+        if c == 6:
+            content += "defined_text = {\n"
+            content += "\tname = socialism_L\n"
+        if c == 7:
+            content += "defined_text = {\n"
+            content += "\tname = Western_Autocracy_L\n"
+
+
+        if c == 10:
+            content += "defined_text = {\n"
+            content += "\tname = Communist-State_L\n"
+        if c == 11:
+            content += "defined_text = {\n"
+            content += "\tname = Conservative_L\n"
+        if c == 12:
+            content += "defined_text = {\n"
+            content += "\tname = Autocracy_L\n"
+        if c == 13:
+            content += "defined_text = {\n"
+            content += "\tname = Vilayat_e_Faqih_L\n"
+        if c == 14:
+            content += "defined_text = {\n"
+            content += "\tname = Mod_Vilayat_e_Faqih_L\n"
+        if c == 15:
+            content += "defined_text = {\n"
+            content += "\tname = anarchist_communism_L\n"
+
+
+        if c == 18:
+            content += "defined_text = {\n"
+            content += "\tname = Caliphate_L\n"
+        if c == 19:
+            content += "defined_text = {\n"
+            content += "\tname = Kingdom_L\n"
+
+
+        if c == 22:
+            content += "defined_text = {\n"
+            content += "\tname = Neutral_conservatism_L\n"
+        if c == 23:
+            content += "defined_text = {\n"
+            content += "\tname = oligarchism_L\n"
+        if c == 24:
+            content += "defined_text = {\n"
+            content += "\tname = neutral_Social_L\n"
+        if c == 25:
+            content += "defined_text = {\n"
+            content += "\tname = Neutral_Libertarian_L\n"
+        if c == 26:
+            content += "defined_text = {\n"
+            content += "\tname = Neutral_Autocracy_L\n"
+        if c == 27:
+            content += "defined_text = {\n"
+            content += "\tname = Neutral_Communism_L\n"
+        if c == 28:
+            content += "defined_text = {\n"
+            content += "\tname = Neutral_Muslim_Brotherhood_L\n"
+        if c == 29:
+            content += "defined_text = {\n"
+            content += "\tname = Neutral_green_L\n"
+
+
+        if c == 32:
+            content += "defined_text = {\n"
+            content += "\tname = Nat_Autocracy_L\n"
+        if c == 33:
+            content += "defined_text = {\n"
+            content += "\tname = Nat_Fascism_L\n"
+        if c == 34:
+            content += "defined_text = {\n"
+            content += "\tname = Nat_Populism_L\n"
+        if c == 35:
+            content += "defined_text = {\n"
+            content += "\tname = Monarchist_L\n"
+
+
+        for a, b in enumerate(sheet[0]):
+            if c not in [0, 1, 2, 3, 9, 17, 31, 37]:
+                if b != "" or a != 0:
+                    d = sheet[c][a]
+                    if not d.isspace():
+                        if c == 4 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".conservatism }\n"
+                        elif c == 5 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".liberalism }\n"
+                        elif c == 6 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".socialism }\n"
+                        elif c == 7 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Western_Autocracy }\n"
+
+                        #Emerging
+                        elif c == 10 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Communist-State }\n"
+                        elif c == 11 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Conservative }\n"
+                        elif c == 12 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Autocracy }\n"
+                        elif c == 13 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Vilayat_e_Faqih }\n"
+                        elif c == 14 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Mod_Vilayat_e_Faqih }\n"
+                        elif c == 15 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".anarchist_communism }\n"
+
+                        #Salafist
+                        elif c == 18 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Caliphate }\n"
+                        elif c == 19 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Kingdom }\n"
+
+                        #Non-Alligned
+                        elif c == 22 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_conservatism }\n"
+                        elif c == 23 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".oligarchism }\n"
+                        elif c == 24 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".neutral_Social }\n"
+                        elif c == 25 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_Libertarian }\n"
+                        elif c == 26 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_Autocracy }\n"
+                        elif c == 27 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_Communism }\n"
+                        elif c == 28 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_Muslim_Brotherhood }\n"
+                        elif c == 29 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_green }\n"
+
+                        #Nationalist
+                        elif c == 32 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Nat_Autocracy }\n"
+                        elif c == 33 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Nat_Fascism }\n"
+                        elif c == 34 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Nat_Populism }\n"
+                        elif c == 35 and d != "":
+                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Monarchist }\n"
+        if c == 4:
+            content += "\ttext = { localization_key = generic.conservatism }\n"
+            content += "}\n"
+        if c == 5:
+            content += "\ttext = { localization_key = generic.liberalism }\n"
+            content += "}\n"
+        if c == 6:
+            content += "\ttext = { localization_key = generic.socialism }\n"
+            content += "}\n"
+        if c == 7:
+            content += "\ttext = { localization_key = generic.Western_Autocracy }\n"
+            content += "}\n"
+
+
+        if c == 10:
+            content += "\ttext = { localization_key = generic.Communist-State }\n"
+            content += "}\n"
+        if c == 11:
+            content += "\ttext = { localization_key = generic.Conservative }\n"
+            content += "}\n"
+        if c == 12:
+            content += "\ttext = { localization_key = generic.Autocracy }\n"
+            content += "}\n"
+        if c == 13:
+            content += "\ttext = { localization_key = generic.Vilayat_e_Faqih }\n"
+            content += "}\n"
+        if c == 14:
+            content += "\ttext = { localization_key = generic.Mod_Vilayat_e_Faqih }\n"
+            content += "}\n"
+        if c == 15:
+            content += "\ttext = { localization_key = generic.anarchist_communism }\n"
+            content += "}\n"
+
+        if c == 18:
+            content += "\ttext = { localization_key = generic.Caliphate }\n"
+            content += "}\n"
+        if c == 19:
+            content += "\ttext = { localization_key = generic.Caliphate }\n"
+            content += "}\n"
+
+        if c == 22:
+            content += "\ttext = { localization_key = generic.Neutral_conservatism }\n"
+            content += "}\n"
+        if c == 23:
+            content += "\ttext = { localization_key = generic.oligarchism }\n"
+            content += "}\n"
+        if c == 24:
+            content += "\ttext = { localization_key = generic.neutral_Social }\n"
+            content += "}\n"
+        if c == 25:
+            content += "\ttext = { localization_key = generic.Neutral_Libertarian }\n"
+            content += "}\n"
+        if c == 26:
+            content += "\ttext = { localization_key = generic.Neutral_Autocracy }\n"
+            content += "}\n"
+        if c == 27:
+            content += "\ttext = { localization_key = generic.Neutral_Communism }\n"
+            content += "}\n"
+        if c == 28:
+            content += "\ttext = { localization_key = generic.Neutral_Muslim_Brotherhood }\n"
+            content += "}\n"
+        if c == 29:
+            content += "\ttext = { localization_key = generic.Neutral_green }\n"
+            content += "}\n"
+
+
+        if c == 32:
+            content += "\ttext = { localization_key = generic.Nat_Autocracy }\n"
+            content += "}\n\n"
+        if c == 33:
+            content += "\ttext = { localization_key = generic.Nat_Fascism }\n"
+            content += "}\n\n"
+        if c == 34:
+            content += "\ttext = { localization_key = generic.Nat_Populism }\n"
+            content += "}\n\n"
+        if c == 35:
+            content += "\ttext = { localization_key = generic.Monarchist }\n"
+            content += "}\n\n"
+
+
+
+
+
+
+
+                    #input()
+
+    f = open(filepath, "w")
+    with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
+        file.write(content)
+
 #Called by createPartyLeaders and Returns the country_leader = {... content
 def generateLeaderContent(content, rowInSheet, leaderName, picName, extraLeaders, tagPos):
     ideology = ""
@@ -809,7 +1050,7 @@ def createPartyLeaders (rootDir, sheet, filepath, extraLeaders, tags):
                     leaderName, picList = generateLeaderPic(leaderName, picList)
                     filePic = Path(rootDir + "/gfx/leaders/" + b + "/" + picName)
                     if picName != "" and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName) and not os.path.isfile(rootDir + "/gfx/leaders/" + b + "/" + picName.lower()):
-                        print("Expected a picture for " + b + " leader " + leaderName + " named " + "/gfx/leaders/"+b+"/"+picName)
+                        print("Expected a picture for " + b + " leader " + leaderName + " named " + "/gfx/leaders/" + b + "/" + picName)
                     tagPos = get_tagPos2(b,tags)
                     content = generateLeaderContent(content, c, leaderName, picName, extraLeaders, tagPos)
                     #print("done here")
@@ -1663,7 +1904,10 @@ def main():
 
     # Create party name localiastion
     createPartNameLoc(rootDir, content)
-
+    createPartNameScriptedLoc(rootDir, content)
+    input()
+    input()
+    input()
     organizedLeaders = []
 
     extraLeaders = []
