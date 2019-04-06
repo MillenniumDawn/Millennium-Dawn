@@ -77,8 +77,8 @@ def get_tagPos2(tag,tags):
 
 #Creates the localisation for the party names
 def createPartNameLoc (rootDir, sheet):
-    content = ""
-    filepath = rootDir + "/localisation/MD_subideology_names.yml"
+    content = "\ufeff"
+    filepath = rootDir + "/localisation/MD_subideology_names_l_english.yml"
     content = "l_english:\n"
     for a, b in enumerate(sheet[0]):
         if b != "" or a != 0:
@@ -88,6 +88,7 @@ def createPartNameLoc (rootDir, sheet):
                     if c > 36:
                         break
                     d = sheet[c][a]
+                    d = unidecode.unidecode(d)
                     #print(d)
                     #input()
                     #western
@@ -188,7 +189,7 @@ def createPartNameLoc (rootDir, sheet):
 
 #Creates the localisation for the party names
 def createPartNameScriptedLoc (rootDir, sheet):
-    content = ""
+    content = "\ufeff"
     filepath = rootDir + "/common/scripted_localisation/subideology_party_scripted_localisation.txt"
     c = 4
     for c in range (0, 37):
@@ -279,63 +280,64 @@ def createPartNameScriptedLoc (rootDir, sheet):
             if c not in [0, 1, 2, 3, 9, 17, 31, 37]:
                 if b != "" or a != 0:
                     d = sheet[c][a]
+                    d = unidecode.unidecode(d)
                     if not d.isspace():
                         if c == 4 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".conservatism }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".conservatism }\n"
                         elif c == 5 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".liberalism }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".liberalism }\n"
                         elif c == 6 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".socialism }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".socialism }\n"
                         elif c == 7 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Western_Autocracy }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Western_Autocracy }\n"
 
                         #Emerging
                         elif c == 10 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Communist-State }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Communist-State }\n"
                         elif c == 11 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Conservative }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Conservative }\n"
                         elif c == 12 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Autocracy }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Autocracy }\n"
                         elif c == 13 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Vilayat_e_Faqih }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Vilayat_e_Faqih }\n"
                         elif c == 14 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Mod_Vilayat_e_Faqih }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Mod_Vilayat_e_Faqih }\n"
                         elif c == 15 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".anarchist_communism }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".anarchist_communism }\n"
 
                         #Salafist
                         elif c == 18 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Caliphate }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Caliphate }\n"
                         elif c == 19 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Kingdom }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Kingdom }\n"
 
                         #Non-Alligned
                         elif c == 22 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_conservatism }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Neutral_conservatism }\n"
                         elif c == 23 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".oligarchism }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".oligarchism }\n"
                         elif c == 24 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".neutral_Social }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".neutral_Social }\n"
                         elif c == 25 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_Libertarian }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Neutral_Libertarian }\n"
                         elif c == 26 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_Autocracy }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Neutral_Autocracy }\n"
                         elif c == 27 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_Communism }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Neutral_Communism }\n"
                         elif c == 28 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_Muslim_Brotherhood }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Neutral_Muslim_Brotherhood }\n"
                         elif c == 29 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_green }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Neutral_green }\n"
 
                         #Nationalist
                         elif c == 32 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Nat_Autocracy }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Nat_Autocracy }\n"
                         elif c == 33 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Nat_Fascism }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Nat_Fascism }\n"
                         elif c == 34 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Nat_Populism }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Nat_Populism }\n"
                         elif c == 35 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Monarchist }\n"
+                            content += "\ttext = { trigger = { TAG = " + b + " } localization_key = " + b + ".Monarchist }\n"
         if c == 4:
             content += "\ttext = { localization_key = generic.conservatism }\n"
             content += "}\n"
@@ -802,6 +804,7 @@ def generateLeaderPic(leaderName, picList):
         leaderName = leaderName.replace('\t', '')
         leaderName = leaderName.lstrip()
         leaderName = leaderName.rstrip()
+        leaderName = unidecode.unidecode(leaderName)
         picName = leaderName.replace('.', '')
         picName = picName.replace(',', '')
         picName = picName.replace('-', '_')
@@ -1032,7 +1035,7 @@ def extraLeadersToSheet(extraLeaders, sheet, sheetName, tags):
 ###Main Function used to begin writting leaders to in game text files###
 def createPartyLeaders (rootDir, sheet, filepath, extraLeaders, tags):
     extraLeaders = delExtraLeaders(sheet, extraLeaders, tags)
-    content = ""
+    content = "\ufeff"
     for a, b in enumerate(sheet[0]):
         if (b != "" or a != 0) and len(b) == 3:
             picList = []
@@ -1078,7 +1081,7 @@ def createPartyLeaders (rootDir, sheet, filepath, extraLeaders, tags):
 
 ###Main Function used to pull spreadsheet voter popularity & turn it into subideology values & write to ingame txt file
 def createSubIdeologyValues (rootDir, sheet, filepath, worksheet):
-    content = ""
+    content = "\ufeff"
     for a, b in enumerate(sheet[0]):
         if b != "" or a != 0:
             subIdeology = []
@@ -1433,7 +1436,7 @@ def createCustomElectionEffect (hasCustomElections, tag, rootDir):
     return "hello"
 
 def createPartyContent2 (organizedLeaders, tag, ideology):
-    content = ""
+    content = "\ufeff"
     leader = 1
     leaderCounter2 = 0
     for pos2, b in enumerate(organizedLeaders):
@@ -1481,7 +1484,7 @@ def createPartyLeaders2 (rootDir, organizedLeaders):
     hasCustomElections = []
 
     for tag in inGameTags:
-        content = ""
+        content = "\ufeff"
         count = 1
         writeToFile = 0
         for pos, a in enumerate(organizedLeaders):
