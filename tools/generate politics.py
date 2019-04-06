@@ -281,61 +281,61 @@ def createPartNameScriptedLoc (rootDir, sheet):
                     d = sheet[c][a]
                     if not d.isspace():
                         if c == 4 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".conservatism }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".conservatism }\n"
                         elif c == 5 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".liberalism }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".liberalism }\n"
                         elif c == 6 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".socialism }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".socialism }\n"
                         elif c == 7 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Western_Autocracy }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Western_Autocracy }\n"
 
                         #Emerging
                         elif c == 10 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Communist-State }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Communist-State }\n"
                         elif c == 11 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Conservative }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Conservative }\n"
                         elif c == 12 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Autocracy }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Autocracy }\n"
                         elif c == 13 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Vilayat_e_Faqih }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Vilayat_e_Faqih }\n"
                         elif c == 14 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Mod_Vilayat_e_Faqih }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Mod_Vilayat_e_Faqih }\n"
                         elif c == 15 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".anarchist_communism }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".anarchist_communism }\n"
 
                         #Salafist
                         elif c == 18 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Caliphate }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Caliphate }\n"
                         elif c == 19 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Kingdom }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Kingdom }\n"
 
                         #Non-Alligned
                         elif c == 22 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_conservatism }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_conservatism }\n"
                         elif c == 23 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".oligarchism }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".oligarchism }\n"
                         elif c == 24 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".neutral_Social }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".neutral_Social }\n"
                         elif c == 25 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_Libertarian }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_Libertarian }\n"
                         elif c == 26 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_Autocracy }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_Autocracy }\n"
                         elif c == 27 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_Communism }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_Communism }\n"
                         elif c == 28 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_Muslim_Brotherhood }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_Muslim_Brotherhood }\n"
                         elif c == 29 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Neutral_green }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Neutral_green }\n"
 
                         #Nationalist
                         elif c == 32 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Nat_Autocracy }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Nat_Autocracy }\n"
                         elif c == 33 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Nat_Fascism }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Nat_Fascism }\n"
                         elif c == 34 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Nat_Populism }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Nat_Populism }\n"
                         elif c == 35 and d != "":
-                            content += "\ttext = { trigger = { TAG " + b + "  } localization_key = " + b + ".Monarchist }\n"
+                            content += "\ttext = { trigger = { TAG " + b + " } localization_key = " + b + ".Monarchist }\n"
         if c == 4:
             content += "\ttext = { localization_key = generic.conservatism }\n"
             content += "}\n"
