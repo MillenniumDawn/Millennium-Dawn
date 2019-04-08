@@ -1893,7 +1893,7 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
 
 def main():
     sheet = gc.open('Politics') #Opens the politics sheet
-    worksheet = sheet.worksheet('Party Name') #sets active worksheet as party Name
+    worksheet = sheet.worksheet('Party Name 2000') #sets active worksheet as party Name
     content = worksheet.get_all_values() #downloads content of worksheet
 
     scriptDir = os.path.realpath(__file__)
@@ -1906,8 +1906,8 @@ def main():
     sheetTags = get_sheet_tags(content)
 
     # Create party name localiastion
-    createPartNameLoc(rootDir, content)
-    createPartNameScriptedLoc(rootDir, content)
+    #createPartNameLoc(rootDir, content)
+    #createPartNameScriptedLoc(rootDir, content)
     input()
     input()
     input()
