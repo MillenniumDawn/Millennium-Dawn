@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os, sys, fnmatch, re
 import time
+import codecs
 import gspread
 import unidecode
 import string
@@ -18,7 +19,7 @@ __version__ = 1.0
 def get_tags(rootDir):
     tags = []
     pos =0
-    with open(rootDir, 'r', encoding='utf-8', errors='ignore') as file:
+    with open(rootDir, 'r', encoding='utf8', errors='ignore') as file:
         content = file.readlines()
         for line in content:
             if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
@@ -77,7 +78,7 @@ def get_tagPos2(tag,tags):
 
 #Creates the localisation for the party names
 def createPartNameLoc (rootDir, sheet):
-    content = "\ufeff"
+    content = ""
     filepath = rootDir + "/localisation/MD_subideology_names_l_english.yml"
     content = "l_english:\n"
     for a, b in enumerate(sheet[0]):
@@ -184,12 +185,13 @@ def createPartNameLoc (rootDir, sheet):
                     #input()
 
     f = open(filepath, "w")
-    with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
+    with open(filepath, 'w', encoding='utf8', errors='ignore') as file:
         file.write(content)
+        file.close()
 
 #Creates the localisation for the party names
 def createPartNameScriptedLoc (rootDir, sheet):
-    content = "\ufeff"
+    content = ""
     filepath = rootDir + "/common/scripted_localisation/subideology_party_scripted_localisation.txt"
     c = 4
     for c in range (0, 37):
@@ -426,8 +428,10 @@ def createPartNameScriptedLoc (rootDir, sheet):
                     #input()
 
     f = open(filepath, "w")
-    with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
+    with open(filepath, 'w', encoding='utf8', errors='ignore') as file:
+        
         file.write(content)
+        file.close()
 
 #Called by createPartyLeaders and Returns the country_leader = {... content
 def generateLeaderContent(content, rowInSheet, leaderName, picName, extraLeaders, tagPos):
@@ -544,11 +548,11 @@ def generateLeaderContent(content, rowInSheet, leaderName, picName, extraLeaders
             content += "\tpicture = \"" + picName + "\"\n"
             content += "\tideology = Mod_Vilayat_e_Faqih\n"
             content += "\ttraits = {\n"
-            content += "\t\temerging_Vilayat_e_Faqih_ref\n"
+            content += "\t\temerging_Vilayat_e_Faqih\n"
             content += "\t}\n"
             content += "}\n"
         ideology = "Mod_Vilayat_e_Faqih"
-        subIdeology = "emerging_Vilayat_e_Faqih_ref"
+        subIdeology = "emerging_Vilayat_e_Faqih"
 
     elif rowInSheet == 12:
         if leaderName != "":
@@ -1035,7 +1039,7 @@ def extraLeadersToSheet(extraLeaders, sheet, sheetName, tags):
 ###Main Function used to begin writting leaders to in game text files###
 def createPartyLeaders (rootDir, sheet, filepath, extraLeaders, tags):
     extraLeaders = delExtraLeaders(sheet, extraLeaders, tags)
-    content = "\ufeff"
+    content = ""
     for a, b in enumerate(sheet[0]):
         if (b != "" or a != 0) and len(b) == 3:
             picList = []
@@ -1074,14 +1078,16 @@ def createPartyLeaders (rootDir, sheet, filepath, extraLeaders, tags):
 
 
     f = open(filepath, "w")
-    with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
+    with open(filepath, 'w', encoding='utf8', errors='ignore') as file:
+        
         file.write(content)
+        file.close()
 
     return extraLeaders
 
 ###Main Function used to pull spreadsheet voter popularity & turn it into subideology values & write to ingame txt file
 def createSubIdeologyValues (rootDir, sheet, filepath, worksheet):
-    content = "\ufeff"
+    content = ""
     for a, b in enumerate(sheet[0]):
         if b != "" or a != 0:
             subIdeology = []
@@ -1220,12 +1226,14 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet):
 
                     #input()
     f = open(filepath, "w")
-    with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
+    with open(filepath, 'w', encoding='utf8', errors='ignore') as file:
+        
         file.write(content)
+        file.close()
 
 #Pulls extra 2000 leaders from in game history/country files, formats them & creates new list
 def getExtraLeaders2000(rootDir, tags, tagPos, tag):
-    with open(rootDir, 'r', encoding='utf-8', errors='ignore') as file:
+    with open(rootDir, 'r', encoding='utf8', errors='ignore') as file:
         content = file.readlines()
         foundLeader = 0
         openBrace = 0
@@ -1318,7 +1326,7 @@ def getExtraLeaders2000(rootDir, tags, tagPos, tag):
 
 #Pulls extra 2017 leaders from in game history/country files, formats them & creates new list
 def getExtraLeaders2017(rootDir, tags, tagPos, tag):
-    with open(rootDir, 'r', encoding='utf-8', errors='ignore') as file:
+    with open(rootDir, 'r', encoding='utf8', errors='ignore') as file:
         content = file.readlines()
         foundLeader = 0
         openBrace = 0
@@ -1429,14 +1437,15 @@ def createCustomElectionEffect (hasCustomElections, tag, rootDir):
 
     filepath = rootDir + "/common/scripted_effects/generated/election_effects.txt"
     f = open(filepath, "w")
-    with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
+    with open(filepath, 'w', encoding='utf8', errors='ignore') as file:
+        
         file.write(content)
         file.close()
 
     return "hello"
 
 def createPartyContent2 (organizedLeaders, tag, ideology):
-    content = "\ufeff"
+    content = ""
     leader = 1
     leaderCounter2 = 0
     for pos2, b in enumerate(organizedLeaders):
@@ -1484,7 +1493,7 @@ def createPartyLeaders2 (rootDir, organizedLeaders):
     hasCustomElections = []
 
     for tag in inGameTags:
-        content = "\ufeff"
+        content = ""
         count = 1
         writeToFile = 0
         for pos, a in enumerate(organizedLeaders):
@@ -1516,14 +1525,15 @@ def createPartyLeaders2 (rootDir, organizedLeaders):
         if writeToFile == 1:
             filepath = rootDir + "/common/scripted_effects/generated/" + tag[0][0][0] + "_political_leaders.txt"
             f = open(filepath, "w")
-            with open(filepath, 'w', encoding='utf-8', errors='ignore') as file:
+            with open(filepath, 'w', encoding='utf8', errors='ignore') as file:
+                
                 file.write(content)
                 file.close()
     createCustomElectionEffect(hasCustomElections, tag[0][0][0], rootDir)
 
 
     print("WOOT")
-    input()
+    #input()
     return "hello"
 
 #Returns the ideology and trait dependent on the row in the spreadsheet, similar to what is used in generateLeaderContent
@@ -1565,7 +1575,7 @@ def getIdeology(c):
 
     elif c == 11:
         ideology = "Mod_Vilayat_e_Faqih"
-        traits = "emerging_Vilayat_e_Faqih_ref"
+        traits = "emerging_Vilayat_e_Faqih"
 
     elif c == 12:
         ideology = "anarchist_communism"
@@ -1665,7 +1675,7 @@ def makeIdeology(ideology):
         traits = "emerging_Vilayat_e_Faqih"
 
     elif ideology.lower() == "Mod_Vilayat_e_Faqih".lower():
-        traits = "emerging_Vilayat_e_Faqih_ref"
+        traits = "emerging_Vilayat_e_Faqih"
 
     elif ideology.lower() == "anarchist_communism".lower():
         traits = "emerging_anarchist_communism"
@@ -1908,9 +1918,9 @@ def main():
     # Create party name localiastion
     #createPartNameLoc(rootDir, content)
     #createPartNameScriptedLoc(rootDir, content)
-    input()
-    input()
-    input()
+    #input()
+    #input()
+    #input()
     organizedLeaders = []
 
     extraLeaders = []
@@ -1935,14 +1945,14 @@ def main():
 
     createPartyLeaders2(rootDir, organizedLeaders)
     print("fini")
-    input()
+    #input()
     extraLeaders = createPartyLeaders(rootDir, content, (rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),
                        extraLeaders, tags)
 
     print("done")
-    input()
-    input()
-    input()
+    #input()
+    #input()
+    #input()
 
     sheetName = "2000 Extra Leaders"
     extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
