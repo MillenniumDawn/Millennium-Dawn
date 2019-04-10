@@ -10,11 +10,11 @@ focus_tree = {
 		}
 	}
 	
-	continuous_focus_position = { x = 250 y = 2000 }
+	continuous_focus_position = { x = 1000 y = 1500 }
 #Lula main political tree
 	focus = {
 		id = BRA_lula
-		icon = Workers_Party
+		icon = workers_party
 		
 		x = 2
 		y = 0
@@ -37,7 +37,8 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			country_event = brazil.5
+			country_event = brazil.4
+			unlock_decision_category_tooltip = BRA_workers_party_alignment_decision_category
 		}
 		
 		ai_will_do = {
@@ -70,6 +71,7 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = { 
 			add_ideas = BRA_idea_nossa_economia
+			remove_ideas = BRA_idea_crippled_currency
 		}
 		
 		ai_will_do = {
@@ -101,7 +103,28 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			add_ideas = BRA_idea_political_buildup
+			if = {
+				limit = { has_idea = bureau_05 }
+				swap_ideas = { remove_idea = bureau_05 add_idea = bureau_04 }
+			}
+			if = {
+				limit = { has_idea = bureau_04 }
+				swap_ideas = { remove_idea = bureau_04 add_idea = bureau_03 }
+			}
+			if = {
+				limit = { has_idea = bureau_03 }
+				swap_ideas = { remove_idea = bureau_03 add_idea = bureau_02 }
+			}
+			if = {
+				limit = { has_idea = bureau_02 }
+				swap_ideas = { remove_idea = bureau_02 add_idea = bureau_01 }
+			}
+			if = {
+				limit = { has_idea = bureau_01 }
+				add_political_power = 150	#if country has desired level it earns political power instead.
+			}
+			add_to_variable = { BRA_brazilian_party_alignment = 10.0 }
+			custom_effect_tooltip = "Raises Party Alignment by 10"
 		}
 		
 		ai_will_do = {
@@ -168,6 +191,10 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			remove_ideas = BRA_idea_imf_debts
+			subtract_from_variable = { debt = 100 }
+			custom_effect_tooltip = "Debt falls by 100"
+			add_to_variable = { BRA_brazilian_party_alignment = 5.0 }
+			custom_effect_tooltip = "Raises Party Alignment by 5"
 		}
 		
 		ai_will_do = {
@@ -200,7 +227,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			country_event = brazil.5
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -215,7 +244,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = BRA_lula
 		
-		cost = 1
+		cost = 5
 		
 		prerequisite = { 
 			focus = BRA_brazilian_exports 
@@ -232,7 +261,21 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 2
+					instant_build = yes
+				}
+			}
+			if = {
+				limit = { has_idea = industrial_conglomerates }
+				visually_display_opinion_rise_industrial_conglomerates = yes
+				set_country_flag = current_industrial_conglomerates
+				increase_internal_faction_opinion = yes
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -247,7 +290,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = BRA_lula
 		
-		cost = 1
+		cost = 5
 		
 		prerequisite = { 
 			focus = BRA_the_internal 
@@ -264,7 +307,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_stability = .05
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -279,7 +324,7 @@ focus_tree = {
 		y = 3
 		relative_position_id = BRA_lula
 		
-		cost = 1
+		cost = 5
 		
 		prerequisite = { 
 			focus = BRA_discuss_the_party 
@@ -296,7 +341,10 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_stability = .05
+			add_political_power = 100
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -311,7 +359,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = BRA_lula
 		
-		cost = 1
+		cost = 5
 		
 		prerequisite = { 
 			focus = BRA_finalize_the_agenda 
@@ -331,11 +379,7 @@ focus_tree = {
 		historical_ai = { }
 		select_effect = { }
 		bypass = { 
-			OR = {
-				has_idea = modest_corruption
-				has_idea = slight_corruption
-				has_idea = negligible_corruption
-			}
+			has_idea = negligible_corruption 
 		}
 		cancel = { }
 		
@@ -344,7 +388,42 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			if = {
+				limit = { has_idea = paralyzing_corruption }
+				swap_ideas = { remove_idea = paralyzing_corruption add_idea = crippling_corruption }
+			}
+			if = {
+				limit = { has_idea = crippling_corruption }
+				swap_ideas = { remove_idea = crippling_corruption add_idea = rampant_corruption }
+			}
+			if = {
+				limit = { has_idea = rampant_corruption }
+				swap_ideas = { remove_idea = rampant_corruption add_idea = unrestrained_corruption }
+			}
+			if = {
+				limit = { has_idea = unrestrained_corruption }
+				swap_ideas = { remove_idea = unrestrained_corruption add_idea = systematic_corruption }
+			}
+			if = {
+				limit = { has_idea = systematic_corruption }
+				swap_ideas = { remove_idea = systematic_corruption add_idea = widespread_corruption }
+			}
+			if = {
+				limit = { has_idea = widespread_corruption }
+				swap_ideas = { remove_idea = widespread_corruption add_idea = medium_corruption }
+			}
+			if = {
+				limit = { has_idea = medium_corruption }
+				swap_ideas = { remove_idea = medium_corruption add_idea = modest_corruption }
+			}
+			if = {
+				limit = { has_idea = modest_corruption }
+				add_political_power = 150 #if desired corruption level is reached before PP is rewarded instead
+			}
+			add_to_variable = { BRA_brazilian_party_alignment = 5.0 }
+			custom_effect_tooltip = "Raises Party Alignment by 5"
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -359,7 +438,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = BRA_lula
 		
-		cost = 1
+		cost = 5
 		
 		prerequisite = { 
 			focus = BRA_nosso_povo
@@ -376,7 +455,30 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			if = {
+				limit = { has_idea = edu_01 }
+				swap_ideas = { remove_idea = edu_01 add_idea = edu_02 }
+			}
+			if = {
+				limit = { has_idea = edu_02 }
+				swap_ideas = { remove_idea = edu_02 add_idea = edu_03 }
+			}
+			if = {
+				limit = { has_idea = edu_03 }
+				swap_ideas = { remove_idea = edu_03 add_idea = edu_04 }
+			}
+			if = {
+				limit = { has_idea = edu_04 }
+				swap_ideas = { remove_idea = edu_04 add_idea = edu_05 }
+			}
+			if = {
+				limit = { has_idea = edu_05 }
+				add_political_power = 100 #will raise no matter what until highest education law is reached
+			}
+			add_to_variable = { BRA_brazilian_party_alignment = 5.0 }
+			custom_effect_tooltip = "Raises Party Alignment by 5"
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -391,7 +493,7 @@ focus_tree = {
 		y = 3
 		relative_position_id = BRA_lula
 		
-		cost = 1
+		cost = 5
 		
 		prerequisite = { 
 			focus = BRA_bolsa_familia			
@@ -408,7 +510,26 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			if = {
+				limit = { has_idea = health_01 }
+				swap_ideas = { remove_idea = health_01 add_idea = health_02 }
+			}
+			if = {
+				limit = { has_idea = health_02 }
+				swap_ideas = { remove_idea = health_02 add_idea = health_03 }
+			}
+			if = {
+				limit = { has_idea = health_03 }
+				swap_ideas = { remove_idea = health_03 add_idea = health_04 }
+			}
+			if = {
+				limit = { has_idea = health_03 }
+				add_political_power = 75 #healthcare is invested in up to an extent
+			}
+			subtract_from_variable = { BRA_brazilian_party_alignment = 5.0 }
+			custom_effect_tooltip = "Lowers Party Alignment by 5"
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -423,7 +544,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = BRA_lula
 		
-		cost = 1
+		cost = 5
 		
 		prerequisite = { 
 			focus = BRA_socialism_in_concept 
@@ -440,7 +561,32 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			if = {
+				limit = { has_idea = social_01 }
+				swap_ideas = { remove_idea = social_01 add_idea = social_02 }
+			}
+			if = {
+				limit = { has_idea = social_02 }
+				swap_ideas = { remove_idea = social_02 add_idea = social_03 }
+			}
+			if = {
+				limit = { has_idea = social_03 }
+				swap_ideas = { remove_idea = social_03 add_idea = social_04 }
+			}
+			if = {
+				limit = { has_idea = social_04 }
+				swap_ideas = { remove_idea = social_04 add_idea = social_05 }
+			}
+			if = {
+				limit = { has_idea = social_05 }
+				swap_ideas = { remove_idea = social_05 add_idea = social_06 }
+			}
+			if = {
+				limit = { has_idea = social_06 }
+				add_political_power = 100 #If Welfare State is acheived political power is awarded
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -449,7 +595,7 @@ focus_tree = {
 	
 	focus = {
 		id = BRA_new_wave_ideas
-		icon = unknown
+		icon = tripartite_pact
 
 		x = 2
 		y = 5
@@ -478,7 +624,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_new_wave_ideas
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -487,7 +635,7 @@ focus_tree = {
 	
 	focus = {
 		id = BRA_war_on_the_cartels
-		icon = Ample_Cocaine
+		icon = ample_cocaine
 
 		x = 0
 		y = 5
@@ -520,7 +668,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			unlock_decision_category_tooltip = BRA_war_on_the_cartels_decision_category
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -556,7 +706,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = { 
-			add_political_power = 
+			add_political_power = 100
 		}
 		
 		ai_will_do = {
@@ -564,294 +714,23 @@ focus_tree = {
 		}
 	}
 	
-#Diplomaitc Alliance
 	focus = {
-		id = BRA_our_place
-		icon = tripartite_pact
-
-		x = 15
-		y = 10
-		
-		cost = 10
-		
-		prerequisite = { }
-		mutually_exclusive = { }
-		available = {
-			has_completed_focus = BRA_global_diplomacy
-		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { 
-			has_completed_focus = BRA_global_diplomacy
-		}
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_among_many
-		icon = united_nations
-
-		x = 0
-		y = 1
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_our_place
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_nato
+		id = BRA_align_to_nato
 		icon = nato
 
-		x = -2
-		y = 2
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_among_many
-		}
-		mutually_exclusive = {
-			focus = BRA_rio_pact
-		}
-		mutually_exclusive = {
-			focus = BRA_brics
-		}
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_rio_pact
-		icon = unknown
-
-		x = 0
-		y = 2
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_among_many
-		}
-		mutually_exclusive = {
-			focus = BRA_nato
-		}
-		mutually_exclusive = {
-			focus = BRA_brics
-		}
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_brics
-		icon = unknown
-
-		x = 2
-		y = 2
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_among_many
-		}
-		mutually_exclusive = {
-			focus = BRA_rio_pact
-		}
-		mutually_exclusive = {
-			focus = BRA_nato
-		}
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_western_visits
-		icon = align_to_nato
-
-		x = -2
-		y = 3
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_nato
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_western_treaties
-		icon = treaty3
-
-		x = -2
-		y = 4
-		relative_position_id = BRA_our_place
-		
-		cost = 2
-		
-		prerequisite = {
-			focus = BRA_western_visits
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_sever_ties_with_the_east
-		icon = renounce_treaty
-
-		x = -2
-		y = 5
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_western_treaties
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_join_nato
-		icon = nato3
-
-		x = -2
+		x = 1.5
 		y = 6
-		relative_position_id = BRA_our_place
+		relative_position_id = BRA_lula
 		
 		cost = 10
 		
 		prerequisite = {
-			focus = BRA_sever_ties_with_the_east
+			focus = BRA_global_diplomacy
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = {
+
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -862,7 +741,34 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_opinion_modifier = { target = USA modifier = supports_nato }
+			USA = {
+				add_opinion_modifier = { target = ROOT modifier = supports_nato }
+				add_political_power = 25
+			}
+			add_opinion_modifier = { target = FRA modifier = supports_nato }
+			FRA = {
+				add_opinion_modifier = { target = ROOT modifier = supports_nato }
+				add_political_power = 25
+			}
+			add_opinion_modifier = { target = GER modifier = supports_nato }
+			GER = {
+				add_opinion_modifier = { target = ROOT modifier = supports_nato }
+				add_political_power = 25
+			}
+			add_opinion_modifier = { target = ENG modifier = supports_nato }
+			ENG = {
+				add_opinion_modifier = { target = ROOT modifier = supports_nato }
+				add_political_power = 25
+			}
+			add_opinion_modifier = { target = CAN modifier = supports_nato }
+			CAN = {
+				add_opinion_modifier = { target = ROOT modifier = supports_nato }
+				add_political_power = 25
+			}
+			add_political_power = 50
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -870,116 +776,22 @@ focus_tree = {
 	}
 	
 	focus = {
-		id = BRA_our_hemisphere
-		icon = entente
+		id = BRA_non_aligned
+		icon = christ_the_redeemer
 
-		x = 0
-		y = 3
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_rio_pact
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_approach_our_neighbors
-		icon = diplomatic_treaty
-
-		x = 0
-		y = 4
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_our_hemisphere
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_argentina_or_bust
-		icon = flag_argentina
-
-		x = 0
-		y = 5
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_approach_our_neighbors
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_formalize_the_alliance
-		icon = alliance
-
-		x = 0
+		x = 3.5
 		y = 6
-		relative_position_id = BRA_our_place
+		relative_position_id = BRA_lula
 		
 		cost = 10
 		
 		prerequisite = {
-			focus = BRA_argentina_or_bust
+			focus = BRA_global_diplomacy
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+		
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -990,7 +802,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_political_power = 100
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -998,113 +812,17 @@ focus_tree = {
 	}
 	
 	focus = {
-		id = BRA_eastern_visits
-		icon = align_to_russia
+		id = BRA_eastern_alignment
+		icon = GFX_brics
 
-		x = 2
-		y = 3
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_brics
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_approach_the_east
-		icon = align_to_russia2
-
-		x = 2
-		y = 4
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_eastern_visits
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_denouce_the_west
-		icon = gunpoint_diplomacy
-
-		x = 2
-		y = 5
-		relative_position_id = BRA_our_place
-		
-		cost = 10
-		
-		prerequisite = {
-			focus = BRA_approach_the_east
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_lay_the_brics
-		icon = alliance_purple
-
-		x = 2
+		x = 5.5
 		y = 6
-		relative_position_id = BRA_our_place
+		relative_position_id = BRA_lula
 		
 		cost = 10
 		
 		prerequisite = {
-			focus = BRA_denouce_the_west
+			focus = BRA_global_diplomacy
 		}
 		mutually_exclusive = { }
 		available = { }
@@ -1118,12 +836,35 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_opinion_modifier = { target = SOV modifier = supports_the_east }
+			SOV = {
+				add_opinion_modifier = { target = ROOT modifier = supports_the_east }
+				add_political_power = 25
+			}
+			add_opinion_modifier = { target = RAJ modifier = supports_the_east }
+			RAJ = {
+				add_opinion_modifier = { target = ROOT modifier = supports_the_east }
+				add_political_power = 25
+			}
+			add_opinion_modifier = { target = CHI modifier = supports_the_east }
+			CHI = {
+				add_opinion_modifier = { target = ROOT modifier = supports_the_east }
+				add_political_power = 25
+			}
+			add_opinion_modifier = { target = SAF modifier = supports_the_east }
+			SAF = {
+				add_opinion_modifier = { target = ROOT modifier = supports_the_east }
+				add_political_power = 25
+			}
+			add_political_power = 50
+		}
 		
 		ai_will_do = {
 			base = 10
 		}
 	}
+	
 #industrial
 
 	focus = {
@@ -1170,7 +911,9 @@ focus_tree = {
 		
 		prerequisite = { focus = BRA_growth_through_freedom }
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			has_full_control_of_state = 889
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -1247,7 +990,9 @@ focus_tree = {
 		
 		prerequisite = { focus = BRA_growth_through_freedom }
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			has_full_control_of_state = 888
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -1286,7 +1031,9 @@ focus_tree = {
 		
 		prerequisite = { focus = BRA_develop_recife }
 		mutually_exclusive = { }
-		available = { }
+		available = {
+			has_full_control_of_state = 890
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -1325,7 +1072,9 @@ focus_tree = {
 		
 		prerequisite = { focus = BRA_develop_recife }
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			has_full_control_of_state = 883
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -1400,7 +1149,9 @@ focus_tree = {
 		
 		prerequisite = { focus = BRA_build_fortaleza }
 		mutually_exclusive = { }
-		available = { }
+		available = {
+			has_full_control_of_state = 892
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -1452,10 +1203,24 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			if = {
+				limit = { has_idea = farmers }
+				visually_display_opinion_rise_farmers = yes
+				set_country_flag = current_farmers
+				increase_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = labour_unions }
+				visually_display_opinion_fall_labour_unions = yes
+				set_country_flag = current_labour_unions
+				decrease_internal_faction_opinion = yes
+			}
+		}
 		
 		ai_will_do = {
-			base = 10
+			base = 5
+			
 		}
 	}
 	
@@ -1483,7 +1248,20 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			if = {
+				limit = { has_idea = labour_unions }
+				visually_display_opinion_rise_labour_unions = yes
+				set_country_flag = current_labour_unions
+				increase_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = farmers }
+				visually_display_opinion_fall_farmers = yes
+				set_country_flag = current_farmers
+				decrease_internal_faction_opinion = yes
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1498,7 +1276,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = BRA_nossa_economia
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_support_the_unions }
 		mutually_exclusive = { }
@@ -1513,7 +1291,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_pro_unions
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1527,7 +1307,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = BRA_nossa_economia
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_help_the_farmers }
 		mutually_exclusive = { }
@@ -1542,7 +1322,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_pro_farmers
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1557,7 +1339,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = BRA_nossa_economia
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_northeastern_stimulus }
 		prerequisite = { focus = BRA_rio_employment_projects }
@@ -1573,7 +1355,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_mercosur_member_state
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1588,7 +1372,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = BRA_nossa_economia
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_neighborly_development }
 		mutually_exclusive = { }
@@ -1603,7 +1387,26 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			if = {
+				limit = {
+					country_exists = PAR
+					NOT = { has_war_with = PAR }
+				}
+				PAR = {
+					country_event = brazil.16
+				}	
+			}
+			if = {
+				limit = {
+					country_exists = URG
+					NOT = { has_war_with = URG }
+				}
+				URG = {
+					country_event = brazil.16
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1618,7 +1421,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = BRA_nossa_economia
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_neighborly_development }
 		mutually_exclusive = { }
@@ -1633,7 +1436,17 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			if = {
+				limit = {
+					country_exists = ARG
+					NOT = { has_war_with = ARG }
+				}
+				ARG = {
+					country_event = brazil.16
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1648,7 +1461,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = BRA_nossa_economia
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_neighborly_development }
 		mutually_exclusive = { }
@@ -1663,7 +1476,17 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			if = {
+				limit = {
+					country_exists = BOL
+					NOT = { has_war_with = BOL }
+				}
+				BOL = {
+					country_event = brazil.16
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1672,13 +1495,13 @@ focus_tree = {
 	
 	focus = {
 		id = BRA_western_coastal_countries
-		icon = unknown
+		icon = treaty2
 
 		x = -10
 		y = 7
 		relative_position_id = BRA_nossa_economia
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_bolivia }
 		prerequisite = { focus = BRA_argentina }
@@ -1694,7 +1517,35 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			if = {
+				limit = {
+					country_exists = CHL
+					NOT = { has_war_with = CHL }
+				}
+				CHL = {
+					country_event = brazil.16
+				}
+			}
+			if = {
+				limit = {
+					country_exists = PRU
+					NOT = { has_war_with = PRU }
+				}
+				PRU = {
+					country_event = brazil.16
+				}
+			}
+			if = {
+				limit = {
+					country_exists = ECU
+					NOT = { has_war_with = ECU }
+				}
+				ECU = {
+					country_event = brazil.16
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1703,13 +1554,13 @@ focus_tree = {
 	
 	focus = {
 		id = BRA_northerners
-		icon = unknown
+		icon = treaty
 
 		x = -8
 		y = 7
 		relative_position_id = BRA_nossa_economia
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_the_guays }
 		prerequisite = { focus = BRA_argentina }
@@ -1725,7 +1576,44 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			if = {
+				limit = {
+					country_exists = COL
+					NOT = { has_war_with = COL }
+				}
+				COL = {
+					country_event = brazil.16
+				}
+			}
+			if = {
+				limit = {
+					country_exists = VEN
+					NOT = { has_war_with = VEN }
+				}
+				VEN = {
+					country_event = brazil.16
+				}
+			}
+			if = {
+				limit = {
+					country_exists = GUY
+					NOT = { has_war_with = GUY }
+				}
+				GUY = {
+					country_event = brazil.16
+				}
+			}
+			if = {
+				limit = {
+					country_exists = SUR
+					NOT = { has_war_with = SUR }
+				}
+				SUR = {
+					country_event = brazil.16
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1739,10 +1627,10 @@ focus_tree = {
 		icon = improve_relations_cyan
 
 		x = 2
-		y = 6
+		y = 7
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_new_wave_ideas }
 		mutually_exclusive = { }
@@ -1757,7 +1645,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_political_power = 100
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1769,14 +1659,19 @@ focus_tree = {
 		icon = align_to_brazil
 
 		x = 0
-		y = 7
+		y = 8
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_the_way_we_judge }
 		mutually_exclusive = { focus = BRA_the_country_of_brotherly_love }
-		available = { }
+		available = {
+			NOT = {
+				has_idea = BRA_idea_party_of_progress
+				has_idea = BRA_idea_modern_reformist
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -1787,7 +1682,24 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			if = {
+				limit = { has_idea = intervention_local_security  }
+				swap_ideas = { remove_idea = intervention_local_security  add_idea = intervention_isolation  }
+			}
+			if = {
+				limit = { has_idea = intervention_limited_interventionism   }
+				swap_ideas = { remove_idea = intervention_local_security  add_idea = intervention_isolation  }
+			}
+			if = {
+				limit = { has_idea = intervention_limited_interventionism   }
+				swap_ideas = { remove_idea = intervention_limited_interventionism   add_idea = intervention_isolation  }
+			}
+			if = {
+				limit = { has_idea = intervention_isolation  }
+				add_political_power = 100 #If player already has desired law
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1799,14 +1711,19 @@ focus_tree = {
 		icon = race_relations2
 
 		x = 4
-		y = 7
+		y = 8
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_the_way_we_judge }
 		mutually_exclusive = { focus = BRA_isolationism }
-		available = { }
+		available = { 
+			NOT = {
+				has_idea = BRA_idea_neo_comunista
+				has_idea = BRA_idea_radical_leftist
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -1817,10 +1734,16 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_diplomatic_powerhouse
+		}
 		
 		ai_will_do = {
 			base = 10
+			modifier = {
+				add = 5
+				is_historical_focus_on = Yes
+			}
 		}
 	}
 	
@@ -1829,7 +1752,7 @@ focus_tree = {
 		icon = colonial_crackdown
 
 		x = -1
-		y = 8
+		y = 9
 		relative_position_id = BRA_lula
 		
 		cost = 2
@@ -1847,7 +1770,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_ideas = BRA_idea_restricted_travelers
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1858,41 +1783,11 @@ focus_tree = {
 		id = BRA_shut_down_the_borders
 		icon = aggressive_diplomacy
 
-		x = 1
-		y = 8
-		relative_position_id = BRA_lula
-		
-		cost = 2
-		
-		prerequisite = { focus = BRA_isolationism }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-		
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-		
-		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
-		}
-	}
-	
-	focus = {
-		id = BRA_brazil_first
-		icon = political_pressure
-
 		x = -1
-		y = 9
+		y = 10
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_restrict_travelers }
 		mutually_exclusive = { }
@@ -1907,7 +1802,12 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			swap_ideas = {
+				remove_idea = BRA_idea_restricted_travelers
+				add_idea = BRA_idea_extensive_border_control
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1915,16 +1815,16 @@ focus_tree = {
 	}
 	
 	focus = {
-		id = BRA_elimnate_the_visa_program
-		icon = dangerous_deal2
+		id = BRA_brazil_first
+		icon = political_pressure
 
 		x = 1
 		y = 9
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
-		prerequisite = { focus = BRA_shut_down_the_borders }
+		prerequisite = { focus = BRA_isolationism }
 		mutually_exclusive = { }
 		available = { }
 		historical_ai = { }
@@ -1937,7 +1837,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_political_power = 100
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1945,16 +1847,15 @@ focus_tree = {
 	}
 	
 	focus = {
-		id = BRA_brazil_above_all
-		icon = anti_democracy3
+		id = BRA_gunboat_diplomacy
+		icon = dangerous_deal2
 
-		x = 0
+		x = 1
 		y = 10
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
-		prerequisite = { focus = BRA_elimnate_the_visa_program }
 		prerequisite = { focus = BRA_brazil_first }
 		mutually_exclusive = { }
 		available = { }
@@ -1968,7 +1869,47 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			893 = { add_claim_by = BRA }
+			894 = { add_claim_by = BRA }
+			895 = { add_claim_by = BRA }
+			896 = { add_claim_by = BRA }
+		}
+		
+		ai_will_do = {
+			base = 10
+		}
+	}
+	
+	focus = {
+		id = BRA_brazil_above_all
+		icon = anti_democracy3
+
+		x = 0
+		y = 11
+		relative_position_id = BRA_lula
+		
+		cost = 10
+		
+		prerequisite = { focus = BRA_brazil_first }
+		mutually_exclusive = { }
+		available = { }
+		historical_ai = { }
+		select_effect = { }
+		bypass = { }
+		cancel = { }
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		complete_tooltip = { }
+		completion_reward = { 
+			add_popularity = {
+				ideology = communism
+				popularity = 0.05
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -1980,10 +1921,10 @@ focus_tree = {
 		icon = democracy
 
 		x = 3
-		y = 8
+		y = 9
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_the_country_of_brotherly_love }
 		mutually_exclusive = { }
@@ -1998,7 +1939,12 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = BRA_idea_diplomatic_powerhouse
+				add_idea = BRA_idea_the_international_mediator
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2010,10 +1956,10 @@ focus_tree = {
 		icon = treaty2
 
 		x = 5
-		y = 8
+		y = 9
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_the_country_of_brotherly_love }
 		mutually_exclusive = { }
@@ -2028,7 +1974,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			#Tax Cut/Encouraged Foreign Investment
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2040,10 +1988,10 @@ focus_tree = {
 		icon = intelligence_exchange
 
 		x = 3
-		y = 9
+		y = 10
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_the_international_mediator }
 		mutually_exclusive = { }
@@ -2058,7 +2006,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_stability = 0.10
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2070,14 +2020,16 @@ focus_tree = {
 		icon = military_mission
 
 		x = 5
-		y = 9
+		y = 10
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_strength_in_cooperation }
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -2088,7 +2040,55 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			if = {
+				limit = {
+					country_exists = GUY
+					NOT = { has_war_with = BRA }
+				}
+				GUY = {
+					877 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+					add_opinion_modifier = { target = BRA modifier = brazilian_investments }
+					add_to_variable = { influencer1_amount = 5 }
+				}
+			}
+			
+			if = {
+				limit = {
+					country_exists = SUR
+					NOT = { has_war_with = BRA }
+				}
+				SUR = {
+					878 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+					add_opinion_modifier = { target = BRA modifier = brazilian_investments }
+					add_to_variable = { influencer1_amount = 5 }
+				}
+			}
+			
+			if = {
+				limit = {
+					country_exists = PAR
+					NOT = { has_war_with = BRA }
+				}
+				PAR = {
+					895 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+					add_opinion_modifier = { target = BRA modifier = brazilian_investments }
+					add_to_variable = { influencer1_amount = 5 }
+				}
+			}
+			
+			if = {
+				limit = {
+					country_exists = URG
+					NOT = { has_war_with = BRA }
+				}
+				URG = {
+					894 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+					add_opinion_modifier = { target = BRA modifier = brazilian_investments }
+					add_to_variable = { influencer1_amount = 5 }
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2100,10 +2100,10 @@ focus_tree = {
 		icon = diplomacy
 
 		x = 4
-		y = 10
+		y = 11
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_visit_every_country }
 		prerequisite = { focus = BRA_support_the_little_guys }
@@ -2119,7 +2119,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_a_global_power
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2134,7 +2136,7 @@ focus_tree = {
 		x = 10
 		y = 0
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { } 
 		mutually_exclusive = { }
@@ -2150,6 +2152,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			army_experience = 10
 		}
 		
 		ai_will_do = {
@@ -2164,7 +2167,7 @@ focus_tree = {
 		x = 20
 		y = 0
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { } 
 		mutually_exclusive = { }
@@ -2179,7 +2182,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			navy_experience = 10
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2194,7 +2199,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = BRA_nosso_exercito
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_nosso_exercito } 
 		mutually_exclusive = { }
@@ -2209,7 +2214,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_imbel
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2224,7 +2231,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = BRA_nosso_exercito
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_imbel } 
 		mutually_exclusive = { }
@@ -2239,7 +2246,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_modern_artillery
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2254,7 +2263,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = BRA_nosso_exercito
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_modern_artillery } 
 		mutually_exclusive = { focus = BRA_reform_the_navy }
@@ -2269,7 +2278,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_ideas = BRA_idea_strength_on_land
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2284,7 +2295,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = BRA_nosso_exercito
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_nosso_exercito } 
 		mutually_exclusive = { }
@@ -2299,7 +2310,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_homemade_rifles
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2307,14 +2320,14 @@ focus_tree = {
 	}
 	
 	focus = {
-		id = BRA_eastern_military_factories
+		id = BRA_western_military_factories
 		icon = industry_military
 
 		x = 0
 		y = 1
 		relative_position_id = BRA_homemade_rifles
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_homemade_rifles } 
 		mutually_exclusive = { }
@@ -2329,7 +2342,16 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			886 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = arms_factory
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2344,9 +2366,9 @@ focus_tree = {
 		y = 2
 		relative_position_id = BRA_homemade_rifles
 		
-		cost = 2
+		cost = 10
 		
-		prerequisite = { focus = BRA_eastern_military_factories } 
+		prerequisite = { focus = BRA_western_military_factories } 
 		mutually_exclusive = { }
 		available = { }
 		historical_ai = { }
@@ -2359,7 +2381,24 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			889 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+			888 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = arms_factory
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2374,7 +2413,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = BRA_marinha_do_brasil
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_marinha_do_brasil } 
 		mutually_exclusive = { }
@@ -2389,7 +2428,16 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			889 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2397,14 +2445,14 @@ focus_tree = {
 	}
 	
 	focus = {
-		id = BRA_sao_paulo_naval_bases
+		id = BRA_sao_paulo_naval_industries
 		icon = naval_dockyard
 
 		x = 0
 		y = 1
 		relative_position_id = BRA_national_drydocks
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_national_drydocks } 
 		mutually_exclusive = { }
@@ -2419,7 +2467,16 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			882 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2434,9 +2491,9 @@ focus_tree = {
 		y = 2
 		relative_position_id = BRA_national_drydocks
 		
-		cost = 2
+		cost = 10
 		
-		prerequisite = { focus = BRA_sao_paulo_naval_bases } 
+		prerequisite = { focus = BRA_sao_paulo_naval_industries } 
 		mutually_exclusive = { }
 		available = { }
 		historical_ai = { }
@@ -2449,7 +2506,17 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			883 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = dockyard
+					level = 2
+					instant_build = yes
+				}
+			}
+
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2458,13 +2525,13 @@ focus_tree = {
 	
 	focus = {
 		id = BRA_behind_the_times
-		icon = amphibious_assaults
+		icon = amphibious_assault
 
 		x = 0
 		y = 1
 		relative_position_id = BRA_marinha_do_brasil
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_marinha_do_brasil } 
 		mutually_exclusive = { }
@@ -2479,7 +2546,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			navy_experience = 10
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2494,7 +2563,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = BRA_marinha_do_brasil
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_behind_the_times } 
 		mutually_exclusive = { }
@@ -2509,7 +2578,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_underwater_flotilla
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2524,7 +2595,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = BRA_marinha_do_brasil
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_underwater_flotilla } 
 		mutually_exclusive = { focus = BRA_strength_on_land }
@@ -2539,7 +2610,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_reform_the_navy
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2554,7 +2627,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = BRA_nosso_exercito
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_strength_on_land } 
 		mutually_exclusive = { }
@@ -2569,7 +2642,21 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_tech_bonus = {
+				name = BRA_ee_11
+				bonus = 0.75
+				uses = 1
+				technology = APC_1
+				technology = APC_2
+				technology = APC_3
+				technology = APC_4
+				technology = APC_5
+				technology = APC_6
+				technology = APC_7
+				technology = APC_8
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2584,7 +2671,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = BRA_nosso_exercito
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_strength_on_land } 
 		mutually_exclusive = { }
@@ -2599,7 +2686,29 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_tech_bonus = {
+				name = BRA_acquire_new_equipment
+				bonus = 0.50
+				uses = 1
+				technology = command_control_equipment
+				technology = command_control_equipment1
+				technology = command_control_equipment2
+				technology = command_control_equipment3
+				technology = command_control_equipment4
+				technology = command_control_equipment5
+				technology = command_control_equipment6
+			}
+			add_tech_bonus = {
+				name = BRA_acquire_new_equipment
+				bonus = 0.50
+				uses = 1
+				technology = body_armor
+				technology = body_armor2
+				technology = body_armor3
+				technology = body_armor4
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2614,7 +2723,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = BRA_nosso_exercito
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_ee_11 } 
 		mutually_exclusive = { }
@@ -2629,7 +2738,20 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_tech_bonus = {
+				name = BRA_update_the_ifvs
+				bonus = 0.75
+				uses = 1
+				technology = IFV_1 
+				technology = IFV_2 
+				technology = IFV_3
+				technology = IFV_4
+				technology = IFV_5 
+				technology = IFV_6
+				technology = IFV_7
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2644,7 +2766,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = BRA_nosso_exercito
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_acquire_new_equipment } 
 		mutually_exclusive = { }
@@ -2659,7 +2781,14 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_tech_bonus = {
+				name = BRA_decentralized_warfare
+				bonus = 1.0
+				uses = 2
+				technology = decentralized_warfare
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2674,7 +2803,7 @@ focus_tree = {
 		y = 7
 		relative_position_id = BRA_nosso_exercito
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_update_the_ifvs } 
 		mutually_exclusive = { }
@@ -2689,7 +2818,21 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_ideas = BRA_idea_modern_armor
+			add_tech_bonus = {
+				name = BRA_modern_armor
+				bonus = 1.0
+				uses = 1
+				technology = MBT_1
+				technology = MBT_2
+				technology = MBT_3
+				technology = MBT_4
+				technology = MBT_5
+				technology = MBT_7
+				technology = MBT_8
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2704,7 +2847,7 @@ focus_tree = {
 		y = 7
 		relative_position_id = BRA_nosso_exercito
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_decentralized_warfare } 
 		mutually_exclusive = { }
@@ -2719,7 +2862,21 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_tech_bonus = {
+				name = BRA_larger_artillery
+				bonus = 0.75
+				uses = 2
+				technology = artillery_1
+				technology = artillery_2
+				technology = artillery_3
+				technology = artillery_4
+				technology = SP_arty_1
+				technology = SP_arty_2
+				technology = SP_arty_3
+				technology = SP_arty_4
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2728,13 +2885,13 @@ focus_tree = {
 	
 	focus = {
 		id = BRA_braco_forte_mao_amiga
-		icon = Brazilian_Armed_Forces
+		icon = brazilian_armed_forces
 
 		x = 0
 		y = 8
 		relative_position_id = BRA_nosso_exercito
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_modern_armor } 
 		prerequisite = { focus = BRA_larger_artillery } 
@@ -2750,7 +2907,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_ideas = BRA_idea_braco_forte_mao_amiga
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2765,7 +2924,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = BRA_marinha_do_brasil
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_reform_the_navy } 
 		mutually_exclusive = { }
@@ -2780,7 +2939,18 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			if = {
+				limit = {
+					country_exists = FRA
+					NOT = { has_war_with = FRA }
+				}
+				
+				FRA = {
+					country_event = brazil.15
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2795,7 +2965,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = BRA_marinha_do_brasil
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_french_naval_studies } 
 		mutually_exclusive = { }
@@ -2810,7 +2980,20 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_tech_bonus = {
+				name = BRA_nuclear_battle_cruisers
+				bonus = 0.75
+				uses = 1
+				technology = attack_submarine_1 
+				technology = attack_submarine_2
+				technology = attack_submarine_3 
+				technology = attack_submarine_4 
+				technology = attack_submarine_5 
+				technology = attack_submarine_6
+				technology = attack_submarine_7 
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2825,7 +3008,7 @@ focus_tree = {
 		y = 7
 		relative_position_id = BRA_marinha_do_brasil
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_lets_go_nuclear } 
 		mutually_exclusive = { }
@@ -2840,7 +3023,18 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_tech_bonus = {
+				name = BRA_assault_carriers
+				bonus = 0.50
+				uses = 1
+				technology = LHA_0
+				technology = LHA_1
+				technology = LHA_2
+				technology = LHA_3
+				technology = LHA_4
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2855,7 +3049,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = BRA_marinha_do_brasil
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_reform_the_navy } 
 		mutually_exclusive = { }
@@ -2870,7 +3064,20 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_tech_bonus = {
+				name = BRA_usn_carriers
+				bonus = 0.50
+				uses = 1
+				technology = modern_carrier_0
+				technology = modern_carrier_1
+				technology = modern_carrier_2
+				technology = modern_carrier_3
+				technology = modern_carrier_4
+				technology = modern_carrier_5
+				technology = modern_carrier_6
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2885,7 +3092,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = BRA_marinha_do_brasil
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_usn_carriers } 
 		mutually_exclusive = { }
@@ -2900,7 +3107,20 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_tech_bonus = {
+				name = BRA_destroyers
+				bonus = 0.50
+				uses = 1
+				technology = destroyer_1
+				technology = destroyer_2
+				technology = missile_destroyer_1
+				technology = missile_destroyer_2
+				technology = missile_destroyer_3
+				technology = missile_destroyer_4
+				technology = missile_destroyer_5
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2915,7 +3135,7 @@ focus_tree = {
 		y = 7
 		relative_position_id = BRA_marinha_do_brasil
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_juruena_class } 
 		mutually_exclusive = { }
@@ -2930,7 +3150,20 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_tech_bonus = {
+				name = BRA_assault_carriers
+				bonus = 0.75
+				uses = 1
+				technology = frigate_1
+				technology = frigate_2
+				technology = missile_frigate_1
+				technology = missile_frigate_2
+				technology = missile_frigate_3
+				technology = missile_frigate_4
+				technology = missile_frigate_5
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2945,7 +3178,7 @@ focus_tree = {
 		y = 8
 		relative_position_id = BRA_marinha_do_brasil
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_cgn_1985 } 
 		prerequisite = { focus = BRA_assault_carriers } 
@@ -2961,7 +3194,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_protegendo_nossas_riquezas
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -2971,7 +3206,7 @@ focus_tree = {
 
 	focus = {
 		id = BRA_air_force_expansion
-		icon = air_force
+		icon = brazil_airforce
 
 		x = 15
 		y = 5
@@ -2996,7 +3231,65 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			if = {
+				limit = {
+					NOT = {
+						any_owned_state = {
+							air_base > 1
+							air_base < 3
+						}
+					}
+				}
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = air_base
+							size > 5
+						}
+					}
+					add_building_construction = {
+						type = air_base
+						level = 5
+						instant_build = yes
+					}
+				}			
+			}
+
+			random_owned_controlled_state = {
+				limit = {
+					air_base > 1
+					air_base < 3
+				}
+				add_building_construction = {
+					type = air_base
+					level = 2
+					instant_build = yes
+				}
+			}
+			random_owned_controlled_state = {
+				limit = {
+					air_base > 1
+					air_base < 3
+				}
+				add_building_construction = {
+					type = air_base
+					level = 2
+					instant_build = yes
+				}
+			}
+			random_owned_controlled_state = {
+				limit = {
+					air_base > 1
+					air_base < 3
+				}
+				add_building_construction = {
+					type = air_base
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3026,10 +3319,23 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
-		
-		ai_will_do = {
-			base = 10
+		completion_reward = {
+			add_tech_bonus = {
+				name = BRA_invest_in_heli
+				bonus = 0.50
+				uses = 1
+				technology = early_helicopter
+				technology = attack_helicopter1
+				technology = attack_helicopter2
+				technology = attack_helicopter3
+				technology = attack_helicopter4
+				technology = attack_helicopter5
+				technology = transport_helicopter1
+				technology = transport_helicopter2
+				technology = transport_helicopter3
+				technology = transport_helicopter4
+				technology = transport_helicopter5
+			}
 		}
 	}
 	
@@ -3056,7 +3362,25 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_tech_bonus = {
+				name = BRA_carrier_planes
+				bonus = 0.50
+				uses = 1
+				technology = CV_MR_Fighter1
+				technology = CV_MR_Fighter2
+				technology = CV_MR_Fighter3
+				technology = CV_MR_Fighter4
+				technology = CV_MR_Fighter5
+				technology = CV_MR_Fighter6
+				technology = CV_MR_Fighter7
+				technology = CV_L_Strike_fighter1
+				technology = CV_L_Strike_fighter2
+				technology = CV_L_Strike_fighter3
+				technology = CV_L_Strike_fighter4
+				technology = CV_L_Strike_fighter5
+			}
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3086,7 +3410,18 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_tech_bonus = {
+				name = BRA_cas_research
+				bonus = 0.50
+				uses = 1
+				technology = cas1
+				technology = cas2
+				technology = cas3
+				technology = cas4
+				technology = cas5
+			} 
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3116,7 +3451,19 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_tech_bonus = {
+				name = BRA_maritime_routine
+				bonus = 0.50
+				uses = 1
+				technology = naval_plane1
+				technology = naval_plane2
+				technology = naval_plane3
+				technology = naval_plane4
+				technology = naval_plane5
+				technology = naval_plane6
+			}	
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3146,7 +3493,20 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_tech_bonus = {
+				name = BRA_mr_fighters
+				bonus = 0.50
+				uses = 1
+				technology = MR_Fighter1
+				technology = MR_Fighter2
+				technology = MR_Fighter3
+				technology = MR_Fighter4
+				technology = MR_Fighter5
+				technology = MR_Fighter6
+				technology = MR_Fighter7
+			} 
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3176,7 +3536,18 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_tech_bonus = {
+				name = BRA_light_fighters
+				bonus = 0.50
+				uses = 1
+				technology = L_Strike_fighter1
+				technology = L_Strike_fighter2
+				technology = L_Strike_fighter3
+				technology = L_Strike_fighter4
+				technology = L_Strike_fighter5
+			} 
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3201,8 +3572,12 @@ focus_tree = {
 		}
 		historical_ai = { }
 		select_effect = { }
-		bypass = { }
-		cancel = { }
+		bypass = { 
+			NOT = { has_country_leader = { name = "Fernando Henrique Cardoso" } }
+		}
+		cancel = { 
+			NOT = { has_country_leader = { name = "Fernando Henrique Cardoso" } }
+		}
 		
 		cancel_if_invalid = yes
 		continue_if_invalid = yes
@@ -3211,6 +3586,7 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			add_stability = -0.05
+			add_political_power = 50
 		}
 		
 		ai_will_do = {
@@ -3243,6 +3619,7 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = { 
 			country_event = brazil.3
+			unlock_decision_category_tooltip = BRA_amazon_resource_development_decision_category
 		}
 		
 		ai_will_do = {
@@ -3265,7 +3642,9 @@ focus_tree = {
 		available = { }
 		historical_ai = { }
 		select_effect = { }
-		bypass = { }
+		bypass = { 
+			NOT = { has_idea = BRA_idea_amazonian_development_project }
+		}
 		cancel = { }
 		
 		cancel_if_invalid = yes
@@ -3273,7 +3652,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			country_event = brazil.6
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3303,7 +3684,11 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_stability = 0.05
+			subtract_from_variable = { treasury = 15.0 }
+			custom_effect_tooltip = "Loses $15 Million"
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3329,11 +3714,13 @@ focus_tree = {
 		cancel = { }
 		
 		cancel_if_invalid = yes
-		continue_if_invalid = yes
+		continue_if_invalid = no
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			country_event = brazil.14
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3364,7 +3751,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_stability = -0.02
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3394,7 +3783,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = BRA_idea_angry_natives
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3426,6 +3817,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = { 
 			add_ideas = BRA_idea_imf_debts
+			add_to_variable = { debt = 225 }
+			custom_effect_tooltip = "Debt Rises by 225"
 		}
 		
 		ai_will_do = {
@@ -3445,9 +3838,7 @@ focus_tree = {
 		
 		prerequisite = { focus = BRA_reinstating_imf_debts } 
 		mutually_exclusive = { }
-		available = {
-			has_idea = recession
-		}
+		available = { }
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -3458,8 +3849,29 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { 
-			
+		completion_reward = {		
+			if = {
+				limit = { has_idea = stagnation }
+				swap_ideas = { remove_idea = stagnation add_idea = recession }
+			}
+			if = {
+				limit = { has_idea = stable_growth }
+				swap_ideas = { remove_idea = stable_growth add_idea = recession }
+			}
+			if = {
+				limit = { has_idea = fast_growth }
+				swap_ideas = { remove_idea = fast_growth add_idea = recession }
+			}
+			if = {
+				limit = { has_idea = economic_boom }
+				swap_ideas = { remove_idea = economic_boom add_idea = recession }
+			}
+			if = {
+				limit = { has_idea = recession }
+				add_political_power = -100
+			}
+			subtract_from_variable = { treasury = 10 }
+			custom_effect_tooltip = "Loses $10 Million"
 		}
 		
 		ai_will_do = {
@@ -3490,7 +3902,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_ideas = BRA_idea_crippled_currency
+		}
 		
 		ai_will_do = {
 			base = 10
@@ -3522,7 +3936,10 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_stability = 0.10
+			relative_change_pos_4 = yes
+		}
 		
 		ai_will_do = {
 			base = 10
