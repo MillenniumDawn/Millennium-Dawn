@@ -1,0 +1,172 @@
+﻿add_namespace = nato
+
+country_event = {	#We receive an invitation to NATO
+	id = nato.1
+	title = nato.1.t
+	desc = nato.1.d
+	picture = GFX_report_event_nato
+	
+	is_triggered_only = yes
+	
+	option = {	#We accept!
+		name = nato.1.o1
+		
+		set_country_flag = has_joined_NATO_by_event
+		
+		USA = { add_to_faction = FROM }
+		
+		hidden_effect = { USA = { country_event = { id = nato.2 } } }
+		
+		hidden_effect = { news_event = { id = nato_news.1 hours = 3 } }
+		
+		ai_chance = {
+			factor = 90
+			
+			modifier = {
+				add = 70
+				has_democratic_form_of_government = yes
+			}
+			
+			modifier = {
+				add = 70
+				original_tag = VIN
+				country_exists = PRC
+			}
+		}
+	}
+	
+	option = {	#We refuse
+		name = nato.1.o2
+		add_political_power = 50
+		USA = {
+			add_opinion_modifier = {
+				target = FROM
+				modifier = recent_actions_negative
+			}
+			
+			country_event = {
+				id = nato.3
+			}
+		}
+		
+		ai_chance = {
+			factor = 10
+			
+			modifier = {
+				add = 70
+				has_democratic_form_of_government = no
+			}
+			
+			modifier = {
+				factor = 0
+				AND = {
+					is_historical_focus_on = yes
+					OR = {
+						tag = EST
+						tag = LAT
+						tag = LIT
+						tag = SLO
+						tag = SLV
+						tag = ROM
+						tag = BUL
+						tag = ALB
+						tag = CRO
+					}
+				}
+			}
+		}
+	}
+}
+
+country_event = {	#They accept!
+	id = nato.2
+	title = nato.2.t
+	desc = nato.2.d
+	picture = GFX_report_event_nato
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = nato.2.o1
+		add_to_faction = FROM
+	}
+}
+
+country_event = {	#They refuse!
+	id = nato.3
+	title = nato.3.t
+	desc = nato.3.d
+	picture = GFX_report_event_nato
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = nato.3.o1
+		
+		effect_tooltip = {
+			add_opinion_modifier = {
+				target = FROM
+				modifier = recent_actions_negative
+			}
+		}
+	}
+}
+
+country_event = {	#FROM seeks to join NATO
+	id = nato.4
+	title = nato.4.t
+	desc = nato.4.d
+	picture = GFX_report_event_nato
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = nato.4.o1
+		add_to_faction = FROM
+		FROM = { country_event = diplomatic_response.1 }
+		FROM = { 
+			news_event = { id = nato_news.1 hours = 3 }
+		}
+		FROM = { set_country_flag = has_joined_NATO_by_event }
+		
+		ai_chance = { factor = 100 }
+	}
+	
+	option = {
+		name = nato.4.o2
+		FROM = { country_event = diplomatic_response.2 }
+		
+		ai_chance = { factor = 0 }
+	}
+}
+
+#drills on FROM soil
+country_event = {
+	id = nato.5
+	title = nato.5.t
+	desc = nato.5.d
+	picture = GFX_report_event_nato
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = nato.5.o1
+		
+		add_political_power = -10
+		army_experience = 5
+		navy_experience = 5
+		air_experience = 5
+		
+		FROM = { add_opinion_modifier = { target = ROOT modifier = took_part_in_NATO_drills } }
+		
+		ai_chance = { factor = 100 }
+	}
+	
+	option = {
+		name = nato.5.o2
+		
+		FROM = { add_opinion_modifier = { target = ROOT modifier = didnt_take_part_in_NATO_drills } }
+		
+		ai_chance = { factor = 0 }
+	}
+}
