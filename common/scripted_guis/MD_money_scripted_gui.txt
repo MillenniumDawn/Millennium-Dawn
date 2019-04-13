@@ -1,12 +1,44 @@
 scripted_gui = {
 
+	hide_money = {
+		context_type = player_context
+		
+		window_name = "hide_money_button"
+		
+		visible = {
+			ROOT = { NOT = { has_country_flag = hide_money } }
+		}
+		
+		effects = {
+			hide_money_bg_click = {
+				ROOT = { set_country_flag = hide_money }
+			}
+		}
+	}
+
+	show_money = {
+		context_type = player_context
+		
+		window_name = "show_money_button"
+		
+		visible = {
+			ROOT = { has_country_flag = hide_money }
+		}
+		
+		effects = {
+			show_money_bg_click = {
+				ROOT = { clr_country_flag = hide_money }
+			}
+		}
+	}
+
 	debt = {
 		context_type = player_context
 		
 		window_name = "debt_container"
 		
 		visible = {
-		  always = yes
+			ROOT = { NOT = { has_country_flag = hide_money } }
 		}
 		
 		effects = {
@@ -15,6 +47,7 @@ scripted_gui = {
 					add_to_variable = { treasury = 1 }
 					add_to_variable = { debt = 1 }
 					ingame_calculate_size_modifier = yes
+					update_military_rate = yes
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
 			}
@@ -22,6 +55,7 @@ scripted_gui = {
 					add_to_variable = { treasury = 10 }
 					add_to_variable = { debt = 10 }
 					ingame_calculate_size_modifier = yes
+					update_military_rate = yes
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
 			}
@@ -29,6 +63,7 @@ scripted_gui = {
 					add_to_variable = { treasury = 100 }
 					add_to_variable = { debt = 100 }
 					ingame_calculate_size_modifier = yes
+					update_military_rate = yes
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
 			}
@@ -40,6 +75,7 @@ scripted_gui = {
 					subtract_from_variable = { treasury = 1 }
 					subtract_from_variable = { debt = 0.95 }
 					ingame_calculate_size_modifier = yes
+					update_military_rate = yes
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
 				}
@@ -50,6 +86,7 @@ scripted_gui = {
 					subtract_from_variable = { treasury = 10 }
 					subtract_from_variable = { debt = 9.5 }
 					ingame_calculate_size_modifier = yes
+					update_military_rate = yes
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
 				}
@@ -59,6 +96,7 @@ scripted_gui = {
 					limit = { check_variable = { treasury > 100 } }
 					subtract_from_variable = { treasury = 100 }
 					subtract_from_variable = { debt = 95 }
+					update_military_rate = yes
 					ingame_calculate_size_modifier = yes
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
@@ -83,7 +121,7 @@ scripted_gui = {
 		window_name = "treasury_container"
 		
 		visible = {
-		  always = yes
+			ROOT = { NOT = { has_country_flag = hide_money } }
 		}
 		
 		effects = { }
@@ -95,10 +133,10 @@ scripted_gui = {
 		window_name = "int_investments_container"
 		
 		visible = {
-		  always = yes
+			ROOT = { NOT = { has_country_flag = hide_money } }
 		}
 		
-		effects = { 
+		effects = {
 			#Sell off investments
 			int_investments_bg_right_click = {	
 				if = {
@@ -126,6 +164,34 @@ scripted_gui = {
 			}
 		}
 	}
+	### AC System ###
+	AC_treasury = {
+		context_type = selected_state_context
+		
+		window_name = "AC_treasury_container"
+		
+		parent_window_token = selected_state_view
+		
+		visible = {
+			NOT = { is_owned_by = ROOT }
+		}
+		
+		effects = { }
+	}
+	
+	AC_int_investments = {
+		context_type = selected_state_context
+		
+		window_name = "AC_int_investments_container"
+		
+		parent_window_token = selected_state_view
+		
+		visible = {
+			NOT = { is_owned_by = ROOT }
+		}
+		
+		effects = {	}
+	}
 	### Politics Screen ###
 	tax_rate = {
 		context_type = player_context
@@ -152,6 +218,7 @@ scripted_gui = {
 					add_to_variable = { tax_rate = 1 }
 					increase_tax_cost = yes
 					calculate_tax_gain = yes
+					update_military_rate = yes
 					ingame_calculate_size_modifier = yes
 					calculate_resource_sale_rate = yes
 					
@@ -177,6 +244,7 @@ scripted_gui = {
 					subtract_from_variable = { tax_rate = 1 }
 					decrease_tax_cost = yes
 					calculate_tax_gain = yes
+					update_military_rate = yes
 					ingame_calculate_size_modifier = yes
 					calculate_resource_sale_rate = yes
 			}

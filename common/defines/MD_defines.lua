@@ -23,7 +23,7 @@
 	NDefines.NDiplomacy.IC_TO_EQUIPMENT_COUP_RATIO = 0.3
 	NDefines.NDiplomacy.VOLUNTEERS_RETURN_EQUIPMENT = 0.80
 	NDefines.NDiplomacy.VOLUNTEERS_TRANSFER_SPEED = 12
-	NDefines.NDiplomacy.VOLUNTEERS_DIVISIONS_REQUIRED = 10
+	NDefines.NDiplomacy.VOLUNTEERS_DIVISIONS_REQUIRED = 7
 	NDefines.NDiplomacy.TENSION_STATE_VALUE = 4
 	NDefines.NDiplomacy.TENSION_CIVIL_WAR_IMPACT = 0.4
 	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 15
@@ -49,7 +49,7 @@
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 1
 	NDefines.NCountry.VP_TO_SUPPLY_BASE = 0.1
 	NDefines.NCountry.VP_TO_SUPPLY_BONUS_CONVERSION = 0.2
-	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01
+	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01 --0.01
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_UNIT = 0.002
 	NDefines.NCountry.RESOURCE_LENDLEASE_PRIORITY = 2
@@ -71,6 +71,7 @@
 	NDefines.NCountry.SPECIAL_FORCES_CAP_BASE = 0.075
 	NDefines.NCountry.SPECIAL_FORCES_CAP_MIN = 6
 	NDefines.NCountry.DAYS_OF_WAR_BEFORE_SURRENDER = 7
+	NDefines.NCountry.BASE_MOBILIZATION_SPEED = 0.01 --0.01
 
 	NDefines.NProduction.MAX_EQUIPMENT_RESOURCES_NEED = 4
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
@@ -92,7 +93,7 @@
 	NDefines.NTechnology.BASE_TECH_COST = 300
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
-	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 50
+	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 100
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 24
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
 	NDefines.NBuildings.BASE_FACTORY_REPAIR = 0.25
@@ -332,4 +333,20 @@
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
 	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 6				-- 3
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
+	NDefines.NAI.UEL_CONSUMPTION_MULT_FOR_FUEL_SAVING_MODE = 1.0			-- fuel consumptions will be limited by this ratio in fuel saving mode
+	NDefines.NAI.FUEL_CONSUMPTION_MULT_REGULAR_FUEL_MODE = 1.0				-- fuel consumptions will be limited by this ratio in regular fuel mode
+	NDefines.NAI.FUEL_CONSUMPTION_MULT_AGRESSIVE_FUEL_MODE = 300.0				-- fuel consumptions will be limited by this ratio in aggressive fuel usage mode
+	
+	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE = 1				-- countries will enter fuel saving mode if they will be out of fuel in this number of days and their fuel ratio is below next define
+	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE_FUEL_RATIO = 0
+	
+	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0 					-- countries will exit fuel saving mode if they have more fuel ratio than this
+	
+	
+	
+
+	NDefines.NAI.WANTED_MAX_FUEL_BUFFER_IN_DAYS_FOR_ARMY_MAX_CONSUMPTION = 1  -- AI will try to buffer at least this amount of days on max consumption, will trade if necesarry and will go into fuel saving mode/aggresive mode using this buffer 
+	NDefines.NAI.WANTED_MAX_FUEL_BUFFER_IN_DAYS_FOR_AIR_MAX_CONSUMPTION  = 1  -- AI will try to buffer at least this amount of days on max consumption, will trade if necesarry and will go into fuel saving mode/aggresive mode using this buffer
+	NDefines.NAI.WANTED_MAX_FUEL_BUFFER_IN_DAYS_FOR_NAVY_MAX_CONSUMPTION = 1  -- AI will try to buffer at least this amount of days on max consumption, will trade if necesarry and will go into fuel saving mode/aggresive mode using this buffer
+	NDefines.NAI.MIN_WANTED_MAX_FUEL = 1	
 	
