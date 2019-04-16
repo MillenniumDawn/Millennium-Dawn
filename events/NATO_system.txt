@@ -263,3 +263,158 @@ news_event = {
 		ai_chance = { factor = 100 }
 	}
 }
+
+country_event = {	#We receive an invitation to NATO
+	id = nato.9
+	title = nato.9.t
+	desc = nato.9.d
+	picture = GFX_report_event_nato
+	
+	is_triggered_only = yes
+	
+	option = {	#We accept!
+		name = nato.9.a
+		log = "[GetDateText]: [This.GetName]: nato.9.a executed"	
+		set_country_flag = has_joined_NATO_by_event
+		add_ideas = NATO_member
+		hidden_effect = { USA = { country_event = { id = nato.10 } } }
+		hidden_effect = { news_event = { id = nato.13 hours = 3 } } 
+		ai_chance = {
+			factor = 90
+			
+			modifier = {
+				add = 70
+				has_elections = yes
+			}
+			
+			modifier = {
+				add = 70
+				original_tag = VIN
+				country_exists = CHI
+			}
+		}
+	}
+	
+	option = {	#We refuse
+		name = nato.9.b
+		log = "[GetDateText]: [This.GetName]: nato.9.b executed"
+		add_political_power = 50
+		USA = { country_event = nato.11 }
+		
+		ai_chance = {
+			factor = 10
+			
+			modifier = {
+				add = 70
+				has_elections = no
+			}
+			
+			modifier = {
+				factor = 0
+				AND = {
+					is_historical_focus_on = yes
+					OR = {
+						tag = EST
+						tag = LAT
+						tag = LIT
+						tag = SLO
+						tag = SLV
+						tag = ROM
+						tag = BUL
+						tag = ALB
+						tag = CRO
+					}
+				}
+			}
+		}
+	}
+}
+
+country_event = {	#They accept!
+	id = nato.10
+	title = nato.10.t
+	desc = nato.10.d
+	picture = GFX_report_event_nato
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = nato.10.a
+		log = "[GetDateText]: [This.GetName]: nato.10.a executed"
+		USA = {
+			add_opinion_modifier = {
+				target = FROM
+				modifier = NATO_member_modifier
+			}
+		}
+	}
+}
+
+country_event = {	#They refuse!
+	id = nato.11
+	title = nato.11.t
+	desc = nato.11.d
+	picture = GFX_report_event_nato
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = nato.11.o1
+		log = "[GetDateText]: [This.GetName]: nato.11.o1 executed"
+		effect_tooltip = {
+			add_opinion_modifier = {
+				target = FROM
+				modifier = recent_actions_negative
+			}
+		}
+	}
+}
+
+#Drills on FROM soil
+country_event = {
+	id = nato.12
+	title = nato.12.t
+	desc = nato.12.d
+	picture = GFX_report_event_nato
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = nato.12.o1
+		log = "[GetDateText]: [This.GetName]: nato.12.o1 executed"
+		
+		add_political_power = -10
+		army_experience = 5
+		navy_experience = 5
+		air_experience = 5
+		
+		FROM = { add_opinion_modifier = { target = ROOT modifier = took_part_in_NATO_drills } }
+		
+		ai_chance = { factor = 100 }
+	}
+	
+	option = {
+		name = nato.12.o2
+		log = "[GetDateText]: [This.GetName]: nato.12.o2 executed"
+		
+		FROM = { add_opinion_modifier = { target = ROOT modifier = didnt_take_part_in_NATO_drills } }
+		
+		ai_chance = { factor = 0 }
+	}
+}
+
+#News Event
+news_event = {
+	id = nato.13
+	title = nato.13.t
+	desc = nato.13.d
+	picture = GFX_news_event_nato
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = nato.13.o1
+		log = "[GetDateText]: [This.GetName]: nato.13.o1 executed"
+	}
+}
