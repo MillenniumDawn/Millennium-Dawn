@@ -1,0 +1,552 @@
+coalition_desicions = {
+	
+	give_up_coalition = {
+		icon = decision
+		available = {
+		}
+		
+		cost = 0
+		days_remove = 0
+		days_re_enable = 0
+		
+		ai_will_do = { base = 0 }
+		
+		complete_effect = {
+			hidden_effect = {
+				refund_government_coalition = yes #give 75% of invested PP back
+				clear_array = gov_coalition_array
+				clear_array = ruling_party
+			}
+			add_political_power = -150
+		}
+	}
+	#probably need a event for reasonable display
+	
+	###Western_Autocracy #0
+	
+	Western_Autocracy_invite = {
+		icon = decision
+		available = {
+			NOT = {
+				OR = {
+					check_variable = { party_pop_elect_array^0 < election_threshold } #failed elections
+					is_in_array = { gov_coalition_array = 0 } #is already in coalition
+					is_in_array = { ruling_party = 0 } #is already in coalition
+					check_variable = { government_coalition_strength_elect > majority_threshold } #already strong enough
+					
+					#is bigger than ruling party
+					meta_trigger = {
+						text = {
+							check_variable = { 
+								party_pop_elect_array^0 > [META_RULING_PARTY_PERCENTAGE]
+							}
+						}
+						META_RULING_PARTY_PERCENTAGE = "[meta_ruling_party_percentage]"
+					}
+					
+					#won't join coalition if:
+					is_in_array = { gov_coalition_array = 4 } #emerging communist
+					is_in_array = { gov_coalition_array = 5 } #left-wing radical
+					is_in_array = { gov_coalition_array = 8 } #mod shiite islamist
+					is_in_array = { gov_coalition_array = 9 } #shiite islamist
+					is_in_array = { gov_coalition_array = 11 } #jihadist
+					is_in_array = { gov_coalition_array = 19 } #neutral communist
+					is_in_array = { gov_coalition_array = 21 } #fascist
+					
+				}
+			}
+		}
+		
+		cost = 0
+		days_remove = 0
+		days_re_enable = 0
+		
+		ai_will_do = { base = 0 }
+		
+		complete_effect = {
+			hidden_effect = {
+				pol_distance_matrix_0 = yes
+				multiply_variable = { pol_distance_current = party_pop_elect_array^0 } #size
+				set_variable = { pp_cost_to_invite = pol_distance_current }
+				multiply_variable = { pp_cost_to_invite = -2000 }
+				#for correct localization of idea
+				if = {
+					limit = { 
+						NOT = {
+							OR = {
+								#western ruling party
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 1 }
+								is_in_array = { ruling_party = 2 }
+								is_in_array = { ruling_party = 3 }	
+							}
+						}
+					}
+					add_to_variable = { coalition_democratic = party_pop_elect_array^0 }
+				}
+			}
+			country_event = { id = coalition.0 }
+		}
+	}
+	Western_Autocracy_remove = {
+		icon = decision
+		available = {
+		}
+		visible = { is_in_array = { gov_coalition_array = 0 } }
+		
+		cost = 0
+		days_remove = 0
+		days_re_enable = 0
+		
+		ai_will_do = { base = 0 }
+		
+		complete_effect = {
+			hidden_effect = {
+				pol_distance_matrix_0 = yes
+				multiply_variable = { pol_distance_current = party_pop_elect_array^0 } #size
+				set_variable = { pp_cost_to_invite = pol_distance_current }
+				multiply_variable = { pp_cost_to_invite = 1500 } #75%
+				add_political_power = pp_cost_to_invite
+				if = {
+					limit = { 
+						NOT = {
+							OR = {
+								#western ruling party
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 1 }
+								is_in_array = { ruling_party = 2 }
+								is_in_array = { ruling_party = 3 }	
+							}
+						}
+					}
+					subtract_from_variable = { coalition_democratic = party_pop_elect_array^0 }
+					clear_coalition_western_count_ideas = yes
+					reset_democratic_coalition_ideas = yes
+				}
+				remove_from_array = { gov_coalition_array = 0 } #conservatism
+				update_government_coalition_strength = yes
+			}
+		}
+	}
+	
+	
+	###Western Conservative #1
+	conservatism_invite = {
+		icon = decision
+		available = {
+			NOT = {
+				OR = {
+					check_variable = { party_pop_elect_array^1 < election_threshold } #failed elections
+					is_in_array = { gov_coalition_array = 1 } #is already in coalition
+					is_in_array = { ruling_party = 1 } #is already in coalition
+					check_variable = { government_coalition_strength_elect > majority_threshold } #already strong enough
+					
+					#is bigger than ruling party
+					meta_trigger = {
+						text = {
+							check_variable = { 
+								party_pop_elect_array^1 > [META_RULING_PARTY_PERCENTAGE]
+							}
+						}
+						META_RULING_PARTY_PERCENTAGE = "[meta_ruling_party_percentage]"
+					}
+					
+					#won't join coalition if:
+					is_in_array = { gov_coalition_array = 4 } #emerging communist
+					is_in_array = { gov_coalition_array = 5 } #left-wing radical
+					is_in_array = { gov_coalition_array = 8 } #mod shiite islamist
+					is_in_array = { gov_coalition_array = 9 } #shiite islamist
+					is_in_array = { gov_coalition_array = 11 } #jihadist
+					is_in_array = { gov_coalition_array = 19 } #neutral communist
+					is_in_array = { gov_coalition_array = 21 } #fascist
+					
+					#won't join social democrats if both are strong
+					AND = {
+						OR = {
+							is_in_array = { gov_coalition_array = 3 } #social democrats
+							is_in_array = { ruling_party = 3 } #social democrats
+						}
+						check_variable = { party_pop_elect_array^3 > 0.2 } #social democrats
+						check_variable = { party_pop_elect_array^1 > 0.2 } #western conservative
+					}
+					#won't join democratic socialists if both are strong
+					AND = {
+						OR = {
+							is_in_array = { gov_coalition_array = 18 } #social democrats
+							is_in_array = { ruling_party = 18 } #social democrats
+						}
+						check_variable = { party_pop_elect_array^18 > 0.2 } #social democrats
+						check_variable = { party_pop_elect_array^1 > 0.2 } #western conservative
+					}
+				}
+			}
+		}
+		
+		cost = 0
+		days_remove = 0
+		days_re_enable = 0
+		
+		ai_will_do = { base = 0 }
+		
+		complete_effect = {
+			hidden_effect = {
+				pol_distance_matrix_1 = yes
+				multiply_variable = { pol_distance_current = party_pop_elect_array^1 } #size
+				set_variable = { pp_cost_to_invite = pol_distance_current }
+				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
+				
+				#for correct localization of idea
+				if = {
+					limit = { 
+						NOT = {
+							OR = {
+								#western ruling party
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 1 }
+								is_in_array = { ruling_party = 2 }
+								is_in_array = { ruling_party = 3 }	
+							}
+						}
+					}
+					add_to_variable = { coalition_democratic = party_pop_elect_array^1 }
+				}
+			}
+			country_event = { id = coalition.1 }
+		}
+	}
+	conservatism_remove = {
+		icon = decision
+		available = {
+		}
+		visible = { is_in_array = { gov_coalition_array = 1 } }
+		
+		cost = 0
+		days_remove = 0
+		days_re_enable = 0
+		
+		ai_will_do = { base = 0 }
+		
+		complete_effect = {
+			hidden_effect = {
+				pol_distance_matrix_1 = yes
+				multiply_variable = { pol_distance_current = party_pop_elect_array^1 } #size
+				set_variable = { pp_cost_to_invite = pol_distance_current }
+				multiply_variable = { pp_cost_to_invite = 1500 } #75%
+				add_political_power = pp_cost_to_invite
+				if = {
+					limit = { 
+						NOT = {
+							OR = {
+								#western ruling party
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 1 }
+								is_in_array = { ruling_party = 2 }
+								is_in_array = { ruling_party = 3 }	
+							}
+						}
+					}
+					subtract_from_variable = { coalition_democratic = party_pop_elect_array^1 }
+					clear_coalition_western_count_ideas = yes
+					reset_democratic_coalition_ideas = yes
+				}
+				remove_from_array = { gov_coalition_array = 1 } #conservatism
+				update_government_coalition_strength = yes
+			}
+		}
+	}
+	
+	###Western Liberal
+	liberalism_invite = {
+		icon = decision
+		available = {
+			hidden_trigger = {
+				NOT = {
+					OR = {
+						check_variable = { party_pop_elect_array^2 < election_threshold } #failed elections
+						is_in_array = { gov_coalition_array = 2 } #is already in coalition
+						is_in_array = { ruling_party = 2 } #is already in coalition
+						check_variable = { government_coalition_strength_elect > majority_threshold } #already strong enough
+						
+						#is bigger than ruling party
+						#meta_trigger = {
+						#	text = {
+						#		check_variable = { 
+						#			party_pop_elect_array^2 > [META_RULING_PARTY_PERCENTAGE]
+						#		}
+						#	}
+						#	META_RULING_PARTY_PERCENTAGE = "[meta_ruling_party_percentage]"
+						#}
+						
+						#won't join coalition if:
+						is_in_array = { gov_coalition_array = 4 } #Communist-State
+						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
+						is_in_array = { gov_coalition_array = 6 } #Autocracy
+						is_in_array = { gov_coalition_array = 7 } #Conservative (reactionary)
+						is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
+						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
+						is_in_array = { gov_coalition_array = 10 } #Kingdom
+						is_in_array = { gov_coalition_array = 11 } #Caliphate
+						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
+						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
+						is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
+						is_in_array = { gov_coalition_array = 23 } #Monarchist
+						
+						#won't join conservatives if both are strong
+						AND = {
+							OR = {
+								is_in_array = { gov_coalition_array = 1 } #conservatives
+								is_in_array = { ruling_party = 1 } #conservatives
+							}
+							check_variable = { party_pop_elect_array^1 > 0.25 } #conservatives
+							check_variable = { party_pop_elect_array^2 > 0.25 } #liberalism
+						}
+						#won't join social democrats if both are strong
+						AND = {
+							NOT = { TAG = USA }
+							OR = {
+								is_in_array = { gov_coalition_array = 3 } #social democrats
+								is_in_array = { ruling_party = 3 } #social democrats
+							}
+							check_variable = { party_pop_elect_array^3 > 0.25 } #social democrats
+							check_variable = { party_pop_elect_array^2 > 0.25 } #liberalism
+						}
+						#USA - Democrats (liberalism) and Republicans can't team up unless one is insignificant
+						AND = {
+							TAG = USA
+							OR = {
+								is_in_array = { gov_coalition_array = 1 } #conservatives
+								is_in_array = { ruling_party = 1 } #conservatives
+							}
+							check_variable = { party_pop_elect_array^1 > 0.05 } #conservatives
+							check_variable = { party_pop_elect_array^2 > 0.05 } #liberalism
+						}
+						AND = {
+							TAG = USA
+							OR = {
+								is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
+								is_in_array = { ruling_party = 14 } #Neutral_conservatism
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		cost = 0
+		days_remove = 0
+		days_re_enable = 0
+		
+		ai_will_do = { base = 0 }
+		
+		complete_effect = {
+			hidden_effect = {
+				pol_distance_matrix_2 = yes
+				multiply_variable = { pol_distance_current = party_pop_elect_array^2 } #size
+				set_variable = { pp_cost_to_invite = pol_distance_current }
+				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
+				
+				#for correct localization of idea
+				if = {
+					limit = { 
+						NOT = {
+							OR = {
+								#western ruling party
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 1 }
+								is_in_array = { ruling_party = 2 }
+								is_in_array = { ruling_party = 3 }	
+							}
+						}
+					}
+					add_to_variable = { coalition_democratic = party_pop_elect_array^2 }
+				}
+			}
+			country_event = { id = coalition.2 }
+		}
+	}
+	liberalism_remove = {
+		icon = decision
+		available = {
+			
+		}
+		visible = { is_in_array = { gov_coalition_array = 2 } }
+		
+		cost = 0
+		days_remove = 0
+		days_re_enable = 0
+		
+		ai_will_do = { base = 0 }
+		
+		complete_effect = {
+			hidden_effect = {
+				pol_distance_matrix_2 = yes
+				multiply_variable = { pol_distance_current = party_pop_elect_array^2 } #size
+				set_variable = { pp_cost_to_invite = pol_distance_current }
+				multiply_variable = { pp_cost_to_invite = 1500 } #75%
+				add_political_power = pp_cost_to_invite
+				if = {
+					limit = { 
+						NOT = {
+							OR = {
+								#western ruling party
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 1 }
+								is_in_array = { ruling_party = 2 }
+								is_in_array = { ruling_party = 3 }	
+							}
+						}
+					}
+					subtract_from_variable = { coalition_democratic = party_pop_elect_array^2 }
+					clear_coalition_western_count_ideas = yes
+					reset_democratic_coalition_ideas = yes
+				}
+				remove_from_array = { gov_coalition_array = 2 } #liberalism
+				update_government_coalition_strength = yes
+			}
+		}
+	}
+	
+	###Western Social Democrat
+	socialism_invite = {
+		icon = decision
+		available = {
+			NOT = {
+				OR = {
+					check_variable = { party_pop_elect_array^3 < election_threshold } #failed elections
+					is_in_array = { gov_coalition_array = 3 } #is already in coalition
+					is_in_array = { ruling_party = 3 } #is already in coalition
+					check_variable = { government_coalition_strength_elect > majority_threshold } #already strong enough
+					
+					#is bigger than ruling party
+					meta_trigger = {
+						text = {
+							check_variable = { 
+								party_pop_elect_array^3 > [META_RULING_PARTY_PERCENTAGE]
+							}
+						}
+						META_RULING_PARTY_PERCENTAGE = "[meta_ruling_party_percentage]"
+					}
+					
+					#won't join coalition if:
+					is_in_array = { gov_coalition_array = 6 } #Autocracy
+					is_in_array = { gov_coalition_array = 7 } #Conservative (reactionary)
+					is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
+					is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
+					is_in_array = { gov_coalition_array = 10 } #Kingdom
+					is_in_array = { gov_coalition_array = 11 } #Caliphate
+					is_in_array = { gov_coalition_array = 20 } #Nat_Populism
+					is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
+					is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
+					is_in_array = { gov_coalition_array = 23 } #Monarchist
+					
+					#won't join conservatives if both are strong
+					AND = {
+						OR = {
+							is_in_array = { gov_coalition_array = 1 } #conservatives
+							is_in_array = { ruling_party = 1 } #conservatives
+						}
+						check_variable = { party_pop_elect_array^1 > 0.2 } #conservatives
+						check_variable = { party_pop_elect_array^3 > 0.2 } #socialism
+					}
+					AND = {
+						OR = {
+							is_in_array = { gov_coalition_array = 14 } #neutral conservatives
+							is_in_array = { ruling_party = 14 } #neutral conservatives
+						}
+						check_variable = { party_pop_elect_array^14 > 0.2 } #neutral conservatives
+						check_variable = { party_pop_elect_array^3 > 0.2 } #socialism
+					}
+					#USA - Democrats and Republicans can't team up at all
+					AND = {
+						TAG = USA
+						OR = {
+							is_in_array = { gov_coalition_array = 1 } #conservatives
+							is_in_array = { ruling_party = 1 } #conservatives
+						}
+					}
+					AND = {
+						TAG = USA
+						OR = {
+							is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
+							is_in_array = { ruling_party = 14 } #Neutral_conservatism
+						}
+					}
+				}
+			}
+		}
+		
+		cost = 1
+		days_remove = 0
+		days_re_enable = 0
+		
+		ai_will_do = { base = 0 }
+		
+		complete_effect = {
+			hidden_effect = {
+				pol_distance_matrix_3 = yes
+				multiply_variable = { pol_distance_current = party_pop_elect_array^3 } #size
+				set_variable = { pp_cost_to_invite = pol_distance_current }
+				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
+				
+				#for correct localization of idea
+				if = {
+					limit = { 
+						NOT = {
+							OR = {
+								#western ruling party
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 1 }
+								is_in_array = { ruling_party = 2 }
+								is_in_array = { ruling_party = 3 }	
+							}
+						}
+					}
+					add_to_variable = { coalition_democratic = party_pop_elect_array^3 }
+				}
+			}
+			country_event = { id = coalition.3 }
+		}
+	}
+	socialism_remove = {
+		icon = decision
+		available = {
+		}
+		visible = { is_in_array = { gov_coalition_array = 3 } }
+		
+		cost = 0
+		days_remove = 0
+		days_re_enable = 0
+		
+		ai_will_do = { base = 0 }
+		
+		complete_effect = {
+			hidden_effect = {
+				pol_distance_matrix_3 = yes
+				multiply_variable = { pol_distance_current = party_pop_elect_array^3 } #size
+				set_variable = { pp_cost_to_invite = pol_distance_current }
+				multiply_variable = { pp_cost_to_invite = 1500 } #75%
+				add_political_power = pp_cost_to_invite
+				if = {
+					limit = { 
+						NOT = {
+							OR = {
+								#western ruling party
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 1 }
+								is_in_array = { ruling_party = 2 }
+								is_in_array = { ruling_party = 3 }	
+							}
+						}
+					}
+					subtract_from_variable = { coalition_democratic = party_pop_elect_array^3 }
+					clear_coalition_western_count_ideas = yes
+					reset_democratic_coalition_ideas = yes
+				}
+				remove_from_array = { gov_coalition_array = 3 } #socialism
+				update_government_coalition_strength = yes
+			}
+		}
+	}
+}
+
+
