@@ -123,8 +123,8 @@ focus_tree = {
 				limit = { has_idea = bureau_01 }
 				add_political_power = 150	#if country has desired level it earns political power instead.
 			}
-			add_to_variable = { BRA_brazilian_party_alignment = 10.0 }
-			custom_effect_tooltip = "Raises Party Alignment by 10"
+			subtract_from_variable = { BRA_brazilian_party_alignment = 10.0 }
+			custom_effect_tooltip = BRA_the_internal_tt
 		}
 		
 		ai_will_do = {
@@ -192,9 +192,9 @@ focus_tree = {
 		completion_reward = {
 			remove_ideas = BRA_idea_imf_debts
 			subtract_from_variable = { debt = 100 }
-			custom_effect_tooltip = "Debt falls by 100"
 			add_to_variable = { BRA_brazilian_party_alignment = 5.0 }
-			custom_effect_tooltip = "Raises Party Alignment by 5"
+			custom_effect_tooltip = BRA_pay_back_the_imf_tt
+			relative_change_pos_2 = yes
 		}
 		
 		ai_will_do = {
@@ -422,7 +422,8 @@ focus_tree = {
 				add_political_power = 150 #if desired corruption level is reached before PP is rewarded instead
 			}
 			add_to_variable = { BRA_brazilian_party_alignment = 5.0 }
-			custom_effect_tooltip = "Raises Party Alignment by 5"
+			relative_change_pos_4 = yes
+			custom_effect_tooltip = BRA_raise_party_alignment_by_5_tt
 		}
 		
 		ai_will_do = {
@@ -477,7 +478,8 @@ focus_tree = {
 				add_political_power = 100 #will raise no matter what until highest education law is reached
 			}
 			add_to_variable = { BRA_brazilian_party_alignment = 5.0 }
-			custom_effect_tooltip = "Raises Party Alignment by 5"
+			relative_change_pos_4 = yes
+			custom_effect_tooltip = BRA_raise_party_alignment_by_5_tt
 		}
 		
 		ai_will_do = {
@@ -528,7 +530,7 @@ focus_tree = {
 				add_political_power = 75 #healthcare is invested in up to an extent
 			}
 			subtract_from_variable = { BRA_brazilian_party_alignment = 5.0 }
-			custom_effect_tooltip = "Lowers Party Alignment by 5"
+			custom_effect_tooltip = BRA_lowers_party_alignment_by_5_tt
 		}
 		
 		ai_will_do = {
@@ -626,6 +628,7 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = { 
 			add_ideas = BRA_idea_new_wave_ideas
+			add_political_power = -50
 		}
 		
 		ai_will_do = {
@@ -669,7 +672,8 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			unlock_decision_category_tooltip = BRA_war_on_the_cartels_decision_category
+			#unlock_decision_category_tooltip = BRA_war_on_the_cartels_decision_category
+			remove_ideas = cartels_3
 		}
 		
 		ai_will_do = {
@@ -1755,7 +1759,7 @@ focus_tree = {
 		y = 9
 		relative_position_id = BRA_lula
 		
-		cost = 2
+		cost = 10
 		
 		prerequisite = { focus = BRA_isolationism }
 		mutually_exclusive = { }
@@ -1975,7 +1979,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = { 
-			#Tax Cut/Encouraged Foreign Investment
+			add_political_power = 100
 		}
 		
 		ai_will_do = {
@@ -2267,7 +2271,9 @@ focus_tree = {
 		
 		prerequisite = { focus = BRA_modern_artillery } 
 		mutually_exclusive = { focus = BRA_reform_the_navy }
-		available = { }
+		available = {
+			threat > 0.10
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -2599,7 +2605,9 @@ focus_tree = {
 		
 		prerequisite = { focus = BRA_underwater_flotilla } 
 		mutually_exclusive = { focus = BRA_strength_on_land }
-		available = { }
+		available = {
+			threat > 0.10
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -3563,7 +3571,7 @@ focus_tree = {
 		x = 25
 		y = 0
 		
-		cost = 10
+		cost = 5
 		
 		prerequisite = { } 
 		mutually_exclusive = { }
@@ -3586,7 +3594,7 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			add_stability = -0.05
-			add_political_power = 50
+			add_political_power = 100
 		}
 		
 		ai_will_do = {
@@ -3685,9 +3693,10 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = { 
-			add_stability = 0.05
+			add_stability = 0.075
 			subtract_from_variable = { treasury = 15.0 }
-			custom_effect_tooltip = "Loses $15 Million"
+			relative_change_pos_2 = yes
+			custom_effect_tooltip = BRA_dismantle_the_agency_tt
 		}
 		
 		ai_will_do = {
@@ -3753,6 +3762,15 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			add_stability = -0.02
+			if = {
+				limit = { has_idea = police_02 }
+				swap_ideas = { remove_idea = police_02 add_idea = police_03 }
+			}
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.05
+			}	
+			recalculate_party = yes
 		}
 		
 		ai_will_do = {
@@ -3818,7 +3836,8 @@ focus_tree = {
 		completion_reward = { 
 			add_ideas = BRA_idea_imf_debts
 			add_to_variable = { debt = 225 }
-			custom_effect_tooltip = "Debt Rises by 225"
+			add_to_variable = { treasury = 225 }
+			custom_effect_tooltip = BRA_reinstating_imf_debts_tt
 		}
 		
 		ai_will_do = {
@@ -3851,27 +3870,15 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {		
 			if = {
-				limit = { has_idea = stagnation }
-				swap_ideas = { remove_idea = stagnation add_idea = recession }
-			}
-			if = {
-				limit = { has_idea = stable_growth }
-				swap_ideas = { remove_idea = stable_growth add_idea = recession }
-			}
-			if = {
-				limit = { has_idea = fast_growth }
-				swap_ideas = { remove_idea = fast_growth add_idea = recession }
-			}
-			if = {
-				limit = { has_idea = economic_boom }
-				swap_ideas = { remove_idea = economic_boom add_idea = recession }
-			}
-			if = {
 				limit = { has_idea = recession }
-				add_political_power = -100
+				swap_ideas = { remove_idea = recession add_idea = stagnation }
+			}
+			if = {
+				limit = { has_idea = stagnation }
+				add_political_power = 100 #If Player has already boosted to stagnation
 			}
 			subtract_from_variable = { treasury = 10 }
-			custom_effect_tooltip = "Loses $10 Million"
+			custom_effect_tooltip = BRA_lose_10_million_tt
 		}
 		
 		ai_will_do = {
