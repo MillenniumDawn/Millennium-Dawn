@@ -1,0 +1,165 @@
+###For industries going bankrupt, relocating &c.### 
+
+##Remember to Set Reduction Factor!!##
+##Reduction factor is the percentage to remove, so for 10% reduction factor is 0.1
+##This doesnt produce a tooltip so a scripted one is used.
+##Tooltip: "Lose <reduction_factor>% of civilian factories."
+
+remove_civilian_industry_effect = {
+	#log = "ecovent100 eff: Lose §R[?reduction_factor|%0]§! of civilian factories."
+	#log = "Ind: [?reduction_factor] [?reduction_factor|%0]"
+	custom_effect_tooltip = remove_civilian_industry_effect_tt
+	hidden_effect = {
+		set_variable = { ind_factories = num_of_civilian_factories }
+		log = "Removing Industry, Factories: [?ind_factories], reduction factor: [?reduction_factor]"
+		multiply_variable = {
+			var = ind_factories
+			value = reduction_factor
+		}
+		set_variable = { iterations = 0 }
+		civ_factory_remove_loop_effect = yes
+	}
+}
+
+##HoI doesn't have while = { } loops so this'll do for now.##
+##Must set iterations before calling this effect.
+civ_factory_remove_loop_effect = {
+	hidden_effect = {
+		log = "Starting Removal Loop"
+		if = {
+			log = "Removal Loop. Iteration: [?iterations]"
+			limit = {
+				check_variable = {
+					var = iterations
+					value = ind_factories
+					compare = less_than
+				}
+			}
+			random_owned_state = {
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+				log = "Removing industry in [This.GetName], [Root.GetName]"
+			}
+			add_to_variable = {
+				var = iterations
+				value = 1
+			}
+			civ_factory_remove_loop_effect = yes
+		}
+	}
+}
+
+###Industry Relocates###
+##Tooltip: "<reduction_factor>% of civilian factories move to <relocation_location>."
+migrate_industry_to_random_effect = {
+	hidden_effect = {
+		random_country = {
+			limit = {
+				NOT = {
+					OR = {
+						has_idea = depression
+						has_idea = recession
+						has_idea = stagnation
+					}
+				}
+				has_war = no
+				#num_of_controlled_states > ROOT #Should stop one-state country getting 50 factories. #Doesn't appear to work with scope reference
+			}
+			save_event_target_as = relocation_location
+		}
+	}
+	custom_effect_tooltip = migrate_industry_to_random_effect_tt
+	hidden_effect = {
+		set_variable = { ind_factories = num_of_civilian_factories }
+		log = "Relocating Industry, Factories: [?ind_factories], reduction factor: [?reduction_factor]"
+		multiply_variable = {
+			var = ind_factories
+			value = reduction_factor
+		}
+		set_variable = { iterations = 0 }
+		civ_factory_remove_loop_effect = yes
+		event_target:relocation_location = {
+			country_event = {
+				id = econvent.102
+				days = 1
+				random = 24
+			}
+		}
+	}
+}
+
+# Remember to save_event_target_as = relocation_location before effect
+migrate_industry_to_relocation_location_effect = {
+	custom_effect_tooltip = migrate_industry_to_random_effect_tt
+	hidden_effect = {
+		set_variable = { ind_factories = num_of_civilian_factories }
+		log = "Relocating Industry, Factories: [?ind_factories], reduction factor: [?reduction_factor]"
+		multiply_variable = {
+			var = ind_factories
+			value = reduction_factor
+		}
+		set_variable = { iterations = 0 }
+		civ_factory_remove_loop_effect = yes
+		event_target:relocation_location = {
+			country_event = {
+				id = econvent.102
+				days = 1
+				random = 24
+			}
+		}
+	}
+}
+
+##HoI doesn't have while = { } loops so this'll do for now.##
+##Must set iterations before calling this effect.
+civ_factory_relocate_from_from_build_loop_effect = {
+	hidden_effect = {
+		log = "Starting Construction Loop"
+		if = {
+			log = "Construction Loop. Iteration: [?From.iterations]"
+			limit = {
+				FROM = { #To get ind_factories var
+					check_variable = {
+						var = iterations
+						value = ind_factories
+						compare = less_than
+					}
+				}
+			}
+			random_owned_state = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 1
+							include_locked = no
+						}
+					}
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+				else = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+				log = "Constructing industry in [This.GetName], [Root.GetName]"
+			}
+			FROM = {
+				add_to_variable = {
+					var = iterations
+					value = 1
+				}
+			}
+			civ_factory_relocate_from_from_build_loop_effect = yes
+		}
+	}
+}
