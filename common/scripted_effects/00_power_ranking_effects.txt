@@ -1,0 +1,112 @@
+# Power ranking effects by Yard1
+
+# THIS is whatever
+# Do the ranking - fired every month
+set_power_ranking_ideas_for_every_country = {
+	get_global_factories = yes
+	determine_regional_powers = yes
+	every_country = {
+		get_percentage_of_global_factories = yes
+		determine_power_ranking = yes
+	}
+}
+
+# THIS is whatever
+# Sum of world's factories (civ, mil, nav) saved in global_num_of_factories variable
+get_global_factories = {
+	clear_array = global.european_nations
+	set_variable = { global.global_num_of_factories = 0 }
+	every_country = {
+		clr_country_flag = regional_power
+		set_variable = { global.tmp = num_of_factories }
+		add_to_variable = { global.global_num_of_factories = num_of_factories }
+		if = { # could probably be done once in on_startup
+			limit = { is_european_nation = yes }
+			for_each_loop = {
+				array = global.european_nations
+				if = {
+					limit = {
+						var:v = {
+							check_variable = { global.tmp > num_of_factories }
+						}
+					}
+					var:v = { log = "[?this.GetName] has [?this.num_of_factories], [Prev.GetName] has [?global.tmp], idx [?i]" }
+					set_variable = { global.idx = i }
+					set_temp_variable = { break = 1 }
+				}
+			}
+			add_to_array = {
+				array = global.european_nations
+				value = THIS
+				index = global.idx
+			}
+		}
+	}
+	clear_variable = global.idx
+	clear_variable = global.tmp
+}
+
+# THIS is whatever
+# Determine which countries are eligible to become a regional power
+determine_regional_powers = {
+	set_temp_variable = {
+		end_idx = global.european_nations^num
+	}
+	if = {
+		limit = { check_variable = { end_idx > 8 } }
+		set_temp_variable = { end_idx = 8 }
+	}
+	for_loop_effect = {
+		start = 0
+		end = end_idx
+		value = i
+		var:global.european_nations^i = { set_country_flag = regional_power }
+	}
+}
+
+# THIS is a country
+# Calculates what percentage of global factories the country's factories (civ, mil, nav) make up
+# Saved in percentage_of_global_factories variable
+get_percentage_of_global_factories = {
+	set_variable = { percentage_of_global_factories = num_of_factories }
+	divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
+}
+
+# THIS is a country
+# Determine what kind of power they are
+determine_power_ranking = {
+	remove_ideas = {
+		superpower
+		great_power
+		large_power
+		regional_power
+		non_power
+	}
+	if = {
+		limit = {
+			check_variable = { percentage_of_global_factories > 0.08 }
+		}
+		add_ideas = superpower
+	}
+	else_if = {
+		limit = {
+			check_variable = { percentage_of_global_factories > 0.035 }
+		}
+		add_ideas = great_power
+	}
+	else_if = {
+		limit = {
+			check_variable = { percentage_of_global_factories > 0.015 }
+		}
+		add_ideas = large_power
+	}
+	else_if = {
+		limit = {
+			has_country_flag = regional_power
+		}
+		add_ideas = regional_power
+	}
+	else = {
+		add_ideas = non_power
+	}
+}
