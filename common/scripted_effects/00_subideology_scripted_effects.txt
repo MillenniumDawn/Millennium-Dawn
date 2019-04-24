@@ -79,6 +79,42 @@ gov_pop_idea_remove = {
 	}
 }
 
+set_coalition_drift = {
+	#reset coalition counts
+	set_variable = { coalition_fascism = 0 }
+	set_variable = { coalition_nationalist = 0 }
+	set_variable = { coalition_communism = 0 }
+	set_variable = { coalition_neutrality = 0 }
+	set_variable = { coalition_democratic = 0 }
+	clear_coalition_count_ideas = yes
+	
+	for_loop_effect = {
+		end = 23 
+		value = v
+		set_temp_variable = { sum = party_pop_elect_array^gov_coalition_array^v } #pop of current element
+		set_temp_variable = { current_id = gov_coalition_array^v } #ID of current element
+		
+		meta_effect = {
+			text = {
+				add_to_variable = { coalition_[PART_OF_IDEOLOGY] = sum }
+			}
+			PART_OF_IDEOLOGY = "[offcial_name_party_ideology]"
+		}
+	}
+	#prevents adding to own ideology
+	meta_effect = {
+		text = {
+			set_variable = { coalition_[CURRENT_RULING_IDEOLOGY] = 0 }
+		}
+		CURRENT_RULING_IDEOLOGY = "[offcial_name_party_ideology]"
+	}
+	reset_democratic_coalition_ideas = yes
+	reset_neutrality_coalition_ideas = yes
+	reset_communism_coalition_ideas = yes
+	reset_nationalist_coalition_ideas = yes
+	reset_fascism_coalition_ideas = yes
+}
+
 #run on recalculate_party as well
 update_government_coalition_strength = {
 	gov_pop_idea_remove = yes #remove popularity idea
@@ -122,6 +158,7 @@ update_government_coalition_strength = {
 	subtract_from_variable = { government_coalition_differential = government_coalition_strength_elect }
 	update_majority_threshold = yes
 	gov_pop_idea_add = yes # give popularity idea
+	set_coalition_drift = yes
 	find_two_highest_parties = yes
 }
 
@@ -195,7 +232,7 @@ store_election_values = {
 				limit = { 
 					check_variable = { party_pop_array^v > election_threshold } #entry is over threshold
 				}
-				set_variable = { party_pop_elect_array^v = party_pop_array^v } #note: new var has no name
+				set_variable = { party_pop_elect_array^v = party_pop_array^v } #
 			}
 		}
 	}
