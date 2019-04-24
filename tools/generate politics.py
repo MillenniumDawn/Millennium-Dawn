@@ -1415,7 +1415,7 @@ def createCustomElectionEffect (hasCustomElections, tag, rootDir):
     content = "set_leader = {\n\n"
     content += "\t#will set correct outlook to place the newly generated leader in\n"
     content += "\thidden_effect = {\n"
-    content += "\t\tkill_country_leader = yes\n"
+    content += "\t\thidden_effect = { kill_country_leader = yes }\n"
     content += "\t}\n"
     content += "\tupdate_set_politics = yes\n"
     content += "\t#script per country\n"
@@ -1456,9 +1456,9 @@ def createPartyContent2 (organizedLeaders, tag, ideology):
                 if leader ==1:
                     content += "\t\tif = { limit = { check_variable = { " + ideology + "_leader = " + str(leader - 1) + " } }\n"
                 else:
-                    content += "\t\tif = { limit = { check_variable = { " + ideology + "_leader = " + str(leader - 1) + " NOT = { check_variable = { b = 1 } } } }\n"
-                content += "\t\t\tset_variable = { " + ideology + "_leader = 1 }\n"
-                content += "\t\t\tkill_country_leader = yes\n\n"
+                    content += "\t\tif = { limit = { check_variable = { " + ideology + "_leader = " + str(leader - 1) + " } NOT = { check_variable = { b = 1 } } }\n"
+                content += "\t\t\tadd_to_variable = { " + ideology + "_leader = 1 }\n"
+                content += "\t\t\thidden_effect = { kill_country_leader = yes }\n\n"
                 content += "\t\t\tcreate_country_leader = {\n"
                 content += "\t\t\t\tname = \"" + organizedLeaders[pos2][2][0] + "\"\n"
                 content += "\t\t\t\tpicture = \"" + organizedLeaders[pos2][3][0] + "\"\n"
