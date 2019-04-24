@@ -43,31 +43,45 @@ update_party_name = {
 	}
 }
 
-setup_coalition_vars = {
-	
-	#Emerging add-up
-	if = {
-		limit = { 
-			AND = {
-				NOT = {
-					OR = {
-						#Emerging ruling party
-						is_in_array = { ruling_party = 4 }
-						is_in_array = { ruling_party = 5 }
-						is_in_array = { ruling_party = 6 }
-						is_in_array = { ruling_party = 7 }
-						is_in_array = { ruling_party = 8 }
-						is_in_array = { ruling_party = 9 }
-					}
-				}
+gov_pop_idea_add = {
+	set_temp_variable = { add_t = government_coalition_differential }
+	multiply_temp_variable = { add_t = 100 }
+	meta_effect = {
+		text = {
+			add_ideas = { 
+				gov_pop_[POP_DIFF_ADD]
 			}
 		}
-		add_to_variable = { coalition_democratic = party_pop_elect_array^4 }
+		POP_DIFF_ADD = "[?add_t|0]"
+	}
+}
+
+gov_pop_idea_remove = {
+	set_temp_variable = { remove_t = government_coalition_differential }
+	multiply_temp_variable = { remove_t = 100 }
+	if = {
+		limit = {
+			meta_trigger = {
+				text = {
+					has_idea = gov_pop_[POP_DIFF_HAS]
+				}
+				POP_DIFF_HAS = "[?remove_t|0]"
+			}
+		}
+		meta_effect = {
+			text = {
+				remove_ideas = { 
+					gov_pop_[POP_DIFF_REMOVE]
+				}
+			}
+			POP_DIFF_REMOVE = "[?remove_t|0]"
+		}
 	}
 }
 
 #run on recalculate_party as well
 update_government_coalition_strength = {
+	gov_pop_idea_remove = yes #remove popularity idea
 	set_temp_variable = { sum = 0 }
 	for_loop_effect = {
 		end = 23 
@@ -107,6 +121,7 @@ update_government_coalition_strength = {
 	set_variable = { government_coalition_differential = government_coalition_strength }
 	subtract_from_variable = { government_coalition_differential = government_coalition_strength_elect }
 	update_majority_threshold = yes
+	gov_pop_idea_add = yes # give popularity idea
 	find_two_highest_parties = yes
 }
 
