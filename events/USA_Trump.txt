@@ -418,6 +418,414 @@ country_event = {
 	}
 }
 
+########################## Asteroid Mining Event Chain ##########################
+
+#Launching the Asteroid Mining Initiative
+country_event = {
+	id = donald_trump.8
+	title = donald_trump.8.t
+	desc = donald_trump.8.d
+	picture = GFX_trump_announcement
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Just need to wait for an asteroid...
+		name = donald_trump.8.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.8.o1 executed"
+		hidden_effect = {
+			country_event = {
+				id = donald_trump.9
+				days = 10
+				random = 4800
+			}
+		}
+		news_event = donald_trump_news.2
+		custom_effect_tooltip = asteroid_mining_wait_period_tt
+	}
+}
+#Asteroid Spotted
+country_event = {
+	id = donald_trump.9
+	title = donald_trump.9.t
+	desc = donald_trump.9.d
+	picture = GFX_asteroid
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Let's get that baby into orbit
+		name = donald_trump.9.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.9.o1 executed"
+		hidden_effect = {
+			country_event = {
+				id = donald_trump.10
+				days = 50
+				random = 1200
+			}
+		}
+		custom_effect_tooltip = asteroid_mining_spotted_tt
+	}
+}
+#Asteroid in Orbit
+country_event = {
+	id = donald_trump.10
+	title = donald_trump.10.t
+	desc = donald_trump.10.d
+	picture = GFX_asteroid_in_orbit
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Mining shall begin
+		name = donald_trump.10.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.10.o1 executed"
+		hidden_effect = {
+			country_event = {
+				id = donald_trump.11
+				days = 100
+				random = 2400
+			}
+		}
+		custom_effect_tooltip = asteroid_mining_orbit_tt
+		set_variable = { asteroid_mining_rate = 2 } #It's set here so the next event's localization isn't screwed up
+		set_variable = { global.asteroid_mining_rate = 2 }
+	}
+}
+#Profits from Mining Start Pouring in
+country_event = {
+	id = donald_trump.11
+	title = donald_trump.11.t
+	desc = donald_trump.11.d
+	picture = GFX_asteroid_in_orbit
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Huzzah!
+		name = donald_trump.11.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.11.o1 executed"
+		add_resource = {
+			type = tungsten
+			amount = 2
+			state = capital_scope
+		}
+		add_resource = {
+			type = steel
+			amount = 2
+			state = capital_scope
+		}
+		set_variable = { global.asteroid_mineral_count = 100 }
+		custom_effect_tooltip = asteroid_mining_mined_tt
+		add_to_variable = { treasury = asteroid_mining_rate }
+		custom_effect_tooltip = asteroid_mining_revenue_tt
+		set_country_flag = asteroid_mining
+		news_event = donald_trump_news.3
+	}
+}
+#Profits from Asteroid Mining
+country_event = {
+	id = donald_trump.12
+	title = donald_trump.12.t
+	desc = donald_trump.12.d
+	picture = GFX_asteroid_in_orbit
+
+	is_triggered_only = yes
+
+	option = { #Excellent!
+		name = donald_trump.12.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.12.o1 executed"
+		custom_effect_tooltip = asteroid_mining_mined_tt
+		add_to_variable = { treasury = asteroid_mining_rate }
+		subtract_from_variable = { global.asteroid_mineral_count = asteroid_mining_rate }
+		custom_effect_tooltip = asteroid_mining_revenue_tt
+		hidden_effect = {
+			every_country = {
+				limit = {
+					num_of_factories > 40
+				}
+				country_event = { days = 20 id = donald_trump.13 }
+			}
+		}
+	}
+}
+#Potential for Asteroid Mining
+country_event = {
+	id = donald_trump.13
+	title = donald_trump.13.t
+	desc = donald_trump.13.d
+	picture = GFX_asteroid_in_orbit
+
+	is_triggered_only = yes
+
+	option = { #Invest in Asteroid Mining
+		name = donald_trump.13.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.13.o1 executed"
+		add_political_power = -50
+		subtract_from_variable = { treasury = 25 }
+		set_variable = { asteroid_mining_rate = 1 }
+		set_variable = { global.asteroid_mining_rate = 1 }		
+		add_resource = {
+			type = tungsten
+			amount = 1
+			state = capital_scope
+		}
+		add_resource = {
+			type = steel
+			amount = 1
+			state = capital_scope
+		}
+		custom_effect_tooltip = 25_billion_expense_tt
+		custom_effect_tooltip = asteroid_mining_opportunity_tt
+		set_country_flag = asteroid_mining
+		set_global_flag = asteroid_mining
+	}
+	option = { #Too expensive and a waste of our time!
+		name = donald_trump.13.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump.13.o2 executed"
+	}
+}
+
+########################## Mission to Mars Event Chain ##########################
+
+
+#Mission to Mars
+country_event = {
+	id = donald_trump.23
+	title = donald_trump.23.t
+	desc = donald_trump.23.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Preparations shall begin
+		name = donald_trump.23.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.23.o1 executed"
+		add_political_power = -10
+		hidden_effect = {
+			country_event = {
+				id = donald_trump.14
+				days = 180
+			}
+		}
+	}
+}
+#Mission to Mars Ready
+country_event = {
+	id = donald_trump.14
+	title = donald_trump.14.t
+	desc = donald_trump.14.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #30 days until launch!
+		name = donald_trump.14.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.14.o1 executed"
+		add_political_power = -10
+		hidden_effect = {
+			country_event = {
+				id = donald_trump.15
+				days = 30
+			}
+		}
+	}
+}
+#On the Launch Pad
+country_event = {
+	id = donald_trump.15
+	title = donald_trump.15.t
+	desc = donald_trump.15.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #3, 2, 1...
+		name = donald_trump.15.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.15.o1 executed"
+		hidden_effect = {
+			random_list = {
+				90 = {
+					country_event = donald_trump.16			
+				}
+				10 = {
+					country_event = donald_trump.17
+				}
+			}
+		}
+	}
+}
+#Lift off!
+country_event = {
+	id = donald_trump.16
+	title = donald_trump.16.t
+	desc = donald_trump.16.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Off to Mars they go!
+		name = donald_trump.16.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.16.o1 executed"
+		add_political_power = 50
+		add_stability = 0.03
+		hidden_effect = {
+			random_list = {
+				75 = {
+					country_event = {
+						id = donald_trump.21
+						days = 210
+					}
+				}
+				25 = {
+					country_event = {
+						id = donald_trump.18
+						days = 180
+					}
+				}
+			}
+		}
+	}
+}
+#Disaster Strikes!
+country_event = {
+	id = donald_trump.17
+	title = donald_trump.17.t
+	desc = donald_trump.17.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #A fatal accident
+		name = donald_trump.17.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.17.o1 executed"
+		add_political_power = -75
+		add_stability = -0.02
+		custom_effect_tooltip = mission_to_mars_chain_end_tt
+	}
+}
+#Collision in Space
+country_event = {
+	id = donald_trump.18
+	title = donald_trump.18.t
+	desc = donald_trump.18.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #If the astronauts are ready for it, then let them go
+		name = donald_trump.18.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.18.o1 executed"
+		add_political_power = -75
+		country_event = {
+			id = donald_trump.20
+			days = 70
+		}
+	}
+	option = { #Let's get our men home
+		name = donald_trump.18.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump.18.o2 executed"
+		add_political_power = -25
+		country_event = {
+			id = donald_trump.19
+			days = 360
+		}
+	}
+}
+#Shamed Return
+country_event = {
+	id = donald_trump.19
+	title = donald_trump.19.t
+	desc = donald_trump.19.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Unfortunate, but at least they're alive
+		name = donald_trump.19.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.19.o1 executed"
+		add_political_power = 50
+		custom_effect_tooltip = mission_to_mars_chain_end_tt
+	}
+}
+#Sacrifice on Mars
+country_event = {
+	id = donald_trump.20
+	title = donald_trump.20.t
+	desc = donald_trump.20.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Martyrs on Mars
+		name = donald_trump.20.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.20.o1 executed"
+		add_political_power = 100
+		custom_effect_tooltip = mission_to_mars_chain_end_tt
+	}
+}
+#The Eagle has Landed
+country_event = {
+	id = donald_trump.21
+	title = donald_trump.21.t
+	desc = donald_trump.21.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Hip Hip Hurray for the USA!
+		name = donald_trump.21.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.21.o1 executed"
+		add_political_power = 100
+		country_event = {
+			id = donald_trump.22
+			days = 400
+		}
+	}
+}
+#Heroic Return
+country_event = {
+	id = donald_trump.22
+	title = donald_trump.22.t
+	desc = donald_trump.22.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Our heroes are home
+		name = donald_trump.22.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.22.o1 executed"
+		add_political_power = 150
+		custom_effect_tooltip = mission_to_mars_chain_end_tt
+	}
+}
+
+
+
 ####################################################################################################################################################################################################################
 ################################################################################ FOREIGN POLICY (Huge separation for quicker navigation) ###########################################################################
 ####################################################################################################################################################################################################################
@@ -427,7 +835,7 @@ country_event = {
 	id = donald_trump.500
 	title = donald_trump.500.t
 	desc = donald_trump.500.d
-	picture = GFX_USA_Election_2020
+	picture = GFX_SYR_tahir_al_sham
 
 	fire_only_once = yes
 
@@ -567,7 +975,7 @@ country_event = {
 	id = donald_trump.501
 	title = donald_trump.501.t
 	desc = donald_trump.501.d
-	picture = GFX_USA_Election_2020
+	picture = GFX_us_flag
 
 	fire_only_once = yes
 
@@ -662,7 +1070,7 @@ country_event = {
 	id = donald_trump.502
 	title = donald_trump.502.t
 	desc = donald_trump.502.d
-	picture = GFX_USA_Election_2020
+	picture = GFX_us_flag
 
 	fire_only_once = yes
 
@@ -703,7 +1111,7 @@ country_event = {
 	id = donald_trump.503
 	title = donald_trump.503.t
 	desc = donald_trump.503.d
-	picture = GFX_USA_Election_2020
+	picture = GFX_us_flag
 
 	fire_only_once = yes
 
@@ -721,7 +1129,7 @@ country_event = {
 	id = donald_trump.504
 	title = donald_trump.504.t
 	desc = donald_trump.504.d
-	picture = GFX_USA_Election_2020
+	picture = GFX_us_flag
 
 	fire_only_once = yes
 
@@ -733,14 +1141,16 @@ country_event = {
 		add_ideas = us_extensive_bombing_campaign
 	}
 }
+####################################################################################################################
 ####################################################### NEWS #######################################################
+####################################################################################################################
 
 #US Suspends War Against ISIS
 news_event = {
 	id = donald_trump_news.0
 	title = donald_trump_news.0.t
 	desc = donald_trump_news.0.d
-	picture = GFX_USA_TRUMP_JCPOA
+	picture = GFX_news_trump_announcement
 	
 	major = yes
 
@@ -796,7 +1206,7 @@ news_event = {
 	id = donald_trump_news.1
 	title = donald_trump_news.1.t
 	desc = donald_trump_news.1.d
-	picture = GFX_USA_TRUMP_JCPOA
+	picture = GFX_report_event_united_states_air_force	
 	
 	major = yes
 
@@ -844,5 +1254,81 @@ news_event = {
 		}
 		name = donald_trump_news.1.o4
 		log = "[GetDateText]: [This.GetName]: donald_trump_news.1.o4 executed"
+	}
+}
+
+#US Launches Asteroid Mining Initiative
+news_event = {
+	id = donald_trump_news.2
+	title = donald_trump_news.2.t
+	desc = donald_trump_news.2.d
+	picture = GFX_news_trump_announcement
+	
+	major = yes
+
+	fire_only_once = yes
+
+	option = { #Space!
+		trigger = {
+			original_tag = USA
+		}
+		name = donald_trump_news.2.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.2.o1 executed"
+	}
+	option = { #Maybe we could expand into this...
+		trigger = {
+			num_of_factories > 25
+			NOT = { original_tag = USA }
+		}
+		name = donald_trump_news.2.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.2.o2 executed"
+	}
+	option = { #Interesting
+		trigger = {
+			NOT = {
+				num_of_factories > 25
+				original_tag = USA 
+			}
+		}
+		name = donald_trump_news.2.o3
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.2.o3 executed"
+	}
+}
+
+#US Sets up Asteroid Mining Operations
+news_event = {
+	id = donald_trump_news.3
+	title = donald_trump_news.3.t
+	desc = donald_trump_news.3.d
+	picture = GFX_news_asteroid_in_orbit
+	
+	major = yes
+
+	fire_only_once = yes
+
+	option = { #Space!
+		trigger = {
+			original_tag = USA
+		}
+		name = donald_trump_news.3.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.3.o1 executed"
+	}
+	option = { #We really should expand into this
+		trigger = {
+			num_of_factories > 25
+			NOT = { original_tag = USA }
+		}
+		name = donald_trump_news.3.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.3.o2 executed"
+	}
+	option = { #Interesting
+		trigger = {
+			NOT = {
+				num_of_factories > 25
+				original_tag = USA 
+			}
+		}
+		name = donald_trump_news.3.o3
+		log = "[GetDateText]: [This.GetName]: donald_trump_news.3.o3 executed"
 	}
 }
