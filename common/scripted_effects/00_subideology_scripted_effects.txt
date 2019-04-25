@@ -3,56 +3,71 @@
 
 startup_politics = {
 	set_failsafe_values = yes #adds needed values if missing
-	recalculate_party = yes #standard existing function
+	add_up_party_totals = yes
+	set_party_positions = yes
 	setup_election_threshold = yes #adds election_threshold if not set
-	store_election_values = yes #create election array
-	update_government_coalition_strength = yes #need to be redone if custom election strength added in history
+	store_election_values = yes #add to election array
+	update_majority_threshold = yes
+	update_government_coalition_strength = yes
 	update_party_name = yes
 	reset_coalition_ideas = yes
+	find_two_highest_parties = yes
 }
 
 start_politics_input = {
 	clear_array = party_pop_array
+	clear_array = party_pop_elect_array
 	clear_array = pos_array
 	clear_array = ruling_party
 	clear_array = gov_coalition_array
 	
 	resize_array = { array = party_pop_array size = 24 }
+	resize_array = { array = party_pop_elect_array size = 24 }
 	resize_array = { array = pos_array size = 24 }
 }
 
 recalculate_party = {
-
-
+	add_up_party_totals = yes
+	set_party_positions = yes
+	update_government_coalition_strength = yes
 }
 
 
 add_up_party_totals = {
+
+	set_variable = { pop_total_democratic = 0 }
+	set_variable = { pop_total_communism = 0 }
+	set_variable = { pop_total_fascism = 0 }
+	set_variable = { pop_total_neutrality = 0 }
+	set_variable = { pop_total_nationalist = 0 }
+	
 	#sum of ideologies
 	for_each_loop = {
 		array = party_pop_array
-		set_temp_variable = { current_id = i }
+		set_variable = { current_id = party_pop_array^i }
 		meta_effect = {
-			text = { add_to_variable = { pop_total_[PART_OF_IDEOLOGY] = party_pop_array^v } }
-			PART_OF_IDEOLOGY = "[offcial_name_party_ideology]"
+			text = { add_to_variable = { pop_total_[PART_OF_IDEOLOGY1] = party_pop_array^v } }
+			PART_OF_IDEOLOGY1 = "[offcial_name_party_ideology]"
 		}
 	}
 	#Maintain consistency with outlooks
 	for_each_loop = {
 		array = party_pop_array
-		set_temp_variable = { current_id = i }
+		set_variable = { current_id = party_pop_array^i }
 		meta_effect = {
 			text = {
-				divide_variable = { party_pop_array^v = pop_total_[PART_OF_IDEOLOGY] }
-				multiply_variable = { party_pop_array^v = party_popularity@[PART_OF_IDEOLOGY] }
+				divide_variable = { party_pop_array^v = pop_total_[PART_OF_IDEOLOGY2] }
+				multiply_variable = { party_pop_array^v = party_popularity@[PART_OF_IDEOLOGY3] }
 			}
-			PART_OF_IDEOLOGY = "[offcial_name_party_ideology]"
+			PART_OF_IDEOLOGY2 = "[offcial_name_party_ideology]"
+			PART_OF_IDEOLOGY3 = "[offcial_name_party_ideology]"
 		}
 	}
+	clear_variable = current_id
 }
 
 set_party_positions = {
-	resize_array = { 
+	resize_temp_array = { 
 		array = party_pop_array_temp 
 		size = 24
 	}
@@ -65,12 +80,14 @@ set_party_positions = {
         }
 		set_variable = { pos_array^v = max_index }
 		set_variable = { party_pop_array^max_index = -1 }
-		add_to_temp_array = { party_pop_array_temp^max_index = max }
+		set_temp_variable = { party_pop_array_temp^max_index = max }
     }
+	clear_array = party_pop_array
     for_each_loop = {
         array = party_pop_array_temp
         add_to_array = { party_pop_array = v  }
     }
+	clear_temp_array = party_pop_array_temp
 }
 
 find_two_highest_parties = {
@@ -176,7 +193,6 @@ set_coalition_drift = {
 	reset_fascism_coalition_ideas = yes
 }
 
-#run on recalculate_party as well
 update_government_coalition_strength = {
 	gov_pop_idea_remove = yes #remove popularity idea
 	set_temp_variable = { sum = 0 }
@@ -217,10 +233,10 @@ update_government_coalition_strength = {
 	#find the differentials
 	set_variable = { government_coalition_differential = government_coalition_strength }
 	subtract_from_variable = { government_coalition_differential = government_coalition_strength_elect }
-	update_majority_threshold = yes
+	#update_majority_threshold = yes
 	gov_pop_idea_add = yes # give popularity idea
 	set_coalition_drift = yes
-	find_two_highest_parties = yes
+	#find_two_highest_parties = yes
 }
 
 refund_government_coalition = {
@@ -246,23 +262,18 @@ refund_government_coalition = {
 
 store_election_values = {
 
-	clear_array = party_pop_elect_array
-	
-	resize_array = {
-		array = party_pop_elect_array
-		size = 24
-	}
-	
 	for_loop_effect = {
 		end = 23 #24 parties
 		value = v
 		if = {
-			limit = { 
-				check_variable = { party_pop_elect_array^v = 0 } #if entry is 0 - always true
+			limit = {
+				#if entry is 0 - true if no specific value has been set
+				check_variable = { party_pop_elect_array^v = 0 }
 			}
 			if = { 
-				limit = { 
-					check_variable = { party_pop_array^v > election_threshold } #entry is over threshold
+				limit = {
+					#entry is over threshold
+					check_variable = { party_pop_array^v > election_threshold }
 				}
 				set_variable = { party_pop_elect_array^v = party_pop_array^v } #
 			}
