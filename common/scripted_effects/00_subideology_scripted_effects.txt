@@ -43,7 +43,7 @@ add_up_party_totals = {
 	
 	#sum of ideologies
 	for_loop_effect = {
-		end = 23
+		end = party_pop_array^num
 		set_variable = { current_id = v }
 		meta_effect = {
 			text = { add_to_variable = { pop_total_[PART_OF_IDEOLOGY1] = party_pop_array^v } }
@@ -52,17 +52,19 @@ add_up_party_totals = {
 	}
 	#Maintain consistency with outlooks
 	for_loop_effect = {
-		end = 23
-		set_variable = { current_id = v }
-		meta_effect = {
-			text = {
-				divide_variable = { party_pop_array^v = pop_total_[PART_OF_IDEOLOGY2] }
-				multiply_variable = { party_pop_array^v = party_popularity@[PART_OF_IDEOLOGY3] }
-			}
-			PART_OF_IDEOLOGY2 = "[offcial_name_party_ideology]"
-			PART_OF_IDEOLOGY3 = "[offcial_name_party_ideology]"
-		}
-	}
+        end = party_pop_array^num
+        set_variable = { current_id = v }
+        multiply_variable = { party_pop_array^v = 100 }
+        meta_effect = {
+            text = {
+                divide_variable = { party_pop_array^v = pop_total_[PART_OF_IDEOLOGY2] }
+                multiply_variable = { party_pop_array^v = party_popularity@[PART_OF_IDEOLOGY2] }
+            }
+            PART_OF_IDEOLOGY2 = "[offcial_name_party_ideology]"
+        }
+        round_variable = party_pop_array^v
+        divide_variable = { party_pop_array^v = 100 }
+    }
 	clear_variable = current_id
 }
 
@@ -72,7 +74,7 @@ set_party_positions = {
 		size = 24
 	}
 	for_loop_effect = {
-		end = 23
+		end = pos_array^num
 		find_highest_in_array = {
 			array = party_pop_array 
 			value = max
@@ -197,7 +199,7 @@ update_government_coalition_strength = {
 	gov_pop_idea_remove = yes #remove popularity idea
 	set_temp_variable = { sum = 0 }
 	for_loop_effect = {
-		end = 23 
+		end = party_pop_array^num 
 		value = v
 		add_to_temp_variable = { sum = party_pop_array^gov_coalition_array^v }
 	}
@@ -206,7 +208,7 @@ update_government_coalition_strength = {
 	#strength of ruling_party is separate
 	set_temp_variable = { sum = 0 }
 	for_loop_effect = {
-		end = 1 
+		end = ruling_party^num 
 		value = v
 		add_to_temp_variable = { sum = party_pop_array^ruling_party^v }
 	}
@@ -215,7 +217,7 @@ update_government_coalition_strength = {
 	### Now setup the election strength ###
 	set_temp_variable = { sum = 0 }
 	for_loop_effect = {
-		end = 23 
+		end = party_pop_array^num 
 		value = v
 		add_to_temp_variable = { sum = party_pop_elect_array^gov_coalition_array^v }
 	}
@@ -224,7 +226,7 @@ update_government_coalition_strength = {
 	#strength of ruling_party is separate
 	set_temp_variable = { sum = 0 }
 	for_loop_effect = {
-		end = 1 
+		end = ruling_party^num 
 		value = v
 		add_to_temp_variable = { sum = party_pop_elect_array^ruling_party^v }
 	}
@@ -242,7 +244,7 @@ update_government_coalition_strength = {
 refund_government_coalition = {
 	set_temp_variable = { sum_factor = 0 }
 	for_loop_effect = {
-		end = 23 
+		end = party_pop_array^num 
 		value = v
 		set_temp_variable = { sum = party_pop_elect_array^gov_coalition_array^v } #pop of current element
 		set_temp_variable = { current_id = gov_coalition_array^v } #ID of current element
@@ -263,7 +265,7 @@ refund_government_coalition = {
 store_election_values = {
 
 	for_loop_effect = {
-		end = 23 #24 parties
+		end = party_pop_array^num
 		value = v
 		if = {
 			limit = {
