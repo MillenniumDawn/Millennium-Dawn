@@ -20,8 +20,10 @@ scripted_gui = {
 		visible = {
 		  always = yes
 		}
-		
-		effects = { }
+
+		effects = { 
+			
+		}
 	}
 	
 	tha_list_of_parties = {
@@ -68,9 +70,46 @@ scripted_gui = {
 			has_country_flag = subideologies_opened
 		}
 		
+		properties = {
+			opt_party1_boost_button = {
+				image = "[select_party1_boost_button]"
+			}
+			opt_party1_attack_button = {
+				image = "[select_party1_attack_button]"
+			}
+		}
+		
+		triggers = {
+		
+			opt_party1_boost_button_click_enabled = {
+				check_variable = { party_pop_array^0 < election_threshold }
+				check_variable = { party_popularity@democratic > 0 }
+			}
+			opt_party1_attack_button_click_enabled = {
+				check_variable = { party_pop_array^0 > election_threshold }
+				#can't attack yourself or allies
+				NOT = {
+					OR = {
+						is_in_array = { ruling_party = 0 }
+						is_in_array = { gov_coalition_array = 0 }
+					}
+				}
+			}
+		}
+		
 		effects = {
 			subideologies_close_button_click = {
 				clr_country_flag = subideologies_opened
+			}
+			opt_party1_boost_button_click = {
+				add_to_variable = { party_pop_array^0 = 0.02 }
+				add_political_power = -100
+				#recalculate_party = yes
+			}
+			opt_party1_attack_button_click = {
+				subtract_from_variable = { party_pop_array^0 = 0.02 }
+				add_political_power = -75
+				#recalculate_party = yes
 			}
 		}
 	}
