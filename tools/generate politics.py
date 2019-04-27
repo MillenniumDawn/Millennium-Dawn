@@ -1086,7 +1086,7 @@ def createPartyLeaders (rootDir, sheet, filepath, extraLeaders, tags):
     return extraLeaders
 
 ###Main Function used to pull spreadsheet voter popularity & turn it into subideology values & write to ingame txt file
-def createSubIdeologyValues (rootDir, sheet, filepath, worksheet):
+def createSubIdeologyValues (rootDir, sheet, filepath, worksheet, startingLeaders):
     content = ""
     for a, b in enumerate(sheet[0]):
         if b != "" or a != 0:
@@ -1932,6 +1932,23 @@ def main():
                 #print(filename)
                 extraLeaders += getExtraLeaders2000(os.path.join(root, filename), tags, tagPos, tag)
 
+    worksheet = sheet.worksheet('Vote Share 2000')
+    content = worksheet.get_all_values()
+    worksheet = sheet.worksheet('Starting Leader 2000')
+    startingLeaders2000 = worksheet.get_all_values()
+
+    createSubIdeologyValues(rootDir, content, (rootDir + "/Modding resources/generated/generated_2000_politics.txt"),
+                            worksheet, startingLeaders2000)
+
+    print("subideology values done")
+    input()
+
+    worksheet = sheet.worksheet('Vote Share 2017')
+    content = worksheet.get_all_values()
+    createSubIdeologyValues(rootDir, content, (rootDir + "/Modding resources/generated/generated_2017_politics.txt"),
+                            worksheet)
+
+
     worksheet = sheet.worksheet('Party Leader 2000')
     content = worksheet.get_all_values()
     leaders2000 = worksheet.get_all_values()
@@ -1950,8 +1967,8 @@ def main():
                        extraLeaders, tags)
 
     print("done")
-    #input()
-    #input()
+    input()
+    input()
     #input()
 
     sheetName = "2000 Extra Leaders"
@@ -1976,13 +1993,7 @@ def main():
     sheetName = "2017 Extra Leaders"
     extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
 
-    worksheet = sheet.worksheet('Vote Share 2000')
-    content = worksheet.get_all_values()
-    createSubIdeologyValues(rootDir, content,(rootDir + "/Modding resources/generated/generated_2000_politics.txt"),worksheet)
 
-    worksheet = sheet.worksheet('Vote Share 2017')
-    content = worksheet.get_all_values()
-    createSubIdeologyValues(rootDir, content,(rootDir + "/Modding resources/generated/generated_2017_politics.txt"),worksheet)
 
     #print(len(sheet.row_values(1)))
     #data = sheet.get_all_records()
