@@ -28,7 +28,7 @@
 		NATO_member
 		western_country
 		#pop_050
-		gdp_9
+		gdp_8
 		petro_dollar
 		stagnation
 		defence_02
@@ -587,12 +587,27 @@
 		active = yes
 	}
 	
+	####################################
+	### Politics Parties Setup Guide ###
+	####################################
+	# All political parties in MD belong to Outlook (Ideology in vanilla HOI4) and correspond to a subideology with the same name. They have a predetermined identifier, a ID from 0-23.
 	
+	##### LIST of party types: (Subideology name and ID) ###
+	### Pro-Western (democratic) ###: Western_Autocracy(0) conservatism(1) liberalism(2) socialism(3)
+	### Emerging (communism) ###: Communist-State(4) anarchist_communism(5) Conservative(6) Autocracy(7) Mod_Vilayat_e_Faqih(8) Vilayat_e_Faqih(9)
+	### Salafist (fascism) ###: Kingdom(10) Caliphate(11)
+	### Non-Aligned (neutrality) ###: Neutral_Muslim_Brotherhood(12) Neutral_Autocracy(13) Neutral_conservatism(14) oligarchism(15) Neutral_Libertarian(16) Neutral_green(17) neutral_Social(18) Neutral_Communism(19)
+	### Nationalist (nationalist) ###: Nat_Populism(20) Nat_Fascism(21) Nat_Autocracy(22) Monarchist(23)
+
+	# All their definitions are stored in arrays - (party_pop_array) stores current popularities, (party_pop_elect_array) stores popularities at the previous election, (ruling_party) stores the ID of the governing party, (gov_coalition_array) stores the ID's of it's coalition partners. If party_pop_elect_array entries are not set for a party, it will take values from party_pop_array for this purpose. If no popularities are set at all, the game will give them failsafe values based on ruling outlook, geography and religion.
+	# Please note that the main ruling party should NOT be also added to gov_coalition_array. Upon startup, parties are recalculated to conform to outlook popularites. This means that if the sum of popularity of say the western parties don't match the popularity of the democratic entry in set_politics = {}, or add up to 100, they will appear a bit different ingame, but there is no harm in this in general. 
+	# Before any array values can be set for both 2000 and 2017, one must first use the scripted function start_politics_input = yes
+	# after intput is finished, set startup_politics = yes
 	
 	set_politics = {
 		parties = {
 			democratic = { 
-				popularity = 98
+				popularity = 86.6
 			}
 			fascism = {
 				popularity = 0
@@ -603,11 +618,11 @@
 			}
 			
 			neutrality = {
-				popularity = 1
+				popularity = 12.9
 			}
 			
 			nationalist = {
-				popularity = 1
+				popularity = 0.5
 			}
 		}
 		
@@ -617,22 +632,29 @@
 		elections_allowed = yes
 	}
 	
-	set_variable = { party_pop_array^1 = 0.5 }
-	set_variable = { party_pop_array^2 = 0.48 }
-	set_variable = { party_pop_array^13 = 0.01 }
-	set_variable = { party_pop_array^20 = 0.01 }
+	start_politics_input = yes
+	#2000 popularities
+	set_variable = { party_pop_array^1 = 0.393 } #republican
+	set_variable = { party_pop_array^2 = 0.400 } #democrat
+	set_variable = { party_pop_array^3 = 0.073 } #democrat progressives
+	set_variable = { party_pop_array^14 = 0.084 } #republican constitutionists
+	set_variable = { party_pop_array^13 = 0.004 } #libertarians
+	set_variable = { party_pop_array^17 = 0.026 } #Greens
+	set_variable = { party_pop_array^18 = 0.015 } #democrat socialists
+	set_variable = { party_pop_array^20 = 0.005 } #RWP
 	
-	recalculate_party = yes
+	add_to_array = { ruling_party = 2 } #dem libs
+	add_to_array = { gov_coalition_array = 3 } #soc. dem
 	
-	create_country_leader = {
-		name = "George W. Bush"
-		picture = "George_W_Bush.dds"
-		expire = "2008.1.1"
-		ideology = conservatism
-		traits = {
-			western_conservatism
-		}
-	}
+	#1996 elections estimated - only over threshold added
+	set_variable = { party_pop_elect_array^1 = 0.407 } #repubs
+	set_variable = { party_pop_elect_array^2 = 0.437 } #dem libs
+	set_variable = { party_pop_elect_array^3 = 0.055 } #soc. dem
+	set_variable = { party_pop_elect_array^13 = 0.084 } #reform party
+	set_variable = { party_pop_elect_array^14 = 0.0 } #N/A cons cons
+	
+	startup_politics = yes
+	
 
 	create_country_leader = {
 		name = "Bill Clinton"
@@ -1339,6 +1361,7 @@
 		#usa_russia_investigation
 		large_far_right_movement
 		small_libertarian_movement
+		gdp_9
 	}
 	
 	add_opinion_modifier = { target = BHR modifier = supports_us }
@@ -1650,22 +1673,22 @@
 	set_politics = {
 		parties = {
 			democratic = { 
-				popularity = 97
+				popularity = 65.9
 			}
 			fascism = {
 				popularity = 0
 			}
 			
 			communism = {
-				popularity = 0
+				popularity = 0.1
 			}
 			
 			neutrality = {
-				popularity = 3
+				popularity = 20
 			}
 			
 			nationalist = {
-				popularity = 0
+				popularity = 14
 			}
 		}
 		
@@ -1675,12 +1698,23 @@
 		elections_allowed = yes
 	}
 	
-	set_variable = { party_pop_array^1 = 0.50 }
-	set_variable = { party_pop_array^2 = 0.47 }
-	set_variable = { party_pop_array^16 = 0.02 }
-	set_variable = { party_pop_array^17 = 0.01 }
+	start_politics_input = yes
+	#2016 elections
+	set_variable = { party_pop_array^1 = 0.259 } #republican
+	set_variable = { party_pop_array^14 = 0.080 } #republican constitutionists
+	set_variable = { party_pop_array^20 = 0.140 } #republican right populists
+	set_variable = { party_pop_array^2 = 0.240 } #democrat
+	set_variable = { party_pop_array^3 = 0.160 } #democrat progressives
+	set_variable = { party_pop_array^18 = 0.076 } #democrat progressives
+	set_variable = { party_pop_array^5 = 0.001 } #PSL
+	set_variable = { party_pop_array^13 = 0.033 } #libertarians
+	set_variable = { party_pop_array^17 = 0.011 } #Greens
 	
-	recalculate_party = yes
+	add_to_array = { ruling_party = 1 } #republican
+	add_to_array = { gov_coalition_array = 14 } #republican constitutionists
+	add_to_array = { gov_coalition_array = 20 } #republican constitutionists
+	
+	startup_politics = yes
 
 ##Far-right and Alt-right figures
 
