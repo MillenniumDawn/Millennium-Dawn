@@ -3370,12 +3370,114 @@ generic_coalition_politics_desicions = {
 			hidden_effect = {
 				subtract_from_variable = { election_threshold = 0.01 }
 			}
-		}	
+		}
+	}
+	
+	### Extremist Civil Wars
+	
+	fascism_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^21 > 0.01 } #significant fascism test
+			has_civil_war = no
+			NOT = {
+				OR = {
+					is_in_array = { gov_coalition_array = 21 } #not is in coalition
+					is_in_array = { ruling_party = 21 } #not is ruling party
+				}
+			}
+		}
+		available = {
+			NOT = { 
+				limit = { has_government = nationalist }
+			}
+			custom_trigger_tooltip = {
+				tooltip = fascism_20_tt	
+				check_variable = { party_pop_array^21 > 0.01 } #test
+			}
+		}
+		
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war executed"
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.45
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = nationalist
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^21 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^21 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set for [This.GetName]"
+			
+			#Now (player) is the civil war rebel tag
+			
+			
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = nationalist
+				}
+			
+				#New TAG so need to set some generic politics
+				log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set politics"
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 10
+						}
+						fascism = {
+							popularity = 0
+						}
+						neutrality = {
+							popularity = 10
+						}
+						communism = {
+							popularity = 10
+						}
+						nationalist = {
+							popularity = 70
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 21 } #fascists
+					set_variable = { party_pop_array^21 = 0.7 } #generate the rest
+					startup_politics = yes
+				}
+				log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set startup politics"
+				
+				#Switch to fascist leader
+					set_country_flag = set_Nat_Fascism
+					set_leader = yes
+					
+				log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set leader"
+				#Setup done, now play as them
+					change_tag_from = PREV #testing
+					
+					#to make starting values look good
+					recalculate_party = yes
+					update_majority_threshold = yes
+					
+					log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war setup finished"
+			}
+		}
 	}
 	
 	### #### TODO: ####
 	### - extremist civil wars
 	### - generic boost outlook temp drift
-	### - if autocratic party; disallow elections / allow again
 
 }
