@@ -13,8 +13,8 @@
 	set_convoys = 150
 		
 	add_ideas = {
-		gdp_7
-		pop_050
+		gdp_8
+		#pop_050
 		christian
 		slight_corruption
 		fast_growth
@@ -26,7 +26,7 @@
 		police_02
 		rentier_state
 		export_economy
-		drafted_army
+		draft_army
 		volunteer_women
 		labour_unions
 		fossil_fuel_industry
@@ -82,7 +82,24 @@
 	add_opinion_modifier = { target = ICE modifier = nordic }
 	add_opinion_modifier = { target = FIN modifier = nordic }
 	add_opinion_modifier = { target = DEN modifier = nordic }
-
+	
+	####################################
+	### Politics Parties Setup Guide ###
+	####################################
+	# All political parties in MD belong to Outlook (Ideology in vanilla HOI4) and correspond to a subideology with the same name. They have a predetermined identifier, a ID from 0-23.
+	
+	##### LIST of party types: (Subideology name and ID) ###
+	### Pro-Western (democratic) ###: Western_Autocracy(0) conservatism(1) liberalism(2) socialism(3)
+	### Emerging (communism) ###: Communist-State(4) anarchist_communism(5) Conservative(6) Autocracy(7) Mod_Vilayat_e_Faqih(8) Vilayat_e_Faqih(9)
+	### Salafist (fascism) ###: Kingdom(10) Caliphate(11)
+	### Non-Aligned (neutrality) ###: Neutral_Muslim_Brotherhood(12) Neutral_Autocracy(13) Neutral_conservatism(14) oligarchism(15) Neutral_Libertarian(16) Neutral_green(17) neutral_Social(18) Neutral_Communism(19)
+	### Nationalist (nationalist) ###: Nat_Populism(20) Nat_Fascism(21) Nat_Autocracy(22) Monarchist(23)
+	
+	# All their definitions are stored in arrays - (party_pop_array) stores current popularities, (party_pop_elect_array) stores popularities at the previous election, (ruling_party) stores the ID of the governing party, (gov_coalition_array) stores the ID's of it's coalition partners. If party_pop_elect_array entries are not set for a party, it will take values from party_pop_array for this purpose. If no popularities are set at all, the game will give them failsafe values based on ruling outlook, geography and religion.
+	# Please note that the main ruling party should NOT be also added to gov_coalition_array. Upon startup, parties are recalculated to conform to outlook popularites. This means that if the sum of popularity of say the western parties don't match the popularity of the democratic entry in set_politics = {}, or add up to 100, they will appear a bit different ingame, but there is no harm in this in general. 
+	# Before any array values can be set for both 2000 and 2017, one must first use the scripted function start_politics_input = yes
+	# after intput is finished, set startup_politics = yes
+	
 	set_politics = {
 
 		parties = {
@@ -113,18 +130,20 @@
 		elections_allowed = yes
 	}
 	
-	set_variable = { conservatism_pop = 0.205 }
-	set_variable = { liberalism_pop = 0.041 }
-	set_variable = { socialism_pop = 0.258 }
-	set_variable = { anarchist_communism_pop = 0.015 }
-	set_variable = { Neutral_conservatism_pop = 0.133 }
-	set_variable = { oligarchism_pop = 0.071 }
-	set_variable = { neutral_Social_pop = 0.121 }
-	set_variable = { Neutral_Libertarian_pop = 0.001 }
-	set_variable = { Neutral_green_pop = 0.002 }
-	set_variable = { Nat_Populism_pop = 0.153 }
+	start_politics_input = yes
 	
 	set_variable = { election_threshold = 0.04 }
+	
+	set_variable = { party_pop_array^1 = 0.205 } #conservatism
+	set_variable = { party_pop_array^2 = 0.041 } #liberalism
+	set_variable = { party_pop_array^3 = 0.258 } #socialism
+	set_variable = { party_pop_array^5 = 0.015 } #anarchist_communism
+	set_variable = { party_pop_array^14 = 0.133 } #Neutral_conservatism
+	set_variable = { party_pop_array^15 = 0.071 } #oligarchism
+	set_variable = { party_pop_array^16 = 0.001 } #Neutral_Libertarian
+	set_variable = { party_pop_array^17 = 0.002 } #Neutral_green
+	set_variable = { party_pop_array^18 = 0.121 } #neutral_Social
+	set_variable = { party_pop_array^20 = 0.153 } #Nat_Populism
 	
 	add_to_array = { ruling_party = 14 } #Neutral_conservatism
 	
@@ -132,27 +151,15 @@
 	add_to_array = { gov_coalition_array = 2 } #liberalism
 	add_to_array = { gov_coalition_array = 15 } #oligarchism
 	
-	startup_politics = yes
+	#optional: special custom values representing % of votes in last election
 	
-	#optional: special custom values representing % of votes in last election, must be added after startup_politics
-	set_variable = { party_pop_elect_array^14 = 0.137 } #Neutral_conservatism
-	set_variable = { party_pop_elect_array^15 = 0.079 } #oligarchism
 	set_variable = { party_pop_elect_array^1 = 0.143 } #conservatism
 	set_variable = { party_pop_elect_array^2 = 0.045 } #liberalism
-	update_government_coalition_strength = yes #need to be run only if custom election strength added above
+	set_variable = { party_pop_elect_array^14 = 0.137 } #Neutral_conservatism
+	set_variable = { party_pop_elect_array^15 = 0.079 } #oligarchism
 	
-	create_country_leader = {
-		name = "Jens Stoltenberg"
-		picture = "Jens_Stoltenberg.dds"
-		expire = "2015.1.1"
-		ideology = socialism
-		traits = {
-			career_politician
-			western_socialism
-			capable
-		}
-	}
-	
+	startup_politics = yes
+
 	create_country_leader = {
 		name = "Kjell Magne Bondevik"
 		picture = "Kjell_Magne_Bondevik.dds"
@@ -324,112 +331,6 @@
 		country = USA
 		relation = military_access
 		active = yes
-	}
-	
-	
-	
-	#Easter Egg - famous retired al-qaeda commander living in norway
-	create_country_leader = {
-		name = "Mullah Krekar"
-		desc = ""
-		picture = "Salafist_Mullah_Krekar.dds"
-		expire = "2028.1.1"
-		ideology = Caliphate
-		traits = {
-			cleric
-			salafist_Caliphate
-			pro_al_qaeda
-			capable
-			stubborn
-		}
-	}
-	
-	create_country_leader = {
-		name = "Ingrid Alexandra I"
-		picture = "Ingrid_Alexandra_I.dds"
-		expire = "2065.1.1"
-		ideology = Monarchist
-		traits = {
-		}
-	}
-	
-	create_country_leader = {
-		name = "Haakon Magnus I"
-		picture = "Haakon_Magnus_I.dds"
-		expire = "2035.1.1"
-		ideology = Monarchist
-		traits = {
-			king
-		}
-	}
-	
-	create_country_leader = {
-		name = "Harald V"
-		picture = "Harald_V.dds"
-		expire = "2021.1.1"
-		ideology = Monarchist
-		traits = {
-			king
-			pro_american
-			capable
-			likeable
-		}
-	}
-	
-	create_country_leader = {
-		name = "Carl Ivar Hagen"
-		picture = "Carl_I_Hagen.dds"
-		expire = "2012.1.1"
-		ideology = Nat_Populism
-		traits = {
-			nationalist_Nat_Populism
-			pro_american
-		}
-	}
-	
-	create_country_leader = {
-		name = "Torstein Dahle"
-		picture = "Torstein_Dahle.dds"
-		expire = "2015.1.1"
-		ideology = anarchist_communism
-		traits = {
-			emerging_anarchist_communism
-			honest
-		}
-	}
-	
-	create_country_leader = {
-		name = "Jens Stoltenberg"
-		picture = "Jens_Stoltenberg.dds"
-		expire = "2015.1.1"
-		ideology = socialism
-		traits = {
-			career_politician
-			western_socialism
-			capable
-		}
-	}
-	create_country_leader = {
-		name = "Kristin Halvorsen"
-		picture = "Kristin_Halvorsen.dds"
-		expire = "2012.1.1"
-		ideology = neutral_Social
-		traits = {
-			neutrality_neutral_Social
-			cautious
-		}
-	}
-	create_country_leader = {
-		name = "Kjell Magne Bondevik"
-		picture = "Kjell_Magne_Bondevik.dds"
-		expire = "2012.1.1"
-		ideology = Neutral_conservatism
-		traits = {
-			cleric
-			neutrality_Neutral_conservatism
-			likeable
-			cautious
-		}
 	}
 	
 
@@ -921,7 +822,7 @@
 	}
 	
 	remove_ideas = {
-		gdp_7
+		gdp_8
 		fast_growth
 		tax_cost_44
 	}
@@ -935,12 +836,7 @@
 	#set_country_flag = gdp_9
 	set_country_flag = negative_labour_unions
 	set_country_flag = positive_fossil_fuel_industry
-	set_country_flag = defence_02
-	set_country_flag = edu_05
-	set_country_flag = health_05
-	set_country_flag = social_06
-	set_country_flag = bureau_04
-	set_country_flag = police_02
+	set_country_flag = alliansen
 	set_global_flag = sell_NOR_cc_equi_4
 	clr_global_flag = sell_NOR_cc_equi_2
 	set_global_flag = sell_NOR_SP_anti_air_2
@@ -967,6 +863,22 @@
 		infantry_weapons2 = 1
 
 	}
+	
+	####################################
+	### Politics Parties Setup Guide ###
+	####################################
+	# All political parties in MD belong to Outlook (Ideology in vanilla HOI4) and correspond to a subideology with the same name. They have a predetermined identifier, a ID from 0-23.
+	
+	##### LIST of party types: (Subideology name and ID) ###
+	### Pro-Western (democratic) ###: Western_Autocracy(0) conservatism(1) liberalism(2) socialism(3)
+	### Emerging (communism) ###: Communist-State(4) anarchist_communism(5) Conservative(6) Autocracy(7) Mod_Vilayat_e_Faqih(8) Vilayat_e_Faqih(9)
+	### Salafist (fascism) ###: Kingdom(10) Caliphate(11)
+	### Non-Aligned (neutrality) ###: Neutral_Muslim_Brotherhood(12) Neutral_Autocracy(13) Neutral_conservatism(14) oligarchism(15) Neutral_Libertarian(16) Neutral_green(17) neutral_Social(18) Neutral_Communism(19)
+	### Nationalist (nationalist) ###: Nat_Populism(20) Nat_Fascism(21) Nat_Autocracy(22) Monarchist(23)
+	
+	# All their definitions are stored in arrays - (party_pop_array) stores current popularities, (party_pop_elect_array) stores popularities at the previous election, (ruling_party) stores the ID of the governing party, (gov_coalition_array) stores the ID's of it's coalition partners. If party_pop_elect_array entries are not set for a party, it will take values from party_pop_array for this purpose. If no popularities are set at all, the game will give them failsafe values based on ruling outlook, geography and religion.
+	# Please note that the main ruling party should NOT be also added to gov_coalition_array. Upon startup, parties are recalculated to conform to outlook popularites. This means that if the sum of popularity of say the western parties don't match the popularity of the democratic entry in set_politics = {}, or add up to 100, they will appear a bit different ingame, but there is no harm in this in general. 
+	# Before any array values can be set for both 2000 and 2017, one must first use the scripted function start_politics_input = yes
 	
 	set_politics = {
 
@@ -998,36 +910,32 @@
 		elections_allowed = yes
 	}
 	
-	set_variable = { conservatism_pop = 0.25 }
-	set_variable = { liberalism_pop = 0.046 }
-	set_variable = { socialism_pop = 0.274 }
-	set_variable = { Communist-State_pop = 0.001 }
-	set_variable = { anarchist_communism_pop = 0.024 }
-	set_variable = { Neutral_conservatism_pop = 0.045 }
-	set_variable = { oligarchism_pop = 0.103 }
-	set_variable = { neutral_Social_pop = 0.06 }
-	set_variable = { Neutral_green_pop = 0.032 }
-	set_variable = { Neutral_Libertarian_pop = 0.002 }
-	set_variable = { Nat_Fascism_pop = 0.002 }
-	set_variable = { Nat_Populism_pop = 0.152 }
+	start_politics_input = yes
 	
-	
-	clear_array = gov_coalition_array #clear 2000 entry
-	clear_array = ruling_party #clear 2000 entry
+	set_variable = { party_pop_array^1 = 0.25 }
+	set_variable = { party_pop_array^2 = 0.046 }
+	set_variable = { party_pop_array^3 = 0.274 }
+	set_variable = { party_pop_array^4 = 0.001 }
+	set_variable = { party_pop_array^5 = 0.024 }
+	set_variable = { party_pop_array^14 = 0.045 }
+	set_variable = { party_pop_array^15 = 0.103 }
+	set_variable = { party_pop_array^18 = 0.06 }
+	set_variable = { party_pop_array^17 = 0.032 }
+	set_variable = { party_pop_array^16 = 0.002 }
+	set_variable = { party_pop_array^21 = 0.002 }
+	set_variable = { party_pop_array^20 = 0.152 }
 	
 	add_to_array = { ruling_party = 1 } #conservatism
 
 	add_to_array = { gov_coalition_array = 20 } #Nat_Populism
 	
-	startup_politics = yes
-	
-	#optional: special custom values representing % of votes in last election, must be added after startup_politics
 	set_variable = { party_pop_elect_array^14 = 0.056 } #Neutral_conservatism
 	set_variable = { party_pop_elect_array^15 = 0.055 } #oligarchism
 	set_variable = { party_pop_elect_array^1 = 0.268 } #conservatism
 	set_variable = { party_pop_elect_array^2 = 0.052 } #liberalism
 	set_variable = { party_pop_elect_array^20 = 0.163 } #liberalism
-	update_government_coalition_strength = yes #need to be run only if custom election strength added above
+	
+	startup_politics = yes
 	
 	diplomatic_relation = {
 		country = ALB
@@ -1098,159 +1006,8 @@
 		complete_national_focus = Generic_8_IC_slot
 
 	create_country_leader = {
-		name = "Inga Marte Thorkildsen"
-		picture = "Inga_Marte_Thorkildsen.dds"
-		expire = "2055.1.1"
-		ideology = neutral_Social
-		traits = {
-			neutrality_neutral_Social
-		}
-	}
-	#Leader of norwegian salafists. Pledges allegiance to ISIS
-	create_country_leader = {
-		name = "Ubaydullah Hussain"
-		picture = "Salafist_Ubaydullah_Hussain.dds"
-		expire = "2065.1.1"
-		ideology = Caliphate
-		traits = {
-			guerrilla_leader
-			salafist_Caliphate
-			pro_isis
-			inexperienced
-			sly
-			tech_savy
-		}
-	}
-
-	#Fascist-like far right anti-islamist, known as Fjordman
-	create_country_leader = {
-		name = "Peder Nøstvold Jensen"
-		picture = "Fascist_Fjordman.dds"
-		expire = "2065.1.1"
-		ideology = Nat_Fascism
-		traits = {
-			writer
-			nationalist_Nat_Fascism
-			inexperienced
-			islamophobe
-			ruthless
-			emotional
-		}
-	}
-
-	#Far Right Populist Candidate
-	create_country_leader = {
-		name = "Christian Tybring Gjedde"
-		picture = "nationalist_Christian_Tybring_Gjedde.dds"
-		expire = "2065.1.1"
-		ideology = Nat_Populism
-		traits = {
-			military_career
-			nationalist_Nat_Populism
-			pro_american
-			islamophobe
-			emotional
-			sly
-		}
-	}
-	
-	create_country_leader = {
-		name = "Sylvi Listhaug"
-		picture = "Sylvi_Listhaug.dds"
-		expire = "2065.1.1"
-		ideology = Nat_Populism
-		traits = {
-			nationalist_Nat_Populism
-			islamophobe
-			emotional
-		}
-	}
-	
-	create_country_leader = {
-		name = "Bjørnar Moxnes"
-		picture = "Bjoernar_Moxnes.dds"
-		expire = "2065.1.1"
-		ideology = anarchist_communism
-		traits = {
-			emerging_anarchist_communism
-			likeable
-			honest
-		}
-	}
-
-	create_country_leader = {
-		name = "Lan Marie Nguyen Berg"
-		picture = "Lan_Marie_Nguyen_Berg.dds"
-		expire = "2065.1.1"
-		ideology = Neutral_green
-		traits = {
-			scientist
-			neutrality_Neutral_green
-			likeable
-			humble
-			capable
-		}
-	}
-
-	#Liberalist
-	create_country_leader = {
-		name = "Sveinung Rotevatn"
-		picture = "Liberal_Sveinung_Rotevatn.dds"
-		expire = "2065.1.1"
-		ideology = liberalism
-		traits = {
-			lawyer
-			western_liberalism
-			polished
-			capable
-			tech_savy
-			
-		}
-	}
-	#Likely future candidate for the social democrats
-	create_country_leader = {
-		name = "Hadia Tajik"
-		picture = "Labor_Hadia_Tajik.dds"
-		expire = "2065.1.1"
-		ideology = socialism
-		traits = {
-			writer
-			western_socialism
-			likeable
-			humble
-			capable
-		}
-	}
-	#Likely future candidate for conservatives
-	create_country_leader = {
-		name = "Ine Marie Eriksen Søreide"
-		picture = "Cons_Ine_Marie_Eriksen_Soereide.dds"
-		expire = "2065.1.1"
-		ideology = conservatism
-		traits = {
-			lawyer
-			western_conservatism
-			polished
-			rational
-		}
-	}
-	create_country_leader = {
-		name = "Jonas Gahr Støre"
-		picture = "Labor_Jonas_Gahr_Stoere.dds"
-		expire = "2065.1.1"
-		ideology = socialism
-		traits = {
-			career_politician
-			western_socialism
-			polished
-			cautious
-			capable
-		}
-	}
-
-	create_country_leader = {
 		name = "Erna Solberg"
-		picture = "Cons_Erna_Solberg.dds"
+		picture = "erna_solberg.dds"
 		expire = "2050.1.1"
 		ideology = conservatism
 		traits = {
