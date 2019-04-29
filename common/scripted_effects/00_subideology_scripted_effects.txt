@@ -2,6 +2,8 @@
 #### New Coalition stuff ####
 
 startup_politics = {
+	log = "[GetDateText]: [This.GetName]: "
+	log = "startup_politics"
 	set_failsafe_values = yes #adds needed values if missing
 	add_up_party_totals = yes
 	set_party_positions = yes
@@ -12,6 +14,7 @@ startup_politics = {
 	update_party_name = yes
 	reset_coalition_ideas = yes
 	find_two_highest_parties = yes
+	log = "[GetDateText]: [This.GetName]: startup_politics executed"
 }
 
 start_politics_input = {
@@ -22,7 +25,7 @@ start_politics_input = {
 	clear_array = gov_coalition_array
 	
 	resize_array = { array = party_pop_array size = 24 }
-	resize_array = { array = party_pop_elect_array size = 24 }
+	resize_array = { array = party_pop_elect_array size = 24 value = -1 }
 	resize_array = { array = pos_array size = 24 }
 }
 
@@ -30,6 +33,7 @@ recalculate_party = {
 	add_up_party_totals = yes
 	set_party_positions = yes
 	update_government_coalition_strength = yes
+	log = "[GetDateText]: [This.GetName]: recalculate_party executed"
 }
 
 
@@ -47,7 +51,8 @@ add_up_party_totals = {
 		set_variable = { current_id = v }
 		meta_effect = {
 			text = { add_to_variable = { pop_total_[PART_OF_IDEOLOGY1] = party_pop_array^v } }
-			PART_OF_IDEOLOGY1 = "[offcial_name_party_ideology]"
+			PART_OF_IDEOLOGY1 = "[?this.offcial_name_party_ideology]"
+			log = "[This.GetName] [?current_id] [?this.offcial_name_party_ideology]"
 		}
 	}
 	#Maintain consistency with outlooks
@@ -235,10 +240,8 @@ update_government_coalition_strength = {
 	#find the differentials
 	set_variable = { government_coalition_differential = government_coalition_strength }
 	subtract_from_variable = { government_coalition_differential = government_coalition_strength_elect }
-	#update_majority_threshold = yes
 	hidden_effect = { gov_pop_idea_add = yes }
 	set_coalition_drift = yes
-	#find_two_highest_parties = yes
 }
 
 refund_government_coalition = {
@@ -269,15 +272,21 @@ store_election_values = {
 		value = v
 		if = {
 			limit = {
-				#if entry is 0 - true if no specific value has been set
-				check_variable = { party_pop_elect_array^v = 0 }
+				#true if no specific value has already been set
+				check_variable = { party_pop_elect_array^v = -1 }
 			}
-			if = { 
+			if = {
 				limit = {
-					#entry is over threshold
+					#normal popularity entry is over threshold
 					check_variable = { party_pop_array^v > election_threshold }
 				}
-				set_variable = { party_pop_elect_array^v = party_pop_array^v } #
+				set_variable = { party_pop_elect_array^v = party_pop_array^v }
+			}
+			else_if = {
+				limit = {
+					check_variable = { party_pop_elect_array^v = -1 }
+				}
+				set_variable = { party_pop_elect_array^v = 0 }
 			}
 		}
 	}
