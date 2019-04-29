@@ -30,10 +30,11 @@ start_politics_input = {
 }
 
 recalculate_party = {
+	#log = "[GetDateText]: [This.GetName]: recalculate_party started"
 	add_up_party_totals = yes
 	set_party_positions = yes
 	update_government_coalition_strength = yes
-	log = "[GetDateText]: [This.GetName]: recalculate_party executed"
+	#log = "[GetDateText]: [This.GetName]: recalculate_party finished"
 }
 
 
@@ -48,29 +49,27 @@ add_up_party_totals = {
 	#sum of ideologies
 	for_loop_effect = {
 		end = party_pop_array^num
-		set_variable = { current_id = v }
+		value = current_id
 		meta_effect = {
 			text = { add_to_variable = { pop_total_[PART_OF_IDEOLOGY1] = party_pop_array^v } }
 			PART_OF_IDEOLOGY1 = "[?this.offcial_name_party_ideology]"
-			log = "[This.GetName] [?current_id] [?this.offcial_name_party_ideology]"
 		}
 	}
 	#Maintain consistency with outlooks
 	for_loop_effect = {
 		end = party_pop_array^num
-		set_variable = { current_id = v }
+		value = current_id
 		multiply_variable = { party_pop_array^v = 1000 }
 		meta_effect = {
 			text = {
 				divide_variable = { party_pop_array^v = pop_total_[PART_OF_IDEOLOGY2] }
 				multiply_variable = { party_pop_array^v = party_popularity@[PART_OF_IDEOLOGY2] }
 			}
-			PART_OF_IDEOLOGY2 = "[offcial_name_party_ideology]"
+			PART_OF_IDEOLOGY2 = "[?this.offcial_name_party_ideology]"
 		}
 		round_variable = party_pop_array^v
 		divide_variable = { party_pop_array^v = 1000 }
 	}
-	clear_variable = current_id
 }
 
 set_party_positions = {
@@ -129,38 +128,38 @@ update_party_name = {
 }
 
 gov_pop_idea_add = {
+	log = "[This.GetName] gov_pop_idea_add"
 	set_temp_variable = { add_t = government_coalition_differential }
 	multiply_temp_variable = { add_t = 100 }
+	if = {
+		limit = {
+			check_variable = { add_t > 100 }
+		}
+		set_temp_variable = { add_t = 100 }
+	}
 	meta_effect = {
 		text = {
-			add_ideas = { 
-				gov_pop_[POP_DIFF_ADD]
-			}
+			add_ideas = gov_pop_[POP_DIFF_ADD]
 		}
 		POP_DIFF_ADD = "[?add_t|0]"
 	}
 }
 
 gov_pop_idea_remove = {
+	log = "[This.GetName] gov_pop_idea_remove"
 	set_temp_variable = { remove_t = government_coalition_differential }
 	multiply_temp_variable = { remove_t = 100 }
 	if = {
 		limit = {
-			meta_trigger = {
-				text = {
-					has_idea = gov_pop_[POP_DIFF_HAS]
-				}
-				POP_DIFF_HAS = "[?remove_t|0]"
-			}
+			check_variable = { remove_t > 100 }
 		}
-		meta_effect = {
-			text = {
-				remove_ideas = { 
-					gov_pop_[POP_DIFF_REMOVE]
-				}
-			}
-			POP_DIFF_REMOVE = "[?remove_t|0]"
+		set_temp_variable = { remove_t = 100 }
+	}
+	meta_effect = {
+		text = {
+			remove_ideas = gov_pop_[POP_DIFF_REMOVE]
 		}
+		POP_DIFF_REMOVE = "[?remove_t|0]"
 	}
 }
 
