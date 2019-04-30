@@ -1217,7 +1217,14 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet, startingLeader
             content += "set_variable = { Monarchist_pop = " + subIdeology[23] + " }\n"
             content += "recalculate_party = yes\n\n\n"
 
-
+            cont = 1;
+            for x, y in enumerate(startingLeaders):
+                # print(y[0][0])
+                if leaderName == y[1][0]:
+                    startingLeaders[x][3] = [ideology]
+                    startingLeaders[x][4] = [traits]
+                    cont = 0;
+                    print(startingLeaders[x])
 
 
 
@@ -1904,7 +1911,7 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                             else:
                                 organizedLeaders.insert(pos + 1, [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
                                 #print(len(organizedLeaders))
-                               # print(pos)
+                                #print(pos)
                                 #print(leaderName)
                                 #print(organizedLeaders[pos])
                                 #print(organizedLeaders[pos + 1])
