@@ -1163,6 +1163,24 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet, startingLeader
                          + float(subIdeology[16]) + float(subIdeology[17]) + float(subIdeology[18]) + float(subIdeology[19])
             nationalist = float(subIdeology[20]) + float(subIdeology[21]) + float(subIdeology[22]) + float(subIdeology[23])
 
+            name = "error"
+            picture = "error"
+            expire = "2090.1.1"
+            ideology = "error"
+            traits = []
+            outlook = "error"
+
+            cont = 1;
+            for x, y in enumerate(startingLeaders):
+                # print(y[0][0])
+                if b.lower() == y[0][0].lower():
+                    name = y[1][0]
+                    picture = y[2][0]
+                    ideology = y[3][0]
+                    traits = y[4][0]
+                    outlook = GetOutlook(ideology)
+
+
             content += "set_politics = {\n"
             content += "\tparties = {\n"
             content += "\t\tdemocratic = { #western\n"
@@ -1181,50 +1199,61 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet, startingLeader
             content += "\t\t\tpopularity = " + str(round ((100 * nationalist),2)) + " \n"
             content += "\t\t}\n"
             content += "\t}\n"
-            content += "\truling_party = \n"
-            content += "\tlast_election = \"\"\n"
-            content += "\telection_frequency = \"\"\n"
-            content += "\telections_allowed = \"\"\n"
+            content += "\truling_party = " + outlook + "\n"
+            content += "\tlast_election = \"\"####### FIX NEED TO INPUT DATA ######\n"
+            content += "\telection_frequency = \"\"####### FIX NEED TO INPUT DATA ######\n"
+            content += "\telections_allowed = \"\"####### FIX NEED TO INPUT DATA ######\n"
             content += "}\n"
+            content += "\n"
+            content += "start_politics_input = yes\n\n"
+            content += "set_variable = { election_threshold = 0.04 ####### FIX - THIS IS A DEFAULT VALUE ######\n\n"
             #western
-            content += "set_variable = { conservatism_pop = " + subIdeology[0] + " }\n"
-            content += "set_variable = { liberalism_pop = " + subIdeology[1] + " }\n"
-            content += "set_variable = { socialism_pop = " + subIdeology[2] + " }\n"
-            content += "set_variable = { Western_Autocracy_pop = " + subIdeology[3] + " }\n"
+            content += "set_variable = { party_pop_array^0 = " + subIdeology[3] + " } #Western_Autocracy\n"
+            content += "set_variable = { party_pop_array^1 = " + subIdeology[0] + " } #conservatism\n"
+            content += "set_variable = { party_pop_array^2 = " + subIdeology[1] + " } #liberalism\n"
+            content += "set_variable = { party_pop_array^3 = " + subIdeology[2] + " } #socialism\n"
             #emerging
-            content += "set_variable = { Communist-State = " + subIdeology[4] + " }\n"
-            content += "set_variable = { Conservative_pop = " + subIdeology[5] + " }\n"
-            content += "set_variable = { Autocracy_pop = " + subIdeology[6] + " }\n"
-            content += "set_variable = { Vilayat_e_Faqih_pop = " + subIdeology[7] + " }\n"
-            content += "set_variable = { Mod_Vilayat_e_Faqih_pop = " + subIdeology[8] + " }\n"
-            content += "set_variable = { anarchist_communism_pop = " + subIdeology[9] + " }\n"
+            content += "set_variable = { party_pop_array^4 = " + subIdeology[4] + " } #Communist-State\n"
+            content += "set_variable = { party_pop_array^5 = " + subIdeology[9] + " } #anarchist_communism\n"
+            content += "set_variable = { party_pop_array^6 = " + subIdeology[5] + " } #Conservative\n"
+            content += "set_variable = { party_pop_array^7 = " + subIdeology[6] + " } #Autocracy\n"
+            content += "set_variable = { party_pop_array^8 = " + subIdeology[8] + " } #Mod_Vilayat_e_Faqih\n"
+            content += "set_variable = { party_pop_array^9 = " + subIdeology[7] + " } #Vilayat_e_Faqih\n"
             #salafist
-            content += "set_variable = { Caliphate_pop = " + subIdeology[10] + " }\n"
-            content += "set_variable = { Kingdom_pop = " + subIdeology[11] + " }\n"
-            #non-alligned
-            content += "set_variable = { Neutral_conservatism_pop = " + subIdeology[12] + " }\n"
-            content += "set_variable = { oligarchism_pop = " + subIdeology[13] + " }\n"
-            content += "set_variable = { neutral_Social_pop = " + subIdeology[14] + " }\n"
-            content += "set_variable = { Neutral_Libertarian_pop = " + subIdeology[15] + " }\n"
-            content += "set_variable = { Neutral_Autocracy_pop = " + subIdeology[16] + " }\n"
-            content += "set_variable = { Neutral_Communism_pop = " + subIdeology[17] + " }\n"
-            content += "set_variable = { Neutral_Muslim_Brotherhood_pop = " + subIdeology[18] + " }\n"
+            content += "set_variable = { party_pop_array^10 = " + subIdeology[11] + " } #Kingdom\n"
+            content += "set_variable = { party_pop_array^11 = " + subIdeology[10] + " } #Caliphate\n"
+            #neutral
+            content += "set_variable = { party_pop_array^12 = " + subIdeology[18] + " } #Neutral_Muslim_Brotherhood\n"
+            content += "set_variable = { party_pop_array^13 = " + subIdeology[16] + " } #Neutral_Autocracy\n"
+            content += "set_variable = { party_pop_array^14 = " + subIdeology[12] + " } #Neutral_conservatism\n"
+            content += "set_variable = { party_pop_array^15 = " + subIdeology[13] + " } #oligarchism\n"
+            content += "set_variable = { party_pop_array^16 = " + subIdeology[15] + " } #Neutral_Libertarian\n"
+            content += "set_variable = { party_pop_array^17 = " + subIdeology[19] + " } #Neutral_green\n"
+            content += "set_variable = { party_pop_array^18 = " + subIdeology[14] + " } #neutral_Social\n"
+            content += "set_variable = { party_pop_array^19 = " + subIdeology[17] + " } #Neutral_Communism\n"
             #nationalist
-            content += "set_variable = { Neutral_Green_pop = " + subIdeology[19] + " }\n"
-            content += "set_variable = { Nat_Autocracy_pop = " + subIdeology[20] + " }\n"
-            content += "set_variable = { Nat_Fascism_pop = " + subIdeology[21] + " }\n"
-            content += "set_variable = { Nat_Populism_pop = " + subIdeology[22] + " }\n"
-            content += "set_variable = { Monarchist_pop = " + subIdeology[23] + " }\n"
-            content += "recalculate_party = yes\n\n\n"
+            content += "set_variable = { party_pop_array^20 = " + subIdeology[22] + " } #Nat_Populism\n"
+            content += "set_variable = { party_pop_array^21 = " + subIdeology[21] + " } #Nat_Fascism\n"
+            content += "set_variable = { party_pop_array^22 = " + subIdeology[20] + " } #Nat_Autocracy\n"
+            content += "set_variable = { party_pop_array^23 = " + subIdeology[23] + " } #Monarchist\n"
+            content += "set_variable = { party_pop_array^24 = " + subIdeology[20] + " } #Nat_Autocracy\n"
 
-            cont = 1;
-            for x, y in enumerate(startingLeaders):
-                # print(y[0][0])
-                if leaderName == y[1][0]:
-                    startingLeaders[x][3] = [ideology]
-                    startingLeaders[x][4] = [traits]
-                    cont = 0;
-                    print(startingLeaders[x])
+
+            content += "add_to_array = { ruling_party = " + GetIdeologyNum(ideology) + " }\n"
+            content += "startup_politics = yes\n\n"
+
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + name + "\"\n"
+            content += "\tpicture = " + picture + "\n"
+            content += "\tideology = " + ideology + "\n"
+            content += "\ttraits = {\n"
+            if isinstance(traits, (list,)):
+                for trait in traits:
+                    content += "\t\t\t\t\t" + trait + "\n"
+            else:
+                content += "\t\t\t\t\t" + traits + "\n"
+            content += "\t}\n"
+            content += "}\n"
 
 
 
@@ -1997,6 +2026,65 @@ def findStartingLeaderInfo (startingLeaders, mainLeaders):
     print(startingLeadersContent)
 
     return startingLeadersContent
+
+def GetOutlook(ideology):
+
+    if ideology.lower() in ["Western_Autocracy".lower(),"conservatism".lower(),"liberalism".lower(), "socialism".lower()]:
+        return "democratic"
+
+    elif ideology.lower() in ["socialism".lower(),"Communist-State".lower(),"anarchist_communism".lower(),
+                    "Conservative ".lower(),"Autocracy".lower(),"Mod_Vilayat_e_Faqih".lower(),
+                    "Vilayat_e_Faqih".lower()]:
+        return "communism"
+
+    elif ideology.lower() in ["Kingdom".lower(),"Caliphate".lower()]:
+        return "fascism"
+
+    elif ideology.lower() in ["Neutral_Muslim_Brotherhood".lower(),"Neutral_Autocracy".lower(),"Neutral_conservatism".lower(),
+                    "oligarchism".lower(),"Neutral_Libertarian".lower(),"Neutral_green".lower(), "neutral_Social".lower(),
+                    "Neutral_Communism".lower()]:
+        return "neutrality"
+
+    elif ideology.lower() in ["Nat_Populism".lower(),"Nat_Fascism".lower(),"Nat_Autocracy".lower(),
+                        "Monarchist ".lower()]:
+        return "nationalist"
+
+def GetIdeologyNum(ideology):
+    switcher = {
+        "Western_Autocracy".lower(): "0",
+        "conservatism".lower(): "1",
+        "liberalism".lower(): "2",
+        "socialism".lower(): "3",
+        "Communist-State".lower(): "4",
+        "anarchist_communism ".lower(): "5",
+        "Conservative".lower(): "6",
+        "Autocracy".lower(): "7",
+        "Mod_Vilayat_e_Faqih".lower(): "8",
+        "Vilayat_e_Faqih".lower(): "9",
+        "Kingdom ".lower(): "10",
+        "Caliphate".lower(): "11",
+        "Neutral_Muslim_Brotherhood".lower(): "12",
+        "Neutral_Autocracy".lower(): "13",
+        "Neutral_conservatism".lower(): "14",
+        "oligarchism".lower(): "15",
+        "Neutral_Libertarian".lower(): "16",
+        "Neutral_green".lower(): "17",
+        "neutral_Social".lower(): "18",
+        "Neutral_Communism".lower(): "19",
+        "Nat_Populism".lower(): "20",
+        "Nat_Fascism".lower(): "21",
+        "Nat_Autocracy".lower(): "22",
+        "Monarchist".lower(): "23",
+
+    }
+
+    # get() method of dictionary data type returns
+    # value of passed argument if it is present
+    # in dictionary otherwise second argument will
+    # be assigned as default value of passed argument
+    return switcher.get(ideology.lower(), "error")
+
+
 
 def main():
     sheet = gc.open('Politics') #Opens the politics sheet
