@@ -1255,9 +1255,7 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet, startingLeader
             content += "\t}\n"
             content += "}\n"
 
-
-
-
+            #if startingLeaders[c][a] != "":
 
 
                     #input()
@@ -2012,6 +2010,8 @@ def findStartingLeaderInfo (startingLeaders, mainLeaders):
             leaders = ""
             for c in range(0,31):
                 if c not in [0,1,6,13,16,25]:
+                    #print(startingLeaders[c][a])
+                    #print(str(c) + " " + str(a))
                     if startingLeaders[c][a] != "":
 
                         try:
@@ -2048,6 +2048,8 @@ def GetOutlook(ideology):
     elif ideology.lower() in ["Nat_Populism".lower(),"Nat_Fascism".lower(),"Nat_Autocracy".lower(),
                         "Monarchist ".lower()]:
         return "nationalist"
+    else:
+        return "error"
 
 def GetIdeologyNum(ideology):
     switcher = {
