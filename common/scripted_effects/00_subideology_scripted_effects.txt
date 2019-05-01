@@ -336,15 +336,6 @@ update_majority_threshold = {
 }
 
 # ### AI make coaliton ###
-# - made affinity arrays = ok	make_affinity_arrays = yes
-# - reduce them 1+2 = ok	reduce_affinity_array_party_1/2 = yes
-# - do the calculations = ok
-# - set the government =
-# #Neutral_conservatism
-	
-#	add_to_array = { gov_coalition_array = 1 } #conservatism
-#	add_to_array = { gov_coalition_array = 2 } #liberalism
-#	add_to_array = { gov_coalition_array = 15 } #oligarchism
 
 AI_setup_government = {
 	hold_elections = yes #add values to election array etc
@@ -352,29 +343,10 @@ AI_setup_government = {
 	clear_array = gov_coalition_array
 	
 	set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
-	for_each_loop = {
-		array = party_pop_elect_array
-		value = val1
-		index = index_name
-		if = {
-			limit = {
-				check_variable = { party_pop_elect_array^index_name = max_index_1 }
-			}
-			subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^val1 }
-		}
-	}
+	subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^max_index_1 }
+
 	set_temp_variable = { majority_threshold_2 = majority_threshold } #need one that does not include second biggest party
-	for_each_loop = {
-		array = party_pop_elect_array
-		value = val2
-		index = index_name2
-		if = {
-			limit = {
-				check_variable = { party_pop_elect_array^index_name2 = max_index_2 }
-			}
-			subtract_from_temp_variable = { majority_threshold_2 = party_pop_elect_array^val2 }
-		}
-	}
+	subtract_from_temp_variable = { majority_threshold_2 = party_pop_elect_array^max_index_2 }
 	
 	make_affinity_arrays = yes
 	reduce_affinity_array_party_1 = yes
@@ -382,17 +354,22 @@ AI_setup_government = {
 	
 	if = {
 		limit = {
-			check_variable = { cost1 < cost2 } #coalition 1 is prefered - lowest
+			#coalition 1 is prefered - lowest
+			check_variable = {
+				var = cost1
+				value = cost2
+				compare = less_than_or_equals
+			}
 		}
 		add_to_array = { ruling_party = max_index_1 }
 		for_each_loop = {
 			array = party_pop_elect_array
-			value = z
+			index = i1
 			if = {
 				limit = {
-					check_variable = { party_1_affinity_array^z > 0 }
+					check_variable = { party_1_affinity_array^i1 > 0 }
 				}
-				add_to_array = { gov_coalition_array = z }
+				add_to_array = { gov_coalition_array = i1 }
 			}
 		}
 	}
@@ -403,18 +380,135 @@ AI_setup_government = {
 		add_to_array = { ruling_party = max_index_2 }
 		for_each_loop = {
 			array = party_pop_elect_array
-			value = z
+			index = i2
 			if = {
 				limit = {
-					check_variable = { party_2_affinity_array^z > 0 }
+					check_variable = { party_2_affinity_array^i2 > 0 }
 				}
-				add_to_array = { gov_coalition_array = z }
+				add_to_array = { gov_coalition_array = i2 }
 			}
 		}
 	}
 	
 	update_government_coalition_strength = yes
+	set_coalition_drift = yes
 	
+	if = {
+		limit = {
+			#leader has subideology_trait = ruling party
+			NOT = {
+				OR = {
+					AND = {
+						has_country_leader_with_trait = western_Western_Autocracy
+						is_in_array = { ruling_party = 0 }
+					}
+					AND = {
+						has_country_leader_with_trait = western_conservatism
+						is_in_array = { ruling_party = 1 }
+					}
+					AND = {
+						has_country_leader_with_trait = western_liberalism
+						is_in_array = { ruling_party = 2 }
+					}
+					AND = {
+						has_country_leader_with_trait = western_socialism
+						is_in_array = { ruling_party = 3 }
+					}
+					AND = {
+						has_country_leader_with_trait = emerging_Communist-State
+						is_in_array = { ruling_party = 4 }
+					}
+					AND = {
+						has_country_leader_with_trait = emerging_anarchist_communism
+						is_in_array = { ruling_party = 5 }
+					}
+					AND = {
+						has_country_leader_with_trait = emerging_Conservative
+						is_in_array = { ruling_party = 6 }
+					}
+					AND = {
+						has_country_leader_with_trait = emerging_Autocracy
+						is_in_array = { ruling_party = 7 }
+					}
+					AND = {
+						has_country_leader_with_trait = emerging_Mod_Vilayat_e_Faqih
+						is_in_array = { ruling_party = 8 }
+					}
+					AND = {
+						has_country_leader_with_trait = emerging_Vilayat_e_Faqih
+						is_in_array = { ruling_party = 9 }
+					}
+					AND = {
+						has_country_leader_with_trait = salafist_Kingdom
+						is_in_array = { ruling_party = 10 }
+					}
+					AND = {
+						has_country_leader_with_trait = salafist_Caliphate
+						is_in_array = { ruling_party = 11 }
+					}
+					AND = {
+						has_country_leader_with_trait = neutrality_Neutral_Muslim_Brotherhood
+						is_in_array = { ruling_party = 12 }
+					}
+					AND = {
+						has_country_leader_with_trait = neutrality_Neutral_Autocracy
+						is_in_array = { ruling_party = 13 }
+					}
+					AND = {
+						has_country_leader_with_trait = neutrality_Neutral_conservatism
+						is_in_array = { ruling_party = 14 }
+					}
+					AND = {
+						has_country_leader_with_trait = neutrality_oligarchism
+						is_in_array = { ruling_party = 15 }
+					}
+					AND = {
+						has_country_leader_with_trait = neutrality_Neutral_Libertarian
+						is_in_array = { ruling_party = 16 }
+					}
+					AND = {
+						has_country_leader_with_trait = neutrality_Neutral_green
+						is_in_array = { ruling_party = 17 }
+					}
+					AND = {
+						has_country_leader_with_trait = neutrality_neutral_Social
+						is_in_array = { ruling_party = 18 }
+					}
+					AND = {
+						has_country_leader_with_trait = neutrality_Neutral_Communism
+						is_in_array = { ruling_party = 19 }
+					}
+					AND = {
+						has_country_leader_with_trait = nationalist_Nat_Populism
+						is_in_array = { ruling_party = 20 }
+					}
+					AND = {
+						has_country_leader_with_trait = nationalist_Nat_Fascism
+						is_in_array = { ruling_party = 21 }
+					}
+					AND = {
+						has_country_leader_with_trait = nationalist_Nat_Autocracy
+						is_in_array = { ruling_party = 22 }
+					}
+					AND = {
+						has_country_leader_with_trait = nationalist_Monarchist
+						is_in_array = { ruling_party = 23 }
+					}
+				}
+			}
+		}
+		#switch to ruling
+		hidden_effect = {
+			meta_effect = {
+				text = {
+					set_country_flag = [META_SET_RULING_PARTY]
+				}
+				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+			}
+			set_leader = yes
+		}
+	}
+	#for eventual debug - remove in final version
 	print_variables = {
 		file = log_file
 		text = header_text
@@ -480,9 +574,10 @@ reduce_affinity_array_party_1 = {
 		for_each_loop = {
 			array = party_pop_elect_array
 			value = b1
+			index = e1
 			if = {
 				limit = {
-					check_variable = { party_1_affinity_array^b1 > 0 }
+					check_variable = { party_1_affinity_array^e1 > 0 }
 				}
 				add_to_temp_variable = { sum_coalition_1 = b1 }
 			}
@@ -496,23 +591,14 @@ reduce_affinity_array_party_1 = {
 				value = max1
 				index = max1_index
 			}
-			set_temp_variable = { party_1_affinity_array^max1_index = 0 }
-			set_temp_variable = { restore_check1 = 0 }
-			for_each_loop = {
-				array = party_pop_elect_array
-				value = c1
-				if = {
-					limit = {
-						check_variable = { party_1_affinity_array^c1 > 0 }
-					}
-					add_to_temp_variable = { restore_check1 = c1 }
-				}
-			}
+			subtract_from_temp_variable = { sum_coalition_1 = party_pop_elect_array^max1_index }
+			set_temp_variable = { party_1_affinity_array^max1_index = 0 }	
 			if = {
 				limit = {
-					check_variable = { restore_check1 > majority_threshold_1 }
+					check_variable = { sum_coalition_1 < majority_threshold_1 }
 				}
-				set_temp_variable = { party_1_affinity_array^max_index = max }
+				set_temp_variable = { party_1_affinity_array^max1_index = max1 }
+				add_to_temp_variable = { sum_coalition_1 = party_pop_elect_array^max1_index }
 				set_temp_variable = { break_1 = 1 }
 			}
 		}
@@ -522,12 +608,13 @@ reduce_affinity_array_party_1 = {
 	for_each_loop = {
 		array = party_pop_elect_array
 		value = d1
+		index = g1
 		if = {
 			limit = {
-				check_variable = { party_1_affinity_array^d1 > 0 }
+				check_variable = { party_1_affinity_array^g1 > 0 }
 			}
-			set_temp_variable = { cost1_element = party_1_affinity_array^d1 }
-			multiply_temp_variable = { cost1_element = party_pop_elect_array^d1 }
+			set_temp_variable = { cost1_element = party_1_affinity_array^g1 }
+			multiply_temp_variable = { cost1_element = d1 }
 			add_to_temp_variable = { cost1 = cost1_element }
 		}
 	}
@@ -545,9 +632,10 @@ reduce_affinity_array_party_2 = {
 		for_each_loop = {
 			array = party_pop_elect_array
 			value = b2
+			index = e2
 			if = {
 				limit = {
-					check_variable = { party_2_affinity_array^b2 > 0 }
+					check_variable = { party_2_affinity_array^e2 > 0 }
 				}
 				add_to_temp_variable = { sum_coalition_2 = b2 }
 			}
@@ -561,23 +649,14 @@ reduce_affinity_array_party_2 = {
 				value = max2
 				index = max2_index
 			}
-			set_temp_variable = { party_2_affinity_array^max2_index = 0 }
-			set_temp_variable = { restore_check2 = 0 }
-			for_each_loop = {
-				array = party_pop_elect_array
-				value = c2
-				if = {
-					limit = {
-						check_variable = { party_2_affinity_array^c2 > 0 }
-					}
-					add_to_temp_variable = { restore_check2 = c2 }
-				}
-			}
+			subtract_from_temp_variable = { sum_coalition_2 = party_pop_elect_array^max2_index }
+			set_temp_variable = { party_2_affinity_array^max2_index = 0 }	
 			if = {
 				limit = {
-					check_variable = { restore_check2 > majority_threshold_2 }
+					check_variable = { sum_coalition_2 < majority_threshold_2 }
 				}
-				set_temp_variable = { party_2_affinity_array^max_index = max }
+				set_temp_variable = { party_2_affinity_array^max2_index = max2 }
+				add_to_temp_variable = { sum_coalition_2 = party_pop_elect_array^max2_index }
 				set_temp_variable = { break_2 = 1 }
 			}
 		}
@@ -587,12 +666,13 @@ reduce_affinity_array_party_2 = {
 	for_each_loop = {
 		array = party_pop_elect_array
 		value = d2
+		index = g2
 		if = {
 			limit = {
-				check_variable = { party_2_affinity_array^d2 > 0 }
+				check_variable = { party_2_affinity_array^g2 > 0 }
 			}
-			set_temp_variable = { cost1_element = party_2_affinity_array^d1 }
-			multiply_temp_variable = { cost2_element = party_pop_elect_array^d1 }
+			set_temp_variable = { cost2_element = party_2_affinity_array^g2 }
+			multiply_temp_variable = { cost2_element = d2 }
 			add_to_temp_variable = { cost2 = cost2_element }
 		}
 	}
