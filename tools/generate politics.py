@@ -1235,7 +1235,6 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet, startingLeader
             content += "set_variable = { party_pop_array^21 = " + subIdeology[21] + " } #Nat_Fascism\n"
             content += "set_variable = { party_pop_array^22 = " + subIdeology[20] + " } #Nat_Autocracy\n"
             content += "set_variable = { party_pop_array^23 = " + subIdeology[23] + " } #Monarchist\n"
-            content += "set_variable = { party_pop_array^24 = " + subIdeology[20] + " } #Nat_Autocracy\n"
 
 
             content += "add_to_array = { ruling_party = " + GetIdeologyNum(ideology) + " }\n"
