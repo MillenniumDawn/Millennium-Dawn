@@ -1086,7 +1086,7 @@ def createPartyLeaders (rootDir, sheet, filepath, extraLeaders, tags):
     return extraLeaders
 
 ###Main Function used to pull spreadsheet voter popularity & turn it into subideology values & write to ingame txt file
-def createSubIdeologyValues (rootDir, sheet, filepath, worksheet, startingLeaders):
+def createSubIdeologyValues (rootDir, sheet, filepath, startingLeaders):
     content = ""
     for a, b in enumerate(sheet[0]):
         if b != "" or a != 0:
@@ -1179,6 +1179,8 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet, startingLeader
                     ideology = y[3][0]
                     traits = y[4][0]
                     outlook = GetOutlook(ideology)
+                    print(y)
+                    input()
 
 
             content += "set_politics = {\n"
@@ -1571,7 +1573,6 @@ def createPartyLeaders2 (rootDir, organizedLeaders):
 #Returns the ideology and trait dependent on the row in the spreadsheet, similar to what is used in generateLeaderContent
 def getIdeology(c):
 
-
     if c == 2:
         ideology = "conservatism"
         traits = "western_conservatism"
@@ -1822,10 +1823,9 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                         for x, y in enumerate(startingLeaders2000):
                             # print(y[0][0])
                             if leaderName == y[1][0]:
-                                startingLeaders2017[x][3] = [ideology]
-                                startingLeaders2017[x][4] = [traits]
+                                startingLeaders2000[x][3] = [ideology]
+                                startingLeaders2000[x][4] = [traits]
                                 cont = 0;
-                                print(startingLeaders2017[x])
 
                         if cont == 1:
                             organizedLeaders.append([[b], ["2000"] ,[leaderName],[leaderPic], [ideology],[traits]])
@@ -1857,16 +1857,16 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                 for x, y in enumerate(startingLeaders2000):
                     # print(y[0][0])
                     if leaderName == y[1][0]:
-                        startingLeaders2017[x][3] = [ideology]
-                        startingLeaders2017[x][4] = [traits]
+                        startingLeaders2000[x][3] = [ideology]
+                        startingLeaders2000[x][4] = [traits]
                         cont = 0;
-                        print(startingLeaders2017[x])
+                        #print(startingLeaders2017[x])
 
                 for pos2, y in enumerate(organizedLeaders):
                     # print(y[0][0])
                     if leaderName == organizedLeaders[pos2][2][0]:
                         cont = 0;
-                        print(organizedLeaders[pos2][2][0])
+                        #print(organizedLeaders[pos2][2][0])
 
 
                 if cont == 1:
@@ -1913,13 +1913,12 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                                 startingLeaders2017[x][3] = [ideology]
                                 startingLeaders2017[x][4] = [traits]
                                 cont = 0;
-                                print(startingLeaders2017[x])
 
                         for pos2, y in enumerate(organizedLeaders):
                             # print(y[0][0])
                             if leaderName == organizedLeaders[pos2][2][0]:
                                 cont = 0;
-                                print(organizedLeaders[pos2][2][0])
+                                #print(organizedLeaders[pos2][2][0])
 
                         if cont == 1:
 
@@ -1972,13 +1971,12 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                             startingLeaders2017[x][3] = [ideology]
                             startingLeaders2017[x][4] = [traits]
                             cont = 0;
-                            print(startingLeaders2017[x])
 
                     for pos2, y in enumerate(organizedLeaders):
                         # print(y[0][0])
                         if leaderName == organizedLeaders[pos2][2][0]:
                             cont = 0;
-                            print(organizedLeaders[pos2][2][0])
+                            ##print(organizedLeaders[pos2][2][0])
 
                     if cont == 1:
 
@@ -1998,7 +1996,7 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
 
     print("done")
     #input()
-    return organizedLeaders
+    return organizedLeaders, startingLeaders2000, startingLeaders2017
 
 def findStartingLeaderInfo (startingLeaders, mainLeaders):
     startingLeadersContent = []
@@ -2021,7 +2019,7 @@ def findStartingLeaderInfo (startingLeaders, mainLeaders):
                         except:
                             picName = ""
             startingLeadersContent.append([[b], [leaders], [picName], [""], [""]])
-    print(startingLeadersContent)
+    #print(startingLeadersContent)
 
     return startingLeadersContent
 
@@ -2050,39 +2048,37 @@ def GetOutlook(ideology):
         return "error"
 
 def GetIdeologyNum(ideology):
-    switcher = {
-        "Western_Autocracy".lower(): "0",
-        "conservatism".lower(): "1",
-        "liberalism".lower(): "2",
-        "socialism".lower(): "3",
-        "Communist-State".lower(): "4",
-        "anarchist_communism ".lower(): "5",
-        "Conservative".lower(): "6",
-        "Autocracy".lower(): "7",
-        "Mod_Vilayat_e_Faqih".lower(): "8",
-        "Vilayat_e_Faqih".lower(): "9",
-        "Kingdom ".lower(): "10",
-        "Caliphate".lower(): "11",
-        "Neutral_Muslim_Brotherhood".lower(): "12",
-        "Neutral_Autocracy".lower(): "13",
-        "Neutral_conservatism".lower(): "14",
-        "oligarchism".lower(): "15",
-        "Neutral_Libertarian".lower(): "16",
-        "Neutral_green".lower(): "17",
-        "neutral_Social".lower(): "18",
-        "Neutral_Communism".lower(): "19",
-        "Nat_Populism".lower(): "20",
-        "Nat_Fascism".lower(): "21",
-        "Nat_Autocracy".lower(): "22",
-        "Monarchist".lower(): "23",
-
-    }
+    num = 9999
+    if ideology.lower() == "Western_Autocracy".lower(): num = 0
+    elif ideology.lower() == "conservatism".lower(): num = 1
+    elif ideology.lower() == "liberalism".lower(): num = 2
+    elif ideology.lower() == "socialism".lower(): num = 3
+    elif ideology.lower() == "Communist-State".lower(): num = 4
+    elif ideology.lower() == "anarchist_communism ".lower(): num = 5
+    elif ideology.lower() == "Conservative".lower(): num = 6
+    elif ideology.lower() == "Autocracy".lower(): num = 7
+    elif ideology.lower() == "Mod_Vilayat_e_Faqih".lower(): num = 8
+    elif ideology.lower() == "Vilayat_e_Faqih".lower(): num = 9
+    elif ideology.lower() == "Kingdom ".lower(): num = 10
+    elif ideology.lower() == "Caliphate".lower(): num = 11
+    elif ideology.lower() == "Neutral_Muslim_Brotherhood".lower(): num = 12
+    elif ideology.lower() == "Neutral_Autocracy".lower(): num = 13
+    elif ideology.lower() == "Neutral_conservatism".lower(): num = 14
+    elif ideology.lower() == "oligarchism".lower(): num = 15
+    elif ideology.lower() == "Neutral_Libertarian".lower(): num = 16
+    elif ideology.lower() == "Neutral_green".lower(): num = 17
+    elif ideology.lower() == "neutral_Social".lower(): num = 18
+    elif ideology.lower() == "Neutral_Communism".lower(): num = 19
+    elif ideology.lower() == "Nat_Populism".lower(): num = 20
+    elif ideology.lower() == "Nat_Fascism".lower(): num = 21
+    elif ideology.lower() == "Nat_Autocracy".lower(): num = 22
+    elif ideology.lower() == "Monarchist".lower(): num = 23
 
     # get() method of dictionary data type returns
     # value of passed argument if it is present
     # in dictionary otherwise second argument will
     # be assigned as default value of passed argument
-    return switcher.get(ideology.lower(), "error")
+    return str(num)
 
 
 
@@ -2119,6 +2115,8 @@ def main():
 
     worksheet = sheet.worksheet('Vote Share 2000')
     voteShare2000 = worksheet.get_all_values()
+    worksheet = sheet.worksheet('Vote Share 2017')
+    voteShare2017 = worksheet.get_all_values()
     worksheet = sheet.worksheet('Starting Leader 2000')
     startingLeaders2000 = worksheet.get_all_values()
     worksheet = sheet.worksheet('Party Leader 2000')
@@ -2142,24 +2140,28 @@ def main():
     startingLeaders2000 = worksheet.get_all_values()
     startingLeaders2000 = findStartingLeaderInfo(startingLeaders2000, partyLeader2000)
 
+    organizedLeaders, startingLeaders2000, startingLeaders2017 = sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, organizedLeaders,
+                                   startingLeaders2000, startingLeaders2017)
 
 
-
-
+    print(startingLeaders2000)
+    print(startingLeaders2017)
+    input()
     createSubIdeologyValues(rootDir, voteShare2000, (rootDir + "/Modding resources/generated/generated_2000_politics.txt"),
-                            worksheet, startingLeaders2000)
+                            startingLeaders2000)
 
-    worksheet = sheet.worksheet('Vote Share 2017')
-    voteShare2017 = worksheet.get_all_values()
     createSubIdeologyValues(rootDir, voteShare2017, (rootDir + "/Modding resources/generated/generated_2017_politics.txt"),
-                            worksheet, startingLeaders2017)
+                            startingLeaders2017)
 
 
 
-    organizedLeaders = sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, organizedLeaders, startingLeaders2000, startingLeaders2017)
+
 
     createPartyLeaders2(rootDir, organizedLeaders)
     print("fini")
+    input()
+    input()
+    input()
     input()
 
     extraLeaders = createPartyLeaders(rootDir, partyLeader2000, (rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),
