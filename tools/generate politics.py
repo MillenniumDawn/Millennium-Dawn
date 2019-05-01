@@ -788,7 +788,7 @@ def generateLeaderContent(content, rowInSheet, leaderName, picName, extraLeaders
 
                                 content += "create_country_leader = {\n"
                                 content += "\tname = \"" + extraLeaderName + "\"\n"
-                                content += "\tpicture = " + extraLeaderPic + "\n"
+                                content += "\tpicture = \"" + extraLeaderPic + "\"\n"
                                 content += "\tideology = " + ideology + "\n"
                                 content += "\ttraits = {\n"
                                 content += "\t\t" + subIdeology + "\n"
@@ -1179,8 +1179,8 @@ def createSubIdeologyValues (rootDir, sheet, filepath, startingLeaders):
                     ideology = y[3][0]
                     traits = y[4][0]
                     outlook = GetOutlook(ideology)
-                    print(y)
-                    input()
+                    #print(y)
+                    #input()
 
 
             content += "set_politics = {\n"
@@ -1244,14 +1244,14 @@ def createSubIdeologyValues (rootDir, sheet, filepath, startingLeaders):
 
             content += "create_country_leader = {\n"
             content += "\tname = \"" + name + "\"\n"
-            content += "\tpicture = " + picture + "\n"
+            content += "\tpicture = \"" + picture + "\"\n"
             content += "\tideology = " + ideology + "\n"
             content += "\ttraits = {\n"
             if isinstance(traits, (list,)):
                 for trait in traits:
-                    content += "\t\t\t\t\t" + trait + "\n"
+                    content += "\t\t" + trait + "\n"
             else:
-                content += "\t\t\t\t\t" + traits + "\n"
+                content += "\t\t" + traits + "\n"
             content += "\t}\n"
             content += "}\n"
 
@@ -1823,9 +1823,9 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                         for x, y in enumerate(startingLeaders2000):
                             # print(y[0][0])
                             if leaderName == y[1][0]:
+                                cont = 0;
                                 startingLeaders2000[x][3] = [ideology]
                                 startingLeaders2000[x][4] = [traits]
-                                cont = 0;
 
                         if cont == 1:
                             organizedLeaders.append([[b], ["2000"] ,[leaderName],[leaderPic], [ideology],[traits]])
@@ -1857,16 +1857,16 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                 for x, y in enumerate(startingLeaders2000):
                     # print(y[0][0])
                     if leaderName == y[1][0]:
+                        cont = 0;
                         startingLeaders2000[x][3] = [ideology]
                         startingLeaders2000[x][4] = [traits]
-                        cont = 0;
                         #print(startingLeaders2017[x])
-
-                for pos2, y in enumerate(organizedLeaders):
-                    # print(y[0][0])
-                    if leaderName == organizedLeaders[pos2][2][0]:
-                        cont = 0;
-                        #print(organizedLeaders[pos2][2][0])
+                if cont == 1:
+                    for pos2, y in enumerate(organizedLeaders):
+                        # print(y[0][0])
+                        if leaderName == organizedLeaders[pos2][2][0]:
+                            cont = 0;
+                            #print(organizedLeaders[pos2][2][0])
 
 
                 if cont == 1:
@@ -1892,53 +1892,54 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                 if c not in [0, 1, 6, 13, 16, 25]:
                     if c > 36:
                         break
-                        leaderName = leaders2017[c][a]
-                        if leaders2017[c][a+1] != "":
-                            leaderPic = leaders2017[c][a+1]
-                        else:
-                            leaderPic = "generic.dds"
+                    leaderName = leaders2017[c][a]
+                    if leaders2017[c][a+1] != "":
+                        leaderPic = leaders2017[c][a+1]
+                    else:
+                        leaderPic = "generic.dds"
 
-                        #print(leaders2017[c])
-                        ideology, traits = getIdeology(c)
+                    #print(leaders2017[c])
+                    ideology, traits = getIdeology(c)
 
 
-                        startDate = "2017"
-                        tag = b
-                        pos = getTagPos3(organizedLeaders, tag, startDate)
+                    startDate = "2017"
+                    tag = b
+                    pos = getTagPos3(organizedLeaders, tag, startDate)
 
-                        cont = 1;
-                        for x, y in enumerate(startingLeaders2017):
-                            # print(y[0][0])
-                            if leaderName == y[1][0]:
-                                startingLeaders2017[x][3] = [ideology]
-                                startingLeaders2017[x][4] = [traits]
-                                cont = 0;
+                    cont = 1;
+                    for x, y in enumerate(startingLeaders2017):
+                        # print(y[0][0])
 
+                        if leaderName == y[1][0]:
+                            cont = 0;
+                            startingLeaders2017[x][3] = [ideology]
+                            startingLeaders2017[x][4] = [traits]
+                    if cont == 1:
                         for pos2, y in enumerate(organizedLeaders):
                             # print(y[0][0])
                             if leaderName == organizedLeaders[pos2][2][0]:
                                 cont = 0;
                                 #print(organizedLeaders[pos2][2][0])
 
-                        if cont == 1:
+                    if cont == 1:
 
-                            if pos == 0:
+                        if pos == 0:
 
-                                organizedLeaders.insert(len(organizedLeaders) + 1,
-                                                        [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
-                                #print("ERROR")
-                                #print(len(organizedLeaders))
-                                #print(pos)
-                                #print(organizedLeaders[-2])
-                                #print(organizedLeaders[-1])
-                                #input()
-                            else:
-                                organizedLeaders.insert(pos + 1, [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
-                                #print(len(organizedLeaders))
-                                #print(pos)
-                                #print(leaderName)
-                                #print(organizedLeaders[pos])
-                                #print(organizedLeaders[pos + 1])
+                            organizedLeaders.insert(len(organizedLeaders) + 1,
+                                                    [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
+                            #print("ERROR")
+                            #print(len(organizedLeaders))
+                            #print(pos)
+                            #print(organizedLeaders[-2])
+                            #print(organizedLeaders[-1])
+                            #input()
+                        else:
+                            organizedLeaders.insert(pos + 1, [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
+                            #print(len(organizedLeaders))
+                            #print(pos)
+                            #print(leaderName)
+                            #print(organizedLeaders[pos])
+                            #print(organizedLeaders[pos + 1])
     #input()
 
     for a, b in enumerate(extraLeaders2017):
@@ -1968,15 +1969,15 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                     for x, y in enumerate(startingLeaders2017):
                         # print(y[0][0])
                         if leaderName == y[1][0]:
+                            cont = 0;
                             startingLeaders2017[x][3] = [ideology]
                             startingLeaders2017[x][4] = [traits]
-                            cont = 0;
-
-                    for pos2, y in enumerate(organizedLeaders):
-                        # print(y[0][0])
-                        if leaderName == organizedLeaders[pos2][2][0]:
-                            cont = 0;
-                            ##print(organizedLeaders[pos2][2][0])
+                    if cont == 1:
+                        for pos2, y in enumerate(organizedLeaders):
+                            # print(y[0][0])
+                            if leaderName == organizedLeaders[pos2][2][0]:
+                                cont = 0;
+                                ##print(organizedLeaders[pos2][2][0])
 
                     if cont == 1:
 
@@ -1993,6 +1994,22 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                             #print(organizedLeaders[pos])
                             #print(organizedLeaders[pos+1])
                             #input()
+
+    for a, b in enumerate(organizedLeaders):
+        for x, y in enumerate(startingLeaders2017):
+           if b[2][0] == y[1][0]:
+                startingLeaders2017[x][3] = b[4]
+                startingLeaders2017[x][4] = b[5]
+        for x, y in enumerate(startingLeaders2000):
+           if b[2][0] == y[1][0] and b[0][0] == y[0][0]:
+                #print("match!")
+                #print(b)
+                #print(startingLeaders2000[x])
+                startingLeaders2000[x][3] = b[4]
+                startingLeaders2000[x][4] = b[5]
+                #print(startingLeaders2000[x])
+                #input()
+
 
     print("done")
     #input()
@@ -2029,7 +2046,7 @@ def GetOutlook(ideology):
         return "democratic"
 
     elif ideology.lower() in ["socialism".lower(),"Communist-State".lower(),"anarchist_communism".lower(),
-                    "Conservative ".lower(),"Autocracy".lower(),"Mod_Vilayat_e_Faqih".lower(),
+                    "Conservative".lower(),"Autocracy".lower(),"Mod_Vilayat_e_Faqih".lower(),
                     "Vilayat_e_Faqih".lower()]:
         return "communism"
 
@@ -2042,7 +2059,7 @@ def GetOutlook(ideology):
         return "neutrality"
 
     elif ideology.lower() in ["Nat_Populism".lower(),"Nat_Fascism".lower(),"Nat_Autocracy".lower(),
-                        "Monarchist ".lower()]:
+                        "Monarchist".lower()]:
         return "nationalist"
     else:
         return "error"
@@ -2073,7 +2090,6 @@ def GetIdeologyNum(ideology):
     elif ideology.lower() == "Nat_Fascism".lower(): num = 21
     elif ideology.lower() == "Nat_Autocracy".lower(): num = 22
     elif ideology.lower() == "Monarchist".lower(): num = 23
-
     # get() method of dictionary data type returns
     # value of passed argument if it is present
     # in dictionary otherwise second argument will
@@ -2144,9 +2160,8 @@ def main():
                                    startingLeaders2000, startingLeaders2017)
 
 
-    print(startingLeaders2000)
+    #print(startingLeaders2000)
     print(startingLeaders2017)
-    input()
     createSubIdeologyValues(rootDir, voteShare2000, (rootDir + "/Modding resources/generated/generated_2000_politics.txt"),
                             startingLeaders2000)
 
