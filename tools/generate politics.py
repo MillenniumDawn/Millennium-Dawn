@@ -1206,7 +1206,6 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet, startingLeader
             content += "}\n"
             content += "\n"
             content += "start_politics_input = yes\n\n"
-            content += "set_variable = { election_threshold = 0.04 ####### FIX - THIS IS A DEFAULT VALUE ######\n\n"
             #western
             content += "set_variable = { party_pop_array^0 = " + subIdeology[3] + " } #Western_Autocracy\n"
             content += "set_variable = { party_pop_array^1 = " + subIdeology[0] + " } #conservatism\n"
