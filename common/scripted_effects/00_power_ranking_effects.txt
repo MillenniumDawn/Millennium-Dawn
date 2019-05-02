@@ -19,7 +19,8 @@ get_global_factories = {
 	every_country = {
 		clr_country_flag = regional_power
 		set_variable = { global.tmp = num_of_factories }
-		add_to_variable = { global.global_num_of_factories = num_of_factories }
+		multiply_variable = { global.tmp = domestic_influence_amount_calc?0.5 }
+		add_to_variable = { global.global_num_of_factories = global.tmp }
 		if = { # could probably be done once in on_startup
 			limit = { is_european_nation = yes }
 			for_each_loop = {
@@ -27,7 +28,9 @@ get_global_factories = {
 				if = {
 					limit = {
 						var:v = {
-							check_variable = { global.tmp > num_of_factories }
+							set_temp_variable = { num_of_factories_tmp = num_of_factories }
+							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_calc?0.5 }
+							check_variable = { global.tmp > num_of_factories_tmp }
 						}
 					}
 					set_variable = { global.idx = i }
@@ -68,6 +71,7 @@ determine_regional_powers = {
 # Saved in percentage_of_global_factories variable
 get_percentage_of_global_factories = {
 	set_variable = { percentage_of_global_factories = num_of_factories }
+	multiply_variable = { percentage_of_global_factories = domestic_influence_amount_calc?0.5 }
 	divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
 }
 
@@ -82,6 +86,12 @@ determine_power_ranking = {
 		non_power
 	}
 	if = {
+		limit = {
+			check_variable = { percentage_of_global_factories < 0.002 }
+		}
+		add_ideas = non_power
+	}
+	else_if = {
 		limit = {
 			check_variable = { percentage_of_global_factories > 0.08 }
 		}
@@ -104,8 +114,6 @@ determine_power_ranking = {
 			has_country_flag = regional_power
 		}
 		add_ideas = regional_power
-	}
-	else = {
-		add_ideas = non_power
+		clr_country_flag = regional_power
 	}
 }
