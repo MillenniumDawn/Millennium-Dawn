@@ -2,6 +2,97 @@
 ### Other generic politics desicions at the bottom of the file ###
 
 coalition_desicions = {
+
+	###Desicion countdown ###
+	#activate_decision
+	#remove_decision
+	
+	coalition_countdown = {
+		
+		#need to complete
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = has_formed_coalition_TT	
+				has_country_flag = coalition_formed
+			}
+		}
+		
+		modifier = {
+			#political_power_cost = 2
+		}
+
+		activation = {
+			#is triggered only
+		}
+
+		Is_good = no
+
+		days_mission_timeout = 30
+		days_remove = 0
+
+		fire_only_once = yes
+
+		timeout_effect = {
+			add_political_power = -300
+			custom_effect_tooltip = AI_form_government_TT
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				
+				set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
+				subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^max_index_1 }
+
+				set_temp_variable = { majority_threshold_2 = majority_threshold } #need one that does not include second biggest party
+				subtract_from_temp_variable = { majority_threshold_2 = party_pop_elect_array^max_index_2 }
+				
+				make_affinity_arrays = yes
+				reduce_affinity_array_party_1 = yes
+				reduce_affinity_array_party_2 = yes
+				
+				if = {
+					limit = {
+						#coalition 1 is prefered - lowest
+						check_variable = {
+							var = cost1
+							value = cost2
+							compare = less_than_or_equals
+						}
+					}
+					add_to_array = { ruling_party = max_index_1 }
+					for_each_loop = {
+						array = party_pop_elect_array
+						index = i1
+						if = {
+							limit = {
+								check_variable = { party_1_affinity_array^i1 > 0 }
+							}
+							add_to_array = { gov_coalition_array = i1 }
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { cost1 > cost2 } #coalition 2 is prefered - lowest
+					}
+					add_to_array = { ruling_party = max_index_2 }
+					for_each_loop = {
+						array = party_pop_elect_array
+						index = i2
+						if = {
+							limit = {
+								check_variable = { party_2_affinity_array^i2 > 0 }
+							}
+							add_to_array = { gov_coalition_array = i2 }
+						}
+					}
+				}
+			}
+		}
+
+		complete_effect = {
+		}
+	}
+	
 	
 	###Western_Autocracy #0
 	
@@ -3304,7 +3395,64 @@ generic_coalition_politics_desicions = {
 		}
 		complete_effect = {
 			set_politics = {
-				elections_allowed = no
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 0 }
+					}
+					set_politics = {
+						ruling_party = democratic
+						elections_allowed = no
+					}
+				}
+				else_if = {
+					limit = {
+						OR = {
+							is_in_array = { ruling_party = 4 }
+							is_in_array = { ruling_party = 7 }
+						}
+					}
+					set_politics = {
+						ruling_party = communism
+						elections_allowed = no
+					}
+				}
+				else_if = {
+					limit = {
+						OR = {
+							is_in_array = { ruling_party = 10 }
+							is_in_array = { ruling_party = 11 }
+						}
+					}
+					set_politics = {
+						ruling_party = fascism
+						elections_allowed = no
+					}
+				}
+				else_if = {
+					limit = {
+						OR = {
+							is_in_array = { ruling_party = 13 }
+							is_in_array = { ruling_party = 19 }
+						}
+					}
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = no
+					}
+				}
+				else_if = {
+					limit = {
+						OR = {
+							is_in_array = { ruling_party = 21 }
+							is_in_array = { ruling_party = 22 }
+							is_in_array = { ruling_party = 23 }
+						}
+					}
+					set_politics = {
+						ruling_party = nationalist
+						elections_allowed = no
+					}
+				}
 			}
 		}
 	}
@@ -3321,8 +3469,79 @@ generic_coalition_politics_desicions = {
 			has_elections = no
 		}
 		complete_effect = {
-			set_politics = {
-				elections_allowed = yes
+			if = {
+				limit = {
+					OR = {
+						is_in_array = { ruling_party = 0 }
+						is_in_array = { ruling_party = 1 }
+						is_in_array = { ruling_party = 2 }
+						is_in_array = { ruling_party = 3 }
+					}
+				}
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					OR = {
+						is_in_array = { ruling_party = 4 }
+						is_in_array = { ruling_party = 5 }
+						is_in_array = { ruling_party = 6 }
+						is_in_array = { ruling_party = 7 }
+						is_in_array = { ruling_party = 8 }
+						is_in_array = { ruling_party = 9 }
+					}
+				}
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					OR = {
+						is_in_array = { ruling_party = 10 }
+						is_in_array = { ruling_party = 11 }
+					}
+				}
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					OR = {
+						is_in_array = { ruling_party = 12 }
+						is_in_array = { ruling_party = 13 }
+						is_in_array = { ruling_party = 14 }
+						is_in_array = { ruling_party = 15 }
+						is_in_array = { ruling_party = 16 }
+						is_in_array = { ruling_party = 17 }
+						is_in_array = { ruling_party = 18 }
+						is_in_array = { ruling_party = 19 }
+					}
+				}
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					OR = {
+						is_in_array = { ruling_party = 20 }
+						is_in_array = { ruling_party = 21 }
+						is_in_array = { ruling_party = 22 }
+						is_in_array = { ruling_party = 23 }
+					}
+				}
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = yes
+				}
 			}
 		}
 	}

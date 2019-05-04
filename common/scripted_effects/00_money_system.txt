@@ -299,6 +299,10 @@ calculate_interest_rate = {
 		limit = { or = { has_idea = wall_street has_idea = international_bankers } }
 		subtract_from_variable = { var = interest_rate value = 1 }
 	}
+	if = {
+		limit = { has_country_flag = bailout_given }
+		subtract_from_variable = { var = interest_rate value = 10 }
+	}
 	clamp_variable = {
 		var = interest_rate
 		min = 0.5
@@ -314,6 +318,36 @@ calculate_debt_rate = {
 	divide_variable = { var = debt_rate value = 36500 }
 	subtract_from_variable = { var = treasury_rate value = debt_rate }
 	update_display_expense = yes
+	
+	if = {
+		limit = { 
+			NOT = { has_country_flag = bailout_happened }
+		}
+		#check for imminent bankrupcy
+		set_temp_variable = { bankrupcy_check = size_modifier }
+		divide_temp_variable = { bankrupcy_check = 4 }
+		if = {
+			limit = { 
+				check_variable = { bankrupcy_check < debt_rate }
+				NOT = { has_country_flag = bailout_happened }
+			}
+			country_event = { id = bankrupcy.0 }
+		}
+	}
+	if = {
+		limit = {
+			NOT = { has_idea = bankrupcy }
+		}
+		#check for bankrupcy
+		set_temp_variable = { bankrupcy_check = size_modifier }
+		divide_temp_variable = { bankrupcy_check = 2.5 }
+		if = {
+			limit = { 
+				check_variable = { bankrupcy_check < debt_rate }
+			}
+			ROOT = { news_event = { id = News_bankrupcy.6 } } #actually bankrupt
+		}
+	}
 }
 
 update_military_rate = {
