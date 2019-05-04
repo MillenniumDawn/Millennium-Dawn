@@ -2165,8 +2165,13 @@ def main():
 
     createSubIdeologyValues(rootDir, voteShare2017, (rootDir + "/Modding resources/generated/generated_2017_politics.txt"),
                             startingLeaders2017)
+    createPartyLeaders(rootDir, partyLeader2000,
+                                      (rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),
+                                      extraLeaders, tags)
 
-
+    createPartyLeaders(rootDir, partyLeader2017,
+                                      (rootDir + "/Modding resources/generated/generated_2017_leaders.txt"),
+                                      extraLeaders, tags)
 
 
 
@@ -2177,8 +2182,7 @@ def main():
     input()
     input()
 
-    extraLeaders = createPartyLeaders(rootDir, partyLeader2000, (rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),
-                       extraLeaders, tags)
+
 
     print("done")
     input()
@@ -2200,8 +2204,7 @@ def main():
                 extraLeaders += getExtraLeaders2017(os.path.join(root, filename), tags, tagPos, tag)
 
 
-    extraLeaders = createPartyLeaders(rootDir, partyLeader2017, (rootDir + "/Modding resources/generated/generated_2017_leaders.txt"),
-                       extraLeaders, tags)
+
 
     sheetName = "2017 Extra Leaders"
     extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
