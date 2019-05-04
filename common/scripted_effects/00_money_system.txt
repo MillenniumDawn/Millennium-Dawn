@@ -14,6 +14,7 @@ initial_money_setup = {
 	#update_military_rate = yes
 	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
+	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
 	update_AI_NO_WANT_DEBT = yes
 }
 
@@ -29,6 +30,7 @@ startup_extra_setup = {
 	update_military_rate = yes
 	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
+	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
 	update_AI_NO_WANT_DEBT = yes
 
 }
@@ -113,6 +115,17 @@ ingame_calculate_size_modifier = {
 		#Divides/removes previous to avoid distortion
 		add_to_variable = { var = treasury_rate value = expense_gain }
 		subtract_from_variable = { var = treasury_rate value = tax_gain }
+		
+		### Temp multiply to avoid rounding errors ###
+		multiply_variable = { bureaucracy_gain = 1000 }
+		multiply_variable = { security_gain = 1000 }
+		multiply_variable = { education_gain = 1000 }
+		multiply_variable = { health_gain = 1000 }
+		multiply_variable = { welfare_gain = 1000 }
+		multiply_variable = { expense_gain = 1000 }
+		multiply_variable = { tax_gain = 1000 }
+		multiply_variable = { econ_cycle_upg_cost = 1000 }
+		
 		divide_variable = { var = bureaucracy_gain value = size_modifier }
 		divide_variable = { var = security_gain value = size_modifier }
 		divide_variable = { var = education_gain value = size_modifier }
@@ -160,6 +173,7 @@ ingame_calculate_size_modifier = {
 				} }
 			} }
 		}
+		
 		multiply_variable = { var = bureaucracy_gain value = size_modifier }
 		multiply_variable = { var = security_gain value = size_modifier }
 		multiply_variable = { var = education_gain value = size_modifier }
@@ -168,6 +182,27 @@ ingame_calculate_size_modifier = {
 		multiply_variable = { var = expense_gain value = size_modifier }
 		multiply_variable = { var = tax_gain value = size_modifier }
 		multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
+		
+		#Round to avoid automatic cutoff of important values
+		round_variable = bureaucracy_gain
+		round_variable = security_gain
+		round_variable = education_gain
+		round_variable = health_gain
+		round_variable = welfare_gain
+		round_variable = expense_gain
+		round_variable = tax_gain
+		round_variable = econ_cycle_upg_cost
+		
+		### divide back to avoid rounding errors ###
+		divide_variable = { bureaucracy_gain = 1000 }
+		divide_variable = { security_gain = 1000 }
+		divide_variable = { education_gain = 1000 }
+		divide_variable = { health_gain = 1000 }
+		divide_variable = { welfare_gain = 1000 }
+		divide_variable = { expense_gain = 1000 }
+		divide_variable = { tax_gain = 1000 }
+		divide_variable = { econ_cycle_upg_cost = 1000 }
+		
 		subtract_from_variable = { var = treasury_rate value = expense_gain }
 		add_to_variable = { var = treasury_rate value = tax_gain }
 		update_display_income = yes
@@ -179,6 +214,9 @@ ingame_calculate_size_modifier = {
 calculate_tax_gain = {
 	subtract_from_variable = { var = treasury_rate value = tax_gain }
 	set_variable = { var = tax_gain value = tax_rate }
+	
+	multiply_variable = { tax_gain = 1000 }
+	
 	multiply_variable = { var = tax_gain value = size_modifier }
 	divide_variable = { var = tax_gain value = 100 }
 	if = { limit = { has_idea = depression }
@@ -200,14 +238,16 @@ calculate_tax_gain = {
 			} }
 		} }
 	}
+	
+	round_variable = tax_gain
+	divide_variable = { tax_gain = 1000 }
+	
 	add_to_variable = { var = treasury_rate value = tax_gain }
 	update_display_income = yes
 }
 
 calculate_interest_rate = {
 	set_variable = { var = interest_rate value = debt }
-	divide_variable = { var = interest_rate value = size_modifier }
-	divide_variable = { var = interest_rate value = 365 }
 	if = { limit = { has_idea = gdp_1 }
 		multiply_variable = { var = interest_rate value = 20 }
 		
@@ -241,12 +281,14 @@ calculate_interest_rate = {
 			} }
 		} }
 	}
+	divide_variable = { var = interest_rate value = size_modifier }
+	divide_variable = { var = interest_rate value = 365 }
 	if = {
 		limit = { has_idea = petro_dollar }
 		subtract_from_variable = { var = interest_rate value = 1 }
 	}
 	if = {
-		limit = { has_idea = EU_member }
+		limit = { has_idea = the_euro }
 		subtract_from_variable = { var = interest_rate value = 1 }
 	}
 	if = {
@@ -264,7 +306,7 @@ calculate_interest_rate = {
 	}
 	update_AI_NO_WANT_DEBT = yes
 }
-
+	### safeproofing - reached here #killerrabbit
 calculate_debt_rate = {
 	add_to_variable = { var = treasury_rate value = debt_rate }
 	set_variable = { var = debt_rate value = debt }
@@ -404,11 +446,11 @@ update_military_rate = {
 
 	set_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
 	add_to_temp_variable = { expensive_airforce = num_equipment@nav_plane_equipment }
-	multiply_temp_variable = { expensive_airforce = 6 }
+	multiply_temp_variable = { expensive_airforce = 5 }
 	add_to_temp_variable = { airforce_count = expensive_airforce }
 
 	set_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
-	multiply_temp_variable = { strategic_airforce = 20 }
+	multiply_temp_variable = { strategic_airforce = 18 }
 	add_to_temp_variable = { airforce_count = strategic_airforce }
 
 	divide_temp_variable = { airforce_count = 10 } #control factor
@@ -554,7 +596,7 @@ calculate_resource_sale_rate = {
 	round_variable = resource_exports
 	
 	set_variable = { var = resource_sale_rate value = resource_exports }
-	divide_variable = { var = resource_sale_rate value = 60 }
+	divide_variable = { var = resource_sale_rate value = 70 }
 	
 	add_to_variable = { var = treasury_rate value = resource_sale_rate }
 	update_display_income = yes
