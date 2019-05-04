@@ -1859,6 +1859,9 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                     # print(y[0][0])
                     if leaderName == organizedLeaders[pos2][2][0]:
                         cont = 0;
+                        organizedLeaders[pos2][5] = [traits]
+                        print("added traits: " + organizedLeaders[pos2][2][0])
+                        input()
                         #print(organizedLeaders[pos2][2][0])
 
                 for x, y in enumerate(startingLeaders2000):
