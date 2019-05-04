@@ -1457,7 +1457,7 @@ def createCustomElectionEffect (hasCustomElections, tag, rootDir):
         if pos == 0:
             content += "\tif = { limit = { TAG = " + tag[0] + " } set_leader_" + tag[0] + " = yes }\n"
         else:
-            content += "\telse_if = { limit = { TAG = " + tag[0] + " } set_leader_" + tag[0] + " = yes }\n"
+            content += "\telse_if = { limit = { original_tag = " + tag[0] + " } set_leader_" + tag[0] + " = yes }\n"
 
     content += "\t# We need to remove the current leader for the game to use random generation.\n"
     content += "\t#It's OK if no leader was created in script!\n\n"
