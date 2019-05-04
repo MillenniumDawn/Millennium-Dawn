@@ -1179,8 +1179,8 @@ def createSubIdeologyValues (rootDir, sheet, filepath, startingLeaders):
                     ideology = y[3][0]
                     traits = y[4][0]
                     outlook = GetOutlook(ideology)
-                    print(y)
-                    input()
+                    #print(y)
+                    #input()
 
 
             content += "set_politics = {\n"
@@ -1861,7 +1861,8 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                         cont = 0;
                         organizedLeaders[pos2][5] = [traits]
                         print("added traits: " + organizedLeaders[pos2][2][0])
-                        input()
+                        print(traits)
+                        #input()
                         #print(organizedLeaders[pos2][2][0])
 
                 for x, y in enumerate(startingLeaders2000):
@@ -1971,6 +1972,15 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                     pos = getTagPos3(organizedLeaders, tag, startDate)
 
                     cont = 1;
+                    for pos2, y in enumerate(organizedLeaders):
+                        # print(y[0][0])
+                        if leaderName == organizedLeaders[pos2][2][0]:
+                            cont = 0;
+                            organizedLeaders[pos2][5] = [traits]
+                            print("added traits: " + organizedLeaders[pos2][2][0])
+                            print(traits)
+                            #input()
+
                     for x, y in enumerate(startingLeaders2017):
                         # print(y[0][0])
                         if leaderName == y[1][0]:
@@ -1978,10 +1988,7 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                             startingLeaders2017[x][4] = [traits]
                             cont = 0;
 
-                    for pos2, y in enumerate(organizedLeaders):
-                        # print(y[0][0])
-                        if leaderName == organizedLeaders[pos2][2][0]:
-                            cont = 0;
+
                             ##print(organizedLeaders[pos2][2][0])
 
                     if cont == 1:
@@ -2150,9 +2157,9 @@ def main():
                                    startingLeaders2000, startingLeaders2017)
 
 
-    print(startingLeaders2000)
-    print(startingLeaders2017)
-    input()
+    #print(startingLeaders2000)
+    #print(startingLeaders2017)
+    #input()
     createSubIdeologyValues(rootDir, voteShare2000, (rootDir + "/Modding resources/generated/generated_2000_politics.txt"),
                             startingLeaders2000)
 
