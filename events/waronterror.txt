@@ -410,9 +410,14 @@ country_event = {
 	
 	is_triggered_only = yes
 	
+	immediate = {
+		set_country_flag = war_on_terror_speech
+	}
+	
 	option = {
 		name = wot.8.a
 		log = "[GetDateText]: [This.GetName]: wot.8.a executed"
+		ai_chance = { factor = 50 }
 		add_stability = 0.045
 		hidden_effect = {
 			news_event = {
@@ -424,6 +429,7 @@ country_event = {
 	option = {
 		name = wot.8.b
 		log = "[GetDateText]: [This.GetName]: wot.8.a executed"
+		ai_chance = { factor = 50 }
 		add_war_support = 0.045
 		hidden_effect = {
 			news_event = {
@@ -433,6 +439,181 @@ country_event = {
 		}
 	}
 }
+
+#US Demands extradition of bin Laden
+country_event = {
+	id = wot.9
+	title = wot.9.t
+	desc = wot.9.d
+	picture = GFX_bin_laden
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.9.a
+		log = "[GetDateText]: [This.GetName]: wot.9.a executed"
+		ai_chance = { factor = 95 }
+		FROM = { country_event = { id = wot.10 days = 3 } }
+		USA = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = terrorist_menace 
+			}
+		}
+	}
+	option = {
+		name = wot.9.b
+		log = "[GetDateText]: [This.GetName]: wot.9.a executed"
+		ai_chance = { factor = 5 }
+		FROM = { country_event = { id = wot.11 days = 3 } }
+		add_stability = -0.10
+		USA = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = military_cooperation   
+			}
+		}
+	}
+	
+}
+
+#Taliban decline to extradite bin Laden
+country_event = {
+	id = wot.10
+	title = wot.10.t
+	desc = wot.10.d
+	picture = GFX_bin_laden
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.10.a
+		log = "[GetDateText]: [This.GetName]: wot.10.a executed"
+		ai_chance = { factor = 100 }
+		set_country_flag = bin_Laden_stays_home
+	}
+	
+}
+
+#Taliban agree to extradite bin Laden
+country_event = {
+	id = wot.11
+	title = wot.11.t
+	desc = wot.11.d
+	picture = GFX_bin_laden
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.11.a
+		log = "[GetDateText]: [This.GetName]: wot.11.a executed"
+		ai_chance = { factor = 100 }
+		set_country_flag = Cooperation_with_taleban
+	}
+	
+}
+
+#US Requests help in Afghanistan
+country_event = {
+	id = wot.12
+	title = wot.12.t
+	desc = wot.12.d
+	picture = GFX_afghanistan_war
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.12.a		#Send troops
+		log = "[GetDateText]: [This.GetName]: wot.12.a executed"
+		ai_chance = { 
+			factor = 30
+			modifier = {
+				factor = 2
+				OR = {
+					original_tag = ENG
+					original_tag = CAN
+					original_tag = AST
+				}
+			}
+			modifier = {
+				factor = 0.5
+				num_divisions < 10
+			}
+		}
+		lose_pp_for_month = yes
+		if = {
+			limit = { NOT = { has_idea = intervention_regional_interventionism  } }
+			add_ideas = intervention_regional_interventionism  
+		}
+		if = {
+			limit = { is_ai = yes }
+			add_ai_strategy = {
+				type = send_volunteers_desire
+				id = AFG
+				value = 200
+			}
+			add_ai_strategy = {
+				type = befriend
+				id = AFG
+				value = 200
+			}
+			add_ai_strategy = {
+				type = support
+				id = AFG
+				value = 200
+			}
+		}
+	}
+	option = {
+		name = wot.12.b		#Only provide equipment
+		log = "[GetDateText]: [This.GetName]: wot.12.b executed"
+		ai_chance = { 
+			factor = 50 
+			modifier = {
+				factor = 0.5
+				OR = {
+					original_tag = ENG
+					original_tag = CAN
+					original_tag = AST
+				}
+			}
+			modifier = {
+				factor = 2
+				num_divisions < 10
+			}
+		}
+		lose_pp_for_15_days = yes
+		if = {
+			limit = { is_ai = yes }
+			add_ai_strategy = {
+				type = befriend
+				id = AFG
+				value = 100
+			}
+			add_ai_strategy = {
+				type = support
+				id = AFG
+				value = 100
+			}
+		}
+	}
+	option = {
+		name = wot.12.c		#We'll provide moral support
+		log = "[GetDateText]: [This.GetName]: wot.12.c executed"
+		ai_chance = { 
+			factor = 20
+			modifier = {
+				factor = 0.5
+				OR = {
+					original_tag = ENG
+					original_tag = CAN
+					original_tag = AST
+				}
+			}
+		}
+		add_stability = -0.03
+	}
+}		
 
 ### NEWS EVENTS ###
 #9/11 News Event
@@ -569,5 +750,21 @@ news_event = {
 	option = {
 		name = wotnews.6.a
 		log = "[GetDateText]: [This.GetName]: wotnews.6.a executed"
+	}
+}
+
+#Bush announces the Invasion of Afghanistan
+news_event = {
+	id = wotnews.7
+	title = wotnews.7.t
+	desc = wotnews.7.d
+	picture = GFX_news_event_afghanistan_war4
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.7.a
+		log = "[GetDateText]: [This.GetName]: wotnews.7.a executed"
 	}
 }

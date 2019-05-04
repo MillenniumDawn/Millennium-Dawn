@@ -46,7 +46,164 @@ war_on_terror_category = {
 		}				
 		
 	}
+	
+	#Invasion of Afghanistan storyline
+	usa_demand_extradition_of_bin_laden = {
+	
+		visible = {
+			has_country_flag = USA_911_happened
+		}
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
+				has_country_flag = war_on_terror_speech
+			}
+		}
+		
+		cost = 100
+		fire_only_once = yes
+		
+		complete_effect = {
+			TAL = { country_event = { id = wot.9 days = 3 } }
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	usa_operation_enduring_freedom = {
+		
+		visible = {
+			has_country_flag = bin_Laden_stays_home
+		}
 
+		available = {
+			always = yes
+		}
+		
+		cost = 250
+
+		selectable_mission = yes
+		days_remove = 30
+		fire_only_once = yes
+		
+		war_with_on_remove = TAL
+		
+		remove_effect = {
+			set_country_flag = Operation_enduring_freedom
+			#Add threat to allow volunteers to be sent
+			add_named_threat = {
+				threat = 10
+				name = USA_enduring_freedom
+			}
+			#Add strategy to AI to help AFG
+			if = {
+				limit = { is_ai = yes }
+				add_ai_strategy = {
+					type = send_volunteers_desire
+					id = AFG
+					value = 200
+				}
+				add_ai_strategy = {
+					type = befriend
+					id = AFG
+					value = 200
+				}
+				add_ai_strategy = {
+					type = support
+					id = AFG
+					value = 200
+				}
+			}
+			PER = {
+				add_ai_strategy = {
+					type = send_volunteers_desire
+					id = AFG
+					value = 200
+				}
+				add_ai_strategy = {
+					type = befriend
+					id = AFG
+					value = 200
+				}
+				add_ai_strategy = {
+					type = support
+					id = AFG
+					value = 200
+				}
+			}
+			#Other NATO countries + Australia requested to join
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = AST
+						has_idea = NATO_member
+					}
+				}
+				country_event = { id = wot.12 days = 2 random = 24 }
+			}
+			#Make sure US is at Global Interventionism idea
+			if = {
+				limit = { NOT = { has_idea = intervention_global_interventionism } }
+				add_ideas = intervention_global_interventionism 
+			}
+			#If Northern Alliance has been defeated, start a weaker new civil war
+			if = {
+				limit = { NOT = { country_exists = AFG } }
+				clr_global_flag = Afghanistan_Civil_War_Over
+				TAL = {
+					every_owned_state = {
+						limit = { is_core_of = TAL }
+						add_core_of = AFG
+					}
+				}
+				AFG = {
+					transfer_state = 411
+					transfer_state = 410
+					set_capital = 411
+					declare_war_on = {
+						target = TAL
+						type = civil_war
+					}
+					load_oob = "AFG_uprising_by_US"
+				}
+			}
+			hidden_effect = {
+				news_event = {
+					id = wotnews.7
+					hours = 6
+				}
+			}
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	
+	#Homeland Security Act
+	usa_homeland_security_act = {
+	
+		visible = {
+			has_country_flag = USA_911_happened
+		}
+		
+		available = {
+			NOT = { country_exists = TAL }
+		}
+		
+		cost = 300
+		
+		complete_effect = {
+			add_ideas = USA_homeland_security
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}
+		
 	usa_intervene_SYR = {
 		allowed = { tag = USA }
 
@@ -270,37 +427,6 @@ war_on_terror_category = {
 		
 		ai_will_do = {
 			factor = 1
-		}
-	}
-	
-	usa_operation_enduring_freedom = {
-		allowed = { tag = USA }
-		cost = 75
-
-		available = {
-			date > 2001.9.11
-			country_exists = TAL
-			AFG = { has_war_with = TAL }
-		}
-
-		Is_good = no
-		selectable_mission = yes
-		days_remove = 25
-		fire_only_once = yes
-		
-		complete_effect = {
-			create_wargoal = {
-				target = TAL
-				type = puppet_wargoal_focus
-			}
-		}
-		
-		ai_will_do = {
-			factor = 10
-			modifier = {
-				add = 25
-				is_historical_focus_on = Yes
-			}
 		}
 	}
 	usa_operation_iraqi_freedom = {
