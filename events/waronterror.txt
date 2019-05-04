@@ -1,36 +1,40 @@
 ﻿add_namespace = wot
+add_namespace = wotnews
 
 #Major Terrorist attacks timetable
 country_event = {
 	id = wot.1
 	title = wot.1.t
 	desc = wot.1.d
-	picture = GFX_report_event_nine_eleven
 	
 	is_triggered_only = yes
 	hidden = yes
 	
 	trigger = {
 		NOT = { has_government = fascism } #Just incase some tomfoolery happens
+		original_tag = USA
 	}
 	
 	option = {
 		name = wot.1.a
 		log = "[GetDateText]: [This.GetName]: wot.1.a executed"
-		news_event = {
-			hours = 6
-			id = usa_news.1
+		ai_chance = { factor = 100 }
+		news_event = { hours = 18 id = wotnews.1 }
+		country_event = { id = wot.2 hours = 12 }
+		if = {
+			limit = { NOT = { has_country_flag = USA_increased_intelligence_efforts } }
+			random_list = {
+				5 = { set_country_flag = major_terrorist_attacks_discovered }
+				80 = { set_country_flag = terrorist_attacks_succeed_no_fourth_plane }
+				15 = { set_country_flag = terrorist_attacks_succeed_fourth_plane }
+			}
 		}
-		USA = { country_event = { id = wot.2 hours = 8 } } 
-		random_list = {
-			5 = {
-				set_country_flag = major_terrorist_attacks_discovered
-			}
-			80 = {
-				set_country_flag = terrorist_attacks_succeed_no_fourth_plane
-			}
-			15 = {
-				set_country_flag = terrorist_attacks_succeed_fourth_plane
+		if = {
+			limit = { has_country_flag = USA_increased_intelligence_efforts }
+			random_list = {
+				15 = { set_country_flag = major_terrorist_attacks_discovered }
+				75 = { set_country_flag = terrorist_attacks_succeed_no_fourth_plane }
+				10 = { set_country_flag = terrorist_attacks_succeed_fourth_plane }
 			}
 		}
 	}
@@ -54,34 +58,516 @@ country_event = {
 		text = wot.2.dc
 		trigger = { has_country_flag = terrorist_attacks_succeed_fourth_plane }
 	}
+	picture = GFX_nine_eleven
 	
 	is_triggered_only = yes
 	fire_only_once = yes
 	
+	immediate = {
+		hidden_effect = {
+			set_country_flag = USA_911_happened
+			every_country = {							#September 12th: International Reactions
+				limit = { 
+					OR = { 
+						has_idea = NATO_member 
+						tag = CAN 
+						tag = ENG 
+						tag = AST 
+						tag = GER 
+						tag = FRA 
+						tag = POL 
+						tag = IRQ
+					}
+				}
+				country_event = { id = wot.3 days = 1 }
+			}
+			country_event = { id = wot.4 days = 2 }	#September 13th: Hillary Clinton backs the post-9/11
+			country_event = { id = wot.5 days = 3 }	#September 14th: National Prayer Service
+			country_event = { id = wot.6 days = 4 }	#September 15th: Murder of Balbir Singh Sondhi
+			country_event = { id = wot.7 days = 7 }	#September 18th: Anthrax Attacks
+			country_event = { id = wot.8 days = 9 }	#September 20th: The War on Terror Speech
+		}
+	}
+			
+	
 	option = {
+		name = wot.2.a
 		trigger = { has_country_flag = major_terrorist_attacks_discovered }
 		log = "[GetDateText]: [This.GetName]: wot.2.a executed"
-		#Good Shit - We Can Thwart it
+		ai_chance = { factor = 100 }
+		add_stability = -0.05
 	}
 	
 	option = {
+		name = wot.2.b
 		trigger = { has_country_flag = terrorist_attacks_succeed_no_fourth_plane }
 		log = "[GetDateText]: [This.GetName]: wot.2.b executed"
-		#Bad - Normal Option
+		ai_chance = { factor = 100 }
+		add_stability = -0.10
 	}
 	
 	option = {
+		name = wot.2.c
 		trigger = { has_country_flag = terrorist_attacks_succeed_fourth_plane }
 		log = "[GetDateText]: [This.GetName]: wot.2.c executed"
-		#Maybe a politician dies - Extremely Bad Option
+		ai_chance = { factor = 100 }
+		add_stability = -0.15
 	}
 }
 
-##Plot Discovered
+#Diplomatic Response to 9/11
+country_event = {
+	id = wot.3 
+	title = wot.3.t
+	desc = wot.3.d
+	picture = GFX_report_event_schroeder_and_bush
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.3.a
+		log = "[GetDateText]: [This.GetName]: wot.3.a executed"
+		ai_chance = { 
+			factor = 90
+			modifier = {
+				factor = 0
+				original_tag = IRQ
+				NOT = { has_government = democratic }
+			}
+		}
+		USA = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = nine_eleven_total_loyalty
+			}
+		}
+		add_political_power = -20
+		add_stability = -0.01
+	}
+	option = {
+		name = wot.3.b
+		log = "[GetDateText]: [This.GetName]: wot.3.b executed"
+		ai_chance = { 
+			factor = 10
+			modifier = {
+				factor = 2
+				original_tag = IRQ
+				NOT = { has_government = democratic }
+			} 
+		}
+		USA = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = nine_eleven_loyalty
+			}
+		}	
+		add_stability = 0.01
+	}
+	option = {
+		name = wot.3.c
+		log = "[GetDateText]: [This.GetName]: wot.3.c executed"
+		ai_chance = { 
+			factor = 0
+			modifier = {
+				add = 80 
+				original_tag = IRQ
+				NOT = { has_government = democratic }
+			}
+		}
+		USA = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = imminent_danger_to_national_security 
+			}
+		}
+		add_popularity = { ideology = fascism popularity = 0.05 }
+		add_popularity = { ideology = nationalist popularity = 0.05 }
+	}
+}
 
-##Attacks Succeeds - NON 4th Plane
+#Opposition politician backs the government
+country_event = {
+	id = wot.4
+	title = wot.4.t
+	desc = {
+		text = wot.4.da
+		trigger = { is_in_array = { array = ruling_party value = 1 } }
+	}
+	desc = {
+		text = wot.4.db
+		trigger = { is_in_array = { array = ruling_party value = 2 } }
+	}
+	picture = GFX_hillary_clinton_young
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_government = democratic
+		OR = {	#Either Republicans or Democrats in office
+			is_in_array = {
+				array = ruling_party
+				value = 1
+			}
+			is_in_array = {
+				array = ruling_party
+				value = 2
+			}
+		}
+	}
+	
+	option = {	#We stand united
+		name = wot.4.a
+		log = "[GetDateText]: [This.GetName]: wot.4.a executed"
+		ai_chance = { factor = 90 }
+		add_stability = 0.03
+		hidden_effect = {
+			news_event = {
+				id = wotnews.2
+				hours = 6
+			}
+		}
+		#Increase the popularities of the ruling coalition by 10%, and the main opposition party by 5%
+		custom_effect_tooltip = TT_OEF_RAISE_POPULARITIES
+		for_each_loop = {
+			array = ruling_party
+			value = v
+			multiply_variable = { party_pop_array^v = 1.1 }
+		}
+		for_each_loop = {
+			array = gov_coalition_array
+			value = v
+			multiply_variable = { party_pop_array^v = 1.1 }
+		}
+		if = {
+			limit = {
+				is_in_array = {
+					array = ruling_party
+					value = 1
+				}
+			}
+			multiply_variable = { party_pop_array^2 = 1.05 }
+		}
+		if = {
+			limit = {
+				is_in_array = {
+					array = ruling_party
+					value = 2
+				}
+			}
+			multiply_variable = { party_pop_array^1 = 1.05 }
+		}
+		hidden_effect = {	
+			recalculate_party = yes
+		}
+	}
+	option = {	#They're trying to benefit from a tragedy
+		name = wot.4.b
+		log = "[GetDateText]: [This.GetName]: wot.4.b executed"
+		ai_chance = { factor = 10 }
+		#Decrease the popularities of the ruling coalition by 5%, and the main opposition party by 10%
+		custom_effect_tooltip = TT_OEF_LOWER_POPULARITIES
+		for_each_loop = {
+			array = ruling_party
+			value = v
+			multiply_variable = { party_pop_array^v = 0.95 }
+		}
+		for_each_loop = {
+			array = gov_coalition_array
+			value = v
+			multiply_variable = { party_pop_array^v = 0.95 }
+		}
+		if = {
+			limit = {
+				is_in_array = {
+					array = ruling_party
+					value = 1
+				}
+			}
+			multiply_variable = { party_pop_array^2 = 0.9 }
+		}
+		if = {
+			limit = {
+				is_in_array = {
+					array = ruling_party
+					value = 2
+				}
+			}
+			multiply_variable = { party_pop_array^1 = 0.9 }
+		}
+		hidden_effect = {	
+			recalculate_party = yes
+		}
+	}		
+}
 
-##Capitol Gets Smacked - All 4 Planes hit
+#National Prayer Service
+country_event = {
+	id = wot.5
+	title = wot.5.t
+	desc = wot.5.d
+	picture = GFX_national_prayer_service_2001
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.5.a
+		log = "[GetDateText]: [This.GetName]: wot.5.a executed"
+		ai_chance = { factor = 90 }
+		lose_pp_for_month = yes
+		add_stability = 0.05
+		add_war_support = 0.05		
+		hidden_effect = {
+			news_event = {
+				id = wotnews.3
+				hours = 6
+			}
+		}
+	}
+	option = {
+		name = wot.5.b
+		log = "[GetDateText]: [This.GetName]: wot.5.b executed"
+		ai_chance = { factor = 10 }
+	}		
+}
 
+#Murder of Balbir Singh Sodhi
+country_event = {
+	id = wot.6
+	title = wot.6.t
+	desc = wot.6.d
+	picture = GFX_balbir_singh_sodhi
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.6.a
+		log = "[GetDateText]: [This.GetName]: wot.6.a executed"
+		ai_chance = { factor = 95 }
+		add_political_power = -5
+		hidden_effect = {
+			news_event = {
+				id = wotnews.4
+				hours = 6
+			}
+		}
+	}
+	option = {
+		name = wot.6.b
+		log = "[GetDateText]: [This.GetName]: wot.6.b executed"
+		ai_chance = { factor = 5 }
+		add_political_power = -100
+		add_popularity = { ideology = nationalist popularity = 0.03 }
+		hidden_effect = {
+			news_event = {
+				id = wotnews.4
+				hours = 6
+			}
+		}
+	}
+}
 
+#Anthrax Attacks
+country_event = {
+	id = wot.7
+	title = wot.7.t
+	desc = wot.7.d
+	picture = GFX_fbi
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.7.a
+		log = "[GetDateText]: [This.GetName]: wot.7.a executed"
+		ai_chance = { factor = 80 }
+		add_stability = -0.03	
+		hidden_effect = {
+			news_event = {
+				id = usa_news.13
+				hours = 6
+			}
+		}
+	}
+	option = {
+		name = wot.7.b
+		log = "[GetDateText]: [This.GetName]: wot.7.b executed"
+		ai_chance = { factor = 20 }
+		lose_pp_for_15_days = yes		
+		hidden_effect = {
+			news_event = {
+				id = wotnews.5
+				hours = 6
+			}
+		}
+	}
+}
 
+#The War on Terror Speech
+country_event = {
+	id = wot.8
+	title = wot.8.t
+	desc = wot.8.d
+	picture = GFX_george_w_bush
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.8.a
+		log = "[GetDateText]: [This.GetName]: wot.8.a executed"
+		add_stability = 0.045
+		hidden_effect = {
+			news_event = {
+				id = wotnews.6
+				hours = 6
+			}
+		}
+	}
+	option = {
+		name = wot.8.b
+		log = "[GetDateText]: [This.GetName]: wot.8.a executed"
+		add_war_support = 0.045
+		hidden_effect = {
+			news_event = {
+				id = wotnews.6
+				hours = 6
+			}
+		}
+	}
+}
+
+### NEWS EVENTS ###
+#9/11 News Event
+news_event = {
+	id = wotnews.1
+	title = wotnews.1.t
+	desc = {
+		text = wotnews.1.da
+		trigger = { FROM = { has_country_flag = major_terrorist_attacks_discovered } }
+	}
+	desc = {
+		text = wotnews.1.db
+		trigger = { FROM = { has_country_flag = terrorist_attacks_succeed_no_fourth_plane } }
+	}
+	desc = {
+		text = wotnews.1.dc
+		trigger = { FROM = { has_country_flag = terrorist_attacks_succeed_fourth_plane } }
+	}
+	picture = GFX_news_nine_eleven
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wotnews.1.o1
+		log = "[GetDateText]: [This.GetName]: wotnews.1.o1 executed"
+		trigger = { original_tag = USA }
+	}
+	
+	option = {
+		name = wotnews.1.o2
+		log = "[GetDateText]: [This.GetName]: wotnews.1.o2 executed"
+		trigger = {
+			has_idea = NATO_member
+			NOT = { original_tag = USA }
+		}
+	}
+	
+	option = {
+		name = wotnews.1.o3
+		log = "[GetDateText]: [This.GetName]: wotnews.1.o3 executed"
+		trigger = {
+			NOT = { has_idea = NATO_member }
+			NOT = { original_tag = USA }
+			NOT = { has_government = fascism }
+		}
+	}
+	
+	option = {
+		name = wotnews.1.o4
+		log = "[GetDateText]: [This.GetName]: wotnews.1.o4 executed"
+		trigger = {
+			NOT = { original_tag = USA }
+			has_government = fascism
+		}
+	}
+}
+
+#Democrats rally behind the Republican Government after 9/11
+news_event = {
+	id = wotnews.2
+	title =wotnews.2.t
+	desc = wotnews.2.d
+	picture = GFX_news_hillary_clinton_young
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name =wotnews.2.a
+		log = "[GetDateText]: [This.GetName]: wotnews.2.a executed"
+	}
+}
+
+#National Prayer Service
+news_event = {
+	id = wotnews.3
+	title = wotnews.3.t
+	desc = wotnews.3.d
+	picture = GFX_news_national_prayer_service_2001
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.3.a
+		log = "[GetDateText]: [This.GetName]: wotnews.3.a executed"
+	}
+}
+
+#Murder of Balbir Singh Sodhi
+news_event = {
+	id = wotnews.4
+	title = wotnews.4.t
+	desc = wotnews.4.d
+	picture = GFX_news_balbir_singh_sodhi
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.4.a
+		log = "[GetDateText]: [This.GetName]: wotnews.4 executed"
+	}
+}
+
+#Anthrax Attacks
+news_event = {
+	id = wotnews.5
+	title = wotnews.5.t
+	desc = wotnews.5.d
+	picture = GFX_news_fbi
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.5.a
+		log = "[GetDateText]: [This.GetName]: wotnews.5.a executed"
+	}
+}
+
+#The War on Terror Speech
+news_event = {
+	id = wotnews.6
+	title = wotnews.6.t
+	desc = wotnews.6.d
+	picture = GFX_report_event_american_flag
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.6.a
+		log = "[GetDateText]: [This.GetName]: wotnews.6.a executed"
+	}
+}
