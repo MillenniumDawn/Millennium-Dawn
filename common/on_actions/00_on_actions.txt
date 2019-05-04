@@ -34,7 +34,10 @@ on_actions = {
 
 	on_bi_yearly_pulse = {
 		effect = {
-			every_country = { update_AI_NO_WANT_DEBT = yes }
+			every_country = { 
+				update_AI_NO_WANT_DEBT = yes
+				2017_state_init_setup = yes #updates all global state categories
+			}
 		}
 	}
 
@@ -377,16 +380,43 @@ on_actions = {
 			
 			LIB = { if = { limit = { NOT = { country_exists = LUR } } white_peace = GUI white_peace = SIE } }
 			DRC = { if = { limit = { NOT = { country_exists = MLC } } white_peace = UGA white_peace = RWA } }
+			LIB = { set_law_attitudes = yes } #any country will do
 			
 			every_country = {
-				country_event = { id = init.0 }
+				startup_politics = yes		#won't work in every_country
+				startup_extra_setup = yes 	#money system
+				setup_init_factions = yes 	#flags for int. factions
+				set_law_vars = yes 	#vars for change laws secondary effects
+				init_neighbor_drift_1 = yes #drift from neighbor
+				init_neighbor_drift_2 = yes #drift from neighbor
+				init_AI_strategy_1 = yes
+				init_AI_strategy_2 = yes
+				
+				country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
+				country_event = { id = brotherhood.2 }
+				set_country_flag = { flag = total_AB_wars value = 0 }
+				#news_event = { id = USA_Russia_Investigation.0 days = 35 }
+				
+				if = { 
+					limit = { is_ai = no } country_event = { id = init.0 } #has no effects except startup text
+				}
+				else = {
+					give_AI_templates = yes
+				}
+				
 				set_variable = { AC_build_amount = 1 }
 				if = { #Set NATO tech sharing
 					limit = { has_dlc = "Together for Victory" }
 					every_country = { limit = { has_idea = NATO_member } add_to_tech_sharing_group = NATO_Tech_Share }
 				}
-			}
-			every_country = {
+				if = {
+					limit = { has_start_date > 2016.1.1 }		#2017 state category update
+					2017_state_init_setup = yes
+				}
+				if = {
+					limit = { has_stability < 0.36 }
+					low_stability_init = yes
+				}
 				if = {
 					limit = { has_focus_tree = generic_focus }
 					if = {
@@ -417,7 +447,16 @@ on_actions = {
 			}
 			
 			USA = {
-				if = { limit = { has_start_date > 2016.1.1 } country_event = { id = USA.1 days = 1 } country_event = { id = USA.2 days = 19 } }
+				if = { 
+					limit = { has_start_date > 2016.1.1 } 
+					country_event = { id = USA.1 days = 1 } 
+					country_event = { id = USA.2 days = 19 }
+				}
+				#9/11
+				if = {
+					limit = { has_start_date < 2001.1.1 }
+					country_event = { id = wot.1 days = 450 random = 8760 }
+				}				
 			}
 			CAN = {
 				CAN_update_french_happiness = yes
@@ -428,12 +467,15 @@ on_actions = {
 				# if = { limit = { is_ai = yes } set_technology = { ISIS_JIHAD = 1 } }
 				# if = { limit = { is_ai = no } set_technology = { ISIS_JIHAD_HUMAN = 1 } }
 			# }
+			
 			log = "[GetDateText]: [This.GetName]: on_startup init completed"
 		}
 
 	}
 	on_government_change = {
 		effect = {
+			set_failsafe_change_leader = yes
+			
 			every_neighbor_country = {
 				clear_neighbor_count_ideas = yes
 				set_country_flag = { flag = neighbor_count value = 0 }

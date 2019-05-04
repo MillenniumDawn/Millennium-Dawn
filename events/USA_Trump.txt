@@ -1,6 +1,427 @@
 ﻿add_namespace = donald_trump
 add_namespace = donald_trump_news
 
+#The Travel Ban
+country_event = {
+	id = donald_trump.0
+	title = donald_trump.0.t
+	desc = donald_trump.0.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Keep the ban limited
+		name = donald_trump.0.o1 #Iraq, Syria, Iran, Sudan, Libya, Yemen, Somalia
+		log = "[GetDateText]: [This.GetName]: donald_trump.0.o1 executed"
+		set_country_flag = original_travel_ban
+		add_popularity = { ideology = nationalist popularity = 0.01 }
+		add_to_variable = {
+			var = party_pop_array^20
+			value = 0.01
+		}
+		custom_effect_tooltip = add_Nat_Populism_0.01_tt
+		recalculate_party = yes
+		custom_effect_tooltip = travel_ban_challenge_possibility_tt
+		hidden_effect = {
+			random_list = {
+				80 = { #Bad Effect
+					country_event = { id = donald_trump.1 days = 2 }
+					set_country_flag = challenged_travel_ban
+				}
+				20 = { #Good Effect
+					country_event = { id = donald_trump.7 days = 5 }
+				}
+			}
+		}
+		ai_chance = {
+			factor = 25
+		}
+	}
+	option = { #Expand the ban to other countries around the globe
+		name = donald_trump.0.o2 #Adds Venezuela, Chad, and North Korea
+		log = "[GetDateText]: [This.GetName]: donald_trump.0.o2 executed"
+		set_country_flag = expanded_travel_ban
+		add_political_power = -10
+		add_stability = -0.01
+		custom_effect_tooltip = travel_ban_small_challenge_possibility_tt
+		hidden_effect = {
+			random_list = {
+				60 = { #Bad Effect
+					country_event = { id = donald_trump.1 days = 12 }
+					set_country_flag = challenged_travel_ban
+				}
+				40 = { #Good Effect
+					country_event = { id = donald_trump.7 days = 15 }
+				}
+			}
+		}
+		ai_chance = {
+			factor = 25
+		}
+	}
+}
+
+#Travel Ban Challenged by Federal Courts
+country_event = {
+	id = donald_trump.1
+	title = donald_trump.1.t
+	desc = {
+		text = donald_trump.1.d1
+		trigger = {
+			has_country_flag = original_travel_ban
+		}
+	}
+	desc = {
+		text = donald_trump.1.d2
+		trigger = {
+			has_country_flag = expanded_travel_ban
+		}
+	}
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Revise the ban
+		name = donald_trump.1.o1 #Iraq, Syria, Iran, Libya, Yemen, Somalia, Chad, Venezuela, North Korea
+		log = "[GetDateText]: [This.GetName]: donald_trump.1.o1 executed"
+		trigger = {
+			has_country_flag = original_travel_ban
+		}
+		clr_country_flag = original_travel_ban
+		set_country_flag = revised_travel_ban
+		add_political_power = -15
+		add_stability = -0.01
+		custom_effect_tooltip = travel_ban_small_challenge_possibility_tt
+		hidden_effect = {
+			random_list = {
+				67 = { #Bad Effect
+					country_event = { id = donald_trump.3 days = 10 }
+				}
+				33 = { #Good Effect
+					country_event = { id = donald_trump.7 days = 15 }
+				}
+			}
+		}
+		ai_chance = {
+			factor = 25
+		}
+	}
+	option = { #Push the ban through!
+		name = donald_trump.1.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump.1.o2 executed"
+		add_political_power = -10
+		add_stability = -0.02
+		custom_effect_tooltip = travel_ban_failure_possibility_tt
+		hidden_effect = {
+			random_list = {
+				80 = { #Bad Effect
+					country_event = { id = donald_trump.3 days = 35 }
+					set_country_flag = rejected_travel_ban
+					modifier = {
+						add = -20
+						has_country_flag = expanded_travel_ban
+					}
+				}
+				20 = { #Good Effect
+					country_event = { id = donald_trump.7 days = 28 }
+					modifier = {
+						add = 20
+						has_country_flag = expanded_travel_ban
+					}
+				}
+			}
+		}
+		ai_chance = {
+			factor = 25
+		}
+	}
+	option = { #We can't afford to be entangled in legal battles
+		name = donald_trump.1.o3
+		log = "[GetDateText]: [This.GetName]: donald_trump.1.o3 executed"
+		add_stability = 0.01
+		custom_effect_tooltip = travel_ban_drop_tt
+		ai_chance = {
+			factor = 25
+		}
+	}
+}
+
+#Travel Ban Rejected in Federal Courts
+country_event = {
+	id = donald_trump.2
+	title = donald_trump.2.t
+	desc = {
+		text = donald_trump.2.d1
+		trigger = {
+			has_country_flag = original_travel_ban
+		}
+	}
+	desc = {
+		text = donald_trump.2.d2
+		trigger = {
+			has_country_flag = expanded_travel_ban
+			NOT = {
+				has_country_flag = rejected_travel_ban
+			}
+		}
+	}
+	desc = {
+		text = donald_trump.2.d3
+		trigger = {
+			has_country_flag = rejected_travel_ban
+			NOT = {
+				has_country_flag = expanded_travel_ban
+			}
+		}
+	}	
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Bring it to the Supreme Court!
+		name = donald_trump.2.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.2.o1 executed"
+		add_political_power = -15
+		add_stability = -0.02
+		country_event = { id = donald_trump.4 days = 30 }
+		custom_effect_tooltip = travel_ban_supreme_courte_tt
+		ai_chance = {
+			factor = 25
+		}
+	}
+	option = { #Revise the ban
+		name = donald_trump.1.o1 #Iraq, Syria, Iran, Libya, Yemen, Somalia, Chad, Venezuela, North Korea
+		log = "[GetDateText]: [This.GetName]: donald_trump.2.o2 executed"
+		trigger = {
+			has_country_flag = original_travel_ban
+		}
+		clr_country_flag = original_travel_ban
+		set_country_flag = revised_travel_ban
+		add_political_power = -10
+		add_stability = -0.01
+		custom_effect_tooltip = travel_ban_failure_possibility_tt
+		hidden_effect = {
+			random_list = {
+				75 = { #Bad Effect
+					country_event = { id = donald_trump.3 days = 10 }
+				}
+				25 = { #Good Effect
+					country_event = { id = donald_trump.7 days = 15 }
+				}
+			}
+		}
+		ai_chance = {
+			factor = 25
+		}
+	}
+	option = { #We can't afford to be entangled in legal battles
+		name = donald_trump.2.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump.2.o3 executed"
+		add_stability = 0.01
+		custom_effect_tooltip = travel_ban_drop_tt
+		ai_chance = {
+			factor = 25
+		}
+	}
+}
+
+#Travel Ban Challenged by Federal Courts Again
+country_event = {
+	id = donald_trump.3
+	title = donald_trump.3.t
+	desc = donald_trump.3.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Push the ban through!
+		name = donald_trump.3.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump.3.o1 executed"
+		add_political_power = -15
+		add_stability = -0.01
+		custom_effect_tooltip = travel_ban_small_failure_possibility_tt
+		hidden_effect = {
+			random_list = {
+				67 = { #Bad Effect
+					country_event = { id = donald_trump.2 days = 35 }
+				}
+				33 = { #Good Effect
+					country_event = { id = donald_trump.7 days = 28 }
+				}
+			}
+		}
+		ai_chance = {
+			factor = 25
+		}
+	}
+	option = { #We can't afford to be entangled in legal battles
+		name = donald_trump.3.o2
+		log = "[GetDateText]: [This.GetName]: donald_trump.3.o2 executed"
+		add_stability = 0.01
+		custom_effect_tooltip = travel_ban_drop_tt
+		ai_chance = {
+			factor = 25
+		}
+	}
+}
+
+#The Ban is Brought Before the Supreme Court
+country_event = {
+	id = donald_trump.4
+	title = donald_trump.4.t
+	desc = donald_trump.4.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Let the process begin
+		name = donald_trump.4.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.4.o1 executed"
+		custom_effect_tooltip = travel_ban_supreme_courte_tt
+		hidden_effect = {
+			random_list = {
+				50 = { #Bad Effect
+					country_event = { id = donald_trump.5 days = 15 }
+				}
+				50 = { #Good Effect
+					country_event = { id = donald_trump.6 days = 15 }
+				}
+			}
+		}
+	}
+}
+
+#The Court Votes Against the Ban
+country_event = {
+	id = donald_trump.5
+	title = donald_trump.5.t
+	desc = donald_trump.5.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #This was a waste of time
+		name = donald_trump.5.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.5.o1 executed"
+		add_political_power = -15
+		add_stability = -0.02
+		custom_effect_tooltip = travel_ban_drop_tt
+	}
+}
+
+#The Court Upholds the Ban
+country_event = {
+	id = donald_trump.6
+	title = donald_trump.6.t
+	desc = donald_trump.6.d
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #We finally have an end to this madness
+		name = donald_trump.6.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.6.o1 executed"
+		add_political_power = 50
+		add_stability = 0.02
+		add_popularity = { ideology = nationalist popularity = 0.01 }
+		add_to_variable = {
+			var = party_pop_array^20
+			value = 0.01
+		}
+		custom_effect_tooltip = add_Nat_Populism_0.01_tt
+		recalculate_party = yes
+		custom_effect_tooltip = travel_ban_drop_tt
+	}
+}
+
+#Travel Ban Succeeds
+country_event = {
+	id = donald_trump.7
+	title = donald_trump.7.t
+	desc = {
+		text = donald_trump.7.d1
+		trigger = {
+			NOT = {
+				has_country_flag = challenged_travel_ban
+			}
+		}
+	}
+	desc = {
+		text = donald_trump.7.d2
+		trigger = {
+			has_country_flag = challenged_travel_ban
+			NOT = {
+				has_country_flag = rejected_travel_ban
+			}
+		}
+	}
+	desc = {
+		text = donald_trump.7.d3
+		trigger = {
+			has_country_flag = rejected_travel_ban
+			NOT = {
+				has_country_flag = expanded_travel_ban
+			}
+		}
+	}		
+	picture = GFX_USA_Election_2020
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Huzzah!
+		name = donald_trump.7.o1
+		log = "[GetDateText]: [This.GetName]: donald_trump.7.o1 executed"
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = challenged_travel_ban
+				}
+			}
+			add_political_power = 50
+			add_stability = 0.03
+			add_popularity = { ideology = nationalist popularity = 0.02 }
+			add_to_variable = {
+				var = party_pop_array^20
+				value = 0.02
+			}
+			custom_effect_tooltip = add_Nat_Populism_0.02_tt
+			recalculate_party = yes
+		}
+		else = {
+			add_political_power = 25
+			add_stability = 0.01
+			add_popularity = { ideology = nationalist popularity = 0.01 }
+			add_to_variable = {
+				var = party_pop_array^20
+				value = 0.01
+			}
+			custom_effect_tooltip = add_Nat_Populism_0.01_tt
+			recalculate_party = yes
+		}
+		custom_effect_tooltip = travel_ban_drop_tt
+	}
+}
+
+####################################################################################################################################################################################################################
+################################################################################ FOREIGN POLICY (Huge separation for quicker navigation) ###########################################################################
+####################################################################################################################################################################################################################
+
 #Dealing with ISIS
 country_event = {
 	id = donald_trump.500
@@ -32,6 +453,7 @@ country_event = {
 				}
 			}
 		}
+		add_stability = 0.06
 		set_country_flag = dealing_with_isis_suspend_us_intervention
 		news_event = donald_trump_news.0
 		hidden_effect = {
@@ -105,6 +527,7 @@ country_event = {
 				}
 			}
 		}
+		add_stability = -0.06
 		set_country_flag = dealing_with_isis_escalate_the_campaign
 		news_event = donald_trump_news.1
 		hidden_effect = {
@@ -248,11 +671,6 @@ country_event = {
 	option = { #Excellent!
 		name = donald_trump.502.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump.502.o1 executed"
-		custom_effect_tooltip = isis_subsidies_tt
-		add_to_variable = {
-			var = treasury
-			value = isis_subsidies
-		}
 		trigger = {
 			check_variable = {
 				var = isis_subsidies
@@ -260,11 +678,15 @@ country_event = {
 				compare = not_equals
 			}
 		}
+		custom_effect_tooltip = isis_subsidies_tt
+		add_to_variable = {
+			var = treasury
+			value = isis_subsidies
+		}
 	}
 	option = { #This is... Unfortunate
 		name = donald_trump.502.o2
 		log = "[GetDateText]: [This.GetName]: donald_trump.502.o2 executed"
-		add_political_power = -10
 		trigger = {
 			check_variable = {
 				var = isis_subsidies
@@ -272,6 +694,7 @@ country_event = {
 				compare = equals
 			}
 		}
+		add_political_power = -10
 	}
 }
 
