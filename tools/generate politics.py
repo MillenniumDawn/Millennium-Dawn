@@ -2110,8 +2110,8 @@ def main():
     sheetTags = get_sheet_tags(content)
 
     # Create party name localiastion
-    #createPartNameLoc(rootDir, content)
-    #createPartNameScriptedLoc(rootDir, content)
+    createPartNameLoc(rootDir, content)
+    createPartNameScriptedLoc(rootDir, content)
     #input()
     #input()
     #input()
