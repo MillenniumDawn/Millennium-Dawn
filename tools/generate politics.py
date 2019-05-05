@@ -1244,14 +1244,14 @@ def createSubIdeologyValues (rootDir, sheet, filepath, startingLeaders):
 
             content += "create_country_leader = {\n"
             content += "\tname = \"" + name + "\"\n"
-            content += "\tpicture = " + picture + "\n"
+            content += "\tpicture = \"" + picture + "\"\n"
             content += "\tideology = " + ideology + "\n"
             content += "\ttraits = {\n"
             if isinstance(traits, (list,)):
                 for trait in traits:
-                    content += "\t\t\t\t\t" + trait + "\n"
+                    content += "\t\t" + trait + "\n"
             else:
-                content += "\t\t\t\t\t" + traits + "\n"
+                content += "\t\t" + traits + "\n"
             content += "\t}\n"
             content += "}\n"
 
