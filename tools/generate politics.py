@@ -1244,14 +1244,14 @@ def createSubIdeologyValues (rootDir, sheet, filepath, startingLeaders):
 
             content += "create_country_leader = {\n"
             content += "\tname = \"" + name + "\"\n"
-            content += "\tpicture = " + picture + "\n"
+            content += "\tpicture = \"" + picture + "\"\n"
             content += "\tideology = " + ideology + "\n"
             content += "\ttraits = {\n"
             if isinstance(traits, (list,)):
                 for trait in traits:
-                    content += "\t\t\t\t\t" + trait + "\n"
+                    content += "\t\t" + trait + "\n"
             else:
-                content += "\t\t\t\t\t" + traits + "\n"
+                content += "\t\t" + traits + "\n"
             content += "\t}\n"
             content += "}\n"
 
@@ -2147,7 +2147,7 @@ def main():
     worksheet = sheet.worksheet('Starting Leader 2017')
     startingLeaders2017 = worksheet.get_all_values()
     startingLeaders2017 = findStartingLeaderInfo(startingLeaders2017, partyLeader2017)
-
+    tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
 
     worksheet = sheet.worksheet('Starting Leader 2000')
     startingLeaders2000 = worksheet.get_all_values()
@@ -2176,38 +2176,29 @@ def main():
 
 
     createPartyLeaders2(rootDir, organizedLeaders)
-    print("fini")
-    input()
-    input()
-    input()
-    input()
-
-
-
     print("done")
-    input()
-    input()
+
     #input()
 
-    sheetName = "2000 Extra Leaders"
-    extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
-
-
-    tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
-    tag = ""
-    extraLeaders = []
-    for root, dirnames, filenames in os.walk(rootDir + '/' + 'history' + '/countries' + '/'):
-        for filename in fnmatch.filter(filenames, '*.txt'):
-            tagPos, tag = get_tagPos(filename, tags)
-            if tagPos != -1:
-                #print(filename)
-                extraLeaders += getExtraLeaders2017(os.path.join(root, filename), tags, tagPos, tag)
+    #sheetName = "2000 Extra Leaders"
+    #extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
 
 
 
+    #tag = ""
+    #extraLeaders = []
+    #for root, dirnames, filenames in os.walk(rootDir + '/' + 'history' + '/countries' + '/'):
+    #    for filename in fnmatch.filter(filenames, '*.txt'):
+     #       tagPos, tag = get_tagPos(filename, tags)
+    #        if tagPos != -1:
+    #            #print(filename)
+     #           extraLeaders += getExtraLeaders2017(os.path.join(root, filename), tags, tagPos, tag)
 
-    sheetName = "2017 Extra Leaders"
-    extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
+
+
+
+    #sheetName = "2017 Extra Leaders"
+    #extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
 
 
 
@@ -2215,7 +2206,8 @@ def main():
     #data = sheet.get_all_records()
 
     print('The script took {0} second!'.format(time.time() - startTime))
-
+    input()
+    input()
 
 if __name__ == "__main__":
     sys.exit(main())
