@@ -79,7 +79,7 @@ def get_tagPos2(tag,tags):
 #Creates the localisation for the party names
 def createPartNameLoc (rootDir, sheet):
     content = ""
-    filepath = rootDir + "/localisation/MD_subideology_names_l_english.yml"
+    filepath = rootDir + "/Modding resources/generated/MD_subideology_names_l_english.yml"
     content = "l_english:\n"
     for a, b in enumerate(sheet[0]):
         if b != "" or a != 0:
@@ -192,7 +192,7 @@ def createPartNameLoc (rootDir, sheet):
 #Creates the localisation for the party names
 def createPartNameScriptedLoc (rootDir, sheet):
     content = ""
-    filepath = rootDir + "/common/scripted_localisation/subideology_party_scripted_localisation.txt"
+    filepath = rootDir + "/Modding resources/generated/subideology_party_scripted_localisation.txt"
     c = 4
     for c in range (0, 37):
 
@@ -1469,7 +1469,7 @@ def createCustomElectionEffect (hasCustomElections, tag, rootDir):
     content += "\t}\n"
     content += "}\n"
 
-    filepath = rootDir + "/common/scripted_effects/generated/election_effects.txt"
+    filepath = rootDir + "/Modding resources/generated/election_effects.txt"
     f = open(filepath, "w")
     with open(filepath, 'w', encoding='utf8', errors='ignore') as file:
         
