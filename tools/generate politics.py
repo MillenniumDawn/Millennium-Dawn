@@ -1086,7 +1086,7 @@ def createPartyLeaders (rootDir, sheet, filepath, extraLeaders, tags):
     return extraLeaders
 
 ###Main Function used to pull spreadsheet voter popularity & turn it into subideology values & write to ingame txt file
-def createSubIdeologyValues (rootDir, sheet, filepath, worksheet):
+def createSubIdeologyValues (rootDir, sheet, filepath, startingLeaders):
     content = ""
     for a, b in enumerate(sheet[0]):
         if b != "" or a != 0:
@@ -1163,6 +1163,26 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet):
                          + float(subIdeology[16]) + float(subIdeology[17]) + float(subIdeology[18]) + float(subIdeology[19])
             nationalist = float(subIdeology[20]) + float(subIdeology[21]) + float(subIdeology[22]) + float(subIdeology[23])
 
+            name = "error"
+            picture = "error"
+            expire = "2090.1.1"
+            ideology = "error"
+            traits = []
+            outlook = "error"
+
+            cont = 1;
+            for x, y in enumerate(startingLeaders):
+                # print(y[0][0])
+                if b.lower() == y[0][0].lower():
+                    name = y[1][0]
+                    picture = y[2][0]
+                    ideology = y[3][0]
+                    traits = y[4][0]
+                    outlook = GetOutlook(ideology)
+                    #print(y)
+                    #input()
+
+
             content += "set_politics = {\n"
             content += "\tparties = {\n"
             content += "\t\tdemocratic = { #western\n"
@@ -1181,47 +1201,61 @@ def createSubIdeologyValues (rootDir, sheet, filepath, worksheet):
             content += "\t\t\tpopularity = " + str(round ((100 * nationalist),2)) + " \n"
             content += "\t\t}\n"
             content += "\t}\n"
-            content += "\truling_party = \n"
-            content += "\tlast_election = \"\"\n"
-            content += "\telection_frequency = \"\"\n"
-            content += "\telections_allowed = \"\"\n"
+            content += "\truling_party = " + outlook + "\n"
+            content += "\tlast_election = \"\"####### FIX NEED TO INPUT DATA ######\n"
+            content += "\telection_frequency = \"\"####### FIX NEED TO INPUT DATA ######\n"
+            content += "\telections_allowed = \"\"####### FIX NEED TO INPUT DATA ######\n"
             content += "}\n"
+            content += "\n"
+            content += "start_politics_input = yes\n\n"
             #western
-            content += "set_variable = { conservatism_pop = " + subIdeology[0] + " }\n"
-            content += "set_variable = { liberalism_pop = " + subIdeology[1] + " }\n"
-            content += "set_variable = { socialism_pop = " + subIdeology[2] + " }\n"
-            content += "set_variable = { Western_Autocracy_pop = " + subIdeology[3] + " }\n"
+            content += "set_variable = { party_pop_array^0 = " + subIdeology[3] + " } #Western_Autocracy\n"
+            content += "set_variable = { party_pop_array^1 = " + subIdeology[0] + " } #conservatism\n"
+            content += "set_variable = { party_pop_array^2 = " + subIdeology[1] + " } #liberalism\n"
+            content += "set_variable = { party_pop_array^3 = " + subIdeology[2] + " } #socialism\n"
             #emerging
-            content += "set_variable = { Communist-State = " + subIdeology[4] + " }\n"
-            content += "set_variable = { Conservative_pop = " + subIdeology[5] + " }\n"
-            content += "set_variable = { Autocracy_pop = " + subIdeology[6] + " }\n"
-            content += "set_variable = { Vilayat_e_Faqih_pop = " + subIdeology[7] + " }\n"
-            content += "set_variable = { Mod_Vilayat_e_Faqih_pop = " + subIdeology[8] + " }\n"
-            content += "set_variable = { anarchist_communism_pop = " + subIdeology[9] + " }\n"
+            content += "set_variable = { party_pop_array^4 = " + subIdeology[4] + " } #Communist-State\n"
+            content += "set_variable = { party_pop_array^5 = " + subIdeology[9] + " } #anarchist_communism\n"
+            content += "set_variable = { party_pop_array^6 = " + subIdeology[5] + " } #Conservative\n"
+            content += "set_variable = { party_pop_array^7 = " + subIdeology[6] + " } #Autocracy\n"
+            content += "set_variable = { party_pop_array^8 = " + subIdeology[8] + " } #Mod_Vilayat_e_Faqih\n"
+            content += "set_variable = { party_pop_array^9 = " + subIdeology[7] + " } #Vilayat_e_Faqih\n"
             #salafist
-            content += "set_variable = { Caliphate_pop = " + subIdeology[10] + " }\n"
-            content += "set_variable = { Kingdom_pop = " + subIdeology[11] + " }\n"
-            #non-alligned
-            content += "set_variable = { Neutral_conservatism_pop = " + subIdeology[12] + " }\n"
-            content += "set_variable = { oligarchism_pop = " + subIdeology[13] + " }\n"
-            content += "set_variable = { neutral_Social_pop = " + subIdeology[14] + " }\n"
-            content += "set_variable = { Neutral_Libertarian_pop = " + subIdeology[15] + " }\n"
-            content += "set_variable = { Neutral_Autocracy_pop = " + subIdeology[16] + " }\n"
-            content += "set_variable = { Neutral_Communism_pop = " + subIdeology[17] + " }\n"
-            content += "set_variable = { Neutral_Muslim_Brotherhood_pop = " + subIdeology[18] + " }\n"
+            content += "set_variable = { party_pop_array^10 = " + subIdeology[11] + " } #Kingdom\n"
+            content += "set_variable = { party_pop_array^11 = " + subIdeology[10] + " } #Caliphate\n"
+            #neutral
+            content += "set_variable = { party_pop_array^12 = " + subIdeology[18] + " } #Neutral_Muslim_Brotherhood\n"
+            content += "set_variable = { party_pop_array^13 = " + subIdeology[16] + " } #Neutral_Autocracy\n"
+            content += "set_variable = { party_pop_array^14 = " + subIdeology[12] + " } #Neutral_conservatism\n"
+            content += "set_variable = { party_pop_array^15 = " + subIdeology[13] + " } #oligarchism\n"
+            content += "set_variable = { party_pop_array^16 = " + subIdeology[15] + " } #Neutral_Libertarian\n"
+            content += "set_variable = { party_pop_array^17 = " + subIdeology[19] + " } #Neutral_green\n"
+            content += "set_variable = { party_pop_array^18 = " + subIdeology[14] + " } #neutral_Social\n"
+            content += "set_variable = { party_pop_array^19 = " + subIdeology[17] + " } #Neutral_Communism\n"
             #nationalist
-            content += "set_variable = { Neutral_Green_pop = " + subIdeology[19] + " }\n"
-            content += "set_variable = { Nat_Autocracy_pop = " + subIdeology[20] + " }\n"
-            content += "set_variable = { Nat_Fascism_pop = " + subIdeology[21] + " }\n"
-            content += "set_variable = { Nat_Populism_pop = " + subIdeology[22] + " }\n"
-            content += "set_variable = { Monarchist_pop = " + subIdeology[23] + " }\n"
-            content += "recalculate_party = yes\n\n\n"
+            content += "set_variable = { party_pop_array^20 = " + subIdeology[22] + " } #Nat_Populism\n"
+            content += "set_variable = { party_pop_array^21 = " + subIdeology[21] + " } #Nat_Fascism\n"
+            content += "set_variable = { party_pop_array^22 = " + subIdeology[20] + " } #Nat_Autocracy\n"
+            content += "set_variable = { party_pop_array^23 = " + subIdeology[23] + " } #Monarchist\n"
 
 
+            content += "add_to_array = { ruling_party = " + GetIdeologyNum(ideology) + " }\n"
+            content += "startup_politics = yes\n\n"
 
+            content += "create_country_leader = {\n"
+            content += "\tname = \"" + name + "\"\n"
+            content += "\tpicture = \"" + picture + "\"\n"
+            content += "\tideology = " + ideology + "\n"
+            content += "\ttraits = {\n"
+            if isinstance(traits, (list,)):
+                for trait in traits:
+                    content += "\t\t" + trait + "\n"
+            else:
+                content += "\t\t" + traits + "\n"
+            content += "\t}\n"
+            content += "}\n"
 
-
-
+            #if startingLeaders[c][a] != "":
 
 
                     #input()
@@ -1415,7 +1449,7 @@ def createCustomElectionEffect (hasCustomElections, tag, rootDir):
     content = "set_leader = {\n\n"
     content += "\t#will set correct outlook to place the newly generated leader in\n"
     content += "\thidden_effect = {\n"
-    content += "\t\tkill_country_leader = yes\n"
+    content += "\t\thidden_effect = { kill_country_leader = yes }\n"
     content += "\t}\n"
     content += "\tupdate_set_politics = yes\n"
     content += "\t#script per country\n"
@@ -1423,7 +1457,7 @@ def createCustomElectionEffect (hasCustomElections, tag, rootDir):
         if pos == 0:
             content += "\tif = { limit = { TAG = " + tag[0] + " } set_leader_" + tag[0] + " = yes }\n"
         else:
-            content += "\telse_if = { limit = { TAG = " + tag[0] + " } set_leader_" + tag[0] + " = yes }\n"
+            content += "\telse_if = { limit = { original_tag = " + tag[0] + " } set_leader_" + tag[0] + " = yes }\n"
 
     content += "\t# We need to remove the current leader for the game to use random generation.\n"
     content += "\t#It's OK if no leader was created in script!\n\n"
@@ -1456,9 +1490,9 @@ def createPartyContent2 (organizedLeaders, tag, ideology):
                 if leader ==1:
                     content += "\t\tif = { limit = { check_variable = { " + ideology + "_leader = " + str(leader - 1) + " } }\n"
                 else:
-                    content += "\t\tif = { limit = { check_variable = { " + ideology + "_leader = " + str(leader - 1) + " NOT = { check_variable = { b = 1 } } } }\n"
-                content += "\t\t\tset_variable = { " + ideology + "_leader = 1 }\n"
-                content += "\t\t\tkill_country_leader = yes\n\n"
+                    content += "\t\tif = { limit = { check_variable = { " + ideology + "_leader = " + str(leader - 1) + " } NOT = { check_variable = { b = 1 } } }\n"
+                content += "\t\t\tadd_to_variable = { " + ideology + "_leader = 1 }\n"
+                content += "\t\t\thidden_effect = { kill_country_leader = yes }\n\n"
                 content += "\t\t\tcreate_country_leader = {\n"
                 content += "\t\t\t\tname = \"" + organizedLeaders[pos2][2][0] + "\"\n"
                 content += "\t\t\t\tpicture = \"" + organizedLeaders[pos2][3][0] + "\"\n"
@@ -1538,7 +1572,6 @@ def createPartyLeaders2 (rootDir, organizedLeaders):
 
 #Returns the ideology and trait dependent on the row in the spreadsheet, similar to what is used in generateLeaderContent
 def getIdeology(c):
-
 
     if c == 2:
         ideology = "conservatism"
@@ -1765,7 +1798,7 @@ def getTagPos3(organizedLeaders, tag, startDate):
     return lastPos
 
 #Sorts and organizes all leaders into a new organized list
-def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, organizedLeaders):
+def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, organizedLeaders, startingLeaders2000, startingLeaders2017):
 
 
 
@@ -1778,6 +1811,7 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                         break
                     leaderName = leaders2000[c][a]
                     if leaderName != "":
+
                         if leaders2000[c][a+1] != "":
                             leaderPic = leaders2000[c][a+1]
                         else:
@@ -1785,42 +1819,78 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
 
                         ideology, traits = getIdeology(c)
 
-                        organizedLeaders.append([[b], ["2000"] ,[leaderName],[leaderPic], [ideology],[traits]])
+                        cont = 1;
+                        for x, y in enumerate(startingLeaders2000):
+                            # print(y[0][0])
+                            if leaderName == y[1][0]:
+                                startingLeaders2000[x][3] = [ideology]
+                                startingLeaders2000[x][4] = [traits]
+                                cont = 0;
+
+                        if cont == 1:
+                            organizedLeaders.append([[b], ["2000"] ,[leaderName],[leaderPic], [ideology],[traits]])
 
     for a, b in enumerate(extraLeaders2000):
         if extraLeaders2000[a][1] != "":
             startDate = "2000"
             tag = extraLeaders2000[a][0]
             leaderName = extraLeaders2000[a][1]
-            if extraLeaders2000[a][2] != "":
-                leaderPic = extraLeaders2000[a][2]
-            else:
-                leaderPic = "generic.dds"
-            if extraLeaders2000[a][4] != "":
-                ideology = extraLeaders2000[a][4]
-            else:
-                ideology = "ERROR"
-            if extraLeaders2000[a][5] != "":
-                hasTraits = re.findall(r'[A-Za-z0-9\_\-]+', extraLeaders2000[a][5])
-                traits = hasTraits
-                #input()
-            else:
-                traits = makeIdeology(ideology)
+            if leaderName != "":
+                if extraLeaders2000[a][2] != "":
+                    leaderPic = extraLeaders2000[a][2]
+                else:
+                    leaderPic = "generic.dds"
+                if extraLeaders2000[a][4] != "":
+                    ideology = extraLeaders2000[a][4]
+                else:
+                    ideology = "ERROR"
+                if extraLeaders2000[a][5] != "":
+                    hasTraits = re.findall(r'[A-Za-z0-9\_\-]+', extraLeaders2000[a][5])
+                    traits = hasTraits
+                    #input()
+                else:
+                    traits = makeIdeology(ideology)
 
-            pos = getTagPos3(organizedLeaders, tag, startDate)
-            if pos == 0:
+                pos = getTagPos3(organizedLeaders, tag, startDate)
 
-                organizedLeaders.insert(len(organizedLeaders) +1, [[tag], [startDate], [leaderName], [leaderPic], [ideology], [traits]])
-                #print(len(organizedLeaders))
-                #print("ERROR")
-                #input()
-            else:
-                organizedLeaders.insert(pos+1,[[tag],[startDate],[leaderName],[leaderPic],[ideology],[traits]])
-                #print(pos)
-                #print(leaderName)
-                #print(organizedLeaders[pos])
-                #print(organizedLeaders[pos+1])
-                #input()
+                cont = 1;
+
+                for pos2, y in enumerate(organizedLeaders):
+                    # print(y[0][0])
+                    if leaderName == organizedLeaders[pos2][2][0]:
+                        cont = 0;
+                        organizedLeaders[pos2][5] = [traits]
+                        print("added traits: " + organizedLeaders[pos2][2][0])
+                        print(traits)
+                        #input()
+                        #print(organizedLeaders[pos2][2][0])
+
+                for x, y in enumerate(startingLeaders2000):
+                    # print(y[0][0])
+                    if leaderName == y[1][0]:
+                        startingLeaders2000[x][3] = [ideology]
+                        startingLeaders2000[x][4] = [traits]
+                        cont = 0;
+                        #print(startingLeaders2017[x])
+
+
+
+
+                if cont == 1:
+
+                    if pos == 0:
+
+                        organizedLeaders.insert(len(organizedLeaders) +1, [[tag], [startDate], [leaderName], [leaderPic], [ideology], [traits]])
+                        #print(len(organizedLeaders))
+                        #print("ERROR")
+                        #input()
+                    else:
+                        organizedLeaders.insert(pos+1,[[tag],[startDate],[leaderName],[leaderPic],[ideology],[traits]])
+                        #print(pos)
+                        #print(leaderName)
+                        #print(organizedLeaders[pos])
+                        #print(organizedLeaders[pos+1])
+                        #input()
 
 
     for a, b in enumerate(leaders2017[0]):
@@ -1829,77 +1899,201 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                 if c not in [0, 1, 6, 13, 16, 25]:
                     if c > 36:
                         break
-                    leaderName = leaders2017[c][a]
-                    if leaders2017[c][a+1] != "":
-                        leaderPic = leaders2017[c][a+1]
-                    else:
-                        leaderPic = "generic.dds"
+                        leaderName = leaders2017[c][a]
+                        if leaders2017[c][a+1] != "":
+                            leaderPic = leaders2017[c][a+1]
+                        else:
+                            leaderPic = "generic.dds"
 
-                    #print(leaders2017[c])
-                    ideology, traits = getIdeology(c)
+                        #print(leaders2017[c])
+                        ideology, traits = getIdeology(c)
 
 
-                    if leaderName != "":
                         startDate = "2017"
                         tag = b
                         pos = getTagPos3(organizedLeaders, tag, startDate)
-                        if pos == 0:
 
-                            organizedLeaders.insert(len(organizedLeaders) + 1,
-                                                    [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
-                            #print("ERROR")
-                            #print(len(organizedLeaders))
-                            #print(pos)
-                            #print(organizedLeaders[-2])
-                            #print(organizedLeaders[-1])
-                            #input()
-                        else:
-                            organizedLeaders.insert(pos + 1, [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
-                            #print(len(organizedLeaders))
-                           # print(pos)
-                            #print(leaderName)
-                            #print(organizedLeaders[pos])
-                            #print(organizedLeaders[pos + 1])
-                            #input()
+                        cont = 1;
+                        for x, y in enumerate(startingLeaders2017):
+                            # print(y[0][0])
+                            if leaderName == y[1][0]:
+                                startingLeaders2017[x][3] = [ideology]
+                                startingLeaders2017[x][4] = [traits]
+                                cont = 0;
+
+                        for pos2, y in enumerate(organizedLeaders):
+                            # print(y[0][0])
+                            if leaderName == organizedLeaders[pos2][2][0]:
+                                cont = 0;
+                                #print(organizedLeaders[pos2][2][0])
+
+                        if cont == 1:
+
+                            if pos == 0:
+
+                                organizedLeaders.insert(len(organizedLeaders) + 1,
+                                                        [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
+                                #print("ERROR")
+                                #print(len(organizedLeaders))
+                                #print(pos)
+                                #print(organizedLeaders[-2])
+                                #print(organizedLeaders[-1])
+                                #input()
+                            else:
+                                organizedLeaders.insert(pos + 1, [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
+                                #print(len(organizedLeaders))
+                                #print(pos)
+                                #print(leaderName)
+                                #print(organizedLeaders[pos])
+                                #print(organizedLeaders[pos + 1])
+    #input()
 
     for a, b in enumerate(extraLeaders2017):
         if extraLeaders2017[a][1] != "":
             startDate = "2017"
             tag = extraLeaders2017[a][0]
             leaderName = extraLeaders2017[a][1]
-            if extraLeaders2017[a][2] != "":
-                leaderPic = extraLeaders2017[a][2]
-            else:
-                leaderPic = "generic.dds"
-            if extraLeaders2017[a][4] != "":
-                ideology = extraLeaders2017[a][4]
-            else:
-                ideology = "ERROR"
-            if extraLeaders2017[a][5] != "":
-                hasTraits = re.findall(r'[A-Za-z0-9\_\-]+', extraLeaders2017[a][5])
-                traits = hasTraits
-                #input()
-            else:
-                traits = makeIdeology(ideology)
+            if leaderName != "":
+                    if extraLeaders2017[a][2] != "":
+                        leaderPic = extraLeaders2017[a][2]
+                    else:
+                        leaderPic = "generic.dds"
+                    if extraLeaders2017[a][4] != "":
+                        ideology = extraLeaders2017[a][4]
+                    else:
+                        ideology = "ERROR"
+                    if extraLeaders2017[a][5] != "":
+                        hasTraits = re.findall(r'[A-Za-z0-9\_\-]+', extraLeaders2017[a][5])
+                        traits = hasTraits
+                        #input()
+                    else:
+                        traits = makeIdeology(ideology)
 
-            pos = getTagPos3(organizedLeaders, tag, startDate)
-            if pos == 0:
+                    pos = getTagPos3(organizedLeaders, tag, startDate)
 
-                organizedLeaders.insert(len(organizedLeaders) +1, [[tag], [startDate], [leaderName], [leaderPic], [ideology], [traits]])
-                #print(len(organizedLeaders))
-                #print("ERROR")
-                #input()
-            else:
-                organizedLeaders.insert(pos+1,[[tag],[startDate],[leaderName],[leaderPic],[ideology],[traits]])
-                #print(pos)
-                #print(leaderName)
-                #print(organizedLeaders[pos])
-                #print(organizedLeaders[pos+1])
-                #input()
+                    cont = 1;
+                    for pos2, y in enumerate(organizedLeaders):
+                        # print(y[0][0])
+                        if leaderName == organizedLeaders[pos2][2][0]:
+                            cont = 0;
+                            organizedLeaders[pos2][5] = [traits]
+                            print("added traits: " + organizedLeaders[pos2][2][0])
+                            print(traits)
+                            #input()
+
+                    for x, y in enumerate(startingLeaders2017):
+                        # print(y[0][0])
+                        if leaderName == y[1][0]:
+                            startingLeaders2017[x][3] = [ideology]
+                            startingLeaders2017[x][4] = [traits]
+                            cont = 0;
+
+
+                            ##print(organizedLeaders[pos2][2][0])
+
+                    if cont == 1:
+
+                        if pos == 0:
+
+                            organizedLeaders.insert(len(organizedLeaders) +1, [[tag], [startDate], [leaderName], [leaderPic], [ideology], [traits]])
+                            #print(len(organizedLeaders))
+                            #print("ERROR")
+                            #input()
+                        else:
+                            organizedLeaders.insert(pos+1,[[tag],[startDate],[leaderName],[leaderPic],[ideology],[traits]])
+                            #print(pos)
+                            #print(leaderName)
+                            #print(organizedLeaders[pos])
+                            #print(organizedLeaders[pos+1])
+                            #input()
 
     print("done")
     #input()
-    return organizedLeaders
+    return organizedLeaders, startingLeaders2000, startingLeaders2017
+
+def findStartingLeaderInfo (startingLeaders, mainLeaders):
+    startingLeadersContent = []
+    for a, b in enumerate(startingLeaders[0]):
+        if (b != "" or a != 0) and len(b) == 3:
+            picName = ""
+            leaders = ""
+            for c in range(0,31):
+                if c not in [0,1,6,13,16,25]:
+                    #print(startingLeaders[c][a])
+                    #print(str(c) + " " + str(a))
+                    if startingLeaders[c][a] != "":
+
+                        try:
+                            leaders = startingLeaders[c][a]
+                        except:
+                            leaders = ""
+                        try:
+                            picName = mainLeaders[c][a+1]
+                        except:
+                            picName = ""
+            startingLeadersContent.append([[b], [leaders], [picName], [""], [""]])
+    #print(startingLeadersContent)
+
+    return startingLeadersContent
+
+def GetOutlook(ideology):
+
+    if ideology.lower() in ["Western_Autocracy".lower(),"conservatism".lower(),"liberalism".lower(), "socialism".lower()]:
+        return "democratic"
+
+    elif ideology.lower() in ["socialism".lower(),"Communist-State".lower(),"anarchist_communism".lower(),
+                    "Conservative ".lower(),"Autocracy".lower(),"Mod_Vilayat_e_Faqih".lower(),
+                    "Vilayat_e_Faqih".lower()]:
+        return "communism"
+
+    elif ideology.lower() in ["Kingdom".lower(),"Caliphate".lower()]:
+        return "fascism"
+
+    elif ideology.lower() in ["Neutral_Muslim_Brotherhood".lower(),"Neutral_Autocracy".lower(),"Neutral_conservatism".lower(),
+                    "oligarchism".lower(),"Neutral_Libertarian".lower(),"Neutral_green".lower(), "neutral_Social".lower(),
+                    "Neutral_Communism".lower()]:
+        return "neutrality"
+
+    elif ideology.lower() in ["Nat_Populism".lower(),"Nat_Fascism".lower(),"Nat_Autocracy".lower(),
+                        "Monarchist ".lower()]:
+        return "nationalist"
+    else:
+        return "error"
+
+def GetIdeologyNum(ideology):
+    num = 9999
+    if ideology.lower() == "Western_Autocracy".lower(): num = 0
+    elif ideology.lower() == "conservatism".lower(): num = 1
+    elif ideology.lower() == "liberalism".lower(): num = 2
+    elif ideology.lower() == "socialism".lower(): num = 3
+    elif ideology.lower() == "Communist-State".lower(): num = 4
+    elif ideology.lower() == "anarchist_communism ".lower(): num = 5
+    elif ideology.lower() == "Conservative".lower(): num = 6
+    elif ideology.lower() == "Autocracy".lower(): num = 7
+    elif ideology.lower() == "Mod_Vilayat_e_Faqih".lower(): num = 8
+    elif ideology.lower() == "Vilayat_e_Faqih".lower(): num = 9
+    elif ideology.lower() == "Kingdom ".lower(): num = 10
+    elif ideology.lower() == "Caliphate".lower(): num = 11
+    elif ideology.lower() == "Neutral_Muslim_Brotherhood".lower(): num = 12
+    elif ideology.lower() == "Neutral_Autocracy".lower(): num = 13
+    elif ideology.lower() == "Neutral_conservatism".lower(): num = 14
+    elif ideology.lower() == "oligarchism".lower(): num = 15
+    elif ideology.lower() == "Neutral_Libertarian".lower(): num = 16
+    elif ideology.lower() == "Neutral_green".lower(): num = 17
+    elif ideology.lower() == "neutral_Social".lower(): num = 18
+    elif ideology.lower() == "Neutral_Communism".lower(): num = 19
+    elif ideology.lower() == "Nat_Populism".lower(): num = 20
+    elif ideology.lower() == "Nat_Fascism".lower(): num = 21
+    elif ideology.lower() == "Nat_Autocracy".lower(): num = 22
+    elif ideology.lower() == "Monarchist".lower(): num = 23
+
+    # get() method of dictionary data type returns
+    # value of passed argument if it is present
+    # in dictionary otherwise second argument will
+    # be assigned as default value of passed argument
+    return str(num)
+
+
 
 def main():
     sheet = gc.open('Politics') #Opens the politics sheet
@@ -1916,8 +2110,8 @@ def main():
     sheetTags = get_sheet_tags(content)
 
     # Create party name localiastion
-    #createPartNameLoc(rootDir, content)
-    #createPartNameScriptedLoc(rootDir, content)
+    createPartNameLoc(rootDir, content)
+    createPartNameScriptedLoc(rootDir, content)
     #input()
     #input()
     #input()
@@ -1932,8 +2126,14 @@ def main():
                 #print(filename)
                 extraLeaders += getExtraLeaders2000(os.path.join(root, filename), tags, tagPos, tag)
 
+    worksheet = sheet.worksheet('Vote Share 2000')
+    voteShare2000 = worksheet.get_all_values()
+    worksheet = sheet.worksheet('Vote Share 2017')
+    voteShare2017 = worksheet.get_all_values()
+    worksheet = sheet.worksheet('Starting Leader 2000')
+    startingLeaders2000 = worksheet.get_all_values()
     worksheet = sheet.worksheet('Party Leader 2000')
-    content = worksheet.get_all_values()
+    partyLeader2000 = worksheet.get_all_values()
     leaders2000 = worksheet.get_all_values()
     worksheet = sheet.worksheet('Party Leader 2017')
     leaders2017 = worksheet.get_all_values()
@@ -1941,54 +2141,73 @@ def main():
     extraLeaders2000 = worksheet.get_all_values()
     worksheet = sheet.worksheet('2017 Extra Leaders')
     extraLeaders2017 = worksheet.get_all_values()
-    organizedLeaders = sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, organizedLeaders)
+    worksheet = sheet.worksheet('Party Leader 2017')
+    partyLeader2017 = worksheet.get_all_values()
+
+    worksheet = sheet.worksheet('Starting Leader 2017')
+    startingLeaders2017 = worksheet.get_all_values()
+    startingLeaders2017 = findStartingLeaderInfo(startingLeaders2017, partyLeader2017)
+    tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
+
+    worksheet = sheet.worksheet('Starting Leader 2000')
+    startingLeaders2000 = worksheet.get_all_values()
+    startingLeaders2000 = findStartingLeaderInfo(startingLeaders2000, partyLeader2000)
+
+    organizedLeaders, startingLeaders2000, startingLeaders2017 = sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, organizedLeaders,
+                                   startingLeaders2000, startingLeaders2017)
+
+
+    #print(startingLeaders2000)
+    #print(startingLeaders2017)
+    #input()
+    createSubIdeologyValues(rootDir, voteShare2000, (rootDir + "/Modding resources/generated/generated_2000_politics.txt"),
+                            startingLeaders2000)
+
+    createSubIdeologyValues(rootDir, voteShare2017, (rootDir + "/Modding resources/generated/generated_2017_politics.txt"),
+                            startingLeaders2017)
+    createPartyLeaders(rootDir, partyLeader2000,
+                                      (rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),
+                                      extraLeaders, tags)
+
+    createPartyLeaders(rootDir, partyLeader2017,
+                                      (rootDir + "/Modding resources/generated/generated_2017_leaders.txt"),
+                                      extraLeaders, tags)
+
+
 
     createPartyLeaders2(rootDir, organizedLeaders)
-    print("fini")
-    #input()
-    extraLeaders = createPartyLeaders(rootDir, content, (rootDir + "/Modding resources/generated/generated_2000_leaders.txt"),
-                       extraLeaders, tags)
-
     print("done")
+
     #input()
-    #input()
-    #input()
 
-    sheetName = "2000 Extra Leaders"
-    extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
+    #sheetName = "2000 Extra Leaders"
+    #extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
 
 
-    tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
-    tag = ""
-    extraLeaders = []
-    for root, dirnames, filenames in os.walk(rootDir + '/' + 'history' + '/countries' + '/'):
-        for filename in fnmatch.filter(filenames, '*.txt'):
-            tagPos, tag = get_tagPos(filename, tags)
-            if tagPos != -1:
-                #print(filename)
-                extraLeaders += getExtraLeaders2017(os.path.join(root, filename), tags, tagPos, tag)
 
-    worksheet = sheet.worksheet('Party Leader 2017')
-    content = worksheet.get_all_values()
-    extraLeaders = createPartyLeaders(rootDir, content, (rootDir + "/Modding resources/generated/generated_2017_leaders.txt"),
-                       extraLeaders, tags)
+    #tag = ""
+    #extraLeaders = []
+    #for root, dirnames, filenames in os.walk(rootDir + '/' + 'history' + '/countries' + '/'):
+    #    for filename in fnmatch.filter(filenames, '*.txt'):
+     #       tagPos, tag = get_tagPos(filename, tags)
+    #        if tagPos != -1:
+    #            #print(filename)
+     #           extraLeaders += getExtraLeaders2017(os.path.join(root, filename), tags, tagPos, tag)
 
-    sheetName = "2017 Extra Leaders"
-    extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
 
-    worksheet = sheet.worksheet('Vote Share 2000')
-    content = worksheet.get_all_values()
-    createSubIdeologyValues(rootDir, content,(rootDir + "/Modding resources/generated/generated_2000_politics.txt"),worksheet)
 
-    worksheet = sheet.worksheet('Vote Share 2017')
-    content = worksheet.get_all_values()
-    createSubIdeologyValues(rootDir, content,(rootDir + "/Modding resources/generated/generated_2017_politics.txt"),worksheet)
+
+    #sheetName = "2017 Extra Leaders"
+    #extraLeadersToSheet(extraLeaders, sheet, sheetName, tags)
+
+
 
     #print(len(sheet.row_values(1)))
     #data = sheet.get_all_records()
 
     print('The script took {0} second!'.format(time.time() - startTime))
-
+    input()
+    input()
 
 if __name__ == "__main__":
     sys.exit(main())
