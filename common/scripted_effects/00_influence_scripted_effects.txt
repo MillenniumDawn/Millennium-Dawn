@@ -21,8 +21,8 @@ sort_influence = {
 		array = influence_array_val_temp #values
 		size = influence_array_val^num
 	}
-	resize_array = { 
-		array = influence_array_calc #values
+	resize_temp_array = { 
+		array = influence_array_temp #tags
 		size = influence_array_val^num
 	}
 	for_loop_effect = {
@@ -33,62 +33,65 @@ sort_influence = {
 			value = max
 			index = max_index
 		}
-		set_variable = { influence_array_val_temp^v = max } #sets biggest at the earliest available position
-		set_variable = { influence_array^v = influence_array^max_index } #sets biggest TAG at the earliest available position
+		set_temp_variable = { influence_array_val_temp^v = max } #sets biggest at the earliest available position
+		set_temp_variable = { influence_array_temp^v = influence_array^max_index } #sets biggest TAG at the earliest available position
 		set_variable = { influence_array_val^max_index = -1 } #removes it from selection
 	}
 	clear_array = influence_array_val
+	clear_array = influence_array_calc
+	clear_array = influence_array
+	set_variable = { influence_total = 0 }
+	#restores destroyed arrays in the above process
 	for_each_loop = {
 		array = influence_array_val_temp
-		value = vx
-		index = ix
-		add_to_array = { influence_array_val = vx  }
-		set_variable = { influence_array_calc^ix = vx }
+		add_to_array = { influence_array_val = v  }
+		add_to_array = { influence_array_calc = v }
+		add_to_variable = { influence_total = v }
 	}
-	print_variables = {
-		file = log_file
-		text = header_text
-		append = yes
-		print_global = yes
+	for_each_loop = {
+		array = influence_array_temp
+		add_to_array = { influence_array = v  }
 	}
 	clear_temp_array = influence_array_val_temp
+	clear_temp_array = influence_array_temp
 	set_variable = { domestic_influence_amount_calc = domestic_influence_amount }
+	add_to_variable = { influence_total = domestic_influence_amount_calc }
+	
+	for_each_loop = {
+		array = influence_array_calc
+		round_variable = influence_array_calc^i
+		divide_variable = { influence_array_calc^i = influence_total }
+	}
+	
+	round_variable = domestic_influence_amount_calc
+	divide_variable = { domestic_influence_amount_calc = influence_total }
 }
 
 calculate_influence_percentage = {
 
 	for_each_loop = {
 		array = influence_array_calc
-		add_to_temp_variable = { influence_total = v }
-	}
-	add_to_temp_variable = { influence_total = domestic_influence_amount_calc }
-	for_each_loop = {
-		array = influence_array_calc
-		round_variable = influence_array_calc^v
-		divide_variable = { influence_array_calc^v = influence_total }
 		if = {
-			limit = { var:influence_array^v = { has_government = democratic } }
-			add_to_temp_variable = { influence_democratic = influence_array_calc^v }	
+			limit = { var:influence_array^i = { has_government = democratic } }
+			add_to_temp_variable = { influence_democratic = v }	
 		}
 		else_if = {
-			limit = { var:influence_array^v = { has_government = neutrality } }
-			add_to_temp_variable = { influence_neutrality = influence_array_calc^v }	
+			limit = { var:influence_array^i = { has_government = neutrality } }
+			add_to_temp_variable = { influence_neutrality = v }	
 		}
 		else_if = {
-			limit = { var:influence_array^v = { has_government = communism } }
-			add_to_temp_variable = { influence_communism = influence_array_calc^v }	
+			limit = { var:influence_array^i = { has_government = communism } }
+			add_to_temp_variable = { influence_communism = v }	
 		}
 		else_if = {
-			limit = { var:influence_array^v = { has_government = nationalist } }
-			add_to_temp_variable = { influence_nationalist = influence_array_calc^v }	
+			limit = { var:influence_array^i = { has_government = nationalist } }
+			add_to_temp_variable = { influence_nationalist = v }	
 		}
 		else_if = {
-			limit = { var:influence_array^v = { has_government = fascism } }
-			add_to_temp_variable = { influence_fascism = influence_array_calc^v }	
+			limit = { var:influence_array^i = { has_government = fascism } }
+			add_to_temp_variable = { influence_fascism = v }	
 		}
 	}
-	round_variable = domestic_influence_amount_calc
-	divide_variable = { domestic_influence_amount_calc = influence_total }
 	
 	### see ideology_drifts.txt: ###
 	clear_influence_count_ideas = yes
