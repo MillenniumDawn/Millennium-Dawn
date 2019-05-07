@@ -40,34 +40,35 @@ scripted_gui = {
 		triggers = {
 		
 			opt_influence_action_button_click_enabled = {
-				is_influencer = yes
-			}	
+				ROOT = { has_political_power > 100 }
+			}
 		}
 		
 		effects = {
 		
 			opt_influence_action_button_click = {
-				if = { limit = { check_variable = { influencer1 = ROOT } }
-					add_to_variable = { influencer1_amount = 15 }
+			
+				ROOT = { add_political_power = -100 }
+				
+				set_temp_variable = { influence_gain = ROOT.influence_multiplier } #from global rank idea
+				multiply_temp_variable = { influence_gain = 10 } #base gain
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = ROOT }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+						set_country_flag = found
+					}
 				}
-				else_if = { limit = { check_variable = { influencer2 = ROOT } }
-					add_to_variable = { influencer2_amount = 15 }
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+						add_to_array = { influence_array = ROOT.id }
+						add_to_array = { influence_array_val = influence_gain }
 				}
-				else_if = { limit = { check_variable = { influencer3 = ROOT } }
-					add_to_variable = { influencer3_amount = 15 }
-				}
-				else_if = { limit = { check_variable = { influencer4 = ROOT } }
-					add_to_variable = { influencer4_amount = 15 }
-				}
-				else_if = { limit = { check_variable = { influencer5 = ROOT } }
-					add_to_variable = { influencer5_amount = 15 }
-				}
-				else_if = { limit = { check_variable = { influencer6 = ROOT } }
-					add_to_variable = { influencer6_amount = 15 }
-				}
-				else_if = { limit = { check_variable = { influencer7 = ROOT } }
-					add_to_variable = { influencer7_amount = 15 }
-				}
+				clr_country_flag = found
 				recalculate_influence = yes
 			}
 		}
