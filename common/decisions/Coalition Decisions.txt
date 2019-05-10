@@ -1,33 +1,98 @@
-generic_coalition_politics_desicions = {
-	
-	retire_current_leader = {
-		icon = decision
-		
-		cost = 150
-		days_remove = 0
-		days_re_enable = 0
-		
-		complete_effect = {
-			hidden_effect = {
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
-			}
-		}	
-	}
-	
-	### #### TODO: ####
-	### - extremist civil wars
-	### - generic boost outlook temp drift
-	### - if autocratic party; disallow elections / allow again
 
-}
+### Other generic politics desicions at the bottom of the file ###
 
 coalition_desicions = {
+
+	###Desicion countdown ###
+	#activate_decision
+	#remove_decision
+	
+	coalition_countdown = {
+		
+		#need to complete
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = has_formed_coalition_TT	
+				has_country_flag = coalition_formed
+			}
+		}
+		
+		modifier = {
+			#political_power_cost = 2
+		}
+
+		activation = {
+			#is triggered only
+		}
+
+		Is_good = no
+
+		days_mission_timeout = 30
+		days_remove = 0
+
+		fire_only_once = yes
+
+		timeout_effect = {
+			add_political_power = -300
+			custom_effect_tooltip = AI_form_government_TT
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				
+				set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
+				subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^max_index_1 }
+
+				set_temp_variable = { majority_threshold_2 = majority_threshold } #need one that does not include second biggest party
+				subtract_from_temp_variable = { majority_threshold_2 = party_pop_elect_array^max_index_2 }
+				
+				make_affinity_arrays = yes
+				reduce_affinity_array_party_1 = yes
+				reduce_affinity_array_party_2 = yes
+				
+				if = {
+					limit = {
+						#coalition 1 is prefered - lowest
+						check_variable = {
+							var = cost1
+							value = cost2
+							compare = less_than_or_equals
+						}
+					}
+					add_to_array = { ruling_party = max_index_1 }
+					for_each_loop = {
+						array = party_pop_elect_array
+						index = i1
+						if = {
+							limit = {
+								check_variable = { party_1_affinity_array^i1 > 0 }
+							}
+							add_to_array = { gov_coalition_array = i1 }
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { cost1 > cost2 } #coalition 2 is prefered - lowest
+					}
+					add_to_array = { ruling_party = max_index_2 }
+					for_each_loop = {
+						array = party_pop_elect_array
+						index = i2
+						if = {
+							limit = {
+								check_variable = { party_2_affinity_array^i2 > 0 }
+							}
+							add_to_array = { gov_coalition_array = i2 }
+						}
+					}
+				}
+			}
+		}
+
+		complete_effect = {
+		}
+	}
+	
 	
 	###Western_Autocracy #0
 	
@@ -3279,4 +3344,856 @@ coalition_desicions = {
 	}
 }
 
+#### Other Generic Politics ########
 
+generic_coalition_politics_desicions = {
+	
+	retire_current_leader = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		complete_effect = {
+			hidden_effect = {
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+		}	
+	}
+	
+	## Change election laws ##
+	
+	permanently_suspend_elections = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 0
+		days_re_enable = 0
+		
+		
+		visible = {
+			has_elections = yes
+			OR = {
+				is_in_array = { ruling_party = 0 } #Western_Autocracy
+				is_in_array = { ruling_party = 4 } #Communist-State
+				is_in_array = { ruling_party = 7 } #Autocracy
+				is_in_array = { ruling_party = 10 } #Kingdom
+				is_in_array = { ruling_party = 11 } #Caliphate
+				is_in_array = { ruling_party = 13 } #Neutral_Autocracy
+				is_in_array = { ruling_party = 19 } #neutral communist
+				is_in_array = { ruling_party = 21 } #fascist
+				is_in_array = { ruling_party = 22 } #Nat_Autocracy
+				is_in_array = { ruling_party = 23 } #Monarchist
+			}
+		}
+		
+		complete_effect = {
+			if = {
+				limit = {
+					has_government = democratic
+				}
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = no
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = communism
+				}
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = fascism
+				}
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = no
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = neutrality
+				}
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = no
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = nationalist
+				}
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+			}
+		}
+	}
+	
+	return_democracy = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 0
+		days_re_enable = 0
+		
+		
+		visible = {
+			has_elections = no
+		}
+		
+		complete_effect = {
+			if = {
+				limit = {
+					has_government = democratic
+				}
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = communism
+				}
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = fascism
+				}
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = neutrality
+				}
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = nationalist
+				}
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = yes
+				}
+			}
+		}
+	}
+	
+	increase_election_threshold = {
+		icon = decision
+		
+		cost = 100
+		days_remove = 0
+		days_re_enable = 0
+		
+		
+		available = {
+			has_elections = yes
+			NOT = {
+				custom_trigger_tooltip = {
+					tooltip = election_threshold_max	
+					check_variable = { election_threshold > 0.095 }
+				}
+			}
+		}
+		complete_effect = {
+			add_to_variable = { election_threshold = 0.01 }
+		}
+	}
+	
+	decrease_election_threshold = {
+		icon = decision
+		
+		cost = 100
+		days_remove = 0
+		days_re_enable = 0
+		
+		
+		available = {
+			has_elections = yes
+			NOT = {
+				custom_trigger_tooltip = {
+					tooltip = election_threshold_min	
+					check_variable = { election_threshold < 0.015 }
+				}
+			}
+		}
+		complete_effect = {
+			hidden_effect = {
+				subtract_from_variable = { election_threshold = 0.01 }
+			}
+		}
+	}
+	
+	### Extremist Civil Wars
+	
+	fascism_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^21 > 0.10 } #significant fascism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					is_in_array = { gov_coalition_array = 21 } #not is in coalition
+					is_in_array = { ruling_party = 21 } #not is ruling party
+				}
+			}
+		}
+		available = {
+			NOT = {
+				has_government = nationalist
+			}
+			custom_trigger_tooltip = {
+				tooltip = fascism_20_tt	
+				check_variable = { party_pop_array^21 > 0.2 } #test
+			}
+		}
+		
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war executed"
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.5
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = nationalist
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^21 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^21 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set for [This.GetName]"
+			
+			#Now (player) is the civil war rebel tag
+			
+			
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = nationalist
+				}
+			
+				#New TAG so need to set some generic politics
+				log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set politics"
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 10
+						}
+						fascism = {
+							popularity = 0
+						}
+						neutrality = {
+							popularity = 10
+						}
+						communism = {
+							popularity = 10
+						}
+						nationalist = {
+							popularity = 70
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 21 } #fascists
+					set_variable = { party_pop_array^21 = 0.7 } #generate the rest
+					startup_politics = yes
+				}
+				log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set startup politics"
+				
+				#Switch to fascist leader
+					set_country_flag = set_Nat_Fascism
+					set_leader = yes
+					
+				log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set leader"
+				#Setup done, now play as them
+					change_tag_from = PREV #testing
+					
+					#to make starting values look good
+					recalculate_party = yes
+					update_majority_threshold = yes
+					
+					log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war setup finished"
+			}
+		}
+	}
+	
+	monarchist_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^23 > 0.10 } #significant fascism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					is_in_array = { gov_coalition_array = 23 } #not is in coalition
+					is_in_array = { ruling_party = 23 } #not is ruling party
+				}
+			}
+		}
+		available = {
+			NOT = {
+				has_government = nationalist
+			}
+			custom_trigger_tooltip = {
+				tooltip = monarchist_20_tt	
+				check_variable = { party_pop_array^23 > 0.2 }
+			}
+		}
+		
+		complete_effect = {
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.5
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = nationalist
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^23 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^23 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			
+			#Now (player) is the civil war rebel tag
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = nationalist
+				}
+			
+				#New TAG so need to set some generic politics
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 10
+						}
+						fascism = {
+							popularity = 0
+						}
+						neutrality = {
+							popularity = 10
+						}
+						communism = {
+							popularity = 10
+						}
+						nationalist = {
+							popularity = 70
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 23 } #monarchist
+					set_variable = { party_pop_array^23 = 0.7 } #generate the rest
+					startup_politics = yes
+				}
+				
+				#Switch to monarchist leader
+					set_country_flag = set_Monarchist
+					set_leader = yes
+					
+				#Setup done, now play as them
+					change_tag_from = PREV
+					
+				#to make starting values look good // doesn't work 100%
+				recalculate_party = yes
+				update_majority_threshold = yes
+				
+				log = "[GetDateText]: [This.GetName]: monarchist_extremist_civil_war setup finished"
+			}
+		}
+	}
+	
+	caliphate_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^11 > 0.10 } #significant jihadist
+			has_civil_war = no
+			NOT = {
+				OR = {
+					is_in_array = { gov_coalition_array = 11 } #not is in coalition
+					is_in_array = { ruling_party = 11 } #not is ruling party
+				}
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = caliphate_20_tt	
+				check_variable = { party_pop_array^11 > 0.2 }
+			}
+		}
+		
+		complete_effect = {
+			start_civil_war = {
+				ideology = fascism
+				size = 0.6
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^11 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^11 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			
+			#Now (player) is the civil war rebel tag
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = fascism
+				}
+			
+				#New TAG so need to set some generic politics
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 0
+						}
+						fascism = {
+							popularity = 90
+						}
+						neutrality = {
+							popularity = 10
+						}
+						communism = {
+							popularity = 0
+						}
+						nationalist = {
+							popularity = 0
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 11 } #jihadist
+					set_variable = { party_pop_array^11 = 0.9 } #generate the rest
+					startup_politics = yes
+				}
+				
+				#Switch to fascist leader
+					set_country_flag = set_Caliphate
+					set_leader = yes
+					
+				#Setup done, now play as them
+					change_tag_from = PREV
+					
+					#to make starting values look good // doesn't work 100%
+					recalculate_party = yes
+					update_majority_threshold = yes
+					
+					log = "[GetDateText]: [This.GetName]: caliphate_extremist_civil_war setup finished"
+			}
+		}
+	}
+	
+	communist_state_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^4 > 0.10 } #significant communism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					OR = {
+						is_in_array = { gov_coalition_array = 4 } #not is in coalition
+						is_in_array = { ruling_party = 4 } #not is ruling party
+					}
+					#not already communist
+					OR = {
+						is_in_array = { gov_coalition_array = 19 } #not is in coalition
+						is_in_array = { ruling_party = 19 } #not is ruling party
+					}
+				}
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = communist_state_20_tt	
+				check_variable = { party_pop_array^4 > 0.2 }
+			}
+		}
+		
+		complete_effect = {
+			start_civil_war = {
+				ideology = communism
+				size = 0.5
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = communism
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^4 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^4 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			
+			#Now (player) is the civil war rebel tag
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = communism
+				}
+			
+				#New TAG so need to set some generic politics
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 5
+						}
+						fascism = {
+							popularity = 0
+						}
+						neutrality = {
+							popularity = 5
+						}
+						communism = {
+							popularity = 90
+						}
+						nationalist = {
+							popularity = 0
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 4 } #communism
+					set_variable = { party_pop_array^4 = 0.9 } #generate the rest
+					startup_politics = yes
+				}
+				
+				#Switch to fascist leader
+					set_country_flag = set_Communist-State
+					set_leader = yes
+					
+				#Setup done, now play as them
+					change_tag_from = PREV
+					
+					#to make starting values look good // doesn't work 100%
+					recalculate_party = yes
+					update_majority_threshold = yes
+					
+					log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
+			}
+		}
+	}
+	
+	neutral_communist_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^19 > 0.10 } #significant communism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					OR = {
+						is_in_array = { gov_coalition_array = 4 } #not is in coalition
+						is_in_array = { ruling_party = 4 } #not is ruling party
+					}
+					#not already communist
+					OR = {
+						is_in_array = { gov_coalition_array = 19 } #not is in coalition
+						is_in_array = { ruling_party = 19 } #not is ruling party
+					}
+				}
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = neutral_communist_20_tt	
+				check_variable = { party_pop_array^19 > 0.2 }
+			}
+		}
+		
+		complete_effect = {
+			start_civil_war = {
+				ideology = neutrality
+				size = 0.5
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = neutrality
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^19 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^19 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			
+			#Now (player) is the civil war rebel tag
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = neutrality
+				}
+			
+				#New TAG so need to set some generic politics
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 5
+						}
+						fascism = {
+							popularity = 0
+						}
+						neutrality = {
+							popularity = 90
+						}
+						communism = {
+							popularity = 5
+						}
+						nationalist = {
+							popularity = 0
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 19 } #communism
+					set_variable = { party_pop_array^19 = 0.9 } #generate the rest
+					startup_politics = yes
+				}
+				
+				#Switch to fascist leader
+					set_country_flag = set_Neutral_Communism
+					set_leader = yes
+					
+				#Setup done, now play as them
+					change_tag_from = PREV
+					
+					#to make starting values look good // doesn't work 100%
+					recalculate_party = yes
+					update_majority_threshold = yes
+					
+					log = "[GetDateText]: [This.GetName]: neutral_communist_extremist_civil_war setup finished"
+			}
+		}
+	}
+	#shiite revolutionary
+	vilayat_e_faqih_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^9 > 0.10 } #significant shiite theocracy
+			has_civil_war = no
+			NOT = {
+				OR = {
+					OR = {
+						is_in_array = { gov_coalition_array = 9 } #not is in coalition
+						is_in_array = { ruling_party = 9 } #not is ruling party
+					}
+					#also see if their moderate friends are there
+					OR = {
+						is_in_array = { gov_coalition_array = 8 } #not is in coalition
+						is_in_array = { ruling_party = 8 } #not is ruling party
+					}
+				}
+			}
+		}
+		available = {
+			NOT = {
+				has_government = communism
+			}
+			custom_trigger_tooltip = {
+				tooltip = vilayat_e_faqih_20_tt	
+				check_variable = { party_pop_array^9 > 0.2 }
+			}
+		}
+		
+		complete_effect = {
+			start_civil_war = {
+				ideology = communism
+				size = 0.5
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = neutrality
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^9 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^9 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			
+			#Now (player) is the civil war rebel tag
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = communism
+				}
+			
+				#New TAG so need to set some generic politics
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 2
+						}
+						fascism = {
+							popularity = 0
+						}
+						neutrality = {
+							popularity = 8
+						}
+						communism = {
+							popularity = 90
+						}
+						nationalist = {
+							popularity = 0
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 9 } #shiite theocracy
+					set_variable = { party_pop_array^9 = 0.9 } #generate the rest
+					startup_politics = yes
+				}
+				
+				#Switch to fascist leader
+					set_country_flag = set_Vilayat_e_Faqih
+					set_leader = yes
+					
+				#Setup done, now play as them
+				change_tag_from = PREV
+				
+				#to make starting values look good // doesn't work 100%
+				recalculate_party = yes
+				update_majority_threshold = yes
+				
+				log = "[GetDateText]: [This.GetName]: vilayat_e_faqih_extremist_civil_war setup finished"
+				
+				#Give support from resistance axis
+				hidden_effect = {
+					PER = {
+						if = { 
+							limit = {
+								OR = {
+									is_in_array = { ruling_party = 8 }
+									is_in_array = { ruling_party = 9 } 
+									is_in_array = { ruling_party = 22 } #IRCG
+								}
+							}
+							add_ai_strategy = {
+								type = befriend 
+								id = PREV
+								value = 200
+							}
+							
+							add_ai_strategy = {
+								type = send_volunteers_desire
+								id = PREV
+								value = 200
+							}
+							
+							add_ai_strategy = {
+								type = support
+								id = PREV
+								value = 200
+							}
+						}
+					}
+					HEZ = {
+						if = { 
+							limit = {
+								OR = {
+									is_in_array = { ruling_party = 8 }
+									is_in_array = { ruling_party = 9 }
+								}
+							}
+							add_ai_strategy = {
+								type = befriend 
+								id = PREV
+								value = 200
+							}
+							
+							add_ai_strategy = {
+								type = send_volunteers_desire
+								id = PREV
+								value = 200
+							}
+							
+							add_ai_strategy = {
+								type = support
+								id = PREV
+								value = 200
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	### #### TODO: ####
+	### - generic boost outlook temp drift
+
+}

@@ -4,6 +4,15 @@
 
 #Interest rates are set in GDP/C - need modifier based on debt_ratio, to avoid rich countries getting infinite rich by taking huge loans and reinvesting abroad
 
+add_tax_laws = {
+	meta_effect = {
+		text = {
+			add_ideas = tax_cost_[TAX_RATE_VAR]
+		}
+		TAX_RATE_VAR = "[?tax_rate|0]"
+	}
+}
+
 initial_money_setup = {
 	calculate_interest_rate = yes
 	calculate_debt_rate = yes
@@ -14,6 +23,7 @@ initial_money_setup = {
 	#update_military_rate = yes
 	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
+	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
 	update_AI_NO_WANT_DEBT = yes
 }
 
@@ -29,6 +39,7 @@ startup_extra_setup = {
 	update_military_rate = yes
 	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
+	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
 	update_AI_NO_WANT_DEBT = yes
 
 }
@@ -113,6 +124,17 @@ ingame_calculate_size_modifier = {
 		#Divides/removes previous to avoid distortion
 		add_to_variable = { var = treasury_rate value = expense_gain }
 		subtract_from_variable = { var = treasury_rate value = tax_gain }
+		
+		### Temp multiply to avoid rounding errors ###
+		multiply_variable = { bureaucracy_gain = 1000 }
+		multiply_variable = { security_gain = 1000 }
+		multiply_variable = { education_gain = 1000 }
+		multiply_variable = { health_gain = 1000 }
+		multiply_variable = { welfare_gain = 1000 }
+		multiply_variable = { expense_gain = 1000 }
+		multiply_variable = { tax_gain = 1000 }
+		multiply_variable = { econ_cycle_upg_cost = 1000 }
+		
 		divide_variable = { var = bureaucracy_gain value = size_modifier }
 		divide_variable = { var = security_gain value = size_modifier }
 		divide_variable = { var = education_gain value = size_modifier }
@@ -160,6 +182,7 @@ ingame_calculate_size_modifier = {
 				} }
 			} }
 		}
+		
 		multiply_variable = { var = bureaucracy_gain value = size_modifier }
 		multiply_variable = { var = security_gain value = size_modifier }
 		multiply_variable = { var = education_gain value = size_modifier }
@@ -168,6 +191,27 @@ ingame_calculate_size_modifier = {
 		multiply_variable = { var = expense_gain value = size_modifier }
 		multiply_variable = { var = tax_gain value = size_modifier }
 		multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
+		
+		#Round to avoid automatic cutoff of important values
+		round_variable = bureaucracy_gain
+		round_variable = security_gain
+		round_variable = education_gain
+		round_variable = health_gain
+		round_variable = welfare_gain
+		round_variable = expense_gain
+		round_variable = tax_gain
+		round_variable = econ_cycle_upg_cost
+		
+		### divide back to avoid rounding errors ###
+		divide_variable = { bureaucracy_gain = 1000 }
+		divide_variable = { security_gain = 1000 }
+		divide_variable = { education_gain = 1000 }
+		divide_variable = { health_gain = 1000 }
+		divide_variable = { welfare_gain = 1000 }
+		divide_variable = { expense_gain = 1000 }
+		divide_variable = { tax_gain = 1000 }
+		divide_variable = { econ_cycle_upg_cost = 1000 }
+		
 		subtract_from_variable = { var = treasury_rate value = expense_gain }
 		add_to_variable = { var = treasury_rate value = tax_gain }
 		update_display_income = yes
@@ -179,6 +223,9 @@ ingame_calculate_size_modifier = {
 calculate_tax_gain = {
 	subtract_from_variable = { var = treasury_rate value = tax_gain }
 	set_variable = { var = tax_gain value = tax_rate }
+	
+	multiply_variable = { tax_gain = 1000 }
+	
 	multiply_variable = { var = tax_gain value = size_modifier }
 	divide_variable = { var = tax_gain value = 100 }
 	if = { limit = { has_idea = depression }
@@ -200,14 +247,16 @@ calculate_tax_gain = {
 			} }
 		} }
 	}
+	
+	round_variable = tax_gain
+	divide_variable = { tax_gain = 1000 }
+	
 	add_to_variable = { var = treasury_rate value = tax_gain }
 	update_display_income = yes
 }
 
 calculate_interest_rate = {
 	set_variable = { var = interest_rate value = debt }
-	divide_variable = { var = interest_rate value = size_modifier }
-	divide_variable = { var = interest_rate value = 365 }
 	if = { limit = { has_idea = gdp_1 }
 		multiply_variable = { var = interest_rate value = 20 }
 		
@@ -241,12 +290,14 @@ calculate_interest_rate = {
 			} }
 		} }
 	}
+	divide_variable = { var = interest_rate value = size_modifier }
+	divide_variable = { var = interest_rate value = 365 }
 	if = {
 		limit = { has_idea = petro_dollar }
 		subtract_from_variable = { var = interest_rate value = 1 }
 	}
 	if = {
-		limit = { has_idea = EU_member }
+		limit = { has_idea = the_euro }
 		subtract_from_variable = { var = interest_rate value = 1 }
 	}
 	if = {
@@ -257,6 +308,10 @@ calculate_interest_rate = {
 		limit = { or = { has_idea = wall_street has_idea = international_bankers } }
 		subtract_from_variable = { var = interest_rate value = 1 }
 	}
+	if = {
+		limit = { has_country_flag = bailout_given }
+		subtract_from_variable = { var = interest_rate value = 10 }
+	}
 	clamp_variable = {
 		var = interest_rate
 		min = 0.5
@@ -264,7 +319,7 @@ calculate_interest_rate = {
 	}
 	update_AI_NO_WANT_DEBT = yes
 }
-
+	### safeproofing - reached here #killerrabbit
 calculate_debt_rate = {
 	add_to_variable = { var = treasury_rate value = debt_rate }
 	set_variable = { var = debt_rate value = debt }
@@ -272,6 +327,36 @@ calculate_debt_rate = {
 	divide_variable = { var = debt_rate value = 36500 }
 	subtract_from_variable = { var = treasury_rate value = debt_rate }
 	update_display_expense = yes
+	
+	if = {
+		limit = { 
+			NOT = { has_country_flag = bailout_happened }
+		}
+		#check for imminent bankrupcy
+		set_temp_variable = { bankrupcy_check = size_modifier }
+		divide_temp_variable = { bankrupcy_check = 4 }
+		if = {
+			limit = { 
+				check_variable = { bankrupcy_check < debt_rate }
+				NOT = { has_country_flag = bailout_happened }
+			}
+			country_event = { id = bankrupcy.0 }
+		}
+	}
+	if = {
+		limit = {
+			NOT = { has_idea = bankrupcy }
+		}
+		#check for bankrupcy
+		set_temp_variable = { bankrupcy_check = size_modifier }
+		divide_temp_variable = { bankrupcy_check = 2.5 }
+		if = {
+			limit = { 
+				check_variable = { bankrupcy_check < debt_rate }
+			}
+			ROOT = { news_event = { id = News_bankrupcy.6 } } #actually bankrupt
+		}
+	}
 }
 
 update_military_rate = {
@@ -404,11 +489,11 @@ update_military_rate = {
 
 	set_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
 	add_to_temp_variable = { expensive_airforce = num_equipment@nav_plane_equipment }
-	multiply_temp_variable = { expensive_airforce = 6 }
+	multiply_temp_variable = { expensive_airforce = 5 }
 	add_to_temp_variable = { airforce_count = expensive_airforce }
 
 	set_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
-	multiply_temp_variable = { strategic_airforce = 20 }
+	multiply_temp_variable = { strategic_airforce = 18 }
 	add_to_temp_variable = { airforce_count = strategic_airforce }
 
 	divide_temp_variable = { airforce_count = 10 } #control factor
@@ -572,217 +657,55 @@ update_display_income = {
 	add_to_variable = { var = display_income value = int_investments_rate }
 }
 
+remove_tax_cost = {
+	meta_effect = {
+		text = {
+			remove_ideas = tax_cost_[TAX_RATE_VAR]
+		}
+		TAX_RATE_VAR = "[?tax_rate|0]"
+	}	
+}
+
+set_tax_cost = {
+	meta_effect = {
+		text = {
+			add_ideas = tax_cost_[TAX_RATE_VAR]
+		}
+		TAX_RATE_VAR = "[?tax_rate|0]"
+	}
+}
+
 increase_tax_cost = {
-	if = {
-		if = { limit = { check_variable = { tax_rate = 1 } }
-		add_ideas = tax_cost_01
-		else = { if = { limit = { check_variable = { tax_rate = 2 } }
-		swap_ideas = { remove_idea = tax_cost_01 add_idea = tax_cost_02 }
-		else = { if = { limit = { check_variable = { tax_rate = 3 } }
-		swap_ideas = { remove_idea = tax_cost_02 add_idea = tax_cost_03 }
-		else = { if = { limit = { check_variable = { tax_rate = 4 } }
-		swap_ideas = { remove_idea = tax_cost_03 add_idea = tax_cost_04 }
-		else = { if = { limit = { check_variable = { tax_rate = 5 } }
-		swap_ideas = { remove_idea = tax_cost_04 add_idea = tax_cost_05 }
-		else = { if = { limit = { check_variable = { tax_rate = 6 } }
-		swap_ideas = { remove_idea = tax_cost_05 add_idea = tax_cost_06 }
-		else = { if = { limit = { check_variable = { tax_rate = 7 } }
-		swap_ideas = { remove_idea = tax_cost_06 add_idea = tax_cost_07 }
-		else = { if = { limit = { check_variable = { tax_rate = 8 } }
-		swap_ideas = { remove_idea = tax_cost_07 add_idea = tax_cost_08 }
-		else = { if = { limit = { check_variable = { tax_rate = 9 } }
-		swap_ideas = { remove_idea = tax_cost_08 add_idea = tax_cost_09 }
-		else = { if = { limit = { check_variable = { tax_rate = 10 } }
-		swap_ideas = { remove_idea = tax_cost_09 add_idea = tax_cost_10 }
-		else = { if = { limit = { check_variable = { tax_rate = 11 } }
-		swap_ideas = { remove_idea = tax_cost_10 add_idea = tax_cost_11 }
-		else = { if = { limit = { check_variable = { tax_rate = 12 } }
-		swap_ideas = { remove_idea = tax_cost_11 add_idea = tax_cost_12 }
-		else = { if = { limit = { check_variable = { tax_rate = 13 } }
-		swap_ideas = { remove_idea = tax_cost_12 add_idea = tax_cost_13 }
-		else = { if = { limit = { check_variable = { tax_rate = 14 } }
-		swap_ideas = { remove_idea = tax_cost_13 add_idea = tax_cost_14 }
-		else = { if = { limit = { check_variable = { tax_rate = 15 } }
-		swap_ideas = { remove_idea = tax_cost_14 add_idea = tax_cost_15 }
-		else = { if = { limit = { check_variable = { tax_rate = 16 } }
-		swap_ideas = { remove_idea = tax_cost_15 add_idea = tax_cost_16 }
-		else = { if = { limit = { check_variable = { tax_rate = 17 } }
-		swap_ideas = { remove_idea = tax_cost_16 add_idea = tax_cost_17 }
-		else = { if = { limit = { check_variable = { tax_rate = 18 } }
-		swap_ideas = { remove_idea = tax_cost_17 add_idea = tax_cost_18 }
-		else = { if = { limit = { check_variable = { tax_rate = 19 } }
-		swap_ideas = { remove_idea = tax_cost_18 add_idea = tax_cost_19 }
-		else = { if = { limit = { check_variable = { tax_rate = 20 } }
-		swap_ideas = { remove_idea = tax_cost_19 add_idea = tax_cost_20 }
-		else = { if = { limit = { check_variable = { tax_rate = 21 } }
-		swap_ideas = { remove_idea = tax_cost_20 add_idea = tax_cost_21 }
-		else = { if = { limit = { check_variable = { tax_rate = 22 } }
-		swap_ideas = { remove_idea = tax_cost_21 add_idea = tax_cost_22 }
-		else = { if = { limit = { check_variable = { tax_rate = 23 } }
-		swap_ideas = { remove_idea = tax_cost_22 add_idea = tax_cost_23 }
-		else = { if = { limit = { check_variable = { tax_rate = 24 } }
-		swap_ideas = { remove_idea = tax_cost_23 add_idea = tax_cost_24 }
-		else = { if = { limit = { check_variable = { tax_rate = 25 } }
-		swap_ideas = { remove_idea = tax_cost_24 add_idea = tax_cost_25 }
-		else = { if = { limit = { check_variable = { tax_rate = 26 } }
-		swap_ideas = { remove_idea = tax_cost_25 add_idea = tax_cost_26 }
-		else = { if = { limit = { check_variable = { tax_rate = 27 } }
-		swap_ideas = { remove_idea = tax_cost_26 add_idea = tax_cost_27 }
-		else = { if = { limit = { check_variable = { tax_rate = 28 } }
-		swap_ideas = { remove_idea = tax_cost_27 add_idea = tax_cost_28 }
-		else = { if = { limit = { check_variable = { tax_rate = 29 } }
-		swap_ideas = { remove_idea = tax_cost_28 add_idea = tax_cost_29 }
-		else = { if = { limit = { check_variable = { tax_rate = 30 } }
-		swap_ideas = { remove_idea = tax_cost_29 add_idea = tax_cost_30 }
-		else = { if = { limit = { check_variable = { tax_rate = 31 } }
-		swap_ideas = { remove_idea = tax_cost_30 add_idea = tax_cost_31 }
-		else = { if = { limit = { check_variable = { tax_rate = 32 } }
-		swap_ideas = { remove_idea = tax_cost_31 add_idea = tax_cost_32 }
-		else = { if = { limit = { check_variable = { tax_rate = 33 } }
-		swap_ideas = { remove_idea = tax_cost_32 add_idea = tax_cost_33 }
-		else = { if = { limit = { check_variable = { tax_rate = 34 } }
-		swap_ideas = { remove_idea = tax_cost_33 add_idea = tax_cost_34 }
-		else = { if = { limit = { check_variable = { tax_rate = 35 } }
-		swap_ideas = { remove_idea = tax_cost_34 add_idea = tax_cost_35 }
-		else = { if = { limit = { check_variable = { tax_rate = 36 } }
-		swap_ideas = { remove_idea = tax_cost_35 add_idea = tax_cost_36 }
-		else = { if = { limit = { check_variable = { tax_rate = 37 } }
-		swap_ideas = { remove_idea = tax_cost_36 add_idea = tax_cost_37 }
-		else = { if = { limit = { check_variable = { tax_rate = 38 } }
-		swap_ideas = { remove_idea = tax_cost_37 add_idea = tax_cost_38 }
-		else = { if = { limit = { check_variable = { tax_rate = 39 } }
-		swap_ideas = { remove_idea = tax_cost_38 add_idea = tax_cost_39 }
-		else = { if = { limit = { check_variable = { tax_rate = 40 } }
-		swap_ideas = { remove_idea = tax_cost_39 add_idea = tax_cost_40 }
-		else = { if = { limit = { check_variable = { tax_rate = 41 } }
-		swap_ideas = { remove_idea = tax_cost_40 add_idea = tax_cost_41 }
-		else = { if = { limit = { check_variable = { tax_rate = 42 } }
-		swap_ideas = { remove_idea = tax_cost_41 add_idea = tax_cost_42 }
-		else = { if = { limit = { check_variable = { tax_rate = 43 } }
-		swap_ideas = { remove_idea = tax_cost_42 add_idea = tax_cost_43 }
-		else = { if = { limit = { check_variable = { tax_rate = 44 } }
-		swap_ideas = { remove_idea = tax_cost_43 add_idea = tax_cost_44 }
-		else = { if = { limit = { check_variable = { tax_rate = 45 } }
-		swap_ideas = { remove_idea = tax_cost_44 add_idea = tax_cost_45 }
-		else = { if = { limit = { check_variable = { tax_rate = 46 } }
-		swap_ideas = { remove_idea = tax_cost_45 add_idea = tax_cost_46 }
-		else = { if = { limit = { check_variable = { tax_rate = 47 } }
-		swap_ideas = { remove_idea = tax_cost_46 add_idea = tax_cost_47 }
-		else = { if = { limit = { check_variable = { tax_rate = 48 } }
-		swap_ideas = { remove_idea = tax_cost_47 add_idea = tax_cost_48 }
-		else = { if = { limit = { check_variable = { tax_rate = 49 } }
-		swap_ideas = { remove_idea = tax_cost_48 add_idea = tax_cost_49 }
-		else = { if = { limit = { check_variable = { tax_rate = 50 } }
-		swap_ideas = { remove_idea = tax_cost_49 add_idea = tax_cost_50 }
-		} } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } }
-		} } } } } } } } } } } } } } } } } } } } } } } } } } } } } }
+	set_temp_variable = { tax_increased = tax_rate }
+	subtract_from_temp_variable = { tax_increased = 1 }
+	meta_effect = {
+		text = {
+			remove_ideas = tax_cost_[TAX_RATE_VAR_INCR]
+		}
+		TAX_RATE_VAR_INCR = "[?tax_increased|0]"
+	}
+	meta_effect = {
+		text = {
+			add_ideas = tax_cost_[TAX_RATE_VAR]
+		}
+		TAX_RATE_VAR = "[?tax_rate|0]"
 	}
 }
 
 decrease_tax_cost = {
-	if = {
-		if = { limit = { check_variable = { tax_rate = 0 } }
-		remove_ideas = tax_cost_01
-		else = { if = { limit = { check_variable = { tax_rate = 1 } }
-		swap_ideas = { remove_idea = tax_cost_02 add_idea = tax_cost_01 }
-		else = { if = { limit = { check_variable = { tax_rate = 2 } }
-		swap_ideas = { remove_idea = tax_cost_03 add_idea = tax_cost_02 }
-		else = { if = { limit = { check_variable = { tax_rate = 3 } }
-		swap_ideas = { remove_idea = tax_cost_04 add_idea = tax_cost_03 }
-		else = { if = { limit = { check_variable = { tax_rate = 4 } }
-		swap_ideas = { remove_idea = tax_cost_05 add_idea = tax_cost_04 }
-		else = { if = { limit = { check_variable = { tax_rate = 5 } }
-		swap_ideas = { remove_idea = tax_cost_06 add_idea = tax_cost_05 }
-		else = { if = { limit = { check_variable = { tax_rate = 6 } }
-		swap_ideas = { remove_idea = tax_cost_07 add_idea = tax_cost_06 }
-		else = { if = { limit = { check_variable = { tax_rate = 7 } }
-		swap_ideas = { remove_idea = tax_cost_08 add_idea = tax_cost_07 }
-		else = { if = { limit = { check_variable = { tax_rate = 8 } }
-		swap_ideas = { remove_idea = tax_cost_09 add_idea = tax_cost_08 }
-		else = { if = { limit = { check_variable = { tax_rate = 9 } }
-		swap_ideas = { remove_idea = tax_cost_10 add_idea = tax_cost_09 }
-		else = { if = { limit = { check_variable = { tax_rate = 10 } }
-		swap_ideas = { remove_idea = tax_cost_11 add_idea = tax_cost_10 }
-		else = { if = { limit = { check_variable = { tax_rate = 11 } }
-		swap_ideas = { remove_idea = tax_cost_12 add_idea = tax_cost_11 }
-		else = { if = { limit = { check_variable = { tax_rate = 12 } }
-		swap_ideas = { remove_idea = tax_cost_13 add_idea = tax_cost_12 }
-		else = { if = { limit = { check_variable = { tax_rate = 13 } }
-		swap_ideas = { remove_idea = tax_cost_14 add_idea = tax_cost_13 }
-		else = { if = { limit = { check_variable = { tax_rate = 14 } }
-		swap_ideas = { remove_idea = tax_cost_15 add_idea = tax_cost_14 }
-		else = { if = { limit = { check_variable = { tax_rate = 15 } }
-		swap_ideas = { remove_idea = tax_cost_16 add_idea = tax_cost_15 }
-		else = { if = { limit = { check_variable = { tax_rate = 16 } }
-		swap_ideas = { remove_idea = tax_cost_17 add_idea = tax_cost_16 }
-		else = { if = { limit = { check_variable = { tax_rate = 17 } }
-		swap_ideas = { remove_idea = tax_cost_18 add_idea = tax_cost_17 }
-		else = { if = { limit = { check_variable = { tax_rate = 18 } }
-		swap_ideas = { remove_idea = tax_cost_19 add_idea = tax_cost_18 }
-		else = { if = { limit = { check_variable = { tax_rate = 19 } }
-		swap_ideas = { remove_idea = tax_cost_20 add_idea = tax_cost_19 }
-		else = { if = { limit = { check_variable = { tax_rate = 20 } }
-		swap_ideas = { remove_idea = tax_cost_21 add_idea = tax_cost_20 }
-		else = { if = { limit = { check_variable = { tax_rate = 21 } }
-		swap_ideas = { remove_idea = tax_cost_22 add_idea = tax_cost_21 }
-		else = { if = { limit = { check_variable = { tax_rate = 22 } }
-		swap_ideas = { remove_idea = tax_cost_23 add_idea = tax_cost_22 }
-		else = { if = { limit = { check_variable = { tax_rate = 23 } }
-		swap_ideas = { remove_idea = tax_cost_24 add_idea = tax_cost_23 }
-		else = { if = { limit = { check_variable = { tax_rate = 24 } }
-		swap_ideas = { remove_idea = tax_cost_25 add_idea = tax_cost_24 }
-		else = { if = { limit = { check_variable = { tax_rate = 25 } }
-		swap_ideas = { remove_idea = tax_cost_26 add_idea = tax_cost_25 }
-		else = { if = { limit = { check_variable = { tax_rate = 26 } }
-		swap_ideas = { remove_idea = tax_cost_27 add_idea = tax_cost_26 }
-		else = { if = { limit = { check_variable = { tax_rate = 27 } }
-		swap_ideas = { remove_idea = tax_cost_28 add_idea = tax_cost_27 }
-		else = { if = { limit = { check_variable = { tax_rate = 28 } }
-		swap_ideas = { remove_idea = tax_cost_29 add_idea = tax_cost_28 }
-		else = { if = { limit = { check_variable = { tax_rate = 29 } }
-		swap_ideas = { remove_idea = tax_cost_30 add_idea = tax_cost_29 }
-		else = { if = { limit = { check_variable = { tax_rate = 30 } }
-		swap_ideas = { remove_idea = tax_cost_31 add_idea = tax_cost_30 }
-		else = { if = { limit = { check_variable = { tax_rate = 31 } }
-		swap_ideas = { remove_idea = tax_cost_32 add_idea = tax_cost_31 }
-		else = { if = { limit = { check_variable = { tax_rate = 32 } }
-		swap_ideas = { remove_idea = tax_cost_33 add_idea = tax_cost_32 }
-		else = { if = { limit = { check_variable = { tax_rate = 33 } }
-		swap_ideas = { remove_idea = tax_cost_34 add_idea = tax_cost_33 }
-		else = { if = { limit = { check_variable = { tax_rate = 34 } }
-		swap_ideas = { remove_idea = tax_cost_35 add_idea = tax_cost_34 }
-		else = { if = { limit = { check_variable = { tax_rate = 35 } }
-		swap_ideas = { remove_idea = tax_cost_36 add_idea = tax_cost_35 }
-		else = { if = { limit = { check_variable = { tax_rate = 36 } }
-		swap_ideas = { remove_idea = tax_cost_37 add_idea = tax_cost_36 }
-		else = { if = { limit = { check_variable = { tax_rate = 37 } }
-		swap_ideas = { remove_idea = tax_cost_38 add_idea = tax_cost_37 }
-		else = { if = { limit = { check_variable = { tax_rate = 38 } }
-		swap_ideas = { remove_idea = tax_cost_39 add_idea = tax_cost_38 }
-		else = { if = { limit = { check_variable = { tax_rate = 39 } }
-		swap_ideas = { remove_idea = tax_cost_40 add_idea = tax_cost_39 }
-		else = { if = { limit = { check_variable = { tax_rate = 40 } }
-		swap_ideas = { remove_idea = tax_cost_41 add_idea = tax_cost_40 }
-		else = { if = { limit = { check_variable = { tax_rate = 41 } }
-		swap_ideas = { remove_idea = tax_cost_42 add_idea = tax_cost_41 }
-		else = { if = { limit = { check_variable = { tax_rate = 42 } }
-		swap_ideas = { remove_idea = tax_cost_43 add_idea = tax_cost_42 }
-		else = { if = { limit = { check_variable = { tax_rate = 43 } }
-		swap_ideas = { remove_idea = tax_cost_44 add_idea = tax_cost_43 }
-		else = { if = { limit = { check_variable = { tax_rate = 44 } }
-		swap_ideas = { remove_idea = tax_cost_45 add_idea = tax_cost_44 }
-		else = { if = { limit = { check_variable = { tax_rate = 45 } }
-		swap_ideas = { remove_idea = tax_cost_46 add_idea = tax_cost_45 }
-		else = { if = { limit = { check_variable = { tax_rate = 46 } }
-		swap_ideas = { remove_idea = tax_cost_47 add_idea = tax_cost_46 }
-		else = { if = { limit = { check_variable = { tax_rate = 47 } }
-		swap_ideas = { remove_idea = tax_cost_48 add_idea = tax_cost_47 }
-		else = { if = { limit = { check_variable = { tax_rate = 48 } }
-		swap_ideas = { remove_idea = tax_cost_49 add_idea = tax_cost_48 }
-		else = { if = { limit = { check_variable = { tax_rate = 49 } }
-		swap_ideas = { remove_idea = tax_cost_50 add_idea = tax_cost_49 }
-		} } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } } }
-		} } } } } } } } } } } } } } } } } } } } } } } } } } } } } }
+	set_temp_variable = { tax_decreased = tax_rate }
+	add_to_temp_variable = { tax_decreased = 1 }
+	meta_effect = {
+		text = {
+			remove_ideas = tax_cost_[TAX_RATE_VAR_DECR]
+		}
+		TAX_RATE_VAR_DECR = "[?tax_decreased|0]"
+	}
+	meta_effect = {
+		text = {
+			add_ideas = tax_cost_[TAX_RATE_VAR]
+		}
+		TAX_RATE_VAR = "[?tax_rate|0]"
 	}
 }
 	
