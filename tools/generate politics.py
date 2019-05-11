@@ -1209,6 +1209,7 @@ def createSubIdeologyValues (rootDir, sheet, filepath, startingLeaders):
             content += "\t\n"
             content += "\tstart_politics_input = yes\n\n"
             #western
+            content += "\t### Party Popularities\n"
             content += "\tset_variable = { party_pop_array^0 = " + subIdeology[3] + " } #Western_Autocracy\n"
             content += "\tset_variable = { party_pop_array^1 = " + subIdeology[0] + " } #conservatism\n"
             content += "\tset_variable = { party_pop_array^2 = " + subIdeology[1] + " } #liberalism\n"
@@ -1239,7 +1240,7 @@ def createSubIdeologyValues (rootDir, sheet, filepath, startingLeaders):
             content += "\tset_variable = { party_pop_array^23 = " + subIdeology[23] + " } #Monarchist\n\n"
 
 
-            content += "\t### Ruling Party ###"
+            content += "\t### Ruling Party\n"
             content += "\tadd_to_array = { ruling_party = " + GetIdeologyNum(ideology) + " }\n\n"
             content += "\tstartup_politics = yes\n\n"
 
