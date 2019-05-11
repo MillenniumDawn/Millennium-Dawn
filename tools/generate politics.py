@@ -125,7 +125,7 @@ def createPartNameLoc (rootDir, sheet):
                             content += " " + b +"."+"Mod_Vilayat_e_Faqih_desc:0 \"" +"\"\n"
                         elif c == 15 and d != "":
                             content += " " + b +"."+"anarchist_communism:0 \"£generic_anarchist_communism_small "+d +"\"\n"
-                            content += " " + b +"."+"anarchist_communism:0 \"" +"\"\n"
+                            content += " " + b +"."+"anarchist_communism_desc:0 \"" +"\"\n"
 
                         #Salafist
                         elif c == 18 and d != "":
@@ -158,7 +158,7 @@ def createPartNameLoc (rootDir, sheet):
                             content += " " + b +"."+"Neutral_Muslim_Brotherhood:0 \"£muslim_brotherhood_small "+d +"\"\n"
                             content += " " + b +"."+"Neutral_Muslim_Brotherhood_desc:0 \"" +"\"\n"
                         elif c == 29 and d != "":
-                            content += " " + b +"."+"Neutral_green:0 \"£generic_Neutral_Green_small "+d +"\"\n"
+                            content += " " + b +"."+"Neutral_green:0 \"£generic_Neutral_green_small "+d +"\"\n"
                             content += " " + b +"."+"Neutral_Green_desc:0 \"" +"\"\n"
 
                         #Nationalist
@@ -1899,53 +1899,55 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                 if c not in [0, 1, 6, 13, 16, 25]:
                     if c > 36:
                         break
-                        leaderName = leaders2017[c][a]
-                        if leaders2017[c][a+1] != "":
-                            leaderPic = leaders2017[c][a+1]
+                    leaderName = leaders2017[c][a]
+                    #print(leaderName)
+                    #input()
+                    if leaders2017[c][a+1] != "":
+                        leaderPic = leaders2017[c][a+1]
+                    else:
+                        leaderPic = "generic.dds"
+
+                    #print(leaders2017[c])
+                    ideology, traits = getIdeology(c)
+
+
+                    startDate = "2017"
+                    tag = b
+                    pos = getTagPos3(organizedLeaders, tag, startDate)
+
+                    cont = 1;
+                    for x, y in enumerate(startingLeaders2017):
+                        # print(y[0][0])
+                        if leaderName == y[1][0]:
+                            startingLeaders2017[x][3] = [ideology]
+                            startingLeaders2017[x][4] = [traits]
+                            cont = 0;
+
+                    for pos2, y in enumerate(organizedLeaders):
+                        # print(y[0][0])
+                        if leaderName == organizedLeaders[pos2][2][0]:
+                            cont = 0;
+                            #print(organizedLeaders[pos2][2][0])
+
+                    if cont == 1:
+
+                        if pos == 0:
+
+                            organizedLeaders.insert(len(organizedLeaders) + 1,
+                                                    [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
+                            #print("ERROR")
+                            #print(len(organizedLeaders))
+                            #print(pos)
+                            #print(organizedLeaders[-2])
+                            #print(organizedLeaders[-1])
+                            #input()
                         else:
-                            leaderPic = "generic.dds"
-
-                        #print(leaders2017[c])
-                        ideology, traits = getIdeology(c)
-
-
-                        startDate = "2017"
-                        tag = b
-                        pos = getTagPos3(organizedLeaders, tag, startDate)
-
-                        cont = 1;
-                        for x, y in enumerate(startingLeaders2017):
-                            # print(y[0][0])
-                            if leaderName == y[1][0]:
-                                startingLeaders2017[x][3] = [ideology]
-                                startingLeaders2017[x][4] = [traits]
-                                cont = 0;
-
-                        for pos2, y in enumerate(organizedLeaders):
-                            # print(y[0][0])
-                            if leaderName == organizedLeaders[pos2][2][0]:
-                                cont = 0;
-                                #print(organizedLeaders[pos2][2][0])
-
-                        if cont == 1:
-
-                            if pos == 0:
-
-                                organizedLeaders.insert(len(organizedLeaders) + 1,
-                                                        [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
-                                #print("ERROR")
-                                #print(len(organizedLeaders))
-                                #print(pos)
-                                #print(organizedLeaders[-2])
-                                #print(organizedLeaders[-1])
-                                #input()
-                            else:
-                                organizedLeaders.insert(pos + 1, [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
-                                #print(len(organizedLeaders))
-                                #print(pos)
-                                #print(leaderName)
-                                #print(organizedLeaders[pos])
-                                #print(organizedLeaders[pos + 1])
+                            organizedLeaders.insert(pos + 1, [[b], ["2017"] ,[leaderName],[leaderPic], [ideology],[traits]])
+                            #print(len(organizedLeaders))
+                            #print(pos)
+                            #print(leaderName)
+                            #print(organizedLeaders[pos])
+                            #print(organizedLeaders[pos + 1])
     #input()
 
     for a, b in enumerate(extraLeaders2017):
@@ -2158,8 +2160,6 @@ def main():
 
 
     #print(startingLeaders2000)
-    #print(startingLeaders2017)
-    #input()
     createSubIdeologyValues(rootDir, voteShare2000, (rootDir + "/Modding resources/generated/generated_2000_politics.txt"),
                             startingLeaders2000)
 
