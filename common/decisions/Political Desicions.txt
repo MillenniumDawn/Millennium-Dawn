@@ -1,0 +1,2187 @@
+#### Other Generic Politics ########
+
+generic_coalition_politics_desicions = {
+	
+	retire_current_leader = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		complete_effect = {
+			hidden_effect = {
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+		}	
+	}
+	
+	## Change election laws ##
+	
+	permanently_suspend_elections = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 0
+		days_re_enable = 0
+		
+		
+		visible = {
+			has_elections = yes
+			OR = {
+				is_in_array = { ruling_party = 0 } #Western_Autocracy
+				is_in_array = { ruling_party = 4 } #Communist-State
+				is_in_array = { ruling_party = 7 } #Autocracy
+				is_in_array = { ruling_party = 10 } #Kingdom
+				is_in_array = { ruling_party = 11 } #Caliphate
+				is_in_array = { ruling_party = 13 } #Neutral_Autocracy
+				is_in_array = { ruling_party = 19 } #neutral communist
+				is_in_array = { ruling_party = 21 } #fascist
+				is_in_array = { ruling_party = 22 } #Nat_Autocracy
+				is_in_array = { ruling_party = 23 } #Monarchist
+			}
+		}
+		
+		complete_effect = {
+			if = {
+				limit = {
+					has_government = democratic
+				}
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = no
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = communism
+				}
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = fascism
+				}
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = no
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = neutrality
+				}
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = no
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = nationalist
+				}
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+			}
+		}
+	}
+	
+	return_democracy = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 0
+		days_re_enable = 0
+		
+		
+		visible = {
+			has_elections = no
+		}
+		
+		complete_effect = {
+			if = {
+				limit = {
+					has_government = democratic
+				}
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = communism
+				}
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = fascism
+				}
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = neutrality
+				}
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = {
+					has_government = nationalist
+				}
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = yes
+				}
+			}
+		}
+	}
+	
+	increase_election_threshold = {
+		icon = decision
+		
+		cost = 100
+		days_remove = 0
+		days_re_enable = 0
+		
+		
+		available = {
+			has_elections = yes
+			NOT = {
+				custom_trigger_tooltip = {
+					tooltip = election_threshold_max	
+					check_variable = { election_threshold > 0.095 }
+				}
+			}
+		}
+		complete_effect = {
+			add_to_variable = { election_threshold = 0.01 }
+		}
+	}
+	
+	decrease_election_threshold = {
+		icon = decision
+		
+		cost = 100
+		days_remove = 0
+		days_re_enable = 0
+		
+		
+		available = {
+			has_elections = yes
+			NOT = {
+				custom_trigger_tooltip = {
+					tooltip = election_threshold_min	
+					check_variable = { election_threshold < 0.015 }
+				}
+			}
+		}
+		complete_effect = {
+			hidden_effect = {
+				subtract_from_variable = { election_threshold = 0.01 }
+			}
+		}
+	}
+	
+	### Extremist Civil Wars
+	
+	fascism_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^21 > 0.10 } #significant fascism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					is_in_array = { gov_coalition_array = 21 } #not is in coalition
+					is_in_array = { ruling_party = 21 } #not is ruling party
+				}
+			}
+		}
+		available = {
+			NOT = {
+				has_government = nationalist
+			}
+			custom_trigger_tooltip = {
+				tooltip = fascism_20_tt	
+				check_variable = { party_pop_array^21 > 0.2 } #test
+			}
+		}
+		
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war executed"
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.5
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = nationalist
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^21 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^21 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set for [This.GetName]"
+			
+			#Now (player) is the civil war rebel tag
+			
+			
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = nationalist
+				}
+			
+				#New TAG so need to set some generic politics
+				log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set politics"
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 10
+						}
+						fascism = {
+							popularity = 0
+						}
+						neutrality = {
+							popularity = 10
+						}
+						communism = {
+							popularity = 10
+						}
+						nationalist = {
+							popularity = 70
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 21 } #fascists
+					set_variable = { party_pop_array^21 = 0.7 } #generate the rest
+					startup_politics = yes
+				}
+				log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set startup politics"
+				
+				#Switch to fascist leader
+					set_country_flag = set_Nat_Fascism
+					set_leader = yes
+					
+				log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war set leader"
+				#Setup done, now play as them
+					change_tag_from = PREV #testing
+					
+					#to make starting values look good
+					recalculate_party = yes
+					update_majority_threshold = yes
+					
+					log = "[GetDateText]: [This.GetName]: fascism_extremist_civil_war setup finished"
+			}
+		}
+	}
+	
+	monarchist_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^23 > 0.10 } #significant fascism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					is_in_array = { gov_coalition_array = 23 } #not is in coalition
+					is_in_array = { ruling_party = 23 } #not is ruling party
+				}
+			}
+		}
+		available = {
+			NOT = {
+				has_government = nationalist
+			}
+			custom_trigger_tooltip = {
+				tooltip = monarchist_20_tt	
+				check_variable = { party_pop_array^23 > 0.2 }
+			}
+		}
+		
+		complete_effect = {
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.5
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = nationalist
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^23 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^23 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			
+			#Now (player) is the civil war rebel tag
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = nationalist
+				}
+			
+				#New TAG so need to set some generic politics
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 10
+						}
+						fascism = {
+							popularity = 0
+						}
+						neutrality = {
+							popularity = 10
+						}
+						communism = {
+							popularity = 10
+						}
+						nationalist = {
+							popularity = 70
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 23 } #monarchist
+					set_variable = { party_pop_array^23 = 0.7 } #generate the rest
+					startup_politics = yes
+				}
+				
+				#Switch to monarchist leader
+					set_country_flag = set_Monarchist
+					set_leader = yes
+					
+				#Setup done, now play as them
+					change_tag_from = PREV
+					
+				#to make starting values look good // doesn't work 100%
+				recalculate_party = yes
+				update_majority_threshold = yes
+				
+				log = "[GetDateText]: [This.GetName]: monarchist_extremist_civil_war setup finished"
+			}
+		}
+	}
+	
+	caliphate_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^11 > 0.10 } #significant jihadist
+			has_civil_war = no
+			NOT = {
+				OR = {
+					is_in_array = { gov_coalition_array = 11 } #not is in coalition
+					is_in_array = { ruling_party = 11 } #not is ruling party
+				}
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = caliphate_20_tt	
+				check_variable = { party_pop_array^11 > 0.2 }
+			}
+		}
+		
+		complete_effect = {
+			start_civil_war = {
+				ideology = fascism
+				size = 0.6
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^11 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^11 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			
+			#Now (player) is the civil war rebel tag
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = fascism
+				}
+			
+				#New TAG so need to set some generic politics
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 0
+						}
+						fascism = {
+							popularity = 90
+						}
+						neutrality = {
+							popularity = 10
+						}
+						communism = {
+							popularity = 0
+						}
+						nationalist = {
+							popularity = 0
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 11 } #jihadist
+					set_variable = { party_pop_array^11 = 0.9 } #generate the rest
+					startup_politics = yes
+				}
+				
+				#Switch to fascist leader
+					set_country_flag = set_Caliphate
+					set_leader = yes
+					
+				#Setup done, now play as them
+					change_tag_from = PREV
+					
+					#to make starting values look good // doesn't work 100%
+					recalculate_party = yes
+					update_majority_threshold = yes
+					
+					log = "[GetDateText]: [This.GetName]: caliphate_extremist_civil_war setup finished"
+			}
+		}
+	}
+	
+	communist_state_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^4 > 0.10 } #significant communism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					OR = {
+						is_in_array = { gov_coalition_array = 4 } #not is in coalition
+						is_in_array = { ruling_party = 4 } #not is ruling party
+					}
+					#not already communist
+					OR = {
+						is_in_array = { gov_coalition_array = 19 } #not is in coalition
+						is_in_array = { ruling_party = 19 } #not is ruling party
+					}
+				}
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = communist_state_20_tt	
+				check_variable = { party_pop_array^4 > 0.2 }
+			}
+		}
+		
+		complete_effect = {
+			start_civil_war = {
+				ideology = communism
+				size = 0.5
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = communism
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^4 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^4 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			
+			#Now (player) is the civil war rebel tag
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = communism
+				}
+			
+				#New TAG so need to set some generic politics
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 5
+						}
+						fascism = {
+							popularity = 0
+						}
+						neutrality = {
+							popularity = 5
+						}
+						communism = {
+							popularity = 90
+						}
+						nationalist = {
+							popularity = 0
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 4 } #communism
+					set_variable = { party_pop_array^4 = 0.9 } #generate the rest
+					startup_politics = yes
+				}
+				
+				#Switch to fascist leader
+					set_country_flag = set_Communist-State
+					set_leader = yes
+					
+				#Setup done, now play as them
+					change_tag_from = PREV
+					
+					#to make starting values look good // doesn't work 100%
+					recalculate_party = yes
+					update_majority_threshold = yes
+					
+					log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
+			}
+		}
+	}
+	
+	neutral_communist_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^19 > 0.10 } #significant communism
+			has_civil_war = no
+			NOT = {
+				OR = {
+					OR = {
+						is_in_array = { gov_coalition_array = 4 } #not is in coalition
+						is_in_array = { ruling_party = 4 } #not is ruling party
+					}
+					#not already communist
+					OR = {
+						is_in_array = { gov_coalition_array = 19 } #not is in coalition
+						is_in_array = { ruling_party = 19 } #not is ruling party
+					}
+				}
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = neutral_communist_20_tt	
+				check_variable = { party_pop_array^19 > 0.2 }
+			}
+		}
+		
+		complete_effect = {
+			start_civil_war = {
+				ideology = neutrality
+				size = 0.5
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = neutrality
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^19 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^19 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			
+			#Now (player) is the civil war rebel tag
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = neutrality
+				}
+			
+				#New TAG so need to set some generic politics
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 5
+						}
+						fascism = {
+							popularity = 0
+						}
+						neutrality = {
+							popularity = 90
+						}
+						communism = {
+							popularity = 5
+						}
+						nationalist = {
+							popularity = 0
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 19 } #communism
+					set_variable = { party_pop_array^19 = 0.9 } #generate the rest
+					startup_politics = yes
+				}
+				
+				#Switch to fascist leader
+					set_country_flag = set_Neutral_Communism
+					set_leader = yes
+					
+				#Setup done, now play as them
+					change_tag_from = PREV
+					
+					#to make starting values look good // doesn't work 100%
+					recalculate_party = yes
+					update_majority_threshold = yes
+					
+					log = "[GetDateText]: [This.GetName]: neutral_communist_extremist_civil_war setup finished"
+			}
+		}
+	}
+	#shiite revolutionary
+	vilayat_e_faqih_extremist_civil_war = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		days_re_enable = 0
+		
+		visible = {
+			check_variable = { party_pop_array^9 > 0.10 } #significant shiite theocracy
+			has_civil_war = no
+			NOT = {
+				OR = {
+					OR = {
+						is_in_array = { gov_coalition_array = 9 } #not is in coalition
+						is_in_array = { ruling_party = 9 } #not is ruling party
+					}
+					#also see if their moderate friends are there
+					OR = {
+						is_in_array = { gov_coalition_array = 8 } #not is in coalition
+						is_in_array = { ruling_party = 8 } #not is ruling party
+					}
+				}
+			}
+		}
+		available = {
+			NOT = {
+				has_government = communism
+			}
+			custom_trigger_tooltip = {
+				tooltip = vilayat_e_faqih_20_tt	
+				check_variable = { party_pop_array^9 > 0.2 }
+			}
+		}
+		
+		complete_effect = {
+			start_civil_war = {
+				ideology = communism
+				size = 0.5
+			}
+			#first setup some things for original tag
+			add_popularity = {
+				ideology = neutrality
+				popularity = -0.2
+			}
+			set_variable = { party_pop_array^9 = 0.01 } #all moved to fight ;) 
+			set_variable = { party_pop_elect_array^9 = 0 } #made illegal
+			recalculate_party = yes
+			update_majority_threshold = yes
+			
+			#Now (player) is the civil war rebel tag
+			random_other_country = {
+				limit = {
+					original_tag = PREV
+					has_government = communism
+				}
+			
+				#New TAG so need to set some generic politics
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+					parties = {
+						democratic = { 
+							popularity = 2
+						}
+						fascism = {
+							popularity = 0
+						}
+						neutrality = {
+							popularity = 8
+						}
+						communism = {
+							popularity = 90
+						}
+						nationalist = {
+							popularity = 0
+						}
+					}
+				}
+				hidden_effect = {
+					start_politics_input = yes
+					add_to_array = { ruling_party = 9 } #shiite theocracy
+					set_variable = { party_pop_array^9 = 0.9 } #generate the rest
+					startup_politics = yes
+				}
+				
+				#Switch to fascist leader
+					set_country_flag = set_Vilayat_e_Faqih
+					set_leader = yes
+					
+				#Setup done, now play as them
+				change_tag_from = PREV
+				
+				#to make starting values look good // doesn't work 100%
+				recalculate_party = yes
+				update_majority_threshold = yes
+				
+				log = "[GetDateText]: [This.GetName]: vilayat_e_faqih_extremist_civil_war setup finished"
+				
+				#Give support from resistance axis
+				hidden_effect = {
+					PER = {
+						if = { 
+							limit = {
+								OR = {
+									is_in_array = { ruling_party = 8 }
+									is_in_array = { ruling_party = 9 } 
+									is_in_array = { ruling_party = 22 } #IRCG
+								}
+							}
+							add_ai_strategy = {
+								type = befriend 
+								id = PREV
+								value = 200
+							}
+							
+							add_ai_strategy = {
+								type = send_volunteers_desire
+								id = PREV
+								value = 200
+							}
+							
+							add_ai_strategy = {
+								type = support
+								id = PREV
+								value = 200
+							}
+						}
+					}
+					HEZ = {
+						if = { 
+							limit = {
+								OR = {
+									is_in_array = { ruling_party = 8 }
+									is_in_array = { ruling_party = 9 }
+								}
+							}
+							add_ai_strategy = {
+								type = befriend 
+								id = PREV
+								value = 200
+							}
+							
+							add_ai_strategy = {
+								type = send_volunteers_desire
+								id = PREV
+								value = 200
+							}
+							
+							add_ai_strategy = {
+								type = support
+								id = PREV
+								value = 200
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	### #### TODO: ####
+	### - generic boost outlook temp drift
+	
+	### Nationalist Claims ###
+	
+	
+	### France ###
+	
+	FRA_nationalist_claims_BEL = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = FRA }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 52
+			BEL = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = BEL
+				type = take_claimed_state
+				generator = {
+					52
+				}
+			}
+			hidden_effect = { BEL = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	FRA_nationalist_claims_SWI = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = FRA }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 72
+			SWI = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = SWI
+				type = take_claimed_state
+				generator = {
+					72
+				}
+			}
+			hidden_effect = { SWI = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	### Norway ###
+	
+	NOR_nationalist_claims_DEN = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = NOR }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 1 #greenland
+			add_state_core = 2 #faroe islands
+			DEN = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = DEN
+				type = take_claimed_state
+				generator = {
+					1 2
+				}
+			}
+			hidden_effect = { DEN = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	NOR_nationalist_claims_ICE = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = NOR }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 7 #iceland
+			ICE = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = ICE
+				type = take_claimed_state
+				generator = {
+					7
+				}
+			}
+			hidden_effect = { ICE = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	NOR_nationalist_claims_ENG = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = NOR }
+		
+		visible = { 
+			has_government = nationalist
+			8 = { is_owned_by = ENG }
+		}
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 8 #shetland
+			ENG = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = ENG
+				type = take_claimed_state
+				generator = {
+					8
+				}
+			}
+			hidden_effect = { ENG = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	NOR_nationalist_claims_SCO = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = NOR }
+		
+		visible = { 
+			has_government = nationalist
+			8 = { is_owned_by = SCO }
+		}
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 8 #shetland
+			SCO = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = SCO
+				type = take_claimed_state
+				generator = {
+					8
+				}
+			}
+			hidden_effect = { SCO = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	
+	### Sweden ###
+	
+	SWE_nationalist_claims_FIN = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = SWE }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 104 #åland
+			FIN = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = FIN
+				type = take_claimed_state
+				generator = {
+					104
+				}
+			}
+			hidden_effect = { FIN = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	### Denmark ###
+	
+	DEN_nationalist_claims_SWE = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = DEN }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 550 #skåne
+			SWE = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = SWE
+				type = take_claimed_state
+				generator = {
+					550
+				}
+			}
+			hidden_effect = { SWE = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	DEN_nationalist_claims_GER = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = DEN }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 37 #sclesvig-holstein
+			GER = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = GER
+				type = take_claimed_state
+				generator = {
+					37
+				}
+			}
+			hidden_effect = { GER = { add_political_power = 2000 } } #extra to compensate higher cost
+		}
+	}
+	
+	### Netherlands ###
+	
+	HOL_nationalist_claims_BEL = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = HOL }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 50
+			add_state_core = 51
+			BEL = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = BEL
+				type = take_claimed_state
+				generator = {
+					50 51
+				}
+			}
+			hidden_effect = { BEL = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	### Italy ###
+	
+	ITA_nationalist_claims_SWI = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = ITA }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 73
+			SWI = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = SWI
+				type = take_claimed_state
+				generator = {
+					73
+				}
+			}
+			hidden_effect = { SWI = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	ITA_nationalist_claims_SLV = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = ITA }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 124
+			SLV = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = SLV
+				type = take_claimed_state
+				generator = {
+					124
+				}
+			}
+			hidden_effect = { SLV = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	ITA_nationalist_claims_CRO = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = ITA }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 127
+			CRO = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = CRO
+				type = take_claimed_state
+				generator = {
+					127
+				}
+			}
+			hidden_effect = { CRO = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	ITA_nationalist_claims_FRA = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = ITA }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 65 #Corsica
+			FRA = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = FRA
+				type = take_claimed_state
+				generator = {
+					65
+				}
+			}
+			hidden_effect = { FRA = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	ITA_nationalist_claims_MLT = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = ITA }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 85 #Malta
+			MLT = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = MLT
+				type = take_claimed_state
+				generator = {
+					85
+				}
+			}
+			hidden_effect = { MLT = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	### Hungary ###
+	
+	HUN_nationalist_claims_UKR = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = HUN }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 701
+			UKR = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = UKR
+				type = take_claimed_state
+				generator = {
+					701
+				}
+			}
+			hidden_effect = { UKR = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	HUN_nationalist_claims_ROM = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = HUN }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 909
+			ROM = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = ROM
+				type = take_claimed_state
+				generator = {
+					909
+				}
+			}
+			hidden_effect = { ROM = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	### Austria ##
+	
+	AUS_nationalist_claims_ITA = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = AUS }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 285
+			ITA = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = ITA
+				type = take_claimed_state
+				generator = {
+					285
+				}
+			}
+			hidden_effect = { ITA = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	### Poland ##
+	
+	POL_nationalist_claims_UKR = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = POL }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 700
+			UKR = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = UKR
+				type = take_claimed_state
+				generator = {
+					700
+				}
+			}
+			hidden_effect = { UKR = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	POL_nationalist_claims_BLR = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = POL }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 702
+			BLR = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = BLR
+				type = take_claimed_state
+				generator = {
+					702
+				}
+			}
+			hidden_effect = { BLR = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	POL_nationalist_claims_LIT = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = POL }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 110
+			LIT = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = LIT
+				type = take_claimed_state
+				generator = {
+					110
+				}
+			}
+			hidden_effect = { LIT = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	### Albania ##
+	
+	ALB_nationalist_claims_KOS = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = ALB }
+		
+		visible = { 
+			has_government = nationalist
+			133 = { is_owned_by = KOS }
+		}
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 133
+			KOS = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = KOS
+				type = take_claimed_state
+				generator = {
+					133
+				}
+			}
+			hidden_effect = { KOS = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	ALB_nationalist_claims_SER = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = ALB }
+		
+		visible = { 
+			has_government = nationalist
+			133 = { is_owned_by = SER }
+		}
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 133
+			SER = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = SER
+				type = take_claimed_state
+				generator = {
+					133
+				}
+			}
+			hidden_effect = { SER = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	ALB_nationalist_claims_FYR = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = ALB }
+		
+		visible = { 
+			has_government = nationalist
+			135 = { is_owned_by = FYR }
+		}
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 135
+			FYR = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = FYR
+				type = take_claimed_state
+				generator = {
+					135
+				}
+			}
+			hidden_effect = { FYR = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	### Germany ###
+	
+	GER_nationalist_claims_enable = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 0
+		fire_only_once = yes
+		
+		allowed = { original_tag = GER }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_named_threat = { threat = 20 name = GER_expansionist }
+			remove_ideas = { german_legacy }
+			USA = { add_opinion_modifier = { target = GER modifier = expansionist_agenda } }
+			ENG = { add_opinion_modifier = { target = GER modifier = expansionist_agenda } }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+	}
+	
+	GER_nationalist_claims_AUS = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = GER }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+					has_idea = german_legacy
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 286
+			add_state_core = 75
+			add_state_core = 76
+			AUS = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = AUS
+				type = take_claimed_state
+				generator = {
+					286 76 75
+				}
+			}
+			hidden_effect = { AUS = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	GER_nationalist_claims_SWI = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = GER }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+					has_idea = german_legacy
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 74
+			SWI = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = SWI
+				type = take_claimed_state
+				generator = {
+					74
+				}
+			}
+			hidden_effect = { SWI = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	GER_nationalist_claims_FRA = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = GER }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+					has_idea = german_legacy
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 57
+			FRA = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = FRA
+				type = take_claimed_state
+				generator = {
+					57
+				}
+			}
+			hidden_effect = { FRA = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	
+	GER_nationalist_claims_LUX = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = GER }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+					has_idea = german_legacy
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 53
+			LUX = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = LUX
+				type = take_claimed_state
+				generator = {
+					53
+				}
+			}
+			hidden_effect = { LUX = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	GER_nationalist_claims_SOV = {
+		icon = decision
+		
+		cost = 200
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = GER }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+					has_idea = german_legacy
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 642
+			SOV = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = SOV
+				type = take_claimed_state
+				generator = {
+					642
+				}
+			}
+			hidden_effect = { SOV = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	GER_nationalist_claims_POL = {
+		icon = decision
+		
+		cost = 300
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = GER }
+		
+		visible = { has_government = nationalist }
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+					has_idea = german_legacy
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 626
+			add_state_core = 625
+			add_state_core = 474
+			add_state_core = 113
+			POL = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = POL
+				type = take_claimed_state
+				generator = {
+					626 625 474 113
+				}
+			}
+			hidden_effect = { POL = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	GER_nationalist_claims_ITA = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = GER }
+		
+		visible = { 
+			has_government = nationalist
+			286 = { is_fully_controlled_by = ROOT }
+		}
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+					has_idea = german_legacy
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 285
+			ITA = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = ITA
+				type = take_claimed_state
+				generator = {
+					285
+				}
+			}
+			hidden_effect = { ITA = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+	GER_nationalist_claims_SLV = {
+		icon = decision
+		
+		cost = 150
+		days_remove = 120
+		fire_only_once = yes
+		
+		allowed = { original_tag = GER }
+		
+		visible = { 
+			has_government = nationalist
+			75 = { is_fully_controlled_by = ROOT }
+		}
+		
+		available = {
+			NOT = {
+				OR = {
+					has_idea = EU_member
+					has_idea = NATO_member
+					has_idea = german_legacy
+				}
+			}
+		}
+		
+		complete_effect = {
+			add_state_core = 125
+			SLV = { ai_build_units = yes }
+			every_neighbor_country = {
+				add_opinion_modifier = { target = PREV modifier = expansionist_agenda }
+			}
+		}
+		remove_effect = {
+			create_wargoal = {
+				target = SLV
+				type = take_claimed_state
+				generator = {
+					125
+				}
+			}
+			hidden_effect = { SLV = { add_political_power = 400 } } #pp to change mil law
+		}
+	}
+}
