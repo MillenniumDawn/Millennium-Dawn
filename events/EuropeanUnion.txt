@@ -1,0 +1,630 @@
+﻿add_namespace = european_union
+
+#A country applies for EU membership
+country_event = {
+	id = european_union.1
+	title = european_union.1.t
+	desc = european_union.1.d
+	picture = GFX_report_event_european_union
+	
+	is_triggered_only = yes
+	
+	option = {	#Okay
+		name = european_union.1.o1
+		
+		ai_chance = {
+			factor = 100
+		}
+	}
+	
+	option = {	#Veto!
+		name = european_union.1.o2
+		
+		FROM = { country_event = { id = european_union.2 } }
+		FROM = { add_opinion_modifier = { target = ROOT modifier = recent_actions_negative } }
+		
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+#We have been vetoed!
+country_event = {
+	id = european_union.2
+	title = european_union.2.t
+	desc = european_union.2.d
+	picture = GFX_report_event_european_union
+	
+	is_triggered_only = yes
+	
+	option = {	#It was worth a try.
+		name = european_union.2.o1
+		EU_membership_termination = yes
+		add_political_power = -25
+	}
+}
+
+#Unite the Union
+country_event = {
+	id = european_union.3
+	title = european_union.3.t
+	desc = european_union.3.d
+	picture = GFX_report_event_european_union
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = european_union.3.o1
+		add_political_power = 150
+		set_country_flag = tried_to_unite_the_EU
+		every_country = {
+			limit = {
+				NOT = { has_country_flag = tried_to_unite_the_EU }
+				is_EU_member = yes
+			}
+			country_event = european_union.4
+		}
+		set_global_flag = EU_united
+		set_cosmetic_tag = EUU
+		hidden_effect = { EU_membership_termination = yes }
+	}
+}
+
+#Call to join the Union!
+country_event = {
+	id = european_union.4
+	title = european_union.4.t
+	desc = european_union.4.d
+	picture = GFX_report_event_european_union
+	
+	is_triggered_only = yes 
+	
+	option = {
+		name = european_union.4.o1
+		
+		random_country = {
+			limit = {
+				has_country_flag = tried_to_unite_the_EU
+			}
+			country_event = { id = diplomatic_response.1 }
+			country_event = { id = european_union.9 }
+			annex_country = { 
+				target = ROOT 
+				transfer_troops = yes
+			}
+		}
+		
+		ai_chance = {
+			factor = 95
+			modifier = {
+				factor = 0
+				OR = {
+					has_government = islamist
+					has_government = fascist
+					has_government = nationalist
+					has_government = reactionary
+				}
+			}
+			modifier = {
+				add = 40
+				OR = {
+					has_government = progressive
+					has_government = social_democrat
+					has_government = social_liberal
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = european_union.4.o2
+		
+		random_country = {
+			limit = {
+				has_country_flag = tried_to_unite_the_EU
+			}
+			country_event = { id = diplomatic_response.2 }
+		}
+		
+		EU_membership_termination = yes
+		add_political_power = 25
+		
+		ai_chance = {
+			factor = 5
+			modifier = {
+				add = 75
+				OR = {	#Countries that are more careful about unification
+					tag = DEN
+					tag = SWE
+					tag = ENG
+				}
+			}
+			modifier = {
+				add = 75
+				has_government = reactionary
+			}
+		}
+	}
+}
+
+#Invited to the European Union (Primarily for historical expansion)
+country_event = {
+	id = european_union.5
+	title = european_union.5.t
+	desc = european_union.5.d
+	picture = GFX_report_event_european_union
+	
+	is_triggered_only = yes
+	
+	option = {	#Sure thing
+		name = european_union.5.o1
+		add_ideas = idea_eu_member
+		news_event = { id = european_union.7 }
+		
+		ai_chance = {
+			factor = 70
+		}
+	}
+	
+	option = {	#Aint nobody got time for that
+		name = european_union.5.o2
+		add_political_power = 15
+		every_country = {
+			limit = { is_EU_member = yes }
+			news_event = { id = european_union.8 }
+		}
+		
+		ai_chance = {
+			factor = 30
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+#ROOT European Union Cooperation
+country_event = {
+	id = european_union.6
+	title = european_union.6.t
+	desc = european_union.6.d
+	picture = GFX_report_event_european_union
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = european_union.6.o1
+		add_political_power = 10
+		random_owned_state = {
+			limit = {
+				free_building_slots = {
+					building = industrial_complex
+					size > 0
+					include_locked = yes
+				}
+			}
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+
+#News Event: Country joins EU
+news_event = {
+	id = european_union.7
+	title = european_union.7.t
+	desc = european_union.7.d
+	picture = GFX_news_event_european_union
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = european_union.7.o1
+		trigger = {
+			is_EU_member = yes
+		}
+	}
+	
+	option = {
+		name = european_union.7.o2
+		trigger = {
+			NOT = { is_EU_member = yes }
+		}
+	}
+}
+
+#News Event: Country has rejected the EU invitation
+news_event = {
+	id = european_union.8
+	title = european_union.8.t
+	desc = european_union.8.d
+	picture = GFX_news_event_european_union
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = european_union.8.o1
+	}
+}
+
+#Help Event to add cores by joining new-EU states
+country_event = {
+	id = european_union.9
+	hidden = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		every_state = {
+			limit = { is_owned_by = ROOT }
+			add_core_of = THIS
+		}
+	}
+}
+
+#Abandon the EU?
+country_event = {
+	id = european_union.10
+	title = european_union.10.t
+	desc = {
+		text = european_union.10.d1
+		trigger = { has_government = fascist }
+	}
+	desc = {
+		text = european_union.10.d2
+		trigger = { has_government = nationalist }
+	}
+	desc = {
+		text = european_union.10.d3
+		trigger = { has_government = monarchist }
+	}
+	desc = {
+		text = european_union.10.d4
+		trigger = { has_government = reactionary }
+	}
+	desc = {
+		text = european_union.10.d5
+		trigger = { has_government = communist }
+	}
+	desc = {
+		text = european_union.10.d6
+		trigger = { has_government = islamist }
+	}
+	picture = GFX_report_event_european_union
+	
+	trigger = {
+		is_EU_member = yes
+		OR = {
+			has_government = fascist
+			has_government = nationalist
+			has_government = monarchist
+			has_government = reactionary
+			has_government = communist
+			has_government = islamist
+		}
+		NOT = { has_country_flag = considered_quitting_EU }
+	}
+	
+	mean_time_to_happen = {
+		days = 15
+	}
+	
+	immediate = {
+		set_country_flag = considered_quitting_EU
+	}
+	
+	option = {
+		name = european_union.10.o1
+		
+		EU_membership_termination = yes
+		news_event = news.4
+		
+		ai_chance = {
+			factor = 25
+		}
+	}
+	
+	option = {
+		name = european_union.10.o2
+		trigger = {
+			has_government = reactionary
+		}
+		
+		add_political_power = -25
+		
+		ai_chance = {
+			factor = 100
+		}
+	}	
+}
+
+#Apply the EU relationships Event
+country_event = {
+	id = european_union.11
+	hidden = yes
+	
+	trigger = {
+		NOT = { has_country_flag = has_received_EU_membership_opinions }
+		is_EU_member = yes
+	}
+	
+	mean_time_to_happen = {
+		days = 3
+	}
+	
+	option = {
+		set_country_flag = has_received_EU_membership_opinions
+		every_country = {
+			limit = { is_EU_member = yes }
+			country_event = european_union.12
+		}
+	}
+}
+country_event = {
+	id = european_union.12
+	hidden = yes
+	is_triggered_only = yes
+	
+	option = {
+		add_opinion_modifier = {
+			target = FROM
+			modifier = european_union_member
+		}
+		add_opinion_modifier = {
+			target = FROM
+			modifier = european_union_member_trade
+		}
+	}
+}
+
+#Remove the relationships upon leaving
+country_event = {
+	id = european_union.13
+	hidden = yes
+	
+	trigger = {
+		NOT = { is_EU_member = yes }
+		has_country_flag = has_received_EU_membership_opinions
+	}
+	
+	mean_time_to_happen = {
+		days = 3
+	}
+	
+	option = {
+		clr_country_flag = has_received_EU_membership_opinions
+		every_country = {
+			limit = {
+				is_EU_member = yes
+			}
+			remove_opinion_modifier = {
+				target = ROOT
+				modifier = european_union_member
+			}
+			remove_opinion_modifier = {
+				target = ROOT
+				modifier = european_union_member_trade
+			}
+			country_event = european_union.14
+		}
+	}
+}
+country_event = {
+	id = european_union.14
+	hidden = yes
+	is_triggered_only = yes
+	
+	option = {
+		FROM = {
+			remove_opinion_modifier = {
+				target = ROOT
+				modifier = european_union_member
+			}
+			remove_opinion_modifier = {
+				target = ROOT
+				modifier = european_union_member_trade
+			}
+		}
+	}
+}
+
+#The dissolution of the EU
+country_event = {
+	id = european_union.15
+	title = european_union.15.t
+	desc = european_union.15.d
+	picture = GFX_report_event_european_union
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = european_union.15.o1
+		every_country = {
+			limit = {
+				is_EU_member = yes
+			}
+			EU_membership_termination = yes
+		}
+		news_event = news.54
+	}
+}
+
+#The Euro
+country_event = {
+	id = european_union.16
+	title = european_union.16.t
+	desc = european_union.16.d
+	picture = GFX_report_event_euro
+	
+	is_triggered_only = yes
+	
+	option = {	#We want in!
+		trigger = {
+			NOT = { has_completed_focus = ITA_restore_the_currency }
+		}
+		name = european_union.16.o1
+		add_ideas = the_euro
+		if = {
+			limit = { NOT = { has_global_flag = the_euro_established } }
+			set_global_flag = the_euro_established
+			news_event = news.96
+		}
+		if = {
+			limit = {
+				OR = {
+					tag = SWE
+					tag = DEN
+					tag = ENG
+				}
+			}
+			add_political_power = -25
+		}
+		
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0.01
+				OR = {
+					tag = SWE
+					tag = DEN
+					tag = ENG
+				}
+			}
+		}
+	}
+	
+	option = {	#We will have an opt-out on that one.
+		name = european_union.16.o2
+		if = {
+			limit = {
+				OR = {
+					tag = SWE
+					tag = DEN
+					tag = ENG
+				}
+			}
+			add_political_power = 25
+		}
+		if = {
+			limit = {
+				NOT = { tag = SWE }
+				NOT = { tag = DEN }
+				NOT = { tag = ENG }
+			}
+			add_political_power = -50
+		}
+		
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 1000
+				OR = {
+					tag = SWE
+					tag = DEN
+					tag = ENG
+				}
+			}
+		}
+	}
+}
+
+#Re-Nationalize the Currency
+country_event = {
+	id = european_union.17
+	title = european_union.17.t
+	desc = european_union.17.d
+	picture = GFX_report_event_euro
+	
+	trigger = {
+		has_idea = the_euro
+		AND = {
+			is_EU_member = no
+			NOT = { has_country_flag = special_euro_user }
+			NOT = { has_cosmetic_tag = EUU }
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 20
+	}
+	
+	option = {
+		name = european_union.17.o1
+		add_political_power = -50
+		remove_ideas = the_euro
+	}
+}
+
+#Call the Union's Aid
+country_event = {
+	id = european_union.18
+	title = european_union.18.t
+	desc = european_union.18.d
+	picture = GFX_report_event_european_union
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = european_union.18.o1
+		add_stability = 0.05
+		every_other_country = {
+			limit = {
+				is_EU_member = yes
+				is_subject = no
+				NOT = { has_war_with = ROOT }
+				NOT = { has_war_together_with = ROOT }
+			}
+			country_event = european_union.19
+		}
+		ai_chance = { base = 100 }
+	}
+	
+	option = {
+		name = european_union.18.o2
+		add_stability = -0.1
+		add_war_support = -0.1
+		ai_chance = { base = 0 }
+	}
+}
+
+#Called to Aid
+country_event = {
+	id = european_union.19
+	title = european_union.19.t
+	desc = european_union.19.d
+	picture = GFX_report_event_european_union
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = european_union.19.o1
+		add_to_war = {
+			targeted_alliance = FROM
+			enemy = FROM.FROM
+		}
+		ai_chance = { base = 100 }
+	}
+	
+	option = {
+		name = european_union.19.o2
+		add_stability = -0.1
+		add_war_support = -0.1
+		every_other_country = {
+			limit = {
+				is_EU_member = yes
+			}
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = european_traitor
+			}
+		}
+		ai_chance = { base = 0 }
+	}
+}
