@@ -1,33 +1,98 @@
-generic_coalition_politics_desicions = {
-	
-	retire_current_leader = {
-		icon = decision
-		
-		cost = 150
-		days_remove = 0
-		days_re_enable = 0
-		
-		complete_effect = {
-			hidden_effect = {
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
-			}
-		}	
-	}
-	
-	### #### TODO: ####
-	### - extremist civil wars
-	### - generic boost outlook temp drift
-	### - if autocratic party; disallow elections / allow again
 
-}
+### Other generic politics desicions at the bottom of the file ###
 
 coalition_desicions = {
+
+	###Desicion countdown ###
+	#activate_decision
+	#remove_decision
+	
+	coalition_countdown = {
+		
+		#need to complete
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = has_formed_coalition_TT	
+				has_country_flag = coalition_formed
+			}
+		}
+		
+		modifier = {
+			#political_power_cost = 2
+		}
+
+		activation = {
+			#is triggered only
+		}
+
+		Is_good = no
+
+		days_mission_timeout = 30
+		days_remove = 0
+
+		fire_only_once = yes
+
+		timeout_effect = {
+			add_political_power = -300
+			custom_effect_tooltip = AI_form_government_TT
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				
+				set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
+				subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^max_index_1 }
+
+				set_temp_variable = { majority_threshold_2 = majority_threshold } #need one that does not include second biggest party
+				subtract_from_temp_variable = { majority_threshold_2 = party_pop_elect_array^max_index_2 }
+				
+				make_affinity_arrays = yes
+				reduce_affinity_array_party_1 = yes
+				reduce_affinity_array_party_2 = yes
+				
+				if = {
+					limit = {
+						#coalition 1 is prefered - lowest
+						check_variable = {
+							var = cost1
+							value = cost2
+							compare = less_than_or_equals
+						}
+					}
+					add_to_array = { ruling_party = max_index_1 }
+					for_each_loop = {
+						array = party_pop_elect_array
+						index = i1
+						if = {
+							limit = {
+								check_variable = { party_1_affinity_array^i1 > 0 }
+							}
+							add_to_array = { gov_coalition_array = i1 }
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { cost1 > cost2 } #coalition 2 is prefered - lowest
+					}
+					add_to_array = { ruling_party = max_index_2 }
+					for_each_loop = {
+						array = party_pop_elect_array
+						index = i2
+						if = {
+							limit = {
+								check_variable = { party_2_affinity_array^i2 > 0 }
+							}
+							add_to_array = { gov_coalition_array = i2 }
+						}
+					}
+				}
+			}
+		}
+
+		complete_effect = {
+		}
+	}
+	
 	
 	###Western_Autocracy #0
 	
@@ -3278,5 +3343,3 @@ coalition_desicions = {
 		}
 	}
 }
-
-
