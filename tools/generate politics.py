@@ -1506,7 +1506,7 @@ def createPartyContent2 (organizedLeaders, tag, ideology):
                     content += "\t\t\t\t\t" + organizedLeaders[pos2][5][0] + "\n"
                 content += "\t\t\t\t}\n"
                 content += "\t\t\t}\n\n"
-                content += "\t\t\tif = { limit = { has_country_flag = do_not_retire } subtract_from_variable = {" + ideology + "_leader = 1 } }\n"
+                content += "\t\t\tif = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { " + ideology + "_leader = 1 } }\n"
                 if organizedLeaders[pos2][1][0] == "2017":
                     content += "\t\t\tset_temp_variable = { b = 1 }\n"
                 else:
@@ -1830,8 +1830,7 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
 
                         if cont == 1:
                             organizedLeaders.append([[b], ["2000"] ,[leaderName],[leaderPic], [ideology],[traits]])
-
-    for a, b in enumerate(extraLeaders2000):
+    for a, b in reversed(list(enumerate(extraLeaders2000))):
         if extraLeaders2000[a][1] != "":
             startDate = "2000"
             tag = extraLeaders2000[a][0]
@@ -1951,7 +1950,7 @@ def sortLeaders(leaders2000, leaders2017, extraLeaders2000, extraLeaders2017, or
                             #print(organizedLeaders[pos + 1])
     #input()
 
-    for a, b in enumerate(extraLeaders2017):
+    for a, b in reversed(list(enumerate(extraLeaders2017))):
         if extraLeaders2017[a][1] != "":
             startDate = "2017"
             tag = extraLeaders2017[a][0]
