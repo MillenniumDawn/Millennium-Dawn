@@ -9,33 +9,11 @@
 
 
 #Main Function
-set_leader = {
-	
-	#will set correct outlook to place the newly generated leader in
-	hidden_effect = {
-		kill_country_leader = yes
-	}
-	update_set_politics = yes
 
-	#script per country
-	if = { limit = { TAG = GER } set_leader_GER = yes }
-	#else_if = { limit = { TAG = TAG } set_leader_TAG = yes } #how to input more
-	
-	# We need to remove the current leader for the game to use random generation. 
-	#It's OK if no leader was created in script!
-	
-	hidden_effect = {
-		#Will set sub-ideology trait if it wasn't given when creating the leader
-		set_correct_ideology_trait = yes
-
-		#Removes country flag used for setting the correct leader
-		remove_set_ideology_flag = yes
-	}
-}
 
 update_set_politics = {
 	#western
-	if = { 
+	if = {
 		limit = {
 			OR = {
 				has_country_flag = set_conservatism
@@ -44,10 +22,38 @@ update_set_politics = {
 				has_country_flag = set_Western_Autocracy
 			}
 		}
-		set_politics = { ruling_party = democratic }
+		if = { limit = { has_elections = yes }
+			hidden_effect = {
+				set_politics = { 
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+			}
+		}
+		else_if = { limit = { has_elections = no }
+			hidden_effect = {
+				set_politics = { 
+					ruling_party = democratic
+					elections_allowed = no
+				}
+			}
+		}
+		hidden_effect = {
+			meta_effect = {
+				text = {
+					set_party_name = { 
+						ideology = [OUTLOOK]
+						name = [SUBIDEOLOGY_NAME]
+						long_name = [SUBIDEOLOGY_NAME]
+					}
+				}
+				OUTLOOK = "[meta_ideology_names]"
+				SUBIDEOLOGY_NAME = "[show_ruling_party]"
+			}
+		}
 	}
 	#Emerging
-	if = { 
+	else_if = {
 		limit = {
 			OR = {
 				has_country_flag = set_Communist-State
@@ -58,10 +64,38 @@ update_set_politics = {
 				has_country_flag = set_anarchist_communism
 			}
 		}
-		set_politics = { ruling_party = communism }
+		if = { limit = { has_elections = yes }
+			hidden_effect = {
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = yes
+				}
+			}
+		}
+		else_if = { limit = { has_elections = no }
+			hidden_effect = {
+				set_politics = { 
+					ruling_party = communism
+					elections_allowed = no
+				}
+			}
+		}
+		hidden_effect = {
+			meta_effect = {
+				text = {
+					set_party_name = { 
+						ideology = [OUTLOOK]
+						name = [SUBIDEOLOGY_NAME]
+						long_name = [SUBIDEOLOGY_NAME]
+					}
+				}
+				OUTLOOK = "[meta_ideology_names]"
+				SUBIDEOLOGY_NAME = "[show_ruling_party]"
+			}
+		}
 	}
 	#Non-Aligned
-	if = { 
+	else_if = {
 		limit = {
 			OR = {
 				has_country_flag = set_Neutral_conservatism
@@ -74,20 +108,64 @@ update_set_politics = {
 				has_country_flag = set_Neutral_green
 			}
 		}
-		set_politics = { ruling_party = neutrality }
+		if = { limit = { has_elections = yes }
+			hidden_effect = {
+				set_politics = { 
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+			}
+		}
+		else_if = { limit = { has_elections = no }
+			hidden_effect = {
+				set_politics = { 
+					ruling_party = neutrality
+					elections_allowed = no
+				}
+			}
+		}
+		hidden_effect = {
+			meta_effect = {
+				text = {
+					set_party_name = { 
+						ideology = [OUTLOOK]
+						name = [SUBIDEOLOGY_NAME]
+						long_name = [SUBIDEOLOGY_NAME]
+					}
+				}
+				OUTLOOK = "[meta_ideology_names]"
+				SUBIDEOLOGY_NAME = "[show_ruling_party]"
+			}
+		}
 	}
 	#Salafist
-	if = { 
+	else_if = {
 		limit = {
 			OR = {
 				has_country_flag = set_Kingdom
 				has_country_flag = set_Caliphate
 			}
 		}
-		set_politics = { ruling_party = fascism }
+		hidden_effect = {
+			set_politics = { 
+				ruling_party = fascism
+				elections_allowed = no
+			}
+			meta_effect = {
+				text = {
+					set_party_name = { 
+						ideology = [OUTLOOK]
+						name = [SUBIDEOLOGY_NAME]
+						long_name = [SUBIDEOLOGY_NAME]
+					}
+				}
+				OUTLOOK = "[meta_ideology_names]"
+				SUBIDEOLOGY_NAME = "[show_ruling_party]"
+			}
+		}
 	}
 	#Nationalist
-	if = { 
+	else_if = {
 		limit = {
 			OR = {
 				has_country_flag = set_Nat_Autocracy
@@ -96,7 +174,35 @@ update_set_politics = {
 				has_country_flag = set_Monarchist
 			}
 		}
-		set_politics = { ruling_party = nationalist }
+		if = { limit = { has_elections = yes }
+			hidden_effect = {
+				set_politics = { 
+					ruling_party = nationalist
+					elections_allowed = yes
+				}
+			}
+		}
+		else_if = { limit = { has_elections = no }
+			hidden_effect = {
+				set_politics = { 
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+			}
+		}
+		hidden_effect = {
+			meta_effect = {
+				text = {
+					set_party_name = { 
+						ideology = [OUTLOOK]
+						name = [SUBIDEOLOGY_NAME]
+						long_name = [SUBIDEOLOGY_NAME]
+					}
+				}
+				OUTLOOK = "[meta_ideology_names]"
+				SUBIDEOLOGY_NAME = "[show_ruling_party]"
+			}
+		}
 	}
 }
 
@@ -374,40 +480,41 @@ set_failsafe_values = {
 	#Western
 	if = {
 		limit = {
+			check_variable = { party_popularity@democratic > 0 }
 			NOT = {
 				OR = {
-					has_variable = conservatism_pop
-					has_variable = liberalism_pop
-					has_variable = socialism_pop
-					has_variable = Western_Autocracy_pop
+					check_variable = { party_pop_array^1 > 0 }
+					check_variable = { party_pop_array^2 > 0 }
+					check_variable = { party_pop_array^3 > 0 }
+					check_variable = { party_pop_array^0 > 0 }
 				}
 			}
 		}
 		if = { limit = { has_elections = yes }
 			random_list = {
 				2 = {
-					set_variable = { socialism_pop = 0.3 }
-					set_variable = { conservatism_pop = 0.1 }
-					set_variable = { liberalism_pop = 0.1 }
+					set_variable = { party_pop_array^3 = 0.3 }
+					set_variable = { party_pop_array^1 = 0.1 }
+					set_variable = { party_pop_array^2 = 0.1 }
 				
 				}
 				2 = {
-					set_variable = { conservatism_pop = 0.3 }
-					set_variable = { socialism_pop = 0.1 }
-					set_variable = { liberalism_pop = 0.1 }
+					set_variable = { party_pop_array^1 = 0.3 }
+					set_variable = { party_pop_array^3 = 0.1 }
+					set_variable = { party_pop_array^2 = 0.1 }
 				}
 			}
 			else = {
 				random_list = {
 					2 = {
-						set_variable = { Western_Autocracy_pop = 0.3 }
-						set_variable = { conservatism_pop = 0.1 }
-						set_variable = { socialism_pop = 0.1 }
+						set_variable = { party_pop_array^0 = 0.3 }
+						set_variable = { party_pop_array^1 = 0.1 }
+						set_variable = { party_pop_array^3 = 0.1 }
 					}
 					2 = {
-						set_variable = { Western_Autocracy_pop = 0.5 }
-						set_variable = { liberalism_pop = 0.1 }
-						set_variable = { socialism_pop = 0.1 }
+						set_variable = { party_pop_array^0 = 0.5 }
+						set_variable = { party_pop_array^2 = 0.1 }
+						set_variable = { party_pop_array^3 = 0.1 }
 					}
 				}
 			}
@@ -416,14 +523,15 @@ set_failsafe_values = {
 	#Emerging
 	if = {
 		limit = {
+			check_variable = { party_popularity@communism > 0 }
 			NOT = {
 				OR = {
-					has_variable = Communist-State_pop
-					has_variable = Conservative_pop
-					has_variable = Autocracy_pop
-					has_variable = Vilayat_e_Faqih_pop
-					has_variable = Mod_Vilayat_e_Faqih_pop
-					has_variable = anarchist_communism_pop
+					check_variable = { party_pop_array^4 > 0 }
+					check_variable = { party_pop_array^6 > 0 }
+					check_variable = { party_pop_array^7 > 0 }
+					check_variable = { party_pop_array^9 > 0 }
+					check_variable = { party_pop_array^8 > 0 }
+					check_variable = { party_pop_array^5 > 0 }
 				}
 			}
 		}
@@ -432,203 +540,206 @@ set_failsafe_values = {
 			if = { limit = { has_idea = shia }
 				random_list = {
 					2 = {
-						set_variable = { Vilayat_e_Faqih_pop = 0.5 } #iranian revolution is spreading
-						set_variable = { Mod_Vilayat_e_Faqih_pop = 0.2 }
-						set_variable = { anarchist_communism_pop = 0.1 }
+						set_variable = { party_pop_array^9 = 0.5 } #iranian revolution is spreading
+						set_variable = { party_pop_array^8 = 0.2 }
+						set_variable = { party_pop_array^5 = 0.1 }
 					
 					}
 					1 = {
-						set_variable = { Vilayat_e_Faqih_pop = 0.4 } #iranian revolution is spreading
-						set_variable = { Mod_Vilayat_e_Faqih_pop = 0.3 }
-						set_variable = { anarchist_communism_pop = 0.2 }
+						set_variable = { party_pop_array^9 = 0.4 } #iranian revolution is spreading
+						set_variable = { party_pop_array^8 = 0.3 }
+						set_variable = { party_pop_array^5 = 0.2 }
 					}
 				}
 			}
 			if = { limit = { has_idea = western_country }
-				set_variable = { anarchist_communism_pop = 0.5 } #left-wing radicalism can rise
-				set_variable = { Communist-State_pop = 0.01 } #communism is dead
+				set_variable = { party_pop_array^5 = 0.5 } #left-wing radicalism can rise
+				set_variable = { party_pop_array^4 = 0.01 } #communism is dead
 			}
 			else_if = { limit = { OR = { Russian_Proficient = yes is_asian_nation = yes } } #soviet block and asia
 				random_list = {
 					2 = {
-						set_variable = { Conservative_pop = 0.3 } #reactionary
-						set_variable = { Communist-State_pop = 0.1 } #communism can be a potent force still here
+						set_variable = { party_pop_array^6 = 0.3 } #reactionary
+						set_variable = { party_pop_array^4 = 0.1 } #communism can be a potent force still here
 					}
 					2 = {
-						set_variable = { Conservative_pop = 0.1 } #reactionary
-						set_variable = { Communist-State_pop = 0.2 } #communism can be a potent force still here
+						set_variable = { party_pop_array^6 = 0.1 } #reactionary
+						set_variable = { party_pop_array^4 = 0.2 } #communism can be a potent force still here
 					}
 				}
 			}
 			else_if = { limit = { OR = { is_Central_America = yes is_caribbean_nation = yes is_South_America = yes } }
-				set_variable = { anarchist_communism_pop = 0.5 } #revolutionary socialism is major force
-				set_variable = { Communist-State_pop = 0.1 } #more hard core castroism is muted
+				set_variable = { party_pop_array^5 = 0.5 } #revolutionary socialism is major force
+				set_variable = { party_pop_array^4 = 0.1 } #more hard core castroism is muted
 			}
 			else_if = { limit = { always = yes }
-				set_variable = { anarchist_communism_pop = 0.5 } #generic left-radical movement
+				set_variable = { party_pop_array^5 = 0.5 } #generic left-radical movement
 			}
 		}
 		else_if = { limit = { has_elections = no }
 		
 			if = { limit = { has_idea = shia }
-				set_variable = { Vilayat_e_Faqih_pop = 0.5 } #iranian revolution is spreading
+				set_variable = { party_pop_array^9 = 0.5 } #iranian revolution is spreading
 			}
 			if = { limit = { has_idea = western_country }
-				set_variable = { Communist-State_pop = 0.5 } #communism is only viable western emerging autocratic force
-				set_variable = { anarchist_communism_pop = 0.1 } #revolutionary socialism is supporting role
+				set_variable = { party_pop_array^4 = 0.5 } #communism is only viable western emerging autocratic force
+				set_variable = { party_pop_array^5 = 0.1 } #revolutionary socialism is supporting role
 			}
 			else_if = { limit = { OR = { Russian_Proficient = yes is_asian_nation = yes } } #soviet block and asia
 				random_list = {
 					2 = {
-						set_variable = { Autocracy_pop = 0.3 } #reactionary autocrat
-						set_variable = { Communist-State_pop = 0.1 } #communism can be a potent force still here
+						set_variable = { party_pop_array^7 = 0.3 } #reactionary autocrat
+						set_variable = { party_pop_array^4 = 0.1 } #communism can be a potent force still here
 					}
 					2 = {
-						set_variable = { Autocracy_pop = 0.1 } #reactionary autocrat
-						set_variable = { Communist-State_pop = 0.3 } #communism can be a potent force still here
+						set_variable = { party_pop_array^7 = 0.1 } #reactionary autocrat
+						set_variable = { party_pop_array^4 = 0.3 } #communism can be a potent force still here
 					}
 				}
 			}
 			else_if = { limit = { OR = { is_Central_America = yes is_caribbean_nation = yes is_South_America = yes } }
-				set_variable = { Communist-State_pop = 0.5 } #communism! viva Che!
+				set_variable = { party_pop_array^4 = 0.5 } #communism! viva Che!
 			}
 			else_if = { limit = { always = yes }
-				set_variable = { Autocracy_pop = 0.5 } #generic autocracy
+				set_variable = { party_pop_array^7 = 0.5 } #generic autocracy
 			}
 		}
 	}
 	#Non-aligned
 	if = {
 		limit = {
+			check_variable = { party_popularity@neutrality > 0 }
 			NOT = {
 				OR = {
-					has_variable = Neutral_conservatism_pop
-					has_variable = oligarchism_pop
-					has_variable = neutral_Social_pop
-					has_variable = Neutral_Libertarian_pop
-					has_variable = Neutral_Autocracy_pop
-					has_variable = Neutral_Communism_pop
-					has_variable = Neutral_green_pop
-					has_variable = Neutral_Muslim_Brotherhood_pop
+					check_variable = { party_pop_array^14 > 0 }
+					check_variable = { party_pop_array^15 > 0 }
+					check_variable = { party_pop_array^18 > 0 }
+					check_variable = { party_pop_array^16 > 0 }
+					check_variable = { party_pop_array^13 > 0 }
+					check_variable = { party_pop_array^19 > 0 }
+					check_variable = { party_pop_array^17 > 0 }
+					check_variable = { party_pop_array^12 > 0 }
 				}
 			}
 		}
 		if = { limit = { has_elections = yes }
 		
 			if = { limit = { Is_Possible_Muslim_Brotherhood = yes }
-				set_variable = { Neutral_Muslim_Brotherhood_pop = 0.5 } #Islamism!
+				set_variable = { party_pop_array^12 = 0.5 } #Islamism!
 			}
 			else_if = { limit = { has_idea = western_country }
 				random_list = {
 					2 = {
-						set_variable = { Neutral_Libertarian_pop = 0.3 } #libertarian
-						set_variable = { Neutral_green_pop = 0.1 } #Green party
+						set_variable = { party_pop_array^16 = 0.3 } #libertarian
+						set_variable = { party_pop_array^17 = 0.1 } #Green party
 					}
 					2 = {
-						set_variable = { Neutral_green_pop = 0.3 } #Green party
-						set_variable = { Neutral_Libertarian_pop = 0.1 } #libertarian
-						set_variable = { neutral_Social_pop = 0.02 }
+						set_variable = { party_pop_array^17 = 0.3 } #Green party
+						set_variable = { party_pop_array^16 = 0.1 } #libertarian
+						set_variable = { party_pop_array^18 = 0.02 }
 					}
 					2 = {
-						set_variable = { Neutral_green_pop = 0.2 } #Green party
-						set_variable = { Neutral_Libertarian_pop = 0.1 } #libertarian
-						set_variable = { neutral_Social_pop = 0.15 }
+						set_variable = { party_pop_array^17 = 0.2 } #Green party
+						set_variable = { party_pop_array^16 = 0.1 } #libertarian
+						set_variable = { party_pop_array^18 = 0.15 }
 					}
 				}
 			}
 			else_if = { limit = { OR = { Russian_Proficient = yes } } #soviet block
 				random_list = {
 					2 = {
-						set_variable = { oligarchism_pop = 0.3 }
-						set_variable = { Neutral_Communism_pop = 0.1 } #communism can be a potent force still here
+						set_variable = { party_pop_array^15 = 0.3 }
+						set_variable = { party_pop_array^19 = 0.1 } #communism can be a potent force still here
 					}
 					2 = {
-						set_variable = { oligarchism_pop = 0.1 } #reactionary
-						set_variable = { Neutral_Communism_pop = 0.2 } #communism can be a potent force still here
+						set_variable = { party_pop_array^15 = 0.1 } #reactionary
+						set_variable = { party_pop_array^19 = 0.2 } #communism can be a potent force still here
 					}
 				}
 			}
 			else_if = { limit = { OR = { is_Central_America = yes is_caribbean_nation = yes is_South_America = yes } }
-				set_variable = { Neutral_conservatism_pop = 0.5 }
-				set_variable = { Neutral_green_pop = 0.1 }
+				set_variable = { party_pop_array^14 = 0.5 }
+				set_variable = { party_pop_array^17 = 0.1 }
 			}
 			else_if = { limit = { always = yes }
-				set_variable = { Neutral_conservatism_pop = 0.5 }
+				set_variable = { party_pop_array^14 = 0.5 }
 			}
 		}
 		else_if = { limit = { has_elections = no }
 			
 			if = { limit = { Is_Possible_Muslim_Brotherhood = yes }
-				set_variable = { Neutral_Muslim_Brotherhood_pop = 0.5 } #Islamism!
+				set_variable = { party_pop_array^12 = 0.5 } #Islamism!
 			}
 			if = { limit = { has_idea = western_country }
-				set_variable = { Neutral_Autocracy_pop = 0.5 }
+				set_variable = { party_pop_array^13 = 0.5 }
 			}
 			else_if = { limit = { OR = { Russian_Proficient = yes is_asian_nation = yes } } #soviet block and asia
-				set_variable = { Neutral_Communism_pop = 0.5 }
+				set_variable = { party_pop_array^19 = 0.5 }
 			}
 			else_if = { limit = { OR = { is_asian_nation = yes } } #asia
 				random_list = {
 					2 = {
-						set_variable = { Neutral_Autocracy_pop = 0.3 }
+						set_variable = { party_pop_array^13 = 0.3 }
 					}
 					2 = {
-						set_variable = { Neutral_Communism_pop = 0.3 }
+						set_variable = { party_pop_array^19 = 0.3 }
 					}
 				}
 			}
 			else_if = { limit = { OR = { is_Central_America = yes is_caribbean_nation = yes is_South_America = yes } }
-				set_variable = { Neutral_Autocracy_pop = 0.5 }
+				set_variable = { party_pop_array^13 = 0.5 }
 			}
 			else_if = { limit = { always = yes }
-				set_variable = { Neutral_Autocracy_pop = 0.5 }
+				set_variable = { party_pop_array^13 = 0.5 }
 			}
 		}
 	}
 	#Salafism
 	if = {
 		limit = {
+			check_variable = { party_popularity@fascism > 0 }
 			NOT = {
 				OR = {
-					has_variable = Kingdom_pop
-					has_variable = Caliphate_pop
+					check_variable = { party_pop_array^10 > 0 }
+					check_variable = { party_pop_array^11 > 0 }
 				}
 			}
 		}
-		set_variable = { Caliphate_pop = 0.5 }
+		set_variable = { party_pop_array^11 = 0.5 }
 	}
 	#Nationalist
 	if = {
 		limit = {
+			check_variable = { party_popularity@nationalist > 0 }
 			NOT = {
 				OR = {
-					has_variable = Nat_Autocracy_pop
-					has_variable = Nat_Fascism_pop
-					has_variable = Nat_Populism_pop
-					has_variable = Monarchist_pop
+					check_variable = { party_pop_array^22 > 0 }
+					check_variable = { party_pop_array^21 > 0 }
+					check_variable = { party_pop_array^20 > 0 }
+					check_variable = { party_pop_array^23 > 0 }
 				}
 			}
 		}
 		if = { limit = { has_elections = yes }
-			set_variable = { Nat_Populism_pop = 0.5 }
+			set_variable = { party_pop_array^20 = 0.5 }
 		}
 		else_if = { limit = { has_elections = no }
 			
 			if = { limit = { OR = { has_idea = western_country Russian_Proficient = yes } } #soviet block
-				set_variable = { Nat_Fascism_pop = 0.5 }
+				set_variable = { party_pop_array^21 = 0.5 }
 			}
 			else_if = { limit = { OR = { is_asian_nation = yes } } #asia
 				random_list = {
 					5 = {
-						set_variable = { Nat_Autocracy_pop = 0.3 }
+						set_variable = { party_pop_array^22 = 0.3 }
 					}
 					1 = {
-						set_variable = { Monarchist_pop = 0.3 }
+						set_variable = { party_pop_array^23 = 0.3 }
 					}
 				}
 			}
 			else_if = { limit = { always = yes }
-				set_variable = { Nat_Autocracy_pop = 0.5 }
+				set_variable = { party_pop_array^22 = 0.5 }
 			}
 		}
 	}
@@ -673,43 +784,43 @@ set_failsafe_change_leader = {
 		if = { limit = { has_government = democratic }
 			if = {
 				limit = {
-					has_variable = conservatism_pop
-					check_variable = { conservatism_pop > prevmax_temp }
+					has_variable = party_pop_array^1
+					check_variable = { party_pop_array^1 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = conservatism_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^1 }
 			}
 			if = {
 				limit = {
-					has_variable = liberalism_pop
-					check_variable = { liberalism_pop > prevmax_temp }
+					has_variable = party_pop_array^2
+					check_variable = { party_pop_array^2 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = liberalism_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^2 }
 			}
 			if = {
 				limit = {
-					has_variable = socialism_pop
-					check_variable = { socialism_pop > prevmax_temp }
+					has_variable = party_pop_array^3
+					check_variable = { party_pop_array^3 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = socialism_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^3 }
 			}
 			if = {
 				limit = {
-					has_variable = Western_Autocracy_pop
-					check_variable = { Western_Autocracy_pop > prevmax_temp }
+					has_variable = party_pop_array^0
+					check_variable = { party_pop_array^0 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Western_Autocracy_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^0 }
 			}
 			#Set for highest value
-			if = { limit = { check_variable = { prevmax_temp = conservatism_pop } }
+			if = { limit = { check_variable = { prevmax_temp = party_pop_array^1 } }
 				set_country_flag = set_conservatism
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = liberalism_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^2 } }
 				set_country_flag = set_liberalism
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = socialism_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^3 } }
 				set_country_flag = set_socialism
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Western_Autocracy_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^0 } }
 				set_country_flag = set_Western_Autocracy
 			}
 		}
@@ -717,64 +828,64 @@ set_failsafe_change_leader = {
 		if = { limit = { has_government = communism }
 			if = {
 				limit = {
-					has_variable = Communist-State_pop
-					check_variable = { Communist-State_pop > prevmax_temp }
+					has_variable = party_pop_array^4
+					check_variable = { party_pop_array^4 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Communist-State_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^4 }
 			}
 			if = {
 				limit = {
-					has_variable = Conservative_pop
-					check_variable = { Conservative_pop > prevmax_temp }
+					has_variable = party_pop_array^6
+					check_variable = { party_pop_array^6 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Conservative_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^6 }
 			}
 			if = {
 				limit = {
-					has_variable = Autocracy_pop
-					check_variable = { Autocracy_pop > prevmax_temp }
+					has_variable = party_pop_array^7
+					check_variable = { party_pop_array^7 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Autocracy_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^7 }
 			}
 			if = {
 				limit = {
-					has_variable = Vilayat_e_Faqih_pop
-					check_variable = { Vilayat_e_Faqih_pop > prevmax_temp }
+					has_variable = party_pop_array^9
+					check_variable = { party_pop_array^9 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Vilayat_e_Faqih_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^9 }
 			}
 			if = {
 				limit = {
-					has_variable = Mod_Vilayat_e_Faqih_pop
-					check_variable = { Mod_Vilayat_e_Faqih_pop > prevmax_temp }
+					has_variable = party_pop_array^8
+					check_variable = { party_pop_array^8 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Mod_Vilayat_e_Faqih_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^8 }
 			}
 			if = {
 				limit = {
-					has_variable = anarchist_communism_pop
-					check_variable = { anarchist_communism_pop > prevmax_temp }
+					has_variable = party_pop_array^5
+					check_variable = { party_pop_array^5 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = anarchist_communism_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^5 }
 			}
 			
 			#Set for highest value
-			if = { limit = { check_variable = { prevmax_temp = Communist-State_pop } }
+			if = { limit = { check_variable = { prevmax_temp = party_pop_array^4 } }
 				set_country_flag = set_Communist-State
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Conservative_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^6 } }
 				set_country_flag = set_Conservative
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Autocracy_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^7 } }
 				set_country_flag = set_Autocracy
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Vilayat_e_Faqih_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^9 } }
 				set_country_flag = set_Vilayat_e_Faqih
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Mod_Vilayat_e_Faqih_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^8 } }
 				set_country_flag = set_Mod_Vilayat_e_Faqih
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = anarchist_communism_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^5 } }
 				set_country_flag = set_anarchist_communism
 			}
 		}
@@ -782,127 +893,127 @@ set_failsafe_change_leader = {
 		if = { limit = { has_government = neutrality }
 			if = {
 				limit = {
-					has_variable = Neutral_conservatism_pop
-					check_variable = { Neutral_conservatism_pop > prevmax_temp }
+					has_variable = party_pop_array^14
+					check_variable = { party_pop_array^14 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Neutral_conservatism_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^14 }
 			}
 			if = {
 				limit = {
-					has_variable = oligarchism_pop
-					check_variable = { oligarchism_pop > prevmax_temp }
+					has_variable = party_pop_array^15
+					check_variable = { party_pop_array^15 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = oligarchism_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^15 }
 			}
 			if = {
 				limit = {
-					has_variable = neutral_Social_pop
-					check_variable = { neutral_Social_pop > prevmax_temp }
+					has_variable = party_pop_array^18
+					check_variable = { party_pop_array^18 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = neutral_Social_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^18 }
 			}
 			if = {
 				limit = {
-					has_variable = Neutral_Libertarian_pop
-					check_variable = { Neutral_Libertarian_pop > prevmax_temp }
+					has_variable = party_pop_array^16
+					check_variable = { party_pop_array^16 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Neutral_Libertarian_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^16 }
 			}
 			if = {
 				limit = {
-					has_variable = Neutral_Autocracy_pop
-					check_variable = { Neutral_Autocracy_pop > prevmax_temp }
+					has_variable = party_pop_array^13
+					check_variable = { party_pop_array^13 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Neutral_Autocracy_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^13 }
 			}
 			if = {
 				limit = {
-					has_variable = Neutral_Communism_pop
-					check_variable = { Neutral_Communism_pop > prevmax_temp }
+					has_variable = party_pop_array^19
+					check_variable = { party_pop_array^19 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Neutral_Communism_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^19 }
 			}
 			if = {
 				limit = {
-					has_variable = Neutral_green_pop
-					check_variable = { Neutral_green_pop > prevmax_temp }
+					has_variable = party_pop_array^17
+					check_variable = { party_pop_array^17 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Neutral_green_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^17 }
 			}
 			if = {
 				limit = {
-					has_variable = Neutral_Muslim_Brotherhood_pop
-					check_variable = { Neutral_Muslim_Brotherhood_pop > prevmax_temp }
+					has_variable = party_pop_array^12
+					check_variable = { party_pop_array^12 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Neutral_Muslim_Brotherhood_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^12 }
 			}
 			
 			#Set for highest value
-			if = { limit = { check_variable = { prevmax_temp = Neutral_conservatism_pop } }
+			if = { limit = { check_variable = { prevmax_temp = party_pop_array^14 } }
 				set_country_flag = set_Neutral_conservatism
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = oligarchism_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^15 } }
 				set_country_flag = set_oligarchism
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = neutral_Social_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^18 } }
 				set_country_flag = set_neutral_Social
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Neutral_Libertarian_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^16 } }
 				set_country_flag = set_Neutral_Libertarian
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Neutral_Autocracy_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^13 } }
 				set_country_flag = set_Neutral_Autocracy
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Neutral_Communism_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^19 } }
 				set_country_flag = set_Neutral_Communism
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Neutral_green_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^17 } }
 				set_country_flag = set_Neutral_Muslim_Brotherhood
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Neutral_Muslim_Brotherhood_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^12 } }
 				set_country_flag = set_Neutral_green
 			}
 		}
 		if = { limit = { has_government = nationalist }
 			if = {
 				limit = {
-					has_variable = Nat_Autocracy_pop
-					check_variable = { Nat_Autocracy_pop > prevmax_temp }
+					has_variable = party_pop_array^22
+					check_variable = { party_pop_array^22 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Nat_Autocracy_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^22 }
 			}
 			if = {
 				limit = {
-					has_variable = Nat_Fascism_pop
-					check_variable = { Nat_Fascism_pop > prevmax_temp }
+					has_variable = party_pop_array^21
+					check_variable = { party_pop_array^21 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Nat_Fascism_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^21 }
 			}
 			if = {
 				limit = {
-					has_variable = Nat_Populism_pop
-					check_variable = { Nat_Populism_pop > prevmax_temp }
+					has_variable = party_pop_array^20
+					check_variable = { party_pop_array^20 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Nat_Populism_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^20 }
 			}
 			if = {
 				limit = {
-					has_variable = Monarchist_pop
-					check_variable = { Monarchist_pop > prevmax_temp }
+					has_variable = party_pop_array^23
+					check_variable = { party_pop_array^23 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Monarchist_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^23 }
 			}
 			#Set for highest value
-			if = { limit = { check_variable = { prevmax_temp = Nat_Autocracy_pop } }
+			if = { limit = { check_variable = { prevmax_temp = party_pop_array^22 } }
 				set_country_flag = set_Nat_Autocracy
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Nat_Fascism_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^21 } }
 				set_country_flag = set_Nat_Fascism
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Nat_Populism_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^20 } }
 				set_country_flag = set_Nat_Populism
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Monarchist_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^23 } }
 				set_country_flag = set_Monarchist
 			}
 		}
@@ -910,25 +1021,27 @@ set_failsafe_change_leader = {
 		if = { limit = { has_government = fascism }
 			if = {
 				limit = {
-					has_variable = Kingdom_pop
-					check_variable = { Kingdom_pop > prevmax_temp }
+					has_variable = party_pop_array^10
+					check_variable = { party_pop_array^10 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Kingdom_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^10 }
 			}
 			if = {
 				limit = {
-					has_variable = Caliphate_pop
-					check_variable = { Caliphate_pop > prevmax_temp }
+					has_variable = party_pop_array^11
+					check_variable = { party_pop_array^11 > prevmax_temp }
 				}
-				set_temp_variable = { prevmax_temp = Caliphate_pop }
+				set_temp_variable = { prevmax_temp = party_pop_array^11 }
 			}
 			#Set for highest value
-			if = { limit = { check_variable = { prevmax_temp = Kingdom_pop } }
+			if = { limit = { check_variable = { prevmax_temp = party_pop_array^10 } }
 				set_country_flag = set_Kingdom
 			}
-			else_if = { limit = { check_variable = { prevmax_temp = Caliphate_pop } }
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^11 } }
 				set_country_flag = set_Caliphate
 			}
 		}
+		set_leader = yes
+		#maybe clear gov + ruling party, assign one
 	}
 }
