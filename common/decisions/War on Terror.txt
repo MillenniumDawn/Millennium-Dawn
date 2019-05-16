@@ -16,7 +16,6 @@ war_on_terror_category = {
 		}
 		
 		cost = 200
-		fire_only_once = yes
 		days_remove = 180
 		
 		modifier = {
@@ -52,6 +51,7 @@ war_on_terror_category = {
 	
 		visible = {
 			has_country_flag = USA_911_happened
+			NOT = { has_country_flag = USA_911_killswitch }
 		}
 		
 		available = {
@@ -94,7 +94,7 @@ war_on_terror_category = {
 			set_country_flag = Operation_enduring_freedom
 			#Add threat to allow volunteers to be sent
 			add_named_threat = {
-				threat = 10
+				threat = 11
 				name = USA_enduring_freedom
 			}
 			#Add strategy to AI to help AFG
@@ -187,6 +187,7 @@ war_on_terror_category = {
 	
 		visible = {
 			has_country_flag = USA_911_happened
+			NOT = { has_idea = USA_homeland_security }
 		}
 		
 		available = {
@@ -230,8 +231,188 @@ war_on_terror_category = {
 		}
 	}
 	
+	#Create Guantanamo Bay
+	usa_create_guantanamo_bay = {
 	
+		visible = {
+			has_country_flag = Operation_enduring_freedom
+			NOT = { has_idea = USA_guantanamo_bay }
+		}
 		
+		available = {
+			OR = {
+				NOT = { country_exists = TAL }
+				AFG = { has_volunteers_amount_from = { tag = USA count > 0 } }
+			}
+		}
+		
+		cost = 200
+		
+		fire_only_once = yes
+		
+		complete_effect = {
+			add_ideas = USA_guantanamo_bay
+			set_country_flag = guantanamo_bay_detention_center_established
+			CUB = {
+				add_opinion_modifier = {
+					target = USA
+				modifier = territorial_violation
+				}
+			}
+			hidden_effect = {
+				news_event = { id = wotnews.9 hours = 6 }
+			}
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	
+	#Petition Operation Iraqi Freedom
+	usa_petition_invasion_of_iraq = {
+	
+		visible = {
+			has_country_flag = Operation_enduring_freedom
+			IRQ = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
+		}
+		
+		available = {
+			NOT = { country_exists = TAL }
+		}
+		
+		cost = 200
+		
+		fire_only_once = yes
+		
+		complete_effect = {
+			ENG = { country_event = { id = wot.14 days = 5 random = 72 } }
+			CHI = { country_event = { id = wot.14 days = 5 random = 72 } }
+			SOV = { country_event = { id = wot.14 days = 5 random = 72 } }
+			FRA = { country_event = { id = wot.14 days = 5 random = 72 } }
+			set_country_flag = US_UN_vote_on_iraq
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	
+	#Run a war support campaign for Iraq
+	usa_run_war_support_campaign_against_iraq = {
+	
+		visible = {
+			has_country_flag = us_prepare_for_iraq_invasion
+			NOT = { has_country_flag = Operation_iraqi_freedom }
+		}
+		
+		available = {
+			has_war = no
+		}
+		
+		cost = 200
+		
+		selectable_mission = yes
+		days_remove = 180
+		
+		modifier = {
+			political_power_gain = -2
+			war_support_weekly = 0.005
+		}
+		
+		complete_effect = {
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}		
+	
+	#Operation iraqi freedom
+	usa_operation_iraqi_freedom = {
+	
+		visible = {
+			has_country_flag = us_prepare_for_iraq_invasion
+		}
+		
+		available = {
+			has_war_support > 0.75
+		}
+		
+		cost = 150
+
+		selectable_mission = yes
+		days_remove = 90
+		fire_only_once = yes
+		
+		war_with_on_remove = IRQ
+		
+		remove_effect = {
+			set_country_flag = Operation_iraqi_freedom
+			#Add threat to allow volunteers to be sent
+			add_named_threat = {
+				threat = 11
+				name = USA_iraqi_freedom
+			}
+			create_wargoal = {
+				target = IRQ
+				type = puppet_wargoal_focus
+			}
+			hidden_effect = { news_event = { id = wotnews.11 hours = 6 } }
+		}
+			
+		complete_effect = {
+			KUR = {
+				add_ai_strategy = {
+					type = conquer
+					id = "IRQ"
+					value = 200
+				}
+			}
+			set_country_flag = us_preparing_invasion_of_iraq
+			every_other_country = {
+				limit = {
+					OR = {
+						has_idea = NATO_member
+						original_tag = AST
+					}
+				}
+				country_event = { id = wot.17 days = 5 random = 72 }
+			}
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	
+	#Withdraw troops from iraq
+	usa_withdraw_troops_from_iraq = {
+	
+		visible = {
+			date > 2012.1.1
+			IRQ = { is_subject_of = USA }
+			has_global_flag = success_of_operation_iraqi_freedom
+		}
+		
+		available = {
+			IRQ = { has_war = no }
+		}
+
+		cost = 200
+		
+		fire_only_once = yes
+		
+		complete_effect = {
+			end_puppet = IRQ
+			remove_from_faction = IRQ
+			hidden_effect = { news_event = { id = wotnews.14 hours = 6 } }
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}		
 		
 	usa_intervene_SYR = {
 		allowed = { tag = USA }
@@ -458,34 +639,4 @@ war_on_terror_category = {
 			factor = 1
 		}
 	}
-	# usa_operation_iraqi_freedom = {
-		# allowed = { tag = USA }
-		# cost = 75
-
-		# available = {
-			# date > 2002.9.01
-			# country_exists = IRQ
-			# IRQ = { has_government = communism }
-		# }
-
-		# Is_good = no
-		# selectable_mission = yes
-		# days_remove = 90
-		# fire_only_once = yes
-		
-		# complete_effect = {
-			# create_wargoal = {
-				# target = IRQ
-				# type = puppet_wargoal_focus
-			# }
-		# }
-		
-		# ai_will_do = {
-			# factor = 10
-			# modifier = {
-				# add = 25
-				# is_historical_focus_on = Yes
-			# }
-		# }
-	# }
 }
