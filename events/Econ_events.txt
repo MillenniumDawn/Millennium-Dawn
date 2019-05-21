@@ -3,7 +3,8 @@ add_namespace = econvent
 add_namespace = econvent_remove_flag
 add_namespace = bankrupcy
 add_namespace = News_bankrupcy
-
+add_namespace = influence
+add_namespace = News_influence
 
 ### Contents ###
 # 1-5 Financial Crisis / Economic Collapse Chain
@@ -17,6 +18,137 @@ add_namespace = News_bankrupcy
 # Make crisises in larger neigbour countries affect situation, especially IF ingame friends and have trade
 # Flavor events for high debt situations
 # Add in pics and better texts
+
+### Influence Action events ###
+
+country_event = {
+	id = influence.0
+	title = influence.0.t
+	desc = influence.0.d
+	#picture = GFX_united_states_dollar
+	
+	is_triggered_only = yes
+	hidden = yes
+	
+	immediate = {
+		set_variable = { gift_sum = size_modifier }
+		multiply_variable = { gift_sum = 20 }
+		clamp_variable = {
+			var = gift_sum
+			min = 1
+			max = 10000
+		}
+		FROM = { country_event = { id = influence.1 } }
+	}
+
+	option = {
+		name = influence.0.a
+		log = "[GetDateText]: [This.GetName]: influence.0.a executed"
+	}
+}
+
+
+country_event = {
+	id = influence.1
+	title = influence.1.t
+	desc = influence.1.d
+	picture = GFX_united_states_dollar
+	
+	is_triggered_only = yes
+	
+	immediate = {
+	}
+	
+	#Give it
+	option = {
+		name = influence.1.a
+		log = "[GetDateText]: [This.GetName]: influence.1.a executed"
+		ai_chance = {
+			factor = 10
+		}
+		custom_effect_tooltip = influence_0_TT
+		subtract_from_variable = { treasury = FROM.gift_sum }
+
+		custom_effect_tooltip = aid_influence_gain_relative_TT
+		
+		reverse_add_opinion_modifier = {
+				target = FROM
+				modifier = given_gift
+		}
+		FROM = {
+			#influence addition
+			set_temp_variable = { influence_gain = ROOT.influence_multiplier } #from global rank idea
+			multiply_temp_variable = { influence_gain = 5 } #base gain
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = ROOT }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = ROOT.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+			news_event = { id = News_influence.0 } 
+		}
+	}
+	#Let's not bother
+	option = {
+		name = influence.1.b
+		log = "[GetDateText]: [This.GetName]: influence.1.b executed"
+		ai_chance = { factor = 0 }
+	}
+}
+
+
+news_event = {
+	id = News_influence.0
+	title = News_influence.0.t
+	desc = News_influence.0.d
+	picture = GFX_news_update_gdpc
+	
+	is_triggered_only = yes
+	
+	immediate = {
+	}
+	
+	#yeah...
+	option = {
+		name = News_influence.0.a
+		log = "[GetDateText]: [This.GetName]: News_influence.0.a executed"
+		custom_effect_tooltip = influence_from_0_TT
+		add_to_variable = { treasury = gift_sum }
+	}
+}
+
+news_event = {
+	id = News_influence.1
+	title = News_influence.1.t
+	desc = News_influence.1.d
+	picture = GFX_news_update_gdpc
+	
+	is_triggered_only = yes
+	
+	immediate = {
+	}
+	
+	#yeah...
+	option = {
+		name = News_influence.1.a
+		log = "[GetDateText]: [This.GetName]: News_influence.1.a executed"
+		custom_effect_tooltip = influence_from_0_TT
+		add_to_variable = { treasury = gift_sum }
+	}
+}
+
 
 ### Bailout needed ###
 country_event = {
