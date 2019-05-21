@@ -66,7 +66,7 @@ country_event = {
 	immediate = {
 		hidden_effect = {
 			set_country_flag = USA_911_happened
-			every_country = {							#September 12th: International Reactions
+			every_other_country = {							#September 12th: International Reactions
 				limit = { 
 					OR = { 
 						has_idea = NATO_member 
@@ -528,7 +528,7 @@ country_event = {
 		ai_chance = { 
 			factor = 30
 			modifier = {
-				factor = 2
+				factor = 3
 				OR = {
 					original_tag = ENG
 					original_tag = CAN
@@ -613,7 +613,292 @@ country_event = {
 		}
 		add_stability = -0.03
 	}
-}		
+}	
+
+#Set up new administration in Afghanistan
+country_event = {
+	id = wot.13
+	title = wot.13.t
+	desc = {
+		text = wot.13.da
+		trigger = { AFG = { NOT = { has_country_flag = Massoud_dead } } }
+	}
+	desc = {
+		text = wot.13.db
+		trigger = { AFG = { has_country_flag = Massoud_dead } }
+	}
+	picture = GFX_bonn_agreement
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = { news_event = { id = wotnews.8 hours = 6 } }
+	}
+	
+	option = {
+		name = wot.13.a		#Hamid Karzai (make Afghanistan Western)
+		log = "[GetDateText]: [This.GetName]: wot.13.a executed"
+		ai_chance = { factor = 70 }
+		custom_effect_tooltip = TT_AFGHANISTAN_NEW_ADMINISTRATION_KARZAI
+		AFG = { 
+			country_event = { id = Afghanistan.4 } 
+			set_country_flag = AFG_new_administration_Karzai
+		}
+	}
+	option = {
+		name = wot.13.b 	#Burhanuddin Rabbani
+		log = "[GetDateText]: [This.GetName]: wot.13.b executed"
+		ai_chance = { factor = 15 }
+		custom_effect_tooltip = TT_AFGHANISTAN_NEW_ADMINISTRATION_RABBANI
+		AFG = { 
+			country_event = { id = Afghanistan.4 }
+			set_country_flag = AFG_new_administration_Rabbani
+		}
+	}
+	option = {
+		name = wot.13.c 	#Ahmad Shah Massoud
+		log = "[GetDateText]: [This.GetName]: wot.13.c executed"
+		ai_chance = { factor = 150 }
+		custom_effect_tooltip = TT_AFGHANISTAN_NEW_ADMINISTRATION_MASSOUD
+		AFG = { 
+			country_event = { id = Afghanistan.4 }
+			set_country_flag = AFG_new_administration_Massoud 
+		}
+	}
+	option = {
+		name = wot.13.d 	#Mohammed Zahir Shah
+		log = "[GetDateText]: [This.GetName]: wot.13.d executed"
+		ai_chance = { factor = 5 }
+		custom_effect_tooltip = TT_AFGHANISTAN_NEW_ADMINISTRATION_ZAHIR_SHAH
+		AFG = { 
+			country_event = { id = Afghanistan.4 }
+			set_country_flag = AFG_new_administration_Zahir_Shah
+		}
+	}
+	
+}	
+
+#US Petitions invasion of Iraq
+country_event = {
+	id = wot.14
+	title = wot.14.t
+	desc = wot.14.d
+	picture = GFX_iraq_war3
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.14.a		
+		log = "[GetDateText]: [This.GetName]: wot.14.a executed"
+		ai_chance = { 
+			factor = 5 
+			modifier = {
+				factor = 5
+				original_tag = ENG
+			}
+		}
+		set_country_flag = voted_in_favor_of_iraq_invasion
+	}
+	option = {
+		name = wot.14.b 	
+		log = "[GetDateText]: [This.GetName]: wot.14.b executed"
+		ai_chance = { 
+			factor = 95
+			modifier = {
+				factor = 0.8 
+				original_tag = ENG
+			}
+		}
+		set_country_flag = voted_against_of_iraq_invasion
+	}
+	
+}
+
+#Petition denied
+country_event = {
+	id = wot.15
+	title = wot.15.t
+	desc = wot.15.d
+	picture = GFX_iraq_war3
+	
+	trigger = {
+		has_country_flag = US_UN_vote_on_iraq
+		OR = {
+			ENG = { has_country_flag = voted_against_of_iraq_invasion }
+			CHI = { has_country_flag = voted_against_of_iraq_invasion }
+			SOV = { has_country_flag = voted_against_of_iraq_invasion }
+			FRA = { has_country_flag = voted_against_of_iraq_invasion }
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = wot.15.a		
+		log = "[GetDateText]: [This.GetName]: wot.15.a executed"
+		ai_chance = { factor = 95 }
+		set_country_flag = us_prepare_for_iraq_invasion
+	}
+	option = {
+		name = wot.15.b 	
+		log = "[GetDateText]: [This.GetName]: wot.15.b executed"
+		ai_chance = { factor = 5 }
+	}
+	
+}
+
+#Petition approved
+country_event = {
+	id = wot.16
+	title = wot.16.t
+	desc = wot.16.d
+	picture = GFX_iraq_war3
+	
+	trigger = {
+		has_country_flag = US_UN_vote_on_iraq
+		ENG = { has_country_flag = voted_in_favor_of_iraq_invasion }
+		CHI = { has_country_flag = voted_in_favor_of_iraq_invasion }
+		SOV = { has_country_flag = voted_in_favor_of_iraq_invasion }
+		FRA = { has_country_flag = voted_in_favor_of_iraq_invasion }
+	}
+	
+	mean_time_to_happen = {
+		days = 7
+	}
+	
+	option = {
+		name = wot.16.a		
+		log = "[GetDateText]: [This.GetName]: wot.16.a executed"
+		ai_chance = { factor = 100 }
+		set_country_flag = Operation_iraqi_freedom
+		create_wargoal = {
+			type = puppet_wargoal_focus
+			target = IRQ
+		}
+		add_ai_strategy = {
+			type = declare_war
+			id = "IRQ"
+			value = 200
+		}
+		hidden_effect = { news_event = { id = wotnews.10 hours = 6 } }
+	}
+	
+}
+
+#Asking countries to join Invasion of Iraq
+country_event = {
+	id = wot.17
+	title = wot.17.t
+	desc = wot.17.d
+	picture = GFX_iraq_war3
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.17.a		#Send troops
+		log = "[GetDateText]: [This.GetName]: wot.17.a executed"
+		ai_chance = { 
+			factor = 30
+			modifier = {
+				factor = 3
+				OR = {
+					original_tag = ENG
+					original_tag = POL
+					original_tag = AST
+				}
+			}
+			modifier = {
+				factor = 0.5
+				num_divisions < 10
+			}
+		}
+		lose_pp_for_month = yes
+		if = {
+			limit = { NOT = { has_idea = intervention_regional_interventionism  } }
+			add_ideas = intervention_regional_interventionism  
+		}
+		if = {
+			limit = { is_ai = yes }
+			add_ai_strategy = {
+				type = send_volunteers_desire
+				id = USA
+				value = 200
+			}
+		}
+	}
+	option = {
+		name = wot.17.b		#We don't want to take part
+		log = "[GetDateText]: [This.GetName]: wot.17.b executed"
+		ai_chance = { 
+			factor = 50 
+			modifier = {
+				factor = 0.5
+				OR = {
+					original_tag = ENG
+					original_tag = POL
+					original_tag = AST
+				}
+			}
+			modifier = {
+				factor = 2
+				num_divisions < 10
+			}
+		}
+	}
+	
+}
+
+#Capture of Saddam Hussein Trigger
+country_event = {
+	id = wot.18
+	hidden = yes
+
+	fire_only_once = yes
+
+	trigger = {
+		has_global_flag = success_of_operation_iraqi_freedom
+		IRQ = { is_subject_of = USA }
+		date > 2003.12.12
+		date < 2006.12.30
+	}
+
+	immediate = {
+		set_global_flag = saddam_hussein_captured
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: wot.18 executed"
+		news_event = {
+			id = wotnews.12
+			hours = 6
+		}
+	}
+}	
+
+#Saddam Hussein Sentenced to Death Trigger
+country_event = {
+	id = wot.19
+	hidden = yes
+
+	fire_only_once = yes
+
+	trigger = {
+		date > 2006.12.29
+		date < 2015.1.1
+		has_global_flag = success_of_operation_iraqi_freedom
+		IRQ = { is_puppet_of = USA }
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: wot.19 executed"
+		news_event = {
+			id = wotnews.13
+			hours = 6
+		}
+	}
+}
 
 ### NEWS EVENTS ###
 #9/11 News Event
@@ -766,5 +1051,117 @@ news_event = {
 	option = {
 		name = wotnews.7.a
 		log = "[GetDateText]: [This.GetName]: wotnews.7.a executed"
+	}
+}
+
+#Bonn Agreement
+news_event = {
+	id = wotnews.8
+	title = wotnews.8.t
+	desc = wotnews.8.d
+	picture = GFX_news_bonn_agreement
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.8.a
+		log = "[GetDateText]: [This.GetName]: wotnews.8.a executed"
+	}
+}
+
+#Guantanamo bay
+news_event = {
+	id = wotnews.9
+	title = wotnews.9.t
+	desc = wotnews.9.d
+	picture = GFX_report_event_guantanamo_bay
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.9.a
+		log = "[GetDateText]: [This.GetName]: wotnews.9.a executed"
+	}
+}
+
+#Invasion of Iraq appoved by the UN
+news_event = {
+	id = wotnews.10
+	title = wotnews.10.t
+	desc = wotnews.10.d
+	picture = GFX_news_fate_of_iraq
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.10.a
+		log = "[GetDateText]: [This.GetName]: wotnews.10.a executed"
+	}
+}
+
+#Invasion of Iraq 
+news_event = {
+	id = wotnews.11
+	title = wotnews.11.t
+	desc = wotnews.11.d
+	picture = GFX_news_fate_of_iraq
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.11.a
+		log = "[GetDateText]: [This.GetName]: wotnews.11.a executed"
+	}
+}
+
+#Saddam captured
+news_event = {
+	id = wotnews.12
+	title = wotnews.12.t
+	desc = wotnews.12.d
+	picture = GFX_news_saddam_captured
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.12.a
+		log = "[GetDateText]: [This.GetName]: wotnews.12.a executed"
+	}
+}
+
+#Saddam sentenced to death
+news_event = {
+	id = wotnews.13
+	title = wotnews.13.t
+	desc = wotnews.13.d
+	picture = GFX_news_saddam_captured
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.13.a
+		log = "[GetDateText]: [This.GetName]: wotnews.13.a executed"
+	}
+}
+
+#US withdraws from Iraq
+news_event = {
+	id = wotnews.14
+	title = wotnews.14.t
+	desc = wotnews.14.d
+	picture = GFX_news_fate_of_iraq
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.14.a
+		log = "[GetDateText]: [This.GetName]: wotnews.14.a executed"
 	}
 }
