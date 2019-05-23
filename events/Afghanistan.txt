@@ -207,15 +207,13 @@ country_event = {
 	
 	fire_only_once = yes
 	
+	is_triggered_only = yes
+	
 	trigger = {
 		tag = AFG
 		has_war_with = TAL
 		USA = { NOT = { has_country_flag = Operation_enduring_freedom } }
 		has_country_leader = { name = "Ahmed Shah Massoud" ruling_only = yes }
-	}
-	
-	mean_time_to_happen = {
-		days = 270
 	}
 	
 	option = {
@@ -224,15 +222,15 @@ country_event = {
 		ai_chance = { factor = 100 }
 		random_list = {
 			90 = {
-				kill_country_leader = yes
-				create_country_leader = {
-					name = "Burhanuddin Rabbani"
-					picture = "Burhanuddin_Rabbani.dds"
-					expire = "2050.1.1"
-					ideology = Neutral_conservatism
-					traits = {
-						
+				custom_effect_tooltip = TT_CURRENT_LEADER_DIES
+				hidden_effect = {
+					meta_effect = {
+						text = {
+							set_country_flag = [META_SET_RULING_PARTY]
+						}
+						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 					}
+					set_leader = yes
 				}
 				hidden_effect = { news_event = { id = AfghanistanNews.6 hours = 6 } }
 				set_country_flag = Massoud_dead
@@ -252,42 +250,158 @@ country_event = {
 	desc = Afghanistan.4.d
 	picture = GFX_bonn_agreement
 	
-	is_triggered_only = yes
+	is_triggered_only = yes	
 	
 	option = {
 		name = Afghanistan.4.a
 		log = "[GetDateText]: [This.GetName]: Afghanistan.4.a executed"
 		ai_chance = { factor = 100 }
 		if = { 
-			limit = { has_country_flag = AFG_new_administration_Karzai }
-			#Change to Western
-			#Put "Afghan Independents" as the ruling party
-			#Make Karzai the leader
-			#Add popularity to Taliban
-			#Change next election date
+			limit = { has_country_flag = AFG_new_administration_Karzai }	
+			custom_effect_tooltip = TT_KARZAI_ADMINISTRATION
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.25
+			}
+			effect_tooltip = {
+				create_country_leader = {
+					name = "Hamid Karzai"
+					picture = "Hamid_Karzai.dds"
+					ideology = conservatism
+					traits = {
+						western_Western_Autocracy
+					}
+				}
+			}
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 0 } #Western autocracy
+			for_each_loop = {
+				array = ruling_party
+				value = v
+				multiply_variable = { party_pop_array^v = 1.5 }
+			}
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.15
+			}
+			add_to_variable = { var = party_pop_array^11 value = 0.15 }
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.05
+			}
+			add_to_variable = { var = party_pop_array^23 value = 0.05 }
 		}
 		if = { 
 			limit = { has_country_flag = AFG_new_administration_Rabbani }
-			#Change to Non-aligned
-			#Put "Jamiat e-Islami" as the ruling party
-			#Make Rabbani the leader
-			#Change next election date
-			#Add small popularity to Taliban
+			custom_effect_tooltip = TT_RABBANI_ADMINISTRATION
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.20
+			}
+			if = { 
+				limit = {
+					NOT = { has_country_leader = { name = "Burhanuddin Rabbani" ruling_only = yes } }
+				}
+				effect_tooltip = {
+					create_country_leader = {
+						name = "Burhanuddin Rabbani"
+						picture = "Burhanuddin_Rabbani.dds"
+						ideology = Nat_Populism
+						traits = {
+							neutrality_Neutral_Muslim_Brotherhood
+						}
+					}
+				}
+				hidden_effect = {
+					meta_effect = {
+						text = {
+							set_country_flag = [META_SET_RULING_PARTY]
+						}
+						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+					}
+					set_leader = yes
+				}
+			}	
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 12 } #Muslim Brotherhood
+			for_each_loop = {
+				array = ruling_party
+				value = v
+				multiply_variable = { party_pop_array^v = 1.5 }
+			}
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}
+			add_to_variable = { var = party_pop_array^11 value = 0.05 }
 		}
 		if = { 
 			limit = { has_country_flag = AFG_new_administration_Massoud }
-			#Change to Non-aligned
-			#Put "Jamiat e-Islami" as the ruling party
-			#Make Massoud the leader
-			#Change next election date
+			custom_effect_tooltip = TT_RABBANI_ADMINISTRATION
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.20
+			}
+			effect_tooltip = {
+				create_country_leader = {
+					name = "Ahmed Shah Massoud"
+					picture = "Ahmad_Shah_Massoud.dds"
+					expire = "2001.9.9"
+					ideology = Neutral_Muslim_Brotherhood
+					traits = {
+						neutrality_Neutral_Muslim_Brotherhood
+					}
+				}
+			}
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 12 } #Muslim Brotherhood
+			for_each_loop = {
+				array = ruling_party
+				value = v
+				multiply_variable = { party_pop_array^v = 1.5 }
+			}
 		}
 		if = { 
 			limit = { has_country_flag = AFG_new_administration_Zahir_Shah }
-			#Change to Nationalist
-			#Put "Barakzai Dynasty" as the ruling party
-			#Make Mohammed Zahir Shah the leader
-			#Remove elections
-			#Add a lot of popularity to Taliban
+			custom_effect_tooltip = TT_SHAH_ADMINISTRATION
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 23 } #monarchist
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.15
+			}
+			effect_tooltip = {
+				create_country_leader = {
+					name = "Mohammed Zahir Shah"
+					picture = "generic.dds"
+					ideology = Monarchist
+					traits = {
+						nationalist_Monarchist
+					}
+				}
+			}
+			for_each_loop = {
+				array = ruling_party
+				value = v
+				add_to_variable = { var = party_pop_array^v value = 0.15 }
+			}
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.25
+			}
+			add_to_variable = { var = party_pop_array^11 value = 0.25 }
 		}
 	}
 	
