@@ -68,6 +68,25 @@ scripted_gui = {
 				}
 			}
 			
+			opt_make_puppet_button_click_enabled = {
+				
+				AND = {
+					check_variable = { influence_array^0 = ROOT }
+					check_variable = { influence_array_calc^0 > 0.8 }
+					is_same_government = yes
+					NOT = { is_puppet_of = ROOT }
+				}
+				
+			}
+			
+			opt_target_other_button_click_enabled = {
+				OR = {
+					check_variable = { influence_array^0 = ROOT }
+					check_variable = { influence_array^1 = ROOT }
+					check_variable = { influence_array^2 = ROOT }
+				}
+			}
+			
 			#hide for yourself
 			opt_influence_action_button_visible = {
 				NOT = {
@@ -141,6 +160,16 @@ scripted_gui = {
 			}
 			
 			# give gift of money
+			opt_aid_button_click = {
+				
+				ROOT = {
+					PREV = {
+						country_event = { id = influence.0 }
+					}
+				}
+			}
+			
+			##target select influence
 			opt_aid_button_click = {
 				
 				ROOT = {
@@ -231,6 +260,110 @@ scripted_gui = {
 					add_opinion_modifier = {
 							target = ROOT
 							modifier = supported_opposition
+					}
+				}
+			}
+			opt_coup_button_click = {
+				
+				#Add +5 to our outlook
+				if = {
+					limit = {
+						ROOT = { has_government = fascism }
+					}
+					add_popularity = {
+						ideology = fascism
+						popularity = 0.05
+					}
+				}
+				if = {
+					limit = {
+						ROOT = { has_government = neutrality }
+					}
+					add_popularity = {
+						ideology = neutrality
+						popularity = 0.05
+					}
+				}
+				if = {
+					limit = {
+						ROOT = { has_government = communism }
+					}
+					add_popularity = {
+						ideology = communism
+						popularity = 0.05
+					}
+				}
+				if = {
+					limit = {
+						ROOT = { has_government = nationalist }
+					}
+					add_popularity = {
+						ideology = nationalist
+						popularity = 0.05
+					}
+				}
+				if = {
+					limit = {
+						ROOT = { has_government = democratic }
+					}
+					add_popularity = {
+						ideology = democratic
+						popularity = 0.05
+					}
+				}
+				
+				#add +5 to our party
+				ROOT = {
+					for_each_loop = {
+						array = ruling_party
+						value = v
+						add_to_variable = { PREV.party_pop_array^v = 0.05 }
+					}
+				}
+				
+				#remove 10% influence
+				set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+				multiply_temp_variable = { influence_reduce = 0.1 } #10%
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = ROOT }
+						}
+						subtract_from_variable = { influence_array_val^v = influence_reduce }
+					}
+				}
+				recalculate_influence = yes
+				
+				#reduce relations if different gov
+				if = {
+					limit = {
+						NOT = { is_same_government = yes }
+					}
+					add_opinion_modifier = {
+							target = ROOT
+							modifier = supported_opposition
+					}
+				}
+			}
+			opt_make_puppet_button_click = {
+				
+				ROOT = {
+					set_autonomy = {
+						target = PREV
+						autonomy_state = autonomy_satellite_state
+						freedom_level = 0.5
+					}
+					add_named_threat = {
+						threat = 5
+						name = created_puppet_loc
+					}
+				}
+				every_neighbor_country = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = puppeted_neighbor
 					}
 				}
 			}

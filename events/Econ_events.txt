@@ -129,6 +129,138 @@ news_event = {
 	}
 }
 
+
+country_event = {
+	id = influence.2
+	title = influence.2.t
+	desc = influence.2.d
+	#picture = GFX_united_states_dollar
+	
+	is_triggered_only = yes
+	hidden = yes
+	
+	immediate = {
+		FROM = { country_event = { id = influence.3 } }
+	}
+
+	option = {
+		name = influence.2.a
+		log = "[GetDateText]: [This.GetName]: influence.2.a executed"
+	}
+}
+
+
+country_event = {
+	id = influence.3
+	title = influence.3.t
+	desc = influence.3.d
+	picture = GFX_united_states_dollar
+	
+	is_triggered_only = yes
+	
+	immediate = {
+	}
+	
+	#Give it
+	option = {
+		name = influence.3.a
+		log = "[GetDateText]: [This.GetName]: influence.3.a executed"
+		ai_chance = {
+			factor = 10
+		}
+		trigger = {
+			FROM = {
+				has_variable = influence_array^0
+				NOT = {
+					check_variable = { influence_array^0 = ROOT }
+				}
+			}
+		}
+		custom_effect_tooltip = influence_0_TT
+		subtract_from_variable = { treasury = FROM.gift_sum }
+
+		custom_effect_tooltip = aid_influence_gain_relative_TT
+		
+		var:FROM.influence_array^0 = {
+				country_event = { id = bankrupcy.1 }
+		}
+		reverse_add_opinion_modifier = {
+				target = FROM
+				modifier = given_gift
+		}
+		FROM = {
+			#influence addition
+			set_temp_variable = { influence_gain = ROOT.influence_multiplier } #from global rank idea
+			multiply_temp_variable = { influence_gain = 5 } #base gain
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = ROOT }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = ROOT.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+			news_event = { id = News_influence.2 } 
+		}
+	}
+	option = {
+		name = bankrupcy.0.1
+		log = "[GetDateText]: [This.GetName]: bankrupcy.0.1 executed"
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 5
+				is_in_faction_with = influence_array^0
+			}
+			modifier = {
+				factor = 0.1
+				var:influence_array^0 = {
+					has_opinion = {
+						target = ROOT
+						value < 1
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				var:influence_array^0 = {
+					ic_ratio = { tag = PREV ratio > 10.0 } #has lotsa capacity
+				}
+			}
+		}
+		
+		trigger = {
+			has_variable = influence_array^0
+			var:influence_array^0 = {
+				ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
+			}
+			var:influence_array^0 = {
+				has_opinion = {
+					target = PREV
+					value > -11
+				}
+			}
+		}
+	}
+	#Let's not bother
+	option = {
+		name = influence.3.b
+		log = "[GetDateText]: [This.GetName]: influence.3.b executed"
+		ai_chance = { factor = 0 }
+	}
+}
+
+# attacked our influence in another country
 news_event = {
 	id = News_influence.1
 	title = News_influence.1.t
@@ -144,8 +276,33 @@ news_event = {
 	option = {
 		name = News_influence.1.a
 		log = "[GetDateText]: [This.GetName]: News_influence.1.a executed"
-		custom_effect_tooltip = influence_from_0_TT
-		add_to_variable = { treasury = gift_sum }
+		add_opinion_modifier = {
+				target = FROM
+				modifier = attacked_our_influence
+		}
+	}
+}
+
+# attacked our domestic influence
+news_event = {
+	id = News_influence.2
+	title = News_influence.2.t
+	desc = News_influence.2.d
+	picture = GFX_news_update_gdpc
+	
+	is_triggered_only = yes
+	
+	immediate = {
+	}
+	
+	#yeah...
+	option = {
+		name = News_influence.2.a
+		log = "[GetDateText]: [This.GetName]: News_influence.2.a executed"
+		add_opinion_modifier = {
+				target = FROM
+				modifier = attacked_our_influence
+		}
 	}
 }
 
