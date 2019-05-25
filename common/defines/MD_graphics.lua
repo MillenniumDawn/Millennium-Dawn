@@ -1,6 +1,6 @@
 
 	NDefines.NWiki.BASE_URL = ""
-	NDefines.NWiki.FORUM_URL = "https://modernday4.gitlab.io/"
+	NDefines.NWiki.FORUM_URL = "https://millennium_dawn.gitlab.io/modernday4.gitlab.io"
 
 	NDefines.NMapIcons.STATES_PRIORITY_VICTORY_POINTS = 0
 	
