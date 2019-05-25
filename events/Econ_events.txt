@@ -32,7 +32,7 @@ country_event = {
 	
 	immediate = {
 		set_variable = { gift_sum = size_modifier }
-		multiply_variable = { gift_sum = 20 }
+		multiply_variable = { gift_sum = 10 }
 		clamp_variable = {
 			var = gift_sum
 			min = 1
@@ -129,7 +129,7 @@ news_event = {
 	}
 }
 
-
+### target specific influence
 country_event = {
 	id = influence.2
 	title = influence.2.t
@@ -154,17 +154,55 @@ country_event = {
 	id = influence.3
 	title = influence.3.t
 	desc = influence.3.d
-	picture = GFX_united_states_dollar
+	picture = GFX_politics_surveillence
 	
 	is_triggered_only = yes
 	
 	immediate = {
 	}
 	
-	#Give it
+	#Target domestic influence
 	option = {
 		name = influence.3.a
 		log = "[GetDateText]: [This.GetName]: influence.3.a executed"
+		ai_chance = {
+			factor = 11
+		}
+		
+		FROM = {
+				news_event = { id = News_influence.2 }
+		}
+		custom_effect_tooltip = influence_3_a_TT
+		FROM = {
+			
+			# remove 1% of target influence
+			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 0.01 } #1%
+			subtract_from_variable = { domestic_influence_amount = influence_reduce }
+			subtract_from_variable = { domestic_influence_amount = 10 } #+10 fixed reduction
+		
+			#ROOT remove 1% influence
+			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 0.01 } #1%
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = ROOT }
+					}
+					subtract_from_variable = { influence_array_val^v = influence_reduce }
+				}
+			}
+			recalculate_influence = yes
+		}
+		add_political_power = -100
+	}
+	
+	#Target biggest influencer
+	option = {
+		name = influence.3.b
+		log = "[GetDateText]: [This.GetName]: influence.3.b executed"
 		ai_chance = {
 			factor = 10
 		}
@@ -176,22 +214,22 @@ country_event = {
 				}
 			}
 		}
-		custom_effect_tooltip = influence_0_TT
-		subtract_from_variable = { treasury = FROM.gift_sum }
-
-		custom_effect_tooltip = aid_influence_gain_relative_TT
 		
 		var:FROM.influence_array^0 = {
-				country_event = { id = bankrupcy.1 }
+				news_event = { id = News_influence.1 }
 		}
-		reverse_add_opinion_modifier = {
-				target = FROM
-				modifier = given_gift
-		}
+		custom_effect_tooltip = influence_3_b_TT
 		FROM = {
-			#influence addition
-			set_temp_variable = { influence_gain = ROOT.influence_multiplier } #from global rank idea
-			multiply_temp_variable = { influence_gain = 5 } #base gain
+			
+			#ROOT remove 1% of target influencer
+			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 0.01 } #1%
+			subtract_from_variable = { influence_array_val^0 = influence_reduce }
+			subtract_from_variable = { influence_array_val^0 = 10 } #+10 fixed reduction
+		
+			#ROOT remove 1% influence
+			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 0.01 } #1%
 			for_loop_effect = {
 				end = influence_array^num
 				value = v
@@ -199,63 +237,107 @@ country_event = {
 					limit = {
 						check_variable = { influence_array^v = ROOT }
 					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-					set_country_flag = found
+					subtract_from_variable = { influence_array_val^v = influence_reduce }
 				}
 			}
-			if = {
-				limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = ROOT.id }
-					add_to_array = { influence_array_val = influence_gain }
-			}
-			clr_country_flag = found
 			recalculate_influence = yes
-			news_event = { id = News_influence.2 } 
 		}
+		add_political_power = -100
 	}
+	#Target 2nd biggest influencer
 	option = {
-		name = bankrupcy.0.1
-		log = "[GetDateText]: [This.GetName]: bankrupcy.0.1 executed"
+		name = influence.3.c
+		log = "[GetDateText]: [This.GetName]: influence.3.c executed"
 		ai_chance = {
-			factor = 10
-			modifier = {
-				factor = 5
-				is_in_faction_with = influence_array^0
-			}
-			modifier = {
-				factor = 0.1
-				var:influence_array^0 = {
-					has_opinion = {
-						target = ROOT
-						value < 1
-					}
-				}
-			}
-			modifier = {
-				factor = 2
-				var:influence_array^0 = {
-					ic_ratio = { tag = PREV ratio > 10.0 } #has lotsa capacity
+			factor = 6
+		}
+		trigger = {
+			FROM = {
+				has_variable = influence_array^1
+				NOT = {
+					check_variable = { influence_array^1 = ROOT }
 				}
 			}
 		}
 		
-		trigger = {
-			has_variable = influence_array^0
-			var:influence_array^0 = {
-				ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
+		var:FROM.influence_array^1 = {
+				news_event = { id = News_influence.1 }
+		}
+		custom_effect_tooltip = influence_3_c_TT
+		FROM = {
+			
+			#ROOT remove 1% of target influencer
+			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 0.01 } #1%
+			subtract_from_variable = { influence_array_val^1 = influence_reduce }
+			subtract_from_variable = { influence_array_val^1 = 10 } #+10 fixed reduction
+		
+			#ROOT remove 1% influence
+			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 0.01 } #1%
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = ROOT }
+					}
+					subtract_from_variable = { influence_array_val^v = influence_reduce }
+				}
 			}
-			var:influence_array^0 = {
-				has_opinion = {
-					target = PREV
-					value > -11
+			recalculate_influence = yes
+		}
+		add_political_power = -100
+	}
+	
+	option = {
+		name = influence.3.e
+		log = "[GetDateText]: [This.GetName]: influence.3.e executed"
+		ai_chance = {
+			factor = 3
+		}
+		trigger = {
+			FROM = {
+				has_variable = influence_array^2
+				NOT = {
+					check_variable = { influence_array^2 = ROOT }
 				}
 			}
 		}
+		
+		var:FROM.influence_array^2 = {
+				news_event = { id = News_influence.1 }
+		}
+		custom_effect_tooltip = influence_3_e_TT
+		FROM = {
+			
+			#ROOT remove 1% of target influencer
+			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 0.01 } #1%
+			subtract_from_variable = { influence_array_val^2 = influence_reduce }
+			subtract_from_variable = { influence_array_val^2 = 10 } #+10 fixed reduction
+		
+			#ROOT remove 1% influence
+			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 0.01 } #1%
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = ROOT }
+					}
+					subtract_from_variable = { influence_array_val^v = influence_reduce }
+				}
+			}
+			recalculate_influence = yes
+		}
+		add_political_power = -100
 	}
 	#Let's not bother
 	option = {
-		name = influence.3.b
-		log = "[GetDateText]: [This.GetName]: influence.3.b executed"
+		name = influence.3.f
+		log = "[GetDateText]: [This.GetName]: influence.3.f executed"
 		ai_chance = { factor = 0 }
 	}
 }
@@ -265,7 +347,7 @@ news_event = {
 	id = News_influence.1
 	title = News_influence.1.t
 	desc = News_influence.1.d
-	picture = GFX_news_update_gdpc
+	picture = GFX_news_crime_fighting
 	
 	is_triggered_only = yes
 	
@@ -288,7 +370,7 @@ news_event = {
 	id = News_influence.2
 	title = News_influence.2.t
 	desc = News_influence.2.d
-	picture = GFX_news_update_gdpc
+	picture = GFX_news_crime_fighting
 	
 	is_triggered_only = yes
 	
@@ -305,6 +387,1296 @@ news_event = {
 		}
 	}
 }
+
+### Coup! ###
+
+#target
+country_event = {
+	id = influence.4
+	title = influence.4.t
+	desc = influence.4.d
+	#picture = GFX_united_states_dollar
+	
+	is_triggered_only = yes
+	hidden = yes
+	
+	immediate = {
+		
+		### Chance of failure for ROOT add-up ###
+		for_loop_effect = {
+			end = influence_array_calc^num
+			if = {
+				limit = { var:influence_array^v = { has_government = democratic } }
+				add_to_temp_variable = { influence_democratic = influence_array_calc^v }	
+			}
+			else_if = {
+				limit = { var:influence_array^v = { has_government = neutrality } }
+				add_to_temp_variable = { influence_neutrality = influence_array_calc^v }	
+			}
+			else_if = {
+				limit = { var:influence_array^v = { has_government = communism } }
+				add_to_temp_variable = { influence_communism = influence_array_calc^v }	
+			}
+			else_if = {
+				limit = { var:influence_array^v = { has_government = nationalist } }
+				add_to_temp_variable = { influence_nationalist = influence_array_calc^v }	
+			}
+			else_if = {
+				limit = { var:influence_array^v = { has_government = fascism } }
+				add_to_temp_variable = { influence_fascism = influence_array_calc^v }	
+			}
+		}
+		#
+		
+		set_variable = { fail_factor_biggest = party_popularity@ruling_party }
+		divide_variable = { fail_factor_biggest = 100 }
+		
+		if = {
+			limit = { has_government = democratic }
+			add_to_variable = { fail_factor_biggest = influence_democratic }
+			add_to_variable = { fail_factor_biggest = domestic_influence_amount_calc }
+		}
+		else_if = {
+			limit = { has_government = neutrality }
+			add_to_variable = { fail_factor_biggest = influence_neutrality }
+			add_to_variable = { fail_factor_biggest = domestic_influence_amount_calc }
+		}
+		else_if = {
+			limit = { has_government = communism }
+			add_to_variable = { fail_factor_biggest = influence_communism }
+			add_to_variable = { fail_factor_biggest = domestic_influence_amount_calc }
+		}
+		else_if = {
+			limit = { has_government = nationalist }
+			add_to_variable = { fail_factor_biggest = influence_nationalist }
+			add_to_variable = { fail_factor_biggest = domestic_influence_amount_calc }
+		}
+		else_if = {
+			limit = { has_government = fascism }
+			add_to_variable = { fail_factor_biggest = influence_fascism }
+			add_to_variable = { fail_factor_biggest = domestic_influence_amount_calc }
+		}
+		set_temp_variable = { add_factor = size_modifier }
+		divide_temp_variable = { add_factor = 7 }
+		add_to_temp_variable = { add_factor = 1 }
+		multiply_variable = { fail_factor_biggest = add_factor }
+		
+		### Chance of success for ROOT add-up ###
+		if = {
+			limit = { FROM = { has_government = democratic } }
+			
+			set_variable = { success_factor_biggest = party_popularity@democratic }
+			divide_variable = { success_factor_biggest = 100 }
+			add_to_variable = { success_factor_biggest = influence_democratic }
+			
+			#storing biggest party
+			set_temp_variable = { prevmax_temp = 0 }
+			if = {
+				limit = {
+					has_variable = party_pop_array^1
+					check_variable = { party_pop_array^1 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^1 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^2
+					check_variable = { party_pop_array^2 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^2 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^3
+					check_variable = { party_pop_array^3 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^3 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^0
+					check_variable = { party_pop_array^0 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^0 }
+			}
+			#Set for highest value
+			if = { limit = { check_variable = { prevmax_temp = party_pop_array^1 } }
+				set_country_flag = set_conservatism
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^2 } }
+				set_country_flag = set_liberalism
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^3 } }
+				set_country_flag = set_socialism
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^0 } }
+				set_country_flag = set_Western_Autocracy
+			}
+		}
+		else_if = {
+			limit = { FROM = { has_government = neutrality } }
+			
+			set_variable = { success_factor_biggest = party_popularity@neutrality }
+			divide_variable = { success_factor_biggest = 100 }
+			add_to_variable = { success_factor_biggest = influence_neutrality }
+			
+			#storing biggest party
+			set_temp_variable = { prevmax_temp = 0 }
+			if = {
+				limit = {
+					has_variable = party_pop_array^14
+					check_variable = { party_pop_array^14 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^14 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^15
+					check_variable = { party_pop_array^15 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^15 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^18
+					check_variable = { party_pop_array^18 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^18 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^16
+					check_variable = { party_pop_array^16 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^16 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^13
+					check_variable = { party_pop_array^13 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^13 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^19
+					check_variable = { party_pop_array^19 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^19 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^17
+					check_variable = { party_pop_array^17 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^17 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^12
+					check_variable = { party_pop_array^12 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^12 }
+			}
+			
+			#Set for highest value
+			if = { limit = { check_variable = { prevmax_temp = party_pop_array^14 } }
+				set_country_flag = set_Neutral_conservatism
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^15 } }
+				set_country_flag = set_oligarchism
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^18 } }
+				set_country_flag = set_neutral_Social
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^16 } }
+				set_country_flag = set_Neutral_Libertarian
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^13 } }
+				set_country_flag = set_Neutral_Autocracy
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^19 } }
+				set_country_flag = set_Neutral_Communism
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^17 } }
+				set_country_flag = set_Neutral_Muslim_Brotherhood
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^12 } }
+				set_country_flag = set_Neutral_green
+			}
+		}
+		else_if = {
+			limit = { FROM = { has_government = communism } }
+			
+			set_variable = { success_factor_biggest = party_popularity@communism }
+			divide_variable = { success_factor_biggest = 100 }
+			add_to_variable = { success_factor_biggest = influence_communism }
+			
+			#storing biggest party
+			set_temp_variable = { prevmax_temp = 0 }
+			if = {
+				limit = {
+					has_variable = party_pop_array^4
+					check_variable = { party_pop_array^4 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^4 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^6
+					check_variable = { party_pop_array^6 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^6 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^7
+					check_variable = { party_pop_array^7 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^7 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^9
+					check_variable = { party_pop_array^9 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^9 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^8
+					check_variable = { party_pop_array^8 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^8 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^5
+					check_variable = { party_pop_array^5 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^5 }
+			}
+			
+			#Set for highest value
+			if = { limit = { check_variable = { prevmax_temp = party_pop_array^4 } }
+				set_country_flag = set_Communist-State
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^6 } }
+				set_country_flag = set_Conservative
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^7 } }
+				set_country_flag = set_Autocracy
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^9 } }
+				set_country_flag = set_Vilayat_e_Faqih
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^8 } }
+				set_country_flag = set_Mod_Vilayat_e_Faqih
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^5 } }
+				set_country_flag = set_anarchist_communism
+			}
+		}
+		else_if = {
+			limit = { FROM = { has_government = nationalist } }
+			
+			set_variable = { success_factor_biggest = party_popularity@nationalist }
+			divide_variable = { success_factor_biggest = 100 }
+			add_to_variable = { success_factor_biggest = influence_nationalist }
+			
+			#storing biggest party
+			set_temp_variable = { prevmax_temp = 0 }
+			if = {
+				limit = {
+					has_variable = party_pop_array^22
+					check_variable = { party_pop_array^22 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^22 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^21
+					check_variable = { party_pop_array^21 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^21 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^20
+					check_variable = { party_pop_array^20 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^20 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^23
+					check_variable = { party_pop_array^23 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^23 }
+			}
+			#Set for highest value
+			if = { limit = { check_variable = { prevmax_temp = party_pop_array^22 } }
+				set_country_flag = set_Nat_Autocracy
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^21 } }
+				set_country_flag = set_Nat_Fascism
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^20 } }
+				set_country_flag = set_Nat_Populism
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^23 } }
+				set_country_flag = set_Monarchist
+			}
+		}
+		else_if = {
+			limit = { FROM = { has_government = fascism } }
+			
+			set_variable = { success_factor_biggest = party_popularity@fascism }
+			divide_variable = { success_factor_biggest = 100 }
+			add_to_variable = { success_factor_biggest = influence_fascism }
+			
+			#storing biggest party
+			set_temp_variable = { prevmax_temp = 0 }
+			if = {
+				limit = {
+					has_variable = party_pop_array^10
+					check_variable = { party_pop_array^10 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^10 }
+			}
+			if = {
+				limit = {
+					has_variable = party_pop_array^11
+					check_variable = { party_pop_array^11 > prevmax_temp }
+				}
+				set_temp_variable = { prevmax_temp = party_pop_array^11 }
+			}
+			#Set for highest value
+			if = { limit = { check_variable = { prevmax_temp = party_pop_array^10 } }
+				set_country_flag = set_Kingdom
+			}
+			else_if = { limit = { check_variable = { prevmax_temp = party_pop_array^11 } }
+				set_country_flag = set_Caliphate
+			}
+		}
+		for_loop_effect = {
+			end = influence_array^num
+			value = v
+			if = {
+				limit = {
+					check_variable = { influence_array^v = FROM }
+				}
+				add_to_variable = { success_factor_biggest = influence_array_calc^v }
+			}
+		}
+		
+		### Chance of civil war ###
+		set_variable = { civil_war_factor = stability }
+		multiply_variable = { civil_war_factor = -1 }
+		add_to_variable = { civil_war_factor = 1 }
+		if = {
+			limit = {
+				check_variable = { gdp_capita < 2 }
+			}
+			multiply_variable = { civil_war_factor = 1.3 }
+		}
+		if = {
+			limit = {
+				check_variable = { gdp_capita > 3 }
+			}
+			multiply_variable = { civil_war_factor = 0.9 }
+		}
+		if = {
+			limit = {
+				check_variable = { gdp_capita > 5 }
+			}
+			multiply_variable = { civil_war_factor = 0.8 }
+		}
+		if = {
+			limit = {
+				check_variable = { gdp_capita > 7 }
+			}
+			multiply_variable = { civil_war_factor = 0.7 }
+		}
+		if = {
+			limit = {
+				check_variable = { gdp_capita > 9 }
+			}
+			multiply_variable = { civil_war_factor = 0.7 }
+		}
+	
+		FROM = { country_event = { id = influence.5 } }
+	}
+
+	option = {
+		name = influence.4.a
+		log = "[GetDateText]: [This.GetName]: influence.4.a executed"
+	}
+}
+
+#root
+country_event = {
+	id = influence.5
+	title = influence.5.t
+	desc = influence.5.d
+	picture = GFX_politics_surveillence
+	
+	is_triggered_only = yes
+	
+	immediate = {
+	
+	
+	
+	}
+	
+	#target outlook - biggest party
+	option = {
+		name = influence.5.a
+		log = "[GetDateText]: [This.GetName]: influence.5.a executed"
+		
+		
+		add_political_power = -200
+		
+		add_threat = 2
+		
+		random_list = {
+			
+			#success
+			33.3 = {
+				modifier = {
+					factor = var:FROM.success_factor_biggest
+				}
+				custom_effect_tooltip = influence_coup_largest_success_TT
+				#add tooltip
+				
+				FROM = {
+					hidden_effect = {
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						
+						#new gov democratic
+						if = {
+							limit = { has_country_flag = set_Western_Autocracy }
+							add_to_array = { ruling_party = 0 }
+							add_popularity = { ideology = democratic popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_conservatism }
+							add_to_array = { ruling_party = 1 }
+							add_popularity = { ideology = democratic popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_liberalism }
+							add_to_array = { ruling_party = 2 }
+							add_popularity = { ideology = democratic popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_socialism }
+							add_to_array = { ruling_party = 3 }
+							add_popularity = { ideology = democratic popularity = 0.2 }
+						}
+						
+						#new gov communism
+						else_if = {
+							limit = { has_country_flag = set_Communist-State }
+							add_to_array = { ruling_party = 4 }
+							add_popularity = { ideology = communism popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_anarchist_communism }
+							add_to_array = { ruling_party = 5 }
+							add_popularity = { ideology = communism popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Conservative }
+							add_to_array = { ruling_party = 6 }
+							add_popularity = { ideology = communism popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Autocracy }
+							add_to_array = { ruling_party = 7 }
+							add_popularity = { ideology = communism popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Mod_Vilayat_e_Faqih }
+							add_to_array = { ruling_party = 8 }
+							add_popularity = { ideology = communism popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Vilayat_e_Faqih }
+							add_to_array = { ruling_party = 9 }
+							add_popularity = { ideology = communism popularity = 0.2 }
+						}
+						
+						#new gov fascism
+						else_if = {
+							limit = { has_country_flag = set_Kingdom }
+							add_to_array = { ruling_party = 10 }
+							add_popularity = { ideology = fascism popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Caliphate }
+							add_to_array = { ruling_party = 11 }
+							add_popularity = { ideology = fascism popularity = 0.2 }
+						}
+						
+						#new gov neutrality
+						else_if = {
+							limit = { has_country_flag = set_Neutral_Muslim_Brotherhood }
+							add_to_array = { ruling_party = 12 }
+							add_popularity = { ideology = neutrality popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Neutral_Autocracy }
+							add_to_array = { ruling_party = 13 }
+							add_popularity = { ideology = neutrality popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Neutral_conservatism }
+							add_to_array = { ruling_party = 14 }
+							add_popularity = { ideology = neutrality popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_oligarchism }
+							add_to_array = { ruling_party = 15 }
+							add_popularity = { ideology = neutrality popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Neutral_Libertarian }
+							add_to_array = { ruling_party = 16 }
+							add_popularity = { ideology = neutrality popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Neutral_green }
+							add_to_array = { ruling_party = 17 }
+							add_popularity = { ideology = neutrality popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_neutral_Social }
+							add_to_array = { ruling_party = 18 }
+							add_popularity = { ideology = neutrality popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Neutral_Communism }
+							add_to_array = { ruling_party = 19 }
+							add_popularity = { ideology = neutrality popularity = 0.2 }
+						}
+						
+						#new gov nationalist
+						else_if = {
+							limit = { has_country_flag = set_Nat_Populism }
+							add_to_array = { ruling_party = 20 }
+							add_popularity = { ideology = nationalist popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Nat_Fascism }
+							add_to_array = { ruling_party = 21 }
+							add_popularity = { ideology = nationalist popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Nat_Autocracy }
+							add_to_array = { ruling_party = 22 }
+							add_popularity = { ideology = nationalist popularity = 0.2 }
+						}
+						else_if = {
+							limit = { has_country_flag = set_Monarchist }
+							add_to_array = { ruling_party = 23 }
+							add_popularity = { ideology = nationalist popularity = 0.2 }
+						}
+					}
+					hidden_effect = {
+						set_leader = yes		
+						recalculate_party = yes
+						hold_elections = yes
+					}
+					#add 20% to ROOT influence
+					set_temp_variable = { influence_add = influence_total } #from global rank idea
+					multiply_temp_variable = { influence_add = 0.2 } #20%
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							add_to_variable = { influence_array_val^v = influence_add }
+						}
+						#reduce all else by 30%
+						else_if = {
+							multiply_variable = { influence_array_val^v = 0.7 }
+						}
+					}
+					hidden_effect = { recalculate_influence = yes }
+					
+					hidden_effect = {
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = succeded_coup
+						}
+						news_event = { id = News_influence.3 }
+					}
+				}
+				#add event to country and world
+				hidden_effect = {
+					every_country = {
+						limit = { is_ai = no }
+						news_event = { days = 1 id = News_influence.4 }
+					}
+				}
+			}
+			#discovered
+			33.3 = {
+				modifier = {
+					factor = var:FROM.fail_factor_biggest
+				}
+				
+				custom_effect_tooltip = influence_coup_largest_discovered_TT
+				
+				FROM = {
+					
+					#remove a LOT of influence
+					set_temp_variable = { influence_remove = influence_total } #from global rank idea
+					multiply_temp_variable = { influence_remove = 0.1 } #10%
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							subtract_from_variable = { influence_array_val^v = influence_remove }
+							#half the remains
+							multiply_variable = { influence_array_val^v = 0.5 }
+						}
+					}
+					
+					hidden_effect = { recalculate_influence = yes }
+					
+					hidden_effect = {
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = failed_coup
+						}
+					}
+				}
+				#add event to country and world
+				hidden_effect = {
+					every_country = {
+						limit = { is_ai = no }
+						news_event = { days = 1 id = News_influence.5 }
+					}
+				}
+			}
+			#civil_war
+			33.3 = {
+				modifier = {
+					factor = var:FROM.civil_war_factor
+				}
+				
+				FROM = {
+					#kill player influence 
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							set_variable = { current_influence = influence_array_val^v }
+							remove_from_array = {
+								array = influence_array
+								index = v
+							}
+							remove_from_array = {
+								array = influence_array_val
+								index = v
+							}
+							remove_from_array = {
+								array = influence_array_calc
+								index = v
+							}
+						}
+					}
+					#damage relations with original gov
+					hidden_effect = {
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = failed_coup
+						}
+					}
+					recalculate_influence = yes
+				}
+				
+				#democratic
+				if = {
+					limit = {
+						has_government = democratic
+					}
+					FROM = {
+						start_civil_war = {
+							ideology = democratic
+							size = 0.5
+						}
+						#first setup some things for original tag
+						hidden_effect = {
+							add_popularity = {
+								ideology = democratic
+								popularity = -0.5
+							}
+						}
+						recalculate_party = yes
+						update_majority_threshold = yes
+						
+					}	
+					random_other_country = {
+						limit = {
+							original_tag = FROM
+							has_government = democratic
+						}
+						
+						start_politics_input = yes
+						
+						#new gov democratic
+						if = {
+							limit = { FROM = { has_country_flag = set_Communist-State } }
+							set_country_flag = set_Communist-State
+							add_to_array = { ruling_party = 0 }
+							set_variable = { party_pop_array^0 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_anarchist_communism } }
+							set_country_flag = set_anarchist_communism
+							add_to_array = { ruling_party = 1 }
+							set_variable = { party_pop_array^1 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Conservative } }
+							set_country_flag = set_Conservative
+							add_to_array = { ruling_party = 2 }
+							set_variable = { party_pop_array^2 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Autocracy } }
+							set_country_flag = set_Autocracy
+							add_to_array = { ruling_party = 3 }
+							set_variable = { party_pop_array^3 = 0.7 }
+						}
+					
+						#New TAG so need to set some generic politics
+						set_politics = {
+							ruling_party = democratic
+							elections_allowed = no
+							parties = {
+								democratic = { 
+									popularity = 70
+								}
+								fascism = {
+									popularity = 0
+								}
+								neutrality = {
+									popularity = 10
+								}
+								communism = {
+									popularity = 10
+								}
+								nationalist = {
+									popularity = 10
+								}
+							}
+						}
+						hidden_effect = {
+							startup_politics = yes
+							set_leader = yes		
+							recalculate_party = yes
+							hold_elections = yes
+						}
+						#influence transfer
+						init_influence = yes
+						set_variable = { domestic_influence_amount = FROM.current_influence }
+						add_to_array = { influence_array = ROOT }
+						add_to_array = { influence_array_val = FROM.current_influence }
+						startup_influence = yes
+					}
+				}
+				
+				#communism
+				if = {
+					limit = {
+						has_government = communism
+					}
+					FROM = {
+						start_civil_war = {
+							ideology = communism
+							size = 0.5
+						}
+						#first setup some things for original tag
+						hidden_effect = {
+							add_popularity = {
+								ideology = communism
+								popularity = -0.5
+							}
+						}
+						recalculate_party = yes
+						update_majority_threshold = yes
+						
+					}	
+					random_other_country = {
+						limit = {
+							original_tag = FROM
+							has_government = communism
+						}
+						
+						start_politics_input = yes
+						
+						#new gov communism
+						if = {
+							limit = { FROM = { has_country_flag = set_Communist-State } }
+							set_country_flag = set_Communist-State
+							add_to_array = { ruling_party = 4 }
+							set_variable = { party_pop_array^4 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_anarchist_communism } }
+							set_country_flag = set_anarchist_communism
+							add_to_array = { ruling_party = 5 }
+							set_variable = { party_pop_array^5 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Conservative } }
+							set_country_flag = set_Conservative
+							add_to_array = { ruling_party = 6 }
+							set_variable = { party_pop_array^6 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Autocracy } }
+							set_country_flag = set_Autocracy
+							add_to_array = { ruling_party = 7 }
+							set_variable = { party_pop_array^7 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Mod_Vilayat_e_Faqih } }
+							set_country_flag = set_Mod_Vilayat_e_Faqih
+							add_to_array = { ruling_party = 8 }
+							set_variable = { party_pop_array^8 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Vilayat_e_Faqih } }
+							set_country_flag = set_Vilayat_e_Faqih
+							add_to_array = { ruling_party = 9 }
+							set_variable = { party_pop_array^9 = 0.7 }
+						}
+					
+						#New TAG so need to set some generic politics
+						set_politics = {
+							ruling_party = communism
+							elections_allowed = no
+							parties = {
+								democratic = { 
+									popularity = 10
+								}
+								fascism = {
+									popularity = 0
+								}
+								neutrality = {
+									popularity = 5
+								}
+								communism = {
+									popularity = 75
+								}
+								nationalist = {
+									popularity = 10
+								}
+							}
+						}
+						hidden_effect = {
+							startup_politics = yes
+							set_leader = yes		
+							recalculate_party = yes
+							hold_elections = yes
+						}
+						#influence transfer
+						init_influence = yes
+						set_variable = { domestic_influence_amount = FROM.current_influence }
+						add_to_array = { influence_array = ROOT }
+						add_to_array = { influence_array_val = FROM.current_influence }
+						startup_influence = yes
+					}
+				}
+				
+				#fascism
+				if = {
+					limit = {
+						has_government = fascism
+					}
+					FROM = {
+						start_civil_war = {
+							ideology = fascism
+							size = 0.5
+						}
+						#first setup some things for original tag
+						hidden_effect = {
+							add_popularity = {
+								ideology = fascism
+								popularity = -0.5
+							}
+						}
+						recalculate_party = yes
+						update_majority_threshold = yes
+						
+					}	
+					random_other_country = {
+						limit = {
+							original_tag = FROM
+							has_government = fascism
+						}
+						
+						start_politics_input = yes
+						
+						#new gov fascism
+						if = {
+							limit = { FROM = { has_country_flag = set_Kingdom } }
+							set_country_flag = set_Kingdom
+							add_to_array = { ruling_party = 10 }
+							set_variable = { party_pop_array^10 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Caliphate } }
+							set_country_flag = set_Caliphate
+							add_to_array = { ruling_party = 11 }
+							set_variable = { party_pop_array^11 = 0.7 }
+						}
+					
+						#New TAG so need to set some generic politics
+						set_politics = {
+							ruling_party = fascism
+							elections_allowed = no
+							parties = {
+								democratic = { 
+									popularity = 0
+								}
+								fascism = {
+									popularity = 80
+								}
+								neutrality = {
+									popularity = 5
+								}
+								communism = {
+									popularity = 5
+								}
+								nationalist = {
+									popularity = 10
+								}
+							}
+						}
+						hidden_effect = {
+							startup_politics = yes
+							set_leader = yes		
+							recalculate_party = yes
+							hold_elections = yes
+						}
+						#influence transfer
+						init_influence = yes
+						set_variable = { domestic_influence_amount = FROM.current_influence }
+						add_to_array = { influence_array = ROOT }
+						add_to_array = { influence_array_val = FROM.current_influence }
+						startup_influence = yes
+					}
+				}
+				
+				#neutrality
+				if = {
+					limit = {
+						has_government = neutrality
+					}
+					FROM = {
+						start_civil_war = {
+							ideology = neutrality
+							size = 0.5
+						}
+						#first setup some things for original tag
+						hidden_effect = {
+							add_popularity = {
+								ideology = neutrality
+								popularity = -0.5
+							}
+						}
+						recalculate_party = yes
+						update_majority_threshold = yes
+						
+					}	
+					random_other_country = {
+						limit = {
+							original_tag = FROM
+							has_government = neutrality
+						}
+						
+						start_politics_input = yes
+						
+						#new gov neutrality
+						if = {
+							limit = { FROM = { has_country_flag = set_Neutral_Muslim_Brotherhood } }
+							set_country_flag = set_Neutral_Muslim_Brotherhood
+							add_to_array = { ruling_party = 12 }
+							set_variable = { party_pop_array^12 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Neutral_Autocracy } }
+							set_country_flag = set_Neutral_Autocracy
+							add_to_array = { ruling_party = 13 }
+							set_variable = { party_pop_array^13 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Neutral_conservatism } }
+							set_country_flag = set_Neutral_conservatism
+							add_to_array = { ruling_party = 14 }
+							set_variable = { party_pop_array^14 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_oligarchism } }
+							set_country_flag = set_oligarchism
+							add_to_array = { ruling_party = 15 }
+							set_variable = { party_pop_array^15 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Neutral_Libertarian } }
+							set_country_flag = set_Neutral_Libertarian
+							add_to_array = { ruling_party = 16 }
+							set_variable = { party_pop_array^16 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Neutral_green } }
+							set_country_flag = set_Neutral_green
+							add_to_array = { ruling_party = 17 }
+							set_variable = { party_pop_array^17 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_neutral_Social } }
+							set_country_flag = set_neutral_Social
+							add_to_array = { ruling_party = 18 }
+							set_variable = { party_pop_array^18 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Neutral_Communism } }
+							set_country_flag = set_Neutral_Communism
+							add_to_array = { ruling_party = 19 }
+							set_variable = { party_pop_array^19 = 0.7 }
+						}
+					
+						#New TAG so need to set some generic politics
+						set_politics = {
+							ruling_party = neutrality
+							elections_allowed = no
+							parties = {
+								democratic = { 
+									popularity = 10
+								}
+								fascism = {
+									popularity = 0
+								}
+								neutrality = {
+									popularity = 70
+								}
+								communism = {
+									popularity = 10
+								}
+								nationalist = {
+									popularity = 10
+								}
+							}
+						}
+						hidden_effect = {
+							startup_politics = yes
+							set_leader = yes		
+							recalculate_party = yes
+							hold_elections = yes
+						}
+						#influence transfer
+						init_influence = yes
+						set_variable = { domestic_influence_amount = FROM.current_influence }
+						add_to_array = { influence_array = ROOT }
+						add_to_array = { influence_array_val = FROM.current_influence }
+						startup_influence = yes
+					}
+				}
+				
+				#nationalist civil war
+				if = {
+					limit = {
+						has_government = nationalist
+					}
+					FROM = {
+						start_civil_war = {
+							ideology = nationalist
+							size = 0.5
+						}
+						#first setup some things for original tag
+						hidden_effect = {
+							add_popularity = {
+								ideology = nationalist
+								popularity = -0.2
+							}
+						}
+						recalculate_party = yes
+						update_majority_threshold = yes
+					}	
+					random_other_country = {
+						limit = {
+							original_tag = FROM
+							has_government = nationalist
+						}
+						
+						start_politics_input = yes
+						
+						#new gov nationalist
+						if = {
+							limit = { FROM = { has_country_flag = set_Nat_Populism } }
+							set_country_flag = set_Nat_Populism
+							add_to_array = { ruling_party = 20 }
+							set_variable = { party_pop_array^20 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Nat_Fascism } }
+							set_country_flag = set_Nat_Fascism
+							add_to_array = { ruling_party = 21 }
+							set_variable = { party_pop_array^21 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Nat_Autocracy } }
+							set_country_flag = set_Nat_Autocracy
+							add_to_array = { ruling_party = 22 }
+							set_variable = { party_pop_array^22 = 0.7 }
+						}
+						else_if = {
+							limit = { FROM = { has_country_flag = set_Monarchist } }
+							set_country_flag = set_Monarchist
+							add_to_array = { ruling_party = 23 }
+							set_variable = { party_pop_array^23 = 0.7 }
+						}
+					
+						#New TAG so need to set some generic politics
+						set_politics = {
+							ruling_party = nationalist
+							elections_allowed = no
+							parties = {
+								democratic = { 
+									popularity = 10
+								}
+								fascism = {
+									popularity = 0
+								}
+								neutrality = {
+									popularity = 10
+								}
+								communism = {
+									popularity = 10
+								}
+								nationalist = {
+									popularity = 70
+								}
+							}
+						}
+						hidden_effect = {
+							startup_politics = yes
+							set_leader = yes		
+							recalculate_party = yes
+							hold_elections = yes
+						}
+						#influence transfer
+						init_influence = yes
+						set_variable = { domestic_influence_amount = FROM.current_influence }
+						add_to_array = { influence_array = ROOT }
+						add_to_array = { influence_array_val = FROM.current_influence }
+						startup_influence = yes
+					}
+				}
+				#add event to country and world
+				hidden_effect = {
+					every_country = {
+						limit = { is_ai = no }
+						news_event = { id = News_influence.6 }
+					}
+				}
+			}
+		}
+	}
+	
+	#abort planning
+	option = {
+		name = influence.5.c
+		log = "[GetDateText]: [This.GetName]: influence.5.c executed"
+		FROM = { remove_set_ideology_flag = yes }
+	}
+}
+
+
+news_event = {
+	id = News_influence.3
+	title = News_influence.3.t
+	desc = News_influence.3.d
+	picture = GFX_news_crime_fighting
+	
+	is_triggered_only = yes
+	
+	immediate = {
+	}
+	
+	option = {
+		name = News_influence.3.a
+		log = "[GetDateText]: [This.GetName]: News_influence.3.a executed"
+	}
+}
+
+news_event = {
+	id = News_influence.4
+	title = News_influence.4.t
+	desc = News_influence.4.d
+	picture = GFX_news_crime_fighting
+	
+	is_triggered_only = yes
+	
+	immediate = {
+	}
+	
+	option = {
+		name = News_influence.4.a
+		log = "[GetDateText]: [This.GetName]: News_influence.4.a executed"
+	}
+}
+
+news_event = {
+	id = News_influence.5
+	title = News_influence.5.t
+	desc = News_influence.5.d
+	picture = GFX_news_crime_fighting
+	
+	is_triggered_only = yes
+	
+	immediate = {
+	}
+	
+	option = {
+		name = News_influence.5.a
+		log = "[GetDateText]: [This.GetName]: News_influence.5.a executed"
+	}
+}
+
+news_event = {
+	id = News_influence.6
+	title = News_influence.6.t
+	desc = News_influence.6.d
+	picture = GFX_news_crime_fighting
+	
+	is_triggered_only = yes
+	
+	immediate = {
+	}
+	
+	option = {
+		name = News_influence.6.a
+		log = "[GetDateText]: [This.GetName]: News_influence.6.a executed"
+	}
+}
+
 
 
 ### Bailout needed ###
@@ -1202,7 +2574,7 @@ country_event = {
 	}
 	
 	mean_time_to_happen = {
-		days = 1500
+		days = 3000
 		modifier = {
 			factor = 0.6
 			has_idea = economic_boom
@@ -1274,7 +2646,7 @@ country_event = {
 	}
 	
 	mean_time_to_happen = {
-		days = 830
+		days = 1830
 		modifier = {
 			factor = 0.6
 			has_idea = economic_boom
@@ -1579,7 +2951,7 @@ country_event = {
 	}
 	
 	mean_time_to_happen = {
-		days = 950
+		days = 1800
 		modifier = {
 			factor = 0.4
 			has_idea = economic_boom
@@ -1708,7 +3080,7 @@ country_event = {
 	}
 	
 	mean_time_to_happen = {
-		days = 1000
+		days = 2000
 		modifier = {
 			factor = 0.3
 			has_idea = economic_boom
@@ -2453,7 +3825,7 @@ country_event = {
 	}
 	
 	mean_time_to_happen = {
-		days = 2400
+		days = 2800
 		modifier = {
 			factor = 0.6
 			is_african_nation = yes #Africa has worst irrigation
