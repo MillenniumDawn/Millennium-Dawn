@@ -155,7 +155,45 @@ on_actions = {
 	on_capitulation = {
 		effect = {
 			news_event = { id = country_capitulated.0 days = 1 }
+			
+			#Special capitulation for ISIS
+			if = {
+				limit = { 
+					original_tag = ISI
+					has_start_date > 2016.1.1
+				}
+				# Give Iraqi states first Kurdistan if they've capture them, otherwise return to Iraq
+				every_owned_state = {
+					limit = { 
+						is_core_of = IRQ
+						is_controlled_by = KUR
+					}
+					KUR = {
+						set_state_owner = PREV
+					}
+				}
+				every_owned_state = {
+					limit = { 
+						is_core_of = IRQ
+					}
+					IRQ = {
+						set_state_owner = PREV
+					}
+				}
+				# In Syria, give every non-capital state to its current controller
+				every_owned_state = {
+					limit = { 
+						is_core_of = SYR
+					}
+					controller = {
+						transfer_state = PREV
+					}
+				}
+				# Rest to the winner
+				FROM = { annex_country = { target = ISI } }
+			}			
 		}
+		
 	}
 
 	#FROM is war target
