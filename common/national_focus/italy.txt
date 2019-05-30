@@ -4,6 +4,10 @@ focus_tree = {
 	
 	country = {
 		factor = 0
+		modifier = {
+			tag = ITA
+			add = 20
+		}
 	}
 	
 	@diplomatic_focus_zero = 0
@@ -70,7 +74,7 @@ focus_tree = {
 		cost = 10
 		
 		completion_reward = {
-			add_political_power = 50
+			add_political_power = 75
 		}
 		
 		ai_will_do = {
@@ -91,6 +95,7 @@ focus_tree = {
 		
 		available = {
 			threat > 0.15
+			has_idea = NATO_member
 		}
 		
 		mutually_exclusive = {
@@ -98,20 +103,14 @@ focus_tree = {
 		}
 		
 		bypass = {
-			OR = {
-				is_faction_leader = yes
-				is_in_faction = no
-			}
+			NOT = { has_idea = NATO_member }
 		}
 		
 		completion_reward = {
 			random_country = {
-				limit = {
-					is_in_faction_with = ITA
-					is_faction_leader = yes
-				}
-				remove_from_faction = ITA
-				news_event = news.58
+				limit = { has_idea = NATO_member }
+				add_opinion_modifier = { target = ITA modifier = broke_off_diplomatic_relations }
+				news_event = NATO.16
 			}
 		}
 		
@@ -137,14 +136,16 @@ focus_tree = {
 		
 		available = {
 			threat > 0.15
-		}
-		
-		mutually_exclusive = {
-			focus = ITA_abandon_the_west
+			has_idea = NATO_member
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			add_political_power = 50
+			random_country = {
+				limit = { has_idea = NATO_member }
+				add_opinion_modifier = { target = ITA modifier = reaffirmed_NATO }
+				add_opinion_modifier = { target = ROOT modifier = reaffirmed_NATO }
+			}
 		}
 		
 		ai_will_do = {
@@ -191,10 +192,6 @@ focus_tree = {
 		
 		prerequisite = {
 			focus = ITA_abandon_the_west
-		}
-		
-		mutually_exclusive = {
-			focus = ITA_draw_closer_to_east
 		}
 		
 		available = {
@@ -545,16 +542,44 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			every_country = {
+			if = {
 				limit = {
-					is_in_faction_with = SOV
-					NOT = { tag = SOV }
-					}		
-				add_opinion_modifier = {
-					target = ITA
-					modifier = declaration_of_friendship
+					AND = {
+						OR = {
+							country_exists = SOV
+							country_exists = ARM
+							country_exists = KAZ
+							country_exists = KYR
+							country_exists = BLR
+							country_exists = TAJ
+						}
+						NOT = { has_war_with = ITA }
+					}
 				}
-				set_country_flag = ITA_friendship_focus
+				SOV = {
+					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship }  
+					set_country_flag = ITA_friendship_focus
+				}
+				ARM = {
+					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship }  
+					set_country_flag = ITA_friendship_focus
+				}
+				KAZ = {
+					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship }  
+					set_country_flag = ITA_friendship_focus
+				}
+				KYR = {
+					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship } 
+					set_country_flag = ITA_friendship_focus
+				}
+				BLR = {
+					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship } 
+					set_country_flag = ITA_friendship_focus					
+				}
+				TAJ = {
+					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship } 
+					set_country_flag = ITA_friendship_focus
+				}
 			}
 		}
 	}
@@ -711,7 +736,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			SOV = { country_event = italy.12 }
+			SOV = { country_event = italy_md.12 }
 		}
 	}
 	
@@ -737,7 +762,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			CHI = { country_event = italy.12 }
+			CHI = { country_event = italy_md.12 }
 		}
 	}
 	
@@ -757,22 +782,18 @@ focus_tree = {
 		}
 		
 		available = {
-			USA = { 
-				is_faction_leader = yes
+			OR = {
+				USA = { has_idea = NATO_member }
+				ENG = { has_idea = NATO_member } 
+				GER = { has_idea = NATO_member } 
+				FRA = { has_idea = NATO_member } 
 			}
-			is_in_faction_with = USA
 		}
 
 		completion_reward = {
 			every_country = {
-				limit = {
-					is_in_faction_with = ITA
-					NOT = { has_country_flag = ITA_friendship_focus }
-					}		
-				add_opinion_modifier = {
-					target = ITA
-					modifier = declaration_of_friendship
-				}
+				limit = { has_idea = NATO_member }		
+				add_opinion_modifier = { target = ITA modifier = NATO_commitment }
 			}
 		}
 		
@@ -797,15 +818,13 @@ focus_tree = {
 		}
 		
 		available = {
-			GER = {
-				AND = {			
-					is_faction_leader = yes
-				}
+			GER = {			
+				is_faction_leader = yes
 			}
 		}
 
 		completion_reward = {
-			GER = { country_event = italy.12 }
+			GER = { country_event = italy_md.12 }
 		}
 		
 		ai_will_do = {
@@ -1828,9 +1847,9 @@ focus_tree = {
 				limit = {
 					NOT = { has_country_flag = EGY_oil_deal_through_fascist_tree }
 				}
-				EGY = { country_event = italy.6 }
+				EGY = { country_event = italy_md.6 }
 			} 
-			NGR = { country_event = italy.6 }
+			NGR = { country_event = italy_md.6 }
 		}
 	}
 	
@@ -1863,8 +1882,8 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			SAU = { country_event = italy.6 }
-			UAE = { country_event = italy.6 }
+			SAU = { country_event = italy_md.6 }
+			UAE = { country_event = italy_md.6 }
 		}
 	}
 	
@@ -2298,7 +2317,7 @@ focus_tree = {
 				limit = {
 					NOT = { has_country_flag = EGY_happened_egypt_oil_deal_through_industry_focus }
 				}
-				EGY = { country_event = italy.9 }
+				EGY = { country_event = italy_md.9 }
 			}
 			add_state_claim = 551
 			add_state_claim = 763
@@ -2426,7 +2445,7 @@ focus_tree = {
 					NOT = { MLT = { is_puppet_of = ITA } }
 					country_exists = MLT
 				}
-				MLT = { country_event = italy.3 }
+				MLT = { country_event = italy_md.3 }
 			}	
 			if = {
 				limit = {
@@ -2438,7 +2457,7 @@ focus_tree = {
 						ITA = { is_neighbor_of = HLS }
 					}
 				}
-				HLS = { country_event = italy.3 }
+				HLS = { country_event = italy_md.3 }
 			}
 		}
 	}
@@ -2645,7 +2664,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = FRA }
 					}
 				}
-				FRA = { country_event = italy.11 }
+				FRA = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2658,7 +2677,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = SWI }
 					}
 				}
-				SWI = { country_event = italy.11 }
+				SWI = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2671,7 +2690,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = BEL }
 					}
 				}
-				BEL = { country_event = italy.11 }
+				BEL = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2684,7 +2703,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = LUX }
 					}
 				}
-				LUX = { country_event = italy.11 }
+				LUX = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2697,7 +2716,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = ENG }
 					}
 				}
-				ENG = { country_event = italy.11 }
+				ENG = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2710,7 +2729,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = SPR }
 					}
 				}
-				SPR = { country_event = italy.11 }
+				SPR = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2723,7 +2742,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = POR }
 					}
 				}
-				POR = { country_event = italy.11 }
+				POR = { country_event = italy_md.11 }
 			}
 			#if = {
 			 #   limit = {
@@ -2736,7 +2755,7 @@ focus_tree = {
 			 #		   NOT = { is_in_faction_with = GLC }
 			#		}
 			#		}
-			#	GLC = { country_event = italy.11 }
+			#	GLC = { country_event = italy_md.11 }
 			#}
 			
 			if = {
@@ -2750,7 +2769,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = CAT }
 					}
 				}
-				CAT = { country_event = italy.11 }
+				CAT = { country_event = italy_md.11 }
 			}
 		}
 	}
@@ -2882,7 +2901,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = MOR }
 					}
 				}
-				MOR = { country_event = italy.11 }
+				MOR = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2895,7 +2914,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = ALG }
 					}
 				}
-				ALG = { country_event = italy.11 }
+				ALG = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2908,7 +2927,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = TUN }
 					}
 				}
-				TUN = { country_event = italy.11 }
+				TUN = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2921,7 +2940,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = LBA }
 					}
 				}
-				LBA = { country_event = italy.11 }
+				LBA = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2934,7 +2953,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = EGY }
 					}
 				}
-				EGY = { country_event = italy.11 }
+				EGY = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2947,7 +2966,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = ISR }
 					}
 				}
-				ISR = { country_event = italy.11 }
+				ISR = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2960,7 +2979,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = PAL }
 					}
 				}
-				PAL = { country_event = italy.11 }
+				PAL = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2973,7 +2992,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = LEB }
 					}
 				}
-				LEB = { country_event = italy.11 }
+				LEB = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2986,7 +3005,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = SYR }
 					}
 				}
-				SYR = { country_event = italy.11 }
+				SYR = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -2999,7 +3018,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = IRQ }
 					}
 				}
-				IRQ = { country_event = italy.11 }
+				IRQ = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -3012,7 +3031,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = KUW }
 					}
 				}
-				KUW = { country_event = italy.11 }
+				KUW = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -3025,7 +3044,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = KUR }
 					}
 				}
-				KUR = { country_event = italy.11 }
+				KUR = { country_event = italy_md.11 }
 			}
 		}
 	}
@@ -3067,7 +3086,7 @@ focus_tree = {
 					country_exists = ALB
 					ALB = { owns_state = 44 }
 				}
-				ALB = { country_event = italy.3 }
+				ALB = { country_event = italy_md.3 }
 			}
 			add_state_core = 900
 			add_state_core = 736
@@ -3584,7 +3603,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = TUR }
 					}
 				}
-				TUR = { country_event = italy.11 }
+				TUR = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -3597,7 +3616,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = CYP }
 					}
 				}
-				CYP = { country_event = italy.11 }
+				CYP = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -3610,7 +3629,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = NCY }
 					}
 				}
-				NCY = { country_event = italy.11 }
+				NCY = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -3623,7 +3642,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = ARM }
 					}
 				}
-				ARM = { country_event = italy.11 }
+				ARM = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -3636,7 +3655,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = AZE }
 					}
 				}
-				AZE = { country_event = italy.11 }
+				AZE = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -3649,7 +3668,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = GEO }
 					}
 				}
-				GEO = { country_event = italy.11 }
+				GEO = { country_event = italy_md.11 }
 			}
 		}
 	}
@@ -4227,7 +4246,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = SLV }
 					}
 				}
-				SLV = { country_event = italy.11 }
+				SLV = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -4240,7 +4259,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = CRO }
 					}
 				}
-				CRO = { country_event = italy.11 }
+				CRO = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -4253,7 +4272,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = BOS }
 					}
 				}
-				BOS = { country_event = italy.11 }
+				BOS = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -4266,7 +4285,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = SER }
 					}
 				}
-				SER = { country_event = italy.11 }
+				SER = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -4279,7 +4298,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = MNT }
 					}
 				}
-				MNT = { country_event = italy.11 }
+				MNT = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -4292,7 +4311,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = ALB }
 					}
 				}
-				ALB = { country_event = italy.11 }
+				ALB = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -4305,7 +4324,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = BUL }
 					}
 				}
-				BUL = { country_event = italy.11 }
+				BUL = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -4318,7 +4337,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = FYR }
 					}
 				}
-				FYR = { country_event = italy.11 }
+				FYR = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -4331,7 +4350,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = GRE }
 					}
 				}
-				GRE = { country_event = italy.11 }
+				GRE = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -4344,7 +4363,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = HUN }
 					}
 				}
-				HUN = { country_event = italy.11 }
+				HUN = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -4357,7 +4376,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = ROM }
 					}
 				}
-				ROM = { country_event = italy.11 }
+				ROM = { country_event = italy_md.11 }
 			}
 			if = {
 				limit = {
@@ -4370,7 +4389,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = KOS }
 					}
 				}
-				KOS = { country_event = italy.11 }
+				KOS = { country_event = italy_md.11 }
 			}
 		#	if = {
 		#		limit = {
@@ -4383,7 +4402,7 @@ focus_tree = {
 		#				NOT = { is_in_faction_with = VOJ }
 		#		}
 		#		}
-		#		VOJ = { country_event = italy.11 }
+		#		VOJ = { country_event = italy_md.11 }
 		#	}
 			if = {
 				limit = {
@@ -4396,7 +4415,7 @@ focus_tree = {
 						NOT = { is_in_faction_with = AUS }
 					}
 				}
-				AUS = { country_event = italy.11 }
+				AUS = { country_event = italy_md.11 }
 			}
 		}
 	}
@@ -4480,7 +4499,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-				ALB = { country_event = italy.3 }
+				ALB = { country_event = italy_md.3 }
 		}
 	}
 	
@@ -4957,7 +4976,7 @@ focus_tree = {
 					}
 					has_idea = EU_member
 				}
-				country_event = { id = italy.13 } 
+				country_event = { id = italy_md.13 } 
 			}
 		}
 		
@@ -5206,7 +5225,7 @@ focus_tree = {
 					NOT = { tag = ITA }
 					has_idea = EU_member
 				}
-				country_event = { id = italy.14 }
+				country_event = { id = italy_md.14 }
 			}
 		}
 		
@@ -5517,7 +5536,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			country_event = italy.19
+			country_event = italy_md.19
 		}
 	}
 	
@@ -5533,7 +5552,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			country_event = italy.22
+			country_event = italy_md.22
 		}
 	}
 	
@@ -5550,7 +5569,7 @@ focus_tree = {
 		
 		completion_reward = {
 			remove_ideas = ITA_corruption
-			country_event = italy.26
+			country_event = italy_md.26
 		}
 	}
 	
@@ -5609,7 +5628,7 @@ focus_tree = {
 					NOT = { has_government = communism }
 					is_neighbor_of = ITA
 				}
-				country_event = { id = italy.23 }
+				country_event = { id = italy_md.23 }
 			}
 		}
 	}
@@ -5807,7 +5826,7 @@ focus_tree = {
 						NOT = { tag = ITA }
 						capital_scope = { is_on_continent = europe }	
 					}
-					country_event = italy.27
+					country_event = italy_md.27
 				}
 			}	
 			if = {
@@ -5817,7 +5836,7 @@ focus_tree = {
 						NOT = { tag = ITA }
 						capital_scope = { is_on_continent = europe }	
 					}
-					country_event = italy.27
+					country_event = italy_md.27
 				}
 			}	
 		}
