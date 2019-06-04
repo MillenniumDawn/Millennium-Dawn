@@ -326,22 +326,22 @@ country_event = {
 	option = {
 		name = italy_md.10.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.10.o1 executed"
-		add_opinion_modifier = {
-			target = EGY
-			modifier = ITA_refused_oil_investments_africa
-		}
-		add_state_claim = 552
-		add_state_claim = 452
-		add_state_claim = 447
-	  	add_state_claim = 813
-		add_state_claim = 453
-		add_state_claim = 446
-		add_state_claim = 457
-		add_state_claim = 456
-		add_state_claim = 798
-		create_wargoal = {
-			type = annex_everything
-			target = EGY
+		if = {
+			limit = { country_exists = EGY }	
+			every_state = {
+				limit = { 
+					is_core_of = EGY
+				}
+				add_claim_by = ROOT
+			}	
+			create_wargoal = {
+				type = annex_everything
+				target = EGY
+			}
+			add_opinion_modifier = {
+				target = EGY
+				modifier = ITA_refused_oil_investments_africa
+			}
 		}
 	}
 }
@@ -367,6 +367,57 @@ country_event = {
 				NOT = { has_war_with = ITA }
 			}
 			modifier = {
+				factor = 45
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = ITA } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.2 }
+			}
+			modifier = {
+				factor = 50
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = ITA } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.4 }
+			}
+			modifier = {
+				factor = 80
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = ITA } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.8 }
+			}
+			modifier = {
 				factor = 0
 				is_in_faction = yes
 			}
@@ -379,6 +430,28 @@ country_event = {
 		ITA = { country_event = diplomatic_response.2 }
 		ai_chance = {
 			factor = 60
+			modifier = { 
+				factor = 100
+				has_war_with = ITA
+				is_ai = yes
+			}
+			modifier = { 
+				factor = 75
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = ITA } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx < 0.2 }
+			}
 		}
 	}
 }
@@ -668,7 +741,8 @@ country_event = {
 	option = {
 		name = italy_md.23.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.23.o1 executed"
-		add_to_variable = { party_pop_array^6 = 0.05 }
+		add_to_variable = { party_pop_array^6 = 0.10 }
+		custom_effect_tooltip = ITA_reactionary_party_tt
 	}
 }
 #Salerno-to-Reggio Calabria Motorway
