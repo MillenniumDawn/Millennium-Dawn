@@ -32,6 +32,23 @@
 on_actions = {
 	# country
 
+	#Timed pulses, four year and thri yearly pulses copied from EUIV, weekly and monthly from the top of my head, doesn't given an error at least?
+	on_daily = {
+	
+	}
+	
+	on_weekly = {
+	
+	}
+	
+	on_monthly = {
+	
+	}
+	
+	on_thri_yearly_pulse = {
+	
+	}
+	
 	on_bi_yearly_pulse = {
 		effect = {
 			every_country = { 
@@ -39,6 +56,17 @@ on_actions = {
 				2017_state_init_setup = yes #updates all global state categories
 			}
 		}
+		#Economic events
+		random_events = {
+			100 = econvent.1 #Central Bank warns of housing bubble & possible crisis
+			100 = econvent.5 #Slowdown in consumption as pessimism and unemployment on the rise
+			100 = econvent.6 #Lower demand for our goods in int. markets
+			100 = econvent.7 #Drought!
+		}
+	}
+	
+	on_four_year_pulse = {
+	
 	}
 
 	on_five_year_pulse = {
@@ -183,7 +211,45 @@ on_actions = {
 	on_capitulation = {
 		effect = {
 			news_event = { id = country_capitulated.0 days = 1 }
+			
+			#Special capitulation for ISIS
+			if = {
+				limit = { 
+					original_tag = ISI
+					has_start_date > 2016.1.1
+				}
+				# Give Iraqi states first Kurdistan if they've capture them, otherwise return to Iraq
+				every_owned_state = {
+					limit = { 
+						is_core_of = IRQ
+						is_controlled_by = KUR
+					}
+					KUR = {
+						set_state_owner = PREV
+					}
+				}
+				every_owned_state = {
+					limit = { 
+						is_core_of = IRQ
+					}
+					IRQ = {
+						set_state_owner = PREV
+					}
+				}
+				# In Syria, give every non-capital state to its current controller
+				every_owned_state = {
+					limit = { 
+						is_core_of = SYR
+					}
+					controller = {
+						transfer_state = PREV
+					}
+				}
+				# Rest to the winner
+				FROM = { annex_country = { target = ISI } }
+			}			
 		}
+		
 	}
 
 	#FROM is war target
@@ -244,6 +310,10 @@ on_actions = {
 			#Starts Anti-Bully War
 			if = {
 				limit = {
+					has_game_rule = {
+						rule = rule_disable_anti_bully
+						option = no  
+					}
 					FROM = { is_major = no }
 					FROM = { ic_ratio = { tag = ROOT ratio < 0.4 } }
 					not = { has_government = fascism }
@@ -634,7 +704,7 @@ on_actions = {
 			AFG = {
 				if = {
 					limit = { has_start_date < 2001.1.1 }
-					country_event = { id = Afghanistan.3 days = 270 random = 1440 }
+					country_event = { id = Afghanistan.3 days = 635 random = 1440 }
 				}
 			}
 			
