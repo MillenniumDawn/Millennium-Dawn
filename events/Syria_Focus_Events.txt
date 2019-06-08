@@ -367,8 +367,11 @@ country_event = {
 		name = SyriaFocus.9.a
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.9.a executed"
 		ai_chance = { factor = 100 }
-		kill_country_leader = yes
-		set_global_flag = Al_Assad_Dead
+		if = {
+			limit = { has_country_leader = { name = "Bashar Al Assad" ruling_only = yes } }
+			kill_country_leader = yes
+			set_global_flag = Al_Assad_Dead
+		}
 		if = {
 			limit = { 
 				nationalist > 40
@@ -726,17 +729,37 @@ country_event = {
 		name = SyriaFocus.16.a
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.16.a executed"		#Agree to their request
 		ai_chance = { factor = 90 }
-		set_autonomy = {
-			target = SYR
-			autonomy_state = autonomy_associated_state
+		FROM = {
+			hidden_effect = {
+				set_temp_variable = { influence_gain = 20 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = ROOT }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+						add_to_array = { influence_array = ROOT.id }
+						add_to_array = { influence_array_val = influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+			}
 		}
-		hidden_effect = { SYR = { add_ideas = subject_neutral } } 
+		custom_effect_tooltip = TT_SYR_GAIN_20_INFLUENCE
 		SYR = { set_country_flag = SYR_Post_War_Tree_Finished }
 		SYR = { country_event = SyriaFocus.17 }
+		give_guarantee = FROM
 	}
 	option = {
 		name = SyriaFocus.16.b
-		log = "[GetDateText]: [This.GetName]: SyriaFocus.16.b executed"		#Agree to their request
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.16.b executed"		#Don't agree to their request
 		ai_chance = { factor = 10 }
 		SYR = { set_country_flag = SYR_Request_Rejected }
 		SYR = { country_event = SyriaFocus.18 }
@@ -763,6 +786,7 @@ country_event = {
 			}
 			remove_ideas = iranian_aid 
 		}
+		custom_effect_tooltip = TT_SYR_FROM_GAIN_20_INFLUENCE
 	}
 }
 
@@ -786,6 +810,11 @@ country_event = {
 				has_idea = iranian_aid 
 			}
 			remove_ideas = iranian_aid 
+		}
+		custom_effect_tooltip = TT_SYR_INCREASE_INDEPENDENCE_20
+		hidden_effect = {
+			add_to_variable = { domestic_influence_amount = 20 }
+			recalculate_influence = yes
 		}
 	}
 }
