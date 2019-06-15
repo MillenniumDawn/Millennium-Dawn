@@ -28,3 +28,99 @@ country_event = {	#Invitation to French Alliance
 		}
 	}
 }
+
+country_event = { #Euro Investments
+	id = france.1
+	title = france.1.t
+	desc = france.1.d
+	picture = unknown
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = france.1.a 
+		log = "[GetDateText]: [This.GetName]: france.1.a executed"
+		FRA = { 
+			country_event = france.2 
+			hidden_effect = {
+				add_to_variable = { int_investments = 20 }
+				subtract_from_variable = { treasury = 20 }
+			}
+		}
+		random_owned_state = { 
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
+			}
+		}
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 20 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = FRA }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = FRA.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		custom_effect_tooltip = FRA_euro_investments_accept_TT
+		ai_chance = {
+			base = 60
+		}
+	}
+	
+	option = {
+		name = france.1.b
+		log = "[GetDateText]: [This.GetName]: france.1.b executed"
+		FRA = { country_event = france.3 }
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+country_event = { #[Root.GetName] accepts!
+	id = france.2
+	title = france.2.t
+	desc = france.2.d  
+	picture = unknown
+
+	is_triggered_only = yes
+	
+	option = {
+		name = france.2.a
+		custom_effect_tooltip = FRA_euro_investments_cost_TT
+		log = "[GetDateText]: [This.GetName]: france.2.a executed"
+	}
+}
+
+country_event = { #[Root.GetName] refuses
+	id = france.3
+	title = france.3.t
+	desc = france.3.d 
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = france.3.a 
+		log = "[GetDateText]: [This.GetName]: france.2.a executed"
+	}
+}
