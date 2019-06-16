@@ -33,7 +33,7 @@ country_event = { #Euro Investments
 	id = france_md.1
 	title = france_md.1.t
 	desc = france_md.1.d
-	picture = unknown
+	picture = GFX_euro_investments
 	
 	is_triggered_only = yes
 	
@@ -46,6 +46,7 @@ country_event = { #Euro Investments
 				add_to_variable = { int_investments = 20 }
 				subtract_from_variable = { treasury = 20 }
 			}
+			set_country_flag = FRA_euro_investments_1
 		}
 		random_owned_state = { 
 			add_extra_state_shared_building_slots = 2
@@ -101,13 +102,22 @@ country_event = { #[Root.GetName] accepts!
 	id = france_md.2
 	title = france_md.2.t
 	desc = france_md.2.d  
-	picture = unknown
+	picture = GFX_trade_agreement
 
 	is_triggered_only = yes
 	
 	option = {
 		name = france_md.2.a
-		custom_effect_tooltip = FRA_euro_investments_cost_TT
+		if = {	
+			limit = { has_country_flag = FRA_euro_investments_1 } 
+			custom_effect_tooltip = FRA_euro_investments_cost_TT
+			clr_country_flag = FRA_euro_investments_1
+		}
+		if = {
+			limit = { has_country_flag = FRA_europe_investments_2 } 
+			custom_effect_tooltip = FRA_euro_investments_2_cost_TT
+			clr_country_flag = FRA_europe_investments_2
+		}
 		log = "[GetDateText]: [This.GetName]: france_md.2.a executed"
 	}
 }
@@ -126,20 +136,62 @@ country_event = { #[Root.GetName] refuses
 	}
 }
 
-#country_event = { #Invesments in Eastern Europe
-	#id = france_md.4
-	#title = france_md.4.t
-	#desc = france_md.4.d 
-	#picture = unknown
+country_event = { #Investments in Eastern Europe
+	id = france_md.4
+	title = france_md.4.t
+	desc = france_md.4.d 
+	picture = GFX_euro_investments
 	
-	#option = {
-		#name = france_md.4.a
-		#log = "[GetDateText]: [This.GetName]: france_md.2.a executed"
-		#random_owned_state = {
-		
-		#}
-	#}
+	option = {
+		name = france_md.4.a
+		log = "[GetDateText]: [This.GetName]: france_md.4.a executed"
+		random_owned_state = {
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+		FRA = {
+			subtract_from_variable = { treasury = 5.0 }
+			add_to_variable = { int_investments = 5.0 }
+			country_event = { france_md.2 }
+			set_country_flag = FRA_europe_investments_2
+		}
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 5 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = FRA }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = FRA.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		custom_effect_tooltip = FRA_euro_investments_accept_TT
+		ai_chance = {
+			base = 60
+		}
+	}
 	
-	#option
+	option = {
+		name = france_md.4.b
+		log = "[GetDateText]: [This.GetName]: france_md.4.b executed"
+		FRA = { country_event = france_md.3 }
+		ai_chance = {
+			base = 40
+		}
+	}
 
-#}
+}
