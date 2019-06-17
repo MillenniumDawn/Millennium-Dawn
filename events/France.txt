@@ -102,7 +102,7 @@ country_event = { #[Root.GetName] accepts!
 	id = france_md.2
 	title = france_md.2.t
 	desc = france_md.2.d  
-	picture = GFX_trade_agreement
+	picture = GFX_political_deal
 
 	is_triggered_only = yes
 	
@@ -142,6 +142,8 @@ country_event = { #Investments in Eastern Europe
 	desc = france_md.4.d 
 	picture = GFX_euro_investments
 	
+	is_triggered_only = yes
+	
 	option = {
 		name = france_md.4.a
 		log = "[GetDateText]: [This.GetName]: france_md.4.a executed"
@@ -155,7 +157,7 @@ country_event = { #Investments in Eastern Europe
 		FRA = {
 			subtract_from_variable = { treasury = 5.0 }
 			add_to_variable = { int_investments = 5.0 }
-			country_event = { france_md.2 }
+			country_event = france_md.2 
 			set_country_flag = FRA_europe_investments_2
 		}
 		hidden_effect = {
@@ -193,5 +195,71 @@ country_event = { #Investments in Eastern Europe
 			base = 40
 		}
 	}
+}
 
+country_event = { #The Paris Convention
+	id = france_md.5
+	title = france_md.5.t 
+	desc = france_md.5.d 
+	picture = GFX_french_generic
+	
+	is_triggered_only = yes
+	
+	
+	option = {
+		name = france_md.5.a
+		log = "[GetDateText]: [This.GetName]: france_md.5.a executed"
+		FRA = {
+			add_opinion_modifier = { target = ROOT modifier = supported_the_unification }
+			country_event = france_md.6
+		}
+		set_country_flag = FRA_supported_the_unification
+		add_political_power = 50
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 15 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = FRA }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = FRA.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				is_historical_focus_on = no
+				factor = 60
+			}	
+		}
+	}
+	
+	option = {
+		name = france_md.5.a
+		log = "[GetDateText]: [This.GetName]: france_md.5.a executed"
+		FRA = { 
+			add_opinion_modifier = { target = ROOT modifier = fled_the_union } 
+			country_event = france_md.7
+		} 
+		set_country_flag = FRA_fled_the_union
+		remove_ideas = EU_member
+		ai_chance = {
+			base = 60
+			modifier = {
+				is_historical_focus_on = no
+				factor = 40 
+			}	
+		}
+	}
 }
