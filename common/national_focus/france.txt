@@ -1859,6 +1859,7 @@ focus_tree = {
 				remove_idea = FRA_idea_communist_revolution1
 				add_idea = FRA_idea_communist_revolution2
 			}
+			country_event = france_md.10
 		}
 		
 		ai_will_do = {
@@ -2290,7 +2291,7 @@ focus_tree = {
 		prerequisite = { focus = FRA_censorship_in_education }
 		mutually_exclusive = { } 
 		available = { 
-			nationalist > 0.30
+			nationalist > 0.35
 		}
 		historical_ai = { }
 		select_effect = { }
@@ -2303,21 +2304,41 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			set_politics = {
-				ruling_party = nationalist
-				elections_allowed = no
+			if = { 
+				limit = { 
+					OR = {
+						NOT = { has_country_flag = FRA_monarch_support } 
+						NOT = { has_country_flag = FRA_house_of_bonaparte_crowned }
+					}
+				}
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 20 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+				}
+				add_to_array = { party_pop_array^20 = 0.10 }
+				recalculate_party = yes
+				custom_effect_tooltip = FRA_nationalist_rise_and_seize_TT
 			}
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 20 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
+			if = { 
+				limit = { 
+					OR = {
+						has_country_flag = FRA_monarch_support
+						has_country_flag = FRA_house_of_bonaparte_crowned
+					}
+				}
+				add_to_array = { party_pop_array^20 = 0.10 }
+				recalculate_party = yes
+				custom_effect_tooltip = FRA_nationalist_rise_10_TT
+				add_political_power = 50
 			}
-			add_to_array = { party_pop_array^4 = 0.10 }
-			recalculate_party = yes
-			custom_effect_tooltip = FRA_nationalist_rise_and_seize_TT
 		}
 		
 		ai_will_do = {
@@ -2355,6 +2376,11 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			add_ideas = FRA_napoleon_dream
+			if = {
+				limit = { has_country_flag = FRA_house_of_bonaparte_crowned }
+				add_ideas = FRA_restoration_society
+			}
 		}
 		
 		ai_will_do = {
@@ -2386,6 +2412,10 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			every_neighbor_country = {
+				add_opinion_modifier = { target = ROOT modifier = european_betrayal }
+			}
+			add_war_support = 0.025
 		}
 		
 		ai_will_do = {
@@ -2417,6 +2447,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			add_ideas = FRA_idea_napoleon_guard
 		}
 		
 		ai_will_do = {
@@ -2448,6 +2479,12 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			every_country = {
+				limit = { has_idea = EU_member }
+				add_to_array = { party_pop_array^20 = 0.10 }
+				recalculate_party = yes
+				custom_effect_tooltip = FRA_nationalist_rise_10_TT
+			}
 		}
 		
 		ai_will_do = {
@@ -2481,6 +2518,8 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			add_ideas = FRA_idea_new_empire
+			country_event = france_md.10
 		}
 		
 		ai_will_do = {
@@ -2505,6 +2544,11 @@ focus_tree = {
 		
 		completion_reward = {
 			add_stability = 0.05
+			add_tech_bonus = {
+				bonus = FRA_industry
+				uses = 2
+				category = industry
+			}
 		}
 		
 		ai_will_do = {
@@ -2583,6 +2627,8 @@ focus_tree = {
 				amount = 6
 				state = 60
 			}
+			subtract_from_variable = { treasury = 6 }
+			custom_effect_tooltip = FRA_6_billion_TT
 		}
 		
 		ai_will_do = {
@@ -2687,7 +2733,8 @@ focus_tree = {
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 2
 			}
-			
+			subtract_from_variable = { treasury = 5 }
+			custom_effect_tooltip = FRA_5_billion_TT
 		}
 		
 		ai_will_do = {
@@ -5472,6 +5519,12 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			if = {
+				limit = { has_country_flag = FRA_peaceful_rise_flag }
+			}
+			if = {
+				limit = { has_country_flag = FRA_aggresive_expanisionism_flag }
+			}
 		}
 		
 		ai_will_do = {
@@ -5536,7 +5589,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			
+			add_political_power = 25
 		}
 		
 		ai_will_do = {
@@ -5568,6 +5621,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			add_political_power = 25
 		}
 		
 		ai_will_do = {
@@ -5599,6 +5653,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			add_political_power = 25
 		}
 		
 		ai_will_do = {
@@ -5630,6 +5685,80 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			MOR = { 
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 25 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = FRA_gain_influence_TT
+			}
+			ALG = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 25 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = FRA_gain_influence_TT
+			}
+			
+			TUN = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 25 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = FRA_gain_influence_TT
+			}
+		
 		}
 		
 		ai_will_do = {
@@ -5661,6 +5790,30 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			SEN = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 25 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = FRA_gain_influence_TT
+			}
 		}
 		
 		ai_will_do = {
@@ -5692,6 +5845,30 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			LEB = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 25 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = FRA_gain_influence_TT
+			}
 		}
 		
 		ai_will_do = {
@@ -5723,6 +5900,30 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			VIE = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 25 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = FRA_gain_influence_TT
+			}
 		}
 		
 		ai_will_do = {
@@ -5754,6 +5955,54 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			LAO = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 25 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = FRA_gain_influence_TT
+			}
+			VIE = { 
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 25 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = FRA_gain_influence_TT
+			}
 		}
 		
 		ai_will_do = {
@@ -5785,6 +6034,30 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			CDI = { 
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 25 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = FRA_gain_influence_TT
+			}
 		}
 		
 		ai_will_do = {
@@ -5816,6 +6089,30 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			MAD = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 25 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = FRA_gain_influence_TT
+			}
 		}
 		
 		ai_will_do = {
@@ -5847,6 +6144,30 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			SYR = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 25 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = FRA_gain_influence_TT
+			}
 		}
 		
 		ai_will_do = {
@@ -5911,6 +6232,8 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
+			add_political_power = 75 
+			##Subject to change
 		}
 		
 		ai_will_do = {
@@ -5942,7 +6265,8 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			
+			add_political_power = 75
+			##Subject to change
 		}
 		
 		ai_will_do = {
