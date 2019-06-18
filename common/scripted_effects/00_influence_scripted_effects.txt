@@ -127,16 +127,16 @@ hostile_influence_target = {
 
 spread_influence = {
 			
-	ROOT = { add_political_power = -80 }
+	PREV = { add_political_power = -80 }
 	
-	set_temp_variable = { influence_gain = ROOT.influence_multiplier } #from global rank idea
+	set_temp_variable = { influence_gain = PREV.influence_multiplier } #from global rank idea
 	multiply_temp_variable = { influence_gain = 10 } #base gain
 	for_loop_effect = {
 		end = influence_array^num
 		value = v
 		if = {
 			limit = {
-				check_variable = { influence_array^v = ROOT }
+				check_variable = { influence_array^v = PREV }
 			}
 			add_to_variable = { influence_array_val^v = influence_gain }
 			set_country_flag = found
@@ -144,7 +144,7 @@ spread_influence = {
 	}
 	if = {
 		limit = { NOT = { has_country_flag = found } }
-			add_to_array = { influence_array = ROOT.id }
+			add_to_array = { influence_array = PREV.id }
 			add_to_array = { influence_array_val = influence_gain }
 	}
 	clr_country_flag = found
@@ -168,7 +168,7 @@ make_puppet_action = {
 		}
 	}
 	
-	ROOT = {
+	PREV = {
 		set_autonomy = {
 			target = PREV
 			autonomy_state = autonomy_satellite_state
@@ -181,7 +181,7 @@ make_puppet_action = {
 	}
 	every_neighbor_country = {
 		add_opinion_modifier = {
-			target = ROOT
+			target = PREV
 			modifier = puppeted_neighbor
 		}
 	}
@@ -204,7 +204,7 @@ economic_exploitation_action = {
 		value = v
 		if = {
 			limit = {
-				check_variable = { influence_array^v = ROOT }
+				check_variable = { influence_array^v = PREV }
 			}
 			subtract_from_variable = { influence_array_val^v = influence_reduce }
 		}
@@ -213,12 +213,12 @@ economic_exploitation_action = {
 	
 	#opinions
 	add_opinion_modifier = {
-		target = ROOT
+		target = PREV
 		modifier = exploited_us
 	}
 	every_neighbor_country = {
 		add_opinion_modifier = {
-			target = ROOT
+			target = PREV
 			modifier = exploited_neighbor
 		}
 	}
@@ -229,7 +229,7 @@ manipulate_politics_action = {
 	#Add +5 to our outlook
 	if = {
 		limit = {
-			ROOT = { has_government = fascism }
+			PREV = { has_government = fascism }
 		}
 		add_popularity = {
 			ideology = fascism
@@ -238,7 +238,7 @@ manipulate_politics_action = {
 	}
 	if = {
 		limit = {
-			ROOT = { has_government = neutrality }
+			PREV = { has_government = neutrality }
 		}
 		add_popularity = {
 			ideology = neutrality
@@ -247,7 +247,7 @@ manipulate_politics_action = {
 	}
 	if = {
 		limit = {
-			ROOT = { has_government = communism }
+			PREV = { has_government = communism }
 		}
 		add_popularity = {
 			ideology = communism
@@ -256,7 +256,7 @@ manipulate_politics_action = {
 	}
 	if = {
 		limit = {
-			ROOT = { has_government = nationalist }
+			PREV = { has_government = nationalist }
 		}
 		add_popularity = {
 			ideology = nationalist
@@ -265,7 +265,7 @@ manipulate_politics_action = {
 	}
 	if = {
 		limit = {
-			ROOT = { has_government = democratic }
+			PREV = { has_government = democratic }
 		}
 		add_popularity = {
 			ideology = democratic
@@ -274,12 +274,11 @@ manipulate_politics_action = {
 	}
 	
 	#add +5 to our party
-	ROOT = {
-		for_each_loop = {
-			array = ruling_party
-			value = v
-			add_to_variable = { PREV.party_pop_array^v = 0.05 }
-		}
+	
+	for_each_loop = {
+		array = PREV.ruling_party
+		value = v
+		add_to_variable = { party_pop_array^v = 0.05 }
 	}
 	
 	#remove 10% influence
@@ -290,7 +289,7 @@ manipulate_politics_action = {
 		value = v
 		if = {
 			limit = {
-				check_variable = { influence_array^v = ROOT }
+				check_variable = { influence_array^v = PREV }
 			}
 			subtract_from_variable = { influence_array_val^v = influence_reduce }
 		}
@@ -300,10 +299,10 @@ manipulate_politics_action = {
 	#reduce relations if different gov
 	if = {
 		limit = {
-			NOT = { is_same_government = yes }
+			NOT = { is_same_government_PREV = yes }
 		}
 		add_opinion_modifier = {
-				target = ROOT
+				target = PREV
 				modifier = supported_opposition
 		}
 	}
