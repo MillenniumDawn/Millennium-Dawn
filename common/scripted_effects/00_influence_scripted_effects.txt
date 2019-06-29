@@ -1,278 +1,309 @@
 #Written by Killerrabbit and SWF541
 
-#Script to run after any change to influence
+#for not oversizing the array for having both 2000 and 2017 values
+init_influence = {
+	clear_array = influence_array_val
+	clear_array = influence_array_calc
+	clear_array = influence_array
+}
+
+startup_influence = {
+	sort_influence = yes #the rest is on_startup
+}
+
 recalculate_influence = {
-	influence_refresh = yes
-	set_variable = { found_num_vars = 0 } #always have this
-	if = { limit = { NOT = { check_variable = { found_num_vars = total_influencers } } }
-		add_to_variable = { found_num_vars = 1 }
-		find_largest_influence = yes #returns the largest not found yet 1
-	}	
-	if = { limit = { NOT = { check_variable = { found_num_vars = total_influencers } } }
-		add_to_variable = { found_num_vars = 1 }
-		find_largest_influence = yes #returns the largest not found yet	2
-	}	
-	if = { limit = { NOT = { check_variable = { found_num_vars = total_influencers } } }
-		add_to_variable = { found_num_vars = 1 }
-		find_largest_influence = yes #returns the largest not found yet	3
+	hidden_effect = {
+		sort_influence = yes
+		calculate_influence_percentage = yes
 	}
-	if = { limit = { NOT = { check_variable = { found_num_vars = total_influencers } } }
-		add_to_variable = { found_num_vars = 1 }
-		find_largest_influence = yes #returns the largest not found yet	4
-	}
-	if = { limit = { NOT = { check_variable = { found_num_vars = total_influencers } } }
-		add_to_variable = { found_num_vars = 1 }
-		find_largest_influence = yes #returns the largest not found yet	5
-	}
-	if = { limit = { NOT = { check_variable = { found_num_vars = total_influencers } } }
-		add_to_variable = { found_num_vars = 1 }
-		find_largest_influence = yes #returns the largest not found yet	6
-	}
-	if = { limit = { NOT = { check_variable = { found_num_vars = total_influencers } } }
-		add_to_variable = { found_num_vars = 1 }
-		find_largest_influence = yes #returns the largest not found yet	7
-	}
-	check_influence_cleanup = yes
 }
 
-influence_refresh = {
-
-	#Set Variables for Calc Variant
-	if = { limit = { has_variable = influencer1 }
-		set_variable = { influencer1_amount_calc = influencer1_amount }
+sort_influence = {
+	resize_temp_array = { 
+		array = influence_array_val_temp #values
+		size = influence_array_val^num
 	}
-	if = { limit = { has_variable = influencer2 }
-	set_variable = { influencer2_amount_calc = influencer2_amount }
+	resize_temp_array = { 
+		array = influence_array_temp #tags
+		size = influence_array_val^num
 	}
-	if = { limit = { has_variable = influencer3 }
-	set_variable = { influencer3_amount_calc = influencer3_amount }
+	for_loop_effect = {
+		end = influence_array_val^num
+		value = v
+		find_highest_in_array = {
+			array = influence_array_val 
+			value = max
+			index = max_index
+		}
+		set_temp_variable = { influence_array_val_temp^v = max } #sets biggest at the earliest available position
+		set_temp_variable = { influence_array_temp^v = influence_array^max_index } #sets biggest TAG at the earliest available position
+		set_variable = { influence_array_val^max_index = -1 } #removes it from selection
 	}
-	if = { limit = { has_variable = influencer4 }
-	set_variable = { influencer4_amount_calc = influencer4_amount }
+	clear_array = influence_array_val
+	clear_array = influence_array_calc
+	clear_array = influence_array
+	set_variable = { influence_total = 0 }
+	#restores destroyed arrays in the above process
+	for_each_loop = {
+		array = influence_array_val_temp
+		add_to_array = { influence_array_val = v  }
+		add_to_array = { influence_array_calc = v }
+		add_to_variable = { influence_total = v }
 	}
-	if = { limit = { has_variable = influencer5 }
-	set_variable = { influencer5_amount_calc = influencer5_amount }
+	for_each_loop = {
+		array = influence_array_temp
+		add_to_array = { influence_array = v  }
 	}
-	if = { limit = { has_variable = influencer6 }
-	set_variable = { influencer6_amount_calc = influencer6_amount }
-	}
-	if = { limit = { has_variable = influencer7 }
-	set_variable = { influencer7_amount_calc = influencer7_amount }
-	}
+	clear_temp_array = influence_array_val_temp
+	clear_temp_array = influence_array_temp
 	set_variable = { domestic_influence_amount_calc = domestic_influence_amount }
-	set_variable = { influence_total = 0 } 
-	
-	
-	#Influence Total Addition Begins
-	add_to_variable = { influence_total = influencer1_amount_calc }
-	add_to_variable = { influence_total = influencer2_amount_calc }
-	add_to_variable = { influence_total = influencer3_amount_calc }
-	add_to_variable = { influence_total = influencer4_amount_calc }
-	add_to_variable = { influence_total = influencer5_amount_calc }
-	add_to_variable = { influence_total = influencer6_amount_calc }
-	add_to_variable = { influence_total = influencer7_amount_calc }
 	add_to_variable = { influence_total = domestic_influence_amount_calc }
-	#Total Established
 	
-	#Begin Division
-	set_variable = { total_influencers = 0 }
-	if = {
-		limit = { check_variable = { influencer1_amount_calc > 0.5 } }
-		divide_variable = { influencer1_amount_calc = influence_total }
-		add_to_variable = { total_influencers = 1 }
+	for_each_loop = {
+		array = influence_array_calc
+		round_variable = influence_array_calc^i
+		divide_variable = { influence_array_calc^i = influence_total }
+		clamp_variable = { var = influence_array_calc^i min = 0 max = 1 }
+		clamp_variable = { var = influence_array_val^i min = 0 max = influence_total }
 	}
-	if = {
-		limit = { check_variable = { influencer2_amount_calc > 0.5 } }
-		divide_variable = { influencer2_amount_calc = influence_total }
-		add_to_variable = { total_influencers = 1 }
-	}
-	if = {
-		limit = { check_variable = { influencer3_amount_calc > 0.5 } }
-		divide_variable = { influencer3_amount_calc = influence_total }
-		add_to_variable = { total_influencers = 1 }
-	}
-	if = {
-		limit = { check_variable = { influencer4_amount_calc > 0.5 } }
-		divide_variable = { influencer4_amount_calc = influence_total }
-		add_to_variable = { total_influencers = 1 }
-	}
-	if = {
-		limit = { check_variable = { influencer5_amount_calc > 0.5 } }
-		divide_variable = { influencer5_amount_calc = influence_total }
-		add_to_variable = { total_influencers = 1 }
-	}
-	if = {
-		limit = { check_variable = { influencer6_amount_calc > 0.5 } }
-		divide_variable = { influencer6_amount_calc = influence_total }
-		add_to_variable = { total_influencers = 1 }
-	}
-	if = {
-		limit = { check_variable = { influencer7_amount_calc > 0.5 } }
-		divide_variable = { influencer7_amount_calc = influence_total }
-		add_to_variable = { total_influencers = 1 }
-	}
+	
+	round_variable = domestic_influence_amount_calc
 	divide_variable = { domestic_influence_amount_calc = influence_total }
+	clamp_variable = { var = domestic_influence_amount_calc min = 0 max = 1 }
+	clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
+	
+	#hostile_influence_target = yes
 }
 
-establish_influencer_tag = {
-	if = { limit = { NOT = { has_variable = influencer1 } }
-		set_variable = { influencer1 = ROOT.id }
-	}
-	if = {
-		limit = {
-			NOT = {
-				has_variable = influencer2
-			}	
-		}
-		set_variable = { influencer2 = ROOT.id }
-		break = yes
-	}	
-	if = {
-		limit = {
-			NOT = {
-				has_variable = influencer3
-			}	
-		}
-		set_variable = { influencer3 = ROOT.id }
-		break = yes
-	}	
-	if = {
-		limit = {
-			NOT = {
-				has_variable = influencer4
-			}	
-		}
-		set_variable = { influencer4 = ROOT.id }
-		break = yes
-	}	
-	if = {
-		limit = {
-			NOT = {
-				has_variable = influencer5
-			}	
-		}
-		set_variable = { influencer5 = ROOT.id }
-		break = yes
-	}	
-	if = {
-		limit = {
-			NOT = {
-				has_variable = influencer6
-			}	
-		}
-		set_variable = { influencer6 = ROOT.id }
-		break = yes
-	}	
-	if = {
-		limit = {
-			NOT = {
-				has_variable = influencer7
-			}	
-		}
-		set_variable = { influencer7 = ROOT.id }
-		break = yes
-	}	
-}
+calculate_influence_percentage = {
 
-find_largest_influence = {
-	set_variable = { prevmax = 0 }
-	if = {
-		limit = { NOT = { has_country_flag = found_1 } check_variable = { influencer1_amount_calc > prevmax } }
-		set_variable = { prevmax = influencer1_amount_calc }
-		set_variable = { var_ID = 1 }
-	}	
-	if = {
-		limit = { NOT = { has_country_flag = found_2 } check_variable = { influencer2_amount_calc > prevmax } }
-		set_variable = { prevmax = influencer2_amount_calc } 
-		set_variable = { var_ID = 2 }
-	}
-	if = {
-		limit = { NOT = { has_country_flag = found_3 } check_variable = { influencer3_amount_calc > prevmax } }
-		set_variable = { prevmax = influencer3_amount_calc } 
-		set_variable = { var_ID = 3 }
-	}
-	if = {
-		limit = { NOT = { has_country_flag = found_4 } check_variable = { influencer4_amount_calc > prevmax } }
-		set_variable = { prevmax = influencer4_amount_calc } 
-		set_variable = { var_ID = 4 }
-	}
-	if = {
-		limit = { NOT = { has_country_flag = found_5 } check_variable = { influencer5_amount_calc > prevmax } }
-		set_variable = { prevmax = influencer5_amount_calc } 
-		set_variable = { var_ID = 5 }
-	}
-	if = {
-		limit = { NOT = { has_country_flag = found_6 } check_variable = { influencer6_amount_calc > prevmax } }
-		set_variable = { prevmax = influencer6_amount_calc } 
-		set_variable = { var_ID = 6 }
-	}
-	if = {
-		limit = { NOT = { has_country_flag = found_7 } check_variable = { influencer7_amount_calc > prevmax } }
-		set_variable = { prevmax = influencer7_amount_calc } 
-		set_variable = { var_ID = 7 }
+	set_temp_variable = { influence_democratic = 0 }
+	set_temp_variable = { influence_neutrality = 0 }
+	set_temp_variable = { influence_communism = 0 }
+	set_temp_variable = { influence_nationalist = 0 }
+	set_temp_variable = { influence_fascism = 0 }
+
+	for_loop_effect = {
+		end = influence_array_calc^num
+		if = {
+			limit = { var:influence_array^v = { has_government = democratic } }
+			add_to_temp_variable = { influence_democratic = influence_array_calc^v }	
+		}
+		else_if = {
+			limit = { var:influence_array^v = { has_government = neutrality } }
+			add_to_temp_variable = { influence_neutrality = influence_array_calc^v }	
+		}
+		else_if = {
+			limit = { var:influence_array^v = { has_government = communism } }
+			add_to_temp_variable = { influence_communism = influence_array_calc^v }	
+		}
+		else_if = {
+			limit = { var:influence_array^v = { has_government = nationalist } }
+			add_to_temp_variable = { influence_nationalist = influence_array_calc^v }	
+		}
+		else_if = {
+			limit = { var:influence_array^v = { has_government = fascism } }
+			add_to_temp_variable = { influence_fascism = influence_array_calc^v }	
+		}
 	}
 	
-	#Largest Found, now setting position
+	### see ideology_drifts.txt: ###
+	clear_influence_count_ideas = yes
+
+	if = { limit = { check_variable = { influence_democratic > 0.04 } } reset_democratic_influence_ideas = yes }
+	if = { limit = { check_variable = { influence_neutrality > 0.04 } } reset_neutrality_influence_ideas = yes }
+	if = { limit = { check_variable = { influence_communism > 0.04 } } reset_communism_influence_ideas = yes }
+	if = { limit = { check_variable = { influence_nationalist > 0.04 } } reset_nationalist_influence_ideas = yes }
+	if = { limit = { check_variable = { influence_fascism > 0.04 } } reset_fascism_influence_ideas = yes }
+}
+
+### Assign target for hostile influence ###
+
+hostile_influence_target = {
+	
+}
+
+### Actions ###
+
+spread_influence = {
 			
-	if = { limit = { check_variable = { var_ID = 1 } } 
-		set_country_flag = found_1
-		set_variable = { influencer1_position = found_num_vars }
-		
-		else = { if = { limit = { check_variable = { var_ID = 2 } }
-			set_country_flag = found_2
-			set_variable = { influencer2_position = found_num_vars }
+	PREV = { add_political_power = -80 }
 	
-			else = { if = { limit = { check_variable = { var_ID = 3 } } 
-				set_country_flag = found_3
-				set_variable = { influencer3_position = found_num_vars }
-
-				else = { if = { limit = { check_variable = { var_ID = 4 } }
-					set_country_flag = found_4
-					set_variable = { influencer4_position = found_num_vars }
-					
-					else = { if = { limit = { check_variable = { var_ID = 5 } }
-						set_country_flag = found_5
-						set_variable = { influencer5_position = found_num_vars }
-						
-						else = { if = { limit = { check_variable = { var_ID = 6 } }
-							set_country_flag = found_6
-							set_variable = { influencer6_position = found_num_vars }
-							
-							else = { if = { limit = { check_variable = { var_ID = 7 } }
-								set_country_flag = found_7
-								set_variable = { influencer7_position = found_num_vars }
-							} }
-						} }
-					} }
-				} }
-			} }
-		} }
+	set_temp_variable = { influence_gain = PREV.influence_multiplier } #from global rank idea
+	multiply_temp_variable = { influence_gain = 10 } #base gain
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
+		if = {
+			limit = {
+				check_variable = { influence_array^v = PREV }
+			}
+			add_to_variable = { influence_array_val^v = influence_gain }
+			set_country_flag = found
+		}
 	}
-	clear_variable = var_ID
-	clear_variable = prevmax
+	if = {
+		limit = { NOT = { has_country_flag = found } }
+			add_to_array = { influence_array = PREV.id }
+			add_to_array = { influence_array_val = influence_gain }
+	}
+	clr_country_flag = found
+	recalculate_influence = yes
 }
 
-check_influence_cleanup = {
+make_puppet_action = {
+	#eventually remove explotation idea (shouldn't double up)
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
 
-	if = { limit = { has_country_flag = found_1 } 
-		clr_country_flag = found_1
+		meta_effect = {
+			text = {
+				if = {
+					limit = { has_idea = [THISTAG]_tribute_idea }
+					remove_ideas = [THISTAG]_tribute_idea
+				}
+			}
+			THISTAG = "[?var:influence_array^v.GetTag]"
+		}
 	}
-	if = { limit = { has_country_flag = found_2 } 
-		clr_country_flag = found_2
+	
+	PREV = {
+		set_autonomy = {
+			target = PREV
+			autonomy_state = autonomy_satellite_state
+			freedom_level = 0.5
+		}
+		add_named_threat = {
+			threat = 5
+			name = created_puppet_loc
+		}
 	}
-	if = { limit = { has_country_flag = found_3 } 
-		clr_country_flag = found_3
+	every_neighbor_country = {
+		add_opinion_modifier = {
+			target = PREV
+			modifier = puppeted_neighbor
+		}
 	}
-	if = { limit = { has_country_flag = found_4 } 
-		clr_country_flag = found_4
+}
+
+economic_exploitation_action = {
+	
+	meta_effect = {
+		text = {
+			add_ideas = [ROOTTAG]_tribute_idea
+		}
+		ROOTTAG = "[?var:influence_array^0.GetTag]"
 	}
-	if = { limit = { has_country_flag = found_5 } 
-		clr_country_flag = found_5
+	
+	#remove 10% influence
+	set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+	multiply_temp_variable = { influence_reduce = 0.1 } #10%
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
+		if = {
+			limit = {
+				check_variable = { influence_array^v = PREV }
+			}
+			subtract_from_variable = { influence_array_val^v = influence_reduce }
+		}
 	}
-	if = { limit = { has_country_flag = found_6 } 
-		clr_country_flag = found_6
+	recalculate_influence = yes
+	
+	#opinions
+	add_opinion_modifier = {
+		target = PREV
+		modifier = exploited_us
 	}
-	if = { limit = { has_country_flag = found_7 } 
-		clr_country_flag = found_7
+	every_neighbor_country = {
+		add_opinion_modifier = {
+			target = PREV
+			modifier = exploited_neighbor
+		}
 	}
-}	
+}
+
+
+manipulate_politics_action = {				
+	#Add +5 to our outlook
+	if = {
+		limit = {
+			PREV = { has_government = fascism }
+		}
+		add_popularity = {
+			ideology = fascism
+			popularity = 0.05
+		}
+	}
+	if = {
+		limit = {
+			PREV = { has_government = neutrality }
+		}
+		add_popularity = {
+			ideology = neutrality
+			popularity = 0.05
+		}
+	}
+	if = {
+		limit = {
+			PREV = { has_government = communism }
+		}
+		add_popularity = {
+			ideology = communism
+			popularity = 0.05
+		}
+	}
+	if = {
+		limit = {
+			PREV = { has_government = nationalist }
+		}
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.05
+		}
+	}
+	if = {
+		limit = {
+			PREV = { has_government = democratic }
+		}
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.05
+		}
+	}
+	
+	#add +5 to our party
+	
+	for_each_loop = {
+		array = PREV.ruling_party
+		value = v
+		add_to_variable = { party_pop_array^v = 0.05 }
+	}
+	
+	#remove 10% influence
+	set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+	multiply_temp_variable = { influence_reduce = 0.1 } #10%
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
+		if = {
+			limit = {
+				check_variable = { influence_array^v = PREV }
+			}
+			subtract_from_variable = { influence_array_val^v = influence_reduce }
+		}
+	}
+	recalculate_influence = yes
+	
+	#reduce relations if different gov
+	if = {
+		limit = {
+			NOT = { is_same_government_PREV = yes }
+		}
+		add_opinion_modifier = {
+				target = PREV
+				modifier = supported_opposition
+		}
+	}
+}

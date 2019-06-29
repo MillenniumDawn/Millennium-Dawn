@@ -23,7 +23,7 @@
 	NDefines.NDiplomacy.IC_TO_EQUIPMENT_COUP_RATIO = 0.3
 	NDefines.NDiplomacy.VOLUNTEERS_RETURN_EQUIPMENT = 0.80
 	NDefines.NDiplomacy.VOLUNTEERS_TRANSFER_SPEED = 12
-	NDefines.NDiplomacy.VOLUNTEERS_DIVISIONS_REQUIRED = 10
+	NDefines.NDiplomacy.VOLUNTEERS_DIVISIONS_REQUIRED = 7
 	NDefines.NDiplomacy.TENSION_STATE_VALUE = 4
 	NDefines.NDiplomacy.TENSION_CIVIL_WAR_IMPACT = 0.4
 	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 15
@@ -31,7 +31,7 @@
 	NDefines.NDiplomacy.TENSION_ANNEX_NO_CLAIM = 3
 	NDefines.NDiplomacy.TENSION_ANNEX_CLAIM = 2
 	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.5
-	NDefines.NDiplomacy.TENSION_DECAY = 0.2
+	NDefines.NDiplomacy.TENSION_DECAY = 0.15
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_START_DATE = "2000.1.1.12"
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MONTHLY_FACTOR = 0
 	NDefines.NDiplomacy.TENSION_GUARANTEE = -10
@@ -49,7 +49,7 @@
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 1
 	NDefines.NCountry.VP_TO_SUPPLY_BASE = 0.1
 	NDefines.NCountry.VP_TO_SUPPLY_BONUS_CONVERSION = 0.2
-	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01
+	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01 --0.01
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_UNIT = 0.002
 	NDefines.NCountry.RESOURCE_LENDLEASE_PRIORITY = 2
@@ -71,6 +71,7 @@
 	NDefines.NCountry.SPECIAL_FORCES_CAP_BASE = 0.075
 	NDefines.NCountry.SPECIAL_FORCES_CAP_MIN = 6
 	NDefines.NCountry.DAYS_OF_WAR_BEFORE_SURRENDER = 7
+	NDefines.NCountry.BASE_MOBILIZATION_SPEED = 0.01 --0.01
 
 	NDefines.NProduction.MAX_EQUIPMENT_RESOURCES_NEED = 4
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
@@ -79,11 +80,11 @@
 	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 20
 	NDefines.NProduction.BASE_CONSUMER_GOODS_NEED_FACTOR = 0
 	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 0.01
-	NDefines.NProduction.ANNEX_STOCKPILES_RATIO = 0.5
+	NDefines.NProduction.ANNEX_STOCKPILES_RATIO = 0.4
 	NDefines.NProduction.ANNEX_FIELD_EQUIPMENT_RATIO = 0.1
 	NDefines.NProduction.INFRA_MAX_CONSTRUCTION_COST_EFFECT = 0.75
 	NDefines.NProduction.LICENSE_IC_COST_YEAR_INCREASE = 0
-	NDefines.NProduction.LICENSE_EQUIPMENT_BASE_SPEED = 0.5 -- -0.2 exp
+	NDefines.NProduction.LICENSE_EQUIPMENT_BASE_SPEED = -0.2 -- -0.2 exp
 	NDefines.NProduction.LICENSE_EQUIPMENT_TECH_SPEED_PER_YEAR = -0.01
 	NDefines.NProduction.LICENSE_EQUIPMENT_TECH_SPEED_MAX_YEARS = 40
 
@@ -92,7 +93,7 @@
 	NDefines.NTechnology.BASE_TECH_COST = 300
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
-	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 50
+	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 100
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 24
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
 	NDefines.NBuildings.BASE_FACTORY_REPAIR = 0.25
@@ -166,7 +167,7 @@
 	NDefines.NMilitary.FASTER_ORG_REGAIN_MULT = 0.40 -- 1.0
 	NDefines.NMilitary.SLOWER_ORG_REGAIN_MULT = -0.6 -- -0.5
 	NDefines.NMilitary.FRONT_MIN_PATH_TO_REDEPLOY = 3 -- 8
-	NDefines.NMilitary.BASE_CAPTURE_EQUIPMENT_RATIO = 0.05 -- 0.0
+	NDefines.NMilitary.BASE_CAPTURE_EQUIPMENT_RATIO = 0.0 -- 0.0
 	NDefines.NMilitary.GARRISON_ORDER_ARMY_CAP_FACTOR = 2.0 -- 3.0
 	NDefines.NMilitary.UNIT_LEADER_ASSIGN_TRAIT_COST = 25.0 -- 15
 	NDefines.NMilitary.BORDER_WAR_WIN_DAYS_AGAINST_EMPTY_OPPONENTS = 21 -- 14
@@ -313,18 +314,11 @@
 	NDefines.NAI.REQUEST_LEND_LEASE_STOCKPILE_RATIO_NAVAL = 0.3		-- 0.1
 	NDefines.NAI.INVASION_DISTANCE_RANDOMNESS = 200					-- 300
 	NDefines.NAI.NAVAL_TRANSFER_AIR_IMPORTANCE = 25.0				-- 0
-	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_ARMY = 7					-- 0
-	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_SHIP = 4					-- 20
-	NDefines.NAI.PORT_STRIKE_PLANES_PER_SHIP = 4						-- 10
-	NDefines.NAI.NAVAL_MIN_EXCORT_WINGS = 1							-- 0
+
 	NDefines.NAI.DEMOCRATIC_AI_FACTION_KICKING_PLAYER_THREAT_DIFFERENCE = 0.0 -- 6
-	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.1				-- 1.0
-	NDefines.NAI.LAND_DEFENSE_INTERSEPTORS_PER_BOMBERS = 0.2			-- 2.0
-	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 4					-- 20
-	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 50						-- 150
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_LAND_FORT_LEVEL = 7			-- 15
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5		-- 10
-	NDefines.NAI.STR_BOMB_MIN_ENEMY_FIGHTERS_IN_AREA = 24			-- 300
+	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.4
 	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 4					-- 20
 	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 4					-- 25
 	NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 4					-- 25
@@ -332,4 +326,37 @@
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
 	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 6				-- 3
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
+	NDefines.NAI.UEL_CONSUMPTION_MULT_FOR_FUEL_SAVING_MODE = 1.0			-- fuel consumptions will be limited by this ratio in fuel saving mode
+	NDefines.NAI.FUEL_CONSUMPTION_MULT_REGULAR_FUEL_MODE = 2.0				-- fuel consumptions will be limited by this ratio in regular fuel mode
+	NDefines.NAI.FUEL_CONSUMPTION_MULT_AGRESSIVE_FUEL_MODE = 5.0				-- fuel consumptions will be limited by this ratio in aggressive fuel usage mode
+	NDefines.NAI.AIR_SUPERIORITY_FACTOR = 2.7
+	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE = 1				-- countries will enter fuel saving mode if they will be out of fuel in this number of days and their fuel ratio is below next define
+	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE_FUEL_RATIO = 0.01
+	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0.01 					-- countries will exit fuel saving mode if they have more fuel ratio than this
+	NDefines.NAI.LAND_COMBAT_CAS_WINGS_PER_ENEMY_ARMY_LIMIT = 5	-- Limit of CAS wings requested by enemy armies
+	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- Amount of CAS planes requested per enemy army
+	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 50
+	--`NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 5
+	NDefines.NAI.LLAND_COMBAT_MIN_EXCORT_WINGS = 2
+	NDefines.NAI.MIN_WANTED_MAX_FUEL = 0.1	
+	--NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 10.0
+	NDefines.NAI.STR_BOMB_MIN_EXCORT_WINGS = 1
+	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
+	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
+	--NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 10						-- base amount of fuel gained hourly per excess oil
+	--NDefines.NCountry.BASE_FUEL_GAIN = 3.0							-- base amount of fuel gained hourly, independent of excess oil
+	NDefines.NCountry.BASE_FUEL_CAPACITY = 500000
+	NDefines.NAI.LAND_COMBAT_OUR_ARMIES_AIR_IMPORTANCE = 100
+	NDefines.NAI.LAND_COMBAT_OUR_COMBATS_AIR_IMPORTANCE = 200		-- Strategic importance of our armies in the combats
+	NDefines.NAI.LAND_COMBAT_FRIEND_ARMIES_AIR_IMPORTANCE = 25
 	
+	NDefines.NAI.NUM_AI_MESSAGES = 50
+	NDefines.NAI.AIR_ACTUAL_FUEL_USAGE_WEIGHT_ON_OIL_REQUEST = 0.05
+	NDefines.NAI.LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 0.5
+	NDefines.NAI.LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 0.7
+	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.2
+	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
+	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of pirority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
+		'arms_factory',
+		'industrial_complex',
+	}

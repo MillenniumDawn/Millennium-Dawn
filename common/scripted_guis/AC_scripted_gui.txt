@@ -1,6 +1,27 @@
 ############################################################################################################
 #	AC mod - scripted gui
 ############################################################################################################
+#Written by hiddengearz
+#Inspired by the original Allied Construction Project https://steamcommunity.com/sharedfiles/filedetails/?id=1368202826
+#This reworked system allows you to have 5 of each project active per country.
+#So you can have 5 CIC projects, 5 INF projects, 5 MIC projects etc in every country in the game
+#There are 8 project types * 5 of each allowed per country = 40 investments possibile in one country * 210 countries the player can invest in = 8400 possibile investments for the player
+#Now if the AI also does the same that's 210 * 8400 = 1,764,000 possibile investments possibile
+
+
+#Root is investor
+#prev is state
+#Prev = { controller = { is country being invested in
+
+#AC_build_amount determines how many buildings to build
+#AC_building_type_selected = 1 = Infastructure
+#AC_building_type_selected = 2 = Airbase
+#AC_building_type_selected = 3 = Anti Air
+#AC_building_type_selected = 4 = Radar
+#AC_building_type_selected = 5 = Military Industry
+#AC_building_type_selected = 6 = Civilian Industry
+#AC_building_type_selected = 7 = naval Industry
+#AC_building_type_selected = 8 = Refinery
 
 @BUILD_COST_INFRASTRUCTURE = 10
 @BUILD_COST_AIRBASE = 10
@@ -41,7 +62,7 @@ scripted_gui = {
 
 		visible = {
 			NOT = { is_owned_by = ROOT }
-			ROOT = { not = { has_country_flag = AC_hide_investment_window } }
+			ROOT = { NOT = { has_country_flag = AC_hide_investment_window } }
 		}
 
 		properties = {
@@ -79,18 +100,21 @@ scripted_gui = {
 		}
 
 		effects = {
-			AC_down_arrow_click = {
+			AC_down_arrow_click = { #hides investment window
 				ROOT = { set_country_flag = AC_hide_investment_window }
 			}
 			
-			AC_build_button_click = {
+			AC_build_button_click = { #starts investment if building slots available
 				if = {
-					limit = {  ROOT = { AC_project_type_not_active = yes } }
+					#checks to see if you don't have a project active in this state
+					limit = {  ROOT = { AC_project_type_not_active = yes } } 
 
 					AC_start_project = yes
 					
 				}
-				else = {
+				else = { 
+					#If you do have a project active then the button will say cancel instead of build
+					#If you press it you cancel the project - scripted localisation
 					ROOT = { AC_end_project = yes }
 				}
 			}
@@ -100,7 +124,7 @@ scripted_gui = {
 
 			###
 
-			AC_building_amount_increase_button_click = {
+			AC_building_amount_increase_button_click = { #increases AC_build_amount & update build time/cost
 				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					
@@ -150,7 +174,7 @@ scripted_gui = {
 					AC_update_build_time = yes
 				}
 			}
-			AC_building_amount_decrease_button_click = {
+			AC_building_amount_decrease_button_click = { ##decreases AC_build_amount & update build time/cost
 				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					### max amount depends on the selected building
@@ -200,8 +224,9 @@ scripted_gui = {
 				}
 			}
 			######### STATE BUILDINGS
-
-			AC_building_infra_button_click = {
+			
+			#AC_buiding_xxxx_button_click sets variables for specific building and updated build time/cost
+			AC_building_infra_button_click = { 
 				ROOT = { log = "[GetDateText]: [This.GetName]: infra investment on [FROM.Owner.GetName]. Treasury:[?treasury] int investments:[?int_investments]  debt:[?debt]" }
 				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
@@ -209,7 +234,7 @@ scripted_gui = {
 					AC_update_build_cost = yes
 					AC_update_build_time = yes
 				}
-				if = {
+				if = { #cheat for ai
 					limit = {  ROOT = { is_ai = yes AC_project_type_not_active = yes } }
 
 					AC_start_project = yes
@@ -292,26 +317,26 @@ scripted_gui = {
 		}
 
 		triggers = {
-			AC_build_button_click_enabled = {
+			
+			###I feel below is self explanatory
+			AC_build_button_click_enabled = { 
 				ROOT = { check_variable = { AC_Selected_state = PREV.id } }
 				
 				#Must have a building selected
 				ROOT = { check_variable = { AC_building_type_selected > 0 } }
 				AC_Building_available = yes
 				
-				not = { has_state_flag = Investment_pause_@ROOT }
+				NOT = { has_state_flag = Investment_pause_@ROOT }
 				if = {
 					limit = { AC_project_type_not_active2 = yes }
-					CONTROLLER = { not = { AC_has_max_investments = yes } }
+					CONTROLLER = { NOT = { AC_has_max_investments = yes } }
 					ROOT = { check_variable = { treasury > AC_build_cost } }
 				}
 				
 				
 			}
 
-			###
-
-				###
+			
 
 			AC_building_amount_increase_button_click_enabled = {
 				
@@ -337,10 +362,10 @@ scripted_gui = {
 				if = {
 					limit = { ROOT = { is_ai = yes } }
 					
-					not = { has_state_flag = Investment_pause_@ROOT }
+					NOT = { has_state_flag = Investment_pause_@ROOT }
 					if = {
 						limit = { AC_project_type_not_active2 = yes }
-						CONTROLLER = { not = { AC_has_max_investments = yes } }
+						CONTROLLER = { NOT = { AC_has_max_investments = yes } }
 						ROOT = { check_variable = { treasury > AC_build_cost } }
 					}
 				}
@@ -375,10 +400,10 @@ scripted_gui = {
 				if = {
 					limit = { ROOT = { is_ai = yes } }
 					
-					not = { has_state_flag = Investment_pause_@ROOT }
+					NOT = { has_state_flag = Investment_pause_@ROOT }
 					if = {
 						limit = { AC_project_type_not_active2 = yes }
-						CONTROLLER = { not = { AC_has_max_investments = yes } }
+						CONTROLLER = { NOT = { AC_has_max_investments = yes } }
 						ROOT = { check_variable = { treasury > AC_build_cost } }
 					}
 				}

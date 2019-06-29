@@ -392,7 +392,7 @@ def main():
     rootDir = os.path.dirname(os.path.dirname(scriptDir))
 
     tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
-    allTriggers, allEffects = findPdxSyntax(rootDir + "/Modding resources/List of triggers and effects 1_5_4.txt")
+    allTriggers, allEffects = findPdxSyntax(rootDir + "/Modding resources/List of triggers and effects 1_6_1.txt")
     countryTriggers = getCountryTriggers(allTriggers)
     stateTriggers = getStateTriggers(allTriggers)
     unkownTriggers = getUnkownTriggers(allTriggers)

@@ -1,15 +1,25 @@
 ﻿2000.1.1 = {
 	capital = 32
 	oob = "NOR_2000"
+	if = {
+		limit = {
+			has_dlc = "Man the Guns"
+		}
+		set_naval_oob = "NOR_2000_naval_mtg"
+		else = {
+			set_naval_oob = "NOR_2000_naval_legacy"
+		}
+	}
 	set_convoys = 150
-		
+	
+	set_research_slots = 3
+	
 	add_ideas = {
-		gdp_7
-		pop_050
+		gdp_8
+		#pop_050
 		christian
 		slight_corruption
-		gdp_9
-		stagnation
+		fast_growth
 		defence_02
 		edu_05
 		health_05
@@ -18,8 +28,8 @@
 		police_02
 		rentier_state
 		export_economy
-		volunteer_army
-		drafted_women
+		draft_army
+		volunteer_women
 		labour_unions
 		fossil_fuel_industry
 		maritime_industry
@@ -27,132 +37,97 @@
 		NATO_member
 		western_country
 		medium_far_right_movement
-		civil_law
-		tax_cost_44
+		#civil_law
+		#tax_cost_44
 	}
 	
+	#Influence system
+	init_influence = yes
+	set_variable = { domestic_influence_amount = 130 }
+	add_to_array = { influence_array = SWE.id }
+	add_to_array = { influence_array_val = 24 }
+	add_to_array = { influence_array = GER.id }
+	add_to_array = { influence_array_val = 22 }
+	add_to_array = { influence_array = ENG.id }
+	add_to_array = { influence_array_val = 12 }
+	add_to_array = { influence_array = CHI.id }
+	add_to_array = { influence_array_val = 2 }
+	add_to_array = { influence_array = SOV.id }
+	add_to_array = { influence_array_val = 26 }
+	add_to_array = { influence_array = USA.id }
+	add_to_array = { influence_array_val = 60 }
+	add_to_array = { influence_array = DEN.id }
+	add_to_array = { influence_array_val = 5 }
+	startup_influence = yes
+	
 	set_country_flag = positive_fossil_fuel_industry
+	set_global_flag = sell_NOR_cc_equi_2
+	clr_global_flag = sell_NOR_cc_equi_4
+	set_global_flag = sell_NOR_SP_anti_air_2
 	
 	set_variable = { var = debt value = 66.43 }
 	set_variable = { var = int_investments value = 58.4 }
 	set_variable = { var = treasury value = 40.74 }
 	set_variable = { var = tax_rate value = 44 }
+	#initial_money_setup = yes
 	
-	#NATO military access
-	diplomatic_relation = {
-		country = BEL
-		relation = military_access
-		active = yes
+	#2000 NATO Relations
+	add_opinion_modifier = { target = BEL modifier = NATO_member_modifier }
+	reverse_add_opinion_modifier = { target = BEL modifier = NATO_member_modifier }
+	add_opinion_modifier = { target = ITA modifier = NATO_member_modifier }
+	reverse_add_opinion_modifier = { target = ITA modifier = NATO_member_modifier }
+	add_opinion_modifier = { target = POR modifier = NATO_member_modifier }
+	reverse_add_opinion_modifier = { target = POR modifier = NATO_member_modifier }
+	add_opinion_modifier = { target = SPR modifier = NATO_member_modifier }
+	reverse_add_opinion_modifier = { target = SPR modifier = NATO_member_modifier }
+	
+	add_opinion_modifier = { target = SWE modifier = large_commercial_relations }
+	reverse_add_opinion_modifier = { target = SWE modifier = large_commercial_relations }
+	add_opinion_modifier = { target = DEN modifier = large_commercial_relations }
+	reverse_add_opinion_modifier = { target = DEN modifier = large_commercial_relations }
+	
+	add_opinion_modifier = { target = USA modifier = large_commercial_relations }
+	add_opinion_modifier = { target = GER modifier = large_commercial_relations }
+	add_opinion_modifier = { target = HOL modifier = large_commercial_relations }
+	add_opinion_modifier = { target = ENG modifier = large_commercial_relations }
+	add_opinion_modifier = { target = FRA modifier = large_commercial_relations }
+	add_opinion_modifier = { target = SOV modifier = large_commercial_relations }
+	add_opinion_modifier = { target = POL modifier = large_commercial_relations }
+	
+	add_opinion_modifier = { target = FIN modifier = arctic_council }
+	reverse_add_opinion_modifier = { target = FIN modifier = arctic_council }
+	
+	#Nordic good relations
+	add_opinion_modifier = { target = SWE modifier = nordic }
+	add_opinion_modifier = { target = ICE modifier = nordic }
+	add_opinion_modifier = { target = FIN modifier = nordic }
+	add_opinion_modifier = { target = DEN modifier = nordic }
+	
+	####################################
+	### Politics Parties Setup Guide ###
+	####################################
+	# All political parties in MD belong to Outlook (Ideology in vanilla HOI4) and correspond to a subideology with the same name. They have a predetermined identifier, a ID from 0-23.
+	
+	##### LIST of party types: (Subideology name and ID) ###
+	### Pro-Western (democratic) ###: Western_Autocracy(0) conservatism(1) liberalism(2) socialism(3)
+	### Emerging (communism) ###: Communist-State(4) anarchist_communism(5) Conservative(6) Autocracy(7) Mod_Vilayat_e_Faqih(8) Vilayat_e_Faqih(9)
+	### Salafist (fascism) ###: Kingdom(10) Caliphate(11)
+	### Non-Aligned (neutrality) ###: Neutral_Muslim_Brotherhood(12) Neutral_Autocracy(13) Neutral_conservatism(14) oligarchism(15) Neutral_Libertarian(16) Neutral_green(17) neutral_Social(18) Neutral_Communism(19)
+	### Nationalist (nationalist) ###: Nat_Populism(20) Nat_Fascism(21) Nat_Autocracy(22) Monarchist(23)
+	
+	# All their definitions are stored in arrays - (party_pop_array) stores current popularities, (party_pop_elect_array) stores popularities at the previous election, (ruling_party) stores the ID of the governing party, (gov_coalition_array) stores the ID's of it's coalition partners. If party_pop_elect_array entries are not set for a party, it will take values from party_pop_array for this purpose. If no popularities are set at all, the game will give them failsafe values based on ruling outlook, geography and religion.
+	# Please note that the main ruling party should NOT be also added to gov_coalition_array. Upon startup, parties are recalculated to conform to outlook popularities. This means that if the sum of popularity of say the western parties don't match the popularity of the democratic entry in set_politics = {}, or add up to 100, they will appear a bit different in-game, but there is no harm in this in general. 
+	# Before any array values can be set for both 2000 and 2017, one must first use the scripted function start_politics_input = yes
+	# after input is finished, set startup_politics = yes
+	
+	set_popularities = {
+		democratic = 50.4
+		fascism = 0
+		communism = 1.5
+		neutrality = 32.8
+		nationalist = 15.3
 	}
-	diplomatic_relation = {
-		country = CAN
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = CZH
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = DEN
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = FRA
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = GER
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = GRE
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = HUN
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = ICE
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = ITA
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = LUX
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = HOL
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = POL
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = POR
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = SPR
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = TUR
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = ENG
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = USA
-		relation = military_access
-		active = yes
-	}
-
 	set_politics = {
-
-		parties = {
-			democratic = { 
-				popularity = 50.4
-			}
-
-			fascism = {
-				popularity = 0
-			}
-			
-			communism = {
-				popularity = 1.5
-			}
-			
-			neutrality = {
-				popularity = 32.8
-			}
-			
-			nationalist = {
-				popularity = 15.3
-			}
-		}
 		
 		ruling_party = neutrality
 		last_election = "1997.9.15"
@@ -160,31 +135,36 @@
 		elections_allowed = yes
 	}
 	
-	set_variable = { conservatism_pop = 0.205 }
-	set_variable = { liberalism_pop = 0.041 }
-	set_variable = { socialism_pop = 0.258 }
-	set_variable = { anarchist_communism_pop = 0.015 }
-	set_variable = { Neutral_conservatism_pop = 0.133 }
-	set_variable = { oligarchism_pop = 0.071 }
-	set_variable = { neutral_Social_pop = 0.121 }
-	set_variable = { Neutral_Libertarian_pop = 0.001 }
-	set_variable = { Neutral_Green_pop = 0.002 }
-	set_variable = { Nat_Populism_pop = 0.153 }
+	start_politics_input = yes
 	
-	coalition_government_set_up = yes
+	set_variable = { election_threshold = 0.04 }
 	
-	create_country_leader = {
-		name = "Jens Stoltenberg"
-		picture = "Jens_Stoltenberg.dds"
-		expire = "2015.1.1"
-		ideology = socialism
-		traits = {
-			career_politician
-			western_socialism
-			capable
-		}
-	}
+	set_variable = { party_pop_array^1 = 0.205 } #conservatism
+	set_variable = { party_pop_array^2 = 0.041 } #liberalism
+	set_variable = { party_pop_array^3 = 0.258 } #socialism
+	set_variable = { party_pop_array^5 = 0.015 } #anarchist_communism
+	set_variable = { party_pop_array^14 = 0.133 } #Neutral_conservatism
+	set_variable = { party_pop_array^15 = 0.071 } #oligarchism
+	set_variable = { party_pop_array^16 = 0.001 } #Neutral_Libertarian
+	set_variable = { party_pop_array^17 = 0.002 } #Neutral_green
+	set_variable = { party_pop_array^18 = 0.121 } #neutral_Social
+	set_variable = { party_pop_array^20 = 0.153 } #Nat_Populism
 	
+	add_to_array = { ruling_party = 14 } #Neutral_conservatism
+	
+	add_to_array = { gov_coalition_array = 1 } #conservatism
+	add_to_array = { gov_coalition_array = 2 } #liberalism
+	add_to_array = { gov_coalition_array = 15 } #oligarchism
+	
+	#optional: special custom values representing % of votes in last election
+	
+	set_variable = { party_pop_elect_array^1 = 0.143 } #conservatism
+	set_variable = { party_pop_elect_array^2 = 0.045 } #liberalism
+	set_variable = { party_pop_elect_array^14 = 0.137 } #Neutral_conservatism
+	set_variable = { party_pop_elect_array^15 = 0.079 } #oligarchism
+	
+	startup_politics = yes
+
 	create_country_leader = {
 		name = "Kjell Magne Bondevik"
 		picture = "Kjell_Magne_Bondevik.dds"
@@ -198,7 +178,6 @@
 		}
 	}
 	
-
 	set_technology = { 
 		legacy_doctrines = 1 
 		modern_blitzkrieg = 1 
@@ -213,7 +192,7 @@
 		IFV_1 = 1
 		combat_eng_equipment = 1
 		MBT_1 = 1
-		ENGI_MBT_1 = 1 #
+		ENGI_MBT_1 = 1
 		artillery_0 = 1
 		SP_arty_0 = 1
 		SP_R_arty_0 = 1
@@ -268,47 +247,25 @@
 		
 		landing_craft = 1
 		
+		body_armor_1980 = 1
+		body_armor_2000 = 1
+		
 	}
 
-	
 	#NATO military access
-	diplomatic_relation = {
-		country = ALB
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = BEL
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = BUL
-		relation = military_access
-		active = yes
-	}
+
 	diplomatic_relation = {
 		country = CAN
 		relation = military_access
 		active = yes
 	}
 	diplomatic_relation = {
-		country = CRO
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = CZH
+		country = CZE
 		relation = military_access
 		active = yes
 	}
 	diplomatic_relation = {
 		country = DEN
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = EST
 		relation = military_access
 		active = yes
 	}
@@ -342,16 +299,7 @@
 		relation = military_access
 		active = yes
 	}
-	diplomatic_relation = {
-		country = LAT
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = LIT
-		relation = military_access
-		active = yes
-	}
+	
 	diplomatic_relation = {
 		country = LUX
 		relation = military_access
@@ -369,21 +317,6 @@
 	}
 	diplomatic_relation = {
 		country = POR
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = ROM
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = SLO
-		relation = military_access
-		active = yes
-	}
-	diplomatic_relation = {
-		country = SLV
 		relation = military_access
 		active = yes
 	}
@@ -406,160 +339,6 @@
 		country = USA
 		relation = military_access
 		active = yes
-	}
-
-	#Nordic good relations
-	add_opinion_modifier = { target = SWE modifier = nordic }
-	add_opinion_modifier = { target = ICE modifier = nordic }
-	add_opinion_modifier = { target = FIN modifier = nordic }
-	add_opinion_modifier = { target = DEN modifier = nordic }
-	
-	
-	set_politics = {
-
-		parties = {
-			democratic = { 
-				popularity = 50.4
-			}
-
-			fascism = {
-				popularity = 0
-			}
-			
-			communism = {
-				popularity = 1.5
-			}
-			
-			neutrality = {
-				popularity = 32.8
-			}
-			
-			nationalist = {
-				popularity = 15.3
-			}
-		}
-		
-		ruling_party = neutrality
-		last_election = "1997.9.15"
-		election_frequency = 48
-		elections_allowed = yes
-	}
-	
-	set_variable = { conservatism_pop = 0.205 }
-	set_variable = { liberalism_pop = 0.041 }
-	set_variable = { socialism_pop = 0.258 }
-	set_variable = { anarchist_communism_pop = 0.015 }
-	set_variable = { Neutral_conservatism_pop = 0.133 }
-	set_variable = { oligarchism_pop = 0.071 }
-	set_variable = { neutral_Social_pop = 0.121 }
-	set_variable = { Neutral_Libertarian_pop = 0.001 }
-	set_variable = { Neutral_Green_pop = 0.002 }
-	set_variable = { Nat_Populism_pop = 0.153 }
-	
-	recalculate_party = yes
-	
-	#Easter Egg - famous retired al-qaeda commander living in norway
-	create_country_leader = {
-		name = "Mullah Krekar"
-		desc = "POLITICS_JOHAN_NYGAARDSVOLD_DESC"
-		picture = "Salafist_Mullah_Krekar.dds"
-		expire = "2028.1.1"
-		ideology = Caliphate
-		traits = {
-			cleric
-			salafist_Caliphate
-			pro_al_qaeda
-			capable
-			stubborn
-		}
-	}
-	
-	create_country_leader = {
-		name = "Ingrid Alexandra I"
-		picture = "Ingrid_Alexandra_I.dds"
-		expire = "2065.1.1"
-		ideology = Monarchist
-		traits = {
-		}
-	}
-	
-	create_country_leader = {
-		name = "Haakon Magnus I"
-		picture = "Haakon_Magnus_I.dds"
-		expire = "2035.1.1"
-		ideology = Monarchist
-		traits = {
-			king
-		}
-	}
-	
-	create_country_leader = {
-		name = "Harald V"
-		picture = "Harald_V.dds"
-		expire = "2021.1.1"
-		ideology = Monarchist
-		traits = {
-			king
-			pro_american
-			capable
-			likeable
-		}
-	}
-	
-	create_country_leader = {
-		name = "Carl Ivar Hagen"
-		picture = "Carl_I_Hagen.dds"
-		expire = "2012.1.1"
-		ideology = Nat_Populism
-		traits = {
-			nationalist_Nat_Populism
-			pro_american
-		}
-	}
-	
-	create_country_leader = {
-		name = "Torstein Dahle"
-		picture = "Torstein_Dahle.dds"
-		expire = "2015.1.1"
-		ideology = anarchist_communism
-		traits = {
-			emerging_anarchist_communism
-			honest
-		}
-	}
-	
-	create_country_leader = {
-		name = "Jens Stoltenberg"
-		picture = "Jens_Stoltenberg.dds"
-		expire = "2015.1.1"
-		ideology = socialism
-		traits = {
-			career_politician
-			western_socialism
-			capable
-		}
-	}
-	create_country_leader = {
-		name = "Kristin Halvorsen"
-		picture = "Kristin_Halvorsen.dds"
-		expire = "2012.1.1"
-		ideology = neutral_Social
-		traits = {
-			neutrality_neutral_Social
-			cautious
-		}
-	}
-	create_country_leader = {
-		name = "Kjell Magne Bondevik"
-		picture = "Kjell_Magne_Bondevik.dds"
-		expire = "2012.1.1"
-		ideology = Neutral_conservatism
-		traits = {
-			cleric
-			neutrality_Neutral_conservatism
-			likeable
-			cautious
-		}
 	}
 	
 
@@ -1040,70 +819,130 @@
 2017.1.1 = {
 	capital = 32
 	oob = "NOR_2017"
+	if = {
+		limit = {
+			has_dlc = "Man the Guns"
+		}
+		set_naval_oob = "NOR_2017_naval_mtg"
+		else = {
+			set_naval_oob = "NOR_2017_naval_legacy"
+		}
+	}
 	
 	remove_ideas = {
-		gdp_7
-		stagnation
-		defence_02
-		edu_05
-		health_05
-		social_06
-		bureau_04
-		police_02
-		rentier_state
-		export_economy
-		volunteer_army
-		drafted_women
-		labour_unions
-		fossil_fuel_industry
-		maritime_industry
-		intervention_limited_interventionism
-		tax_cost_44
+		gdp_8
+		fast_growth
+		#tax_cost_44
 	}
 	
 	add_ideas = {
-		pop_050
-		christian
-		slight_corruption
 		gdp_9
 		stagnation
-		defence_02
-		edu_05
-		health_05
-		social_06
-		bureau_04
-		police_02
-		rentier_state
-		export_economy
-		volunteer_army
-		drafted_women
-		labour_unions
-		fossil_fuel_industry
-		maritime_industry
-		intervention_limited_interventionism
-		NATO_member
-		western_country
-		medium_far_right_movement
-		civil_law
-		tax_cost_36
+		#tax_cost_36
 	}
+	
+	#Influence system
+	init_influence = yes
+	set_variable = { domestic_influence_amount = 130 }
+	add_to_array = { influence_array = SWE.id }
+	add_to_array = { influence_array_val = 16 }
+	add_to_array = { influence_array = GER.id }
+	add_to_array = { influence_array_val = 20 }
+	add_to_array = { influence_array = ENG.id }
+	add_to_array = { influence_array_val = 12 }
+	add_to_array = { influence_array = CHI.id }
+	add_to_array = { influence_array_val = 5 }
+	add_to_array = { influence_array = SOV.id }
+	add_to_array = { influence_array_val = 12 }
+	add_to_array = { influence_array = USA.id }
+	add_to_array = { influence_array_val = 90 }
+	add_to_array = { influence_array = POL.id }
+	add_to_array = { influence_array_val = 9 }
+	startup_influence = yes
+	
 	#set_country_flag = gdp_9
 	set_country_flag = negative_labour_unions
 	set_country_flag = positive_fossil_fuel_industry
-	set_country_flag = defence_02
-	set_country_flag = edu_05
-	set_country_flag = health_05
-	set_country_flag = social_06
-	set_country_flag = bureau_04
-	set_country_flag = police_02
+	set_country_flag = alliansen
+	set_global_flag = sell_NOR_cc_equi_4
+	clr_global_flag = sell_NOR_cc_equi_2
+	set_global_flag = sell_NOR_SP_anti_air_2
 		
 	set_variable = { var = debt value = 145 }
 	set_variable = { var = int_investments value = 1038 }
 	set_variable = { var = treasury value = 60 }
 	set_variable = { var = tax_rate value = 36 }
 	
-	set_variable = { var = size_modifier value = 0.74 } #6 CIC
-	initial_money_setup = yes
+	#set_variable = { var = size_modifier value = 0.74 } #6 CIC
+	#initial_money_setup = yes
+	
+	diplomatic_relation = {
+		country = ALB
+		relation = military_access
+		active = yes
+	}
+	diplomatic_relation = {
+		country = BEL
+		relation = military_access
+		active = yes
+	}
+	diplomatic_relation = {
+		country = BUL
+		relation = military_access
+		active = yes
+	}
+	diplomatic_relation = {
+		country = ROM
+		relation = military_access
+		active = yes
+	}
+	diplomatic_relation = {
+		country = SLO
+		relation = military_access
+		active = yes
+	}
+	diplomatic_relation = {
+		country = SLV
+		relation = military_access
+		active = yes
+	}
+	diplomatic_relation = {
+		country = LAT
+		relation = military_access
+		active = yes
+	}
+	diplomatic_relation = {
+		country = LIT
+		relation = military_access
+		active = yes
+	}
+	diplomatic_relation = {
+		country = EST
+		relation = military_access
+		active = yes
+	}
+	diplomatic_relation = {
+		country = CRO
+		relation = military_access
+		active = yes
+	}
+	
+	remove_opinion_modifier = { target = SOV modifier = maritime_border_dispute }
+	remove_opinion_modifier = { target = SOV modifier = large_commercial_relations }
+	
+	add_opinion_modifier = { target = KOR modifier = large_commercial_relations }
+	add_opinion_modifier = { target = CHI modifier = large_commercial_relations }
+	
+	add_opinion_modifier = { target = BRA modifier = large_commercial_relations }
+	reverse_add_opinion_modifier = { target = BRA modifier = large_commercial_relations }
+
+	#Nat focus
+	
+	
+	
+	
+	
+	
 	
 	set_technology = { 
 		
@@ -1117,32 +956,35 @@
 		
 		infantry_weapons1 = 1
 		infantry_weapons2 = 1
+		
+		body_armor_2010 = 1
 
 	}
 	
+	####################################
+	### Politics Parties Setup Guide ###
+	####################################
+	# All political parties in MD belong to Outlook (Ideology in vanilla HOI4) and correspond to a subideology with the same name. They have a predetermined identifier, a ID from 0-23.
+	
+	##### LIST of party types: (Subideology name and ID) ###
+	### Pro-Western (democratic) ###: Western_Autocracy(0) conservatism(1) liberalism(2) socialism(3)
+	### Emerging (communism) ###: Communist-State(4) anarchist_communism(5) Conservative(6) Autocracy(7) Mod_Vilayat_e_Faqih(8) Vilayat_e_Faqih(9)
+	### Salafist (fascism) ###: Kingdom(10) Caliphate(11)
+	### Non-Aligned (neutrality) ###: Neutral_Muslim_Brotherhood(12) Neutral_Autocracy(13) Neutral_conservatism(14) oligarchism(15) Neutral_Libertarian(16) Neutral_green(17) neutral_Social(18) Neutral_Communism(19)
+	### Nationalist (nationalist) ###: Nat_Populism(20) Nat_Fascism(21) Nat_Autocracy(22) Monarchist(23)
+	
+	# All their definitions are stored in arrays - (party_pop_array) stores current popularities, (party_pop_elect_array) stores popularities at the previous election, (ruling_party) stores the ID of the governing party, (gov_coalition_array) stores the ID's of it's coalition partners. If party_pop_elect_array entries are not set for a party, it will take values from party_pop_array for this purpose. If no popularities are set at all, the game will give them failsafe values based on ruling outlook, geography and religion.
+	# Please note that the main ruling party should NOT be also added to gov_coalition_array. Upon startup, parties are recalculated to conform to outlook popularites. This means that if the sum of popularity of say the western parties don't match the popularity of the democratic entry in set_politics = {}, or add up to 100, they will appear a bit different ingame, but there is no harm in this in general. 
+	# Before any array values can be set for both 2000 and 2017, one must first use the scripted function start_politics_input = yes
+	
+	set_popularities = {
+		democratic = 57.9
+		fascism = 0
+		communism = 2.5
+		neutrality = 24.2
+		nationalist = 15.4
+	}
 	set_politics = {
-
-		parties = {
-			democratic = { 
-				popularity = 57
-			}
-
-			fascism = {
-				popularity = 0
-			}
-			
-			communism = {
-				popularity = 2.5
-			}
-			
-			neutrality = {
-				popularity = 24.2
-			}
-			
-			nationalist = {
-				popularity = 15.4
-			}
-		}
 		
 		ruling_party = democratic
 		last_election = "2013.9.9"
@@ -1150,183 +992,36 @@
 		elections_allowed = yes
 	}
 	
-	set_variable = { conservatism_pop = 0.25 }
-	set_variable = { liberalism_pop = 0.046 }
-	set_variable = { socialism_pop = 0.274 }
-	set_variable = { Communist-State_pop = 0.001 }
-	set_variable = { anarchist_communism_pop = 0.024 }
-	set_variable = { Neutral_conservatism_pop = 0.045 }
-	set_variable = { oligarchism_pop = 0.103 }
-	set_variable = { neutral_Social_pop = 0.06 }
-	set_variable = { Neutral_Green_pop = 0.032 }
-	set_variable = { Neutral_Libertarian_pop = 0.002 }
-	set_variable = { Nat_Fascism_pop = 0.002 }
-	set_variable = { Nat_Populism_pop = 0.152 }
+	start_politics_input = yes
 	
-	coalition_government_set_up = yes
-
-	#Nat focus
-		complete_national_focus = bonus_tech_slots
-		complete_national_focus = Generic_4K_GDPC_slot
-		complete_national_focus = Generic_15K_GDPC_slot
-		complete_national_focus = Generic_30K_GDPC_slot
-		complete_national_focus = Generic_4_IC_slot
-		complete_national_focus = Generic_8_IC_slot
-
-	create_country_leader = {
-		name = "Inga Marte Thorkildsen"
-		picture = "Inga_Marte_Thorkildsen.dds"
-		expire = "2055.1.1"
-		ideology = neutral_Social
-		traits = {
-			neutrality_neutral_Social
-		}
-	}
-	#Leader of norwegian salafists. Pledges allegiance to ISIS
-	create_country_leader = {
-		name = "Ubaydullah Hussain"
-		picture = "Salafist_Ubaydullah_Hussain.dds"
-		expire = "2065.1.1"
-		ideology = Caliphate
-		traits = {
-			guerrilla_leader
-			salafist_Caliphate
-			pro_isis
-			inexperienced
-			sly
-			tech_savy
-		}
-	}
-
-	#Fascist-like far right anti-islamist, known as Fjordman
-	create_country_leader = {
-		name = "Peder Nøstvold Jensen"
-		picture = "Fascist_Fjordman.dds"
-		expire = "2065.1.1"
-		ideology = Nat_Fascism
-		traits = {
-			writer
-			nationalist_Nat_Fascism
-			inexperienced
-			islamophobe
-			ruthless
-			emotional
-		}
-	}
-
-	#Far Right Populist Candidate
-	create_country_leader = {
-		name = "Christian Tybring Gjedde"
-		picture = "nationalist_Christian_Tybring_Gjedde.dds"
-		expire = "2065.1.1"
-		ideology = Nat_Populism
-		traits = {
-			military_career
-			nationalist_Nat_Populism
-			pro_american
-			islamophobe
-			emotional
-			sly
-		}
-	}
+	set_variable = { party_pop_array^1 = 0.25 }
+	set_variable = { party_pop_array^2 = 0.046 }
+	set_variable = { party_pop_array^3 = 0.274 }
+	set_variable = { party_pop_array^4 = 0.001 }
+	set_variable = { party_pop_array^5 = 0.024 }
+	set_variable = { party_pop_array^14 = 0.045 }
+	set_variable = { party_pop_array^15 = 0.103 }
+	set_variable = { party_pop_array^18 = 0.06 }
+	set_variable = { party_pop_array^17 = 0.032 }
+	set_variable = { party_pop_array^16 = 0.002 }
+	set_variable = { party_pop_array^21 = 0.002 }
+	set_variable = { party_pop_array^20 = 0.152 }
 	
-	create_country_leader = {
-		name = "Sylvi Listhaug"
-		picture = "Sylvi_Listhaug.dds"
-		expire = "2065.1.1"
-		ideology = Nat_Populism
-		traits = {
-			nationalist_Nat_Populism
-			islamophobe
-			emotional
-		}
-	}
+	add_to_array = { ruling_party = 1 } #conservatism
+
+	add_to_array = { gov_coalition_array = 20 } #Nat_Populism
 	
-	create_country_leader = {
-		name = "Bjørnar Moxnes"
-		picture = "Bjoernar_Moxnes.dds"
-		expire = "2065.1.1"
-		ideology = anarchist_communism
-		traits = {
-			emerging_anarchist_communism
-			likeable
-			honest
-		}
-	}
-
-	create_country_leader = {
-		name = "Lan Marie Nguyen Berg"
-		picture = "Lan_Marie_Nguyen_Berg.dds"
-		expire = "2065.1.1"
-		ideology = Neutral_green
-		traits = {
-			scientist
-			neutrality_Neutral_green
-			likeable
-			humble
-			capable
-		}
-	}
-
-	#Liberalist
-	create_country_leader = {
-		name = "Sveinung Rotevatn"
-		picture = "Liberal_Sveinung_Rotevatn.dds"
-		expire = "2065.1.1"
-		ideology = liberalism
-		traits = {
-			lawyer
-			western_liberalism
-			polished
-			capable
-			tech_savy
-			
-		}
-	}
-	#Likely future candidate for the social democrats
-	create_country_leader = {
-		name = "Hadia Tajik"
-		picture = "Labor_Hadia_Tajik.dds"
-		expire = "2065.1.1"
-		ideology = socialism
-		traits = {
-			writer
-			western_socialism
-			likeable
-			humble
-			capable
-		}
-	}
-	#Likely future candidate for conservatives
-	create_country_leader = {
-		name = "Ine Marie Eriksen Søreide"
-		picture = "Cons_Ine_Marie_Eriksen_Soereide.dds"
-		expire = "2065.1.1"
-		ideology = conservatism
-		traits = {
-			lawyer
-			western_conservatism
-			polished
-			rational
-		}
-	}
-	create_country_leader = {
-		name = "Jonas Gahr Støre"
-		picture = "Labor_Jonas_Gahr_Stoere.dds"
-		expire = "2065.1.1"
-		ideology = socialism
-		traits = {
-			career_politician
-			western_socialism
-			polished
-			cautious
-			capable
-		}
-	}
+	set_variable = { party_pop_elect_array^14 = 0.056 } #Neutral_conservatism
+	set_variable = { party_pop_elect_array^15 = 0.055 } #oligarchism
+	set_variable = { party_pop_elect_array^1 = 0.268 } #conservatism
+	set_variable = { party_pop_elect_array^2 = 0.052 } #liberalism
+	set_variable = { party_pop_elect_array^20 = 0.163 } #liberalism
+	
+	startup_politics = yes
 
 	create_country_leader = {
 		name = "Erna Solberg"
-		picture = "Cons_Erna_Solberg.dds"
+		picture = "erna_solberg.dds"
 		expire = "2050.1.1"
 		ideology = conservatism
 		traits = {
@@ -1338,7 +1033,7 @@
 		}
 	}
 	
-		create_corps_commander = {
+	create_corps_commander = {
 		name = "Anne Rydning"
 		picture = "gen_Anne_Rydning.dds"
 		traits = {  trait_mountaineer winter_specialist }
@@ -1349,7 +1044,7 @@
 		planning_skill = 3
 		logistics_skill = 3
 	}
-
+	
 	create_corps_commander = {
 		name = "Kristin Lund"
 		picture = "gen_Kristin_Lund.dds"
@@ -1409,7 +1104,7 @@
 		planning_skill = 2
 		logistics_skill = 2
 	}
-
+	
 	create_corps_commander = {
 		name = "Trond Haande"
 		picture = "Gen_Trond_Haande.dds"
@@ -1421,7 +1116,7 @@
 		planning_skill = 3
 		logistics_skill = 3
 	}
-
+	
 	create_corps_commander = {
 		name = "Frode Kristoffersen"
 		picture = "Gen_Frode_Kristoffersen.dds"
@@ -1433,8 +1128,7 @@
 		planning_skill = 4
 		logistics_skill = 4
 	}
-
-
+	
 	create_navy_leader = {
 		name = "Lars Saunes"
 		picture = "admiral_lars_saunes.dds"

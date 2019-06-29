@@ -9,21 +9,28 @@ ideas = {
 			removal_cost = -1
 			level = 1
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			on_add = {
 				custom_effect_tooltip = defence_00_TT
-				subtract_from_variable = { var = expense_gain value = defence_gain }
-				add_to_variable = { var = treasury_rate value = defence_gain }
-				set_variable = { var = defence_gain value = size_modifier }
-				multiply_variable = { var = defence_gain value = 0.002 }
-				add_to_variable = { var = expense_gain value = defence_gain }
-				subtract_from_variable = { var = treasury_rate value = defence_gain }
+				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 1 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 1 }
 				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			modifier = {
 				conscription_factor = -1.00
 				industrial_capacity_factory = 0.00
 				industrial_capacity_dockyard = 0.00
+				production_speed_arms_factory_factor = -0.5
+				production_speed_dockyard_factor = -0.5
 			}
 			
 			ai_will_do = {
@@ -37,21 +44,28 @@ ideas = {
 			removal_cost = -1
 			level = 2
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			on_add = {
 				custom_effect_tooltip = defence_01_TT
-				subtract_from_variable = { var = expense_gain value = defence_gain }
-				add_to_variable = { var = treasury_rate value = defence_gain }
-				set_variable = { var = defence_gain value = size_modifier }
-				multiply_variable = { var = defence_gain value = 0.02 }
-				add_to_variable = { var = expense_gain value = defence_gain }
-				subtract_from_variable = { var = treasury_rate value = defence_gain }
+				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 2 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 2 }
 				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			modifier = {
 				conscription_factor = -0.95
 				industrial_capacity_factory = 0.1
 				industrial_capacity_dockyard = 0.05
+				production_speed_arms_factory_factor = 0.02
+				production_speed_dockyard_factor = 0.02
 			}
 			
 			ai_will_do = {
@@ -59,20 +73,47 @@ ideas = {
 				modifier = {
 					#Prio if low on manpower
 					factor = 20
-					manpower_per_military_factory <  500
+					manpower_per_military_factory < 500
 					has_idea = defence_00
 				}
-				modifier = {
-					#Lower chance if has decent amount
-					factor = 0.5
-					manpower_per_military_factory >  3000
 				
+				modifier = {
+					factor = 0 
+					OR = {
+						AND = {
+							has_idea = defence_02
+							check_variable = { AI_WAR_SPEND_RATIO > 0.2 }
+						}
+						
+						check_variable = { AI_WAR_SPEND_RATIO < 0.1 }
+					}
 				}
-				modifier = {
-					#Higher chance if doing badly
-					factor = 2
-					surrender_progress > 0.1
 				
+				modifier = {
+					factor = 100
+					AND = {
+						has_idea = defence_02
+						check_variable = { AI_WAR_SPEND_RATIO < 0.2 }
+					}
+				}
+								
+				modifier = {
+					factor = 0
+					AND = {
+						NOT = { has_idea = defence_00 }
+						NOT = { has_idea = defence_02 }
+					}
+				}
+				
+
+				
+				modifier = {
+					factor = 100
+					check_variable = {
+						var = AI_WAR_SPEND_RATIO
+						value = 0.1
+						compare = less_than
+					}
 				}
 				
 			}
@@ -86,35 +127,96 @@ ideas = {
 			removal_cost = -1
 			level = 3
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			on_add = {
 				custom_effect_tooltip = defence_02_TT
-				subtract_from_variable = { var = expense_gain value = defence_gain }
-				add_to_variable = { var = treasury_rate value = defence_gain }
-				set_variable = { var = defence_gain value = size_modifier }
-				multiply_variable = { var = defence_gain value = 0.04 }
-				add_to_variable = { var = expense_gain value = defence_gain }
-				subtract_from_variable = { var = treasury_rate value = defence_gain }
+				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 3 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 3 }
 				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			modifier = {
 				conscription_factor = -0.90
 				industrial_capacity_factory = 0.2
 				industrial_capacity_dockyard = 0.1
+				production_speed_arms_factory_factor = 0.04
+				production_speed_dockyard_factor = 0.04
 			}
 			
 			ai_will_do = {
    				factor = 1
+				
+				modifier = {
+					factor = 0 
+					OR = {
+						AND = {
+							has_idea = defence_03
+							check_variable = { AI_WAR_SPEND_RATIO > 0.3 }
+						}
+						AND = {
+							has_idea = defence_01
+							check_variable = { AI_WAR_SPEND_RATIO < 0.2 }
+						}
+					}
+				}
+				
+				modifier = {
+					factor = 100
+					AND = {
+						has_idea = defence_03
+						check_variable = { AI_WAR_SPEND_RATIO < 0.3 }
+					}
+				}
+				
+				
 				modifier = {
 					#Prio if low on manpower
 					factor = 21
 					manpower_per_military_factory <  450
 					has_idea = defence_01
 				}
+				
+				modifier = {
+					factor = 0
+					AND = {
+						NOT = { has_idea = defence_01 }
+						NOT = { has_idea = defence_03 }
+					}
+				}
+				
 				modifier = {
 					#Lower chance if has decent amount
 					factor = 0.5
-					manpower_per_military_factory >  3000
+					OR = {
+						AND = {
+							manpower_per_military_factory >  3000
+							has_war = no
+						}
+						
+						AND = {
+							manpower_per_military_factory > 5000
+							has_war = yes
+							all_enemy_country = {
+								check_variable = { IS_MAJOR = 0 }
+							}
+						}
+						
+						AND = {
+							manpower_per_military_factory > 20000
+							has_war = yes
+							any_enemy_country = {
+								check_variable = { IS_MAJOR = 1 }
+							}
+						}
+					}
 				
 				}
 				modifier = {
@@ -138,6 +240,22 @@ ideas = {
 						has_idea = defence_07
 					}
 				}
+				
+				modifier = {
+					factor = 200
+					check_variable = {
+						var = AI_WAR_SPEND_RATIO
+						value = 0.2
+						compare = greater_than
+					}
+				}
+				
+				modifier = {
+					factor = 1000
+					any_enemy_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+					}
+				}
 			}
 			
 			cancel_if_invalid = no
@@ -147,35 +265,95 @@ ideas = {
 			removal_cost = -1
 			level = 4
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			on_add = {
 				custom_effect_tooltip = defence_03_TT
-				subtract_from_variable = { var = expense_gain value = defence_gain }
-				add_to_variable = { var = treasury_rate value = defence_gain }
-				set_variable = { var = defence_gain value = size_modifier }
-				multiply_variable = { var = defence_gain value = 0.06 }
-				add_to_variable = { var = expense_gain value = defence_gain }
-				subtract_from_variable = { var = treasury_rate value = defence_gain }
+				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 4 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 4 }
 				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			modifier = {
 				conscription_factor = -0.85
 				industrial_capacity_factory = 0.3
 				industrial_capacity_dockyard = 0.15
+				production_speed_arms_factory_factor = 0.06
+				production_speed_dockyard_factor = 0.06
 			}
 			
 			ai_will_do = {
    				factor = 1
+				
+				modifier = {
+					factor = 0 
+					OR = {
+						AND = {
+							has_idea = defence_04
+							check_variable = { AI_WAR_SPEND_RATIO > 0.4 }
+						}
+						AND = {
+							has_idea = defence_02
+							check_variable = { AI_WAR_SPEND_RATIO < 0.3 }
+						}
+					}
+				}
+				
+				modifier = {
+					factor = 100
+					AND = {
+						has_idea = defence_04
+						check_variable = { AI_WAR_SPEND_RATIO < 0.4 }
+					}
+				}
+				
+				
 				modifier = {
 					#Prio if low on manpower
 					factor = 22
 					manpower_per_military_factory <  400
 					has_idea = defence_02
 				}
+				
+				modifier = {
+					factor = 0
+					AND = {
+						NOT = { has_idea = defence_02 }
+						NOT = { has_idea = defence_04 }
+					}
+				}
 				modifier = {
 					#Lower chance if has decent amount
 					factor = 0.5
-					manpower_per_military_factory >  3000
+					OR = {
+						AND = {
+							manpower_per_military_factory >  3000
+							has_war = no
+						}
+						
+						AND = {
+							manpower_per_military_factory > 5000
+							has_war = yes
+							all_enemy_country = {
+								check_variable = { IS_MAJOR = 0 }
+							}
+						}
+						
+						AND = {
+							manpower_per_military_factory > 20000
+							has_war = yes
+							any_enemy_country = {
+								check_variable = { IS_MAJOR = 1 }
+							}
+						}
+					}
 				
 				}
 				modifier = {
@@ -199,6 +377,23 @@ ideas = {
 						has_idea = defence_07
 					}
 				}
+
+				modifier = {
+					factor = 300
+					check_variable = {
+						var = AI_WAR_SPEND_RATIO
+						value = 0.3
+						compare = greater_than
+					}
+				}
+				
+				modifier = {
+					factor = 2000
+					any_enemy_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+						has_war_with = ROOT
+					}
+				}
 				
 			}
 			
@@ -209,25 +404,62 @@ ideas = {
 			removal_cost = -1
 			level = 5
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			on_add = {
 				custom_effect_tooltip = defence_04_TT
-				subtract_from_variable = { var = expense_gain value = defence_gain }
-				add_to_variable = { var = treasury_rate value = defence_gain }
-				set_variable = { var = defence_gain value = size_modifier }
-				multiply_variable = { var = defence_gain value = 0.09 }
-				add_to_variable = { var = expense_gain value = defence_gain }
-				subtract_from_variable = { var = treasury_rate value = defence_gain }
+				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 5 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 5 }
 				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			modifier = {
 				conscription_factor = -0.775
 				industrial_capacity_factory = 0.45
 				industrial_capacity_dockyard = 0.225
+				production_speed_arms_factory_factor = 0.09
+				production_speed_dockyard_factor = 0.09
 			}
 			
 			ai_will_do = {
    				factor = 1
+			
+				modifier = {
+					factor = 0 
+					OR = {
+						AND = {
+							has_idea = defence_05
+							check_variable = { AI_WAR_SPEND_RATIO > 0.5 }
+						}
+						AND = {
+							has_idea = defence_03
+							check_variable = { AI_WAR_SPEND_RATIO < 0.4 }
+						}
+					}
+				}
+				
+				modifier = {
+					factor = 100
+					AND = {
+						has_idea = defence_05
+						check_variable = { AI_WAR_SPEND_RATIO < 0.5 }
+					}
+				}
+				
+				modifier = {
+					factor = 0
+					AND = {
+						NOT = { has_idea = defence_03 }
+						NOT = { has_idea = defence_05 }
+					}
+				}
 				modifier = {
 					#Prio if low on manpower
 					factor = 23
@@ -237,10 +469,34 @@ ideas = {
 				modifier = {
 					#Lower chance if has decent amount
 					factor = 0.5
-					manpower_per_military_factory >  3000
+					OR = {
+						AND = {
+							manpower_per_military_factory >  3000
+							has_war = no
+						}
+						
+						AND = {
+							manpower_per_military_factory > 5000
+							has_war = yes
+							all_enemy_country = {
+								check_variable = { IS_MAJOR = 0 }
+							}
+						}
+						
+						AND = {
+							manpower_per_military_factory > 20000
+							has_war = yes
+							any_enemy_country = {
+								check_variable = { IS_MAJOR = 1 }
+							}
+						}
+					}
 				
 				}
-				
+				modifier = {
+					factor = 10
+					check_variable = { AI_VOLUNTEERS = 1 }
+				}
 				modifier = {
 					#Higher chance if doing badly
 					factor = 5
@@ -262,6 +518,24 @@ ideas = {
 						has_idea = defence_07
 					}
 				}
+				modifier = {
+					factor = 400
+					check_variable = {
+						var = AI_WAR_SPEND_RATIO
+						value = 0.4
+						compare = greater_than
+					}
+					
+				}
+				
+				modifier = {
+					factor = 3000
+					any_enemy_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+						has_war_with = ROOT
+					}
+				}
+				
 			}
 			
 			cancel_if_invalid = no
@@ -271,22 +545,30 @@ ideas = {
 			removal_cost = -1
 			level = 6
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			on_add = {
 				custom_effect_tooltip = defence_05_TT
-				subtract_from_variable = { var = expense_gain value = defence_gain }
-				add_to_variable = { var = treasury_rate value = defence_gain }
-				set_variable = { var = defence_gain value = size_modifier }
-				multiply_variable = { var = defence_gain value = 0.12 }
-				add_to_variable = { var = expense_gain value = defence_gain }
-				subtract_from_variable = { var = treasury_rate value = defence_gain }
+				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 6 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 6 }
 				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			modifier = {
 				conscription_factor = -0.7
 				industrial_capacity_factory = 0.6
 				industrial_capacity_dockyard = 0.3
+				production_speed_arms_factory_factor = 0.12
+				production_speed_dockyard_factor = 0.12
 			}
+
 			
 			ai_will_do = {
    				factor = 1
@@ -296,15 +578,71 @@ ideas = {
 					manpower_per_military_factory <  350
 					has_idea = defence_04
 				}
+				
+				modifier = {
+					factor = 0
+					OR = {
+						AND = {
+							has_idea = defence_06
+							check_variable = { AI_WAR_SPEND_RATIO > 0.6 }
+						}
+						AND = {
+							has_idea = defence_04
+							check_variable = { AI_WAR_SPEND_RATIO < 0.5 }
+						}
+					}
+				}
+				
+				modifier = {
+					factor = 100
+					AND = {
+						has_idea = defence_06
+						check_variable = { AI_WAR_SPEND_RATIO < 0.6 }
+					}
+				}
+				
+				modifier = {
+					factor = 0
+					AND = {
+						NOT = { has_idea = defence_04 }
+						NOT = { has_idea = defence_06 }
+					}
+				}
 				modifier = {
 					#Lower chance if has decent amount
 					factor = 0.5
-					manpower_per_military_factory >  3000
+					OR = {
+						AND = {
+							manpower_per_military_factory >  3000
+							has_war = no
+						}
+						
+						AND = {
+							manpower_per_military_factory > 5000
+							has_war = yes
+							all_enemy_country = {
+								check_variable = { IS_MAJOR = 0 }
+							}
+						}
+						
+						AND = {
+							manpower_per_military_factory > 20000
+							has_war = yes
+							any_enemy_country = {
+								check_variable = { IS_MAJOR = 1 }
+							}
+						}
+					}
 				
+				}
+				
+				modifier = {
+					factor = 10
+					check_variable = { AI_VOLUNTEERS = 1 }
 				}
 				modifier = {
 					#Lower chance if not at war
-					factor = 0.1
+					factor = 0.5
 					has_war = no
 				
 				}
@@ -337,6 +675,22 @@ ideas = {
 						has_idea = defence_07
 					}
 				}
+				
+				modifier = {
+					factor = 500
+					check_variable = {
+						var = AI_WAR_SPEND_RATIO
+						value = 0.5
+						compare = greater_than
+					}
+				}
+				
+				modifier = {
+					factor = 4000
+					any_enemy_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+					}
+				}
 			}
 			
 			cancel_if_invalid = no
@@ -346,21 +700,28 @@ ideas = {
 			removal_cost = -1
 			level = 7
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			on_add = {
 				custom_effect_tooltip = defence_06_TT
-				subtract_from_variable = { var = expense_gain value = defence_gain }
-				add_to_variable = { var = treasury_rate value = defence_gain }
-				set_variable = { var = defence_gain value = size_modifier }
-				multiply_variable = { var = defence_gain value = 0.16 }
-				add_to_variable = { var = expense_gain value = defence_gain }
-				subtract_from_variable = { var = treasury_rate value = defence_gain }
+				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 7 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 7 }
 				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			modifier = {
 				conscription_factor = -0.6
 				industrial_capacity_factory = 0.8
 				industrial_capacity_dockyard = 0.4
+				production_speed_arms_factory_factor = 0.16
+				production_speed_dockyard_factor = 0.16
 			}
 			
 			ai_will_do = {
@@ -371,17 +732,74 @@ ideas = {
 					manpower_per_military_factory <  330
 					has_idea = defence_05
 				}
+				
+				modifier = {
+					factor = 0 
+					OR = {
+						AND = {
+							has_idea = defence_07
+							check_variable = { AI_WAR_SPEND_RATIO > 0.7 }
+						}
+						AND = {
+							has_idea = defence_05
+							check_variable = { AI_WAR_SPEND_RATIO < 0.6 }
+						}
+					}
+				}
+				
+				modifier = {
+					factor = 100
+					AND = {
+						has_idea = defence_07
+						check_variable = { AI_WAR_SPEND_RATIO < 0.7 }
+					}
+				}
+				
+				modifier = {
+					factor = 0
+					AND = {
+						NOT = { has_idea = defence_05 }
+						NOT = { has_idea = defence_07 }
+					}
+				}
+			
 				modifier = {
 					#Lower chance if has decent amount
 					factor = 0.5
-					manpower_per_military_factory >  3000
+					OR = {
+						AND = {
+							manpower_per_military_factory >  3000
+							has_war = no
+						}
+						
+						AND = {
+							manpower_per_military_factory > 5000
+							has_war = yes
+							all_enemy_country = {
+								check_variable = { IS_MAJOR = 0 }
+							}
+						}
+						
+						AND = {
+							manpower_per_military_factory > 20000
+							has_war = yes
+							any_enemy_country = {
+								check_variable = { IS_MAJOR = 1 }
+							}
+						}
+					}
 				
 				}
 				modifier = {
 					#Lower chance if not at war
-					factor = 0.1
+					factor = 0.3
 					has_war = no
 				
+				}
+				
+				modifier = {
+					factor = 10
+					check_variable = { AI_VOLUNTEERS = 1 }
 				}
 				modifier = {
 					#Higher chance if doing badly
@@ -412,6 +830,23 @@ ideas = {
 						has_idea = defence_07
 					}
 				}
+				
+				modifier = {
+					factor = 600
+					check_variable = {
+						var = AI_WAR_SPEND_RATIO
+						value = 0.6
+						compare = greater_than
+					}
+				}
+				
+				modifier = {
+					factor = 5000
+					any_enemy_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+						has_war_with = ROOT
+					}
+				}
 			}
 			
 			cancel_if_invalid = no
@@ -421,35 +856,99 @@ ideas = {
 			removal_cost = -1
 			level = 8
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			on_add = {
 				custom_effect_tooltip = defence_07_TT
-				subtract_from_variable = { var = expense_gain value = defence_gain }
-				add_to_variable = { var = treasury_rate value = defence_gain }
-				set_variable = { var = defence_gain value = size_modifier }
-				multiply_variable = { var = defence_gain value = 0.2 }
-				add_to_variable = { var = expense_gain value = defence_gain }
-				subtract_from_variable = { var = treasury_rate value = defence_gain }
+				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 8 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 8 }
 				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			modifier = {
 				conscription_factor = -0.5
 				industrial_capacity_factory = 1.0
 				industrial_capacity_dockyard = 0.5
+				production_speed_arms_factory_factor = 0.2
+				production_speed_dockyard_factor = 0.2
 			}
+			
+			
 			
 			ai_will_do = {
    				factor = 1
+				
+				modifier = {
+					factor = 0 
+					OR = {
+						AND = {
+							has_idea = defence_08
+							check_variable = { AI_WAR_SPEND_RATIO > 0.8 }
+						}
+						AND = {
+							has_idea = defence_06
+							check_variable = { AI_WAR_SPEND_RATIO < 0.7 }
+						}
+					}
+				}
+				
+				modifier = {
+					factor = 100
+					AND = {
+						has_idea = defence_08
+						check_variable = { AI_WAR_SPEND_RATIO < 0.8 }
+					}
+				}
+				
 				modifier = {
 					#Prio if low on manpower
 					factor = 26
 					manpower_per_military_factory <  300
 					has_idea = defence_06
 				}
+				
+
+				modifier = {
+					factor = 0
+					AND = {
+						NOT = { has_idea = defence_06 }
+						NOT = { has_idea = defence_08 }
+					}
+				}
+				
+				
 				modifier = {
 					#Lower chance if has decent amount
 					factor = 0.5
-					manpower_per_military_factory >  3000
+					OR = {
+						AND = {
+							manpower_per_military_factory >  3000
+							has_war = no
+						}
+						
+						AND = {
+							manpower_per_military_factory > 5000
+							has_war = yes
+							all_enemy_country = {
+								is_major = no
+							}
+						}
+						
+						AND = {
+							manpower_per_military_factory > 20000
+							has_war = yes
+							any_enemy_country = {
+								check_variable = { IS_MAJOR = 1 }
+							}
+						}
+					}
 				
 				}
 				modifier = {
@@ -457,6 +956,11 @@ ideas = {
 					factor = 0.1
 					has_war = no
 				
+				}
+				
+				modifier = {
+					factor = 10
+					check_variable = { AI_VOLUNTEERS = 1 }
 				}
 				modifier = {
 					#Higher chance if doing badly
@@ -472,9 +976,26 @@ ideas = {
 				modifier = {
 					#Higher chance if doing badly
 					factor = 12
-					any_country = {
+					any_enemy_country = {
 						is_justifying_wargoal_against = THIS
 						strength_ratio = { tag = THIS ratio > 2.0 } # 2x stronger than THIS
+					}
+				}
+				
+				modifier = {
+					factor = 700
+					check_variable = {
+						var = AI_WAR_SPEND_RATIO
+						value = 0.7
+						compare = greater_than
+					}
+				}
+				
+				modifier = {
+					factor = 5000
+					any_enemy_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+						has_war_with = ROOT
 					}
 				}
 			}
@@ -486,15 +1007,20 @@ ideas = {
 			removal_cost = -1
 			level = 9
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			on_add = {
 				custom_effect_tooltip = defence_08_TT
-				subtract_from_variable = { var = expense_gain value = defence_gain }
-				add_to_variable = { var = treasury_rate value = defence_gain }
-				set_variable = { var = defence_gain value = size_modifier }
-				multiply_variable = { var = defence_gain value = 0.25 }
-				add_to_variable = { var = expense_gain value = defence_gain }
-				subtract_from_variable = { var = treasury_rate value = defence_gain }
+				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 9 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 9 }
 				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			available = {
@@ -512,27 +1038,84 @@ ideas = {
 				conscription_factor = -0.375
 				industrial_capacity_factory = 1.25
 				industrial_capacity_dockyard = 0.625
+				production_speed_arms_factory_factor = 0.25
+				production_speed_dockyard_factor = 0.25
 			}
 			
 			ai_will_do = {
    				factor = 1
+				
+				modifier = {
+					factor = 0 
+					OR = {
+						AND = {
+							has_idea = defence_09
+							check_variable = { AI_WAR_SPEND_RATIO > 0.9 }
+						}
+						AND = {
+							has_idea = defence_07
+							check_variable = { AI_WAR_SPEND_RATIO < 0.75 }
+						}
+					}
+				}
+				
+				modifier = {
+					factor = 100
+					AND = {
+						has_idea = defence_06
+						check_variable = { AI_WAR_SPEND_RATIO < 0.9 }
+					}
+				}
+				
 				modifier = {
 					#Prio if low on manpower
 					factor = 27
 					manpower_per_military_factory <  270
 					has_idea = defence_07
 				}
+				
+				modifier = {
+					factor = 0
+					AND = {
+						NOT = { has_idea = defence_07 }
+						NOT = { has_idea = defence_09 }
+					}
+				}
 				modifier = {
 					#Lower chance if has decent amount
 					factor = 0.5
-					manpower_per_military_factory >  3000
+					OR = {
+						AND = {
+							manpower_per_military_factory >  3000
+							has_war = no
+						}
+						
+						AND = {
+							manpower_per_military_factory > 5000
+							has_war = yes
+							all_enemy_country = {
+								is_major = no
+							}
+						}
+						
+						AND = {
+							manpower_per_military_factory > 20000
+							has_war = yes
+							any_enemy_country = {
+								check_variable = { IS_MAJOR = 1 }
+							}
+						}
+					}
 				
 				}
 				modifier = {
 					#Lower chance if not at war
 					factor = 0.1
 					has_war = no
-				
+				}
+				modifier = {
+					factor = 10
+					check_variable = { AI_VOLUNTEERS = 1 }
 				}
 				modifier = {
 					factor = 2
@@ -557,6 +1140,23 @@ ideas = {
 						strength_ratio = { tag = THIS ratio > 2.0 } # 2x stronger than THIS
 					}
 				}
+				
+				modifier = {
+					factor = 800
+					check_variable = {
+						var = AI_WAR_SPEND_RATIO
+						value = 0.75
+						compare = greater_than
+					}
+				}
+				
+				modifier = {
+					factor = 7000
+					any_enemy_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+						has_war_with = ROOT
+					}
+				}
 			
 			}
 			
@@ -567,15 +1167,20 @@ ideas = {
 			removal_cost = -1
 			level = 10
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			on_add = {
 				custom_effect_tooltip = defence_09_TT
-				subtract_from_variable = { var = expense_gain value = defence_gain }
-				add_to_variable = { var = treasury_rate value = defence_gain }
-				set_variable = { var = defence_gain value = size_modifier }
-				multiply_variable = { var = defence_gain value = 0.4 }
-				add_to_variable = { var = expense_gain value = defence_gain }
-				subtract_from_variable = { var = treasury_rate value = defence_gain }
+				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 10 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 10 }
 				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			available = {
@@ -593,20 +1198,50 @@ ideas = {
 				conscription_factor = 0
 				industrial_capacity_factory = 2.0
 				industrial_capacity_dockyard = 1.0
+				production_speed_arms_factory_factor = 0.4
+				production_speed_dockyard_factor = 0.4
 			}
 			
 			ai_will_do = {
    				factor = 1
+
 				modifier = {
 					#Prio if low on manpower
 					factor = 28
 					manpower_per_military_factory <  250
 					has_idea = defence_08
 				}	
+				
+				modifier = {
+					factor = 0
+					NOT = { has_idea = defence_08 }
+				}
 				modifier = {
 					#Lower chance if has decent amount
 					factor = 0.5
-					manpower_per_military_factory >  3000
+					OR = {
+						AND = {
+							manpower_per_military_factory >  3000
+							has_war = no
+						}
+						
+						AND = {
+							manpower_per_military_factory > 5000
+							has_war = yes
+							all_enemy_country = {
+								is_major = no
+							}
+						}
+						
+						AND = {
+							manpower_per_military_factory > 20000
+							has_war = yes
+							any_enemy_country = {
+								check_variable = { IS_MAJOR = 1 }
+							}
+						}
+					}
+					
 				
 				}
 				modifier = {
@@ -617,13 +1252,13 @@ ideas = {
 				}
 				modifier = {
 					#Higher chance if doing badly
-					factor = 10
+					factor = 1000
 					surrender_progress > 0.3
 				
 				}
 				
 				modifier = {
-				factor = 4
+				factor = 40000
 					AND = {
 						has_war = yes
 						any_enemy_country = {
@@ -647,6 +1282,23 @@ ideas = {
 						strength_ratio = { tag = THIS ratio > 2.0 } # 2x stronger than THIS
 					}
 				}
+				
+				modifier = {
+					factor = 100000
+					check_variable = {
+						var = AI_WAR_SPEND_RATIO
+						value = 0.9
+						compare = greater_than
+					}
+				}
+				
+				modifier = {
+					factor = 1000000
+					any_enemy_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+						has_war_with = ROOT
+					}
+				}
 			}
 			
 			cancel_if_invalid = no
@@ -663,8 +1315,17 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
 			
+			}
+			
+			on_add = {
+				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 				
 			cost = 300
@@ -673,11 +1334,8 @@ ideas = {
 			
 			modifier = {
 				conscription = 0.00
-				army_morale_factor = 0.00
-				army_org_factor = 0.00
-				army_core_attack_factor = 0.00
-				army_core_defence_factor = 0.00
-				training_time_factor = 0.00
+				army_attack_factor = -0.9
+				army_defence_factor = -0.9
 			}
 			
 			ai_will_do = {
@@ -702,8 +1360,18 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
 
+			}
+			
+			on_add = {
+				custom_effect_tooltip = volunteer_army_TT
+				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			cost = 300
@@ -714,10 +1382,8 @@ ideas = {
 				conscription = 0.025
 				army_morale_factor = 0.10
 				army_org_factor = 0.10
-				army_core_attack_factor = 0.00
-				army_core_defence_factor = 0.00
-				training_time_factor = 0.00
 				special_forces_cap = 0.5
+				experience_gain_army = 0.06
 			}
 			
 			ai_will_do = {
@@ -767,8 +1433,18 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
 
+			}
+			
+			on_add = {
+				custom_effect_tooltip = partial_draft_army_TT
+				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			cost = 300
@@ -777,12 +1453,13 @@ ideas = {
 			
 			modifier = {
 				conscription = 0.0325
-				army_morale_factor = 0.00
-				army_org_factor = 0.00
+				army_attack_factor = -0.05
 				army_core_attack_factor = 0.05
+				army_defence_factor = -0.05
 				army_core_defence_factor = 0.05
-				training_time_factor = -0.05
+				training_time_factor = -0.10
 				special_forces_cap = 0.2
+				experience_gain_army = 0.04
 			}
 			
 			ai_will_do = {
@@ -829,6 +1506,22 @@ ideas = {
 						}
 					}
 				}
+				
+				modifier = {
+					add = 20
+					all_enemy_country = {
+						has_war_with = ROOT
+						check_variable = { var = IS_MAJOR value = 0 }
+					}
+				}
+				modifier = {
+					add = 10000
+					any_enemy_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+						has_war_with = ROOT
+					}
+				}
+				
 			}
 			
 			cancel_if_invalid = no
@@ -841,8 +1534,17 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
 				
+			}
+			
+			on_add = {
+				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			cost = 300
@@ -853,9 +1555,12 @@ ideas = {
 				conscription = 0.04
 				army_morale_factor = -0.10
 				army_org_factor = -0.10
+				army_attack_factor = -0.20
 				army_core_attack_factor = 0.20
+				army_defence_factor = -0.20
 				army_core_defence_factor = 0.20
-				training_time_factor = -0.10
+				training_time_factor = -0.20
+				experience_gain_army = 0.02
 			}
 			
 			ai_will_do = {
@@ -908,6 +1613,14 @@ ideas = {
 						}
 					}
 				}
+				
+				modifier = {
+					add = 20000
+						any_enemy_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+						has_war_with = ROOT
+					}
+				}
 			}
 			
 			cancel_if_invalid = no
@@ -923,6 +1636,10 @@ ideas = {
 		no_women_in_military = {
 			
 			allowed = {
+				always = yes
+			}
+			
+			allowed_civil_war = {
 				always = yes
 			}
 			
@@ -953,6 +1670,8 @@ ideas = {
 				}
 			}
 			
+			
+			
 			cancel_if_invalid = no
 			
 		}
@@ -960,6 +1679,10 @@ ideas = {
 		volunteer_women = {
 			
 			allowed = {
+				always = yes
+			}
+			
+			allowed_civil_war = {
 				always = yes
 			}
 			
@@ -974,7 +1697,7 @@ ideas = {
 			modifier = {
 				conscription = 0.004
 				monthly_population = -0.05
-				production_speed_buildings_factor = -0.03
+				production_speed_buildings_factor = -0.05
 				special_forces_cap = -0.05
 			}
 			
@@ -988,6 +1711,14 @@ ideas = {
 					has_manpower < 10000
 
 				}
+				
+				modifier = {
+					add = 20000
+					any_other_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+						has_war_with = ROOT
+					}
+				}
 			}
 			
 			default = yes
@@ -999,6 +1730,10 @@ ideas = {
 		drafted_women = {
 			
 			allowed = {
+				always = yes
+			}
+			
+			allowed_civil_war = {
 				always = yes
 			}
 			
@@ -1015,9 +1750,9 @@ ideas = {
 			
 			modifier = {
 				conscription = 0.02
-				monthly_population = -0.10
-				production_speed_buildings_factor = -0.10
-				special_forces_cap = -0.25
+				monthly_population = -0.15
+				production_speed_buildings_factor = -0.15
+				special_forces_cap = -0.15
 			}
 			
 			ai_will_do = {
@@ -1030,6 +1765,13 @@ ideas = {
 					NOT = { has_government = fascism }
 					all_neighbor_country = {
 						has_opinion = { target = ROOT value < 0 }
+					}
+				}
+				modifier = {
+					add = 30000
+					any_other_country = {
+						check_variable = { var = IS_MAJOR value = 1 }
+						has_war_with = ROOT
 					}
 				}
 			}
@@ -1049,24 +1791,27 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
 				NOT = {
-					has_idea = defense_industry
 					has_idea = the_military
 					is_in_faction = yes
 				}
 			}
 			
-			cost = 500
+			cost = 350
 			removal_cost = -1
 			level = 1
 			
 			modifier = {
 				lend_lease_tension = 0.20
-				send_volunteers_tension = 0.40
-				guarantee_tension = 0.80
+				send_volunteers_tension = 0.50
+				guarantee_tension = 0.60
 				join_faction_tension = 0.80
-				generate_wargoal_tension = 1.05
+				generate_wargoal_tension = 0.95
 			}
 			
 			ai_will_do = {
@@ -1082,20 +1827,24 @@ ideas = {
 				always = yes
 			}
 			
-			available = {
+			allowed_civil_war = {
 				always = yes
 			}
 			
-			cost = 500
+			available = {
+				always = yes
+			}
+
+			cost = 350
 			removal_cost = -1
 			level = 2
 			
 			modifier = {
-				lend_lease_tension = 0.10
+				lend_lease_tension = 0.15
 				send_volunteers_tension = 0.30
-				guarantee_tension = 0.70
-				join_faction_tension = 0.70
-				generate_wargoal_tension = 0.95
+				guarantee_tension = 0.40
+				join_faction_tension = 0.60
+				generate_wargoal_tension = 0.75
 			}
 			
 			ai_will_do = {
@@ -1113,20 +1862,24 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
 				always = yes
 			}
 			
-			cost = 500
+			cost = 350
 			removal_cost = -1
 			level = 3
 			
 			modifier = {
-				lend_lease_tension = 0.05
-				send_volunteers_tension = 0.15
-				guarantee_tension = 0.40
-				join_faction_tension = 0.35
-				generate_wargoal_tension = 0.47
+				lend_lease_tension = 0.10
+				send_volunteers_tension = 0.20
+				guarantee_tension = 0.30
+				join_faction_tension = 0.45
+				generate_wargoal_tension = 0.55
 			}
 			
 			ai_will_do = {
@@ -1142,20 +1895,24 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
 				always = yes
 			}
 			
-			cost = 500
+			cost = 350
 			removal_cost = -1
 			level = 4
 			
 			modifier = {
-				lend_lease_tension = 0.025
-				send_volunteers_tension = 0.05
+				lend_lease_tension = 0.05
+				send_volunteers_tension = 0.10
 				guarantee_tension = 0.20
-				join_faction_tension = 0.16
-				generate_wargoal_tension = 0.24
+				join_faction_tension = 0.25
+				generate_wargoal_tension = 0.35
 			}
 			
 			ai_will_do = {
@@ -1171,19 +1928,24 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
 				always = yes
 			}
 			
-			cost = 500
+			cost = 350
 			removal_cost = -1
 			level = 5
 			
 			modifier = {
-				send_volunteers_tension = 0.025
+				lend_lease_tension = 0.00
+				send_volunteers_tension = 0.05
 				guarantee_tension = 0.10
-				join_faction_tension = 0.08
-				generate_wargoal_tension = 0.12
+				join_faction_tension = 0.15
+				generate_wargoal_tension = 0.15
 			}
 			
 			ai_will_do = {
@@ -1199,6 +1961,10 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
 				OR = {
 					has_government = fascism
@@ -1206,21 +1972,22 @@ ideas = {
 				}
 			}
 			
-			cost = 500
+			cost = 350
 			removal_cost = -1
 			level = 6
 			
 			modifier = {
-				send_volunteers_tension = 0.0125
-				guarantee_tension = 0.05
-				join_faction_tension = 0.04
-				generate_wargoal_tension = 0.06
+				lend_lease_tension = 0.00
+				send_volunteers_tension = 0.0
+				guarantee_tension = 0.0
+				join_faction_tension = 0.0
+				generate_wargoal_tension = 0.0
 			}
 			
 			ai_will_do = {
 				factor = 0
 				modifier = {
-					add = 10
+					factor = 10
 					has_government = fascism
 				}
 				modifier = {
@@ -1251,7 +2018,16 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
+			}
+			
+			on_add = {
+				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			cost = 150
@@ -1261,6 +2037,7 @@ ideas = {
 			modifier = {
 				military_leader_cost_factor = -0.50
 				army_leader_start_level = -1
+				experience_gain_army = -0.01
 			}
 			
 			ai_will_do = {
@@ -1276,7 +2053,17 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
+			}
+			
+			on_add = {
+				custom_effect_tooltip = officer_basic_training_TT
+				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			default = yes
@@ -1288,6 +2075,8 @@ ideas = {
 			modifier = {
 				military_leader_cost_factor = -0.25
 				army_leader_start_level = 0
+				command_power_gain_mult = 0.05
+				max_command_power = 10
 			}
 			
 			ai_will_do = {
@@ -1303,7 +2092,17 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
+			}
+			
+			on_add = {
+				custom_effect_tooltip = officer_advanced_training_TT
+				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			cost = 150
@@ -1313,6 +2112,9 @@ ideas = {
 			modifier = {
 				military_leader_cost_factor = 0
 				army_leader_start_level = 1
+				command_power_gain_mult = 0.1
+				max_command_power = 20
+				experience_gain_army = 0.01
 			}
 			
 			ai_will_do = {
@@ -1328,7 +2130,17 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
+			}
+			
+			on_add = {
+				custom_effect_tooltip = officer_military_school_TT
+				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			cost = 150
@@ -1338,6 +2150,9 @@ ideas = {
 			modifier = {
 				military_leader_cost_factor = 0.3
 				army_leader_start_level = 2
+				command_power_gain_mult = 0.15
+				max_command_power = 30
+				experience_gain_army = 0.02
 			}
 			
 			ai_will_do = {
@@ -1353,7 +2168,17 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
+			}
+			
+			on_add = {
+				custom_effect_tooltip = officer_military_academy_TT
+				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			cost = 150
@@ -1363,6 +2188,9 @@ ideas = {
 			modifier = {
 				military_leader_cost_factor = 0.7
 				army_leader_start_level = 3
+				command_power_gain_mult = 0.20
+				max_command_power = 40
+				experience_gain_army = 0.03
 			}
 			
 			ai_will_do = {
@@ -1378,11 +2206,21 @@ ideas = {
 				always = yes
 			}
 			
+			allowed_civil_war = {
+				always = yes
+			}
+			
 			available = {
 				OR = {
 					is_in_faction = yes
 					has_idea = NATO_member
 				}
+			}
+			
+			on_add = {
+				custom_effect_tooltip = officer_international_education_TT
+				ingame_calculate_size_modifier = yes
+				update_military_rate = yes
 			}
 			
 			cost = 150
@@ -1392,6 +2230,9 @@ ideas = {
 			modifier = {
 				military_leader_cost_factor = 1.00
 				army_leader_start_level = 4
+				command_power_gain_mult = 0.25
+				max_command_power = 50
+				experience_gain_army = 0.04
 			}
 			
 			ai_will_do = {
