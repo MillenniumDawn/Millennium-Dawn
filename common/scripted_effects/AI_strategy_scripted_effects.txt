@@ -36,7 +36,7 @@ ai_build_units = {
 ai_update_build_units = {
 	if = {
 		limit = {
-			has_country_flag = ai_no_unit_build
+			NOT = { has_country_flag = ai_yes_unit_build }
 			or = {
 				has_war = yes
 				threat > 0.30
@@ -49,6 +49,7 @@ ai_update_build_units = {
 				}
 			}
 		}
+		set_country_flag = ai_yes_unit_build
 		clr_country_flag = ai_no_unit_build
 		add_ai_strategy = { type = role_ratio id = L_Inf value = 500 }
 		add_ai_strategy = { type = role_ratio id = infantry value = 500 }
@@ -60,8 +61,21 @@ ai_update_build_units = {
 		add_ai_strategy = { type = role_ratio id = Air_Inf value = 500 }
 		add_ai_strategy = { type = role_ratio id = Special_Forces value = 500 }
 	}
-	else = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = ai_no_unit_build }
+			has_war = no
+			threat < 0.31
+			is_bad_salafist = no
+			any_other_country = {
+				NOT = {
+					is_justifying_wargoal_against = this
+					has_wargoal_against = this
+				}
+			}
+		}
 		set_country_flag = ai_no_unit_build
+		clr_country_flag = ai_yes_unit_build
 		add_ai_strategy = { type = role_ratio id = L_Inf value = -500 }
 		add_ai_strategy = { type = role_ratio id = infantry value = -500 }
 		add_ai_strategy = { type = role_ratio id = garrison value = -500 }
