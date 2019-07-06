@@ -1224,7 +1224,6 @@ focus_tree = {
 				add_opinion_modifier = { target = ROOT modifier = pushing_the_union } 
 			}
 			add_political_power = 100
-			add_stability = 0.05
 		}
 		
 		ai_will_do = {
@@ -1329,7 +1328,31 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			add_political_power = 75
+			every_country = {
+				limit = { has_idea = EU_member }
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 20 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = FRA }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = FRA.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+					custom_effect_tooltip = FRA_european_alignment_TT
+				}
+			}
 		}
 		
 		ai_will_do = {
@@ -1361,7 +1384,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			add_stability = 0.05
+			add_political_power = 50
 		}
 		
 		ai_will_do = {
@@ -1393,7 +1416,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			country_event = european_union.4
+			country_event = european_union.3
 		}
 		
 		ai_will_do = {
@@ -2908,12 +2931,14 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			random_owned_state = {
+				limit = { region = 19 }
 				add_resource = {
 					type = steel
 					amount = 4
 				}
 			}
 			random_owned_state = {
+				limit = { region = 19 }
 				add_resource = {
 					type = steel
 					amount = 4
@@ -3559,20 +3584,20 @@ focus_tree = {
 		available = { 
 			AND = {
 				OR = {
-					NOT = {
-						is_puppet_of = USA
-						has_war_with = USA
-					}
-					NOT = {
+					AND = {
 						USA = { has_government = communism }
-						NOT = { FRA = { has_government = communism } }
+						FRA = { has_government = communism }
 					}
-					NOT = {
+					AND = {
 						USA = { has_government = nationalist }
-						NOT = { FRA = { has_government = nationalist } }
+						FRA = { has_government = nationalist }
 					}
 				}
-				num_of_factories > 95
+				num_of_factories > 75
+				NOT = {
+					is_puppet_of = USA
+					has_war_with = USA
+				}
 			}
 		}
 		historical_ai = { }
