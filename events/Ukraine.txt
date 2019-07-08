@@ -230,7 +230,7 @@ country_event = {
 	is_triggered_only = yes
 	
 	hidden = yes
-		
+	
 	option = {
 		name = ukraine_hidden.1.a # < 2/3 agree
 		log = "[GetDateText]: [This.GetName]: ukraine_hidden.1.a executed"
@@ -325,7 +325,7 @@ country_event = {
 	id = ukraine_md.2
 	title = ukraine_md.2.t
 	desc = ukraine_md.2.d
-	picture = GFX_verkhovna_rada_vote
+	picture = GFX_treaty_rejected
 	
 	is_triggered_only = yes
 	
@@ -344,7 +344,7 @@ country_event = {
 	id = ukraine_md.3
 	title = ukraine_md.3.t
 	desc = ukraine_md.3.d
-	#picture = GFX_verkhovna_rada
+	picture = GFX_georgiy_gongadze
 	
 	fire_only_once = yes
 	
@@ -368,7 +368,7 @@ country_event = {
 		ai_chance = {
 			factor = 15
 			modifier = {
-				is_historical_ai_on = yes 
+				is_historical_focus_on = yes 
 				add = 10
 			}
 		}
@@ -381,7 +381,7 @@ country_event = {
 		ai_chance = {
 			factor = 15
 			modifier = {
-				is_historical_ai_on = no 
+				is_historical_focus_on = no 
 				add = 10
 			}
 		}
@@ -393,7 +393,7 @@ country_event = {
 	id = ukraine_md.6
 	title = ukraine_md.6.t
 	desc = ukraine_md.6.d
-	#picture = GFX_verkhovna_rada
+	picture = GFX_treaty_rejected
 	
 	is_triggered_only = yes
 	
@@ -415,7 +415,7 @@ country_event = {
 	id = ukraine_md.4
 	title = ukraine_md.4.t
 	desc = ukraine_md.4.d
-	#picture = GFX_verkhovna_rada
+	picture = GFX_verkhovna_rada_vote
 	
 	is_triggered_only = yes
 	
@@ -455,7 +455,7 @@ country_event = {
 	id = ukraine_md.5
 	title = ukraine_md.5.t
 	desc = ukraine_md.5.d
-	picture = unknown
+	picture = GFX_verkhovna_rada_vote
 	
 	is_triggered_only = yes
 	
@@ -475,7 +475,7 @@ country_event = {
 		ai_chance = {
 			factor = 5
 			modifier = {
-				is_historical_ai_on = no
+				is_historical_focus_on = no
 				add = 10
 			}
 		}
@@ -486,7 +486,7 @@ country_event = { ##Ukraine Trying to Join the CSTO!
 	id = ukraine_md.7
 	title = ukraine_md.7.t
 	desc = ukraine_md.7.d
-	picture = join_the_csto
+	picture = GFX_join_the_csto
 	
 	is_triggered_only = yes
 	
@@ -516,7 +516,7 @@ news_event = { ##Ukraine Joins the CSTO
 	id = ukraine_news.6
 	title = ukraine_news.6.t
 	desc = ukraine_news.6.d
-	picture = news_csto
+	picture = GFX_news_csto
 	
 	is_triggered_only = yes 
 	
@@ -524,19 +524,100 @@ news_event = { ##Ukraine Joins the CSTO
 		name = ukraine_news.6.a
 		log = "[GetDateText]: [This.GetName]: ukraine_news.6.a executed"
 		trigger = {
-			tag = UKR 
+			original_tag = UKR 
 		}
 	}
 	option = {
 		name = ukraine_news.6.b
 		log = "[GetDateText]: [This.GetName]: ukraine_news.6.b executed"
 		trigger = {
-			tag = SOV 
+			original_tag = SOV 
 		}
 	}
 	option = {
 		name = ukraine_news.6.c
 		log = "[GetDateText]: [This.GetName]: ukraine_news.6.c executed"
+		trigger = {
+			NOT = {
+				original_tag = UKR
+				original_tag = SOV
+			}
+		}
 	}
+}
 
+country_event = { #Request European Investments from the Majors
+	id = ukraine_md.8
+	title = ukraine_md.8.t
+	desc = ukraine_md.8.d
+	picture = GFX_kiev_construction
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = ukraine_md.8.a
+		log = "[GetDateText]: [This.GetName]: ukraine_md.8.a executed"
+		UKR = {
+			hidden_effect = {
+				set_temp_variable = { influence_gain = 10 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = PREV }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = PREV.id }
+					add_to_array = { influence_array_val = influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+			}
+			random_list = {
+				60 = {
+					random_owned_state = {
+						add_building_construction = {
+							type = industrial_complex
+							level = 1
+							instant_build = yes
+						}
+						add_extra_state_shared_building_slots = 1
+					}
+				}
+				40 = {
+					random_owned_state = {
+						add_building_construction = {
+							type = infrastructure
+							level = 1
+							instant_build = yes
+						}
+					}
+				}
+			}
+		}
+		UKR = { country_event = diplomatic_response.1 }
+		ai_chance = {
+			base = 25
+		}
+	}
+	
+	option = {
+		name = ukraine_md.8.b
+		log = "[GetDateText]: [This.GetName]: ukraine_md.8.b executed"
+		UKR = { country_event = diplomatic_response.2 
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = loan_denied
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
 }
