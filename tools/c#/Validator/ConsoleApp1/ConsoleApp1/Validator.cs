@@ -6,13 +6,24 @@ using System.Linq;
 
 namespace Validator
 {
-    public class Mod
+
+    static class Extensions
+    {
+        public static List<T> Clone<T>(this List<T> listToClone) where T : ICloneable
+        {
+            return listToClone.Select(item => (T)item.Clone()).ToList();
+        }
+    }
+
+    public class Mod: ICloneable
     {
         protected String rootdir;
         protected List<String> allTags = new List<String>();
         protected List<String> errors = new List<String>();
         protected List<String> minorErrors = new List<String>();
         protected List<String> ideologies = new List<String>();
+        protected List<String> ideas = new List<String>();
+        protected List<String> technologies = new List<String>();
 
         
         public Mod(String _rootDir)
@@ -48,6 +59,7 @@ namespace Validator
             foreach (string line in lines)
                 if (returnMatch(line, "^[A-Z]{3}") != null)
                     allTags.Add(returnMatch(line, "^[A-Z]{3}"));
+            
             ValidateTags();
         }
         private void ValidateTags()
@@ -55,7 +67,7 @@ namespace Validator
 
             var dir = rootdir + "\\history\\countries\\";
             List<String> tempTags = new List<String>();
-            tempTags = allTags;
+            tempTags = Extensions.Clone(allTags);
             string temp = "";
 
             foreach (string file in Directory.GetFiles(dir))
@@ -69,7 +81,7 @@ namespace Validator
                         if (tempTags.Contains(temp))
                         {
                             Console.WriteLine(temp);
-                            errors.Add($"Duplicate tag: {temp} found in \\common\\country_tags\\00_countries.txt");
+                            minorErrors.Add($"Duplicate tag: {temp} found in \\common\\country_tags\\00_countries.txt");
                             Console.ReadKey();
                         }
                     }
@@ -84,6 +96,7 @@ namespace Validator
             {
                 minorErrors.Add($"Tag: {tag} has a entry in \\common\\country_tags\\00_countries.txt but no \\history\\countries\\ file");
             }
+            
         }
 
         public void PopulateIdeologies()
@@ -116,10 +129,107 @@ namespace Validator
                 }
             }
         }
-
+        
         public void CheckIfFlagExists()
         {
+            string dir = "";
 
+            foreach (string tag in allTags)
+            {
+                foreach (string ideology in ideologies)
+                {
+                    dir = rootdir + "\\gfx\\flags\\" + tag + "_" + ideology + ".tga";
+                    if (File.Exists(dir) == false)
+                    {
+                        minorErrors.Add($"{tag} is missing flag {dir}");
+                    }
+                    dir = rootdir + "\\gfx\\flags\\medium\\" + tag + "_" + ideology + ".tga";
+                    if (File.Exists(dir) == false)
+                    {
+                        minorErrors.Add($"{tag} is missing flag {dir}");
+                    }
+                    dir = rootdir + "\\gfx\\flags\\small\\" + tag + "_" + ideology + ".tga";
+                    if (File.Exists(dir) == false)
+                    {
+                        minorErrors.Add($"{tag} is missing flag {dir}");
+                    }
+
+                }
+
+            }
+        }
+
+        public void PopulateIdeas()
+        {
+            var dir = rootdir + "\\common\\ideas\\";
+            foreach (string file in Directory.GetFiles(dir))
+            {
+                int brace = 0;
+                string[] lines = File.ReadAllLines(file);
+                foreach (string line in lines)
+                {
+                    if (line.StartsWith("#") == false)
+                    {
+                        if (line.Contains("{") | line.Contains("}"))
+                        {
+                            if (brace == 2)
+                            {
+                                
+                                 var match = Regex.Match(line, @"\s?([\w-_]+)\s?=");
+                                 if (match.Success)
+                                    ideas.Add(match.Groups[1].Value);
+
+
+                            }
+                            if (returnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                            {
+                                brace += line.Count(f => f == '{');
+                                brace -= line.Count(f => f == '}');
+                            }
+
+                        }
+                    }
+                }
+
+                
+
+            }
+            
+        }
+        public void Populatetechnologies()
+        {
+            var dir = rootdir + "\\common\\technologies\\";
+            foreach (string file in Directory.GetFiles(dir))
+            {
+                int brace = 0;
+                string[] lines = File.ReadAllLines(file);
+                foreach (string line in lines)
+                {
+                    if (line.StartsWith("#") == false)
+                    {
+                        if (line.Contains("{") | line.Contains("}"))
+                        {
+                            if (brace == 1)
+                            {
+                                
+                                 var match = Regex.Match(line, @"\s?([\w-_]+)\s?=");
+                                 if (match.Success)
+                                    technologies.Add(match.Groups[1].Value);
+
+
+                            }
+                            if (returnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                            {
+                                brace += line.Count(f => f == '{');
+                                brace -= line.Count(f => f == '}');
+                            }
+
+                        }
+                    }
+                }
+                
+            }
+            
         }
 
         private String returnMatch(string text, string expr)
@@ -138,8 +248,10 @@ namespace Validator
             }
         }
 
-
-
+        public object Clone()
+        {
+            throw new NotImplementedException();
+        }
     }
     
 
@@ -157,8 +269,11 @@ namespace Validator
             }
             Mod mod = new Mod(path);
 
+            mod.PopulateIdeas();
+            mod.Populatetechnologies();
             mod.PopulateTags();
             mod.PopulateIdeologies();
+            mod.CheckIfFlagExists();
 
             foreach (string error in mod.GetMinorErrors())
             {
