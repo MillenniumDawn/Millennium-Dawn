@@ -164,6 +164,12 @@ setup_init_factions = {
 		set_country_flag = indifferent_the_donju
 	}
 	}
+	if = { limit = { has_idea = tatmadaw }
+		set_country_flag = active_tatmadaw
+		if = { limit = { flagcheck_tatmadaw = yes }
+		set_country_flag = indifferent_tatmadaw
+		}
+	}
 
 }
 
@@ -486,6 +492,9 @@ set_country_flag = { flag = campaign_funding_count value = 10 }
 	}
 	if = { limit = { has_idea = the_bazaar }
 		display_election_status_the_bazaar = yes
+	}
+	if = { limit = { has_idea = tatmadaw }
+		display_election_status_tatmadaw = yes
 	}
  
 	if = { limit = { has_idea = internal_faction_removed }
@@ -1168,6 +1177,31 @@ display_election_status_VEVAK = {
 	}
 }
 
+display_election_status_tatmadaw = {
+	if = { limit = { has_idea = tatmadaw }
+		Display_the_military = yes dash = yes providing = yes
+	}
+	if = { limit = { has_country_flag = hostile_tatmadaw }
+		the_opposition = yes massive = yes intimidation = yes against = yes Root_GetLeader = yes newline = yes
+		modify_country_flag = { flag = campaign_funding_count value = -2 }
+	}
+	if = { limit = { has_country_flag = negative_tatmadaw }
+		the_opposition = yes large = yes intimidation = yes against = yes Root_GetLeader = yes newline = yes
+		modify_country_flag = { flag = campaign_funding_count value = -1 }
+	}
+	if = { limit = { has_country_flag = indifferent_tatmadaw }
+		election_indifferent = yes newline = yes
+	}
+	if = { limit = { has_country_flag = positive_tatmadaw }
+		large = yes intimidation = yes for = yes Root_GetLeader = yes newline = yes
+		modify_country_flag = { flag = campaign_funding_count value = 1 }
+	}
+	if = { limit = { has_country_flag = enthusiastic_tatmadaw }
+		massive = yes intimidation = yes for = yes Root_GetLeader = yes newline = yes
+		modify_country_flag = { flag = campaign_funding_count value = 2 }
+	}
+}
+
 reset_all_internal_faction_opinions = {
 	custom_effect_tooltip = reset_internal_faction_opinion 
 	if = {
@@ -1385,6 +1419,14 @@ reset_all_internal_faction_opinions = {
 		clr_country_flag = positive_the_bazaar
 		clr_country_flag = enthusiastic_the_bazaar
 		set_country_flag = indifferent_the_bazaar
+	}
+	if = {
+		limit = { non_indifferent_tatmadaw = yes }
+		clr_country_flag = hostile_tatmadaw
+		clr_country_flag = negative_tatmadaw
+		clr_country_flag = positive_tatmadaw
+		clr_country_flag = enthusiastic_tatmadaw
+		set_country_flag = indifferent_tatmadaw
 	}
 }
 		
@@ -5034,6 +5076,24 @@ display_opinion_IRGC = {
 	}
 }
 
+display_opinion_tatmadaw = {
+	if = { limit = { has_country_flag = hostile_tatmadaw }
+		Root_opinion_of_adj = yes hostile = yes
+	}
+	if = { limit = { has_country_flag = negative_tatmadaw }
+		Root_opinion_of_adj = yes negative = yes
+	}
+	if = { limit = { has_country_flag = indifferent_tatmadaw }
+		Root_opinion_of_adj = yes indifferent = yes
+	}
+	if = { limit = { has_country_flag = positive_tatmadaw }
+		Root_opinion_of_adj = yes positive = yes
+	}
+	if = { limit = { has_country_flag = enthusiastic_tatmadaw }
+		Root_opinion_of_adj = yes enthusiastic = yes
+	}
+}
+
 # Decrease Internal faction opinion
 # Require set flags to select the eligible types.
 decrease_internal_faction_opinion = {
@@ -5280,6 +5340,15 @@ if = {
 		newline = yes #relative_change_neg_6 = yes
 		clr_country_flag = current_IRGC
 }
+if = { 
+		limit = { 
+			current_active_tatmadaw = yes
+		}
+		Display_IRGC = yes
+		display_opinion_fall_tatmadaw = yes
+		newline = yes #relative_change_neg_6 = yes
+		clr_country_flag = current_tatmadaw
+}
 clr_country_flag = current_small_medium_business_owners
 clr_country_flag = current_the_donju
 clr_country_flag = current_the_bazaar
@@ -5307,6 +5376,7 @@ clr_country_flag = current_industrial_conglomerates
 clr_country_flag = current_fossil_fuel_industry
 clr_country_flag = current_wall_street
 clr_country_flag = current_international_bankers
+clr_country_flag = current_tatmadaw
 }
 
 # Rise Internal faction opinion
@@ -5555,6 +5625,15 @@ if = {
 		newline = yes #relative_change_pos_6 = yes
 		clr_country_flag = current_IRGC
 }
+if = { 
+		limit = { 
+			current_active_tatmadaw = yes
+		}
+		Display_IRGC = yes
+		display_opinion_rise_tatmadaw = yes
+		newline = yes #relative_change_pos_6 = yes
+		clr_country_flag = current_tatmadaw
+}
 clr_country_flag = current_small_medium_business_owners
 clr_country_flag = current_the_donju
 clr_country_flag = current_the_bazaar
@@ -5582,6 +5661,7 @@ clr_country_flag = current_industrial_conglomerates
 clr_country_flag = current_fossil_fuel_industry
 clr_country_flag = current_wall_street
 clr_country_flag = current_international_bankers
+clr_country_flag = current_tatmadaw
 }
 
 # Check for deposed faction
@@ -8713,4 +8793,112 @@ display_opinion_fall_IRGC = {
 	}
 	clr_country_flag = opinion_freze
 }
+
+#Shows what the rise will be and sets flags
+display_opinion_rise_tatmadaw {
+	if = {
+		limit = { 
+				has_country_flag = hostile_tatmadaw 
+				NOT = { has_country_flag = opinion_freze }
+				}
+		increase_hostile = yes #display
+		clr_country_flag = hostile_tatmadaw
+		set_country_flag = negative_tatmadaw
+		set_country_flag = opinion_freze #exit
+	}
+	if = {
+		limit = { 
+				has_country_flag = negative_tatmadaw
+				NOT = { has_country_flag = opinion_freze }
+				}
+		increase_negative = yes #display
+		clr_country_flag = negative_tatmadaw
+		set_country_flag = indifferent_tatmadaw
+		set_country_flag = opinion_freze #exit
+	}
+	if = {
+		limit = { 
+				has_country_flag = indifferent_tatmadaw 
+				NOT = { has_country_flag = opinion_freze }
+				}
+		increase_indifferent = yes #display
+		clr_country_flag = indifferent_tatmadaw
+		set_country_flag = positive_tatmadaw
+		set_country_flag = opinion_freze #exit
+	}
+	if = {
+		limit = { 
+				has_country_flag = positive_tatmadaw 
+				NOT = { has_country_flag = opinion_freze }
+				}
+		increase_positive = yes #display
+		clr_country_flag = positive_tatmadaw
+		set_country_flag = enthusiastic_tatmadaw
+		set_country_flag = opinion_freze #exit
+	}
+	if = {
+		limit = { 
+				has_country_flag = enthusiastic_tatmadaw 
+				NOT = { has_country_flag = opinion_freze }
+				}
+		add_political_power = 100
+		set_country_flag = opinion_freze #exit
+	}
+	clr_country_flag = opinion_freze
+}
+
+#Shows what the decrease will be and sets flags
+display_opinion_fall_tatmadaw = {
+	if = {
+		limit = { 
+				has_country_flag = enthusiastic_tatmadaw 
+				NOT = { has_country_flag = opinion_freze }
+				}
+		decrease_enthusiastic = yes #display
+		clr_country_flag = enthusiastic_tatmadaw
+		set_country_flag = positive_tatmadaw
+		set_country_flag = opinion_freze #exit
+	}
+	if = {
+		limit = { 
+				has_country_flag = positive_tatmadaw
+				NOT = { has_country_flag = opinion_freze }
+				}
+		decrease_positive = yes #display
+		clr_country_flag = positive_tatmadaw
+		set_country_flag = indifferent_tatmadaw
+		set_country_flag = opinion_freze #exit
+	}
+	if = {
+		limit = { 
+				has_country_flag = indifferent_tatmadaw 
+				NOT = { has_country_flag = opinion_freze }
+				}
+		decrease_indifferent = yes #display
+		clr_country_flag = indifferent_tatmadaw
+		set_country_flag = negative_tatmadaw
+		set_country_flag = opinion_freze #exit
+	}
+	if = {
+		limit = { 
+				has_country_flag = negative_tatmadaw
+				NOT = { has_country_flag = opinion_freze }
+				}
+		decrease_negative = yes #display
+		clr_country_flag = negative_tatmadaw
+		set_country_flag = hostile_tatmadaw
+		set_country_flag = opinion_freze #exit
+	}
+	if = {
+		limit = { 
+				has_country_flag = hostile_tatmadaw 
+				NOT = { has_country_flag = opinion_freze }
+				}
+		add_political_power = -100
+		set_country_flag = opinion_freze #exit
+	}
+	clr_country_flag = opinion_freze
+}
+
+
 
