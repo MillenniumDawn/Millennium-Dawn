@@ -18,6 +18,10 @@ namespace Validator
             }
             Mod mod = new Mod(path);
 
+
+            mod.PopulateTraits();
+            mod.PopulateNationalFocus();
+            mod.PopulateIdeologies();
             mod.PopulateScriptedTriggers();
             mod.PopulateScriptedEffects();
             mod.PopulateOppinionModifier();
@@ -25,7 +29,7 @@ namespace Validator
             mod.PopulateIdeas();
             mod.PopulateTechnologies();
             mod.PopulateTags();
-            mod.PopulateIdeologies();
+            
             mod.CheckIfFlagExists();
 
             foreach (string error in mod.GetMinorErrors())
