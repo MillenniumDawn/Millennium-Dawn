@@ -1499,7 +1499,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			factor = 40
 		}
 	}
 
@@ -1539,6 +1539,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 20
+				is_historical_focus_on = no
 			}
 		}
 	}
@@ -2042,12 +2046,35 @@ focus_tree = {
 		bypass = { }
 
 		completion_reward = {
-
-			add_popularity = { ideology = nationalist popularity = 0.05 }
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 23 } #Monarchist
+			add_to_variable = { party_pop_array^23 = 0.25 } #Monarchist
 			recalculate_party = yes
-			set_politics = {
-				ruling_party = nationalist
-				elections_allowed = no
+			IF = {
+				limit = {
+					NOT = {
+						has_government = nationalist
+					}
+				}
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.25
+				}
+				recalculate_party = yes
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+			}
+			else = {
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
 			}
 		}
 
@@ -2403,9 +2430,10 @@ focus_tree = {
 		bypass = { }
 
 		completion_reward = {
-			add_state_claim = 149	#Pohjanmaa
-			add_state_claim = 111	#Uusimaa
-			add_state_claim = 145	#Aland
+			every_state = {
+				limit = { is_core_of = FIN }
+				add_claim_by = ROOT
+			}
 			create_wargoal = {
 				target = FIN
 				type = take_claimed_state

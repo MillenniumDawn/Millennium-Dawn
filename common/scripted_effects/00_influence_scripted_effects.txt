@@ -12,8 +12,10 @@ startup_influence = {
 }
 
 recalculate_influence = {
-	sort_influence = yes
-	calculate_influence_percentage = yes
+	hidden_effect = {
+		sort_influence = yes
+		calculate_influence_percentage = yes
+	}
 }
 
 sort_influence = {
@@ -69,6 +71,8 @@ sort_influence = {
 	divide_variable = { domestic_influence_amount_calc = influence_total }
 	clamp_variable = { var = domestic_influence_amount_calc min = 0 max = 1 }
 	clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
+	
+	#hostile_influence_target = yes
 }
 
 calculate_influence_percentage = {
@@ -111,4 +115,195 @@ calculate_influence_percentage = {
 	if = { limit = { check_variable = { influence_communism > 0.04 } } reset_communism_influence_ideas = yes }
 	if = { limit = { check_variable = { influence_nationalist > 0.04 } } reset_nationalist_influence_ideas = yes }
 	if = { limit = { check_variable = { influence_fascism > 0.04 } } reset_fascism_influence_ideas = yes }
+}
+
+### Assign target for hostile influence ###
+
+hostile_influence_target = {
+	
+}
+
+### Actions ###
+
+spread_influence = {
+			
+	PREV = { add_political_power = -80 }
+	
+	set_temp_variable = { influence_gain = PREV.influence_multiplier } #from global rank idea
+	multiply_temp_variable = { influence_gain = 10 } #base gain
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
+		if = {
+			limit = {
+				check_variable = { influence_array^v = PREV }
+			}
+			add_to_variable = { influence_array_val^v = influence_gain }
+			set_country_flag = found
+		}
+	}
+	if = {
+		limit = { NOT = { has_country_flag = found } }
+			add_to_array = { influence_array = PREV.id }
+			add_to_array = { influence_array_val = influence_gain }
+	}
+	clr_country_flag = found
+	recalculate_influence = yes
+}
+
+make_puppet_action = {
+	#eventually remove explotation idea (shouldn't double up)
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
+
+		meta_effect = {
+			text = {
+				if = {
+					limit = { has_idea = [THISTAG]_tribute_idea }
+					remove_ideas = [THISTAG]_tribute_idea
+				}
+			}
+			THISTAG = "[?var:influence_array^v.GetTag]"
+		}
+	}
+	
+	PREV = {
+		set_autonomy = {
+			target = PREV
+			autonomy_state = autonomy_satellite_state
+			freedom_level = 0.5
+		}
+		add_named_threat = {
+			threat = 5
+			name = created_puppet_loc
+		}
+	}
+	every_neighbor_country = {
+		add_opinion_modifier = {
+			target = PREV
+			modifier = puppeted_neighbor
+		}
+	}
+}
+
+economic_exploitation_action = {
+	
+	meta_effect = {
+		text = {
+			add_ideas = [ROOTTAG]_tribute_idea
+		}
+		ROOTTAG = "[?var:influence_array^0.GetTag]"
+	}
+	
+	#remove 10% influence
+	set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+	multiply_temp_variable = { influence_reduce = 0.1 } #10%
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
+		if = {
+			limit = {
+				check_variable = { influence_array^v = PREV }
+			}
+			subtract_from_variable = { influence_array_val^v = influence_reduce }
+		}
+	}
+	recalculate_influence = yes
+	
+	#opinions
+	add_opinion_modifier = {
+		target = PREV
+		modifier = exploited_us
+	}
+	every_neighbor_country = {
+		add_opinion_modifier = {
+			target = PREV
+			modifier = exploited_neighbor
+		}
+	}
+}
+
+
+manipulate_politics_action = {				
+	#Add +5 to our outlook
+	if = {
+		limit = {
+			PREV = { has_government = fascism }
+		}
+		add_popularity = {
+			ideology = fascism
+			popularity = 0.05
+		}
+	}
+	if = {
+		limit = {
+			PREV = { has_government = neutrality }
+		}
+		add_popularity = {
+			ideology = neutrality
+			popularity = 0.05
+		}
+	}
+	if = {
+		limit = {
+			PREV = { has_government = communism }
+		}
+		add_popularity = {
+			ideology = communism
+			popularity = 0.05
+		}
+	}
+	if = {
+		limit = {
+			PREV = { has_government = nationalist }
+		}
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.05
+		}
+	}
+	if = {
+		limit = {
+			PREV = { has_government = democratic }
+		}
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.05
+		}
+	}
+	
+	#add +5 to our party
+	
+	for_each_loop = {
+		array = PREV.ruling_party
+		value = v
+		add_to_variable = { party_pop_array^v = 0.05 }
+	}
+	
+	#remove 10% influence
+	set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+	multiply_temp_variable = { influence_reduce = 0.1 } #10%
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
+		if = {
+			limit = {
+				check_variable = { influence_array^v = PREV }
+			}
+			subtract_from_variable = { influence_array_val^v = influence_reduce }
+		}
+	}
+	recalculate_influence = yes
+	
+	#reduce relations if different gov
+	if = {
+		limit = {
+			NOT = { is_same_government_PREV = yes }
+		}
+		add_opinion_modifier = {
+				target = PREV
+				modifier = supported_opposition
+		}
+	}
 }
