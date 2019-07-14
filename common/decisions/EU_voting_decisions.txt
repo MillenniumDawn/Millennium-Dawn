@@ -1,0 +1,184 @@
+EU_voting_category = {
+	
+	Test_focus01 = {
+	
+		available = {
+			NOT = { has_country_flag = focus01 }
+		}
+		
+		visible = { 
+			has_idea = EU_member 
+		} 
+		
+		complete_effect = {   						
+			set_country_flag = focus01
+		}				
+	}
+	Test_focus01_QMV = {
+	
+		available = {
+			NOT = { has_country_flag = focus01_QMV }
+		}
+		
+		visible = { 
+			has_idea = EU_member 
+		} 
+		
+		complete_effect = {   						
+			set_country_flag = focus01_QMV
+		}				
+	}
+	Test_influence = {
+	
+		available = {
+			has_idea = EU_member
+		}
+		
+		visible = { 
+			has_idea = EU_member 
+		} 
+		
+		complete_effect = {   						
+			 set_temp_variable = { 
+				influence_gain = 5 
+			}
+			for_loop_effect = { 
+				end = influence_array^num value = v 
+					if = { 
+						limit = { 
+							check_variable = { influence_array^v = TUR } 
+						} 
+						add_to_variable = { influence_array_val^v = influence_gain }
+						set_country_flag = found 
+					} 
+			} 
+			if = { 
+				limit = { 
+					NOT = { has_country_flag = found } 
+				} 
+				add_to_array = { influence_array = TUR.id }
+				add_to_array = { influence_array_val = influence_gain } 
+			} 
+			clr_country_flag = found
+			recalculate_influence = yes
+		}				
+	}
+
+	EU_voting_decision_focus01 = {
+	
+		icon = GFX_decision_generic_european_union
+	
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = test123
+				AND = {
+					has_country_flag = focus01
+					NOT = { 
+							has_global_flag = focus01voted
+							has_country_flag = focus01yes
+					}
+					all_country = {	
+						OR = {
+							AND = {
+								set_temp_variable = { temp_idx = -1 }
+								any_of = {
+									array = influence_array
+									value = v
+									index = i
+									if = {
+										limit = { var:v = { tag = ROOT } }
+										set_temp_variable = { temp_idx = i }
+										always = yes
+									}
+									else = { always = no }
+								}
+								check_variable = { temp_idx > -1 }
+								check_variable = { influence_array_calc^temp_idx > 0.03 }						
+							}	
+							tag = PREV
+							NOT = { has_idea = EU_member }
+						}
+					}					
+				}	
+			}
+		}
+		
+		visible = { 
+			has_country_flag = focus01
+			NOT = { 
+				has_global_flag = focus01voted
+				has_country_flag = focus01yes
+			}
+		}
+		
+		complete_effect = {
+			set_global_flag = focus01voted
+			set_variable = {	
+				var = global.var_EUvoteYes
+				value = 0
+			}
+			set_variable = {	
+				var = global.var_EUvoteNo
+				value = 0
+			}
+			set_variable = {	
+				var = global.var_EUvoteTotal
+				value = 0
+			}
+			set_variable = {	
+				var = global.var_EUpopYes
+				value = 0
+			}
+			set_variable = {	
+				var = global.var_EUpopNo
+				value = 0
+			}
+			set_variable = {	
+				var = global.var_EUpopTotal
+				value = 0
+			}				
+			every_country = {
+				limit = { has_idea = EU_member }
+				country_event = {
+					id = EUvote.1
+				}
+			}
+		}
+	}
+	
+}
+EU_SOTEU_category = {
+	
+	State_of_the_European_Union = {
+
+		allowed = {
+			has_idea = EU_member
+		}
+		available = {
+			NOT = { has_idea = EU_member }
+		}
+		
+#		visible = { 
+#			has_idea = EU_member 
+#		} 
+		activation = {
+			has_idea = EU_member 
+		}
+		
+		is_good = yes
+		days_mission_timeout = 3
+		
+		timeout_effect = {		
+			news_event = {
+				id = EU_news.1
+			}
+		}		
+		complete_effect = {   						
+			news_event = {
+				id = EU_news.1
+#				days = 10
+#				random = 50
+			}
+		}				
+	}
+}
