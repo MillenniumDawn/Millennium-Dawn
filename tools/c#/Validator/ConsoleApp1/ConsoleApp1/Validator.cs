@@ -18,6 +18,7 @@ namespace Validator
             }
             Mod mod = new Mod(path);
 
+            mod.PopulateStates();
 
             mod.PopulateTraits();
             mod.PopulateNationalFocus();
