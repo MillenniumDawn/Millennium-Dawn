@@ -116,7 +116,7 @@
 				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
 					type = industrial_complex
-					level = 2
+					level = 1
 					instant_build = yes
 				}
 			}
@@ -1194,7 +1194,21 @@
 		}
 
 		completion_reward = {
-			add_stability = 0.075
+			if = { 
+				limit = { has_idea = ETH_looming_famine }
+				swap_ideas = {
+					remove_idea = ETH_looming_famine
+					add_idea = ETH_idea_stabilized_food_supply
+				}
+			}
+			else_if = {
+				limit = { has_idea = ETH_idea_famine_strikes }
+				swap_ideas = {
+					remove_idea = ETH_idea_famine_strikes
+					add_idea = ETH_idea_stabilized_food_supply
+				}
+			}
+			custom_effect_tooltip = ETH_stabilize_the_food_supply_TT
 		}
 
 		ai_will_do = {
@@ -1325,7 +1339,7 @@
 		x = 14
 		y = 0
 
-		cost = 10
+		cost = 5
 
 		completion_reward = {
 			add_ideas = defensive_preparations
@@ -2250,7 +2264,20 @@
 		bypass = { }
 
 		completion_reward = {
-			custom_effect_tooltip = zera_yacob_returns_tt
+			custom_effect_tooltip = ETH_zera_yacob_returns_TT
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 23 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_variable = { Monarchist_leader = 0 }
+			}
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
 			news_event = { id = ethiopia_news.3 days = 2 }
 		}
 
@@ -2284,7 +2311,7 @@
 				ideology = nationalist
 				popularity = 0.05
 			}
-			add_to_variable = { Monarchist_pop = 0.05 }
+			add_to_variable = { party_pop_array^23 = 0.05 }
 			recalculate_party = yes
 			add_political_power = 200
 		}
@@ -2784,7 +2811,7 @@
 				ideology = communism
 				popularity = 0.15
 			}
-			add_to_variable = { Communist-State_pop = 0.15 }
+			add_to_variable = { party_pop_array^4 = 0.15 }
 			recalculate_party = yes
 			news_event = {
 				id = ethiopia_news.5
@@ -2832,6 +2859,15 @@
 			}
 			add_to_variable = { Communist-State_pop = 0.15 }
 			recalculate_party = yes
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 4 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_variable = { Communist-State_leader = 0 }
+			}
 			set_politics = {
 				ruling_party = communism
 				elections_allowed = no
