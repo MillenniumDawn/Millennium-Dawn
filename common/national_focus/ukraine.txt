@@ -66,6 +66,9 @@ continuous_focus_position = { x = 135 y = 950 }
 			LAT = { country_event = { id = ukraine_md.10 days = 1 } } 
 			LIT = { country_event = { id = ukraine_md.10 days = 1 } }
 			EST = { country_event = { id = ukraine_md.10 days = 1 } }
+			BLR = { country_event = { id = ukraine_md.10 days = 1 } }
+			MLV = { country_event = { id = ukraine_md.10 days = 1 } }
+			ROM = { country_event = { id = ukraine_md.10 days = 1 } }
 		}
  
 	}
@@ -246,10 +249,10 @@ continuous_focus_position = { x = 135 y = 950 }
 						has_idea = EU_member
 						has_idea = NATO_member
 					}
-					add_opinion_modifier = { target = UKR modifier = has_expressed_loyalty }
 				}
+				add_opinion_modifier = { target = UKR modifier = has_expressed_loyalty }
 			}
-			add_political_power = 50
+			add_political_power = 100
 		}
 	} 
 
@@ -385,7 +388,7 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		completion_reward = {
 			UKR_wve_rivlary_alignment_to_the_west = yes
-			add_ideas = Major_Non_NATO_Ally
+			
 		}
 	} 
 	
@@ -435,11 +438,15 @@ continuous_focus_position = { x = 135 y = 950 }
 				has_government = neutrality
 				has_government = communism
 			}
-			has_war_support > 0.20
+			has_war_support > 0.10
 		}
 		
 		
 		mutually_exclusive = { focus = UKR_closer_ties_with_western_bloc focus = UKR_closer_ties_with_eastern_bloc }
+		
+		completion_reward = {
+			add_political_power = 150
+		}
 		
 	}
 
@@ -458,11 +465,11 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = { factor = 1 } 
 		
-		available = {
-			
-		}
-		
 		prerequisite = { focus = UKR_confirm_non_block_status }
+		
+		completion_reward = {
+			add_ideas = UKR_idea_neutrality
+		}
 	}
 
 	### US non-NATO ally
@@ -483,6 +490,13 @@ continuous_focus_position = { x = 135 y = 950 }
 		prerequisite = { focus = UKR_closer_ties_with_western_bloc focus = UKR_confirm_non_block_status }
 		
 		mutually_exclusive = { focus = UKR_special_defensive_agreement }
+		
+		completion_reward = {
+			add_ideas = Major_Non_NATO_Ally
+			add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
+			set_country_flag = Major_Non_NATO_Ally
+			UKR_wve_rivlary_alignment_to_the_west = yes
+		}
 		
 	} 
 
@@ -505,6 +519,14 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_us_non_nato_ally }
 		
+		completion_reward = {
+			give_guarantee = SOV 
+			SOV = {
+				give_guarantee = UKR 
+			}
+			UKR_wve_rivlary_alignment_to_the_east = yes 
+		}
+		
 	} 
 	
 	##Russia Alignment
@@ -523,10 +545,33 @@ continuous_focus_position = { x = 135 y = 950 }
 		ai_will_do = { factor = 1 } 
 		
 		available = {
-			has_government = communism 
 			NOT = { has_country_flag = UKR_supported_patriotic_parties }
 		}
-	} 
+		
+		completion_reward = {
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 6 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = yes
+			}
+			add_to_variable = { party_pop_array^6 = 0.15 }
+			recalculate_party = yes
+		}
+	}
 	
 	### Eastern Doctrine/Joining the CSTO branch
 	focus = { 
@@ -560,8 +605,20 @@ continuous_focus_position = { x = 135 y = 950 }
 					modifier = has_expressed_loyalty
 				}
 			}
-			add_opinion_modifier = { target = SOV modifier = has_expressed_loyalty }
-			add_opinion_modifier = { target = CHI modifier = has_expressed_loyalty }
+			every_country = {
+				limit = {
+					AND = {
+						NOT = { tag = SOV }
+						is_in_faction_with = SOV
+					}
+				}
+				add_opinion_modifier = {
+					target = UKR
+					modifier = has_expressed_loyalty
+				}
+			}
+			add_political_power = 100
+			UKR_wve_rivlary_alignment_to_the_east = yes
 		}
 	} 
 	
@@ -585,7 +642,7 @@ continuous_focus_position = { x = 135 y = 950 }
 		mutually_exclusive = { focus = UKR_confirm_non_block_status }
 		
 		completion_reward = {
-		
+			UKR_wve_rivlary_alignment_to_the_east = yes 
 		}
  
 	} 
@@ -632,6 +689,19 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_eastern_doctrine }
 		
+		completion_reward = {
+			every_country = {
+				limit = { 
+					OR = {
+						is_in_faction_with = SOV 
+						tag = SOV
+						tag = UKR
+					}
+				}	
+				add_ideas = UKR_idea_eacu_cooperation
+			}
+		}
+		
 	} 
 
 	### EACU Integration
@@ -650,6 +720,22 @@ continuous_focus_position = { x = 135 y = 950 }
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_expand_the_east_trade_cooperation }
+		
+		completion_reward = {
+			every_country = {
+				limit = { 
+					OR = {
+						is_in_faction_with = SOV 
+						tag = SOV
+						tag = UKR
+					}
+				}
+				swap_ideas = {
+					remove_idea = UKR_idea_eacu_cooperation
+					add_idea = UKR_idea_eacu_cooperation_2
+				}
+			}
+		}
 		
 	}
 
@@ -671,6 +757,10 @@ continuous_focus_position = { x = 135 y = 950 }
 		prerequisite = { focus = UKR_pro_russian_government_in_power }
 		
 		mutually_exclusive = { focus = UKR_try_to_reach_an_agreement }
+		
+		completion_reward = {
+			add_5_popularity = yes
+		}
 		
 	} 
 
@@ -905,7 +995,6 @@ continuous_focus_position = { x = 135 y = 950 }
 				has_country_flag = UKR_passed_referendum
 				has_country_flag = UKR_failed_referendum
 			}
-			add_ideas = 
 		}
 		
 		completion_reward = {
@@ -913,7 +1002,10 @@ continuous_focus_position = { x = 135 y = 950 }
 				limit = {
 					has_country_flag = UKR_passed_referendum
 				}
-				###Add an Idea about reforming the government
+				add_timed_idea = {
+					idea = UKR_constitutional_changes
+					days = 180
+				}
 			}
 			else_if = {
 				limit = {
@@ -1632,7 +1724,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		ai_will_do = { factor = 1 } 
 		
 		available = {
-			has_country_flag = UKR_revolution3
 		}
 	}  
 
