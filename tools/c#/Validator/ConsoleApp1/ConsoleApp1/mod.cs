@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Linq;
 using Validator.Structs;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace Validator
 {
@@ -22,7 +25,7 @@ namespace Validator
         protected List<String> scriptedEffects = new List<String>();
         protected List<String> scripteTriggers = new List<String>();
         protected List<String> nationalFocus = new List<String>();
-        protected List<State> states = new List<State>();
+        protected BlockingCollection<State> states = new BlockingCollection<State>();
 
         public Mod(String _rootDir)
         {
@@ -192,37 +195,47 @@ namespace Validator
         public void PopulateNationalFocus()
         {
             string dir = rootdir + "\\common\\national_focus\\";
-            Utility.PullData2(dir, @"\s?\bid\b\s?=\s?([\w_]+)", nationalFocus, 2);
+            Utility.PullData2(dir, @"\s?\bid\b\s?=\s?([\w_]+)", nationalFocus, 2, "id");
         }
         public void PopulateStates()
         {
             string dir = rootdir + "\\history\\states";
-            
-           
-            foreach (string file in Directory.GetFiles(dir))
+            string[] file = Directory.GetFiles(dir);
+            Parallel.For(0, Directory.GetFiles(dir).Count(), i =>
             {
                 int brace = 0;
                 bool isProvince = false;
-                string[] lines = File.ReadAllLines(file);
-
+                string[] lines = File.ReadAllLines(file[i]);
+                State _state = new State("");
                 foreach (string line in lines)
                 {
                     if (line.StartsWith("#") == false)
                     {
+
                         if (brace == 1)
                         {
-                            var match = Regex.Match(line, @"\s?id\s?=\s?([0-9]+)+");
-                            if (match.Success)
+                            if (line.Contains("id"))
                             {
-                               states.Add(new State(match.Groups[1].Value));
+                                var match = Regex.Match(line, @"\s?id\s?=\s?([0-9]+)+");
+                                if (match.Success)
+                                {
+                                    _state.ID = match.Groups[1].Value;
+                                    //states.Add(new State(match.Groups[1].Value));
+                                }
                             }
                             
                         }
                         if (line.Contains("{"))
                         {
-                            if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                            if (line.Contains("#"))
+                            {
+                                if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                    brace += line.Count(f => f == '{');
+                            }
+                            else
+                            {
                                 brace += line.Count(f => f == '{');
-
+                            }
                             if ( brace == 2 && line.Contains("provinces"))
                                 isProvince = true;
                         }
@@ -233,22 +246,31 @@ namespace Validator
 
                             foreach (Match match in regex.Matches(line))
                             {
-                                states[states.Count - 1].provinces.Add(match.Value);
+                                _state.provinces.Add(match.Value);
+                                //states[states.Count - 1].provinces.Add(match.Value);
                             }
                         }
 
                         if (line.Contains("}"))
                         {
-
-                            if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                            if (line.Contains("#"))
+                            {
+                                if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                    brace -= line.Count(f => f == '}');
+                            }
+                            else
+                            {
                                 brace -= line.Count(f => f == '}');
-
+                            }
                             if (brace == 1)
                                 isProvince = false;
                         }
                     }
                 }
-            }
+                if(_state.ID != "")
+                    states.Add(_state);
+            });
+
             //for (int i = 0; i < states.Count; i++)
             //{
             //    Console.WriteLine($"~~~State: {states[i].ID} ~~~");
@@ -258,7 +280,7 @@ namespace Validator
             //    }
             //    Console.ReadKey();
             //}
-            
+
         }
         #endregion
 
@@ -304,9 +326,10 @@ namespace Validator
         {
             string dir = "";
 
-
-            foreach (string tag in allTags)
+            
+            Parallel.For(0, allTags.Count, j =>
             {
+                String tag = allTags[j];
                 for (int i = 0; i < ideologies.Count; i++)
                 {
                     var ideology = ideologies[i].name;
@@ -328,7 +351,7 @@ namespace Validator
                     }
                 }
 
-            }
+            });
         }
 
         public object Clone()

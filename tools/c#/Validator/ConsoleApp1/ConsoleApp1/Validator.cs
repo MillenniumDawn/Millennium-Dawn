@@ -44,6 +44,7 @@ namespace Validator
             watch.Stop();
 
             Console.WriteLine($"Execution Time: {watch.ElapsedMilliseconds} ms");
+            Console.ReadKey();
 
         }
     }
