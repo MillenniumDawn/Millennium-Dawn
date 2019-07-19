@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Linq;
 using Validator.Structs;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
@@ -25,7 +24,22 @@ namespace Validator
         protected List<String> scriptedEffects = new List<String>();
         protected List<String> scripteTriggers = new List<String>();
         protected List<String> nationalFocus = new List<String>();
-        protected BlockingCollection<State> states = new BlockingCollection<State>();
+        protected List<State> states = new List<State>();
+
+
+        protected BlockingCollection<String> allTags2 = new BlockingCollection<String>();
+        protected BlockingCollection<String> errors2 = new BlockingCollection<String>();
+        protected BlockingCollection<String> minorErrors2 = new BlockingCollection<String>();
+        protected BlockingCollection<Ideology> ideologies2 = new BlockingCollection<Ideology>();
+        protected BlockingCollection<String> ideas2 = new BlockingCollection<String>();
+        protected BlockingCollection<String> technologies2 = new BlockingCollection<String>();
+        protected BlockingCollection<String> techSharingGroups2 = new BlockingCollection<String>();
+        protected BlockingCollection<String> opinionModifiers2 = new BlockingCollection<String>();
+        protected BlockingCollection<String> traits2 = new BlockingCollection<String>();
+        protected BlockingCollection<String> scriptedEffects2 = new BlockingCollection<String>();
+        protected BlockingCollection<String> scripteTriggers2 = new BlockingCollection<String>();
+        protected BlockingCollection<String> nationalFocus2 = new BlockingCollection<String>();
+        protected BlockingCollection<State> states2 = new BlockingCollection<State>();
 
         public Mod(String _rootDir)
         {
@@ -124,10 +138,23 @@ namespace Validator
 
 
         }
+        public void PopulateIdeas2()
+        {
+            string dir = rootdir + "\\common\\ideas\\";
+            Utility.PullDatap(dir, @"\s?([\w-_]+)\s?=", ideas2, 2);
+
+
+        }
         public void PopulateTechnologies()
         {
             string dir = rootdir + "\\common\\technologies\\";
             Utility.PullData(dir, @"\s?([\w-_]+)\s?=", technologies, 1);
+
+        }
+        public void PopulateTechnologies2()
+        {
+            string dir = rootdir + "\\common\\technologies\\";
+            Utility.PullDatap(dir, @"\s?([\w-_]+)\s?=", technologies2, 1);
 
         }
 
@@ -171,17 +198,33 @@ namespace Validator
             Utility.PullData(dir, @"\s?([\w-_]+)\s?=", opinionModifiers, 1);
             
         }
+        public void PopulateOppinionModifier2()
+        {
+            string dir = rootdir + "\\common\\opinion_modifiers\\";
+            Utility.PullDatap(dir, @"\s?([\w-_]+)\s?=", opinionModifiers2, 1);
+            
+        }
 
         public void PopulateScriptedEffects()
         {
             string dir = rootdir + "\\common\\scripted_effects\\";
             Utility.PullData(dir, @"^\s?([\w-_]+)\s?=", scriptedEffects, 0);
         }
+        public void PopulateScriptedEffects2()
+        {
+            string dir = rootdir + "\\common\\scripted_effects\\";
+            Utility.PullDatap(dir, @"^\s?([\w-_]+)\s?=", scriptedEffects2, 0);
+        }
 
         public void PopulateScriptedTriggers()
         {
             string dir = rootdir + "\\common\\scripted_triggers\\";
             Utility.PullData(dir, @"^\s?([\w-_]+)\s?=", scripteTriggers, 0);
+        }
+        public void PopulateScriptedTriggers2()
+        {
+            string dir = rootdir + "\\common\\scripted_triggers\\";
+            Utility.PullDatap(dir, @"^\s?([\w-_]+)\s?=", scripteTriggers2, 0);
         }
         public void PopulateTraits()
         {
@@ -197,7 +240,104 @@ namespace Validator
             string dir = rootdir + "\\common\\national_focus\\";
             Utility.PullData2(dir, @"\s?\bid\b\s?=\s?([\w_]+)", nationalFocus, 2, "id");
         }
+
+        public void clearAll()
+        {
+
+            allTags.Clear();
+            ideologies.Clear();
+            technologies.Clear();
+            techSharingGroups.Clear();
+            opinionModifiers.Clear();
+            scriptedEffects.Clear();
+            scripteTriggers.Clear();
+            nationalFocus.Clear();
+            states.Clear();
+        }
+
         public void PopulateStates()
+        {
+            string dir = rootdir + "\\history\\states";
+
+
+            foreach (string file in Directory.GetFiles(dir))
+            {
+                int brace = 0;
+                bool isProvince = false;
+                string[] lines = File.ReadAllLines(file);
+
+                foreach (string line in lines)
+                {
+                    if (line.StartsWith("#") == false)
+                    {
+                        if (brace == 1)
+                        {
+                            if (line.Contains("id"))
+                            {
+                                var match = Regex.Match(line, @"\s?id\s?=\s?([0-9]+)+");
+                                if (match.Success)
+                                {
+                                    states.Add(new State(match.Groups[1].Value));
+                                }
+                            }
+
+                        }
+                        if (line.Contains("{"))
+                        {
+                            if (line.Contains("#"))
+                            {
+                                if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                    brace += line.Count(f => f == '{');
+                            }
+                            else
+                            {
+                                brace += line.Count(f => f == '{');
+                            }
+                            if (brace == 2 && line.Contains("provinces"))
+                                isProvince = true;
+                        }
+
+                        if (brace == 2 && isProvince)
+                        {
+                            Regex regex = new Regex(@"([0-9]+)");
+
+                            foreach (Match match in regex.Matches(line))
+                            {
+                                states[states.Count - 1].provinces.Add(match.Value);
+                            }
+                        }
+
+                        if (line.Contains("}"))
+                        {
+                            if (line.Contains("#"))
+                            {
+                                if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                    brace -= line.Count(f => f == '}');
+                            }
+                            else
+                            {
+                                brace -= line.Count(f => f == '}');
+                            }
+                            if (brace == 1)
+                                isProvince = false;
+                        }
+                    }
+                }
+            }
+            //for (int i = 0; i < states.Count; i++)
+            //{
+            //    Console.WriteLine($"~~~State: {states[i].ID} ~~~");
+            //   for (int x = 0; x < states[i].provinces.Count; x++)
+            //    {
+            //        Console.WriteLine(states[i].provinces[x]);
+            //    }
+            //    Console.ReadKey();
+            //}
+            //Console.WriteLine(states.Count());
+
+        }
+
+        public void PopulateStates2()
         {
             string dir = rootdir + "\\history\\states";
             string[] file = Directory.GetFiles(dir);
@@ -268,9 +408,9 @@ namespace Validator
                     }
                 }
                 if(_state.ID != "")
-                    states.Add(_state);
+                    states2.Add(_state);
             });
-
+            //Console.WriteLine(states2.Count());
             //for (int i = 0; i < states.Count; i++)
             //{
             //    Console.WriteLine($"~~~State: {states[i].ID} ~~~");
@@ -303,9 +443,7 @@ namespace Validator
                         tempTags.Remove(temp);
                         if (tempTags.Contains(temp))
                         {
-                            Console.WriteLine(temp);
                             minorErrors.Add($"Duplicate tag: {temp} found in \\common\\country_tags\\00_countries.txt");
-                            Console.ReadKey();
                         }
                     }
                     else

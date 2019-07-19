@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace Validator
 {
@@ -64,6 +66,54 @@ namespace Validator
                 }
 
             }
+            //foreach (string line in variable)
+            //{
+            //    Console.WriteLine(line);
+            //}
+            //Console.ReadKey();
+        }
+        public static void PullDatap(string dir, string regex, BlockingCollection<string> variable, int braceCheck)
+        {
+            string[] file = Directory.GetFiles(dir);
+            Parallel.For(0, Directory.GetFiles(dir).Count(), i =>
+            {
+                int brace = 0;
+                string[] lines = File.ReadAllLines(file[i]);
+
+                foreach (string line in lines)
+                {
+                    if (line.StartsWith("#") == false)
+                    {
+                        if (line.Contains("{") | line.Contains("}"))
+                        {
+                            if (brace == braceCheck)
+                            {
+
+                                var match = Regex.Match(line, regex);
+                                if (match.Success)
+                                    variable.Add(match.Groups[1].Value);
+
+
+                            }
+                            if (line.Contains("#"))
+                            {
+                                if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                {
+                                    brace += line.Count(f => f == '{');
+                                    brace -= line.Count(f => f == '}');
+                                }
+                            }
+                            else
+                            {
+                                brace += line.Count(f => f == '{');
+                                brace -= line.Count(f => f == '}');
+                            }
+
+                        }
+                    }
+                }
+
+            });
             //foreach (string line in variable)
             //{
             //    Console.WriteLine(line);
