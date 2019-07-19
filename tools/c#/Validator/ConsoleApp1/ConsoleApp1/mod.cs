@@ -253,6 +253,20 @@ namespace Validator
             scripteTriggers.Clear();
             nationalFocus.Clear();
             states.Clear();
+            errors.Clear();
+            minorErrors.Clear();
+
+            while (allTags2.TryTake(out _)) { }
+            while (ideologies2.TryTake(out _)) { }
+            while (technologies2.TryTake(out _)) { }
+            while (techSharingGroups2.TryTake(out _)) { }
+            while (opinionModifiers2.TryTake(out _)) { }
+            while (scriptedEffects2.TryTake(out _)) { }
+            while (scripteTriggers2.TryTake(out _)) { }
+            while (nationalFocus2.TryTake(out _)) { }
+            while (states2.TryTake(out _)) { }
+            while (errors2.TryTake(out _)) { }
+            while (minorErrors2.TryTake(out _)) { }
         }
 
         public void PopulateStates()
