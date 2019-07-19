@@ -18,20 +18,8 @@ namespace Validator
             }
             Mod mod = new Mod(path);
 
-            //warm up
-            mod.PopulateStates();
-            mod.PopulateTraits();
-            mod.PopulateNationalFocus();
-            mod.PopulateIdeologies();
-            mod.PopulateScriptedTriggers();
-            mod.PopulateScriptedEffects();
-            mod.PopulateOppinionModifier();
-            mod.PopulateTechSharingGroups();
-            mod.PopulateIdeas();
-            mod.PopulateTechnologies();
-            mod.PopulateTags();
-            mod.CheckIfFlagExists();
-            mod.clearAll();
+            
+
 
             //warm up
             mod.PopulateStates();
@@ -62,21 +50,39 @@ namespace Validator
             mod.PopulateTags();
             mod.CheckIfFlagExists();
             mod.clearAll();
+
+            //warm up
+            mod.PopulateStates();
+            mod.PopulateTraits();
+            mod.PopulateNationalFocus();
+            mod.PopulateIdeologies();
+            mod.PopulateScriptedTriggers();
+            mod.PopulateScriptedEffects();
+            mod.PopulateOppinionModifier();
+            mod.PopulateTechSharingGroups();
+            mod.PopulateIdeas();
+            mod.PopulateTechnologies();
+            mod.PopulateTags();
+            mod.CheckIfFlagExists();
+            mod.clearAll();
+
+
+            
 
             //single thread
             mod.clearAll();
             watch.Reset();
             watch.Start();
-            mod.PopulateStates();
-            mod.PopulateTraits();
-            mod.PopulateNationalFocus();
-            mod.PopulateIdeologies();
-            mod.PopulateScriptedTriggers();
-            mod.PopulateScriptedEffects();
-            mod.PopulateOppinionModifier();
-            mod.PopulateTechSharingGroups();
-            mod.PopulateIdeas();
-            mod.PopulateTechnologies();
+            mod.PopulateStates(); //slower than MT
+            mod.PopulateTraits(); //faster than mt
+            mod.PopulateNationalFocus(); //faster than mt
+            mod.PopulateIdeologies(); //faster than mt
+            mod.PopulateScriptedTriggers(); //same as MT
+            mod.PopulateScriptedEffects(); //slower than MT
+            mod.PopulateOppinionModifier(); //slower than MT
+            mod.PopulateTechSharingGroups(); //faster than MT
+            mod.PopulateIdeas(); //slower than MT
+            mod.PopulateTechnologies(); //slower than MT
             mod.PopulateTags();
             mod.CheckIfFlagExists();
 
@@ -121,13 +127,13 @@ namespace Validator
             watch.Reset();
             watch.Start();
             mod.PopulateStates2();
-            mod.PopulateTraits();
-            mod.PopulateNationalFocus();
-            mod.PopulateIdeologies();
+            mod.PopulateTraits2();
+            mod.PopulateNationalFocus2();
+            mod.PopulateIdeologies2();
             mod.PopulateScriptedTriggers2();
             mod.PopulateScriptedEffects2();
             mod.PopulateOppinionModifier2();
-            mod.PopulateTechSharingGroups();
+            mod.PopulateTechSharingGroups2();
             mod.PopulateIdeas2();
             mod.PopulateTechnologies2();
             mod.PopulateTags();
@@ -142,16 +148,16 @@ namespace Validator
             watch.Start();
             Thread[] threadMulti = new Thread[11];
             threadMulti[0] = new Thread(new ThreadStart(mod.PopulateStates2));
-            threadMulti[1] = new Thread(new ThreadStart(mod.PopulateTraits));
-            threadMulti[2] = new Thread(new ThreadStart(mod.PopulateNationalFocus));
-            threadMulti[3] = new Thread(new ThreadStart(mod.PopulateIdeologies));
+            threadMulti[1] = new Thread(new ThreadStart(mod.PopulateTraits2));
+            threadMulti[2] = new Thread(new ThreadStart(mod.PopulateNationalFocus2));
+            threadMulti[3] = new Thread(new ThreadStart(mod.PopulateIdeologies2));
             threadMulti[4] = new Thread(new ThreadStart(mod.PopulateScriptedTriggers2));
             threadMulti[5] = new Thread(new ThreadStart(mod.PopulateScriptedEffects2));
-            threadMulti[6] = new Thread(new ThreadStart(mod.PopulateOppinionModifier));
+            threadMulti[6] = new Thread(new ThreadStart(mod.PopulateOppinionModifier2));
             threadMulti[7] = new Thread(new ThreadStart(mod.PopulateIdeas2));
             threadMulti[8] = new Thread(new ThreadStart(mod.PopulateTechnologies2));
             threadMulti[9] = new Thread(new ThreadStart(mod.PopulateTags));
-            threadMulti[10] = new Thread(new ThreadStart(mod.PopulateIdeas));
+            threadMulti[10] = new Thread(new ThreadStart(mod.PopulateIdeas2));
 
             for (int i = 0; i < threadMulti.Length; i++)
             {
@@ -167,6 +173,28 @@ namespace Validator
             watch.Stop();
 
             Console.WriteLine($"MT threaded execution Time: {watch.ElapsedMilliseconds} ms");
+
+
+            //mixed
+            mod.clearAll();
+            watch.Reset();
+            watch.Start();
+            mod.PopulateStates2();
+            mod.PopulateTraits();
+            mod.PopulateNationalFocus();
+            mod.PopulateIdeologies();
+            mod.PopulateScriptedTriggers2();
+            mod.PopulateScriptedEffects2();
+            mod.PopulateOppinionModifier2();
+            mod.PopulateTechSharingGroups();
+            mod.PopulateIdeas2();
+            mod.PopulateTechnologies2();
+            mod.PopulateTags();
+            mod.CheckIfFlagExists();
+            watch.Stop();
+
+            Console.WriteLine($"mixed thread execution Time: {watch.ElapsedMilliseconds} ms");
+
 
             Console.ReadKey();
 
