@@ -134,7 +134,7 @@ namespace Validator
         {
             var dir = rootdir + "\\common\\ideologies\\";
             string[] file = Directory.GetFiles(dir);
-            Parallel.For(0, Directory.GetFiles(dir).Count(), i =>
+            Parallel.For(0, file.Count(), i =>
             {
                 int brace = 0;
                 bool isSubideology = false;
@@ -250,7 +250,7 @@ namespace Validator
         {
             var dir = rootdir + "\\common\\technology_sharing\\";
             string[] file = Directory.GetFiles(dir);
-            Parallel.For(0, Directory.GetFiles(dir).Count(), i =>
+            Parallel.For(0, file.Count(), i =>
             {
                 int brace = 0;
                 string[] lines = File.ReadAllLines(file[i]);
@@ -329,7 +329,7 @@ namespace Validator
 
             string dir = rootdir + "\\common\\unit_leader\\";
             string[] file = Directory.GetFiles(dir);
-            Parallel.For(0, Directory.GetFiles(dir).Count(), i =>
+            Parallel.For(0, file.Count(), i =>
             {
                 int brace = 0;
                 string[] lines = File.ReadAllLines(file[i]);
@@ -496,7 +496,7 @@ namespace Validator
         {
             string dir = rootdir + "\\history\\states";
             string[] file = Directory.GetFiles(dir);
-            Parallel.For(0, Directory.GetFiles(dir).Count(), i =>
+            Parallel.For(0, file.Count(), i =>
             {
                 int brace = 0;
                 bool isProvince = false;
@@ -578,7 +578,6 @@ namespace Validator
 
         }
         #endregion
-
 
         private void ValidateTags()
         {
