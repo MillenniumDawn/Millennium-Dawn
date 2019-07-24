@@ -1,11 +1,11 @@
 UKR_stability_of_ukraine_decision_category = {
-	UKR_decision_support_campaigns = { ###TEMP
+	UKR_decision_support_campaigns = {
 		cost = 100
 		icon = political_actions
 		
 		is_good = no
-		days_remove = 30
-		days_re_enable = 15
+		days_remove = 60
+		days_re_enable = 30
 		fire_only_once = no 
 		
 		available = {
@@ -16,15 +16,13 @@ UKR_stability_of_ukraine_decision_category = {
 		}
 		
 		modifier = {
-			stability_weekly = -0.001
-			political_power_factor = -0.15
+			stability_weekly = 0.001
+			political_power_factor = -0.20
 		}
 		
 		complete_effect = {
 			add_to_variable = { UKR_stability_of_ukraine_var = 3.0 }
-			add_to_variable = { UKR_chance_of_collapse_var = 1.0 }
-			decrease_popularity_2_5 = yes
-			custom_effect_tooltip = UKR_send_in_the_national_guard_decision_TT
+			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_3_TT
 		}
 	}
 	UKR_decision_send_in_the_national_guard = {
@@ -32,8 +30,8 @@ UKR_stability_of_ukraine_decision_category = {
 		icon = political_actions
 		
 		is_good = no
-		days_remove = 30
-		days_re_enable = 15
+		days_remove = 60
+		days_re_enable = 30
 		fire_only_once = no 
 		
 		available = {
@@ -48,9 +46,9 @@ UKR_stability_of_ukraine_decision_category = {
 		}
 		
 		complete_effect = {
-			add_to_variable = { UKR_stability_of_ukraine_var = 3.0 }
-			add_to_variable = { UKR_chance_of_collapse_var = 1.0 }
-			decrease_popularity_2_5 = yes
+			add_to_variable = { UKR_stability_of_ukraine_var = 10.0 }
+			add_to_variable = { UKR_chance_of_collapse_var = 3.0 }
+			decrease_popularity_5 = yes
 			custom_effect_tooltip = UKR_send_in_the_national_guard_decision_TT
 		}
 	}
@@ -136,6 +134,10 @@ UKR_stability_of_ukraine_decision_category = {
 		days_remove = 90
 		fire_only_once = yes
 		
+		visible = {
+			date < 2017.1.1
+		}
+		
 		available = {
 			custom_trigger_tooltip = {
 				check_variable = { UKR_stability_of_ukraine_var > 50 }
@@ -185,15 +187,16 @@ UKR_stability_of_ukraine_decision_category = {
 		}	
 	}
 	
-	UKR_decision_disband_the_militias = { ###TEMP
-		cost = 50
+	UKR_decision_disband_the_militias = {
+		cost = 100
 		icon = political_actions
 		
 		is_good = no
-		days_remove = 50
+		days_remove = 60
 		fire_only_once = yes
 		
 		visible = {
+			date < 2017.1.1
 		}
 		available = {
 			custom_trigger_tooltip = {
@@ -204,84 +207,159 @@ UKR_stability_of_ukraine_decision_category = {
 		}
 		
 		complete_effect = {
-			UKR = { delete_unit_template_and_units = { division_template = "Ukrayinski Militsiyi" } }
+			UKR = { delete_unit_template_and_units = { division_template = "Ukrayinski Militsiyi" }
+				add_manpower = 3000
+			}
 			add_5_popularity = yes
 			subtract_from_variable = { UKR_chance_of_collapse_var = 1.0 }
 		}
 	}
 	
-	UKR_decision_reorganize_the_national_guard = { ###TEMP
+	UKR_decision_reorganize_the_national_guard = {
+		cost = 150
+		icon = political_actions
+		
+		is_good = no
+		days_remove = 120
+		fire_only_once = yes
+		
+		visible = {
+			date > 2016.12.31
+			NOT = { has_decision
+		}
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { UKR_stability_of_ukraine_var > 50 }
+				tooltip = UKR_requires_over_50_variable_stab_TT
+			}
+			NOT = { has_decision = UKR_decision_disband_the_national_guard }
+		}
+		
+		complete_effect = {
+			add_ideas = UKR_idea_reorgnanized_national_guard
+		}
+	}
+	
+	UKR_decision_disband_the_national_guard = {
 		cost = 100
 		icon = political_actions
 		
 		is_good = no
-		days_remove = 50
-		days_re_enable = 150
-		fire_only_once = no
+		days_remove = 60
+		fire_only_once = yes
+		
+		visible = {
+			date > 2016.12.31
+			
+		}
 		
 		available = {
 			custom_trigger_tooltip = {
 				check_variable = { UKR_stability_of_ukraine_var > 50 }
 				tooltip = UKR_requires_over_50_variable_stab_TT
 			}
+			NOT = { has_decision = UKR_decision_reorganize_the_national_guard }
 		}
 		
 		complete_effect = {
-			subtract_from_variable = { UKR_chance_of_collapse_var = 2.0 }
-			add_to_variable = { UKR_stability_of_ukraine_var = 1.0 }
-			decrease_popularity_2_5 = yes
-			custom_effect_tooltip = UKR_decision_strike_smuggling_caches_TT
+			add_ideas = UKR_idea_disbanded_national_guard
+			delete_unit_template_and_units = { division_template = "Natsionalna Hvardiya" }
+			UKR = { add_manpower = 3000 }
+			subtract_from_variable = { UKR_chance_of_collapse_var = 1.0 }
+			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_1_TT
 		}
 	}
 	
-	UKR_decision_disband_the_national_guard = { ###TEMP
-		cost = 100
+	UKR_decision_reign_in_the_donbass_region = {
+		cost = 200
 		icon = political_actions
 		
 		is_good = no
-		days_remove = 50
-		days_re_enable = 150
-		fire_only_once = no
+		days_remove = 180
+		fire_only_once = yes
 		
+		visible = {
+			OR = {
+				any_owned_state = {
+					is_core_of = NOV
+				}
+				country_exists = NOV
+			}
+		}
 		available = {
 			custom_trigger_tooltip = {
 				check_variable = { UKR_stability_of_ukraine_var > 50 }
 				tooltip = UKR_requires_over_50_variable_stab_TT
 			}
+			OR = {
+				any_owned_state = {
+					is_core_of = NOV
+				}
+				country_exists = NOV
+			}
 		}
 		
 		complete_effect = {
-			subtract_from_variable = { UKR_chance_of_collapse_var = 2.0 }
-			add_to_variable = { UKR_stability_of_ukraine_var = 1.0 }
-			decrease_popularity_2_5 = yes
-			custom_effect_tooltip = UKR_decision_strike_smuggling_caches_TT
+			if = {
+				limit = { 
+					AND = {
+						NOT = { country_exists = NOV }
+						any_owned_state = {
+							is_core_of = NOV
+						}
+					}
+				}
+				any_owned_state = {
+					limit = { is_core_of = NOV }
+					remove_core_of = NOV 
+				}
+				hidden_effect = {
+					any_owned_state = {
+						limit = {
+							AND = { 
+								is_owned_by = NOV 
+								NOT = { is_core_of = UKR }
+							}
+							add_state_core = UKR 
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = { 
+					country_exists = NOV
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = NOV
+				}
+				hidden_effect = {
+					any_owned_state = {
+						limit = {
+							AND = { 
+								is_owned_by = NOV 
+								NOT = { is_core_of = UKR }
+							}
+							add_state_core = UKR 
+						}
+					}
+				}
+			}
 		}
 	}
-	
-	UKR_decision_reign_in_the_donbass_region = { ###TEMP
-		cost = 100
+	UKR_ukrainian_revolution_mission = {
 		icon = political_actions
-		
-		is_good = no
-		days_remove = 50
-		days_re_enable = 150
-		fire_only_once = no
-		
 		available = {
-			custom_trigger_tooltip = {
-				check_variable = { UKR_stability_of_ukraine_var > 40 }
-				tooltip = UKR_requires_over_40_variable_stab_TT
-			}
-			any_owned_state = {
-				is_core_of = NOV
-			}
+			always = no
 		}
-		
-		complete_effect = {
-			subtract_from_variable = { UKR_chance_of_collapse_var = 2.0 }
-			add_to_variable = { UKR_stability_of_ukraine_var = 1.0 }
-			decrease_popularity_2_5 = yes
-			custom_effect_tooltip = UKR_decision_strike_smuggling_caches_TT
+		activation = {
+			check_variable = { UKR_chance_of_collapse_var = 15.0 }
 		}
+		is_good = yes
+		days_mission_timeout = 180
+		timeout_effect = {
+			country_event = ukraine_revolution.5
+		}
+		fire_only_once = yes
 	}
 }
