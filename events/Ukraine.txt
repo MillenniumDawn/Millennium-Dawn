@@ -832,106 +832,257 @@ country_event = { ###Kharkiv Pact
 }
 
 ############ Revolution Events/Tied to the UKR specific variables
-country_event = { ##Random Event below 50 stability of the regime/Light
+#New Event goes here/###Euromaidan revolution!
+
+country_event = { ##Ukrainian Civil War
 	id = ukraine_revolution.1
 	title = ukraine_revolution.1.t
 	desc = ukraine_revolution.1.d
-	#picture = unknown
+	#picture
 	
 	is_triggered_only = yes
+	
+	option = {
+		name = ukraine_revolution.1.o1
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.1.o1 executed"
+		set_country_flag = UKR_civil_war_in_the_donbass_flag
+		NOV = {
+			transfer_state = 693
+		}
+		NOV = { load_oob = "NOV_2017" }
+		NOV = {
+			set_country_flag = NOV_civil_war_in_the_donbass_flag
+			declare_war_on = {
+				target = UKR 
+				type = annex_everything
+			}
+		}
+		hidden_effect = {
+			if = {
+				limit = { 669 = { is_core_of = SOV } }
+				SOV = { country_event = { id = ukraine_revolution.2 days = 14 } }
+			}
+		}
+	}
 }
 
-country_event = { ##Random Event below 50 stability of the regime/Heavy
+
+news_event = {###Ukrainian Civil War! 
+	id = ukraine_news.7
+	title = ukraine_news.7.t
+	desc = ukraine_news.d 
+	
+	is_triggered_only = yes 
+	
+	option = {
+		name = ukraine_news.7.a
+		trigger = {
+			tag = UKR 
+		}
+	}
+	option = {
+		name = ukraine_news.7.b
+		trigger = {
+			tag = NOV 
+		}
+	}
+	option = {
+		name = ukraine_news.7.c
+		trigger = {
+			NOT = { tag = UKR }
+			NOT = { tag = NOV }
+		}
+	}
+}
+
+country_event = { ##IF ted doesn t add the annexation of Ukraine by Russia
 	id = ukraine_revolution.2
 	title = ukraine_revolution.2.t
-	desc = ukraine_revolution..d
-	#picture = unknown
+	desc = ukraine_revolution.2.d
+	#picture
 	
 	is_triggered_only = yes
+	
+	option = {##Submit to Russian Pressure
+		name = ukraine_revolution.2.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.2.a executed"
+		add_named_threat = {
+			threat = 5
+			name = threat_SOV_annexiation_of_crimea
+		}
+		effect_tooltip = {
+			SOV = { transfer_state = 669 }
+		}
+		hidden_effect = {
+			add_opinion_modifier = {
+				target = SOV
+				modifier = annexed_ukraine
+			}
+			add_opinion_modifier = {
+				target = SOV
+				modifier = annexed_ukraine_trade
+			}
+			add_opinion_modifier = {
+				target = UKR
+				modifier = annexed_ukraine_trade
+			}
+		}
+		SOV = { country_event = diplomatic_response.1 }
+		ai_chance = {
+			factor = 75
+		}
+	}
+	
+	option = {##Crimea is Ukrainian!
+		name = ukraine_revolution.2.b
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.2.b executed"
+		SOV = { 
+			669 = {
+				limit = { NOT = { is_core_of = SOV } }
+				add_core_of = SOV
+			}
+		}
+		SOV = { country_event = diplomatic_response.1 }
+		ai_chance = {
+			factor = 50
+			modifier = {
+				UKR = {	
+					has_war_with = NOV
+				}
+				factor = 15 
+			}
+		}
+	}
 }
 
-country_event = { ##Random Event above 50 stability of the regime/Good
+news_event = {##Annexation of the Crimea
+	id = ukraine_news.8 
+}
+
+country_event = { ##End of the Civil War 
 	id = ukraine_revolution.3
 	title = ukraine_revolution.3.t
 	desc = ukraine_revolution.3.d
 	#picture
 	
-	is_triggered_only = yes
+	trigger = {
+		OR = {
+			AND = {
+				UKR = {
+					has_country_flag = UKR_civil_war_in_the_donbass_flag
+				}
+				OR = {	
+					NOT = { country_exists = NOV }
+					UKR = { NOT = { has_war_with = NOV } }
+				}
+				UKR = {
+					owns_state = 693 
+				}
+			}
+			AND = {
+				NOV = {
+					has_country_flag = NOV_civil_war_in_the_donbass_flag
+				}
+				OR = { 
+					NOV = { NOT = { has_war_with = UKR } }
+					NOT = { country_exists = UKR }
+				}
+				NOV = { owns_state = 693 }
+			}
+			AND = {
+				UKR = { NOT = { has_war_with = NOV } }
+				country_exists = NOV 
+				NOV = { NOT = { is_puppet_of = UKR }
+			}
+		}
+	}
+	
+	option = {
+		name = ukraine_revolution.3.a
+		trigger = {
+			tag = UKR 
+			OR = {	
+				NOT = { country_exists = NOV }
+				UKR = { NOT = { has_war_with = NOV } }
+			}
+		}
+		every_owned_state = {
+			limit = { is_core_of = NOV }
+			remove_core_of = NOV
+		}
+		clr_country_flag = UKR_civil_war_in_the_donbass_flag
+		news_event = ukraine_news.9
+	}
+	option = {
+		name = ukraine_revolution.3.b
+		trigger = {
+			tag = NOV 
+			OR = { 
+				NOV = { NOT = { has_war_with = UKR } }
+				NOT = { country_exists = UKR }
+			}
+		}
+		every_owned_state = {
+			limit = { is_core_of = UKR }
+			add_core_of = NOV 
+		}
+		clr_country_flag = NOV_civil_war_in_the_donbass_flag
+		news_event = ukraine_news.9
+	}
+	option = {
+		name = ukraine_revolution.3.c
+		trigger = {
+			country_exists 
+		}
+	}
 }
 
-country_event = { ##Random Event above 50 stability of the regime/Very Good
+###End of the Ukrainian Civil War 
+news_event = {
+	id = ukraine_news.9
+	title = { trigger = { country_exists = NOV } text = ukraine_news.9.t1 }
+	title = { trigger = { NOT = { country_exists = NOV } } text = ukraine_news.9.t2 }
+	title = { trigger = { UKR = { NOT = { has_war_with } } country_exists = NOV } text = ukraine_news.9.t3 }
+	desc = { trigger = { country_exists = NOV } text = ukraine_news.9.d1 }
+	desc = { trigger = { NOT = { country_exists = NOV } } text = ukraine_news.9.d2 }
+	desc = { trigger = { UKR = { NOT = { has_war_with = NOV } } country_exists = NOV } } text = ukraine_news.9.d3 }
+	#picture = unknown
+	
+	is_triggered_only = yes
+	
+	option = {
+		trigger = {
+			country_exists = UKR 
+			NOT = { country_exists = NOV }
+		}
+	}
+	option = {
+		trigger = {
+			UKR = { NOT = { has_war_with = NOV } }
+			
+		}
+	}
+	option = {
+		trigger = {
+			UKR = { NOT = { has_war_with = NOV } }
+		}
+	}
+}
+ 
+country_event = { ##Demand the Crimea's Return to Ukraine - SOV
 	id = ukraine_revolution.4
 	title = ukraine_revolution.4.t
 	desc = ukraine_revolution.4.d
 	#picture
 	
 	is_triggered_only = yes
+	
+	option = {
+		name = ukraine_revolution.4.a
+		
+	}
 }
 
-###New Event goes here/###Euromaidan revolution!
-
-country_event = { ##Ukrainian Civil War
-	id = ukraine_revolution.5
-	title = ukraine_revolution.5.t
-	desc = ukraine_revolution.5.d
-	#picture
-	
-	is_triggered_only = yes
-}
-
-country_event = { ##IF ted doesn t add the annexation of Ukraine by Russia
-	id = ukraine_revolution.1
-	title = ukraine_revolution.1.t
-	desc = ukraine_revolution.1.d
-	#picture
-	
-	is_triggered_only = yes
-}
-
-country_event = { ##End of the Civil War 
-	id = ukraine_revolution.1
-	title = ukraine_revolution.1.t
-	desc = ukraine_revolution.1.d
-	#picture
-	
-	is_triggered_only = yes
-}
-
-country_event = { ##Donbass Succeeds
-	id = ukraine_revolution.1
-	title = ukraine_revolution.1.t
-	desc = ukraine_revolution.1.d
-	#picture
-	
-	is_triggered_only = yes
-}
-
-###Donbass - News 
-country_event = {
-	id = ukraine_revolution.1
-	title = { trigger = { country_exists = NOV } text = ukraine_revolution.1.t1 }
-	title = { trigger = { NOT = { country_exists = NOV } } text = ukraine_revolution.1.t2 }
-	desc = { trigger = { country_exists = NOV } text = ukraine_revolution.1.d1 }
-	desc = { trigger = { NOT = { country_exists = NOV } } text = ukraine_revolution.1.d2 }
-	#picture = unknown
-	
-	is_triggered_only = yes
-}
- 
-country_event = { ##Demand the Crimea's Return to Ukraine 
-	id = ukraine_revolution.1
-	title = ukraine_revolution.1.t
-	desc = ukraine_revolution.1.d
-	#picture
-	
-	is_triggered_only = yes
-}
-
-country_event = { ##Return to Ukraine - NOV
-	id = ukraine_revolution.1
-	title = ukraine_revolution.1.t
-	desc = ukraine_revolution.1.d
-	#picture
-	
-	is_triggered_only = yes
+country_event = { ###Demand the Return of the Donbass
+	id = ukraine_revolution.5 
 }
