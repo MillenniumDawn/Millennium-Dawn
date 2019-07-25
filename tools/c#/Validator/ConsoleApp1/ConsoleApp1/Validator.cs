@@ -90,6 +90,27 @@ namespace Validator
 
             Console.WriteLine($"Single thread execution Time: {watch.ElapsedMilliseconds} ms");
 
+            //New single thread
+            mod.clearAll();
+            watch.Reset();
+            watch.Start();
+            mod.PopulateStatesNew(); //slower than MT
+            mod.PopulateTraitsNew(); //faster than mt
+            mod.PopulateNationalFocusNew(); //faster than mt
+            mod.PopulateIdeologiesNew(); //faster than mt
+            mod.PopulateScriptedTriggersNew(); //same as MT
+            mod.PopulateScriptedEffectsNew(); //slower than MT
+            mod.PopulateOppinionModifierNew(); //slower than MT
+            mod.PopulateTechSharingGroupsNew(); //faster than MT
+            mod.PopulateIdeasNew(); //slower than MT
+            mod.PopulateTechnologiesNew(); //slower than MT
+            mod.PopulateTags();
+            mod.CheckIfFlagExists();
+
+            watch.Stop();
+
+            Console.WriteLine($"New Single thread execution Time: {watch.ElapsedMilliseconds} ms");
+
 
             //ST threaded
             mod.clearAll();
@@ -141,6 +162,26 @@ namespace Validator
             watch.Stop();
 
             Console.WriteLine($"Multi thread execution Time: {watch.ElapsedMilliseconds} ms");
+
+            //multi thread
+            mod.clearAll();
+            watch.Reset();
+            watch.Start();
+            mod.PopulateStates2New();
+            mod.PopulateTraits2New();
+            mod.PopulateNationalFocus2New();
+            mod.PopulateIdeologies2New();
+            mod.PopulateScriptedTriggers2New();
+            mod.PopulateScriptedEffects2New();
+            mod.PopulateOppinionModifier2New();
+            mod.PopulateTechSharingGroups2New();
+            mod.PopulateIdeas2New();
+            mod.PopulateTechnologies2New();
+            mod.PopulateTags();
+            mod.CheckIfFlagExists();
+            watch.Stop();
+
+            Console.WriteLine($"New Multi thread execution Time: {watch.ElapsedMilliseconds} ms");
 
             //MT threaded
             mod.clearAll();

@@ -130,6 +130,62 @@ namespace Validator
                 }
             }
         }
+        public void PopulateIdeologiesNew()
+        {
+            var dir = rootdir + "\\common\\ideologies\\";
+            foreach (string file in Directory.GetFiles(dir))
+            {
+                int brace = 0;
+                bool isSubideology = false;
+
+                using (FileStream fs = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (BufferedStream bs = new BufferedStream(fs))
+                using (StreamReader sr = new StreamReader(bs))
+                {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (line.StartsWith("#") == false)
+                        {
+                            if (line.Contains("{") | line.Contains("}"))
+                            {
+                                if (brace == 1)
+                                {
+                                    var match = Regex.Match(line, @"^\s?([\w-]+)\s?=");
+                                    if (match.Success)
+                                    {
+                                        ideologies.Add(new Ideology(match.Groups[1].Value));
+                                    }
+
+                                }
+
+                                if (isSubideology)
+                                {
+                                    var match2 = Regex.Match(line, @"\s?([\w-]+)\s?=");
+                                    if (match2.Success)
+                                    {
+                                        ideologies[ideologies.Count - 1].subIdeologies.Add(match2.Groups[1].Value);
+                                    }
+
+                                }
+                                if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                {
+                                    brace += line.Count(f => f == '{');
+                                    brace -= line.Count(f => f == '}');
+                                    if (brace == 3 && line.Contains("types"))
+                                        isSubideology = true;
+                                    if (brace == 2)
+                                        isSubideology = false;
+                                }
+
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         public void PopulateIdeologies2()
         {
             var dir = rootdir + "\\common\\ideologies\\";
@@ -185,6 +241,67 @@ namespace Validator
             });
 
         }
+        public void PopulateIdeologies2New()
+        {
+            var dir = rootdir + "\\common\\ideologies\\";
+            string[] file = Directory.GetFiles(dir);
+            Parallel.For(0, file.Count(), i =>
+            {
+                int brace = 0;
+                bool isSubideology = false;
+                Ideology _ideology = new Ideology("");
+
+                using (FileStream fs = File.Open(file[i], FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (BufferedStream bs = new BufferedStream(fs))
+                using (StreamReader sr = new StreamReader(bs))
+                {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (line.StartsWith("#") == false)
+                        {
+                            if (line.Contains("{") | line.Contains("}"))
+                            {
+                                if (brace == 1)
+                                {
+                                    var match = Regex.Match(line, @"^\s?([\w-]+)\s?=");
+                                    if (match.Success)
+                                    {
+                                        _ideology.name = match.Groups[1].Value;
+                                    }
+
+                                }
+
+                                if (isSubideology)
+                                {
+                                    var match2 = Regex.Match(line, @"\s?([\w-]+)\s?=");
+                                    if (match2.Success)
+                                    {
+                                        _ideology.subIdeologies.Add(match2.Groups[1].Value);
+                                    }
+
+                                }
+                                if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                {
+                                    brace += line.Count(f => f == '{');
+                                    brace -= line.Count(f => f == '}');
+                                    if (brace == 3 && line.Contains("types"))
+                                        isSubideology = true;
+                                    if (brace == 2)
+                                        isSubideology = false;
+                                }
+
+
+                            }
+                        }
+                    }
+                }
+                if (_ideology.name != "")
+                    ideologies2.Add(_ideology);
+               
+            });
+
+        }
 
         public void PopulateIdeas()
         {
@@ -193,6 +310,14 @@ namespace Validator
 
 
         }
+        public void PopulateIdeasNew()
+        {
+            string dir = rootdir + "\\common\\ideas\\";
+            Utility.PullDataNew(dir, @"\s?([\w-_]+)\s?=", ideas, 2);
+
+
+        }
+
         public void PopulateIdeas2()
         {
             string dir = rootdir + "\\common\\ideas\\";
@@ -200,16 +325,37 @@ namespace Validator
 
 
         }
+        public void PopulateIdeas2New()
+        {
+            string dir = rootdir + "\\common\\ideas\\";
+            Utility.PullDatapNew(dir, @"\s?([\w-_]+)\s?=", ideas2, 2);
+
+
+        }
+
         public void PopulateTechnologies()
         {
             string dir = rootdir + "\\common\\technologies\\";
             Utility.PullData(dir, @"\s?([\w-_]+)\s?=", technologies, 1);
 
         }
+        public void PopulateTechnologiesNew()
+        {
+            string dir = rootdir + "\\common\\technologies\\";
+            Utility.PullDataNew(dir, @"\s?([\w-_]+)\s?=", technologies, 1);
+
+        }
+
         public void PopulateTechnologies2()
         {
             string dir = rootdir + "\\common\\technologies\\";
             Utility.PullDatap(dir, @"\s?([\w-_]+)\s?=", technologies2, 1);
+
+        }
+        public void PopulateTechnologies2New()
+        {
+            string dir = rootdir + "\\common\\technologies\\";
+            Utility.PullDatapNew(dir, @"\s?([\w-_]+)\s?=", technologies2, 1);
 
         }
 
@@ -246,6 +392,44 @@ namespace Validator
 
             }
         }
+        public void PopulateTechSharingGroupsNew()
+        {
+            var dir = rootdir + "\\common\\technology_sharing\\";
+            foreach (string file in Directory.GetFiles(dir))
+            {
+                int brace = 0;
+                using (FileStream fs = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (BufferedStream bs = new BufferedStream(fs))
+                using (StreamReader sr = new StreamReader(bs))
+                {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (line.StartsWith("#") == false)
+                        {
+                            if (brace == 1) //slightly different as ID = name not ID = name  = {
+                            {
+                                var match = Regex.Match(line, @"^\s?id\s?=\s?([\w_]+)");
+                                if (match.Success)
+                                    techSharingGroups.Add(match.Groups[1].Value);
+
+                            }
+                            if (line.Contains("{") | line.Contains("}"))
+                            {
+
+                                if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                {
+                                    brace += line.Count(f => f == '{');
+                                    brace -= line.Count(f => f == '}');
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         public void PopulateTechSharingGroups2()
         {
             var dir = rootdir + "\\common\\technology_sharing\\";
@@ -280,6 +464,44 @@ namespace Validator
 
             });
         }
+        public void PopulateTechSharingGroups2New()
+        {
+            var dir = rootdir + "\\common\\technology_sharing\\";
+            string[] file = Directory.GetFiles(dir);
+            Parallel.For(0, file.Count(), i =>
+            {
+                int brace = 0;
+                using (FileStream fs = File.Open(file[i], FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (BufferedStream bs = new BufferedStream(fs))
+                using (StreamReader sr = new StreamReader(bs))
+                {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (line.StartsWith("#") == false)
+                        {
+                            if (brace == 1) //slightly different as ID = name not ID = name  = {
+                            {
+                                var match = Regex.Match(line, @"^\s?id\s?=\s?([\w_]+)");
+                                if (match.Success)
+                                    techSharingGroups2.Add(match.Groups[1].Value);
+
+                            }
+                            if (line.Contains("{") | line.Contains("}"))
+                            {
+
+                                if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                {
+                                    brace += line.Count(f => f == '{');
+                                    brace -= line.Count(f => f == '}');
+                                }
+
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
         public void PopulateOppinionModifier()
         {
@@ -287,10 +509,23 @@ namespace Validator
             Utility.PullData(dir, @"\s?([\w-_]+)\s?=", opinionModifiers, 1);
             
         }
+        public void PopulateOppinionModifierNew()
+        {
+            string dir = rootdir + "\\common\\opinion_modifiers\\";
+            Utility.PullDataNew(dir, @"\s?([\w-_]+)\s?=", opinionModifiers, 1);
+            
+        }
+
         public void PopulateOppinionModifier2()
         {
             string dir = rootdir + "\\common\\opinion_modifiers\\";
             Utility.PullDatap(dir, @"\s?([\w-_]+)\s?=", opinionModifiers2, 1);
+            
+        }
+        public void PopulateOppinionModifier2New()
+        {
+            string dir = rootdir + "\\common\\opinion_modifiers\\";
+            Utility.PullDatapNew(dir, @"\s?([\w-_]+)\s?=", opinionModifiers2, 1);
             
         }
 
@@ -299,22 +534,45 @@ namespace Validator
             string dir = rootdir + "\\common\\scripted_effects\\";
             Utility.PullData(dir, @"^\s?([\w-_]+)\s?=", scriptedEffects, 0);
         }
+        public void PopulateScriptedEffectsNew()
+        {
+            string dir = rootdir + "\\common\\scripted_effects\\";
+            Utility.PullDataNew(dir, @"^\s?([\w-_]+)\s?=", scriptedEffects, 0);
+        }
+
         public void PopulateScriptedEffects2()
         {
             string dir = rootdir + "\\common\\scripted_effects\\";
             Utility.PullDatap(dir, @"^\s?([\w-_]+)\s?=", scriptedEffects2, 0);
         }
-
+        public void PopulateScriptedEffects2New()
+        {
+            string dir = rootdir + "\\common\\scripted_effects\\";
+            Utility.PullDatapNew(dir, @"^\s?([\w-_]+)\s?=", scriptedEffects2, 0);
+        }
+        
         public void PopulateScriptedTriggers()
         {
             string dir = rootdir + "\\common\\scripted_triggers\\";
             Utility.PullData(dir, @"^\s?([\w-_]+)\s?=", scripteTriggers, 0);
         }
+        public void PopulateScriptedTriggersNew()
+        {
+            string dir = rootdir + "\\common\\scripted_triggers\\";
+            Utility.PullDataNew(dir, @"^\s?([\w-_]+)\s?=", scripteTriggers, 0);
+        }
+
         public void PopulateScriptedTriggers2()
         {
             string dir = rootdir + "\\common\\scripted_triggers\\";
             Utility.PullDatap(dir, @"^\s?([\w-_]+)\s?=", scripteTriggers2, 0);
         }
+        public void PopulateScriptedTriggers2New()
+        {
+            string dir = rootdir + "\\common\\scripted_triggers\\";
+            Utility.PullDatapNew(dir, @"^\s?([\w-_]+)\s?=", scripteTriggers2, 0);
+        }
+
         public void PopulateTraits()
         {
             string dir = rootdir + "\\common\\unit_leader\\";
@@ -324,6 +582,16 @@ namespace Validator
                .ToList();
 
         }
+        public void PopulateTraitsNew()
+        {
+            string dir = rootdir + "\\common\\unit_leader\\";
+            Utility.PullDataNew(dir, @"^\s?([\w-_]+)\s?=", traits, 1);
+            
+            traits = traits.Where(w => !w.All(char.IsDigit))
+               .ToList();
+
+        }
+
         public void PopulateTraits2()
         {
 
@@ -371,15 +639,79 @@ namespace Validator
 
 
         }
+        public void PopulateTraits2New()
+        {
+
+            string dir = rootdir + "\\common\\unit_leader\\";
+            string[] file = Directory.GetFiles(dir);
+            Parallel.For(0, file.Count(), i =>
+            {
+                int brace = 0;
+
+                using (FileStream fs = File.Open(file[i], FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (BufferedStream bs = new BufferedStream(fs))
+                using (StreamReader sr = new StreamReader(bs))
+                {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (line.StartsWith("#") == false)
+                        {
+
+
+                            if (brace == 1)
+                            {
+                                var match = Regex.Match(line, @"^\s?([\w-_]+)\s?=");
+                                if (match.Success)
+                                    if (match.Groups[1].Value.All(char.IsNumber) == false)
+                                        traits2.Add(match.Groups[1].Value);
+
+                                if (line.Contains("{") | line.Contains("}"))
+                                {
+                                    if (line.Contains("#"))
+                                    {
+                                        if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                        {
+                                            brace += line.Count(f => f == '{');
+                                            brace -= line.Count(f => f == '}');
+                                        }
+                                    }
+                                    else
+                                    {
+                                        brace += line.Count(f => f == '{');
+                                        brace -= line.Count(f => f == '}');
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+
+        }
+
         public void PopulateNationalFocus()
         {
             string dir = rootdir + "\\common\\national_focus\\";
             Utility.PullData2(dir, @"\s?\bid\b\s?=\s?([\w_]+)", nationalFocus, 2, "id");
         }
+        public void PopulateNationalFocusNew()
+        {
+            string dir = rootdir + "\\common\\national_focus\\";
+            Utility.PullData2New(dir, @"\s?\bid\b\s?=\s?([\w_]+)", nationalFocus, 2, "id");
+        }
+
         public void PopulateNationalFocus2()
         {
             string dir = rootdir + "\\common\\national_focus\\";
             Utility.PullData2p(dir, @"\s?\bid\b\s?=\s?([\w_]+)", nationalFocus2, 2, "id");
+        }
+        public void PopulateNationalFocus2New()
+        {
+            string dir = rootdir + "\\common\\national_focus\\";
+            Utility.PullData2pNew(dir, @"\s?\bid\b\s?=\s?([\w_]+)", nationalFocus2, 2, "id");
         }
 
         public void clearAll()
@@ -491,7 +823,93 @@ namespace Validator
             //Console.WriteLine(states.Count());
 
         }
+        public void PopulateStatesNew()
+        {
+            string dir = rootdir + "\\history\\states";
 
+
+            foreach (string file in Directory.GetFiles(dir))
+            {
+                int brace = 0;
+                bool isProvince = false;
+                using (FileStream fs = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (BufferedStream bs = new BufferedStream(fs))
+                using (StreamReader sr = new StreamReader(bs))
+                {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (line.StartsWith("#") == false)
+                        {
+                            if (brace == 1)
+                            {
+                                if (line.Contains("id"))
+                                {
+                                    var match = Regex.Match(line, @"\s?id\s?=\s?([0-9]+)+");
+                                    if (match.Success)
+                                    {
+                                        states.Add(new State(match.Groups[1].Value));
+                                    }
+                                }
+
+                            }
+                            if (line.Contains("{"))
+                            {
+                                if (line.Contains("#"))
+                                {
+                                    if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                        brace += line.Count(f => f == '{');
+                                }
+                                else
+                                {
+                                    brace += line.Count(f => f == '{');
+                                }
+                                if (brace == 2 && line.Contains("provinces"))
+                                    isProvince = true;
+                            }
+
+                            if (brace == 2 && isProvince)
+                            {
+                                Regex regex = new Regex(@"([0-9]+)");
+
+                                foreach (Match match in regex.Matches(line))
+                                {
+                                    states[states.Count - 1].provinces.Add(match.Value);
+                                }
+                            }
+
+                            if (line.Contains("}"))
+                            {
+                                if (line.Contains("#"))
+                                {
+                                    if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                        brace -= line.Count(f => f == '}');
+                                }
+                                else
+                                {
+                                    brace -= line.Count(f => f == '}');
+                                }
+                                if (brace == 1)
+                                    isProvince = false;
+                            }
+                        }
+                    }
+                }
+
+            }
+            //for (int i = 0; i < states.Count; i++)
+            //{
+            //    Console.WriteLine($"~~~State: {states[i].ID} ~~~");
+            //   for (int x = 0; x < states[i].provinces.Count; x++)
+            //    {
+            //        Console.WriteLine(states[i].provinces[x]);
+            //    }
+            //    Console.ReadKey();
+            //}
+            //Console.WriteLine(states.Count());
+
+        }
+        
         public void PopulateStates2()
         {
             string dir = rootdir + "\\history\\states";
@@ -564,6 +982,97 @@ namespace Validator
                 }
                 if(_state.ID != "")
                     states2.Add(_state);
+            });
+            //Console.WriteLine(states2.Count());
+            //for (int i = 0; i < states.Count; i++)
+            //{
+            //    Console.WriteLine($"~~~State: {states[i].ID} ~~~");
+            //   for (int x = 0; x < states[i].provinces.Count; x++)
+            //    {
+            //        Console.WriteLine(states[i].provinces[x]);
+            //    }
+            //    Console.ReadKey();
+            //}
+
+        }
+        public void PopulateStates2New()
+        {
+            string dir = rootdir + "\\history\\states";
+            string[] file = Directory.GetFiles(dir);
+            Parallel.For(0, file.Count(), i =>
+            {
+                int brace = 0;
+                bool isProvince = false;
+                State _state = new State("");
+
+                using (FileStream fs = File.Open(file[i], FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (BufferedStream bs = new BufferedStream(fs))
+                using (StreamReader sr = new StreamReader(bs))
+                {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (line.StartsWith("#") == false)
+                        {
+
+                            if (brace == 1)
+                            {
+                                if (line.Contains("id"))
+                                {
+                                    var match = Regex.Match(line, @"\s?id\s?=\s?([0-9]+)+");
+                                    if (match.Success)
+                                    {
+                                        _state.ID = match.Groups[1].Value;
+                                        //states.Add(new State(match.Groups[1].Value));
+                                    }
+                                }
+
+                            }
+                            if (line.Contains("{"))
+                            {
+                                if (line.Contains("#"))
+                                {
+                                    if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                        brace += line.Count(f => f == '{');
+                                }
+                                else
+                                {
+                                    brace += line.Count(f => f == '{');
+                                }
+                                if (brace == 2 && line.Contains("provinces"))
+                                    isProvince = true;
+                            }
+
+                            if (brace == 2 && isProvince)
+                            {
+                                Regex regex = new Regex(@"([0-9]+)");
+
+                                foreach (Match match in regex.Matches(line))
+                                {
+                                    _state.provinces.Add(match.Value);
+                                    //states[states.Count - 1].provinces.Add(match.Value);
+                                }
+                            }
+
+                            if (line.Contains("}"))
+                            {
+                                if (line.Contains("#"))
+                                {
+                                    if (Utility.ReturnMatch(line, "#.*[{}]+") == null) //if the line doesn't have a comment before the open brace
+                                        brace -= line.Count(f => f == '}');
+                                }
+                                else
+                                {
+                                    brace -= line.Count(f => f == '}');
+                                }
+                                if (brace == 1)
+                                    isProvince = false;
+                            }
+                        }
+                    }
+                    if (_state.ID != "")
+                        states2.Add(_state);
+                }
             });
             //Console.WriteLine(states2.Count());
             //for (int i = 0; i < states.Count; i++)
