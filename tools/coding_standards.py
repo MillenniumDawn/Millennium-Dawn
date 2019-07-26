@@ -479,7 +479,7 @@ def main():
 
     try:
         print("here")
-        privateToken = os.environ['OAUTH_TOKEN']
+        privateToken = os.environ['Bot_Token']
         print(privateToken)
         projectId = os.environ['CI_PROJECT_ID'];
         print(property)
