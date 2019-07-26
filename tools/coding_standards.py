@@ -478,6 +478,7 @@ def main():
     message += 'The script took {0} second!'.format(time.time() - startTime)
 
     try:
+        print("here")
         privateToken = os.environ['OAUTH_TOKEN']
         print(privateToken)
         projectId = os.environ['CI_PROJECT_ID'];
