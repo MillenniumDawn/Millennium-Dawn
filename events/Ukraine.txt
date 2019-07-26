@@ -843,9 +843,10 @@ country_event = { ##Ukrainian Civil War
 	is_triggered_only = yes
 	
 	option = {
-		name = ukraine_revolution.1.o1
+		name = ukraine_revolution.1.a 
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.1.o1 executed"
 		set_country_flag = UKR_civil_war_in_the_donbass_flag
+		news_event = ukraine_news.7
 		NOV = {
 			transfer_state = 693
 		}
@@ -859,7 +860,9 @@ country_event = { ##Ukrainian Civil War
 		}
 		hidden_effect = {
 			if = {
-				limit = { 669 = { is_core_of = SOV } }
+				limit = { 
+					669 = { NOT = { is_owned_by = SOV } }
+				}
 				SOV = { country_event = { id = ukraine_revolution.2 days = 14 } }
 			}
 		}
@@ -895,7 +898,7 @@ news_event = {###Ukrainian Civil War!
 	}
 }
 
-country_event = { ##IF ted doesn t add the annexation of Ukraine by Russia
+country_event = { ##Annexation of Crimea if the Soviet Player doesnt already Own the Crimea
 	id = ukraine_revolution.2
 	title = ukraine_revolution.2.t
 	desc = ukraine_revolution.2.d
@@ -927,7 +930,12 @@ country_event = { ##IF ted doesn t add the annexation of Ukraine by Russia
 				modifier = annexed_ukraine_trade
 			}
 		}
-		SOV = { country_event = diplomatic_response.1 }
+		SOV = { 
+			669 = {
+				add_core_of = SOV
+			}
+		}
+		SOV = { country_event = ukraine_revolution.6 }
 		ai_chance = {
 			factor = 75
 		}
@@ -938,11 +946,10 @@ country_event = { ##IF ted doesn t add the annexation of Ukraine by Russia
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.2.b executed"
 		SOV = { 
 			669 = {
-				limit = { NOT = { is_core_of = SOV } }
 				add_core_of = SOV
 			}
 		}
-		SOV = { country_event = diplomatic_response.1 }
+		SOV = { country_event = ukraine_revolution.7 }
 		ai_chance = {
 			factor = 50
 			modifier = {
@@ -955,8 +962,68 @@ country_event = { ##IF ted doesn t add the annexation of Ukraine by Russia
 	}
 }
 
+country_event = {###Russia Annexes Crimea
+	id = ukraine_revolution.6
+	title = ukraine_revolution.6.t
+	desc = ukraine_revolution.6.d
+	#picture
+	is_triggered_only = yes
+	
+	option = {
+		name = ukraine_revolution.6.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.6.a executed"
+		add_opinion_modifier = { target = SOV modifier = rival }
+		reverse_opinion_modifier = { target = SOV modifier = rival }
+		add_war_support = 0.05 
+	}
+}
+
+country_event = {###Russia Denies the People of Crimea 
+	id = ukraine_revolution.7
+	title = ukraine_revolution.7.t
+	desc = ukraine_revolution.7.d
+	#picture
+	is_triggered_only = yes
+	
+	option = {
+		name = ukraine_revolution.7.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.7.a executed"
+		add_opinion_modifier = { target = SOV modifier = has_expressed_loyalty } 
+		reverse_opinion_modifier = { target = SOV modifier = has_expressed_loyalty }
+		add_stability = 0.05
+	}
+}
+
 news_event = {##Annexation of the Crimea
 	id = ukraine_news.8 
+	title = ukraine_news.8.t
+	desc = ukraine_news.8.d
+	#picture
+	is_triggered_only = yes
+
+	option = {
+		name = ukraine_news.8.a
+		trigger = {
+			tag = UKR
+		}
+	}
+	option = {
+		name = ukraine_news.8.b
+		trigger = {
+			OR = {	
+				tag = UKR
+				tag = NOV
+			}
+		}
+	}
+	option = {
+		name = ukraine_news.8.c
+		trigger = {
+			NOT = { tag = UKR }
+			NOT = { tag = SOV }
+			NOT = { tag = NOV }
+		}
+	}
 }
 
 country_event = { ##End of the Civil War 
@@ -1032,7 +1099,8 @@ country_event = { ##End of the Civil War
 	option = {
 		name = ukraine_revolution.3.c
 		trigger = {
-			country_exists 
+			country_exists = NOV
+			UKR = { NOT = { has_war_with = NOV } } 
 		}
 	}
 }
@@ -1051,18 +1119,21 @@ news_event = {
 	is_triggered_only = yes
 	
 	option = {
+		name = ukraine_news.9.a
 		trigger = {
 			country_exists = UKR 
 			NOT = { country_exists = NOV }
 		}
 	}
 	option = {
+		name = ukraine_news.9.a
 		trigger = {
 			UKR = { NOT = { has_war_with = NOV } }
 			
 		}
 	}
 	option = {
+		name = ukraine_news.9.a
 		trigger = {
 			UKR = { NOT = { has_war_with = NOV } }
 		}
@@ -1085,4 +1156,11 @@ country_event = { ##Demand the Crimea's Return to Ukraine - SOV
 
 country_event = { ###Demand the Return of the Donbass
 	id = ukraine_revolution.5 
+	title = ukraine_revolution.5.t
+	desc = ukraine_revolution.5.d
+	is_triggered_only = yes 
+	
+	option = {
+		name = ukraine_revolution.5.a
+	}
 }
