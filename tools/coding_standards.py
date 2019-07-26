@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import os, sys, fnmatch, re
 import time
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 startTime = time.time()
 
@@ -379,6 +381,7 @@ def getUnkownEffects (allEffects):
 
 def main():
     print("Validating Basic Style - Secondary Check")
+    message = "Validating Basic Style - Secondary Check\n"
 
     files_list = []
     nation_focus_files = []
@@ -458,14 +461,35 @@ def main():
     # for filename in files_list:
     #    bad_count = bad_count + check_basic_style(filename)
 
+
+
+
     print("------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count))
+    message += "------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count) + "\n"
+
     if (bad_count == 0):
         print("File validation PASSED")
+        message += "File validation PASSED\n"
     else:
         print("File validation FAILED")
+        message += "File validation FAILED\n"
 
     print('The script took {0} second!'.format(time.time() - startTime))
+    message += 'The script took {0} second!'.format(time.time() - startTime)
 
+    try:
+        privateToken = os.environ['OAUTH_TOKEN']
+        projectId = os.environ['CI_PROJECT_ID'];
+        mergeRequestId = os.environ['MR_NO'];
+        url = 'https://gitlab.com/api/v4/projects/' + projectId + '/merge_requests/' + mergeRequestId + '/notes?private_token=' + privateToken;  # Set destination URL here
+        post_fields = {'body': message}  # Set POST fields here
+
+        request = Request(url, urlencode(post_fields).encode())
+        json = urlopen(request).read().decode()
+        print(json)
+    except:
+        print("Couldn't post results to gitlab merge request")
+        
     return bad_count
 
 
