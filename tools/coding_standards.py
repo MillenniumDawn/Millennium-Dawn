@@ -489,7 +489,7 @@ def main():
         print(json)
     except:
         print("Couldn't post results to gitlab merge request")
-        
+
     return bad_count
 
 
