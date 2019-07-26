@@ -479,13 +479,13 @@ def main():
 
     try:
         print("here")
-        projectId = sys.argv[0]
+        projectId = sys.argv[1]
         #projectId = os.environ['CI_PROJECT_ID'];
         print(projectId)
-        mergeRequestId = sys.argv[1]
+        mergeRequestId = sys.argv[2]
         #mergeRequestId = os.environ['MR_NO'];
         print(mergeRequestId)
-        privateToken = sys.argv[2]
+        privateToken = sys.argv[3]
         #privateToken = os.environ['Bot_Token']
         print(privateToken)
 
