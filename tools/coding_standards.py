@@ -489,8 +489,9 @@ def main():
         url = 'https://gitlab.com/api/v4/projects/' + projectId + '/merge_requests/' + mergeRequestId + '/notes?private_token=' + privateToken;  # Set destination URL here
         print(url)
         post_fields = {'body': message}  # Set POST fields here
-
+        print("here2")
         request = Request(url, urlencode(post_fields).encode())
+        print("here3")
         json = urlopen(request).read().decode()
         print("Posted to to merge request")
     except:
