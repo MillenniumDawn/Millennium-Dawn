@@ -479,9 +479,14 @@ def main():
 
     try:
         privateToken = os.environ['OAUTH_TOKEN']
+        print(privateToken)
         projectId = os.environ['CI_PROJECT_ID'];
+        print(property)
         mergeRequestId = os.environ['MR_NO'];
+        print(mergeRequestId)
+
         url = 'https://gitlab.com/api/v4/projects/' + projectId + '/merge_requests/' + mergeRequestId + '/notes?private_token=' + privateToken;  # Set destination URL here
+        print(url)
         post_fields = {'body': message}  # Set POST fields here
 
         request = Request(url, urlencode(post_fields).encode())
