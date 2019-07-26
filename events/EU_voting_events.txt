@@ -422,13 +422,15 @@ country_event = {
 	option = {
 		if = { # Unanimity - yes 
 			limit = {
+				has_global_flag = EU_unanimity_voting
 				check_variable = {
-					var = global.var_EUvoteTotal
-					value = global.var_EUvoteYes
+					var = global.var_EUvoteYes
+					value = global.var_EUvoteTotal
 					compare = equals
 				}			
 			}
 			set_country_flag = focus_EU001_yes
+			set_global_flag = EU_unanimity_voting_YES
 			every_country = {
 				limit = { has_country_flag = EU_voted }
 				news_event = {
@@ -436,8 +438,101 @@ country_event = {
 				}
 			}
 		}
-		else = {
+		else_if = { # QMV - yes 
+			limit = {
+				AND = {
+					has_global_flag = EU_qualified_majority_voting
+					check_variable = {
+						var = global.var_EUvoteYes
+						value = 0.55
+						compare = greater_than_or_equals
+					}
+					check_variable = {
+						var = global.var_EUpopYes
+						value = 0.65
+						compare = greater_than_or_equals
+					}
+				}			
+			}
+			set_country_flag = focus_EU001_QMV_yes
+			set_global_flag = EU_qualified_majority_voting_YES
+			every_country = {
+				limit = { has_country_flag = EU_voted }
+				news_event = {
+					id = EUvote_news.2
+				}
+			}
+		}		
+		else_if = { # majority - yes 
+			limit = {
+				has_global_flag = EU_majority_voting
+				set_temp_variable = { 
+					temp1 = global.var_EUvoteTotal 
+				}
+				divide_temp_variable = { 
+					temp1 = 2 
+				}
+				check_variable = {
+					var = global.var_EUvoteYes
+					value = temp1
+					compare = greater_than
+				}			
+			}
+			set_country_flag = focus_EU001_maj_yes
+			set_global_flag = EU_majority_voting_YES
+			every_country = {
+				limit = { has_country_flag = EU_voted }
+				news_event = {
+					id = EUvote_news.2
+				}
+			}
+		}		
+		else_if = { # Unanimity - no
+			limit = {
+				has_global_flag = EU_unanimity_voting
+				check_variable = {
+					var = global.var_EUvoteYes
+					value = global.var_EUvoteTotal
+					compare = not_equals
+				}
+			}
 			set_country_flag = focus_EU001_no
+			set_global_flag = EU_unanimity_voting_NO
+			every_country = {
+				limit = { has_country_flag = EU_voted }
+				news_event = {
+					id = EUvote_news.2
+				}
+			}
+		}		
+		else_if = { # QMV - no
+			limit = {
+				has_global_flag = EU_qualified_majority_voting
+				OR = {
+					check_variable = {
+						var = global.var_EUvoteYes
+						value = 0.55
+						compare = less_than
+					}
+					check_variable = {
+						var = global.var_EUpopYes
+						value = 0.65
+						compare = less_than
+					}
+				}
+			}
+			set_country_flag = focus_EU001_QMV_no
+			set_global_flag = EU_unanimity_voting_NO
+			every_country = {
+				limit = { has_country_flag = EU_voted }
+				news_event = {
+					id = EUvote_news.2
+				}
+			}
+		}		
+		else = {
+			set_country_flag = focus_EU001_maj_no
+			set_global_flag = EU_unanimity_voting_NO
 			every_country = {
 				limit = { has_country_flag = EU_voted }
 				news_event = {
@@ -453,7 +548,7 @@ news_event = {
 	id = EUvote_news.2
 	title = EU_news.2.t
 	desc = EU_news.2.d
-	picture = GFX_news_EU
+	picture = GFX_eu
 	
 	major = no
 	is_triggered_only = yes
