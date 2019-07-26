@@ -481,7 +481,7 @@ def main():
         print("here")
         projectId = os.environ['CI_PROJECT_ID'];
         print(projectId)
-        mergeRequestId = os.environ['$CI_MERGE_REQUEST_ID'];
+        mergeRequestId = os.environ['CI_MERGE_REQUEST_ID'];
         print(mergeRequestId)
         privateToken = os.environ['Bot_Token']
         print(privateToken)
