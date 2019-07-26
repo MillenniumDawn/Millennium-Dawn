@@ -479,14 +479,11 @@ def main():
 
     try:
         print("here")
-        projectId = sys.argv[1]
-        #projectId = os.environ['CI_PROJECT_ID'];
+        projectId = os.environ['CI_PROJECT_ID'];
         print(projectId)
-        mergeRequestId = sys.argv[2]
-        #mergeRequestId = os.environ['MR_NO'];
+        mergeRequestId = os.environ['$CI_MERGE_REQUEST_ID'];
         print(mergeRequestId)
-        privateToken = sys.argv[3]
-        #privateToken = os.environ['Bot_Token']
+        privateToken = os.environ['Bot_Token']
         print(privateToken)
 
         url = 'https://gitlab.com/api/v4/projects/' + projectId + '/merge_requests/' + mergeRequestId + '/notes?private_token=' + privateToken;  # Set destination URL here
