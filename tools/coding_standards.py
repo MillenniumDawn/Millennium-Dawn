@@ -479,12 +479,12 @@ def main():
 
     try:
         print("here")
-        privateToken = os.environ['Bot_Token']
-        print(privateToken)
         projectId = os.environ['CI_PROJECT_ID'];
         print(property)
         mergeRequestId = os.environ['MR_NO'];
         print(mergeRequestId)
+        privateToken = os.environ['Bot_Token']
+        print(privateToken)
 
         url = 'https://gitlab.com/api/v4/projects/' + projectId + '/merge_requests/' + mergeRequestId + '/notes?private_token=' + privateToken;  # Set destination URL here
         print(url)
