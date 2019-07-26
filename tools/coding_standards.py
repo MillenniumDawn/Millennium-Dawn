@@ -486,7 +486,7 @@ def main():
 
         request = Request(url, urlencode(post_fields).encode())
         json = urlopen(request).read().decode()
-        print(json)
+        print("Posted to to merge request")
     except:
         print("Couldn't post results to gitlab merge request")
 
