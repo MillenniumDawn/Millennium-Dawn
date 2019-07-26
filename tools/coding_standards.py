@@ -485,7 +485,9 @@ def main():
         print(mergeRequestId)
         privateToken = privateToken = sys.argv[1]
         print("here1")
-        
+
+        #wasted so much fing time, just use this https://python-gitlab.readthedocs.io/en/stable/gl_objects/commits.html
+        #https://docs.gitlab.com/ee/api/discussions.html#create-new-merge-request-thread
         url = 'https://gitlab.com/api/v4/projects/' + projectId + '/merge_requests/' + mergeRequestId + '/notes?private_token=' + privateToken;  # Set destination URL here
         print(url)
         post_fields = {'body': message}  # Set POST fields here
