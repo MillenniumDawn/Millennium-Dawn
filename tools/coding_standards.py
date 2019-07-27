@@ -487,12 +487,14 @@ def main():
         privateToken = privateToken = sys.argv[1]
         print("here1")
 
-        MyOut = subprocess.Popen(['curl', '--request', 'POST', '--header', '\"PRIVATE-TOKEN: ' + privateToken + '\"', 'https://gitlab.com/api/v4/projects/' + projectId + '/merge_requests/' + mergeRequestId + '/discussions?' + message + '=comment'],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
-        stdout, stderr = MyOut.communicate()
-        print(stdout)
-        print(stderr)
+        os.system("curl --request POST --header \"PRIVATE-TOKEN: " +  privateToken + "\" https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions?" + message + "=comment")
+
+        #MyOut = subprocess.Popen(['curl', '--request', 'POST', '--header', '\"PRIVATE-TOKEN: ' + privateToken + '\"', 'https://gitlab.com/api/v4/projects/' + projectId + '/merge_requests/' + mergeRequestId + '/discussions?' + message + '=comment'],
+         #                        stdout=subprocess.PIPE,
+         #                        stderr=subprocess.STDOUT)
+        #stdout, stderr = MyOut.communicate()
+        #print(stdout)
+        #print(stderr)
 
         print("Posted results to merge request")
 
