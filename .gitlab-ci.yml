@@ -6,14 +6,19 @@ stages:
 CodingStandards:
   stage: StandardsTest
   image: python:3.6
+  only:
+    - merge_requests
   script:
     - python3 tools/coding_standards.py
 
 Styling:
   stage: StylingTest
   image: python:3.6
+  only:
+    - merge_requests
   script:
-    - python3 tools/check_basic_style_2.py
+    - echo $Bot_Token
+    - python3 tools/check_basic_style_2.py $Bot_Token
 
 FixingStyling:
   stage: FixStyling
@@ -24,7 +29,7 @@ FixingStyling:
     - git config --global user.email "x-mike-x_@live.com"
     - git config --global user.name "MD4GitBot"
     - git config --global push.default simple
-    - git remote set-url origin https://MD4GitBot:YWpC6KJzp2cKnPZdGLYV@gitlab.com/Millennium_Dawn/Millennium_Dawn.git
+    - git remote set-url origin https://MD4GitBot:$Bot_Token@gitlab.com/Millennium_Dawn/Millennium_Dawn.git
     - git add -A
     - git commit -m 'Fixed Styling for you'
     - git push -u origin HEAD:$CI_COMMIT_REF_NAME
