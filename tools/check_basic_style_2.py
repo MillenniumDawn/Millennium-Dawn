@@ -94,7 +94,7 @@ def check_basic_style(filepath, bad_count, message):
 
 def main():
     print("Validating Basic Style - Secondary Check")
-    message = ""
+    message = "Validating Basic Style - Secondary Check\n"
     files_list = []
     bad_count = 0
   
@@ -121,10 +121,12 @@ def main():
         bad_count, message = check_basic_style(filename, bad_count, message)
 
     print("------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count))
+    message +="------\nChecked {0} files\nErrors detected: {1}\n".format(len(files_list), bad_count)
     if (bad_count == 0):
         print("File validation PASSED")
+        message +="File validation PASSED\n"
     else:
-        print("File validation FAILED")
+        message +="File validation FAILED\n"
 
     print ('The script took {0} second!'.format(time.time() - startTime))
 
@@ -147,6 +149,8 @@ def main():
                 "https://gitlab.com/api/v4/projects/" + projectId + "/commits/" + commitID + "/discussions",
                 data=payload, headers=headers)
             print("Posted results to commit")
+
+
     except:
         print("Couldn't post results to gitlab")
     
