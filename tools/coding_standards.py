@@ -3,6 +3,7 @@ import os, sys, fnmatch, re
 import time
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+import subprocess
 
 startTime = time.time()
 
@@ -486,16 +487,10 @@ def main():
         privateToken = privateToken = sys.argv[1]
         print("here1")
 
-        #wasted so much fing time, just use this https://python-gitlab.readthedocs.io/en/stable/gl_objects/commits.html
-        #https://docs.gitlab.com/ee/api/discussions.html#create-new-merge-request-thread
-        url = 'https://gitlab.com/api/v4/projects/' + projectId + '/merge_requests/' + mergeRequestId + '/notes?private_token=' + privateToken;  # Set destination URL here
-        print(url)
-        post_fields = {'body': message}  # Set POST fields here
-        print("here2")
-        request = Request(url, urlencode(post_fields).encode())
-        print("here3")
-        json = urlopen(request).read().decode()
-        print("Posted to to merge request")
+        bashCommand = "curl --request POST --header \"PRIVATE-TOKEN: " + privateToken + "\" https://gitlab.example.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions?" + message +"=comment"
+        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+
     except:
         print("Couldn't post results to gitlab merge request")
 
