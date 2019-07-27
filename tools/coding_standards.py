@@ -488,8 +488,8 @@ def main():
         headers = {'PRIVATE-TOKEN': "4jUdCXsyZD5xWUVLzbCh"}
         payload = {'body': message}
 
-        #r = requests.post("https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions", data=payload, headers=headers)
-        r = requests.post("https://gitlab.com/api/v4/projects/1272202/merge_requests/33925826/discussions", data=payload, headers=headers)
+        r = requests.post("https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions", data=payload, headers=headers)
+        #r = requests.post("https://gitlab.com/api/v4/projects/1272202/merge_requests/33925826/discussions", data=payload, headers=headers)
         print(r.text)  # TEXT/HTML
         print(r.status_code, r.reason)  # HTTP
 
