@@ -487,7 +487,7 @@ def main():
         privateToken = privateToken = sys.argv[1]
         print("here1")
 
-        bashCommand = "curl --request POST --header \"PRIVATE-TOKEN: " + privateToken + "\" https://gitlab.example.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions?" + message +"=comment"
+        bashCommand = "curl --request POST --header \"PRIVATE-TOKEN: " + privateToken + "\" https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions?" + message +"=comment"
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
