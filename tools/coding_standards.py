@@ -492,6 +492,8 @@ def main():
         output, error = process.communicate()
 
         print("Posted results to merge request")
+        print(error)
+        print(output)
 
     except:
         print("Couldn't post results to gitlab merge request")
