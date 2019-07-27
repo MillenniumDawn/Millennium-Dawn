@@ -6,7 +6,7 @@ startTime = time.time()
 
 __version__ = 1.0
 
-def check_basic_style(filepath, message):
+def check_basic_style(filepath, bad_count, message):
 
     fixedErrors = 0
     with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
@@ -82,14 +82,14 @@ def check_basic_style(filepath, message):
             if openBraces[0] < 0:
                 print("ERROR: A possible missing curly brace }} in file {} {{line {}}}".format(filepath, lineNum))
                 message += "ERROR: A possible missing curly brace }} in file {} {{line {}}}\n".format(filepath, lineNum)
-                fixedErrors += 1
+                bad_count += 1
             elif openBraces[0] > 0:
                 print("ERROR: A possible missing curly brace {{ in file {} has no matching closing bracket".format(filepath, lineNum))
                 message += "ERROR: A possible missing curly brace {{ in file {} has no matching closing bracket\n".format(filepath, lineNum)
-                fixedErrors += 1
+                bad_count += 1
     file.close()
 
-    return fixedErrors
+    return bad_count, message
 
 
 def main():
@@ -118,7 +118,7 @@ def main():
             files_list.append(os.path.join(root, filename))
 
     for filename in files_list:
-        bad_count = bad_count + check_basic_style(filename, message)
+        bad_count, message = check_basic_style(filename, bad_count, message)
 
     print("------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count))
     if (bad_count == 0):
