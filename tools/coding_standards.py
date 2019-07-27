@@ -491,6 +491,8 @@ def main():
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
+        print("Posted results to merge request")
+
     except:
         print("Couldn't post results to gitlab merge request")
 
