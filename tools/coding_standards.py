@@ -474,7 +474,6 @@ def main():
         message += "File validation FAILED\n"
 
     print('The script took {0} second!'.format(time.time() - startTime))
-    message += 'The script took {0} second!'.format(time.time() - startTime)
 
     try:
         projectId = os.environ['CI_PROJECT_ID'];
