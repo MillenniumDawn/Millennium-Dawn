@@ -477,32 +477,26 @@ def main():
     message += 'The script took {0} second!'.format(time.time() - startTime)
 
     try:
-        print("here")
         projectId = os.environ['CI_PROJECT_ID'];
-        print("here1")
-        mergeRequestId = os.environ['CI_MERGE_REQUEST_IID'];
-        print("here2")
         privateToken = privateToken = sys.argv[1]
-
-        print("here3")
-
         headers = {'PRIVATE-TOKEN': privateToken}
-        print("here4")
         payload = {'body': message}
 
-        print(projectId)
-        print(mergeRequestId)
+        if "CI_MERGE_REQUEST_IID" in os.environ:
+            mergeRequestId = os.environ['CI_MERGE_REQUEST_IID'];
+            r = requests.post(
+                "https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions",
+                data=payload, headers=headers)
+            print("Posted results to merge request")
 
-        r = requests.post("https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions", data=payload, headers=headers)
-        #r = requests.post("https://gitlab.com/api/v4/projects/1272202/merge_requests/33925826/discussions", data=payload, headers=headers)
-        print(r.text)  # TEXT/HTML
-        print(r.status_code, r.reason)  # HTTP
-
-
-        print("Posted results to merge request")
-
+        else:
+            commitID = os.environ['CI_COMMIT_SHA'];
+            r = requests.post(
+                "https://gitlab.com/api/v4/projects/" + projectId + "/commits/" + commitID + "/discussions",
+                data=payload, headers=headers)
+            print("Posted results to commit")
     except:
-        print("Couldn't post results to gitlab merge request")
+        print("Couldn't post results to gitlab")
 
     return bad_count
 
