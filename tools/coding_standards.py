@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 import os, sys, fnmatch, re
 import time
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
-import subprocess
+import requests
 
 startTime = time.time()
 
@@ -479,13 +477,17 @@ def main():
     message += 'The script took {0} second!'.format(time.time() - startTime)
 
     try:
+        print("here")
         projectId = os.environ['CI_PROJECT_ID'];
+        print("here1")
         mergeRequestId = os.environ['CI_MERGE_REQUEST_IID'];
+        print("here2")
         privateToken = privateToken = sys.argv[1]
 
-        import requests
+        print("here3")
 
-        headers = {'PRIVATE-TOKEN': "4jUdCXsyZD5xWUVLzbCh"}
+        headers = {'PRIVATE-TOKEN': privateToken}
+        print("here4")
         payload = {'body': message}
 
         print(projectId)
