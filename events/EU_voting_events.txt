@@ -399,27 +399,13 @@ country_event = {
 	id = EUvote.2 ### counting voting result focus_EU001
 	title = EUvote.2.t
 	desc = EUvote.2.d
-	
-#	trigger = {
-#		has_country_flag = focus_EU001
-#		has_global_flag = focus_EU001_voted
-#		check_variable = {
-#			var = global.var_EUvoteTotal
-#			value = global.var_EUmemberstatesTotal
-#			compare = equals
-#		}
-#	}
-	
-#	mean_time_to_happen = { days = 1 }
 
 	is_triggered_only = yes
 
-	fire_only_once = yes
-	
-	#immediate = { }
-	
+#	fire_only_once = yes
 	
 	option = {
+		name = EUvote.2.a #Show the result of the voting
 		if = { # Unanimity - yes 
 			limit = {
 				has_global_flag = EU_unanimity_voting
@@ -432,11 +418,20 @@ country_event = {
 			set_country_flag = focus_EU001_yes
 			set_global_flag = EU_unanimity_voting_YES
 			every_country = {
-				limit = { has_country_flag = EU_voted }
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
 				news_event = {
 					id = EUvote_news.2
 				}
 			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001 }
+				news_event = {
+					id = EUvote.3
+				}
+			}			
 		}
 		else_if = { # QMV - yes 
 			limit = {
@@ -457,11 +452,20 @@ country_event = {
 			set_country_flag = focus_EU001_QMV_yes
 			set_global_flag = EU_qualified_majority_voting_YES
 			every_country = {
-				limit = { has_country_flag = EU_voted }
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
 				news_event = {
 					id = EUvote_news.2
 				}
 			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001_QMV }
+				news_event = {
+					id = EUvote.3
+				}
+			}			
 		}		
 		else_if = { # majority - yes 
 			limit = {
@@ -481,11 +485,20 @@ country_event = {
 			set_country_flag = focus_EU001_maj_yes
 			set_global_flag = EU_majority_voting_YES
 			every_country = {
-				limit = { has_country_flag = EU_voted }
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
 				news_event = {
 					id = EUvote_news.2
 				}
 			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001_maj }
+				news_event = {
+					id = EUvote.3
+				}
+			}			
 		}		
 		else_if = { # Unanimity - no
 			limit = {
@@ -499,11 +512,20 @@ country_event = {
 			set_country_flag = focus_EU001_no
 			set_global_flag = EU_unanimity_voting_NO
 			every_country = {
-				limit = { has_country_flag = EU_voted }
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
 				news_event = {
 					id = EUvote_news.2
 				}
 			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001 }
+				news_event = {
+					id = EUvote.4
+				}
+			}			
 		}		
 		else_if = { # QMV - no
 			limit = {
@@ -522,21 +544,39 @@ country_event = {
 				}
 			}
 			set_country_flag = focus_EU001_QMV_no
-			set_global_flag = EU_unanimity_voting_NO
+			set_global_flag = EU_qualified_majority_voting_NO
 			every_country = {
-				limit = { has_country_flag = EU_voted }
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
 				news_event = {
 					id = EUvote_news.2
 				}
 			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001_QMV }
+				news_event = {
+					id = EUvote.4
+				}
+			}			
 		}		
 		else = {
 			set_country_flag = focus_EU001_maj_no
-			set_global_flag = EU_unanimity_voting_NO
+			set_global_flag = EU_majority_voting_NO
 			every_country = {
-				limit = { has_country_flag = EU_voted }
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
 				news_event = {
 					id = EUvote_news.2
+				}
+			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001_maj }
+				news_event = {
+					id = EUvote.4
 				}
 			}
 		}
@@ -559,12 +599,13 @@ news_event = {
 }
 
 
-############################ id's have to be updated
+### changed EUvote.3 and EUvote.4 fired from EUvote.2 to news event instead of country event
 
-country_event = {
-	id = EUvote.12
-	title = EUvote.12.t
-	desc = EUvote.12.d
+news_event = {
+	id = EUvote.3 ### voting result focus_EU001 yes and focus_EU001 effect
+	title = EUvote.3.t
+	desc = EUvote.3.d
+	picture = GFX_eu
 	
 	is_triggered_only = yes
 
@@ -572,138 +613,100 @@ country_event = {
 	
 	
 	option = {
-		name = EUvote.12.a # yes
+		name = EUvote.3.a # yes
 			clear_variable = global.var_EUvoteYes
 			clear_variable = global.var_EUvoteNo
 			clear_variable = global.var_EUvoteTotal
 			clear_variable = global.var_EUpopYes
 			clear_variable = global.var_EUpopNo
-			clear_variable = global.var_EUpopTotal
-			clear_variable = global.var_EUvoteNoQuote
-			clear_variable = global.var_EUpopNoQuote			
-			clr_country_flag = EU_voted
-			clr_country_flag = gov_strong_resist
-			clr_country_flag = gov_resist
-			clr_country_flag = gov_support
-			clr_country_flag = gov_strong_support
-			clr_country_flag = EU_voted_yes
-			clr_country_flag = EU_voted_no			
-			if = {
-				limit = {
-					AND = {
-						has_country_flag = focus01
-						has_global_flag = focus01voted
-					}
-				}
-				set_country_flag = focus01yes
-			}
-	}
-}
-
-country_event = {
-	id = EUvote.13
-	title = EUvote.13.t
-	desc = EUvote.13.d
-	
-	is_triggered_only = yes
-
-	immediate = { }
-	
-	
-	option = {
-		name = EUvote.13.a # no
-			clear_variable = global.var_EUvoteYes
-			clear_variable = global.var_EUvoteNo
-			clear_variable = global.var_EUvoteTotal
-			clear_variable = global.var_EUpopYes
-			clear_variable = global.var_EUpopNo
-			clear_variable = global.var_EUpopTotal
-			clear_variable = global.var_EUvoteNoQuote
-			clear_variable = global.var_EUpopNoQuote
-			clr_country_flag = EU_voted
-			clr_country_flag = gov_strong_resist
-			clr_country_flag = gov_resist
-			clr_country_flag = gov_support
-			clr_country_flag = gov_strong_support			
-			if = {
-				limit = {
-					AND = {
-						has_country_flag = focus01
-						has_global_flag = focus01voted
-					}
-				}
-				FROM = { set_country_flag = focus01no }
-				clr_global_flag = focus01again
-			}			
-	}
-}
-country_event = {
-	id = EUvote.14
-	title = EUvote.14.t
-	desc = EUvote.14.d
-	
-	is_triggered_only = yes
-
-	immediate = { }
-	
-	
-	option = {
-		name = EUvote.14.a # No vote quote QMV
-			set_variable = { 
-				var = global.var_EUvoteNoQuote
-				value = global.var_EUvoteNo
-			
-			}
-			set_variable = { 
-				var = global.var_EUpopNoQuote
-				value = global.var_EUpopNo
-			
-			}			
-			divide_variable = { 
-				var = global.var_EUvoteNoQuote
-				value = global.var_EUvoteTotal
-			
-			}
-			divide_variable = { 
-				var = global.var_EUpopNoQuote
-				value = global.var_EUpopTotal
-			
-			}
-	}
-}
-country_event = {
-	id = EUvote.15 ### new try for all member states
-	title = EUvote.15.t
-	desc = EUvote.15.d
-	
-	trigger = {
-		has_country_flag = focus01no
-		NOT = { has_global_flag = focus01again }
-	}
-	mean_time_to_happen = {
-		days = 10 ### 180 days
-	}
-
-#	immediate = { }
-	
-	
-	option = {
-		name = EUvote.15.a # 
-			clr_country_flag = focus01no
-			clr_global_flag = focus01voted
-			set_global_flag = focus01again
 			every_country = {
-				limit = { has_idea = EU_member }
-					set_country_flag = focus01
-					if = {
-						limit = { has_country_flag = focus01_maj }
-						set_country_flag = focus01_maj	
+				limit = {
+					has_idea = EU_member
+				}	
+				clr_country_flag = EU_voted
+				clr_country_flag = gov_strong_resist
+				clr_country_flag = gov_resist
+				clr_country_flag = gov_support
+				clr_country_flag = gov_strong_support
+				clr_country_flag = EU_voted_yes
+				clr_country_flag = EU_voted_no
+			}
+			clr_global_flag = EU_unanimity_voting
+			clr_global_flag = EU_qualified_majority_voting
+			clr_global_flag = EU_majority_voting
+			clr_global_flag = focus_EU001_result
+			clr_global_flag = focus_EU001_QMV_result
+			clr_global_flag = focus_EU001_maj_result
+
+			clr_global_flag = EU_unanimity_voting_YES
+			clr_global_flag = EU_qualified_majority_voting_YES
+			clr_global_flag = EU_majority_voting_YES
+			clr_global_flag = EU_unanimity_voting_NO
+			clr_global_flag = EU_qualified_majority_voting_NO
+			clr_global_flag = EU_majority_voting_NO			
+			if = {
+				limit = {
+					OR = {
+						has_country_flag = focus_EU001_yes
+						has_country_flag = focus_EU001_QMV_yes
+						has_country_flag = focus_EU001_maj_yes
 					}
-					if = {
-						limit { has_country_flag = focus01_QMV }
-						set_country_flag = focus01_QMV
+				}
+				every_country = {
+					limit = {
+						has_country_flag = focus_EU001
 					}
-				
+					### focus01 effect
+				}
 			}
 	}
 }
+
+news_event = {
+	id = EUvote.4 ### voting result focus_EU001 yes and focus_EU001 effect
+	title = EUvote.4.t
+	desc = EUvote.4.d
+	picture = GFX_eu
+	
+	is_triggered_only = yes
+
+	immediate = { }
+	
+	
+	option = {
+		name = EUvote.4.a # no
+			clear_variable = global.var_EUvoteYes
+			clear_variable = global.var_EUvoteNo
+			clear_variable = global.var_EUvoteTotal
+			clear_variable = global.var_EUpopYes
+			clear_variable = global.var_EUpopNo
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}	
+				clr_country_flag = EU_voted
+				clr_country_flag = gov_strong_resist
+				clr_country_flag = gov_resist
+				clr_country_flag = gov_support
+				clr_country_flag = gov_strong_support
+				clr_country_flag = EU_voted_yes
+				clr_country_flag = EU_voted_no
+			}
+			clr_global_flag = EU_unanimity_voting
+			clr_global_flag = EU_qualified_majority_voting
+			clr_global_flag = EU_majority_voting
+			clr_global_flag = focus_EU001_result
+			clr_global_flag = focus_EU001_QMV_result
+			clr_global_flag = focus_EU001_maj_result
+
+			clr_global_flag = EU_unanimity_voting_YES
+			clr_global_flag = EU_qualified_majority_voting_YES
+			clr_global_flag = EU_majority_voting_YES
+			clr_global_flag = EU_unanimity_voting_NO
+			clr_global_flag = EU_qualified_majority_voting_NO
+			clr_global_flag = EU_majority_voting_NO			
+	}
+}
+
+
+
