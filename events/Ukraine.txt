@@ -947,7 +947,7 @@ country_event = { ##Annexation of Crimea if the Soviet Player doesn't already Ow
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.2.b executed"
 		SOV = { 
 			669 = {
-				add_core_of = SOV
+				remove_core_of = SOV
 			}
 		}
 		SOV = { country_event = ukraine_revolution.7 }
@@ -976,6 +976,7 @@ country_event = {###Russia Annexes Crimea
 		add_opinion_modifier = { target = SOV modifier = rival }
 		reverse_add_opinion_modifier = { target = SOV modifier = rival }
 		add_war_support = 0.05 
+		news_event = ukraine_news.8
 	}
 }
 
@@ -1014,7 +1015,7 @@ news_event = { ##Annexation of the Crimea
 		log = "[GetDateText]: [This.GetName]: ukraine_news.8.b executed"
 		trigger = {
 			OR = {	
-				tag = UKR
+				tag = SOV
 				tag = NOV
 			}
 		}
@@ -1069,7 +1070,7 @@ country_event = { ##End of the Civil War
 	}
 	
 	mean_time_to_happen = {
-		days = 1
+		days = 31
 	}
 	
 	option = {
@@ -1088,6 +1089,7 @@ country_event = { ##End of the Civil War
 		}
 		clr_country_flag = UKR_civil_war_in_the_donbass_flag
 		news_event = ukraine_news.9
+		add_stability = 0.05
 	}
 	option = {
 		name = ukraine_revolution.3.b
@@ -1105,24 +1107,27 @@ country_event = { ##End of the Civil War
 		}
 		clr_country_flag = NOV_civil_war_in_the_donbass_flag
 		news_event = ukraine_news.9
+		add_war_support = 0.05 
 	}
 	option = {
 		name = ukraine_revolution.3.c
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.3.c executed"
 		trigger = {
+			tag = UKR
+			tag = NOV
 			country_exists = NOV
 			UKR = { NOT = { has_war_with = NOV } } 
 		}
+		add_war_support = 0.05
+		add_stability = -0.03
 	}
 }
 
 ###End of the Ukrainian Civil War 
 news_event = {
 	id = ukraine_news.9
-	title = { trigger = { country_exists = NOV } text = ukraine_news.9.t1 }
-	title = { trigger = { NOT = { country_exists = NOV } } text = ukraine_news.9.t2 }
-	title = { trigger = { UKR = { NOT = { has_war_with } } country_exists = NOV } text = ukraine_news.9.t3 }
-	desc = { trigger = { country_exists = NOV } text = ukraine_news.9.d1 }
+	title = ukraine_news.9.t
+	desc = { trigger = { country_exists = NOV NOT = { country_exists = UKR } } text = ukraine_news.9.d1 }
 	desc = { trigger = { NOT = { country_exists = NOV } } text = ukraine_news.9.d2 }
 	desc = { trigger = { UKR = { NOT = { has_war_with = NOV } } country_exists = NOV } text = ukraine_news.9.d3 }
 	#picture = unknown
@@ -1159,11 +1164,30 @@ country_event = { ##Demand the Crimea's Return to Ukraine - SOV
 	option = {
 		name = ukraine_revolution.4.a
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.4.a executed"
+		effect_tooltip = {
+			UKR = { transfer_state = 669 }
+		}
+		SOV = {
+			669 = {
+				remove_core_of = SOV 
+			}
+		}
+		add_war_support = 0.05
+		add_stability = -0.05
+		hidden_effect = {
+			UKR = { country_event = { id = ukraine_revolution.9 days = 1 } }
+		}
 	}
 	
 	option = {
 		name = ukraine_revolution.4.b
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.4.b executed"
+		add_political_power = -25
+		add_stability = 0.05
+		add_war_support = -0.05
+		hidden_effect = {
+			UKR = { country_event = { id = ukraine_revolution.10 days = 1 } }
+		}
 	}
 }
 
@@ -1177,6 +1201,13 @@ country_event = { ###Russia Refuses to Return Crimea
 	
 	option = {
 		name = ukraine_revolution.9.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.9.a executed"
+		add_war_support = 0.05 
+		create_wargoal = {
+			type = take_state_focus
+			target = SOV
+			generator = { 669 }
+		}
 	}
 }
 
@@ -1190,24 +1221,9 @@ country_event = {###Russia Returns the Crimea
 	
 	option = {
 		name = ukraine_revolution.10.a
-	}
-}
-
-
-country_event = { ###Demand the Return of the Donbass
-	id = ukraine_revolution.5 
-	title = ukraine_revolution.5.t
-	desc = ukraine_revolution.5.d
-	is_triggered_only = yes 
-	
-	option = {
-		name = ukraine_revolution.5.a
-		log = "[GetDateText]: [This.GetName]: ukraine_revolution.5.a executed"
-		set_country_flag = UKR_denied_to_return_crimea
-	}
-	option = {
-		name = ukraine_revolution.5.b
-		log = "[GetDateText]: [This.GetName]: ukraine_revolution.5.b executed"
-		set_country_flag = UKR_returned_crimea_to_ukraine
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.10.a executed"
+		remove_opinion_modifier = { target = SOV modifier = rival }
+		add_stability = 0.05 
+		add_political_power = 150
 	}
 }
