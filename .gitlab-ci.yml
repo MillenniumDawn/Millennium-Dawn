@@ -3,13 +3,15 @@ stages:
   - StylingTest
   - FixStyling
   
+  
 CodingStandards:
   stage: StandardsTest
   image: python:3.6
   only:
     - merge_requests
   script:
-    - python3 tools/coding_standards.py
+    - pip install requests
+    - python3 tools/coding_standards.py $Bot_Token
 
 Styling:
   stage: StylingTest
@@ -17,14 +19,17 @@ Styling:
   only:
     - merge_requests
   script:
-    - echo $Bot_Token
+    - pip install requests
     - python3 tools/check_basic_style_2.py $Bot_Token
 
 FixingStyling:
   stage: FixStyling
   image: python:3.6
+  only:
+    - merge_requests
   script:
-    - python3 tools/fix_styling.py
+    - pip install requests
+    - python3 tools/fix_styling.py $Bot_Token
   after_script:
     - git config --global user.email "x-mike-x_@live.com"
     - git config --global user.name "MD4GitBot"
@@ -33,7 +38,10 @@ FixingStyling:
     - git add -A
     - git commit -m 'Fixed Styling for you'
     - git push -u origin HEAD:$CI_COMMIT_REF_NAME
-    - python3 tools/check_basic_style.py
-    - python3 tools/check_basic_style_2.py
+    - python3 tools/check_basic_style.py $Bot_Token
+    - python3 tools/check_basic_style_2.py $Bot_Token
     
   when: on_failure
+
+  
+  
