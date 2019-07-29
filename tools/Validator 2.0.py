@@ -15,7 +15,7 @@ class Mod:
         self.rootDir = os.path.dirname(os.path.dirname(scriptDir))
 
         self.tags = self.GetTags(self.rootDir + "/common/country_tags/")
-        self.ideologies = self.GetIdeologies()
+        self.ideologies = self.GetIdeologies(self.rootDir + "/common/ideologies/")
 
     def GetTags(self, dir):
         tags = []
@@ -25,16 +25,15 @@ class Mod:
                 for line in content:
                     if not line.startswith("#") or line.startswith(
                             ""):  # If the line doesn't start with a comment or blank
-                        hasTag = re.match(r'^[A-Z]{3}', line, re.M | re.I)  # If it's a tag
+                        hasTag = re.match(r'^([A-Z]{3})', line, re.M | re.I)  # If it's a tag
                         if hasTag:
-                            tags.append(hasTag.group())
+                            tags.append(hasTag.group(1))
         print(tags)
         return tags
 
-    def GetIdeologies(self):
-        dir = self.rootDir + "/common/ideologies/"
+    def GetIdeologies(self, dir):
         ideologies = []
-        ideologies.append(Ideology("test", ["1","2","3"]))
+        #ideologies.append(Ideology("test", ["1","2","3"]))
 
         for file in os.listdir(dir):
             with open(dir + file, 'r', encoding='utf-8', errors='ignore') as file:
@@ -50,12 +49,12 @@ class Mod:
                             if brace == 1:
                                 match = re.match(r'^\s?([\w-]+)\s?=', line, re.M | re.I)
                                 if match:
-                                    ideologies.append(Ideology(match.group(), []))
+                                    ideologies.append(Ideology(match.group(1), []))
 
                             if isSubideology:
                                 match2 = re.match2(r'\s?([\w-]+)\s?=', line, re.M | re.I)
                                 if match2:
-                                    ideologies[ideologies.count()].Subideology.append(match2.group())
+                                    ideologies[ideologies.count()].Subideology.append(match2.group(1))
 
                             if "#" in line:
                                 match = re.match(r'#.*[{}]+', line, re.M | re.I)
@@ -70,7 +69,7 @@ class Mod:
                             else:
                                 brace += line.count("{")
                                 brace -= line.count("}")
-        print(ideologies[0])
+        print(ideologies)
 
 
 
