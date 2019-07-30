@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os, sys, fnmatch, re
 import time
+import requests
 
 startTime = time.time()
 
@@ -139,6 +140,7 @@ def main():
 
     files_list = []
     bad_count = 0
+    message = ""
   
     # Allow running from root directory as well as from inside the tools directory
     scriptDir = os.path.realpath(__file__)
@@ -160,6 +162,31 @@ def main():
         bad_count = bad_count + check_basic_style(filename)
 
     print("Fixed " + str(bad_count) + " styling mistakes")
+    message += "Fixed " + str(bad_count) + " styling mistakes\n"
+
+    try:
+        projectId = os.environ['CI_PROJECT_ID'];
+        privateToken = privateToken = sys.argv[1]
+        headers = {'PRIVATE-TOKEN': privateToken}
+        payload = {'body': message}
+
+        if "CI_MERGE_REQUEST_IID" in os.environ:
+            mergeRequestId = os.environ['CI_MERGE_REQUEST_IID'];
+            r = requests.post(
+                "https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions",
+                data=payload, headers=headers)
+            print("Posted results to merge request")
+
+        else:
+            commitID = os.environ['CI_COMMIT_SHA'];
+            r = requests.post(
+                "https://gitlab.com/api/v4/projects/" + projectId + "/commits/" + commitID + "/discussions",
+                data=payload, headers=headers)
+            print("Posted results to commit")
+    except:
+        print("Couldn't post results to gitlab")
+
+
     print ('The script took {0} second!'.format(time.time() - startTime))
     
     #return bad_count

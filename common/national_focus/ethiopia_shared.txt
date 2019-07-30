@@ -67,6 +67,14 @@
 				popularity = 0.05
 			}
 			recalculate_party = yes
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -104,6 +112,14 @@
 				popularity = 0.05
 			}
 			recalculate_party = yes
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -241,6 +257,9 @@
 			add_to_variable = { influence_array_val^1 = 5 }
 			add_to_variable = { influence_array_val^2 = 5 }
 			recalculate_influence = yes
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+			}
 		}
 
 		ai_will_do = {
@@ -299,6 +318,13 @@
 
 		completion_reward = {
 			add_ideas = infrastructure_project2
+			random_owned_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -386,6 +412,14 @@
 
 		completion_reward = {
 			add_ideas = motorization_investments
+			random_owned_state = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
 		}
 
 		ai_will_do = {
@@ -431,6 +465,28 @@
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
 					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				add_building_construction = {
+					type = infrastructure
 					level = 1
 					instant_build = yes
 				}
@@ -514,10 +570,10 @@
 						include_locked = yes
 					}
 				}
-				add_extra_state_shared_building_slots = 1
+				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
 					type = arms_factory
-					level = 1
+					level = 2
 					instant_build = yes
 				}
 			}
@@ -630,13 +686,6 @@
 		prerequisite = {
 			focus = ETH_military_buildup_2
 		}
-
-		mutually_exclusive = { }
-
-		available = { }
-
-		bypass = { }
-
 		completion_reward = {
 			random_owned_state = {
 				limit = {
@@ -726,13 +775,18 @@
 		bypass = { }
 
 		completion_reward = {
-			#every_country = {
-				#	limit = {
-					#		is_in_africa = yes
-					#	}
-				#	increase_trade_influence_by_1 = yes
-				#}
-			#Yeah mate I got no clue
+			every_country = {
+				limit = {
+					NOT = { original_tag = ETH }
+					NOT = { has_war_with = ETH }
+					OR = {
+						is_puppet = no
+						is_puppet_of = ETH
+					}
+				}
+				add_opinion_modifier = { target = ROOT modifier = global_trade }
+			}
+			add_political_power = 50
 		}
 
 		ai_will_do = {
@@ -763,9 +817,9 @@
 		bypass = { }
 
 		completion_reward = {
-			ENG = { country_event = { id = ethiopia.2 hours = 6 } }
-			FRA = { country_event = { id = ethiopia.2 hours = 6 } }
-			GER = { country_event = { id = ethiopia.2 hours = 6 } }
+			ENG = { country_event = { id = ethiopia.2 hours = 8 } }
+			FRA = { country_event = { id = ethiopia.3 hours = 8 } }
+			GER = { country_event = { id = ethiopia.4 hours = 8 } }
 		}
 
 		ai_will_do = {
@@ -801,6 +855,27 @@
 					target = ETH
 					modifier = has_expressed_loyalty
 				}
+			}
+			hidden_effect = {
+				set_temp_variable = { influence_gain = 5 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = ITA }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+						add_to_array = { influence_array = ITA.id }
+						add_to_array = { influence_array_val = influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
 			}
 		}
 
@@ -867,17 +942,10 @@
 		bypass = { }
 
 		completion_reward = {
-			#every_country = {
-				#	limit = {
-					#		has_idea = african_union_member
-					#		NOT = { original_tag = ERI }
-					#	}
-				#	add_opinion_modifier = {
-					#		target = ETH
-					#		modifier = declaration_of_friendship
-					#	}
-				#}
-			#yeah I got nothin chief
+			every_country = {
+				limit = { capital_scope = { is_on_continent = africa } }
+				add_opinion_modifier = { target = ETH modifier = declaration_of_friendship }
+			}
 		}
 
 		ai_will_do = {
@@ -907,8 +975,8 @@
 
 		completion_reward = {
 			ENG = { country_event = { id = ethiopia.2 hours = 6 } }
-			FRA = { country_event = { id = ethiopia.2 hours = 6 } }
-			GER = { country_event = { id = ethiopia.2 hours = 6 } }
+			FRA = { country_event = { id = ethiopia.3 hours = 6 } }
+			GER = { country_event = { id = ethiopia.4 hours = 6 } }
 			unlock_decision_category_tooltip = ETH_european_investments_category
 		}
 
@@ -1040,7 +1108,34 @@
 		bypass = { }
 
 		completion_reward = {
-			add_stability = 0.03
+			if = {
+				limit = { has_idea = paralyzing_corruption }
+				swap_ideas = { remove_idea = paralyzing_corruption add_idea = crippling_corruption }
+			}
+			if = {
+				limit = { has_idea = crippling_corruption }
+				swap_ideas = { remove_idea = crippling_corruption add_idea = rampant_corruption }
+			}
+			if = {
+				limit = { has_idea = rampant_corruption }
+				swap_ideas = { remove_idea = rampant_corruption add_idea = unrestrained_corruption }
+			}
+			if = {
+				limit = { has_idea = unrestrained_corruption }
+				swap_ideas = { remove_idea = unrestrained_corruption add_idea = systematic_corruption }
+			}
+			if = {
+				limit = { has_idea = systematic_corruption }
+				swap_ideas = { remove_idea = systematic_corruption add_idea = widespread_corruption }
+			}
+			if = {
+				limit = { has_idea = widespread_corruption }
+				swap_ideas = { remove_idea = widespread_corruption add_idea = medium_corruption }
+			}
+			if = {
+				limit = { has_idea = medium_corruption }
+				swap_ideas = { remove_idea = medium_corruption add_idea = modest_corruption }
+			}
 		}
 
 		ai_will_do = {
@@ -1075,7 +1170,7 @@
 		bypass = { }
 
 		completion_reward = {
-			add_stability = 0.03
+			add_stability = 0.05
 			add_political_power = 150
 		}
 
@@ -1098,14 +1193,22 @@
 			focus = ETH_anti_corruption_measurements
 		}
 
-		mutually_exclusive = { }
-
-		available = { }
-
-		bypass = { }
-
 		completion_reward = {
-			add_stability = 0.05
+			if = { 
+				limit = { has_idea = ETH_looming_famine }
+				swap_ideas = {
+					remove_idea = ETH_looming_famine
+					add_idea = ETH_idea_stabilized_food_supply
+				}
+			}
+			else_if = {
+				limit = { has_idea = ETH_idea_famine_strikes }
+				swap_ideas = {
+					remove_idea = ETH_idea_famine_strikes
+					add_idea = ETH_idea_stabilized_food_supply
+				}
+			}
+			custom_effect_tooltip = ETH_stabilize_the_food_supply_TT
 		}
 
 		ai_will_do = {
@@ -1236,13 +1339,7 @@
 		x = 14
 		y = 0
 
-		cost = 10
-
-		prerequisite = { }
-
-		available = { }
-
-		bypass = { }
+		cost = 5
 
 		completion_reward = {
 			add_ideas = defensive_preparations
@@ -1267,12 +1364,9 @@
 			focus = ETH_defense_of_ethiopia
 		}
 
-		available = { }
-
-		bypass = { }
-
 		completion_reward = {
-			army_experience = 10
+			army_experience = 15
+			add_ideas = rifle_production_bonus
 		}
 
 		ai_will_do = {
@@ -1293,10 +1387,6 @@
 		prerequisite = {
 			focus = ETH_defense_of_ethiopia
 		}
-
-		available = { }
-
-		bypass = { }
 
 		completion_reward = {
 			air_experience = 10
@@ -1365,7 +1455,10 @@
 		bypass = { }
 
 		completion_reward = {
-			add_ideas = rifle_production_bonus
+			swap_ideas = {
+				remove_idea = rifle_production_bonus
+				add_idea = rifle_production_bonus2
+			}
 		}
 
 		ai_will_do = {
@@ -1387,12 +1480,8 @@
 			focus = ETH_expand_the_etaf
 		}
 
-		available = { }
-
-		bypass = { }
-
 		completion_reward = {
-			air_experience = 10
+			air_experience = 15
 		}
 
 		ai_will_do = {
@@ -1464,8 +1553,6 @@
 			has_full_control_of_state = 235
 			has_full_control_of_state = 236
 		}
-
-		bypass = { }
 
 		completion_reward = {
 			235 = {
@@ -1559,10 +1646,6 @@
 		prerequisite = {
 			focus = ETH_air_training_program
 		}
-
-		available = { }
-
-		bypass = { }
 
 		completion_reward = {
 			add_ideas = fighter_production_bonus
@@ -1880,7 +1963,7 @@
 		completion_reward = {
 			add_tech_bonus = {
 				name = land_doc_bonus
-				bonus = 0.3
+				bonus = 0.35
 				uses = 2
 				category = land_doctrine
 			}
@@ -1913,6 +1996,7 @@
 			add_tech_bonus = {
 				name = air_doc_bonus
 				bonus = 0.5
+				uses = 1
 				category = air_doctrine
 			}
 		}
@@ -2091,7 +2175,7 @@
 		mutually_exclusive = { }
 
 		available = {
-			nationalist > 0.5
+			nationalist > 0.45
 			#has_government = nationalist
 		}
 
@@ -2180,7 +2264,20 @@
 		bypass = { }
 
 		completion_reward = {
-			custom_effect_tooltip = zera_yacob_returns_tt
+			custom_effect_tooltip = ETH_zera_yacob_returns_TT
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 23 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_variable = { Monarchist_leader = 0 }
+			}
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
 			news_event = { id = ethiopia_news.3 days = 2 }
 		}
 
@@ -2214,7 +2311,7 @@
 				ideology = nationalist
 				popularity = 0.05
 			}
-			add_to_variable = { Monarchist_pop = 0.05 }
+			add_to_variable = { party_pop_array^23 = 0.05 }
 			recalculate_party = yes
 			add_political_power = 200
 		}
@@ -2275,12 +2372,17 @@
 		prerequisite = {
 			focus = ETH_imperial_nostalgia
 		}
-
-		mutually_exclusive = { }
-
-		available = { }
-
-		bypass = { }
+		
+		available = {
+			NOT = { 
+				ERI = {
+					NOT = { is_puppet_of = ETH }
+				}
+			}
+			country_exists = ERI
+		}
+		
+		bypass = { NOT = { country_exists = ERI } }
 
 		completion_reward = {
 			create_wargoal = {
@@ -2385,7 +2487,30 @@
 		bypass = { }
 
 		completion_reward = {
-			add_stability = 0.03
+			if = {
+				limit = { has_idea = health_01 }
+				swap_ideas = { remove_idea = health_01 add_idea = health_02 }
+			}
+			if = {
+				limit = { has_idea = health_02 }
+				swap_ideas = { remove_idea = health_02 add_idea = health_03 }
+			}
+			if = {
+				limit = { has_idea = health_03 }
+				swap_ideas = { remove_idea = health_03 add_idea = health_04 }
+			}
+			if = {
+				limit = { has_idea = health_04 }
+				swap_ideas = { remove_idea = health_04 add_idea = health_05 }
+			}
+			if = {
+				limit = { has_idea = health_05 }
+				swap_ideas = { remove_idea = health_05 add_idea = health_06 }
+			}
+			if = {
+				limit = { has_idea = health_05 }
+				add_political_power = 150 #Has Desired Amount
+			}
 		}
 
 		ai_will_do = {
@@ -2475,16 +2600,20 @@
 		bypass = { }
 
 		completion_reward = {
-			#every_country = {
-				#	limit = {
-					#		has_idea = african_union_member
-					#		is_puppet = no
-					#		NOT = { has_war_with = ETH }
-					#		NOT = { original_tag = ETH }
-					#		NOT = { original_tag = ERI }
-					#	}
-				#	increase_trade_influence_by_1 = yes
-				#}
+			every_country = {
+				limit = {
+					capital_scope = { is_on_continent = africa }
+					is_puppet = no
+					NOT = { has_war_with = ETH }
+					NOT = { original_tag = ETH }
+					NOT = { original_tag = ERI }
+				}
+				add_opinion_modifier = {
+					target = ETH
+					modifier = has_expressed_loyalty
+				}
+			}
+			add_political_power = 100
 		}
 
 		ai_will_do = {
@@ -2682,7 +2811,7 @@
 				ideology = communism
 				popularity = 0.15
 			}
-			add_to_variable = { Communist-State_pop = 0.15 }
+			add_to_variable = { party_pop_array^4 = 0.15 }
 			recalculate_party = yes
 			news_event = {
 				id = ethiopia_news.5
@@ -2730,6 +2859,15 @@
 			}
 			add_to_variable = { Communist-State_pop = 0.15 }
 			recalculate_party = yes
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 4 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_variable = { Communist-State_leader = 0 }
+			}
 			set_politics = {
 				ruling_party = communism
 				elections_allowed = no
