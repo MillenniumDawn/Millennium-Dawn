@@ -16,6 +16,12 @@ class Mod:
 
         self.tags = self.GetTags(self.rootDir + "/common/country_tags/")
         self.ideologies = self.GetIdeologies(self.rootDir + "/common/ideologies/")
+        self.ideas = self.GetIdeas(self.rootDir + "/common/ideas/")
+        self.technology = self.GetTechnology(self.rootDir + "/common/technologies/")
+        self.techSharingGroups = self.GetTechSharingGroups(self.rootDir + "/common/technology_sharing/")
+        self.oppinionModifiers = self.GetOppinionModifiers(self.rootDir + "/common/opinion_modifiers/")
+        self.scriptedEffects = self.GetScriptedEffects(self.rootDir + "/common/scripted_effects/")
+        self.scriptedTriggers = self.GetScriptedTriggers(self.rootDir + "/common/scripted_triggers/")
 
     def GetTags(self, dir):
         tags = []
@@ -52,24 +58,90 @@ class Mod:
                                     ideologies.append(Ideology(match.group(1), []))
 
                             if isSubideology:
-                                match2 = re.match2(r'\s?([\w-]+)\s?=', line, re.M | re.I)
+                                match2 = re.search(r'\s?([\w-]+)\s?=', line, re.M | re.I)
                                 if match2:
-                                    ideologies[ideologies.count()].Subideology.append(match2.group(1))
+                                    ideologies[len(ideologies)-1].Subideology.append(match2.group(1))
 
                             if "#" in line:
                                 match = re.match(r'#.*[{}]+', line, re.M | re.I)
                                 if not match:
                                     brace += line.count("{")
                                     brace -= line.count("}")
-
-                                if brace == 3 and "types" in line:
-                                    isSubideology = True
-                                if brace == 2:
-                                    isSubideology = False;
                             else:
                                 brace += line.count("{")
                                 brace -= line.count("}")
+
+                            if brace == 3 and "types" in line:
+                                isSubideology = True
+                            if brace == 2:
+                                isSubideology = False
+
         print(ideologies)
+        return ideologies
+
+    def GetIdeas (self, dir):
+        variable = []
+        Utility.GetData(dir, '\s+?([\w]+)\s?=', variable, 2)
+
+        print(variable)
+        return variable
+
+    def GetTechnology (self, dir):
+        variable = []
+        Utility.GetData(dir, '\s+?([\w]+)\s?=', variable, 1)
+
+        print(variable)
+        return variable
+
+    def GetTechSharingGroups(self, dir):
+        variable = []
+
+        for file in os.listdir(dir):
+            with open(dir + file, 'r', encoding='utf-8', errors='ignore') as file:
+                brace = 0
+                content = file.readlines()
+
+                for line in content:
+                    if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or is blank
+
+
+                        if brace == 1:
+                            match = re.match(r'{}'.format('\s?id\s?=\s?([\w_]+)'), line, re.M | re.I)
+                            if match:
+                                variable.append(match.group(1))
+
+                        if "{" in line or "}" in line:
+                            if "#" in line:
+                                match2 = re.match(r"\s?#.*[{}]+", line, re.M | re.I)
+                                if not match2:
+                                    brace += line.count("{")
+                                    brace -= line.count("}")
+                            else:
+                                brace += line.count("{")
+                                brace -= line.count("}")
+        print(variable)
+        return variable
+
+    def GetOppinionModifiers (self, dir):
+        variable = []
+        Utility.GetData(dir, '\s?([-_\w]+)\s?=', variable, 1)
+
+        print(variable)
+        return variable
+
+    def GetScriptedEffects (self, dir):
+        variable = []
+        Utility.GetData(dir, '^\s?([-_\w]+)\s?=', variable, 0)
+
+        print(variable)
+        return variable
+
+    def GetScriptedTriggers (self, dir):
+        variable = []
+        Utility.GetData(dir, '^\s?([-_\w]+)\s?=', variable, 0)
+
+        print(variable)
+        return variable
 
 
 
@@ -83,7 +155,7 @@ class Utility:
             return match.group()
 
     @staticmethod
-    def GetData(self, dir, expr, variable, braceCheck):
+    def GetData(dir, expr, variable, braceCheck):
 
         for file in os.listdir(dir):
             with open(dir + file, 'r', encoding='utf-8', errors='ignore') as file:
@@ -97,16 +169,18 @@ class Utility:
                             if brace == braceCheck:
                                 match = re.match(r'{}'.format(expr), line, re.M | re.I)
                                 if match:
-                                    variable.append(match.group())
+                                    variable.append(match.group(1))
 
                             if "#" in line:
-                                match = re.match(r'#.*[{}]+', line, re.M | re.I)
-                                if not match:
+                                match2 = re.match(r"\s?#.*[{}]+", line, re.M | re.I)
+                                if not match2:
                                     brace += line.count("{")
                                     brace -= line.count("}")
                             else:
                                 brace += line.count("{")
                                 brace -= line.count("}")
+        #print(variable)
+        return variable
 
     @staticmethod
     def GetData2(self, dir, expr, variable, braceCheck, keyword):
