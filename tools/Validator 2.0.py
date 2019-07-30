@@ -22,6 +22,8 @@ class Mod:
         self.oppinionModifiers = self.GetOppinionModifiers(self.rootDir + "/common/opinion_modifiers/")
         self.scriptedEffects = self.GetScriptedEffects(self.rootDir + "/common/scripted_effects/")
         self.scriptedTriggers = self.GetScriptedTriggers(self.rootDir + "/common/scripted_triggers/")
+        self.traits = self.GetTraits(self.rootDir + "/common/unit_leader/")
+        self.nationalFocus = self.GetNationalFocus(self.rootDir + "/common/national_focus/")
 
     def GetTags(self, dir):
         tags = []
@@ -142,6 +144,30 @@ class Mod:
 
         print(variable)
         return variable
+
+    def GetTraits (self, dir):
+        variable = []
+        Utility.GetData(dir, '^\s?([-_\w]+)\s?=', variable, 1)
+
+        toRemove = []
+        for num, trait in enumerate(variable):
+            if trait.isdigit():
+                toRemove.append(trait)
+
+        for num in toRemove:
+            variable.remove(num)
+
+        print(variable)
+        return variable
+
+    def GetNationalFocus (self, dir):
+        variable = []
+        Utility.GetData(dir, '\s?\bid\b\s?=\s?([\w_]+)', variable, 0)
+
+        print(variable)
+        return variable
+
+
 
 
 
