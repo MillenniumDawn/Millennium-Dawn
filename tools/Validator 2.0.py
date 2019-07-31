@@ -162,7 +162,7 @@ class Mod:
 
     def GetNationalFocus (self, dir):
         variable = []
-        Utility.GetData(dir, '\s?\bid\b\s?=\s?([\w_]+)', variable, 0)
+        Utility.GetData(dir, '^\s+?id\s?=\s?([-_\w]+)', variable, 2)
 
         print(variable)
         return variable
@@ -183,28 +183,34 @@ class Utility:
     @staticmethod
     def GetData(dir, expr, variable, braceCheck):
 
+
         for file in os.listdir(dir):
-            with open(dir + file, 'r', encoding='utf-8', errors='ignore') as file:
-                brace = 0
-                content = file.readlines()
 
-                for line in content:
-                    if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or is blank
-                        if "{" in line or "}" in line:
+            try:
+                with open(dir + file, 'r', encoding='utf-8', errors='ignore') as file:
+                    brace = 0
+                    content = file.readlines()
 
-                            if brace == braceCheck:
-                                match = re.match(r'{}'.format(expr), line, re.M | re.I)
-                                if match:
-                                    variable.append(match.group(1))
+                    for line in content:
+                        if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or is blank
+                            if "{" in line or "}" in line:
 
-                            if "#" in line:
-                                match2 = re.match(r"\s?#.*[{}]+", line, re.M | re.I)
-                                if not match2:
+                                if brace == braceCheck:
+                                    match = re.match(r'{}'.format(expr), line, re.M | re.I)
+                                    if match:
+                                        variable.append(match.group(1))
+
+                                if "#" in line:
+                                    match2 = re.match(r"\s?#.*[{}]+", line, re.M | re.I)
+                                    if not match2:
+                                        brace += line.count("{")
+                                        brace -= line.count("}")
+                                else:
                                     brace += line.count("{")
                                     brace -= line.count("}")
-                            else:
-                                brace += line.count("{")
-                                brace -= line.count("}")
+            except:
+                print("Couldn't open file: " + str(file) )
+
         #print(variable)
         return variable
 
