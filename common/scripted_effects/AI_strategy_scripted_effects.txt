@@ -1,7 +1,21 @@
+ai_default_build_units = {
+	set_country_flag = ai_no_unit_build
+	add_ai_strategy = { type = role_ratio id = L_Inf value = -500 }
+	add_ai_strategy = { type = role_ratio id = infantry value = -500 }
+	add_ai_strategy = { type = role_ratio id = garrison value = -500 }
+	add_ai_strategy = { type = role_ratio id = mechanized value = -500 }
+	add_ai_strategy = { type = role_ratio id = armor value = -500 }
+	add_ai_strategy = { type = role_ratio id = marines value = -500 }
+	add_ai_strategy = { type = role_ratio id = Air_assault value = -500 }
+	add_ai_strategy = { type = role_ratio id = Air_Inf value = -500 }
+	add_ai_strategy = { type = role_ratio id = Special_Forces value = -500 }
+	add_to_variable = { var = ai_wants_divisions value = -500 } #maybe causing a crash? You can edit vanilla vars? idk who did this		
+}
+
 ai_stop_building_units = {
 	if = {
 		limit = { not = { has_country_flag = ai_no_unit_build } }
-		set_country_flag = ai_no_unit_build
+		clr_country_flag = ai_yes_unit_build
 		add_ai_strategy = { type = role_ratio id = L_Inf value = -500 }
 		add_ai_strategy = { type = role_ratio id = infantry value = -500 }
 		add_ai_strategy = { type = role_ratio id = garrison value = -500 }
@@ -11,32 +25,36 @@ ai_stop_building_units = {
 		add_ai_strategy = { type = role_ratio id = Air_assault value = -500 }
 		add_ai_strategy = { type = role_ratio id = Air_Inf value = -500 }
 		add_ai_strategy = { type = role_ratio id = Special_Forces value = -500 }
-		add_to_variable = { var = ai_wants_divisions value = 500 }
+		add_to_variable = { var = ai_wants_divisions value = -500 } #maybe causing a crash? You can edit vanilla vars? idk who did this
 	}
 		
 }
 
 ai_build_units = {
 	if = {
-		limit = { has_country_flag = ai_no_unit_build }
+		limit = { has_country_flag = ai_yes_unit_build }
 		clr_country_flag = ai_no_unit_build
-		add_ai_strategy = { type = role_ratio id = L_Inf value = 600 }
-		add_ai_strategy = { type = role_ratio id = infantry value = 600 }
-		add_ai_strategy = { type = role_ratio id = garrison value = 600 }
-		add_ai_strategy = { type = role_ratio id = mechanized value = 600 }
-		add_ai_strategy = { type = role_ratio id = armor value = 600 }
-		add_ai_strategy = { type = role_ratio id = marines value = 600 }
-		add_ai_strategy = { type = role_ratio id = Air_assault value = 600 }
-		add_ai_strategy = { type = role_ratio id = Air_Inf value = 600 }
-		add_ai_strategy = { type = role_ratio id = Special_Forces value = 600 }
-		add_to_variable = { var = ai_wants_divisions value = 500 }
+		
+		add_ai_strategy = { type = role_ratio id = L_Inf value = 500 }
+		add_ai_strategy = { type = role_ratio id = infantry value = 500 }
+		add_ai_strategy = { type = role_ratio id = garrison value = 500 }
+		add_ai_strategy = { type = role_ratio id = mechanized value = 500 }
+		add_ai_strategy = { type = role_ratio id = armor value = 500 }
+		add_ai_strategy = { type = role_ratio id = marines value = 500 }
+		add_ai_strategy = { type = role_ratio id = Air_assault value = 500 }
+		add_ai_strategy = { type = role_ratio id = Air_Inf value = 500 }
+		add_ai_strategy = { type = role_ratio id = Special_Forces value = 500 }
+		add_to_variable = { var = ai_wants_divisions value = 500 } #maybe causing a crash? You can edit vanilla vars? idk who did this
 	}
 		
 }
-ai_update_build_units = {
-	if = {
+
+ai_update_build_units = { #default is not to build units
+	
+	
+	if = { #If current status is not to build units, check if you should be building units (e.g because your at war or etc)
 		limit = {
-			NOT = { has_country_flag = ai_yes_unit_build }
+			has_country_flag = ai_no_unit_build #check will end here if they don't have the flag thus avoiding the expensive triggers below
 			or = {
 				has_war = yes
 				threat > 0.30
@@ -50,20 +68,12 @@ ai_update_build_units = {
 			}
 		}
 		set_country_flag = ai_yes_unit_build
-		clr_country_flag = ai_no_unit_build
-		add_ai_strategy = { type = role_ratio id = L_Inf value = 500 }
-		add_ai_strategy = { type = role_ratio id = infantry value = 500 }
-		add_ai_strategy = { type = role_ratio id = garrison value = 500 }
-		add_ai_strategy = { type = role_ratio id = mechanized value = 500 }
-		add_ai_strategy = { type = role_ratio id = armor value = 500 }
-		add_ai_strategy = { type = role_ratio id = marines value = 500 }
-		add_ai_strategy = { type = role_ratio id = Air_assault value = 500 }
-		add_ai_strategy = { type = role_ratio id = Air_Inf value = 500 }
-		add_ai_strategy = { type = role_ratio id = Special_Forces value = 500 }
+		ai_build_units = yes
 	}
-	if = {
+	
+	if = { #If current status is to build units, check if you should be building units (e.g at peace or no WT)
 		limit = {
-			NOT = { has_country_flag = ai_no_unit_build }
+			has_country_flag = ai_yes_unit_build #check will end here if they don't have the flag thus avoiding the expensive triggers below
 			has_war = no
 			threat < 0.31
 			is_bad_salafist = no
@@ -75,16 +85,19 @@ ai_update_build_units = {
 			}
 		}
 		set_country_flag = ai_no_unit_build
-		clr_country_flag = ai_yes_unit_build
-		add_ai_strategy = { type = role_ratio id = L_Inf value = -500 }
-		add_ai_strategy = { type = role_ratio id = infantry value = -500 }
-		add_ai_strategy = { type = role_ratio id = garrison value = -500 }
-		add_ai_strategy = { type = role_ratio id = mechanized value = -500 }
-		add_ai_strategy = { type = role_ratio id = armor value = -500 }
-		add_ai_strategy = { type = role_ratio id = marines value = -500 }
-		add_ai_strategy = { type = role_ratio id = Air_assault value = -500 }
-		add_ai_strategy = { type = role_ratio id = Air_Inf value = -500 }
-		add_ai_strategy = { type = role_ratio id = Special_Forces value = -500 }
+		ai_stop_building_units = yes
+	}
+	
+	if = { #If you don't have a unit build order, by default you should build nothing, this should only trigger on init or creation of a new country
+		limit = {
+			not = {
+				or = {
+					has_country_flag = ai_no_unit_build
+					has_country_flag = ai_yes_unit_build
+				}
+			}
+		}
+		ai_default_build_units = yes #Default is to build nothing
 	}
 }
 
