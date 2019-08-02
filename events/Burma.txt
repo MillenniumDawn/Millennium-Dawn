@@ -781,9 +781,8 @@ country_event = {
 	is_triggered_only = no
 	
 	trigger = {
-		tag = BRM
 		has_idea = Ethnic_Insurgencies
-		has_country_flag = ceasefire_KAC
+		has_country_flag = ceasefire
 	}
 		
 	hidden = yes
@@ -795,7 +794,7 @@ country_event = {
 	option = {
 		name = Insurgency.8.a
 		log = "[GetDateText]: [This.GetName]: Insurgency.8.a executed"
-		KAC = {
+		ROOT = {
 			set_temp_variable = { influence_gain = 1 }
 			for_loop_effect = {
 				end = influence_array^num
@@ -811,88 +810,7 @@ country_event = {
 		}
 	}
 }
-country_event = {
 
-	id = Insurgency.9
-	
-	title = Insurgency.9.t
-	
-	desc = Insurgency.9.d
-	
-	is_triggered_only = no
-	
-	trigger = {
-		tag = BRM
-		has_idea = Ethnic_Insurgencies
-		has_country_flag = ceasefire_KAR
-	}
-		
-	hidden = yes
-	
-	mean_time_to_happen = {
-		days = 30
-	}
-	
-	option = {
-		name = Insurgency.9.a
-		log = "[GetDateText]: [This.GetName]: Insurgency.9.a executed"
-		KAR = {
-			set_temp_variable = { influence_gain = 1 }
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
-				if = {
-					limit = {
-						check_variable = { influence_array^v = BRM }						
-					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-				}
-			}
-			recalculate_influence = yes
-		}
-	}
-}
-country_event = {
-
-	id = Insurgency.10
-	
-	title = Insurgency.10.t
-	
-	desc = Insurgency.10.d
-	
-	is_triggered_only = no
-	
-	trigger = {
-		tag = BRM
-		has_idea = Ethnic_Insurgencies
-		has_country_flag = ceasefire_SHN
-	}
-		
-	hidden = yes
-	
-	mean_time_to_happen = {
-		days = 30
-	}
-	
-	option = {
-		name = Insurgency.10.a
-		log = "[GetDateText]: [This.GetName]: Insurgency.10.a executed"
-		SHN = {
-			set_temp_variable = { influence_gain = 1 }
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
-				if = {
-					limit = {
-						check_variable = { influence_array^v = BRM }						
-					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-				}
-			}
-			recalculate_influence = yes
-		}
-	}
-}
 #Ceasefire events
 #The government has offered us a ceasefire
 country_event = {
@@ -908,11 +826,11 @@ country_event = {
 	option = {
 		name = Insurgency.11.a #Make ambitious demands
 		log = "[GetDateText]: [This.GetName]: Insurgency.11.a executed"
-		ai_chance = { factor = 10 }
+		ai_chance = { factor = 40 }
 		BRM = {
 			country_event = {
 				id = Insurgency.12
-				days = 7
+				days = 1
 			}
 		}
 		custom_effect_tooltip = 11_BRM_ambitious_demands_tt
@@ -921,11 +839,11 @@ country_event = {
 	option = {
 		name = Insurgency.11.b #Make moderate demands
 		log = "[GetDateText]: [This.GetName]: Insurgency.11.b executed"
-		ai_chance = { factor = 10 }
+		ai_chance = { factor = 40 }
 		BRM = {
 			country_event = {
 				id = Insurgency.13
-				days = 7
+				days = 1
 			}
 		}
 		custom_effect_tooltip = 11_BRM_moderate_demands_tt
@@ -934,11 +852,33 @@ country_event = {
 	option = {
 		name = Insurgency.11.c #Reject negotiations
 		log = "[GetDateText]: [This.GetName]: Insurgency.11.c executed"
-		ai_chance = { factor = 10 }
+		ai_chance = { 
+			factor = 40
+			modifier = {
+				factor = 1.5
+				OR = {
+					has_opinion = {
+						target = BRM value < -50
+					}
+					BRM = {
+						has_government = nationalist
+					}
+				}
+			}
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = BRM value < -50
+				}
+				BRM = {
+					has_government = nationalist
+				}
+			}
+		}
 		BRM = {
 			country_event = {
 				id = Insurgency.14
-				days = 7
+				days = 1
 			}
 		}
 	}
@@ -957,26 +897,13 @@ country_event = {
 	option = {
 		name = Insurgency.12.a #Accept their demands
 		log = "[GetDateText]: [This.GetName]: Insurgency.12.a executed"
-		ai_chance = { factor = 10 }
-		if = {
-			limit = {
-				FROM = { original_tag = KAC }
-			}
-			set_country_flag = ceasefire_KAC
-		}
-		else_if = {
-			limit = {
-				FROM = { original_tag = KAR }
-			}
-			set_country_flag = ceasefire_KAR
-		}
-		else_if = {
-			limit = {
-				FROM = { original_tag = SHN }
-			}
-			set_country_flag = ceasefire_SHN
-		}
+		ai_chance = { factor = 20 }
 		FROM = {
+			set_country_flag = ceasefire
+			add_opinion_modifier = {
+				target = BRM
+				modifier = negotiated_ceasefire
+			}
 			country_event = {
 				id = Insurgency.15
 				days = 1
@@ -1002,7 +929,7 @@ country_event = {
 	option = {
 		name = Insurgency.12.b #Reject their demands
 		log = "[GetDateText]: [This.GetName]: Insurgency.12.b executed"
-		ai_chance = { factor = 30 }
+		ai_chance = { factor = 40 }
 		FROM = {
 			country_event = {
 				id = Insurgency.16
@@ -1025,26 +952,13 @@ country_event = {
 	option = {
 		name = Insurgency.13.a #Accept their demands
 		log = "[GetDateText]: [This.GetName]: Insurgency.13.a executed"
-		ai_chance = { factor = 30 }
-		if = {
-			limit = {
-				FROM = { original_tag = KAC }
-			}
-			set_country_flag = ceasefire_KAC
-		}
-		else_if = {
-			limit = {
-				FROM = { original_tag = KAR }
-			}
-			set_country_flag = ceasefire_KAR
-		}
-		else_if = {
-			limit = {
-				FROM = { original_tag = SHN }
-			}
-			set_country_flag = ceasefire_SHN
-		}
+		ai_chance = { factor = 40 }
 		FROM = {
+			set_country_flag = ceasefire
+			add_opinion_modifier = {
+				target = BRM
+				modifier = negotiated_ceasefire
+			}
 			country_event = {
 				id = Insurgency.15
 				days = 1
@@ -1070,7 +984,7 @@ country_event = {
 	option = {
 		name = Insurgency.13.b #Reject their demands
 		log = "[GetDateText]: [This.GetName]: Insurgency.13.b executed"
-		ai_chance = { factor = 10 }
+		ai_chance = { factor = 20 }
 		FROM = {
 			country_event = {
 				id = Insurgency.16
@@ -1092,24 +1006,7 @@ country_event = {
 	option = {
 		name = Insurgency.14.a
 		log = "[GetDateText]: [This.GetName]: Insurgency.14.a executed"
-		if = {
-			limit = {
-				FROM = { original_tag = KAC }
-			}
-			clr_country_flag = offered_ceasefire_KAC
-		}
-		else_if = {
-			limit = {
-				FROM = { original_tag = KAR }
-			}
-			clr_country_flag = offered_ceasefire_KAR
-		}
-		else_if = {
-			limit = {
-				FROM = { original_tag = SHN }
-			}
-			clr_country_flag = offered_ceasefire_SHN
-		}
+		FROM = { clr_country_flag = ceasefire_offer }
 	}
 }
 #The government has accepted our demands
@@ -1165,23 +1062,422 @@ country_event = {
 	option = {
 		name = Insurgency.17.a
 		log = "[GetDateText]: [This.GetName]: Insurgency.17.a executed"
+		FROM = { clr_country_flag = ceasefire_offer }
+	}
+}
+
+#The government has invited us to negotiations of the Nationwide Ceasefire Agreement
+country_event = {
+	id = Insurgency.18
+	
+	title = Insurgency.18.t
+	
+	desc = Insurgency.18.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.18.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.18.a executed"
+		set_country_flag = NCA_participant
 		if = {
 			limit = {
-				FROM = { original_tag = KAC }
+				or = {	
+					original_tag = SHN
+					original_tag = KAR
+				}
 			}
-			clr_country_flag = offered_ceasefire_KAC
+			set_variable = {
+				var = NCA_support
+				value = 0
+			}
 		}
 		else_if = {
 			limit = {
-				FROM = { original_tag = KAR }
+				original_tag = WAA
 			}
-			clr_country_flag = offered_ceasefire_KAR
+			set_variable = {
+				var = NCA_support
+				value = -1
+			}
 		}
 		else_if = {
 			limit = {
-				FROM = { original_tag = SHN }
+				original_tag = KAC
 			}
-			clr_country_flag = offered_ceasefire_SHN
+			set_variable = {
+				var = NCA_support
+				value = -3
+			}
 		}
+		ai_chance = {
+			factor = 40
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = BRM
+					value < -70
+				}
+				NOT = {
+					has_country_flag = ceasefire
+				}
+			}
+		}
+	}
+	option = {
+		name = Insurgency.18.b
+		log = "[GetDateText]: [This.GetName]: Insurgency.18.a executed"
+		BRM = {
+			country_event = {
+				id = Insurgency.14
+				days = 1
+			}
+		}
+	}
+}
+
+#The First Round of Negotiations - union/federation
+country_event = {
+	id = Insurgency.19
+	
+	title = Insurgency.19.t
+	
+	desc = Insurgency.19.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.19.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.19.a executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			subtract_from_variable = {
+				var = NCA_support
+				value = 1
+			}
+		}
+		country_event = {
+			id = Insurgency.20
+			days = 7
+		}
+	}
+	option = {
+		name = Insurgency.19.b
+		log = "[GetDateText]: [This.GetName]: Insurgency.19.b executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			add_to_variable = {
+				var = NCA_support
+				value = 1
+			}
+		}
+		country_event = {
+			id = Insurgency.20
+			days = 7
+		}
+	}
+	option = {
+		name = Insurgency.19.c #compromise
+		log = "[GetDateText]: [This.GetName]: Insurgency.19.c executed"
+		ai_chance = {
+			factor = 40
+		}
+		country_event = {
+			id = Insurgency.20
+			days = 7
+		}
+	}
+}
+
+#The Second Round of Negotiations - composition of the armed forces
+country_event = {
+	id = Insurgency.20
+	
+	title = Insurgency.20.t
+	
+	desc = Insurgency.20.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.20.a #status quo
+		log = "[GetDateText]: [This.GetName]: Insurgency.20.a executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			subtract_from_variable = {
+				var = NCA_support
+				value = 1
+			}
+		}
+		country_event = {
+			id = Insurgency.21
+			days = 7
+		}
+	}
+	option = {
+		name = Insurgency.20.b #improve representation
+		log = "[GetDateText]: [This.GetName]: Insurgency.20.b executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			add_to_variable = {
+				var = NCA_support
+				value = 1
+			}
+		}
+		country_event = {
+			id = Insurgency.21
+			days = 7
+		}
+	}
+	option = {
+		name = Insurgency.20.c #delay
+		log = "[GetDateText]: [This.GetName]: Insurgency.20.c executed"
+		ai_chance = {
+			factor = 40
+		}
+		country_event = {
+			id = Insurgency.21
+			days = 7
+		}
+	}
+}
+
+#The Final Round of Negotiations - DDR or SSR
+country_event = {
+	id = Insurgency.21
+	
+	title = Insurgency.21.t
+	
+	desc = Insurgency.21.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.21.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.21.a executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			subtract_from_variable = {
+				var = NCA_support
+				value = 1
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = -1
+						compare = less_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.23 #unacceptable
+					days = 7
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = 0
+						compare = greater_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.22 #acceptable
+					days = 7
+				}
+			}
+		}
+	}
+	option = {
+		name = Insurgency.21.b
+		log = "[GetDateText]: [This.GetName]: Insurgency.21.b executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			add_to_variable = {
+				var = NCA_support
+				value = 1
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = -1
+						compare = less_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.23 #unacceptable
+					days = 7
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = 0
+						compare = greater_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.22 #acceptable
+					days = 7
+				}
+			}
+		}
+	}
+	option = {
+		name = Insurgency.21.c 
+		log = "[GetDateText]: [This.GetName]: Insurgency.21.c executed"
+		ai_chance = {
+			factor = 40
+		}
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = -1
+						compare = less_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.23 #unacceptable
+					days = 7
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = 0
+						compare = greater_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.22 #acceptable
+					days = 7
+				}
+			}
+		}
+	}
+}
+
+#acceptable draft
+country_event = {
+	id = Insurgency.22
+	
+	title = Insurgency.22.t
+	
+	desc = Insurgency.22.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.22.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.22.a executed"
+		clr_country_flag = NCA_participant
+		clear_variable = NCA_support
+		if = {
+			limit = {
+				NOT = {
+					has_idea = Nationwide_Ceasefire_Agreement
+				}
+			}
+			add_ideas = Nationwide_Ceasefire_Agreement
+		}
+		add_opinion_modifier = {
+			target = BRM
+			modifier = Nationwide_Ceasefire_Agreement
+		}
+		BRM = {
+			country_event = {
+				id = Insurgency.24
+				days = 1
+			}
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = Nationwide_Ceasefire_Agreement
+			}
+		}
+	}
+}
+
+#unacceptable draft
+country_event = {
+	id = Insurgency.23
+	
+	title = Insurgency.23.t
+	
+	desc = Insurgency.23.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.23.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.23.a executed"
+		clr_country_flag = NCA_participant
+		clear_variable = NCA_support
+		BRM = {
+			country_event = {
+				id = Insurgency.25
+				days = 1
+			}
+		}
+	}
+}
+
+#country signed NCA
+country_event = {
+	id = Insurgency.24
+	
+	title = Insurgency.24.t
+	
+	desc = Insurgency.24.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.24.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.24.a executed"
+		if = {
+			limit = {
+				NOT = {
+					has_idea = Nationwide_Ceasefire_Agreement
+				}
+			}
+			add_ideas = Nationwide_Ceasefire_Agreement
+		}
+	}
+}
+
+#country has not signed NCA
+country_event = {
+	id = Insurgency.25
+	
+	title = Insurgency.25.t
+	
+	desc = Insurgency.25.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.25.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.25.a executed"
 	}
 }
