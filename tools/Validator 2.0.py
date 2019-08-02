@@ -14,15 +14,15 @@ class Mod:
         self.scriptDir = os.path.realpath(scriptDir)
         self.rootDir = os.path.dirname(os.path.dirname(scriptDir))
 
-        self.tags = self.GetTags(self.rootDir + "/common/country_tags/")
-        self.ideologies = self.GetIdeologies(self.rootDir + "/common/ideologies/")
-        self.ideas = self.GetIdeas(self.rootDir + "/common/ideas/")
-        self.technology = self.GetTechnology(self.rootDir + "/common/technologies/")
-        self.techSharingGroups = self.GetTechSharingGroups(self.rootDir + "/common/technology_sharing/")
-        self.oppinionModifiers = self.GetOppinionModifiers(self.rootDir + "/common/opinion_modifiers/")
-        self.scriptedEffects = self.GetScriptedEffects(self.rootDir + "/common/scripted_effects/")
-        self.scriptedTriggers = self.GetScriptedTriggers(self.rootDir + "/common/scripted_triggers/")
-        self.traits = self.GetTraits(self.rootDir + "/common/unit_leader/")
+        #self.tags = self.GetTags(self.rootDir + "/common/country_tags/")
+        #self.ideologies = self.GetIdeologies(self.rootDir + "/common/ideologies/")
+        #self.ideas = self.GetIdeas(self.rootDir + "/common/ideas/")
+        #self.technology = self.GetTechnology(self.rootDir + "/common/technologies/")
+        #self.techSharingGroups = self.GetTechSharingGroups(self.rootDir + "/common/technology_sharing/")
+        #self.oppinionModifiers = self.GetOppinionModifiers(self.rootDir + "/common/opinion_modifiers/")
+        #self.scriptedEffects = self.GetScriptedEffects(self.rootDir + "/common/scripted_effects/")
+        #self.scriptedTriggers = self.GetScriptedTriggers(self.rootDir + "/common/scripted_triggers/")
+        #self.traits = self.GetTraits(self.rootDir + "/common/unit_leader/")
         self.nationalFocus = self.GetNationalFocus(self.rootDir + "/common/national_focus/")
 
     def GetTags(self, dir):
@@ -65,8 +65,7 @@ class Mod:
                                     ideologies[len(ideologies)-1].Subideology.append(match2.group(1))
 
                             if "#" in line:
-                                match = re.match(r'#.*[{}]+', line, re.M | re.I)
-                                if not match:
+                                if not Utility.ReturnMatch(r"\s?#.*[{}]+", line):
                                     brace += line.count("{")
                                     brace -= line.count("}")
                             else:
@@ -114,8 +113,7 @@ class Mod:
 
                         if "{" in line or "}" in line:
                             if "#" in line:
-                                match2 = re.match(r"\s?#.*[{}]+", line, re.M | re.I)
-                                if not match2:
+                                if not Utility.ReturnMatch(r"\s?#.*[{}]+", line):
                                     brace += line.count("{")
                                     brace -= line.count("}")
                             else:
@@ -162,7 +160,7 @@ class Mod:
 
     def GetNationalFocus (self, dir):
         variable = []
-        Utility.GetData(dir, '^\s+?id\s?=\s?([-_\w]+)', variable, 2)
+        Utility.GetData(dir, '^\s?([-_\w]+)\s?=', variable, 1)
 
         print(variable)
         return variable
@@ -193,21 +191,25 @@ class Utility:
 
                     for line in content:
                         if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or is blank
+
+                            if brace == braceCheck:
+                                match = re.match(r'{}'.format(expr), line, re.M | re.I)
+                                print(line + " brace = " + brace)
+
+                                if match:
+                                    print("match")
+                                    variable.append(match.group(1))
+
                             if "{" in line or "}" in line:
-
-                                if brace == braceCheck:
-                                    match = re.match(r'{}'.format(expr), line, re.M | re.I)
-                                    if match:
-                                        variable.append(match.group(1))
-
                                 if "#" in line:
-                                    match2 = re.match(r"\s?#.*[{}]+", line, re.M | re.I)
-                                    if not match2:
+                                    if not Utility.ReturnMatch(r"\s?#.*[{}]+", line):
                                         brace += line.count("{")
                                         brace -= line.count("}")
+
                                 else:
                                     brace += line.count("{")
                                     brace -= line.count("}")
+
             except:
                 print("Couldn't open file: " + str(file) )
 
