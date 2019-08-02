@@ -4,6 +4,7 @@ add_namespace = ukraine_hidden
 add_namespace = ukraine_debates
 add_namespace = ukraine_revolution
 
+#Author: Birdy
 ### Constitutional referendum
 
 news_event = {
@@ -1251,5 +1252,116 @@ country_event = { ###Russia Returns the Crimea
 		remove_opinion_modifier = { target = SOV modifier = rival }
 		add_stability = 0.05 
 		add_political_power = 150
+	}
+}
+
+
+country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
+	id = ukraine_revolution.11
+	title = ukraine_revolution.11.t
+	desc = ukraine_revolution.11.d
+	#picture = GFX_negotiations
+	
+	trigger = {
+		check_variable = { UKR_stability_of_ukraine_var < 50 }
+		check_variable = { UKR_chance_of_collapse_var > 3 }
+		tag = UKR 
+		UKR = { NOT = { has_war_with = NOV } }
+	}
+	
+	mean_time_to_happen = {
+		days = 250
+		modifier = {
+			factor = 0.75
+			check_variable = { UKR_stability_of_ukraine_var < 50 }
+		}
+		modifier = {
+			factor = 0.5
+			check_variable = { UKR_stability_of_ukraine_var < 25 }
+		}
+		modifier = { 
+			factor = 0.25
+			check_variable = { UKR_stability_of_ukraine_var < 15 }
+		}
+	}
+	
+	option = { ##Crackdown on Protestors
+		name = ukraine_revolution.11.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.11.a executed"
+		add_to_variable = { UKR_chance_of_collapse_var = 1 }
+		subtract_from_variable = { UKR_stability_of_ukraine_var = 3 }
+		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_1_TT
+		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_3_TT
+	}
+	option = { ##Let them Protest
+		name = ukraine_revolution.11.b
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.11.b executed"
+		add_to_variable = { UKR_chance_of_collapse_var = 2 }
+		add_to_variable = { UKR_stability_of_ukraine_var = 5 }
+		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_2_TT
+		custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+	}
+}
+
+country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian Sabtoage
+	id = ukraine_revolution.12
+	title = ukraine_revolution.12.t
+	desc = ukraine_revolution.12.d
+	#picture = GFX_negotiations
+	
+	trigger = {
+		check_variable = { UKR_stability_of_ukraine_var < 60 }
+		check_variable = { UKR_chance_of_collapse_var > 8 }
+		tag = UKR 
+		UKR = { NOT = { has_war_with = NOV } }
+		any_owned_state = {
+			industrial_complex > 0 
+		}
+		any_owned_state = {
+			infrastructure > 0
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 90
+		modifier = {
+			factor = 0.50
+			check_variable = { UKR_stability_of_ukraine_var < 60 }
+		}
+		modifier = {
+			factor = 0.25
+			check_variable = { UKR_stability_of_ukraine_var < 30 }
+		}
+		modifier = { 
+			factor = 0.10
+			check_variable = { UKR_stability_of_ukraine_var < 15 }
+		}
+	}
+	
+	option = { ##Sabtoage!
+		name = ukraine_revolution.12.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.12.a executed"
+		subtract_from_variable = { UKR_stability_of_ukraine_var = 3 }
+		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_3_TT
+		add_war_support = 0.01 
+		add_stability = -0.01
+		random_owned_state = {
+			limit = {
+				industrial_complex > 0
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 0.50
+			}
+		}
+		random_owned_state = {
+			limit = {
+				infrastructure > 0
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 0.35
+			}
+		}
 	}
 }
