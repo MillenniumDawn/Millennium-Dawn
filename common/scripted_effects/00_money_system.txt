@@ -4,6 +4,11 @@
 
 #Interest rates are set in GDP/C - need modifier based on debt_ratio, to avoid rich countries getting infinite rich by taking huge loans and reinvesting abroad
 
+#Variable explanations
+#interest_rate - the intrest rate you pay DAILY on debt.
+#treasury_rate - How much money your country is making daily
+#debt_rate - How much money your country is paying for debt daily
+
 add_tax_laws = {
 	meta_effect = {
 		text = {
@@ -254,43 +259,51 @@ calculate_tax_gain = {
 	update_display_income = yes
 }
 
+#Updates intrest rate, is called on init and on_daily in MD4_money_on_actions.txt
 calculate_interest_rate = {
 	set_variable = { var = interest_rate value = debt }
-	if = { limit = { has_idea = gdp_1 }
+	
+	#Base intrest rate is determined by your GDP/C
+	if = {
+		limit = { has_idea = gdp_1 }
 		multiply_variable = { var = interest_rate value = 27 }
-		
-		else = { if = { limit = { has_idea = gdp_2 }
-			multiply_variable = { var = interest_rate value = 23 }
-				
-			else = { if = { limit = { has_idea = gdp_3 }
-				multiply_variable = { var = interest_rate value = 19 }
-							
-				else = { if = { limit = { has_idea = gdp_4 }
-					multiply_variable = { var = interest_rate value = 16.5 }
-					
-					else = { if = { limit = { has_idea = gdp_5 }
-						multiply_variable = { var = interest_rate value = 13.5 }
-						
-						else = { if = { limit = { has_idea = gdp_6 }
-							multiply_variable = { var = interest_rate value = 10.6 }
-							
-							else = { if = { limit = { has_idea = gdp_7 }
-								multiply_variable = { var = interest_rate value = 8.2 }
-								
-								else = { if = { limit = { has_idea = gdp_8 }
-									multiply_variable = { var = interest_rate value = 6.1 }
-									
-									else = { multiply_variable = { var = interest_rate value = 5 } }
-								} }
-							} }			
-						} }									
-					} }
-				} }
-			} }
-		} }
 	}
+	else_if = {
+		limit = { has_idea = gdp_2 }
+		multiply_variable = { var = interest_rate value = 23 }
+	}
+	else_if = {
+		limit = { has_idea = gdp_3 }
+		multiply_variable = { var = interest_rate value = 19 }
+	}
+	else_if = {
+		limit = { has_idea = gdp_4 }
+		multiply_variable = { var = interest_rate value = 16.5 }
+	}
+	else_if = {
+		limit = { has_idea = gdp_5 }
+		multiply_variable = { var = interest_rate value = 13.5 }
+	}
+	else_if = {
+		limit = { has_idea = gdp_6 }
+		multiply_variable = { var = interest_rate value = 10.6 }
+	}
+	else_if = {
+		limit = { has_idea = gdp_7 }
+		multiply_variable = { var = interest_rate value = 8.2 }
+	}
+	else_if = {
+		limit = { has_idea = gdp_8 }
+		multiply_variable = { var = interest_rate value = 6.1 }
+	}
+	else = { multiply_variable = { var = interest_rate value = 5 } }
+	
+	#Intrest rate is modifier by the size_modifier variable ("Size of the country")
 	divide_variable = { var = interest_rate value = size_modifier }
+	#You divide by 365 as you don't pay say 10% intrest every day but yearly
 	divide_variable = { var = interest_rate value = 365 }
+	
+	#Intrest rate is modified based on some ideas
 	if = {
 		limit = { has_idea = petro_dollar }
 		subtract_from_variable = { var = interest_rate value = 2 }
@@ -311,16 +324,26 @@ calculate_interest_rate = {
 		limit = { has_country_flag = bailout_given }
 		subtract_from_variable = { var = interest_rate value = 8 }
 	}
+	
 	clamp_variable = {
 		var = interest_rate
 		min = 0.8
 		max = 50
 	}
-	update_AI_NO_WANT_DEBT = yes
+	update_AI_NO_WANT_DEBT = yes #need to talk to ducky about this - Gearz
 }
-	### safeproofing - reached here #killerrabbit
+
+
+### safeproofing - reached here #killerrabbit
 calculate_debt_rate = {
-	add_to_variable = { var = treasury_rate value = debt_rate }
+	
+	#It took me a while to figure out why you add debt_rate to treasury_rate so ill try to explain (Gearz)
+	#When your debt_rate changes you need to "reset the treasury_rate" so you return
+	#how much you were taking from the treasury before and then take the new ammount you need
+	#e.g treasury_rate $10B, you take $2B for your current debt_rate. Treasury rate = $8B
+	#Your new debt_rate is $4B. So you need to "reset the treasury" you give the treasury_rate back the $2B
+	#So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
+	add_to_variable = { var = treasury_rate value = debt_rate } #idk why this is here
 	set_variable = { var = debt_rate value = debt }
 	multiply_variable = { var = debt_rate value = interest_rate }
 	divide_variable = { var = debt_rate value = 36500 }
