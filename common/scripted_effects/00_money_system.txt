@@ -237,34 +237,36 @@ ingame_calculate_size_modifier = {
 }
 
 calculate_tax_gain = {
+	##See Treasury reset comment at top of page
 	subtract_from_variable = { var = treasury_rate value = tax_gain }
 	set_variable = { var = tax_gain value = tax_rate }
 	
 	multiply_variable = { tax_gain = 10 }
 	
 	multiply_variable = { var = tax_gain value = size_modifier }
-	if = { limit = { has_idea = depression }
+	if = {
+		limit = { has_idea = depression }
 		multiply_variable = { var = tax_gain value = 0.6 }
-		
-		else = { if = { limit = { has_idea = recession }
-			multiply_variable = { var = tax_gain value = 0.8 }
-				
-			else = { if = { limit = { has_idea = stagnation }
-				multiply_variable = { var = tax_gain value = 0.9 }
-							
-				else = { if = { limit = { has_idea = fast_growth }
-					multiply_variable = { var = tax_gain value = 1.05 }
-									
-					else = { if = { limit = { has_idea = economic_boom }
-						multiply_variable = { var = tax_gain value = 1.1 }
-					} }
-				} }
-			} }
-		} }
+	}
+	else_if = {
+		limit = { has_idea = recession }
+		multiply_variable = { var = tax_gain value = 0.8 }
+	}
+	else_if = {
+		limit = { has_idea = stagnation }
+		multiply_variable = { var = tax_gain value = 0.9 }
+	}
+	else_if = {
+		limit = { has_idea = fast_growth }
+		multiply_variable = { var = tax_gain value = 1.05 }
+	}
+	else_if = {
+		limit = { has_idea = economic_boom }
+		multiply_variable = { var = tax_gain value = 1.1 }
 	}
 	
 	round_variable = tax_gain
-	divide_variable = { tax_gain = 1000 }
+	divide_variable = { tax_gain = 1000 } #why? - gearz
 	
 	add_to_variable = { var = treasury_rate value = tax_gain }
 	update_display_income = yes
@@ -357,7 +359,7 @@ calculate_debt_rate = {
 	divide_variable = { var = debt_rate value = 36500 }
 	subtract_from_variable = { var = treasury_rate value = debt_rate }
 	update_display_expense = yes
-	
+		
 	if = {
 		limit = { 
 			NOT = { has_country_flag = bailout_happened }
@@ -389,6 +391,7 @@ calculate_debt_rate = {
 	}
 }
 
+#Update military spending
 update_military_rate = {
 	### Defence spending ###
 	
@@ -400,6 +403,7 @@ update_military_rate = {
 	
 	if = { limit = { has_idea = defence_00 }
 		divide_temp_variable = { temp_defence_spend = 3000 }
+	}
 	else_if = {
 		limit = { has_idea = defence_01 }
 		divide_temp_variable = { temp_defence_spend = 300 }
@@ -549,7 +553,7 @@ update_military_rate = {
 
 	if = { limit = { has_idea = partial_draft_army }
 		divide_temp_variable = { personnel_cost = 1.4 }
-		
+	}
 	else_if = {
 		limit = { has_idea = draft_army }
 		divide_temp_variable = { personnel_cost = 1.8 }
@@ -559,8 +563,10 @@ update_military_rate = {
 		divide_temp_variable = { personnel_cost = 1.8 }
 	}
 
-	if = { limit = { has_idea = officer_baptism_by_fire }
-			#do nothing
+	if = {
+		limit = { has_idea = officer_baptism_by_fire }
+		#do nothing
+	}
 	else_if = { 
 		limit = { has_idea = officer_basic_training }
 		multiply_temp_variable = { personnel_cost = 1.05 }
@@ -584,9 +590,10 @@ update_military_rate = {
 	
 	divide_temp_variable = { personnel_cost = 500 } #control factor
 
-	if = { limit = { has_idea = gdp_12 }
+	if = { 
+		limit = { has_idea = gdp_12 }
 		multiply_temp_variable = { personnel_cost = 0.7 }
-		
+	}
 	else_if = { limit = { has_idea = gdp_11 }
 		multiply_temp_variable = { personnel_cost = 0.565 }
 		divide_temp_variable = { temp_defence_spend = 1.6 }
@@ -649,7 +656,9 @@ update_military_rate = {
 	}
 }
 
+#Update money gained from international investments
 calculate_int_investments_rate = {
+	#See Treasury reset comment at top of page
 	subtract_from_variable = { var = treasury_rate value = int_investments_rate }
 	set_variable = { var = int_investments_rate value = int_investments }
 	divide_variable = { var = int_investments_rate value = 6080 } #6%
@@ -658,6 +667,8 @@ calculate_int_investments_rate = {
 }
 
 calculate_resource_sale_rate = {
+	
+	#See Treasury reset comment at top of page
 	subtract_from_variable = { var = treasury_rate value = resource_sale_rate }
 	
 	set_variable = { resource_exports = resource_exported@steel }
@@ -742,148 +753,157 @@ init_expenses = {
 	#Defence spending
 	
 	#bueraucracy
-	set_variable = { var = bureaucracy_gain value = size_modifier }
-	if = { limit = { has_idea = bureau_01 }
+	set_variable = { var = bureaucracy_gain value = size_modifier } #why???? - Gearz
+	if = { 
+		limit = { has_idea = bureau_01 }
 		multiply_variable = { var = bureaucracy_gain value = 0.01 }
-		
-		else = { if = { limit = { has_idea = bureau_02 }
-			multiply_variable = { var = bureaucracy_gain value = 0.02 }
-			
-			else = { if = { limit = { has_idea = bureau_03 }
-				multiply_variable = { var = bureaucracy_gain value = 0.03 }
+	}
+	else_if = {
+		limit = { has_idea = bureau_02 }
+		multiply_variable = { var = bureaucracy_gain value = 0.02 }
+	}
+	else_if = { 
+		limit = { has_idea = bureau_03 }
+		multiply_variable = { var = bureaucracy_gain value = 0.03 }
+	}
+	else_if = { 
+		limit = { has_idea = bureau_04 }
+		multiply_variable = { var = bureaucracy_gain value = 0.04 }
+	}
+	else_if = { 
+		limit = { has_idea = bureau_05 }
+		multiply_variable = { var = bureaucracy_gain value = 0.05 }
 				
-				else = { if = { limit = { has_idea = bureau_04 }
-					multiply_variable = { var = bureaucracy_gain value = 0.04 }
-					
-					else = { if = { limit = { has_idea = bureau_05 }
-						multiply_variable = { var = bureaucracy_gain value = 0.05 }
-					} }
-				} }
-			} }
-		} }
 	}
 	add_to_variable = { var = expense_gain value = bureaucracy_gain }
 	subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
 	
 	#internal security
 	set_variable = { var = security_gain value = size_modifier }
-	if = { limit = { has_idea = police_01  }
+	if = { 
+		limit = { has_idea = police_01  }
 		multiply_variable = { var = security_gain value = 0.005 }
-		
-		else = { if = { limit = { has_idea = police_02 }
-			multiply_variable = { var = security_gain value = 0.011 }
-			
-			else = { if = { limit = { has_idea = police_03 }
-				multiply_variable = { var = security_gain value = 0.019 }
-				
-				else = { if = { limit = { has_idea = police_04 }
-					multiply_variable = { var = security_gain value = 0.029 }
-					
-					else = { if = { limit = { has_idea = police_05 }
-						multiply_variable = { var = security_gain value = 0.04 }
-					} }
-				} }
-			} }
-		} }
 	}
+	else_if = { 
+		limit = { has_idea = police_02 }
+		multiply_variable = { var = security_gain value = 0.011 }
+	}
+	else_if = {
+		limit = { has_idea = police_03 }
+		multiply_variable = { var = security_gain value = 0.019 }
+	}
+	else_if = {
+		limit = { has_idea = police_04 }
+		multiply_variable = { var = security_gain value = 0.029 }
+	}
+	else_if = {
+		limit = { has_idea = police_05 }
+		multiply_variable = { var = security_gain value = 0.04 }		
+	}
+	
 	add_to_variable = { var = expense_gain value = security_gain }
 	subtract_from_variable = { var = treasury_rate value = security_gain }
 	
 	#education
 	set_variable = { var = education_gain value = size_modifier }
-	if = { limit = { has_idea = edu_01  }
+	if = {
+		limit = { has_idea = edu_01  }
 		multiply_variable = { var = education_gain value = 0.02 }
-		
-		else = { if = { limit = { has_idea = edu_02 }
-			multiply_variable = { var = education_gain value = 0.04 }
-			
-			else = { if = { limit = { has_idea = edu_03 }
-				multiply_variable = { var = education_gain value = 0.06 }
-				
-				else = { if = { limit = { has_idea = edu_04 }
-					multiply_variable = { var = education_gain value = 0.08 }
-					
-					else = { if = { limit = { has_idea = edu_05 }
-						multiply_variable = { var = education_gain value = 0.10 }
-					} }
-				} }
-			} }
-		} }
 	}
-	if = { limit = { has_idea = gdp_1 }
+	else_if = {
+		limit = { has_idea = edu_02 }
+		multiply_variable = { var = education_gain value = 0.04 }
+	}
+	else_if = {
+		limit = { has_idea = edu_03 }
+		multiply_variable = { var = education_gain value = 0.06 }
+	}
+	else_if = {
+		limit = { has_idea = edu_04 }
+		multiply_variable = { var = education_gain value = 0.08 }
+	}
+	else_if = {
+		limit = { has_idea = edu_05 }
+		multiply_variable = { var = education_gain value = 0.10 }			
+	}
+	
+	if = {
+		limit = { has_idea = gdp_1 }
 		multiply_variable = { var = education_gain value = 2.25 }
-				
-		else = { if = { limit = { has_idea = gdp_2 }
-			multiply_variable = { var = education_gain value = 2 }
-				
-			else = { if = { limit = { has_idea = gdp_3 }
-				multiply_variable = { var = education_gain value = 1.75 }
-				
-				else = { if = { limit = { has_idea = gdp_4 }
-					multiply_variable = { var = education_gain value = 1.5 }
-					
-					else = { if = { limit = { has_idea = gdp_5 }
-						multiply_variable = { var = education_gain value = 1.25 }
-					} }
-				} }
-			} }
-		} }
+	}	
+	else_if = {
+		limit = { has_idea = gdp_2 }
+		multiply_variable = { var = education_gain value = 2 }
+	}
+	else_if = {
+		limit = { has_idea = gdp_3 }
+		multiply_variable = { var = education_gain value = 1.75 }
+	}
+	else_if = {
+		limit = { has_idea = gdp_4 }
+		multiply_variable = { var = education_gain value = 1.5 }
+	}
+	else_if = {
+		limit = { has_idea = gdp_5 }
+		multiply_variable = { var = education_gain value = 1.25 }
 	}
 	add_to_variable = { var = expense_gain value = education_gain }
 	subtract_from_variable = { var = treasury_rate value = education_gain }
 	
 	#health
 	set_variable = { var = health_gain value = size_modifier }
-	if = { limit = { has_idea = health_01  }
+	if = {
+		limit = { has_idea = health_01  }
 		multiply_variable = { var = health_gain value = 0.012 }
-		
-		else = { if = { limit = { has_idea = health_02 }
-			multiply_variable = { var = health_gain value = 0.022 }
-			
-			else = { if = { limit = { has_idea = health_03 }
-				multiply_variable = { var = health_gain value = 0.038 }
-				
-				else = { if = { limit = { has_idea = health_04 }
-					multiply_variable = { var = health_gain value = 0.059 }
-					
-					else = { if = { limit = { has_idea = health_05 }
-						multiply_variable = { var = health_gain value = 0.079 }
-						
-						else = { if = { limit = { has_idea = health_06 }
-							multiply_variable = { var = health_gain value = 0.10 }
-						} }
-					} }
-				} }
-			} }
-		} }
+	}
+	else_if = {
+		limit = { has_idea = health_02 }
+		multiply_variable = { var = health_gain value = 0.022 }
+	}
+	else_if = {
+		limit = { has_idea = health_03 }
+		multiply_variable = { var = health_gain value = 0.038 }
+	}
+	else_if = {
+		limit = { has_idea = health_04 }
+		multiply_variable = { var = health_gain value = 0.059 }
+	}
+	else_if = {
+		limit = { has_idea = health_05 }
+		multiply_variable = { var = health_gain value = 0.079 }
+	}
+	else_if = {
+		limit = { has_idea = health_06 }
+		multiply_variable = { var = health_gain value = 0.10 }				
 	}
 	add_to_variable = { var = expense_gain value = health_gain }
 	subtract_from_variable = { var = treasury_rate value = health_gain }
 	
 	#Social
 	set_variable = { var = welfare_gain value = size_modifier }
-	if = { limit = { has_idea = social_01  }
+	if = {
+		limit = { has_idea = social_01  }
 		multiply_variable = { var = welfare_gain value = 0.02 }
-		
-		else = { if = { limit = { has_idea = social_02 }
-			multiply_variable = { var = welfare_gain value = 0.045 }
-			
-			else = { if = { limit = { has_idea = social_03 }
-				multiply_variable = { var = welfare_gain value = 0.07 }
-				
-				else = { if = { limit = { has_idea = social_04 }
-					multiply_variable = { var = welfare_gain value = 0.095 }
-					
-					else = { if = { limit = { has_idea = social_05 }
-						multiply_variable = { var = welfare_gain value = 0.13 }
-						
-						else = { if = { limit = { has_idea = social_06 }
-							multiply_variable = { var = welfare_gain value = 0.165 }
-						} }
-					} }
-				} }
-			} }
-		} }
+	}
+	else_if = {
+		limit = { has_idea = social_02 }
+		multiply_variable = { var = welfare_gain value = 0.045 }
+	}
+	else_if = {
+		limit = { has_idea = social_03 }
+		multiply_variable = { var = welfare_gain value = 0.07 }
+	}
+	else_if = {
+		limit = { has_idea = social_04 }
+		multiply_variable = { var = welfare_gain value = 0.095 }
+	}
+	else_if = {
+		limit = { has_idea = social_05 }
+		multiply_variable = { var = welfare_gain value = 0.13 }
+	}
+	else_if = {
+		limit = { has_idea = social_06 }
+		multiply_variable = { var = welfare_gain value = 0.165 }
 	}
 	add_to_variable = { var = expense_gain value = welfare_gain }
 	subtract_from_variable = { var = treasury_rate value = welfare_gain }
