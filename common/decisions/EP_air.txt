@@ -1,3 +1,4 @@
+
 EP_air_cat = {
 
 EP_air_close = { #closes air tab
@@ -8,37 +9,68 @@ EP_air_close = { #closes air tab
 			has_country_flag = air_cat_open
 		}
 		
-	#	available = {
-	    #	NOT = { has_country_flag = small_arms_order_active }
-		
-	    #NOT = { has_country_flag = cc_equi_order_active }
-		#	NOT = { has_country_flag = anti_tank_order_active }
-		#	NOT = { has_country_flag = anti_air_order_active }
-	#	}
+		available = {
+	    	NOT = { has_country_flag = aircraft_order_active }
+		}
 		
 		complete_effect = {
 			clr_country_flag = air_cat_open
 		}
 	}
 
-
-
-
-
-
-
-
-
-
-
-    #USA
+	####Aircraft Subcategories####
+	
+	EP_MR_open = {
+	
+		icon = GFX_decision_generic_prepare_civil_war
+	
+		visible = {
+			has_country_flag = air_cat_open
+			hidden_trigger = {
+				NOT = { has_country_flag = show_MR }
+			}
+		}
+	
+		complete_effect = {
+			set_country_flag = show_MR
+		}
+	}
+	
+	EP_MR_close = { #cant close it if one your orders havent delivered yet
+	
+		icon = GFX_decision_generic_prepare_civil_war
+	
+		visible = {
+			has_country_flag = show_MR
+		}
+		
+		available = {
+			NOT = { has_country_flag = MR_order_active }
+		}
+		
+		complete_effect = {
+			clr_country_flag = show_MR
+		}
+	}
+	
+	
+	
+##########################################################	
 	
 	EP_buy_USA_MR_Fighter_1 = {
-	
+		visible = {
+			has_country_flag = show_MR
+			country_exists = USA
+			ROOT = {
+				NOT = {
+					tag = USA
+				}
+			}
+		}
 		
 		icon = usa
 		
-		days_remove = 25
+		days_remove = 1
 		days_re_enable = 0
 		
 		custom_cost_trigger = {
@@ -49,6 +81,7 @@ EP_air_close = { #closes air tab
 		complete_effect = {
 			hidden_effect = {
 				subtract_from_variable = { treasury = 0.125 }
+				set_country_flag = aircraft_order_active
 			}
 		}
 		remove_effect = {
@@ -56,15 +89,28 @@ EP_air_close = { #closes air tab
 				type = MR_Fighter3 #F16C
 				amount = 100
 				producer = USA
+			}	
+			hidden_effect = {
+				set_country_flag = aircraft_delivered
+				clr_country_flag = aircraft_order_active
 			}
 		}
 	}
-    EP_buy_USA_AS_Fighter_1 = {
 	
+	EP_buy_SOV_MR_Fighter_1 = {
+	
+		visible = {
+			has_country_flag = show_MR
+			country_exists = SOV
+			ROOT = {
+				NOT = {
+					tag = SOV
+				}
+			}
+		}
+		icon = russia
 		
-		icon = usa
-		
-		days_remove = 25
+		days_remove = 1
 		days_re_enable = 0
 		
 		custom_cost_trigger = {
@@ -75,6 +121,85 @@ EP_air_close = { #closes air tab
 		complete_effect = {
 			hidden_effect = {
 				subtract_from_variable = { treasury = 0.125 }
+				set_country_flag = aircraft_order_active
+			}
+		}
+		remove_effect = {
+			add_equipment_to_stockpile = {
+				type = MR_Fighter3 #F16C
+				amount = 100
+				producer = SOV
+			}
+			hidden_effect = {
+				set_country_flag = aircraft_delivered
+				clr_country_flag = aircraft_order_active
+			}
+		}
+	}
+	
+	EP_ASF_open = {
+	
+		icon = GFX_decision_generic_prepare_civil_war
+	
+		visible = {
+			has_country_flag = air_cat_open
+			hidden_trigger = {
+				NOT = { has_country_flag = show_ASF }
+			}
+		}
+	
+	
+		complete_effect = {
+			set_country_flag = show_ASF
+		}
+	}
+	
+	EP_ASF_close = { #cant close it if one your orders havent delivered yet
+	
+		icon = GFX_decision_generic_prepare_civil_war
+	
+		visible = {
+			has_country_flag = show_ASF
+		}
+		
+		available = {
+			NOT = { has_country_flag = ASF_order_active }
+		}
+		
+		complete_effect = {
+			clr_country_flag = show_ASF
+		}
+	}
+	
+	
+	
+	
+    EP_buy_USA_AS_Fighter_1 = {
+	
+		visible = {
+			has_country_flag = show_ASF
+			country_exists = USA
+			ROOT = {
+				NOT = {
+					tag = USA
+				}
+			}
+		}
+		
+		icon = usa
+		
+		days_remove = 1
+		days_re_enable = 0
+		
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.125 }
+		}
+		custom_cost_text = cost_0_125
+		
+		complete_effect = {
+			hidden_effect = {
+				subtract_from_variable = { treasury = 0.125 }
+				set_country_flag = aircraft_order_active
 			}
 		}
 		remove_effect = {
@@ -83,17 +208,28 @@ EP_air_close = { #closes air tab
 				amount = 100
 				producer = USA
 			}
+			hidden_effect = {
+				set_country_flag = aircraft_delivered
+				clr_country_flag = aircraft_order_active
+			}	
 		}
 	}
 
-    #SOV
-
-    EP_buy_SOV_MR_Fighter_1 = {
+	EP_buy_SOV_AS_Fighter_1 = {
 	
+		visible = {
+			has_country_flag = show_ASF
+			country_exists = SOV
+			ROOT = {
+				NOT = {
+					tag = SOV
+				}
+			}
+		}
 		
 		icon = russia
 		
-		days_remove = 25
+		days_remove = 1
 		days_re_enable = 0
 		
 		custom_cost_trigger = {
@@ -104,32 +240,7 @@ EP_air_close = { #closes air tab
 		complete_effect = {
 			hidden_effect = {
 				subtract_from_variable = { treasury = 0.125 }
-			}
-		}
-		remove_effect = {
-			add_equipment_to_stockpile = {
-				type = MR_Fighter3 #F16C
-				amount = 100
-				producer = SOV
-			}
-		}
-	}
-    EP_buy_SOV_AS_Fighter_1 = {
-	
-		
-		icon = russia
-		
-		days_remove = 25
-		days_re_enable = 0
-		
-		custom_cost_trigger = {
-			check_variable = { treasury > 0.125 }
-		}
-		custom_cost_text = cost_0_125
-		
-		complete_effect = {
-			hidden_effect = {
-				subtract_from_variable = { treasury = 0.125 }
+				set_country_flag = aircraft_order_active
 			}
 		}
 		remove_effect = {
@@ -138,9 +249,137 @@ EP_air_close = { #closes air tab
 				amount = 100
 				producer = SOV
 			}
+			hidden_effect = {
+				set_country_flag = aircraft_delivered
+				clr_country_flag = aircraft_order_active
+			}
 		}
 	}
-
+	
+	EP_transport_helicopters_open = {
+	
+		icon = GFX_decision_generic_prepare_civil_war
+	
+		visible = {
+			has_country_flag = air_cat_open
+			hidden_trigger = {
+				NOT = { has_country_flag = show_transport_helicopter }
+			}
+		}
+	
+	
+		complete_effect = {
+			set_country_flag = show_transport_helicopter
+		}
+	}
+	
+	EP_transport_helicopters_close = { #cant close it if one your orders havent delivered yet
+	
+		icon = GFX_decision_generic_prepare_civil_war
+	
+		visible = {
+			has_country_flag = show_transport_helicopter
+		}
+		
+		available = {
+			NOT = { has_country_flag = transport_helicopter_order_active }
+		}
+		
+		complete_effect = {
+			clr_country_flag = show_transport_helicopter
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	EP_buy_USA_transport_helicopter_1 = {
+	
+		visible = {
+			has_country_flag = show_transport_helicopter
+			has_country_flag = air_cat_open
+			country_exists = USA
+			ROOT = {
+				NOT = {
+					tag = USA
+				}
+			}
+		}
+		
+		icon = usa
+		
+		days_remove = 1
+		days_re_enable = 0
+		
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.1 }
+		}
+		custom_cost_text = cost_0_1
+		
+		complete_effect = {
+			hidden_effect = {
+				subtract_from_variable = { treasury = 0.1 }
+				set_country_flag = transport_helicopter_order_active
+			}
+		}
+		remove_effect = {
+			add_equipment_to_stockpile = {
+				type = transport_helicopter2
+				amount = 1200
+				producer = USA
+			}
+			hidden_effect = {
+				set_country_flag = transport_helicopter_delivered
+				clr_country_flag = transport_helicopter_order_active
+			}
+		}
+	}
+	
+	EP_buy_SOV_transport_helicopter_1 = {
+	
+		visible = {
+			has_country_flag = show_transport_helicopter
+			has_country_flag = air_cat_open
+			country_exists = SOV
+			ROOT = {
+				NOT = {
+					tag = SOV
+				}
+			}
+		}
+		
+		icon = russia
+		
+		days_remove = 1
+		days_re_enable = 0
+		
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.1 }
+		}
+		custom_cost_text = cost_0_1
+		
+		complete_effect = {
+			hidden_effect = {
+				subtract_from_variable = { treasury = 0.1 }
+				set_country_flag = transport_helicopter_order_active
+			}
+		}
+		remove_effect = {
+			add_equipment_to_stockpile = {
+				type = transport_helicopter2
+				amount = 1200
+				producer = SOV
+			}
+			hidden_effect = {
+				set_country_flag = transport_helicopter_delivered
+				clr_country_flag = transport_helicopter_order_active
+			}
+		}
+	}
 
 
 }
