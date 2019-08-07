@@ -386,24 +386,47 @@ class Mod:
         variable = []
         for root, dirs, files in os.walk(dir):
             for file in files:
-                try:
-                    if not os.path.isdir(dir + file):
-                        with open(os.path.join(root, file), 'r', encoding='utf-8', errors='ignore') as file:
-                            content = file.readlines()
-                            for line in content:
-                                if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or is blank
-                                    if keyword in line:
-                                        if "#" in line:
-                                            if not Utility.ReturnMatch('\s?#.*[{}]+', line):
-                                                variable.append(Utility.ReturnMatch('.*' + keyword + '\s?=\s?([-_\w]+)', line))
-                                        else:
-                                            variable.append(Utility.ReturnMatch('.*' + keyword + '\s?=\s?([-_\w]+)', line))
+                #try:
+                if not os.path.isdir(dir + file):
+                    with open(os.path.join(root, file), 'r', encoding='utf-8', errors='ignore') as file:
+                        content = file.readlines()
+                        inScope = False
+                        for line in content:
+                            temp = ""
+                            if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or is blank
+
+                                if inScope and "flag" in line:
+                                    if not Utility.ReturnMatch('\s?#.*[{}]+', line):
+                                        temp = Utility.ReturnMatchGroup(line, 1, '.*\bflag\b\s?=\s?([-_\w\@]+)')
+
+                                if keyword in line:
+                                    inScope = False
+                                    if "#" in line:
+                                        if not Utility.ReturnMatch('\s?#.*[{}]+', line):
+                                            temp = Utility.ReturnMatchGroup(line, 2, '.*' + keyword + '\s=\s?(\{\s?flag\s?=\s?)?([[-_\w\@]+)')
+                                    else:
+                                        temp = Utility.ReturnMatchGroup(line, 2, '.*' + keyword + '\s=\s?(\{\s?flag\s?=\s?)?([[-_\w\@]+)')
+                                    if not temp:
+                                        inScope = True
+
+                                if temp:
+                                    variable.append(temp)
+                                    #print("line: " + line)
+                                    #print("temp: " + variable[-1])
+                                    #input()
+
+
+
+
+
+
+
                         #else:
 
 
 
-                except:
-                    print("Couldn't open file: " + str(file))
+                #except:
+                    #print("Couldn't open file: " + str(file))
 
         Utility.RemoveDuplicates(variable)
         print(variable)
@@ -417,11 +440,23 @@ class Utility:
         match = re.match(r'{}'.format(expr), text, re.M | re.I)
         if match:
             return match.group()
+
     def ReturnMatch(text, expr):
 
         match = re.match(r'{}'.format(expr), text, re.M | re.I)
         if match:
             return match.group()
+
+    def ReturnMatchGroup(self, text, num, expr):
+
+        match = re.match(r'{}'.format(expr), text, re.M | re.I)
+        if match:
+            return match.group(num)
+    def ReturnMatchGroup(text, num, expr):
+
+        match = re.match(r'{}'.format(expr), text, re.M | re.I)
+        if match:
+            return match.group(num)
 
     @staticmethod
     def GetData(dir, expr, variable, braceCheck):
@@ -499,6 +534,7 @@ class Utility:
             if num not in final_list:
                 final_list.append(num)
         return final_list
+
 @dataclass
 class Ideology:
     Ideology: str
