@@ -34,6 +34,13 @@ class Mod:
         self.globalFlags = self.GetFlag(self.rootDir + "/common/", "set_global_flag")
         self.countryFlags = self.GetFlag(self.rootDir + "/common/", "set_country_flag")
 
+        self.errors = self.check_event_for_logs(self.rootDir + "/events/")
+
+        for error in self.errors:
+            print(error)
+        print("Total of: " + str(len(self.errors)) + " errors")
+
+
     def GetTags(self, dir):
         tags = []
         for root, dirs, files in os.walk(dir):
@@ -386,51 +393,87 @@ class Mod:
         variable = []
         for root, dirs, files in os.walk(dir):
             for file in files:
-                #try:
-                if not os.path.isdir(dir + file):
-                    with open(os.path.join(root, file), 'r', encoding='utf-8', errors='ignore') as file:
-                        content = file.readlines()
-                        inScope = False
-                        for line in content:
-                            temp = ""
-                            if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or is blank
+                try:
+                    if not os.path.isdir(dir + file):
+                        with open(os.path.join(root, file), 'r', encoding='utf-8', errors='ignore') as file:
+                            content = file.readlines()
+                            inScope = False
+                            for line in content:
+                                temp = ""
+                                if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or is blank
 
-                                if inScope and "flag" in line:
-                                    if not Utility.ReturnMatch('\s?#.*[{}]+', line):
-                                        temp = Utility.ReturnMatchGroup(line, 1, '.*\bflag\b\s?=\s?([-_\w\@]+)')
-
-                                if keyword in line:
-                                    inScope = False
-                                    if "#" in line:
+                                    if inScope and "flag" in line:
                                         if not Utility.ReturnMatch('\s?#.*[{}]+', line):
+                                            temp = Utility.ReturnMatchGroup(line, 1, '.*\bflag\b\s?=\s?([-_\w\@]+)')
+
+                                    if keyword in line:
+                                        inScope = False
+                                        if "#" in line:
+                                            if not Utility.ReturnMatch('\s?#.*[{}]+', line):
+                                                temp = Utility.ReturnMatchGroup(line, 2, '.*' + keyword + '\s=\s?(\{\s?flag\s?=\s?)?([[-_\w\@]+)')
+                                        else:
                                             temp = Utility.ReturnMatchGroup(line, 2, '.*' + keyword + '\s=\s?(\{\s?flag\s?=\s?)?([[-_\w\@]+)')
-                                    else:
-                                        temp = Utility.ReturnMatchGroup(line, 2, '.*' + keyword + '\s=\s?(\{\s?flag\s?=\s?)?([[-_\w\@]+)')
-                                    if not temp:
-                                        inScope = True
+                                        if not temp:
+                                            inScope = True
 
-                                if temp:
-                                    variable.append(temp)
-                                    #print("line: " + line)
-                                    #print("temp: " + variable[-1])
-                                    #input()
+                                    if temp:
+                                        variable.append(temp)
+                                        #print("line: " + line)
+                                        #print("temp: " + variable[-1])
+                                        #input()
 
-
-
-
-
-
-
-                        #else:
-
-
-
-                #except:
-                    #print("Couldn't open file: " + str(file))
+                except:
+                    print("Couldn't open file: " + str(file))
 
         Utility.RemoveDuplicates(variable)
         print(variable)
         return variable
+
+    def check_event_for_logs(self, dir):
+        errors = []
+
+        for root, dirs, files in os.walk(dir):
+            for file in files:
+                lineNum = 0
+                hasLog = 0
+                optionFound = 0
+                optionName = ""
+                try:
+                    if not os.path.isdir(dir + file):
+                        with open(os.path.join(root, file), 'r', encoding='utf-8', errors='ignore') as file:
+                            content = file.readlines()
+                            braces = 0
+                            for line in content:
+                                lineNum += 1
+                                if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
+                                    if "option" in line and "=" in line:
+                                        optionFound = 1
+                                        optionLine = lineNum
+                                        hasLog = 0
+                                    if optionFound == 1:
+                                        if "name" in line and "=" in line:
+                                            hasName = re.search(r'name\s?=\s([a-zA-Z0-9-_.]+)', line, re.M | re.I)  # If it's a tag
+                                            if hasName:
+                                                optionName = hasName.group(1)
+                                        if "{" in line:
+                                            braces += line.count("{")
+
+                                        if braces > 0 and hasLog == 0 and "log" in line:
+                                            hasLog = 1
+                                            optionFound = 0
+                                            braces = 0
+                                        if "}" in line:
+                                            braces -= line.count("}")
+                                        if braces == 0 and hasLog == 0:
+                                            errors.append("ERROR: Event " + optionName + " doesn't have logging {0} Line number: {1}".format(
+                                                dir, optionLine))
+                                            optionFound = 0
+                                            braces = 0
+                                            hasLog = 0
+                except:
+                    print("Couldn't open file: " + str(file) )
+
+        return errors
 
 class Utility:
 
