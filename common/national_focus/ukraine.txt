@@ -1,26 +1,19 @@
-	focus_tree = {
-
-	### by MrSur1cate
+#Angriest Bird aka Birb
+focus_tree = {
 
 	id = ukraine
 	
 	country = {
 		factor = 0
 		modifier = {
-			add = 0
+			add = 15
 			tag = UKR
 		}
 	}
 
 continuous_focus_position = { x = 135 y = 950 }
 
-#################################################################################################################
-### 										FOREIGN POLICY													  ###
-#################################################################################################################
-
-##################
-# Own Way Branch #
-##################
+## Foreign Policy 
 
 	### Foreign Policy Initiative
 	focus = { 
@@ -30,61 +23,113 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 2
 		cost = 10
 		
-		ai_will_do = { factor = 1 } 
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 }
 		
 		available = {
-			OR = { 
-				has_government = democratic
-				has_government = nationalist
+			OR = {
+				has_completed_focus = UKR_save_the_status_quo
+				has_completed_focus = UKR_pro_russian_government_in_power
+				has_completed_focus = UKR_pro_ukrainian_government_in_power
+				has_completed_focus = UKR_take_lead_at_national_revival
 			}
 		}
 		
+		completion_reward = {
+			add_political_power = 150
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
-###################
-# Own Bloc Branch #
-###################
-
-	### Consolidation
-	focus = { 
+	### Own Way Branch - Consolidation
+	focus = {
 		id = UKR_consolidation
 		icon = national_unity
-		x = 1
-		y = 3
+		x = -2
+		y = 1
+		relative_position_id = UKR_foreign_policy_initiative
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		cost = 10
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_foreign_policy_initiative }
+		
+		completion_reward = {
+			POL = { country_event = { id = ukraine_md.10 days = 1 } }
+			LAT = { country_event = { id = ukraine_md.10 days = 1 } } 
+			LIT = { country_event = { id = ukraine_md.10 days = 1 } }
+			EST = { country_event = { id = ukraine_md.10 days = 1 } }
+			BLR = { country_event = { id = ukraine_md.10 days = 1 } }
+			MLV = { country_event = { id = ukraine_md.10 days = 1 } }
+			ROM = { country_event = { id = ukraine_md.10 days = 1 } }
+		}
  
-	} 
-	
-#----------------------------------------------------------------------------------------------------------------
+	}
 
-	### Baltic-Black Sea Dialogue
+	#### Baltic-Black Sea Dialogue
 	focus = { 
 		id = UKR_baltic_black_sea_dialogue
 		icon = diplomacy
-		x = 1
-		y = 4
+		x = -2
+		y = 2
+		relative_position_id = UKR_foreign_policy_initiative
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		cost = 10
 		
 		ai_will_do = { factor = 1 } 
 	
 		prerequisite = { focus = UKR_consolidation }
+		
+		completion_reward = { 
+			hidden_effect = {
+				every_country = {
+					limit = { has_country_flag = did_not_support_the_balatic_black_sea_union }
+					clr_country_flag = did_not_support_the_balatic_black_sea_union
+				}
+			}
+			every_country = {
+				limit = { has_country_flag = supported_the_baltic_black_sea_union }
+				give_guarantee = UKR
+				UKR = { 
+					give_guarantee = PREV
+				}
+			}
+			if = {
+				limit = {
+					any_country = {
+						NOT = { has_country_flag = supported_the_baltic_black_sea_union }
+						NOT = { has_country_flag = did_not_support_the_balatic_black_sea_union }
+					}
+				}
+				custom_effect_tooltip = UKR_baltic_black_sea_dialogue_focus_TT
+			}
+		}
 
 	}
 
-#----------------------------------------------------------------------------------------------------------------
-
-	### Baltic-Black Sea Union
-	focus = { 
+	#### Baltic-Black Sea Union
+	focus = {
 		id = UKR_baltic_black_sea_union
 		icon = alliance
-		x = 1
-		y = 6
+		x = -2
+		y = 4
+		relative_position_id = UKR_foreign_policy_initiative
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		cost = 10
 		
 		ai_will_do = { factor = 1 } 
@@ -93,21 +138,28 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_nato_membership_action_plan focus = UKR_aplly_to_join_csto }
 		
+		completion_reward = {
+			create_faction = UKR_baltic_black_sea_union_faction
+			every_country = {
+				limit = { has_country_flag = supported_the_baltic_black_sea_union }
+				country_event = { id = ukraine_md.11 days = 1 }
+			}
+		}
+		
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
-#================================================================================================================
-
-####################
-# Own Union Branch #
-####################
 
 	### Euroscepticism
 	focus = { 
 		id = UKR_euroscepticism
 		icon = GFX_euroscepticism
-		x = 3
-		y = 3
+		x = 0
+		y = 1
+		relative_position_id = UKR_foreign_policy_initiative
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		cost = 10
 		
 		ai_will_do = { factor = 1 } 
@@ -116,278 +168,309 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_closer_ties_with_eu }
 		
+		completion_reward = {
+			add_war_support = 0.05
+		}
+		
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### GUAM Reogranization
 	focus = { 
 		id = UKR_guam_reogranization
 		icon = GFX_guam_reogranization
-		x = 3
-		y = 4
+		x = 0
+		y = 2
+		relative_position_id = UKR_foreign_policy_initiative
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		cost = 10
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_euroscepticism }
+		
+		completion_reward = {
+			every_country = {
+				limit = { has_idea = idea_GUAM_member_state }
+				add_war_support = 0.02
+				add_political_power = 50
+			}
+			add_war_support = 0.02
+			add_political_power = 50
+		}
 
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Own Union Theory
 	focus = { 
 		id = UKR_own_union_theory
 		icon = demand_territory
-		x = 3
-		y = 5
+		x = 0
+		y = 3
+		relative_position_id = UKR_foreign_policy_initiative
 		cost = 10
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_guam_reogranization }
+		
+		completion_reward = {
+			every_country = {
+				limit = { has_idea = idea_GUAM_member_state }
+				swap_ideas = {
+					remove_idea = idea_GUAM_member_state
+					add_idea = idea_GUAM_member_state_2
+				}
+			}
+		}
 
 	} 
 
-#----------------------------------------------------------------------------------------------------------------
-#================================================================================================================
-
-#########################
-# EU Integration Branch #
-#########################
+	### Western Doctrine/Alignment Branch
+	focus = { 
+		id = UKR_western_doctrine
+		icon = GFX_western_doctrine
+		x = 5
+		y = 2
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		cost = 10
+		
+		ai_will_do = { factor = 1 } 
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_nato_major_influence_greater_than_10_percent_TT
+				UKR_nato_major_influence_greater_than_10_percent = yes 
+			}
+		}
+		
+		mutually_exclusive = { focus = UKR_eastern_doctrine }
+		
+		completion_reward = {
+			every_country = {
+				limit = {
+					OR = {
+						has_idea = EU_member
+						has_idea = NATO_member
+					}
+				}
+				add_opinion_modifier = { target = UKR modifier = has_expressed_loyalty }
+			}
+			add_political_power = 100
+			
+		}
+	} 
 
 	### Closer ties with EU
 	focus = { 
 		id = UKR_closer_ties_with_eu
 		icon = GFX_closer_ties_with_eu
-		x = 5
-		y = 3
+		x = 0
+		y = 1
+		relative_position_id = UKR_western_doctrine
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_western_doctrine }
 		
 		mutually_exclusive = { focus = UKR_euroscepticism }
-
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_nato_major_influence_greater_than_10_percent_TT
+				UKR_nato_major_influence_greater_than_10_percent = yes 
+			}
+		}
+		
+		completion_reward = {
+			every_country = {
+				limit = { has_idea = EU_member }
+				country_event = { id = ukraine_md.9 days = 1 }
+			}
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
-	### Association Agreement
+	### Association Agreement with the EU
 	focus = { 
 		id = UKR_association_agreement
 		icon = GFX_association_agreement
-		x = 5
-		y = 4
+		x = 0
+		y = 2
+		relative_position_id = UKR_western_doctrine
 		cost = 10 
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_closer_ties_with_eu }
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_nato_major_influence_greater_than_10_percent_TT
+				UKR_nato_major_influence_greater_than_10_percent = yes 
+			}
+		}
+		
+		completion_reward = {
+			every_country = {
+				limit = { has_idea = EU_member } 
+				add_opinion_modifier = { target = UKR modifier = european_commitment }
+			}
+			UKR_wve_rivlary_alignment_to_the_west = yes
+			ENG = { country_event = ukraine_md.8 }
+			FRA = { country_event = ukraine_md.8 } 
+			GER = { country_event = ukraine_md.8 }
+			ITA = { country_event = ukraine_md.8 }
+		}
 
 	}
-
-#----------------------------------------------------------------------------------------------------------------
 
 	### European Union Integration
 	focus = { 
 		id = UKR_european_union_integration
 		icon = GFX_european_union_integration
-		x = 5
-		y = 5
+		x = 0
+		y = 3
+		relative_position_id = UKR_western_doctrine
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 
 		prerequisite = { focus = UKR_association_agreement }
 		
-	} 
-
-#----------------------------------------------------------------------------------------------------------------	
-#================================================================================================================
-
-######################
-# Western Way Branch #
-######################
-
-	### Western Doctrine
-	focus = { 
-		id = UKR_western_doctrine
-		icon = GFX_western_doctrine
-		x = 5
-		y = 2
-		cost = 10
-		
-		ai_will_do = { factor = 1 } 
-		
 		available = {
-			has_government = democratic
+			custom_trigger_tooltip = {
+				tooltip = UKR_nato_major_influence_greater_than_10_percent_TT
+				UKR_nato_major_influence_greater_than_10_percent = yes 
+			}
 		}
 		
-		mutually_exclusive = { focus = UKR_eastern_doctrine }
-
+		completion_reward = {
+			UKR_wve_rivlary_alignment_to_the_west = yes
+			add_ideas = EU_member
+			news_event = european_union.7
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
-
-###########################
-# NATO Integration Branch #
-###########################
 
 	### Closer ties with Western bloc
 	focus = { 
 		id = UKR_closer_ties_with_western_bloc
 		icon = GFX_closer_ties_with_western_bloc
-		x = 7
-		y = 3
+		x = 2
+		y = 1
+		relative_position_id = UKR_western_doctrine
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 
 		prerequisite = { focus = UKR_western_doctrine }
 		
 		mutually_exclusive = { focus = UKR_confirm_non_block_status }
-
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_nato_major_influence_greater_than_10_percent_TT
+				UKR_nato_major_influence_greater_than_10_percent = yes 
+			}
+		}
+		
+		completion_reward = {
+			every_country = {
+				limit = { 
+					OR = {
+						has_idea = EU_member
+						has_idea = NATO_member
+					}
+				}
+				add_opinion_modifier = { target = UKR modifier = supports_us }
+			}
+		}
 	}
-
-#----------------------------------------------------------------------------------------------------------------
-
-	### NATO Standarts
+	### NATO Standards
 	focus = { 
 		id = UKR_nato_standarts
 		icon = GFX_nato_standarts
-		x = 7
-		y = 4
+		x = 2
+		y = 2
+		relative_position_id = UKR_western_doctrine
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_closer_ties_with_western_bloc }
 		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_nato_major_influence_greater_than_10_percent_TT
+				UKR_nato_major_influence_greater_than_10_percent = yes 
+			}
+		}
+		
+		completion_reward = {
+			UKR_wve_rivlary_alignment_to_the_west = yes
+			
+		}
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### NATO Membership Action Plan
 	focus = { 
 		id = UKR_nato_membership_action_plan
 		icon = GFX_nato_membership_action_plan
-		x = 7
-		y = 6
+		x = 2
+		y = 4
+		relative_position_id = UKR_western_doctrine
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 
 		prerequisite = { focus = UKR_nato_standarts }
 		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_nato_major_influence_greater_than_10_percent_TT
+				UKR_nato_major_influence_greater_than_10_percent = yes 
+			}
+		}
+		
 		mutually_exclusive = { focus = UKR_baltic_black_sea_union focus = UKR_aplly_to_join_csto }
-
-	} 
-
-#----------------------------------------------------------------------------------------------------------------	
-#================================================================================================================
-
-###########################
-# CSTO Integration Branch #
-###########################
-	
-	### Eastern Doctrine
-	focus = { 
-		id = UKR_eastern_doctrine
-		icon = GFX_eastern_doctrine
-		x = 17
-		y = 2
-		cost = 10
 		
-		ai_will_do = { factor = 1 }
-		
-		prerequisite = { focus = UKR_pro_russian_government_in_power }
-		
-		mutually_exclusive = { focus = UKR_western_doctrine }
-	} 
-	
-#----------------------------------------------------------------------------------------------------------------
-
-	### Closer ties with Eastern bloc
-	focus = { 
-		id = UKR_closer_ties_with_eastern_bloc
-		icon = GFX_closer_ties_with_eastern_bloc
-		x = 15
-		y = 3
-		cost = 10
-		
-		ai_will_do = { factor = 1 } 
-		
-		prerequisite = { focus = UKR_eastern_doctrine }
-		
-		mutually_exclusive = { focus = UKR_confirm_non_block_status }
- 
-	} 
-	
-#----------------------------------------------------------------------------------------------------------------
-
-	### Aplly to join CSTO
-	focus = { 
-		id = UKR_aplly_to_join_csto
-		icon = GFX_aplly_to_join_csto
-		x = 15
-		y = 6
-		cost = 10
-		
-		ai_will_do = { factor = 1 } 
-		
-		prerequisite = { focus = UKR_closer_ties_with_eastern_bloc }
-		
-		mutually_exclusive = { focus = UKR_nato_membership_action_plan focus = UKR_baltic_black_sea_union }
-		
+		completion_reward = {
+			UKR_wve_rivlary_alignment_to_the_west = yes 
+			USA = { country_event = { id = NATO.14 days = 1 } }
+		}
 	}
-
-#----------------------------------------------------------------------------------------------------------------	
-#================================================================================================================
-
-###########################
-# EACU Integration Branch #
-###########################
-
-	### Expand the East Trade Cooperation
-		focus = { 
-		id = UKR_expand_the_east_trade_cooperation
-		icon = GFX_expand_the_east_trade_cooperation
-		x = 17
-		y = 3
-		cost = 10
-		
-		ai_will_do = { factor = 1 }
-		
-		prerequisite = { focus = UKR_eastern_doctrine }
-		
-	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
-	### EACU Integration
-		focus = { 
-		id = UKR_eacu_integration
-		icon = GFX_eacu_integration
-		x = 17
-		y = 4
-		cost = 10
-		
-		ai_will_do = { factor = 1 }
-		
-		prerequisite = { focus = UKR_expand_the_east_trade_cooperation }
-		
-	}
-
-#----------------------------------------------------------------------------------------------------------------	
-#================================================================================================================
-
-#####################
-# Neutrality Branch #
-#####################
-
 	### Confirm Non-block Status
 	focus = { 
 		id = UKR_confirm_non_block_status
@@ -396,6 +479,10 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 3
 		cost = 10
 		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		ai_will_do = { factor = 1 } 
 		
 		available = {
@@ -403,64 +490,87 @@ continuous_focus_position = { x = 135 y = 950 }
 				has_government = neutrality
 				has_government = communism
 			}
-			has_war_support < 0.20
+			has_war_support > 0.10
 		}
+		
 		
 		mutually_exclusive = { focus = UKR_closer_ties_with_western_bloc focus = UKR_closer_ties_with_eastern_bloc }
 		
+		completion_reward = {
+			add_political_power = 150
+		}
+		
 	}
-
-#----------------------------------------------------------------------------------------------------------------
 
 	### Proclaim Neutral Foreign Policy
 	focus = { 
 		id = UKR_proclaim_neutrality
 		icon = neutrality
-		x = 11
-		y = 5
+		x = 0
+		y = 2
+		relative_position_id = UKR_confirm_non_block_status
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 
 		ai_will_do = { factor = 1 } 
 		
-		available = {
-			
-		}
-		
 		prerequisite = { focus = UKR_confirm_non_block_status }
+		
+		completion_reward = {
+			add_ideas = UKR_idea_neutrality
+		}
 	}
-
-#----------------------------------------------------------------------------------------------------------------
-#================================================================================================================
-
-###################
-# USA/Russia ally #
-###################
 
 	### US non-NATO ally
 	focus = { 
 		id = UKR_us_non_nato_ally
 		icon = GFX_us_non_nato_ally
-		x = 9
-		y = 4
+		x = -2
+		y = 1
+		relative_position_id = UKR_confirm_non_block_status
 		cost = 10
 		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		ai_will_do = { factor = 1 } 
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_nato_major_influence_greater_than_10_percent_TT
+				UKR_nato_major_influence_greater_than_10_percent = yes
+			}
+		}
 	
 		prerequisite = { focus = UKR_closer_ties_with_western_bloc focus = UKR_confirm_non_block_status }
 		
 		mutually_exclusive = { focus = UKR_special_defensive_agreement }
 		
+		completion_reward = {
+			add_ideas = Major_Non_NATO_Ally
+			add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
+			set_country_flag = Major_Non_NATO_Ally
+			UKR_wve_rivlary_alignment_to_the_west = yes
+		}
+		
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Special Defensive Agreement
 	focus = { 
 		id = UKR_special_defensive_agreement
 		icon = GFX_special_defensive_agreement
-		x = 13
-		y = 4
+		x = 2
+		y = 1
+		relative_position_id = UKR_confirm_non_block_status
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -468,19 +578,24 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_us_non_nato_ally }
 		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_east_major_influence_greater_than_10_perecnt_TT
+				UKR_east_major_influence_greater_than_10_perecnt = yes 
+			}
+		}
+		
+		completion_reward = {
+			give_guarantee = SOV 
+			SOV = {
+				give_guarantee = UKR 
+			}
+			UKR_wve_rivlary_alignment_to_the_east = yes 
+		}
+		
 	} 
-
-#----------------------------------------------------------------------------------------------------------------
-#================================================================================================================
-
-#################################################################################################################
-### 										INTERNAL POLICY													  ###
-#################################################################################################################
-
-#############################
-# Pro-Russian Policy Branch #
-#############################
-
+	
+	##Russia Alignment
 	### Pro-Russian Government in Power
 	focus = { 
 		id = UKR_pro_russian_government_in_power
@@ -489,24 +604,248 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 1
 		cost = 10
 		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		ai_will_do = { factor = 1 } 
 		
 		available = {
-			has_government = communism 
+			NOT = { has_country_flag = UKR_supported_patriotic_parties_flag }
+			has_country_flag = UKR_supported_russian_parties_flag
 		}
 		
-		mutually_exclusive = { focus = UKR_pro_ukrainian_government_in_power }
+		completion_reward = {
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 6 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = yes
+			}
+			add_to_variable = { party_pop_array^6 = 0.15 }
+			recalculate_party = yes
+			subtract_from_variable = { UKR_stability_of_ukraine_var = 5.0 }
+			custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_5_TT
+			subtract_from_variable = { UKR_chance_of_collapse_var = 3.0 }
+			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_3_TT
+		}
+	}
+	
+	### Eastern Doctrine/Joining the CSTO branch
+	focus = { 
+		id = UKR_eastern_doctrine
+		icon = GFX_eastern_doctrine
+		x = -6
+		y = 1
+		relative_position_id = UKR_pro_russian_government_in_power
+		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 }
+		
+		prerequisite = { focus = UKR_pro_russian_government_in_power }
+		
+		mutually_exclusive = { focus = UKR_western_doctrine }
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_east_major_influence_greater_than_10_perecnt_TT
+				UKR_east_major_influence_greater_than_10_perecnt = yes 
+			}
+		}
+		
+		completion_reward = {
+			SOV = {
+				add_opinion_modifier = {
+					target = UKR
+					modifier = has_expressed_loyalty
+				}
+			}
+			CHI = {
+				add_opinion_modifier = {
+					target = UKR
+					modifier = has_expressed_loyalty
+				}
+			}
+			every_country = {
+				limit = {
+					AND = {
+						NOT = { tag = SOV }
+						is_in_faction_with = SOV
+					}
+				}
+				add_opinion_modifier = {
+					target = UKR
+					modifier = has_expressed_loyalty
+				}
+			}
+			add_political_power = 100
+			UKR_wve_rivlary_alignment_to_the_east = yes
+		}
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
+	### Closer ties with Eastern bloc
+	focus = { 
+		id = UKR_closer_ties_with_eastern_bloc
+		icon = GFX_closer_ties_with_eastern_bloc
+		x = -6
+		y = 2
+		relative_position_id = UKR_pro_russian_government_in_power
+		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 } 
+		
+		prerequisite = { focus = UKR_eastern_doctrine }
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_east_major_influence_greater_than_10_perecnt_TT
+				UKR_east_major_influence_greater_than_10_perecnt = yes 
+			}
+		}
+		
+		mutually_exclusive = { focus = UKR_confirm_non_block_status }
+		
+		completion_reward = {
+			UKR_wve_rivlary_alignment_to_the_east = yes 
+		}
+ 
+	} 
+
+	### Apply to join CSTO
+	focus = {  
+		id = UKR_aplly_to_join_csto
+		icon = GFX_aplly_to_join_csto
+		x = -6
+		y = 5
+		relative_position_id = UKR_pro_russian_government_in_power
+		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 } 
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_east_major_influence_greater_than_10_perecnt_TT
+				UKR_east_major_influence_greater_than_10_perecnt = yes 
+			}
+		}
+		
+		prerequisite = { focus = UKR_closer_ties_with_eastern_bloc }
+		
+		mutually_exclusive = { focus = UKR_nato_membership_action_plan focus = UKR_baltic_black_sea_union }
+		
+		completion_reward = {
+			UKR_wve_rivlary_alignment_to_the_east = yes 
+			SOV = { country_event = { id = ukraine_md.7 days = 1 } } 
+		}
+		
+	}
+
+	### East Trade Cooperation
+		focus = { 
+		id = UKR_expand_the_east_trade_cooperation
+		icon = GFX_expand_the_east_trade_cooperation
+		x = -4
+		y = 2
+		relative_position_id = UKR_pro_russian_government_in_power
+		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 }
+		
+		prerequisite = { focus = UKR_eastern_doctrine }
+		
+		completion_reward = {
+			every_country = {
+				limit = { 
+					OR = {
+						is_in_faction_with = SOV 
+						tag = SOV
+						tag = UKR
+					}
+				}	
+				add_ideas = UKR_idea_eacu_cooperation
+			}
+			UKR_idea_pro_russia_government_reforms = yes 
+		}
+		
+	} 
+
+	### EACU Integration
+		focus = { 
+		id = UKR_eacu_integration
+		icon = GFX_eacu_integration
+		x = -4
+		y = 3
+		relative_position_id = UKR_pro_russian_government_in_power
+		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 }
+		
+		prerequisite = { focus = UKR_expand_the_east_trade_cooperation }
+		
+		completion_reward = {
+			every_country = {
+				limit = { 
+					OR = {
+						is_in_faction_with = SOV 
+						tag = SOV
+						tag = UKR
+					}
+				}
+				swap_ideas = {
+					remove_idea = UKR_idea_eacu_cooperation
+					add_idea = UKR_idea_eacu_cooperation_2
+				}
+			}
+			UKR_idea_pro_russia_government_reforms = yes 
+		}
+		
+	}
 
 	### Increasing Popularity
 	focus = { 
 		id = UKR_increasing_popularity
 		icon = demand_territory
-		x = 21
-		y = 3
+		x = 0
+		y = 2
+		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -514,17 +853,29 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_try_to_reach_an_agreement }
 		
+		completion_reward = {
+			add_popularity = {
+				ideology = communism
+				popularity = 0.075
+			}
+			recalculate_party = yes 
+			UKR_idea_pro_russia_government_reforms = yes 
+		}
+		
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Clash with opposition
 	focus = { 
 		id = UKR_clash_with_opposition
 		icon = political_pressure
-		x = 20
-		y = 4
+		x = -1
+		y = 3
+		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -532,17 +883,33 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_try_to_reach_an_agreement }
 		
+		completion_reward = {
+			add_popularity = {
+				ideology = neutrality
+				popularity = -0.05
+			}
+			add_popularity = {
+				ideology = democratic
+				popularity = -0.05
+			}
+			recalculate_party = yes
+			UKR_idea_pro_russia_government_reforms = yes 
+		}
+		
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Try to reach an agreement
 	focus = { 
 		id = UKR_try_to_reach_an_agreement
 		icon = tripartite_pact
-		x = 22
-		y = 4
+		x = 1
+		y = 3
+		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -550,17 +917,28 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_clash_with_opposition }
 		
+		completion_reward = {
+			hidden_effect = {
+				add_to_array = { gov_coalition_array = 4 } 
+				recalculate_party = yes 
+			}
+			custom_effect_tooltip = UKR_try_to_reach_an_agreement_TT
+			UKR_idea_pro_russia_government_reforms = yes 
+		}		
 	}
 
-#----------------------------------------------------------------------------------------------------------------
-
-	### Adopt the second language
+	### Adopt the second language/ Adopt Russian 
 	focus = { 
 		id = UKR_adopt_the_second_language
 		icon = treaty
-		x = 20
-		y = 5
+		x = -1
+		y = 4
+		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -568,17 +946,29 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_freedom_of_choise_in_regions }
 		
+		completion_reward = {
+			subtract_from_variable = { UKR_chance_of_collapse_var = 1.0 }
+			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_1_TT
+			every_owned_state = {
+				remove_core_of = NOV
+			}
+			UKR_idea_pro_russia_government_reforms = yes 
+		}
+		
 	}
 
-#----------------------------------------------------------------------------------------------------------------
-
-	### Freedom of choise in regions
+	### Freedom to Choose
 	focus = { 
 		id = UKR_freedom_of_choise_in_regions
 		icon = military_academy
-		x = 22
-		y = 5
+		x = 1
+		y = 4
+		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -586,17 +976,28 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_adopt_the_second_language }
 		
+		completion_reward = {	
+			add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
+			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT 
+			every_owned_state = {
+				remove_core_of = NOV
+			}
+			UKR_idea_pro_russia_government_reforms = yes 
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Federalisation
 	focus = { 
 		id = UKR_federalisation
 		icon = treaty2
-		x = 20
-		y = 6
+		x = -1
+		y = 5
+		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -604,17 +1005,39 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_centralization }
 		
+		completion_reward = {
+			if = {
+				limit = { has_idea = bureau_05 }
+				swap_ideas = { remove_idea = bureau_05 add_idea = bureau_04 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_04 }
+				swap_ideas = { remove_idea = bureau_04 add_idea = bureau_03 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_03 }
+				swap_ideas = { remove_idea = bureau_03 add_idea = bureau_02 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_02 }
+				swap_ideas = { remove_idea = bureau_02 add_idea = bureau_01 }
+			}
+			UKR_idea_pro_russia_government_reforms = yes 
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Centralization
 		focus = { 
 		id = UKR_centralization
 		icon = treaty4
-		x = 22
-		y = 6
+		x = 1
+		y = 5
+		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -622,53 +1045,98 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_federalisation }
 		
+		completion_reward = {
+			if = {
+				limit = { has_idea = bureau_01 }
+				swap_ideas = { remove_idea = bureau_01 add_idea = bureau_02 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_02 }
+				swap_ideas = { remove_idea = bureau_02 add_idea = bureau_03 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_03 }
+				swap_ideas = { remove_idea = bureau_03 add_idea = bureau_04 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_04 }
+				swap_ideas = { remove_idea = bureau_04 add_idea = bureau_05 }
+			}
+			UKR_idea_pro_russia_government_reforms = yes 
+		}
 	} 
-
-#----------------------------------------------------------------------------------------------------------------
 	
-#########################
-# Relations with Russia #
-#########################
-	
-	### Rapprochement with Russia
+	### Reapproachment with Russia
 	focus = { 
 		id = UKR_rapprochement_with_russia
 		icon = GFX_rapprochement_with_russia
-		x = 21
-		y = 2
+		x = 0
+		y = 1
+		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_pro_russian_government_in_power }
 		
+		completion_reward = {
+			add_popularity = { ideology = communism popularity = 0.05 }
+			recalculate_party = yes
+			UKR_idea_pro_russia_government_reforms = yes 
+		}
+		
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
-	### Negotiations About Gas Price
+	### Negotiate Gas Prices
 	focus = { 
 		id = UKR_negotiations_about_gas_price
 		icon = GFX_negotiations_about_gas_price
-		x = 23
-		y = 3
+		x = 2
+		y = 2
+		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_rapprochement_with_russia }
 		
+		completion_reward = {
+			random_owned_state = {
+				add_resource = { 
+					type = oil 
+					amount = 6
+				}
+			}
+			random_owned_state = {
+				add_resource = { 
+					type = oil 
+					amount = 3
+				}
+			}
+			UKR_idea_pro_russia_government_reforms = yes 
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Kharkiv Pact
 	focus = { 
 		id = UKR_kharkiv_pact
 		icon = treaty3
-		x = 19
-		y = 3
+		x = -2
+		y = 2
+		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -676,99 +1144,131 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_eastern_doctrine }
 		
+		completion_reward = {
+			SOV = { country_event = { id = ukraine_md.12 hours = 2 } }
+			UKR_idea_pro_russia_government_reforms = yes
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
-#================================================================================================================
 
-######################################
-# Constitutional Changes (2000-2002) #
-######################################
-
-	### Constitutional referendum
-	focus = { 
+	### Consitution Referendum (Peoples' Referendum)
+	focus = {
 		id = UKR_peoples_referendum
 		icon = anti_democracy3
-		x = 27
-		y = 0
+		x = 25
+		y = 1
 		cost = 10
 		
-		ai_will_do = { factor = 90 }
+		bypass = {
+			date > 2016.12.31
+		}
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 100 }
+		
+		select_effect = {
+			country_event = { id = ukraine_debates.1 days = 23 }
+		}
 		
 		completion_reward = {
 			add_political_power = 150
-			country_event = { id = UKR_news.1 days = 1 }
 		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-	
-	### Referendum Results Implementation
+	### Referendum Results
 	focus = { 
 		id = UKR_referendum_results_implementation
 		icon = treaty3
-		x = 27
-		y = 2
+		x = 2
+		y = 1 
+		relative_position_id = UKR_peoples_referendum
 		cost = 15
 		
-		ai_will_do = { factor = 1 }
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
-		mutually_exclusive = { focus = UKR_politreforma }
+		ai_will_do = { factor = 100 }
 		
 		prerequisite = { focus = UKR_peoples_referendum }
 		
-		available = {
-			date > 2000.11.10
-			NOT = { has_country_flag = UKR_cassette_scandal }
-		}
-		
-		select_effect = {
-			country_event = { id = UKR_news.2 days = 7 }
-		}
-		
-		completion_reward = {
-			country_event = { id = UKR_news.3 days = 1 }
-		}
-	}
-	
-#----------------------------------------------------------------------------------------------------------------
-	
-	### Politreforma
-	focus = { 
-		id = UKR_politreforma
-		icon = self_management
-		x = 23
-		y = 2
-		cost = 10
-		
-		ai_will_do = { factor = 90 }
-		
-		available = {
-			date > 2002.7.1
-			has_idea = oligarchs
-		}
-		
-		mutually_exclusive = { focus = UKR_referendum_results_implementation }
-		
 		bypass = {
+			date > 2016.12.31
+		}
+		
+		available = {
+			date > 2000.3.15
 			OR = {
-				has_country_flag = UKR_2001_revolution_successful
-				has_idea = UKR_constitutional_changes
+				has_country_flag = UKR_passed_referendum
+				has_country_flag = UKR_failed_referendum
 			}
 		}
 		
 		completion_reward = {
+			if = {
+				limit = {
+					has_country_flag = UKR_passed_referendum
+				}
+				add_timed_idea = {
+					idea = UKR_constitutional_changes
+					days = 180
+				}
+			}
+			else_if = {
+				limit = {
+					has_country_flag = UKR_failed_referendum
+				}
+				add_timed_idea = {
+					idea = UKR_constitutional_changes_failed
+					days = 180
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = {
+						has_country_flag = UKR_passed_referendum
+						has_country_flag = UKR_failed_referendum
+					}
+				}
+				custom_effect_tooltip = UKR_referendum_results_implementation_TT
+			}
+		}
+	}
+	
+	### Our Identity
+	focus = { 
+		id = UKR_our_identity
+		icon = self_management
+		x = -2
+		y = 1
+		relative_position_id = UKR_peoples_referendum
+		cost = 10
 		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		bypass = {
+			date > 2016.12.31
+		}
+		
+		ai_will_do = { factor = 100 }
+		
+		prerequisite = { focus = UKR_peoples_referendum }
+		
+		available = {
+			date > 2000.6.1
+		}
+		
+		completion_reward = {
+			country_event = ukraine_md.5
+			add_political_power = 100
 		}
 	}
 
-#----------------------------------------------------------------------------------------------------------------	
-#================================================================================================================
-
-######################
-# Oligarchism Branch #
-######################
-
+	##Oligarchs Branch(es)
 	### Save the status Quo
 	focus = { 
 		id = UKR_save_the_status_quo
@@ -777,48 +1277,82 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 3
 		cost = 10
 		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		ai_will_do = { factor = 1 }
 		
 		available = {
 			has_government = neutrality
 			has_idea = oligarchs
+			NOT = { 
+				has_country_flag = UKR_supported_russian_parties_flag
+			}
 		}
-		
+		 
 		completion_reward = {
-		
+			if = {
+				limit = { has_idea = oligarchs }
+				visually_display_opinion_rise_oligarchs = yes
+				set_country_flag = current_oligarchs
+				increase_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = UKR_kleptocracy }
+				swap_ideas = {
+					remove_idea = UKR_kleptocracy
+					add_idea = UKR_kleptocracy_empowered
+				}
+			}
 		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 	
 	### Backstage arrangements
 	focus = { 
 		id = UKR_backstage_arrangements
 		icon = dangerous_deal
-		x = 27
-		y = 4
+		x = 2
+		y = 1
+		relative_position_id = UKR_save_the_status_quo
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 50 }
 		
 		prerequisite = { focus = UKR_save_the_status_quo }
 		
-		mutually_exclusive = { focus = UKR_anticorruption_plan }
-		
 		completion_reward = {
-		
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.10
+			}
+			add_to_variable = { party_pop_array^15 = 0.10 }
+			recalculate_party = yes
+			if = {
+				limit = { has_idea = oligarchs }
+				visually_display_opinion_rise_oligarchs = yes
+				set_country_flag = current_oligarchs
+				increase_internal_faction_opinion = yes
+			}
 		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Stay with Families
 	focus = { 
 		id = UKR_stay_with_families
 		icon = tripartite_pact
-		x = 27
-		y = 5
+		x = 2
+		y = 2
+		relative_position_id = UKR_save_the_status_quo
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
@@ -827,19 +1361,27 @@ continuous_focus_position = { x = 135 y = 950 }
 		mutually_exclusive = { focus = UKR_war_with_oligarhism }
 		
 		completion_reward = {
-		
+			if = {
+				limit = { has_idea = oligarchs }
+				visually_display_opinion_rise_oligarchs = yes
+				set_country_flag = current_oligarchs
+				increase_internal_faction_opinion = yes
+			}
 		}	
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Families Rule
 	focus = { 
 		id = UKR_families_rule
 		icon = union_negotiations
-		x = 25
-		y = 6
+		x = 0
+		y = 3
+		relative_position_id = UKR_save_the_status_quo
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
@@ -850,19 +1392,28 @@ continuous_focus_position = { x = 135 y = 950 }
 		mutually_exclusive = { focus = UKR_take_power_in_one_hands }
 		
 		completion_reward = {
-		
+			if = {
+				limit = { has_idea = oligarchs }
+				visually_display_opinion_rise_oligarchs = yes
+				set_country_flag = current_oligarchs
+				increase_internal_faction_opinion = yes
+			}
+			add_stability = 0.05
 		}	
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
-	### Take the power in one hands
+	### Seize Power
 	focus = { 
 		id = UKR_take_power_in_one_hands
 		icon = ultimatum2
-		x = 29
-		y = 6
+		x = 4
+		y = 3
+		relative_position_id = UKR_save_the_status_quo
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
@@ -871,47 +1422,69 @@ continuous_focus_position = { x = 135 y = 950 }
 		mutually_exclusive = { focus = UKR_families_rule }
 		
 		completion_reward = {
-		
+			if = {
+				limit = { has_idea = oligarchs }
+				visually_display_opinion_fall_oligarchs = yes
+				set_country_flag = current_oligarchs
+				decrease_internal_faction_opinion = yes
+			}
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			} 
+			###Rinat Akehmtov or Lenoid Kuchma holds power idk what I want yet(Wealthiest Man in Ukraine add into scripted_effects)
 		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Strenghten the Power
 	focus = { 
 		id = UKR_strenghten_the_power
 		icon = attack_democracy
-		x = 27
-		y = 7
+		x = 2
+		y = 4
+		relative_position_id = UKR_save_the_status_quo
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		prerequisite = { focus = UKR_families_rule focus = UKR_take_power_in_one_hands }
 		
 		ai_will_do = { factor = 1 } 
+		
+		completion_reward = {
+			add_war_support = 0.05
+			add_popularity = { ideology = communism popularity = -0.05 }
+			add_popularity = { ideology = democratic popularity = -0.05 }
+			recalculate_party = yes
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Authoritarian Rule
 	focus = { 
 		id = UKR_authoritarian_rule
 		icon = political_pressure
-		x = 27
-		y = 9
+		x = 2
+		y = 6
+		relative_position_id = UKR_save_the_status_quo
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		prerequisite = { focus = UKR_strenghten_the_power }
 		
 		ai_will_do = { factor = 1 } 
+		
+		completion_reward = {
+			add_stability = 0.02
+			add_political_power = 100
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-#================================================================================================================
-
-###############################
-# Pro-Ukrainian Policy Branch #
-###############################
-	
+	##Pro-Ukraine Stuff
 	### Pro-Ukrainian Government in power
 	focus = { 
 		id = UKR_pro_ukrainian_government_in_power
@@ -920,84 +1493,171 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 1
 		cost = 10
 		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		ai_will_do = { factor = 1 } 
 		
 		available = {
-			OR = { 
-				has_government = democratic
-				has_government = nationalist
-			}
+			NOT = { has_country_flag = UKR_supported_russian_parties_flag }
+			has_country_flag = UKR_supported_patriotic_parties_flag
 		}
 		
-		mutually_exclusive = { focus = UKR_pro_russian_government_in_power }
+		completion_reward = {
+			hidden_effect = { ###Euromaidan Coalition
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 18 }
+				add_to_array = { gov_coalition_array = 14 }
+				add_to_array = { gov_coalition_array = 20 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+			add_to_variable = { party_pop_array^18 = 0.08 }
+			add_to_variable = { party_pop_array^14 = 0.02 }
+			recalculate_party = yes
+			add_to_variable = { UKR_chance_of_collapse_var = 3.0 }
+			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_3_TT
+			add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
+			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Found the NABU
 	focus = { 
 		id = UKR_restructuring_of_anticorruption_committee
 		icon = GFX_restructuring_of_anticorruption_committee
-		x = 29
-		y = 2
+		x = -6
+		y = 1
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_pro_ukrainian_government_in_power }
 		
 		completion_reward = {
-			relative_change_pos_2 = yes
+			if = {
+				limit = { has_idea = paralyzing_corruption }
+				swap_ideas = { remove_idea = paralyzing_corruption add_idea = crippling_corruption }
+			}
+			else_if = {
+				limit = { has_idea = crippling_corruption }
+				swap_ideas = { remove_idea = crippling_corruption add_idea = rampant_corruption }
+			}
+			else_if = {
+				limit = { has_idea = rampant_corruption }
+				swap_ideas = { remove_idea = rampant_corruption add_idea = unrestrained_corruption }
+			}
+			else_if = {
+				limit = { has_idea = unrestrained_corruption }
+				swap_ideas = { remove_idea = unrestrained_corruption add_idea = systematic_corruption }
+			}
+			else_if = {
+				limit = { has_idea = systematic_corruption }
+				swap_ideas = { remove_idea = systematic_corruption add_idea = widespread_corruption }
+			}
+			else_if = {
+				limit = { has_idea = widespread_corruption }
+				swap_ideas = { remove_idea = widespread_corruption add_idea = medium_corruption }
+			}
+			else_if = {
+				limit = { has_idea = medium_corruption }
+				swap_ideas = { remove_idea = medium_corruption add_idea = modest_corruption }
+			}
+			UKR_idea_pro_ukraine_government_reforms = yes 
 		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Judiciary Reform
 	focus = { 
 		id = UKR_judiciary_reform
 		icon = GFX_judiciary_reform
-		x = 31
-		y = 2
+		x = -4
+		y = 1
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_pro_ukrainian_government_in_power }
 		
 		completion_reward = {
-			relative_change_pos_2 = yes
+			UKR_idea_pro_ukraine_government_reforms = yes
 		}
 	} 
-
-#----------------------------------------------------------------------------------------------------------------
 
 	### Police Reform
 	focus = { 
 		id = UKR_police_reform
 		icon = GFX_police_reform
-		x = 33
-		y = 2
+		x = -2
+		y = 1
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_pro_ukrainian_government_in_power }
 		
 		completion_reward = {
-			relative_change_pos_2 = yes
+			if = {
+				limit = { has_idea = police_01 }
+				swap_ideas = { remove_idea = police_01 add_idea = police_02 }
+			}
+			else_if = {
+				limit = { has_idea = police_02 }
+				swap_ideas = { remove_idea = police_02 add_idea = police_03 }
+			}
+			else_if = {
+				limit = { has_idea = police_03 }
+				swap_ideas = { remove_idea = police_03 add_idea = police_04 }
+			}
+			else_if = {
+				limit = { has_idea = police_04 }
+				swap_ideas = { remove_idea = police_04 add_idea = police_05 }
+			} #this will increase policing
+			UKR_idea_pro_ukraine_government_reforms = yes
 		}
 	}
-
-#----------------------------------------------------------------------------------------------------------------	
-
+	
 	### Anti-Corruption Plan
 	focus = { 
 		id = UKR_anticorruption_plan
 		icon = military_deal
-		x = 31
-		y = 4
+		x = -4
+		y = 3
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
@@ -1007,17 +1667,50 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_police_reform }
 		
+		completion_reward = {
+			if = {
+				limit = { has_idea = paralyzing_corruption }
+				swap_ideas = { remove_idea = paralyzing_corruption add_idea = crippling_corruption }
+			}
+			else_if = {
+				limit = { has_idea = crippling_corruption }
+				swap_ideas = { remove_idea = crippling_corruption add_idea = rampant_corruption }
+			}
+			else_if = {
+				limit = { has_idea = rampant_corruption }
+				swap_ideas = { remove_idea = rampant_corruption add_idea = unrestrained_corruption }
+			}
+			else_if = {
+				limit = { has_idea = unrestrained_corruption }
+				swap_ideas = { remove_idea = unrestrained_corruption add_idea = systematic_corruption }
+			}
+			else_if = {
+				limit = { has_idea = systematic_corruption }
+				swap_ideas = { remove_idea = systematic_corruption add_idea = widespread_corruption }
+			}
+			else_if = {
+				limit = { has_idea = widespread_corruption }
+				swap_ideas = { remove_idea = widespread_corruption add_idea = medium_corruption }
+			}
+			else_if = {
+				limit = { has_idea = medium_corruption }
+				swap_ideas = { remove_idea = medium_corruption add_idea = modest_corruption }
+			}
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 	
 	### Deal with Oligarhism
 	focus = { 
 		id = UKR_war_with_oligarhism
 		icon = self_management
-		x = 31
-		y = 5
+		x = -4
+		y = 4
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
@@ -1026,134 +1719,229 @@ continuous_focus_position = { x = 135 y = 950 }
 		mutually_exclusive = { focus = UKR_stay_with_families }
 		
 		completion_reward = {
-			relative_change_pos_6 = yes
+			add_popularity = { ideology = neutrality popularity = -0.10 }
+			add_political_power = 75
+			recalculate_party = yes
+			UKR_idea_pro_ukraine_government_reforms = yes 
 		}		
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Economic Recovery Program
 	focus = { 
 		id = UKR_economic_recovery_program
 		icon = gold_standard
-		x = 31
-		y = 7
+		x = -4
+		y = 6
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_war_with_oligarhism }
 		
+		completion_reward = {
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = industrial_complex
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
+		
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 	
 	### Privatization of State Enterprises
 	focus = { 
 		id = UKR_privatization_of_state_enterprises
 		icon = industry_democratic
-		x = 29
-		y = 8
+		x = -6
+		y = 7
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_economic_recovery_program }
 		
+		completion_reward = {
+			if = {
+				limit = { has_idea = oligarchs }
+				visually_display_opinion_fall_oligarchs = yes
+				set_country_flag = current_oligarchs
+				decrease_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = international_bankers }
+				visually_display_opinion_rise_international_bankers = yes
+				set_country_flag = current_international_bankers
+				increase_internal_faction_opinion = yes
+			}
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 	
 	### Fight against Bureaucracy
 	focus = { 
 		id = UKR_fight_against_bureaucracy
 		icon = renounce_treaty
-		x = 31
-		y = 8
+		x = -4
+		y = 7
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_economic_recovery_program }
 		
+		completion_reward = {
+			add_political_power = 150
+			UKR_idea_pro_ukraine_government_reforms = yes 
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
-	### Bet on Small and Medium-sized Business
+	### Promote Small Business
 	focus = { 
 		id = UKR_bet_on_small_business
 		icon = industry
-		x = 33
-		y = 8
+		x = -2
+		y = 7
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_economic_recovery_program }
 		
+		completion_reward = {
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1 
+			}
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+			}
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Legacy of the Revolution of Dignity
 	focus = { 
 		id = UKR_legacy_of_the_revolution_of_dignity
 		icon = GFX_legacy_of_the_revolution_of_dignity
-		x = 35
-		y = 3
+		x = 0
+		y = 2
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_pro_ukrainian_government_in_power }
 		
+		completion_reward = {
+			UKR_idea_pro_ukraine_government_reforms = yes 
+		}
+		
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Unite the Opposition
 	focus = { 
 		id = UKR_unite_the_opposition
 		icon = GFX_unite_the_opposition
-		x = 35
-		y = 4
+		x = 0
+		y = 3
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_legacy_of_the_revolution_of_dignity }
 		
+		completion_reward = {
+			add_5_popularity = yes  
+			add_stability = 0.05
+		}
 	}
-
-#----------------------------------------------------------------------------------------------------------------
 
 	### Health Care Reform
 	focus = { 
 		id = UKR_health_care_reform
 		icon = GFX_health_care_reform
-		x = 37
-		y = 2
+		x = 2
+		y = 1
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_pro_ukrainian_government_in_power }
 		
 		completion_reward = {
-			relative_change_pos_2 = yes
+			if = {
+				limit = { has_idea = health_01 }
+				swap_ideas = { remove_idea = health_01 add_idea = health_02 }
+			}
+			else_if = {
+				limit = { has_idea = health_02 }
+				swap_ideas = { remove_idea = health_02 add_idea = health_03 }
+			}
+			else_if = {
+				limit = { has_idea = health_03 }
+				swap_ideas = { remove_idea = health_03 add_idea = health_04 }
+			}
+			else_if = {
+				limit = { has_idea = health_04 }
+				swap_ideas = { remove_idea = health_04 add_idea = health_05 }
+			}
+			else_if = {
+				limit = { has_idea = health_05 }
+				swap_ideas = { remove_idea = health_05 add_idea = health_06 }
+			} ###Regardless will boost health reforms
+			UKR_idea_pro_ukraine_government_reforms = yes 
 		}
 	} 
-
-#----------------------------------------------------------------------------------------------------------------
 	
 	### Ukrainian Orthodox Church
 	focus = { 
 		id = UKR_uoc
 		icon = GFX_ukr_orthodox
-		x = 41
-		y = 2
+		x = 6
+		y = 1
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
@@ -1161,103 +1949,183 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		completion_reward = {
 			add_stability = -0.05
-			relative_change_pos_4 = yes
+			swap_ideas = {
+				remove_idea = orthodox_christian
+				add_idea = UKR_idea_orthodox_chrisitan_church
+			}
 		}
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Education Reform
 	focus = { 
 		id = UKR_education_reform
 		icon = GFX_education_reform
-		x = 39
-		y = 2
+		x = 4
+		y = 1
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_pro_ukrainian_government_in_power }
 		
 		completion_reward = {
-			relative_change_pos_2 = yes
+			if = {
+				limit = { has_idea = edu_01 }
+				swap_ideas = { remove_idea = edu_01 add_idea = edu_02 }
+			}
+			else_if = {
+				limit = { has_idea = edu_02 }
+				swap_ideas = { remove_idea = edu_02 add_idea = edu_03 }
+			}
+			else_if = {
+				limit = { has_idea = edu_03 }
+				swap_ideas = { remove_idea = edu_03 add_idea = edu_04 }
+			}
+			else_if = {
+				limit = { has_idea = edu_04 }
+				swap_ideas = { remove_idea = edu_04 add_idea = edu_05 }
+			}
+			UKR_idea_pro_ukraine_government_reforms = yes
 		}
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Invest in NASU
 	focus = { 
 		id = UKR_invest_in_nasu
 		icon = GFX_invest_in_nasu
-		x = 39
-		y = 5
+		x = 4
+		y = 4
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_education_reform }
 		
+		completion_reward = {
+			add_ideas = scientific_advances
+		}
+		
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Support SSAU
 	focus = { 
 		id = UKR_ssau
 		icon = GFX_ukr_ssau
-		x = 39
-		y = 6
+		x = 4
+		y = 5
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
-		prerequisite = { focus = UKR_invest_in_nasu } 
+		prerequisite = { focus = UKR_invest_in_nasu }
+
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = scientific_advances
+				add_idea = scientific_advances2
+			}
+		}
+			
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-	
-	### Parlamentary Reform
+	###Consitutional Reform
 	focus = { 
 		id = UKR_parlamentary_reform
 		icon = treaty
-		x = 33
-		y = 5
+		x = -2
+		y = 4
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_unite_the_opposition focus = UKR_snap_election }
 		
-		mutually_exclusive = { focus = UKR_direct_democracy_idea }
+		mutually_exclusive = {
+			focus = UKR_direct_democracy_idea
+		}
 		
+		completion_reward = {
+			if = {
+				limit = { has_idea = bureau_01 }
+				swap_ideas = { remove_idea = bureau_01 add_idea = bureau_02 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_02 }
+				swap_ideas = { remove_idea = bureau_02 add_idea = bureau_03 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_03 }
+				swap_ideas = { remove_idea = bureau_03 add_idea = bureau_04 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_04 }
+				swap_ideas = { remove_idea = bureau_04 add_idea = bureau_05 }
+			}
+		}
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Direct Democracy Idea
 	focus = { 
 		id = UKR_direct_democracy_idea
 		icon = GFX_parlamentary_reform
-		x = 37
-		y = 5
+		x = 2
+		y = 4
+		relative_position_id = UKR_pro_ukrainian_government_in_power
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_unite_the_opposition focus = UKR_snap_election }
 		
-		mutually_exclusive = { focus = UKR_parlamentary_reform }
+		mutually_exclusive = {
+			focus = UKR_parlamentary_reform
+		}
 		
+		completion_reward = {
+			if = {
+				limit = { has_idea = bureau_05 }
+				swap_ideas = { remove_idea = bureau_05 add_idea = bureau_04 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_04 }
+				swap_ideas = { remove_idea = bureau_04 add_idea = bureau_03 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_03 }
+				swap_ideas = { remove_idea = bureau_03 add_idea = bureau_02 }
+			}
+			else_if = {
+				limit = { has_idea = bureau_02 }
+				swap_ideas = { remove_idea = bureau_02 add_idea = bureau_01 }
+			}
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
-#================================================================================================================
 
-########################
-# Nationalistic Branch #
-########################
-
+	##Nationalist Branch/Usable w/ Oligarhcs and Pro Ukraine
 	### Take lead at National Revival
 	focus = { 
 		id = UKR_take_lead_at_national_revival
@@ -1266,147 +2134,262 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 1
 		cost = 10
 		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		ai_will_do = { factor = 1 } 
 		
 		available = {
-			has_country_flag = UKR_revolution3
+			OR = {
+				has_completed_focus = UKR_pro_ukrainian_government_in_power
+				has_completed_focus = UKR_save_the_status_quo 
+			}
+			NOT = { has_completed_focus = UKR_pro_russian_government_in_power }
+			custom_trigger_tooltip = {
+				check_variable = { UKR_stability_of_ukraine_var > 50 }
+				tooltip = UKR_take_lead_at_national_revival_focus_TT
+			}
+		}
+		
+		completion_reward = {
+			add_popularity = { ideology = nationalist popularity = 0.10 }
+			recalculate_party = yes
+			add_war_support = 0.02
 		}
 	}  
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Enlist the people support
 	focus = { 
 		id = UKR_enlist_the_people_support
 		icon = national_unity
-		x = 43
-		y = 2
+		x = -3
+		y = 1
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_take_lead_at_national_revival }
 		
 		mutually_exclusive = { focus = UKR_take_the_power_by_force }
+		
+		completion_reward = {
+			add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
+			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+			subtract_from_variable = { UKR_chance_of_collapse_var = 2.0 }
+			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_2_TT
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Snap Election
 	focus = { 
 		id = UKR_snap_election
 		icon = anti_democracy3
-		x = 41
-		y = 4
+		x = -5
+		y = 3
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_enlist_the_people_support }
 		
-		mutually_exclusive = { focus = UKR_state_of_emergency }
-		
+		completion_reward = {
+			add_political_power = 150
+			if = {
+				limit = { has_government = neutrality }
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = no
+				}
+			}
+			else_if = {
+				limit = { has_government = nationalist }
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+			}
+			if = {
+				limit = { has_government = communism }
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+				}
+			}
+			if = {
+				limit = { has_government = democratic }
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = no
+				}
+			}
+		}
 	}  
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### State of Emergency
 	focus = { 
 		id = UKR_state_of_emergency
 		icon = forceful_treaty
-		x = 43
-		y = 4
+		x = -3
+		y = 3
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_enlist_the_people_support }
 		
-		mutually_exclusive = { focus = UKR_snap_election }
-		
+		completion_reward = {
+			add_war_support = 0.05
+			add_political_power = 150
+		}
 	}  
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Strong Republic
 	focus = { 
 		id = UKR_strong_republic
 		icon = GFX_strong_republic
-		x = 43
-		y = 5
+		x = -3
+		y = 4
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_state_of_emergency }
 		
-		mutually_exclusive = { focus = UKR_strong_state } 
-		
 		mutually_exclusive = { focus = UKR_strong_nation }
+		mutually_exclusive = { focus = UKR_strong_state }
 		
+		completion_reward = {
+			add_ideas = UKR_idea_strong_state
+		}
 	}  
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### New National Idea
 	focus = { 
 		id = UKR_new_national_idea
 		icon = demand_territory2
-		x = 43
-		y = 6
+		x = -3
+		y = 5
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
-		mutually_exclusive = { focus = UKR_clean_the_country }
-		
 		prerequisite = { focus = UKR_strong_republic }
 		
+		completion_reward = {
+			add_political_power = 100
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Take the Power by Force
 	focus = { 
 		id = UKR_take_the_power_by_force
 		icon = attack_democracy
-		x = 49
-		y = 2
+		x = 3
+		y = 1
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_take_lead_at_national_revival }
 		
-		mutually_exclusive = { focus = UKR_enlist_the_people_support }
-		 
+		mutually_exclusive = { focus = UKR_enlist_the_people_support  }
+		
+		completion_reward = {
+			hidden_effect = { ###Nationalist Coalition
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 21 }
+				add_to_array = { gov_coalition_array = 22 }
+				add_to_array = { gov_coalition_array = 20 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			add_to_variable = { party_pop_array^21 = 0.10 }
+			add_to_variable = { party_pop_array^22 = 0.05 }
+			add_popularity = { ideology = nationalist popularity = 0.15 }
+			recalculate_party = yes
+			add_to_variable = { UKR_chance_of_collapse_var = 3.0 }
+			subtract_from_variable = { UKR_stability_of_ukraine_var = 5.0 }
+			custom_effect_tooltip = UKR_nationalist_empowerment_TT
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
-	### Choose the Leader
-	focus = { 
+	### Nationalistic Pressure
+	focus = {
 		id = UKR_choose_the_leader
 		icon = GFX_choose_the_leader
-		x = 47
-		y = 3
+		x = 1
+		y = 2
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_take_the_power_by_force }
 		
-	}	
+		completion_reward = {
+			add_5_popularity = yes
+			add_to_variable = { UKR_chance_of_collapse_var = 1.0 }
+			custom_effect_tooltip = UKR_raise_chance_of_revolt_by_1_TT 
+		}
+		
+	}
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### National Viche
-	focus = { 
+	focus = {
 		id = UKR_choose_the_national_viche
 		icon = military_academy
-		x = 45
-		y = 4
+		x = -1
+		y = 3
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -1414,17 +2397,26 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_choose_the_true_leader }
 		
+		completion_reward = {
+			add_5_popularity = yes 
+			add_stability = 0.05
+			add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
+			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+		}
 	} 
 
-#----------------------------------------------------------------------------------------------------------------
-
 	### New Hetman
-	focus = { 
+	focus = {
 		id = UKR_choose_the_true_leader
 		icon = GFX_choose_the_true_leader
-		x = 49
-		y = 4
+		x = 3
+		y = 3
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -1432,17 +2424,29 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_choose_the_national_viche }
 		
+		completion_reward = {
+			add_5_popularity = yes 
+			add_war_support = 0.05
+			add_to_variable = { UKR_stability_of_ukraine_var = -5.0 }
+			subtract_from_variable = { UKR_chance_of_collapse_var = 3.0 }
+			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_3_TT
+		}
+		
 	}  
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Strong State
 	focus = { 
 		id = UKR_strong_state
 		icon = GFX_strong_state
-		x = 47
-		y = 5
+		x = 1
+		y = 4
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
@@ -1452,65 +2456,95 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_strong_republic }
 		
+		completion_reward = {
+			add_ideas = UKR_idea_strong_state
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Clean the Country
 	focus = { 
 		id = UKR_clean_the_country
 		icon = anti_establishment2
-		x = 47
-		y = 6
+		x = 1
+		y = 5
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_strong_republic focus = UKR_strong_state focus = UKR_strong_nation }
 		
+		completion_reward = {
+			add_to_variable = { UKR_stability_of_ukraine_var = 3.0 }
+			add_to_variable = { UKR_chance_of_collapse_var = 1.0 }
+			custom_effect_tooltip = UKR_raise_chance_of_revolt_by_1_TT
+			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_3_TT
+		}
 	} 
-
-#----------------------------------------------------------------------------------------------------------------
 
 	### True political and national freedom
 	focus = { 
 		id = UKR_true_political_and_national_freedom
 		icon = demand_territory
-		x = 45
-		y = 7
+		x = -1
+		y = 6
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_clean_the_country }
 		
+		completion_reward = {
+			add_ideas = political_power_bonus
+		}
 	}
-
-#----------------------------------------------------------------------------------------------------------------	
 
 	### One Nation, One Language, One Way
 	focus = { 
 		id = UKR_one_language_nation_way
 		icon = national_unity
-		x = 47
-		y = 7
+		x = 1
+		y = 6
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_clean_the_country }
 		
+		completion_reward = {
+			add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
+			add_to_variable = { UKR_chance_of_collapse_var = 3.0 }
+			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+			custom_effect_tooltip = UKR_raise_chance_of_revolt_by_3_TT
+		}
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Deal with Traitors of Fatherland
 	focus = { 
 		id = UKR_deal_with_traitors_of_fatherland
 		icon = GFX_deal_with_traitors
-		x = 49
-		y = 7
+		x = 3
+		y = 6
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -1518,33 +2552,46 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_derzhavna_varta }
 		
+		completion_reward = {
+			add_ideas = idea_focus_generic_army_of_purity
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Derzhavna Varta
 	focus = { 
 		id = UKR_derzhavna_varta
 		icon = GFX_derzhavna_varta
-		x = 49
-		y = 6
+		x = 3
+		y = 5
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_strong_nation focus = UKR_strong_state }
 		
+		completion_reward = {
+			add_stability = -0.05
+			add_war_support = 0.10
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Millenial Hetmanate
 	focus = { 
 		id = UKR_millenial_hetmanate
 		icon = fascism
-		x = 51
-		y = 8
+		x = 5
+		y = 7
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
@@ -1552,17 +2599,23 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_deal_with_traitors_of_fatherland }
 		
+		completion_reward = {
+			add_ideas = UKR_idea_modern_cossacks
+		}
 	}
-
-#----------------------------------------------------------------------------------------------------------------
 
 	### Strong Nation
 	focus = { 
 		id = UKR_strong_nation
 		icon = GFX_strong_nation
-		x = 51
-		y = 5
+		x = 5
+		y = 4
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -1574,162 +2627,81 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_strong_republic }
 		
+		completion_reward = {
+			add_ideas = UKR_idea_strong_nation
+		}
 	} 
-
-#----------------------------------------------------------------------------------------------------------------
 
 	### Reorganize the National Guard
 	focus = { 
 		id = UKR_reorganize_the_national_guard
 		icon = GFX_reorganize_the_national_guard
-		x = 49
-		y = 3
+		x = 3
+		y = 2
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_take_the_power_by_force }
 		
+		completion_reward = {
+			custom_effect_tooltip = UKR_reorganize_the_national_guard_focus_TT
+			add_political_power = 150 
+		}
+		
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Support the ultra-right wing
 	focus = { 
 		id = UKR_support_the_ultra_right_wing
 		icon = dangerous_deal
-		x = 51
-		y = 3
+		x = 5
+		y = 2
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_take_the_power_by_force }
 		
+		completion_reward = {
+			add_popularity = { ideology = nationalist popularity = 5.0 }
+			recalculate_party = yes
+		}
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Ideological Doctrine
 	focus = { 
 		id = UKR_new_ideological_doctrine
 		icon = propaganda
-		x = 51
-		y = 4
+		x = 5
+		y = 3
+		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_support_the_ultra_right_wing }
 		
-	}
-	
-#----------------------------------------------------------------------------------------------------------------
-#================================================================================================================
-
-#################################################################################################################
-### 											ARMY BRANCH													  ###
-#################################################################################################################
-	
-	### Break the Budapest Memorandum
-	focus = { 
-		id = UKR_break_the_budapest_memorandum
-		icon = renounce_treaty
-		x = 54
-		y = 3
-		cost = 10
-		
-		ai_will_do = { factor = 1 } 
-		
-		prerequisite = { focus = UKR_deal_with_russian_agression } 
-
-	}
-
-#----------------------------------------------------------------------------------------------------------------	
-
-	### Restore Nuclear Status
-	focus = { 
-		id = UKR_restore_nuclear_status
-		icon = GFX_focus_rocketry
-		x = 54
-		y = 4
-		cost = 10
-		
-		ai_will_do = { factor = 1 } 
-		
-		prerequisite = { focus = UKR_break_the_budapest_memorandum }
-		
-	}
-	
-#----------------------------------------------------------------------------------------------------------------
-
-	### "Sovereignty" Project
-	focus = { 
-		id = UKR_sovereignty_project
-		icon = GFX_focus_wonderweapons
-		x = 54
-		y = 5
-		cost = 10
-		
-		ai_will_do = { factor = 1 } 
-		
-		prerequisite = { focus = UKR_restore_nuclear_status }
-		
-	}
-	
-#----------------------------------------------------------------------------------------------------------------
-
-	### Deal with Russian Agression
-	focus = { 
-		id = UKR_deal_with_russian_agression
-		icon = align_to_russia2
-		x = 56
-		y = 2
-		cost = 10
-		
-		ai_will_do = { factor = 1 } 
-		
-		available = {
-			SOV = { owns_state = 669 }
+		completion_reward = {
+			add_ideas = idea_focus_generic_fatherland_unity
 		}
-	} 
+	}
 	
-#----------------------------------------------------------------------------------------------------------------
-
-	### Political Reaction
-	focus = { 
-		id = UKR_political_reaction
-		icon = union_negotiations
-		x = 56
-		y = 3
-		cost = 10
-		
-		ai_will_do = { factor = 1 } 
-		 
-		prerequisite = { focus = UKR_deal_with_russian_agression } 
-		
-	} 
-	
-#----------------------------------------------------------------------------------------------------------------
-
-	### The "Wall" Project
-	focus = { 
-		id = UKR_the_wall_project
-		icon = defense
-		x = 58
-		y = 3
-		cost = 10
-		
-		ai_will_do = { factor = 1 } 
-		
-		prerequisite = { focus = UKR_deal_with_russian_agression }
-		
-		prerequisite = { focus = UKR_war_on_donbass_experience }
-		
-	} 
-	
-#----------------------------------------------------------------------------------------------------------------
-
+	##Military Focuses
 	### War on Donbas Experience
 	focus = { 
 		id = UKR_war_on_donbass_experience
@@ -1738,72 +2710,269 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 2
 		cost = 10
 		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		ai_will_do = { factor = 1 } 
 		
 		available = {
 			country_exists = NOV
+			NOT = { has_war_with = NOV }
+		}
+		
+		completion_reward = {
+			NOV = { country_event = ukraine_revolution.5 }
 		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
+	### Break the Budapest Memorandum
+	focus = { 
+		id = UKR_break_the_budapest_memorandum
+		icon = renounce_treaty
+		x = -4
+		y = 1
+		relative_position_id = UKR_war_on_donbass_experience
+		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 } 
+		
+		prerequisite = { focus = UKR_deal_with_russian_agression } 
+		
+		completion_reward = {
+			remove_ideas = UKR_budapest_memorandum
+			###Temp Focuses Until Nukes are Added back
+		}
 
+	}
+
+	### Restore Nuclear Status
+	focus = { 
+		id = UKR_restore_nuclear_status
+		icon = GFX_focus_rocketry
+		x = -4
+		y = 2
+		relative_position_id = UKR_war_on_donbass_experience
+		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 } 
+		
+		prerequisite = { focus = UKR_break_the_budapest_memorandum }
+		
+		completion_reward = {
+			###Temp Focuses Until Nukes are Added back
+			698 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1 
+					instant_build = yes 
+				}
+			}
+			custom_effect_tooltip = UKR_temp_focus_placeholder_until_tech_TT
+		}
+	}
+
+	### "Sovereignty" Project
+	focus = { 
+		id = UKR_sovereignty_project
+		icon = GFX_focus_wonderweapons
+		x = -4
+		y = 3
+		relative_position_id = UKR_war_on_donbass_experience
+		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 } 
+		
+		prerequisite = { focus = UKR_restore_nuclear_status }
+		
+		completion_reward = {
+			###Temp Focuses Until Nukes are Added back
+			698 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1 
+					instant_build = yes 
+				}
+			}
+			custom_effect_tooltip = UKR_temp_focus_placeholder_until_tech_TT
+		}
+		
+	}
+	
+	### Deal with Russian Agression
+	focus = { 
+		id = UKR_deal_with_russian_agression
+		icon = align_to_russia2
+		x = -2
+		y = 0
+		relative_position_id = UKR_war_on_donbass_experience
+		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 } 
+		
+		available = {
+			SOV = { owns_state = 669 }
+		}
+		
+		completion_reward = {
+			SOV = { country_event = { id = ukraine_revolution.4 hours = 8 } }
+		}
+	} 
+	
+	### Political Reaction
+	focus = {
+		id = UKR_political_reaction
+		icon = union_negotiations
+		x = -2
+		y = 1
+		relative_position_id = UKR_war_on_donbass_experience
+		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 } 
+		
+		prerequisite = { focus = UKR_deal_with_russian_agression } 
+		
+		completion_reward = {
+			if = {
+				limit = { SOV = { has_country_flag = UKR_denied_to_return_crimea } }
+			}
+			else_if = {
+				limit = { SOV = { has_country_flag = UKR_returned_crimea_to_ukraine } }
+			}
+			else_if = { 
+				limit = { SOV = { OR = { NOT = { has_country_flag = UKR_denied_to_return_crimea } NOT = { has_country_flag = UKR_returned_crimea_to_ukraine } } } }
+				custom_effect_tooltip = UKR_crimea_tooltip_TT
+			}
+		}
+	} 
+
+	### The "Wall" Project
+	focus = {
+		id = UKR_the_wall_project
+		icon = defense
+		x = 0
+		y = 1
+		relative_position_id = UKR_war_on_donbass_experience
+		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		ai_will_do = { factor = 1 } 
+		
+		prerequisite = { focus = UKR_deal_with_russian_agression }
+		
+		prerequisite = { focus = UKR_war_on_donbass_experience }
+		
+		completion_reward = { 
+			add_ideas = defensive_constructions5
+		}
+	} 
+	
 	### Lessons of Tuzla island conflict
 	focus = { 
 		id = UKR_lessons_of_tuzla_island_conflict
 		icon = army_logistics
-		x = 60
-		y = 2
+		x = 2
+		y = 0
+		relative_position_id = UKR_war_on_donbass_experience
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 
 		ai_will_do = { factor = 1 } 
 		
-		available = {
-			has_country_flag = UKR_tuzla_conflict
-		}
+		available = { }
 		
+		completion_reward = {
+			add_tech_bonus = {
+				name = land_doc_bonus
+				bonus = 0.5
+				uses = 2
+				category = land_doctrine
+			}
+		}
 	} 
-
-#----------------------------------------------------------------------------------------------------------------
 
 	### Revise our defensive potentialities
 	focus = { 
 		id = UKR_revise_our_defensive_potentialities
 		icon = tanks4
-		x = 60
-		y = 3
+		x = 2
+		y = 1
+		relative_position_id = UKR_war_on_donbass_experience
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_war_on_donbass_experience focus = UKR_lessons_of_tuzla_island_conflict }
 		
+		completion_reward = {
+			add_ideas = defensive_preparations
+		}
 	} 
-
-#----------------------------------------------------------------------------------------------------------------
 
 	### Ukrainian Armed Forces Reform
 	focus = { 
 		id = UKR_ukrainian_armed_forces_reform
 		icon = GFX_ukrainian_armed_forces_reform
-		x = 58
-		y = 4
+		x = 0
+		y = 2
+		relative_position_id = UKR_war_on_donbass_experience
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_revise_our_defensive_potentialities }
 		
+		completion_reward = {
+			add_ideas = UKR_idea_uar
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Cut down the general staff
 	focus = { 
 		id = UKR_cut_down_the_general_staff
 		icon = diplomacy
-		x = 56
-		y = 5
+		x = -2
+		y = 3
+		relative_position_id = UKR_war_on_donbass_experience
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -1811,69 +2980,110 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_enlist_the_general_staff_support }
 		
+		completion_reward = {
+			###Swaps to many generals to simplified general staff 
+			swap_ideas = {
+				remove_idea = UKR_to_many_generals
+				add_idea = UKR_idea_shortened_general_staff
+			}
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Enlist the general staff support
 	focus = { 
 		id = UKR_enlist_the_general_staff_support
 		icon = tripartite_pact
-		x = 60
-		y = 5
+		x = 2
+		y = 3
+		relative_position_id = UKR_war_on_donbass_experience
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_ukrainian_armed_forces_reform }
 		
 		mutually_exclusive = { focus = UKR_cut_down_the_general_staff }
-		 
+		
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = UKR_to_many_generals
+				add_idea = UKR_idea_trained_expanded_general_staff
+			}
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Professional Army
 	focus = { 
 		id = UKR_contract_army
 		icon = army_reform
-		x = 58
-		y = 6
+		x = 0
+		y = 4
+		relative_position_id = UKR_war_on_donbass_experience
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_ukrainian_armed_forces_reform }
 		
-		prerequisite = { focus = UKR_cut_down_the_general_staff }
+		prerequisite = { focus = UKR_cut_down_the_general_staff focus = UKR_enlist_the_general_staff_support }
 		
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = UKR_idea_uar
+				add_idea = UKR_idea_uar_professional
+			}
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Found the UOP
 	focus = { 
 		id = UKR_found_the_uop
 		icon = GFX_found_the_uop
-		x = 62
-		y = 3
+		x = 4
+		y = 1
+		relative_position_id = UKR_war_on_donbass_experience
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
-		prerequisite = { focus = UKR_revise_our_defensive_potentialities } 
+		prerequisite = { focus = UKR_lessons_of_tuzla_island_conflict focus = UKR_war_on_donbass_experience focus = UKR_deal_with_russian_agression } 
+		
+		completion_reward = {
+			add_war_support = 0.05
+			add_tech_bonus = {
+				name = UKR_IFV_bonus
+				bonus = 0.45
+				uses = 1
+				category = Cat_IFV
+			}
+		}
 		
 	} 
-
-#----------------------------------------------------------------------------------------------------------------
 
 	### Armor Production
 	focus = { 
 		id = UKR_armor_production
 		icon = GFX_armor_production
-		x = 60
-		y = 4
+		x = 2
+		y = 2
+		relative_position_id = UKR_war_on_donbass_experience
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -1881,17 +3091,42 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_revise_our_defensive_potentialities } 
 		
+		completion_reward = {
+			add_tech_bonus = {
+				name = armor_bonus
+				bonus = 0.50
+				uses = 1
+				category = Cat_ARMOR
+			}
+			random_owned_state = {
+				add_building_construction = {
+					type = arms_factory 
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				add_building_construction = {
+					type = arms_factory 
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Defend our Sky
 	focus = { 
 		id = UKR_defend_our_sky
 		icon = GFX_defend_our_sky
-		x = 62
-		y = 4
+		x = 4
+		y = 2
+		relative_position_id = UKR_war_on_donbass_experience
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -1899,49 +3134,107 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_revise_our_defensive_potentialities } 
 		
+		completion_reward = {
+			random_owned_state = {
+				add_building_construction = {
+					type = arms_factory 
+					level = 1
+					instant_build = yes
+				}
+			}
+			add_ideas = fighter_production_bonus
+		}
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Revive the Black Sea Fleet
 	focus = { 
 		id = UKR_revive_the_black_sea_fleet
 		icon = GFX_revive_the_black_sea_fleet
-		x = 64
-		y = 4
+		x = 6
+		y = 2
+		relative_position_id = UKR_war_on_donbass_experience
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_revive_the_black_sea_fleet_trigger_TT
+				check_variable = { treasury > 1.0 }
+			}
+		}
+		
 		prerequisite = { focus = UKR_found_the_uop }
 		
-		prerequisite = { focus = UKR_revise_our_defensive_potentialities } 
+		prerequisite = { focus = UKR_revise_our_defensive_potentialities }
+		
+		completion_reward = {
+			##Buffs Naval Dockyards and naval bases in the black sea (NOT DONBAS OR CRIMEA)
+			695 = { ##Odessa
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = dockyard
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = naval_base
+					level = 3
+					province = 11670
+					instant_build = yes
+				}
+			}
+			694 = { ##Mauripol
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = dockyard
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = naval_base
+					level = 3
+					province = 6420
+					instant_build = yes
+				}
+			}
+			subtract_from_variable = { treasury = 1.0 }
+			custom_effect_tooltip = UKR_revive_the_black_sea_fleet_effect_TT
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### SRDSC
 	focus = { 
 		id = UKR_srdsc
 		icon = GFX_srdsc
-		x = 64
-		y = 5
+		x = 6
+		y = 3
+		relative_position_id = UKR_war_on_donbass_experience
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
+		available = {
+			num_of_available_naval_factories > 5
+		}
+		
 		prerequisite = { focus = UKR_revive_the_black_sea_fleet }
 		
+		completion_reward = {
+			add_research_slot = 1 
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------	
-#================================================================================================================
-
-#################################################################################################################
-### 										INDUSTRIAL BRANCH												  ###
-#################################################################################################################
-
-	#0# Legacy of the Ukrainian Industrialization
+	##Ukrainian Industrialization
+	### Legacy of the Ukrainian Industrialization
 	focus = { 
 		id = UKR_legacy_of_the_ukr_ind
 		icon = industry3
@@ -1949,221 +3242,453 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 7
 		cost = 10
 		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		ai_will_do = { factor = 1 }
+		
+		completion_reward = {
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
-#1# Branch
-
-	#1# Pivdenmash and UDO
+	### Pivdenmash and UDO
 	focus = { 
 		id = UKR_pivdenmash_udo
 		icon = industry_civilian
-		x = 9
-		y = 8
+		x = -2
+		y = 1
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
 		prerequisite = { focus = UKR_legacy_of_the_ukr_ind }
+		
+		completion_reward = {
+			694 = { ##Zaporizhya
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-
-	#2# Rocket Program of Ukraine
+	### Rocket Program of Ukraine
 	focus = { 
 		id = UKR_rocket_program
 		icon = GFX_focus_rocketry
-		x = 9
-		y = 9
+		x = -2
+		y = 2
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_pivdenmash_udo }
+		
+		completion_reward = {
+			698 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1 
+					instant_build = yes 
+				}
+			}
+			694 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1 
+					instant_build = yes 
+				}
+			}
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
-#2# Branch
-
-	#1# Naftogaz
+	### Naftogaz
 	focus = { 
 		id = UKR_naftogaz
 		icon = GFX_ukr_naftogaz
-		x = 11
-		y = 8
+		x = 0
+		y = 1
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_legacy_of_the_ukr_ind }
+		
+		completion_reward = {
+			693 = { ##Donetsk/Donbas Basin
+				add_resource = { 
+					type = oil 
+					amount = 3
+				}
+			}
+			700 = { ##Galicia
+				add_resource = { 
+					type = oil 
+					amount = 1
+				}
+			}
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
-	#2# Extend Ukrainian Oil Refineries
+	### Extend Ukrainian Oil Refineries
 	focus = { 
 		id = UKR_extend_ukrainian_refineries
 		icon = oil_trade
-		x = 11
-		y = 9
+		x = 0
+		y = 2
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_naftogaz }
+		
+		
+		completion_reward = {
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes 
+				}
+			}
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = fuel_silo
+					level = 1
+					instant_build = yes 
+				}
+			}
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-
-#3#Branch
-
-	#1# Ukrainian Steel Companies
+	### Ruthenian Steel
 	focus = { 
 		id = UKR_national_steel_companies
 		icon = steel_production
-		x = 13
-		y = 8
+		x = 2
+		y = 1
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_legacy_of_the_ukr_ind }
+		
+		completion_reward = {
+			701 = { ##Ruthenia
+				add_resource = {
+					type = steel
+					amount = 4
+				}
+			}
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
-	#1# Zaporizhya Industrial Aluminum Plant (ZAlK)
+	### Zaporizhya Industrial Aluminum Plant (ZAlK)
 	focus = { 
 		id = UKR_zalk
 		icon = GFX_focus_generic_aluminum
-		x = 13
-		y = 9
+		x = 2
+		y = 2
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_national_steel_companies }
+		
+		completion_reward = {
+			694 = { ##Zaporizhya
+				add_resource = { 
+					type = aluminium 
+					amount = 3
+				}
+			}
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
-#5#Branch
-	
-	#0# Automobile Industry
+	### Automobile Industry
 	focus = { 
 		id = UKR_automobile_industry
 		icon = motorized
-		x = 16
-		y = 8
+		x = 5
+		y = 1
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_legacy_of_the_ukr_ind }
+		
+		completion_reward = {
+			add_ideas = civilian_industry_project4
+		}
 	}
-	
-#----------------------------------------------------------------------------------------------------------------
 
-	#0.1# Cars Production Licenses
+	### Cars Production Licenses
 	focus = { 
 		id = UKR_cars_production_licenses
 		icon = trade
-		x = 17
-		y = 9
+		x = 6
+		y = 2
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_automobile_industry }
 		
 		mutually_exclusive = { focus = UKR_own_automobile_production }
+		
+		completion_reward = {
+			if = { 
+				limit = { has_dlc = "Death or Dishonor" }
+				USA = {
+					create_production_license = {
+						target = UKR 
+						equipment = {
+							type = util_vehicle_3 #Su-24
+							creator = "USA"
+						}
+						cost_factor = 0
+					}
+				}
+				JAP = {
+					create_production_license = {
+						target = UKR 
+						equipment = {
+							type = util_vehicle_1 #Su-24
+							creator = "JAP"
+						}
+						cost_factor = 0
+					}
+				}
+				add_offsite_building = {
+					type = industrial_complex
+					level = 2
+				}
+				add_research_slot = 1
+			}
+			else_if = {
+				limit = { NOT = { has_dlc = "Death or Dishonor" } }
+				###I need to figure out something for this
+				add_offsite_building = {
+					type = industrial_complex
+					level = 2
+				}
+				add_research_slot = 1
+			}
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-	
-	#0.2# Develop Own Automobile Production
+	### Develop Own Automobile Production
 	focus = { 
 		id = UKR_own_automobile_production
 		icon = production
-		x = 15
-		y = 9
+		x = 4
+		y = 2
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_automobile_industry }
 		
 		mutually_exclusive = { focus = UKR_cars_production_licenses }
+		
+		completion_reward = {
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+			}
+		}
 	}
 
-#----------------------------------------------------------------------------------------------------------------
-	
-	#1# LAZ
+	### LAZ
 	focus = { 
 		id = UKR_laz
 		icon = GFX_laz
-		x = 11
-		y = 10
+		x = 0
+		y = 3
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_own_automobile_production }
+		
+		completion_reward = {
+			700 = { ##Factory in Lviv
+				add_building_construction = {
+					type = industrial_complex 
+					level = 1
+					instant_build = yes
+				}	
+				add_extra_state_shared_building_slots = 1
+			}
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-
-	#2# ZAZ
+	### ZAZ
 	focus = { 
 		id = UKR_zaz
 		icon = GFX_zaz
-		x = 13
-		y = 10
+		x = 2
+		y = 3
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_own_automobile_production }
+		
+		completion_reward = {
+			694 = { ##Factory in Zaporizhya
+				add_building_construction = {
+					type = industrial_complex 
+					level = 1
+					instant_build = yes
+				}	
+				add_extra_state_shared_building_slots = 1
+			}
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-
-	#3# KrAZ
+	### KrAZ
 	focus = { 
 		id = UKR_kraz
 		icon = GFX_kraz
-		x = 15
-		y = 10
+		x = 4
+		y = 3
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_own_automobile_production }
+		
+		completion_reward = {
+			698 = { ##Factory in Kremenchuk
+				add_building_construction = {
+					type = industrial_complex 
+					level = 1
+					instant_build = yes
+				}	
+				add_extra_state_shared_building_slots = 1
+			}
+		}
 	}
 	
-#----------------------------------------------------------------------------------------------------------------
-	
-	#4# LuAZ
+	### LuAZ
 	focus = { 
 		id = UKR_luaz
 		icon = GFX_luaz
-		x = 17
-		y = 10
+		x = 6
+		y = 3
+		relative_position_id = UKR_legacy_of_the_ukr_ind
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_own_automobile_production }
+		
+		completion_reward = {
+			700 = { ##Factory in Lutsk
+				add_building_construction = {
+					type = industrial_complex 
+					level = 1
+					instant_build = yes
+				}	
+				add_extra_state_shared_building_slots = 1
+			}
+		}
 	}
-
-#################################################################################################################
-### 										INFRASTRUCTURE BRANCH											  ###
-#################################################################################################################
-
-	#0# Invest in Ministry of Infrastructure
+	
+	##Infrastructure
+	### Invest in Ministry of Infrastructure
 	focus = { 
 		id = UKR_invest_in_ministry_of_infrastructure
 		icon = infrastructure
@@ -2171,114 +3696,267 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 7
 		cost = 10
 		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
 		ai_will_do = { factor = 1 } 
+		
+		completion_reward = {
+			add_ideas = infrastructure_project
+		}
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
-	#1# SAMRU
-	focus = { 
+	### SAMRU
+	focus = {
 		id = UKR_samru
 		icon = GFX_samru
-		x = 19
-		y = 8
+		x = -2
+		y = 1
+		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_invest_in_ministry_of_infrastructure } 
-		 
+		
+		completion_reward = {
+			if = {
+				limit = { has_idea = infrastructure_project } 
+				swap_ideas = { 
+					remove_idea = infrastructure_project
+					add_idea = infrastructure_project2 
+				}
+			}
+			else_if = {
+				limit = { has_idea = infrastructure_project2 }
+				random_owned_state = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { has_idea = infrastructure_project }
+					NOT = { has_idea = infrastructure_project2 } 
+				}
+				custom_effect_tooltip = UKR_infrastructure_project_TT
+			}
+		}
 	}  
 
-#----------------------------------------------------------------------------------------------------------------
-
-	#5# Roads Extend Plan
+	### Roads Extend Plan
 	focus = { 
 		id = UKR_roads_extend_plan
 		icon = GFX_roads_extend_plan
-		x = 19
-		y = 9
+		x = -2
+		y = 2
+		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_samru }
 		
+		completion_reward = {
+			add_political_power = 100
+			random_owned_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1 
+					instant_build = yes 
+				}
+			}
+		}
 	} 
-
-#----------------------------------------------------------------------------------------------------------------
 
 	### Ukrainian Railways (UZ)
 	focus = { 
 		id = UKR_ukrainian_railways
 		icon = GFX_ukrainian_railways
-		x = 21
-		y = 8
+		x = 0
+		y = 1
+		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_invest_in_ministry_of_infrastructure } 
 		
+		completion_reward = { 
+			if = {
+				limit = { has_idea = infrastructure_project } 
+				swap_ideas = { 
+					remove_idea = infrastructure_project
+					add_idea = infrastructure_project2 
+				}
+			}
+			else_if = {
+				limit = { has_idea = infrastructure_project2 }
+				random_owned_state = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { has_idea = infrastructure_project }
+					NOT = { has_idea = infrastructure_project2 } 
+				}
+				custom_effect_tooltip = UKR_infrastructure_project_TT
+			}
+		}
 	}  
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Grants for high-speed trains
 	focus = { 
 		id = UKR_grants_for_high_speed_trains
 		icon = GFX_grants_for_high_speed_trains
-		x = 21
-		y = 9
+		x = 0
+		y = 2
+		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
-		prerequisite = { focus = UKR_ukrainian_railways } 
+		prerequisite = { focus = UKR_ukrainian_railways }
+
+		completion_reward = {
+			random_owned_state = {
+				prioritize = { 699 695 }
+				add_building_construction = {
+					type = infrastructure
+					level = 1 
+					instant_build = yes 
+				}
+			}
+			random_owned_state = {
+				prioritize = { 695 694 }
+				add_building_construction = {
+					type = infrastructure
+					level = 2
+					instant_build = yes 
+				}
+			}
+		}
 		
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Support UIA
 	focus = { 
 		id = UKR_support_uia
 		icon = GFX_support_uia
-		x = 23
-		y = 8
+		x = 2
+		y = 1
+		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_invest_in_ministry_of_infrastructure }
 		
+		completion_reward = {
+			if = {
+				limit = { has_idea = infrastructure_project } 
+				swap_ideas = { 
+					remove_idea = infrastructure_project
+					add_idea = infrastructure_project2 
+				}
+			}
+			else_if = {
+				limit = { has_idea = infrastructure_project2 }
+				random_owned_state = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { has_idea = infrastructure_project }
+					NOT = { has_idea = infrastructure_project2 } 
+				}
+				custom_effect_tooltip = UKR_infrastructure_project_TT
+			}
+		}
 	} 
 	
-#----------------------------------------------------------------------------------------------------------------
-
 	### Build New Airports
 	focus = { 
 		id = UKR_build_new_airports
 		icon = GFX_build_new_airports
-		x = 23
-		y = 9
+		x = 2
+		y = 2
+		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 }
 		
 		prerequisite = { focus = UKR_support_uia } 
 		
+		completion_reward = {
+			###Airport in Lviv, and Kyiv
+			700 = { #Lviv -Galicia Volhynia
+				add_building_construction = {
+					type = air_base 
+					level = 1 
+					instant_build = yes 
+				}
+			}
+			698 = { ##Kyiv Over-Dnipro
+				add_building_construction = {
+					type = air_base 
+					level = 1 
+					instant_build = yes 
+				}
+			}
+		}
 	} 
-	
-#----------------------------------------------------------------------------------------------------------------
 
 	### Hyperloop Project
 	focus = { 
 		id = UKR_hyperloop_project
 		icon = GFX_hyperloop_project
-		x = 21
-		y = 10
+		x = 0
+		y = 3
+		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
 		
 		ai_will_do = { factor = 1 } 
 		
@@ -2288,7 +3966,31 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_build_new_airports } 
 		
+		completion_reward = {
+			custom_effect_tooltip = UKR_hyperloop_project_focus_TT
+			hidden_effect = { 
+				698 = { ##Kyiv 
+					if = {
+						limit = { is_controlled_by = ROOT }
+						add_building_construction = {
+							type = infrastructure
+							level = 10
+							instant_build = yes
+						}
+					}
+				}
+				694 = { ##Zaporizhya
+					if = {
+						limit = { is_controlled_by = ROOT }
+						add_building_construction = {
+							type = infrastructure
+							level = 10
+							instant_build = yes
+						}
+					}
+				}
+			}
+		}
+		
 	} 
 }
-#----------------------------------------------------------------------------------------------------------------	
-#================================================================================================================

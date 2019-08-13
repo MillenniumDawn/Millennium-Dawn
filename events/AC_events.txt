@@ -388,35 +388,30 @@ country_event = {
 				### reset selected build ammount
 				set_variable = { AC_build_amount = 1 }
 			}
-			PREV = {
-				if = { limit = { CONTROLLER = { check_variable = { influence_array^0 = FROM.id } } }
-					CONTROLLER = { add_to_variable = { influence_array_val^0 = FROM.AC_build_cost } recalculate_influence = yes }
-					
-					else = { if = { limit = { CONTROLLER = { check_variable = { influence_array^1 = FROM.id } } }
-						CONTROLLER = { add_to_variable = { influence_array_val^1 = FROM.AC_build_cost } recalculate_influence = yes }
-				
-						else = { if = { limit = { CONTROLLER = { check_variable = { influence_array^2 = FROM.id } } }
-							CONTROLLER = { add_to_variable = { influence_array_val^2 = FROM.AC_build_cost } recalculate_influence = yes }
-
-							else = { if = { limit = { CONTROLLER = { check_variable = { influence_array^3 = FROM.id } } }
-								CONTROLLER = { add_to_variable = { influence_array_val^3 = FROM.AC_build_cost } recalculate_influence = yes }
-								
-								else = { if = { limit = { CONTROLLER = { check_variable = { influence_array^4 = FROM.id } } }
-									CONTROLLER = { add_to_variable = { influence_array_val^4 = FROM.AC_build_cost } recalculate_influence = yes }
-									
-									else = { if = { limit = { CONTROLLER = { check_variable = { influence_array^5 = FROM.id } } }
-										CONTROLLER = { add_to_variable = { influence_array_val^5 = FROM.AC_build_cost } recalculate_influence = yes }
-										
-										else = { if = { limit = { CONTROLLER = { check_variable = { influence_array^6 = FROM.id } } }
-											CONTROLLER = { add_to_variable = { influence_array_val^6 = FROM.AC_build_cost } recalculate_influence = yes }
-										} }
-									} }
-								} }
-							} }
-						} }
-					} }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = FROM }
+					}
+					add_to_variable = { influence_array_val^v = FROM.AC_build_cost }
+					set_country_flag = found
 				}
 			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = FROM.id }
+					add_to_array = { influence_array_val = FROM.AC_build_cost }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+			
+			#take 25% of the cost
+			custom_effect_tooltip = AC_event.1.o1_TT
+			set_temp_variable = { temp_investment = FROM.AC_build_cost }
+			divide_temp_variable = { temp_investment = 4 }
+			subtract_from_variable = { treasury = temp_investment }
 		}
 	}
 
@@ -766,7 +761,14 @@ country_event = {
 
 	is_triggered_only = yes
 
-	option = { name = AC_event.2.o1 log = "[GetDateText]: [This.GetName]: AC_event.2.o1 executed" }
+	option = { 
+		name = AC_event.2.o1 
+		log = "[GetDateText]: [This.GetName]: AC_event.2.o1 executed" 
+		
+		add_to_variable = { treasury = AC_build_cost }
+		subtract_from_variable = { int_investments = AC_build_cost }
+		calculate_int_investments_rate = yes	
+	}
 }
 
 country_event = {

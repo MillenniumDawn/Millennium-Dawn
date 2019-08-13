@@ -326,22 +326,22 @@ country_event = {
 	option = {
 		name = italy_md.10.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.10.o1 executed"
-		add_opinion_modifier = {
-			target = EGY
-			modifier = ITA_refused_oil_investments_africa
-		}
-		add_state_claim = 552
-		add_state_claim = 452
-		add_state_claim = 447
-	  	add_state_claim = 813
-		add_state_claim = 453
-		add_state_claim = 446
-		add_state_claim = 457
-		add_state_claim = 456
-		add_state_claim = 798
-		create_wargoal = {
-			type = annex_everything
-			target = EGY
+		if = {
+			limit = { country_exists = EGY }	
+			every_state = {
+				limit = { 
+					is_core_of = EGY
+				}
+				add_claim_by = ROOT
+			}	
+			create_wargoal = {
+				type = annex_everything
+				target = EGY
+			}
+			add_opinion_modifier = {
+				target = EGY
+				modifier = ITA_refused_oil_investments_africa
+			}
 		}
 	}
 }
@@ -360,11 +360,83 @@ country_event = {
 		ITA = { add_to_faction = ROOT }
 		set_country_flag = seeks_italian_alliance
 		ITA = { country_event = diplomatic_response.1 }
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 50 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = ITA }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = ITA.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		hidden_effect = { 
+			add_popularity = { ideology = nationalist popularity = 0.10 }
+			recalculate_party = yes
+		}
 		ai_chance = {
 			factor = 40
 			modifier = {
-				factor = 0
-				NOT = { has_war_with = ITA }
+				add = 10
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = ITA } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.2 }
+			}
+			modifier = {
+				add = 20
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = ITA } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.4 }
+			}
+			modifier = {
+				add = 30
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = ITA } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.8 }
 			}
 			modifier = {
 				factor = 0
@@ -378,7 +450,28 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: italy_md.11.o1 executed"
 		ITA = { country_event = diplomatic_response.2 }
 		ai_chance = {
-			factor = 60
+			base = 60
+			modifier = { 
+				add = 100
+				has_war_with = ITA
+			}
+			modifier = { 
+				add = 10
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = ITA } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx < 0.2 }
+			}
 		}
 	}
 }
@@ -454,7 +547,7 @@ country_event = {
 			name = infantry_tech
 			bonus = 0.5
 			uses = 1
-			category = infantry_weapons
+			category = Cat_INF
 		}
 	}
 }
@@ -603,6 +696,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: italy_md.20.o1 executed"
 		add_stability = 0.05
 		set_country_flag = italeave_referendum_leave
+		remove_ideas = EU_member 
 	}
 }
 #Italeave: Remain
@@ -667,7 +761,8 @@ country_event = {
 	option = {
 		name = italy_md.23.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.23.o1 executed"
-		add_to_variable = { party_pop_array^6 = 0.05 }
+		add_to_variable = { party_pop_array^6 = 0.10 }
+		custom_effect_tooltip = ITA_reactionary_party_tt
 	}
 }
 #Salerno-to-Reggio Calabria Motorway
@@ -681,10 +776,7 @@ country_event = {
 	
 	trigger = {
 		original_tag = ITA
-		AND = {
-			owns_state = 117
-			owns_state = 156
-		}
+		owns_state = 82
 		date > 2016.1.1
 	}
 	
@@ -697,21 +789,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: italy_md.24.o1 executed"
 		if = {
 			limit = {
-				117 = { infrastructure < 10 }
+				82 = { infrastructure < 10 }
 			}
-			117 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-		if = {
-			limit = {
-				156 = { infrastructure < 10 }
-			}
-			156 = {
+			82 = {
 				add_building_construction = {
 					type = infrastructure
 					level = 1
@@ -842,10 +922,9 @@ country_event = {
 				damage = 0.35
 			}
 		}
-		add_stability = -0.01
-		add_stability = -0.015
-		news_event = { id = news.109 }
-		custom_effect_tooltip = ITA_stop_war_on_mafia
+		add_stability = -0.025
+		news_event = { id = italy_news.7 }
+		custom_effect_tooltip = ITA_stop_war_on_mafia_tt
 		ai_chance = {
 			factor = 0
 		}
@@ -874,7 +953,7 @@ country_event = {
 				damage = 1
 			}
 		}
-		custom_effect_tooltip = ITA_continue_war_on_mafia		
+		custom_effect_tooltip = ITA_continue_war_on_mafia_tt		
 		ai_chance = {
 			factor = 100
 		}
@@ -933,8 +1012,8 @@ country_event = {
 		clr_country_flag = ITA_mafia_sabotages_1
 		add_stability = -0.01
 		add_stability = -0.025
-		news_event = { id = news.104 }
-		custom_effect_tooltip = ITA_stop_war_on_mafia
+		news_event = { id = italy_news.7 }
+		custom_effect_tooltip = ITA_stop_war_on_mafia_tt
 		ai_chance = {
 			factor = 0
 		}
@@ -964,7 +1043,7 @@ country_event = {
 				damage = 1
 			}
 		}
-		custom_effect_tooltip = ITA_continue_war_on_mafia		
+		custom_effect_tooltip = ITA_continue_war_on_mafia_tt		
 		ai_chance = {
 			factor = 100
 		}
@@ -1025,8 +1104,8 @@ country_event = {
 		clr_country_flag = ITA_mafia_sabotages_2
 		add_stability = -0.01
 		add_stability = -0.025
-		news_event = { id = news.104 }
-		custom_effect_tooltip = ITA_stop_war_on_mafia
+		news_event = { id = italy_news.7 }
+		custom_effect_tooltip = ITA_stop_war_on_mafia_tt
 		ai_chance = {
 			factor = 0
 		}
@@ -1056,7 +1135,7 @@ country_event = {
 			}
 		}
 		add_timed_idea = { idea = ITA_mafia_sabotages_industry days = 180 }
-		custom_effect_tooltip = ITA_continue_war_on_mafia
+		custom_effect_tooltip = ITA_continue_war_on_mafia_tt
 		ai_chance = {
 			factor = 100
 		}
@@ -1094,8 +1173,8 @@ country_event = {
 		clr_country_flag = ITA_mafia_sabotages_3
 		add_stability = -0.03
 		add_stability = -0.025
-		news_event = { id = news.104 }
-		custom_effect_tooltip = ITA_stop_war_on_mafia
+		news_event = { id = italy_news.7 }
+		custom_effect_tooltip = ITA_stop_war_on_mafia_tt
 		ai_chance = {
 			factor = 0
 		}
@@ -1107,7 +1186,7 @@ country_event = {
 		set_country_flag = ITA_mafia_sabotages_4
 		
 		add_timed_idea = { idea = ITA_mafia_sabotages_military days = 90 }
-		custom_effect_tooltip = ITA_continue_war_on_mafia
+		custom_effect_tooltip = ITA_continue_war_on_mafia_tt
 		ai_chance = {
 			factor = 100
 		}
@@ -1154,6 +1233,6 @@ country_event = {
 		clr_country_flag = ITA_mafia_sabotages_4
 		add_stability = 0.10
 		news_event = { id = italy_news.8 }
-		custom_effect_tooltip = ITA_end_war_on_mafia
+		custom_effect_tooltip = ITA_end_war_on_mafia_tt
 	}
 }

@@ -3,73 +3,79 @@
 # Makes the AI actually budget right
 # Update: added ratio system
 inital_AI_NO_WANT_DEBT_set_up = {
-	set_variable = { var = AI_NO_WANT_DEBT value = 0 }
-	set_variable = { var = AI_VOLUNTEERS value = 0 }
-	set_variable = { var = IS_MAJOR value = 0 }
+	if = {
+		limit = { is_ai = yes }
+		set_variable = { var = AI_NO_WANT_DEBT value = 0 }
+		set_variable = { var = AI_VOLUNTEERS value = 0 }
+		set_variable = { var = IS_MAJOR value = 0 }
+	}
 }
 
 update_AI_NO_WANT_DEBT = {
-	set_variable = { var = AI_NO_WANT_DEBT value = interest_rate }
-	set_variable = { var = temp value = AI_NO_WANT_DEBT }
+	if = {
+		limit = { is_ai = yes }
+		set_variable = { var = AI_NO_WANT_DEBT value = interest_rate }
+		set_variable = { var = temp value = AI_NO_WANT_DEBT }
 
-	set_variable = { var = AI_WAR_SPEND_RATIO value = 0.3 }
-	#Debug!
-	#if = { limit = { any_enemy_country = { check_variable = { var = IS_MAJOR value = 1 } } }
-		#set_variable = { var = AT_WAR_WITH_BIG_GUY value = 1 }
-	#}
-	
-	divide_variable = { var = temp value = 50 } #interest should affect mil spending
-	subtract_from_variable = { var = AI_WAR_SPEND_RATIO value = temp }
-	if = { limit = { num_of_military_factories > 40 }
-		set_variable = { var = IS_MAJOR value = 1 }
-	}
-	if = { limit = { has_war = yes } 
-		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 1000 }
-		ai_update_build_units = yes
-	} 
-	
-	if { limit = { AND = { is_in_faction = yes is_faction_leader = no } }
-		subtract_from_variable = { var = AI_WAR_SPEND_RATIO value = 0.1 }
-	}
-	
-	if = { limit = { is_faction_leader = yes } 
-		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.05 } }
-	
-	if = { limit = { num_divisions > 60 } 
-		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.05 }
-	}
-	
-	if = { limit = { num_divisions > 120 } 
-		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.05 }
-	}
-	
-	if = { limit = { IS_MAJOR = yes } 
-		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.1 }
-	}
-	
-	if = { limit = { any_other_country = { is_justifying_wargoal_against = ROOT } }
-		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 1000 }
-		ai_update_build_units = yes
-	}
-	
-	if = { limit = { any_other_country = { is_justifying_wargoal_against = ROOT } }
-		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 1000 }
-		ai_update_build_units = yes
-	}
-	
-	if = { limit = { threat > 0.75 }
-		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.1 } }
+		set_variable = { var = AI_WAR_SPEND_RATIO value = 0.3 }
+		#Debug!
+		#if = { limit = { any_enemy_country = { check_variable = { var = IS_MAJOR value = 1 } } }
+			#set_variable = { var = AT_WAR_WITH_BIG_GUY value = 1 }
+		#}
 		
-	if = { limit = { threat > 0.2 }
-		subtract_from_variable = { var = AI_WAR_SPEND_RATIO value = 0.05 } }
-	
-	if = { limit = { check_variable = { var = AI_VOLUNTEERS = 1 } }
-		add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.05 } }
-	
-	if = { limit = { check_variable = { var = AI_WAR_SPEND_RATIO > 1 } } 
-		set_variable = { var = AI_WAR_SPEND_RATIO value = 1 } }
+		divide_variable = { var = temp value = 50 } #interest should affect mil spending
+		subtract_from_variable = { var = AI_WAR_SPEND_RATIO value = temp }
+		if = { limit = { num_of_military_factories > 40 }
+			set_variable = { var = IS_MAJOR value = 1 }
+		}
+		if = { limit = { has_war = yes } 
+			add_to_variable = { var = AI_WAR_SPEND_RATIO value = 1000 }
+			ai_update_build_units = yes
+		} 
 		
-	if = { limit = { check_variable = { var = AI_WAR_SPEND_RATIO < 0 } } 
-		set_variable = { var = AI_WAR_SPEND_RATIO value = 0 } }
+		if = { limit = { AND = { is_in_faction = yes is_faction_leader = no } }
+			subtract_from_variable = { var = AI_WAR_SPEND_RATIO value = 0.1 }
+		}
+		
+		if = { limit = { is_faction_leader = yes } 
+			add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.05 } }
+		
+		if = { limit = { num_divisions > 60 } 
+			add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.05 }
+		}
+		
+		if = { limit = { num_divisions > 120 } 
+			add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.05 }
+		}
+		
+		if = { limit = { IS_MAJOR = yes } 
+			add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.1 }
+		}
+		
+		if = { limit = { any_other_country = { is_justifying_wargoal_against = ROOT } }
+			add_to_variable = { var = AI_WAR_SPEND_RATIO value = 1000 }
+			ai_update_build_units = yes
+		}
+		
+		if = { limit = { any_other_country = { is_justifying_wargoal_against = ROOT } }
+			add_to_variable = { var = AI_WAR_SPEND_RATIO value = 1000 }
+			ai_update_build_units = yes
+		}
+		
+		if = { limit = { threat > 0.75 }
+			add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.1 } }
+			
+		if = { limit = { threat > 0.2 }
+			subtract_from_variable = { var = AI_WAR_SPEND_RATIO value = 0.05 } }
+		
+		if = { limit = { check_variable = { AI_VOLUNTEERS = 1 } }
+			add_to_variable = { var = AI_WAR_SPEND_RATIO value = 0.05 } }
+		
+		if = { limit = { check_variable = { AI_WAR_SPEND_RATIO > 1 } } 
+			set_variable = { var = AI_WAR_SPEND_RATIO value = 1 } }
+			
+		if = { limit = { check_variable = { AI_WAR_SPEND_RATIO < 0 } } 
+			set_variable = { var = AI_WAR_SPEND_RATIO value = 0 } }
+	}
 }
 
