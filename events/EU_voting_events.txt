@@ -1,10 +1,353 @@
 ﻿# EU Vote mechanism
 add_namespace = EUvote
 add_namespace = EUvote_news
+add_namespace = EUvoteTest
 
 #######################
 ### Testing Section ###
 #######################
+
+
+#country_event = {
+#	id = EUvoteTest.1 ### 
+#	title = EUvoteTest.1.t
+#	desc = EUvoteTest.1.d
+#
+#	is_triggered_only = yes
+#
+#	fire_only_once = yes
+#	
+#	option = {
+#		name = EUvoteTest.1.a #
+#			set_country_flag = focus_EU001
+#		}
+#}
+
+
+
+
+
+
+country_event = {
+	id = EUvote.2 ### counting voting result focus_EU001
+	title = EUvote.2.t
+	desc = EUvote.2.d
+
+	is_triggered_only = yes
+
+#	fire_only_once = yes
+	
+	option = {
+		name = EUvote.2.a #Show the result of the voting
+		if = { # Unanimity - yes 
+			limit = {
+				has_global_flag = EU_unanimity_voting
+				check_variable = {
+					var = global.var_EUvoteYes
+					value = global.var_EUvoteTotal
+					compare = equals
+				}			
+			}
+			set_country_flag = focus_EU001_yes
+			set_global_flag = EU_unanimity_voting_YES
+			every_country = {
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
+				news_event = {
+					id = EUvote_news.2
+				}
+			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001 }
+				news_event = {
+					id = EUvote.3
+				}
+			}			
+		}
+		else_if = { # QMV - yes 
+			limit = {
+				AND = {
+					has_global_flag = EU_qualified_majority_voting
+					check_variable = {
+						var = global.var_EUvoteYes
+						value = 0.55
+						compare = greater_than_or_equals
+					}
+					check_variable = {
+						var = global.var_EUpopYes
+						value = 0.65
+						compare = greater_than_or_equals
+					}
+				}			
+			}
+			set_country_flag = focus_EU001_QMV_yes
+			set_global_flag = EU_qualified_majority_voting_YES
+			every_country = {
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
+				news_event = {
+					id = EUvote_news.2
+				}
+			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001_QMV }
+				news_event = {
+					id = EUvote.3
+				}
+			}			
+		}		
+		else_if = { # majority - yes 
+			limit = {
+				has_global_flag = EU_majority_voting
+				set_temp_variable = { 
+					temp1 = global.var_EUvoteTotal 
+				}
+				divide_temp_variable = { 
+					temp1 = 2 
+				}
+				check_variable = {
+					var = global.var_EUvoteYes
+					value = temp1
+					compare = greater_than
+				}			
+			}
+			set_country_flag = focus_EU001_maj_yes
+			set_global_flag = EU_majority_voting_YES
+			every_country = {
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
+				news_event = {
+					id = EUvote_news.2
+				}
+			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001_maj }
+				news_event = {
+					id = EUvote.3
+				}
+			}			
+		}		
+		else_if = { # Unanimity - no
+			limit = {
+				has_global_flag = EU_unanimity_voting
+				check_variable = {
+					var = global.var_EUvoteYes
+					value = global.var_EUvoteTotal
+					compare = not_equals
+				}
+			}
+			set_country_flag = focus_EU001_no
+			set_global_flag = EU_unanimity_voting_NO
+			every_country = {
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
+				news_event = {
+					id = EUvote_news.2
+				}
+			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001 }
+				news_event = {
+					id = EUvote.4
+				}
+			}			
+		}		
+		else_if = { # QMV - no
+			limit = {
+				has_global_flag = EU_qualified_majority_voting
+				OR = {
+					check_variable = {
+						var = global.var_EUvoteYes
+						value = 0.55
+						compare = less_than
+					}
+					check_variable = {
+						var = global.var_EUpopYes
+						value = 0.65
+						compare = less_than
+					}
+				}
+			}
+			set_country_flag = focus_EU001_QMV_no
+			set_global_flag = EU_qualified_majority_voting_NO
+			every_country = {
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
+				news_event = {
+					id = EUvote_news.2
+				}
+			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001_QMV }
+				news_event = {
+					id = EUvote.4
+				}
+			}			
+		}		
+		else = {
+			set_country_flag = focus_EU001_maj_no
+			set_global_flag = EU_majority_voting_NO
+			every_country = {
+				limit = { 
+					has_country_flag = EU_voted
+					NOT = { has_country_flag = focus_EU001 }
+				}
+				news_event = {
+					id = EUvote_news.2
+				}
+			}
+			every_country = {
+				limit = { has_country_flag = focus_EU001_maj }
+				news_event = {
+					id = EUvote.4
+				}
+			}
+		}
+	}
+	
+}
+
+#news_event = { 
+#	id = EUvote_news.2
+#	title = EU_news.2.t
+#	desc = EU_news.2.d
+#	picture = GFX_eu
+#	
+#	major = no
+#	is_triggered_only = yes
+#	
+#	option = {
+#		name = EU_news.2.a
+#	}
+#}
+
+
+### changed EUvote.3 and EUvote.4 fired from EUvote.2 to news event instead of country event
+
+news_event = {
+	id = EUvote.3 ### voting result focus_EU001 yes and focus_EU001 effect
+	title = EUvote.3.t
+	desc = EUvote.3.d
+	picture = GFX_eu
+	
+	is_triggered_only = yes
+
+	immediate = { }
+	
+	
+	option = {
+		name = EUvote.3.a # yes
+			clear_variable = global.var_EUvoteYes
+			clear_variable = global.var_EUvoteNo
+			clear_variable = global.var_EUvoteTotal
+			clear_variable = global.var_EUpopYes
+			clear_variable = global.var_EUpopNo
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}	
+				clr_country_flag = EU_voted
+				clr_country_flag = gov_strong_resist
+				clr_country_flag = gov_resist
+				clr_country_flag = gov_support
+				clr_country_flag = gov_strong_support
+				clr_country_flag = EU_voted_yes
+				clr_country_flag = EU_voted_no
+			}
+			clr_global_flag = EU_unanimity_voting
+			clr_global_flag = EU_qualified_majority_voting
+			clr_global_flag = EU_majority_voting
+			clr_global_flag = focus_EU001_result
+			clr_global_flag = focus_EU001_QMV_result
+			clr_global_flag = focus_EU001_maj_result
+
+			clr_global_flag = EU_unanimity_voting_YES
+			clr_global_flag = EU_qualified_majority_voting_YES
+			clr_global_flag = EU_majority_voting_YES
+			clr_global_flag = EU_unanimity_voting_NO
+			clr_global_flag = EU_qualified_majority_voting_NO
+			clr_global_flag = EU_majority_voting_NO			
+			if = {
+				limit = {
+					OR = {
+						has_country_flag = focus_EU001_yes
+						has_country_flag = focus_EU001_QMV_yes
+						has_country_flag = focus_EU001_maj_yes
+					}
+				}
+				every_country = {
+					limit = {
+						has_country_flag = focus_EU001
+					}
+					### focus01 effect
+				}
+			}
+	}
+}
+
+news_event = {
+	id = EUvote.4 ### voting result focus_EU001 yes and focus_EU001 effect
+	title = EUvote.4.t
+	desc = EUvote.4.d
+	picture = GFX_eu
+	
+	is_triggered_only = yes
+
+	immediate = { }
+	
+	
+	option = {
+		name = EUvote.4.a # no
+			clear_variable = global.var_EUvoteYes
+			clear_variable = global.var_EUvoteNo
+			clear_variable = global.var_EUvoteTotal
+			clear_variable = global.var_EUpopYes
+			clear_variable = global.var_EUpopNo
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}	
+				clr_country_flag = EU_voted
+				clr_country_flag = gov_strong_resist
+				clr_country_flag = gov_resist
+				clr_country_flag = gov_support
+				clr_country_flag = gov_strong_support
+				clr_country_flag = EU_voted_yes
+				clr_country_flag = EU_voted_no
+			}
+			clr_global_flag = EU_unanimity_voting
+			clr_global_flag = EU_qualified_majority_voting
+			clr_global_flag = EU_majority_voting
+			clr_global_flag = focus_EU001_result
+			clr_global_flag = focus_EU001_QMV_result
+			clr_global_flag = focus_EU001_maj_result
+
+			clr_global_flag = EU_unanimity_voting_YES
+			clr_global_flag = EU_qualified_majority_voting_YES
+			clr_global_flag = EU_majority_voting_YES
+			clr_global_flag = EU_unanimity_voting_NO
+			clr_global_flag = EU_qualified_majority_voting_NO
+			clr_global_flag = EU_majority_voting_NO			
+	}
+}
+
+##############################
+### End of Testing Section ###
+##############################
+
+###########################
+### Focus Voting Events ###
+###########################
 
 country_event = {
 	id = EUvote.1
@@ -415,327 +758,9 @@ country_event = {
 	}
 }
 
-country_event = {
-	id = EUvote.2 ### counting voting result focus_EU001
-	title = EUvote.2.t
-	desc = EUvote.2.d
-
-	is_triggered_only = yes
-
-#	fire_only_once = yes
-	
-	option = {
-		name = EUvote.2.a #Show the result of the voting
-		if = { # Unanimity - yes 
-			limit = {
-				has_global_flag = EU_unanimity_voting
-				check_variable = {
-					var = global.var_EUvoteYes
-					value = global.var_EUvoteTotal
-					compare = equals
-				}			
-			}
-			set_country_flag = focus_EU001_yes
-			set_global_flag = EU_unanimity_voting_YES
-			every_country = {
-				limit = { 
-					has_country_flag = EU_voted
-					NOT = { has_country_flag = focus_EU001 }
-				}
-				news_event = {
-					id = EUvote_news.2
-				}
-			}
-			every_country = {
-				limit = { has_country_flag = focus_EU001 }
-				news_event = {
-					id = EUvote.3
-				}
-			}			
-		}
-		else_if = { # QMV - yes 
-			limit = {
-				AND = {
-					has_global_flag = EU_qualified_majority_voting
-					check_variable = {
-						var = global.var_EUvoteYes
-						value = 0.55
-						compare = greater_than_or_equals
-					}
-					check_variable = {
-						var = global.var_EUpopYes
-						value = 0.65
-						compare = greater_than_or_equals
-					}
-				}			
-			}
-			set_country_flag = focus_EU001_QMV_yes
-			set_global_flag = EU_qualified_majority_voting_YES
-			every_country = {
-				limit = { 
-					has_country_flag = EU_voted
-					NOT = { has_country_flag = focus_EU001 }
-				}
-				news_event = {
-					id = EUvote_news.2
-				}
-			}
-			every_country = {
-				limit = { has_country_flag = focus_EU001_QMV }
-				news_event = {
-					id = EUvote.3
-				}
-			}			
-		}		
-		else_if = { # majority - yes 
-			limit = {
-				has_global_flag = EU_majority_voting
-				set_temp_variable = { 
-					temp1 = global.var_EUvoteTotal 
-				}
-				divide_temp_variable = { 
-					temp1 = 2 
-				}
-				check_variable = {
-					var = global.var_EUvoteYes
-					value = temp1
-					compare = greater_than
-				}			
-			}
-			set_country_flag = focus_EU001_maj_yes
-			set_global_flag = EU_majority_voting_YES
-			every_country = {
-				limit = { 
-					has_country_flag = EU_voted
-					NOT = { has_country_flag = focus_EU001 }
-				}
-				news_event = {
-					id = EUvote_news.2
-				}
-			}
-			every_country = {
-				limit = { has_country_flag = focus_EU001_maj }
-				news_event = {
-					id = EUvote.3
-				}
-			}			
-		}		
-		else_if = { # Unanimity - no
-			limit = {
-				has_global_flag = EU_unanimity_voting
-				check_variable = {
-					var = global.var_EUvoteYes
-					value = global.var_EUvoteTotal
-					compare = not_equals
-				}
-			}
-			set_country_flag = focus_EU001_no
-			set_global_flag = EU_unanimity_voting_NO
-			every_country = {
-				limit = { 
-					has_country_flag = EU_voted
-					NOT = { has_country_flag = focus_EU001 }
-				}
-				news_event = {
-					id = EUvote_news.2
-				}
-			}
-			every_country = {
-				limit = { has_country_flag = focus_EU001 }
-				news_event = {
-					id = EUvote.4
-				}
-			}			
-		}		
-		else_if = { # QMV - no
-			limit = {
-				has_global_flag = EU_qualified_majority_voting
-				OR = {
-					check_variable = {
-						var = global.var_EUvoteYes
-						value = 0.55
-						compare = less_than
-					}
-					check_variable = {
-						var = global.var_EUpopYes
-						value = 0.65
-						compare = less_than
-					}
-				}
-			}
-			set_country_flag = focus_EU001_QMV_no
-			set_global_flag = EU_qualified_majority_voting_NO
-			every_country = {
-				limit = { 
-					has_country_flag = EU_voted
-					NOT = { has_country_flag = focus_EU001 }
-				}
-				news_event = {
-					id = EUvote_news.2
-				}
-			}
-			every_country = {
-				limit = { has_country_flag = focus_EU001_QMV }
-				news_event = {
-					id = EUvote.4
-				}
-			}			
-		}		
-		else = {
-			set_country_flag = focus_EU001_maj_no
-			set_global_flag = EU_majority_voting_NO
-			every_country = {
-				limit = { 
-					has_country_flag = EU_voted
-					NOT = { has_country_flag = focus_EU001 }
-				}
-				news_event = {
-					id = EUvote_news.2
-				}
-			}
-			every_country = {
-				limit = { has_country_flag = focus_EU001_maj }
-				news_event = {
-					id = EUvote.4
-				}
-			}
-		}
-	}
-	
-}
-
-#news_event = { 
-#	id = EUvote_news.2
-#	title = EU_news.2.t
-#	desc = EU_news.2.d
-#	picture = GFX_eu
-#	
-#	major = no
-#	is_triggered_only = yes
-#	
-#	option = {
-#		name = EU_news.2.a
-#	}
-#}
-
-
-### changed EUvote.3 and EUvote.4 fired from EUvote.2 to news event instead of country event
-
-news_event = {
-	id = EUvote.3 ### voting result focus_EU001 yes and focus_EU001 effect
-	title = EUvote.3.t
-	desc = EUvote.3.d
-	picture = GFX_eu
-	
-	is_triggered_only = yes
-
-	immediate = { }
-	
-	
-	option = {
-		name = EUvote.3.a # yes
-			clear_variable = global.var_EUvoteYes
-			clear_variable = global.var_EUvoteNo
-			clear_variable = global.var_EUvoteTotal
-			clear_variable = global.var_EUpopYes
-			clear_variable = global.var_EUpopNo
-			every_country = {
-				limit = {
-					has_idea = EU_member
-				}	
-				clr_country_flag = EU_voted
-				clr_country_flag = gov_strong_resist
-				clr_country_flag = gov_resist
-				clr_country_flag = gov_support
-				clr_country_flag = gov_strong_support
-				clr_country_flag = EU_voted_yes
-				clr_country_flag = EU_voted_no
-			}
-			clr_global_flag = EU_unanimity_voting
-			clr_global_flag = EU_qualified_majority_voting
-			clr_global_flag = EU_majority_voting
-			clr_global_flag = focus_EU001_result
-			clr_global_flag = focus_EU001_QMV_result
-			clr_global_flag = focus_EU001_maj_result
-
-			clr_global_flag = EU_unanimity_voting_YES
-			clr_global_flag = EU_qualified_majority_voting_YES
-			clr_global_flag = EU_majority_voting_YES
-			clr_global_flag = EU_unanimity_voting_NO
-			clr_global_flag = EU_qualified_majority_voting_NO
-			clr_global_flag = EU_majority_voting_NO			
-			if = {
-				limit = {
-					OR = {
-						has_country_flag = focus_EU001_yes
-						has_country_flag = focus_EU001_QMV_yes
-						has_country_flag = focus_EU001_maj_yes
-					}
-				}
-				every_country = {
-					limit = {
-						has_country_flag = focus_EU001
-					}
-					### focus01 effect
-				}
-			}
-	}
-}
-
-news_event = {
-	id = EUvote.4 ### voting result focus_EU001 yes and focus_EU001 effect
-	title = EUvote.4.t
-	desc = EUvote.4.d
-	picture = GFX_eu
-	
-	is_triggered_only = yes
-
-	immediate = { }
-	
-	
-	option = {
-		name = EUvote.4.a # no
-			clear_variable = global.var_EUvoteYes
-			clear_variable = global.var_EUvoteNo
-			clear_variable = global.var_EUvoteTotal
-			clear_variable = global.var_EUpopYes
-			clear_variable = global.var_EUpopNo
-			every_country = {
-				limit = {
-					has_idea = EU_member
-				}	
-				clr_country_flag = EU_voted
-				clr_country_flag = gov_strong_resist
-				clr_country_flag = gov_resist
-				clr_country_flag = gov_support
-				clr_country_flag = gov_strong_support
-				clr_country_flag = EU_voted_yes
-				clr_country_flag = EU_voted_no
-			}
-			clr_global_flag = EU_unanimity_voting
-			clr_global_flag = EU_qualified_majority_voting
-			clr_global_flag = EU_majority_voting
-			clr_global_flag = focus_EU001_result
-			clr_global_flag = focus_EU001_QMV_result
-			clr_global_flag = focus_EU001_maj_result
-
-			clr_global_flag = EU_unanimity_voting_YES
-			clr_global_flag = EU_qualified_majority_voting_YES
-			clr_global_flag = EU_majority_voting_YES
-			clr_global_flag = EU_unanimity_voting_NO
-			clr_global_flag = EU_qualified_majority_voting_NO
-			clr_global_flag = EU_majority_voting_NO			
-	}
-}
-
-##############################
-### End of Testing Section ###
-##############################
-
-###########################
-### Focus Voting Events ###
-###########################
-
+######################
+### Focus specific ###
+######################
 
 ### EU Policies ###
 country_event = {
@@ -977,6 +1002,12 @@ news_event = {
 					}
 					### focus_EU001 effect # will be added later
 				}
+				clr_global_flag = focus_EU001_voted
+				clr_global_flag = focus_EU001_QMV_voted
+				clr_global_flag = focus_EU001_maj_voted
+				clr_country_flag = focus_EU001
+				clr_country_flag = focus_EU001_QMV
+				clr_country_flag = focus_EU001_maj
 			}
 	}
 }
@@ -1022,6 +1053,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU001_voted
+			clr_global_flag = focus_EU001_QMV_voted
+			clr_global_flag = focus_EU001_maj_voted
+			clr_country_flag = focus_EU001
+			clr_country_flag = focus_EU001_QMV
+			clr_country_flag = focus_EU001_maj
 	}
 }
 
@@ -1265,6 +1302,12 @@ news_event = {
 					}
 					### focus_EU002 effect # will be added later
 				}
+				clr_global_flag = focus_EU002_voted
+				clr_global_flag = focus_EU002_QMV_voted
+				clr_global_flag = focus_EU002_maj_voted
+				clr_country_flag = focus_EU002
+				clr_country_flag = focus_EU002_QMV
+				clr_country_flag = focus_EU002_maj
 			}
 	}
 }
@@ -1310,6 +1353,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU002_voted
+			clr_global_flag = focus_EU002_QMV_voted
+			clr_global_flag = focus_EU002_maj_voted
+			clr_country_flag = focus_EU002
+			clr_country_flag = focus_EU002_QMV
+			clr_country_flag = focus_EU002_maj
 	}
 }
 
@@ -1553,6 +1602,12 @@ news_event = {
 					}
 					### focus_EU100 effect # will be added later
 				}
+				clr_global_flag = focus_EU100_voted
+				clr_global_flag = focus_EU100_QMV_voted
+				clr_global_flag = focus_EU100_maj_voted
+				clr_country_flag = focus_EU100
+				clr_country_flag = focus_EU100_QMV
+				clr_country_flag = focus_EU100_maj
 			}
 	}
 }
@@ -1598,6 +1653,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU100_voted
+			clr_global_flag = focus_EU100_QMV_voted
+			clr_global_flag = focus_EU100_maj_voted
+			clr_country_flag = focus_EU100
+			clr_country_flag = focus_EU100_QMV
+			clr_country_flag = focus_EU100_maj
 	}
 }
 
@@ -1841,6 +1902,12 @@ news_event = {
 					}
 					### focus_EU101 effect # will be added later
 				}
+				clr_global_flag = focus_EU101_voted
+				clr_global_flag = focus_EU101_QMV_voted
+				clr_global_flag = focus_EU101_maj_voted
+				clr_country_flag = focus_EU101
+				clr_country_flag = focus_EU101_QMV
+				clr_country_flag = focus_EU101_maj
 			}
 	}
 }
@@ -1886,6 +1953,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU101_voted
+			clr_global_flag = focus_EU101_QMV_voted
+			clr_global_flag = focus_EU101_maj_voted
+			clr_country_flag = focus_EU101
+			clr_country_flag = focus_EU101_QMV
+			clr_country_flag = focus_EU101_maj
 	}
 }
 
@@ -2129,6 +2202,12 @@ news_event = {
 					}
 					### focus_EU102 effect # will be added later
 				}
+				clr_global_flag = focus_EU102_voted
+				clr_global_flag = focus_EU102_QMV_voted
+				clr_global_flag = focus_EU102_maj_voted
+				clr_country_flag = focus_EU102
+				clr_country_flag = focus_EU102_QMV
+				clr_country_flag = focus_EU102_maj
 			}
 	}
 }
@@ -2174,6 +2253,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU102_voted
+			clr_global_flag = focus_EU102_QMV_voted
+			clr_global_flag = focus_EU102_maj_voted
+			clr_country_flag = focus_EU102
+			clr_country_flag = focus_EU102_QMV
+			clr_country_flag = focus_EU102_maj
 	}
 }
 
@@ -2417,6 +2502,12 @@ news_event = {
 					}
 					### focus_EU103 effect # will be added later
 				}
+				clr_global_flag = focus_EU103_voted
+				clr_global_flag = focus_EU103_QMV_voted
+				clr_global_flag = focus_EU103_maj_voted
+				clr_country_flag = focus_EU103
+				clr_country_flag = focus_EU103_QMV
+				clr_country_flag = focus_EU103_maj
 			}
 	}
 }
@@ -2462,6 +2553,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU103_voted
+			clr_global_flag = focus_EU103_QMV_voted
+			clr_global_flag = focus_EU103_maj_voted
+			clr_country_flag = focus_EU103
+			clr_country_flag = focus_EU103_QMV
+			clr_country_flag = focus_EU103_maj
 	}
 }
 
@@ -2705,6 +2802,12 @@ news_event = {
 					}
 					### focus_EU104 effect # will be added later
 				}
+				clr_global_flag = focus_EU104_voted
+				clr_global_flag = focus_EU104_QMV_voted
+				clr_global_flag = focus_EU104_maj_voted
+				clr_country_flag = focus_EU104
+				clr_country_flag = focus_EU104_QMV
+				clr_country_flag = focus_EU104_maj
 			}
 	}
 }
@@ -2750,6 +2853,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU104_voted
+			clr_global_flag = focus_EU104_QMV_voted
+			clr_global_flag = focus_EU104_maj_voted
+			clr_country_flag = focus_EU104
+			clr_country_flag = focus_EU104_QMV
+			clr_country_flag = focus_EU104_maj
 	}
 }
 
@@ -2993,6 +3102,12 @@ news_event = {
 					}
 					### focus_EU105 effect # will be added later
 				}
+				clr_global_flag = focus_EU105_voted
+				clr_global_flag = focus_EU105_QMV_voted
+				clr_global_flag = focus_EU105_maj_voted
+				clr_country_flag = focus_EU105
+				clr_country_flag = focus_EU105_QMV
+				clr_country_flag = focus_EU105_maj
 			}
 	}
 }
@@ -3038,6 +3153,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU105_voted
+			clr_global_flag = focus_EU105_QMV_voted
+			clr_global_flag = focus_EU105_maj_voted
+			clr_country_flag = focus_EU105
+			clr_country_flag = focus_EU105_QMV
+			clr_country_flag = focus_EU105_maj
 	}
 }
 
@@ -3281,6 +3402,12 @@ news_event = {
 					}
 					### focus_EU200 effect # will be added later
 				}
+				clr_global_flag = focus_EU200_voted
+				clr_global_flag = focus_EU200_QMV_voted
+				clr_global_flag = focus_EU200_maj_voted
+				clr_country_flag = focus_EU200
+				clr_country_flag = focus_EU200_QMV
+				clr_country_flag = focus_EU200_maj
 			}
 	}
 }
@@ -3326,6 +3453,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU200_voted
+			clr_global_flag = focus_EU200_QMV_voted
+			clr_global_flag = focus_EU200_maj_voted
+			clr_country_flag = focus_EU200
+			clr_country_flag = focus_EU200_QMV
+			clr_country_flag = focus_EU200_maj
 	}
 }
 
@@ -3569,6 +3702,12 @@ news_event = {
 					}
 					### focus_EU201 effect # will be added later
 				}
+				clr_global_flag = focus_EU201_voted
+				clr_global_flag = focus_EU201_QMV_voted
+				clr_global_flag = focus_EU201_maj_voted
+				clr_country_flag = focus_EU201
+				clr_country_flag = focus_EU201_QMV
+				clr_country_flag = focus_EU201_maj
 			}
 	}
 }
@@ -3614,6 +3753,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU201_voted
+			clr_global_flag = focus_EU201_QMV_voted
+			clr_global_flag = focus_EU201_maj_voted
+			clr_country_flag = focus_EU201
+			clr_country_flag = focus_EU201_QMV
+			clr_country_flag = focus_EU201_maj
 	}
 }
 
@@ -3857,6 +4002,12 @@ news_event = {
 					}
 					### focus_EU202 effect # will be added later
 				}
+				clr_global_flag = focus_EU202_voted
+				clr_global_flag = focus_EU202_QMV_voted
+				clr_global_flag = focus_EU202_maj_voted
+				clr_country_flag = focus_EU202
+				clr_country_flag = focus_EU202_QMV
+				clr_country_flag = focus_EU202_maj
 			}
 	}
 }
@@ -3902,6 +4053,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU202_voted
+			clr_global_flag = focus_EU202_QMV_voted
+			clr_global_flag = focus_EU202_maj_voted
+			clr_country_flag = focus_EU202
+			clr_country_flag = focus_EU202_QMV
+			clr_country_flag = focus_EU202_maj
 	}
 }
 
@@ -4145,6 +4302,12 @@ news_event = {
 					}
 					### focus_EU203 effect # will be added later
 				}
+				clr_global_flag = focus_EU203_voted
+				clr_global_flag = focus_EU203_QMV_voted
+				clr_global_flag = focus_EU203_maj_voted
+				clr_country_flag = focus_EU203
+				clr_country_flag = focus_EU203_QMV
+				clr_country_flag = focus_EU203_maj
 			}
 	}
 }
@@ -4190,6 +4353,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU203_voted
+			clr_global_flag = focus_EU203_QMV_voted
+			clr_global_flag = focus_EU203_maj_voted
+			clr_country_flag = focus_EU203
+			clr_country_flag = focus_EU203_QMV
+			clr_country_flag = focus_EU203_maj
 	}
 }
 
@@ -4433,6 +4602,12 @@ news_event = {
 					}
 					### focus_EU204 effect # will be added later
 				}
+				clr_global_flag = focus_EU204_voted
+				clr_global_flag = focus_EU204_QMV_voted
+				clr_global_flag = focus_EU204_maj_voted
+				clr_country_flag = focus_EU204
+				clr_country_flag = focus_EU204_QMV
+				clr_country_flag = focus_EU204_maj
 			}
 	}
 }
@@ -4478,6 +4653,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU204_voted
+			clr_global_flag = focus_EU204_QMV_voted
+			clr_global_flag = focus_EU204_maj_voted
+			clr_country_flag = focus_EU204
+			clr_country_flag = focus_EU204_QMV
+			clr_country_flag = focus_EU204_maj
 	}
 }
 
@@ -4721,6 +4902,12 @@ news_event = {
 					}
 					### focus_EU205 effect # will be added later
 				}
+				clr_global_flag = focus_EU205_voted
+				clr_global_flag = focus_EU205_QMV_voted
+				clr_global_flag = focus_EU205_maj_voted
+				clr_country_flag = focus_EU205
+				clr_country_flag = focus_EU205_QMV
+				clr_country_flag = focus_EU205_maj
 			}
 	}
 }
@@ -4766,6 +4953,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU205_voted
+			clr_global_flag = focus_EU205_QMV_voted
+			clr_global_flag = focus_EU205_maj_voted
+			clr_country_flag = focus_EU205
+			clr_country_flag = focus_EU205_QMV
+			clr_country_flag = focus_EU205_maj
 	}
 }
 
@@ -5009,6 +5202,12 @@ news_event = {
 					}
 					### focus_EU206 effect # will be added later
 				}
+				clr_global_flag = focus_EU206_voted
+				clr_global_flag = focus_EU206_QMV_voted
+				clr_global_flag = focus_EU206_maj_voted
+				clr_country_flag = focus_EU206
+				clr_country_flag = focus_EU206_QMV
+				clr_country_flag = focus_EU206_maj
 			}
 	}
 }
@@ -5054,6 +5253,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU206_voted
+			clr_global_flag = focus_EU206_QMV_voted
+			clr_global_flag = focus_EU206_maj_voted
+			clr_country_flag = focus_EU206
+			clr_country_flag = focus_EU206_QMV
+			clr_country_flag = focus_EU206_maj
 	}
 }
 
@@ -5297,6 +5502,12 @@ news_event = {
 					}
 					### focus_EU207 effect # will be added later
 				}
+				clr_global_flag = focus_EU207_voted
+				clr_global_flag = focus_EU207_QMV_voted
+				clr_global_flag = focus_EU207_maj_voted
+				clr_country_flag = focus_EU207
+				clr_country_flag = focus_EU207_QMV
+				clr_country_flag = focus_EU207_maj
 			}
 	}
 }
@@ -5342,6 +5553,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU207_voted
+			clr_global_flag = focus_EU207_QMV_voted
+			clr_global_flag = focus_EU207_maj_voted
+			clr_country_flag = focus_EU207
+			clr_country_flag = focus_EU207_QMV
+			clr_country_flag = focus_EU207_maj
 	}
 }
 
@@ -5585,6 +5802,12 @@ news_event = {
 					}
 					### focus_EU208 effect # will be added later
 				}
+				clr_global_flag = focus_EU208_voted
+				clr_global_flag = focus_EU208_QMV_voted
+				clr_global_flag = focus_EU208_maj_voted
+				clr_country_flag = focus_EU208
+				clr_country_flag = focus_EU208_QMV
+				clr_country_flag = focus_EU208_maj
 			}
 	}
 }
@@ -5630,6 +5853,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU208_voted
+			clr_global_flag = focus_EU208_QMV_voted
+			clr_global_flag = focus_EU208_maj_voted
+			clr_country_flag = focus_EU208
+			clr_country_flag = focus_EU208_QMV
+			clr_country_flag = focus_EU208_maj
 	}
 }
 
@@ -5873,6 +6102,12 @@ news_event = {
 					}
 					### focus_EU300 effect # will be added later
 				}
+				clr_global_flag = focus_EU300_voted
+				clr_global_flag = focus_EU300_QMV_voted
+				clr_global_flag = focus_EU300_maj_voted
+				clr_country_flag = focus_EU300
+				clr_country_flag = focus_EU300_QMV
+				clr_country_flag = focus_EU300_maj
 			}
 	}
 }
@@ -5918,6 +6153,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU300_voted
+			clr_global_flag = focus_EU300_QMV_voted
+			clr_global_flag = focus_EU300_maj_voted
+			clr_country_flag = focus_EU300
+			clr_country_flag = focus_EU300_QMV
+			clr_country_flag = focus_EU300_maj
 	}
 }
 
@@ -6161,6 +6402,12 @@ news_event = {
 					}
 					### focus_EU301 effect # will be added later
 				}
+				clr_global_flag = focus_EU301_voted
+				clr_global_flag = focus_EU301_QMV_voted
+				clr_global_flag = focus_EU301_maj_voted
+				clr_country_flag = focus_EU301
+				clr_country_flag = focus_EU301_QMV
+				clr_country_flag = focus_EU301_maj
 			}
 	}
 }
@@ -6206,6 +6453,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU301_voted
+			clr_global_flag = focus_EU301_QMV_voted
+			clr_global_flag = focus_EU301_maj_voted
+			clr_country_flag = focus_EU301
+			clr_country_flag = focus_EU301_QMV
+			clr_country_flag = focus_EU301_maj
 	}
 }
 
@@ -6449,6 +6702,12 @@ news_event = {
 					}
 					### focus_EU302 effect # will be added later
 				}
+				clr_global_flag = focus_EU302_voted
+				clr_global_flag = focus_EU302_QMV_voted
+				clr_global_flag = focus_EU302_maj_voted
+				clr_country_flag = focus_EU302
+				clr_country_flag = focus_EU302_QMV
+				clr_country_flag = focus_EU302_maj
 			}
 	}
 }
@@ -6494,6 +6753,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU302_voted
+			clr_global_flag = focus_EU302_QMV_voted
+			clr_global_flag = focus_EU302_maj_voted
+			clr_country_flag = focus_EU302
+			clr_country_flag = focus_EU302_QMV
+			clr_country_flag = focus_EU302_maj
 	}
 }
 
@@ -6737,6 +7002,12 @@ news_event = {
 					}
 					### focus_EU303 effect # will be added later
 				}
+				clr_global_flag = focus_EU303_voted
+				clr_global_flag = focus_EU303_QMV_voted
+				clr_global_flag = focus_EU303_maj_voted
+				clr_country_flag = focus_EU303
+				clr_country_flag = focus_EU303_QMV
+				clr_country_flag = focus_EU303_maj
 			}
 	}
 }
@@ -6782,6 +7053,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU303_voted
+			clr_global_flag = focus_EU303_QMV_voted
+			clr_global_flag = focus_EU303_maj_voted
+			clr_country_flag = focus_EU303
+			clr_country_flag = focus_EU303_QMV
+			clr_country_flag = focus_EU303_maj
 	}
 }
 
@@ -7025,6 +7302,12 @@ news_event = {
 					}
 					### focus_EU304 effect # will be added later
 				}
+				clr_global_flag = focus_EU304_voted
+				clr_global_flag = focus_EU304_QMV_voted
+				clr_global_flag = focus_EU304_maj_voted
+				clr_country_flag = focus_EU304
+				clr_country_flag = focus_EU304_QMV
+				clr_country_flag = focus_EU304_maj
 			}
 	}
 }
@@ -7070,6 +7353,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU304_voted
+			clr_global_flag = focus_EU304_QMV_voted
+			clr_global_flag = focus_EU304_maj_voted
+			clr_country_flag = focus_EU304
+			clr_country_flag = focus_EU304_QMV
+			clr_country_flag = focus_EU304_maj
 	}
 }
 
@@ -7313,6 +7602,12 @@ news_event = {
 					}
 					### focus_EU305 effect # will be added later
 				}
+				clr_global_flag = focus_EU305_voted
+				clr_global_flag = focus_EU305_QMV_voted
+				clr_global_flag = focus_EU305_maj_voted
+				clr_country_flag = focus_EU305
+				clr_country_flag = focus_EU305_QMV
+				clr_country_flag = focus_EU305_maj
 			}
 	}
 }
@@ -7358,6 +7653,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU305_voted
+			clr_global_flag = focus_EU305_QMV_voted
+			clr_global_flag = focus_EU305_maj_voted
+			clr_country_flag = focus_EU305
+			clr_country_flag = focus_EU305_QMV
+			clr_country_flag = focus_EU305_maj
 	}
 }
 
@@ -7601,6 +7902,12 @@ news_event = {
 					}
 					### focus_EU306 effect # will be added later
 				}
+				clr_global_flag = focus_EU306_voted
+				clr_global_flag = focus_EU306_QMV_voted
+				clr_global_flag = focus_EU306_maj_voted
+				clr_country_flag = focus_EU306
+				clr_country_flag = focus_EU306_QMV
+				clr_country_flag = focus_EU306_maj
 			}
 	}
 }
@@ -7646,6 +7953,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU306_voted
+			clr_global_flag = focus_EU306_QMV_voted
+			clr_global_flag = focus_EU306_maj_voted
+			clr_country_flag = focus_EU306
+			clr_country_flag = focus_EU306_QMV
+			clr_country_flag = focus_EU306_maj
 	}
 }
 
@@ -7889,6 +8202,12 @@ news_event = {
 					}
 					### focus_EU307 effect # will be added later
 				}
+				clr_global_flag = focus_EU307_voted
+				clr_global_flag = focus_EU307_QMV_voted
+				clr_global_flag = focus_EU307_maj_voted
+				clr_country_flag = focus_EU307
+				clr_country_flag = focus_EU307_QMV
+				clr_country_flag = focus_EU307_maj
 			}
 	}
 }
@@ -7934,6 +8253,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU307_voted
+			clr_global_flag = focus_EU307_QMV_voted
+			clr_global_flag = focus_EU307_maj_voted
+			clr_country_flag = focus_EU307
+			clr_country_flag = focus_EU307_QMV
+			clr_country_flag = focus_EU307_maj
 	}
 }
 
@@ -8177,6 +8502,12 @@ news_event = {
 					}
 					### focus_EU308 effect # will be added later
 				}
+				clr_global_flag = focus_EU308_voted
+				clr_global_flag = focus_EU308_QMV_voted
+				clr_global_flag = focus_EU308_maj_voted
+				clr_country_flag = focus_EU308
+				clr_country_flag = focus_EU308_QMV
+				clr_country_flag = focus_EU308_maj
 			}
 	}
 }
@@ -8222,6 +8553,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU308_voted
+			clr_global_flag = focus_EU308_QMV_voted
+			clr_global_flag = focus_EU308_maj_voted
+			clr_country_flag = focus_EU308
+			clr_country_flag = focus_EU308_QMV
+			clr_country_flag = focus_EU308_maj
 	}
 }
 
@@ -8465,6 +8802,12 @@ news_event = {
 					}
 					### focus_EU400 effect # will be added later
 				}
+				clr_global_flag = focus_EU400_voted
+				clr_global_flag = focus_EU400_QMV_voted
+				clr_global_flag = focus_EU400_maj_voted
+				clr_country_flag = focus_EU400
+				clr_country_flag = focus_EU400_QMV
+				clr_country_flag = focus_EU400_maj
 			}
 	}
 }
@@ -8510,6 +8853,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU400_voted
+			clr_global_flag = focus_EU400_QMV_voted
+			clr_global_flag = focus_EU400_maj_voted
+			clr_country_flag = focus_EU400
+			clr_country_flag = focus_EU400_QMV
+			clr_country_flag = focus_EU400_maj
 	}
 }
 
@@ -8753,6 +9102,12 @@ news_event = {
 					}
 					### focus_EU401 effect # will be added later
 				}
+				clr_global_flag = focus_EU401_voted
+				clr_global_flag = focus_EU401_QMV_voted
+				clr_global_flag = focus_EU401_maj_voted
+				clr_country_flag = focus_EU401
+				clr_country_flag = focus_EU401_QMV
+				clr_country_flag = focus_EU401_maj
 			}
 	}
 }
@@ -8798,6 +9153,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU401_voted
+			clr_global_flag = focus_EU401_QMV_voted
+			clr_global_flag = focus_EU401_maj_voted
+			clr_country_flag = focus_EU401
+			clr_country_flag = focus_EU401_QMV
+			clr_country_flag = focus_EU401_maj
 	}
 }
 
@@ -9041,6 +9402,12 @@ news_event = {
 					}
 					### focus_EU402 effect # will be added later
 				}
+				clr_global_flag = focus_EU402_voted
+				clr_global_flag = focus_EU402_QMV_voted
+				clr_global_flag = focus_EU402_maj_voted
+				clr_country_flag = focus_EU402
+				clr_country_flag = focus_EU402_QMV
+				clr_country_flag = focus_EU402_maj
 			}
 	}
 }
@@ -9086,6 +9453,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU402_voted
+			clr_global_flag = focus_EU402_QMV_voted
+			clr_global_flag = focus_EU402_maj_voted
+			clr_country_flag = focus_EU402
+			clr_country_flag = focus_EU402_QMV
+			clr_country_flag = focus_EU402_maj
 	}
 }
 
@@ -9329,6 +9702,12 @@ news_event = {
 					}
 					### focus_EU403 effect # will be added later
 				}
+				clr_global_flag = focus_EU403_voted
+				clr_global_flag = focus_EU403_QMV_voted
+				clr_global_flag = focus_EU403_maj_voted
+				clr_country_flag = focus_EU403
+				clr_country_flag = focus_EU403_QMV
+				clr_country_flag = focus_EU403_maj
 			}
 	}
 }
@@ -9374,6 +9753,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU403_voted
+			clr_global_flag = focus_EU403_QMV_voted
+			clr_global_flag = focus_EU403_maj_voted
+			clr_country_flag = focus_EU403
+			clr_country_flag = focus_EU403_QMV
+			clr_country_flag = focus_EU403_maj
 	}
 }
 
@@ -9617,6 +10002,12 @@ news_event = {
 					}
 					### focus_EU404 effect # will be added later
 				}
+				clr_global_flag = focus_EU404_voted
+				clr_global_flag = focus_EU404_QMV_voted
+				clr_global_flag = focus_EU404_maj_voted
+				clr_country_flag = focus_EU404
+				clr_country_flag = focus_EU404_QMV
+				clr_country_flag = focus_EU404_maj
 			}
 	}
 }
@@ -9662,6 +10053,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU404_voted
+			clr_global_flag = focus_EU404_QMV_voted
+			clr_global_flag = focus_EU404_maj_voted
+			clr_country_flag = focus_EU404
+			clr_country_flag = focus_EU404_QMV
+			clr_country_flag = focus_EU404_maj
 	}
 }
 
@@ -9905,6 +10302,12 @@ news_event = {
 					}
 					### focus_EU405 effect # will be added later
 				}
+				clr_global_flag = focus_EU405_voted
+				clr_global_flag = focus_EU405_QMV_voted
+				clr_global_flag = focus_EU405_maj_voted
+				clr_country_flag = focus_EU405
+				clr_country_flag = focus_EU405_QMV
+				clr_country_flag = focus_EU405_maj
 			}
 	}
 }
@@ -9950,6 +10353,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU405_voted
+			clr_global_flag = focus_EU405_QMV_voted
+			clr_global_flag = focus_EU405_maj_voted
+			clr_country_flag = focus_EU405
+			clr_country_flag = focus_EU405_QMV
+			clr_country_flag = focus_EU405_maj
 	}
 }
 
@@ -10193,6 +10602,12 @@ news_event = {
 					}
 					### focus_EU406 effect # will be added later
 				}
+				clr_global_flag = focus_EU406_voted
+				clr_global_flag = focus_EU406_QMV_voted
+				clr_global_flag = focus_EU406_maj_voted
+				clr_country_flag = focus_EU406
+				clr_country_flag = focus_EU406_QMV
+				clr_country_flag = focus_EU406_maj
 			}
 	}
 }
@@ -10238,6 +10653,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU406_voted
+			clr_global_flag = focus_EU406_QMV_voted
+			clr_global_flag = focus_EU406_maj_voted
+			clr_country_flag = focus_EU406
+			clr_country_flag = focus_EU406_QMV
+			clr_country_flag = focus_EU406_maj
 	}
 }
 
@@ -10481,6 +10902,12 @@ news_event = {
 					}
 					### focus_EU407 effect # will be added later
 				}
+				clr_global_flag = focus_EU407_voted
+				clr_global_flag = focus_EU407_QMV_voted
+				clr_global_flag = focus_EU407_maj_voted
+				clr_country_flag = focus_EU407
+				clr_country_flag = focus_EU407_QMV
+				clr_country_flag = focus_EU407_maj
 			}
 	}
 }
@@ -10526,6 +10953,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU407_voted
+			clr_global_flag = focus_EU407_QMV_voted
+			clr_global_flag = focus_EU407_maj_voted
+			clr_country_flag = focus_EU407
+			clr_country_flag = focus_EU407_QMV
+			clr_country_flag = focus_EU407_maj
 	}
 }
 
@@ -10769,6 +11202,12 @@ news_event = {
 					}
 					### focus_EU408 effect # will be added later
 				}
+				clr_global_flag = focus_EU408_voted
+				clr_global_flag = focus_EU408_QMV_voted
+				clr_global_flag = focus_EU408_maj_voted
+				clr_country_flag = focus_EU408
+				clr_country_flag = focus_EU408_QMV
+				clr_country_flag = focus_EU408_maj
 			}
 	}
 }
@@ -10814,6 +11253,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU408_voted
+			clr_global_flag = focus_EU408_QMV_voted
+			clr_global_flag = focus_EU408_maj_voted
+			clr_country_flag = focus_EU408
+			clr_country_flag = focus_EU408_QMV
+			clr_country_flag = focus_EU408_maj
 	}
 }
 
@@ -11057,6 +11502,12 @@ news_event = {
 					}
 					### focus_EU500 effect # will be added later
 				}
+				clr_global_flag = focus_EU500_voted
+				clr_global_flag = focus_EU500_QMV_voted
+				clr_global_flag = focus_EU500_maj_voted
+				clr_country_flag = focus_EU500
+				clr_country_flag = focus_EU500_QMV
+				clr_country_flag = focus_EU500_maj
 			}
 	}
 }
@@ -11102,6 +11553,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU500_voted
+			clr_global_flag = focus_EU500_QMV_voted
+			clr_global_flag = focus_EU500_maj_voted
+			clr_country_flag = focus_EU500
+			clr_country_flag = focus_EU500_QMV
+			clr_country_flag = focus_EU500_maj
 	}
 }
 
@@ -11345,6 +11802,12 @@ news_event = {
 					}
 					### focus_EU600 effect # will be added later
 				}
+				clr_global_flag = focus_EU600_voted
+				clr_global_flag = focus_EU600_QMV_voted
+				clr_global_flag = focus_EU600_maj_voted
+				clr_country_flag = focus_EU600
+				clr_country_flag = focus_EU600_QMV
+				clr_country_flag = focus_EU600_maj
 			}
 	}
 }
@@ -11390,6 +11853,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU600_voted
+			clr_global_flag = focus_EU600_QMV_voted
+			clr_global_flag = focus_EU600_maj_voted
+			clr_country_flag = focus_EU600
+			clr_country_flag = focus_EU600_QMV
+			clr_country_flag = focus_EU600_maj
 	}
 }
 
@@ -11633,6 +12102,12 @@ news_event = {
 					}
 					### focus_EU601 effect # will be added later
 				}
+				clr_global_flag = focus_EU601_voted
+				clr_global_flag = focus_EU601_QMV_voted
+				clr_global_flag = focus_EU601_maj_voted
+				clr_country_flag = focus_EU601
+				clr_country_flag = focus_EU601_QMV
+				clr_country_flag = focus_EU601_maj
 			}
 	}
 }
@@ -11678,6 +12153,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU601_voted
+			clr_global_flag = focus_EU601_QMV_voted
+			clr_global_flag = focus_EU601_maj_voted
+			clr_country_flag = focus_EU601
+			clr_country_flag = focus_EU601_QMV
+			clr_country_flag = focus_EU601_maj
 	}
 }
 
@@ -11921,6 +12402,12 @@ news_event = {
 					}
 					### focus_EU602 effect # will be added later
 				}
+				clr_global_flag = focus_EU602_voted
+				clr_global_flag = focus_EU602_QMV_voted
+				clr_global_flag = focus_EU602_maj_voted
+				clr_country_flag = focus_EU602
+				clr_country_flag = focus_EU602_QMV
+				clr_country_flag = focus_EU602_maj
 			}
 	}
 }
@@ -11966,6 +12453,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU602_voted
+			clr_global_flag = focus_EU602_QMV_voted
+			clr_global_flag = focus_EU602_maj_voted
+			clr_country_flag = focus_EU602
+			clr_country_flag = focus_EU602_QMV
+			clr_country_flag = focus_EU602_maj
 	}
 }
 
@@ -12209,6 +12702,12 @@ news_event = {
 					}
 					### focus_EU603 effect # will be added later
 				}
+				clr_global_flag = focus_EU603_voted
+				clr_global_flag = focus_EU603_QMV_voted
+				clr_global_flag = focus_EU603_maj_voted
+				clr_country_flag = focus_EU603
+				clr_country_flag = focus_EU603_QMV
+				clr_country_flag = focus_EU603_maj
 			}
 	}
 }
@@ -12254,6 +12753,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU603_voted
+			clr_global_flag = focus_EU603_QMV_voted
+			clr_global_flag = focus_EU603_maj_voted
+			clr_country_flag = focus_EU603
+			clr_country_flag = focus_EU603_QMV
+			clr_country_flag = focus_EU603_maj
 	}
 }
 
@@ -12497,6 +13002,12 @@ news_event = {
 					}
 					### focus_EU700 effect # will be added later
 				}
+				clr_global_flag = focus_EU700_voted
+				clr_global_flag = focus_EU700_QMV_voted
+				clr_global_flag = focus_EU700_maj_voted
+				clr_country_flag = focus_EU700
+				clr_country_flag = focus_EU700_QMV
+				clr_country_flag = focus_EU700_maj
 			}
 	}
 }
@@ -12542,6 +13053,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU700_voted
+			clr_global_flag = focus_EU700_QMV_voted
+			clr_global_flag = focus_EU700_maj_voted
+			clr_country_flag = focus_EU700
+			clr_country_flag = focus_EU700_QMV
+			clr_country_flag = focus_EU700_maj
 	}
 }
 
@@ -12785,6 +13302,12 @@ news_event = {
 					}
 					### focus_EU701 effect # will be added later
 				}
+				clr_global_flag = focus_EU701_voted
+				clr_global_flag = focus_EU701_QMV_voted
+				clr_global_flag = focus_EU701_maj_voted
+				clr_country_flag = focus_EU701
+				clr_country_flag = focus_EU701_QMV
+				clr_country_flag = focus_EU701_maj
 			}
 	}
 }
@@ -12830,6 +13353,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU701_voted
+			clr_global_flag = focus_EU701_QMV_voted
+			clr_global_flag = focus_EU701_maj_voted
+			clr_country_flag = focus_EU701
+			clr_country_flag = focus_EU701_QMV
+			clr_country_flag = focus_EU701_maj
 	}
 }
 
@@ -13073,6 +13602,12 @@ news_event = {
 					}
 					### focus_EU702 effect # will be added later
 				}
+				clr_global_flag = focus_EU702_voted
+				clr_global_flag = focus_EU702_QMV_voted
+				clr_global_flag = focus_EU702_maj_voted
+				clr_country_flag = focus_EU702
+				clr_country_flag = focus_EU702_QMV
+				clr_country_flag = focus_EU702_maj
 			}
 	}
 }
@@ -13118,6 +13653,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU702_voted
+			clr_global_flag = focus_EU702_QMV_voted
+			clr_global_flag = focus_EU702_maj_voted
+			clr_country_flag = focus_EU702
+			clr_country_flag = focus_EU702_QMV
+			clr_country_flag = focus_EU702_maj
 	}
 }
 
@@ -13361,6 +13902,12 @@ news_event = {
 					}
 					### focus_EU703 effect # will be added later
 				}
+				clr_global_flag = focus_EU703_voted
+				clr_global_flag = focus_EU703_QMV_voted
+				clr_global_flag = focus_EU703_maj_voted
+				clr_country_flag = focus_EU703
+				clr_country_flag = focus_EU703_QMV
+				clr_country_flag = focus_EU703_maj
 			}
 	}
 }
@@ -13406,6 +13953,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU703_voted
+			clr_global_flag = focus_EU703_QMV_voted
+			clr_global_flag = focus_EU703_maj_voted
+			clr_country_flag = focus_EU703
+			clr_country_flag = focus_EU703_QMV
+			clr_country_flag = focus_EU703_maj
 	}
 }
 
@@ -13649,6 +14202,12 @@ news_event = {
 					}
 					### focus_EU110 effect # will be added later
 				}
+				clr_global_flag = focus_EU110_voted
+				clr_global_flag = focus_EU110_QMV_voted
+				clr_global_flag = focus_EU110_maj_voted
+				clr_country_flag = focus_EU110
+				clr_country_flag = focus_EU110_QMV
+				clr_country_flag = focus_EU110_maj
 			}
 	}
 }
@@ -13694,6 +14253,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU110_voted
+			clr_global_flag = focus_EU110_QMV_voted
+			clr_global_flag = focus_EU110_maj_voted
+			clr_country_flag = focus_EU110
+			clr_country_flag = focus_EU110_QMV
+			clr_country_flag = focus_EU110_maj
 	}
 }
 
@@ -13937,6 +14502,12 @@ news_event = {
 					}
 					### focus_EU111 effect # will be added later
 				}
+				clr_global_flag = focus_EU111_voted
+				clr_global_flag = focus_EU111_QMV_voted
+				clr_global_flag = focus_EU111_maj_voted
+				clr_country_flag = focus_EU111
+				clr_country_flag = focus_EU111_QMV
+				clr_country_flag = focus_EU111_maj
 			}
 	}
 }
@@ -13982,6 +14553,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU111_voted
+			clr_global_flag = focus_EU111_QMV_voted
+			clr_global_flag = focus_EU111_maj_voted
+			clr_country_flag = focus_EU111
+			clr_country_flag = focus_EU111_QMV
+			clr_country_flag = focus_EU111_maj
 	}
 }
 
@@ -14225,6 +14802,12 @@ news_event = {
 					}
 					### focus_EU112 effect # will be added later
 				}
+				clr_global_flag = focus_EU112_voted
+				clr_global_flag = focus_EU112_QMV_voted
+				clr_global_flag = focus_EU112_maj_voted
+				clr_country_flag = focus_EU112
+				clr_country_flag = focus_EU112_QMV
+				clr_country_flag = focus_EU112_maj
 			}
 	}
 }
@@ -14270,6 +14853,12 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU112_voted
+			clr_global_flag = focus_EU112_QMV_voted
+			clr_global_flag = focus_EU112_maj_voted
+			clr_country_flag = focus_EU112
+			clr_country_flag = focus_EU112_QMV
+			clr_country_flag = focus_EU112_maj
 	}
 }
 
@@ -14513,6 +15102,12 @@ news_event = {
 					}
 					### focus_EU113 effect # will be added later
 				}
+				clr_global_flag = focus_EU113_voted
+				clr_global_flag = focus_EU113_QMV_voted
+				clr_global_flag = focus_EU113_maj_voted
+				clr_country_flag = focus_EU113
+				clr_country_flag = focus_EU113_QMV
+				clr_country_flag = focus_EU113_maj
 			}
 	}
 }
@@ -14558,9 +15153,14 @@ news_event = {
 			clr_global_flag = EU_unanimity_voting_NO
 			clr_global_flag = EU_qualified_majority_voting_NO
 			clr_global_flag = EU_majority_voting_NO
+			clr_global_flag = focus_EU113_voted
+			clr_global_flag = focus_EU113_QMV_voted
+			clr_global_flag = focus_EU113_maj_voted
+			clr_country_flag = focus_EU113
+			clr_country_flag = focus_EU113_QMV
+			clr_country_flag = focus_EU113_maj
 	}
 }
-
 
 ##################################
 ### End of Focus Voting Events ###
