@@ -4,6 +4,7 @@ add_namespace = ukraine_hidden
 add_namespace = ukraine_debates
 add_namespace = ukraine_revolution
 
+#Author: Birdy
 ### Constitutional referendum
 
 news_event = {
@@ -461,7 +462,7 @@ country_event = {
 	option = {
 		name = ukraine_md.5.a
 		log = "[GetDateText]: [This.GetName]: ukraine_md.5.a executed"
-		set_country_flag = UKR_supported_patriotic_parties
+		set_country_flag = UKR_supported_patriotic_parties_flag
 		
 		ai_chance = {
 			factor = 10
@@ -470,7 +471,7 @@ country_event = {
 	option = {
 		name = ukraine_md.5.b
 		log = "[GetDateText]: [This.GetName]: ukraine_md.5.b executed"
-		set_country_flag = UKR_supported_russian_parties
+		set_country_flag = UKR_supported_russian_parties_flag
 		ai_chance = {
 			factor = 5
 			modifier = {
@@ -1054,6 +1055,7 @@ country_event = { ##End of the Civil War
 				UKR = {
 					owns_state = 693 
 				}
+				date < 2016.12.31
 			}
 			AND = {
 				NOV = {
@@ -1064,17 +1066,22 @@ country_event = { ##End of the Civil War
 					NOT = { country_exists = UKR }
 				}
 				NOV = { owns_state = 693 }
+				date < 2016.12.31
 			}
 			AND = {
 				UKR = { NOT = { has_war_with = NOV } }
 				country_exists = NOV 
 				NOV = { NOT = { is_puppet_of = UKR } }
+				date < 2016.12.31
 			}
 		}
 	}
 	
+	fire_only_once = yes
+	
 	mean_time_to_happen = {
 		days = 31
+		
 	}
 	
 	option = {
@@ -1124,6 +1131,7 @@ country_event = { ##End of the Civil War
 		}
 		add_war_support = 0.05
 		add_stability = -0.03
+		news_event = ukraine_news.9 
 	}
 }
 
@@ -1217,6 +1225,63 @@ country_event = { ##Demand the Crimea's Return to Ukraine - SOV
 	}
 }
 
+country_event = { ##Reign in the Donbas
+	id = ukraine_revolution.5
+	title = ukraine_revolution.5.t
+	desc = ukraine_revolution.5.d
+	picture = GFX_ukraine_revolution1
+	
+	is_triggered_only = yes 
+	
+	option = { ###Accepts
+		name = ukraine_revolution.5.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.5.a executed"
+		UKR = {
+			add_stability = 0.02
+			add_war_support = -0.02
+			transfer_state = 693
+			country_event = { id = diplomatic_response.1 hours = 4 }
+		}	
+		ai_chance = {
+			base = 25 
+			modifier = {
+				is_historical_focus_on = no 
+				add = 50
+			}
+			modifier = {
+				date < 2016.1.1
+				add = 75
+			}
+		}
+	}
+	
+	option = { ###Refuses
+		name = ukraine_revolution.5.b
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.5.b executed"
+		UKR = {
+			add_stability = -0.02 
+			add_war_support = 0.02
+			country_event = { id = diplomatic_response.2 hours = 4 }
+			create_wargoal = {
+				type = take_state_focus
+				target = SOV
+				generator = { 693 }
+			}
+		}
+		ai_chance = {
+			base = 75 
+			modifier = {
+				is_historical_focus_on = yes 
+				add = 25
+			}
+			modifier = {
+				date < 2016.1.1
+				add = 25 
+			}
+		}
+	}
+}
+
 country_event = { ###Russia Refuses to Return Crimea 
 	id = ukraine_revolution.9
 	title = ukraine_revolution.9.t
@@ -1251,5 +1316,116 @@ country_event = { ###Russia Returns the Crimea
 		remove_opinion_modifier = { target = SOV modifier = rival }
 		add_stability = 0.05 
 		add_political_power = 150
+	}
+}
+
+
+country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
+	id = ukraine_revolution.11
+	title = ukraine_revolution.11.t
+	desc = ukraine_revolution.11.d
+	#picture = GFX_negotiations
+	
+	trigger = {
+		check_variable = { UKR_stability_of_ukraine_var < 50 }
+		check_variable = { UKR_chance_of_collapse_var > 3 }
+		tag = UKR 
+		UKR = { NOT = { has_war_with = NOV } }
+	}
+	
+	mean_time_to_happen = {
+		days = 250
+		modifier = {
+			factor = 0.75
+			check_variable = { UKR_stability_of_ukraine_var < 50 }
+		}
+		modifier = {
+			factor = 0.5
+			check_variable = { UKR_stability_of_ukraine_var < 25 }
+		}
+		modifier = { 
+			factor = 0.25
+			check_variable = { UKR_stability_of_ukraine_var < 15 }
+		}
+	}
+	
+	option = { ##Crackdown on Protestors
+		name = ukraine_revolution.11.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.11.a executed"
+		add_to_variable = { UKR_chance_of_collapse_var = 1 }
+		subtract_from_variable = { UKR_stability_of_ukraine_var = 3 }
+		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_1_TT
+		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_3_TT
+	}
+	option = { ##Let them Protest
+		name = ukraine_revolution.11.b
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.11.b executed"
+		add_to_variable = { UKR_chance_of_collapse_var = 2 }
+		add_to_variable = { UKR_stability_of_ukraine_var = 5 }
+		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_2_TT
+		custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+	}
+}
+
+country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian Sabtoage
+	id = ukraine_revolution.12
+	title = ukraine_revolution.12.t
+	desc = ukraine_revolution.12.d
+	#picture = GFX_negotiations
+	
+	trigger = {
+		check_variable = { UKR_stability_of_ukraine_var < 60 }
+		check_variable = { UKR_chance_of_collapse_var > 8 }
+		tag = UKR 
+		UKR = { NOT = { has_war_with = NOV } }
+		any_owned_state = {
+			industrial_complex > 0 
+		}
+		any_owned_state = {
+			infrastructure > 0
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 90
+		modifier = {
+			factor = 0.50
+			check_variable = { UKR_stability_of_ukraine_var < 60 }
+		}
+		modifier = {
+			factor = 0.25
+			check_variable = { UKR_stability_of_ukraine_var < 30 }
+		}
+		modifier = { 
+			factor = 0.10
+			check_variable = { UKR_stability_of_ukraine_var < 15 }
+		}
+	}
+	
+	option = { ##Sabtoage!
+		name = ukraine_revolution.12.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.12.a executed"
+		subtract_from_variable = { UKR_stability_of_ukraine_var = 3 }
+		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_3_TT
+		add_war_support = 0.01 
+		add_stability = -0.01
+		random_owned_state = {
+			limit = {
+				industrial_complex > 0
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 0.50
+			}
+		}
+		random_owned_state = {
+			limit = {
+				infrastructure > 0
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 0.35
+			}
+		}
 	}
 }
