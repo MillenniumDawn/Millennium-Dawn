@@ -1083,6 +1083,12 @@ focus_tree = {
 		
 		available = {
 			NOT = { is_in_faction_with = CHI }
+			OR = { 
+				CHI = {
+					has_added_tension_amount > 0
+				}
+				threat > 0.2
+			}
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_CHI_influence_lower_20_tt
 				BRM = {
@@ -1116,6 +1122,14 @@ focus_tree = {
 					random = 3
 				}
 			}
+			hidden_effect = {
+				country_event = {
+					id = Burma.10
+					days = 5
+				}
+			}
+			set_country_flag = ASEAN_defence_treaty
+			custom_effect_tooltip = 11_ASEAN_defence_tt
 		}
 		
 		ai_will_do = {
@@ -1560,7 +1574,7 @@ focus_tree = {
 	
 	focus = {
 		id = BRM_mobilize_the_workers
-		icon = entente
+		icon = mobilize_the_workers
 		x = -1
 		y = 9
 		cost = 10
@@ -2023,6 +2037,22 @@ focus_tree = {
 					autonomy_state = autonomy_autonomous_state
 				}
 			}
+			KAC = {
+				drop_cosmetic_tag = yes
+				set_cosmetic_tag = KAC_federation
+			}
+			KAR = {
+				drop_cosmetic_tag = yes
+				set_cosmetic_tag = KAR_federation
+			}
+			SHN = {
+				drop_cosmetic_tag = yes
+				set_cosmetic_tag = SHN_federation
+			}
+			WAA = {
+				drop_cosmetic_tag = yes
+				set_cosmetic_tag = WAA_federation
+			}
 		}
 		
 		ai_will_do = {
@@ -2064,6 +2094,15 @@ focus_tree = {
 					check_variable = { temp_idx > -1 }
 					check_variable = { influence_array_calc^temp_idx < 0.20 }
 				}
+			}
+		}
+		
+		bypass = {
+			NOT = {
+				country_exists = KAC
+				country_exists = KAR
+				country_exists = SHN
+				country_exists = WAA
 			}
 		}
 		
@@ -2190,6 +2229,21 @@ focus_tree = {
 						target = BRM
 						modifier = left_ASEAN
 					}
+					remove_opinion_modifier = {
+						target = BRM
+						modifier = asean_relations
+					}
+			}
+			every_country = {
+				limit = {
+					has_opinion_modifier = asean_plus_three_relations
+				}
+				remove_opinion_modifier = {
+					target = BRM
+					modifier = asean_plus_three_relations
+				}
+			}
+			BRM = {
 			}
 		}
 		
@@ -2219,6 +2273,8 @@ focus_tree = {
 		
 		available = {
 			has_elections = no
+			has_stability > 0.25
+			NOT = { has_idea = police_01 has_idea = police_02 has_idea = police_03 has_idea = police_04 }
 		}
 		
 		completion_reward = {
@@ -2396,6 +2452,15 @@ focus_tree = {
 				has_idea = Nationwide_Ceasefire_Agreement
 			}
 		}
+		
+		bypass = {
+			NOT = {
+				country_exists = KAC
+				country_exists = KAR
+				country_exists = SHN
+				country_exists = WAA
+			}
+		}
 
 		completion_reward = {
 			news_event = {
@@ -2413,7 +2478,7 @@ focus_tree = {
 	
 	focus = {
 		id = BRM_strike_the_karen
-		icon = political_pressure
+		icon = political_pressure_blue
 		x = 10
 		y = 10
 		cost = 10
@@ -2444,7 +2509,7 @@ focus_tree = {
 	
 	focus = {
 		id = BRM_strike_the_kachin
-		icon = political_pressure_blue
+		icon = political_pressure_dark_green
 		x = 12
 		y = 10
 		cost = 10
@@ -2475,7 +2540,7 @@ focus_tree = {
 	
 	focus = {
 		id = BRM_strike_the_shan
-		icon = political_pressure_dark_green
+		icon = political_pressure
 		x = 14
 		y = 10
 		cost = 10
@@ -2685,6 +2750,7 @@ focus_tree = {
 		
 		completion_reward = {
 			add_political_power = 100
+			add_stability = 0.1
 			custom_effect_tooltip = 11_BRM_increase_domestic_influence_tt
 			hidden_effect = {
 				add_to_variable = { domestic_influence_amount = 40 }
@@ -2756,8 +2822,13 @@ focus_tree = {
 		}
 		
 		available = {
-			any_country = {
-				has_idea = Chinese_Involvement
+			OR = {	
+				any_country = {
+					has_idea = Chinese_Involvement
+				}
+				any_country = {
+					has_idea = Low_Chinese_Involvement
+				}
 			}
 		}
 		
@@ -2884,6 +2955,15 @@ focus_tree = {
 					add_idea = Disrupted_Chinese_Involvement
 				}
 			}
+			every_other_country = {
+				limit = {
+					has_idea = Low_Chinese_Involvement
+				}
+				swap_ideas = {
+					remove_idea = Low_Chinese_Involvement
+					add_idea = Disrupted_Chinese_Involvement
+				}
+			}
 			CHI = {
 				add_opinion_modifier = {
 					target = BRM
@@ -2932,6 +3012,11 @@ focus_tree = {
 		
 		completion_reward = {
 			add_war_support = 0.2
+			CHI = {
+				country_event = {
+					id = Burma.11
+				}
+			}
 		}
 		
 		ai_will_do = {
@@ -2960,8 +3045,8 @@ focus_tree = {
 		
 		available = {
 			has_civil_war = no
-			nationalist > 0.6
-			has_stability > 0.65
+			nationalist > 0.5
+			has_stability > 0.4
 			custom_trigger_tooltip = {
 				tooltip = 11_monks_indifferent_tt
 				hidden_trigger = {
@@ -3265,7 +3350,7 @@ focus_tree = {
 
 		completion_reward = {
 			add_political_power = 50
-			add_ideas = { Ensure_our_Unity }
+			add_stability = 0.05
 			
 		}
 		
@@ -3906,7 +3991,7 @@ focus_tree = {
 
 		completion_reward = {
 			add_political_power = 75
-			add_ideas = { Preserve_our_Sovereignty }
+			add_war_support = 0.05
 		}
 		
 		ai_will_do = {
