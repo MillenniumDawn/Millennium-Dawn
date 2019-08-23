@@ -1943,7 +1943,24 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			##Once Cell Tower STuff is included
+			add_political_power = 100
+			add_popularity = { ideology = neutrality popularity = 0.01 }
+			add_to_variable = { party_pop_array^14 = 0.01 }
+			recalculate_party = yes
+			338 = {
+				add_building_construction = {
+					type = infrastructure 
+					level = 1 
+					instant_build = yes 
+				}
+			}
+			337 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
 		}
 	}
 	
@@ -2055,7 +2072,10 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_stability = -0.025 #Mimic Islamists Rioting
+			increase_education_budget = yes
+		}
 	}
 	
 	focus = {
@@ -2086,7 +2106,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			NIG_religious_idea_switch_christian_majority = yes
+		}
 	}
 	
 	##Admin Reforms
@@ -2172,7 +2194,21 @@ focus_tree = {
 		prerequisite = { focus = NIG_adminstrative_reforms }
 		prerequisite = { }
 		mutually_exclusive = { } 
-		available = { } 
+		available = { 
+			custom_trigger_tooltip = {
+				OR = {
+					has_idea = paralyzing_corruption
+					has_idea = crippling_corruption
+					has_idea = rampant_corruption
+					has_idea = unrestrained_corruption
+					has_idea = systematic_corruption
+					has_idea = widespread_corruption
+					has_idea = medium_corruption
+					has_idea = modest_corruption
+				}
+				tooltip = NIG_found_the_icpc_trigger_TT
+			}
+		} 
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -2220,7 +2256,12 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = political_power_bonus
+				add_idea = political_power_bonus2
+			}
+		}
 	}
 	
 	focus = {
@@ -2268,10 +2309,14 @@ focus_tree = {
 		prerequisite = { focus = NIG_found_the_icpc }
 		prerequisite = { focus = NIG_cut_the_waste }
 		mutually_exclusive = { } 
-		available = { } 
+		available = {
+			has_idea = NIG_unrestrained_piracy_idea
+		} 
 		historical_ai = { }
 		select_effect = { }
-		bypass = { }
+		bypass = {
+			NOT = { has_idea = NIG_unrestrained_piracy_idea }
+		}
 		cancel = { }
 		
 		ai_will_do = {
@@ -2283,7 +2328,13 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			swap_ideas = {
+				remove_idea = NIG_unrestrained_piracy_idea
+				add_idea = NIG_restrained_piracy_idea
+			}
+			add_stability = 0.025
+		}
 	}
 	
 	focus = {
@@ -2314,7 +2365,12 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = political_power_bonus2
+				add_idea = political_power_bonus3
+			}
+		}
 	}
 	
 	focus = {
@@ -2328,10 +2384,17 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = NIG_piracy_and_militias }
-		available = { } 
+		available = {
+			custom_trigger_tooltip = {
+				has_idea = police_03
+				tooltip = NIG_has_higher_police_funding_TT
+			}
+		} 
 		historical_ai = { }
 		select_effect = { }
-		bypass = { }
+		bypass = {
+			NOT = { has_idea = NIG_restrained_piracy_idea }
+		}
 		cancel = { }
 		
 		ai_will_do = {
@@ -2343,7 +2406,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			remove_ideas = NIG_restrained_piracy_idea
+		}
 	}
 	
 	##ANPP
@@ -2731,7 +2796,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			remove_ideas = USA_usaid
+		}
 	}
 	
 	focus = {
@@ -2762,7 +2829,11 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_political_power = 50
+			add_opinion_modifier = { target = USA modifier = supports_us }
+			reverse_add_opinion_modifier = { target = USA modifier = supports }
+		}
 	}
 	
 	focus = {
@@ -2824,6 +2895,7 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = { 
 			add_ideas = NIG_efficent_government_spending_idea
+			custom_effect_tooltip = NIG_efficent_government_one_tt
 		}
 	}
 	
@@ -2858,6 +2930,7 @@ focus_tree = {
 				remove_idea = NIG_efficent_government_spending_idea
 				add_idea = NIG_efficent_government_spending_reform_idea
 			}
+			custom_effect_tooltip = NIG_efficent_government_two_tt
 		}
 	}
 	####Industrial####
@@ -2890,11 +2963,21 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			if = {
-				limit = { has_idea = fossil_fuel_industry }
-				visually_display_opinion_rise_fossil_fuel_industry = yes
-				set_country_flag = current_fossil_fuel_industry
-				increase_internal_faction_opinion = yes
+			hidden_effect = {
+				if = {
+					limit = { has_idea = small_medium_business_owners }
+					visually_display_opinion_rise_small_medium_business_owners = yes
+					set_country_flag = current_small_medium_business_owners
+					increase_internal_faction_opinion = yes
+				}
+			}
+			custom_effect_tooltip = NIG_small_and_med_business_owner_increase
+			334 = { #Lagos 
+				add_building_construction = {
+					type = industrial_complex 
+					level = 2 
+					instant_build = yes
+				}
 			}
 		}
 	}
@@ -2928,7 +3011,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			#Country Event to fire to decide what path to take for future water endeavors
+		}
 	}
 	
 	focus = {
@@ -2959,7 +3044,11 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			every_owned_state = {
+				add_extra_state_shared_building_slots = 1
+			}
+		}
 	}
 	
 	focus = {
@@ -2989,7 +3078,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			#Event to 3 random countries in africa to allow Nigerian investments 
+		}
 	}
 	
 	focus = {
@@ -3020,7 +3111,20 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			334 = { #Lagos
+				add_building_construction = {
+					type = industrial_complex 
+					level = 1 
+					instant_build = yes 
+				}
+				add_building_construction = {
+					type = infrastructure 
+					level = 1 
+					instant_build = yes 
+				}
+			}
+		}
 	}
 	
 	focus = {
@@ -3051,7 +3155,11 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_stability = 0.02
+			#Gains Opinion with Niger, Camerron and Chad
+			#
+		}
 	}
 	
 	focus = {
@@ -3082,7 +3190,11 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_stability = -0.02
+			#Loses Opinion with Niger Cameroon and Chad 
+			#Adds Factories in random states
+		}
 	}
 	
 	focus = {
