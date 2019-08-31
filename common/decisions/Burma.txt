@@ -139,6 +139,10 @@ ethnic_insurgency_category = {
 					target = BRM
 					modifier = scrapped_NCA
 				}
+				remove_opinion_modifier = {
+					target = BRM
+					modifier = Nationwide_Ceasefire_Agreement
+				}
 			}
 		}
 	}
@@ -1107,6 +1111,270 @@ ethnic_insurgency_category = {
 	
 	}
 	
+	attack_drug_factories = {
+		icon = GFX_decision_generic_scorched_earth
+		
+		visible = { 
+			original_tag = SHN
+			WAA = {
+				has_idea = WAA_Narcotics_Producer
+			}
+		}
+		
+		available = {
+			has_equipment = { 
+				Inf_equipment > 1499
+			}
+			divisions_in_border_state = {
+					size > 1
+					state = 498
+					border_state = 497
+			}
+		}
+		
+		custom_cost_trigger = {
+			command_power > 40
+		}
+		
+		custom_cost_text = command_power_more_than_40
+		
+		fire_only_once = no
+		
+		complete_effect = {
+			add_command_power = -40
+		}
+		
+		days_remove = 30
+		days_re_enable = 30
+		
+		remove_effect = {
+			add_political_power = 25
+			497 = {
+				damage_building = {
+					type = industrial_complex
+					damage = 4
+				}
+			}
+			SIA = {
+				add_opinion_modifier = {
+					target = SHN
+					modifier = destroyed_drug_factories
+				}
+			}
+			WAA = {
+				country_event = {
+					id = Insurgency.26
+				}
+				add_opinion_modifier = {
+					target = SHN
+					modifier = attacks_on_our_economy
+				}
+			}
+		}
+	}
+	
+	intercept_drug_convoys = {
+		icon = GFX_decision_infiltrate_state
+		
+		visible = { 
+			original_tag = SHN
+			WAA = {
+				has_idea = WAA_Narcotics_Producer
+			}
+		}
+		
+		available = {
+			has_equipment = { 
+				Inf_equipment > 499
+			}
+			divisions_in_border_state = {
+					size > 0
+					state = 498
+					border_state = 507
+			}
+			divisions_in_border_state = {
+					size > 0
+					state = 498
+					border_state = 497
+			}
+		}
+		
+		custom_cost_trigger = {
+			command_power > 20
+		}
+		
+		custom_cost_text = command_power_more_than_20
+		
+		fire_only_once = no
+		
+		complete_effect = {
+			add_command_power = -20
+		}
+		
+		days_remove = 14
+		days_re_enable = 14
+		
+		remove_effect = {
+			add_political_power = 20
+			497 = {
+				damage_building = {
+					type = infrastructure
+					damage = 2
+				}
+			}
+			SIA = {
+				add_opinion_modifier = {
+					target = SHN
+					modifier = confiscated_drugs
+				}
+			}
+			WAA = {
+				country_event = {
+					id = Insurgency.26
+				}
+				add_opinion_modifier = {
+					target = SHN
+					modifier = attacks_on_our_economy
+				}
+			}
+		}
+	}
+	
+	end_opium_production = {
+		icon = GFX_decision_generic_scorched_earth
+		
+		allowed = { 
+			original_tag = WAA 
+		}
+		
+		visible = {
+			NOT = {
+				has_country_flag = banned_heroin
+			}
+		}
+		
+		cost = 300
+		
+		complete_effect = {
+			set_country_flag = banned_heroin
+			CHI = {
+				remove_opinion_modifier = {
+					target = ROOT
+					modifier = opium_trade_china
+				}
+			}
+			USA = {
+				remove_opinion_modifier = {
+					target = ROOT
+					modifier = opium_trade_usa
+				}
+			}
+			if = {
+				limit = { has_country_flag = banned_meth }
+				remove_ideas = WAA_Narcotics_Producer
+			}
+			if = {
+				limit = { has_idea = economic_boom }
+				custom_effect_tooltip = econvent.from_booming_tt
+				set_country_flag = disable_cycle_costs
+				hidden_effect = { add_ideas = fast_growth }
+				clr_country_flag = disable_cycle_costs
+			}
+			else_if = {
+				limit = { has_idea = fast_growth }
+				custom_effect_tooltip = econvent.from_fast_growth_tt
+				set_country_flag = disable_cycle_costs
+				hidden_effect = { add_ideas = stable_growth }
+				clr_country_flag = disable_cycle_costs
+			}
+			else_if = {
+				limit = { has_idea = stable_growth }
+				custom_effect_tooltip = econvent.from_stable_growth_tt
+				set_country_flag = disable_cycle_costs
+				hidden_effect = { add_ideas = stagnation }
+				clr_country_flag = disable_cycle_costs
+			}
+			else_if = {
+				limit = { has_idea = stagnation }
+				custom_effect_tooltip = econvent.from_stagnation_tt
+				set_country_flag = disable_cycle_costs
+				hidden_effect = { add_ideas = recession }
+				clr_country_flag = disable_cycle_costs
+			}
+			else_if = {
+				limit = { has_idea = recession }
+				custom_effect_tooltip = econvent.from_recession_tt
+				set_country_flag = disable_cycle_costs
+				hidden_effect = { add_ideas = depression }
+				clr_country_flag = disable_cycle_costs
+			}
+		}
+	}
+	
+	end_meth_production = {
+		icon = GFX_decision_generic_scorched_earth
+		
+		allowed = { original_tag = WAA }
+		
+		visible = {
+			NOT = {
+				has_country_flag = banned_meth
+			}
+		}
+		
+		cost = 300
+		
+		complete_effect = {
+			set_country_flag = banned_meth
+			SIA = {
+				remove_opinion_modifier = {
+					target = ROOT
+					modifier = meth_trade_thailand
+				}
+			}
+			if = {
+				limit = { has_country_flag = banned_heroin }
+				remove_ideas = WAA_Narcotics_Producer
+			}
+			if = {
+				limit = { has_idea = economic_boom }
+				custom_effect_tooltip = econvent.from_booming_tt
+				set_country_flag = disable_cycle_costs
+				hidden_effect = { add_ideas = fast_growth }
+				clr_country_flag = disable_cycle_costs
+			}
+			else_if = {
+				limit = { has_idea = fast_growth }
+				custom_effect_tooltip = econvent.from_fast_growth_tt
+				set_country_flag = disable_cycle_costs
+				hidden_effect = { add_ideas = stable_growth }
+				clr_country_flag = disable_cycle_costs
+			}
+			else_if = {
+				limit = { has_idea = stable_growth }
+				custom_effect_tooltip = econvent.from_stable_growth_tt
+				set_country_flag = disable_cycle_costs
+				hidden_effect = { add_ideas = stagnation }
+				clr_country_flag = disable_cycle_costs
+			}
+			else_if = {
+				limit = { has_idea = stagnation }
+				custom_effect_tooltip = econvent.from_stagnation_tt
+				set_country_flag = disable_cycle_costs
+				hidden_effect = { add_ideas = recession }
+				clr_country_flag = disable_cycle_costs
+			}
+			else_if = {
+				limit = { has_idea = recession }
+				custom_effect_tooltip = econvent.from_recession_tt
+				set_country_flag = disable_cycle_costs
+				hidden_effect = { add_ideas = depression }
+				clr_country_flag = disable_cycle_costs
+			}
+		}
+		
+	}
+	
 	attack_tatmadaw = {
 	
 		icon = GFX_decision_generic_prepare_civil_war
@@ -1483,7 +1751,7 @@ ethnic_insurgency_category = {
 								has_opinion_modifier = declared_independence
 							}
 						}
-						check_variable = { opinion@ROOT > opinion@BRM}					
+						check_variable = { opinion@ROOT > opinion@BRM }					
 					}
 				}
 			}
@@ -1584,7 +1852,7 @@ ethnic_insurgency_category = {
 								has_opinion_modifier = declared_independence
 							}
 						}
-						check_variable = { opinion@ROOT > opinion@BRM}					
+						check_variable = { opinion@ROOT > opinion@BRM }					
 					}
 				}
 			}
@@ -1683,7 +1951,7 @@ ethnic_insurgency_category = {
 								has_opinion_modifier = declared_independence
 							}
 						}
-						check_variable = { opinion@ROOT > opinion@BRM}					
+						check_variable = { opinion@ROOT > opinion@BRM }					
 					}
 				}
 			}
@@ -1783,7 +2051,7 @@ ethnic_insurgency_category = {
 								has_opinion_modifier = declared_independence
 							}
 						}
-						check_variable = { opinion@ROOT > opinion@BRM}					
+						check_variable = { opinion@ROOT > opinion@BRM }					
 					}
 				}
 			}
@@ -1936,7 +2204,7 @@ ethnic_insurgency_category = {
 								has_opinion_modifier = declared_independence
 							}
 						}
-						check_variable = { opinion@ROOT > opinion@BRM}					
+						check_variable = { opinion@ROOT > opinion@BRM }					
 					}
 				}
 			}
@@ -2410,49 +2678,6 @@ BRM_sangha_category = {
 		ai_will_do = {
 			factor = 1
 		}
-	}
-}
-
-
-BRM_ASEAN_category = {
-	
-	BRM_call_ASEAN = {
-	
-		icon = GFX_decision_generic_civil_support
-		
-		visible = {
-			has_defensive_war = yes
-			has_idea = ASEAN_Defence_Treaty
-			NOT = { has_global_flag = ASEAN_called_to_arms }
-		}
-		
-		available = {
-			has_idea = ASEAN_Defence_Treaty
-			has_defensive_war = yes
-		}
-		
-		fire_only_once = yes
-		
-		complete_effect = {
-			create_faction = ASEAN
-			set_global_flag = ASEAN_called_to_arms
-			set_country_flag = Leader_of_ASEAN
-			every_country = {
-				limit = {
-					has_idea = ASEAN_Defence_Treaty
-					NOT = { has_war_with = ROOT }		#Just in case someone starts a war between ASEAN countries
-					is_subject = no
-				}
-				ROOT = {
-					add_to_faction = PREV
-				}
-			}
-		}
-		
-		ai_will_do = {
-			factor = 10
-		}
-
 	}
 }
 
