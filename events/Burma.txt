@@ -1,6 +1,6 @@
 ﻿add_namespace = Burma
 add_namespace = Burma_News
-add_namespace = ASEAN
+add_namespace = Insurgency
 
 #News Events
 #A new path for Myanmar?
@@ -25,7 +25,7 @@ news_event = {
 	id = Burma_News.2
 	title = Burma_News.2.t
 	desc = Burma_News.2.d
-	picture = aung_san_suu_kyi_released
+	picture = GFX_news_aung_san_suu_kyi_released
 	
 	major = yes
 	
@@ -59,7 +59,7 @@ news_event = {
 	id = Burma_News.4
 	title = Burma_News.4.t
 	desc = Burma_News.4.d
-	picture = GFX_trade_agreement
+	picture = GFX_news_press_conference
 	
 	major = yes
 	
@@ -76,7 +76,7 @@ news_event = {
 	id = Burma_News.5
 	title = Burma_News.5.t
 	desc = Burma_News.5.d
-	picture = GFX_trade_agreement
+	picture = GFX_news_press_conference
 	
 	major = yes
 	
@@ -88,14 +88,114 @@ news_event = {
 	}
 }
 
-#Country Events
+#The {root.getname}
+news_event = {
+	id = Burma_News.6
+	title = Burma_News.6.t
+	desc = Burma_News.6.d
+	picture = GFX_news_press_conference
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Burma_News.6.a
+		log = "[GetDateText]: [This.GetName]: Burma_News.6.a executed"
+	}
+}
 
+#Myanmar cracks down on protests (triggered by “Crackdown on Protests” focus)
+news_event = {
+	id = Burma_News.7
+	title = Burma_News.7.t
+	desc = Burma_News.7.d
+	picture = GFX_trade_agreement
+	
+	major = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Burma_News.7.a
+		log = "[GetDateText]: [This.GetName]: Burma_News.7.a executed"
+		trigger = {
+			NOT = {
+				has_government = communism
+			}
+		}
+	}
+	
+	option = {
+		name = Burma_News.7.b
+		log = "[GetDateText]: [This.GetName]: Burma_News.7.b executed"
+		trigger = {
+			has_government = communism
+		}
+	}
+}
+
+#The Insurgency has been Crushed (triggered when Wa, Karen, Kachin, Shan no longer exist)
+news_event = {
+	id = Burma_News.8
+	title = Burma_News.8.t
+	desc = Burma_News.8.d
+	picture = GFX_trade_agreement
+			
+	fire_only_once = yes
+	
+	trigger = {
+		NOT = {
+			country_exists = KAR
+			country_exists = SHN
+			country_exists = WAA
+			country_exists = KAC
+		}
+		has_completed_focus = BRM_crush_the_rebel_groups
+	}
+
+	option = {
+		name = Burma_News.8.a
+		log = "[GetDateText]: [This.GetName]: Burma_News.8.a executed"
+	}
+}
+
+#ASEAN Mutual Defence Treaty signed
+news_event = {
+	id = Burma_News.9
+	title = Burma_News.9.t
+	desc = Burma_News.9.d
+	picture = GFX_trade_agreement
+			
+	
+	major = yes
+	
+	fire_only_once = yes
+	
+	is_triggered_only = yes
+
+	option = {
+		name = Burma_News.9.a
+		log = "[GetDateText]: [This.GetName]: Burma_News.9.a executed"
+		trigger = {
+			NOT = { original_tag = CHI }
+		}
+	}
+	option = {
+		name = Burma_News.9.b
+		log = "[GetDateText]: [This.GetName]: Burma_News.9.b executed"
+		trigger = {
+			original_tag = CHI
+		}
+	}
+}
+
+#Country Events
 #Myanmar seeks our protection
 country_event = {
 	id = Burma.1
 	title = Burma.1.t
 	desc = Burma.1.d
-	picture = GFX_report_event_kursk_sinking
 	
 	Fire_only_once = yes
 	
@@ -132,7 +232,17 @@ country_event = {
 		}
 		
 		ai_chance = {
-			factor = 85
+			factor = 25
+			modifier = {
+				factor = 10
+				has_opinion = { target = BRM value > 50 }
+			}
+			modifier = {
+				factor = 10
+				CHI = {
+					has_added_tension_amount > 0
+				}
+			}
 		}
 	}
 	
@@ -148,7 +258,11 @@ country_event = {
 		}
 		
 		ai_chance = {
-			factor = 15
+			factor = 75
+			modifier = {
+				factor = 2
+				has_opinion = { target = CHI value > 25 }
+			}
 		}
 	}
 }
@@ -158,7 +272,7 @@ country_event = {
 	id = Burma.2
 	title = Burma.2.t
 	desc = Burma.2.d
-	picture = GFX_report_event_kursk_sinking
+	picture = GFX_USA_generic
 	
 	Fire_only_once = yes
 	
@@ -181,7 +295,7 @@ country_event = {
 	id = Burma.3
 	title = Burma.3.t
 	desc = Burma.3.d
-	picture = GFX_report_event_kursk_sinking
+	picture = GFX_USA_generic
 	
 	is_triggered_only = yes
 
@@ -193,7 +307,7 @@ country_event = {
 	immediate = {
 	}
 	
-	option = {	#Rejoice!
+	option = {	
 		name = Burma.3.a
 		log = "[GetDateText]: [This.GetName]: Burma.3.a executed"
 	}
@@ -204,38 +318,28 @@ country_event = {
 	id = Burma.4
 	title = Burma.4.t
 	desc = Burma.4.d
-	picture = GFX_report_event_kursk_sinking
+	
+	picture = GFX_political_deal
 	
 	is_triggered_only = yes
-
-	Fire_only_once = yes
-	
-	trigger = {
-	}
-	
-	immediate = {
-	}
 	
 	option = {	#Vote in favour
 		name = Burma.4.a
 		log = "[GetDateText]: [This.GetName]: Burma.4.a executed"
 		
-		add_ideas = { ASEAN_Defence_Treaty }
-		
-		if = {
-			limit = {
-			 NOT = {
-				BRM = { has_idea = ASEAN_Defence_Treaty }
-			 }
-			}
-			BRM = {
-				add_ideas = { ASEAN_Defence_Treaty }
-			}
+		set_country_flag = ASEAN_defence_treaty
+		country_event = {
+			id = Burma.10
+			days = 5
+		}
+		news_event = {
+			id = Burma_News.9
+			days = 7
 		}
 
 				
 		ai_chance = {
-			factor = 100
+			factor = 40
 		}
 	}
 	option = {	#Vote against
@@ -244,6 +348,13 @@ country_event = {
 		
 		ai_chance = {
 			factor = 0
+			modifier = {
+				add = 200
+				has_opinion = {
+					target = CHI
+					value > 30
+				}
+			}
 		}
 	}
 }
@@ -253,7 +364,8 @@ country_event = {
 	id = Burma.5
 	title = Burma.5.t
 	desc = Burma.5.d
-	picture = GFX_report_event_kursk_sinking
+	
+	picture = GFX_election_rally
 	
 	is_triggered_only = yes
 	
@@ -275,6 +387,7 @@ country_event = {
 					remove_idea = the_military
 					add_idea = farmers
 				}
+				set_country_flag = positive_farmers
 			}
 			
 			25 = {
@@ -282,6 +395,7 @@ country_event = {
 					remove_idea = the_military
 					add_idea = labour_unions
 				}
+				set_country_flag = negative_labour_unions
 			}
 			
 			25 = {
@@ -289,6 +403,7 @@ country_event = {
 					remove_idea = the_military
 					add_idea = small_medium_business_owners
 				}
+				set_country_flag = negative_small_medium_business_owners
 			}
 		}
 		
@@ -307,6 +422,7 @@ country_event = {
 					remove_idea = the_military
 					add_idea = labour_unions
 				}
+				set_country_flag = positive_labour_unions
 			}
 			
 			25 = {
@@ -314,6 +430,7 @@ country_event = {
 					remove_idea = the_military
 					add_idea = farmers
 				}
+				set_country_flag = negative_farmers
 			}
 			
 			25 = {
@@ -321,6 +438,7 @@ country_event = {
 					remove_idea = the_military
 					add_idea = small_medium_business_owners
 				}
+				set_country_flag = negative_small_medium_business_owners
 			}
 		}
 		
@@ -337,8 +455,9 @@ country_event = {
 			50 = {
 				swap_ideas = {
 					remove_idea = the_military
-					add_idea = small_medium_business_owners
+					add_idea = small_medium_business_owners					
 				}
+				set_country_flag = positive_small_medium_business_owners
 			}
 			
 			25 = {
@@ -346,13 +465,15 @@ country_event = {
 					remove_idea = the_military
 					add_idea = farmers
 				}
+				set_country_flag = negative_farmers
 			}
 			
 			25 = {
 				swap_ideas = {
 					remove_idea = the_military
-					add_idea = small_medium_business_owners
+					add_idea = labour_unions
 				}
+				set_country_flag = negative_labour_unions
 			}
 		}
 		
@@ -366,7 +487,8 @@ country_event = {
 	id = Burma.6
 	title = Burma.6.t
 	desc = Burma.6.d
-	picture = GFX_report_event_kursk_sinking
+	
+	picture = GFX_rocket_explosion
 	
 	is_triggered_only = yes	
 	
@@ -385,7 +507,7 @@ country_event = {
 		add_political_power = -100
 				
 		ai_chance = {
-			factor = 100
+			factor = 5
 		}
 	}
 	option = {	#Send them arms
@@ -395,11 +517,11 @@ country_event = {
 		send_equipment = {
 			equipment = Cat_INF_WEP
 			amount = 10000
-			target = wa
+			target = WAA
 		}
 		
 		ai_chance = {
-			factor = 0
+			factor = 20
 		}
 	}
 	option = {	#Send them troops
@@ -409,70 +531,1349 @@ country_event = {
 		add_threat = 10
 		
 		ai_chance = {
-			factor = 0
+			factor = 10
 		}
 	}
 }
 
-##ASEAN
 country_event = {
-
-	id = ASEAN.1
-	title = ASEAN.1.t
-	desc = ASEAN.1.d
+	id = Burma.7
+	title = Burma.7.t
+	desc = Burma.7.d
+	
+	is_triggered_only = yes	
+	
+	Fire_only_once = yes
+	
+	trigger = {
+	}
+	
+	immediate = {
+	}
+	
+	option = {	#Yes, we need to keep out the West
+		name = Burma.7.a
+		log = "[GetDateText]: [This.GetName]: Burma.7.a executed"
+				
+		BRM = {
+			country_event = {
+				id = Burma.8
+				days = 2
+				random = 3
+			}
+		}	
 		
+		add_opinion_modifier = {
+			target = CHI
+			modifier = military_partnership
+		}
+		
+		CHI = {
+			add_opinion_modifier = {
+			target = BRM
+			modifier = military_partnership
+			}
+		}
+		
+		CHI = {
+			give_guarantee = BRM
+		}
+				
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 10
+				has_opinion = { target = BRM value > 25 }
+			}
+			modifier = {
+				factor = 10
+				USA = {
+					has_added_tension_amount > 10
+				}
+			}
+		}
+	}
+	option = {	#No, Myanmar is not a worthy ally
+		name = Burma.7.b
+		log = "[GetDateText]: [This.GetName]: Burma.7.b executed"
+		
+		BRM = {
+			country_event = {
+				id = Burma.9
+				days = 2
+				random = 3
+			}
+		}
+		
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 10
+				has_opinion = { target = USA value > 25 }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = Burma.8
+	title = Burma.8.t
+	desc = Burma.8.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes	
+	
+	Fire_only_once = yes
+	
+	trigger = {
+	}
+	
+	immediate = {
+	}
+	
+	option = {	#China has accepted our request!
+		name = Burma.8.a
+		log = "[GetDateText]: [This.GetName]: Burma.8.a executed"
+
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+
+country_event = {
+	id = Burma.9
+	title = Burma.9.t
+	desc = Burma.9.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes	
+	
+	Fire_only_once = yes
+	
+	trigger = {
+	}
+	
+	immediate = {
+	}
+	
+	option = {	#China has chosen to abandon us…
+		name = Burma.9.a
+		log = "[GetDateText]: [This.GetName]: Burma.9.a executed"
+
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+
+#
+country_event = {
+	id = Burma.10
+	title = Burma.10.t
+	desc = Burma.10.d
+	
+	is_triggered_only = yes
+		
+	option = {
+		name = Burma.10.a
+		log = "[GetDateText]: [This.GetName]: Burma.10.a executed"
+		every_other_country = {
+			limit = { has_country_flag = ASEAN_defence_treaty }
+			diplomatic_relation = {
+				country = ROOT
+				relation = guarantee
+				active = yes
+			}
+		}
+	}
+}
+
+#Myanmar demands that we respect its sovereignty
+country_event = {
+	id = Burma.11
+	title = Burma.11.t
+	desc = Burma.11.d
+	
+	picture = GFX_political_deal
+	
+	is_triggered_only = yes
+		
+	option = {
+		name = Burma.11.a #Accept
+		log = "[GetDateText]: [This.GetName]: Burma.11.a executed"
+		every_country = {
+			limit = {
+				has_idea = Disrupted_Chinese_Involvement
+			}
+			remove_ideas = Disrupted_Chinese_Involvement
+		}
+		BRM = {
+			country_event = {
+				id = Burma.12
+				days = 7
+			}
+		}
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 40
+				strength_ratio = {
+					tag = BRM
+					ratio < 2
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = Burma.11.b #Reject
+		log = "[GetDateText]: [This.GetName]: Burma.11.b executed"
+		BRM = {
+			country_event = {
+				id = Burma.13
+				days = 7
+			}
+		}
+		ai_chance = {
+			factor = 10
+		}
+	}
+}
+
+country_event = {
+	id = Burma.12
+	title = Burma.12.t
+	desc = Burma.12.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+		
+	option = {
+		name = Burma.12.a #Wise of them
+		log = "[GetDateText]: [This.GetName]: Burma.12.a executed"
+	}
+}
+
+country_event = {
+	id = Burma.13
+	title = Burma.13.t
+	desc = Burma.13.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+		
+	option = {
+		name = Burma.13.a #War it is!
+		log = "[GetDateText]: [This.GetName]: Burma.13.a executed"
+		create_wargoal = { type = puppet_wargoal_focus target = CHI }
+	}
+}
+
+##Insurgency
+#Clashes with the Kachin
+country_event = {
+	
+	id = Insurgency.1
+	
+	title = Insurgency.1.t
+	
+	desc = Insurgency.1.d
+	
 	is_triggered_only = yes
 	
-	trigger = {
-		NOT = {	has_country_flag = Justifying_against_@FROM }
-		FROM = {
-			has_idea = ASEAN_Defence_Treaty
-		}
-	}
-	
-	immediate = {
-		set_country_flag = Justifying_against_@FROM
+	option = {
+		name = Insurgency.1.a #Adopt an aggressive strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.1.a executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = aggressive_strategy
 	}
 	
 	option = {
-		name = ASEAN.1.a
-		log = "[GetDateText]: [This.GetName]: ASEAN.1.a executed"
-		ai_chance = { factor = 100 }
+		name = Insurgency.1.b #Adopt a balanced strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.1.b executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = balanced_strategy
+	}
+	
+	option = {
+		name = Insurgency.1.c #Adopt a cautious strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.1.c executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = cautious_strategy
+	}
+}
+
+#Clashes with the Karen
+country_event = {
+	
+	id = Insurgency.2
+	
+	title = Insurgency.2.t
+	
+	desc = Insurgency.2.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.2.a #Adopt an aggressive strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.2.a executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = aggressive_strategy
+	}
+	
+	option = {
+		name = Insurgency.2.b #Adopt a balanced strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.2.b executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = balanced_strategy
+	}
+	
+	option = {
+		name = Insurgency.2.c #Adopt a cautious strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.2.c executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = cautious_strategy
+	}
+}
+
+#Clashes with the Shan
+country_event = {
+	
+	id = Insurgency.3
+	
+	title = Insurgency.3.t
+	
+	desc = Insurgency.3.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.3.a #Adopt an aggressive strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.3.a executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = aggressive_strategy
+	}
+	
+	option = {
+		name = Insurgency.3.b #Adopt a balanced strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.3.b executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = balanced_strategy
+	}
+	
+	option = {
+		name = Insurgency.3.c #Adopt a cautious strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.3.c executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = cautious_strategy
+	}
+}
+
+#Clashes with the Tatmadaw
+country_event = {
+	
+	id = Insurgency.4
+	
+	title = Insurgency.4.t
+	
+	desc = Insurgency.4.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.4.a #Adopt an aggressive strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.4.a executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = aggressive_strategy
+	}
+	
+	option = {
+		name = Insurgency.4.b #Adopt a balanced strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.4.b executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = balanced_strategy
+	}
+	
+	option = {
+		name = Insurgency.4.c #Adopt a cautious strategy
+		log = "[GetDateText]: [This.GetName]: Insurgency.4.c executed"
+		ai_chance = { factor = 10 }
+		set_country_flag = cautious_strategy
+	}
+}
+#The Tatmadaw is victorious! 
+country_event = {
+
+	id = Insurgency.5
+	
+	title = Insurgency.5.t
+	
+	desc = Insurgency.5.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.5.a #To the victor, the spoils
+		trigger = { tag = BRM }
+		log = "[GetDateText]: [This.GetName]: Insurgency.5.a executed"
+		add_manpower = -100
+		add_equipment_to_stockpile = {
+			type = infantry_weapons				
+			amount = 300
+			producer = SOV			
+		}
+		add_equipment_to_stockpile = {
+			type = infantry_weapons				
+			amount = 200
+			producer = USA			
+		}
+		add_equipment_to_stockpile = {
+			type = infantry_weapons1
+			amount = 100				
+			producer = KAC			
+		}
+		clr_country_flag = aggressive_strategy
+		clr_country_flag = balanced_strategy
+		clr_country_flag = cautious_strategy
+		custom_effect_tooltip = 11_BRM_rebel_influence_gain_tt
+	}
+	
+	option = {
+		name = Insurgency.5.b #These losses are temporary...
+		trigger = { NOT = { tag = BRM } }
+		log = "[GetDateText]: [This.GetName]: Insurgency.5.b executed"
+		add_manpower = -1000
+		add_equipment_to_stockpile = {
+			type = infantry_weapons				
+			amount = -600
+		}
+		clr_country_flag = aggressive_strategy
+		clr_country_flag = balanced_strategy
+		clr_country_flag = cautious_strategy
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 20 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = BRM }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+				}
+			}
+			recalculate_influence = yes
+		}
+		custom_effect_tooltip = 11_BRM_rebel_influence_gain_tt
+	}
+}
+
+#The rebels are victorious!
+country_event = {
+
+	id = Insurgency.6
+	
+	title = Insurgency.6.t
+	
+	desc = Insurgency.6.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.6.a #To the victor, the spoils
+		trigger = { NOT = { tag = BRM } }
+		log = "[GetDateText]: [This.GetName]: Insurgency.6.a executed"
+		add_manpower = -100
+		add_equipment_to_stockpile = {
+			type = infantry_weapons				
+			amount = 1000
+			producer = BRM			
+		}
+		add_equipment_to_stockpile = {
+			type = infantry_weapons2
+			amount = 500				
+			producer = BRM			
+		}
+		clr_country_flag = aggressive_strategy
+		clr_country_flag = balanced_strategy
+		clr_country_flag = cautious_strategy
+		hidden_effect = {
+			set_temp_variable = { influence_gain = -20 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = BRM }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+				}
+			}
+			recalculate_influence = yes
+		}
+		custom_effect_tooltip = 11_BRM_rebel_influence_loss_tt
+	}
+	option = {
+		name = Insurgency.6.b #These losses are temporary...
+		trigger = { tag = BRM }
+		log = "[GetDateText]: [This.GetName]: Insurgency.6.b executed"
+		add_manpower = -1000
+		add_equipment_to_stockpile = {
+			type = Inf_equipment			
+			amount = -1500
+		}
+		add_equipment_to_stockpile = {
+			type = APC_Equipment
+			amount = -50				
+		}
+		add_equipment_to_stockpile = {
+			type = IFV_Equipment
+			amount = -50				
+		}
+		clr_country_flag = aggressive_strategy
+		clr_country_flag = balanced_strategy
+		clr_country_flag = cautious_strategy
+		custom_effect_tooltip = 11_BRM_rebel_influence_loss_tt
+	}
+}
+
+#The Result is Inconclusive
+country_event = {
+
+	id = Insurgency.7
+	
+	title = Insurgency.7.t
+	
+	desc = Insurgency.7.d
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.7.a #A stalemate, for now
+		log = "[GetDateText]: [This.GetName]: Insurgency.7.a executed"
+		add_manpower = -200
+		add_equipment_to_stockpile = {
+			type = Inf_equipment			
+			amount = -200
+		}
+		clr_country_flag = aggressive_strategy
+		clr_country_flag = balanced_strategy
+		clr_country_flag = cautious_strategy
+	}
+}
+
+#Hidden ceasefire influence increase events
+country_event = {
+
+	id = Insurgency.8
+	
+	title = Insurgency.8.t
+	
+	desc = Insurgency.8.d
+	
+	is_triggered_only = no
+	
+	trigger = {
+		has_idea = Ethnic_Insurgencies
+		has_country_flag = ceasefire
+	}
+		
+	hidden = yes
+	
+	mean_time_to_happen = {
+		days = 30
+	}
+	
+	option = {
+		name = Insurgency.8.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.8.a executed"
+		ROOT = {
+			set_temp_variable = { influence_gain = 1 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = BRM }						
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+				}
+			}
+			recalculate_influence = yes
+		}
+	}
+}
+
+#Ceasefire events
+#The government has offered us a ceasefire
+country_event = {
+	
+	id = Insurgency.11
+	
+	title = Insurgency.11.t
+	
+	desc = Insurgency.11.d
+	
+	picture = GFX_politics_negotiations
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.11.a #Make ambitious demands
+		log = "[GetDateText]: [This.GetName]: Insurgency.11.a executed"
+		ai_chance = { factor = 40 }
+		BRM = {
+			country_event = {
+				id = Insurgency.12
+				days = 1
+			}
+		}
+		custom_effect_tooltip = 11_BRM_ambitious_demands_tt
+	}
+	
+	option = {
+		name = Insurgency.11.b #Make moderate demands
+		log = "[GetDateText]: [This.GetName]: Insurgency.11.b executed"
+		ai_chance = { factor = 40 }
+		BRM = {
+			country_event = {
+				id = Insurgency.13
+				days = 1
+			}
+		}
+		custom_effect_tooltip = 11_BRM_moderate_demands_tt
+	}
+	
+	option = {
+		name = Insurgency.11.c #Reject negotiations
+		log = "[GetDateText]: [This.GetName]: Insurgency.11.c executed"
+		ai_chance = { 
+			factor = 40
+			modifier = {
+				factor = 1.5
+				OR = {
+					has_opinion = {
+						target = BRM value < -50
+					}
+					BRM = {
+						has_government = nationalist
+					}
+				}
+			}
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = BRM value < -50
+				}
+				BRM = {
+					has_government = nationalist
+				}
+			}
+		}
+		BRM = {
+			country_event = {
+				id = Insurgency.14
+				days = 1
+			}
+		}
+	}
+}
+#The rebels are pushing for outrageously large concessions!
+country_event = {
+	
+	id = Insurgency.12
+	
+	title = Insurgency.12.t
+	
+	desc = Insurgency.12.d
+	
+	picture = GFX_politics_talks
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.12.a #Accept their demands
+		log = "[GetDateText]: [This.GetName]: Insurgency.12.a executed"
+		ai_chance = { factor = 20 }
+		FROM = {
+			set_country_flag = ceasefire
+			add_opinion_modifier = {
+				target = BRM
+				modifier = negotiated_ceasefire
+			}
+			country_event = {
+				id = Insurgency.15
+				days = 1
+			}
+			hidden_effect = {
+				set_temp_variable = { influence_gain = -10 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = BRM }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+					}
+				}
+				recalculate_influence = yes
+			}
+		}
+		custom_effect_tooltip = 11_BRM_rebel_influence_loss_10_tt
+	}
+	
+	option = {
+		name = Insurgency.12.b #Reject their demands
+		log = "[GetDateText]: [This.GetName]: Insurgency.12.b executed"
+		ai_chance = { factor = 40 }
+		FROM = {
+			country_event = {
+				id = Insurgency.16
+				days = 1
+			}
+		}
+	}
+}
+#The rebels are making reasonable demands
+country_event = {
+	
+	id = Insurgency.13
+	
+	title = Insurgency.13.t
+	
+	desc = Insurgency.13.d
+	
+	picture = GFX_politics_talks
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.13.a #Accept their demands
+		log = "[GetDateText]: [This.GetName]: Insurgency.13.a executed"
+		ai_chance = { factor = 40 }
+		FROM = {
+			set_country_flag = ceasefire
+			add_opinion_modifier = {
+				target = BRM
+				modifier = negotiated_ceasefire
+			}
+			country_event = {
+				id = Insurgency.15
+				days = 1
+			}
+			hidden_effect = {
+				set_temp_variable = { influence_gain = -5 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = BRM }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+					}
+				}
+				recalculate_influence = yes
+			}
+		}
+		custom_effect_tooltip = 11_BRM_rebel_influence_loss_5_tt
+	}
+	
+	option = {
+		name = Insurgency.13.b #Reject their demands
+		log = "[GetDateText]: [This.GetName]: Insurgency.13.b executed"
+		ai_chance = { factor = 20 }
+		FROM = {
+			country_event = {
+				id = Insurgency.16
+				days = 1
+			}
+		}
+	}
+}
+#The rebels have rejected our offer of talks!
+country_event = {
+	id = Insurgency.14
+	
+	title = Insurgency.14.t
+	
+	desc = Insurgency.14.d
+	
+	picture = GFX_treaty_rejected
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.14.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.14.a executed"
+		FROM = { clr_country_flag = ceasefire_offer }
+	}
+}
+#The government has accepted our demands
+country_event = {
+	id = Insurgency.15
+	
+	title = Insurgency.15.t
+	
+	desc = Insurgency.15.d
+	
+	picture = GFX_politics_talks
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.15.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.15.a executed"
+		hidden_effect = {	
+			BRM = {	
+				country_event = {
+					id = Insurgency.17
+					days = 30
+				}
+			}
+		}
+	}
+}
+#The government has rejected our demands!
+country_event = {
+	id = Insurgency.16
+	
+	title = Insurgency.16.t
+	
+	desc = Insurgency.16.d
+	
+	picture = GFX_treaty_rejected
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.16.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.16.a executed"
 	}
 }
 
 country_event = {
+	id = Insurgency.17
+	
+	title = Insurgency.17.t
+	
+	desc = Insurgency.17.d
+	
+	is_triggered_only = yes
+	
+	hidden = yes
+	
+	option = {
+		name = Insurgency.17.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.17.a executed"
+		FROM = { clr_country_flag = ceasefire_offer }
+	}
+}
 
-	id = ASEAN.2
-	title = ASEAN.2.t
-	desc = ASEAN.2.d
-		
-	trigger = {
-		has_country_flag = Leader_of_ASEAN
-		ROOT = {
-			has_war = no
+#The government has invited us to negotiations of the Nationwide Ceasefire Agreement
+country_event = {
+	id = Insurgency.18
+	
+	title = Insurgency.18.t
+	
+	desc = Insurgency.18.d
+	
+	picture = GFX_political_deal
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.18.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.18.a executed"
+		set_country_flag = NCA_participant
+		if = {
+			limit = {
+				or = {	
+					original_tag = SHN
+					original_tag = KAR
+				}
+			}
+			set_variable = {
+				var = NCA_support
+				value = 0
+			}
+		}
+		else_if = {
+			limit = {
+				original_tag = WAA
+			}
+			set_variable = {
+				var = NCA_support
+				value = -1
+			}
+		}
+		else_if = {
+			limit = {
+				original_tag = KAC
+			}
+			set_variable = {
+				var = NCA_support
+				value = -3
+			}
+		}
+		ai_chance = {
+			factor = 40
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = BRM
+					value < -70
+				}
+				NOT = {
+					has_country_flag = ceasefire
+				}
+			}
 		}
 	}
-	
-	mean_time_to_happen = {
-		days = 7
+	option = {
+		name = Insurgency.18.b
+		log = "[GetDateText]: [This.GetName]: Insurgency.18.a executed"
+		BRM = {
+			country_event = {
+				id = Insurgency.14
+				days = 1
+			}
+		}
 	}
+}
+
+#The First Round of Negotiations - union/federation
+country_event = {
+	id = Insurgency.19
 	
-	immediate = {
-		hidden_effect = {
-			clr_country_flag = Leader_of_ASEAN
-			clr_global_flag = ASEAN_called_to_arms
-			dismantle_faction = yes
+	title = Insurgency.19.t
+	
+	desc = Insurgency.19.d
+	
+	picture = GFX_politics_talks
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.19.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.19.a executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			subtract_from_variable = {
+				var = NCA_support
+				value = 1
+			}
+		}
+		country_event = {
+			id = Insurgency.20
+			days = 7
+		}
+	}
+	option = {
+		name = Insurgency.19.b
+		log = "[GetDateText]: [This.GetName]: Insurgency.19.b executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			add_to_variable = {
+				var = NCA_support
+				value = 1
+			}
+		}
+		country_event = {
+			id = Insurgency.20
+			days = 7
+		}
+	}
+	option = {
+		name = Insurgency.19.c #compromise
+		log = "[GetDateText]: [This.GetName]: Insurgency.19.c executed"
+		ai_chance = {
+			factor = 40
+		}
+		country_event = {
+			id = Insurgency.20
+			days = 7
+		}
+	}
+}
+
+#The Second Round of Negotiations - composition of the armed forces
+country_event = {
+	id = Insurgency.20
+	
+	title = Insurgency.20.t
+	
+	desc = Insurgency.20.d
+	
+	picture = GFX_politics_negotiations
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.20.a #status quo
+		log = "[GetDateText]: [This.GetName]: Insurgency.20.a executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			subtract_from_variable = {
+				var = NCA_support
+				value = 1
+			}
+		}
+		country_event = {
+			id = Insurgency.21
+			days = 7
+		}
+	}
+	option = {
+		name = Insurgency.20.b #improve representation
+		log = "[GetDateText]: [This.GetName]: Insurgency.20.b executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			add_to_variable = {
+				var = NCA_support
+				value = 1
+			}
+		}
+		country_event = {
+			id = Insurgency.21
+			days = 7
+		}
+	}
+	option = {
+		name = Insurgency.20.c #delay
+		log = "[GetDateText]: [This.GetName]: Insurgency.20.c executed"
+		ai_chance = {
+			factor = 40
+		}
+		country_event = {
+			id = Insurgency.21
+			days = 7
+		}
+	}
+}
+
+#The Final Round of Negotiations - DDR or SSR
+country_event = {
+	id = Insurgency.21
+	
+	title = Insurgency.21.t
+	
+	desc = Insurgency.21.d
+	
+	picture = GFX_politics_talks
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.21.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.21.a executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			subtract_from_variable = {
+				var = NCA_support
+				value = 1
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = -1
+						compare = less_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.23 #unacceptable
+					days = 7
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = 0
+						compare = greater_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.22 #acceptable
+					days = 7
+				}
+			}
+		}
+	}
+	option = {
+		name = Insurgency.21.b
+		log = "[GetDateText]: [This.GetName]: Insurgency.21.b executed"
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			add_to_variable = {
+				var = NCA_support
+				value = 1
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = -1
+						compare = less_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.23 #unacceptable
+					days = 7
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = 0
+						compare = greater_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.22 #acceptable
+					days = 7
+				}
+			}
+		}
+	}
+	option = {
+		name = Insurgency.21.c 
+		log = "[GetDateText]: [This.GetName]: Insurgency.21.c executed"
+		ai_chance = {
+			factor = 40
+		}
+		every_other_country = {	
+			limit = {
+				has_country_flag = NCA_participant
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = -1
+						compare = less_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.23 #unacceptable
+					days = 7
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						var = NCA_support
+						value = 0
+						compare = greater_than_or_equals
+					}
+				}
+				country_event = {
+					id = Insurgency.22 #acceptable
+					days = 7
+				}
+			}
+		}
+	}
+}
+
+#acceptable draft
+country_event = {
+	id = Insurgency.22
+	
+	title = Insurgency.22.t
+	
+	desc = Insurgency.22.d
+	
+	picture = GFX_politics_negotiations
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.22.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.22.a executed"
+		clr_country_flag = NCA_participant
+		clear_variable = NCA_support
+		if = {
+			limit = {
+				NOT = {
+					has_idea = Nationwide_Ceasefire_Agreement
+				}
+			}
+			add_ideas = Nationwide_Ceasefire_Agreement
+		}
+		add_opinion_modifier = {
+			target = BRM
+			modifier = Nationwide_Ceasefire_Agreement
+		}
+		BRM = {
+			country_event = {
+				id = Insurgency.24
+				days = 1
+			}
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = Nationwide_Ceasefire_Agreement
+			}
+		}
+	}
+}
+
+#unacceptable draft
+country_event = {
+	id = Insurgency.23
+	
+	title = Insurgency.23.t
+	
+	desc = Insurgency.23.d
+	
+	picture = GFX_treaty_rejected
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.23.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.23.a executed"
+		clr_country_flag = NCA_participant
+		clear_variable = NCA_support
+		BRM = {
+			country_event = {
+				id = Insurgency.25
+				days = 1
+			}
+		}
+	}
+}
+
+#country signed NCA
+country_event = {
+	id = Insurgency.24
+	
+	title = Insurgency.24.t
+	
+	desc = Insurgency.24.d
+	
+	picture = GFX_politics_negotiations
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.24.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.24.a executed"
+		if = {
+			limit = {
+				NOT = {
+					has_idea = Nationwide_Ceasefire_Agreement
+				}
+			}
+			add_ideas = Nationwide_Ceasefire_Agreement
+		}
+	}
+}
+
+#country has not signed NCA
+country_event = {
+	id = Insurgency.25
+	
+	title = Insurgency.25.t
+	
+	desc = Insurgency.25.d
+	
+	picture = GFX_treaty_rejected
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.25.a
+		log = "[GetDateText]: [This.GetName]: Insurgency.25.a executed"
+	}
+}
+
+#Shan rebels have attacked our financial interests
+country_event = {
+	id = Insurgency.26
+	
+	title = Insurgency.26.t
+	
+	desc = Insurgency.26.d
+	
+	picture = GFX_rocket_explosion
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.26.a #This means war
+		log = "[GetDateText]: [This.GetName]: Insurgency.26.a executed"
+		create_wargoal = {
+			target = SHN
+			type = puppet_wargoal_focus
+		}
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 40
+				has_opinion = {
+					target = SHN
+					value < 100
+				}
+			}
 		}
 	}
 	
 	option = {
-		name = ASEAN.2.a
-		log = "[GetDateText]: [This.GetName]: ASEAN.2.a executed"
-		ai_chance = { factor = 100 }
-		every_other_country = {
-			limit = { has_idea = ASEAN_Defence_Treaty }
-			country_event = { id = ASEAN.3 hours = 6 }
+		name = Insurgency.26.b #Launch a limited assault
+		log = "[GetDateText]: [This.GetName]: Insurgency.26.a executed"
+		SHN = {
+			country_event = {
+				id = Insurgency.27
+			}
 		}
+		ai_chance = {
+			factor = 40
+		}
+	}
+	
+	option = {
+		name = Insurgency.26.c #We can do nothing
+		log = "[GetDateText]: [This.GetName]: Insurgency.26.c executed"
+		add_political_power = -10
+		ai_chance = {
+			factor = 40
+		}
+	}
+}
+
+#The United Wa State Army has retaliated!
+country_event = {
+	id = Insurgency.27
+	
+	title = Insurgency.27.t
+	
+	desc = Insurgency.27.d
+	
+	picture = GFX_rocket_explosion
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = Insurgency.27.a #Acceptable losses.
+		log = "[GetDateText]: [This.GetName]: Insurgency.27.a executed"
+		add_manpower = -200
+		add_stability = -0.02
 	}
 }
