@@ -360,14 +360,35 @@ country_event = {
 		ITA = { add_to_faction = ROOT }
 		set_country_flag = seeks_italian_alliance
 		ITA = { country_event = diplomatic_response.1 }
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 50 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = ITA }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = ITA.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		hidden_effect = { 
+			add_popularity = { ideology = nationalist popularity = 0.10 }
+			recalculate_party = yes
+		}
 		ai_chance = {
 			factor = 40
 			modifier = {
-				factor = 0
-				NOT = { has_war_with = ITA }
-			}
-			modifier = {
-				factor = 45
+				add = 10
 				set_temp_variable = { temp_idx = -1 }
 				any_of = {
 					array = influence_array
@@ -384,7 +405,7 @@ country_event = {
 				check_variable = { influence_array_calc^temp_idx > 0.2 }
 			}
 			modifier = {
-				factor = 50
+				add = 20
 				set_temp_variable = { temp_idx = -1 }
 				any_of = {
 					array = influence_array
@@ -401,7 +422,7 @@ country_event = {
 				check_variable = { influence_array_calc^temp_idx > 0.4 }
 			}
 			modifier = {
-				factor = 80
+				add = 30
 				set_temp_variable = { temp_idx = -1 }
 				any_of = {
 					array = influence_array
@@ -429,14 +450,13 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: italy_md.11.o1 executed"
 		ITA = { country_event = diplomatic_response.2 }
 		ai_chance = {
-			factor = 60
+			base = 60
 			modifier = { 
-				factor = 100
+				add = 100
 				has_war_with = ITA
-				is_ai = yes
 			}
 			modifier = { 
-				factor = 75
+				add = 10
 				set_temp_variable = { temp_idx = -1 }
 				any_of = {
 					array = influence_array
@@ -902,8 +922,7 @@ country_event = {
 				damage = 0.35
 			}
 		}
-		add_stability = -0.01
-		add_stability = -0.015
+		add_stability = -0.025
 		news_event = { id = italy_news.7 }
 		custom_effect_tooltip = ITA_stop_war_on_mafia_tt
 		ai_chance = {
