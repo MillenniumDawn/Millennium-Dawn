@@ -43,8 +43,8 @@ country_event = { #Euro Investments
 		FRA = { 
 			country_event = france_md.2 
 			hidden_effect = {
-				add_to_variable = { int_investments = 20 }
-				subtract_from_variable = { treasury = 20 }
+				add_to_variable = { int_investments = 1 }
+				subtract_from_variable = { treasury = 1 }
 			}
 			set_country_flag = FRA_euro_investments_1
 		}
@@ -140,7 +140,7 @@ country_event = { #Investments in Eastern Europe
 	id = france_md.4
 	title = france_md.4.t
 	desc = france_md.4.d 
-	picture = GFX_euro_investments
+	picture = GFX_invetsments_in_eastern_europe
 	
 	is_triggered_only = yes
 	
@@ -201,7 +201,7 @@ country_event = { #The Paris Convention
 	id = france_md.5
 	title = france_md.5.t 
 	desc = france_md.5.d 
-	picture = GFX_french_generic
+	picture = GFX_paris_convention
 	
 	is_triggered_only = yes
 	
@@ -298,21 +298,21 @@ country_event = { #The Proposition of the Monarch
 	id = france_md.8
 	title = france_md.8.t
 	desc = france_md.8.d
-	picture = GFX_french_generic
+	picture = GFX_proposition_of_the_monarch
 	
-	trigger = {
-		has_country_flag = FRA_new_nationalism
-	}
-	
-	mean_time_to_happen = {
-		days = 210
-	}
+	is_triggered_only = yes
 	
 	option = {
 		name = france_md.8.a
 		log = "[GetDateText]: [This.GetName]: france_md.8.a executed"
 		set_country_flag = FRA_monarch_support
 		clr_country_flag = FRA_new_nationalism
+		hidden_effect = {
+			country_event = { id = france_md.9 days = 35 } 
+		}
+		ai_chance = {
+			base = 30
+		}
 	}
 	
 	option = {
@@ -320,6 +320,9 @@ country_event = { #The Proposition of the Monarch
 		log = "[GetDateText]: [This.GetName]: france_md.8.b executed"
 		clr_country_flag = FRA_new_nationalism
 		set_country_flag = FRA_the_national_front
+		ai_chance = {
+			base = 70
+		}
 	}
 }
 
@@ -327,15 +330,10 @@ country_event = { #Restoration of the Bonapartes
 	id = france_md.9
 	title = france_md.9.t
 	desc = france_md.9.d
-	picture = GFX_french_generic
+	picture = GFX_bonaparte_restoration
 	
-	trigger = {
-		has_country_flag = FRA_monarch_support
-	}
-	
-	mean_time_to_happen = {
-		days = 35
-	}
+	fire_only_once = yes
+	is_triggered_only = yes 
 	
 	option = {
 		name = france_md.9.a
@@ -345,6 +343,19 @@ country_event = { #Restoration of the Bonapartes
 		set_country_flag = FRA_bonaparte_name_switch
 		news_event = France_news.99
 		
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.15
+		}
+		recalculate_party = yes
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 23 }
+			update_government_coalition_strength = yes
+			update_party_name = yes
+			set_coalition_drift = yes
+		}
 		set_politics = {
 			ruling_party = nationalist
 			elections_allowed = no
@@ -359,19 +370,6 @@ country_event = { #Restoration of the Bonapartes
 				businessman
 				smooth_talking_charmer
 			}
-		}
-		add_popularity = {
-			ideology = nationalist
-			popularity = 0.15
-		}
-		recalculate_party = yes
-		hidden_effect = {
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 23 }
-			update_government_coalition_strength = yes
-			update_party_name = yes
-			set_coalition_drift = yes
 		}
 	}
 }
@@ -395,13 +393,118 @@ country_event = { #Foreign Policy Agreement
 		name = france_md.10.a 
 		log = "[GetDateText]: [This.GetName]: france_md.10.a executed"
 		set_country_flag = FRA_a_peaceful_rise_flag
+		ai_chance = {
+			base = 50
+		}
 	}
 	
 	option = { 
 		name = france_md.10.b 
 		log = "[GetDateText]: [This.GetName]: france_md.10.b executed"
 		set_country_flag = FRA_an_aggresive_expansionism_flag
+		ai_chance = {
+			base = 50
+		}
 	}
+}
 
+country_event = { #International Space Research - NASA
+	id = france_md.11
+	title = france_md.11.t 
+	desc = france_md.11.d
+	picture = GFX_astronauts
+	
+	is_triggered_only = yes 
+	
+	option = {
+		name = france_md.11.a
+		log = "[GetDateText]: [This.GetName]: france_md.11.a executed"
+		add_opinion_modifier = { target = FRA modifier = space_partners }
+		FRA = {
+			add_opinion_modifier = { target = ROOT modifier = space_partners }
+			add_research_slot = 1
+			subtract_from_variable = { treasury = 10.0 }
+			country_event = diplomatic_response.1
+		}
+		add_research_slot = 1
+		subtract_from_variable = { treasury = 10.0 }
+		custom_effect_tooltip = FRA_international_space_nasa_TT
+		ai_chance = {
+			base = 60
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 80 
+			}	
+		}
+	}
+	option = {
+		name = france_md.11.b
+		log = "[GetDateText]: [This.GetName]: france_md.11.b executed"
+		add_opinion_modifier = { target = FRA modifier = denied_us }
+		FRA = {
+			add_opinion_modifier = { target = ROOT modifier = denied_us }
+			country_event = diplomatic_response.2
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 20 
+			}	
+		}
+	}
+}
 
+country_event = { #Income-Event
+	id = france_md.12
+	title = france_md.12.t
+	desc = france_md.12.d
+	picture = GFX_news_asteriod
+	
+	is_triggered_only = yes 
+	
+	option = {
+		name = france_md.12.a
+		log = "[GetDateText]: [This.GetName]: france_md.12.a executed"
+		if = {
+			limit = {
+				check_variable = { var = FRA_space_income_var value = 3 compare = less_than_or_equals }
+			}
+			add_to_variable = { treasury = 10.0 }
+			custom_effect_tooltip = FRA_income_1_TT
+		}
+		else_if = {
+			limit = {
+				check_variable = { var = FRA_space_income_var value = 3 compare = greater_than_or_equals }
+				check_variable = { var = FRA_space_income_var value = 6 compare = less_than_or_equals }
+			}
+			add_to_variable = { treasury = 20.0 }
+			custom_effect_tooltip = FRA_income_2_TT
+		}
+		else_if = {
+			limit = {
+				check_variable = { var = FRA_space_income_var value = 3 compare = greater_than_or_equals }
+				check_variable = { var = FRA_space_income_var value = 6 compare = less_than_or_equals }
+			}
+			add_to_variable = { treasury = 20.0 }
+			custom_effect_tooltip = FRA_income_2_TT
+		}
+		else_if = {
+			limit = {
+				check_variable = { var = FRA_space_income_var value = 6 compare = greater_than_or_equals }
+				check_variable = { var = FRA_space_income_var value = 9 compare = less_than_or_equals }
+			}
+			add_to_variable = { treasury = 30.0 }
+			custom_effect_tooltip = FRA_income_3_TT
+		}
+		else_if = {
+			limit = {
+				check_variable = { var = FRA_space_income_var value = 9 compare = greater_than_or_equals }
+				check_variable = { var = FRA_space_income_var value = 12 compare = less_than_or_equals }
+			}
+			add_to_variable = { treasury = 40.0 }
+			custom_effect_tooltip = FRA_income_4_TT
+		}
+		subtract_from_variable = { FRA_peoples_support = 5.0 }
+	}
 }
