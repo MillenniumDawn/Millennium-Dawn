@@ -363,6 +363,105 @@ calculate_interest_rate = {
 }
 
 
+calculate_interest_rate_player = {
+	clear_array = test_interest_rate
+	
+	for_loop_effect = {
+		start = 1
+		end = 10 # < 10
+		
+		add_to_temp_array = {
+			array = temp_interest_rate
+			value = 0
+		}
+		
+	}
+	for_each_loop = {
+		array = temp_interest_rate
+		value = v
+		index = i
+		add_to_temp_variable = { var = temp_interest_rate^i value = debt }
+	}
+	
+	
+	set_variable = { var = interest_rate value = debt }
+	
+	#Base interest  rate is determined by your GDP/C
+	multiply_variable = { var = temp_interest_rate^1 value = 27 }
+	multiply_variable = { var = temp_interest_rate^2 value = 23 }
+	multiply_variable = { var = temp_interest_rate^3 value = 19 }
+	multiply_variable = { var = temp_interest_rate^4 value = 16.5 }
+	multiply_variable = { var = temp_interest_rate^5 value = 13.5 }
+	multiply_variable = { var = temp_interest_rate^6 value = 10.6 }
+	multiply_variable = { var = temp_interest_rate^7 value = 8.2 }
+	multiply_variable = { var = temp_interest_rate^8 value = 6.1 }
+	multiply_variable = { var = temp_interest_rate^9 value = 5 }
+	
+	for_each_loop = {
+		array = temp_interest_rate
+		value = v
+		index = i
+		#interest  rate is modifier by the size_modifier variable ("Size of the country")
+		divide_variable = { var = temp_interest_rate^i value = size_modifier }
+		#You divide by 365 as you don't pay say 10% interest  every day but yearly
+		divide_variable = { var = temp_interest_rate^i value = 365 }
+		#interest  rate is modified based on some ideas
+		if = {
+			limit = { has_idea = petro_dollar }
+			subtract_from_variable = { var = temp_interest_rate^i value = 2 }
+		}
+		if = {
+			limit = { has_idea = the_euro }
+			subtract_from_variable = { var = temp_interest_rate^i value = 1 }
+		}
+		if = {
+			limit = { has_idea = JAP_deflation }
+			subtract_from_variable = { var = temp_interest_rate^i value = 9 }
+		}
+		if = {
+			limit = { or = { has_idea = wall_street has_idea = international_bankers } }
+			subtract_from_variable = { var = temp_interest_rate^i value = 1 }
+		}
+		if = {
+			limit = { has_country_flag = bailout_given }
+			subtract_from_variable = { var = temp_interest_rate^i value = 8 }
+		}
+	}
+	
+	for_each_loop = {
+		array = temp_interest_rate
+		value = v
+		index = i
+		clamp_variable = {
+			var = temp_interest_rate^i
+			min = 0.8
+			max = 50
+		}
+	}
+	for_each_loop = {
+		array = temp_interest_rate
+		value = v
+		index = i
+		add_to_array = {
+			
+		}
+	}
+	
+	for_each_loop = {
+		array = temp_interest_rate
+		index = i
+		value = v
+		add_to_array = {
+			array = test_interest_rate
+			value = v
+		}
+	}
+	
+	
+	update_AI_NO_WANT_DEBT = yes #need to talk to ducky about this - Gearz
+}
+
+
 ### safeproofing - reached here #killerrabbit
 
 #Update the debt rate called mostly when debt is taken
