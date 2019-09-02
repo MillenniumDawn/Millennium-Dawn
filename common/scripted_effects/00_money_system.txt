@@ -370,11 +370,14 @@ calculate_interest_rate_ai = {
 	}
 	update_AI_NO_WANT_DEBT = yes #need to talk to ducky about this - Gearz
 }
-
-
 calculate_interest_rate_player = {
+	
+	#This array stores the interest rate for each level of gdp/c
+	
+	#clears the array
 	clear_array = test_interest_rate
 	
+	#creates the array
 	for_loop_effect = {
 		start = 1
 		end = 10 # < 10
@@ -385,6 +388,8 @@ calculate_interest_rate_player = {
 		}
 		
 	}
+	
+	#adds debt to each item in the array
 	for_each_loop = {
 		array = temp_interest_rate
 		value = v
@@ -404,6 +409,7 @@ calculate_interest_rate_player = {
 	multiply_temp_variable = { var = temp_interest_rate^7 value = 6.1 }
 	multiply_temp_variable = { var = temp_interest_rate^8 value = 5 }
 	
+	#Update each item in the array
 	for_each_loop = {
 		array = temp_interest_rate
 		value = v
@@ -440,6 +446,7 @@ calculate_interest_rate_player = {
 		}
 	}
 	
+	#add the temp array to a local array
 	for_each_loop = {
 		array = temp_interest_rate
 		index = i
@@ -449,6 +456,8 @@ calculate_interest_rate_player = {
 			value = v
 		}
 	}
+	
+	#update the displayed interest on the topbar (interest_rate) with the actual interest rate
 	if = {
 		limit = { has_idea = gdp_1 }
 		set_variable = { var = interest_rate value = test_interest_rate^0 }
@@ -542,7 +551,6 @@ update_military_rate = {
 		update_military_rate_player = yes
 	}
 }
-
 update_military_rate_ai = {
 	### Defence spending ###
 	
@@ -806,12 +814,12 @@ update_military_rate_ai = {
 		update_display_expense = yes
 	}
 }
-
-
-update_military_rate_player = {
+update_military_rate_player = {	
 	
+	#clear the array that stores the law cost
 	clear_array = test_defence_spend
 	
+	#recreate the array
 	for_loop_effect = {
 		start = 0
 		end = 10 # < 10
@@ -823,6 +831,7 @@ update_military_rate_player = {
 		
 	}
 	
+	#add the naval factoreis and mil factories to each item index in the array
 	for_each_loop = {
 		array = temp_defence_spend
 		value = v
@@ -831,6 +840,7 @@ update_military_rate_player = {
 		add_to_temp_variable = { var = temp_defence_spend^i value = num_of_military_factories }
 	}
 	
+	#A variable that stores the current military law the player has
 	if = {
 		limit = { has_idea = defence_00 }
 		set_temp_variable = { def_index = 0 }
@@ -872,6 +882,7 @@ update_military_rate_player = {
 		set_temp_variable = { def_index = 9 }
 	}
 	
+	#Some math that is applied to each law (see the update_military_rate_ai for more details)
 	divide_temp_variable = { temp_defence_spend^0 = 3000 }
 	divide_temp_variable = { temp_defence_spend^1 = 300 }
 	divide_temp_variable = { temp_defence_spend^2 = 150 }
@@ -1031,6 +1042,7 @@ update_military_rate_player = {
 	
 	divide_temp_variable = { personnel_cost = 500 } #control factor
 	
+	#Update each item in the array based on your gdp/c
 	for_each_loop = {
 		array = temp_defence_spend
 		index = i
@@ -1110,7 +1122,7 @@ update_military_rate_player = {
 	
 	set_variable = { var = tooltip_personnel_cost value = personnel_cost }
 	
-	
+	#add personal cost to each item in the array
 	for_each_loop = {
 		array = temp_defence_spend
 		index = i
