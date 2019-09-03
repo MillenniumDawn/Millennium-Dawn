@@ -278,7 +278,7 @@ focus_tree = {
 	
 	focus = {
 		id = NIG_line_the_government
-		icon = self_management
+		icon = islamist_gov
 		
 		x = -6
 		y = 4
@@ -306,6 +306,7 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			NIG_religious_idea_switch_muslim_majority = yes 
+			add_political_power = 100 
 		}
 	}
 	
@@ -360,7 +361,9 @@ focus_tree = {
 		prerequisite = { }
 		mutually_exclusive = { focus = NIG_tolerance }
 		mutually_exclusive = { focus = NIG_suppresion_of_islam }
-		available = { } 
+		available = {
+			NOT = { has_completed_focus = NIG_the_pdp }
+		} 
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -510,7 +513,10 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_stability = 0.025
+			add_war_support = 0.25
+		}
 	}
 	
 	focus = {
@@ -546,7 +552,25 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			#
+			if = {
+				limit = {
+					has_completed_focus = NIG_continue_sharia_law
+				}	
+				add_stability = 0.025
+			}
+			if = {
+				limit = {
+					has_completed_focus = NIG_end_sharia_law 
+				}
+				add_political_power = 150
+			}
+			if = {
+				limit = {
+					NOT = {	has_completed_focus = NIG_end_sharia_law }
+					NOT = { has_completed_focus = NIG_continue_sharia_law }
+				}
+				custom_effect_tooltip = NIG_tolerance_toolie_TT
+			}
 		}
 	}
 	
@@ -579,7 +603,11 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			###every state in the north gains a state flag saying we are not tolerant of them
+			338 = { set_state_flag = NIG_tolerant_state }
+			339 = { set_state_flag = NIG_tolerant_state }
+			340 = { set_state_flag = NIG_tolerant_state }
+			custom_effect_tooltip = NIG_northern_tolerance_TT
+			add_stability = 0.025
 		}
 	}
 	
@@ -612,7 +640,16 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = { 
-			###every state in the south gains a state flag saying we are not tolerant of them
+			336 = { set_state_flag = NIG_tolerant_state }
+			337 = { set_state_flag = NIG_tolerant_state }
+			334 = { set_state_flag = NIG_tolerant_state }
+			332 = { set_state_flag = NIG_tolerant_state }
+			if = {
+				limit = { owns_state = 322 }
+				322 = { set_state_flag = NIG_tolerant_state }
+			}
+			custom_effect_tooltip = NIG_southern_tolerance_TT
+			add_stability = 0.025
 		}
 	}
 	
@@ -645,7 +682,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = { 
-			##Swaps Idea of Religion with Secular
+			NIG_set_to_pluralist = yes
 		}
 	}
 	
@@ -716,7 +753,7 @@ focus_tree = {
 	
 	focus = {
 		id = NIG_education_from_the_bible
-		icon = treaty4
+		icon = preaching
 		
 		x = 4
 		y = 1
@@ -881,7 +918,7 @@ focus_tree = {
 	
 	focus = {
 		id = NIG_secure_christian_support
-		icon = catholicism
+		icon = christian_faiths
 		
 		x = 5
 		y = 3
@@ -1018,7 +1055,7 @@ focus_tree = {
 	
 	focus = {
 		id = NIG_christian_cabinet
-		icon = diplomacy
+		icon = christian_gov
 		
 		x = 6
 		y = 4
@@ -2857,7 +2894,9 @@ focus_tree = {
 		
 		prerequisite = { focus = NIG_stabilize_the_regime }
 		mutually_exclusive = { focus = NIG_petition_to_continue_usaid } 
-		available = { } 
+		available = {
+			has_idea = USA_usaid
+		} 
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -2875,6 +2914,11 @@ focus_tree = {
 		completion_reward = {
 			remove_ideas = USA_usaid
 			add_stability = 0.05
+			hidden_effect = {
+				add_to_variable = { domestic_influence_amount = 20 }
+				recalculate_influence = yes
+			}
+			custom_effect_tooltip = foreign_independence_20_NIG_TT
 		}
 	}
 	
@@ -2891,7 +2935,13 @@ focus_tree = {
 		prerequisite = { focus = NIG_stabilize_the_regime }
 		prerequisite = { }
 		mutually_exclusive = { focus = NIG_end_usaid } 
-		available = { } 
+		available = { 
+			OR = {
+				has_idea = USA_usaid
+				has_government = democratic
+				USA = { has_opinion = { target = NIG value > 50 } }
+			}
+		} 
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -2907,7 +2957,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			add_political_power = 100
+			add_political_power = 50
 			add_opinion_modifier = { target = USA modifier = supports_us }
 			reverse_add_opinion_modifier = { target = USA modifier = supports_us }
 			NIG_gain_influence_20_american_influence = yes
@@ -3256,7 +3306,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			add_stability = 0.05
+			add_stability = 0.0150
 			add_political_power = 150
 			add_opinion_modifier = { target = NGR modifier = lake_niger_shared }
 			add_opinion_modifier = { target = CHA modifier = lake_niger_shared }
@@ -3297,12 +3347,12 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = { 
 			add_stability = -0.07
-			add_opinion_modifier = { target = NGR modifier = lake_niger_shared }
-			add_opinion_modifier = { target = CHA modifier = lake_niger_shared }
-			add_opinion_modifier = { target = CAM modifier = lake_niger_shared } 
-			reverse_add_opinion_modifier = { target = NGR modifier = lake_niger_shared }
-			reverse_add_opinion_modifier = { target = CHA modifier = lake_niger_shared }
-			reverse_add_opinion_modifier = { target = CAM modifier = lake_niger_shared }
+			add_opinion_modifier = { target = NGR modifier = lake_niger_exploited }
+			add_opinion_modifier = { target = CHA modifier = lake_niger_exploited }
+			add_opinion_modifier = { target = CAM modifier = lake_niger_exploited } 
+			reverse_add_opinion_modifier = { target = NGR modifier = lake_niger_exploited }
+			reverse_add_opinion_modifier = { target = CHA modifier = lake_niger_exploited }
+			reverse_add_opinion_modifier = { target = CAM modifier = lake_niger_exploited }
 			340 = { #Borno Industrial Complex
 				add_building_construction = { 
 					type = industrial_complex 
@@ -4427,7 +4477,20 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = { 
 			air_experience = 25
-			#Something else maybe air bases
+			336 = {
+				add_building_construction = {
+					type = air_base
+					level = 2 
+					instant_build = yes 
+				}
+			}
+			338 = {
+				add_building_construction = {
+					type = air_base
+					level = 2 
+					instant_build = yes 
+				}
+			}
 		}
 	}
 	
@@ -4460,7 +4523,31 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = { 
-			###Gains Random Local Resources in the north and south
+			if = {
+				limit = { has_full_control_of_state = 337 }
+				add_resource = {
+					type = steel
+					amount = 4
+					state = 337
+				}
+			}
+			if = {
+				limit = { has_full_control_of_state = 336 }
+				add_resource = {
+					type = steel
+					amount = 2
+					state = 336
+				}
+			}
+			if = {
+				limit = { has_full_control_of_state = 332 }
+				add_resource = {
+					type = tungsten
+					amount = 4
+					state = 332
+				}
+			}
+			add_stability = -0.015
 		}
 	}
 	
@@ -4526,7 +4613,21 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = { 
-			###Cheaper Rifle Production
+			if = { 
+				limit = {
+					NOT = { has_idea = rifle_production_bonus }
+				}
+				add_ideas = rifle_production_bonus
+			}
+			else_if = { 
+				limit = {
+					has_idea = rifle_production_bonus
+				}
+				swap_ideas = {
+					remove_idea = rifle_production_bonus
+					add_idea = rifle_production_bonus2
+				}
+			}
 		}
 	}
 	
@@ -4559,7 +4660,21 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			###Idea about Combined Arms? 
+			if = { 
+				limit = {
+					NOT = { has_idea = rifle_production_bonus }
+				}
+				add_ideas = rifle_production_bonus
+			}
+			else_if = { 
+				limit = {
+					has_idea = rifle_production_bonus
+				}
+				swap_ideas = {
+					remove_idea = rifle_production_bonus
+					add_idea = rifle_production_bonus2
+				}
+			}
 		}
 	}
 	
@@ -4624,7 +4739,13 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = { 
-			###Tech Boost to MR Fighters 
+			add_tech_bonus = {
+				name = NIG_multirole_fighters 
+				bonus = 0.75
+				uses = 1
+				category = Cat_FIGHTER
+				category = Cat_MR_FIGHTER
+			}
 		}
 	}
 	
@@ -4661,7 +4782,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			###Generic Volunteers thing?
+			add_ideas = NIG_nigerian_peacekeepers_idea
 		}
 	}
 	
@@ -4686,6 +4807,10 @@ focus_tree = {
 		
 		ai_will_do = {
 			base = 10
+			modifier = {
+				check_variable = { treasury < 10.0 }
+				factor = 0 
+			}
 		}
 		
 		cancel_if_invalid = yes
@@ -4694,7 +4819,24 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			###Main Northern States gain one arms factory
+			338 = { #Sokoto
+				add_building_construction = {
+					type = arms_factory 
+					level = 1 
+					instant_build = yes 
+				}
+				add_extra_state_shared_building_slots = 1 
+			}
+			339 = {
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1 
+			}
+			subtract_from_variable = { treasury = 7.5 }
+			custom_effect_tooltip = NIG_spend_7_5_billion_TT
 		}
 	}
 	
@@ -4727,13 +4869,32 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			hidden_effect = {
-				load_oob = "NIG_establish_ng"
-				delete_unit_template_and_units = "Chrisitan Militas"
-				delete_unit_template_and_units = "Islamic Militas"
+			if = {
+				limit = { 
+					NOT = { has_completed_focus = NIG_enlist_the_militas }
+					NOT = { has_completed_focus = NIG_contract_boko_haram }
+				}
+				hidden_effect = {
+					load_oob = "NIG_establish_ng"
+					delete_unit_template_and_units = { division_template = "Chrisitan Militas" }
+					delete_unit_template_and_units = { division_template = "Islamic Militas" }
+				}
+				subtract_from_variable = { treasury = 2.5 }
+				custom_effect_tooltip = NIG_establish_ng_TT
 			}
-			subtract_from_variable = { treasury = 2.5 }
-			custom_effect_tooltip = NIG_establish_ng_TT
+			if = { 
+				limit = {
+					OR = {
+						has_completed_focus = NIG_enlist_the_militas
+						has_completed_focus = NIG_contract_boko_haram
+					}
+				}
+				hidden_effect = {
+					load_oob = "NIG_establish_ng"
+				}
+				subtract_from_variable = { treasury = 1.5 }
+				custom_effect_tooltip = NIG_establish_ng_two_TT
+			}
 		}
 	}
 	
@@ -4765,7 +4926,7 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { 
+		completion_reward = {
 			add_ideas = motorization_investments
 		}
 	}
@@ -4798,7 +4959,7 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { 
+		completion_reward = {
 			random_owned_state = { #Should Prioritze Abuja and Benue
 				limit = {
 					free_building_slots = {
