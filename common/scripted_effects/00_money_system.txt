@@ -1151,6 +1151,103 @@ update_military_rate_player = {
 	
 }
 
+#Update bureaucracy spending
+update_bureaucracy_rate = {
+	if = {
+		limit = { is_ai = yes }
+		update_bureaucracy_ai = yes
+	}
+	else = {
+		update_bureaucracy_rate_player = yes
+	}
+}
+update_bureaucracy_ai = {
+	subtract_from_variable = { var = expense_gain value = bureaucracy_gain }
+	add_to_variable = { var = treasury_rate value = bureaucracy_gain }
+	set_variable = { var = bureaucracy_gain value = size_modifier }
+	multiply_variable = { bureaucracy_gain = 100 }
+	multiply_variable = { var = bureaucracy_gain value = 0.01 }
+	round_variable = bureaucracy_gain
+	divide_variable = { bureaucracy_gain = 100 }
+	add_to_variable = { var = expense_gain value = bureaucracy_gain }
+	subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
+}
+update_bureaucracy_rate_player = {
+	
+	subtract_from_variable = { var = expense_gain value = bureaucracy_gain }
+	add_to_variable = { var = treasury_rate value = bureaucracy_gain }
+	
+	#clear the array that stores the law cost
+	clear_array = test_bureaucracy_spend
+	
+	#recreate the array
+	for_loop_effect = {
+		start = 0
+		end = 6 # < 10
+		
+		add_to_temp_array = {
+			array = temp_bureaucracy_spend
+			value = size_modifier
+		}
+		
+	}
+	
+	multiply_temp_variable = { var = temp_bureaucracy_spend^0 value = 0.01 }
+	multiply_temp_variable = { var = temp_bureaucracy_spend^1 value = 0.02 }
+	multiply_temp_variable = { var = temp_bureaucracy_spend^2 value = 0.03 }
+	multiply_temp_variable = { var = temp_bureaucracy_spend^3 value = 0.04 }
+	multiply_temp_variable = { var = temp_bureaucracy_spend^4 value = 0.05 }
+	
+	#add the naval factoreis and mil factories to each item index in the array
+	for_each_loop = {
+		array = temp_bureaucracy_spend
+		value = v
+		index = i
+		multiply_temp_variable = { temp_bureaucracy_spend^i = 100 }
+		
+		round_temp_variable = temp_bureaucracy_spend^i
+		divide_temp_variable = { temp_bureaucracy_spend^i = 100 }
+	}
+	
+	if = {
+		limit = { has_idea = bureau_01 }
+		set_temp_variable = { bureau_index = 0 }
+	}
+	else_if = {
+		limit = { has_idea = bureau_02 }
+		set_temp_variable = { bureau_index = 1 }
+	}
+	else_if = {
+		limit = { has_idea = bureau_03 }
+		set_temp_variable = { bureau_index = 2 }
+	}
+	else_if = {
+		limit = { has_idea = bureau_04 }
+		set_temp_variable = { bureau_index = 3 }
+	}
+	else_if = {
+		limit = { has_idea = bureau_05 }
+		set_temp_variable = { bureau_index = 4 }
+	}
+	
+	for_each_loop = {
+		array = temp_bureaucracy_spend
+		index = i
+		value = v
+		add_to_array = {
+			array = test_bureaucracy_spend
+			value = v
+		}
+	}
+	
+	set_variable = { var = bureaucracy_gain value = test_bureaucracy_spend^bureau_index }
+	
+	add_to_variable = { var = expense_gain value = bureaucracy_gain }
+	subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
+}
+
+
+
 #Update money gained from international investments
 calculate_int_investments_rate = {
 	#See Treasury reset comment at top of page
@@ -1248,30 +1345,7 @@ init_expenses = {
 	#Defence spending
 	
 	#bueraucracy
-	set_variable = { var = bureaucracy_gain value = size_modifier } #why???? - Gearz
-	if = { 
-		limit = { has_idea = bureau_01 }
-		multiply_variable = { var = bureaucracy_gain value = 0.01 }
-	}
-	else_if = {
-		limit = { has_idea = bureau_02 }
-		multiply_variable = { var = bureaucracy_gain value = 0.02 }
-	}
-	else_if = { 
-		limit = { has_idea = bureau_03 }
-		multiply_variable = { var = bureaucracy_gain value = 0.03 }
-	}
-	else_if = { 
-		limit = { has_idea = bureau_04 }
-		multiply_variable = { var = bureaucracy_gain value = 0.04 }
-	}
-	else_if = { 
-		limit = { has_idea = bureau_05 }
-		multiply_variable = { var = bureaucracy_gain value = 0.05 }
-				
-	}
-	add_to_variable = { var = expense_gain value = bureaucracy_gain }
-	subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
+	update_bureaucracy_rate = yes
 	
 	#internal security
 	set_variable = { var = security_gain value = size_modifier }
