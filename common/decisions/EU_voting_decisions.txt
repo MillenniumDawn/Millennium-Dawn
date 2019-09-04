@@ -13782,3 +13782,307 @@ EU_fiscal_category = {
 	
 	
 } ### End of EU_fiscal_category	
+
+##########################
+##########################
+### EU_exit_category   ###
+##########################
+##########################
+
+EU_exit_category = {
+
+	EU_Article_50 = {
+	
+		available = {
+			has_idea = EU_member
+			has_completed_focus = EU701
+			NOT = {
+				has_country_flag = Article_50
+			}
+		}
+		
+		visible = { 
+			has_idea = EU_member
+			#has_completed_focus = EU701
+		} 
+		
+		complete_effect = {   						
+			ROOT = {
+				activate_mission =  EU_exit
+				set_country_flag = Article_50
+			}
+		}				
+	}
+
+	EU_Revoke_Article_50 = {
+	
+		available = {
+			has_idea = EU_member
+			has_completed_focus = EU701
+			has_country_flag = Article_50
+		}
+		
+		visible = { 
+			has_idea = EU_member
+			has_completed_focus = EU701
+		} 
+		
+		complete_effect = {   						
+			ROOT = {
+				clr_country_flag = Article_50
+			}
+		}				
+	}
+
+	EU_exit = {
+		
+		allowed = { always = no }
+		
+		available = {
+			OR = {
+				### Withdrawal Treaty
+				has_country_flag = focus_EU702_yes
+				has_country_flag = focus_EU702_QMV_yes
+				has_country_flag = focus_EU702_maj_yes
+			}
+		}
+		
+		activation = {
+			always = no
+		}
+		
+		visible = { 
+			has_idea = EU_member
+			has_completed_focus = EU701			
+		} 
+		
+		days_mission_timeout = 730
+		
+		fire_only_once = yes
+		
+		timeout_effect = {
+			ROOT = {
+				if = { ### unprepared no deal exit
+					limit = {
+						NOT = { has_completed_focus = EU703 }
+					}
+					add_timed_idea = {
+						idea = no_deal_exit
+						days = 1825 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
+					}
+					remove_ideas = EU_member
+					remove_ideas = the_euro
+					clr_country_flag = Article_50
+				}
+				else_if = { ### prepared no deal exit
+					limit = {
+						has_completed_focus = EU703
+					}
+					add_timed_idea = {
+						idea = no_deal_exit
+						days = 730 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
+					}
+					remove_ideas = EU_member
+					remove_ideas = the_euro
+					clr_country_flag = Article_50
+				}				
+			}
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				news_event = {
+					id = EU_news.21 ### one member state leaves
+				}
+			}
+		}
+		
+		cancel_trigger = { ### by EU_Revoke_Article_50
+			ROOT = {
+				NOT = {
+					has_country_flag = Article_50
+				}
+			}
+		}
+		
+		remove_effect = {   						
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				country_event = {
+					id = EU_news.22 ### Article 50 is revoked
+				}
+			}
+		}
+		complete_effect = {   						
+			ROOT = {	
+				add_ideas = withdrawal_treaty
+				remove_ideas = EU_member
+				remove_ideas = the_euro
+				clr_country_flag = Article_50
+			}
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				country_event = {
+					id = EU_news.23 ### withdrawal_treaty
+				}
+			}
+		}		
+	}
+
+	EU_extend_Article_50 = {
+	
+		available = {
+			has_idea = EU_member
+			has_completed_focus = EU701
+			has_country_flag = Article_50
+				all_country = {
+					OR = {
+							AND = {
+								set_temp_variable = { temp_idx = -1 }
+								any_of = {
+									array = influence_array
+									value = v
+									index = i
+									if = {
+										limit = { var:v = { tag = ROOT } }
+										set_temp_variable = { temp_idx = i }
+										always = yes
+									}
+									else = { always = no }
+								}
+								check_variable = { temp_idx > -1 }
+								check_variable = { influence_array_calc^temp_idx > 0.05 }
+							}
+							tag = PREV
+							NOT = { has_idea = EU_member }
+					}
+				}			
+		}
+		
+		visible = { 
+			has_idea = EU_member
+			has_completed_focus = EU701
+		} 
+		
+		complete_effect = {   						
+			ROOT = {
+				remove_mission = EU_exit
+				activate_mission = EU_exit_three_month
+				
+			}
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				country_event = {
+					id = EU_news.24 ### Article 50 Extension
+				}
+			}
+		}				
+	}
+
+	EU_exit_three_month = {
+		
+		allowed = { always = no }
+		
+		available = {
+			OR = {
+				### Withdrawal Treaty
+				has_country_flag = focus_EU702_yes
+				has_country_flag = focus_EU702_QMV_yes
+				has_country_flag = focus_EU702_maj_yes
+			}
+		}
+		
+		activation = {
+			always = no
+		}
+		
+		visible = { 
+			has_idea = EU_member
+			has_completed_focus = EU701			
+		} 
+		
+		days_mission_timeout = 90
+		
+		fire_only_once = yes
+		
+		timeout_effect = {
+			ROOT = {
+				if = { ### unprepared no deal exit
+					limit = {
+						NOT = { has_completed_focus = EU703 }
+					}
+					add_timed_idea = {
+						idea = no_deal_exit
+						days = 1825 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
+					}
+					remove_ideas = EU_member
+					remove_ideas = the_euro
+					clr_country_flag = Article_50
+				}
+				else_if = { ### prepared no deal exit
+					limit = {
+						has_completed_focus = EU703
+					}
+					add_timed_idea = {
+						idea = no_deal_exit
+						days = 730 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
+					}
+					remove_ideas = EU_member
+					remove_ideas = the_euro
+					clr_country_flag = Article_50
+				}				
+			}
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				news_event = {
+					id = EU_news.21 ### one member state leaves
+				}
+			}
+		}
+		
+		cancel_trigger = { ### by EU_Revoke_Article_50
+			ROOT = {
+				NOT = {
+					has_country_flag = Article_50
+				}
+			}
+		}
+		
+		remove_effect = {   						
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				country_event = {
+					id = EU_news.22 ### Article 50 is revoked
+				}
+			}
+		}
+		complete_effect = {   						
+			ROOT = {	
+				add_ideas = withdrawal_treaty
+				remove_ideas = EU_member
+				remove_ideas = the_euro
+				clr_country_flag = Article_50
+			}
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				country_event = {
+					id = EU_news.23 ### withdrawal_treaty
+				}
+			}
+		}		
+	}
+
+
+} ### EU_exit_category
