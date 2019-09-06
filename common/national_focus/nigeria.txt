@@ -1989,22 +1989,7 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = {
-			if = {
-				limit = { has_idea = health_01 }
-				swap_ideas = { remove_idea = health_01 add_idea = health_02 }
-			}
-			else_if = {
-				limit = { has_idea = health_02 }
-				swap_ideas = { remove_idea = health_02 add_idea = health_03 }
-			}
-			else_if = {
-				limit = { has_idea = health_03 }
-				swap_ideas = { remove_idea = health_03 add_idea = health_04 }
-			}
-			else_if = {
-				limit = { has_idea = health_04 }
-				swap_ideas = { remove_idea = health_04 add_idea = health_05 }
-			}
+			increase_healthcare_budget = yes
 		}
 	}
 	
@@ -2417,7 +2402,10 @@ focus_tree = {
 		prerequisite = { focus = NIG_cut_the_waste }
 		mutually_exclusive = { } 
 		available = {
-			has_idea = NIG_unrestrained_piracy_idea
+			OR = {
+				has_idea = NIG_restrained_piracy_idea 
+				has_idea = NIG_unrestrained_piracy_idea
+			}
 		} 
 		historical_ai = { }
 		select_effect = { }
@@ -2436,9 +2424,16 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = { 
-			swap_ideas = {
-				remove_idea = NIG_unrestrained_piracy_idea
-				add_idea = NIG_restrained_piracy_idea
+			if = {
+				limit = { has_idea = NIG_unrestrained_piracy_idea }
+				swap_ideas = {
+					remove_idea = NIG_unrestrained_piracy_idea
+					add_idea = NIG_restrained_piracy_idea
+				}
+			} 
+			else_if = { 
+				limit = { has_idea = NIG_restrained_piracy_idea }
+				remove_ideas = NIG_restrained_piracy_idea
 			}
 			add_stability = 0.025
 		}
@@ -2514,7 +2509,18 @@ focus_tree = {
 		
 		complete_tooltip = { }
 		completion_reward = { 
-			remove_ideas = NIG_restrained_piracy_idea
+			if = {
+				limit = { has_idea = NIG_restrained_piracy_idea }
+				remove_ideas = NIG_restrained_piracy_idea
+			}
+			else_if = {
+				limit = { has_idea = NIG_unrestrained_piracy_idea }
+				swap_ideas = {
+					remove_idea = NIG_unrestrained_piracy_idea
+					add_idea = NIG_restrained_piracy_idea
+				}
+			}
+			add_war_support = 0.05
 		}
 	}
 	
@@ -2547,7 +2553,10 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_stability = 0.05
+			add_political_power = 75 
+		}
 	}
 	
 	focus = {
@@ -2680,7 +2689,11 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = {
+			add_popularity = { ideology = democratic popularity = 0.10 }
+			add_to_variable = { party_pop_array^3 = 0.10 }
+			recalculate_party = yes 
+		}
 	}
 	
 	focus = {
@@ -2696,7 +2709,13 @@ focus_tree = {
 		prerequisite = { focus = NIG_keynesian_economic_policies }
 		prerequisite = { }
 		mutually_exclusive = { } 
-		available = { } 
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { treasury > 3.0 }
+				tooltip = NIG_state_run_markets_tooltip_TT
+			}
+			has_political_power > 50
+		} 
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -2711,7 +2730,12 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_ideas = NIG_state_run_markets_idea
+			add_political_power = -100
+			subtract_from_variable = { treasury = 3 }
+			custom_effect_tooltip = NIG_state_run_markets_effect_TT
+		}
 	}
 	
 	###Shared Policies 
@@ -2746,7 +2770,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			increase_policing_budget = yes
+		}
 	}
 	
 	focus = {
@@ -2780,7 +2806,9 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			#country_event = {}
+		}
 	}
 	
 	focus = {
@@ -2848,7 +2876,10 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
-		completion_reward = { }
+		completion_reward = { 
+			add_stability = 0.025
+			add_political_power = 100
+		}
 	}
 	
 	focus = {
