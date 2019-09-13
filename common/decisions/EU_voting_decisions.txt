@@ -16932,8 +16932,8 @@ EU_ECB_category = {
 	ECB_Outright_Monetary_Transactions = {
 		
 		cost = 100
-		days_remove = 10
-		days_re_enable = 10
+#		days_remove = 10
+#		days_re_enable = 10
 		available = {
 			has_idea = EU_member
 			has_idea = ECB_president
@@ -16943,33 +16943,57 @@ EU_ECB_category = {
 			has_idea = EU_member 
 		} 
 		
-		complete_effect = {   						
-				ROOT = {
-
-							subtract_from_variable = { THIS.debt = 1.0 }
-
-							ingame_calculate_size_modifier = yes
-							update_military_rate = yes
-							calculate_interest_rate = yes
-							calculate_debt_rate = yes
-						}
-					
-				
-		}
-		
-		remove_effect = {
-				ROOT = {
-					add_to_variable = { 
-						var = THIS.debt
-						value = 1.0
+		complete_effect = {
+#			while_loop_effect = {    
+#                limit = {
+#					all_country = {
+#						OR = {
+#							check_variable = { THIS.interest_rate > 4.0 }
+#							NOT = {
+#								has_idea = EU_member
+#								has_idea = the_euro							
+#							}
+#						}
+#					}
+#				}
+				random_country = {
+					limit = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate > 4.0 }
 					}
-
-					ingame_calculate_size_modifier = yes
-					update_military_rate = yes
-					calculate_interest_rate = yes
-					calculate_debt_rate = yes
+                
+                    set_variable = {
+                        var = THIS.OMT_account
+                        value = 0
+                    }        
+                    while_loop_effect = {    
+                        limit = { 
+                            check_variable = { THIS.interest_rate > 4.0 } 
+                        }                        
+                        subtract_from_variable = { THIS.debt = 1.0 }
+                        add_to_variable = { THIS.OMT_account = 1.0 }
+                    }
+                    ingame_calculate_size_modifier = yes
+                    update_military_rate = yes
+                    calculate_interest_rate = yes
+                    calculate_debt_rate = yes
+                }
+			#}
+		}
+		remove_effect = {
+				every_country = {
+					if = {
+						limit = {
+							has_idea = EU_member
+							has_idea = the_euro
+						}
+					}
+					country_event = {
+						id = EUevent.18
+					}
 				}
-          }
+        }
 	}
 
 
