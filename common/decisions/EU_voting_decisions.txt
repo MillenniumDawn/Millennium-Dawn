@@ -29,509 +29,6 @@ EU_voting_category = {
 ### Testing Section ###
 #######################
 
-	Test_Effect = {
-	
-		available = {
-			has_idea = EU_member
-			ROOT = {
-				is_in_array = { ruling_party = 3 }
-			}
-		}
-		
-		visible = { 
-			has_idea = EU_member 
-		} 
-		
-		complete_effect = {   						
-			add_to_variable = { party_pop_array^14 = 0.1 }
-			#add_popularity = { ideology = neutrality popularity = 0.1 }
-			#add_to_variable = { party_pop_array^16 = -0.1 }
-			#add_popularity = { ideology = neutrality popularity = -0.1 }
-			recalculate_party = yes
-
-		}				
-	}
-	
-	Test_focus_EU001 = {
-	
-		available = {
-			NOT = { has_country_flag = focus_EU001 }
-		}
-		
-		visible = { 
-			has_idea = EU_member 
-		} 
-		
-		complete_effect = {   						
-			country_event = {
-				id = EUvoteTest.1
-				days = 10
-			}
-		}				
-	}
-	
-	Test_focus_EU001_retry = {
-	
-		available = {
-			has_idea = EU_member
-			any_country = {
-				OR = {
-					has_country_flag = focus_EU001_no
-					has_country_flag = focus_EU001_QMV_no
-					has_country_flag = focus_EU001_maj_no			
-				}
-				NOT = { 	
-					has_country_flag = focus_EU001_yes
-				}
-			}
-		}
-		
-		visible = { 
-			has_idea = EU_member
-			any_country = {
-				OR = {
-					has_country_flag = focus_EU001_no
-					has_country_flag = focus_EU001_QMV_no
-					has_country_flag = focus_EU001_maj_no			
-				}
-				NOT = { 	
-					has_country_flag = focus_EU001_yes
-				}
-			}
-		} 
-		
-		complete_effect = {
-			clr_global_flag = focus_EU001_voted
-			every_country = {	
-					clr_country_flag = focus_EU001
-					clr_country_flag = focus_EU001_no
-					clr_country_flag = focus_EU001_QMV_no
-					clr_country_flag = focus_EU001_maj_no					
-			}
-			set_country_flag = focus_EU001
-		}				
-	}
-	
-	Test_focus_EU001_QMV = {
-	
-		available = {
-			NOT = { has_country_flag = focus_EU001_QMV }
-		}
-		
-		visible = { 
-			has_idea = EU_member 
-		} 
-		
-		complete_effect = {   						
-			set_country_flag = focus_EU001_QMV
-		}				
-	}
-	
-	Test_focus_EU001_maj = {
-	
-		available = {
-			NOT = { has_country_flag = focus_EU001_maj }
-		}
-		
-		visible = { 
-			has_idea = EU_member 
-		} 
-		
-		complete_effect = {   						
-			set_country_flag = focus_EU001_maj
-		}				
-	}
-	
-	Test_influence = {
-	
-		available = {
-			has_idea = EU_member
-		}
-		
-		visible = { 
-			has_idea = EU_member 
-		} 
-		
-		complete_effect = {   						
-			 set_temp_variable = { 
-				influence_gain = 70 
-			}
-			for_loop_effect = { 
-				end = influence_array^num value = v 
-					if = { 
-						limit = { 
-							check_variable = { influence_array^v = GER } 
-						} 
-						add_to_variable = { influence_array_val^v = influence_gain }
-						set_country_flag = found 
-					} 
-			} 
-			if = { 
-				limit = { 
-					NOT = { has_country_flag = found } 
-				} 
-				add_to_array = { influence_array = GER.id }
-				add_to_array = { influence_array_val = influence_gain } 
-			} 
-			clr_country_flag = found
-			recalculate_influence = yes
-		}				
-	}
-
-	EU_voting_decision_focus01 = {
-	
-		icon = GFX_decision_generic_european_union
-	
-		available = {
-			AND = {
-				custom_trigger_tooltip = {
-					tooltip = "[ROOT.GetNameWithFlag] has completed National Focus EU001"
-					AND = {
-						has_country_flag = focus_EU001
-						NOT = { 
-							has_global_flag = focus_EU001_voted
-							has_country_flag = focus_EU001_yes
-						}
-					}
-				}
-				OR = {	
-					custom_trigger_tooltip = {
-						tooltip = "[ROOT.GetNameWithFlag] must have > 3% influence on all member states"
-						all_country = {	
-							OR = {
-								AND = {
-									set_temp_variable = { temp_idx = -1 }
-									any_of = {
-										array = influence_array
-										value = v
-										index = i
-										if = {
-											limit = { var:v = { tag = ROOT } }
-											set_temp_variable = { temp_idx = i }
-											always = yes
-										}
-										else = { always = no }
-									}
-									check_variable = { temp_idx > -1 }
-									check_variable = { influence_array_calc^temp_idx > 0.03 }						
-								}	
-								tag = PREV
-								NOT = { has_idea = EU_member }
-							}
-						}
-					}
-					has_idea = EU_commission_president
-					has_idea = EU_council_president
-					has_idea = EU_parliament_president						
-				}	
-			}
-		}
-		
-		visible = { 
-			has_country_flag = focus_EU001
-			NOT = { 
-			###	has_global_flag = focus_EU001_voted
-				has_country_flag = focus_EU001_yes
-			}
-		}
-		
-		complete_effect = {
-			set_global_flag = focus_EU001_voted
-			set_global_flag = EU_unanimity_voting
-			set_variable = {	
-				var = global.var_EUvoteYes
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUvoteNo
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUvoteTotal
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUpopYes
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUpopNo
-				value = 0
-			}				
-			every_country = {
-				limit = { has_idea = EU_member }
-				country_event = {
-					id = EUvote.1
-				}
-			}
-		}
-	}
-	
-	EU_voting_decision_focus01_QMV = {
-	
-		icon = GFX_decision_generic_european_union
-	
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = test123
-				AND = {
-					has_country_flag = focus_EU001_QMV
-					NOT = { 
-							has_global_flag = focus_EU001_QMV_voted
-							has_country_flag = focus_EU001_QMV_yes
-					}
-					all_country = {	
-						OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.03 }						
-							}	
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}					
-				}	
-			}
-		}
-		
-		visible = { 
-			has_country_flag = focus_EU001_QMV
-			NOT = { 
-				has_global_flag = focus_EU001_QMV_voted
-				has_country_flag = focus_EU001_QMV_yes
-			}
-		}
-		
-		complete_effect = {
-			set_global_flag = focus_EU001_QMV_voted
-			set_global_flag = EU_qualified_majority_voting
-			set_variable = {	
-				var = global.var_EUvoteYes
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUvoteNo
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUvoteTotal
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUpopYes
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUpopNo
-				value = 0
-			}				
-			every_country = {
-				limit = { has_idea = EU_member }
-				country_event = {
-					id = EUvote.1
-				}
-			}
-		}
-	}
-
-	EU_voting_decision_focus01_maj = {
-	
-		icon = GFX_decision_generic_european_union
-	
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = test123
-				AND = {
-					has_country_flag = focus_EU001_maj
-					NOT = { 
-							has_global_flag = focus_EU001_maj_voted
-							has_country_flag = focus_EU001_maj_yes
-					}
-					all_country = {	
-						OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.03 }						
-							}	
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}					
-				}	
-			}
-		}
-		
-		visible = { 
-			has_country_flag = focus_EU001_maj
-			NOT = { 
-				has_global_flag = focus_EU001_maj_voted
-				has_country_flag = focus_EU001_maj_yes
-			}
-		}
-		
-		complete_effect = {
-			set_global_flag = focus_EU001_maj_voted
-			set_global_flag = EU_majority_voting
-			set_variable = {	
-				var = global.var_EUvoteYes
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUvoteNo
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUvoteTotal
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUpopYes
-				value = 0
-			}
-			set_variable = {	
-				var = global.var_EUpopNo
-				value = 0
-			}				
-			every_country = {
-				limit = { has_idea = EU_member }
-				country_event = {
-					id = EUvote.1
-				}
-			}
-		}
-	}
-
-	EU_voting_decision_focus01_result = {
-	
-		icon = GFX_decision_generic_european_union
-	
-		available = {
-			NOT = { has_global_flag = focus_EU001_result }
-			has_global_flag = focus_EU001_voted
-			check_variable = {
-				var = global.var_EUvoteTotal
-				value = global.var_EUmemberstatesTotal
-				compare = equals
-			}
-		}
-		visible = {
-			NOT = { has_global_flag = focus_EU001_result }		
-			has_global_flag = focus_EU001_voted
-			check_variable = {
-				var = global.var_EUvoteTotal
-				value = global.var_EUmemberstatesTotal
-				compare = equals
-			}		
-		}
-		complete_effect = {
-			set_global_flag = focus_EU001_result
-			every_country = {
-				limit = { has_country_flag = focus_EU001 }
-				country_event = {
-					id = EUvote.2
-				}		
-			}
-		}
-		ai_will_do = {
-			factor = 100
-		}
-	}		
-
-	EU_voting_decision_focus01_QMV_result = {
-	
-		icon = GFX_decision_generic_european_union
-	
-		available = {
-			NOT = { has_global_flag = focus_EU001_QMV_result }
-			has_global_flag = focus_EU001_QMV_voted
-			check_variable = {
-				var = global.var_EUvoteTotal
-				value = global.var_EUmemberstatesTotal
-				compare = equals
-			}
-		}
-		visible = {
-			NOT = { has_global_flag = focus_EU001_QMV_result }		
-			has_global_flag = focus_EU001_QMV_voted
-			check_variable = {
-				var = global.var_EUvoteTotal
-				value = global.var_EUmemberstatesTotal
-				compare = equals
-			}		
-		}
-		complete_effect = {
-			set_global_flag = focus_EU001_QMV_result
-			every_country = {
-				limit = { has_country_flag = focus_EU001_QMV }
-				country_event = {
-					id = EUvote.2
-				}		
-			}
-		}
-		ai_will_do = {
-			factor = 100
-		}
-	}
-
-	EU_voting_decision_focus01_maj_result = {
-	
-		icon = GFX_decision_generic_european_union
-	
-		available = {
-			NOT = { has_global_flag = focus_EU001_maj_result }
-			has_global_flag = focus_EU001_maj_voted
-			check_variable = {
-				var = global.var_EUvoteTotal
-				value = global.var_EUmemberstatesTotal
-				compare = equals
-			}
-		}
-		visible = {
-			NOT = { has_global_flag = focus_EU001_maj_result }		
-			has_global_flag = focus_EU001_maj_voted
-			check_variable = {
-				var = global.var_EUvoteTotal
-				value = global.var_EUmemberstatesTotal
-				compare = equals
-			}		
-		}
-		complete_effect = {
-			set_global_flag = focus_EU001_maj_result
-			every_country = {
-				limit = { has_country_flag = focus_EU001_maj }
-				country_event = {
-					id = EUvote.2
-				}		
-			}
-		}
-		ai_will_do = {
-			factor = 100
-		}
-	}
 
 
 
@@ -16665,46 +16162,6 @@ EU_office_category = {
 
 EU_fiscal_category = {
 
-	EU_mission_activation_test = {
-	
-		available = {
-			has_idea = EU_member
-		}
-		
-		visible = { 
-			has_idea = EU_member 
-		} 
-		
-		complete_effect = {   						
-			ROOT = {
-				activate_mission =  troika_reforms
-				add_ideas = national_dept_crisis_EU				
-			}
-		}				
-	}
-
-	EU_mission_trigger_test = {
-	
-		available = {
-			check_variable = {
-				var = ROOT.interest_rate
-				value = 3.5
-				compare = less_than
-			}
-		}
-		
-		visible = { 
-			has_idea = EU_member 
-		} 
-		
-		complete_effect = {   						
-			ROOT = {
-				activate_mission =  troika_reforms
-				add_ideas = national_dept_crisis_EU				
-			}
-		}				
-	}
-
 	eurozone_reforms = {
 		
 		allowed = { always = no }
@@ -16929,11 +16386,60 @@ EU_fiscal_category = {
 
 EU_ECB_category = {
 
-	ECB_Outright_Monetary_Transactions = {
+	ECB_Start_OMT = { ### whatever it takes
+	
+		available = {
+			has_idea = EU_member
+			has_idea = ECB_zero_interest_rate_policy
+			has_idea = ECB_president
+		}
 		
-		cost = 100
-#		days_remove = 10
-#		days_re_enable = 10
+		visible = { 
+			has_idea = EU_member 
+		}
+		
+		fire_only_once = yes # Will not re-enable after being removed
+		
+		complete_effect = {   						
+                    set_variable = {
+                        var = global.OMT_size_limit
+                        value = 400
+                    }
+                    set_variable = {
+                        var = global.OMT_total_value
+                        value = 0
+                    }
+
+		}
+		ai_will_do = {
+			factor = 10
+				modifier = {
+					add = 40
+					any_country = {
+						AND = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate > 4.0 }
+						}			
+					}
+				}	
+				### Euroscepticism
+				modifier = {
+					add = -40
+						any_country = {
+							has_idea = EU_member
+							check_variable = {
+								var = eurosceptic
+								value = 0.6
+								compare = greater_than_or_equals
+							}
+						}
+				}
+		}		
+	}
+
+	ECB_expand_OMT_limit = {
+	
 		available = {
 			has_idea = EU_member
 			has_idea = ECB_president
@@ -16943,43 +16449,172 @@ EU_ECB_category = {
 			has_idea = EU_member 
 		} 
 		
-		complete_effect = {
-#			while_loop_effect = {    
-#                limit = {
-#					all_country = {
-#						OR = {
-#							check_variable = { THIS.interest_rate > 4.0 }
-#							NOT = {
-#								has_idea = EU_member
-#								has_idea = the_euro							
-#							}
-#						}
-#					}
-#				}
-				random_country = {
+		complete_effect = {   						
+                    add_to_variable = {
+                        var = global.OMT_size_limit
+                        value = 200
+                    }
+			every_country = { ### contra OMT
+				if = {
 					limit = {
+						has_idea = EU_member
+						has_idea = the_euro
+						check_variable = { THIS.interest_rate < 4.0 }
+					}
+					country_event = {
+						id = EUevent.16 ### ROOT euroscepticism rise 5% ###
+					}			
+				}
+			}
+			every_country = { ### pro OMT
+				if = {
+					limit = {
+						has_idea = EU_member
+						has_idea = the_euro
+						check_variable = { THIS.interest_rate > 4.0 }
+					}				
+					country_event = {
+						id = EUevent.15 ### ROOT euroscepticism decline -5% ###
+					}
+				}
+			}			
+		}
+		ai_will_do = {
+			factor = 10
+				modifier = {
+					add = 40
+					check_variable = { global.OMT_total_value > 0}
+					any_country = {
+						AND = {
 							has_idea = EU_member
 							has_idea = the_euro
 							check_variable = { THIS.interest_rate > 4.0 }
+						}			
 					}
-                
-                    set_variable = {
-                        var = THIS.OMT_account
-                        value = 0
-                    }        
-                    while_loop_effect = {    
-                        limit = { 
-                            check_variable = { THIS.interest_rate > 4.0 } 
-                        }                        
-                        subtract_from_variable = { THIS.debt = 1.0 }
-                        add_to_variable = { THIS.OMT_account = 1.0 }
+				}	
+				### Euroscepticism
+				modifier = {
+					add = -50
+						any_country = {							
+							has_idea = EU_member							
+							check_variable = {
+								var = eurosceptic
+								value = 0.6
+								compare = greater_than_or_equals
+							}
+						}
+				}
+		}		
+	}
+
+	ECB_reduce_OMT_limit = {
+	
+		available = {
+			has_idea = EU_member
+			has_idea = ECB_president
+			check_variable = { global.OMT_size_limit > 0 }
+		}
+		
+		visible = { 
+			has_idea = EU_member 
+		} 
+		
+		complete_effect = {   						
+                    subtract_from_variable = {
+                        var = global.OMT_size_limit
+                        value = 200
                     }
-                    ingame_calculate_size_modifier = yes
-                    update_military_rate = yes
-                    calculate_interest_rate = yes
-                    calculate_debt_rate = yes
-                }
-			#}
+					if = {
+						limit = {
+							check_variable = { global.OMT_size_limit < 0 }
+						}
+						set_variable = { global.OMT_size_limit = 0 }
+					}
+			every_country = { ### contra OMT
+				if = {
+					limit = {
+						has_idea = EU_member
+						has_idea = the_euro
+						check_variable = { THIS.interest_rate < 4.0 }
+					}
+					country_event = {
+						id = EUevent.15 ### ROOT euroscepticism decline -5% ###
+					}			
+				}
+			}
+			every_country = { ### pro OMT
+				if = {
+					limit = {
+						has_idea = EU_member
+						has_idea = the_euro
+						check_variable = { THIS.interest_rate > 4.0 }
+					}
+					country_event = {
+						id = EUevent.16 ### ROOT euroscepticism rise 5% ###
+					}			
+				}			
+			}
+		}
+	}
+
+	ECB_Outright_Monetary_Transactions = {
+		
+		#cost = 100
+		days_remove = 10
+		available = {
+			has_idea = EU_member
+			has_idea = ECB_president
+			check_variable = { global.OMT_size_limit > 0 }
+		}
+		
+		visible = { 
+			has_idea = EU_member 
+		} 
+		
+		complete_effect = {
+				every_country = {
+					if = {
+						limit = {
+							has_idea = EU_member
+							has_idea = the_euro
+						}					
+						set_variable = {
+							var = THIS.OMT_account
+							value = 0
+						}        
+						while_loop_effect = {    
+							limit = { 
+								check_variable = { THIS.interest_rate > 4.0 }
+								check_variable = { global.OMT_size_limit > global.OMT_total_value }							
+							}
+							if = {
+								limit = { 
+									check_variable = { THIS.interest_rate > 4.0 } 
+								}						
+								subtract_from_variable = { THIS.debt = 0.10 }
+								add_to_variable = { THIS.OMT_account = 0.10 }
+								add_to_variable = { global.OMT_total_value = 0.10 }
+								calculate_interest_rate = yes
+								calculate_debt_rate = yes
+							}
+						}                    
+						ingame_calculate_size_modifier = yes
+						update_military_rate = yes
+						calculate_interest_rate = yes
+						calculate_debt_rate = yes
+					}
+				}
+				every_country = {
+					if = {
+						limit = {
+							has_idea = EU_member
+						}
+					
+						news_event = {
+							id = EU_news.32 
+						}
+					}
+                }		
 		}
 		remove_effect = {
 				every_country = {
@@ -16988,12 +16623,43 @@ EU_ECB_category = {
 							has_idea = EU_member
 							has_idea = the_euro
 						}
-					}
-					country_event = {
-						id = EUevent.18
+					
+						add_to_variable = { 
+							var = THIS.debt
+							value = THIS.OMT_account
+						}
+						clear_variable = THIS.OMT_account
+						clear_variable = global.OMT_total_value
+						ingame_calculate_size_modifier = yes
+						update_military_rate = yes
+						calculate_interest_rate = yes
+						calculate_debt_rate = yes
 					}
 				}
+				every_country = {
+					if = {
+						limit = {
+							has_idea = EU_member
+						}					
+						news_event = {
+							id = EU_news.33 
+						}
+					}
+                }
         }
+		ai_will_do = {
+			factor = 10
+				modifier = {
+					add = 40
+					any_country = {
+						AND = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate > 4.0 }
+						}			
+					}
+				}
+		}
 	}
 
 
