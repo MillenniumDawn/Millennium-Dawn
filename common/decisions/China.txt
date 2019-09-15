@@ -36,10 +36,10 @@ one_china_category = {
 		}
 		
 		custom_cost_trigger = {
-			check_variable = { treasury > 1.25 }
+			check_variable = { treasury > 0.25 }
 		}
 		
-		custom_cost_text = cost_1_5
+		custom_cost_text = cost_0_5
 		
 		available = {
 			custom_trigger_tooltip = {	
@@ -65,8 +65,12 @@ one_china_category = {
 		
 		days_remove = 30
 		
+		days_re_enable = 100
+		
+		highlight_states = { state = 598 }
+		
 		complete_effect = {
-			subtract_from_variable = { treasury = 1.5 }
+			subtract_from_variable = { treasury = 0.5 }
 			log = "[GetDateText]: [This.GetName]: decision anti_DPP_media_campaign executed"
 		}
 		
@@ -117,6 +121,8 @@ one_china_category = {
 		}
 		
 		cost = 100
+		
+		highlight_states = { state = 598 }
 		
 		available = {
 			custom_trigger_tooltip = {	
@@ -179,6 +185,8 @@ one_china_category = {
 		available = {
 		}
 		
+		highlight_states = { state = 598 }
+		
 		complete_effect = {
 			TAI = {
 				remove_ideas = china_travel_ban
@@ -237,6 +245,8 @@ one_china_category = {
 			}
 		}
 		
+		highlight_states = { state = 598 }
+		
 		cost = 300
 		
 		complete_effect = {
@@ -277,6 +287,8 @@ one_china_category = {
 		}
 		
 		fire_only_once = yes
+		
+		highlight_states = { state = 598 }
 		
 		cost = 300
 		
@@ -341,7 +353,7 @@ one_china_category = {
 				remove_state_core = 585
 				remove_state_core = 586
 				remove_state_core = 588
-				remove_state_core = 589
+				remove_state_core = 592
 				remove_state_core = 592
 				remove_state_core = 595
 				remove_state_core = 596
@@ -354,659 +366,287 @@ one_china_category = {
 			log = "[GetDateText]: [This.GetName]: decision declare_independence_taiwan executed"
 		}
 	}	
+}
+
+xinjiang_category = {
 	
-	show_recognised_countries_taiwan = {
-		
-		icon = GFX_decision_generic_nationalism
-		
-		visible = {
-			has_idea = Lacks_International_Recognition
-			original_tag = TAI
+	raid_militant_hideouts = {
+		icon = GFX_decision_generic_prepare_civil_war_new
+				
+		custom_cost_trigger = {
+			command_power > 40
 		}
 		
+		custom_cost_text = command_power_more_than_40
+		
+		highlight_states = { state = 592 }
+		
 		complete_effect = {
-			statehood_show_recognised_countries = yes
+			add_command_power = -40
+			log = "[GetDateText]: [This.GetName]: decision raid_TIP_hideouts executed"		
+		}
+		
+		days_remove = 15
+		days_re_enable = 60
+		
+		remove_effect = {
+			custom_effect_tooltip = CHI_uighur_threat_decrease_10_tt
+			custom_effect_tooltip = CHI_uighur_opinion_decrease_10_tt
+			hidden_effect = {
+				subtract_from_variable = {
+					var = uighur_threat
+					value = 10
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				subtract_from_variable = {
+					var = uighur_opinion
+					value = 10
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
 		}
 	}
 	
-	show_non_recognised_countries_taiwan = {
-		
-		icon = GFX_decision_generic_nationalism
-		
-		visible = {
-			has_idea = Lacks_International_Recognition
-			original_tag = TAI
-		}
-		
-		complete_effect = {
-			statehood_show_non_recognised_countries = yes
-		}
-		
-	}
-	
-	campaign_for_recognition_USA_taiwan = {
-	
-		icon = GFX_decision_usa
+	increase_restrictions_on_the_uighur_language = {
+		icon = eng_propaganda_campaigns
 		
 		visible = {
-			has_idea = Lacks_International_Recognition
-			original_tag = TAI
+			NOT = { has_country_flag = restricted_uighur_language }
 		}
 		
-		available = {
-			USA = {
-				has_opinion = {
-					target = ROOT
-					value > 49
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = USA_recognition_CHI_tt
-				USA = {
-					if = {
-						limit = {
-							CHI = {
-								has_opinion_modifier = declared_independence
-							}
-						}
-						check_variable = { opinion@ROOT > opinion@CHI }					
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = CHI_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = CHI } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = CHI
-						}
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = SOV_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = SOV } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = SOV
-						}
-					}
-				}
-			}
-			has_elections = yes
-		}
+		cost = 200
 		
-		days_remove = 30
-		
-		cost = 300
+		highlight_states = { state = 592 }
 		
 		complete_effect = {
-			set_country_flag = USA_recognition_campaign
-			USA = {	
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = is_trying_to_win_our_favour
+			set_country_flag = restricted_uighur_language
+			custom_effect_tooltip = CHI_uighur_threat_decrease_5_tt
+			custom_effect_tooltip = CHI_uighur_opinion_decrease_5_tt
+			hidden_effect = {
+				subtract_from_variable = {
+					var = uighur_threat
+					value = 5
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				subtract_from_variable = {
+					var = uighur_opinion
+					value = 5
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
 				}
 			}
-			log = "[GetDateText]: [This.GetName]: decision campaign_for_recognition_USA_taiwan executed"
-		}
-		
-	}
-	
-	campaign_for_recognition_ENG_taiwan = {
-	
-		icon = GFX_decision_uk
-		
-		visible = {
-			has_idea = Lacks_International_Recognition
-			original_tag = TAI
-		}
-		
-		available = {
-			ENG = {
-				has_opinion = {
-					target = ROOT
-					value > 49
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = ENG_recognition_CHI_tt
-				ENG = {
-					if = {
-						limit = {
-							CHI = {
-								has_opinion_modifier = declared_independence
-							}
-						}
-						check_variable = { opinion@ROOT > opinion@CHI }					
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = CHI_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = CHI } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = CHI
-						}
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = SOV_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = SOV } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = SOV
-						}
-					}
-				}
-			}
-			has_elections = yes
-		}
-		
-		days_remove = 30
-		
-		cost = 300
-		
-		complete_effect = {
-			set_country_flag = ENG_recognition_campaign
-			ENG = {	
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = is_trying_to_win_our_favour
-				}
-			}
-			log = "[GetDateText]: [This.GetName]: decision campaign_for_recognition_ENG_taiwan executed"
-		}
-	}
-	campaign_for_recognition_FRA_taiwan = {
-	
-		icon = GFX_decision_france
-		
-		visible = {
-			has_idea = Lacks_International_Recognition
-			original_tag = TAI
-		}
-		
-		available = {
-			FRA = {
-				has_opinion = {
-					target = ROOT
-					value > 49
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = FRA_recognition_CHI_tt
-				FRA = {
-					if = {
-						limit = {
-							CHI = {
-								has_opinion_modifier = declared_independence
-							}
-						}
-						check_variable = { opinion@ROOT > opinion@CHI }					
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = CHI_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = CHI } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = CHI
-						}
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = SOV_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = SOV } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = SOV
-						}
-					}
-				}
-			}
-			has_elections = yes
-		}
-		
-		days_remove = 30
-		
-		cost = 300
-		
-		complete_effect = {
-			set_country_flag = FRA_recognition_campaign
-			FRA = {	
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = is_trying_to_win_our_favour
-				}
-			}
-			log = "[GetDateText]: [This.GetName]: decision campaign_for_recognition_FRA_taiwan executed"
+			log = "[GetDateText]: [This.GetName]: decision increase_restrictions_on_the_uighur_language executed"		
 		}
 	}
 	
-	campaign_for_recognition_SOV_taiwan = {
-	
-		icon = GFX_decision_russia
+	reduce_restrictions_on_the_uighur_language = {
+		icon = eng_propaganda_campaigns
 		
 		visible = {
-			has_idea = Lacks_International_Recognition
-			original_tag = TAI
+			has_country_flag = restricted_uighur_language
 		}
 		
-		available = {
-			SOV = {
-				has_opinion = {
-					target = ROOT
-					value > 49
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = SOV_recognition_CHI_tt
-				SOV = {
-					if = {
-						limit = {
-							BRM = {
-								has_opinion_modifier = declared_independence
-							}
-						}
-						check_variable = { opinion@ROOT > opinion@CHI }					
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = USA_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = USA } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = USA
-						}
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = ENG_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = ENG } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = ENG
-						}
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = FRA_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = FRA } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = FRA
-						}
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = GER_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = GER } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = GER
-						}
-					}
-				}
-			}
-		}
+		cost = 200
 		
-		days_remove = 30
-		
-		cost = 300
+		highlight_states = { state = 592 }
 		
 		complete_effect = {
-			set_country_flag = SOV_recognition_campaign
-			SOV = {	
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = is_trying_to_win_our_favour
+			custom_effect_tooltip = CHI_uighur_threat_increase_5_tt
+			custom_effect_tooltip = CHI_uighur_opinion_increase_5_tt
+			hidden_effect = {
+				add_to_variable = {
+					var = uighur_threat
+					value = 5
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				add_to_variable = {
+					var = uighur_opinion
+					value = 5
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
 				}
 			}
-			log = "[GetDateText]: [This.GetName]: decision campaign_for_recognition_SOV_taiwan executed"
+			clr_country_flag = restricted_uighur_language
+			log = "[GetDateText]: [This.GetName]: decision reduce_restrictions_on_the_uighur_language executed"		
 		}
 	}
 	
-	campaign_for_recognition_CHI_taiwan = {
-	
-		icon = GFX_decision_china
-		
-		visible = {
-			has_idea = Lacks_International_Recognition
-			original_tag = TAI
-		}
-		
-		available = {
-			CHI = {
-				has_opinion = {
-					target = ROOT
-					value > 49
-				}
-				NOT = {
-					has_opinion_modifier = declared_independence
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = USA_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = USA } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = USA
-						}
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = JAP_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = JAP } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = JAP
-						}
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = RAJ_influence_below_10_tt
-				OR = {
-					ROOT = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								value = v
-								index = i
-								if = {
-									limit = { var:v = { tag = RAJ } }
-									set_temp_variable = { temp_idx = i }
-									always = yes
-								}
-								else = { always = no }
-							}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx < 0.1 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = RAJ
-						}
-					}
-				}
-			}
-		}
-		
-		days_remove = 30
-		
-		cost = 300
-		
-		complete_effect = {
-			set_country_flag = CHI_recognition_campaign
-			CHI = {	
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = is_trying_to_win_our_favour
-				}
-			}
-			log = "[GetDateText]: [This.GetName]: decision campaign_for_recognition_CHI_taiwan executed"
-		}
-	}
-	
-	become_a_UN_member_state_taiwan = {
-	
-		icon = GFX_decision_generic_UN
-		
-		visible = {
-			has_idea = Lacks_International_Recognition
-			original_tag = TAI
-		}
-		
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = two_thirds_tt
-				check_variable = {
-					var = Granted_Recognition
-					value = 120
-					compare = greater_than
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = security_council_support_tt
-				USA = {
-					has_country_flag = Recognised_@ROOT
-				}
-				ENG = {
-					has_country_flag = Recognised_@ROOT
-				}
-				FRA = {
-					has_country_flag = Recognised_@ROOT
-				}
-				SOV = {
-					has_country_flag = Recognised_@ROOT
-				}
-				CHI = {
-					has_country_flag = Recognised_@ROOT
-				}
-			}
-		}
+	arrest_dissidents = {
+		icon = GFX_decision_oppression
 		
 		cost = 100
 		
+		highlight_states = { state = 592 }
+		
+		fire_only_once = yes
+		
+		days_re_enable = 30
+		
 		complete_effect = {
-			remove_ideas = Lacks_International_Recognition
-			log = "[GetDateText]: [This.GetName]: decision become_a_UN_member_state_taiwan executed"
+			custom_effect_tooltip = CHI_uighur_threat_decrease_2_tt
+			custom_effect_tooltip = CHI_uighur_opinion_decrease_2_tt
+			hidden_effect = {
+				subtract_from_variable = {
+					var = uighur_threat
+					value = 2
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				subtract_from_variable = {
+					var = uighur_opinion
+					value = 2
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: decision arrest_dissidents executed"		
+		}
+	}
+	
+	release_dissidents = {
+		icon = GFX_decision_generic_political_discourse
+		
+		cost = 100
+		
+		highlight_states = { state = 592 }
+		
+		fire_only_once = yes
+		
+		days_re_enable = 30
+		
+		complete_effect = {
+			custom_effect_tooltip = CHI_uighur_threat_increase_2_tt
+			custom_effect_tooltip = CHI_uighur_opinion_increase_2_tt
+			hidden_effect = {
+				add_to_variable = {
+					var = uighur_threat
+					value = 2
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				add_to_variable = {
+					var = uighur_opinion
+					value = 2
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: decision release_dissidents executed"		
+		}
+	}
+	
+	promote_immigration = {
+		icon = GFX_decision_infiltrate_state
+		
+		cost = 50
+		
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision promote_immigration executed"		
 		}
 		
+		days_remove = 30
+		
+		days_re_enable = 60
+		
+		highlight_states = { state = 592 }
+		
+		remove_effect = {
+			random_owned_state = {
+				add_manpower = -1000
+			}
+			592 = {
+				add_manpower = 1000
+			}
+			custom_effect_tooltip = CHI_uighur_threat_decrease_2_tt
+			custom_effect_tooltip = CHI_uighur_opinion_decrease_1_tt
+			hidden_effect = {
+				subtract_from_variable = {
+					var = uighur_threat
+					value = 2
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				subtract_from_variable = {
+					variable = uighur_opinion
+					value = 1
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
+		}
+	}
+	
+	build_mosques = {
+		icon = GFX_decision_generic_construction
+		
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.74 }
+		}
+		
+		custom_cost_text = cost_0_75
+		
+		highlight_states = { state = 592 }
+		
+		complete_effect = {
+			subtract_from_variable = { treasury = 0.75 }
+			log = "[GetDateText]: [This.GetName]: decision build_mosques executed"		
+		}
+		
+		days_remove = 30
+				
+		remove_effect = {
+			custom_effect_tooltip = CHI_uighur_opinion_increase_1_tt
+			hidden_effect = {
+				add_to_variable = {
+					var = uighur_opinion
+					value = 1
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
+		}
 	}
 }
