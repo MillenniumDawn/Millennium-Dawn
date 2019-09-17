@@ -1,0 +1,600 @@
+one_china_category = {
+	
+	show_countries_that_recognize_the_ROC = {
+		
+		icon = GFX_decision_generic_nationalism
+		
+		visible = {
+			OR = {
+				original_tag = TAI
+				original_tag = CHI
+			}
+			NOT = {
+				TAI = {
+					is_puppet = yes
+				}
+				TAI = {
+					has_idea = Lacks_International_Recognition
+				}
+			}
+		}
+		
+		complete_effect = {
+			statehood_show_recognised_ROC = yes
+		}
+	}
+	
+	anti_DPP_media_campaign = {
+		
+		icon = eng_propaganda_campaigns
+		
+		visible = {
+			original_tag = CHI
+			TAI = {
+				is_puppet = no
+			}
+		}
+		
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.25 }
+		}
+		
+		custom_cost_text = cost_0_5
+		
+		available = {
+			custom_trigger_tooltip = {	
+				tooltip = CHI_TAI_influence_higher_10_tt
+				TAI = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.1 }
+				}
+			}
+		}
+		
+		days_remove = 30
+		
+		days_re_enable = 100
+		
+		highlight_states = { state = 598 }
+		
+		complete_effect = {
+			subtract_from_variable = { treasury = 0.5 }
+			log = "[GetDateText]: [This.GetName]: decision anti_DPP_media_campaign executed"
+		}
+		
+		remove_effect = {
+			custom_effect_tooltip = CHI_DPP_tt
+			hidden_effect = {
+				TAI = {
+					add_to_variable = {
+						var = conservatism
+						value = 0.05
+					}
+					subtract_from_variable = {
+						var = liberalism
+						value = 0.05
+					}
+					recalculate_party = yes
+				}
+			}
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 10
+				TAI = {
+					check_variable = {
+						var = liberalism
+						value = 0.55
+						compare = greater_than
+					}
+				}
+			}
+		}
+	}
+	
+	ban_solo_travel_to_taiwan = {
+	
+		icon = GFX_decision_border_war
+		
+		visible = {
+			original_tag = CHI
+			TAI = {
+				is_puppet = no
+			}
+			NOT = {
+				TAI = { has_idea = china_travel_ban }
+			}
+		}
+		
+		cost = 100
+		
+		highlight_states = { state = 598 }
+		
+		available = {
+			custom_trigger_tooltip = {	
+				tooltip = CHI_TAI_influence_higher_10_tt
+				TAI = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.1 }
+				}
+			}
+		}
+		
+		complete_effect = {
+			TAI = {
+				add_ideas = china_travel_ban
+			}
+			log = "[GetDateText]: [This.GetName]: decision ban_solo_travel_to_taiwan executed"
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 10
+				TAI = {
+					check_variable = {
+						var = liberalism
+						value = 0.55
+						compare = greater_than
+					}
+				}
+			}
+		}
+	}
+	
+	rescind_travel_ban = {
+	
+		icon = GFX_decision_border_war
+		
+		visible = {
+			original_tag = CHI
+			TAI = {
+				is_puppet = no
+			}
+			TAI = { has_idea = china_travel_ban }
+		}
+		
+		cost = 100
+		
+		available = {
+		}
+		
+		highlight_states = { state = 598 }
+		
+		complete_effect = {
+			TAI = {
+				remove_ideas = china_travel_ban
+			}
+			log = "[GetDateText]: [This.GetName]: decision rescind_travel_ban executed"
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 10
+				TAI = {
+					check_variable = {
+						var = liberalism
+						value = 0.55
+						compare = less_than_or_equals
+					}
+				}
+			}
+		}
+	}
+	
+	declare_independence_taiwan = {
+	
+		icon = GFX_decision_generic_nationalism
+		
+		allowed = { 
+			original_tag = TAI
+		}
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TAI_DPP_ruling_tt
+				is_in_array = { ruling_party = 2 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = TAI_DPP_75_tt
+				TAI = {
+					check_variable = {
+						var = liberalism
+						value = 0.75
+						compare = greater_than
+					}
+				}
+			}
+		}
+		
+		fire_only_once = yes
+		
+		highlight_states = { state = 598 }
+		
+		cost = 300
+		
+		complete_effect = {
+			add_ideas = Lacks_International_Recognition
+			add_to_array = {
+				global.Unrecognised_States = THIS
+			}
+			set_variable = {
+				var = Granted_Recognition
+				value = 0
+			}
+			CHI = {
+				add_opinion_modifier = {
+					modifier = declared_independence
+					target = ROOT
+				}
+				remove_opinion_modifier = {
+					modifier = one_china_policy
+					target = ROOT
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ROOT
+				}
+			}
+			set_cosmetic_tag = TAI_independent
+			custom_effect_tooltip = TAI_loses_cores_tt
+			hidden_effect = {
+				remove_state_core = 434
+				remove_state_core = 435
+				remove_state_core = 475
+				remove_state_core = 526
+				remove_state_core = 531
+				remove_state_core = 532
+				remove_state_core = 534
+				remove_state_core = 536
+				remove_state_core = 537
+				remove_state_core = 538
+				remove_state_core = 540
+				remove_state_core = 541
+				remove_state_core = 544
+				remove_state_core = 547
+				remove_state_core = 548
+				remove_state_core = 549
+				remove_state_core = 552
+				remove_state_core = 554
+				remove_state_core = 555
+				remove_state_core = 556
+				remove_state_core = 558
+				remove_state_core = 559
+				remove_state_core = 560
+				remove_state_core = 562
+				remove_state_core = 564
+				remove_state_core = 567
+				remove_state_core = 570
+				remove_state_core = 572
+				remove_state_core = 574
+				remove_state_core = 578
+				remove_state_core = 582
+				remove_state_core = 583
+				remove_state_core = 585
+				remove_state_core = 586
+				remove_state_core = 588
+				remove_state_core = 592
+				remove_state_core = 592
+				remove_state_core = 595
+				remove_state_core = 596
+				remove_state_core = 597
+				remove_state_core = 801
+				remove_state_core = 802
+				remove_state_core = 813
+				remove_state_core = 816
+			}
+			log = "[GetDateText]: [This.GetName]: decision declare_independence_taiwan executed"
+		}
+	}	
+}
+
+xinjiang_category = {
+	
+	raid_militant_hideouts = {
+		icon = GFX_decision_generic_prepare_civil_war_new
+				
+		custom_cost_trigger = {
+			command_power > 40
+		}
+		
+		custom_cost_text = command_power_more_than_40
+		
+		highlight_states = { state = 592 }
+		
+		complete_effect = {
+			add_command_power = -40
+			log = "[GetDateText]: [This.GetName]: decision raid_TIP_hideouts executed"		
+		}
+		
+		days_remove = 15
+		days_re_enable = 60
+		
+		remove_effect = {
+			custom_effect_tooltip = CHI_uighur_threat_decrease_10_tt
+			custom_effect_tooltip = CHI_uighur_opinion_decrease_10_tt
+			hidden_effect = {
+				subtract_from_variable = {
+					var = uighur_threat
+					value = 10
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				subtract_from_variable = {
+					var = uighur_opinion
+					value = 10
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
+		}
+	}
+	
+	increase_restrictions_on_the_uighur_language = {
+		icon = eng_propaganda_campaigns
+		
+		visible = {
+			NOT = { has_country_flag = restricted_uighur_language }
+		}
+		
+		cost = 200
+		
+		highlight_states = { state = 592 }
+		
+		complete_effect = {
+			set_country_flag = restricted_uighur_language
+			custom_effect_tooltip = CHI_uighur_threat_decrease_5_tt
+			custom_effect_tooltip = CHI_uighur_opinion_decrease_5_tt
+			hidden_effect = {
+				subtract_from_variable = {
+					var = uighur_threat
+					value = 5
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				subtract_from_variable = {
+					var = uighur_opinion
+					value = 5
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: decision increase_restrictions_on_the_uighur_language executed"		
+		}
+	}
+	
+	reduce_restrictions_on_the_uighur_language = {
+		icon = eng_propaganda_campaigns
+		
+		visible = {
+			has_country_flag = restricted_uighur_language
+		}
+		
+		cost = 200
+		
+		highlight_states = { state = 592 }
+		
+		complete_effect = {
+			custom_effect_tooltip = CHI_uighur_threat_increase_5_tt
+			custom_effect_tooltip = CHI_uighur_opinion_increase_5_tt
+			hidden_effect = {
+				add_to_variable = {
+					var = uighur_threat
+					value = 5
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				add_to_variable = {
+					var = uighur_opinion
+					value = 5
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
+			clr_country_flag = restricted_uighur_language
+			log = "[GetDateText]: [This.GetName]: decision reduce_restrictions_on_the_uighur_language executed"		
+		}
+	}
+	
+	arrest_dissidents = {
+		icon = GFX_decision_oppression
+		
+		cost = 100
+		
+		highlight_states = { state = 592 }
+		
+		fire_only_once = yes
+		
+		days_re_enable = 30
+		
+		complete_effect = {
+			custom_effect_tooltip = CHI_uighur_threat_decrease_2_tt
+			custom_effect_tooltip = CHI_uighur_opinion_decrease_2_tt
+			hidden_effect = {
+				subtract_from_variable = {
+					var = uighur_threat
+					value = 2
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				subtract_from_variable = {
+					var = uighur_opinion
+					value = 2
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: decision arrest_dissidents executed"		
+		}
+	}
+	
+	release_dissidents = {
+		icon = GFX_decision_generic_political_discourse
+		
+		cost = 100
+		
+		highlight_states = { state = 592 }
+		
+		fire_only_once = yes
+		
+		days_re_enable = 30
+		
+		complete_effect = {
+			custom_effect_tooltip = CHI_uighur_threat_increase_2_tt
+			custom_effect_tooltip = CHI_uighur_opinion_increase_2_tt
+			hidden_effect = {
+				add_to_variable = {
+					var = uighur_threat
+					value = 2
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				add_to_variable = {
+					var = uighur_opinion
+					value = 2
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: decision release_dissidents executed"		
+		}
+	}
+	
+	promote_immigration = {
+		icon = GFX_decision_infiltrate_state
+		
+		cost = 50
+		
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision promote_immigration executed"		
+		}
+		
+		days_remove = 30
+		
+		days_re_enable = 60
+		
+		highlight_states = { state = 592 }
+		
+		remove_effect = {
+			random_owned_state = {
+				add_manpower = -1000
+			}
+			592 = {
+				add_manpower = 1000
+			}
+			custom_effect_tooltip = CHI_uighur_threat_decrease_2_tt
+			custom_effect_tooltip = CHI_uighur_opinion_decrease_1_tt
+			hidden_effect = {
+				subtract_from_variable = {
+					var = uighur_threat
+					value = 2
+				}
+				clamp_variable = {
+					var = uighur_threat
+					min = 0
+					max = 100
+				}
+				subtract_from_variable = {
+					variable = uighur_opinion
+					value = 1
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
+		}
+	}
+	
+	build_mosques = {
+		icon = GFX_decision_generic_construction
+		
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.74 }
+		}
+		
+		custom_cost_text = cost_0_75
+		
+		highlight_states = { state = 592 }
+		
+		complete_effect = {
+			subtract_from_variable = { treasury = 0.75 }
+			log = "[GetDateText]: [This.GetName]: decision build_mosques executed"		
+		}
+		
+		days_remove = 30
+				
+		remove_effect = {
+			custom_effect_tooltip = CHI_uighur_opinion_increase_1_tt
+			hidden_effect = {
+				add_to_variable = {
+					var = uighur_opinion
+					value = 1
+				}
+				clamp_variable = {
+					var = uighur_opinion
+					min = 0
+					max = 100
+				}
+			}
+		}
+	}
+}
