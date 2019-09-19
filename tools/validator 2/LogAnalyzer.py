@@ -9,7 +9,11 @@ class Logs:
         self.highPriority = []
         self.mediumPriority = []
         self.lowPriority = []
-        self.logTypes = {"pdx_entity": self.PdxEntity}
+        self.logTypes = {"map.cpp": self.Map, "technologytemplate.cpp": self.TechnologyTemplate, "pdx_entity.cpp": self.PdxEntity,
+                         "effect.cpp": self.Effect, "effectimplementation.cpp": self.EffectImplementation, "containerwindow.cpp": self.ContainerWindow,
+                         "gamestate.cpp": self.GameState, "graphics.cpp": self.Graphics, "effectbase.cpp": self.EffectBase,
+                         "session.cpp": self.Session, "gfxairplanes.cpp": self.GfxAirplanes,
+                         "triggerimplementation.cpp": self.TriggerImplementation }
         self.AnalyzeLogs()
 
         print("done")
@@ -22,50 +26,58 @@ class Logs:
             with open(file, 'r', encoding='utf-8', errors='ignore') as file:
                 content = file.readlines()
                 for line in content:
-                    ignore = False
-                    for logType in self.typeToIgnore:
-                        if logType in line:
-                            ignore = True
-                    if ignore == False:
-                        for logType in self.logTypes:
+                    if line.startswith('['):
+                        ignore = False
+                        for logType in self.typeToIgnore:
                             if logType in line:
-                                functionToCall = self.logTypes[logType]
-                                functionToCall()
-                        input()
+                                ignore = True
+                        if ignore == False:
+                            found = False
+                            for logType in self.logTypes:
+                                if logType in line:
+                                    functionToCall = self.logTypes[logType]
+                                    functionToCall(line)
+                                    found = True
+                                    break
+                            if found == False:
+                                print("Error - Please send this line to the developer: {0}".format(line))
+                    else:
+                        print("need to append last log zzzz")
+                input()
 
-    def Map(self):
-        print()
+    def Map(self, line):
+        print("MAP")
 
-    def TechnologyTemplate(self):
-        print()
+    def TechnologyTemplate(self, line):
+        print("TECH TEMPLATE")
 
-    def PdxEntity(self):
+    def PdxEntity(self, line):
         print("PDX ENTITY")
 
-    def Effect(self):
-        print()
+    def Effect(self, line):
+        print("EFFECT")
 
-    def EffectImplementation(self):
-        print()
+    def EffectImplementation(self, line):
+        print("EFFECT IMPLEMENTATION")
 
-    def ContainerWindow(self):
-        print()
+    def ContainerWindow(self, line):
+        print("CONTAINER WINDOW")
 
-    def GameState(self):
-        print()
+    def GameState(self, line):
+        print("GAME STATE")
 
-    def Graphics(self):
-        print()
+    def Graphics(self, line):
+        print("GRAPHICS")
 
-    def EffectBase(self):
-        print()
+    def EffectBase(self, line):
+        print("EFFECT BASE")
 
-    def Session(self):
-        print()
+    def Session(self, line):
+        print("SESSION")
 
-    def GfxAirplanes(self):
-        print()
+    def GfxAirplanes(self, line):
+        print("GFX Airplanes")
 
-    def TriggerImplementation(self):
-        print()
+    def TriggerImplementation(self, line):
+        print("TRIGGER IMPLEMENTATION")
 
