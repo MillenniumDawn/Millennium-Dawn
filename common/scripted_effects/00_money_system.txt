@@ -297,7 +297,7 @@ calculate_tax_gain = {
 calculate_interest_rate = {
 	if = {
 		limit = { is_ai = yes }
-		calculate_interest_rate_ai
+		calculate_interest_rate_ai = yes
 	}
 	else = {
 		calculate_interest_rate_player = yes
@@ -554,7 +554,7 @@ calculate_debt_rate = {
 update_military_rate = {
 	if = {
 		limit = { is_ai = yes }
-		update_military_rate_ai
+		update_military_rate_ai = yes
 	}
 	else = {
 		update_military_rate_player = yes
@@ -1237,7 +1237,6 @@ update_bureaucracy_rate_ai = {
 	}
 	
 }
-
 update_bureaucracy_rate_player = {
 	
 	subtract_from_variable = { var = expense_gain value = bureaucracy_gain }
@@ -1650,11 +1649,6 @@ update_education_rate_player = {
 		}
 		
 	}
-	for_each_loop = {
-		array = temp_education_spend
-		index = i
-		multiply_temp_variable = { var = temp_education_spend^i value = 100 }
-	}
 	
 	multiply_temp_variable = { var = temp_education_spend^0 value = 0.02 }
 	multiply_temp_variable = { var = temp_education_spend^1 value = 0.04 }
@@ -1681,14 +1675,14 @@ update_education_rate_player = {
 			multiply_temp_variable = { temp_education_spend^i = 1.25 }
 		}
 	}
+	
 	for_each_loop = {
-		array = temp_education_spend
+		array = temp_security_spend
+		value = v
 		index = i
+		multiply_temp_variable = { temp_education_spend^i = 100 }
+		
 		round_temp_variable = temp_education_spend^i
-	}
-	for_each_loop = {
-		array = temp_education_spend
-		index = i
 		divide_temp_variable = { temp_education_spend^i = 100 }
 	}
 	
@@ -1836,11 +1830,6 @@ update_health_rate_player = {
 		}
 		
 	}
-	for_each_loop = {
-		array = temp_defence_spend
-		index = i
-		multiply_temp_variable = { var = temp_health_spend^i value = 100 }
-	}
 	
 	multiply_temp_variable = { var = temp_health_spend^0 value = 0.01 }
 	multiply_temp_variable = { var = temp_health_spend^1 value = 0.02 }
@@ -1850,13 +1839,12 @@ update_health_rate_player = {
 	multiply_temp_variable = { var = temp_health_spend^5 value = 0.1 }
 	
 	for_each_loop = {
-		array = temp_health_spend
+		array = temp_security_spend
+		value = v
 		index = i
+		multiply_temp_variable = { temp_health_spend^i = 100 }
+		
 		round_temp_variable = temp_health_spend^i
-	}
-	for_each_loop = {
-		array = temp_health_spend
-		index = i
 		divide_temp_variable = { temp_health_spend^i = 100 }
 	}
 	
@@ -2008,11 +1996,6 @@ update_social_rate_player = {
 		}
 		
 	}
-	for_each_loop = {
-		array = temp_defence_spend
-		index = i
-		multiply_temp_variable = { var = temp_social_spend^i value = 100 }
-	}
 	
 	multiply_temp_variable = { var = temp_social_spend^0 value = 0.02 }
 	multiply_temp_variable = { var = temp_social_spend^1 value = 0.045 }
@@ -2022,13 +2005,12 @@ update_social_rate_player = {
 	multiply_temp_variable = { var = temp_social_spend^5 value = 0.165 }
 	
 	for_each_loop = {
-		array = temp_social_spend
+		array = temp_security_spend
+		value = v
 		index = i
+		multiply_temp_variable = { temp_social_spend^i = 100 }
+		
 		round_temp_variable = temp_social_spend^i
-	}
-	for_each_loop = {
-		array = temp_social_spend
-		index = i
 		divide_temp_variable = { temp_social_spend^i = 100 }
 	}
 	
@@ -2182,32 +2164,7 @@ init_expenses = {
 	update_health_rate = yes
 	
 	#Social
-	set_variable = { var = welfare_gain value = size_modifier }
-	if = {
-		limit = { has_idea = social_01  }
-		multiply_variable = { var = welfare_gain value = 0.02 }
-	}
-	else_if = {
-		limit = { has_idea = social_02 }
-		multiply_variable = { var = welfare_gain value = 0.045 }
-	}
-	else_if = {
-		limit = { has_idea = social_03 }
-		multiply_variable = { var = welfare_gain value = 0.07 }
-	}
-	else_if = {
-		limit = { has_idea = social_04 }
-		multiply_variable = { var = welfare_gain value = 0.095 }
-	}
-	else_if = {
-		limit = { has_idea = social_05 }
-		multiply_variable = { var = welfare_gain value = 0.13 }
-	}
-	else_if = {
-		limit = { has_idea = social_06 }
-		multiply_variable = { var = welfare_gain value = 0.165 }
-	}
-	add_to_variable = { var = expense_gain value = welfare_gain }
-	subtract_from_variable = { var = treasury_rate value = welfare_gain }
+	update_social_rate = yes
+	
 	update_display_expense = yes
 }
