@@ -20,19 +20,17 @@ focus_tree = {
 		
 		will_lead_to_war_with = CHE
 		
-		prerequisite = { }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		available = { 
+			has_war_with = CHE 
+		}
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
+		complete_tooltip = { 
+			add_war_support = 0.05
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attack_chechnya"
 			add_war_support = 0.05
@@ -53,14 +51,9 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_attack_chechnya }
-		mutually_exclusive = { }
 		available = {
 			NOT = { has_war_with = CHE }
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -99,11 +92,6 @@ focus_tree = {
 				}
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
@@ -111,35 +99,58 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_putin"
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 6 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-				meta_effect = {
-				text = {
-					set_country_flag = [META_SET_RULING_PARTY]
+			if = {
+				limit = { NOT = { in_in_array = { ruling_party = 6 } } 
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 6 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 				}
-				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				set_leader = yes
+				}
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = yes
+				}
+				add_popularity = {
+					ideology = communism
+					popularity = 0.05
+				}
+				add_to_variable = { party_pop_array^6 = 0.075 }
+				recalculate_party = yes
 			}
-			set_leader = yes
+			else_if = {
+				limit = { in_in_array = { ruling_party = 6 }
+				add_popularity = {
+					ideology = communism
+					popularity = 0.05
+				}
+				add_to_variable = { party_pop_array^6 = 0.075 }
+				recalculate_party = yes
 			}
-			set_politics = {
-				ruling_party = communism
-				elections_allowed = yes
-			}
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}
-			add_to_variable = { party_pop_array^6 = 0.075 }
-			recalculate_party = yes
 		}
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				is_historical_focus_on = yes 
+				add = 25 
+			}
+			modifier = { 
+				has_game_rule = {
+					rule = RUS_AI_BEHAVIOR
+					option = PUTIN
+				}
+				add = 50 
+			}
 		}
 	}
 	
@@ -165,10 +176,6 @@ focus_tree = {
 				}
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -177,35 +184,54 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zhirinovsky"
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 20 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-				meta_effect = {
-				text = {
-					set_country_flag = [META_SET_RULING_PARTY]
+			if = { 
+				limit = { NOT = { is_in_array = { ruling_party = 20 }
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 20 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 				}
-				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				set_leader = yes
+				}
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = yes
+				}
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.075
+				}
+				add_to_variable = { party_pop_array^20 = 0.075 }
+				recalculate_party = yes
 			}
-			set_leader = yes
+			else_if = {
+				limit = { is_in_array = { ruling_party = 20 }
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.075
+				}
+				add_to_variable = { party_pop_array^20 = 0.075 }
+				recalculate_party = yes
 			}
-			set_politics = {
-				ruling_party = nationalist
-				elections_allowed = yes
-			}
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.15
-			}
-			add_to_variable = { party_pop_array^20 = 0.15 }
-			recalculate_party = yes
 		}
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				has_game_rule = { 
+					rule = RUS_AI_BEHAVIOR
+					option = RISE_OF_RUSSIA
+				}
+				add = 50 
+			}
 		}
 	}
 	
@@ -231,10 +257,6 @@ focus_tree = {
 				}
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -243,35 +265,54 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zyuganov"
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 4 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-				meta_effect = {
-				text = {
-					set_country_flag = [META_SET_RULING_PARTY]
+			if = {
+				limit = { NOT = { in_in_array = { ruling_party = 4 }
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 4 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 				}
-				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				set_leader = yes
+				}
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = yes
+				}
+				add_popularity = {
+					ideology = communism
+					popularity = 0.05
+				}
+				add_to_variable = { party_pop_array^4 = 0.15 }
+				recalculate_party = yes
 			}
-			set_leader = yes
+			else_if = { 
+				limit = { is_in_array = { ruling_party = 4 }
+				add_popularity = {
+					ideology = communism
+					popularity = 0.05
+				}
+				add_to_variable = { party_pop_array^4 = 0.15 }
+				recalculate_party = yes
 			}
-			set_politics = {
-				ruling_party = communism
-				elections_allowed = yes
-			}
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}
-			add_to_variable = { party_pop_array^4 = 0.15 }
-			recalculate_party = yes
 		}
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				has_game_rule = {
+					rule = RUS_AI_BEHAVIOR
+					option = THE_RED_MENACE
+				}
+				add = 50
+			}
 		}
 	}
 	
@@ -297,10 +338,6 @@ focus_tree = {
 				}
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -309,35 +346,54 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_yavlinsky"
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 2 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-				meta_effect = {
-				text = {
-					set_country_flag = [META_SET_RULING_PARTY]
+			if = {
+				limit = { NOT = { is_in_array = { ruling_party = 2 } } }
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 2 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 				}
-				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				set_leader = yes
+				}
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.15
+				}
+				add_to_variable = { party_pop_array^2 = 0.15 }
+				recalculate_party = yes
 			}
-			set_leader = yes
+			else_if = {
+				limit = { is_in_array = { ruling_party = 2 } } 
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.15
+				}
+				add_to_variable = { party_pop_array^2 = 0.15 }
+				recalculate_party = yes
 			}
-			set_politics = {
-				ruling_party = democratic
-				elections_allowed = yes
-			}
-			add_popularity = {
-				ideology = democratic
-				popularity = 0.15
-			}
-			add_to_variable = { party_pop_array^2 = 0.15 }
-			recalculate_party = yes
 		}
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				has_game_rule = {
+					rule = RUS_AI_BEHAVIOR
+					option = PEACEFUL_REFORM
+				}
+				add = 50
+			}
 		}
 	}
 	
