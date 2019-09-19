@@ -2,7 +2,7 @@
 import sys
 import time
 from ModAnalyzer import Mod
-
+from LogAnalyzer import Logs
 
 startTime = time.time()
 
@@ -14,7 +14,8 @@ __version__ = 1.0
 
 def main():
 
-    thisMod = Mod(__file__)
+    logs = Logs(__file__)
+    #thisMod = Mod(__file__)
 
     print('The script took {0} second!'.format(time.time() - startTime))
 
