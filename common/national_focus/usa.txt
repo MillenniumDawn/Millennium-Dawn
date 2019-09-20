@@ -66,10 +66,10 @@ focus_tree = {
 		mutually_exclusive = { }
 		
 		available = {
-			#OR = {
-			#	NOT = { has_government = communism }
-			#	has_war = yes
-			#}
+			custom_trigger_tooltip = { 
+				NOT = { is_in_array = { ruling_party = 4 } }
+				tooltip = USA_communist_is_not_in_power_TT
+			}
 		}
 		
 		bypass = { }
@@ -146,7 +146,12 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			custom_trigger_tooltip = { 
+				NOT = { is_in_array = { ruling_party = 4 } }
+				tooltip = USA_communist_is_not_in_power_TT
+			}
+		}
 		
 		bypass = {
 			has_tech = infantry_weapons
@@ -514,7 +519,14 @@ focus_tree = {
 		mutually_exclusive = { }
 		
 		available = {
-			has_defensive_war = yes
+			OR = {
+				has_defensive_war = yes
+				custom_trigger_tooltip = { 
+					is_in_array = { ruling_party = 20 }
+					tooltip = USA_right_wing_populist_is_in_power_TT
+				}
+				has_war_support > 0.55
+			}
 		}
 		
 		bypass = { }
@@ -4040,26 +4052,29 @@ focus_tree = {
 		
 		available = {
 			has_government = democratic
-			has_elections = yes
+			has_political_power > 100 
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 2 }
+				tooltip = USA_democrats_in_power_TT
+			}
 		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_pro_democratic_gerrymandering"
-			add_to_variable = {
-				var = liberalism
-				value = 0.025
-			}
+			add_to_variable = { party_pop_array^2 = 0.05 } #Liberalism
 			recalculate_party = yes
-			add_political_power = -25
-			
-			custom_effect_tooltip = pro_democratic_gerrymandering_tt
+			add_political_power = -150
+			custom_effect_tooltip = USA_gains_liberalism_5_TT
 		}
 		
 		ai_will_do = {
 			factor = 10
-			
+			modifier = {
+				add = 5
+				check_variable = { party_pop_array^2 > 0.40 }
+			}
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
@@ -4094,7 +4109,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_balanced_approach"
-			add_political_power = 50
+			add_political_power = 100
 			add_stability = 0.05
 		}
 		
@@ -4126,20 +4141,21 @@ focus_tree = {
 		
 		available = {
 			has_government = democratic
+			has_political_power > 100
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 1 }
+				tooltip = USA_republicans_in_power_TT
+			}
 		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_pro_republican_gerrymandering"
-			add_to_variable = {
-				var = conservatism
-				value = 0.025
-			}
+			add_to_variable = { party_pop_array^1 = 0.05 }
 			recalculate_party = yes
-			
-			add_political_power = -25
-			custom_effect_tooltip = pro_republican_gerrymandering_tt
+			add_political_power = -150
+			custom_effect_tooltip = USA_gains_conservatism_5_TT
 		}
 		
 		ai_will_do = {
