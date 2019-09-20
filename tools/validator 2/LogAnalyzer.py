@@ -1,4 +1,4 @@
-import os
+import os, re
 
 class Logs:
     def __init__(self, logFolder):
@@ -13,11 +13,10 @@ class Logs:
                          "effect.cpp": self.Effect, "effectimplementation.cpp": self.EffectImplementation, "containerwindow.cpp": self.ContainerWindow,
                          "gamestate.cpp": self.GameState, "graphics.cpp": self.Graphics, "effectbase.cpp": self.EffectBase,
                          "gfxairplanes.cpp": self.GfxAirplanes, "triggerimplementation.cpp": self.TriggerImplementation,
-                         "texturehandler.cpp":self.TextureHandler}
+                         "texturehandler.cpp":self.TextureHandler, "pdx_audio.cpp":self.PdxAudtio}
         self.AnalyzeLogs()
 
         print("done")
-        input()
 
     def AnalyzeLogs(self):
         files = os.listdir(self.scriptDir)
@@ -40,16 +39,24 @@ class Logs:
                                             line = line.rstrip() + '' + content[y]
                                         else:
                                             break
-                                    functionToCall = self.logTypes[logType]
-                                    functionToCall(line)
-                                    found = True
-                                    break
+
+                                    hasDateAndTime = re.search(r'\[[0-9]+\:[0-9]+\:[0-9]+\](.*)', line,
+                                                           re.M | re.I)  # If no space before or after brace
+                                    if hasDateAndTime:
+                                        functionToCall = self.logTypes[logType]
+                                        functionToCall(hasDateAndTime.group(1))
+                                        found = True
+                                        break
+                                    else:
+                                        print(
+                                            "Error: Couldn't remove date, Please send this line to the developer: {0}".format(
+                                                line))
+                                        break
                             if found == False:
                                 print("Error: Couldn't catagorize this line, Please send this line to the developer: {0}".format(line))
                     #else:
                     #    print("need to append last log zzzz")
                      #   print(line)
-                input()
 
     def Map(self, line):
         self.highPriority.append(line)
@@ -90,5 +97,35 @@ class Logs:
     def TextureHandler(self, line):
         self.highPriority.append(line)
 
+    def PdxAudtio(self, line):
+        self.lowPriority.append(line)
+
     def CompareLogs(self, newHigh, newMediun, newLow):
-        print()
+        diffInHighLogs = []
+        diffInMediunLogs = []
+        diffInLowLogs = []
+
+        for newLog in newHigh:
+            if newLog not in self.highPriority:
+                diffInHighLogs.append(newLog)
+        for newLog in newMediun:
+            if newLog not in self.mediumPriority:
+                diffInMediunLogs.append(newLog)
+        for newLog in newLow:
+            if newLog not in self.lowPriority:
+                diffInLowLogs.append(newLog)
+
+        print('Old Logs High: {0} - Medium: {1} - Low: {2}'.format(len(self.highPriority), len(self.mediumPriority), len(self.lowPriority)))
+        print('New Logs High: {0} - Medium: {1} - Low: {2}'.format(len(newHigh), len(newMediun), len(newLow)))
+        print('Difference High: {0} - Medium: {1} - Low: {2}'.format(len(self.highPriority) - len(newHigh),
+                                                                       len(self.mediumPriority) - len(newMediun),
+                                                                       len(self.lowPriority) - len(newLow)))
+        print("\nHigh Priority:")
+        for error in diffInHighLogs:
+            print(error)
+        print("\nMedium Priority:")
+        for error in diffInMediunLogs:
+            print(error)
+        print("\nLow Priority:")
+        for error in diffInLowLogs:
+            print(error)

@@ -14,7 +14,11 @@ __version__ = 1.0
 
 def main():
 
-    logs = Logs(__file__)
+    oldLogs = Logs('C:/Users/Boss/Documents/GitHub/Millennium_Dawn/tools/validator 2/new/')
+    newLogs = Logs('C:/Users/Boss/Documents/GitHub/Millennium_Dawn/tools/validator 2/old/')
+
+    oldLogs.CompareLogs(newLogs.highPriority, newLogs.mediumPriority, newLogs.lowPriority)
+
     #thisMod = Mod(__file__)
 
     print('The script took {0} second!'.format(time.time() - startTime))
