@@ -44,16 +44,16 @@ class Logs:
                                                            re.M | re.I)  # If no space before or after brace
                                     if hasDateAndTime:
                                         functionToCall = self.logTypes[logType]
-                                        functionToCall(hasDateAndTime.group(1))
+                                        functionToCall(str(os.path.basename(file.name) + ' - ' + hasDateAndTime.group(1)))
                                         found = True
                                         break
                                     else:
                                         print(
-                                            "Error: Couldn't remove date, Please send this line to the developer: {0}".format(
-                                                line))
+                                            "Error: Couldn't remove date, Please send this line to the developer: {0} - {1}".format(
+                                                os.path.basename(file.name), line))
                                         break
                             if found == False:
-                                print("Error: Couldn't catagorize this line, Please send this line to the developer: {0}".format(line))
+                                print("Error: Couldn't catagorize this line, Please send this line to the developer: {0} - {1}".format(os.path.basename(file.name), line))
                     #else:
                     #    print("need to append last log zzzz")
                      #   print(line)
@@ -106,20 +106,16 @@ class Logs:
         diffInLowLogs = []
 
         for newLog in newHigh:
-            if newLog not in self.highPriority:
+            if newLog not in self.highPriority and newLog not in diffInHighLogs:
                 diffInHighLogs.append(newLog)
         for newLog in newMediun:
-            if newLog not in self.mediumPriority:
+            if newLog not in self.mediumPriority and newLog not in diffInMediunLogs:
                 diffInMediunLogs.append(newLog)
         for newLog in newLow:
-            if newLog not in self.lowPriority:
+            if newLog not in self.lowPriority and newLog not in diffInLowLogs:
                 diffInLowLogs.append(newLog)
 
-        print('Old Logs High: {0} - Medium: {1} - Low: {2}'.format(len(self.highPriority), len(self.mediumPriority), len(self.lowPriority)))
-        print('New Logs High: {0} - Medium: {1} - Low: {2}'.format(len(newHigh), len(newMediun), len(newLow)))
-        print('Difference High: {0} - Medium: {1} - Low: {2}'.format(len(self.highPriority) - len(newHigh),
-                                                                       len(self.mediumPriority) - len(newMediun),
-                                                                       len(self.lowPriority) - len(newLow)))
+        print('Difference High: {0} - Medium: {1} - Low: {2}'.format(len(diffInHighLogs), len(diffInMediunLogs), len(diffInLowLogs)))
         print("\nHigh Priority:")
         for error in diffInHighLogs:
             print(error)

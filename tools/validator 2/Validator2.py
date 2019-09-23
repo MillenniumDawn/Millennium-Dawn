@@ -14,8 +14,11 @@ __version__ = 1.0
 
 def main():
 
-    oldLogs = Logs('C:/Users/Boss/Documents/GitHub/Millennium_Dawn/tools/validator 2/new/')
-    newLogs = Logs('C:/Users/Boss/Documents/GitHub/Millennium_Dawn/tools/validator 2/old/')
+    #oldLogs = Logs('C:/Users/Boss/Documents/GitHub/Millennium_Dawn/tools/validator 2/Old Logs/')
+    #newLogs = Logs('C:/Users/Boss/Documents/GitHub/Millennium_Dawn/tools/validator 2/New logs/')
+
+    oldLogs = Logs('C:/Users/Michael/Documents/Paradox Interactive/Hearts of Iron IV/mod/Millennium_Dawn/tools/validator 2/Old logs/')
+    newLogs = Logs('C:/Users/Michael/Documents/Paradox Interactive/Hearts of Iron IV/mod/Millennium_Dawn/tools/validator 2/New Logs/')
 
     oldLogs.CompareLogs(newLogs.highPriority, newLogs.mediumPriority, newLogs.lowPriority)
 
