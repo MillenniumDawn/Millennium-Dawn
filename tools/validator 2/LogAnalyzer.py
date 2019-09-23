@@ -5,7 +5,7 @@ class Logs:
         self.scriptDir = os.path.dirname(logFolder)
         self.rootDir = os.path.dirname(os.path.dirname(self.scriptDir))
 
-        self.typeToIgnore = ['lexer.cpp', 'convoys.cpp', 'session.cpp', 'gameidler.cpp']
+        self.typeToIgnore = ['lexer.cpp', 'convoys.cpp', 'session.cpp', 'gameidler.cpp', "gameitemdatabase.h", "eventmanager.cpp"]
         self.highPriority = []
         self.mediumPriority = []
         self.lowPriority = []
@@ -13,10 +13,10 @@ class Logs:
                          "effect.cpp": self.Effect, "effectimplementation.cpp": self.EffectImplementation, "containerwindow.cpp": self.ContainerWindow,
                          "gamestate.cpp": self.GameState, "graphics.cpp": self.Graphics, "effectbase.cpp": self.EffectBase,
                          "gfxairplanes.cpp": self.GfxAirplanes, "triggerimplementation.cpp": self.TriggerImplementation,
-                         "texturehandler.cpp":self.TextureHandler, "pdx_audio.cpp":self.PdxAudtio}
+                         "texturehandler.cpp":self.TextureHandler, "pdx_audio.cpp":self.PdxAudtio,
+                         "equipmentvariant.cpp":self.EquipmentVariant, "spritetype.cpp":self.SpriteType,
+                         "nationalfocus.cpp":self.NationalFocus}
         self.AnalyzeLogs()
-
-        print("done")
 
     def AnalyzeLogs(self):
         files = os.listdir(self.scriptDir)
@@ -99,6 +99,15 @@ class Logs:
 
     def PdxAudtio(self, line):
         self.lowPriority.append(line)
+
+    def EquipmentVariant(self, line):
+        self.highPriority.append(line)
+
+    def SpriteType(self, line):
+        self.highPriority.append(line)
+
+    def NationalFocus(self, line):
+        self.highPriority.append(line)
 
     def CompareLogs(self, newHigh, newMediun, newLow):
         diffInHighLogs = []
