@@ -485,133 +485,6 @@ one_china_category = {
 			}	
 		}
 	}
-	
-	rally_support_taiwan = {
-	
-		icon = GFX_decision_generic_civil_support
-		
-		visible = {
-			original_tag = TAI
-			CHI = { has_completed_focus = CHI_The_Fifth_Column }
-		}
-		
-		cost = 50
-		
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision rally_support_taiwan executed"
-		}
-		
-		days_remove = 3
-		
-		remove_effect = {
-			custom_effect_tooltip = TAI_decrease_coup_support_tt
-			add_to_variable = {
-				var = TAI_preparations
-				value = 1
-			}
-		}
-		
-		ai_will_do = {
-			factor = 100
-		}
-	}
-	
-	rally_support_military_taiwan = {
-	
-		icon = GFX_decision_generic_army_support_new
-		
-		visible = {
-			original_tag = TAI
-			CHI = { has_completed_focus = CHI_The_Fifth_Column }
-		}
-		
-		custom_cost_trigger = {
-			command_power > 49
-		}
-		
-		custom_cost_text = command_power_more_than_50
-		
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision rally_support_taiwan executed"
-		}
-		
-		days_remove = 3
-		
-		remove_effect = {
-			add_command_power = -50
-			custom_effect_tooltip = TAI_decrease_coup_support_tt
-			add_to_variable = {
-				var = TAI_preparations
-				value = 1
-			}
-		}
-		
-		ai_will_do = {
-			factor = 100
-		}
-	}
-	
-	
-	prevent_coup_taiwan = {
-	
-		allowed = { original_tag = TAI }
-		
-		icon = GFX_decision_generic_prepare_civil_war
-		
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = TAI_relative_support_tt
-				check_variable = {
-					TAI_preparations > CHI_preparations
-				}
-			}
-		}
-		
-		activation = { CHI = { has_completed_focus = CHI_The_Fifth_Column } }
-		
-		is_good = no
-		
-		days_mission_timeout = 14
-		
-		timeout_effect = {
-			set_politics = {
-				ruling_party = communism
-				elections_allowed = no
-			}
-			hidden_effect = {
-				set_popularities = {
-					democratic = 59.0
-					communism = 37.0
-					fascism = 0.0
-					neutrality = 4.0
-					nationalist = 0.0
-				}
-				set_variable = { party_pop_array^1 = 0.320 } #conservatism
-				set_variable = { party_pop_array^2 = 0.270 } #liberalism
-				set_variable = { party_pop_array^7 = 0.370 } #Autocracy
-				set_variable = { party_pop_array^14 = 0.03 } #Neutral_conservatism
-				set_variable = { party_pop_array^18 = 0.01 } #neutral_Social
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 7 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-				recalculate_party = yes
-			}
-			every_country = {
-				news_event = { id = taiwan.13 }
-			}
-			set_country_flag = TAI_coup_success
-		}
-		
-		complete_effect = {
-			add_political_power = 100
-			every_country = {
-				news_event = { id = taiwan.14 }
-			}
-		}
-	}
 }
 
 xinjiang_category = {
@@ -892,6 +765,236 @@ xinjiang_category = {
 					min = 0
 					max = 100
 				}
+			}
+		}
+	}
+}
+
+taiwan_coup_category = {
+	rally_support_taiwan = {
+	
+		icon = GFX_decision_generic_civil_support
+		
+		allowed = {
+			original_tag = TAI
+		}
+		
+		cost = 50
+		
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision rally_support_taiwan executed"
+		}
+		
+		days_remove = 3
+		
+		remove_effect = {
+			custom_effect_tooltip = TAI_decrease_coup_support_tt
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							is_in_array = { array = ruling_party value = 1 }
+							check_variable = {
+								var = party_pop_array^2
+								value = 0.5
+								compare = greater_than
+							}
+						}
+						AND = {
+							is_in_array = { array = ruling_party value = 2 }
+							check_variable = {
+								var = party_pop_array^2
+								value = 0.5
+								compare = greater_than
+							}
+						}
+						AND = {
+							is_in_array = { array = ruling_party value = 14 }
+							check_variable = {
+								var = party_pop_array^14
+								value = 0.5
+								compare = greater_than
+							}
+						}
+						AND = {
+							is_in_array = { array = ruling_party value = 18 }
+							check_variable = {
+								var = party_pop_array^19
+								value = 0.5
+								compare = greater_than
+							}
+						}
+					}
+				}
+				add_to_variable = {
+					var = TAI_preparations
+					value = 2
+				}
+			}
+			else_if = {
+				add_to_variable = {
+					var = TAI_preparations
+					value = 1
+				}
+			}
+		}
+		
+		ai_will_do = {
+			factor = 100
+		}
+	}
+	
+	send_civilian_support_taiwan = {
+	
+		icon = GFX_decision_generic_civil_support
+		
+		allowed = {
+			NOT = { original_tag = TAI }
+		}
+		
+		cost = 50
+		
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision send_political_support_taiwan executed"
+		}
+		
+		days_remove = 2
+		
+		remove_effect = {
+			TAI = {
+				add_political_power = 50
+			}
+		}
+		
+		ai_will_do = {
+			factor = 100
+		}
+	}
+	
+	rally_support_military_taiwan = {
+	
+		icon = GFX_decision_generic_army_support_new
+		
+		allowed = {
+			original_tag = TAI
+		}
+		
+		custom_cost_trigger = {
+			command_power > 49
+		}
+		
+		custom_cost_text = command_power_more_than_50
+		
+		complete_effect = {
+			add_command_power = -50
+			log = "[GetDateText]: [This.GetName]: decision rally_support_taiwan executed"
+		}
+		
+		days_remove = 3
+		
+		remove_effect = {
+			custom_effect_tooltip = TAI_decrease_coup_support_tt
+			add_to_variable = {
+				var = TAI_preparations
+				value = 1
+			}
+		}
+		
+		ai_will_do = {
+			factor = 100
+		}
+	}
+	
+	send_military_support_taiwan = {
+	
+		icon = GFX_decision_generic_army_support_new
+		
+		allowed = {
+			NOT = { original_tag = TAI }
+		}
+		
+		custom_cost_trigger = {
+			command_power > 49
+		}
+		
+		custom_cost_text = command_power_more_than_50
+		
+		days_remove = 2
+		
+		complete_effect = {
+			add_command_power = -50
+			log = "[GetDateText]: [This.GetName]: decision send_military_support_taiwan executed"
+		}
+		
+		remove_effect = {
+			TAI = { add_command_power = 50 }
+		}
+		
+		ai_will_do = {
+			factor = 100
+		}
+	}
+	
+	
+	prevent_coup_taiwan = {
+	
+		allowed = { original_tag = TAI }
+		
+		icon = GFX_decision_generic_prepare_civil_war
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TAI_relative_support_tt
+				check_variable = {
+					TAI_preparations > CHI_preparations
+				}
+			}
+		}
+		
+		activation = { CHI = { has_completed_focus = CHI_The_Fifth_Column } }
+		
+		is_good = no
+		
+		days_mission_timeout = 14
+		
+		timeout_effect = {
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+			hidden_effect = {
+				set_popularities = {
+					democratic = 59.0
+					communism = 37.0
+					fascism = 0.0
+					neutrality = 4.0
+					nationalist = 0.0
+				}
+				set_variable = { party_pop_array^1 = 0.320 } #conservatism
+				set_variable = { party_pop_array^2 = 0.270 } #liberalism
+				set_variable = { party_pop_array^7 = 0.370 } #Autocracy
+				set_variable = { party_pop_array^14 = 0.03 } #Neutral_conservatism
+				set_variable = { party_pop_array^18 = 0.01 } #neutral_Social
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 7 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				recalculate_party = yes
+			}
+			every_country = {
+				news_event = { id = taiwan.13 }
+			}
+			remove_ideas = taiwanese_coup
+			set_country_flag = TAI_coup_success
+		}
+		
+		complete_effect = {
+			add_political_power = 100
+			remove_ideas = taiwanese_coup
+			every_country = {
+				news_event = { id = taiwan.14 }
 			}
 		}
 	}
