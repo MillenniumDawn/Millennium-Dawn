@@ -1121,6 +1121,7 @@ focus_tree = {
 			random_owned_state = { 
 				add_extra_state_shared_building_slots = 1 
 			}
+			increase_economic_growth = yes
 		}
 
 		ai_will_do = {
@@ -1452,7 +1453,7 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_tighten_the_union_state"
-			BLR = { country_event = { id = russia.2 days = 1 } } 
+			BLR = { country_event = { id = russia.2 days = 1 } }
 		}
 
 		ai_will_do = {
@@ -1485,7 +1486,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_pressure_ukraine"
-			
+			UKR = {
+				SOV_effect_gain_russian_influence_25 = yes
+			}
 		}
 
 		ai_will_do = {
@@ -1518,7 +1521,12 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_condemn_ukrainian_russophobes"
-			
+			UKR = {
+				add_popularity = { ideology = nationalist popularity = -0.05 }
+				recalculate_party = yes
+			}
+			add_opinion_modifier = { target = UKR modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = UKR modifier = recent_actions_negative }
 		}
 
 
@@ -1538,7 +1546,9 @@ focus_tree = {
 		prerequisite = { focus = SOV_pressure_ukraine }
 		prerequisite = { focus = SOV_tighten_the_union_state }
 		mutually_exclusive = { }
-		available = { }
+		available = {
+			country_exists = BLR
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -1551,7 +1561,30 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_demand_belarussian_annexation"
-			
+			BLR = { country_event = { id = russia.10 days = 1 } }
+			effect_tooltip = { 
+				if = {
+					limit = { BLR = { is_puppet_of = SOV } }
+					BLR = { 
+						every_owned_state = {
+							add_core_of = SOV 
+						}
+					}
+					annex_country = { target = SOV transfer_troops = yes }
+				}
+				if = {
+					limit = { BLR = { NOT = { is_puppet_of = SOV } } }
+					BLR = { 
+						every_owned_state = {
+							add_core_of = SOV 
+						}
+					}
+					declare_war_on = {
+						target = BLR
+						type = annex_everything
+					}
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -1643,6 +1676,8 @@ focus_tree = {
 		relative_position_id = SOV_russian_national_interests
 		cost = 2.50
 		
+		will_lead_to_war_with = UKR 
+		
 		prerequisite = { focus = SOV_take_crimea }
 		mutually_exclusive = { }
 		available = {
@@ -1686,6 +1721,10 @@ focus_tree = {
 		mutually_exclusive = { }
 		available = {
 			country_exists = NOV
+			custom_trigger_tooltip = {
+				tooltip = SOV_NOV_more_than_80_percent_influence_TT
+				NOV = { SOV_targeted_country_has_more_than_80_percent_influence = yes }
+			}
 		}
 		historical_ai = { }
 		select_effect = { }
@@ -1699,6 +1738,7 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_annex_novorossiya"
+			annex_country = { target = NOV transfer_troops = yes }
 			
 		}
 
@@ -1720,7 +1760,11 @@ focus_tree = {
 		available = { }
 		historical_ai = { }
 		select_effect = { }
-		bypass = { }
+		bypass = { 
+			NOT = { country_exists = LAT }
+			NOT = { country_exists = LIT }
+			NOT = { country_exists = EST }
+		}
 		cancel = { }
 
 		cancel_if_invalid = no
@@ -1730,7 +1774,33 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_demand_baltic_loyalty"
-			
+			if = {
+				limit = { country_exists = LAT }
+				LAT = {
+					add_war_support = 0.10
+					SOV_effect_gain_russian_influence_25 = yes
+				}
+				add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
+				reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
+			}
+			if = {
+				limit = { country_exists = LIT }
+				LIT = {
+					add_war_support = 0.10
+					SOV_effect_gain_russian_influence_25 = yes
+				}
+				add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
+				reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
+			}
+			if = {
+				limit = { country_exists = EST }
+				EST = { 
+					add_war_support = 0.10
+					SOV_effect_gain_russian_influence_25 = yes
+				}
+				add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
+				reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
+			}
 		}
 
 		ai_will_do = {
@@ -1748,10 +1818,14 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_demand_baltic_loyalty }
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			country_exists = EST 
+		}
 		historical_ai = { }
 		select_effect = { }
-		bypass = { }
+		bypass = {
+			NOT = { country_exists = EST }
+		}
 		cancel = { }
 
 		cancel_if_invalid = no
@@ -1761,8 +1835,11 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_settle_the_estonian_question"
- }
-
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = EST
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -1779,10 +1856,14 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_demand_baltic_loyalty }
 		mutually_exclusive = { }
-		available = { }
+		available = {
+			country_exists = LAT
+		}
 		historical_ai = { }
 		select_effect = { }
-		bypass = { }
+		bypass = { 
+			NOT = { country_exists = LAT }
+		}
 		cancel = { }
 
 		cancel_if_invalid = no
@@ -1792,8 +1873,11 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_settle_the_latvian_question"
- }
-
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = LAT
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -1824,8 +1908,11 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attack_lithuania"
- }
-
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = LIT
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -1855,8 +1942,11 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attack_finland"
- }
-
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = FIN
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -1886,8 +1976,11 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attack_poland"
- }
-
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = POL
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -1917,7 +2010,11 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attack_sweden"
- }
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = SWE
+			}
+		}
 
 
 		ai_will_do = {
@@ -1948,8 +2045,12 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attack_germany"
- }
-
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = GER
+			}
+		
+		}
 
 		ai_will_do = {
 			base = 10
@@ -2019,7 +2120,14 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_political_purges"
-			
+			hidden_effect = {
+				subtract_from_variable = { party_pop_array^6 = 0.10 }
+				add_to_variable = { party_pop_array^20 = 0.10 }
+				add_popularity = { ideology = nationalist popularity = 0.10 }
+				recalculate_party = yes
+			}
+			custom_effect_tooltip = SOV_gain_10_LDPR_support_TT
+			custom_effect_tooltip = SOV_lose_10_united_russia_support_TT
 		}
 
 
@@ -2154,6 +2262,7 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_punish_yeltsins_cronies"
+			SOV_fall_in_russian_entrepeneurs_opinion = yes 
 		}
 
 		ai_will_do = {
@@ -2184,8 +2293,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_revoke_personal_freedoms"
- }
-
+			add_stability = 0.03
+		}
 
 		ai_will_do = {
 			base = 10
@@ -2215,8 +2324,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_execute_the_oligarchs"
- }
-
+			SOV_fall_in_russian_entrepeneurs_opinion = yes 
+		}
 
 		ai_will_do = {
 			base = 10
@@ -2246,8 +2355,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_persecute_minorities"
- }
-
+			add_war_support = 0.05
+		}
 
 		ai_will_do = {
 			base = 10
@@ -2278,8 +2387,19 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_the_end_of_the_republic"
- }
-
+			set_country_flag = no_leader_change
+			if = {
+				limit = {
+					has_government = nationalist
+				}
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+			}
+			clr_country_flag = no_leader_change
+			custom_effect_tooltip = SOV_end_of_republic_TT
+		}
 
 		ai_will_do = {
 			base = 10
@@ -2309,8 +2429,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_encourage_foreign_cheap_laborers"
- }
-
+			add_ideas = SOV_cheap_foreign_labor_idea
+		}
 
 		ai_will_do = {
 			base = 10
@@ -2418,8 +2538,10 @@ focus_tree = {
 		relative_position_id = SOV_zhirinovsky
 		cost = 10
 		
-		#prerequisite = { focus = SOV_reinforce_the_one_party_state }
-		prerequisite = { focus = SOV_claim_the_crown }
+		prerequisite = { 
+			focus = SOV_claim_the_crown
+			focus = SOV_dictatorial_coup
+		}
 		mutually_exclusive = { }
 		available = { }
 		historical_ai = { }
