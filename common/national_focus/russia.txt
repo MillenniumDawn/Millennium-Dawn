@@ -23,6 +23,12 @@ focus_tree = {
 		available = { 
 			has_war_with = CHE 
 		}
+		bypass = {
+			AND = {
+				SOV = { owns_state = 672 }
+				NOT = { country_exists = CHE }
+			}
+		}
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -54,6 +60,7 @@ focus_tree = {
 		available = {
 			NOT = { has_war_with = CHE }
 		}
+		
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -2249,7 +2256,12 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_hyper_nationalism }
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			custom_trigger_tooltip = {
+				tooltip = SOV_has_oligarchs_TT
+				has_idea = oligarchs
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -2263,6 +2275,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_punish_yeltsins_cronies"
 			SOV_fall_in_russian_entrepeneurs_opinion = yes 
+			add_political_power = 150
 		}
 
 		ai_will_do = {
@@ -2317,7 +2330,12 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_punish_yeltsins_cronies }
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			custom_trigger_tooltip = {
+				tooltip = SOV_has_oligarchs_TT
+				has_idea = oligarchs
+			} 
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -2331,6 +2349,22 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_execute_the_oligarchs"
 			SOV_fall_in_russian_entrepeneurs_opinion = yes 
+			hidden_effect = {
+				if = {
+					limit = { has_idea = oligarchs }
+					swap_ideas = {
+						remove_idea = oligarchs 
+						add_idea = the_military
+					}
+					clr_country_flag = enthusiastic_oligarchs
+					clr_country_flag = positive_oligarchs
+					clr_country_flag = indifferent_oligarchs
+					clr_country_flag = negative_oligarchs
+					clr_country_flag = hostile_oligarchs
+					set_country_flag = positive_the_military
+				}
+			}
+			custom_effect_tooltip = SOV_execute_the_oligarchs_TT
 		}
 
 		ai_will_do = {
@@ -2527,6 +2561,7 @@ focus_tree = {
 				}
 			}
 			clr_country_flag = no_leader_change
+			custom_effect_tooltip = SOV_claim_the_crown_TT
 		}
 
 		ai_will_do = {
@@ -2557,8 +2592,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reinforce_the_one_party_state"
-			add_popularity = { ideology = nationalist popularity = 0.025 }
-			recalculate_party = yes 
+			add_popularity = { ideology = nationalist popularity = 0.10 }
+			recalculate_party = yes  
 			
 		}
 
@@ -2593,8 +2628,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_ensure_military_loyalty"
- }
-
+			add_ideas = SOV_russian_militarism_idea
+		}
 
 		ai_will_do = {
 			base = 10
@@ -2624,8 +2659,10 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_honor_the_romanovs"
- }
-
+			add_popularity = { ideology = nationalist popularity = 0.10 }
+			recalculate_party = yes 
+			
+		}
 
 		ai_will_do = {
 			base = 10
@@ -2641,22 +2678,29 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_ensure_military_loyalty }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		available = { 
+			country_exists = KAZ
+		}
+		bypass = {
+			NOT = { country_exists = KAZ }
+		}
 
+		will_lead_to_war_with = KAZ
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_secure_kazakhstan"
- }
-
+			every_state = {
+				limit = { is_owned_by = KAZ }
+				add_claim_by = SOV 
+			}
+			create_wargoal = {
+				target = KAZ 
+				type = puppet_wargoal_focus
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -2673,22 +2717,59 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_dictatorial_coup }
 		prerequisite = { focus = SOV_secure_kazakhstan }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
+		available = {
+			OR = {
+				country_exists = TAJ 
+				country_exists = TRK 
+				country_exists = UZB 
+				country_exists = KYR
+			}
+		}
+		bypass = {
+			NOT = { country_exists = TAJ }
+			NOT = { country_exists = TRK }
+			NOT = { country_exists = UZB }
+			NOT = { country_exists = KYR}
+		}
+		will_lead_to_war_with = TAJ
+		will_lead_to_war_with = TRK
+		will_lead_to_war_with = UZB
+		will_lead_to_war_with = KYR
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_ambitions_in_central_asia"
- }
-
+			if = {
+				limit = { country_exists = TAJ }
+				create_wargoal = {
+					target = TAJ 
+					type = puppet_wargoal_focus
+				}
+			}
+			if = {
+				limit = { country_exists = TRK } 
+				create_wargoal = {
+					target = TRK 
+					type = puppet_wargoal_focus
+				}
+			}
+			if = {
+				limit = { country_exists = UZB } 
+				create_wargoal = {
+					target = UZB 
+					type = puppet_wargoal_focus
+				}
+			}
+			if = {
+				limit = { country_exists = KYR }
+				create_wargoal = {
+					target = KYR 
+					type = puppet_wargoal_focus
+				}
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -2706,7 +2787,9 @@ focus_tree = {
 		prerequisite = { focus = SOV_claim_the_crown }
 		prerequisite = { focus = SOV_secure_kazakhstan }
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			country_exists = FIN
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -2719,8 +2802,11 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_secure_the_grand_duchy"
- }
-
+			create_wargoal = {
+				target = FIN 
+				type = puppet_wargoal_focus
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -2753,8 +2839,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_fight_international_capitalists"
- }
-
+			
+		}
 
 		ai_will_do = {
 			base = 10
