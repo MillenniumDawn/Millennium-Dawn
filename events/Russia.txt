@@ -2,6 +2,56 @@
 add_namespace = election_SOV
 add_namespace = russia_news
 
+#Russian Invites [From.ThisGetName] to Faction 
+country_event = {
+	id = russia.0
+	immediate = {log = "[GetDateText]: [Root.GetName]: event russia.0"}
+	title = russia.0.t
+	desc = russia.0.d 
+	picture = GFX_report_event_kursk_sinking
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {	#Acceptr
+		name = russia.0.o1
+		log = "[GetDateText]: [This.GetName]: russia.0.o1 executed"
+		SOV = { add_to_faction = ROOT } 
+		SOV = { country_event = diplomatic_response.1 }
+		ai_chance = {
+			base = 75
+			modifier = {
+				has_opinion = { target = SOV value > 30 }
+				add = 5
+			}
+		}
+	}
+	option = {	#Never 
+		name = russia.0.o2
+		log = "[GetDateText]: [This.GetName]: russia.0.o2 executed"
+		SOV = { country_event = diplomatic_response.2 }
+		ai_chance = {
+			base = 25
+			modifier = { 
+				NOT = { SOV_targeted_country_has_more_than_10_percent_influence = yes } 
+				add = -10
+			}
+			modifier = {
+				NOT = { SOV_targeted_country_has_more_than_20_percent_influence = yes }
+				add = -15
+			}
+			modifier = {
+				NOT = { SOV_targeted_country_has_more_than_30_percent_influence = yes }
+				add = -20
+			}
+			modifier = {
+				has_opinion = { target = SOV value < 0 }
+				add = -5 
+			}
+		}
+	}
+}
+
 #Kursk Submarine Disaster
 country_event = {
 	id = russia.1
@@ -862,14 +912,56 @@ news_event = {
 news_event = {
 	id = russia_news.50
 	immediate = {log = "[GetDateText]: [Root.GetName]: event russia_news.50"}
-	title = russia_news.5.t
-	desc = russia_news.5.d
+	title = russia_news.50.t
+	desc = russia_news.50.d
 	picture = GFX_news_event_kursk_sinking
 	
 	major = yes
 	
 	is_triggered_only = yes
 	major = yes
+	
+	option = {
+		name = russia_news.50.o1
+		log = "[GetDateText]: [This.GetName]: russia_news.50.o1 executed"
+		trigger = { original_tag = SOV }
+	}
+	
+	option = {
+		name = russia_news.50.o2
+		log = "[GetDateText]: [This.GetName]: russia_news.50.o2 executed"
+		trigger = { 
+			is_in_faction_with = SOV 
+			NOT = { original_tag = SOV }
+		}
+	}
+	
+	option = {
+		name = russia_news.50.o3
+		log = "[GetDateText]: [This.GetName]: russia_news.50.o3 executed"
+		trigger = { 
+			NOT = { is_in_faction_with = SOV }
+			NOT = { original_tag = SOV }
+			NOT = { has_war_with = SOV }
+		}
+	}
+	
+	option = {
+		name = russia_news.50.o4
+		log = "[GetDateText]: [This.GetName]: russia_news.50.o4 executed"
+		trigger = { 
+			has_war_with = SOV
+		}
+	}
+}
+
+#The Rise of a New Union
+news_event = {
+	id = russia_news.5 
+	immediate = {log = "[GetDateText]: [Root.GetName]: event russia_news.5"}
+	title = russia_news.5.t
+	desc = russia_news.5.d
+	picture = GFX_news_event_kursk_sinking
 	
 	option = {
 		name = russia_news.5.o1
