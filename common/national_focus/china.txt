@@ -4167,7 +4167,7 @@ focus_tree = {
 		id = CHI_Two_Systems
 		icon = chinese_social_democracy
 		
-		x = -2
+		x = -3
 		y = 1
 		relative_position_id = CHI_One_China_Policy
 		
@@ -4197,7 +4197,7 @@ focus_tree = {
 		id = CHI_Extend_Interpretation_of_the_Systems
 		icon = treaty3
 		
-		x = -2
+		x = -3
 		y = 2
 		relative_position_id = CHI_One_China_Policy
 		
@@ -4225,11 +4225,11 @@ focus_tree = {
 		id = CHI_Consider_Electoral_Reform_in_Hong_Kong
 		icon = Election
 		
-		x = -2
+		x = 1
 		y = 3
 		relative_position_id = CHI_One_China_Policy
 		
-		prerequisite = { focus = CHI_Extend_Interpretation_of_the_Systems }
+		prerequisite = { focus = CHI_Extend_Interpretation_of_the_Systems focus = CHI_One_System }
 		
 		cost = 10
 		
@@ -4237,6 +4237,7 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		available = {
+			HKG = { is_puppet_of = CHI }
 		}
 		
 		completion_reward = {
@@ -4253,7 +4254,7 @@ focus_tree = {
 		id = CHI_The_NPCSC_Decision_on_Hong_Kong
 		icon = communist_china
 		
-		x = -2
+		x = 1
 		y = 4
 		relative_position_id = CHI_One_China_Policy
 		
@@ -4265,9 +4266,11 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		available = {
+			HKG = { is_puppet_of = CHI }
 		}
 		
 		completion_reward = {
+			country_event = { id = china.27 }
 			log = "[GetDateText]: [This.GetName]: focus CHI_The_NPCSC_Decision_on_Hong_Kong executed"
 		}
 		
@@ -4280,7 +4283,7 @@ focus_tree = {
 		id = CHI_Hong_Kong_Future
 		icon = demand_territory3
 		
-		x = -2
+		x = 1
 		y = 5
 		relative_position_id = CHI_One_China_Policy
 		
@@ -4292,14 +4295,18 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		available = {
+			HKG = { is_puppet_of = CHI }
 		}
 		
 		completion_reward = {
+			country_event = { 
+				id = china.28 
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Hong_Kong_Future executed"
 		}
 		
 		ai_will_do = {
-			base = 50
+			base = 10
 		}
 	}
 	
@@ -4401,12 +4408,11 @@ focus_tree = {
 		id = CHI_Dialogue_with_the_Taiwan_Self_Government
 		icon = diplomacy
 		
-		x = 0
+		x = -1
 		y = 3
 		relative_position_id = CHI_One_China_Policy
 		
 		prerequisite = { focus = CHI_Extend_Interpretation_of_the_Systems }
-		mutually_exclusive = { focus = CHI_Combat_the_Traitors }
 		
 		cost = 10
 		
@@ -4443,7 +4449,7 @@ focus_tree = {
 		id = CHI_Three_Links
 		icon = infrastructure
 		
-		x = 0
+		x = -1
 		y = 4
 		relative_position_id = CHI_One_China_Policy
 		
@@ -4509,7 +4515,7 @@ focus_tree = {
 		id = CHI_Cross_Strait_Service_Trade_Agreement
 		icon = union_negotiations
 		
-		x = 0
+		x = -1
 		y = 5
 		relative_position_id = CHI_One_China_Policy
 		
@@ -4557,7 +4563,7 @@ focus_tree = {
 		id = CHI_Propose_Roadmap_to_Reunification
 		icon = treaty3
 		
-		x = 1
+		x = 0
 		y = 6
 		relative_position_id = CHI_One_China_Policy
 		
@@ -4618,7 +4624,7 @@ focus_tree = {
 		id = CHI_Drop_Opposition_to_Taiwanese_Independence
 		icon = chinese_glory
 		
-		x = -1
+		x = -2
 		y = 6
 		relative_position_id = CHI_One_China_Policy
 		
@@ -4638,6 +4644,7 @@ focus_tree = {
 		
 		completion_reward = {
 			add_popularity = { ideology = communism popularity = -0.1 }
+			recalculate_party = yes
 			custom_effect_tooltip = CHI_uighur_threat_increase_10_tt
 			hidden_effect = {
 				add_to_variable = {
@@ -5824,9 +5831,34 @@ focus_tree = {
 		
 		available = {
 			HKG = { has_government = communism }
+			HKG = { is_puppet_of = CHI }
 		}
 		
 		completion_reward = {
+			HKG = {
+				custom_effect_tooltip = CHI_HKG_influence_60_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 60 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = CHI.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_One_System executed"
 		}
 		
@@ -5852,7 +5884,7 @@ focus_tree = {
 		
 		available = {
 			HKG = { has_government = communism }
-			country_exists = HKG
+			HKG = { is_puppet_of = CHI }
 			custom_trigger_tooltip = {	
 				tooltip = CHI_HKG_influence_higher_90_tt
 				HKG = {
@@ -5879,6 +5911,10 @@ focus_tree = {
 				target = HKG
 				transfer_troops = yes
 			}
+			595 = { add_core_of = CHI }
+			every_country = {
+				news_event = { id = hongkong.1 }
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Formal_Annexation executed"
 		}
 		
@@ -5895,8 +5931,7 @@ focus_tree = {
 		y = 3
 		relative_position_id = CHI_One_China_Policy
 		
-		prerequisite = { focus = CHI_One_System focus = CHI_Extend_Interpretation_of_the_Systems }
-		mutually_exclusive = { focus = CHI_Dialogue_with_the_Taiwan_Self_Government }
+		prerequisite = { focus = CHI_One_System }
 		
 		cost = 10
 		
@@ -5912,6 +5947,7 @@ focus_tree = {
 				ideology = communism
 				popularity = 0.05
 			}
+			recalculate_party = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_One_System executed"
 		}
 		
