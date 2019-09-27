@@ -395,7 +395,7 @@ country_event = {
 	}
 }
 
-#Demand Belarus' Annexation
+#Demand Belarus' Annexation/Puppeting
 country_event = {
 	id = russia.10
 	immediate = {log = "[GetDateText]: [Root.GetName]: event russia.10"}
@@ -439,11 +439,50 @@ country_event = {
 					add_core_of = SOV 
 				}
 			}
-			declare_war_on = {
-				target = UKR
-				type = annex_everything
+			SOV = { puppet = BLR }
+		}
+		SOV = {
+			country_event = { id = russia.3 days = 1 }
+		}
+		ai_chance = {
+			base = 75
+		}
+	}
+	
+	option = { #Belarus Refuses!
+		name - russia.10.o2 
+		log = "[GetDateText]: [This.GetName]: russia.10.o1 executed"	
+		if = {
+			limit = { BLR = { is_puppet_of = SOV } }
+			SOV = { release_puppet = BLR } 
+			BLR = { 
+				every_owned_state = {
+					add_core_of = SOV 
+				}
+			}
+			SOV = {
+				create_wargoal = {
+					target = BLR
+					type = annex_everything 
+				}
 			}
 		}
+		if = {
+			limit = { BLR = { NOT = { is_puppet_of = SOV } } }
+			BLR = { 
+				every_owned_state = {
+					add_core_of = SOV 
+				}
+			}
+			SOV = {
+				create_wargoal = {
+					target = BLR
+					type = annex_everything 
+				}
+			}
+		}
+		SOV = { add_opinion_modifier = { target = BLR modifier = betrayed_our_cause } }
+		SOV = { country_event = { id = russia.4 days = 1 } }	
 	}
 }
 
@@ -962,6 +1001,9 @@ news_event = {
 	title = russia_news.5.t
 	desc = russia_news.5.d
 	picture = GFX_news_event_kursk_sinking
+	
+	is_triggered_only = yes
+	fire_only_once = yes
 	
 	option = {
 		name = russia_news.5.o1
