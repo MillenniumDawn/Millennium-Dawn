@@ -999,3 +999,422 @@ taiwan_coup_category = {
 		}
 	}
 }
+
+hongkong_category = {
+
+	HKG_declare_independence = {
+	
+		allowed = { original_tag = HKG }
+		
+		icon = GFX_decision_generic_nationalism
+		
+		available = {
+			has_government = nationalist
+			nationalist > 0.5
+		}
+		
+		cost = 300
+		
+		complete_effect = {
+			add_ideas = Lacks_International_Recognition
+			add_to_array = {
+				global.Unrecognised_States = THIS
+			}
+			set_variable = {
+				var = Granted_Recognition
+				value = 0
+			}
+			CHI = {
+				add_opinion_modifier = {
+					modifier = declared_independence
+					target = ROOT
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ROOT
+				}
+			}
+			595 = {
+				add_core_of = CHI
+			}
+			log = "[GetDateText]: [This.GetName]: decision HKG_declare_independence executed"
+		}
+		
+	}
+	
+	reconsider_the_NPCSC_decision = {
+	
+		allowed = { original_tag = CHI }
+		
+		icon = GFX_decision_generic_political_discourse
+		
+		visible = { 
+			has_completed_focus = CHI_The_NPCSC_Decision_on_Hong_Kong 
+			HKG = {
+				OR = { has_idea = Lacks_Universal_Suffrage has_idea = Limited_Universal_Suffrage }
+			}
+		}
+		
+		cost = 50
+		
+		days_remove = 7
+		
+		remove_effect = {
+			country_event = { id = china.27 }
+			log = "[GetDateText]: [This.GetName]: decision reconsider_the_NPCSC_decision executed"
+		}
+		
+	}
+	
+	reconsider_the_future_of_hongkong = {
+	
+		allowed = { original_tag = CHI }
+		
+		icon = GFX_decision_generic_political_discourse
+		
+		visible = { 
+			has_completed_focus = CHI_Hong_Kong_Future 
+		}
+		
+		cost = 50
+		
+		days_remove = 7
+		
+		remove_effect = {
+			country_event = { id = china.28 }
+			log = "[GetDateText]: [This.GetName]: decision reconsider_the_future_of_hongkong executed"
+		}
+		
+	}
+	
+	deploy_troops = {
+	
+		allowed = { original_tag = CHI }
+		
+		icon = GFX_decision_generic_army_support_new
+		
+		visible = {
+			OR = {
+				has_idea = CHI_Hong_Kong_Protests_01
+				has_idea = CHI_Hong_Kong_Protests_02
+				has_idea = CHI_Hong_Kong_Protests_03
+			}
+		}
+		
+		available = {
+			divisions_in_state = {
+				size > 1
+				state = 595
+			}
+			has_political_power > 500
+		}
+		
+		custom_cost_trigger = {
+			command_power > 39
+		}
+		
+		custom_cost_text = command_power_more_than_40
+		
+		complete_effect = {
+			add_command_power = -40
+			log = "[GetDateText]: [This.GetName]: decision deploy_troops executed"
+		}
+		
+		days_remove = 7
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 10
+				has_idea = CHI_Hong_Kong_Protests_03
+			}
+		}
+		
+		remove_effect = {
+			if = {
+				limit = { CHI = { has_idea = CHI_Hong_Kong_Protests_01 } }
+				HKG = { remove_ideas = Hong_Kong_Protests_01 }
+				CHI = { remove_ideas = CHI_Hong_Kong_Protests_01 }
+			}
+			else_if = {
+				limit = { CHI = { has_idea = CHI_Hong_Kong_Protests_02 } }
+				HKG = { remove_ideas = Hong_Kong_Protests_02 }
+				CHI = { remove_ideas = CHI_Hong_Kong_Protests_02 }
+			}
+			else_if = {
+				limit = { CHI = { has_idea = CHI_Hong_Kong_Protests_03 } }
+				HKG = { remove_ideas = Hong_Kong_Protests_03 }
+				CHI = { remove_ideas = CHI_Hong_Kong_Protests_03 }
+			}
+			add_political_power = -500
+			HKG = { 
+				add_stability = -0.1 
+				set_country_flag = troops_deployed
+			}
+			every_other_country = {
+				country_event = { id = hongkong.2 }
+			}
+		}
+		
+	}
+	
+	stop_the_protests_01 = {
+	
+		allowed = { 
+			OR = { original_tag = CHI }
+		}
+		
+		icon = GFX_decision_generic_civil_support
+		
+		is_good = no
+		
+		days_mission_timeout = 60
+		
+		activation = { 
+			OR = {
+				has_idea = CHI_Hong_Kong_Protests_01
+				has_idea = Hong_Kong_Protests_01
+			}
+		}
+		
+		available = {
+			OR = {
+				AND = {
+					country_exists = HKG
+					HKG = { 
+						has_idea = Universal_Suffrage
+					}
+					custom_trigger_tooltip = {
+						tooltip = HKG_continuation_tt
+						HKG = { NOT = { has_country_flag = reunification } }
+					}
+					
+				}
+				HKG = { 
+					custom_trigger_tooltip = {
+						tooltip = HKG_chinese_troops_deployed_tt
+						has_country_flag = troops_deployed 
+					}
+				}
+			}
+		}
+		
+		timeout_effect = {
+			HKG = {
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.05
+				}
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.05
+				}
+				recalculate_party = yes
+			}
+			random_list = {	
+				75 = {
+					CHI = {
+						swap_ideas = {
+							remove_idea = CHI_Hong_Kong_Protests_01
+							add_idea = CHI_Hong_Kong_Protests_02
+						}
+					}
+					HKG = {
+						swap_ideas = {
+							remove_idea = Hong_Kong_Protests_01
+							add_idea = Hong_Kong_Protests_02
+						}
+					}
+				}
+				25 = {
+					CHI = {
+						remove_ideas = CHI_Hong_Kong_Protests_01
+					}
+					HKG = {
+						remove_ideas = Hong_Kong_Protests_01
+					}
+				}
+			}
+		}
+		
+		complete_effect = {
+			CHI = {
+				remove_ideas = CHI_Hong_Kong_Protests_01
+			}
+			HKG = {
+				remove_ideas = Hong_Kong_Protests_01
+			}
+			HKG = { clr_country_flag = troops_deployed }
+		}
+	}
+	
+	stop_the_protests_02 = {
+	
+		allowed = { original_tag = CHI }
+		
+		icon = GFX_decision_generic_civil_support
+		
+		is_good = no
+		
+		days_mission_timeout = 60
+		
+		activation = { 
+			OR = {
+				has_idea = CHI_Hong_Kong_Protests_02
+				has_idea = Hong_Kong_Protests_02
+			}
+		}
+		
+		available = {
+			OR = {
+				AND = {
+					country_exists = HKG
+					HKG = { 
+						has_idea = Universal_Suffrage 
+					}
+					custom_trigger_tooltip = {
+						tooltip = HKG_continuation_tt
+						HKG = { NOT = { has_country_flag = reunification } }
+					}
+				}
+				HKG = { 
+					custom_trigger_tooltip = {
+						tooltip = HKG_chinese_troops_deployed_tt
+						has_country_flag = troops_deployed 
+					}
+				}
+			}
+		}
+		
+		timeout_effect = {
+			HKG = {
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.05
+				}
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.05
+				}
+				recalculate_party = yes
+			}
+			
+			random_list = {	
+				50 = {
+					CHI = {
+						swap_ideas = {
+							remove_idea = CHI_Hong_Kong_Protests_02
+							add_idea = CHI_Hong_Kong_Protests_03
+						}
+					}
+					HKG = {
+						swap_ideas = {
+							remove_idea = Hong_Kong_Protests_02
+							add_idea = Hong_Kong_Protests_03
+						}
+					}
+				}
+				50 = {
+					CHI = {
+						swap_ideas = {
+							remove_idea = CHI_Hong_Kong_Protests_02
+							add_idea = CHI_Hong_Kong_Protests_01
+						}
+					}
+					HKG = {
+						swap_ideas = {
+							remove_idea = Hong_Kong_Protests_02
+							add_idea = Hong_Kong_Protests_01
+						}
+					}
+				}
+			}
+		}
+		
+		complete_effect = {
+			CHI = {
+				remove_ideas = CHI_Hong_Kong_Protests_02
+			}
+			HKG = {
+				remove_ideas = Hong_Kong_Protests_02
+			}
+			HKG = { clr_country_flag = troops_deployed }
+		}
+	}
+	
+	stop_the_protests_03 = {
+	
+		allowed = { original_tag = CHI }
+		
+		icon = GFX_decision_generic_civil_support
+		
+		is_good = no
+		
+		days_mission_timeout = 60
+		
+		activation = { 
+			OR = {
+				has_idea = CHI_Hong_Kong_Protests_03
+				has_idea = Hong_Kong_Protests_03
+			}
+		}
+		
+		available = {
+			OR = {
+				AND = {
+					country_exists = HKG
+					HKG = { 
+						has_idea = Universal_Suffrage 
+					}
+					custom_trigger_tooltip = {
+						tooltip = HKG_continuation_tt
+						HKG = { NOT = { has_country_flag = reunification } }
+					}
+				}
+				HKG = { 
+					custom_trigger_tooltip = {
+						tooltip = HKG_chinese_troops_deployed_tt
+						has_country_flag = troops_deployed 
+					}
+				}
+			}
+		}
+		
+		timeout_effect = {
+			HKG = {
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.05
+				}
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.05
+				}
+				recalculate_party = yes
+			}
+			
+			CHI = {
+				swap_ideas = {
+					remove_idea = CHI_Hong_Kong_Protests_03
+					add_idea = CHI_Hong_Kong_Protests_02
+				}
+			}
+			HKG = {
+				swap_ideas = {
+					remove_idea = Hong_Kong_Protests_03
+					add_idea = Hong_Kong_Protests_02
+				}
+			}
+		}
+		
+		complete_effect = {
+			CHI = {
+				remove_ideas = CHI_Hong_Kong_Protests_03
+			}
+			HKG = {
+				remove_ideas = Hong_Kong_Protests_03
+			}
+			HKG = { clr_country_flag = troops_deployed }
+		}
+	}
+}

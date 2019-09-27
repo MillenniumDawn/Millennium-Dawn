@@ -671,6 +671,10 @@ country_event = {
 			}
 		}
 		add_political_power = 10
+		add_opinion_modifier = {
+			target = CHI
+			modifier = re_education_camps
+		}
 		ai_chance = {
 			factor = 1
 			modifier = {
@@ -1126,10 +1130,12 @@ country_event = {
 	
 	option = {
 		name = china.27.a #Universal suffrage is out of the question!
+		trigger = { NOT = { HKG = { has_idea = Limited_Universal_Suffrage } } }
 		add_popularity = {
 			ideology = communism
 			popularity = 0.05
 		}
+		add_ideas = CHI_Hong_Kong_Protests_01
 		recalculate_party = yes
 		HKG = {
 			set_country_flag = universal_suffrage_rejected
@@ -1139,6 +1145,7 @@ country_event = {
 			}
 			recalculate_party = yes
 			add_ideas = Localist_Movement
+			add_ideas = Hong_Kong_Protests_01
 		}
 		every_country = {
 			news_event = { id = hongkong.1 }
@@ -1161,6 +1168,7 @@ country_event = {
 	
 	option = {
 		name = china.27.b #We can accept universal suffrage, as long as we vet the candidates first
+		trigger = { NOT = { HKG = { has_idea = Limited_Universal_Suffrage } } }
 		random_list = {	
 			50 = {
 				HKG = {
@@ -1171,6 +1179,7 @@ country_event = {
 				}
 			}
 			50 = {
+				add_ideas = CHI_Hong_Kong_Protests_01
 				HKG = {
 					set_country_flag = universal_suffrage_limited
 					add_popularity = {
@@ -1179,6 +1188,7 @@ country_event = {
 					}
 					recalculate_party = yes
 					add_ideas = Localist_Movement
+					add_ideas = Hong_Kong_Protests_01
 				}
 				every_country = {
 					news_event = { id = hongkong.1 }
@@ -1202,9 +1212,19 @@ country_event = {
 		}
 		recalculate_party = yes
 		HKG = {
-			swap_ideas = {
-				remove_idea = Lacks_Universal_Suffrage
-				add_idea = Universal_Suffrage
+			if = {
+				limit = { has_idea = Lacks_Universal_Suffrage }
+				swap_ideas = {
+					remove_idea = Lacks_Universal_Suffrage
+					add_idea = Universal_Suffrage
+				}
+			}
+			else_if = {
+				limit = { has_idea = Limited_Universal_Suffrage }
+				swap_ideas = {
+					remove_idea = Limited_Universal_Suffrage
+					add_idea = Universal_Suffrage
+				}
 			}
 			add_popularity = {
 				ideology = nationalist
@@ -1245,6 +1265,7 @@ country_event = {
 		}
 		recalculate_party = yes
 		HKG = {
+			clr_country_flag = reunification
 			set_country_flag = continuation
 		}
 		ai_chance = {
@@ -1260,8 +1281,10 @@ country_event = {
 			ideology = communism
 			popularity = 0.05
 		}
+		add_ideas = CHI_Hong_Kong_Protests_01
 		recalculate_party = yes
 		HKG = {
+			clr_country_flag = continuation
 			set_country_flag = reunification
 			add_popularity = {
 				ideology = democratic
@@ -1272,12 +1295,10 @@ country_event = {
 				popularity = 0.1
 			}
 			recalculate_party = yes
+			add_ideas = Hong_Kong_Protests_01
 		}
 		every_country = {
 			news_event = { id = hongkong.1 }
-		}
-		HKG = {
-			clr_country_flag = reunification
 		}
 		ai_chance = {
 			factor = 1
