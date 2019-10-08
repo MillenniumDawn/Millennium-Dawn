@@ -2982,8 +2982,15 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_the_fifth_international"
-			dismantle_faction = SOV 
-			create_faction = SOV_the_fifth_international
+			if = {
+				limit = { is_in_faction = yes }
+				dismantle_faction = yes
+				create_faction = SOV_the_fifth_international
+			}
+			else_if = {
+				limit = { is_in_faction = no }
+				create_faction = SOV_the_fifth_international
+			}
 			every_country = {
 				limit = { 
 					AND = {
@@ -3885,7 +3892,13 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_deals_with_europe"
-			
+			every_country = {
+				limit = { 
+					has_idea = EU_member 
+					NOT = { has_war_with = SOV }
+				}
+				SOV_effect_gain_russian_influence_5 = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4458,10 +4471,6 @@ focus_tree = {
 				has_idea = NATO_member 
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -4471,12 +4480,30 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_approach_nato"
 			if = {
-				limit = { USA = { has_idea = NATO_member } }
+				limit = { is_in_faction = yes }
+				dismantle_faction = yes
+			}
+			add_ideas = Major_Non_NATO_Ally
+			add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
+			set_country_flag = Major_Non_NATO_Ally
+			every_country = { 
+				limit = { has_idea = NATO_member }
+				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
 			}
 		}
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				OR = { 
+					has_opinion = { target = ENG value > 10 }
+					has_opinion = { target = FRA value > 10 }
+					has_opinion = { target = USA value > 10 }
+					has_opinion = { target = GER value > 10 }
+				}
+				add = 10
+			}
 		}
 	}
 	focus = {
@@ -4506,8 +4533,13 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_maintain_csto"
- }
-
+			every_country = {
+				limit = { is_in_faction_with = ROOT }
+				add_opinion_modifier = { target = ROOT modifier = maintained_CSTO }
+				reverse_add_opinion_modifier = { target = ROOT modifier = maintained_CSTO }
+			}
+			add_political_power = 100
+		}
 
 		ai_will_do = {
 			base = 10
@@ -4538,8 +4570,14 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_bastion_of_democracy"
- }
-
+			hidden_effect = { 
+				add_popularity = { ideology = democratic popularity = 0.10 }
+				add_to_variable = { party_pop_array^2 = 0.05 }
+				add_to_variable = { party_pop_array^1 = 0.05 }
+				recalculate_party = yes
+			}
+			custom_effect_tooltip = SOV_bastion_of_democracy_TT
+		}
 
 		ai_will_do = {
 			base = 10
@@ -4569,8 +4607,42 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_bring_democracy_to_central_asia"
- }
-
+			if = {
+				limit = { KAZ = { NOT = { has_government = democratic } } }
+				create_wargoal = {
+					target = KAZ
+					type = liberate_wargoal
+				}
+			}
+			if = {
+				limit = { TAJ = { NOT = { has_government = democratic } } }
+				create_wargoal = {
+					target = TAJ
+					type = liberate_wargoal
+				}
+			}
+			if = {
+				limit = { KYR = { NOT = { has_government = democratic } } }
+				create_wargoal = {
+					target = KYR
+					type = liberate_wargoal
+				}
+			}
+			if = {
+				limit = { UZB = { NOT = { has_government = democratic } } }
+				create_wargoal = {
+					target = UZB
+					type = liberate_wargoal
+				}
+			}
+			if = {
+				limit = { TRK = { NOT = { has_government = democratic } } }
+				create_wargoal = {
+					target = TRK
+					type = liberate_wargoal
+				}
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -4600,7 +4672,13 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_liberalize_russian_society"
- }
+			hidden_effect = {
+				add_popularity = { ideology = democratic popularity = 0.05 }
+				add_to_variable = { party_pop_array^2 = 0.05 }
+				recalculate_party = yes 
+			}
+			custom_effect_tooltip = SOV_gain_5_yabloko_support_TT
+		}
 
 
 		ai_will_do = {
@@ -5478,7 +5556,7 @@ focus_tree = {
 		}
 	}
 	
-	#Economic Program
+	####Economic Program
 	focus = {
 		id = SOV_economic_programs
 		icon = industry
@@ -5515,18 +5593,24 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_rebuild_grozny
-		icon = unknown
+		icon = industry2
 		x = -2
 		y = 0
 		
 		relative_position_id = SOV_economic_programs
-		cost = 10
+		cost = 5.0
 		
 		prerequisite = { 
 			focus = SOV_attack_chechnya
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			owns_state = 672
+			custom_trigger_tooltip = {
+				check_variable = { treasury > 4.99 }
+				tooltip = 5_billion_currently_in_treasury_tt
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -5539,8 +5623,17 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rebuild_grozny"
- }
-
+			672 = { #Chechyna
+				add_building_construction = {
+					type = infrastructure 
+					instant_build = yes 
+					level = 1
+				}
+			}
+			add_stability = 0.03
+			subtract_from_variable = { treasury = 5.0 }
+			custom_effect_tooltip = 5_billion_expense_tt
+		}
 
 		ai_will_do = {
 			base = 10
@@ -5874,8 +5967,8 @@ focus_tree = {
 	focus = {
 		id = SOV_international_oil_price_agreements
 		icon = oil_trade
-		x = -2
-		y = 3
+		x = -3
+		y = 2
 		
 		relative_position_id = SOV_please_the_moscow_oligarchs
 		cost = 10
@@ -5940,7 +6033,7 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_european_interaction_plan
-		icon = unknown
+		icon = trade_with_europe
 		x = 3
 		y = 2
 		
@@ -5973,7 +6066,7 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_appease_foreign_powers
-		icon = unknown
+		icon = race_relations2
 		x = 5
 		y = 2
 		
@@ -5983,9 +6076,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_resist_international_sanctions
 		}
-		mutually_exclusive = { 
-			focus = SOV_trade_with_nko
-		}
+		mutually_exclusive = { }
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -6008,7 +6099,7 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_nordstream
-		icon = unknown
+		icon = oil_production
 		x = 3
 		y = 3
 		
@@ -6040,7 +6131,7 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_discuss_lifting_sanctions
-		icon = unknown
+		icon = trade
 		x = 5
 		y = 3
 		
@@ -6072,7 +6163,7 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_south_stream
-		icon = unknown
+		icon = oil_trade
 		x = 1
 		y = 4
 		
@@ -6104,7 +6195,7 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_revaluation_of_the_ruble
-		icon = unknown
+		icon = russian_ruble
 		x = 3
 		y = 4
 		
@@ -6137,7 +6228,7 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_intice_foreign_investment
-		icon = unknown
+		icon = gold_standard
 		x = 5
 		y = 4
 		
@@ -6145,7 +6236,7 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = {
-			focus = SOV_appease_foreign_powers
+			focus = SOV_discuss_lifting_sanctions
 		}
 		available = { }
 		historical_ai = { }
@@ -6202,7 +6293,7 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_trade_with_nko
-		icon = unknown
+		icon = trade_with_north_korea
 		x = 7
 		y = 2
 		
@@ -6212,7 +6303,9 @@ focus_tree = {
 		prerequisite = { 
 			focus = SOV_trade_with_the_east
 		}
-		mutually_exclusive = { }
+		mutually_exclusive = { 
+			focus = SOV_trade_with_sko
+		}
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -6234,7 +6327,7 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_trade_with_sko
-		icon = unknown
+		icon = trade_with_south_korea
 		x = 9
 		y = 2
 		
@@ -6264,11 +6357,105 @@ focus_tree = {
 		}
 	}
 	
+	focus = {
+		id = SOV_trade_with_authoritarianism
+		icon = fascism
+		x = 7
+		y = 3
+		
+		relative_position_id = SOV_economic_programs
+		cost = 10
+		
+		prerequisite = { 
+			focus = SOV_trade_with_nko
+		}
+		available = { }
+		historical_ai = { }
+		select_effect = { }
+		bypass = { }
+		cancel = { }
+
+		cancel_if_invalid = no
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		complete_tooltip = { }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_trade_with_authoritarianism"
+		}
+		ai_will_do = {
+			base = 10
+		}
+	}
+	
+	focus = {
+		id = SOV_trade_with_democratic_countries
+		icon = democracy
+		x = 9
+		y = 3
+		
+		relative_position_id = SOV_economic_programs
+		cost = 10
+		
+		prerequisite = { 
+			focus = SOV_trade_with_sko
+		}
+		available = { }
+		historical_ai = { }
+		select_effect = { }
+		bypass = { }
+		cancel = { }
+
+		cancel_if_invalid = no
+		continue_if_invalid = yes
+		available_if_capitulated = no 
+		
+		complete_tooltip = { }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_trade_with_democratic_countries"
+		}
+		ai_will_do = {
+			base = 10
+		}
+	}
+	
+	focus = {
+		id = SOV_expansionary_trade_policy
+		icon = trade
+		x = 8
+		y = 4
+		
+		relative_position_id = SOV_economic_programs
+		cost = 10
+		
+		prerequisite = { 
+			focus = SOV_trade_with_authoritarianism
+			focus = SOV_trade_with_democratic_countries
+		}
+		available = { }
+		historical_ai = { }
+		select_effect = { }
+		bypass = { }
+		cancel = { }
+
+		cancel_if_invalid = no
+		continue_if_invalid = yes
+		available_if_capitulated = no
+		
+		complete_tooltip = { }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_expansionary_trade_policy"
+		}
+		ai_will_do = {
+			base = 10
+		}
+	}
+	
 	##Sub Branch - Additional Interactions with the Economy
 	focus = {
 		id = SOV_rise_of_the_oligarchs
-		icon = unknown
-		x = -2
+		icon = union_negotiations
+		x = -5
 		y = 4
 		
 		relative_position_id = SOV_economic_programs
@@ -6304,16 +6491,16 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_state_run_capitalism
-		icon = unknown
-		x = 2
+		icon = industry_democratic
+		x = -1
 		y = 4
 		
 		relative_position_id = SOV_economic_programs
 		cost = 10
 		
 		prerequisite = { 
-			focus = SOV_diversify_the_economy
 			focus = SOV_attract_international_investors
+			focus = SOV_economic_stimulus
 		}
 		mutually_exclusive = { 
 			focus = SOV_rise_of_the_oligarchs
@@ -6342,8 +6529,8 @@ focus_tree = {
 	#Rise of the Oligarch Focus Pathing
 	focus = {
 		id = SOV_intice_oligarchic_investment
-		icon = unknown
-		x = -3
+		icon = economic_prosperity
+		x = -6
 		y = 5
 		
 		relative_position_id = SOV_economic_programs
@@ -6376,8 +6563,8 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_request_a_handout
-		icon = unknown
-		x = -1
+		icon = demand_territory
+		x = -4
 		y = 5
 		
 		relative_position_id = SOV_economic_programs
@@ -6409,8 +6596,8 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_deregulation
-		icon = unknown
-		x = -2
+		icon = consumer_goods
+		x = -5
 		y = 6
 		
 		relative_position_id = SOV_economic_programs
@@ -6447,8 +6634,8 @@ focus_tree = {
 	##State Run Capitalism
 	focus = {
 		id = SOV_regulate_the_market
-		icon = unknown
-		x = 1
+		icon = money
+		x = -2
 		y = 5
 		
 		relative_position_id = SOV_economic_programs
@@ -6481,8 +6668,8 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_nationalize_foreign_industry
-		icon = unknown
-		x = 3
+		icon = industry_democratic3
+		x = 0
 		y = 5
 		
 		relative_position_id = SOV_economic_programs
@@ -6514,8 +6701,8 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_root_out_the_oligarchs
-		icon = unknown
-		x = 2
+		icon = better_money
+		x = -1
 		y = 6
 		
 		relative_position_id = SOV_economic_programs
