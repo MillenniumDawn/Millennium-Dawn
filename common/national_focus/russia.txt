@@ -3870,7 +3870,9 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_yavlinsky }
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+		
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -3900,12 +3902,6 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_yavlinsky }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -3914,7 +3910,10 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_national_economic_goals"
-			add_ideas = idea_focus_industrial_development_program
+			add_timed_idea = {
+				idea = idea_focus_industrial_development_program
+				days = 365 
+			}
 		}
 
 		ai_will_do = {
@@ -3931,12 +3930,24 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_yavlinsky }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		available = { 
+			OR = {
+				country_exists = LIT
+				country_exists = LAT
+				country_exists = EST
+			}
+			custom_trigger_tooltip = { 
+				check_variable = { treasury > 29.99 }
+				tooltip = 30_billion_currently_in_treasury_tt
+			}
+		}
+		bypass = {
+			AND = {
+				NOT = { country_exists = LIT } 
+				NOT = { country_exists = LAT }
+				NOT = { country_exists = EST }
+			}
+		}
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -3945,11 +3956,36 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_baltic_economic_cooperation"
- }
-
+			if = {
+				limit = { 
+					country_exists = LIT 
+					NOT = { has_war_with = SOV }
+				}
+				country_event = { id = russia.14 days = 1 } 
+			}
+			if = {
+				limit = { 
+					country_exists = LAT 
+					NOT = { has_war_with = SOV }
+				}
+				country_event = { id = russia.14 days = 1 } 
+			}
+			if = {
+				limit = { 
+					country_exists = EST 
+					NOT = { has_war_with = SOV }
+				}
+				country_event = { id = russia.14 days = 1 } 
+			}
+			custom_effect_tooltip = SOV_baltic_econ_tooltip_TT
+		}
 
 		ai_will_do = {
 			base = 10
+			modifier = { 
+				check_variable = { treasury > 29.99 }
+				add = 20 
+			}
 		}
 	}
 	focus = {
@@ -3962,25 +3998,18 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_deals_with_europe }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_european_university_connections"
 			increase_education_budget = yes
 		}
 
 		ai_will_do = {
-			base = 10
+			base = 30
 		}
 	}
 	focus = {
@@ -3993,12 +4022,6 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_national_economic_goals }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -4254,7 +4277,9 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_kaliningrad_military_sector }
 		mutually_exclusive = { }
-		available = { }
+		available = {
+			NOT = { has_idea = no_military }
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -4401,8 +4426,17 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_fight_nationalism"
- }
-
+			hidden_effect = { 
+				set_temp_variable = { party_pop_array^20 = abc }
+				add_to_temp_variable = { party_pop_array^23 = abc } 
+				add_to_temp_variable = { party_pop_array^22 = abc }
+				add_to_temp_variable = { party_pop_array^21 = abc }
+				add_popularity = { ideology = nationalist popularity = -abc }
+				set_variable = { var = party_pop_array^20 max = 0 }
+				recalculate_party = yes
+			}
+			custom_effect_tooltip = SOV_root_out_the_nationalists_TT
+		}
 
 		ai_will_do = {
 			base = 10
