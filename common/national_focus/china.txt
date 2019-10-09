@@ -1946,7 +1946,7 @@ focus_tree = {
 			if = {
 				limit = { has_idea = factional_politics_elitist }
 				swap_ideas = {
-					remove_idea = factional_politics_populist
+					remove_idea = factional_politics_elitist
 					add_idea = factional_politics_balanced
 				}
 			}
@@ -2992,15 +2992,15 @@ focus_tree = {
 			custom_effect_tooltip = CHI_unchained_tt
 			hidden_effect = {
 				add_to_variable = {
-					var = Autocracy
+					var = party_pop_array^7
 					value = 0.05
 				}
 				add_to_variable = {
-					var = anarchist_communism
+					var = party_pop_array^5
 					value = 0.05
 				}
 				add_to_variable = {
-					var = neutral_social
+					var = party_pop_array^18
 					value = 0.05
 				}
 				recalculate_party = yes
@@ -4043,9 +4043,13 @@ focus_tree = {
 					min = 0
 					max = 100
 				}
+				add_popularity = {
+					ideology = fascism
+					popularity = 0.01
+				}
 				add_to_variable = {
 					var = party_pop_array^11
-					value = 0.05
+					value = 0.01
 				}
 				recalculate_party = yes
 			}
@@ -4310,7 +4314,14 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 50
+			base = 0
+			modifier = {
+				add = 10
+				has_game_rule = {
+					rule = PRC_ai_behavior
+					option = A_LONG_PEACE
+				}
+			}
 		}
 	}
 	
@@ -6236,10 +6247,12 @@ focus_tree = {
 		
 		available = {
 			has_war = no
-			OR = {
-				has_idea = factional_politics_elitist
-				has_idea = three_represents
-				has_idea = zeng_qinghong_thought
+			NOT = {
+				has_idea = factional_politics_populist
+				has_idea = scientific_outlook_on_development
+				has_idea = chongqing_model
+				has_idea = nanjie_model
+				has_idea = closed_nation
 			}
 			custom_trigger_tooltip = {
 				tooltip = CHI_minimum_opinion_tt
@@ -6285,9 +6298,24 @@ focus_tree = {
 		prerequisite = { focus = CHI_Break_the_Iron_Rice_Bowl }
 		
 		available = {
+			has_war = no
+			NOT = {
+				has_idea = factional_politics_populist
+				has_idea = scientific_outlook_on_development
+				has_idea = chongqing_model
+				has_idea = nanjie_model
+				has_idea = closed_nation
+			}
 		}
 		
 		completion_reward = {
+			if = {
+				limit = { has_start_date < 2016.01.01 }
+				add_timed_idea = {
+					idea = recently_acceded_to_wto
+					days = 30
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Ratification_of_WTO executed"
 		}
 		
@@ -6313,9 +6341,29 @@ focus_tree = {
 		mutually_exclusive = { focus = CHI_Protect_State_Owned_Businesses }
 		
 		available = {
+			has_war = no
+			NOT = {
+				has_idea = factional_politics_populist
+				has_idea = scientific_outlook_on_development
+				has_idea = chongqing_model
+				has_idea = nanjie_model
+				has_idea = closed_nation
+			}
 		}
 		
 		completion_reward = {
+			if = {
+				limit = { has_idea = industrial_conglomerates }
+			
+			
+					visually_display_opinion_fall_industrial_conglomerates = yes
+					set_country_flag = current_industrial_conglomerates
+					decrease_internal_faction_opinion = yes
+			}
+			add_timed_idea = {
+				idea = CHI_foreign_investment
+				days = 60
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Encourage_Foreign_Investment executed"
 		}
 		
@@ -6344,6 +6392,15 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			if = {
+				limit = { has_idea = industrial_conglomerates }
+			
+			
+					visually_display_opinion_rise_industrial_conglomerates = yes
+					set_country_flag = current_industrial_conglomerates
+					increase_internal_faction_opinion = yes
+			}
+			add_stability = 0.01
 			log = "[GetDateText]: [This.GetName]: focus CHI_Protect_State_Owned_Businesses executed"
 		}
 		
@@ -6376,9 +6433,31 @@ focus_tree = {
 		mutually_exclusive = { focus = CHI_Chinese_Model_of_Manufacturing }
 		
 		available = {
+			NOT = {
+				has_idea = factional_politics_populist
+				has_idea = scientific_outlook_on_development
+				has_idea = chongqing_model
+				has_idea = nanjie_model
+				has_idea = closed_nation
+			}
 		}
 		
 		completion_reward = {
+			add_political_power = -50
+			USA = {
+				remove_opinion_modifier = {
+					target = CHI
+					modifier = does_not_respect_intellectual_property
+				}
+			}
+			if = {
+				limit = { has_idea = industrial_conglomerates }
+			
+			
+					visually_display_opinion_fall_industrial_conglomerates = yes
+					set_country_flag = current_industrial_conglomerates
+					decrease_internal_faction_opinion = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Adopt_Western_Patent_Laws executed"
 		}
 		
@@ -6403,9 +6482,28 @@ focus_tree = {
 		prerequisite = { focus = CHI_Adopt_Western_Patent_Laws }
 		
 		available = {
+			NOT = {
+				has_idea = factional_politics_populist
+				has_idea = scientific_outlook_on_development
+				has_idea = chongqing_model
+				has_idea = nanjie_model
+				has_idea = closed_nation
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_minimum_opinion_enthusiastic_tt
+				has_country_flag = enthusiastic_the_military
+				has_country_flag = enthusiastic_communist_cadres
+			}
 		}
 		
 		completion_reward = {
+			add_political_power = -100
+			swap_ideas = {
+				remove_idea = Socialist_Market_Economy
+				add_idea = Socialist_Market_Economy_free_1
+			}
+			custom_effect_tooltip = CHI_sales_revenue_tt
+			add_to_variable = { treasury = 10 }
 			log = "[GetDateText]: [This.GetName]: focus CHI_SOE_Privatization_Initiative executed"
 		}
 		
@@ -6430,9 +6528,25 @@ focus_tree = {
 		prerequisite = { focus = CHI_SOE_Privatization_Initiative }
 		
 		available = {
+			NOT = {
+				has_idea = factional_politics_populist
+				has_idea = scientific_outlook_on_development
+				has_idea = chongqing_model
+				has_idea = nanjie_model
+				has_idea = closed_nation
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_minimum_opinion_enthusiastic_tt
+				has_country_flag = enthusiastic_the_military
+				has_country_flag = enthusiastic_communist_cadres
+			}
 		}
 		
 		completion_reward = {
+			swap_ideas = {
+				remove_idea = Socialist_Market_Economy_free_1
+				add_idea = Socialist_Market_Economy_free_2
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Free_Direct_Investment executed"
 		}
 		
@@ -6457,9 +6571,17 @@ focus_tree = {
 		prerequisite = { focus = CHI_Free_Direct_Investment }
 		
 		available = {
+			NOT = {
+				has_idea = factional_politics_populist
+				has_idea = scientific_outlook_on_development
+				has_idea = chongqing_model
+				has_idea = nanjie_model
+				has_idea = closed_nation
+			}
 		}
 		
 		completion_reward = {
+			
 			log = "[GetDateText]: [This.GetName]: focus CHI_Expand_the_Special_Economic_Zones executed"
 		}
 		
@@ -6484,9 +6606,17 @@ focus_tree = {
 		prerequisite = { focus = CHI_Free_Direct_Investment }
 		
 		available = {
+			NOT = {
+				has_idea = factional_politics_populist
+				has_idea = scientific_outlook_on_development
+				has_idea = chongqing_model
+				has_idea = nanjie_model
+				has_idea = closed_nation
+			}
 		}
 		
 		completion_reward = {
+			add_research_slot = 1
 			log = "[GetDateText]: [This.GetName]: focus CHI_Promote_Innovation executed"
 		}
 		
@@ -6512,9 +6642,25 @@ focus_tree = {
 		prerequisite = { focus = CHI_Expand_the_Special_Economic_Zones }
 		
 		available = {
+			NOT = {
+				has_idea = factional_politics_populist
+				has_idea = scientific_outlook_on_development
+				has_idea = chongqing_model
+				has_idea = nanjie_model
+				has_idea = closed_nation
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_minimum_opinion_enthusiastic_tt
+				has_country_flag = enthusiastic_the_military
+				has_country_flag = enthusiastic_communist_cadres
+			}
 		}
 		
 		completion_reward = {
+			swap_ideas = {
+				remove_idea = Socialist_Market_Economy_free_2
+				add_idea = Free_Market_Economy
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Liberalize_the_Market executed"
 		}
 		
@@ -6543,6 +6689,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			add_political_power = 25
 			log = "[GetDateText]: [This.GetName]: focus CHI_Chinese_Model_of_Manufacturing executed"
 		}
 		
@@ -6572,6 +6719,8 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = CHI_Chinese_Model_of_Manufacturing }
+		mutually_exclusive = { focus = CHI_German_Joint_Ventures }
+		mutually_exclusive = { focus = CHI_American_Joint_Ventures }
 		
 		available = {
 		}
@@ -6599,6 +6748,8 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = CHI_Chinese_Model_of_Manufacturing }
+		mutually_exclusive = { focus = CHI_German_Joint_Ventures }
+		mutually_exclusive = { focus = CHI_Japanese_Joint_Ventures }
 		
 		available = {
 		}
@@ -6626,6 +6777,8 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = CHI_Chinese_Model_of_Manufacturing }
+		mutually_exclusive = { focus = CHI_German_Joint_Ventures }
+		mutually_exclusive = { focus = CHI_American_Joint_Ventures }
 		
 		available = {
 		}
@@ -6652,14 +6805,26 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 		
-		prerequisite = { focus = CHI_American_Joint_Ventures }
-		prerequisite = { focus = CHI_German_Joint_Ventures }
-		prerequisite = { focus = CHI_Japanese_Joint_Ventures }
+		prerequisite = { focus = CHI_American_Joint_Ventures focus = CHI_German_Joint_Ventures focus = CHI_Japanese_Joint_Ventures }
 		
 		available = {
 		}
 		
 		completion_reward = {
+			if = {
+				limit = { has_idea = consumption_economy }
+				swap_ideas = {
+					remove_idea = consumption_economy
+					add_idea = export_economy
+				}
+			}
+			else_if = {
+				limit = { has_idea = mixed_economy }
+				swap_ideas = {
+					remove_idea = mixed_economy
+					add_idea = export_economy
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Export_Driven_Economy executed"
 		}
 		
@@ -6712,11 +6877,11 @@ focus_tree = {
 		mutually_exclusive = { focus = CHI_Break_the_Iron_Rice_Bowl } 
 		
 		available = {
-			OR = {
-				has_idea = factional_politics_populist
-				has_idea = scientific_outlook_on_development
-				has_idea = chongqing_model
-				has_idea = nanjie_model
+			has_government = communism
+			NOT = {
+				has_idea = factional_politics_elitist
+				has_idea = three_represents
+				has_idea = zeng_qinghong_thought
 			}
 			custom_trigger_tooltip = {
 				tooltip = CHI_minimum_opinion_tt
@@ -6730,6 +6895,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			add_political_power = 25
 			log = "[GetDateText]: [This.GetName]: focus CHI_Socialism_with_Maoist_Characteristics executed"
 		}
 		
@@ -6761,9 +6927,25 @@ focus_tree = {
 		prerequisite = { focus = CHI_Socialism_with_Chinese_Characteristics }
 		
 		available = {
+			has_government = communism
+			NOT = {
+				has_idea = factional_politics_elitist
+				has_idea = three_represents
+				has_idea = zeng_qinghong_thought
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_minimum_opinion_tt
+				OR = {
+					has_country_flag = positive_the_military
+					has_country_flag = enthusiastic_the_military
+					has_country_flag = positive_communist_cadres
+					has_country_flag = enthusiastic_communist_cadres
+				}
+			}
 		}
 		
 		completion_reward = {
+			add_political_power = 50
 			log = "[GetDateText]: [This.GetName]: focus CHI_Denounce_Deng_Xiaoping executed"
 		}
 		
@@ -6788,9 +6970,23 @@ focus_tree = {
 		prerequisite = { focus = CHI_Denounce_Deng_Xiaoping }
 		
 		available = {
+			has_government = communism
+			NOT = {
+				has_idea = factional_politics_elitist
+				has_idea = three_represents
+				has_idea = zeng_qinghong_thought
+			}
 		}
 		
 		completion_reward = {
+			custom_effect_tooltip = CHI_communism_5_tt
+			hidden_effect = {
+				add_to_variable = {
+					var = party_pop_array^4
+					value = 0.05
+				}
+				recalculate_party = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Mao_Zedong_Thought executed"
 		}
 		
@@ -6815,9 +7011,11 @@ focus_tree = {
 		prerequisite = { focus = CHI_Socialism_with_Chinese_Characteristics }
 		
 		available = {
+			has_government = communism
 		}
 		
 		completion_reward = {
+			add_political_power = 50
 			log = "[GetDateText]: [This.GetName]: focus CHI_State_Owned_Business_Supremacy executed"
 		}
 		
@@ -6843,9 +7041,29 @@ focus_tree = {
 		mutually_exclusive = { focus = CHI_Privatize_Agricultural_Products }
 		
 		available = {
+			has_government = communism
+			communism > 0.6
+			NOT = {
+				has_idea = factional_politics_elitist
+				has_idea = three_represents
+				has_idea = zeng_qinghong_thought
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_minimum_opinion_tt
+				OR = {
+					has_country_flag = positive_the_military
+					has_country_flag = enthusiastic_the_military
+					has_country_flag = positive_communist_cadres
+					has_country_flag = enthusiastic_communist_cadres
+				}
+			}
 		}
 		
 		completion_reward = {
+			swap_ideas = {
+				remove_idea = Socialist_Market_Economy
+				add_idea = Socialist_Market_Economy_planned_1
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Collectivize_Agriculture executed"
 		}
 		
@@ -6870,9 +7088,22 @@ focus_tree = {
 		prerequisite = { focus = CHI_Mao_Zedong_Thought }
 		
 		available = {
+			has_government = communism
+			communism > 0.6
+			NOT = {
+				has_idea = factional_politics_elitist
+				has_idea = three_represents
+				has_idea = zeng_qinghong_thought
+			}
 		}
 		
 		completion_reward = {
+			add_stability = -0.02
+			custom_effect_tooltip = increase_domestic_influence_amount_TT
+			hidden_effect = {
+				add_to_variable = { domestic_influence_amount = 10 }
+				recalculate_influence = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Close_Window_to_the_West executed"
 		}
 		
@@ -6897,9 +7128,25 @@ focus_tree = {
 		prerequisite = { focus = CHI_Mao_Zedong_Thought }
 		
 		available = {
+			has_government = communism
+			communism > 0.6
+			NOT = {
+				has_idea = factional_politics_elitist
+				has_idea = three_represents
+				has_idea = zeng_qinghong_thought
+			}
 		}
 		
 		completion_reward = {
+			if = {
+				limit = { has_idea = industrial_conglomerates }
+			
+			
+					visually_display_opinion_fall_industrial_conglomerates = yes
+					set_country_flag = current_industrial_conglomerates
+					decrease_internal_faction_opinion = yes
+			}
+			add_stability = -0.02
 			log = "[GetDateText]: [This.GetName]: focus CHI_Purge_the_Capitalists executed"
 		}
 		
@@ -6925,9 +7172,25 @@ focus_tree = {
 		prerequisite = { focus = CHI_Close_Window_to_the_West }
 		
 		available = {
+			has_government = communism
+			communism > 0.75
+			NOT = {
+				has_idea = factional_politics_elitist
+				has_idea = three_represents
+				has_idea = zeng_qinghong_thought
+			}
 		}
 		
 		completion_reward = {
+			if = {
+				limit = { has_idea = communist_cadres }
+			
+			
+					visually_display_opinion_fall_communist_cadres = yes
+					set_country_flag = current_communist_cadres
+					decrease_internal_faction_opinion = yes
+			}
+			add_stability = -0.05
 			log = "[GetDateText]: [This.GetName]: focus CHI_Purge_the_Communist_Party executed"
 		}
 		
@@ -6954,9 +7217,25 @@ focus_tree = {
 		mutually_exclusive = { focus = CHI_Form_the_Fifth_International }
 		
 		available = {
+			has_government = communism
+			communism > 0.8
+			NOT = {
+				has_idea = factional_politics_elitist
+				has_idea = three_represents
+				has_idea = zeng_qinghong_thought
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_minimum_opinion_enthusiastic_tt
+				has_country_flag = enthusiastic_the_military
+				has_country_flag = enthusiastic_communist_cadres
+			}
 		}
 		
 		completion_reward = {
+			swap_ideas = {
+				remove_idea = Socialist_Market_Economy_planned_2
+				add_idea = Planned_Economy
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Revolution_in_One_Country executed"
 		}
 		
@@ -6983,9 +7262,25 @@ focus_tree = {
 		mutually_exclusive = { focus = CHI_Revolution_in_One_Country }
 		
 		available = {
+			has_government = communism
+			communism > 0.8
+			NOT = {
+				has_idea = factional_politics_elitist
+				has_idea = three_represents
+				has_idea = zeng_qinghong_thought
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_minimum_opinion_enthusiastic_tt
+				has_country_flag = enthusiastic_the_military
+				has_country_flag = enthusiastic_communist_cadres
+			}
 		}
 		
 		completion_reward = {
+			swap_ideas = {
+				remove_idea = Socialist_Market_Economy_planned_2
+				add_idea = Planned_Economy
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Form_the_Fifth_International executed"
 		}
 		
@@ -7014,6 +7309,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			add_stability = 0.02
 			log = "[GetDateText]: [This.GetName]: focus CHI_Privatize_Agricultural_Products executed"
 		}
 		
@@ -7041,6 +7337,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			add_stability = 0.02
 			log = "[GetDateText]: [This.GetName]: focus CHI_Allow_Small_Private_Ventures executed"
 		}
 		
@@ -7068,6 +7365,15 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			add_political_power = 50
+			if = {
+				limit = { has_idea = industrial_conglomerates }
+			
+			
+					visually_display_opinion_rise_industrial_conglomerates = yes
+					set_country_flag = current_industrial_conglomerates
+					increase_internal_faction_opinion = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_State_Run_Corporatism executed"
 		}
 		
@@ -7093,9 +7399,25 @@ focus_tree = {
 		prerequisite = { focus = CHI_Purge_the_Capitalists }
 		
 		available = {
+			has_government = communism
+			communism > 0.75
+			NOT = {
+				has_idea = factional_politics_elitist
+				has_idea = three_represents
+				has_idea = zeng_qinghong_thought
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_minimum_opinion_enthusiastic_tt
+				has_country_flag = enthusiastic_the_military
+				has_country_flag = enthusiastic_communist_cadres
+			}
 		}
 		
 		completion_reward = {
+			swap_ideas = {
+				remove_idea = Socialist_Market_Economy_planned_1
+				add_idea = Socialist_Market_Economy_planned_2
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Proper_State_Nationalization executed"
 		}
 		
