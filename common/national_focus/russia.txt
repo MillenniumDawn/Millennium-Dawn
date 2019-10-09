@@ -4678,6 +4678,7 @@ focus_tree = {
 				recalculate_party = yes 
 			}
 			custom_effect_tooltip = SOV_gain_5_yabloko_support_TT
+			add_stability = 0.025
 		}
 
 
@@ -4709,8 +4710,18 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_russian_values"
- }
-
+			add_war_support = 0.025
+			every_neighbor_country = { 
+				limit = { NOT = { has_war_with = SOV } } 
+				SOV_effect_russian_gain_russian_influence_10 = yes 
+			}
+			hidden_effect = {
+				add_popularity = { ideology = nationalist popularity = 0.05 }
+				add_to_variable = { party_pop_array^20 = 0.05 }
+				recalculate_party = yes
+			}
+			custom_effect_tooltip = SOV_gain_5_LDPR_support_TT
+		}
 
 		ai_will_do = {
 			base = 10
@@ -4743,8 +4754,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reform_the_oblasts"
- }
-
+			add_political_power = 100 
+		}
 
 		ai_will_do = {
 			base = 10
@@ -4776,8 +4787,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_encourage_free_thought"
- }
-
+			increase_education_budget = yes
+		}
 
 		ai_will_do = {
 			base = 10
@@ -4809,8 +4820,9 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_army_of_the_republic"
- }
-
+			increase_military_spending = yes 
+			add_ideas = SOV_idea_army_of_the_republic
+		}
 
 		ai_will_do = {
 			base = 10
@@ -4844,8 +4856,9 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reform_the_army"
- }
-
+			increase_intervention_law_effect = yes
+			
+		}
 
 		ai_will_do = {
 			base = 10
@@ -4864,7 +4877,8 @@ focus_tree = {
 			focus = SOV_encourage_free_thought
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -4877,8 +4891,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_encourage_free_expression"
- }
-
+			add_stability = 0.05
+		}
 
 		ai_will_do = {
 			base = 10
@@ -4910,8 +4924,9 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_embrace_the_orthodox_church"
- }
-
+			add_stability = 0.025
+			add_war_support = 0.025
+		}
 
 		ai_will_do = {
 			base = 10
@@ -4945,8 +4960,11 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_more_universities"
- }
-
+			add_timed_idea = {
+				idea = scientific_advances3
+				days = 365
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -4978,8 +4996,11 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_full_secularism"
- }
-
+			if = {
+				limit = { has_idea = orthodox_christian } 
+				remove_ideas = orthodox_christian
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -5011,8 +5032,12 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_religious_republicanism"
- }
-
+			swap_ideas = {
+				remove_idea = orthodox_christian
+				add_idea = SOV_russian_orthodox_church_idea
+			}
+			
+		}
 
 		ai_will_do = {
 			base = 10
@@ -5583,8 +5608,13 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_programs"
- }
-
+			add_stability = 0.05
+			add_tech_bonus = {
+				bonus = 0.5
+				uses = 2
+				category = industry
+			}
+		}
 
 		ai_will_do = {
 			base = 10
@@ -5665,8 +5695,8 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_please_the_moscow_oligarchs"
- }
-
+			SOV_rise_in_russian_entrepeneurs_opinion = yes
+		}
 
 		ai_will_do = {
 			base = 10
@@ -5674,7 +5704,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_diversify_the_economy
-		icon = industry_united_states
+		icon = construction
 		x = -1
 		y = 1
 		
@@ -5685,7 +5715,12 @@ focus_tree = {
 			focus = SOV_economic_programs
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			custom_trigger_tooltip = { 
+				check_variable = { treasury > 14.99 }
+				tooltip = 15_billion_currently_in_treasury_tt
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -5698,8 +5733,60 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_diversify_the_economy"
+			random_owned_controlled_state = {
+				if = { 
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = industrial_complex 
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1 
+				}
+			}
+			random_owned_controlled_state = {
+				if = { 
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = industrial_complex 
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1 
+				}
+			}
+			random_owned_controlled_state = {
+				if = { 
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = industrial_complex 
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1 
+				}
+			}
+			subtract_from_variable = { treasury = 15.0 }
+			custom_effect_tooltip = 15_billion_expense_tt
 		}
-
 		ai_will_do = {
 			base = 10
 		}
@@ -5707,7 +5794,7 @@ focus_tree = {
 	
 	focus = {
 		id = SOV_expansionary_monetary_policy
-		icon = industry_united_states
+		icon = industry3
 		x = -1
 		y = 2
 		
@@ -5731,6 +5818,7 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_expansionary_monetary_policy"
+			increase_economic_growth = yes
 		}
 		
 		ai_will_do = {
@@ -5750,7 +5838,12 @@ focus_tree = {
 			focus = SOV_economic_programs
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { treasury > 14.99 }
+				tooltip = 15_billion_currently_in_treasury_tt
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -5763,6 +5856,59 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_decree_no_585"
+			random_owned_controlled_state = {
+				if = { 
+					limit = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = infrastructure 
+						level = 1
+						instant_build = yes
+					} 
+ 
+				}
+			}
+			random_owned_controlled_state = {
+				if = { 
+					limit = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = infrastructure 
+						level = 1
+						instant_build = yes
+					} 
+ 
+				}
+			}
+			random_owned_controlled_state = {
+				if = { 
+					limit = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = infrastructure 
+						level = 1
+						instant_build = yes
+					} 
+ 
+				}
+			}
+			custom_effect_tooltip = 15_billion_expense_tt
+			subtract_from_variable = { treasury = 15.0 }
 		}
 
 		ai_will_do = {
@@ -5771,7 +5917,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_regauge_the_sakhalin_railway
-		icon = infrastructure
+		icon = production
 		x = 1
 		y = 2
 		
@@ -5782,7 +5928,13 @@ focus_tree = {
 			focus = SOV_decree_no_585
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			owns_state = 691
+			custom_trigger_tooltip = { 
+				check_variable = { treasury > 4.99 }
+				tooltip = 5_billion_currently_in_treasury_tt
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -5795,6 +5947,25 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_regauge_the_sakhalin_railway"
+			691 = { #Sakhalin
+				if = { 
+					limit = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = infrastructure 
+						level = 1
+						instant_build = yes
+					} 
+ 
+				}
+			}
+			subtract_from_variable = { treasury = 5.0 }
+			custom_effect_tooltip = 5_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -5816,11 +5987,15 @@ focus_tree = {
 			focus = SOV_expansionary_monetary_policy
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			has_political_power > 50
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
-		cancel = { }
+		cancel = {
+			has_political_power < 50 
+		}
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -5829,7 +6004,19 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_stimulus"
-			
+			add_political_power = -100
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 1
+			}
 		}
 		
 		ai_will_do = {
@@ -5863,7 +6050,9 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_russian_federation_stabilization_fund"
-			}
+			add_stability = 0.025
+			SOV_fall_in_russian_entrepeneurs_opinion = yes
+		}
 
 		ai_will_do = {
 			base = 10
@@ -5892,9 +6081,15 @@ focus_tree = {
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
+		complete_tooltip = { 
+			custom_effect_tooltip = SOV_reduction_of_interest_rate_TT
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_overcome_the_1998_crisis"
+			increase_economic_growth = yes
+			set_country_flag = SOV_overcoming_the_1998_financial_crisis
+			custom_effect_tooltip = SOV_reduction_of_interest_rate_TT
+			calculate_interest_rate = yes
 		}
 		
 		ai_will_do = {
