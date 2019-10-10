@@ -6443,7 +6443,12 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_european_interaction_plan
 		}
-		available = { }
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { treasury > 4.99 }
+				tooltip = 5_billion_currently_in_treasury_tt
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -6456,10 +6461,57 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_nordstream"
+			subtract_from_variable = { treasury = 5.0 }
+			custom_effect_tooltip = 5_billion_expense_tt
+			642 = { #Kallingrad
+				add_resource = {
+					type = oil
+					amount = 3 
+				}
+			}
+			if = { 
+				limit = { NOT = { GER = { has_completed_focus = GER_nord_stream } } }
+				if = {
+					limit = { NOT = { has_war_with = GER } }
+					GER = {
+						add_opinion_modifier = { target = ROOT modifier = german_trade_policy }
+						add_opinion_modifier = { target = ROOT modifier = german_trade_policy_trade }
+					}
+				}
+				if = {
+					limit = { NOT = { has_war_with = GER } }
+					GER = {
+						add_opinion_modifier = { target = ROOT modifier = nord_stream }
+						reverse_add_opinion_modifier = { target = ROOT modifier = nord_stream }
+					}
+				}
+				if = {
+					limit = { NOT = { has_war_with = AUS } }
+					AUS = {
+						add_opinion_modifier = { target = ROOT modifier = approval_for_nord_stream }
+					}
+				}
+				every_country = {
+					limit = { OR = { original_tag = LIT original_tag = LAT original_tag = EST } }
+					add_opinion_modifier = { target = ROOT modifier = opposition_to_nord_stream }
+				}
+				every_country = {
+					limit = { OR = { original_tag = SLO original_tag = CZE } }
+					add_opinion_modifier = { target = ROOT modifier = opposition_to_nord_stream }
+				}
+				every_country = {
+					limit = { OR = { original_tag = UKR original_tag = POL } }
+					add_opinion_modifier = { target = ROOT modifier = great_opposition_to_nord_stream }
+				}
+			}
 		}
 		
 		ai_will_do = {
 			base = 10
+			modifier = {
+				GER = { has_completed_focus = GER_nord_stream }
+				add = 20
+			}
 		}
 	}
 	
@@ -6475,7 +6527,17 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_appease_foreign_powers
 		}
-		available = { }
+		available = { 
+			OR = {
+				has_opinion = { target = USA value > 49 }
+				has_opinion = { target = GER value > 49 }
+				has_opinion = { target = FRA value > 49 }
+			}
+			OR = {
+				NOT = { owns_state = 669 }
+				has_government = democratic
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -6488,6 +6550,30 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_discuss_lifting_sanctions"
+			if = {
+				limit = { owns_state = 669 }
+				every_country = {
+					limit = { 
+						has_country_flag = sanctions_against_SOV_flag 
+						NOT = { tag = UKR }
+					}
+					remove_opinion_modifier = { target = SOV modifier = harsh_sanctions }
+					remove_opinion_modifier = { target = SOV modifier = minor_sanctions }
+					remove_opinion_modifier = { target = SOV modifier = sanctions }
+				}
+			}
+			else_if = {
+				limit = { NOT = { owns_state = 669 } }
+				every_country = {
+					limit = { 
+						has_country_flag = sanctions_against_SOV_flag 
+						NOT = { tag = UKR }
+					}
+					remove_opinion_modifier = { target = SOV modifier = harsh_sanctions }
+					remove_opinion_modifier = { target = SOV modifier = minor_sanctions }
+					remove_opinion_modifier = { target = SOV modifier = sanctions }
+				}
+			}
 		}
 		
 		ai_will_do = {
