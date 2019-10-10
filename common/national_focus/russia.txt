@@ -6109,7 +6109,12 @@ focus_tree = {
 			focus = SOV_overcome_the_1998_crisis
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			custom_trigger_tooltip = {
+				check_variable = { treasury > 29.99 }
+				tooltip = 30_billion_currently_in_treasury_tt
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -6122,6 +6127,60 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_heavy_industry_investments"
+			random_owned_controlled_state = {
+				if = { 
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = arms_factory 
+						level = 1
+						instant_build = yes
+					} 
+ 
+				}
+			}
+			random_owned_controlled_state = {
+				if = { 
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = arms_factory 
+						level = 1
+						instant_build = yes
+					} 
+ 
+				}
+			}
+			random_owned_controlled_state = {
+				if = { 
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = arms_factory 
+						level = 1
+						instant_build = yes
+					} 
+ 
+				}
+			}
+			subtract_from_variable = { treasury = 30.0 }
+			custom_effect_tooltip = 30_billion_expense_tt
+			
 		}
 		ai_will_do = {
 			base = 10
@@ -6153,6 +6212,18 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attract_international_investors"
+			every_country = {
+				limit = {
+					NOT = { original_tag = SOV }
+					NOT = { has_war_with = SOV }
+					OR = {
+						is_puppet = no
+						is_puppet_of = SOV
+					}
+				}
+				add_opinion_modifier = { target = ROOT modifier = global_trade }
+				reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
+			}
 		}
 		ai_will_do = {
 			base = 10
@@ -6172,11 +6243,15 @@ focus_tree = {
 			focus = SOV_russian_federation_stabilization_fund
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			has_political_power > 25 
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
-		cancel = { }
+		cancel = { 
+			has_political_power < 25
+		}
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -6185,6 +6260,33 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_international_oil_price_agreements"
+			random_owned_controlled_state = {
+				limit = {
+					has_resources_amount = {
+						resource = oil
+						amount < 10
+						amount > 1
+					}
+				}
+				add_resource = {
+					type = oil 
+					amount = 5
+				}
+			}
+			random_owned_controlled_state = {
+				limit = {
+					has_resources_amount = {
+						resource = oil
+						amount < 10
+						amount > 1
+					}
+				}
+				add_resource = {
+					type = oil 
+					amount = 5
+				}
+			}
+			add_political_power = -50
 		}
 
 		ai_will_do = {
@@ -6206,7 +6308,13 @@ focus_tree = {
 			focus = SOV_economic_programs
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = { 
+			OR =  {
+				has_opinion_modifier = minor_sanctions
+				has_opinion_modifier = harsh_sanctions
+				has_opinion_modifier = sanctions
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -6219,6 +6327,14 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_resist_international_sanctions"
+			add_political_power = 50 
+			every_country = {
+				limit = { 
+					has_country_flag = sanctions_against_SOV_flag
+				}
+				add_opinion_modifier = { target = SOV modifier = SOV_introduced_sanctions_dialogue }
+				reverse_add_opinion_modifier = { target = SOV modifier = SOV_introduced_sanctions_dialogue }
+			}
 		}
 		
 		ai_will_do = {
@@ -6239,7 +6355,13 @@ focus_tree = {
 			focus = SOV_resist_international_sanctions
 		}
 		mutually_exclusive = { }
-		available = { }
+		available = {
+			OR =  {
+				has_opinion_modifier = minor_sanctions
+				has_opinion_modifier = harsh_sanctions
+				has_opinion_modifier = sanctions
+			}
+		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
@@ -6252,6 +6374,15 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_european_interaction_plan"
+			every_country = {
+				limit = { 
+					has_country_flag = sanctions_against_SOV_flag
+					has_idea = EU_member
+					is_in_europe = yes
+				}
+				add_opinion_modifier = { target = SOV modifier = SOV_european_interaction_plan }
+				reverse_add_opinion_modifier = { target = SOV modifier = SOV_european_interaction_plan }
+			}
 		}
 		
 		ai_will_do = {
@@ -6285,6 +6416,14 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_appease_foreign_powers"
+			every_country = {
+				limit = { 
+					has_country_flag = sanctions_against_SOV_flag
+					NOT = { is_in_europe = yes }
+				}
+				add_opinion_modifier = { target = SOV modifier = SOV_non_european_interaction_plan }
+				reverse_add_opinion_modifier = { target = SOV modifier = SOV_non_european_interaction_plan }
+			}
 		}
 		
 		ai_will_do = {
