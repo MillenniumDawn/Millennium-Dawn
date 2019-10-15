@@ -4,6 +4,8 @@ setup_init_factions = {
 
 	if = { 
 		limit = { has_idea = small_medium_business_owners }
+		intialize_internal_faction_dynamic_modifiers = yes
+		apply_small_medium_business_owner_effect_DYNMOD = yes
 		set_country_flag = active_small_medium_business_owners
 		if = {
 			limit = { flagcheck_small_medium_business_owners = yes }
@@ -5050,13 +5052,13 @@ display_opinion_IRGC = {
 # Require set flags to select the eligible types.
 decrease_internal_faction_opinion = {
 if = { 
-		limit = { 
-			current_active_small_medium_business_owners = yes
-		}
-		Display_small_medium_business_owners = yes
-		display_opinion_fall_small_medium_business_owners = yes
-		newline = yes #relative_change_neg_6 = yes
-		clr_country_flag = current_small_medium_business_owners
+	limit = { 
+		current_active_small_medium_business_owners = yes
+	}
+	Display_small_medium_business_owners = yes
+	display_opinion_fall_small_medium_business_owners = yes
+	apply_small_medium_business_owner_effect_DYNMOD = yes
+	clr_country_flag = current_small_medium_business_owners
 }	
 if = { 
 		limit = { 
@@ -8664,9 +8666,9 @@ display_opinion_rise_IRGC = {
 	}
 	if = {
 		limit = { 
-				has_country_flag = enthusiastic_IRGC 
-				NOT = { has_country_flag = opinion_freze }
-				}
+			has_country_flag = enthusiastic_IRGC 
+			NOT = { has_country_flag = opinion_freze }
+		}
 		add_political_power = 100
 		set_country_flag = opinion_freze #exit
 	}
@@ -8677,9 +8679,9 @@ display_opinion_rise_IRGC = {
 display_opinion_fall_IRGC = {
 	if = {
 		limit = { 
-				has_country_flag = enthusiastic_IRGC 
-				NOT = { has_country_flag = opinion_freze }
-				}
+			has_country_flag = enthusiastic_IRGC 
+			NOT = { has_country_flag = opinion_freze }
+		}
 		decrease_enthusiastic = yes #display
 		clr_country_flag = enthusiastic_IRGC
 		set_country_flag = positive_IRGC
@@ -8687,9 +8689,9 @@ display_opinion_fall_IRGC = {
 	}
 	if = {
 		limit = { 
-				has_country_flag = positive_IRGC 
-				NOT = { has_country_flag = opinion_freze }
-				}
+			has_country_flag = positive_IRGC 
+			NOT = { has_country_flag = opinion_freze }
+		}
 		decrease_positive = yes #display
 		clr_country_flag = positive_IRGC
 		set_country_flag = indifferent_IRGC
@@ -8727,3 +8729,68 @@ display_opinion_fall_IRGC = {
 }
 
 ######Apply Modifiers#####
+intialize_internal_faction_dynamic_modifiers = {
+	if = {
+		limit = { has_idea = small_medium_business_owners }
+		add_dynamic_modifier = {
+			modifier = small_medium_business_owners_dynamic_modifier
+		}
+	}	
+}
+apply_small_medium_business_owner_effect_DYNMOD = {
+	if = {
+		limit = { has_country_flag = hostile_small_medium_business_owners }
+		set_variable = { 
+			var = SMBO_production_speed_industrial_complex_factor
+			value = -0.10 
+		}
+		set_variable = { 
+			var = SMBO_stability_factor
+			value = -0.02 
+		}
+	}
+	if = {
+		limit = { has_country_flag = negative_small_medium_business_owners }
+		set_variable = {
+			var = SMBO_production_speed_industrial_complex_factor
+			value = -0.05 
+		}
+		set_variable = {
+			var = SMBO_stability_factor 
+			value = -0.01
+		}
+	}
+	if = {
+		limit = { has_country_flag = indifferent_small_medium_business_owners }
+		set_variable = {
+			var = SMBO_production_speed_industrial_complex_factor
+			value = 0.00
+		}
+		set_variable = {
+			var = SMBO_stability_factor 
+			value = 0.00
+		}
+	}
+	if = {
+		limit = { has_country_flag = positive_small_medium_business_owners }
+		set_variable = {
+			var = SMBO_production_speed_industrial_complex_factor
+			value = 0.05
+		}
+		set_variable = {
+			var = SMBO_stability_factor 
+			value = 0.01
+		}
+	}
+	if = {
+		limit = { has_country_flag = enthusiastic_small_medium_business_owners }
+		set_variable = {
+			var = SMBO_production_speed_industrial_complex_factor
+			value = 0.10
+		}
+		set_variable = {
+			var = SMBO_stability_factor 
+			value = 0.02
+		}
+	}
+}
