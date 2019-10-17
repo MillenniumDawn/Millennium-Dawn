@@ -39,10 +39,14 @@ setup_init_factions = {
 		set_country_flag = indifferent_defense_industry
 		}
 	}
-	if = { limit = { has_idea = maritime_industry }
+	if = { 
+		limit = { has_idea = maritime_industry }
 		set_country_flag = active_maritime_industry
-		if = { limit = { flagcheck_maritime_industry = yes }
-		set_country_flag = indifferent_maritime_industry
+		apply_maritime_industry_dynamic_effect_DYNMOD = yes
+		if = { 
+			limit = { flagcheck_maritime_industry = yes }
+			set_country_flag = indifferent_maritime_industry
+			apply_maritime_industry_dynamic_effect_DYNMOD = yes 
 		}
 	}
 	if = { 
@@ -55,10 +59,14 @@ setup_init_factions = {
 			set_country_flag = indifferent_international_bankers
 		}
 	}
-	if = { limit = { has_idea = oligarchs }
+	if = {
+		limit = { has_idea = oligarchs }
 		set_country_flag = active_oligarchs
-		if = { limit = { flagcheck_oligarchs = yes }
-		set_country_flag = indifferent_oligarchs
+		apply_oligarchs_dynamic_effect_DYNMOD = yes
+		if = {
+			limit = { flagcheck_oligarchs = yes }
+			set_country_flag = indifferent_oligarchs
+			apply_oligarchs_dynamic_effect_DYNMOD = yes
 		}
 	}
 	if = { limit = { has_idea = farmers }
@@ -5062,13 +5070,13 @@ decrease_internal_faction_opinion = {
 		clr_country_flag = current_small_medium_business_owners
 	}	
 	if = { 
-			limit = { 
-				current_active_the_bazaar = yes
-			}
-			Display_the_bazaar = yes
-			display_opinion_fall_the_bazaar = yes
-			newline = yes #relative_change_neg_6 = yes
-			clr_country_flag = current_the_bazaar
+		limit = { 
+			current_active_the_bazaar = yes
+		}
+		Display_the_bazaar = yes
+		display_opinion_fall_the_bazaar = yes
+		newline = yes #relative_change_neg_6 = yes
+		clr_country_flag = current_the_bazaar
 	}	
 	if = { 
 			limit = { 
@@ -5125,22 +5133,22 @@ decrease_internal_faction_opinion = {
 			clr_country_flag = current_chaebols
 	}
 	if = { 
-			limit = { 
-				current_active_oligarchs = yes
-			}
-			Display_oligarchs = yes
-			display_opinion_fall_oligarchs = yes
-			newline = yes #relative_change_neg_6 = yes
-			clr_country_flag = current_oligarchs
+		limit = { 
+			current_active_oligarchs = yes
+		}
+		Display_oligarchs = yes
+		display_opinion_fall_oligarchs = yes
+		apply_oligarchs_dynamic_effect_DYNMOD = yes
+		clr_country_flag = current_oligarchs
 	}
 	if = { 
-			limit = { 
-				current_active_maritime_industry = yes
-			}
-			Display_maritime_industry = yes
-			display_opinion_fall_maritime_industry = yes
-			newline = yes #relative_change_neg_6 = yes
-			clr_country_flag = current_maritime_industry
+		limit = { 
+			current_active_maritime_industry = yes
+		}
+		Display_maritime_industry = yes
+		display_opinion_fall_maritime_industry = yes
+		apply_maritime_industry_dynamic_effect_DYNMOD = yes
+		clr_country_flag = current_maritime_industry
 	}
 	if = { 
 			limit = { 
@@ -5400,22 +5408,22 @@ increase_internal_faction_opinion = {
 			clr_country_flag = current_chaebols
 	}
 	if = { 
-			limit = { 
-				current_active_oligarchs = yes
-			}
-			Display_oligarchs = yes
-			display_opinion_rise_oligarchs = yes
-			newline = yes #relative_change_pos_6 = yes
-			clr_country_flag = current_oligarchs
+		limit = { 
+			current_active_oligarchs = yes
+		}
+		Display_oligarchs = yes
+		display_opinion_rise_oligarchs = yes
+		apply_oligarchs_dynamic_effect_DYNMOD = yes
+		clr_country_flag = current_oligarchs
 	}
 	if = { 
-			limit = { 
-				current_active_maritime_industry = yes
-			}
-			Display_maritime_industry = yes
-			display_opinion_rise_maritime_industry = yes
-			newline = yes #relative_change_pos_6 = yes
-			clr_country_flag = current_maritime_industry
+		limit = { 
+			current_active_maritime_industry = yes
+		}
+		Display_maritime_industry = yes
+		display_opinion_rise_maritime_industry = yes
+		apply_maritime_industry_dynamic_effect_DYNMOD = yes
+		clr_country_flag = current_maritime_industry
 	}
 	if = { 
 			limit = { 
@@ -8756,6 +8764,12 @@ intialize_internal_faction_dynamic_modifiers = {
 			modifier = industrial_conglomerates_dynamic_modifier
 		}
 	}
+	if = {
+		limit = { has_idea = oligarchs }
+		add_dynamic_modifier = {
+			modifier = oligarchs_dynamic_modifier 
+		}
+	}
 }
 apply_small_medium_business_owner_effect_DYNMOD = {
 	log = "[GetDateText]: [Root.GetName]: scripted_effect dynamic modifiers Small & Medium Business Owners applied"
@@ -9135,4 +9149,281 @@ apply_industrial_conglomerates_dynamic_effect_DYNMOD = {
 		}
 	}
 	force_update_dynamic_modifier = yes
+}
+
+apply_oligarchs_dynamic_effect_DYNMOD = {
+	log = "[GetDateText]: [Root.GetName]: scripted_effect dynamic modifiers Oligarchs applied"
+	if = {
+		limit = { has_country_flag = hostile_oligarchs }
+		set_variable = { 
+			var = OLI_psic_factor_var
+			value = -0.06
+		}
+		set_variable = { 
+			var = OLI_local_resources_factor_var
+			value = -0.05
+		}
+		set_variable = { 
+			var = OLI_communism_acceptance_factor_var
+			value = -20
+		}
+		set_variable = { 
+			var = OLI_communism_drift_var
+			value = -0.02
+		}
+	}
+	if = {
+		limit = { has_country_flag = negative_oligarchs }
+		set_variable = { 
+			var = OLI_psic_factor_var
+			value = -0.03
+		}
+		set_variable = { 
+			var = OLI_local_resources_factor_var
+			value = -0.025
+		}
+		set_variable = { 
+			var = OLI_communism_acceptance_factor_var
+			value = -10
+		}
+		set_variable = { 
+			var = OLI_communism_drift_var
+			value = -0.01
+		}
+	}
+	if = {
+		limit = { has_country_flag = indifferent_oligarchs }
+		set_variable = { 
+			var = OLI_psic_factor_var
+			value = 0.00
+		}
+		set_variable = { 
+			var = OLI_local_resources_factor_var
+			value = 0.00
+		}
+		set_variable = { 
+			var = OLI_communism_acceptance_factor_var
+			value = 0
+		}
+		set_variable = { 
+			var = OLI_communism_drift_var
+			value = 0.00
+		}
+	}
+	if = {
+		limit = { has_country_flag = positive_oligarchs }
+		set_variable = { 
+			var = OLI_psic_factor_var
+			value = 0.03
+		}
+		set_variable = { 
+			var = OLI_local_resources_factor_var
+			value = 0.025
+		}
+		set_variable = { 
+			var = OLI_communism_acceptance_factor_var
+			value = 10
+		}
+		set_variable = { 
+			var = OLI_communism_drift_var
+			value = 0.01
+		}
+	}
+	if = {
+		limit = { has_country_flag = enthusiastic_oligarchs }
+		set_variable = { 
+			var = OLI_psic_factor_var
+			value = 0.06
+		}
+		set_variable = { 
+			var = OLI_local_resources_factor_var
+			value = 0.05
+		}
+		set_variable = { 
+			var = OLI_communism_acceptance_factor_var
+			value = 20
+		}
+		set_variable = { 
+			var = OLI_communism_drift_var
+			value = 0.02
+		}
+	}
+}
+
+apply_maritime_industry_dynamic_effect_DYNMOD = {
+	log = "[GetDateText]: [Root.GetName]: scripted_effect dynamic modifiers Maritime Industry applied"
+	if = {
+		limit = { has_country_flag = hostile_maritime_industry }
+		set_variable = { 
+			var = MRI_dockyard_factor_var
+			value = -0.20
+		}
+		set_variable = { 
+			var = MRI_psvb_factor_var
+			value = -0.20
+		}
+		set_variable = { 
+			var = MRI_industrial_capacity_dockyard_var
+			value = -0.10
+		}
+		set_variable = { 
+			var = MRI_navy_max_range_factor_var
+			value = -0.20
+		}
+	}
+	if = {
+		limit = { has_country_flag = negative_maritime_industry }
+		set_variable = { 
+			var = MRI_dockyard_factor_var
+			value = -0.10
+		}
+		set_variable = { 
+			var = MRI_psvb_factor_var
+			value = -0.10
+		}
+		set_variable = { 
+			var = MRI_industrial_capacity_dockyard_var
+			value = -0.05
+		}
+		set_variable = { 
+			var = MRI_navy_max_range_factor_var
+			value = -0.10
+		}
+	}
+	if = {
+		limit = { has_country_flag = indifferent_maritime_industry }
+		set_variable = { 
+			var = MRI_dockyard_factor_var
+			value = 0.00
+		}
+		set_variable = { 
+			var = MRI_psvb_factor_var
+			value = 0.00
+		}
+		set_variable = { 
+			var = MRI_industrial_capacity_dockyard_var
+			value = 0.00
+		}
+		set_variable = { 
+			var = MRI_navy_max_range_factor_var
+			value = 0.00
+		}
+	}
+	if = {
+		limit = { has_country_flag = positive_maritime_industry }
+		set_variable = { 
+			var = MRI_dockyard_factor_var
+			value = 0.10
+		}
+		set_variable = { 
+			var = MRI_psvb_factor_var
+			value = 0.10
+		}
+		set_variable = { 
+			var = MRI_industrial_capacity_dockyard_var
+			value = 0.05
+		}
+		set_variable = { 
+			var = MRI_navy_max_range_factor_var
+			value = 0.10
+		}
+	}
+	if = {
+		limit = { has_country_flag = enthusiastic_maritime_industry }
+		set_variable = { 
+			var = MRI_dockyard_factor_var
+			value = 0.20
+		}
+		set_variable = { 
+			var = MRI_psvb_factor_var
+			value = 0.20
+		}
+		set_variable = { 
+			var = MRI_industrial_capacity_dockyard_var
+			value = 0.10
+		}
+		set_variable = { 
+			var = MRI_navy_max_range_factor_var
+			value = 0.20
+		}
+	}
+}
+
+apply_defense_industry_dynamic_effect_DYNMOD = {
+	log = "[GetDateText]: [Root.GetName]: scripted_effect dynamic modifiers Defense Industry applied"
+	if = {
+		limit = { has_country_flag = hostile_defense_industry }
+		set_variable = { 
+			var = DEF_military_factory_speed_factor_var
+			value = -0.10
+		}
+		set_variable = { 
+			var = DEF_factory_eficiency_gain_factor_var
+			value = -0.15
+		}
+		set_variable = { 
+			var = DEF_factory_base_efficincy_facotr_var
+			value = -0.15
+		}
+	}
+	if = {
+		limit = { has_country_flag = negative_defense_industry }
+		set_variable = { 
+			var = DEF_military_factory_speed_factor_var
+			value = -0.05
+		}
+		set_variable = { 
+			var = DEF_factory_eficiency_gain_factor_var
+			value = -0.075
+		}
+		set_variable = { 
+			var = DEF_factory_base_efficincy_facotr_var
+			value = -0.075
+		}
+	}
+	if = {
+		limit = { has_country_flag = indifferent_defense_industry }
+		set_variable = { 
+			var = DEF_military_factory_speed_factor_var
+			value = 0.00
+		}
+		set_variable = { 
+			var = DEF_factory_eficiency_gain_factor_var
+			value = 0.00
+		}
+		set_variable = { 
+			var = DEF_factory_base_efficincy_facotr_var
+			value = 0.00
+		}
+	}
+	if = {
+		limit = { has_country_flag = positive_defense_industry }
+		set_variable = { 
+			var = DEF_military_factory_speed_factor_var
+			value = 0.05
+		}
+		set_variable = { 
+			var = DEF_factory_eficiency_gain_factor_var
+			value = 0.075
+		}
+		set_variable = { 
+			var = DEF_factory_base_efficincy_facotr_var
+			value = 0.075
+		}
+	}
+	if = {
+		limit = { has_country_flag = enthusiastic_defense_industry }
+		set_variable = { 
+			var = DEF_military_factory_speed_factor_var
+			value = 0.10
+		}
+		set_variable = { 
+			var = DEF_factory_eficiency_gain_factor_var
+			value = 0.15
+		}
+		set_variable = { 
+			var = DEF_factory_base_efficincy_facotr_var
+			value = 0.15
+		}
+	}
 }
