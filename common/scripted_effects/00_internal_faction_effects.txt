@@ -33,10 +33,14 @@ setup_init_factions = {
 			apply_fossil_fuel_industry_dynamic_effect_DYNMOD = yes
 		}
 	}
-	if = { limit = { has_idea = defense_industry }
+	if = { 
+		limit = { has_idea = defense_industry }
 		set_country_flag = active_defense_industry
-		if = { limit = { flagcheck_defense_industry = yes }
-		set_country_flag = indifferent_defense_industry
+		apply_defense_industry_dynamic_effect_DYNMOD = yes 
+		if = { 
+			limit = { flagcheck_defense_industry = yes }
+			set_country_flag = indifferent_defense_industry
+			apply_defense_industry_dynamic_effect_DYNMOD = yes = yes
 		}
 	}
 	if = { 
@@ -117,10 +121,14 @@ setup_init_factions = {
 		set_country_flag = indifferent_the_priesthood
 		}
 	}
-	if = { limit = { has_idea = the_military }
+	if = { 
+		limit = { has_idea = the_military }
 		set_country_flag = active_the_military
-		if = { limit = { flagcheck_the_military = yes }
-		set_country_flag = indifferent_the_military
+		apply_the_military_dynamic_effect_DYNMOD = yes
+		if = { 
+			limit = { flagcheck_the_military = yes }
+			set_country_flag = indifferent_the_military
+			apply_the_military_dynamic_effect_DYNMOD = yes 
 		}
 	}
 	if = { limit = { has_idea = intelligence_community }
@@ -5151,13 +5159,13 @@ decrease_internal_faction_opinion = {
 		clr_country_flag = current_maritime_industry
 	}
 	if = { 
-			limit = { 
-				current_active_defense_industry = yes
-			}
-			Display_defense_industry = yes
-			display_opinion_fall_defense_industry = yes
-			newline = yes #relative_change_neg_6 = yes
-			clr_country_flag = current_defense_industry
+		limit = { 
+			current_active_defense_industry = yes
+		}
+		Display_defense_industry = yes
+		display_opinion_fall_defense_industry = yes
+		apply_defense_industry_dynamic_effect_DYNMOD = yes
+		clr_country_flag = current_defense_industry
 	}
 	if = { 
 			limit = { 
@@ -5165,7 +5173,7 @@ decrease_internal_faction_opinion = {
 			}
 			Display_the_military = yes
 			display_opinion_fall_the_military = yes
-			newline = yes #relative_change_neg_6 = yes
+			apply_the_military_dynamic_effect_DYNMOD = yes 
 			clr_country_flag = current_the_military
 	}
 	if = { 
@@ -5426,22 +5434,22 @@ increase_internal_faction_opinion = {
 		clr_country_flag = current_maritime_industry
 	}
 	if = { 
-			limit = { 
-				current_active_defense_industry = yes
-			}
-			Display_defense_industry = yes
-			display_opinion_rise_defense_industry = yes
-			newline = yes #relative_change_pos_6 = yes
-			clr_country_flag = current_defense_industry
+		limit = { 
+			current_active_defense_industry = yes
+		}
+		Display_defense_industry = yes
+		display_opinion_rise_defense_industry = yes
+		apply_defense_industry_dynamic_effect_DYNMOD = yes 
+		clr_country_flag = current_defense_industry
 	}
 	if = { 
-			limit = { 
-				current_active_the_military = yes
-			}
-			Display_the_military = yes
-			display_opinion_rise_the_military = yes
-			newline = yes #relative_change_pos_6 = yes
-			clr_country_flag = current_the_military
+		limit = { 
+			current_active_the_military = yes
+		}
+		Display_the_military = yes
+		display_opinion_rise_the_military = yes
+		apply_the_military_dynamic_effect_DYNMOD = yes
+		clr_country_flag = current_the_military
 	}
 	if = { 
 			limit = { 
@@ -8770,6 +8778,25 @@ intialize_internal_faction_dynamic_modifiers = {
 			modifier = oligarchs_dynamic_modifier 
 		}
 	}
+	if = { 
+		limit = { has_idea = maritime_industry }
+		add_dynamic_modifier = {
+			modifier = maritime_industry_dynamic_modifier
+		}
+	}
+	if = { 
+		limit = { has_idea = defense_industry }
+		add_dynamic_modifier = {
+			modifier = defense_industry_dynamic_modifier
+		}
+	}
+	if = { 
+		limit = { has_idea = the_military }
+		add_dynamic_modifier = {
+			modifier = the_military_dynamic_modifier
+		}
+	}
+	
 }
 apply_small_medium_business_owner_effect_DYNMOD = {
 	log = "[GetDateText]: [Root.GetName]: scripted_effect dynamic modifiers Small & Medium Business Owners applied"
@@ -9424,6 +9451,105 @@ apply_defense_industry_dynamic_effect_DYNMOD = {
 		set_variable = { 
 			var = DEF_factory_base_efficincy_facotr_var
 			value = 0.15
+		}
+	}
+}
+
+apply_the_military_dynamic_effect_DYNMOD = {
+	log = "[GetDateText]: [Root.GetName]: scripted_effect dynamic modifiers The Military applied"
+	if = {
+		limit = { has_country_flag = hostile_the_military }
+		set_variable = { 
+			var = MILI_army_org_factor_var
+			value = -0.04
+		}
+		set_variable = { 
+			var = MILI_army_morale_factor_var
+			value = -0.04
+		}
+		set_variable = { 
+			var = MILI_training_time_factor_var
+			value = 0.25
+		}
+		set_variable = { 
+			var = MILI_air_base_production_factor_var
+			value = -0.25
+		}
+	}
+	if = {
+		limit = { has_country_flag = negative_the_military }
+		set_variable = { 
+			var = MILI_army_org_factor_var
+			value = -0.02
+		}
+		set_variable = { 
+			var = MILI_army_morale_factor_var
+			value = -0.02
+		}
+		set_variable = { 
+			var = MILI_training_time_factor_var
+			value = 0.125
+		}
+		set_variable = { 
+			var = MILI_air_base_production_factor_var
+			value = -0.125
+		}
+	}
+	if = {
+		limit = { has_country_flag = indifferent_the_military }
+		set_variable = { 
+			var = MILI_army_org_factor_var
+			value = 0.00
+		}
+		set_variable = { 
+			var = MILI_army_morale_factor_var
+			value = 0.00
+		}
+		set_variable = { 
+			var = MILI_training_time_factor_var
+			value = 0.00
+		}
+		set_variable = { 
+			var = MILI_air_base_production_factor_var
+			value = 0.00
+		}
+	}
+	if = {
+		limit = { has_country_flag = positive_the_military }
+		set_variable = { 
+			var = MILI_army_org_factor_var
+			value = 0.02
+		}
+		set_variable = { 
+			var = MILI_army_morale_factor_var
+			value = 0.02
+		}
+		set_variable = { 
+			var = MILI_training_time_factor_var
+			value = -0.125
+		}
+		set_variable = { 
+			var = MILI_air_base_production_factor_var
+			value = -0.125
+		}
+	}
+	if = {
+		limit = { has_country_flag = enthusiastic_the_military }
+		set_variable = { 
+			var = MILI_army_org_factor_var
+			value = 0.04
+		}
+		set_variable = { 
+			var = MILI_army_morale_factor_var
+			value = 0.04
+		}
+		set_variable = { 
+			var = MILI_training_time_factor_var
+			value = -0.25
+		}
+		set_variable = { 
+			var = MILI_air_base_production_factor_var
+			value = 0.25
 		}
 	}
 }
