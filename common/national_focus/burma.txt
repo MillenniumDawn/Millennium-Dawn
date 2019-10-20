@@ -1046,25 +1046,6 @@ focus_tree = {
 		
 		available = {
 			NOT = { is_in_faction_with = CHI }
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				BRM = {
-						set_temp_variable = { temp_idx = -1 }
-						any_of = {
-							array = influence_array
-							value = v
-							index = i
-							if = {
-								limit = { var:v = { tag = CHI } }
-								set_temp_variable = { temp_idx = i }
-								always = yes
-							}
-							else = { always = no }
-						}
-					check_variable = { temp_idx > -1 }
-					check_variable = { influence_array_calc^temp_idx < 0.20 }
-				}
-			}
 		}
 		
 		completion_reward = {
@@ -1304,9 +1285,23 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_join_the_shanghai_pact"
-			CHI = {
-				create_faction = "Shanghai Pact"
-				add_to_faction = BRM
+			if = {
+				limit = { CHI = { is_in_faction = no } }
+				CHI = {
+					create_faction = "The Southeast Asian Security Organization"
+					add_to_faction = BRM
+				}
+			}
+			else_if = {
+				limit = { 
+					CHI = { 
+						is_in_faction = yes 
+						is_faction_leader = yes
+					} 
+				}
+				CHI = {
+					add_to_faction = BRM
+				}
 			}
 			BRM = {
 					hidden_effect = {
@@ -1542,34 +1537,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_target_the_corruption_of_military_enterprises"
-			if = {
-				limit = { has_idea = rampant_corruption }
-				swap_ideas = { remove_idea = rampant_corruption add_idea = unrestrained_corruption }
-			}
-			else_if = {
-				limit = { has_idea = unrestrained_corruption }
-				swap_ideas = { remove_idea = unrestrained_corruption add_idea = systematic_corruption }
-			}
-			else_if = {
-				limit = { has_idea = systematic_corruption }
-				swap_ideas = { remove_idea = systematic_corruption add_idea = widespread_corruption }
-			}
-			else_if = {
-				limit = { has_idea = widespread_corruption }
-				swap_ideas = { remove_idea = widespread_corruption add_idea = medium_corruption }
-			}
-			else_if = {
-				limit = { has_idea = medium_corruption }
-				swap_ideas = { remove_idea = medium_corruption add_idea = modest_corruption }
-			}
-			else_if = {
-				limit = { has_idea = modest_corruption }
-				swap_ideas = { remove_idea = modest_corruption add_idea = slight_corruption }
-			}
-			else_if = {
-				limit = { has_idea = slight_corruption }
-				swap_ideas = { remove_idea = slight_corruption add_idea = negligible_corruption }
-			}
+			decrease_corruption = yes
 			
 				if = {
 					limit = { has_idea = the_military }
@@ -1656,10 +1624,13 @@ focus_tree = {
 		available = {
 			has_civil_war = no
 			has_elections = yes
-			custom_trigger_tooltip = {
-				tooltip = 11_monks_enthusiastic_tt
-				hidden_trigger = {
-					has_country_flag = enthusiastic_the_priesthood
+			if = {
+				limit = { has_idea = the_priesthood }
+				custom_trigger_tooltip = {
+					tooltip = 11_monks_enthusiastic_tt
+					hidden_trigger = {
+						has_country_flag = enthusiastic_the_priesthood
+					}
 				}
 			}
 		}
@@ -2386,38 +2357,7 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			if = {
-				limit = { has_idea = rampant_corruption }
-				swap_ideas = { remove_idea = rampant_corruption add_idea = crippling_corruption }
-			}
-			else_if = {
-				limit = { has_idea = unrestrained_corruption }
-				swap_ideas = { remove_idea = unrestrained_corruption add_idea = rampant_corruption }
-			}
-			else_if = {
-				limit = { has_idea = systematic_corruption }
-				swap_ideas = { remove_idea = systematic_corruption add_idea = unrestrained_corruption }
-			}
-			else_if = {
-				limit = { has_idea = widespread_corruption }
-				swap_ideas = { remove_idea = widespread_corruption add_idea = systematic_corruption }
-			}
-			else_if = {
-				limit = { has_idea = medium_corruption }
-				swap_ideas = { remove_idea = medium_corruption add_idea = widespread_corruption }
-			}
-			else_if = {
-				limit = { has_idea = modest_corruption }
-				swap_ideas = { remove_idea = modest_corruption add_idea = medium_corruption }
-			}
-			else_if = {
-				limit = { has_idea = slight_corruption }
-				swap_ideas = { remove_idea = slight_corruption add_idea = modest_corruption }
-			}
-			else_if = {
-				limit = { has_idea = negligible_corruption }
-				swap_ideas = { remove_idea = negligible_corruption add_idea = slight_corruption }
-			}
+			increase_corruption = yes
 		}
 		
 		ai_will_do = {
@@ -2523,6 +2463,9 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_karen"
 			create_wargoal = { type = annex_everything target = KAR }
 			add_timed_idea = { idea = The_Anti_Karen_Offensive days = 365 }
+			hidden_effect = {	
+				SIA = { give_military_access = KAR }
+			}
 		}
 		
 		ai_will_do = {
@@ -2555,6 +2498,9 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_kachin"
 			create_wargoal = { type = annex_everything target = KAC }
 			add_timed_idea = { idea = The_Anti_Kachin_Offensive days = 365 }
+			hidden_effect = {	
+				CHI = { give_military_access = KAC }
+			}
 		}
 		
 		ai_will_do = {
@@ -2587,6 +2533,9 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_shan"
 			create_wargoal = { type = annex_everything target = SHN }
 			add_timed_idea = { idea = The_Anti_Shan_Offensive days = 365 }
+			hidden_effect = {	
+				SIA = { give_military_access = SHN }
+			}
 		}
 		
 		ai_will_do = {
@@ -2651,7 +2600,11 @@ focus_tree = {
 					target = BRM
 					modifier = attacked_UWSA
 				}
-			}			
+			}	
+			hidden_effect = {	
+				SIA = { give_military_access = WAA }
+				CHI = { give_military_access = WAA }
+			}
 		}
 		
 		ai_will_do = {
@@ -3077,19 +3030,25 @@ focus_tree = {
 		}
 		
 		prerequisite = {
-		focus = BRM_secure_chinese_assistance_in_crushing_dissent
+		focus = BRM_secure_chinese_assistance_in_crushing_dissent focus = BRM_ultimatum_to_china
 		}
 		
 		available = {
 			has_civil_war = no
 			nationalist > 0.5
 			has_stability > 0.4
-			custom_trigger_tooltip = {
-				tooltip = 11_monks_indifferent_tt
-				hidden_trigger = {
-					NOT = { 
-						has_country_flag = hostile_the_priesthood
-						has_country_flag = negative_the_priesthood
+			if = {
+				limit = { has_idea = the_priesthood }
+				if = {
+					limit = { has_idea = the_priesthood }
+					custom_trigger_tooltip = {
+						tooltip = 11_monks_indifferent_tt
+						hidden_trigger = {
+							NOT = { 
+								has_country_flag = hostile_the_priesthood
+								has_country_flag = negative_the_priesthood
+							}
+						}
 					}
 				}
 			}
@@ -4317,7 +4276,7 @@ focus_tree = {
 	
 	focus = {
 		id = BRM_singaporean_armour
-		icon = tanks3
+		icon = tanks4
 		x = 35
 		y = 4
 		cost = 10
