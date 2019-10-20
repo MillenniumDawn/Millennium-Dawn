@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import os, sys, fnmatch, re
-import time
+import time, requests
 
 startTime = time.time()
 
 __version__ = 1.0
 
-def check_basic_style(filepath):
+def check_basic_style(filepath, bad_count, message):
 
     fixedErrors = 0
     with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
@@ -81,18 +81,20 @@ def check_basic_style(filepath):
         else:
             if openBraces[0] < 0:
                 print("ERROR: A possible missing curly brace }} in file {} {{line {}}}".format(filepath, lineNum))
-                fixedErrors += 1
+                message += "ERROR: A possible missing curly brace }} in file {} {{line {}}}\n".format(filepath, lineNum)
+                bad_count += 1
             elif openBraces[0] > 0:
                 print("ERROR: A possible missing curly brace {{ in file {} has no matching closing bracket".format(filepath, lineNum))
-                fixedErrors += 1
+                message += "ERROR: A possible missing curly brace {{ in file {} has no matching closing bracket\n".format(filepath, lineNum)
+                bad_count += 1
     file.close()
 
-    return fixedErrors
+    return bad_count, message
 
 
 def main():
     print("Validating Basic Style - Secondary Check")
-
+    message = "Validating Basic Style - Secondary Check\n"
     files_list = []
     bad_count = 0
   
@@ -116,15 +118,41 @@ def main():
             files_list.append(os.path.join(root, filename))
 
     for filename in files_list:
-        bad_count = bad_count + check_basic_style(filename)
+        bad_count, message = check_basic_style(filename, bad_count, message)
 
     print("------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count))
+    message +="------\nChecked {0} files\nErrors detected: {1}\n".format(len(files_list), bad_count)
     if (bad_count == 0):
         print("File validation PASSED")
+        message +="File validation PASSED\n"
     else:
-        print("File validation FAILED")
+        message +="File validation FAILED\n"
 
     print ('The script took {0} second!'.format(time.time() - startTime))
+
+    try:
+        projectId = os.environ['CI_PROJECT_ID'];
+        privateToken = privateToken = sys.argv[1]
+        headers = {'PRIVATE-TOKEN': privateToken}
+        payload = {'body': message}
+
+        if "CI_MERGE_REQUEST_IID" in os.environ:
+            mergeRequestId = os.environ['CI_MERGE_REQUEST_IID'];
+            r = requests.post(
+                "https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions",
+                data=payload, headers=headers)
+            print("Posted results to merge request")
+
+        else:
+            commitID = os.environ['CI_COMMIT_SHA'];
+            r = requests.post(
+                "https://gitlab.com/api/v4/projects/" + projectId + "/commits/" + commitID + "/discussions",
+                data=payload, headers=headers)
+            print("Posted results to commit")
+
+
+    except:
+        print("Couldn't post results to gitlab")
     
     return bad_count
     
