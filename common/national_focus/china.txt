@@ -3282,6 +3282,10 @@ focus_tree = {
 			CHI_open_nation_level_up = yes
 			custom_effect_tooltip = CHI_unchained_tt
 			hidden_effect = {
+				add_popularity = {
+					ideology = communism
+					popularity = 0.1
+				}
 				add_to_variable = {
 					var = party_pop_array^7
 					value = 0.05
@@ -3289,6 +3293,10 @@ focus_tree = {
 				add_to_variable = {
 					var = party_pop_array^5
 					value = 0.05
+				}
+				add_popularity = {
+					ideology = neutrality
+					popularity = 0.05
 				}
 				add_to_variable = {
 					var = party_pop_array^18
@@ -7424,6 +7432,10 @@ focus_tree = {
 		completion_reward = {
 			custom_effect_tooltip = CHI_communism_5_tt
 			hidden_effect = {
+				add_popularity = {
+					ideology = communism
+					popularity = 0.05
+				}
 				add_to_variable = {
 					var = party_pop_array^4
 					value = 0.05
@@ -7716,12 +7728,24 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			add_stability = 0.05
+			custom_effect_tooltip = CHI_communism_15_tt
+			hidden_effect = {
+				add_popularity = {
+					ideology = communism
+					popularity = 0.15
+				}
+				add_to_variable = {
+					var = party_pop_array^4
+					value = 0.15
+				}
+				recalculate_party = yes
+			}
 			swap_ideas = {
 				remove_idea = Socialist_Market_Economy_planned_2
 				add_idea = Planned_Economy
 			}
 			increase_centralization = yes
-			add_stability = 0.05
 			log = "[GetDateText]: [This.GetName]: focus CHI_Revolution_in_One_Country executed"
 		}
 		
@@ -7781,12 +7805,51 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			add_war_support = 0.05
+			every_other_country = {
+				limit = {
+					check_variable = { party_pop_array^4 > 0.05 }
+				}
+				custom_effect_tooltip = CHI_small_influence_10_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = CHI.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = CHI_fifth_international_5_tt
+				hidden_effect = {
+					add_popularity = {
+						ideology = communism
+						popularity = 0.05
+					}
+					add_to_variable = {
+						var = party_pop_array^4
+						value = 0.05
+					}
+					recalculate_party = yes
+				}
+			}
 			swap_ideas = {
 				remove_idea = Socialist_Market_Economy_planned_2
 				add_idea = Planned_Economy
 			}
 			increase_centralization = yes
-			add_war_support = 0.05
 			log = "[GetDateText]: [This.GetName]: focus CHI_Form_the_Fifth_International executed"
 		}
 		
@@ -8001,7 +8064,157 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			random_owned_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Chinese_Megaprojects executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_North_South_Water_Transfer
+		icon = construction
+		
+		x = 0
+		y = 1
+		relative_position_id = CHI_Chinese_Megaprojects
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Chinese_Megaprojects }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = water_shortages_3
+				add_idea = water_shortages_2
+			}
+			log = "[GetDateText]: [This.GetName]: focus CHI_North_South_Water_Transfer executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Ecological_Preservation_Movement
+		icon = sustainable_development
+		
+		x = -1
+		y = 2
+		relative_position_id = CHI_Chinese_Megaprojects
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_North_South_Water_Transfer }
+		mutually_exclusive = { focus = CHI_Yarlung_Tsangpo_Diversion_Project }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_stability = 0.02
+			log = "[GetDateText]: [This.GetName]: focus CHI_Ecological_Preservation_Movement executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Yarlung_Tsangpo_Diversion_Project
+		icon = construction3
+		
+		x = 1
+		y = 2
+		relative_position_id = CHI_Chinese_Megaprojects
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_North_South_Water_Transfer }
+		mutually_exclusive = { focus = CHI_Ecological_Preservation_Movement }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = water_shortages_2
+				add_idea = water_shortages_1
+			}
+			log = "[GetDateText]: [This.GetName]: focus CHI_Yarlung_Tsangpo_Diversion_Project executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Water_Conservation_Projects
+		icon = concessions
+		
+		x = 0
+		y = 3
+		relative_position_id = CHI_Chinese_Megaprojects
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Yarlung_Tsangpo_Diversion_Project focus = CHI_Ecological_Preservation_Movement }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			if = {
+				limit = { has_idea = water_shortages_1 }
+				remove_ideas = water_shortages_1
+			}
+			else_if = {
+				swap_ideas = {
+					remove_idea = water_shortages_2
+					add_idea = water_shortages_1
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus CHI_Water_Conservation_Projects executed"
 		}
 		
 		ai_will_do = {
