@@ -41,11 +41,15 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_united_states_army"
-			army_experience = 5
+			army_experience = 25
 		}
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				has_war = no 
+				factor = 5 
+			}
 		}
 	}
 	
@@ -66,21 +70,56 @@ focus_tree = {
 		mutually_exclusive = { }
 		
 		available = {
-			#OR = {
-			#	NOT = { has_government = communism }
-			#	has_war = yes
-			#}
+			OR = {
+				AND = {
+					custom_trigger_tooltip = { 
+						NOT = { is_in_array = { ruling_party = 4 } }
+						tooltip = USA_communist_is_not_in_power_TT
+					}
+					custom_trigger_tooltip = {
+						check_variable = { treasury > 49.99 }
+						tooltip = 50_billion_currently_in_treasury_tt
+					}
+					#NOT = { has_country_leader { name = "Donald Trump" } }
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
 		}
 		
-		bypass = { }
+		bypass = {
+			NOT = { has_idea = usa_bad_procurment }
+		}
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_support_small_arms_companies"
-			add_ideas = USA_gun_funding
+			if = {
+				limit = { has_idea = usa_bad_procurment }
+				swap_ideas = {
+					remove_idea = usa_bad_procurment
+					add_idea = USA_gun_funding
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = enthusiastic_defense_industry } }
+				if = {
+					limit = { has_idea = defense_industry }
+					visually_display_opinion_rise_defense_industry = yes
+					set_country_flag = current_defense_industry
+					increase_internal_faction_opinion = yes
+				}
+			}
+			subtract_from_variable = { treasury = 50.0 }
+			custom_effect_tooltip = 50_billion_expense_tt
 		}
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				check_variable = { treasury > 9.99 }
+				factor = 30 
+			}
 		}
 	}
 	
@@ -146,7 +185,12 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			custom_trigger_tooltip = { 
+				NOT = { is_in_array = { ruling_party = 4 } }
+				tooltip = USA_communist_is_not_in_power_TT
+			}
+		}
 		
 		bypass = {
 			has_tech = infantry_weapons
@@ -317,7 +361,16 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_small_arms_production_focus"
 			swap_ideas = {
 				remove_idea = USA_gun_funding
-				add_idea = idea_focus_infantry_production
+				add_idea = USA_gun_funding_2
+			}
+			if = {
+				limit = { NOT = { has_country_flag = enthusiastic_defense_industry } }
+				if = {
+					limit = { has_idea = defense_industry }
+					visually_display_opinion_rise_defense_industry = yes
+					set_country_flag = current_defense_industry
+					increase_internal_faction_opinion = yes
+				}
 			}
 		}
 		
@@ -345,7 +398,10 @@ focus_tree = {
 		available = {
 			OR = {
 				has_war = yes
-				has_government = nationalist
+				custom_trigger_tooltip = { 
+					is_in_array = { ruling_party = 20 }
+					tooltip = USA_right_wing_populist_is_in_power_TT
+				}
 				threat > 0.2
 			}
 		}
@@ -514,7 +570,14 @@ focus_tree = {
 		mutually_exclusive = { }
 		
 		available = {
-			has_defensive_war = yes
+			OR = {
+				has_defensive_war = yes
+				custom_trigger_tooltip = { 
+					is_in_array = { ruling_party = 20 }
+					tooltip = USA_right_wing_populist_is_in_power_TT
+				}
+				has_war_support > 0.55
+			}
 		}
 		
 		bypass = { }
@@ -656,6 +719,10 @@ focus_tree = {
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				has_war = no 
+				factor = 5 
+			}
 		}
 	}
 	
@@ -933,7 +1000,6 @@ focus_tree = {
 			has_tech = diesel_attack_submarine_5
 			has_tech = diesel_attack_submarine_6
 			has_tech = diesel_attack_submarine_7
-			
 		}
 		
 		completion_reward = {
@@ -1357,6 +1423,10 @@ focus_tree = {
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				has_war = no 
+				factor = 5 
+			}
 		}
 	}
 	
@@ -1408,14 +1478,25 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			OR = {
+				custom_trigger_tooltip = { 
+					check_variable = { treasury > 9.99 }
+					tooltip = 10_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}	
+			}
+		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_air_force_production"
 			add_ideas = fighter_production_bonus
-			add_ideas = idea_focus_generic_bomber_focus
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -1450,6 +1531,15 @@ focus_tree = {
 				controls_state = 773 #Virgina
 				controls_state = 790 #North Carolina
 				controls_state = 791 #South Carolina
+			}
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 49.99 }
+					tooltip = 50_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
 			}
 		}
 		
@@ -1646,6 +1736,8 @@ focus_tree = {
 					}
 				}
 			}
+			subtract_from_variable = { treasury = 50.0 }
+			custom_effect_tooltip = 50_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -1843,6 +1935,15 @@ focus_tree = {
 				controls_state = 828 #Baja California
 				controls_state = 817 #Hawaii
 			}
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 49.99 }
+					tooltip = 50_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes 
+				}
+			}
 		}
 		
 		bypass = { }
@@ -1996,6 +2097,8 @@ focus_tree = {
 					}
 				}
 			}
+			subtract_from_variable = { treasury = 50.0 }
+			custom_effect_tooltip = 50_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -2338,11 +2441,15 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_the_american_economy"
-			add_stability = 0.04
+			add_stability = 0.05
 		}
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				has_war = no 
+				add = 10 
+			}
 		}
 	}
 	
@@ -2365,8 +2472,14 @@ focus_tree = {
 		}
 		
 		available = {
-			NOT = { has_government = nationalist }
-			NOT = { has_government = communism }
+			custom_trigger_tooltip = {
+				NOT = { is_in_array = { ruling_party = 20 } }
+				tooltip = USA_right_wing_populist_is_not_in_power_TT
+			}
+			custom_trigger_tooltip = {
+				NOT = { is_in_array = { ruling_party = 4 } } 
+				tooltip = USA_communist_is_not_in_power_TT
+			}
 		}
 		
 		bypass = { }
@@ -2374,7 +2487,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_deregulation"
 			add_ideas = USA_economic_deregulation
-			add_stability = 0.02
+			add_political_power = 75
+			add_stability = -0.01
 		}
 		
 		ai_will_do = {
@@ -2410,6 +2524,18 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_regulation"
 			add_ideas = USA_economic_regulation
 			add_political_power = 50
+			if = {
+				limit = { has_idea = wall_street }
+				visually_display_opinion_fall_wall_street = yes
+				set_country_flag = current_wall_street
+				decrease_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = defense_industry }
+				visually_display_opinion_fall_defense_industry = yes
+				set_country_flag = current_oligarchs
+				decrease_internal_faction_opinion = yes
+			}
 		}
 		
 		ai_will_do = {
@@ -2439,9 +2565,18 @@ focus_tree = {
 		mutually_exclusive = { }
 		
 		available = { 
-			OR = {
+			AND = {
 				controls_state = 798 #Arkansas
 				controls_state = 794 #Alabama
+			}
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 4.99 }
+					tooltip = 5_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes 
+				}
 			}
 		}
 		
@@ -2449,18 +2584,26 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_aluminium_and_steel_production"
-			798 = {	
-				add_resource = {
-					type = aluminium
-					amount = 4
+			if = { #Arkansas
+				limit = { controls_state = 798 }
+				798 = {	
+					add_resource = {
+						type = aluminium
+						amount = 4
+					}
 				}
 			}
-			794 = {
-				add_resource = {
-					type = aluminium
-					amount = 1
+			if = { #Alabama
+				limit = { controls_state = 794 }
+				794 = {
+					add_resource = {
+						type = aluminium
+						amount = 1
+					}
 				}
 			}
+			subtract_from_variable = { treasury = 5.0 }
+			custom_effect_tooltip = 5_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -2484,12 +2627,15 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			has_political_power > 100 
+		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_reduce_market_regulations"
+			add_political_power = -100
 			add_ideas = USA_resource_investment_program1
 		}
 		
@@ -2521,7 +2667,16 @@ focus_tree = {
 				controls_state = 810 #Oregon
 				controls_state = 811 #California
 			}
-		}
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = 30_billion_currently_in_treasury_tt
+					check_variable = { treasury > 29.99 }
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
+		}	
 		
 		bypass = { }
 		
@@ -2587,6 +2742,8 @@ focus_tree = {
 					}
 				}
 			}
+			subtract_from_variable = { treasury = 30.0 }
+			custom_effect_tooltip = 30_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -2623,6 +2780,15 @@ focus_tree = {
 				controls_state = 790 #North Carolina
 				controls_state = 791 #South Carolina
 			}
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = 50_billion_currently_in_treasury_tt
+					check_variable = { treasury > 49.99 }
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
 		}
 		
 		bypass = { }
@@ -2630,6 +2796,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_create_jobs_on_the_east_coast"
 			random_owned_state = {
+				prioritize = { 764 765 770 }
 				limit = {
 					OR = {
 						region = 117
@@ -2649,6 +2816,7 @@ focus_tree = {
 				}
 			}
 			random_owned_state = {
+				prioritize = { 767 768 791 }
 				limit = {
 					OR = {
 						region = 117
@@ -2667,6 +2835,8 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			subtract_from_variable = { treasury = 50.0 }
+			custom_effect_tooltip = 50_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -2690,17 +2860,26 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			has_political_power > 50 
+		}
 		
 		bypass = { }
 		
+		cancel = { has_political_power < 50 }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_industrial_oversight_committee"
-			add_ideas = USA_industrial_development_program_idea1
+			add_political_power = -75 
+			regulation_implementation_effects = yes 
 		}
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				add = 25 
+				has_political_power > 50
+			}	
 		}
 	}
 	
@@ -2708,7 +2887,7 @@ focus_tree = {
 		id = USA_strengthen_the_federal_reserve
 		icon = federal_reserve
 		
-		x = 6
+		x = 5
 		y = 2
 		relative_position_id = USA_the_american_economy
 		
@@ -2720,36 +2899,28 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			has_political_power > 50
+		}
 		
 		bypass = { }
 		
+		cancel = {
+			has_political_power < 50 
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_strengthen_the_federal_reserve"
-			if = {
-				limit = { has_idea = bureau_01 }
-				swap_ideas = { remove_idea = bureau_01 add_idea = bureau_02 }
-			}
-			if = {
-				limit = { has_idea = bureau_02 }
-				swap_ideas = { remove_idea = bureau_02 add_idea = bureau_03 }
-			}
-			if = {
-				limit = { has_idea = bureau_03 }
-				swap_ideas = { remove_idea = bureau_03 add_idea = bureau_04 }
-			}
-			if = {
-				limit = { has_idea = bureau_04 }
-				swap_ideas = { remove_idea = bureau_04 add_idea = bureau_05 }
-			}
-			if = {
-				limit = { has_idea = bureau_05 }
-				add_political_power = 150	#if country has desired level it earns political power instead.
-			}
+			add_political_power = -75
+			increase_centralization = yes
 		}
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				add = 25 
+				has_political_power > 50 
+			}
 		}
 	}
 	
@@ -2774,6 +2945,15 @@ focus_tree = {
 				controls_state = 800 #Texas
 				controls_state = 803 #New Mexico
 				controls_state = 787 #North Dakota
+			}
+			OR = {
+				custom_trigger_tooltip = { 
+					check_variable = { treasury > 19.99 }
+					tooltip = 20_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
 			}
 		}
 		
@@ -2820,6 +3000,9 @@ focus_tree = {
 					}
 				}
 			}
+			subtract_from_variable = { treasury = 20.0 }
+			custom_effect_tooltip = 20_billion_expense_tt
+			degregulation_resource_expansion_effect = yes
 		}
 		
 		ai_will_do = {
@@ -2843,7 +3026,17 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			OR = {
+				custom_trigger_tooltip = { 
+					check_variable = { treasury > 29.99 }
+					tooltip = 30_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
+		}
 		
 		bypass = { }
 		
@@ -2909,6 +3102,8 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			subtract_from_variable { treasury 30.0 }
+			custom_effect_tooltip = 30_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -2939,6 +3134,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_corporatist_legislation"
 			add_political_power = 100
+			degregulation_resource_expansion_effect = yes
 		}
 		
 		ai_will_do = {
@@ -2965,7 +3161,17 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = {
+			OR = { 
+				custom_trigger_tooltip = {
+					check_variable = { treasury 9.99 }
+					tooltip = 10_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
+		}
 		
 		bypass = { }
 		
@@ -3003,6 +3209,8 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3026,13 +3234,16 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = {
+			has_political_power > 100 
+		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_military_production_increase"
-			add_ideas = USA_centralized_industrial_control_idea
+			add_political_power = -100
+			regulation_implementation_effects = yes
 		}
 		
 		ai_will_do = {
@@ -3056,13 +3267,22 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = {
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 9.99 }
+					tooltip = 10_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
+		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_military_production_centralization_reform"
-			add_political_power = 50
 			random_owned_state = {
 				limit = {
 					free_building_slots = {
@@ -3073,10 +3293,12 @@ focus_tree = {
 				}
 				add_building_construction = {
 					type = arms_factory
-					level = 1
+					level = 2
 					instant_build = yes
 				}
 			}
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3107,17 +3329,20 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_expand_the_monetary_control_act"
 			add_stability = 0.02
-			
-			add_to_variable = {
-				var = liberalism
-				value = 0.001
-			}
-			add_to_variable = {
-				var = socialism
-				value = 0.01
+			hidden_effect = {
+				subtract_from_variable = { party_pop_array^1 = 0.04 }
+				add_to_variable = { party_pop_array^2 = 0.02 }
+				add_to_variable = { party_pop_array^3 = 0.02 }
 			}
 			recalculate_party = yes
-			custom_effect_tooltip = expand_the_monetary_control_act_tt
+			custom_effect_tooltip = USA_gain_liberalism_2_TT
+			custom_effect_tooltip = USA_gain_socialdem_2_TT
+			if = {
+				limit = { has_idea = wall_street }
+				visually_display_opinion_fall_wall_street = yes
+				set_country_flag = current_wall_street
+				decrease_internal_faction_opinion = yes
+			}
 		}
 		
 		ai_will_do = {
@@ -3131,6 +3356,7 @@ focus_tree = {
 		
 		x = -5
 		y = 4
+
 		relative_position_id = USA_the_american_economy
 		
 		cost = 10
@@ -3142,17 +3368,24 @@ focus_tree = {
 			focus = USA_build_additional_refineries
 		}
 		
-		mutually_exclusive = { }
-		
 		available = {
 			controls_state = 814
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury = 14.99 }
+					tooltip = 15_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
 		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_resource_production_in_alaska"
-			814 = {
+			814 = { #Alaska
 				add_resource = {
 					type = steel
 					amount = 3
@@ -3163,9 +3396,12 @@ focus_tree = {
 				}
 				add_resource = {
 					type = oil
-					amount = 10
+					amount = 6
 				}
 			}
+			degregulation_resource_expansion_effect = yes
+			subtract_from_variable = { treasury = 15.0 }
+			custom_effect_tooltip = 15_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3195,7 +3431,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_build_additional_steel_factories"
-			add_ideas = resource_production_bonus
+			degregulation_resource_expansion_effect = yes
 		}
 		
 		ai_will_do = {
@@ -3226,7 +3462,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_strengthen_the_military_industrial_complex"
 			add_stability = -0.05
-			add_ideas = USA_massive_military_industrial_complex
+			regulation_implementation_effects = yes
+			if = {
+				limit = { has_idea = defense_industry }
+				visually_display_opinion_rise_defense_industry = yes
+				set_country_flag = current_defense_industry
+				increase_internal_faction_opinion = yes
+			}
 		}
 		
 		ai_will_do = {
@@ -3259,10 +3501,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_factory_worker_rights"
-			swap_ideas = {
-				remove_idea = USA_industrial_development_program_idea1
-				add_idea = USA_industrial_development_program_idea2
-			}
+			regulation_implementation_effects = yes
 		}
 		
 		ai_will_do = {
@@ -3293,6 +3532,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_dodd_frank_plan"
 			add_stability = 0.02
+			regulation_implementation_effects = yes
 		}
 		
 		ai_will_do = {
@@ -3321,6 +3561,15 @@ focus_tree = {
 				controls_state = 807 #Nevada
 				controls_state = 811 #California
 			}
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 9.99 }
+					tooltip = 10_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = { 
+					is_ai = yes
+				}
+			}
 		}
 		
 		bypass = { }
@@ -3336,7 +3585,7 @@ focus_tree = {
 				807 = {
 					add_resource = {
 						type = tungsten
-						amount = 3
+						amount = 5
 					}
 				}
 			}
@@ -3349,10 +3598,13 @@ focus_tree = {
 				811 = {
 					add_resource = {
 						type = tungsten
-						amount = 1
+						amount = 3
 					}
 				}
 			}
+			degregulation_resource_expansion_effect = yes 
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3376,7 +3628,17 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 19.99 }
+					tooltip = 20_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes 
+				}
+			}
+		}
 		
 		bypass = { }
 		
@@ -3393,6 +3655,21 @@ focus_tree = {
 				}
 				add_extra_state_shared_building_slots = 2
 			}
+			random_owned_state = {
+				limit = {
+					region = 120
+					free_building_slots = {
+						building = industrial_complex
+						size > 1
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 2
+			}
+			subtract_from_variable = { 
+				treasury = 20.0 
+			}
+			custom_effect_tooltip = 20_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3416,7 +3693,17 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = {
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 19.99 }
+					tooltip = 20_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes 
+				}
+			}
+		}
 		
 		bypass = { }
 		
@@ -3444,6 +3731,8 @@ focus_tree = {
 				}
 				add_extra_state_shared_building_slots = 2
 			}
+			subtract_from_variable = { treasury = 20.0 }
+			custom_effect_tooltip = 20_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3467,7 +3756,17 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = {
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 24.99 }
+					tooltip = 25_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes 
+				}
+			}
+		}
 		
 		bypass = { }
 		
@@ -3515,6 +3814,8 @@ focus_tree = {
 				}
 				add_extra_state_shared_building_slots = 2
 			}
+			subtract_from_variable = { treasury = 25.0 }
+			custom_effect_tooltip = 25_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3538,7 +3839,17 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 39.99 }
+					tooltip = 40_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
+		}
 		
 		bypass = { }
 		
@@ -3586,6 +3897,8 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			subtract_from_variable = { treasury = 40.0 }
+			custom_effect_tooltip = 40_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3609,7 +3922,17 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = {	
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 19.99 }
+					tooltip = 20_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
+		}
 		
 		bypass = { }
 		
@@ -3660,6 +3983,8 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			subtract_from_variable = { treasury = 20.0 }
+			custom_effect_tooltip = 20_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3685,6 +4010,15 @@ focus_tree = {
 		
 		available = {
 			controls_state = 776 #Indiana
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = 5_billion_currently_in_treasury_tt
+					check_variable = { treasury > 4.99 }	
+				}	
+				hidden_trigger = {
+					is_ai = yes 
+				}
+			}
 		}
 		
 		bypass = { }
@@ -3697,6 +4031,8 @@ focus_tree = {
 					amount = 5
 				}
 			}
+			subtract_from_variable = { treasury = 5.0 }
+			custom_effect_tooltip = 5_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3722,6 +4058,15 @@ focus_tree = {
 		
 		available = {
 			controls_state = 777
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = 5_billion_currently_in_treasury_tt
+					check_variable = { treasury > 4.99 }	
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
 		}
 		
 		bypass = { }
@@ -3734,6 +4079,8 @@ focus_tree = {
 					amount = 5
 				}
 			}
+			subtract_from_variable = { treasury = 5.0 }
+			custom_effect_tooltip = 5_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3760,7 +4107,17 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 9.99 }
+					tooltip = 10_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes 
+				}
+			}
+		}
 		
 		bypass = { }
 		
@@ -3798,6 +4155,8 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3821,7 +4180,17 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = {
+			OR = {
+				custom_trigger_tooltip = {
+					check_variable = { treasury > 9.99 }
+					tooltip = 10_billion_currently_in_treasury_tt
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
+		}
 		
 		bypass = { }
 		
@@ -3859,6 +4228,8 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3885,13 +4256,78 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = 40_billion_currently_in_treasury_tt
+					check_variable = { treasury > 39.99 }
+				}
+				hidden_trigger = {
+					is_ai = yes 
+				}
+			}
+		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_naval_production_increase"
-			add_ideas = USA_naval_development_program_idea
+			random_owned_state = {
+				limit = { 
+					region = 118
+					state_population > 80000
+					is_coastal = yes 
+					free_building_slots = {
+						building = dockyard
+						size > 1
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = dockyard 
+					level = 1 
+					instant_build = yes 
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_state = {
+				limit = { 
+					region = 117
+					state_population > 80000
+					is_coastal = yes 
+					free_building_slots = {
+						building = dockyard
+						size > 1
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = dockyard 
+					level = 1 
+					instant_build = yes 
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_state = {
+				limit = { 
+					region = 119
+					state_population > 80000
+					is_coastal = yes 
+					free_building_slots = {
+						building = dockyard
+						size > 1
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = dockyard 
+					level = 1 
+					instant_build = yes 
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			subtract_from_variable = { treasury = 40.0 }
+			custom_effect_tooltip = 40_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3915,7 +4351,17 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = {	
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = 40_billion_currently_in_treasury_tt
+					check_variable = { treasury > 39.99 }
+				}
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
+		}
 		
 		bypass = { }
 		
@@ -3963,6 +4409,8 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			subtract_from_variable = { treasury = 40.0 }
+			custom_effect_tooltip = 40_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -4010,7 +4458,7 @@ focus_tree = {
 				factor = 9999
 
 				has_game_rule = {
-					rule = USA_ai_behavior
+					rule = USA_AI_BEHAVIOR
 					option = STATUS_QUO
 				}
 			}
@@ -4040,26 +4488,29 @@ focus_tree = {
 		
 		available = {
 			has_government = democratic
-			has_elections = yes
+			has_political_power > 100 
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 2 }
+				tooltip = USA_democrats_in_power_TT
+			}
 		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_pro_democratic_gerrymandering"
-			add_to_variable = {
-				var = liberalism
-				value = 0.025
-			}
+			add_to_variable = { party_pop_array^2 = 0.05 } #Liberalism
 			recalculate_party = yes
-			add_political_power = -25
-			
-			custom_effect_tooltip = pro_democratic_gerrymandering_tt
+			add_political_power = -150
+			custom_effect_tooltip = USA_gains_liberalism_5_TT
 		}
 		
 		ai_will_do = {
 			factor = 10
-			
+			modifier = {
+				add = 5
+				check_variable = { party_pop_array^2 > 0.40 }
+			}
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
@@ -4094,7 +4545,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_balanced_approach"
-			add_political_power = 50
+			add_political_power = 100
 			add_stability = 0.05
 		}
 		
@@ -4126,20 +4577,21 @@ focus_tree = {
 		
 		available = {
 			has_government = democratic
+			has_political_power > 100
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 1 }
+				tooltip = USA_republicans_in_power_TT
+			}
 		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_pro_republican_gerrymandering"
-			add_to_variable = {
-				var = conservatism
-				value = 0.025
-			}
+			add_to_variable = { party_pop_array^1 = 0.05 }
 			recalculate_party = yes
-			
-			add_political_power = -25
-			custom_effect_tooltip = pro_republican_gerrymandering_tt
+			add_political_power = -150
+			custom_effect_tooltip = USA_gains_conservatism_5_TT
 		}
 		
 		ai_will_do = {
@@ -4149,6 +4601,44 @@ focus_tree = {
 				factor = 0
 				is_historical_focus_on = yes
 			}
+		}
+	}
+	
+	focus = {
+		id = USA_common_sense_gun_laws
+		icon = restrictive_gun_laws 
+		
+		x = -5
+		y = 2
+		relative_position_id = USA_status_quo
+		
+		cost = 10
+		
+		prerequisite = {
+			focus = USA_pro_democratic_gerrymandering
+		}
+		
+		mutually_exclusive = { }
+		
+		available = {  
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 2 }
+				tooltip = USA_democrats_in_power_TT
+			}
+		}
+		
+		bypass = { }
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_free_college"
+			swap_ideas = {
+				remove_idea = USA_second_amendment
+				add_idea = USA_common_sense_gun_laws_idea
+			}
+		}
+		
+		ai_will_do = {
+			factor = 10
 		}
 	}
 	
@@ -4168,8 +4658,13 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
-		
+		available = {
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 2 }
+				tooltip = USA_democrats_in_power_TT
+			}
+		}
+			
 		bypass = { }
 		
 		completion_reward = {
@@ -4201,6 +4696,10 @@ focus_tree = {
 		
 		available = {
 			has_government = democratic
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 2 }
+				tooltip = USA_democrats_in_power_TT
+			}
 		}
 		
 		bypass = { }
@@ -4233,6 +4732,10 @@ focus_tree = {
 		
 		available = {
 			has_government = democratic
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 1 }
+				tooltip = USA_republicans_in_power_TT
+			}
 		}
 		
 		bypass = { }
@@ -4265,6 +4768,10 @@ focus_tree = {
 		
 		available = {
 			has_government = democratic
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 1 }
+				tooltip = USA_republicans_in_power_TT
+			}
 		}
 		
 		bypass = { }
@@ -4304,11 +4811,15 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_education_reform"
-			add_ideas = idea_USA_new_education_program
+			increase_education_budget = yes
 		}
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				is_in_array = { ruling_party = 2 }
+				factor = 50
+			}
 		}
 	}
 	
@@ -4371,7 +4882,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_universal_healthcare"
 			add_ideas = USA_universal_healthcare_idea
-			increase_healthcare_budget = yes
+			max_healthcare_budget = yes
 		}
 		
 		ai_will_do = {
@@ -4663,10 +5174,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_resource_production"
-			swap_ideas = {
-				remove_idea = USA_resource_investment_program1
-				add_idea = USA_resource_investment_program3
-			}
+			degregulation_resource_expansion_effect = yes
 		}
 		
 		ai_will_do = {
@@ -4702,22 +5210,18 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_political_reform"
-			add_political_power = -125
 			news_event = usa_news.8
 		}
 		
 		ai_will_do = {
 			factor = 10
-			
 			modifier = {
 				factor = 9999
-
 				has_game_rule = {
-					rule = USA_ai_behavior
+					rule = USA_AI_BEHAVIOR
 					option = POLITICAL_REFORM
 				}
 			}
-
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
@@ -4752,6 +5256,13 @@ focus_tree = {
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				factor = 100
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = POLITICAL_REFORM
+				}
+			}
 		}
 	}
 	
@@ -4777,28 +5288,29 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_defund_major_parties"
-			add_to_variable = {
-				var = liberalism 
-				value = -0.01
-			}
-			add_to_variable = {
-				var = conservatism 
-				value = -0.01
-			}
-			add_to_variable = {
-				var = Neutral_Libertarian
-				value = 0.05
-			}
-			add_to_variable = {
-				var = Neutral_Green 
-				value = 0.05
+			add_to_variable = { party_pop_array^2 = -0.05 } #Liberalism
+			add_to_variable = { party_pop_array^1 = -0.05 } #conservatism
+			add_to_variable = { party_pop_array^16 = 0.05 } #Neutral_Libertarian
+			add_to_variable = { party_pop_array^17 = 0.05 } #Neutral_Green
+			add_to_variable = { party_pop_array^6 = 0.05 } #Conservative
+			hidden_effect = {
+				add_popularity = { ideology = neutrality popularity = 0.05 }
+				add_popularity = { ideology = communism popularity = 0.02 }
+				add_popularity = { ideology = democratic popularity = -0.05 }
 			}
 			recalculate_party = yes
-			custom_effect_tooltip = defund_major_parties_tt
+			custom_effect_tooltip = USA_defund_major_parties_TT
 		}
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				factor = 100
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = POLITICAL_REFORM
+				}
+			}
 		}
 	}
 	
@@ -4824,25 +5336,36 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_additional_funds_for_minor_parties"
-			add_political_power = 25
-			add_to_variable = {
-				var = Neutral_Libertarian
-				value = 0.02
-			}
-			add_to_variable = {
-				var = Neutral_Green 
-				value = 0.02
-			}
-			add_to_variable = {
-				var = Conservative 
-				value = 0.02
+			hidden_effect = {
+				add_popularity = { ideology = neutrality popularity = 0.05 }
+				add_popularity = { ideology = communism popularity = 0.02 }
+				add_popularity = { ideology = democratic popularity = -0.05 }
+				add_to_variable = {
+					var = party_pop_array^16
+					value = 0.02
+				}
+				add_to_variable = {
+					var = party_pop_array^17 
+					value = 0.02
+				}
+				add_to_variable = {
+					var = party_pop_array^6 
+					value = 0.02
+				}
 			}
 			recalculate_party = yes
-			custom_effect_tooltip = additional_funds_for_minor_parties_tt
+			custom_effect_tooltip = USA_additional_funds_for_minor_parties_TT
 		}
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				factor = 100
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = POLITICAL_REFORM
+				}
+			}
 		}
 	}
 	
@@ -4865,18 +5388,28 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
-		
-		bypass = { }
+		available = { 
+			has_political_power > 100
+		}
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_reform_the_electoral_college"
-			add_political_power = 25
-			add_ideas = idea_focus_generic_path_of_liberty
+			add_political_power = -150
+			add_timed_idea = {
+				idea = idea_focus_generic_path_of_liberty
+				days = 365
+			}
 		}
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				factor = 100
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = POLITICAL_REFORM
+				}
+			}
 		}
 	}
 	
@@ -4894,33 +5427,42 @@ focus_tree = {
 			focus = USA_reform_the_electoral_college
 		}
 		
-		mutually_exclusive = { }
-		
-		available = { }
+		available = {
+			has_political_power > 200
+		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_abolish_the_electoral_college"
-			add_stability = 0.01
+			add_political_power = -250
 			remove_ideas = idea_USA_political_establishment
-			add_popularity = {
-				ideology = neutrality
-				popularity = 0.05
-			}
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.02
-			}
-			add_popularity = {
-				ideology = communism
-				popularity = 0.03
+			hidden_effect = {
+				add_popularity = {
+					ideology = neutrality
+					popularity = 0.05
+				}
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.02
+				}
+				add_popularity = {
+					ideology = communism
+					popularity = 0.03
+				}
 			}
 			recalculate_party = yes
 		}
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				factor = 100
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = POLITICAL_REFORM
+				}
+			}
 		}
 	}
 	
@@ -4945,18 +5487,21 @@ focus_tree = {
 			focus = USA_reactionary_ideology
 		}
 		
-		available = { }
-		
-		bypass = { }
+		available = {
+			custom_trigger_tooltip = { 
+				tooltip = USA_green_more_than_10_TT
+				check_variable = { party_pop_array^17 > 0.10 }
+			}
+		}
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_progressive_ideology"
-			add_to_variable = {
-				var = Neutral_Green 
-				value = 0.10
+			hidden_effect = {
+				add_popularity = { ideology = neutrality popularity = 0.075 }
+				add_to_variable = { party_pop_array^17 = 0.10 }
 			}
 			recalculate_party = yes
-			custom_effect_tooltip = progressive_ideology_tt
+			custom_effect_tooltip = USA_progressive_ideology_TT
 		}
 		
 		ai_will_do = {
@@ -4985,22 +5530,30 @@ focus_tree = {
 			focus = USA_reactionary_ideology
 		}
 		
-		available = { }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = USA_libertarian_more_than_10_TT
+				check_variable = { party_pop_array^16 > 0.10 }
+			}
+		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_libertarian_ideology"
-			add_to_variable = {
-				var = Neutral_Libertarian 
-				value = 0.10
+			hidden_effect = {
+				add_popularity = { ideology = neutrality popularity = 0.07 }
+				add_to_variable = {
+					var = party_pop_array^16 
+					value = 0.10
+				}
 			}
 			recalculate_party = yes
-			custom_effect_tooltip = libertarian_ideology_tt
+			custom_effect_tooltip = USA_libertarian_ideology_TT
 		}
 		
 		ai_will_do = {
-			factor = 10
+			factor = 30 
 		}
 	}
 	
@@ -5025,18 +5578,26 @@ focus_tree = {
 			focus = USA_libertarian_ideology
 		}
 		
-		available = { }
+		available = { 
+			custom_trigger_tooltip = { 
+				tooltip = USA_reactionary_more_than_10_TT
+				check_variable = { party_pop_array^6 > 0.10 }
+			}
+		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_reactionary_ideology"
-			add_to_variable = {
-				var = Conservative 
-				value = 0.10
+			hidden_effect = {
+				add_popularity = { ideology = communism popularity = 0.10 }
+				add_to_variable = {
+					var = party_pop_array^6 
+					value = 0.10
+				}
 			}
 			recalculate_party = yes
-			custom_effect_tooltip = reactionary_ideology_tt
+			custom_effect_tooltip = USA_reactionary_ideology_TT
 		}
 		
 		ai_will_do = {
@@ -5232,10 +5793,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_national_self_sufficiency"
-			swap_ideas = {
-				remove_idea = USA_resource_investment_program1
-				add_idea = USA_resource_investment_program2
-			}
+			degregulation_resource_expansion_effect = yes
 		}
 		
 		ai_will_do = {
@@ -5284,10 +5842,10 @@ focus_tree = {
 			}
 
 			modifier = {
-				factor = 9999
+				factor = 1000
 
 				has_game_rule = {
-					rule = USA_ai_behavior
+					rule = USA_AI_BEHAVIOR
 					option = POLITICAL_REVOULUTION
 				}
 			}
@@ -5321,6 +5879,14 @@ focus_tree = {
 		
 		ai_will_do = {
 			factor = 10
+			
+			modifier = {
+				factor = 100
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = POLITICAL_REVOULUTION
+				}
+			}
 		}
 	}
 	
@@ -5349,7 +5915,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_honor_the_confederacy"
 			add_stability = -0.05
-
+			hidden_effect = {
+				add_popularity = { ideology = nationalist popularity = 0.05 }
+				add_to_variable = { party_pop_array^20 = 0.05 }
+				recalculate_party = yes
+			}
+			custom_effect_tooltip = USA_gain_right_wing_populist_5_TT
 		}
 		
 		ai_will_do = {
@@ -5382,6 +5953,18 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_attack_the_financial_system"
 			add_stability = -0.05
+			if = {
+				limit = { has_idea = wall_street }
+				visually_display_opinion_fall_wall_street = yes
+				set_country_flag = current_wall_street
+				decrease_internal_faction_opinion = yes
+			}
+			hidden_effect = {
+				add_popularity = { ideology = communism popularity = 0.05 }
+				add_to_variable = { party_pop_array^4 = 0.05 }
+				recalculate_party = yes
+			}
+			custom_effect_tooltip = USA_gain_communists_5_TT
 		}
 		
 		ai_will_do = {
@@ -5438,7 +6021,10 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_nationalistic_sentiment"
-			add_ideas = USA_american_nationalist_influence
+			add_timed_idea = {
+				idea = USA_american_nationalist_influence
+				days = 730
+			}
 		}
 		
 		ai_will_do = {
@@ -5468,10 +6054,28 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_weaken_the_house"
 			add_political_power = 100
+			if = {
+				limit = { has_completed_focus = USA_honor_the_confederacy }
+				hidden_effect = { 
+					add_popularity = { ideology = nationalist popularity = 0.02 }
+					add_to_variable = { party_pop_array^20 = 0.02 }
+					recalculate_party = yes
+				}
+				custom_effect_tooltip = USA_gain_right_wing_populist_2_TT
+			}
+			if = {
+				limit = { has_completed_focus = USA_attack_the_financial_system }
+				hidden_effect = { 
+					add_popularity = { ideology = communism popularity = 0.02 }
+					add_to_variable = { party_pop_array^4 = 0.02 }
+					recalculate_party = yes
+				}
+				custom_effect_tooltip = USA_gain_communists_2_TT
+			}
 		}
 		
 		ai_will_do = {
-			factor = 10
+			factor = 50
 		}
 	}
 	
@@ -5524,10 +6128,37 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_fight_nationalistic_factions"
 			add_ideas = emerging_outlook
+			if = {
+				limit = { 
+					nationalist > 0.10
+					nationalist < 0.20
+				}
+				add_popularity = { ideology = nationalist popularity = -0.05 }
+				recalculate_party = yes 
+			}
+			if = {
+				limit = { 
+					nationalist > 0.20
+					nationalist < 0.30
+				}
+				add_popularity = { ideology = nationalist popularity = -0.10 }
+				recalculate_party = yes 
+			}
+			if = {
+				limit = { 
+					nationalist > 0.30
+				}
+				add_popularity = { ideology = nationalist popularity = -0.15 }
+				recalculate_party = yes 
+			}
 		}
 		
 		ai_will_do = {
-			factor = 10
+			factor = 25
+			modifier = {
+				add = 10
+				nationalist > 0.0
+			}
 		}
 	}
 	
@@ -5545,15 +6176,21 @@ focus_tree = {
 			focus = USA_ministry_for_art_and_national_culture
 		}
 		
-		available = { }
+		available = { 
+			has_idea = christian
+		}
 		
-		bypass = { }
+		cancel = {
+			NOT = { has_idea = christian } 
+		}
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_establish_a_state_religion"
 			add_stability = -0.05
 			add_ideas = USA_christian_influence
 		}
+		
+		cancel_if_invalid = yes
 		
 		ai_will_do = {
 			factor = 10
@@ -5574,17 +6211,46 @@ focus_tree = {
 			focus = USA_weaken_the_house
 		}
 		
-		available = { }
+		available = { 
+			has_idea = USA_congress_authority
+		}
 		
-		bypass = { }
+		bypass = { 
+			NOT = { has_idea = USA_congress_authority }
+		}
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_weaken_the_senate"
 			remove_ideas = USA_congress_authority
+			if = {
+				limit = { has_completed_focus = USA_honor_the_confederacy }
+				hidden_effect = { 
+					add_popularity = { ideology = nationalist popularity = 0.02 }
+					add_to_variable = { party_pop_array^20 = 0.02 }
+					recalculate_party = yes
+				}
+				custom_effect_tooltip = USA_gain_right_wing_populist_2_TT
+			}
+			if = {
+				limit = { has_completed_focus = USA_attack_the_financial_system }
+				hidden_effect = { 
+					add_popularity = { ideology = communism popularity = 0.02 }
+					add_to_variable = { party_pop_array^4 = 0.02 }
+					recalculate_party = yes
+				}
+				custom_effect_tooltip = USA_gain_communists_2_TT
+			}
 		}
 		
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				add = 10
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = POLITICAL_REVOULUTION
+				}
+			}
 		}
 	}
 	
@@ -5605,21 +6271,30 @@ focus_tree = {
 			focus = USA_fight_nationalistic_factions
 		}
 		
-		available = { }
+		available = { 
+			communism > 0.10
+		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_ban_the_republican_party"
-			add_popularity = {
-				ideology = democratic
-				popularity = -0.02
-			}	
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}	
-			recalculate_party = yes
+			hidden_effect = {
+				set_temp_variable = { party_pop_array^1 = abc }
+				subtract_from_variable = { party_pop_array^1 = -abc }
+				add_to_variable = { party_pop_array^4 = 0.05 }
+				add_popularity = {
+					ideology = democratic
+					popularity = -0.05
+				}	
+				add_popularity = {
+					ideology = communism
+					popularity = 0.05
+				}	
+				recalculate_party = yes
+			}
+			custom_effect_tooltip = USA_gain_communists_5_TT
+			custom_effect_tooltip = USA_bans_the_republican_party_TT
 		}
 		
 		ai_will_do = {
@@ -5700,7 +6375,13 @@ focus_tree = {
 			focus = USA_weaken_the_senate
 		}
 		
-		available = { }
+		available = {
+			has_political_power > 50
+		}
+		
+		cancel = {
+			has_political_power < 50
+		}
 		
 		bypass = {
 			NOT = { has_idea = idea_USA_political_establishment }
@@ -5709,6 +6390,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_break_the_establishment"
 			remove_ideas = idea_USA_political_establishment
+			add_stability = -0.025
+			add_political_power = -100
 		}
 		
 		ai_will_do = {
@@ -5802,15 +6485,22 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_ban_the_democratic_party"
-			add_popularity = {
-				ideology = democratic
-				popularity = -0.02
-			}	
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}	
-			recalculate_party = yes
+			hidden_effect = {
+				set_temp_variable = { party_pop_array^2 = abc }
+				add_to_variable = { party_pop_array^2 = -abc }
+				add_to_variable = { party_pop_array^4 = 0.05 }
+				add_popularity = {
+					ideology = democratic
+					popularity = -0.02
+				}	
+				add_popularity = {
+					ideology = communism
+					popularity = 0.05
+				}	
+				recalculate_party = yes
+			}
+			custom_effect_tooltip = USA_gain_communists_5_TT
+			custom_effect_tooltip = USA_bans_the_democratic_party_TT
 		}
 		
 		ai_will_do = {
@@ -5864,7 +6554,12 @@ focus_tree = {
 			focus = USA_communist_constitution
 		}
 		
-		available = { }
+		available = { 
+			OR = {
+				has_government = nationalist
+				has_government = communism
+			}
+		}
 		
 		bypass = { }
 		
@@ -5894,6 +6589,7 @@ focus_tree = {
 		
 		available = {
 			has_government = communism
+			
 		}
 		
 		bypass = { }
@@ -5986,8 +6682,8 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_new_foreign_policy"
-			add_stability = 0.03
-			add_political_power = 100
+			add_war_support = 0.05
+			add_ideas = USA_jingoism
 		}
 		
 		ai_will_do = {
@@ -6016,6 +6712,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_authoritarian_financial_control"
 			add_stability = 0.05
+			if = {
+				limit = { has_idea = wall_street }
+				visually_display_opinion_fall_wall_street = yes
+				set_country_flag = current_wall_street
+				decrease_internal_faction_opinion = yes
+			}
 		}
 		
 		ai_will_do = {
@@ -6046,6 +6748,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_flames_of_revolution"
+			add_war_support = 0.05 
 			add_ideas = USA_jingoism
 		}
 		
@@ -6097,15 +6800,33 @@ focus_tree = {
 			focus = USA_new_foreign_policy
 		}
 		
-		available = { }
-		
-		bypass = { }
-		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_recolonize_the_philippines"
-			create_wargoal = {
-				type = annex_everything
-				target = PHI
+			if = {
+				limit = { country_exists = PHI }
+				create_wargoal = {
+					type = annex_everything
+					target = PHI
+				}
+			}
+			if = { 
+				limit = { NOT = { country_exists = PHI } } 
+				every_country = {
+					limit = { 
+						OR = {
+							owns_state = 739
+							owns_state = 736 
+							owns_state = 735 
+							owns_state = 740 
+							owns_state = 738 
+							owns_state = 737 
+						}
+					}
+					create_wargoal = {
+						type = annex_everything 
+						target = THIS
+					}
+				}
 			}
 		}
 		
@@ -6333,7 +7054,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_new_alliances"
-			add_political_power = -250
+			add_political_power = -200
 			hidden_effect = {
 				complete_national_focus = USA_diplomacy_americas
 				complete_national_focus = USA_diplomacy_asia
@@ -6351,6 +7072,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 30
+				is_historical_focus_on = no 
 			}
 		}
 	}
@@ -6415,6 +7140,7 @@ focus_tree = {
 					target = USA
 					modifier = has_expressed_loyalty
 				}
+				USA_effect_gain_american_influence_10 = yes
 			}
 			CHI = {
 				add_opinion_modifier = {
@@ -6468,6 +7194,7 @@ focus_tree = {
 					target = USA
 					modifier = has_expressed_loyalty
 				}
+				USA_effect_gain_american_influence_10 = yes
 			}
 			JAP = {
 				add_opinion_modifier = {
@@ -6521,6 +7248,7 @@ focus_tree = {
 					target = ROOT
 					modifier = economic_mission
 				}
+				USA_effect_gain_american_influence_5 = yes
 			}
 		}
 		
@@ -6565,6 +7293,7 @@ focus_tree = {
 					target = ROOT
 					modifier = economic_mission
 				}
+				USA_effect_gain_american_influence_5 = yes
 			}
 		}
 		
@@ -6611,11 +7340,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_trade_deals_with_china"
 			CHI = {
-				
 				add_opinion_modifier = {
 					target = ROOT
 					modifier = economic_mission
 				}
+				USA_effect_gain_american_influence_5 = yes
 			}
 		}
 		
@@ -6741,11 +7470,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_trade_deals_with_south_korea"
 			KOR = {
-				
 				add_opinion_modifier = {
 					target = ROOT
 					modifier = economic_mission
 				}
+				USA_effect_gain_american_influence_5 = yes
 			}
 		}
 		
@@ -6781,11 +7510,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_trade_deals_with_north_korea"
 			NKO = {
-	
 				add_opinion_modifier = {
 					target = ROOT
 					modifier = economic_mission
 				}
+				USA_effect_gain_american_influence_5 = yes
 			}
 		}
 		
@@ -6938,7 +7667,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_trade_deals_with_the_philippines"
 			random_country = {
 				limit = { tag = PHI }
-				
+				USA_effect_gain_american_influence_5 = yes
 				add_opinion_modifier = {
 					target = ROOT
 					modifier = economic_mission
@@ -7195,7 +7924,9 @@ focus_tree = {
 			focus = USA_war_on_india
 		}
 		
-		available = { }
+		available = { 
+			country_exists = SOV 
+		}
 		
 		bypass = {
 			has_war_with = SOV
@@ -7232,7 +7963,9 @@ focus_tree = {
 			focus = USA_war_on_russia
 		}
 		
-		available = { }
+		available = { 
+			country_exists = RAJ 
+		}
 		
 		bypass = {
 			has_war_with = RAJ
@@ -7341,7 +8074,9 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = {
+			country_exists = CHI 
+		}
 		
 		bypass = {
 			has_war_with = CHI
@@ -7438,37 +8173,72 @@ focus_tree = {
 				AND = {
 					OR = {
 						EST = { has_elections = no }
-						EST = { is_in_faction = yes }
+						EST = {
+							OR = { 
+								is_in_faction = yes 
+								has_idea = NATO_member
+							}
+						}
 						EST = { is_puppet = yes }
 					}
 					OR = {
 						LAT = { has_elections = no }
-						LAT = { is_in_faction = yes }
+						LAT = {
+							OR = { 
+								is_in_faction = yes 
+								has_idea = NATO_member
+							}
+						}
 						LAT = { is_puppet = yes }
 					}
 					OR = {
 						LIT = { has_elections = no }
-						LIT = { is_in_faction = yes }
+						LIT = {
+							OR = { 
+								is_in_faction = yes 
+								has_idea = NATO_member
+							}
+						}
 						LIT = { is_puppet = yes }
 					}
 					OR = {
 						SLO = { has_elections = no }
-						SLO = { is_in_faction = yes }
+						SLO = {
+							OR = { 
+								is_in_faction = yes 
+								has_idea = NATO_member
+							}
+						}
 						SLO = { is_puppet = yes }
 					}
 					OR = {
 						SLV = { has_elections = no }
-						SLV = { is_in_faction = yes }
+						SLV = {
+							OR = { 
+								is_in_faction = yes 
+								has_idea = NATO_member
+							}
+						}
 						SLV = { is_puppet = yes }
 					}
 					OR = {
 						BUL = { has_elections = no }
-						BUL = { is_in_faction = yes }
+						BUL = {
+							OR = { 
+								is_in_faction = yes 
+								has_idea = NATO_member
+							}
+						}
 						BUL = { is_puppet = yes }
 					}
 					OR = {
 						ROM = { has_elections = no }
-						ROM = { is_in_faction = yes }
+						ROM = {
+							OR = { 
+								is_in_faction = yes 
+								has_idea = NATO_member
+							}
+						}
 						ROM = { is_puppet = yes }
 					}
 				}
@@ -7522,6 +8292,7 @@ focus_tree = {
 		
 		available = {
 			has_elections = yes
+			
 		}
 		
 		bypass = { }
@@ -7537,7 +8308,7 @@ focus_tree = {
 						is_in_faction_with = USA
 					}
 				}
-				
+				USA_effect_gain_american_influence_10 = yes
 			}
 		}
 		
@@ -7564,7 +8335,10 @@ focus_tree = {
 			focus = USA_strengthen_ties_to_the_eu
 		}
 		
-		available = { }
+		available = {
+			country_exists = SOV 
+			NOT = { has_war_with = SOV }
+		}
 		
 		bypass = { }
 		
@@ -7577,7 +8351,7 @@ focus_tree = {
 						is_in_faction_with = SOV
 					}
 				}
-				
+				USA_effect_gain_american_influence_10 = yes
 			}
 		}
 		
@@ -7617,12 +8391,22 @@ focus_tree = {
 		bypass = {
 			OR = {
 				ALB = { has_elections = no }
-				ALB = { is_in_faction = yes }
+				ALB = {
+					OR = { 
+						is_in_faction = yes 
+						has_idea = NATO_member
+					}
+				}
 				ALB = { is_puppet = yes }
 			}
 			OR = {
 				CRO = { has_elections = no }
-				CRO = { is_in_faction = yes }
+				CRO = {
+					OR = { 
+						is_in_faction = yes 
+						has_idea = NATO_member
+					}
+				}
 				CRO = { is_puppet = yes }
 			}
 		}
@@ -7689,8 +8473,8 @@ focus_tree = {
 					target = USA
 					modifier = declaration_of_friendship
 				}
-				
-			}
+				USA_effect_gain_american_influence_5 = yes
+			}	
 		}
 		
 		ai_will_do = {
@@ -7741,7 +8525,7 @@ focus_tree = {
 					target = USA
 					modifier = declaration_of_friendship
 				}
-				
+				USA_effect_gain_american_influence_5 = yes
 			}
 		}
 		
@@ -7770,12 +8554,34 @@ focus_tree = {
 		
 		available = {
 			has_elections = yes
+			NOT = { has_war_with = SOV }
 		}
 		
 		bypass = { }
 		
+		cancel = {
+			has_war_with = SOV 
+			has_elections = no 
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_democratic_influence_in_russia"
+			SOV = {
+				add_ideas = USA_american_democratic_influence
+				USA_effect_gain_american_influence_10 = yes
+			}
+			every_country = {
+				limit = { 
+					is_in_faction_with = SOV 
+					NOT = { tag = SOV }
+				}
+				USA_effect_gain_american_influence_5 = yes 
+				add_popularity = { ideology = democratic popularity = 0.05 }
+				add_to_variable = { party_pop_array^1 = 0.025 }
+				add_to_variable = { party_pop_array^2 = 0.025 }
+				recalculate_party = yes
+			}
+			
 		}
 		
 		ai_will_do = {
@@ -7865,7 +8671,12 @@ focus_tree = {
 		bypass = {
 			OR = {
 				MNT = { has_elections = no }
-				MNT = { is_in_faction = yes }
+				MNT = { 	
+					OR = {
+						is_in_faction = yes 
+						has_idea = NATO_member
+					}
+				}
 				MNT = { is_puppet = yes }
 				NOT = { country_exists = MNT }
 			}
@@ -7991,7 +8802,12 @@ focus_tree = {
 		bypass = {
 			OR = {
 				BOS = { has_elections = no }
-				BOS = { is_in_faction = yes }
+				BOS = { 	
+					OR = {
+						is_in_faction = yes 
+						has_idea = NATO_member 
+					}
+				}
 				BOS = { is_puppet = yes }
 				BOS = { exists = no }
 			}
