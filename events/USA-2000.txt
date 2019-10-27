@@ -8,10 +8,19 @@ country_event = {
 	desc = usa.2.d
 	picture = GFX_report_event_cole_attack
 	
-	is_triggered_only = yes
+	trigger = {
+		date > 2000.8.1
+		date < 2001.1.1
+	}	
+	
+	fire_only_once = yes
 	
 	immediate = {
 		set_country_flag = usa_uss_cole_attack
+	}
+	
+	mean_time_to_happen = {
+		days = 25 
 	}
 	
 	option = {
@@ -22,7 +31,7 @@ country_event = {
 			id = usa_news.18
 		}
 		navy_experience = 2
-		add_political_power = -10
+		add_political_power = -20
 		add_opinion_modifier = {
 			target = SUD
 			modifier = recent_actions_negative
@@ -59,28 +68,86 @@ country_event = {
 	desc = usa.4.d
 	picture = GFX_report_event_stock_market
 	
-	is_triggered_only = yes
-	
 	trigger = {
-		NOT = { has_government = communism }
-	}
+		date < 2000.3.1
+		OR = {
+			NOT = { has_government = communism }
+			NOT = { has_government = nationalist }
+			NOT = {	is_in_array = { ruling_party = 4 } }
+			NOT = {	is_in_array = { ruling_party = 19 } }
+			NOT = {	is_in_array = { ruling_party = 20 } }
+			NOt = {	is_in_array = { ruling_party = 21 } }
+		}
+	}	
+	fire_only_once = yes 
 	
+	mean_time_to_happen = {
+		days = 60
+	}
+
+	#Allow the Acqusition
 	option = {
 		name = usa.4.o1
 		log = "[GetDateText]: [This.GetName]: usa.4.o1 executed"
-		add_political_power = 5
+		add_political_power = 20
+		set_country_flag = USA_allowed_microsoft_merger
+		hidden_effect = {
+			add_to_variable = { party_pop_array^16 = 0.02 }
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			recalculate_party = yes
+		}
+		custom_effect_tooltip = USA_gain_libertarian_2_TT
+		ai_chance = {
+			base = 20
+			modifier = {
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = STATUS_QUO
+				}
+				add = 10
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = 2
+			}
+			modifier = {
+				is_historical_focus_on = no 
+				add = -10 
+			}
+		}
 	}
 	
+	#Stop the Merger!
 	option = {
 		name = usa.4.o2
 		log = "[GetDateText]: [This.GetName]: usa.4.o2 executed"
 		add_stability = -0.02
-		add_to_variable = {
-			var = Communist-State
-			value = 0.02
+		set_country_flag = USA_stopped_microsoft_merger
+		hidden_effect = {	
+			add_popularity = { ideology = communism popularity = 0.02 }
+			add_to_variable = { party_pop_array^4 = 0.02 }
+			recalculate_party = yes
 		}
-		recalculate_party = yes
-		custom_effect_tooltip = usa.4.o2_tt
+		custom_effect_tooltip = USA_gain_communists_2_TT
+		
+		ai_chance = {
+			base = 5 
+			modifier = {
+				is_historical_focus_on = yes 
+				add = -5 
+			}
+			modifier = { 
+				is_historical_focus_on = no 
+				add = 5 
+			}
+			modifier = {
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = POLITICAL_REVOULUTION
+				}
+				add = 25 
+			}
+		}
 	}
 }
 
@@ -92,28 +159,82 @@ country_event = {
 	desc = usa.5.d
 	picture = GFX_report_event_stock_market
 	
-	is_triggered_only = yes
-	
 	trigger = {
-		NOT = { has_government = communism }
+		OR = {
+			NOT = { has_government = communism }
+			NOT = { has_government = nationalist }
+			NOT = {	is_in_array = { ruling_party = 4 } }
+			NOT = {	is_in_array = { ruling_party = 19 } }
+			NOT = {	is_in_array = { ruling_party = 20 } }
+			NOt = {	is_in_array = { ruling_party = 21 } }
+		}
+		OR = {
+			has_country_flag = USA_stopped_microsoft_merger
+			has_country_flag = USA_allowed_microsoft_merger
+		}
+		date > 2000.2.1 
 	}
 	
 	option = {
 		name = usa.5.o1
 		log = "[GetDateText]: [This.GetName]: usa.5.o1 executed"
 		add_political_power = 30
-	}
+		hidden_effect = {
+			add_to_variable = { party_pop_array^16 = 0.03 }
+			add_popularity = { ideology = neutrality popularity = 0.03 }
+			recalculate_party = yes
+		}
+		custom_effect_tooltip = USA_gain_libertarian_3_TT
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = STATUS_QUO
+				}
+				add = 5 
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = 20 
+			}
+			modifier = {
+				add = -10
+				is_historical_focus_on = no 
+			}
+		}
+	}	
 	
 	option = {
 		name = usa.5.o2
 		log = "[GetDateText]: [This.GetName]: usa.5.o2 executed"
 		add_stability = -0.03
-		add_to_variable = {
-			var = Communist-State
-			value = 0.06
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.06 }
+			add_to_variable = {  party_pop_array^4 = 0.06 }
+			recalculate_party = yes
 		}
-		recalculate_party = yes
-		custom_effect_tooltip = usa.5_tt
+		custom_effect_tooltip = USA_gain_communists_6_TT
+		
+		ai_chance = {
+			base = 5
+			modifier = {
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = POLITICAL_REVOULUTION
+				}
+				add = 20
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = -5 
+			}
+			modifier = {
+				add = 10
+				is_historical_focus_on = no 
+			}
+		}
 	}
 }
 
@@ -1128,7 +1249,8 @@ country_event = { #Focus Tree: USA makes us NATO leader!
 	}	
 }
 
-country_event = { #Focus Tree: Invitation to the American Faction
+#Focus Tree: Invitation to the American Faction
+country_event = { 
 	id = usa.28
 	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.28" }
 	title = usa.28.t
@@ -1225,7 +1347,8 @@ country_event = { #American Stabilization Effort
 	}
 }
 
-country_event = { #American Military Mission
+#American Military Mission
+country_event = { 
 	id = usa.31
 	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.31" }
 	title = usa.31.t
@@ -1243,7 +1366,43 @@ country_event = { #American Military Mission
 		army_experience = 50
 		navy_experience = 50
 		air_experience = 50
+		USA_effect_gain_american_influence_5 = yes
+		
+		ai_chance = {
+			base = 50 
+			modifier = {
+				has_opinion = { target = USA value > 10.0 }
+				add = 5
+			}
+		}
 	}
+	
+	option = {
+		name = usa.31.o2 
+		log = "[GetDateText]: [This.GetName]: usa.31.o2 executed"
+		
+		add_war_support = 0.035
+		add_popularity = { ideology = nationalist popularity = 0.05 }
+		add_to_variable = { party_pop_array^20 = 0.05 }
+		recalculate_party = yes 
+		USA_effect_american_lose_american_influence_10 = yes
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				has_opinion = { target = USA value < 0.0 }
+				add = 5
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = -10 
+			}
+			modifier = {
+				is_historical_focus_on = no 
+				add = 10
+			}
+		}
+	}	
 }
 
 #2000 U.S. Census
@@ -1763,7 +1922,7 @@ country_event = {
 			value = 0.001
 		}
 		recalculate_party = yes
-		custom_effect_tooltip =
+		#custom_effect_tooltip =
 	}
 }
 
