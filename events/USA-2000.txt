@@ -3,15 +3,24 @@
 #USS Cole Attacks
 country_event = {
 	id = usa.2
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.2"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.2" }
 	title = usa.2.t
 	desc = usa.2.d
 	picture = GFX_report_event_cole_attack
 	
-	is_triggered_only = yes
+	trigger = {
+		date > 2000.8.1
+		date < 2001.1.1
+	}	
+	
+	fire_only_once = yes
 	
 	immediate = {
 		set_country_flag = usa_uss_cole_attack
+	}
+	
+	mean_time_to_happen = {
+		days = 25 
 	}
 	
 	option = {
@@ -22,7 +31,7 @@ country_event = {
 			id = usa_news.18
 		}
 		navy_experience = 2
-		add_political_power = -10
+		add_political_power = -20
 		add_opinion_modifier = {
 			target = SUD
 			modifier = recent_actions_negative
@@ -33,7 +42,7 @@ country_event = {
 #Southern Illinois Incident
 country_event = {
 	id = usa.3
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.3"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.3" }
 	title = usa.3.t
 	desc = usa.3.d
 	picture = GFX_report_event_ufo
@@ -54,73 +63,187 @@ country_event = {
 #Microsoft acquires Visio
 country_event = {
 	id = usa.4
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.4"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.4" }
 	title = usa.4.t
 	desc = usa.4.d
 	picture = GFX_report_event_stock_market
 	
-	is_triggered_only = yes
-	
 	trigger = {
-		NOT = { has_government = communism }
-	}
+		date < 2000.3.1
+		OR = {
+			NOT = { has_government = communism }
+			NOT = { has_government = nationalist }
+			NOT = {	is_in_array = { ruling_party = 4 } }
+			NOT = {	is_in_array = { ruling_party = 19 } }
+			NOT = {	is_in_array = { ruling_party = 20 } }
+			NOt = {	is_in_array = { ruling_party = 21 } }
+		}
+	}	
+	fire_only_once = yes 
 	
+	mean_time_to_happen = {
+		days = 60
+	}
+
+	#Allow the Acqusition
 	option = {
 		name = usa.4.o1
 		log = "[GetDateText]: [This.GetName]: usa.4.o1 executed"
-		add_political_power = 5
+		add_political_power = 20
+		set_country_flag = USA_allowed_microsoft_merger
+		hidden_effect = {
+			add_to_variable = { party_pop_array^16 = 0.02 }
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			recalculate_party = yes
+		}
+		custom_effect_tooltip = USA_gain_libertarian_2_TT
+		ai_chance = {
+			base = 20
+			modifier = {
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = STATUS_QUO
+				}
+				add = 10
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = 2
+			}
+			modifier = {
+				is_historical_focus_on = no 
+				add = -10 
+			}
+		}
 	}
 	
+	#Stop the Merger!
 	option = {
 		name = usa.4.o2
 		log = "[GetDateText]: [This.GetName]: usa.4.o2 executed"
 		add_stability = -0.02
-		add_to_variable = {
-			var = Communist-State
-			value = 0.02
+		set_country_flag = USA_stopped_microsoft_merger
+		hidden_effect = {	
+			add_popularity = { ideology = communism popularity = 0.02 }
+			add_to_variable = { party_pop_array^4 = 0.02 }
+			recalculate_party = yes
 		}
-		recalculate_party = yes
-		custom_effect_tooltip = usa.4.o2_tt
+		custom_effect_tooltip = USA_gain_communists_2_TT
+		
+		ai_chance = {
+			base = 5 
+			modifier = {
+				is_historical_focus_on = yes 
+				add = -5 
+			}
+			modifier = { 
+				is_historical_focus_on = no 
+				add = 5 
+			}
+			modifier = {
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = POLITICAL_REVOULUTION
+				}
+				add = 25 
+			}
+		}
 	}
 }
 
 #America Online merges with Time Warner
 country_event = {
 	id = usa.5
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.5"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.5" }
 	title = usa.5.t
 	desc = usa.5.d
 	picture = GFX_report_event_stock_market
 	
-	is_triggered_only = yes
-	
 	trigger = {
-		NOT = { has_government = communism }
+		OR = {
+			NOT = { has_government = communism }
+			NOT = { has_government = nationalist }
+			NOT = {	is_in_array = { ruling_party = 4 } }
+			NOT = {	is_in_array = { ruling_party = 19 } }
+			NOT = {	is_in_array = { ruling_party = 20 } }
+			NOt = {	is_in_array = { ruling_party = 21 } }
+		}
+		OR = {
+			has_country_flag = USA_stopped_microsoft_merger
+			has_country_flag = USA_allowed_microsoft_merger
+		}
+		date > 2000.2.1 
 	}
+	
+	fire_only_once = yes
 	
 	option = {
 		name = usa.5.o1
 		log = "[GetDateText]: [This.GetName]: usa.5.o1 executed"
 		add_political_power = 30
+		hidden_effect = {
+			add_to_variable = { party_pop_array^16 = 0.03 }
+			add_popularity = { ideology = neutrality popularity = 0.03 }
+			recalculate_party = yes
+		}
+		custom_effect_tooltip = USA_gain_libertarian_3_TT
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = STATUS_QUO
+				}
+				add = 5 
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = 20 
+			}
+			modifier = {
+				add = -10
+				is_historical_focus_on = no 
+			}
+		}
 	}
 	
 	option = {
 		name = usa.5.o2
 		log = "[GetDateText]: [This.GetName]: usa.5.o2 executed"
 		add_stability = -0.03
-		add_to_variable = {
-			var = Communist-State
-			value = 0.06
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.06 }
+			add_to_variable = {  party_pop_array^4 = 0.06 }
+			recalculate_party = yes
 		}
-		recalculate_party = yes
-		custom_effect_tooltip = usa.5_tt
+		custom_effect_tooltip = USA_gain_communists_6_TT
+		
+		ai_chance = {
+			base = 5
+			modifier = {
+				has_game_rule = {
+					rule = USA_AI_BEHAVIOR
+					option = POLITICAL_REVOULUTION
+				}
+				add = 20
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = -5 
+			}
+			modifier = {
+				add = 10
+				is_historical_focus_on = no 
+			}
+		}
 	}
 }
 
 #January 2000 North American Blizzard
 country_event = {
 	id = usa.6
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.6"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.6" }
 	title = usa.6.t
 	desc = usa.6.d
 	picture = GFX_report_event_blizzard
@@ -147,7 +270,7 @@ country_event = {
 #Elian Gonzalez Affair
 country_event = {
 	id = usa.7
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.7"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.7" }
 	title = usa.7.t
 	desc = usa.7.d
 	picture = GFX_report_event_elian_gonzalez
@@ -217,7 +340,7 @@ country_event = {
 #Greeneville sinks Ehime-Maru
 country_event = {
 	id = usa.8
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.8"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.8" }
 	title = usa.8.t
 	desc = usa.8.d
 	picture = GFX_report_event_submarine
@@ -255,7 +378,7 @@ country_event = {
 #Alaska Airlines Flight 261
 country_event = {
 	id = usa.9
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.9"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.9" }
 	title = usa.9.t
 	desc = usa.9.d
 	picture = GFX_report_event_plane_crash
@@ -272,7 +395,7 @@ country_event = {
 #End of the Peanuts
 country_event = {
 	id = usa.10
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.10"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.10" }
 	title = usa.10.t
 	desc = usa.10.d
 	picture = GFX_report_event_comic_artist
@@ -289,7 +412,7 @@ country_event = {
 #Shooting of Kayla Rolland
 country_event = {
 	id = usa.11
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.11"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.11" }
 	title = usa.11.t
 	desc = usa.11.d
 	picture = GFX_report_event_handgun
@@ -311,7 +434,7 @@ country_event = {
 #2000 Phillips Explosion
 country_event = {
 	id = usa.12
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.12"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.12" }
 	title = usa.12.t
 	desc = usa.12.d
 	picture = GFX_report_event_burning_oil_refinery
@@ -347,7 +470,7 @@ country_event = {
 #All befriended countries: USA stands with us!
 country_event = {
 	id = usa.13
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.13"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.13" }
 	title = usa.13.t
 	desc = usa.13.d
 	picture = GFX_report_event_american_flag
@@ -369,7 +492,7 @@ country_event = {
 #All opposed countries: USA stands against us!
 country_event = {
 	id = usa.14
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.14"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.14" }
 	title = usa.14.t
 	desc = usa.14.d
 	picture = GFX_report_event_american_flag
@@ -391,7 +514,7 @@ country_event = {
 #Fort Worth Tornado
 country_event = {
 	id = usa.15
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.15"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.15" }
 	title = usa.15.t
 	desc = usa.15.d
 	picture = GFX_report_event_tornado
@@ -412,7 +535,7 @@ country_event = {
 #Japan/SK/Taiwan: East Asian Military Support Program
 country_event = {
 	id = usa.16
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.16"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.16" }
 	title = usa.16.t
 	desc = usa.16.d
 	picture = GFX_report_event_american_flag
@@ -431,7 +554,7 @@ country_event = {
 #The Sanders Craze
 country_event = {
 	id = usa.17
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.17"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.17" }
 	title = usa.17.t
 	desc = usa.17.d
 	picture = GFX_report_event_bernie_sanders
@@ -471,7 +594,7 @@ country_event = {
 #Third Party Gains
 country_event = {
 	id = usa.18
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.18"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.18" }
 	title = usa.18.t
 	desc = usa.18.d
 	picture = GFX_report_event_us_flag
@@ -506,7 +629,7 @@ country_event = {
 #Republican Nomination 2016
 country_event = {
 	id = usa.19
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.19"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.19" }
 	title = usa.19.t
 	desc = usa.19.d
 	
@@ -649,7 +772,7 @@ country_event = {
 #Democratic Nomination 2016
 country_event = {
 	id = usa.20
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.20"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.20" }
 	title = usa.20.t
 	desc = usa.20.d
 	
@@ -739,7 +862,7 @@ country_event = {
 #Totalitarians in our ranks trigger (other countries)
 country_event = {
 	id = usa.21
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.21"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.21" }
 	hidden = yes
 	
 	trigger = {
@@ -764,7 +887,7 @@ country_event = {
 #Totalitarians in our ranks
 country_event = {
 	id = usa.22
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.22"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.22" }
 	title = usa.22.t
 	desc = usa.22.d
 	picture = GFX_report_event_nato
@@ -838,7 +961,7 @@ country_event = {
 
 news_event = {	#Toleration of Totalitarians in NATO
 	id = usa.23
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.23"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.23" }
 	title = usa.23.t
 	desc = usa.23.d
 	picture = GFX_news_event_nato
@@ -919,7 +1042,7 @@ news_event = {	#Toleration of Totalitarians in NATO
 
 country_event = {	#The New President lost the Popular Vote
 	id = usa.25
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.25"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.25" }
 	title = usa.25.t
 	desc = usa.25.d
 	picture = GFX_report_event_protests
@@ -935,7 +1058,7 @@ country_event = {	#The New President lost the Popular Vote
 
 country_event = {	#Choose our successor
 	id = usa.26
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.26"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.26" }
 	title = usa.26.t
 	desc = usa.26.d
 	picture = GFX_report_event_nato
@@ -1114,7 +1237,7 @@ country_event = {	#Choose our successor
 
 country_event = { #Focus Tree: USA makes us NATO leader!
 	id = usa.27
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.27"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.27" }
 	title = usa.27.t
 	desc = usa.27.d
 	picture = GFX_report_event_nato
@@ -1128,9 +1251,10 @@ country_event = { #Focus Tree: USA makes us NATO leader!
 	}	
 }
 
-country_event = { #Focus Tree: Invitation to the American Faction
+#Focus Tree: Invitation to the American Faction
+country_event = { 
 	id = usa.28
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.28"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.28" }
 	title = usa.28.t
 	desc = usa.28.d
 	picture = GFX_report_event_nato
@@ -1173,7 +1297,7 @@ country_event = { #Focus Tree: Invitation to the American Faction
 
 country_event = { #American Infrastructure Investments
 	id = usa.29
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.29"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.29" }
 	title = usa.29.t
 	desc = usa.29.d
 	picture = GFX_report_event_nato
@@ -1211,7 +1335,7 @@ country_event = { #American Infrastructure Investments
 
 country_event = { #American Stabilization Effort
 	id = usa.30
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.30"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.30" }
 	title = usa.30.t
 	desc = usa.30.d
 	picture = GFX_report_event_nato
@@ -1225,9 +1349,10 @@ country_event = { #American Stabilization Effort
 	}
 }
 
-country_event = { #American Military Mission
+#American Military Mission
+country_event = { 
 	id = usa.31
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.31"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.31" }
 	title = usa.31.t
 	desc = usa.31.d
 	picture = GFX_report_event_american_flag
@@ -1243,13 +1368,49 @@ country_event = { #American Military Mission
 		army_experience = 50
 		navy_experience = 50
 		air_experience = 50
+		USA_effect_gain_american_influence_5 = yes
+		
+		ai_chance = {
+			base = 50 
+			modifier = {
+				has_opinion = { target = USA value > 10.0 }
+				add = 5
+			}
+		}
 	}
+	
+	option = {
+		name = usa.31.o2 
+		log = "[GetDateText]: [This.GetName]: usa.31.o2 executed"
+		
+		add_war_support = 0.035
+		add_popularity = { ideology = nationalist popularity = 0.05 }
+		add_to_variable = { party_pop_array^20 = 0.05 }
+		recalculate_party = yes 
+		USA_effect_american_lose_american_influence_10 = yes
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				has_opinion = { target = USA value < 0.0 }
+				add = 5
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = -10 
+			}
+			modifier = {
+				is_historical_focus_on = no 
+				add = 10
+			}
+		}
+	}	
 }
 
 #2000 U.S. Census
 country_event = {
 	id = usa.46
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.46"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.46" }
 	title = usa.46.t
 	desc = usa.46.d
 	picture = GFX_report_event_election
@@ -1267,7 +1428,7 @@ country_event = {
 #United States vs Microsoft Corp
 country_event = {
 	id = usa.47
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.47"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.47" }
 	title = usa.47.t
 	desc = usa.47.d
 	picture = GFX_report_event_jury
@@ -1294,7 +1455,7 @@ country_event = {
 #Microsoft allowed to expand further
 country_event = {
 	id = usa.48
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.48"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.48" }
 	title = usa.48.t
 	desc = usa.48.d
 	picture = GFX_report_event_jury
@@ -1337,7 +1498,7 @@ country_event = {
 #Marine Corps aircraft crash near Marana, Arizona
 country_event = {
 	id = usa.49
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.49"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.49" }
 	title = usa.49.t
 	desc = usa.49.d
 	picture = GFX_report_event_plane_crash
@@ -1360,7 +1521,7 @@ country_event = {
 #Anti-Globalization Protests in Washington
 country_event = {
 	id = usa.50
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.50"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.50" }
 	title = usa.50.t
 	desc = usa.50.d
 	picture = GFX_report_event_political_activist
@@ -1397,7 +1558,7 @@ country_event = {
 #Elian Gonzalez seized by Federal Agents
 country_event = {
 	id = usa.51
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.51"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.51" }
 	title = usa.51.t
 	desc = usa.51.d
 	picture = GFX_report_event_elian_gonzalez
@@ -1423,7 +1584,7 @@ country_event = {
 #Shepherdstown Peace Talks
 country_event = {
 	id = usa.52
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.52"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.52" }
 	title = usa.52.t
 	desc = usa.52.d
 	picture = GFX_report_event_political_deal
@@ -1442,7 +1603,7 @@ country_event = {
 #Syria: Shepherdstown Peace Talks
 country_event = {
 	id = usa.53
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.53"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.53" }
 	title = usa.53.t
 	desc = usa.53.d
 	picture = GFX_report_event_political_deal
@@ -1462,7 +1623,7 @@ country_event = {
 #Israel: Shepherdstown Peace Talks
 country_event = {
 	id = usa.54
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.54"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.54" }
 	title = usa.54.t
 	desc = usa.54.d
 	picture = GFX_report_event_political_deal
@@ -1482,7 +1643,7 @@ country_event = {
 #Datapoint files for Chapter 11 bankruptcy
 country_event = {
 	id = usa.55
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.55"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.55" }
 	title = usa.55.t
 	desc = usa.55.d
 	picture = GFX_report_event_computer
@@ -1507,7 +1668,7 @@ country_event = {
 #Republican National Convention 2000
 country_event = {
 	id = usa.56
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.56"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.56" }
 	title = usa.56.t
 	desc = usa.56.d
 	picture = GFX_report_event_republican_national_convention
@@ -1531,7 +1692,7 @@ country_event = {
 #DeviantART launched
 country_event = {
 	id = usa.57
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.57"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.57" }
 	title = usa.57.t
 	desc = usa.57.d
 	picture = GFX_report_event_computer
@@ -1552,7 +1713,7 @@ country_event = {
 #H.L. Hunley
 country_event = {
 	id = usa.58
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.58"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.58" }
 	title = usa.58.t
 	desc = usa.58.d
 	picture = GFX_report_event_submarine
@@ -1569,7 +1730,7 @@ country_event = {
 #Democratic National Convention 2000
 country_event = {
 	id = usa.59
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.59"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.59" }
 	title = usa.59.t
 	desc = usa.59.d
 	picture = GFX_report_event_democratic_national_convention
@@ -1595,7 +1756,7 @@ country_event = {
 #Mac OS X
 country_event = {
 	id = usa.60
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.60"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.60" }
 	title = usa.60.t
 	desc = usa.60.d
 	picture = GFX_report_event_computer
@@ -1612,7 +1773,7 @@ country_event = {
 #Martin County Oil Spill
 country_event = {
 	id = usa.61
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.61"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.61" }
 	title = usa.61.t
 	desc = usa.61.d
 	picture = GFX_report_event_burning_oil_refinery
@@ -1639,7 +1800,7 @@ country_event = {
 #Gus Hall dies
 country_event = {
 	id = usa.62
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.62"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.62" }
 	title = usa.62.t
 	desc = usa.62.d
 	picture = GFX_report_event_fathers_of_communism
@@ -1681,7 +1842,7 @@ country_event = {
 #Hall State
 country_event = {
 	id = usa.63
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.63"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.63" }
 	title = usa.63.t
 	desc = usa.63.d
 	picture = GFX_report_event_communism
@@ -1726,7 +1887,7 @@ country_event = {
 #Madeleine Albright and Kim Jong-Il
 country_event = {
 	id = usa.64
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.64"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.64" }
 	title = usa.64.t
 	desc = usa.64.d
 	picture = GFX_report_event_political_deal
@@ -1748,7 +1909,7 @@ country_event = {
 #Hillary Clinton elected to the U.S. Senate
 country_event = {
 	id = usa.65
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.65"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.65" }
 	title = usa.65.t
 	desc = usa.65.d
 	picture = GFX_report_event_hillary_clinton_young
@@ -1763,14 +1924,14 @@ country_event = {
 			value = 0.001
 		}
 		recalculate_party = yes
-		custom_effect_tooltip =
+		#custom_effect_tooltip =
 	}
 }
 
 #Bush v Gore: Florida Recount Stopped
 country_event = {
 	id = usa.66
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.66"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.66" }
 	title = usa.66.t
 	desc = usa.66.d
 	picture = GFX_report_event_jury
@@ -1791,7 +1952,7 @@ country_event = {
 #December 2000 nor'easter
 country_event = {
 	id = usa.67
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.67"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.67" }
 	title = usa.67.t
 	desc = usa.67.d
 	picture = GFX_report_event_blizzard
@@ -1808,7 +1969,7 @@ country_event = {
 #The Launch of Wikipedia
 country_event = {
 	id = usa.68
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.68"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.68" }
 	title = usa.68.t
 	desc = usa.68.d
 	picture = GFX_report_event_computer
@@ -1829,7 +1990,7 @@ country_event = {
 #Colin Powell attacks Zimbabwe
 country_event = {
 	id = usa.69
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.69"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.69" }
 	title = usa.69.t
 	desc = usa.69.d
 	picture = GFX_report_event_united_states_army
@@ -1865,7 +2026,7 @@ country_event = {
 #Hall State Reversal Event
 country_event = {
 	id = usa.70
-	immediate = {log = "[GetDateText]: [Root.GetName]: event usa.70"}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.70" }
 	fire_only_once = yes
 	hidden = yes
 	
