@@ -44,13 +44,13 @@ add_tax_laws = {
 }
 
 initial_money_setup = {
+	log = "[GetDateText]: [Root.GetName]: Initial money setup"
 	calculate_interest_rate = yes
 	calculate_debt_rate = yes
 	calculate_int_investments_rate = yes
 	#calculate_resource_sale_rate = yes #no exports at start
 	calculate_tax_gain = yes
 	init_expenses = yes
-	update_military_rate = yes
 	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
 	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
@@ -66,7 +66,6 @@ startup_extra_setup = {
 	calculate_resource_sale_rate = yes
 	calculate_tax_gain = yes
 	init_expenses = yes
-	update_military_rate = yes
 	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
 	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
@@ -281,13 +280,65 @@ calculate_tax_gain = {
 		multiply_variable = { var = tax_gain value = 1.1 }
 	}
 	
-	if = {#Nigeria
+	if = { #Nigeria
 		limit = { has_idea = NIG_efficent_government_spending_idea }
 		multiply_variable = { var = tax_gain value = 1.10 }
 	}
-	
+	#######################################################
+	if = {
+		limit { has_idea = paralyzing_corruption }
+		multiply_variable = { var = tax_gain value = 0.65 }
+		#-35% Tax loss
+	}
+	else_if = {
+		limit { has_idea = crippling_corruption }
+		multiply_variable = { var = tax_gain value = 0.70 }
+		#-30%
+	}
+	else_if = {
+		limit { has_idea = rampant_corruption }
+		multiply_variable = { var = tax_gain value = 0.75 }
+		#-25%
+	}
+	else_if = {
+		limit { has_idea = unrestrained_corruption }
+		multiply_variable = { var = tax_gain value = 0.80 }
+		#-20%
+	}
+	else_if = {
+		limit { has_idea = systematic_corruption }
+		multiply_variable = { var = tax_gain value = 0.85 }
+		#-15%
+	}
+	else_if = {
+		limit { has_idea = widespread_corruption }
+		multiply_variable = { var = tax_gain value = 0.90 }
+		#-10%
+	}
+	else_if = {
+		limit { has_idea = medium_corruption }
+		multiply_variable = { var = tax_gain value = 0.95 }
+		#-5%
+	}
+	else_if = {
+		limit { has_idea = modest_corruption }
+		multiply_variable = { var = tax_gain value = 0.97 }
+		#-3%
+	}
+	else_if = {
+		limit { has_idea = slight_corruption }
+		multiply_variable = { var = tax_gain value = 0.98 }
+		#-2%
+	}
+	else_if = {
+		limit { has_idea = negligible_corruption }
+		multiply_variable = { var = tax_gain value = 0.99 }
+		#-1%
+	}
+	#######################################################
 	round_variable = tax_gain
 	divide_variable = { tax_gain = 1000 } #why? - gearz
+	
 	
 	add_to_variable = { var = treasury_rate value = tax_gain }
 	update_display_income = yes
@@ -371,6 +422,10 @@ calculate_interest_rate_ai = {
 		limit = { has_idea = NIG_efficent_government_spending_reform_idea }
 		subtract_from_variable = { var = interest_rate value = 3 }
 	}
+	if = { 
+		limit = { has_country_flag = SOV_overcoming_the_1998_financial_crisis }
+		subtract_from_variable = { var = interest_rate value = 2 }
+	}
 	
 	clamp_variable = {
 		var = interest_rate
@@ -447,6 +502,14 @@ calculate_interest_rate_player = {
 		if = {
 			limit = { has_country_flag = bailout_given }
 			subtract_from_temp_variable = { var = temp_interest_rate^i value = 8 }
+		}
+		if = {
+			limit = { has_idea = NIG_efficent_government_spending_reform_idea }
+			subtract_from_variable = { var = interest_rate value = 3 }
+		}
+		if = { 
+			limit = { has_country_flag = SOV_overcoming_the_1998_financial_crisis }
+			subtract_from_variable = { var = interest_rate value = 2 }
 		}
 		clamp_temp_variable = {
 			var = temp_interest_rate^i
@@ -825,6 +888,7 @@ update_military_rate_ai = {
 }
 update_military_rate_player = {	
 	
+	log = "[GetDateText]: [Root.GetName]: update_military_rate_player"
 	#clear the array that stores the law cost
 	clear_array = array_defence_spend
 	
@@ -1238,7 +1302,7 @@ update_bureaucracy_rate_ai = {
 	
 }
 update_bureaucracy_rate_player = {
-	
+	log = "[GetDateText]: [This.GetName]: update_bureaucracy_rate_player"
 	subtract_from_variable = { var = expense_gain value = bureaucracy_gain }
 	add_to_variable = { var = treasury_rate value = bureaucracy_gain }
 	
@@ -1387,7 +1451,7 @@ update_police_rate_ai = {
 	}	
 }
 update_police_rate_player = {
-	
+	log = "[GetDateText]: [This.GetName]: update_police_rate_player"
 	subtract_from_variable = { var = expense_gain value = security_gain }
 	add_to_variable = { var = treasury_rate value = security_gain }
 	
@@ -1631,7 +1695,7 @@ update_education_rate_ai = {
 	}
 }
 update_education_rate_player = {
-	
+	log = "[GetDateText]: [This.GetName]: update_education_rate_player"
 	subtract_from_variable = { var = expense_gain value = education_gain }
 	add_to_variable = { var = treasury_rate value = education_gain }
 	
@@ -1812,7 +1876,7 @@ update_health_rate_ai = {
 	
 }
 update_health_rate_player = {
-	
+	log = "[GetDateText]: [This.GetName]: update_health_rate_player"
 	subtract_from_variable = { var = expense_gain value = health_gain }
 	add_to_variable = { var = treasury_rate value = health_gain }
 	
@@ -2150,6 +2214,7 @@ decrease_tax_cost = {
 	
 init_expenses = {
 	#Defence spending
+	update_military_rate = yes
 	
 	#bueraucracy
 	update_bureaucracy_rate = yes
