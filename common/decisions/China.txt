@@ -436,6 +436,11 @@ one_china_category = {
 				remove_state_core = 813
 				remove_state_core = 816
 			}
+			custom_effect_tooltip = increase_domestic_influence_amount_50_TT
+			hidden_effect = {
+				add_to_variable = { domestic_influence_amount = 50 }
+				recalculate_influence = yes
+			}
 			log = "[GetDateText]: [This.GetName]: decision declare_independence_taiwan executed"
 		}
 	}
@@ -1174,6 +1179,123 @@ hongkong_category = {
 				}
 			}
 			every_other_country = {
+				country_event = { id = hongkong.2 }
+			}
+		}
+		
+	}
+	
+	request_troops = {
+	
+		allowed = { original_tag = HKG }
+		
+		icon = GFX_decision_generic_army_support_new
+		
+		visible = {
+			OR = {
+				has_idea = CHI_Hong_Kong_Protests_01
+				has_idea = CHI_Hong_Kong_Protests_02
+				has_idea = CHI_Hong_Kong_Protests_03
+			}
+		}
+		
+		available = {
+			CHI = {	
+				divisions_in_state = {
+					size > 1
+					state = 595
+				}
+			}
+		}
+		
+		cost = 300
+		
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision deploy_troops executed"
+		}
+		
+		days_remove = 7
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 10
+				has_idea = Hong_Kong_Protests_03
+			}
+		}
+		
+		remove_effect = {
+			if = {
+				limit = { CHI = { has_idea = CHI_Hong_Kong_Protests_01 } }
+				HKG = { remove_ideas = Hong_Kong_Protests_01 }
+				CHI = { remove_ideas = CHI_Hong_Kong_Protests_01 }
+			}
+			else_if = {
+				limit = { CHI = { has_idea = CHI_Hong_Kong_Protests_02 } }
+				HKG = { remove_ideas = Hong_Kong_Protests_02 }
+				CHI = { remove_ideas = CHI_Hong_Kong_Protests_02 }
+			}
+			else_if = {
+				limit = { CHI = { has_idea = CHI_Hong_Kong_Protests_03 } }
+				HKG = { remove_ideas = Hong_Kong_Protests_03 }
+				CHI = { remove_ideas = CHI_Hong_Kong_Protests_03 }
+			}
+			HKG = { 
+				add_stability = -0.1 
+				if = {
+					limit = { has_government = communism }
+					add_popularity = {
+						ideology = communism
+						popularity = -0.1
+					}
+				}
+				else_if = {
+					limit = { has_government = democratic }
+					add_popularity = {
+						ideology = democratic
+						popularity = -0.1
+					}
+				}
+				else_if = {
+					limit = { has_government = neutrality }
+					add_popularity = {
+						ideology = neutrality
+						popularity = -0.1
+					}
+				}
+				else_if = {
+					limit = { has_government = nationalist }
+					add_popularity = {
+						ideology = nationalist
+						popularity = -0.1
+					}
+				}
+				set_country_flag = troops_deployed
+				custom_effect_tooltip = CHI_HKG_influence_60_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 60 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = CHI.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
+			every_other_country = {
+				limit = { NOT = { original_tag = CHI } }
 				country_event = { id = hongkong.2 }
 			}
 		}
