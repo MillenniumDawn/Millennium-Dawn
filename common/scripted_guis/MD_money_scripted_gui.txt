@@ -260,23 +260,55 @@ scripted_gui = {
 		}
 		effects = {
 			small_plus_button_bg_click = {
-					ROOT = { add_political_power = -50 }
-					remove_tax_cost = yes
-					add_to_variable = { tax_rate = 1 }
-					set_tax_cost = yes
-					calculate_tax_gain = yes
-					update_military_rate = yes
-					ingame_calculate_size_modifier = yes
-					calculate_resource_sale_rate = yes
-					set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
-					set_variable = { law_change = 1 } #-1 decrease, 1 for increase
-					law_attitude_change = yes
+				ROOT = { add_political_power = -50 }
+				remove_tax_cost = yes
+				add_to_variable = { tax_rate = 1 }
+				set_tax_cost = yes
+				calculate_tax_gain = yes
+				update_military_rate = yes
+				ingame_calculate_size_modifier = yes
+				calculate_resource_sale_rate = yes
+				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
+				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
+				law_attitude_change = yes
+				log = "[GetDateText]: [Root.GetName]: tax_rate increase [?tax_rate]% (expences:[?expense_gain] taxincome:[?tax_gain])"
 			}
 		}
 		triggers = {
 			small_plus_button_bg_click_enabled = {
 				check_variable = { tax_rate < 50 }
 				ROOT = { has_political_power > 50 }
+			}
+		}
+
+		ai_enabled = { always = yes }
+		ai_test_interval = 340
+        ai_weights = {
+            small_plus_button_bg_click = {
+                ai_will_do = {
+					factor = 0
+					modifier = {
+						add = 1
+						AND = {
+							add_political_power > 100
+							check_variable = { tax_gain < expense_gain }
+						}
+					}
+					modifier = {
+						add = 1
+						AND = {
+							add_political_power > 300
+							check_variable = { tax_gain < expense_gain }
+						}
+					}
+					modifier = {
+						add = 1
+						AND = {
+							add_political_power > 600
+							check_variable = { tax_gain < expense_gain }
+						}
+					}
+                }
 			}
 		}
 	}
@@ -291,17 +323,18 @@ scripted_gui = {
 		}
 		effects = {
 			small_minus_button_bg_click = {
-					ROOT = { add_political_power = -50 }
-					remove_tax_cost = yes
-					subtract_from_variable = { tax_rate = 1 }
-					set_tax_cost = yes
-					calculate_tax_gain = yes
-					update_military_rate = yes
-					ingame_calculate_size_modifier = yes
-					calculate_resource_sale_rate = yes
-					set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
-					set_variable = { law_change = -1 } #-1 decrease, 1 for increase
-					law_attitude_change = yes
+				ROOT = { add_political_power = -50 }
+				remove_tax_cost = yes
+				subtract_from_variable = { tax_rate = 1 }
+				set_tax_cost = yes
+				calculate_tax_gain = yes
+				update_military_rate = yes
+				ingame_calculate_size_modifier = yes
+				calculate_resource_sale_rate = yes
+				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
+				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
+				law_attitude_change = yes
+				log = "[GetDateText]: [Root.GetName]: tax_rate decrease [?tax_rate]% (expences:[?expense_gain] taxincome:[?tax_gain])"
 			}
 		}
 		triggers = {
@@ -310,6 +343,67 @@ scripted_gui = {
 				ROOT = { has_political_power > 50 }
 			}
 		}
+
+        ai_enabled = { always = yes }
+		ai_test_interval = 340
+        ai_weights = {
+            small_minus_button_bg_click = {
+                ai_will_do = {
+					factor = 0
+					modifier = {
+						add = 1
+						AND = {
+							add_political_power > 100
+							check_variable = { tax_gain > expense_gain }
+						}
+					}
+					modifier = {
+						add = 1
+						AND = {
+							add_political_power > 300
+							check_variable = { tax_gain > expense_gain }
+						}
+					}
+					modifier = {
+						add = 1
+						AND = {
+							add_political_power > 600
+							check_variable = { tax_gain > expense_gain }
+						}
+					}
+					modifier = {
+						add = 1
+						check_variable = { tax_gain > expense_gain }
+					}
+
+					modifier = {
+						add = -6
+						has_idea = depression
+					}
+					modifier = {
+						add = -4
+						has_idea = recession
+					}
+					modifier = {
+						add = -2
+						has_idea = stagnation
+					}
+
+
+					# If expences is 0 dont care about chaning taxes
+					modifier = {
+						add = -5
+						check_variable = { expense_gain < 0.001 }
+					}
+
+					# Ai like to save befor lowering taxes
+					modifier = {
+						add = -10
+						check_variable = { treasury < 2 }
+					}
+                }
+            }
+        }
 	}
 	expense_gain = {
 		context_type = player_context
