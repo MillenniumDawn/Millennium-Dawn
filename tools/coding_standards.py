@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os, sys, fnmatch, re
 import time
+import requests
 
 startTime = time.time()
 
@@ -88,7 +89,7 @@ def check_event_for_logs(filepath):
         for line in content:
             lineNum +=1
             if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
-                if "option" in line and "=" in line:
+                if "option" in line and "{" in line and "=" in line:
                     optionFound = 1
                     optionLine = lineNum
                     hasLog = 0
@@ -379,6 +380,7 @@ def getUnkownEffects (allEffects):
 
 def main():
     print("Validating Basic Style - Secondary Check")
+    message = "Validating Basic Style - Secondary Check\n"
 
     files_list = []
     nation_focus_files = []
@@ -458,13 +460,42 @@ def main():
     # for filename in files_list:
     #    bad_count = bad_count + check_basic_style(filename)
 
+
+
+
     print("------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count))
+    message += "------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count) + "\n"
+
     if (bad_count == 0):
         print("File validation PASSED")
+        message += "File validation PASSED\n"
     else:
         print("File validation FAILED")
+        message += "File validation FAILED\n"
 
     print('The script took {0} second!'.format(time.time() - startTime))
+
+    try:
+        projectId = os.environ['CI_PROJECT_ID'];
+        privateToken = privateToken = sys.argv[1]
+        headers = {'PRIVATE-TOKEN': privateToken}
+        payload = {'body': message}
+
+        if "CI_MERGE_REQUEST_IID" in os.environ:
+            mergeRequestId = os.environ['CI_MERGE_REQUEST_IID'];
+            r = requests.post(
+                "https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions",
+                data=payload, headers=headers)
+            print("Posted results to merge request")
+
+        else:
+            commitID = os.environ['CI_COMMIT_SHA'];
+            r = requests.post(
+                "https://gitlab.com/api/v4/projects/" + projectId + "/commits/" + commitID + "/discussions",
+                data=payload, headers=headers)
+            print("Posted results to commit")
+    except:
+        print("Couldn't post results to gitlab")
 
     return bad_count
 

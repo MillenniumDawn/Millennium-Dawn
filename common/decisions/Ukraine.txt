@@ -1,0 +1,412 @@
+UKR_stability_of_ukraine_decision_category = {
+	UKR_help_decision_event = {
+		cost = 0 
+		icon = political_actions 
+		
+		is_good = no 
+		days_remove = 1
+		days_re_enable = 1 
+		fire_only_once = no
+		
+		complete_effect = {
+			country_event = ukraine_revolution.0 
+		}
+	}
+	UKR_decision_support_campaigns = {
+		cost = 100
+		icon = political_actions
+		
+		is_good = no
+		days_remove = 60
+		days_re_enable = 30
+		fire_only_once = no 
+		
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { UKR_stability_of_ukraine_var < 60 }
+				tooltip = UKR_requires_under_60_variable_stab_TT
+			}
+		}
+		
+		modifier = {
+			stability_weekly = 0.001
+			political_power_factor = -0.20
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_decision_support_campaigns"
+			add_to_variable = { UKR_stability_of_ukraine_var = 3.0 }
+			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_3_TT
+		}
+	}
+	UKR_decision_send_in_the_national_guard = {
+		cost = 100
+		icon = decision_generic_prepare_civil_war
+		
+		is_good = no
+		days_remove = 30
+		days_re_enable = 30
+		fire_only_once = no 
+		
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { UKR_stability_of_ukraine_var < 60 }
+				tooltip = UKR_requires_under_60_variable_stab_TT
+			}
+		}
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision select UKR_decision_send_in_the_national_guard"
+			add_manpower = -100
+		}
+		
+		modifier = {
+			stability_weekly = -0.002
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_decision_send_in_the_national_guard"
+			add_to_variable = { UKR_stability_of_ukraine_var = 10.0 }
+			add_to_variable = { UKR_chance_of_collapse_var = 4.0 }
+			decrease_popularity_5 = yes
+			custom_effect_tooltip = UKR_send_in_the_national_guard_decision_TT
+		}
+	}
+	
+	UKR_decision_make_deals_with_local_leaders = {
+		cost = 50
+		icon = decision_eng_trade_unions_support
+		
+		is_good = no 
+		days_remove = 60
+		days_re_enable = 30
+		fire_only_once = no
+		
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { UKR_stability_of_ukraine_var > 30 }
+				tooltip = UKR_requires_over_30_variable_stab_TT
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_decision_make_deals_with_local_leaders"
+			subtract_from_variable = { UKR_chance_of_collapse_var = 1.0 }
+			subtract_from_variable = { UKR_stability_of_ukraine_var = 5.0 }
+			add_1_popularity = yes
+			custom_effect_tooltip = UKR_make_deals_with_local_leaders_decision_TT
+		}
+	}
+	
+	UKR_decision_strike_smuggling_caches = {
+		cost = 100
+		icon = decision_generic_prepare_civil_war
+		
+		is_good = no
+		days_remove = 50
+		days_re_enable = 150
+		fire_only_once = no
+		
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { UKR_stability_of_ukraine_var > 50 }
+				tooltip = UKR_requires_over_50_variable_stab_TT
+			}
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_decision_strike_smuggling_caches"
+			subtract_from_variable = { UKR_chance_of_collapse_var = 1.0 }
+			subtract_from_variable = { UKR_stability_of_ukraine_var = 5.0 }
+			hidden_effect = {
+				random_list = {	
+					15 = {
+						add_equipment_to_stockpile = {
+							type = infantry_weapons1 #AK-74
+							amount = 1000
+							producer = SOV
+						}
+					}
+					35 = {
+						add_equipment_to_stockpile = {
+							type = infantry_weapons1 #AK-74
+							amount = 500
+							producer = SOV
+						}
+					}
+					50 = {
+						add_equipment_to_stockpile = {
+							type = infantry_weapons1 #AK-74
+							amount = 250
+							producer = SOV
+						}
+					}
+				
+				}
+			}
+			decrease_popularity_2_5 = yes
+			custom_effect_tooltip = UKR_decision_strike_smuggling_caches_TT
+		}
+	}
+	
+	UKR_decision_reinforce_the_militias = {
+		cost = 150
+		icon = political_actions
+		
+		is_good = no
+		days_remove = 90
+		fire_only_once = yes
+		
+		visible = {
+			date < 2017.1.1
+		}
+		
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { UKR_stability_of_ukraine_var > 50 }
+				tooltip = UKR_requires_over_50_variable_stab_TT
+			}
+			NOT = { has_decision = UKR_decision_disband_the_militias }
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_decision_reinforce_the_militias"
+			subtract_from_variable = { UKR_chance_of_collapse_var = 1.0 }
+			subtract_from_variable = { UKR_stability_of_ukraine_var = 3.0 }
+			custom_effect_tooltip = UKR_decision_reinforce_the_militias_TT
+			delete_unit_template_and_units = { division_template = "Ukrayinski Militsiyi" }
+			hidden_effect = {
+				UKR = {
+					698 = {
+						create_unit = {
+							division = " name = \"Natsionalna Hvardiya - Azov\" division_template = \"Natsionalna Hvardiya\" start_experience_factor = 0.5"
+							owner = UKR
+							prioritize_location = 525
+						}	
+					}
+					698 = {
+						create_unit = {
+							division = " name = \"Natsionalna Hvardiya - Donbass\" division_template = \"Natsionalna Hvardiya\" start_experience_factor = 0.5"
+							owner = UKR
+							prioritize_location = 525
+						}	
+					}
+				}
+				UKR = {	
+					division_template = {
+						name = "Natsionalna Hvardiya"
+						regiments = {
+							Militia_Bat = { x = 0 y = 0 }
+							Militia_Bat = { x = 0 y = 1 }
+							Militia_Bat = { x = 0 y = 2 }
+							Militia_Bat = { x = 0 y = 3 }
+						}
+						support = {
+							L_Engi_Comp = { x = 0 y = 0 }
+							L_Recce_Comp = { x = 0 y = 0 }
+						}
+					}
+				}
+			}
+		}	
+	}
+	
+	UKR_decision_disband_the_militias = {
+		cost = 100
+		icon = political_actions
+		
+		is_good = no
+		days_remove = 60
+		fire_only_once = yes
+		
+		visible = {
+			OR = {	
+				date < 2017.1.1
+				NOT = { has_decision = UKR_decision_reinforce_the_militias }
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { UKR_stability_of_ukraine_var > 50 }
+				tooltip = UKR_requires_over_50_variable_stab_TT
+			}
+			NOT = { has_decision = UKR_decision_reinforce_the_militias }
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_decision_disband_the_militias"
+			UKR = { delete_unit_template_and_units = { division_template = "Ukrayinski Militsiyi" }
+				add_manpower = 3000
+			}
+			add_5_popularity = yes
+			subtract_from_variable = { UKR_chance_of_collapse_var = 1.0 }
+		}
+	}
+	
+	UKR_decision_reorganize_the_national_guard = {
+		cost = 150
+		icon = decision_generic_army_support
+		
+		is_good = no
+		days_remove = 120
+		fire_only_once = yes
+		
+		visible = {
+			OR = {	
+				date > 2016.12.31
+				has_decision = UKR_decision_reinforce_the_militias
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { UKR_stability_of_ukraine_var > 50 }
+				tooltip = UKR_requires_over_50_variable_stab_TT
+			}
+			NOT = { has_decision = UKR_decision_disband_the_national_guard }
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_decision_reorganize_the_national_guard"
+			add_ideas = UKR_idea_reorgnanized_national_guard
+		}
+	}
+	
+	UKR_decision_disband_the_national_guard = {
+		cost = 100
+		icon = political_actions
+		
+		is_good = no
+		days_remove = 60
+		fire_only_once = yes
+		
+		visible = {
+			OR = {	
+				date > 2016.12.31
+				has_decision = UKR_decision_reinforce_the_militias
+			}
+		}
+		
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { UKR_stability_of_ukraine_var > 50 }
+				tooltip = UKR_requires_over_50_variable_stab_TT
+			}
+			NOT = { has_decision = UKR_decision_reorganize_the_national_guard }
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_decision_disband_the_national_guard"
+			add_ideas = UKR_idea_disbanded_national_guard
+			delete_unit_template_and_units = { division_template = "Natsionalna Hvardiya" }
+			UKR = { add_manpower = 3000 }
+			subtract_from_variable = { UKR_chance_of_collapse_var = 1.0 }
+			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_1_TT
+		}
+	}
+	
+	UKR_decision_reign_in_the_donbass_region = {
+		cost = 200
+		icon = political_actions
+		
+		is_good = no
+		days_remove = 180
+		fire_only_once = yes
+		
+		visible = {
+			OR = {
+				any_owned_state = {
+					is_core_of = NOV
+				}
+				country_exists = NOV
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { UKR_stability_of_ukraine_var > 80 }
+				tooltip = UKR_requires_over_80_variable_stab_TT
+			}
+			OR = {
+				any_owned_state = {
+					is_core_of = NOV
+				}
+				country_exists = NOV
+			}
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_decision_reign_in_the_donbass_region"
+			if = {
+				limit = { 
+					AND = {
+						NOT = { country_exists = NOV }
+						any_owned_state = {
+							is_core_of = NOV
+						}
+					}
+				}
+				every_owned_state = {
+					limit = { is_core_of = NOV }
+					remove_core_of = NOV 
+				}
+				hidden_effect = {
+					every_owned_state = {
+						limit = { is_owned_by = NOV } 
+							add_core_of = UKR 
+					}
+				}
+			}
+			else_if = {
+				limit = { 
+					country_exists = NOV
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = NOV
+				}
+				every_owned_state = {
+					limit = {
+						is_owned_by = NOV
+					}
+					add_core_of = UKR 
+				}
+			}
+		}
+	}
+	
+	UKR_decision_demand_the_return_of_the_crimea = {
+		cost = 200
+		icon = political_actions
+		
+		is_good = no
+		days_remove = 120
+		fire_only_once = yes
+		
+		visible = {
+			669 = { is_owned_by = SOV }
+			669 = { NOT = { is_owned_by = UKR } }
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_decision_demand_the_return_of_the_crimea"
+			SOV = { country_event = { id = ukraine_revolution.4 days = 1 } } 
+			custom_effect_tooltip = UKR_decision_demand_the_return_of_the_crimea_TT
+		}
+	}
+	
+	UKR_ukrainian_revolution_mission = {
+		icon = political_actions
+		available = {
+			always = no
+		}
+		activation = {
+			check_variable = { UKR_chance_of_collapse_var > 15.0 }
+			any_owned_state = { is_core_of = NOV } 
+		}
+		is_good = no
+		days_mission_timeout = 180
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_ukrainian_revolution_mission"
+			country_event = ukraine_revolution.5
+		}
+		fire_only_once = yes
+	}
+}
