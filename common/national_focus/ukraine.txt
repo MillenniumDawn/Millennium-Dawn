@@ -543,6 +543,7 @@ continuous_focus_position = { x = 135 y = 950 }
 				has_government = communism
 			}
 			has_war_support > 0.10
+			is_puppet = no 
 		}
 		
 		
@@ -642,6 +643,7 @@ continuous_focus_position = { x = 135 y = 950 }
 				tooltip = UKR_east_major_influence_greater_than_10_perecnt_TT
 				UKR_east_major_influence_greater_than_10_perecnt = yes 
 			}
+			is_puppet = no 
 		}
 		
 		completion_reward = {
@@ -705,9 +707,9 @@ continuous_focus_position = { x = 135 y = 950 }
 			add_to_variable = { party_pop_array^6 = 0.15 }
 			recalculate_party = yes
 			subtract_from_variable = { UKR_stability_of_ukraine_var = 5.0 }
-			custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_5_TT
+			custom_effect_tooltip = UKR_subtract_5_stability_of_regime_TT
 			subtract_from_variable = { UKR_chance_of_collapse_var = 3.0 }
-			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_3_TT
+			custom_effect_tooltip = UKR_lower_chance_of_revolt_by_3_TT
 		}
 	}
 	
@@ -741,6 +743,7 @@ continuous_focus_position = { x = 135 y = 950 }
 				tooltip = UKR_east_major_influence_greater_than_10_perecnt_TT
 				UKR_east_major_influence_greater_than_10_perecnt = yes 
 			}
+			is_puppet = no
 		}
 		
 		completion_reward = {
@@ -802,6 +805,7 @@ continuous_focus_position = { x = 135 y = 950 }
 				tooltip = UKR_east_major_influence_greater_than_10_perecnt_TT
 				UKR_east_major_influence_greater_than_10_perecnt = yes 
 			}
+			is_puppet = no 
 		}
 		
 		mutually_exclusive = { focus = UKR_confirm_non_block_status }
@@ -839,6 +843,7 @@ continuous_focus_position = { x = 135 y = 950 }
 				tooltip = UKR_east_major_influence_greater_than_10_perecnt_TT
 				UKR_east_major_influence_greater_than_10_perecnt = yes 
 			}
+			is_puppet = no 
 		}
 		
 		prerequisite = { focus = UKR_closer_ties_with_eastern_bloc }
@@ -1078,7 +1083,7 @@ continuous_focus_position = { x = 135 y = 950 }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_adopt_the_second_language"
 			subtract_from_variable = { UKR_chance_of_collapse_var = 1.0 }
-			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_1_TT
+			custom_effect_tooltip = UKR_lower_chance_of_revolt_by_1_TT
 			every_owned_state = {
 				remove_core_of = NOV
 			}
@@ -1115,7 +1120,7 @@ continuous_focus_position = { x = 135 y = 950 }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_freedom_of_choise_in_regions"
 			add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
-			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT 
+			custom_effect_tooltip = UKR_add_5_stability_of_regime_TT 
 			every_owned_state = {
 				remove_core_of = NOV
 			}
@@ -1434,6 +1439,7 @@ continuous_focus_position = { x = 135 y = 950 }
 			NOT = { 
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
+			has_completed_focus = UKR_our_identity
 		}
 		 
 		completion_reward = {
@@ -1700,40 +1706,55 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_pro_ukrainian_government_in_power"
-			hidden_effect = { ###Euromaidan Coalition
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 18 }
+			if = { 
+				limit = { NOT = { is_in_array = { ruling_party = 15 } } }
+				hidden_effect = { ###Euromaidan Coalition
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 15 }
+					add_to_array = { gov_coalition_array = 14 }
+					add_to_array = { gov_coalition_array = 20 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					meta_effect = {
+						text = {
+							set_country_flag = [META_SET_RULING_PARTY]
+						}
+						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+					}
+					set_leader = yes
+				}
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+				hidden_effect = {
+					add_popularity = {
+						ideology = neutrality 
+						popularity = 0.10
+					}
+				}
+				add_to_variable = { party_pop_array^15 = 0.05 }
+				add_to_variable = { party_pop_array^14 = 0.05 }
+				recalculate_party = yes
+				subtract_from_variable = { UKR_chance_of_collapse_var = 3.0 }
+				custom_effect_tooltip = UKR_lower_chance_of_revolt_by_3_TT
+				add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
+				custom_effect_tooltip = UKR_add_5_stability_of_regime_TT
+			}
+			else_if = {
+				limit = { is_in_array = { ruling_party = 15 } }
 				add_to_array = { gov_coalition_array = 14 }
 				add_to_array = { gov_coalition_array = 20 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
+				add_to_variable = { party_pop_array^15 = 0.05 }
+				add_to_variable = { party_pop_array^14 = 0.05 }
+				recalculate_party = yes
+				subtract_from_variable = { UKR_chance_of_collapse_var = 3.0 }
+				custom_effect_tooltip = UKR_lower_chance_of_revolt_by_3_TT
+				add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
+				custom_effect_tooltip = UKR_add_5_stability_of_regime_TT
 			}
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = yes
-			}
-			hidden_effect = {
-				add_popularity = {
-					ideology = neutrality 
-					popularity = 0.20
-				}
-			}
-			add_to_variable = { party_pop_array^18 = 0.15 }
-			add_to_variable = { party_pop_array^14 = 0.05 }
-			recalculate_party = yes
-			add_to_variable = { UKR_chance_of_collapse_var = -3.0 }
-			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_3_TT
-			add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
-			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
 		}
 	} 
 
@@ -2283,7 +2304,7 @@ continuous_focus_position = { x = 135 y = 950 }
 			NOT = { has_completed_focus = UKR_pro_russian_government_in_power }
 			custom_trigger_tooltip = {
 				check_variable = { UKR_stability_of_ukraine_var > 50 }
-				tooltip = UKR_take_lead_at_national_revival_focus_TT
+				tooltip = UKR_requires_over_50_variable_stab_TT
 			}
 		}
 		
@@ -2317,9 +2338,9 @@ continuous_focus_position = { x = 135 y = 950 }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_enlist_the_people_support"
 			add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
-			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+			custom_effect_tooltip = UKR_add_5_stability_of_regime_TT
 			subtract_from_variable = { UKR_chance_of_collapse_var = 2.0 }
-			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_2_TT
+			custom_effect_tooltip = UKR_lower_chance_of_revolt_by_2_TT
 		}
 	} 
 
@@ -2493,7 +2514,8 @@ continuous_focus_position = { x = 135 y = 950 }
 			recalculate_party = yes
 			add_to_variable = { UKR_chance_of_collapse_var = 3.0 }
 			subtract_from_variable = { UKR_stability_of_ukraine_var = 5.0 }
-			custom_effect_tooltip = UKR_nationalist_empowerment_TT
+			custom_effect_tooltip = UKR_subtract_5_stability_of_regime_TT
+			custom_effect_tooltip = UKR_raise_chance_of_revolt_by_3_TT
 		}
 	}
 
@@ -2547,7 +2569,7 @@ continuous_focus_position = { x = 135 y = 950 }
 			add_5_popularity = yes 
 			add_stability = 0.05
 			add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
-			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+			custom_effect_tooltip = UKR_add_5_stability_of_regime_TT
 		}
 	} 
 
@@ -2576,8 +2598,8 @@ continuous_focus_position = { x = 135 y = 950 }
 			add_war_support = 0.05
 			add_to_variable = { UKR_stability_of_ukraine_var = -5.0 }
 			subtract_from_variable = { UKR_chance_of_collapse_var = 3.0 }
-			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
-			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_3_TT
+			custom_effect_tooltip = UKR_subtract_5_stability_of_regime_TT
+			custom_effect_tooltip = UKR_lower_chance_of_revolt_by_3_TT
 		}
 		
 	}  
@@ -2631,7 +2653,7 @@ continuous_focus_position = { x = 135 y = 950 }
 			add_to_variable = { UKR_stability_of_ukraine_var = 3.0 }
 			add_to_variable = { UKR_chance_of_collapse_var = 1.0 }
 			custom_effect_tooltip = UKR_raise_chance_of_revolt_by_1_TT
-			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_3_TT
+			custom_effect_tooltip = UKR_add_3_stability_of_regime_TT
 		}
 	} 
 
@@ -2679,7 +2701,7 @@ continuous_focus_position = { x = 135 y = 950 }
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_one_language_nation_way"
 			add_to_variable = { UKR_stability_of_ukraine_var = 5.0 }
 			add_to_variable = { UKR_chance_of_collapse_var = 3.0 }
-			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+			custom_effect_tooltip = UKR_add_5_stability_of_regime_TT
 			custom_effect_tooltip = UKR_raise_chance_of_revolt_by_3_TT
 		}
 	} 
@@ -3428,6 +3450,16 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		ai_will_do = { factor = 1 }
 		
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					is_ai = yes
+					check_variable = { treasury > 2.99 }
+				}
+				tooltip = 3_billion_currently_in_treasury_tt
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_legacy_of_the_ukr_ind"
 			random_owned_state = {
@@ -3446,6 +3478,8 @@ continuous_focus_position = { x = 135 y = 950 }
 					instant_build = yes
 				}
 			}
+			custom_effect_tooltip = 3_billion_expense_tt
+			subtract_from_variable = { treasury = 3.0 }
 		}
 	}
 
@@ -3466,6 +3500,16 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_legacy_of_the_ukr_ind }
 		
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					is_ai = yes
+					check_variable = { treasury > 1.99 }
+				}
+				tooltip = 2_billion_currently_in_treasury_tt
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_pivdenmash_udo"
 			694 = { ##Zaporizhya
@@ -3476,6 +3520,8 @@ continuous_focus_position = { x = 135 y = 950 }
 					instant_build = yes
 				}
 			}
+			custom_effect_tooltip = 2_billion_expense_tt
+			subtract_from_variable = { treasury = 2.0 }
 		}
 	}
 	
@@ -3496,6 +3542,16 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_pivdenmash_udo }
 		
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					is_ai = yes
+					check_variable = { treasury > 1.99 }
+				}
+				tooltip = 2_billion_currently_in_treasury_tt
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_rocket_program"
 			698 = {
@@ -3512,6 +3568,8 @@ continuous_focus_position = { x = 135 y = 950 }
 					instant_build = yes 
 				}
 			}
+			custom_effect_tooltip = 2_billion_expense_tt
+			subtract_from_variable = { treasury = 2.0 }
 		}
 	}
 
@@ -3532,6 +3590,16 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_legacy_of_the_ukr_ind }
 		
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					is_ai = yes
+					check_variable = { treasury > 1.99 }
+				}
+				tooltip = 2_billion_currently_in_treasury_tt
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_naftogaz"
 			693 = { ##Donetsk/Donbas Basin
@@ -3546,6 +3614,8 @@ continuous_focus_position = { x = 135 y = 950 }
 					amount = 1
 				}
 			}
+			custom_effect_tooltip = 2_billion_expense_tt
+			subtract_from_variable = { treasury = 2.0 }
 		}
 	}
 
@@ -3566,6 +3636,15 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_naftogaz }
 		
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					is_ai = yes
+					check_variable = { treasury > 3.99 }
+				}
+				tooltip = 4_billion_currently_in_treasury_tt
+			}
+		}
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_extend_ukrainian_refineries"
@@ -3585,6 +3664,8 @@ continuous_focus_position = { x = 135 y = 950 }
 					instant_build = yes 
 				}
 			}
+			custom_effect_tooltip = 4_billion_expense_tt
+			subtract_from_variable = { treasury = 4.0 }
 		}
 	}
 	
@@ -3605,14 +3686,26 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_legacy_of_the_ukr_ind }
 		
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					is_ai = yes
+					check_variable = { treasury > 3.99 }
+				}
+				tooltip = 4_billion_currently_in_treasury_tt
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_national_steel_companies"
 			701 = { ##Ruthenia
 				add_resource = {
 					type = steel
-					amount = 4
+					amount = 5
 				}
 			}
+			custom_effect_tooltip = 4_billion_expense_tt
+			subtract_from_variable = { treasury = 4.0 }
 		}
 	}
 
@@ -3633,14 +3726,26 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_national_steel_companies }
 		
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					is_ai = yes
+					check_variable = { treasury > 1.99 }
+				}
+				tooltip = 2_billion_currently_in_treasury_tt
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_zalk"
 			694 = { ##Zaporizhya
 				add_resource = { 
 					type = aluminium 
-					amount = 3
+					amount = 4
 				}
 			}
+			custom_effect_tooltip = 2_billion_expense_tt
+			subtract_from_variable = { treasury = 2.0 }
 		}
 	}
 
@@ -3718,7 +3823,6 @@ continuous_focus_position = { x = 135 y = 950 }
 			}
 			else_if = {
 				limit = { NOT = { has_dlc = "Death or Dishonor" } }
-				###I need to figure out something for this
 				add_offsite_building = {
 					type = industrial_complex
 					level = 2
@@ -3747,6 +3851,10 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		mutually_exclusive = { focus = UKR_cars_production_licenses }
 		
+		available = {
+			has_political_power > 25
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_own_automobile_production"
 			random_owned_state = {
@@ -3758,6 +3866,7 @@ continuous_focus_position = { x = 135 y = 950 }
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 1
 			}
+			add_political_power = -100
 		}
 	}
 
@@ -3778,6 +3887,16 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_own_automobile_production }
 		
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					is_ai = yes
+					check_variable = { treasury > 0.99 }
+				}
+				tooltip = 1_billion_currently_in_treasury_tt
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_laz"
 			700 = { ##Factory in Lviv
@@ -3788,6 +3907,8 @@ continuous_focus_position = { x = 135 y = 950 }
 				}	
 				add_extra_state_shared_building_slots = 1
 			}
+			custom_effect_tooltip = 1_billion_expense_tt
+			subtract_from_variable = { treasury = 1.0 }
 		}
 	}
 	
@@ -3808,6 +3929,16 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_own_automobile_production }
 		
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					is_ai = yes
+					check_variable = { treasury > 0.99 }
+				}
+				tooltip = 1_billion_currently_in_treasury_tt
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_zaz"
 			694 = { ##Factory in Zaporizhya
@@ -3818,6 +3949,8 @@ continuous_focus_position = { x = 135 y = 950 }
 				}	
 				add_extra_state_shared_building_slots = 1
 			}
+			custom_effect_tooltip = 1_billion_expense_tt
+			subtract_from_variable = { treasury = 1.0 }
 		}
 	}
 	
@@ -3838,6 +3971,16 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_own_automobile_production }
 		
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					is_ai = yes
+					check_variable = { treasury > 0.99 }
+				}
+				tooltip = 1_billion_currently_in_treasury_tt
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_kraz"
 			698 = { ##Factory in Kremenchuk
@@ -3848,6 +3991,8 @@ continuous_focus_position = { x = 135 y = 950 }
 				}	
 				add_extra_state_shared_building_slots = 1
 			}
+			custom_effect_tooltip = 1_billion_expense_tt
+			subtract_from_variable = { treasury = 1.0 }
 		}
 	}
 	
@@ -3868,6 +4013,16 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		prerequisite = { focus = UKR_own_automobile_production }
 		
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					is_ai = yes
+					check_variable = { treasury > 0.99 }
+				}
+				tooltip = 1_billion_currently_in_treasury_tt
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_luaz"
 			700 = { ##Factory in Lutsk
@@ -3878,6 +4033,8 @@ continuous_focus_position = { x = 135 y = 950 }
 				}	
 				add_extra_state_shared_building_slots = 1
 			}
+			custom_effect_tooltip = 1_billion_expense_tt
+			subtract_from_variable = { treasury = 1.0 }
 		}
 	}
 	
@@ -3967,7 +4124,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_roads_extend_plan"
-			add_political_power = 100
 			random_owned_state = {
 				add_building_construction = {
 					type = infrastructure
