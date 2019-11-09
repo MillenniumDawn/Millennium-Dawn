@@ -50,6 +50,7 @@ scripted_gui = {
 					update_military_rate = yes
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
+					log = "[GetDateText]: [Root.GetName]: 1k debt taken ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
 			}
 			debt_bg_control_click = {
 					add_to_variable = { treasury = 10 }
@@ -58,6 +59,7 @@ scripted_gui = {
 					update_military_rate = yes
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
+					log = "[GetDateText]: [Root.GetName]: 10k debt taken ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
 			}
 			debt_bg_shift_click = {
 					add_to_variable = { treasury = 100 }
@@ -66,9 +68,10 @@ scripted_gui = {
 					update_military_rate = yes
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
+					log = "[GetDateText]: [Root.GetName]: 100k debt taken ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
 			}
 
-		  #Repay debt
+		  	#Repay debt
 			debt_bg_right_click = {
 				if = {
 					limit = { check_variable = { treasury > 1 } }
@@ -78,7 +81,7 @@ scripted_gui = {
 					#update_military_rate = yes
 					#calculate_interest_rate = yes
 					calculate_debt_rate = yes
-					log = "[GetDateText]: [Root.GetName]: 1k debt repayed ([?debt]k left, balance:[?treasury_rate])"
+					log = "[GetDateText]: [Root.GetName]: 1k debt repayed ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
 				}
 			}
 			debt_bg_control_right_click = {
@@ -90,7 +93,7 @@ scripted_gui = {
 					update_military_rate = yes
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
-					log = "[GetDateText]: [Root.GetName]: 10k debt repayed ([?debt]k left, balance:[?treasury_rate])"
+					log = "[GetDateText]: [Root.GetName]: 10k debt repayed ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
 				}
 			}
 			debt_bg_shift_right_click = {
@@ -103,7 +106,7 @@ scripted_gui = {
 					update_military_rate = yes
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
-					log = "[GetDateText]: [Root.GetName]: 100k debt repayed ([?debt]k left, balance:[?treasury_rate])"
+					log = "[GetDateText]: [Root.GetName]: 100k debt repayed ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
 				}
 			}
 			#Pay off all debt
@@ -147,98 +150,51 @@ scripted_gui = {
 		ai_enabled = {
 			has_available_treasury = yes
 		}
-
 		ai_test_interval = 48
 
 		ai_check = {
-			AND = {
-				check_variable = { treasury_rate > 0 }
-				OR = {
-					NOT = { has_idea = superpower }
-					NOT = { has_idea = great_power }
-					check_variable = { treasury > 250 }
-				}
-				OR = {
-					AND = {
-						has_idea = gdp_12 #200K
-						check_variable = { debt > 600 }
-					}
-					AND = {
-						has_idea = gdp_11 #140K
-						check_variable = { debt > 420 }
-					}
-					AND = {
-						has_idea = gdp_10 #90K
-						check_variable = { debt > 270 }
-					}
-					AND = {
-						has_idea = gdp_9 #50K
-						check_variable = { debt > 150 }
-					}
-					AND = {
-						has_idea = gdp_8 #30K
-						check_variable = { debt > 90 }
-					}
-					AND = {
-						has_idea = gdp_7 #20K
-						check_variable = { debt > 60 }
-					}
-					AND = {
-						has_idea = gdp_6 #15K
-						check_variable = { debt > 45 }
-					}
-					AND = {
-						has_idea = gdp_5 #10K
-						check_variable = { debt > 30 }
-					}
-					AND = {
-						has_idea = gdp_4 #7K
-						check_variable = { debt > 21 }
-					}
-					AND = {
-						has_idea = gdp_3 #4K
-						check_variable = { debt > 12 }
-					}
-					AND = {
-						has_idea = gdp_2 #2K
-						check_variable = { debt > 6 }
-					}
-					AND = {
-						has_idea = gdp_1 #1K
-						check_variable = { debt > 3 }
-					}
-				}
-			}
+			always = yes
 		}
 
 		ai_weights = {
-			debt_bg_right_click = {
+			debt_bg_shift_click = {
 				ai_will_do = {
 					factor = 0
-					modifier = {
+					modifier = { # Take a lone
 						add = 1
-						check_variable = { treasury < 30 }
+						AND = {
+							check_variable = { interest_rate < 1.85 }
+							check_variable = { treasury < 125 }
+							NOT = { has_idea = depression }
+							NOT = { has_idea = recession }
+						}
+					}
+				}
+			}
+			debt_bg_control_click = {
+				ai_will_do = {
+					factor = 0
+					modifier = { # Take a lone
+						add = 1
+						AND = {
+							check_variable = { interest_rate < 3.00 }
+							check_variable = { treasury < 25 }
+							NOT = { has_idea = depression }
+							NOT = { has_idea = recession }
+						}
 					}
 				}
 			}
 			debt_bg_control_right_click = {
 				ai_will_do = {
 					factor = 0
-					modifier = {
+					modifier = { # Repay debth
 						add = 1
 						AND = {
-							check_variable = { treasury > 31 }
-							check_variable = { treasury < 250 }
+							check_variable = { interest_rate > 3.80 }
+							check_variable = { treasury_rate > -0.05 }
+							check_variable = { treasury > 15 }
 						}
-					}
-				}
-			}
-			debt_bg_shift_right_click = {
-				ai_will_do = {
-					factor = 0
-					modifier = {
-						add = 1
-						check_variable = { treasury > 251 }
 					}
 				}
 				
@@ -371,25 +327,72 @@ scripted_gui = {
 		ai_enabled = { always = yes }
 		ai_test_interval = 340
 		ai_check = {
-			check_variable = { treasury_rate < 0.025 }
+			check_variable = { treasury_rate < 0 }
 		}
         ai_weights = {
             small_plus_button_bg_click = {
                 ai_will_do = {
 					factor = 0
-					modifier = {
+					modifier = { # If we have pp to spare considder
 						add = 1
 						add_political_power > 100
 					}
-					modifier = {
+					modifier = { # If we have pp to spare considder
+						add = 5
+						add_political_power > 50
+						check_variable = { treasury_rate < -2.10 }
+					}
+
+
+					modifier = { # considder increase taxes if income is low and intrest is high
 						add = 1
-						add_political_power > 300
+						OR = {
+							AND = {
+								has_communist_government = yes
+								check_variable = { interest_rate > 3.50 }
+								check_variable = { treasury_rate < 0.10 }
+							}
+							AND = {
+								has_socialist_government = yes
+								check_variable = { interest_rate > 3.75 }
+								check_variable = { treasury_rate < 0.08 }
+							}
+							AND = {
+								has_liberal_government = yes
+								check_variable = { interest_rate > 3.50 }
+								check_variable = { treasury_rate < 0.05 }
+							}
+							AND = {
+								has_conservative_government = yes
+								check_variable = { interest_rate > 3.75 }
+								check_variable = { treasury_rate < 0.01 }
+							}
+						}
+					}
+
+					modifier = { # increase taxes if our expences is two high
+						add = 5
+						check_variable = { treasury_rate < -1.50 }
+					}
+
+					modifier = { # Dont lower taxes if our industry dont generate income
+						add = -1
+						num_of_available_civilian_factories < 2
 					}
 					modifier = {
-						add = 1
-						add_political_power > 600
+						add = -1
+						num_of_available_civilian_factories < 3
 					}
-                }
+					modifier = {
+						add = -1
+						num_of_available_civilian_factories < 6
+					}
+					modifier = {
+						add = -1
+						num_of_available_civilian_factories < 8
+					}
+				}
+
 			}
 		}
 	}
@@ -427,50 +430,95 @@ scripted_gui = {
 
         ai_enabled = { always = yes }
 		ai_check = {
-			check_variable = { treasury_rate > 1 }
+			check_variable = { treasury_rate > 0 }
 		}
 		ai_test_interval = 340
         ai_weights = {
             small_minus_button_bg_click = {
                 ai_will_do = {
 					factor = 0
-					modifier = {
+
+					modifier = { # If we have pp to spare considder
 						add = 1
 						add_political_power > 100
 					}
+
+					modifier = { # Dont decrease taxes if we have economic problems
+						add = -1
+						OR = {
+							has_idea = depression
+							has_idea = recession
+							has_idea = stagnation
+							check_variable = { interest_rate > 8.00 } 
+						}
+					}
+					modifier = {
+						add = -1
+						OR = {
+							has_idea = depression
+							has_idea = recession
+							check_variable = { interest_rate > 8.00 } 
+						}
+					}
+					modifier = {
+						add = -1
+						OR = {
+							has_idea = depression
+							check_variable = { interest_rate > 8.00 } 
+						}
+					}
+
+					modifier = { # considder lower taxes if income is high and intrest is low
+						add = 1
+						OR = {
+							AND = {
+								has_communist_government = yes
+								check_variable = { interest_rate < 3.50 }
+								check_variable = { treasury_rate > 0.5 }
+							}
+							AND = {
+								has_socialist_government = yes
+								check_variable = { interest_rate < 3.75 }
+								check_variable = { treasury_rate > 0.2 }
+							}
+							AND = {
+								has_liberal_government = yes
+								check_variable = { interest_rate < 3.50 }
+								check_variable = { treasury_rate > 0.4 }
+							}
+							AND = {
+								has_conservative_government = yes
+								check_variable = { interest_rate < 3.75 }
+								check_variable = { treasury_rate > 0.2 }
+							}
+						}
+					}
+
+					modifier = { # Lower taxes if our industry dont generate income
+						add = 1
+						num_of_available_civilian_factories < 2
+					}
 					modifier = {
 						add = 1
-						add_political_power > 300
+						num_of_available_civilian_factories < 3
 					}
 					modifier = {
 						add = 1
-						add_political_power > 600
+						num_of_available_civilian_factories < 6
+					}
+					modifier = {
+						add = 1
+						num_of_available_civilian_factories < 8
 					}
 
-					modifier = {
-						add = -6
-						has_idea = depression
-					}
-					modifier = {
-						add = -4
-						has_idea = recession
-					}
-					modifier = {
-						add = -2
-						has_idea = stagnation
+					modifier = { # lower taxes if the income is high
+						add = 2
+						check_variable = { treasury_rate > 1.000 }
 					}
 
-
-					# If expences is 0 dont care about chaning taxes
-					modifier = {
-						add = -5
-						check_variable = { expense_gain < 0.001 }
-					}
-
-					# Ai like to save befor lowering taxes
-					modifier = {
+					modifier = { # Ai like to have money befor lowering taxes
 						add = -10
-						check_variable = { treasury < 2 }
+						check_variable = { treasury < 10 }
 					}
                 }
             }
