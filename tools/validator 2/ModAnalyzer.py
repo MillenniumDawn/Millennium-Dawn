@@ -3,10 +3,12 @@ import os, re
 from pathlib import Path
 from Utilities import Utility
 from structs.Ideologies import Ideology
+from structs.Country import Country
 
 class Mod:
 
     def __init__(self, scriptDir):
+        self.debugMode = False
         self.scriptDir = os.path.realpath(scriptDir)
         self.rootDir = os.path.realpath(Path(scriptDir).parents[2])
 
@@ -29,11 +31,15 @@ class Mod:
         self.unkownEffects = self.GetUnkownEffects(self.allEffects)
         self.globalFlags = self.GetFlag(self.rootDir + "/common/", "set_global_flag")
         self.countryFlags = self.GetFlag(self.rootDir + "/common/", "set_country_flag")
+        self.countries, self.errors = self.GenerateCountries(self.rootDir + "/history/countries/")
+        self.getCountriesData()
 
-        self.errors = self.check_event_for_logs(self.rootDir + "/events/")
+        self.validateEqpVariants()
 
-        for error in self.errors:
-            print(error)
+        self.errors += self.check_event_for_logs(self.rootDir + "/events/")
+
+        #for error in self.errors:
+            #print(error)
         print("Total of: " + str(len(self.errors)) + " errors")
 
 
@@ -53,8 +59,8 @@ class Mod:
                                         tags.append(hasTag.group(1))
                 except:
                     print("Couldn't open file: " + str(file))
-
-        print(tags)
+        if self.debugMode:
+            print(tags)
         return tags
 
     def GetIdeologies(self, dir):
@@ -99,22 +105,24 @@ class Mod:
                                             isSubideology = False
                 except:
                     print("Couldn't open file: " + str(file))
-
-        print(ideologies)
+        if self.debugMode:
+            print(ideologies)
         return ideologies
 
     def GetIdeas (self, dir):
         variable = []
         Utility.GetData(dir, '\s+?([\w]+)\s?=', variable, 2)
 
-        print(variable)
+        if self.debugMode:
+            print(variable)
         return variable
 
     def GetTechnology (self, dir):
         variable = []
         Utility.GetData(dir, '\s+?([\w]+)\s?=', variable, 1)
 
-        print(variable)
+        if self.debugMode:
+            print(variable)
         return variable
 
     def GetTechSharingGroups(self, dir):
@@ -142,28 +150,32 @@ class Mod:
                             else:
                                 brace += line.count("{")
                                 brace -= line.count("}")
-        print(variable)
+        if self.debugMode:
+            print(variable)
         return variable
 
     def GetOppinionModifiers (self, dir):
         variable = []
         Utility.GetData(dir, '\s?([-_\w]+)\s?=', variable, 1)
 
-        print(variable)
+        if self.debugMode:
+            print(variable)
         return variable
 
     def GetScriptedEffects (self, dir):
         variable = []
         Utility.GetData(dir, '^\s?([-_\w]+)\s?=', variable, 0)
 
-        print(variable)
+        if self.debugMode:
+            print(variable)
         return variable
 
     def GetScriptedTriggers (self, dir):
         variable = []
         Utility.GetData(dir, '^\s?([-_\w]+)\s?=', variable, 0)
 
-        print(variable)
+        if self.debugMode:
+            print(variable)
         return variable
 
     def GetTraits (self, dir):
@@ -178,14 +190,16 @@ class Mod:
         for num in toRemove:
             variable.remove(num)
 
-        print(variable)
+        if self.debugMode:
+            print(variable)
         return variable
 
     def GetNationalFocus (self, dir):
         variable = []
         Utility.GetData(dir, '^[\s?]+id\s?=\s?([\w_]+)', variable, 2)
 
-        print(variable)
+        if self.debugMode:
+            print(variable)
         return variable
 
     def FindPdxSyntax(self, dir):
@@ -272,9 +286,9 @@ class Mod:
                             isEffect = re.search(r'^([A-Z_?-?]+) -', line, re.M | re.I)  # If it's a tag
                             pdxEffects.append([[isEffect.group(1)]])
                             EffectrNum += 1
-
-        print(pdxTriggers)
-        print(pdxEffects)
+        if self.debugMode:
+            print(pdxTriggers)
+            print(pdxEffects)
         return pdxTriggers, pdxEffects
 
     def GetCountryTriggers(self, allTriggers):
@@ -292,8 +306,8 @@ class Mod:
         #           print("x = " + str(x))
         #           print("y = " + str(y))
         #           print("z = " + str(z))
-
-        print(countryTriggers)
+        if self.debugMode:
+            print(countryTriggers)
         return countryTriggers
 
     def GetStateTriggers(self, allTriggers):
@@ -312,7 +326,8 @@ class Mod:
         #            print("y = " + str(y))
         #            print("z = " + str(z))
 
-        print(stateTriggers)
+        if self.debugMode:
+            print(stateTriggers)
         return stateTriggers
 
     def GetUnkownTriggers(self, allTriggers):
@@ -333,7 +348,8 @@ class Mod:
         #            print("y = " + str(y))
         #            print("z = " + str(z))
 
-        print(unkownTriggers)
+        if self.debugMode:
+            print(unkownTriggers)
         return unkownTriggers
 
     def GetCountryEffects(self, allEffects):
@@ -352,7 +368,8 @@ class Mod:
         #           print("y = " + str(y))
         #           print("z = " + str(z))
 
-        print(countryEffects)
+        if self.debugMode:
+            print(countryEffects)
         return countryEffects
 
     def GetStateEffects(self, allEffects):
@@ -371,7 +388,8 @@ class Mod:
         #       print("y = " + str(y))
         #        print("z = " + str(z))
 
-        print(stateEffects)
+        if self.debugMode:
+            print(stateEffects)
         return stateEffects
 
     def GetUnkownEffects(self, allEffects):
@@ -390,7 +408,8 @@ class Mod:
         #       print("y = " + str(y))
         #        print("z = " + str(z))
 
-        print(unkownEffects)
+        if self.debugMode:
+            print(unkownEffects)
         return unkownEffects
 
     def GetFlag(self, dir, keyword):
@@ -430,7 +449,9 @@ class Mod:
                     print("Couldn't open file: " + str(file))
 
         Utility.RemoveDuplicates(variable)
-        print(variable)
+
+        if self.debugMode:
+            print(variable)
         return variable
 
     def check_event_for_logs(self, dir):
@@ -476,6 +497,126 @@ class Mod:
                                             hasLog = 0
                 except:
                     print("Couldn't open file: " + str(file) )
-
-        print(errors)
+        if self.debugMode:
+            print(errors)
         return errors
+
+    def GenerateCountries(self, dir):
+        countries = []
+        countryFiles = os.listdir(dir)
+        errors = []
+
+        for x in self.tags:
+            countries.append(Country(x))
+
+        for country in countries:
+            for filename in countryFiles:
+                if country.tag + " - " in filename:
+                    country.countryFile = dir + filename
+
+                    countryFiles.remove(filename)
+                    #print(country.countryFile)
+                    #print(len(countryFiles))
+
+
+            if country.countryFile == "":
+                #print(f"{country.tag} doesn't have a history/countries file")
+                errors += "ERROR: " + country.tag + "doesn't have a history/countries file"
+
+        return countries, errors
+
+    def getCountriesData(self):
+        for country in self.countries:
+            if country.countryFile != "":
+                with open(country.countryFile, 'r', encoding='utf-8', errors='ignore') as file:
+                    content = file.readlines()
+                    foundTech = 0
+                    foundVariant = 0
+                    openBrace = 0
+                    startDate = 0
+
+                    # input()
+                    for line in content:
+                        if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
+                            if "2000.1.1" in line:
+                                startDate = 1
+                            if "2017.1.1" in line:
+                                startDate = 2
+                            if "{" in line:
+                                openBrace += 1
+                            if "}" in line:
+                                openBrace -= 1
+
+                            if foundTech == 1 and openBrace <= 1:
+                                foundTech = 0
+                            if foundVariant == 1 and openBrace <= 1:
+                                foundVariant = 0
+
+                            if startDate == 1:
+                                if "set_technology" in line:
+                                    foundTech = 1
+                                if "create_equipment_variant" in line:
+                                    foundVariant = 1
+
+                                if openBrace == 2:
+                                    if foundTech == 1:
+                                        country.AddTech(line, startDate)
+
+                                if openBrace == 2 or openBrace == 3:
+                                        if foundVariant == 1:
+                                            country.AddVariant(line, startDate)
+
+                            if startDate == 2:
+                                if "set_technology" in line:
+                                    foundTech = 1
+                                if "create_equipment_variant" in line:
+                                    foundVariant = 1
+
+                                if openBrace == 2:
+                                    if foundTech == 1:
+                                        country.AddTech(line, startDate)
+
+                                if openBrace == 2 or openBrace ==3:
+                                    if foundVariant == 1:
+                                        country.AddVariant(line, startDate)
+
+
+                        #print(f"{line} {openBrace} {foundTech}")
+                        #input()
+
+            #print(country.tag)
+            #print("~~~~SUMMARRY~~~")
+            #for variant in country.variants2000:
+            #    print(variant + " 2000")
+
+           # for variant in country.variants2017:
+            #    print(variant + " 2017")
+            #input()
+
+    def validateEqpVariants(self):
+        tempCountries = self.countries
+        errors = []
+
+        for country in self.countries:
+            for variant in country.variants2000:
+                for tempCountry in tempCountries:
+                    for tempVariant in tempCountry.variants2000:
+                        if country.tag != tempCountry.tag:
+                            if variant.name == tempVariant.name:
+                                errors += (f"ERROR Duplicate Variant. Is this intentional? {country.tag}:  {variant.name} and {tempCountry.tag}: {tempVariant.name}")
+
+                if (variant.type not in country.technology2017) and (variant.type not in country.technology2000):
+                        errors += (f"ERROR {country.tag} has variant {variant.name} - {variant.type} but doesn't have the tech for it")
+
+            for variant in country.variants2017:
+                for tempCountry in tempCountries:
+                    for tempVariant in tempCountry.variants2017:
+                        if country.tag != tempCountry.tag:
+                            if variant.name == tempVariant.name:
+                                errors += (
+                                    f"ERROR Duplicate Variant. Is this intentiona? {country.tag}:  {variant.name} and {tempCountry.tag}: {tempVariant.name}")
+                if (variant.type not in country.technology2017) and (variant.type not in country.technology2000):
+                    errors += (f"ERROR {country.tag} has variant {variant.name} - {variant.type} but doesn't have the tech for it")
+
+
+
