@@ -4,10 +4,12 @@ from pathlib import Path
 from Utilities import Utility
 from structs.Ideologies import Ideology
 from structs.Country import Country
+from structs.EquipmentVariant import EqpVariant, ShipEquipment
 
 class Mod:
 
     def __init__(self, scriptDir):
+        self.errors = []
         self.debugMode = False
         self.scriptDir = os.path.realpath(scriptDir)
         self.rootDir = os.path.realpath(Path(scriptDir).parents[2])
@@ -34,12 +36,14 @@ class Mod:
         self.countries, self.errors = self.GenerateCountries(self.rootDir + "/history/countries/")
         self.getCountriesData()
 
-        self.validateEqpVariants()
+        self.errors += self.validateEqpVariants()
+
+        self.errors += self.validteOOB()
 
         self.errors += self.check_event_for_logs(self.rootDir + "/events/")
 
-        #for error in self.errors:
-            #print(error)
+        for error in self.errors:
+            print(error)
         print("Total of: " + str(len(self.errors)) + " errors")
 
 
@@ -515,13 +519,14 @@ class Mod:
                     country.countryFile = dir + filename
 
                     countryFiles.remove(filename)
+                    break
                     #print(country.countryFile)
                     #print(len(countryFiles))
 
 
-            if country.countryFile == "":
+            #if country.countryFile == "":
                 #print(f"{country.tag} doesn't have a history/countries file")
-                errors += "ERROR: " + country.tag + "doesn't have a history/countries file"
+                #errors += str(f"{country.tag} doesn't have a history/countries file")
 
         return countries, errors
 
@@ -544,8 +549,7 @@ class Mod:
                                 startDate = 2
                             if "{" in line:
                                 openBrace += 1
-                            if "}" in line:
-                                openBrace -= 1
+
 
                             if foundTech == 1 and openBrace <= 1:
                                 foundTech = 0
@@ -557,6 +561,17 @@ class Mod:
                                     foundTech = 1
                                 if "create_equipment_variant" in line:
                                     foundVariant = 1
+
+                                if "oob" in line and "set_naval_oob" not in line:
+                                    hasOOB = re.search(r'oob\s?=\s?\"([A-Za-z0-9_\-]+)\"', line,
+                                                        re.M | re.I)  # If it's a tag
+                                    if hasOOB:
+                                        country.oob2000File = self.rootDir + "/history/units/" + hasOOB.group(1)  + ".txt"
+                                if "set_naval_oob" in line:
+                                    hasNavalOOB = re.search(r'set_naval_oob\s?=\s?\"([A-Za-z0-9_\-]+)\"', line,
+                                                       re.M | re.I)  # If it's a tag
+                                    if hasNavalOOB:
+                                        country.oobNavy2000Files.append(self.rootDir + "/history/units/" + hasNavalOOB.group(1) + ".txt")
 
                                 if openBrace == 2:
                                     if foundTech == 1:
@@ -572,6 +587,18 @@ class Mod:
                                 if "create_equipment_variant" in line:
                                     foundVariant = 1
 
+                                if "oob" in line and "set_naval_oob" not in line:
+                                    hasOOB = re.search(r'oob\s?=\s?\"([A-Za-z0-9_\-]+)\"', line,
+                                                       re.M | re.I)  # If it's a tag
+                                    if hasOOB:
+                                        country.oob2017File = self.rootDir + "/history/units/" + hasOOB.group(1) + ".txt"
+
+                                if "set_naval_oob" in line:
+                                    hasNavalOOB = re.search(r'set_naval_oob\s?=\s?\"([A-Za-z0-9_\-]+)\"', line,
+                                                       re.M | re.I)  # If it's a tag
+                                    if hasNavalOOB:
+                                        country.oobNavy2017Files.append( self.rootDir + "/history/units/" + hasNavalOOB.group(1) + ".txt")
+
                                 if openBrace == 2:
                                     if foundTech == 1:
                                         country.AddTech(line, startDate)
@@ -580,6 +607,8 @@ class Mod:
                                     if foundVariant == 1:
                                         country.AddVariant(line, startDate)
 
+                            if "}" in line:
+                                openBrace -= 1
 
                         #print(f"{line} {openBrace} {foundTech}")
                         #input()
@@ -599,24 +628,128 @@ class Mod:
 
         for country in self.countries:
             for variant in country.variants2000:
-                for tempCountry in tempCountries:
-                    for tempVariant in tempCountry.variants2000:
-                        if country.tag != tempCountry.tag:
-                            if variant.name == tempVariant.name:
-                                errors += (f"ERROR Duplicate Variant. Is this intentional? {country.tag}:  {variant.name} and {tempCountry.tag}: {tempVariant.name}")
-
-                if (variant.type not in country.technology2017) and (variant.type not in country.technology2000):
-                        errors += (f"ERROR {country.tag} has variant {variant.name} - {variant.type} but doesn't have the tech for it")
-
+                startdate = 1
+                error = variant.Validate(country, self.countries, startdate, self.debugMode)
+                if error != "":
+                    errors += error
             for variant in country.variants2017:
-                for tempCountry in tempCountries:
-                    for tempVariant in tempCountry.variants2017:
-                        if country.tag != tempCountry.tag:
-                            if variant.name == tempVariant.name:
-                                errors += (
-                                    f"ERROR Duplicate Variant. Is this intentiona? {country.tag}:  {variant.name} and {tempCountry.tag}: {tempVariant.name}")
-                if (variant.type not in country.technology2017) and (variant.type not in country.technology2000):
-                    errors += (f"ERROR {country.tag} has variant {variant.name} - {variant.type} but doesn't have the tech for it")
+                startdate = 2
+                error = variant.Validate(country, self.countries, startdate, self.debugMode)
+                if error != "":
+                    errors += error
+
+        return errors
+
+    def validteOOB(self):
+        errors = []
+        for country in self.countries:
+            oobs = []
+            startdate = 0
+
+            if country.oob2000File != "":
+                oobs.append(country.oob2000File)
+            for oob in country.oobNavy2000Files:
+                oobs.append(oob)
+
+            filecount = len(oobs) #counts how many 2000 oobs there are
+
+            if country.oob2017File != "":
+                oobs.append(country.oob2017File)
+            for oob in country.oobNavy2017Files:
+                oobs.append(oob)
+
+            for x in range(0, (len(oobs))):
+                if x < filecount:
+                    startdate = 1
+                else:
+                    startdate = 2
+
+                if os.path.exists(oobs[x]):
+                    with open(oobs[x], 'r', encoding='utf-8', errors='ignore') as file:
+                        content = file.readlines()
+
+                        openBrace = 0
+                        braceWhenFound = 0
+
+                        newShip = ShipEquipment()
+                        creator = ""
+                        version_name = ""
+                        equipment_name = ""
+                        owner = ""
+
+                        tagPos = -1
+
+                        stockpile = 0
+                        production = 0
+                        ship = 0
+
+                        # input()
+                        for line in content:
+                            if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
+                                if "{" in line:
+                                    openBrace += 1
+                                if "2000.1.1" in line:
+                                    startDate = 1
+                                if "2017.1.1" in line:
+                                    startDate = 2
+                                if "ship" in line and "#ship" not in line:
+                                    ship = 1
+                                    braceWhenFound = openBrace
+                                if "add_equipment_to_stockpile" in line and "#add_equipment_to_stockpile" not in line:
+                                    stockpile = 1
+                                if "add_equipment_production" in line and "#add_equipment_production" not in line:
+                                    production = 1
 
 
 
+
+
+
+                                if ship == 1:
+                                    if "equipment" in line:
+                                        hasEquipment = re.search(r'equipment\s?=\s?{\s?([A-Za-z0-9_\-]+)\s?=', line,
+                                                                 re.M | re.I)  # If it's a tag
+                                        if hasEquipment:
+                                            newShip.type = hasEquipment.group(1)
+                                    if "version_name" in line:
+                                        hasVersion = re.search(r'version_name\s?=\s?\"(.*)\"', line,
+                                                               re.M | re.I)  # If it's a tag
+                                        if hasVersion:
+                                            newShip.versionName = hasVersion.group(1)
+                                    if "creator" in line:
+                                        hasCreator = re.search(r'creator\s?=\s?([A-Z]{3})', line,
+                                                               re.M | re.I)  # If it's a tag
+                                        if hasCreator:
+                                            newShip.creator = hasCreator.group(1)
+                                    if "owner" in line:
+                                        hasOwner = re.search(r'owner\s?=\s?([A-Z]{3})', line,
+                                                             re.M | re.I)  # If it's a tag
+                                        if hasOwner:
+                                            newShip.owner = hasOwner.group(1)
+
+
+                                if ship == 1 and openBrace <= braceWhenFound:
+                                    #print("validte ship")
+                                    if startdate == 1:
+                                        country.ships2000.append(newShip)
+                                    else:
+                                        country.ships2017.append(newShip)
+
+                                        errors.append(newShip.Validate(self.countries, startdate, file.name, self.debugMode))
+                                    ship = 0
+                                    newShip = ShipEquipment()
+
+                                if stockpile == 1 and openBrace <= 1:
+                                    stockpile = 0
+                                if production == 1 and openBrace <= 1:
+                                    production = 0
+
+
+                                if "}" in line:
+                                    openBrace -= 1
+
+                else:
+                    #print(f"ERROR: {country.tag} has {oobs[x]} but it doesn't exist")
+                    errors.append((f"ERROR: {country.tag} has {oobs[x]} but it doesn't exist"))
+
+            return errors
