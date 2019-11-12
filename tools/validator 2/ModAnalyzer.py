@@ -597,7 +597,7 @@ class Mod:
                                     hasNavalOOB = re.search(r'set_naval_oob\s?=\s?\"([A-Za-z0-9_\-]+)\"', line,
                                                        re.M | re.I)  # If it's a tag
                                     if hasNavalOOB:
-                                        country.oobNavy2017Files.append( self.rootDir + "/history/units/" + hasNavalOOB.group(1) + ".txt")
+                                        country.oobNavy2017Files.append(self.rootDir + "/history/units/" + hasNavalOOB.group(1) + ".txt")
 
                                 if openBrace == 2:
                                     if foundTech == 1:
@@ -749,7 +749,8 @@ class Mod:
                                     openBrace -= 1
 
                 else:
-                    #print(f"ERROR: {country.tag} has {oobs[x]} but it doesn't exist")
+                    if self.debugMode:
+                        print(f"ERROR: {country.tag} has {oobs[x]} but it doesn't exist")
                     errors.append((f"ERROR: {country.tag} has {oobs[x]} but it doesn't exist"))
 
             return errors
