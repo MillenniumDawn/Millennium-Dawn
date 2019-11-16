@@ -1,0 +1,93 @@
+#How to Calculate Influence Values as Percentage for Triggers 
+#Author: Big Birb 
+
+Influence is another great mechaninc introduced in Millennium Dawn v1.0. One of the things you may have found to be an interesting mechanic is how exactly could I use it as a calculated factor to "influence" an AI's decision. So here you are!
+
+If you plan on using these multiple times I suggest you writing up a scripted_trigger file. (View 99_UKR_scripted_triggers.txt for an example) 
+
+##In event option for accepting
+ai_chance = {
+	base = 10
+	modifier = {
+		POL_big_faggot_trigger = yes
+		add = -5 
+	}
+	modifier = {
+		add = 2
+		POL_more_than_25_less_than_40_trigger = yes 
+	}
+	modifier = {
+		add = 5
+		POL_more_than_40_factor = yes
+	}
+}
+
+##In No Event Option
+
+ai_chance = {
+	base = 5 
+	modifier = {
+		POL_big_faggot_trigger = yes 
+		add = 10
+	}
+	modifier = {
+		add = 1 
+		POL_more_than_25_less_than_40_trigger = yes
+	}
+	modifier = {
+		add = -4
+		POL_more_than_40_factor = yes
+	}
+}
+
+##In Scripted trigger file
+POL_big_faggot_trigger = {
+	set_temp_variable = { temp_idx = -1 }
+	any_of = {
+		array = influence_array
+		value = v
+		index = i
+		if = {
+			limit = { var:v = { tag = POL } }
+			set_temp_variable = { temp_idx = i }
+			always = yes
+		}
+		else = { always = no }
+	}
+	check_variable = { temp_idx > -1 }
+	check_variable = { influence_array_calc^temp_idx < 0.25 }
+}
+POL_more_than_25_less_than_40_trigger = {
+	set_temp_variable = { temp_idx = -1 }
+	any_of = {
+		array = influence_array
+		value = v
+		index = i
+		if = {
+			limit = { var:v = { tag = POL } }
+			set_temp_variable = { temp_idx = i }
+			always = yes
+		}
+		else = { always = no }
+	}
+	check_variable = { temp_idx > -1 }
+	check_variable = { influence_array_calc^temp_idx > 0.25 }
+	check_variable = { influence_array_calc^temp_idx < 0.40 }
+}
+
+POL_more_than_40_factor = {
+	set_temp_variable = { temp_idx = -1 }
+	any_of = {
+		array = influence_array
+		value = v
+		index = i
+		if = {
+			limit = { var:v = { tag = POL } }
+			set_temp_variable = { temp_idx = i }
+			always = yes
+		}
+		else = { always = no }
+	}
+	check_variable = { temp_idx > -1 }
+	check_variable = { influence_array_calc^temp_idx > 0.40 }
+}
