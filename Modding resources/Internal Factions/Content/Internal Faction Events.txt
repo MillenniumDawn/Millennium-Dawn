@@ -10,10 +10,10 @@ add_namespace = int_fac_deposed
 
 #Demand for increased wages
 country_event = {
-
 	id = labour_unions_events.0
 	title = labour_unions_events.0.t
 	desc = labour_unions_events.0.d
+	immediate = { log = "[GetDateText]: [This.GetName]: event labour_unions_events.0 }
 	#picture = SOMEPIC
 	
 	trigger = {
@@ -21,19 +21,27 @@ country_event = {
 		NOT = { has_country_flag = enthusiastic_labour_unions }
 	}
 	
-	#is_triggered_only = yes
+	mean_time_to_happen = {
+		days = 365
+		modifier = { 
+			factor = 0.50 
+			OR = {
+				has_country_flag = hostile_labour_unions
+				negative_labour_unions
+			}
+		}
+	}
 	
-	fire_only_once = yes
-	
-	option = {
-		name = labour_unions_events.0.a
-		log = "[GetDateText]: [This.GetName]: labour_unions_events.0.a executed"			#Increase wages
-		relative_change_pos_6 = yes
+	option = { 
+		name = labour_unions_events.0.o1
+		log = "[GetDateText]: [This.GetName]: labour_unions_events.0.o1 executed"			#Increase Wages Heavily
 		newline = yes
 		add_timed_idea = { idea = internal_faction_decreased_investments days = 360 }
-		visually_display_opinion_rise_labour_unions = yes
-		set_country_flag = current_labour_unions
-		increase_internal_faction_opinion = yes
+		if = { limit = { has_idea = labour_unions }
+			visually_display_opinion_rise_labour_unions = yes
+			set_country_flag = current_labour_unions
+			increase_internal_faction_opinion = yes
+		}
 		if = { limit = { has_idea = small_medium_business_owners }
 			visually_display_opinion_fall_small_medium_business_owners = yes
 			set_country_flag = current_small_medium_business_owners
@@ -46,45 +54,48 @@ country_event = {
 		}	
 	}
 	option = {
-		name = labour_unions_events.0.b
-		log = "[GetDateText]: [This.GetName]: labour_unions_events.0.b executed"			#Negotiate a slight increase
-		add_political_power = -100
+		name = labour_unions_events.0.o2
+		log = "[GetDateText]: [This.GetName]: labour_unions_events.0.o2 executed"			#Raise Wages Slightly 
+		
 		add_timed_idea = { idea = internal_faction_decreased_investments days = 120 }
 	}
 	option = {
-		name = labour_unions_events.0.c
-		log = "[GetDateText]: [This.GetName]: labour_unions_events.0.c executed"			#Deny the request
+		name = labour_unions_events.0.o3
+		log = "[GetDateText]: [This.GetName]: labour_unions_events.0.o3 executed"			#Deny the Request 
 		relative_change_neg_6 = yes
 		newline = yes
-		if = { limit = { NOT = { has_government = communism } }
+		if = { 
+			limit = { NOT = { has_government = communism } }
 			add_popularity = { ideology = communism popularity = 0.05 }
-			else = {
+			else_if = {
 				add_popularity = { ideology = communism popularity = -0.05 }
 			}
 		}
-		visually_display_opinion_fall_labour_unions = yes
-		set_country_flag = current_labour_unions
-		decrease_internal_faction_opinion = yes
+		if = { 
+			limit = { has_idea = labour_unions }
+			visually_display_opinion_fall_labour_unions = yes
+			set_country_flag = current_labour_unions
+			decrease_internal_faction_opinion = yes
+		}
 	}
 	option = {
-		name = labour_unions_events.0.dd
-		log = "[GetDateText]: [This.GetName]: labour_unions_events.0.dd executed"		#Decrease them instead
+		name = labour_unions_events.0.o4
+		log = "[GetDateText]: [This.GetName]: labour_unions_events.0.o4 executed"		#Reduce Wages Instead
 		trigger = {
 			OR = {
 				has_idea = depression 
 				has_idea = recession 
+				has_elections = no 
+				has_government = nationalist 
+				has_government = communism 
 			}
 		}
-		relative_change_neg_12 = yes
-		newline = yes
-		if = { limit = { has_idea = recession }
-			swap_ideas = { remove_idea = recession add_idea = stagnation  }
+		increase_economic_growth = yes
+		if = { limit = { has_idea = labour_unions }
+			visually_display_opinion_fall_labour_unions = yes
+			set_country_flag = current_labour_unions
+			decrease_internal_faction_opinion = yes
 		}
-		if = { limit = { has_idea = depression }
-			swap_ideas = { remove_idea = depression add_idea = recession }
-		}
-		set_country_flag = current_labour_unions
-		decrease_internal_faction_opinion = yes
 		if = { limit = { has_idea = small_medium_business_owners }
 			visually_display_opinion_rise_small_medium_business_owners = yes
 			set_country_flag = current_small_medium_business_owners
@@ -97,6 +108,39 @@ country_event = {
 		}
 	}
 }
+
+#Labour Union Strikes! 
+country_event = {
+	id = labour_unions.1
+	title = labour_unions.1.t 
+	desc = labour_unions.1.d
+	immediate = { 
+	#picture = 
+	
+	trigger = {
+		OR = {
+			has_country_flag = hostile_labour_unions
+			has_country_flag = negative_labour_unions 
+		}
+		has_idea = labour_unions 
+	}
+	
+	mean_time_to_happen = {
+		days = 180
+	}
+	
+	option = { ##Accept their Demands  
+		name = labour_unions.1.o1 
+	}
+	
+	option = { ##Negotiate with the Leaders 
+		name = labour_unions.1.o2 
+	}
+	
+	option = { ##Send in Strikebreakers
+		name = labour_unions.1.o3 
+	}
+}
 # Internal Faction Interactive events
 add_namespace = internal_faction_events
 add_namespace = farmers_events
@@ -106,8 +150,7 @@ add_namespace = farmers_events
 #####################
 
 #Peasant farmers resist Neoclassical doctrines of agrarian change.  
-
-	country_event = {
+country_event = {
 	id = farmers_events.0
 	title = farmers_events.0.t
 	desc = farmers_events.0.d
