@@ -18,11 +18,12 @@ country_event = { #Return Of Monarchy
 	fire_only_once = yes
 	is_triggered_only = yes 
 	
-	option = { 
+	option = {
 		name = poland.1.a
 		news_event = 1
+		hidden_effect = {POL = {set_cosmetic_tag = POL_nationalist_monarchist_KING_flag } }
 		create_country_leader = {
-			name = " Rydygier książę Saski, King Of Poland"
+			name = " Rydygier Książę Saski"
 			picture = "1"
 			ideology = Monarchist
 			traits = {
@@ -44,7 +45,36 @@ country_event = { #Offer To Lithuania
 	
 	option = { # LIT accepts
 	name = poland.2.a
-	POL = {puppet = LIT country_event = poland.3 }
+	POL = { add_to_faction = LIT 
+	puppet = LIT
+	country_event = poland.3 }
+	LIT = { hidden_effect = {
+        clear_array = ruling_party
+        clear_array = gov_coalition_array
+        add_to_array = { ruling_party = 23 }
+        update_government_coalition_strength = yes
+        update_party_name = yes
+        set_coalition_drift = yes
+        meta_effect = {
+        text = {
+                        set_country_flag = [META_SET_RULING_PARTY]
+                    }
+                    META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+                }
+                set_leader = yes
+                
+                set_politics = {
+                    ruling_party = nationalist
+                    elections_allowed = no
+                } }
+                add_popularity = {
+                    ideology = nationalist
+                    popularity = 0.05
+                }
+                add_to_variable = { party_pop_array^23 = 0.70 }
+                recalculate_party = yes
+	set_cosmetic_tag = LIT_nationalist_monarchist_flag }
+	
 		ai_chance = {
 	base = 10
 	modifier = {
@@ -52,11 +82,11 @@ country_event = { #Offer To Lithuania
 		add = -5 
 	}
 	modifier = {
-		add = 30
+		add = 40
 		POL_more_than_25_less_than_40_trigger = yes 
 	}
 	modifier = {
-		add = 70
+		add = 90
 		POL_more_than_40_factor = yes
 	    }
       }
@@ -102,465 +132,6 @@ country_event = { #news of lit declining
 		
 	option = { 
 		name = poland.4.b
-        create_wargoal = { type = puppet_wargoal_focus target = LIT } 110 =  { add_core_of = POL }
+        create_wargoal = { type = puppet_wargoal_focus target = LIT } 110 =  { add_core_of = POL } 109 = {add_core_of = POL}
 			}
     }
-country_event = #{
-	id = poland.
-	immediate = { log = "[GetDateText]: [Root.GetName]: event poland.1" }
-	title = poland.1.t
-	desc = poland.1.d
-	picture = GFX_polish_nationalists1
-
-	trigger = {
-		tag = POL
-		date > 2000.11.02
-		date < 2000.11.12
-		NOT = {
-			has_government = nationalist
-		}
-	}
-	fire_only_once = yes
-	mean_time_to_happen = {
-		days = 5
-	}
-
-	immediate = {
-		set_country_flag = POL_independence_march_2000_country_flag
-	}
-		
-	option = {
-		name = poland.1.o1 #Disband the march#
-		log = "[GetDateText]: [This.GetName]: poland.1.o1 executed"
-		add_popularity = {
-			ideology = nationalist
-			popularity = -0.05
-		}
-		add_political_power = 25
-
-		ai_chance = {
-			base = 60
-		}
-	}
-
-	option = {
-		name = poland.1.o2 #Let them be#
-		log = "[GetDateText]: [This.GetName]: poland.1.o2 executed"
-		add_popularity = {
-			ideology = nationalist
-			popularity = 0.05
-		}
-		add_political_power = -25
-		
-		ai_chance = {
-			base = 30
-		}
-	}
-
-	option = {
-		name = poland.1.o3 #Arrest the nationalists#
-		log = "[GetDateText]: [This.GetName]: poland.1.o3 executed"
-		add_popularity = {
-			ideology = nationalist
-			popularity = -0.15
-		}
-		add_political_power = -50
-		add_stability = -0.1
-		
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-### Bank Reforms ###
-
-country_event = #{
-	id = poland.2
-	immediate = { log = "[GetDateText]: [Root.GetName]: event poland.2" }
-	title = poland.2.t
-	desc = poland.2.d
-	picture = GFX_bank_crisis
-
-	is_triggered_only = yes
-		
-	option = {
-		name = poland.2.o1 #Repay Debt#
-		log = "[GetDateText]: [This.GetName]: poland.2.o1 executed"
-		add_political_power = 25
-		custom_effect_tooltip = POL_repay_debt_001_tooltip
-		hidden_effect = {
-			subtract_from_variable = { debt = 10 }
-			ingame_calculate_size_modifier = yes
-			calculate_interest_rate = yes
-			calculate_debt_rate = yes
-		}
-
-		ai_chance = {
-			base = 75
-		}
-	}
-
-	option = {
-		name = poland.2.o2 #Take the money#
-		log = "[GetDateText]: [This.GetName]: poland.2.o2 executed"
-		add_political_power = -25
-		custom_effect_tooltip = POL_take_the_money_001_tooltip
-		hidden_effect = {
-			add_to_variable = { treasury = 10 }
-			ingame_calculate_size_modifier = yes
-		}
-		ai_chance = {
-			base = 25
-		}
-	}
-
-}
-
-### Economic Question of Poland ###
-
-country_event = #{
-	id = poland.3
-	immediate = { log = "[GetDateText]: [Root.GetName]: event poland.3" }
-	title = poland.3.t
-	desc = poland.3.d
-	picture = GFX_bank_crisis
-
-	is_triggered_only = yes
-		
-	option = {
-		name = poland.3.o1 #Free Trade#
-		log = "[GetDateText]: [This.GetName]: poland.3.o1 executed"
-		trigger = {
-			OR = {
-				has_country_leader = { name = "Janusz Korwin-Mikke" }
-				has_country_leader = { name = "Donald Tusk" }
-				has_country_leader = { name = "Bronisław Komorowski" }
-				has_country_leader = { name = "Grzegorz Schetyna" }
-			}
-		}
-		custom_effect_tooltip = POL_free_trade_tooltip
-		hidden_effect = {
-			if = { 
-				limit = { has_idea = export_economy }
-				add_political_power = 25
-			}
-			if = {
-				limit = { NOT = { has_idea = export_economy } }
-				add_ideas = export_economy
-			}
-		}
-
-		ai_chance = {
-			base = 33
-		}
-	}
-
-	option = {
-		name = poland.3.o2 #Interventionism#
-		log = "[GetDateText]: [This.GetName]: poland.3.o2 executed"
-		trigger = {
-			OR = {
-				has_country_leader = { name = "Andrzej Lepper" }
-				has_country_leader = { name = "Aleksander Kwaśniewski" }
-				has_country_leader = { name = "Czesław Kiszczak" }
-			}
-		}
-		custom_effect_tooltip = POL_interventionism_trade_tooltip
-		hidden_effect = {
-			if = { 
-				limit = { has_idea = mixed_economy }
-				add_political_power = 25
-			}
-			if = {
-				limit = { NOT = { has_idea = mixed_economy } }
-				add_ideas = mixed_economy
-			}
-		}
-		ai_chance = {
-			base = 33
-		}
-	}
-
-	option = {
-		name = poland.3.o3 #Protectionism#
-		log = "[GetDateText]: [This.GetName]: poland.3.o3 executed"
-		trigger = {
-			has_government = nationalist
-		}
-		custom_effect_tooltip = POL_protectionism_trade_tooltip
-		hidden_effect = {
-			if = { 
-				limit = { has_idea = consumption_economy }
-				add_political_power = 25
-			}
-			if = {
-				limit = { NOT = { has_idea = consumption_economy } }
-				add_ideas = consumption_economy
-			}
-		}
-		ai_chance = {
-			base = 33
-		}
-	}
-
-
-
-}
-
-### Opposition against abolished elections ###
-
-country_event = #{
-	id = poland.4
-	immediate = { log = "[GetDateText]: [Root.GetName]: event poland.4" }
-	title = poland.4.t
-	desc = poland.4.d
-	picture = GFX_polish_opposition_md
-
-	trigger = {
-		has_country_flag = POL_abolished_elections_country_flag
-	}
-	fire_only_once = yes
-	mean_time_to_happen = {
-		days = 14
-	}
-		
-	option = {
-		name = poland.4.o1 #Worrying#
-		log = "[GetDateText]: [This.GetName]: poland.4.o1 executed"
-		ai_chance = {
-			base = 100
-		}
-	}
-
-}
-
-#Help with corruption#
-
-country_event = #{
-	id = poland.5
-	immediate = { log = "[GetDateText]: [Root.GetName]: event poland.5" }
-	title = poland.5.t
-	desc = poland.5.d
-	picture = GFX_bank_crisis
-
-	is_triggered_only = yes
-		
-	option = {
-		name = poland.5.o1 #Help them#
-		log = "[GetDateText]: [This.GetName]: poland.5.o1 executed"
-
-		add_political_power = -50
-		POL = {
-			add_ideas = polish_help_with_corruption_idea
-			add_opinion_modifier = {
-				target = ROOT
-				modifier = poland_helped_us
-			}
-		}
-
-		ai_chance = {
-			base = 30
-		}
-	}
-
-	option = {
-		name = poland.5.o2 #Temporarily agreement#
-		log = "[GetDateText]: [This.GetName]: poland.5.o2 executed"
-
-		add_political_power = -25
-		POL = {
-			add_timed_idea = {
-				idea = polish_help_with_corruption_idea
-				days = 180
-			}
-			add_opinion_modifier = {
-				target = ROOT
-				modifier = poland_helped_us_timed
-			}
-		}
-
-		ai_chance = {
-			base = 40
-		}
-	}
-
-	option = {
-		name = poland.5.o3 #Temporarily agreement#
-		log = "[GetDateText]: [This.GetName]: poland.5.o3 executed"
-
-		add_political_power = 50
-		POL = {
-			add_opinion_modifier = {
-				target = ROOT
-				modifier = poland_refused_help
-			}
-		}
-
-		ai_chance = {
-			base = 30
-		}
-	}
-
-}
-
-#Join SCO offer#
-
-country_event =# {
-	id = poland.6
-	immediate = { log = "[GetDateText]: [Root.GetName]: event poland.6" }
-	title = poland.6.t
-	desc = poland.6.d
-	picture = GFX_polish_sejm
-
-	is_triggered_only = yes
-		
-	option = {
-		name = poland.6.o1 #Agree#
-		log = "[GetDateText]: [This.GetName]: poland.6.o1 executed"
-
-		add_political_power = 25
-		POL = {
-			add_ideas = sco_member
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}
-		}
-
-		ai_chance = {
-			base = 100
-		}
-	}
-
-	option = {
-		name = poland.6.o2 #Temporarily agreement#
-		log = "[GetDateText]: [This.GetName]: poland.6.o2 executed"
-
-		add_political_power = -25
-		POL = {
-			add_political_power = 25
-		}
-
-		ai_chance = {
-			base = 0
-		}
-	}
-
-}
-
-### Elections 2000 ###
-
-country_event =# {
-	id = poland_election.1
-	immediate = { log = "[GetDateText]: [Root.GetName]: event poland_election.1" }
-	title = poland_election.1.t
-	desc = poland_election.1.d
-	picture = GFX_election_day
-	
-	is_triggered_only = yes
-	trigger = {
-		tag = POL
-		date > 2000.9.1
-		date < 2001.12.1
-	}
-	immediate = {
-		set_country_flag = POL_2000_elections_country_flag
-	}
-		
-	option = {
-		name = poland_election.1.o1 #Kwaśniewski#
-		log = "[GetDateText]: [This.GetName]: poland_election.1.o1 executed"
-		set_politics = {
-			ruling_party = democratic
-			elections_allowed = yes
-		}
-		create_country_leader = {
-			name = "Aleksander Kwaśniewski"
-			desc = "POLITICS_FRANKLIN_DELANO_ROOSEVELT_DESC"
-			picture = "POL_Aleksander_Kwasniewski.dds"
-			expire = "2055.1.1"
-			ideology = socialism
-			traits = {
-				
-			}
-		}
-		set_party_name = { ideology = democratic long_name = POL_sld_party_long name = POL_sld_party }
-		set_country_flag = POL_2000_elections_kwasniewski_wins_country_flag
-		add_popularity = {
-			ideology = democratic
-			popularity = 0.05
-		}
-		ai_chance = {
-			base = 50
-			modifier = {
-				factor = 100
-				is_historical_focus_on = yes
-			}
-		}
-	}
-
-	option = {
-		name = poland_election.1.o2 #Korwin-Mikke#
-		log = "[GetDateText]: [This.GetName]: poland_election.1.o2 executed"
-		set_politics = {
-			ruling_party = neutrality
-			elections_allowed = yes
-		}
-		create_country_leader = {
-			name = "Janusz Korwin-Mikke"
-			desc = "POLITICS_FRANKLIN_DELANO_ROOSEVELT_DESC"
-			picture = "POL_Janusz_Korwin_Mikke.dds"
-			expire = "2055.1.1"
-			ideology = Neutral_conservatism
-			traits = {
-				
-			}
-		}
-		set_party_name = { ideology = neutrality long_name = POL_upr_party_long name = POL_upr_party }
-		set_country_flag = POL_2000_elections_korwinmikke_wins_country_flag
-		add_popularity = {
-			ideology = neutrality
-			popularity = 0.1
-		}
-		ai_chance = {
-			base = 30
-			modifier = {
-				factor = 0
-				is_historical_focus_on = yes
-			}
-		}
-	}
-
-	option = {
-		name = poland_election.1.o3 #Lepper#
-		log = "[GetDateText]: [This.GetName]: poland_election.1.o3 executed"
-		set_politics = {
-			ruling_party = communism
-			elections_allowed = yes
-		}
-		create_country_leader = {
-			name = "Andrzej Lepper"
-			desc = "POLITICS_FRANKLIN_DELANO_ROOSEVELT_DESC"
-			picture = "POL_Andrzej_Lepper.dds"
-			expire = "2055.1.1"
-			ideology = Conservative
-			traits = {
-				
-			}
-		}
-		set_party_name = { ideology = communism long_name = POL_samoobrona_party_long name = POL_samoobrona_party }
-		set_country_flag = POL_2000_elections_lepper_wins_country_flag
-		add_popularity = {
-			ideology = communism
-			popularity = 0.1
-		}
-		ai_chance = {
-			base = 20
-			modifier = {
-				factor = 0
-				is_historical_focus_on = yes
-			}
-		}
-	}
-}
