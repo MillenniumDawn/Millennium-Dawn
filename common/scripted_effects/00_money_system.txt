@@ -44,13 +44,13 @@ add_tax_laws = {
 }
 
 initial_money_setup = {
+	log = "[GetDateText]: [Root.GetName]: Initial money setup"
 	calculate_interest_rate = yes
 	calculate_debt_rate = yes
 	calculate_int_investments_rate = yes
 	#calculate_resource_sale_rate = yes #no exports at start
 	calculate_tax_gain = yes
 	init_expenses = yes
-	update_military_rate = yes
 	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
 	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
@@ -66,7 +66,6 @@ startup_extra_setup = {
 	calculate_resource_sale_rate = yes
 	calculate_tax_gain = yes
 	init_expenses = yes
-	update_military_rate = yes
 	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
 	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
@@ -474,7 +473,7 @@ calculate_interest_rate_player = {
 		array = temp_interest_rate
 		index = i
 		value = v
-		add_to_array = {
+		set_variable = {
 			array = array_interest_rate
 			value = v
 		}
@@ -846,6 +845,7 @@ update_military_rate_ai = {
 }
 update_military_rate_player = {	
 	
+	log = "[GetDateText]: [Root.GetName]: update_military_rate_player"
 	#clear the array that stores the law cost
 	clear_array = array_defence_spend
 	
@@ -1157,10 +1157,7 @@ update_military_rate_player = {
 		array = temp_defence_spend
 		index = i
 		value = v
-		add_to_array = {
-			array = array_defence_spend
-			value = v
-		}
+		set_variable = { array_defence_spend^i = v }
 		add_to_variable = { var = array_defence_spend^i value = personnel_cost }
 	}
 	
@@ -1259,7 +1256,7 @@ update_bureaucracy_rate_ai = {
 	
 }
 update_bureaucracy_rate_player = {
-	
+	log = "[GetDateText]: [This.GetName]: update_bureaucracy_rate_player"
 	subtract_from_variable = { var = expense_gain value = bureaucracy_gain }
 	add_to_variable = { var = treasury_rate value = bureaucracy_gain }
 	
@@ -1320,10 +1317,7 @@ update_bureaucracy_rate_player = {
 		array = temp_bureaucracy_spend
 		index = i
 		value = v
-		add_to_array = {
-			array = array_bureaucracy_spend
-			value = v
-		}
+		set_variable = { array_bureaucracy_spend^i = v }
 	}
 	
 	set_variable = { var = bureaucracy_gain value = array_bureaucracy_spend^bureau_index }
@@ -1408,7 +1402,7 @@ update_police_rate_ai = {
 	}	
 }
 update_police_rate_player = {
-	
+	log = "[GetDateText]: [This.GetName]: update_police_rate_player"
 	subtract_from_variable = { var = expense_gain value = security_gain }
 	add_to_variable = { var = treasury_rate value = security_gain }
 	
@@ -1469,10 +1463,7 @@ update_police_rate_player = {
 		array = temp_security_spend
 		index = i
 		value = v
-		add_to_array = {
-			array = array_security_spend
-			value = v
-		}
+		set_variable = { array_security_spend^i = v }
 	}
 	
 	set_variable = { var = security_gain value = array_security_spend^security_index }
@@ -1652,24 +1643,45 @@ update_education_rate_ai = {
 	}
 }
 update_education_rate_player = {
-	
+	log = "[GetDateText]: [This.GetName]: update_education_rate_player"
 	subtract_from_variable = { var = expense_gain value = education_gain }
 	add_to_variable = { var = treasury_rate value = education_gain }
 	
 	#clear the array that stores the law cost
 	clear_array = array_education_spend
 	
-	#recreate the array
-	for_loop_effect = {
-		start = 0
-		end = 5 # < 10
+	
+	##If we still have synch issues here is even more 
+	# if = {
+		# limit = { not = { has_variable = array_education_spend } }
+		# for_loop_effect = {
+			# start = 0
+			# end = 5 # < 10
+			
+			# add_to_array = {
+				# array = array_education_spend
+				# value = 0
+			# }
+			
+		# }
+		# resize_array = {
+			# array = array_education_spend
+			# value = 99993
+			# size = 6
+		# }
+	# }
+	
+	##recreate the array
+	# for_loop_effect = {
+		# start = 0
+		# end = 5 # < 10
 		
-		add_to_temp_array = {
-			array = temp_education_spend
-			value = size_modifier
-		}
+		# add_to_temp_array = {
+			# array = temp_education_spend
+			# value = size_modifier
+		# }
 		
-	}
+	# }
 	
 	multiply_temp_variable = { var = temp_education_spend^0 value = 0.02 }
 	multiply_temp_variable = { var = temp_education_spend^1 value = 0.04 }
@@ -1732,10 +1744,7 @@ update_education_rate_player = {
 		array = temp_education_spend
 		index = i
 		value = v
-		add_to_array = {
-			array = array_education_spend
-			value = v
-		}
+		set_variable = { array_education_spend^i = v }
 	}
 	
 	set_variable = { var = education_gain value = array_education_spend^education_index }
@@ -1833,7 +1842,7 @@ update_health_rate_ai = {
 	
 }
 update_health_rate_player = {
-	
+	log = "[GetDateText]: [This.GetName]: update_health_rate_player"
 	subtract_from_variable = { var = expense_gain value = health_gain }
 	add_to_variable = { var = treasury_rate value = health_gain }
 	
@@ -1898,10 +1907,7 @@ update_health_rate_player = {
 		array = temp_health_spend
 		index = i
 		value = v
-		add_to_array = {
-			array = array_health_spend
-			value = v
-		}
+		set_variable = { array_health_spend^i = v }
 	}
 	
 	set_variable = { var = health_gain value = array_health_spend^health_index }
@@ -2064,10 +2070,7 @@ update_social_rate_player = {
 		array = temp_social_spend
 		index = i
 		value = v
-		add_to_array = {
-			array = array_social_spend
-			value = v
-		}
+		set_variable = { array_social_spend^i = v }
 	}
 	
 	set_variable = { var = welfare_gain value = array_social_spend^social_index }
@@ -2171,6 +2174,7 @@ decrease_tax_cost = {
 	
 init_expenses = {
 	#Defence spending
+	update_military_rate = yes
 	
 	#bueraucracy
 	update_bureaucracy_rate = yes
