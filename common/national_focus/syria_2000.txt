@@ -12,26 +12,42 @@ focus_tree = {
 	shared_focus = SYR_diplomatic_effort
 	shared_focus = SYR_greater_syria
 	
+	#Main succession branch
 	focus = {
 		id = SYR_death_of_hafez_al_assad
-		icon = GFX_goal_unknown
+		icon = national_unity_red
 		cost = 10
 		x = 9
 		y = 0
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			always = no
+		}
+		
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = TT_DEATH_OF_HAFEZ
+				has_country_flag = Syria_Hafez_dead
+			}
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_death_of_hafez_al_assad"
+		}
 
 	}
-	focus = {
-		id = SYR_affirm_presence_in_lebanon
-		icon = GFX_goal_unknown
-		cost = 10
-		x = 23
-		y = 0
-
-	}
+	##Bushra's branch
 	focus = {
 		id = SYR_bushra_al_assad
-		icon = GFX_goal_unknown
-		cost = 10
+		icon = Bushra_al_Assad
+		cost = 5
 		prerequisite = {
 			focus = SYR_death_of_hafez_al_assad
 		}
@@ -42,11 +58,62 @@ focus_tree = {
 		}
 		x = 3
 		y = 1
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			NOT = { has_country_flag = Syrian_rebels }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_bushra_al_assad"
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 15 }
+			create_country_leader = {
+				name = "Bushra al-Assad"
+				picture = "Bushra_Al-Assad.dds"
+				ideology = oligarchism
+				traits = {
+					neutrality_oligarchism 
+				}
+			}
+			set_temp_variable = { max_leader = bushra_popularity }
+			if = {
+				limit = { check_variable = { max_leader < bashar_popularity } }
+				set_temp_variable = { max_leader = bashar_popularity }
+			}
+			if = {
+				limit = { check_variable = { max_leader < maher_popularity } }
+				set_temp_variable = { max_leader = maher_popularity }
+			}
+			set_temp_variable = { stability_loss = bushra_popularity }
+			subtract_from_temp_variable = { stability_loss = max_leader }
+			divide_temp_variable = { stability_loss = 100 }
+			add_stability = stability_loss
+			set_temp_variable = { leader_popularity = bushra_popularity }
+			divide_temp_variable = { leader_popularity = 200 }
+			add_popularity = { ideology = neutrality popularity = leader_popularity }
+			add_to_variable = { var = party_pop_array^15 value = leader_popularity }
+			set_politics = {
+				ruling_party = neutrality
+			}
+			recalculate_party = yes
+			set_country_flag = Syria_successor_chosen
+		}
 
 	}
 	focus = {
 		id = SYR_husband_minister
-		icon = GFX_goal_unknown
+		icon = diplomacy
 		cost = 10
 		prerequisite = {
 			focus = SYR_bushra_al_assad
@@ -54,11 +121,33 @@ focus_tree = {
 		x = 1
 		y = 1
 		relative_position_id = SYR_bushra_al_assad
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Bushra al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_husband_minister"
+			add_ideas = husband_minister
+			set_country_flag = current_intelligence_community
+			increase_internal_faction_opinion = yes
+			visually_display_opinion_rise_intelligence_community = yes
+		}
 
 	}
 	focus = {
 		id = SYR_gulf_state_tour
-		icon = GFX_goal_unknown
+		icon = improve_relations_green
 		cost = 10
 		prerequisite = {
 			focus = SYR_husband_minister
@@ -66,113 +155,60 @@ focus_tree = {
 		x = 1
 		y = 2
 		relative_position_id = SYR_bushra_al_assad
-
-	}
-	focus = {
-		id = SYR_maher_al_assad
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_death_of_hafez_al_assad
+		
+		ai_will_do = {
+			factor = 10
 		}
-		mutually_exclusive = {
-			focus = SYR_bashar_al_assad
-			focus = SYR_bushra_al_assad
-			focus = SYR_flowers_of_damascus_spring
+		
+		available = {
+			has_country_leader = { name = "Bushra al-Assad" }
 		}
-		x = 12
-		y = 1
-
-	}
-	focus = {
-		id = SYR_encourage_campaigning
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_affirm_presence_in_lebanon
+		
+		bypass = {
 		}
-		mutually_exclusive = {
-			focus = SYR_reduced_political_liberty
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_gulf_state_tour"
+			add_political_power = 150
+			SAU = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_insults   
+				}
+			}
+			UAE = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_insults   
+				}
+			}
+			BHR = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_insults   
+				}
+			}
+			QAT = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_insults   
+				}
+			}
+			KUW = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_insults   
+				}
+			}
 		}
-		x = 4
-		y = 2
-		relative_position_id = SYR_affirm_presence_in_lebanon
-
-	}
-	focus = {
-		id = SYR_bashar_al_assad
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_death_of_hafez_al_assad
-		}
-		mutually_exclusive = {
-			focus = SYR_bushra_al_assad
-			focus = SYR_maher_al_assad
-			focus = SYR_flowers_of_damascus_spring
-		}
-		x = 6
-		y = 1
-
-	}
-	focus = {
-		id = SYR_constitutional_amendment
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_bashar_al_assad
-			focus = SYR_maher_al_assad
-		}
-		x = 9
-		y = 2
-
-	}
-	focus = {
-		id = SYR_empower_the_republican_guard
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_constitutional_amendment
-		}
-		prerequisite = {
-			focus = SYR_maher_al_assad
-		}
-		x = 2
-		y = 1
-		relative_position_id = SYR_constitutional_amendment
-
-	}
-	focus = {
-		id = SYR_oil_must_flow
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_empower_the_republican_guard
-		}
-		x = 3
-		y = 2
-		relative_position_id = SYR_constitutional_amendment
-
-	}
-	focus = {
-		id = SYR_flowers_of_damascus_spring
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_death_of_hafez_al_assad
-		}
-		mutually_exclusive = {
-			focus = SYR_maher_al_assad
-			focus = SYR_bashar_al_assad
-			focus = SYR_bushra_al_assad
-		}
-		x = 16
-		y = 1
 
 	}
 	focus = {
 		id = SYR_healthcare_reform
-		icon = GFX_goal_unknown
+		icon = GFX_health_care_reform
 		cost = 10
 		prerequisite = {
 			focus = SYR_bushra_al_assad
@@ -180,11 +216,31 @@ focus_tree = {
 		x = -2
 		y = 1
 		relative_position_id = SYR_bushra_al_assad
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Bushra al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_healthcare_reform"
+			add_ideas = syrian_health_care_reform
+			increase_healthcare_budget = yes
+		}
 
 	}
 	focus = {
 		id = SYR_invite_big_pharma
-		icon = GFX_goal_unknown
+		icon = money
 		cost = 10
 		prerequisite = {
 			focus = SYR_healthcare_reform
@@ -195,11 +251,89 @@ focus_tree = {
 		x = -3
 		y = 2
 		relative_position_id = SYR_bushra_al_assad
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Bushra al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_invite_big_pharma"
+			if = {
+				limit = {
+					any_owned_state = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 1
+						}
+					}
+				}
+				random_owned_state = {
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 1
+						}
+					}
+					add_building_construction = {
+						type = industrial_complex
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					any_owned_state = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+						}
+					}
+				}
+				random_owned_state = {
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			else = {
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = industrial_complex
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			set_country_flag = current_oligarchs 
+			decrease_internal_faction_opinion = yes
+			visually_display_opinion_fall_oligarchs = yes
+		}
 
 	}
 	focus = {
 		id = SYR_syrian_pharmaceuticals
-		icon = GFX_goal_unknown
+		icon = economic_prosperity
 		cost = 10
 		prerequisite = {
 			focus = SYR_healthcare_reform
@@ -210,6 +344,101 @@ focus_tree = {
 		x = -1
 		y = 2
 		relative_position_id = SYR_bushra_al_assad
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Bushra al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_syrian_pharmaceuticals"
+			if = {
+				limit = {
+					any_owned_state = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+						}
+					}
+				}
+				random_owned_state = {
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+						}
+					}
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else = {
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			set_country_flag = current_oligarchs 
+			increase_internal_faction_opinion = yes
+			visually_display_opinion_rise_oligarchs = yes
+			if = {
+				limit = { has_idea = iranian_quds_force }
+				remove_ideas = iranian_quds_force 
+				add_ideas = small_medium_business_owners 
+			}
+		}
+
+	}
+	focus = {
+		id = SYR_eqalitarian_campaign
+		icon = end_sharia_law
+		cost = 10
+		prerequisite = {
+			focus = SYR_invite_big_pharma
+			focus = SYR_syrian_pharmaceuticals
+		}
+		x = -2
+		y = 3
+		relative_position_id = SYR_bushra_al_assad
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Bushra al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_eqalitarian_campaign"
+			add_stability = 0.10
+			add_popularity = { ideology = fascism popularity = 0.05 }
+			custom_effect_tooltip = TT_SYR_MUSLIM_BROTHERHOOD_GAIN_10_POP
+			add_to_variable = { party_pop_array^12 = 0.10 }
+			recalculate_party = yes
+		}
 
 	}
 	focus = {
@@ -225,24 +454,138 @@ focus_tree = {
 		x = 0
 		y = 4
 		relative_position_id = SYR_bushra_al_assad
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Bushra al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_iron_lady"
+			add_country_leader_trait = iron_lady_of_syria
+		}
+
+	}
+	##Bashar's branch
+	focus = {
+		id = SYR_bashar_al_assad
+		icon = Bashar_al_Assad
+		cost = 5
+		prerequisite = {
+			focus = SYR_death_of_hafez_al_assad
+		}
+		mutually_exclusive = {
+			focus = SYR_bushra_al_assad
+			focus = SYR_maher_al_assad
+			focus = SYR_flowers_of_damascus_spring
+		}
+		x = 6
+		y = 1
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			NOT = { has_country_flag = Syrian_rebels }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_bashar_al_assad"
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 7 }
+			create_country_leader = {
+				name = "Bashar al-Assad"
+				desc = ""
+				picture = "Bashar_Al-Assad.dds"
+				expire = "2050.1.1"
+				ideology = Autocracy
+				traits = {
+					emerging_Autocracy
+					doctor
+					sly
+					inexperienced
+				}
+			}
+			set_temp_variable = { max_leader = bushra_popularity }
+			if = {
+				limit = { check_variable = { max_leader < bashar_popularity } }
+				set_temp_variable = { max_leader = bashar_popularity }
+			}
+			if = {
+				limit = { check_variable = { max_leader < maher_popularity } }
+				set_temp_variable = { max_leader = maher_popularity }
+			}
+			set_temp_variable = { stability_loss = bashar_popularity }
+			subtract_from_temp_variable = { stability_loss = max_leader }
+			divide_temp_variable = { stability_loss = 100 }
+			add_stability = stability_loss
+			set_temp_variable = { leader_popularity = bashar_popularity }
+			divide_temp_variable = { leader_popularity = 200 }
+			add_popularity = { ideology = communism popularity = leader_popularity }
+			add_to_variable = { var = party_pop_array^7 value = leader_popularity }
+			set_politics = {
+				ruling_party = communism
+			}
+			recalculate_party = yes
+			set_country_flag = Syria_successor_chosen
+			set_variable = { Autocracy_leader = 1 }
+		}
 
 	}
 	focus = {
-		id = SYR_eqalitarian_campaign
-		icon = GFX_goal_unknown
+		id = SYR_constitutional_amendment
+		icon = GFX_adopt_the_peoples_constitution
 		cost = 10
 		prerequisite = {
-			focus = SYR_invite_big_pharma
-			focus = SYR_syrian_pharmaceuticals
+			focus = SYR_bashar_al_assad
+			focus = SYR_maher_al_assad
 		}
-		x = -2
-		y = 3
-		relative_position_id = SYR_bushra_al_assad
+		x = 9
+		y = 2
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			OR = {
+				has_country_leader = { name = "Bashar al-Assad" }
+				has_country_leader = { name = "Maher al-Assad" }
+			}	
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_constitutional_amendment"
+			add_political_power = 200
+		}
 
 	}
 	focus = {
 		id = SYR_strengthen_ties_to_HEZ_and_PER
-		icon = GFX_goal_unknown
+		icon = muslim_expansionism
 		cost = 10
 		prerequisite = {
 			focus = SYR_constitutional_amendment
@@ -253,11 +596,56 @@ focus_tree = {
 		x = -2
 		y = 1
 		relative_position_id = SYR_constitutional_amendment
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Bashar al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_strengthen_ties_to_HEZ_and_PER"
+			add_country_leader_trait = pro_iranian
+			add_opinion_modifier = {
+				target = HEZ
+				modifier = declaration_of_friendship 
+			}
+			add_opinion_modifier = {
+				target = PER
+				modifier = declaration_of_friendship 
+			}
+			HEZ = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship 
+				}
+			}
+			PER = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship 
+				}
+			}
+			if = {
+				limit = { has_idea = iranian_quds_force }
+				set_country_flag = current_iranian_quds_force
+				increase_internal_faction_opinion = yes
+				visually_display_opinion_rise_iranian_quds_force = yes
+			}
+		}
 
 	}
 	focus = {
 		id = SYR_purge_opposition
-		icon = GFX_goal_unknown
+		icon = backstab
 		cost = 10
 		prerequisite = {
 			focus = SYR_strengthen_ties_to_HEZ_and_PER
@@ -265,11 +653,30 @@ focus_tree = {
 		x = -3
 		y = 2
 		relative_position_id = SYR_constitutional_amendment
-
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Bashar al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_purge_opposition"
+			add_country_leader_trait = ruthless
+			add_popularity = { ideology = communism popularity = 0.10 }
+		}
 	}
 	focus = {
 		id = SYR_friend_old_guard
-		icon = GFX_goal_unknown
+		icon = military_mission
 		cost = 10
 		prerequisite = {
 			focus = SYR_strengthen_ties_to_HEZ_and_PER
@@ -277,11 +684,32 @@ focus_tree = {
 		x = -1
 		y = 2
 		relative_position_id = SYR_constitutional_amendment
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Bashar al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_friend_old_guard"
+			lose_pp_for_month = yes
+			add_stability = 0.05
+			add_war_support = 0.05
+		}
 
 	}
 	focus = {
 		id = SYR_loyal_marriage
-		icon = GFX_goal_unknown
+		icon = gold_standard
 		cost = 10
 		prerequisite = {
 			focus = SYR_purge_opposition
@@ -290,11 +718,150 @@ focus_tree = {
 		x = -2
 		y = 3
 		relative_position_id = SYR_constitutional_amendment
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Bashar al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_loyal_marriage"
+			add_ideas = loyal_marriage
+		}
+
+	}
+	##Maher's branch
+	focus = {
+		id = SYR_maher_al_assad
+		icon = Maher_al_Assad
+		cost = 5
+		prerequisite = {
+			focus = SYR_death_of_hafez_al_assad
+		}
+		mutually_exclusive = {
+			focus = SYR_bashar_al_assad
+			focus = SYR_bushra_al_assad
+			focus = SYR_flowers_of_damascus_spring
+		}
+		x = 12
+		y = 1
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			NOT = { has_country_flag = Syrian_rebels }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_maher_al_assad"
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 22 }
+			create_country_leader = {
+				name = "Maher al-Assad"
+				desc = ""
+				picture = "Maher_Al-Assad.dds"
+				expire = "2050.1.1"
+				ideology = Nat_Autocracy
+				traits = {
+					nationalist_Nat_Autocracy
+					pro_iranian
+				}
+			}
+			set_temp_variable = { max_leader = bushra_popularity }
+			if = {
+				limit = { check_variable = { max_leader < bashar_popularity } }
+				set_temp_variable = { max_leader = bashar_popularity }
+			}
+			if = {
+				limit = { check_variable = { max_leader < maher_popularity } }
+				set_temp_variable = { max_leader = maher_popularity }
+			}
+			set_temp_variable = { stability_loss = maher_popularity }
+			subtract_from_temp_variable = { stability_loss = max_leader }
+			divide_temp_variable = { stability_loss = 100 }
+			add_stability = stability_loss
+			set_temp_variable = { leader_popularity = maher_popularity }
+			divide_temp_variable = { leader_popularity = 200 }
+			add_popularity = { ideology = nationalist popularity = leader_popularity }
+			add_to_variable = { var = party_pop_array^22 value = leader_popularity }
+			set_politics = {
+				ruling_party = nationalist
+			}
+			recalculate_party = yes
+			set_country_flag = Syria_successor_chosen
+		}
+
+	}
+	focus = {
+		id = SYR_empower_the_republican_guard
+		icon = tanks3
+		cost = 10
+		prerequisite = {
+			focus = SYR_constitutional_amendment
+		}
+		prerequisite = {
+			focus = SYR_maher_al_assad
+		}
+		x = 2
+		y = 1
+		relative_position_id = SYR_constitutional_amendment
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Maher al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_empower_the_republican_guard"
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			army_experience = 10
+			if = {
+				limit = { has_idea = the_military }
+				set_country_flag = current_the_military
+				increase_internal_faction_opinion = yes
+				visually_display_opinion_rise_the_military = yes
+			}
+			else_if = {
+				limit = { has_idea = iranian_quds_force }
+				remove_ideas = iranian_quds_force
+				add_ideas = the_military
+			}
+			else = {
+				add_ideas = the_military
+			}
+		}
 
 	}
 	focus = {
 		id = SYR_resestablish_defence_companies
-		icon = GFX_goal_unknown
+		icon = special_forces
 		cost = 10
 		prerequisite = {
 			focus = SYR_empower_the_republican_guard
@@ -302,11 +869,77 @@ focus_tree = {
 		x = 1
 		y = 2
 		relative_position_id = SYR_constitutional_amendment
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Maher al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_resestablish_defence_companies"
+			custom_effect_tooltip = TT_ACTIVATE_DEFENCE_COMPANIES
+			hidden_effect = {
+				load_oob = "SYR_defence_companies"
+			}
+		}
+
+	}
+	focus = {
+		id = SYR_oil_must_flow
+		icon = oil_trade
+		cost = 10
+		prerequisite = {
+			focus = SYR_empower_the_republican_guard
+		}
+		x = 3
+		y = 2
+		relative_position_id = SYR_constitutional_amendment
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Maher al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_oil_must_flow"
+			if = {
+				limit = { has_idea = fossil_fuel_industry }
+				set_country_flag = current_fossil_fuel_industry
+				increase_internal_faction_opinion = yes
+				visually_display_opinion_rise_fossil_fuel_industry = yes
+			}
+			else_if = {
+				limit = { has_idea = oligarchs }
+				remove_ideas = oligarchs
+				add_ideas = fossil_fuel_industry
+			}
+			else = {
+				add_ideas = fossil_fuel_industry
+			}
+		}
 
 	}
 	focus = {
 		id = SYR_syrian_savage
-		icon = GFX_goal_unknown
+		icon = lion
 		cost = 10
 		prerequisite = {
 			focus = SYR_resestablish_defence_companies
@@ -317,11 +950,65 @@ focus_tree = {
 		x = 2
 		y = 3
 		relative_position_id = SYR_constitutional_amendment
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Maher al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_syrian_savage"
+			add_country_leader_trait = syrian_savage
+		}
+
+	}
+	#Democratic Branch
+	focus = {
+		id = SYR_flowers_of_damascus_spring
+		icon = anti_establishment
+		cost = 10
+		prerequisite = {
+			focus = SYR_death_of_hafez_al_assad
+		}
+		mutually_exclusive = {
+			focus = SYR_maher_al_assad
+			focus = SYR_bashar_al_assad
+			focus = SYR_bushra_al_assad
+		}
+		x = 16
+		y = 1
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_flag = Syrian_rebels
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_flowers_of_damascus_spring"
+		}
 
 	}
 	focus = {
 		id = SYR_rifaat_al_assad
-		icon = GFX_goal_unknown
+		icon = Rifaat_al_Assad
 		cost = 10
 		prerequisite = {
 			focus = SYR_flowers_of_damascus_spring
@@ -332,26 +1019,176 @@ focus_tree = {
 		x = -1
 		y = 1
 		relative_position_id = SYR_flowers_of_damascus_spring
-
-	}
-	focus = {
-		id = SYR_kick_out_al_assads
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_flowers_of_damascus_spring
+		
+		ai_will_do = {
+			factor = 10
 		}
-		mutually_exclusive = {
-			focus = SYR_rifaat_al_assad
+		
+		available = {
 		}
-		x = 1
-		y = 1
-		relative_position_id = SYR_flowers_of_damascus_spring
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_rifaat_al_assad"
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			if = {
+				limit = {
+					NOT = { has_country_flag = Rifaat_no_international_support }
+					NOT = { has_country_flag = Rifaat_international_support }
+				}
+				add_to_array = { ruling_party = 15 }
+				add_popularity = { ideology = neutrality popularity = 0.30 }
+				add_to_variable = { var = party_pop_array^15 value = 0.30 }
+				create_country_leader = {
+					name = "Rifaat al-Assad"
+					desc = ""
+					picture = "Rifaat_Al-Assad.dds"
+					expire = "2050.1.1"
+					ideology = oligarchism
+					traits = {
+						neutrality_oligarchism
+						pro_saudi
+					}
+				}
+				set_country_flag = no_leader_change
+				set_politics = {
+					ruling_party = neutrality
+				}
+				clr_country_flag = no_leader_change
+			}
+			if = {
+				limit = {
+					has_country_flag = Rifaat_western
+				}
+				add_to_array = { ruling_party = 0 }
+				add_popularity = { ideology = democratic popularity = 0.30 }
+				add_to_variable = { var = party_pop_array^0 value = 0.30 }
+				create_country_leader = {
+					name = "Rifaat al-Assad"
+					desc = ""
+					picture = "Rifaat_Al-Assad.dds"
+					expire = "2050.1.1"
+					ideology = Western_Autocracy 
+					traits = {
+						western_Western_Autocracy 
+						pro_saudi
+					}
+				}
+				set_country_flag = no_leader_change
+				set_politics = {
+					ruling_party = democratic
+				}
+				clr_country_flag = no_leader_change
+			}
+			if = {
+				limit = {
+					has_country_flag = Rifaat_emerging
+				}
+				add_to_array = { ruling_party = 6 }
+				add_popularity = { ideology = communism popularity = 0.30 }
+				add_to_variable = { var = party_pop_array^6 value = 0.30 }
+				create_country_leader = {
+					name = "Rifaat al-Assad"
+					desc = ""
+					picture = "Rifaat_Al-Assad.dds"
+					expire = "2050.1.1"
+					ideology = Autocracy  
+					traits = {
+						emerging_Conservative
+						pro_saudi
+					}
+				}
+				set_country_flag = no_leader_change
+				set_politics = {
+					ruling_party = communism
+				}
+				clr_country_flag = no_leader_change
+			}
+			if = {
+				limit = {
+					has_country_flag = Rifaat_nonaligned
+				}
+				add_to_array = { ruling_party = 15 }
+				add_popularity = { ideology = neutrality popularity = 0.30 }
+				add_to_variable = { var = party_pop_array^15 value = 0.30 }
+				create_country_leader = {
+					name = "Rifaat al-Assad"
+					desc = ""
+					picture = "Rifaat_Al-Assad.dds"
+					expire = "2050.1.1"
+					ideology = oligarchism  
+					traits = {
+						neutrality_oligarchism
+						pro_saudi
+					}
+				}
+				set_country_flag = no_leader_change
+				set_politics = {
+					ruling_party = neutrality
+				}
+				clr_country_flag = no_leader_change
+			}
+			if = {
+				limit = {
+					has_country_flag = Rifaat_salafist
+				}
+				add_to_array = { ruling_party = 10 }
+				add_popularity = { ideology = fascism popularity = 0.30 }
+				add_to_variable = { var = party_pop_array^10 value = 0.30 }
+				create_country_leader = {
+					name = "Rifaat al-Assad"
+					desc = ""
+					picture = "Rifaat_Al-Assad.dds"
+					expire = "2050.1.1"
+					ideology = Kingdom   
+					traits = {
+						salafist_Kingdom
+						pro_saudi
+					}
+				}
+				set_country_flag = no_leader_change
+				set_politics = {
+					ruling_party = fascism
+				}
+				clr_country_flag = no_leader_change
+			}
+			if = {
+				limit = {
+					has_country_flag = Rifaat_nationalist
+				}
+				add_to_array = { ruling_party = 20 }
+				add_popularity = { ideology = nationalist popularity = 0.30 }
+				add_to_variable = { var = party_pop_array^20 value = 0.30 }
+				create_country_leader = {
+					name = "Rifaat al-Assad"
+					desc = ""
+					picture = "Rifaat_Al-Assad.dds"
+					expire = "2050.1.1"
+					ideology = Nat_Populism	
+					traits = {
+						nationalist_Nat_Populism
+						pro_saudi
+					}
+				}
+				set_country_flag = no_leader_change
+				set_politics = {
+					ruling_party = nationalist
+				}
+				clr_country_flag = no_leader_change
+			}
+			recalculate_party = yes
+		}
 
 	}
 	focus = {
 		id = SYR_arab_news_network
-		icon = GFX_goal_unknown
+		icon = propaganda
 		cost = 10
 		prerequisite = {
 			focus = SYR_rifaat_al_assad
@@ -359,23 +1196,30 @@ focus_tree = {
 		x = -1
 		y = 2
 		relative_position_id = SYR_flowers_of_damascus_spring
-
-	}
-	focus = {
-		id = SYR_reestablish_political_parties
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_kick_out_al_assads
+		
+		ai_will_do = {
+			factor = 10
 		}
-		x = 1
-		y = 2
-		relative_position_id = SYR_flowers_of_damascus_spring
+		
+		available = {
+			has_country_leader = { name = "Rifaat al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_arab_news_network"
+			add_ideas = arab_news_network
+		}
 
 	}
 	focus = {
 		id = SYR_the_arab_democratic_party
-		icon = GFX_goal_unknown
+		icon = diplomacy
 		cost = 10
 		prerequisite = {
 			focus = SYR_arab_news_network
@@ -383,11 +1227,182 @@ focus_tree = {
 		x = -1
 		y = 3
 		relative_position_id = SYR_flowers_of_damascus_spring
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			has_country_leader = { name = "Rifaat al-Assad" }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_the_arab_democratic_party"
+			custom_effect_tooltip = TT_SYRIAN_ARAB_DEMOCRATIC_PARTY
+			if = {
+				limit = { has_government = democratic }
+				set_country_flag = Syrian_arab_democratic_party_western
+				add_popularity = { ideology = democratic popularity = 0.10 }
+				add_to_variable = { var = party_pop_array^0 value = 0.10 }
+			}
+			if = {
+				limit = { has_government = neutrality }
+				set_country_flag = Syrian_arab_democratic_party_neutrality
+				add_popularity = { ideology = neutrality popularity = 0.10 }
+				add_to_variable = { var = party_pop_array^15 value = 0.10 }
+			}
+			if = {
+				limit = { has_government = communism }
+				set_country_flag = Syrian_arab_democratic_party_emerging
+				add_popularity = { ideology = communism popularity = 0.10 }
+				add_to_variable = { var = party_pop_array^6 value = 0.10 }
+			}
+			if = {
+				limit = { has_government = fascism }
+				set_country_flag = Syrian_arab_democratic_party_salafist
+				add_popularity = { ideology = fascism popularity = 0.10 }
+				add_to_variable = { var = party_pop_array^10 value = 0.10 }
+			}
+			if = {
+				limit = { has_government = nationalist }
+				set_country_flag = Syrian_arab_democratic_party_nationalist
+				add_popularity = { ideology = nationalist popularity = 0.10 }
+				add_to_variable = { var = party_pop_array^20 value = 0.10 }
+			}
+		}
+
+	}
+	focus = {
+		id = SYR_kick_out_al_assads
+		icon = colonial_crackdown
+		cost = 10
+		prerequisite = {
+			focus = SYR_flowers_of_damascus_spring
+		}
+		mutually_exclusive = {
+			focus = SYR_rifaat_al_assad
+		}
+		x = 1
+		y = 1
+		relative_position_id = SYR_flowers_of_damascus_spring
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_kick_out_al_assads"
+			if = {
+				limit = { check_variable = { Autocracy_leader < 1 } }
+				set_variable = { Autocracy_leader = 1 }
+			}
+			add_popularity = { ideology = communism popularity = -0.20 }
+			add_to_variable = { var = party_pop_array^7 value = -0.20 }
+			swap_ideas = { 
+				remove_idea = shia
+				add_idea = sunni
+			}
+		}
+
+	}
+	focus = {
+		id = SYR_reestablish_political_parties
+		icon = treaty
+		cost = 10
+		prerequisite = {
+			focus = SYR_kick_out_al_assads
+		}
+		x = 1
+		y = 2
+		relative_position_id = SYR_flowers_of_damascus_spring
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_reestablish_political_parties"
+			custom_effect_tooltip = TT_RESHUFFLE_PARTIES
+			hidden_effect = {
+				set_temp_variable = { western_popularity = random }
+				multiply_temp_variable = { western_popularity = 0.20 }
+				set_temp_variable = { emerging_popularity = random }
+				multiply_temp_variable = { emerging_popularity = 0.20 }
+				set_temp_variable = { salafist_popularity = random }
+				multiply_temp_variable = { salafist_popularity = 0.10 }
+				set_temp_variable = { neutrality_popularity = random }
+				multiply_temp_variable = { neutrality_popularity = 0.20 }
+				set_temp_variable = { nationalist_popularity = random }
+				multiply_temp_variable = { nationalist_popularity = 0.10 }
+				add_popularity = { ideology = democratic popularity = western_popularity }
+				add_popularity = { ideology = communism popularity = emerging_popularity }
+				add_popularity = { ideology = fascism popularity = salafist_popularity }
+				add_popularity = { ideology = neutrality popularity = neutrality_popularity }
+				add_popularity = { ideology = nationalist popularity = nationalist_popularity }
+				set_temp_variable = { party_1 = random }
+				multiply_temp_variable = { party_1 = 23 }
+				round_variable = party_1
+				add_to_variable = { var = party_pop_array^party_1 value = 0.10 }
+				set_temp_variable = { party_2 = random }
+				multiply_temp_variable = { party_2 = 23 }
+				round_variable = party_2
+				add_to_variable = { var = party_pop_array^party_2 value = 0.10 }
+				set_temp_variable = { party_3 = random }
+				multiply_temp_variable = { party_3 = 23 }
+				round_variable = party_3
+				add_to_variable = { var = party_pop_array^party_3 value = 0.10 }
+				set_temp_variable = { party_4 = random }
+				multiply_temp_variable = { party_4 = 23 }
+				round_variable = party_4
+				add_to_variable = { var = party_pop_array^party_4 value = 0.10 }
+				set_temp_variable = { party_5 = random }
+				multiply_temp_variable = { party_5 = 23 }
+				round_variable = party_5
+				add_to_variable = { var = party_pop_array^party_5 value = 0.10 }
+				set_temp_variable = { party_6 = random }
+				multiply_temp_variable = { party_6 = 23 }
+				round_variable = party_6
+				add_to_variable = { var = party_pop_array^party_6 value = 0.10 }
+				set_temp_variable = { party_7 = random }
+				multiply_temp_variable = { party_7 = 23 }
+				round_variable = party_7
+				add_to_variable = { var = party_pop_array^party_7 value = 0.10 }
+				set_temp_variable = { party_8 = random }
+				multiply_temp_variable = { party_8 = 23 }
+				round_variable = party_8
+				add_to_variable = { var = party_pop_array^party_8 value = 0.10 }
+			}
+			recalculate_party = yes
+		}
 
 	}
 	focus = {
 		id = SYR_free_elections
-		icon = GFX_goal_unknown
+		icon = Election
 		cost = 10
 		prerequisite = {
 			focus = SYR_reestablish_political_parties
@@ -395,11 +1410,30 @@ focus_tree = {
 		x = 1
 		y = 3
 		relative_position_id = SYR_flowers_of_damascus_spring
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_free_elections"
+			hold_election = yes
+			country_event = { id = MD4_election_campaign.0 }
+		}
 
 	}
 	focus = {
 		id = SYR_israeli_allies
-		icon = GFX_goal_unknown
+		icon = align_to_israel
 		cost = 10
 		prerequisite = {
 			focus = SYR_the_arab_democratic_party
@@ -412,11 +1446,43 @@ focus_tree = {
 		x = -3
 		y = 4
 		relative_position_id = SYR_flowers_of_damascus_spring
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_israeli_allies"
+			add_opinion_modifier = {
+				target = ISR
+				modifier = eased_border_tensions 
+			}
+			ISR = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = eased_border_tensions 
+				}
+			}
+			add_ai_strategy = {
+				type = befriend
+				id = "ISR"
+				value = 50
+			}
+		}
 
 	}
 	focus = {
 		id = SYR_saudi_allies
-		icon = GFX_goal_unknown
+		icon = align_to_saudi_arabia
 		cost = 10
 		prerequisite = {
 			focus = SYR_the_arab_democratic_party
@@ -430,11 +1496,43 @@ focus_tree = {
 		x = -1
 		y = 4
 		relative_position_id = SYR_flowers_of_damascus_spring
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_saudi_allies"
+			add_opinion_modifier = {
+				target = SAU
+				modifier = declaration_of_friendship  
+			}
+			SAU = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship  
+				}
+			}
+			add_ai_strategy = {
+				type = befriend
+				id = "SAU"
+				value = 50
+			}
+		}
 
 	}
 	focus = {
 		id = SYR_american_allies
-		icon = GFX_goal_unknown
+		icon = align_to_america
 		cost = 10
 		prerequisite = {
 			focus = SYR_free_elections
@@ -448,11 +1546,43 @@ focus_tree = {
 		x = 1
 		y = 4
 		relative_position_id = SYR_flowers_of_damascus_spring
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_saudi_allies"
+			add_opinion_modifier = {
+				target = USA
+				modifier = declaration_of_friendship  
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship  
+				}
+			}
+			add_ai_strategy = {
+				type = befriend
+				id = "USA"
+				value = 50
+			}
+		}
 
 	}
 	focus = {
 		id = SYR_iranian_allies
-		icon = GFX_goal_unknown
+		icon = align_to_iran
 		cost = 10
 		prerequisite = {
 			focus = SYR_free_elections
@@ -465,41 +1595,285 @@ focus_tree = {
 		x = 3
 		y = 4
 		relative_position_id = SYR_flowers_of_damascus_spring
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_iranian_allies"
+			add_opinion_modifier = {
+				target = PER
+				modifier = declaration_of_friendship  
+			}
+			PER = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship  
+				}
+			}
+			add_ai_strategy = {
+				type = befriend
+				id = "PER"
+				value = 50
+			}
+		}
 
 	}
+	
+	#Lebanon Branch
 	focus = {
-		id = SYR_replace_ghazi_kanaan
-		icon = GFX_goal_unknown
+		id = SYR_affirm_presence_in_lebanon
+		icon = political_pressure_dark_green
+		cost = 10
+		x = 23
+		y = 0
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_affirm_presence_in_lebanon"
+			LEB = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 5 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = TT_GENERIC_GAIN_5_INFLUENCE
+			}
+			HEZ = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 5 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = TT_GENERIC_GAIN_5_INFLUENCE
+			}
+		}
+	}
+	focus = {
+		id = SYR_invest_in_lebanon
+		icon = construction
 		cost = 10
 		prerequisite = {
 			focus = SYR_affirm_presence_in_lebanon
 		}
-		mutually_exclusive = {
-			focus = SYR_recall_intelligence
-		}
-		x = -1
+		x = -3
 		y = 1
 		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_invest_in_lebanon"
+			custom_effect_tooltip = TT_SYR_SPENDING_MINUS_5
+			add_to_variable = { int_investments = 5 }
+			LEB = {
+				if = {
+					limit = {
+						any_owned_state = {
+							free_building_slots = {
+								building = industrial_complex
+								size > 0
+							}
+						}
+					}
+					random_owned_state = {
+						limit = {
+							free_building_slots = {
+								building = industrial_complex
+								size > 0
+							}
+						}
+						add_building_construction = {
+							type = industrial_complex
+							level = 1
+							instant_build = yes
+						}
+					}
+				}
+				else = {
+					random_owned_state = {
+						add_extra_state_shared_building_slots = 1
+						add_building_construction = {
+							type = industrial_complex
+							level = 1
+							instant_build = yes
+						}
+					}
+				}
+				add_autonomy_score = { value = -150 }
+			}
+			if = {
+				limit = { has_idea = small_medium_business_owners }
+				set_country_flag = current_small_medium_business_owners
+				increase_internal_faction_opinion = yes
+				visually_display_opinion_rise_small_medium_business_owners = yes
+			}
+			if = {
+				limit = { has_idea = international_bankers }
+				set_country_flag = current_international_bankers
+				increase_internal_faction_opinion = yes
+				visually_display_opinion_rise_international_bankers = yes
+			}	
+		}
 
 	}
 	focus = {
-		id = SYR_recall_intelligence
-		icon = GFX_goal_unknown
+		id = SYR_relocate_lebanese_industry
+		icon = industry_civilian
 		cost = 10
 		prerequisite = {
 			focus = SYR_affirm_presence_in_lebanon
 		}
-		mutually_exclusive = {
-			focus = SYR_replace_ghazi_kanaan
-		}
-		x = 1
+		x = 3
 		y = 1
 		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_relocate_lebanese_industry"
+			if = {
+				limit = {
+					any_owned_state = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+						}
+					}
+				}
+				random_owned_state = {
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+						}
+					}
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else = {
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			LEB = {
+				random_owned_state = {
+					limit = {
+						industrial_complex > 0
+					}
+					remove_building = {
+						type = industrial_complex
+						level = 1
+					}
+				}
+				add_autonomy_score = { value = 150 }
+			}
+			if = {
+				limit = { has_idea = oligarchs }
+				set_country_flag = current_oligarchs
+				increase_internal_faction_opinion = yes
+				visually_display_opinion_rise_oligarchs = yes
+			}
+			if = {
+				limit = { has_idea = the_military }
+				set_country_flag = current_the_military
+				increase_internal_faction_opinion = yes
+				visually_display_opinion_rise_the_military = yes
+			}	
+		}
 
 	}
 	focus = {
 		id = SYR_commit_more_troops
-		icon = GFX_goal_unknown
+		icon = military_mission2
 		cost = 10
 		prerequisite = {
 			focus = SYR_affirm_presence_in_lebanon
@@ -510,11 +1884,38 @@ focus_tree = {
 		x = -4
 		y = 2
 		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_commit_more_troops"
+			LEB = { add_autonomy_score = { value = -150 } }
+			custom_effect_tooltip = TT_SYR_COMMIT_MORE_TROOPS
+			add_to_variable = { occupation_of_lebanon_manpower_effect = -0.05 }
+			if = {
+				limit = { has_idea = the_military }
+				set_country_flag = current_the_military
+				increase_internal_faction_opinion = yes
+				visually_display_opinion_rise_the_military = yes
+			}	
+		}
 
 	}
 	focus = {
 		id = SYR_reduce_presence
-		icon = GFX_goal_unknown
+		icon = military_academy
 		cost = 10
 		prerequisite = {
 			focus = SYR_affirm_presence_in_lebanon
@@ -525,35 +1926,122 @@ focus_tree = {
 		x = -2
 		y = 2
 		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_reduce_presence"
+			LEB = { add_autonomy_score = { value = 150 } }
+			custom_effect_tooltip = TT_SYR_REDUCE_TROOPS
+			add_to_variable = { occupation_of_lebanon_manpower_effect = 0.05 }
+			if = {
+				limit = { has_idea = the_military }
+				set_country_flag = current_the_military
+				decrease_internal_faction_opinion = yes
+				visually_display_opinion_fall_the_military = yes
+			}	
+		}
 
 	}
 	focus = {
-		id = SYR_invest_in_lebanon
-		icon = GFX_goal_unknown
+		id = SYR_replace_ghazi_kanaan
+		icon = intelligence_exchange
 		cost = 10
 		prerequisite = {
 			focus = SYR_affirm_presence_in_lebanon
 		}
-		x = -3
+		mutually_exclusive = {
+			focus = SYR_recall_intelligence
+		}
+		x = -1
 		y = 1
 		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_replace_ghazi_kanaan"
+			LEB = { add_autonomy_score = { value = -150 } }
+			custom_effect_tooltip = TT_REPLACE_INTELLIGENCE
+			add_to_variable = { occupation_of_lebanon_stability_effect = -0.05 }
+			if = {
+				limit = { has_idea = intelligence_community }
+				set_country_flag = current_intelligence_community
+				increase_internal_faction_opinion = yes
+				visually_display_opinion_rise_intelligence_community = yes
+			}	
+		}
 
 	}
 	focus = {
-		id = SYR_relocate_lebanese_industry
-		icon = GFX_goal_unknown
+		id = SYR_recall_intelligence
+		icon = renounce_treaty
 		cost = 10
 		prerequisite = {
 			focus = SYR_affirm_presence_in_lebanon
 		}
-		x = 3
+		mutually_exclusive = {
+			focus = SYR_replace_ghazi_kanaan
+		}
+		x = 1
 		y = 1
 		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_recall_intelligence"
+			LEB = { add_autonomy_score = { value = 150 } }
+			custom_effect_tooltip = TT_RECALL_INTELLIGENCE
+			add_to_variable = { occupation_of_lebanon_stability_effect = 0.05 }
+			if = {
+				limit = { has_idea = intelligence_community }
+				set_country_flag = current_intelligence_community
+				decrease_internal_faction_opinion = yes
+				visually_display_opinion_fall_intelligence_community = yes
+			}	
+		}
 
 	}
 	focus = {
 		id = SYR_reduced_political_liberty
-		icon = GFX_goal_unknown
+		icon = attack_democracy3
 		cost = 10
 		prerequisite = {
 			focus = SYR_affirm_presence_in_lebanon
@@ -564,41 +2052,108 @@ focus_tree = {
 		x = 2
 		y = 2
 		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_reduced_political_liberty"
+			LEB = { add_autonomy_score = { value = -150 } }
+			if = {
+				limit = { has_government = democratic }
+				LEB = { add_popularity = { ideology = democratic popularity = 0.10 } }
+			}
+			if = {
+				limit = { has_government = communism }
+				LEB = { add_popularity = { ideology = communism popularity = 0.10 } }
+			}
+			if = {
+				limit = { has_government = neutrality }
+				LEB = { add_popularity = { ideology = neutrality popularity = 0.10 } }
+			}
+			if = {
+				limit = { has_government = nationalist }
+				LEB = { add_popularity = { ideology = nationalist popularity = 0.10 } }
+			}
+			if = {
+				limit = { has_government = fascism }
+				LEB = { add_popularity = { ideology = fascism popularity = 0.10 } }
+			}
+			custom_effect_tooltip = TT_REDUCE_POLITICAL_LIBERTIES
+			add_to_variable = { occupation_of_lebanon_political_power_effect = -0.05 }
+		}
 
 	}
 	focus = {
-		id = SYR_integrate_lebanon
-		icon = GFX_goal_unknown
+		id = SYR_encourage_campaigning
+		icon = support_democracy
 		cost = 10
 		prerequisite = {
 			focus = SYR_affirm_presence_in_lebanon
 		}
 		mutually_exclusive = {
-			focus = SYR_withdraw_from_lebanon
+			focus = SYR_reduced_political_liberty
 		}
-		x = -1
-		y = 4
+		x = 4
+		y = 2
 		relative_position_id = SYR_affirm_presence_in_lebanon
-
-	}
-	focus = {
-		id = SYR_withdraw_from_lebanon
-		icon = GFX_goal_unknown
-		cost = 10
-		prerequisite = {
-			focus = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
 		}
-		mutually_exclusive = {
-			focus = SYR_integrate_lebanon
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
 		}
-		x = 1
-		y = 4
-		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_encourage_campaigning"
+			LEB = { add_autonomy_score = { value = 150 } }
+			if = {
+				limit = { has_government = democratic }
+				LEB = { add_popularity = { ideology = democratic popularity = -0.10 } }
+			}
+			if = {
+				limit = { has_government = communism }
+				LEB = { add_popularity = { ideology = communism popularity = -0.10 } }
+			}
+			if = {
+				limit = { has_government = neutrality }
+				LEB = { add_popularity = { ideology = neutrality popularity = -0.10 } }
+			}
+			if = {
+				limit = { has_government = nationalist }
+				LEB = { add_popularity = { ideology = nationalist popularity = -0.10 } }
+			}
+			if = {
+				limit = { has_government = fascism }
+				LEB = { add_popularity = { ideology = fascism popularity = -0.10 } }
+			}
+			custom_effect_tooltip = TT_INCREASE_POLITICAL_LIBERTIES
+			add_to_variable = { occupation_of_lebanon_political_power_effect = 0.05 }
+		}
 
 	}
 	focus = {
 		id = SYR_assassinate_lebanese_prime_minister
-		icon = GFX_goal_unknown
+		icon = gunpoint_diplomacy
 		cost = 10
 		prerequisite = {
 			focus = SYR_affirm_presence_in_lebanon
@@ -609,11 +2164,71 @@ focus_tree = {
 		x = -2
 		y = 3
 		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_assassinate_lebanese_prime_minister"
+			custom_effect_tooltip = TT_SYR_ASSASSINATE_HARIRI
+			if = {
+				limit = { has_completed_focus = SYR_replace_ghazi_kanaan }
+				random_list = {
+					90 = {
+						custom_effect_tooltip = TT_SYR_ASSASSINATE_HARIRI_SUCCESS
+						hidden_effect = { LEB = { country_event = { id = SyriaFocus.47 hours = 6 } } }
+						LEB = { add_autonomy_score = { value = -150 } }
+					}
+					10 = {
+						custom_effect_tooltip = TT_SYR_ASSASSINATE_HARIRI_FAIL
+						hidden_effect = { LEB = { country_event = { id = SyriaFocus.48 hours = 6 } } }
+					}
+				}
+			}
+			else_if = {
+				limit = { has_completed_focus = SYR_recall_intelligence }
+				random_list = {
+					30 = {
+						custom_effect_tooltip = TT_SYR_ASSASSINATE_HARIRI_SUCCESS
+						hidden_effect = { LEB = { country_event = { id = SyriaFocus.47 hours = 6 } } }
+						LEB = { add_autonomy_score = { value = -150 } }
+					}
+					70 = {
+						custom_effect_tooltip = TT_SYR_ASSASSINATE_HARIRI_FAIL
+						hidden_effect = { LEB = { country_event = { id = SyriaFocus.48 hours = 6 } } }
+					}
+				}
+			}
+			else = {
+				random_list = {
+					60 = {
+						custom_effect_tooltip = TT_SYR_ASSASSINATE_HARIRI_SUCCESS
+						hidden_effect = { LEB = { country_event = { id = SyriaFocus.47 hours = 6 } } }
+						LEB = { add_autonomy_score = { value = -150 } }
+					}
+					40 = {
+						custom_effect_tooltip = TT_SYR_ASSASSINATE_HARIRI_FAIL
+						hidden_effect = { LEB = { country_event = { id = SyriaFocus.48 hours = 6 } } }
+					}
+				}
+			}
+		}
 
 	}
 	focus = {
 		id = SYR_raids_against_hezbollah
-		icon = GFX_goal_unknown
+		icon = infiltration
 		cost = 10
 		prerequisite = {
 			focus = SYR_affirm_presence_in_lebanon
@@ -624,6 +2239,151 @@ focus_tree = {
 		x = 2
 		y = 3
 		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_raids_against_hezbollah"
+			LEB = {
+				add_popularity = { 
+					ideology = communism
+					popularity = -0.10 
+				}
+			}
+			HEZ = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = did_not_support_us 
+				}
+			}
+			PER = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = did_not_support_us 
+				}
+			}
+			if = {
+				limit = { has_idea = iranian_quds_force }
+				set_country_flag = current_iranian_quds_force
+				decrease_internal_faction_opinion = yes
+				visually_display_opinion_fall_iranian_quds_force = yes
+			}	
+		}
+
+	}
+	focus = {
+		id = SYR_integrate_lebanon
+		icon = demand_territory3
+		cost = 10
+		prerequisite = {
+			focus = SYR_affirm_presence_in_lebanon
+		}
+		mutually_exclusive = {
+			focus = SYR_withdraw_from_lebanon
+		}
+		x = -1
+		y = 4
+		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+			OR = {
+				AND = {
+					has_completed_focus = SYR_commit_more_troops
+					has_completed_focus = SYR_replace_ghazi_kanaan
+					has_completed_focus = SYR_reduced_political_liberty
+					has_completed_focus = SYR_assassinate_lebanese_prime_minister
+				}
+				LEB = {
+					has_autonomy_state = autonomy_autonomous_state
+				}
+			}
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_integrate_lebanon"
+			add_state_core = 202
+			add_state_core = 203
+			add_state_core = 553
+			add_state_core = 201
+			annex_country = { target = LEB }
+			annex_country = { target = HEZ transfer_troops = yes }
+			hidden_effect = { news_event = { id = SyriaFocusNews.17 hours = 6 } }
+		}
+
+	}
+	focus = {
+		id = SYR_withdraw_from_lebanon
+		icon = align_to_lebanon
+		cost = 10
+		prerequisite = {
+			focus = SYR_affirm_presence_in_lebanon
+		}
+		mutually_exclusive = {
+			focus = SYR_integrate_lebanon
+		}
+		x = 1
+		y = 4
+		relative_position_id = SYR_affirm_presence_in_lebanon
+		
+		ai_will_do = {
+			factor = 10
+		}
+		
+		available = {
+			LEB = { is_subject_of = ROOT }
+			OR = {
+				AND = {
+					has_completed_focus = SYR_reduce_presence
+					has_completed_focus = SYR_recall_intelligence
+					has_completed_focus = SYR_encourage_campaigning
+					has_completed_focus = SYR_raids_against_hezbollah
+				}
+				LEB = {
+					OR = {
+						has_autonomy_state = autonomy_satellite_state
+						has_autonomy_state = autonomy_associated_state
+					}
+				}
+			}
+		}
+		
+		bypass = {
+		}
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SYR_withdraw_from_lebanon"
+			set_autonomy = {
+				target = LEB
+				autonomy_state = autonomy_free
+			}
+			hidden_effect = { news_event = { id = SyriaFocusNews.18 hours = 6 } }
+		}
 
 	}
 }

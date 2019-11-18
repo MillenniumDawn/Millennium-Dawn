@@ -1,4 +1,4 @@
-﻿name="Millennium_Dawn DEV"
+name="Millennium_Dawn DEV"
 path="mod/Millennium_Dawn/"
 tags={
 	"Alternative History"
@@ -7,10 +7,12 @@ tags={
 	"Graphics"
 }
 remote_file_id="1241177173"
-supported_version="1.7.*"
+supported_version="1.8.*"
 picture = "thumbnail.png"
 
 replace_path = "events"
+replace_path = "common/abilities"
+replace_path = "common/ai_focuses"
 replace_path = "common/ai_peace"
 replace_path = "common/ai_strategy"
 replace_path = "common/ai_strategy_plans"
