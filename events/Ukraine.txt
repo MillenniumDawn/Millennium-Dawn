@@ -1384,6 +1384,46 @@ country_event = { ###Russia Returns the Crimea
 	}
 }
 
+##Dispatcher Event - triggers random events below 
+country_event = {
+	id = ukraine_revolution.100
+	immediate = { log = "[GetDateText]: [Root.GetName]: event 
+	hidden = yes 
+	is_triggered_only = yes 
+	
+	trigger = {
+		tag = UKR
+	}
+	
+	immediate = {
+		random_list = {
+			20 = {
+				modifier = {
+					check_variable = { UKR_chance_of_collapse_var > 5 }
+					factor = 2
+				}
+				modifier = {
+					check_variable = { UKR_chance_of_collapse_var > 10
+					factor = 2.50
+				}
+				modifier = {
+					has_stability < 0.50 
+					factor = 1.0 
+				}
+				country_event = { id = ukraine_revolution.12 days = 45 random = 10 }
+				#violent oppposition
+			}
+			40 = {
+				country_event = { id = ukraine_revolution.11 days = 45 random = 10 }
+			}
+			40 = {
+				country_event = { id = ukraine_revolution.13 days = 45 random = 10 }
+			}
+		}
+	}
+	
+	
+}
 
 country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
 	id = ukraine_revolution.11
@@ -1398,22 +1438,7 @@ country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
 		tag = UKR 
 		UKR = { NOT = { has_war_with = NOV } }
 	}
-	
-	mean_time_to_happen = {
-		days = 300
-		modifier = {
-			factor = 0.75
-			check_variable = { UKR_stability_of_ukraine_var < 50 }
-		}
-		modifier = {
-			factor = 0.5
-			check_variable = { UKR_stability_of_ukraine_var < 25 }
-		}
-		modifier = { 
-			factor = 0.25
-			check_variable = { UKR_stability_of_ukraine_var < 15 }
-		}
-	}
+	is_triggered_only = yes 
 	
 	option = { ##Crackdown on Protestors
 		name = ukraine_revolution.11.a
@@ -1422,7 +1447,35 @@ country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
 		subtract_from_variable = { UKR_stability_of_ukraine_var = 3 }
 		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_1_TT
 		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_3_TT
-	}
+		
+		hidden_effect = {
+			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
+		}
+		ai_chance = {
+			factor = 5 
+			modifier = {
+				add = 2
+				has_government = nationalist
+				has_government = communism
+			}
+			modifier = {
+				add = -1
+				check_variable = { UKR_stability_of_ukraine_var < 40 }
+			}
+			modifier = {
+				add = 1 
+				check_variable = { UKR_chance_of_collapse_var > 7 }
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = 2 
+			}
+			modifier = {
+				country_exists = NOV 
+				add = 3
+			}
+		}
+	}	
 	option = { ##Let them Protest
 		name = ukraine_revolution.11.b
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.11.b executed"
@@ -1430,6 +1483,30 @@ country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
 		add_to_variable = { UKR_stability_of_ukraine_var = 5 }
 		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_2_TT
 		custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+		
+		hidden_effect = {
+			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
+		}
+		ai_chance = {
+			factor = 5
+			modifier = {
+				add = 2 
+				has_government = neutrality
+				has_government = democratic
+			}
+			modifier = {
+				add = 1 
+				check_variable = { UKR_stability_of_ukraine_var > 40 }
+			}
+			modifier = {
+				add = 1
+				is_historical_focus_on = no 
+			}
+			modifier = {
+				add = 1
+				country_exists = NOV 
+			}
+		}
 	}
 }
 
@@ -1441,15 +1518,24 @@ country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian 
 	picture = GFX_broken_infrastructure
 	
 	trigger = {
-		check_variable = { UKR_stability_of_ukraine_var < 60 }
-		check_variable = { UKR_chance_of_collapse_var > 8 }
+		check_variable = { UKR_stability_of_ukraine_var < 80 }
+		check_variable = { UKR_chance_of_collapse_var > 3 }
 		tag = UKR 
-		UKR = { NOT = { has_war_with = NOV } }
+		OR = {
+			UKR = { NOT = { has_war_with = NOV } }
+			NOT = { country_exists = NOV } 
+		}
 		any_owned_state = {
 			industrial_complex > 0 
 		}
 		any_owned_state = {
 			infrastructure > 0
+		}
+		any_owned_state = { 
+			dockyard > 0
+		}
+		any_owned_state = {
+			arms_factory > 0 
 		}
 	}
 	
@@ -1496,3 +1582,6 @@ country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian 
 		}
 	}
 }
+
+#Random Event 
+country_event 

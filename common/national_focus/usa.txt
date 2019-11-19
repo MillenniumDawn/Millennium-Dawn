@@ -2479,10 +2479,6 @@ focus_tree = {
 		
 		bypass = { }
 		
-		mutually_exclusive = {
-			focus = USA_regulation 
-		}
-		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_deregulation"
 			add_ideas = USA_economic_deregulation
@@ -2508,11 +2504,7 @@ focus_tree = {
 		prerequisite = {
 			focus = USA_the_american_economy
 		}
-		
-		mutually_exclusive = {
-			focus = USA_deregulation 
-		}
-		
+
 		available = { }
 		
 		bypass = { }
@@ -2571,13 +2563,6 @@ focus_tree = {
 				controls_state = 798 #Arkansas
 				controls_state = 794 #Alabama
 			}
-			custom_trigger_tooltip = {
-				OR = {
-					is_ai = yes 
-					check_variable = { treasury > 4.99 }
-				}
-				tooltip = 5_billion_currently_in_treasury_tt
-			}
 		}
 		
 		bypass = { }
@@ -2598,12 +2583,11 @@ focus_tree = {
 				794 = {
 					add_resource = {
 						type = aluminium
-						amount = 1
+						amount = 4
 					}
 				}
 			}
-			subtract_from_variable = { treasury = 5.0 }
-			custom_effect_tooltip = 5_billion_expense_tt
+			USA_scaling_resource_production_cost_effect = yes
 		}
 		
 		ai_will_do = {
@@ -2646,7 +2630,7 @@ focus_tree = {
 	
 	focus = {
 		id = USA_create_jobs_on_the_west_coast
-		icon = industry_civilian
+		icon = generic_machinery
 		
 		x = -1
 		y = 2
@@ -2779,15 +2763,6 @@ focus_tree = {
 				controls_state = 773 #Virgina
 				controls_state = 790 #North Carolina
 				controls_state = 791 #South Carolina
-			}
-			OR = {
-				custom_trigger_tooltip = {
-					tooltip = 50_billion_currently_in_treasury_tt
-					check_variable = { treasury > 49.99 }
-				}
-				hidden_trigger = {
-					is_ai = yes
-				}
 			}
 		}
 		
@@ -2946,15 +2921,6 @@ focus_tree = {
 				controls_state = 803 #New Mexico
 				controls_state = 787 #North Dakota
 			}
-			OR = {
-				custom_trigger_tooltip = { 
-					check_variable = { treasury > 19.99 }
-					tooltip = 20_billion_currently_in_treasury_tt
-				}
-				hidden_trigger = {
-					is_ai = yes
-				}
-			}
 		}
 		
 		bypass = { }
@@ -3000,8 +2966,8 @@ focus_tree = {
 					}
 				}
 			}
-			subtract_from_variable = { treasury = 20.0 }
-			custom_effect_tooltip = 20_billion_expense_tt
+			subtract_from_variable = { treasury = 50.0 }
+			custom_effect_tooltip = 50_billion_expense_tt
 			degregulation_resource_expansion_effect = yes
 		}
 		
@@ -3267,17 +3233,7 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = {
-			OR = {
-				custom_trigger_tooltip = {
-					check_variable = { treasury > 9.99 }
-					tooltip = 10_billion_currently_in_treasury_tt
-				}
-				hidden_trigger = {
-					is_ai = yes
-				}
-			}
-		}
+		available = { }
 		
 		bypass = { }
 		
@@ -3297,8 +3253,8 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			subtract_from_variable = { treasury = 10.0 }
-			custom_effect_tooltip = 10_billion_expense_tt
+			subtract_from_variable = { treasury = 60.0 }
+			custom_effect_tooltip = 60_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3308,13 +3264,13 @@ focus_tree = {
 	
 	focus = {
 		id = USA_expand_the_monetary_control_act
-		icon = money
+		icon = generic_banks
 		
 		x = 7
 		y = 3
 		relative_position_id = USA_the_american_economy
 		
-		cost = 10
+		cost = 5.0
 		
 		prerequisite = {
 			focus = USA_strengthen_the_federal_reserve
@@ -3322,26 +3278,53 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			if = {
+				limit = {
+					has_elections = no 
+				}
+				congress_low_support_trigger = yes
+			}
+			else_if = {
+				limit = {
+					has_elections = yes 
+				}
+				congress_medium_support_trigger = yes
+			}
+		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_expand_the_monetary_control_act"
-			add_stability = 0.02
 			hidden_effect = {
 				subtract_from_variable = { party_pop_array^1 = 0.04 }
 				add_to_variable = { party_pop_array^2 = 0.02 }
 				add_to_variable = { party_pop_array^3 = 0.02 }
+				recalculate_party = yes
 			}
-			recalculate_party = yes
 			custom_effect_tooltip = USA_gain_liberalism_2_TT
 			custom_effect_tooltip = USA_gain_socialdem_2_TT
 			if = {
-				limit = { has_idea = wall_street }
-				visually_display_opinion_fall_wall_street = yes
-				set_country_flag = current_wall_street
-				decrease_internal_faction_opinion = yes
+				limit = { NOT = { has_country_flag = hostile_wall_street } }
+				if = {
+					limit = { has_idea = wall_street }
+					visually_display_opinion_fall_wall_street = yes
+					set_country_flag = current_wall_street
+					decrease_internal_faction_opinion = yes
+				}
+			}
+			if = {
+				limit = {
+					has_elections = no 
+				}
+				USA_congress_medium_opposition = yes
+			}
+			else_if = {
+				limit = {
+					has_elections = yes 
+				}
+				USA_congress_small_opposition = yes
 			}
 		}
 		
@@ -3369,15 +3352,9 @@ focus_tree = {
 		}
 		
 		available = {
-			controls_state = 814
-			OR = {
-				custom_trigger_tooltip = {
-					check_variable = { treasury = 14.99 }
-					tooltip = 15_billion_currently_in_treasury_tt
-				}
-				hidden_trigger = {
-					is_ai = yes
-				}
+			AND = {
+				owns_state = 814 #Alaska
+				controls_state = 814
 			}
 		}
 		
@@ -3396,12 +3373,12 @@ focus_tree = {
 				}
 				add_resource = {
 					type = oil
-					amount = 6
+					amount = 3
 				}
 			}
 			degregulation_resource_expansion_effect = yes
-			subtract_from_variable = { treasury = 15.0 }
-			custom_effect_tooltip = 15_billion_expense_tt
+			subtract_from_variable = { treasury = 60.0 }
+			custom_effect_tooltip = 60_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3411,7 +3388,7 @@ focus_tree = {
 	
 	focus = {
 		id = USA_build_additional_steel_factories
-		icon = production
+		icon = steel_production2
 		
 		x = -3
 		y = 4
@@ -3495,7 +3472,9 @@ focus_tree = {
 		
 		mutually_exclusive = { }
 		
-		available = { }
+		available = { 
+			
+		}
 		
 		bypass = { }
 		
