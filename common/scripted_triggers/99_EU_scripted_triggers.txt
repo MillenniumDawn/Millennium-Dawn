@@ -8,7 +8,7 @@
 
 influence_on_all_other_EU_members_3_percent = {
 					custom_trigger_tooltip = {
-						tooltip = "[ROOT.GetNameWithFlag] must have > 3% influence on all member states"
+						tooltip = tooltip_influence_on_all_other_EU_members_3_percent
 						all_country = {
 							OR = {
 								AND = {
@@ -36,7 +36,7 @@ influence_on_all_other_EU_members_3_percent = {
 
 influence_on_all_other_EU_members_5_percent = {
 					custom_trigger_tooltip = {
-						tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states"
+						tooltip = tooltip_influence_on_all_other_EU_members_5_percent
 						all_country = {
 							OR = {
 								AND = {
@@ -64,7 +64,7 @@ influence_on_all_other_EU_members_5_percent = {
 
 influence_on_all_other_EU_members_10_percent = {
 					custom_trigger_tooltip = {
-						tooltip = "[ROOT.GetNameWithFlag] must have > 10% influence on all member states"
+						tooltip = tooltip_influence_on_all_other_EU_members_10_percent
 						all_country = {
 							OR = {
 								AND = {
@@ -92,7 +92,7 @@ influence_on_all_other_EU_members_10_percent = {
 
 influence_on_all_other_EU_members_25_percent = {
 					custom_trigger_tooltip = {
-						tooltip = "[ROOT.GetNameWithFlag] must have > 25% influence on all member states"
+						tooltip = tooltip_influence_on_all_other_EU_members_25_percent
 						all_country = {
 							OR = {
 								AND = {
@@ -147,22 +147,143 @@ is_leader_of_EU_foreign_policy = {
 				}
 			}
 			### EU country with the most population
-			custom_trigger_tooltip = {
-				tooltip = "[PREV.GetNameWithFlag] must be the most populous EU member states"
-				all_country = {
-					OR = { 
-						check_variable = {
-							var = THIS.var_EUpopRatio
-							value = PREV.var_EUpopRatio
-							compare = less_than
-						}				
-						tag = PREV
-						NOT = { has_idea = EU_member }
-					}
-				}
-			}	
+			most_populous_EU_member_state = yes	
 		}
 	}
 }
 
+is_leader_of_EU_trade_policy = {
+	has_idea = EU_member
+	OR = {
+		has_idea = EU_commission_president
+		AND = {
+			NOT = {
+				any_country = {
+					has_idea = EU_commission_president
+				}
+			}
+			has_idea = EU_council_president
+		}
+		AND = {
+			NOT = {
+				any_country = {
+					has_idea = EU_commission_president
+				}
+			}
+			NOT = {
+				any_country = {
+					has_idea = EU_council_president
+				}
+			}
+			### EU country with the most population
+			most_populous_EU_member_state = yes	
+		}
+	}
+}
 
+most_populous_EU_member_state = {
+			custom_trigger_tooltip = {
+				tooltip = tooltip_PREV_most_populous_EU_member_state
+				#all_country = {
+					AND = {
+						NOT = {
+							any_country = {
+								check_variable = {
+									var = ROOT.var_EUpopRatio
+									value = THIS.var_EUpopRatio
+									compare = greater_than
+								}
+							}
+						}
+						#tag = PREV.PREV
+						has_idea = EU_member
+					}
+				}
+	}
+}
+
+##############################################
+### ratification of international treaties ###
+##############################################
+
+EU_ratify_international_treaty = {
+	OR = {
+		ROOT = {
+			influence_on_all_other_EU_members_5_percent = yes
+		}
+		custom_trigger_tooltip = {
+			tooltip = tooltip_leader_of_EU_foreign_policy_influence_5_percent			
+			all_country = {
+				OR = {
+					AND = {
+						is_leader_of_EU_foreign_policy = yes
+						influence_on_all_other_EU_members_5_percent = yes
+					}
+					NOT = {
+						is_leader_of_EU_foreign_policy = yes
+					}
+				}
+			}
+		}	
+		AND = {
+			ROOT = {
+				influence_on_all_other_EU_members_3_percent = yes
+			}
+			custom_trigger_tooltip = {
+				tooltip = tooltip_leader_of_EU_foreign_policy_influence_3_percent
+				all_country = {
+					OR = {
+						AND = {
+							is_leader_of_EU_foreign_policy = yes
+							influence_on_all_other_EU_members_3_percent = yes
+						}
+						NOT = {
+							is_leader_of_EU_foreign_policy = yes
+						}
+					}
+				}
+			}		
+		}
+	}
+}
+
+EU_ratify_trade_agreement = {
+	OR = {
+		ROOT = {
+			influence_on_all_other_EU_members_5_percent = yes
+		}
+		custom_trigger_tooltip = {
+			tooltip = tooltip_leader_of_EU_trade_policy_influence_5_percent			
+			all_country = {
+				OR = {
+					AND = {
+						is_leader_of_EU_trade_policy = yes
+						influence_on_all_other_EU_members_5_percent = yes
+					}
+					NOT = {
+						is_leader_of_EU_trade_policy = yes
+					}
+				}
+			}
+		}	
+		AND = {
+			ROOT = {
+				influence_on_all_other_EU_members_3_percent = yes
+			}
+			custom_trigger_tooltip = {
+				tooltip = tooltip_leader_of_EU_trade_policy_influence_3_percent
+				all_country = {
+					OR = {
+						AND = {
+							is_leader_of_EU_trade_policy = yes
+							influence_on_all_other_EU_members_3_percent = yes
+						}
+						NOT = {
+							is_leader_of_EU_trade_policy = yes
+						}
+					}
+				}
+			}		
+		}
+	}
+}
