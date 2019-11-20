@@ -1387,23 +1387,21 @@ country_event = { ###Russia Returns the Crimea
 ##Dispatcher Event - triggers random events below 
 country_event = {
 	id = ukraine_revolution.100
-	immediate = { log = "[GetDateText]: [Root.GetName]: event 
+	immediate = { log = "[GetDateText]: [Root.GetName]: event  ukraine_revolution.100" }
 	hidden = yes 
 	is_triggered_only = yes 
 	
-	trigger = {
-		tag = UKR
-	}
+	trigger = { tag = UKR }
 	
 	immediate = {
 		random_list = {
-			20 = {
+			10 = {
 				modifier = {
 					check_variable = { UKR_chance_of_collapse_var > 5 }
-					factor = 2
+					factor = 1
 				}
 				modifier = {
-					check_variable = { UKR_chance_of_collapse_var > 10
+					check_variable = { UKR_chance_of_collapse_var > 10 }
 					factor = 2.50
 				}
 				modifier = {
@@ -1413,11 +1411,19 @@ country_event = {
 				country_event = { id = ukraine_revolution.12 days = 45 random = 10 }
 				#violent oppposition
 			}
-			40 = {
-				country_event = { id = ukraine_revolution.11 days = 45 random = 10 }
-			}
-			40 = {
+			30 = {
 				country_event = { id = ukraine_revolution.13 days = 45 random = 10 }
+			}
+			60 = {
+				modifier = {
+					check_variable { UKR_chance_of_collapse_var > 3 }
+					factor = 2 
+				}	
+				modifier = {
+					check_variable { UKR_stability_of_ukraine_var > 40 }
+					factor = 3 
+				}
+				country_event = { id = ukraine_revolution.11 days = 45 random = 10 } #Light Protests
 			}
 		}
 	}
@@ -1516,6 +1522,7 @@ country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian 
 	desc = ukraine_revolution.12.d
 	picture = GFX_broken_infrastructure
 	
+	is_triggered_only = yes
 	trigger = {
 		check_variable = { UKR_stability_of_ukraine_var < 80 }
 		check_variable = { UKR_chance_of_collapse_var > 3 }
@@ -1538,46 +1545,122 @@ country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian 
 		}
 	}
 	
-	mean_time_to_happen = {
-		days = 90
-		modifier = {
-			factor = 0.50
-			check_variable = { UKR_stability_of_ukraine_var < 60 }
-		}
-		modifier = {
-			factor = 0.25
-			check_variable = { UKR_stability_of_ukraine_var < 30 }
-		}
-		modifier = { 
-			factor = 0.10
-			check_variable = { UKR_stability_of_ukraine_var < 15 }
-		}
-	}
-	
 	option = { ##Sabtoage!
 		name = ukraine_revolution.12.a
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.12.a executed"
-		subtract_from_variable = { UKR_stability_of_ukraine_var = 3 }
-		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_3_TT
+		subtract_from_variable = { UKR_stability_of_ukraine_var = 5 }
+		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_5_TT
+		add_to_variable = { UKR_chance_of_collapse_var = 3 } 
+		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_3_TT
 		add_war_support = 0.01 
 		add_stability = -0.01
-		random_owned_state = {
-			limit = {
-				industrial_complex > 0
+		if = {
+			limit = { 
+				check_variable = { UKR_chance_of_collapse_var > 1 } 
+				check_variable = { UKR_chance_of_collapse_var < 6 }
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.50
+			random_owned_state = {
+				limit = {
+					industrial_complex > 0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 0.50
+				}
+			}
+			random_owned_state = {
+				limit = {
+					infrastructure > 0
+				}
+				damage_building = {
+					type = infrastructure
+					damage = 0.35
+				}
 			}
 		}
-		random_owned_state = {
-			limit = {
-				infrastructure > 0
+		if = {
+			limit = { 
+				check_variable = { UKR_chance_of_collapse_var > 6 } 
+				check_variable = { UKR_chance_of_collapse_var < 9 }
 			}
-			damage_building = {
-				type = infrastructure
-				damage = 0.35
+			random_owned_state = {
+				limit = {
+					industrial_complex > 0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 0.75
+				}
 			}
+			random_owned_state = {
+				limit = {
+					infrastructure > 0
+				}
+				damage_building = {
+					type = infrastructure
+					damage = 0.50
+				}
+			}
+			random_owned_state = {
+				limit = {
+					is_coastal = yes 
+					dockyard > 0 
+				}
+				damage_building = {
+					type = dockyard
+					damage = 0.35
+				}
+			}
+		}
+		if = {
+			limit = { 
+				check_variable = { UKR_chance_of_collapse_var > 9 }
+			}
+			random_owned_state = {
+				limit = {
+					industrial_complex > 0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 0.75
+				}
+			}
+			random_owned_state = {
+				limit = {
+					industrial_complex > 0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 0.25
+				}
+			}
+			random_owned_state = {
+				limit = {
+					infrastructure > 0
+				}
+				damage_building = {
+					type = infrastructure
+					damage = 0.50
+				}
+			}
+			random_owned_state = {
+				limit = {
+					is_coastal = yes 
+					dockyard > 0 
+				}
+				damage_building = {
+					type = dockyard
+					damage = 0.35
+				}
+			}
+		}
+		
+		hidden_effect = {
+			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
+		}
+		
+		ai_chance = {
+			factor = 1 
 		}
 	}
 }
@@ -1592,16 +1675,25 @@ country_event = {
 	immediate = { log = "[GetDateText]: [This.GetName]: ukraine_revolution.13" }
 	
 	is_triggered_only = yes
-	trigger = {
-		tag = UKR 
-	}
+	trigger = {	tag = UKR }
 	
+	#Harsh Treatment
 	option = {
 		name = ukraine_revolution.13.a
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.13.a"
+		
+		hidden_effect = {
+			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
+		}
 	}
+	
+	#Defuse the Rioters
 	option = {
 		name = ukraine_revolution.13.b
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.13.b"
+		
+		hidden_effect = {
+			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
+		}
 	}
 }
