@@ -44,13 +44,13 @@ add_tax_laws = {
 }
 
 initial_money_setup = {
-	log = "[GetDateText]: [Root.GetName]: Initial money setup"
 	calculate_interest_rate = yes
 	calculate_debt_rate = yes
 	calculate_int_investments_rate = yes
 	#calculate_resource_sale_rate = yes #no exports at start
 	calculate_tax_gain = yes
 	init_expenses = yes
+	
 	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
 	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
@@ -87,6 +87,22 @@ firsttime_calculate_size_modifier = {
 	set_variable = { size_modifier = num_of_civilian_factories }
 	#subtract_from_variable = { size_modifier = resource_exports }
 	
+	set_temp_variable = { temp_resource_import = resource_imported@oil }
+	divide_temp_variable = { var = temp_resource_import value = 6 }
+	add_to_variable = { size_modifier = temp_resource_import }
+	
+	set_temp_variable = { temp_resource_import = resource_imported@aluminium }
+	divide_temp_variable = { var = temp_resource_import value = 6 }
+	add_to_variable = { size_modifier = temp_resource_import }
+	
+	set_temp_variable = { temp_resource_import = resource_imported@tungsten }
+	divide_temp_variable = { var = temp_resource_import value = 6 }
+	add_to_variable = { size_modifier = temp_resource_import }
+	
+	set_temp_variable = { temp_resource_import = resource_imported@steel }
+	divide_temp_variable = { var = temp_resource_import value = 6 }
+	add_to_variable = { size_modifier = temp_resource_import }
+	
 	if = { limit = { check_variable = { size_modifier = 0 } }
 		add_to_variable = { var = size_modifier value = 0.03 }
 		else = { multiply_variable = { var = size_modifier value = 0.22 }
@@ -122,6 +138,22 @@ ingame_calculate_size_modifier = {
 	
 	set_temp_variable = { size_mod_check = num_of_civilian_factories }
 	
+	set_temp_variable = { temp_resource_import = resource_imported@oil }
+	divide_temp_variable = { var = temp_resource_import value = 6 }
+	add_to_variable = { size_mod_check = temp_resource_import }
+	
+	set_temp_variable = { temp_resource_import = resource_imported@aluminium }
+	divide_temp_variable = { var = temp_resource_import value = 6 }
+	add_to_variable = { size_mod_check = temp_resource_import }
+	
+	set_temp_variable = { temp_resource_import = resource_imported@tungsten }
+	divide_temp_variable = { var = temp_resource_import value = 6 }
+	add_to_variable = { size_mod_check = temp_resource_import }
+	
+	set_temp_variable = { temp_resource_import = resource_imported@steel }
+	divide_temp_variable = { var = temp_resource_import value = 6 }
+	add_to_variable = { size_mod_check = temp_resource_import }
+	
 	if = { limit = { check_variable = { size_mod_check = 0 } }
 		add_to_temp_variable = { size_mod_check = 0.03 }
 		else = { multiply_temp_variable = { size_mod_check = 0.22 } }
@@ -151,7 +183,8 @@ ingame_calculate_size_modifier = {
 	}
 	### Does it if new civilian factories has been added
 	if = { limit = { check_variable = { var = size_modifier value = size_mod_check compare = not_equals } }
-	
+		
+		
 		#Divides/removes previous to avoid distortion
 		add_to_variable = { var = treasury_rate value = expense_gain }
 		subtract_from_variable = { var = treasury_rate value = tax_gain }
@@ -183,6 +216,25 @@ ingame_calculate_size_modifier = {
 		round_variable = resource_exports
 
 		set_variable = { size_modifier = num_of_civilian_factories }
+		
+		#add back cic lost to trade
+		set_temp_variable = { temp_resource_import = resource_imported@oil }
+		divide_temp_variable = { var = temp_resource_import value = 6 }
+		add_to_variable = { size_modifier = temp_resource_import }
+		
+		set_temp_variable = { temp_resource_import = resource_imported@aluminium }
+		divide_temp_variable = { var = temp_resource_import value = 6 }
+		add_to_variable = { size_modifier = temp_resource_import }
+		
+		set_temp_variable = { temp_resource_import = resource_imported@tungsten }
+		divide_temp_variable = { var = temp_resource_import value = 6 }
+		add_to_variable = { size_modifier = temp_resource_import }
+		
+		set_temp_variable = { temp_resource_import = resource_imported@steel }
+		divide_temp_variable = { var = temp_resource_import value = 6 }
+		add_to_variable = { size_modifier = temp_resource_import }
+		
+		
 		#subtract_from_variable = { size_modifier = resource_exports }
 		
 		if = { limit = { check_variable = { size_modifier = 0 } }
@@ -245,10 +297,9 @@ ingame_calculate_size_modifier = {
 		
 		subtract_from_variable = { var = treasury_rate value = expense_gain }
 		add_to_variable = { var = treasury_rate value = tax_gain }
-		update_display_income = yes
 	}
 	
-		update_display_expense = yes #will do this always for consistency
+	update_display_expense = yes #will do this always for consistency
 }
 
 calculate_tax_gain = {
@@ -581,7 +632,7 @@ calculate_debt_rate = {
 	divide_variable = { var = debt_rate value = 36500 }
 	subtract_from_variable = { var = treasury_rate value = debt_rate }
 	update_display_expense = yes
-		
+	
 	if = {
 		limit = { 
 			NOT = { has_country_flag = bailout_happened }
@@ -595,8 +646,10 @@ calculate_debt_rate = {
 				NOT = { has_country_flag = bailout_happened }
 			}
 			country_event = { id = bankrupcy.0 }
+			
 		}
 	}
+	
 	if = {
 		limit = {
 			NOT = { has_idea = bankrupcy }
@@ -609,6 +662,7 @@ calculate_debt_rate = {
 				check_variable = { bankrupcy_check < debt_rate }
 			}
 			ROOT = { news_event = { id = News_bankrupcy.6 } } #actually bankrupt
+			
 		}
 	}
 }
@@ -888,7 +942,6 @@ update_military_rate_ai = {
 }
 update_military_rate_player = {	
 	
-	log = "[GetDateText]: [Root.GetName]: update_military_rate_player"
 	#clear the array that stores the law cost
 	clear_array = array_defence_spend
 	
@@ -1302,7 +1355,7 @@ update_bureaucracy_rate_ai = {
 	
 }
 update_bureaucracy_rate_player = {
-	log = "[GetDateText]: [This.GetName]: update_bureaucracy_rate_player"
+	
 	subtract_from_variable = { var = expense_gain value = bureaucracy_gain }
 	add_to_variable = { var = treasury_rate value = bureaucracy_gain }
 	
@@ -1451,7 +1504,7 @@ update_police_rate_ai = {
 	}	
 }
 update_police_rate_player = {
-	log = "[GetDateText]: [This.GetName]: update_police_rate_player"
+	
 	subtract_from_variable = { var = expense_gain value = security_gain }
 	add_to_variable = { var = treasury_rate value = security_gain }
 	
@@ -1570,8 +1623,8 @@ update_education_rate_ai = {
 		limit = { has_idea = edu_02 }
 		subtract_from_variable = { var = expense_gain value = education_gain }
 		add_to_variable = { var = treasury_rate value = education_gain }
-		multiply_variable = { education_gain = 100 }
 		set_variable = { var = education_gain value = size_modifier }
+		multiply_variable = { education_gain = 100 }
 		multiply_variable = { var = education_gain value = 0.04 }
 		if = { limit = { has_idea = gdp_1 }
 			multiply_variable = { var = education_gain value = 2.25 }
@@ -1695,7 +1748,7 @@ update_education_rate_ai = {
 	}
 }
 update_education_rate_player = {
-	log = "[GetDateText]: [This.GetName]: update_education_rate_player"
+	
 	subtract_from_variable = { var = expense_gain value = education_gain }
 	add_to_variable = { var = treasury_rate value = education_gain }
 	
@@ -1876,7 +1929,7 @@ update_health_rate_ai = {
 	
 }
 update_health_rate_player = {
-	log = "[GetDateText]: [This.GetName]: update_health_rate_player"
+	
 	subtract_from_variable = { var = expense_gain value = health_gain }
 	add_to_variable = { var = treasury_rate value = health_gain }
 	
