@@ -13,7 +13,7 @@ focus_tree = {
 		}
 	}
 	default = yes
-	shared_focus = USA_donald_trump_make_america_great_again
+	#shared_focus = USA_donald_trump_make_america_great_again
 
 
 	continuous_focus_position = { x = 50 y = 1100 }
@@ -30,13 +30,8 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { }
-		
 		mutually_exclusive = { }
-		
-		available = {
-			#NOT = { has_country_leader = { name = "Donald Trump" } }
-		}
-		
+		available = { }
 		bypass = { }
 		
 		completion_reward = {
@@ -45,10 +40,14 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			factor = 10
+			factor = 3
 			modifier = {
 				has_war = no 
-				factor = 5 
+				factor = 6
+			}
+			modifier = {
+				date > 2001.1.1 
+				add = 2 
 			}
 		}
 	}
@@ -70,22 +69,11 @@ focus_tree = {
 		mutually_exclusive = { }
 		
 		available = {
-			OR = {
-				AND = {
-					custom_trigger_tooltip = { 
-						NOT = { is_in_array = { ruling_party = 4 } }
-						tooltip = USA_communist_is_not_in_power_TT
-					}
-					custom_trigger_tooltip = {
-						check_variable = { treasury > 49.99 }
-						tooltip = 50_billion_currently_in_treasury_tt
-					}
-					#NOT = { has_country_leader { name = "Donald Trump" } }
-				}
-				hidden_trigger = {
-					is_ai = yes
-				}
+			custom_trigger_tooltip = { 
+				NOT = { is_in_array = { ruling_party = 4 } }
+				tooltip = USA_communist_is_not_in_power_TT
 			}
+			has_idea = usa_bad_procurment 
 		}
 		
 		bypass = {
@@ -110,15 +98,16 @@ focus_tree = {
 					increase_internal_faction_opinion = yes
 				}
 			}
-			subtract_from_variable = { treasury = 50.0 }
-			custom_effect_tooltip = 50_billion_expense_tt
+			subtract_from_variable = { treasury = 70.0 }
+			custom_effect_tooltip = 70_billion_expense_tt
 		}
 		
 		ai_will_do = {
-			factor = 10
+			factor = 5
+			
 			modifier = {
 				check_variable = { treasury > 9.99 }
-				factor = 30 
+				factor = 10
 			}
 		}
 	}
@@ -138,7 +127,6 @@ focus_tree = {
 		}
 		
 		mutually_exclusive = { }
-		
 		available = { }
 		
 		bypass = {
@@ -151,16 +139,8 @@ focus_tree = {
 			add_tech_bonus = {
 				name = artillery_bonus
 				bonus = 0.20
-				technology = artillery_1
-				technology = artillery_2
-				technology = artillery_3 
-			}
-			add_tech_bonus = {
-				name = artillery_upgrade
-				bonus = 0.20
-				technology = Arty_upgrade_1 
-				technology = Arty_upgrade_2
-				technology = Arty_upgrade_3 
+				uses = 2 
+				category = Cat_ARTY 
 			}
 		}
 		
@@ -247,7 +227,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_strengthen_national_morale"
 			army_experience = 15
-			add_stability = 0.03
+			add_stability = 0.015
+			hidden_effect = {
+				add_to_variable = { party_pop_array^20 = 0.02 }
+				add_popularity = { ideology = nationalist popularity = 0.01 }
+				recalculate_party = yes 
+			}
+			custom_effect_tooltip = USA_gain_right_wing_populist_2_TT
 		}
 		
 		ai_will_do = {
@@ -571,7 +557,7 @@ focus_tree = {
 		
 		available = {
 			OR = {
-				has_defensive_war = yes
+				has_war = yes
 				custom_trigger_tooltip = { 
 					is_in_array = { ruling_party = 20 }
 					tooltip = USA_right_wing_populist_is_in_power_TT
@@ -707,7 +693,7 @@ focus_tree = {
 		mutually_exclusive = { }
 		
 		available = { 
-			#NOT = { has_country_leader = { name = "Donald Trump" } }
+			 
 		}
 		
 		bypass = { }
@@ -1411,7 +1397,7 @@ focus_tree = {
 		mutually_exclusive = { }
 		
 		available = {
-			#NOT = { has_country_leader = { name = "Donald Trump" } }
+			 
 		}
 		
 		bypass = { }
@@ -2429,10 +2415,6 @@ focus_tree = {
 		
 		cost = 5.0 
 		
-		available = { 
-			#NOT = { has_country_leader = { name = "Donald Trump" } }
-		}
-		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_the_american_economy"
 			unlock_decision_category_tooltip = USA_american_economic_decisions_category
@@ -2440,7 +2422,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			factor = 15
+			factor = 5
 			modifier = {
 				has_war = no 
 				add = 10 
@@ -2475,13 +2457,24 @@ focus_tree = {
 				NOT = { is_in_array = { ruling_party = 4 } } 
 				tooltip = USA_communist_is_not_in_power_TT
 			}
+			if = {
+				limit = {
+					has_elections = no 
+				}
+				congress_low_support_trigger = yes
+			}
+			else_if = {
+				limit = {
+					has_elections = yes 
+				}
+				congress_medium_support_trigger = yes
+			}
 		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_deregulation"
-			add_ideas = USA_economic_deregulation
 			add_political_power = 75
 			add_stability = -0.01
 		}
@@ -2505,13 +2498,25 @@ focus_tree = {
 			focus = USA_the_american_economy
 		}
 
-		available = { }
+		available = {
+			if = {
+				limit = {
+					has_elections = no 
+				}
+				congress_medium_support_trigger = yes
+			}
+			else_if = {
+				limit = {
+					has_elections = yes 
+				}
+				congress_high_support_trigger = yes
+			}
+		}
 		
 		bypass = { }
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_regulation"
-			add_ideas = USA_economic_regulation
 			if = {
 				limit = { NOT = { has_country_flag = hostile_wall_street } } 
 				if = {
@@ -2530,6 +2535,7 @@ focus_tree = {
 					decrease_internal_faction_opinion = yes
 				}
 			}
+			
 		}
 		
 		ai_will_do = {
@@ -4418,7 +4424,7 @@ focus_tree = {
 		}
 		
 		available = {
-			#NOT = { has_country_leader = { name = "Donald Trump" } }
+			 
 		}
 		
 		bypass = { }
@@ -5182,7 +5188,7 @@ focus_tree = {
 		}
 		
 		available = { 
-			#NOT = { has_country_leader = { name = "Donald Trump" } }
+			 
 		}
 		
 		bypass = { }
@@ -5801,7 +5807,7 @@ focus_tree = {
 		}
 		
 		available = {
-			#NOT = { has_country_leader = { name = "Donald Trump" } }
+			 
 		}
 		
 		bypass = { }
@@ -6954,7 +6960,7 @@ focus_tree = {
 		mutually_exclusive = { }
 		
 		available = { 
-			#NOT = { has_country_leader = { name = "Donald Trump" } }
+			 
 		}
 		
 		bypass = { }
