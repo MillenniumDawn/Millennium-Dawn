@@ -53,6 +53,145 @@ AC_update_build_time = {
 	}
 }
 
+#Sets the investment/build cost, called only in the scripted gui before starting the project
+AC_update_build_cost = {
+	if = { limit = { check_variable = { AC_building_type_selected = 1 } }
+		set_variable = { AC_build_cost = @BUILD_COST_INFRASTRUCTURE }
+	}
+	else_if = { limit = { check_variable = { AC_building_type_selected = 2 } }
+		set_variable = { AC_build_cost = @BUILD_COST_AIRBASE }
+	}
+	else_if = { limit = { check_variable = { AC_building_type_selected = 3 } }
+		set_variable = { AC_build_cost = @BUILD_COST_ANTIAIR }
+	}
+	else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
+		set_variable = { AC_build_cost = @BUILD_COST_RADAR }
+	}
+	else_if = { limit = { check_variable = { AC_building_type_selected = 5 } }
+		set_variable = { AC_build_cost = @BUILD_COST_MILITARY_FACTORY }
+	}
+	else_if = { limit = { check_variable = { AC_building_type_selected = 6 } }
+		set_variable = { AC_build_cost = @BUILD_COST_CIVILIAN_FACTORY }
+	}
+	else_if = { limit = { check_variable = { AC_building_type_selected = 7 } }
+		set_variable = { AC_build_cost = @BUILD_COST_DOCKYARD }
+	}
+	else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
+		set_variable = { AC_build_cost = @BUILD_COST_REFINERY }
+	}
+	multiply_variable = { AC_build_cost = AC_build_amount }
+	
+	PREV = {
+		### get infrastructure level from target country
+		set_variable = { ROOT.AC_target_state_infra_speed = infrastructure_level }
+	}
+	#if = { limit = { check_variable = { AC_building_type_selected > 4 } }
+
+		multiply_variable = { AC_target_state_infra_speed = 0.05 }
+		multiply_variable = { AC_target_state_infra_speed = -1 }
+		
+		add_to_variable = { AC_target_state_infra_speed = 1.5 }
+
+		
+	# }
+	multiply_variable = { AC_build_cost = AC_target_state_infra_speed } #Infrastructure changes cost
+		
+	if = {
+		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
+		multiply_variable = { AC_build_cost = 1.45 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
+		multiply_variable = { AC_build_cost = 1.40 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
+		multiply_variable = { AC_build_cost = 1.35 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
+		multiply_variable = { AC_build_cost = 1.30 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
+		multiply_variable = { AC_build_cost = 1.25 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
+		multiply_variable = { AC_build_cost = 1.20 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
+		multiply_variable = { AC_build_cost = 1.15 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
+		multiply_variable = { AC_build_cost = 1.10 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
+		multiply_variable = { AC_build_cost = 1.05 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = negligible_corruption } } }
+		multiply_variable = { AC_build_cost = 1 }
+	}
+	
+	
+	if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_12 } } }
+		multiply_variable = { AC_build_cost = 3.7 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_11 } } }
+		multiply_variable = { AC_build_cost = 3.25 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_10 } } }
+		multiply_variable = { AC_build_cost = 2.85 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_9 } } }
+		multiply_variable = { AC_build_cost = 2.5 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_8 } } }
+		multiply_variable = { AC_build_cost = 2.22 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_7 } } }
+		multiply_variable = { AC_build_cost = 2.0 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_6 } } }
+		multiply_variable = { AC_build_cost = 1.8 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_5 } } }
+		multiply_variable = { AC_build_cost = 1.63 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_4 } } }
+		multiply_variable = { AC_build_cost = 1.46 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_3 } } }
+		multiply_variable = { AC_build_cost = 1.30 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_2 } } }
+		multiply_variable = { AC_build_cost = 1.15 }
+	}
+	else_if = {
+		limit = { PREV = { CONTROLLER = { has_idea = gdp_1 } } }
+		multiply_variable = { AC_build_cost = 1 }
+	}
+	
+	round_variable = AC_build_cost
+	
+	
+}
+
 #starts the project, called in scripted gui
 #This effect is triggered when a country invests in another country.
 #The default scope is state you're making your investment in, Root is the country initiating the investment (the investor),
@@ -1591,6 +1730,389 @@ AC_get_building_values_for_gui = {
 		add_to_variable = { AC_construction_speed = modifier@production_speed_synthetic_refinery_factor }
 	}
 }
+
+###Only used in the scripted gui when the investor decides to cancel the project via the scripted gui.
+#Projects can also be canceled via decissions but uses slightly different code
+AC_end_project = {
+	#Depending on the building selected in the gui will begin the cancelation process
+	if = {
+		limit = {
+			check_variable = { AC_building_type_selected = 1 } #Infastructure value
+		}
+		AC_Return_money_INF = yes #Return effect
+		if = { #Removes the state flag so it can be reused & removes the decission
+			limit = {
+				PREV = { has_state_flag = AC_construction_INF_target_state1_@ROOT }
+			}			
+			PREV = { clr_state_flag = AC_construction_INF_target_state1_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_INF_decision1 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_INF_target_state2_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_INF_target_state2_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_INF_decision2 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_INF_target_state3_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_INF_target_state3_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_INF_decision3 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_INF_target_state4_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_INF_target_state4_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_INF_decision4 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_INF_target_state5_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_INF_target_state5_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_INF_decision5 }
+		}
+	}
+	else_if = {
+		limit = { 
+			check_variable = { AC_building_type_selected = 2 } 
+		}
+		AC_Return_money_AB = yes
+		if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_AB_target_state1_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_AB_target_state1_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_AB_decision1 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_AB_target_state2_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_AB_target_state2_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_AB_decision2 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_AB_target_state3_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_AB_target_state3_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_AB_decision3 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_AB_target_state4_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_AB_target_state4_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_AB_decision4 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_AB_target_state5_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_AB_target_state5_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_AB_decision5 }
+		}
+
+	}
+	else_if = {
+		limit = { 
+			check_variable = { AC_building_type_selected = 3 } 
+		}
+		AC_Return_money_AA = yes
+		if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_AA_target_state1_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_AA_target_state1_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_AA_decision1 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_AA_target_state2_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_AA_target_state2_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_AA_decision2 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_AA_target_state3_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_AA_target_state3_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_AA_decision3 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_AA_target_state4_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_AA_target_state4_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_AA_decision4 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_AA_target_state5_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_AA_target_state5_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_AA_decision5 }
+		}
+
+	}
+	else_if = {
+		limit = { 
+			check_variable = { AC_building_type_selected = 4 } 
+		}
+		AC_Return_money_RAD = yes
+		if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_RAD_target_state1_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_RAD_target_state1_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_RAD_decision1 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_RAD_target_state2_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_RAD_target_state2_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_RAD_decision2 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_RAD_target_state3_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_RAD_target_state3_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_RAD_decision3 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_RAD_target_state4_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_RAD_target_state4_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_RAD_decision4 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_RAD_target_state5_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_RAD_target_state5_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_RAD_decision5 }
+		}
+
+	}
+	else_if = {
+		limit = { 
+			check_variable = { AC_building_type_selected = 5 } 
+		}
+		AC_Return_money_MIC = yes
+		if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_MIC_target_state1_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_MIC_target_state1_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_MIC_decision1 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_MIC_target_state2_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_MIC_target_state2_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_MIC_decision2 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_MIC_target_state3_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_MIC_target_state3_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_MIC_decision3 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_MIC_target_state4_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_MIC_target_state4_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_MIC_decision4 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_MIC_target_state5_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_MIC_target_state5_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_MIC_decision5 }
+		}
+
+	}
+	else_if = {
+		limit = { 
+			check_variable = { AC_building_type_selected = 6 } 
+		}
+		AC_Return_money_CIC = yes
+		if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_CIC_target_state1_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_CIC_target_state1_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_CIC_decision1 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_CIC_target_state2_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_CIC_target_state2_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_CIC_decision2 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_CIC_target_state3_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_CIC_target_state3_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_CIC_decision3 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_CIC_target_state4_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_CIC_target_state4_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_CIC_decision4 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_CIC_target_state5_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_CIC_target_state5_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_CIC_decision5 }
+		}
+
+	}
+	else_if = {
+		limit = { 
+			check_variable = { AC_building_type_selected = 7 } 
+		}
+		AC_Return_money_NIC = yes
+		if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_NIC_target_state1_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_NIC_target_state1_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_NIC_decision1 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_NIC_target_state2_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_NIC_target_state2_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_NIC_decision2 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_NIC_target_state3_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_NIC_target_state3_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_NIC_decision3 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_NIC_target_state4_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_NIC_target_state4_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_NIC_decision4 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_NIC_target_state5_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_NIC_target_state5_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_NIC_decision5 }
+		}
+
+	}
+	else_if = {
+		limit = { 
+			check_variable = { AC_building_type_selected = 8 } 
+		}
+		AC_Return_money_REF = yes
+		if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_REF_target_state1_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_REF_target_state1_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_REF_decision1 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_REF_target_state2_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_REF_target_state2_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_REF_decision2 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_REF_target_state3_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_REF_target_state3_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_REF_decision3 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_REF_target_state4_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_REF_target_state4_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_REF_decision4 }
+		}
+		else_if = {
+			limit = {
+				PREV = { has_state_flag = AC_construction_REF_target_state5_@ROOT }
+			}
+			
+			PREV = { clr_state_flag = AC_construction_REF_target_state5_@ROOT }
+			remove_targeted_decision = { target = THIS decision = AC_construction_REF_decision5 }
+		}
+
+	}
+	
+		
+}
+
 
 #######################################################################################################################
 ###All of the AC_add_XXX_building effects are used in decissions to add the building to the correct lcoation and etc
@@ -7493,386 +8015,6 @@ AC_add_REF_building2 = {
 	}
 }
 
-###Only used in the scripted gui when the investor decides to cancel the project via the scripted gui.
-#Projects can also be canceled via decissions but uses slightly different code
-AC_end_project = {
-	#Depending on the building selected in the gui will begin the cancelation process
-	if = {
-		limit = {
-			check_variable = { AC_building_type_selected = 1 } #Infastructure value
-		}
-		AC_Return_money_INF = yes #Return effect
-		if = { #Removes the state flag so it can be reused & removes the decission
-			limit = {
-				PREV = { has_state_flag = AC_construction_INF_target_state1_@ROOT }
-			}			
-			PREV = { clr_state_flag = AC_construction_INF_target_state1_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_INF_decision1 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_INF_target_state2_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_INF_target_state2_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_INF_decision2 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_INF_target_state3_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_INF_target_state3_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_INF_decision3 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_INF_target_state4_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_INF_target_state4_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_INF_decision4 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_INF_target_state5_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_INF_target_state5_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_INF_decision5 }
-		}
-	}
-	else_if = {
-		limit = { 
-			check_variable = { AC_building_type_selected = 2 } 
-		}
-		AC_Return_money_AB = yes
-		if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_AB_target_state1_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_AB_target_state1_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_AB_decision1 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_AB_target_state2_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_AB_target_state2_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_AB_decision2 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_AB_target_state3_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_AB_target_state3_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_AB_decision3 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_AB_target_state4_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_AB_target_state4_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_AB_decision4 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_AB_target_state5_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_AB_target_state5_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_AB_decision5 }
-		}
-
-	}
-	else_if = {
-		limit = { 
-			check_variable = { AC_building_type_selected = 3 } 
-		}
-		AC_Return_money_AA = yes
-		if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_AA_target_state1_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_AA_target_state1_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_AA_decision1 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_AA_target_state2_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_AA_target_state2_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_AA_decision2 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_AA_target_state3_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_AA_target_state3_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_AA_decision3 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_AA_target_state4_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_AA_target_state4_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_AA_decision4 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_AA_target_state5_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_AA_target_state5_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_AA_decision5 }
-		}
-
-	}
-	else_if = {
-		limit = { 
-			check_variable = { AC_building_type_selected = 4 } 
-		}
-		AC_Return_money_RAD = yes
-		if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_RAD_target_state1_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_RAD_target_state1_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_RAD_decision1 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_RAD_target_state2_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_RAD_target_state2_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_RAD_decision2 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_RAD_target_state3_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_RAD_target_state3_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_RAD_decision3 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_RAD_target_state4_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_RAD_target_state4_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_RAD_decision4 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_RAD_target_state5_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_RAD_target_state5_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_RAD_decision5 }
-		}
-
-	}
-	else_if = {
-		limit = { 
-			check_variable = { AC_building_type_selected = 5 } 
-		}
-		AC_Return_money_MIC = yes
-		if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_MIC_target_state1_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_MIC_target_state1_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_MIC_decision1 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_MIC_target_state2_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_MIC_target_state2_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_MIC_decision2 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_MIC_target_state3_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_MIC_target_state3_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_MIC_decision3 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_MIC_target_state4_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_MIC_target_state4_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_MIC_decision4 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_MIC_target_state5_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_MIC_target_state5_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_MIC_decision5 }
-		}
-
-	}
-	else_if = {
-		limit = { 
-			check_variable = { AC_building_type_selected = 6 } 
-		}
-		AC_Return_money_CIC = yes
-		if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_CIC_target_state1_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_CIC_target_state1_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_CIC_decision1 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_CIC_target_state2_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_CIC_target_state2_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_CIC_decision2 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_CIC_target_state3_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_CIC_target_state3_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_CIC_decision3 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_CIC_target_state4_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_CIC_target_state4_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_CIC_decision4 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_CIC_target_state5_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_CIC_target_state5_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_CIC_decision5 }
-		}
-
-	}
-	else_if = {
-		limit = { 
-			check_variable = { AC_building_type_selected = 7 } 
-		}
-		AC_Return_money_NIC = yes
-		if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_NIC_target_state1_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_NIC_target_state1_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_NIC_decision1 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_NIC_target_state2_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_NIC_target_state2_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_NIC_decision2 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_NIC_target_state3_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_NIC_target_state3_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_NIC_decision3 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_NIC_target_state4_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_NIC_target_state4_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_NIC_decision4 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_NIC_target_state5_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_NIC_target_state5_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_NIC_decision5 }
-		}
-
-	}
-	else_if = {
-		limit = { 
-			check_variable = { AC_building_type_selected = 8 } 
-		}
-		AC_Return_money_REF = yes
-		if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_REF_target_state1_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_REF_target_state1_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_REF_decision1 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_REF_target_state2_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_REF_target_state2_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_REF_decision2 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_REF_target_state3_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_REF_target_state3_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_REF_decision3 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_REF_target_state4_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_REF_target_state4_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_REF_decision4 }
-		}
-		else_if = {
-			limit = {
-				PREV = { has_state_flag = AC_construction_REF_target_state5_@ROOT }
-			}
-			
-			PREV = { clr_state_flag = AC_construction_REF_target_state5_@ROOT }
-			remove_targeted_decision = { target = THIS decision = AC_construction_REF_decision5 }
-		}
-
-	}
-			
-}
 
 #Should be identical to AC_update_build_cost (except for scopes) as that sets the original cost, this is a copy but with changed scopes
 #and returns money instead of removing it
@@ -7880,7 +8022,9 @@ AC_end_project = {
 #this is used when the investor cancels the investment. Default scope is the investor, PREV is the state they invested in,
 #if you use CONTROLLER within the PREV scope that would be the country that he invested in.
 AC_Calculate_money_to_return = {
-	multiply_variable = { Temp_AC_build_cost = Temp_AC_build_amount }
+	log = "GEARZZZ [Root.GetName]: cost: [?Temp_AC_build_cost] ammount: [?Temp_AC_build_amount] "
+	multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_build_amount }
+	log = "GEARZZZ [Root.GetName]: cost: [?Temp_AC_build_cost]"
 	PREV = {
 		### get infrastructure level from target country
 		set_temp_variable = { ROOT.Temp_AC_target_state_infra_speed = infrastructure_level }
@@ -7894,100 +8038,124 @@ AC_Calculate_money_to_return = {
 		
 	# }
 	multiply_temp_variable = { Temp_AC_build_cost = Temp_AC_target_state_infra_speed } #Infrastructure changes cost
+	log = "GEARZZZ [Root.GetName]: cost: [?Temp_AC_build_cost]"
 	
 	if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_12 } } }
-		multiply_variable = { AC_build_cost = 3.7 }
+		multiply_temp_variable = { Temp_AC_build_cost = 3.7 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_11 } } }
-		multiply_variable = { AC_build_cost = 3.25 }
+		multiply_temp_variable = { Temp_AC_build_cost = 3.25 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_10 } } }
-		multiply_variable = { AC_build_cost = 2.85 }
+		multiply_temp_variable = { Temp_AC_build_cost = 2.85 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_9 } } }
-		multiply_variable = { AC_build_cost = 2.5 }
+		multiply_temp_variable = { Temp_AC_build_cost = 2.5 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_8 } } }
-		multiply_variable = { AC_build_cost = 2.22 }
+		multiply_temp_variable = { Temp_AC_build_cost = 2.22 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_7 } } }
-		multiply_variable = { AC_build_cost = 2.0 }
+		multiply_temp_variable = { Temp_AC_build_cost = 2.0 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_6 } } }
-		multiply_variable = { AC_build_cost = 1.8 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.8 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_5 } } }
-		multiply_variable = { AC_build_cost = 1.63 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.63 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_4 } } }
-		multiply_variable = { AC_build_cost = 1.46 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.46 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_3 } } }
-		multiply_variable = { AC_build_cost = 1.30 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.30 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_2 } } }
-		multiply_variable = { AC_build_cost = 1.15 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.15 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = gdp_1 } } }
-		multiply_variable = { AC_build_cost = 1 }
+		multiply_temp_variable = { AC_build_cost = 1 }
 	}
+	log = "GEARZZZ [Root.GetName]: cost: [?Temp_AC_build_cost]"
 	
 	if = {
 		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.45 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.40 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.35 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.30 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.25 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.20 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.15 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.10 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1.05 }
 	}
 	else_if = {
 		limit = { PREV = { CONTROLLER = { has_idea = negligible_corruption } } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
+		multiply_temp_variable = { Temp_AC_build_cost = 1 }
 	}
+	log = "GEARZZZ [Root.GetName]: cost: [?Temp_AC_build_cost]"
 	round_variable = Temp_AC_build_cost
 	add_to_variable = { treasury = Temp_AC_build_cost }
 	subtract_from_variable = { int_investments = Temp_AC_build_cost }
 	calculate_int_investments_rate = yes
+	
+	set_variable = { Temp_AC_influence_cost = Temp_AC_build_cost }
+	PREV = { 
+		CONTROLLER = {
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = ROOT }
+					}
+					
+					log = "GEARZZZ [Root.GetName]: IA: [?influence_array^v] IAV: [?influence_array_val^v] TCost: [?ROOT.Temp_AC_influence_cost] "
+					subtract_from_variable = { influence_array_val^v = ROOT.Temp_AC_influence_cost }
+					log = "GEARZZZ [Root.GetName]: IA: [?influence_array^v] IAV: [?influence_array_val^v] TCost: [?ROOT.Temp_AC_influence_cost] "
+				}
+			}
+			recalculate_influence = yes
+		}
+	}
+	clear_variable  = Temp_AC_influence_cost
 }
 
 #Should be identical to AC_update_build_cost (except for scopes) as that sets the original cost, this is a copy but with changed scopes
@@ -8012,94 +8180,120 @@ AC_Calculate_money_to_return2 = {
 	
 	if = {
 		limit = { CONTROLLER = { has_idea = gdp_12 } }
-		multiply_variable = { AC_build_cost = 3.7 }
+		multiply_temp_variable = { FROM.AC_build_cost = 3.7 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = gdp_11 } }
-		multiply_variable = { AC_build_cost = 3.25 }
+		multiply_temp_variable = { FROM.AC_build_cost = 3.25 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = gdp_10 } }
-		multiply_variable = { AC_build_cost = 2.85 }
+		multiply_temp_variable = { FROM.AC_build_cost = 2.85 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = gdp_9 } }
-		multiply_variable = { AC_build_cost = 2.5 }
+		multiply_temp_variable = { FROM.AC_build_cost = 2.5 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = gdp_8 } }
-		multiply_variable = { AC_build_cost = 2.22 }
+		multiply_temp_variable = { FROM.AC_build_cost = 2.22 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = gdp_7 } }
-		multiply_variable = { AC_build_cost = 2.0 }
+		multiply_temp_variable = { FROM.AC_build_cost = 2.0 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = gdp_6 } }
-		multiply_variable = { AC_build_cost = 1.8 }
+		multiply_temp_variable = { FROM.AC_build_cost = 1.8 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = gdp_5 } }
-		multiply_variable = { AC_build_cost = 1.63 }
+		multiply_temp_variable = { FROM.AC_build_cost = 1.63 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = gdp_4 } }
-		multiply_variable = { AC_build_cost = 1.46 }
+		multiply_temp_variable = { FROM.AC_build_cost = 1.46 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = gdp_3 } }
-		multiply_variable = { AC_build_cost = 1.30 }
+		multiply_temp_variable = { FROM.AC_build_cost = 1.30 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = gdp_2 } }
-		multiply_variable = { AC_build_cost = 1.15 }
+		multiply_temp_variable = { FROM.AC_build_cost = 1.15 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = gdp_1 } }
-		multiply_variable = { AC_build_cost = 1 }
+		multiply_temp_variable = { FROM.AC_build_cost = 1 }
 	}
 	
 	if = {
 		limit = { CONTROLLER = { has_idea = paralyzing_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.45 }
+		multiply_temp_variable = { FROM.Temp_AC_build_cost = 1.45 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = crippling_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.40 }
+		multiply_temp_variable = { FROM.Temp_AC_build_cost = 1.40 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = rampant_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.35 }
+		multiply_temp_variable = { FROM.Temp_AC_build_cost = 1.35 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = unrestrained_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.30 }
+		multiply_temp_variable = { FROM.Temp_AC_build_cost = 1.30 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = systematic_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.25 }
+		multiply_temp_variable = { FROM.Temp_AC_build_cost = 1.25 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = widespread_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.20 }
+		multiply_temp_variable = { FROM.Temp_AC_build_cost = 1.20 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = medium_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.15 }
+		multiply_temp_variable = { FROM.Temp_AC_build_cost = 1.15 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = modest_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.10 }
+		multiply_temp_variable = { FROM.Temp_AC_build_cost = 1.10 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = slight_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1.05 }
+		multiply_temp_variable = { FROM.Temp_AC_build_cost = 1.05 }
 	}
 	else_if = {
 		limit = { CONTROLLER = { has_idea = negligible_corruption } }
-		multiply_variable = { Temp_AC_build_cost = 1 }
+		multiply_temp_variable = { FROM.Temp_AC_build_cost = 1 }
 	}
-	round_variable = Temp_AC_build_cost
+	FROM = {
+		round_temp_variable = Temp_AC_build_cost
+		add_to_variable = { treasury = Temp_AC_build_cost }
+		subtract_from_variable = { int_investments = Temp_AC_build_cost }
+		calculate_int_investments_rate = yes
+	}
+	
+	set_variable = { Temp_AC_influence_cost = FROM.Temp_AC_build_cost }
+	CONTROLLER = {
+		for_loop_effect = {
+			end = influence_array^num
+			value = v
+			if = {
+				limit = {
+					check_variable = { influence_array^v = FROM }
+				}
+				
+				log = "GEARZZZ [FROM.GetName]: IA: [?influence_array^v] IAV: [?influence_array_val^v] TCost: [?FROM.Temp_AC_influence_cost] "
+				subtract_from_variable = { influence_array_val^v = FROM.Temp_AC_influence_cost }
+				log = "GEARZZZ [FROM.GetName]: IA: [?influence_array^v] IAV: [?influence_array_val^v] TCost: [?FROM.Temp_AC_influence_cost] "
+			}
+		}
+		recalculate_influence = yes
+	}
+	
+	clear_variable  = FROM.Temp_AC_influence_cost
+	
 }
 
 #AC_Return_money_XXX checks for what flag is in state and how many buildings were invested, then calls
