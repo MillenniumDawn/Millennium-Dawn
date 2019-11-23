@@ -10,8 +10,9 @@
 #tax_gain - money your gaining from taxes
 #int_investments_rate - money your gaining from international investments
 #resource_sale_rate - money your gaining from exports
+#size_modifier - total size of economy 
 
-#####expense_gain - total ammount of money your spending#####
+#####expense_gain - total amount of money your spending#####
 #debt_rate - How much money your country owes in debt
 #interest_rate - the interest  rate you pay DAILY on debt.
 #econ_cycle_upg_cost - cost to upgrade economic cycle
@@ -20,14 +21,14 @@
 #health_gain cost of health care law
 #welfare_gain cost of welfare law
 #military_rate cost of military law
-#personnel_cost - how much you pay soldiers and maintainance on equipment
+#personnel_cost - how much you pay soldiers and maintenance on equipment
 
 
 ###Treasury reset###
-#In a couple places I've left a comment saying reffering to tressury reset explanation. This is the explanation
+#In a couple places I've left a comment saying referring to treasury reset explanation. This is the explanation
 #It took me a while to figure out why you add debt_rate to treasury_rate so ill try to explain (Gearz)
 #When your debt_rate changes you need to "reset the treasury_rate" so you return
-#how much you were taking from the treasury before and then take the new ammount you need
+#how much you were taking from the treasury before and then take the new amount you need
 #e.g treasury_rate $10B, you take $2B for your current debt_rate. Treasury rate = $8B
 #Your new debt_rate is $4B. So you need to "reset the treasury" you give the treasury_rate back the $2B
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
@@ -73,8 +74,7 @@ startup_extra_setup = {
 
 }
 
-###To messy not touching - Gearz
-#only for released nations
+#Calculates the "Size" of industry. It uses the resource exports and civilian factories to judge the size of the countries economy. - Bird 
 firsttime_calculate_size_modifier = {
 
 	set_variable = { resource_exports = resource_exported@steel }
@@ -103,37 +103,40 @@ firsttime_calculate_size_modifier = {
 	divide_temp_variable = { var = temp_resource_import value = 6 }
 	add_to_variable = { size_modifier = temp_resource_import }
 	
-	if = { limit = { check_variable = { size_modifier = 0 } }
+	if = {
+		limit = { check_variable = { size_modifier = 0 } }
 		add_to_variable = { var = size_modifier value = 0.03 }
-		else = { multiply_variable = { var = size_modifier value = 0.22 }
-	
-		if = { limit = { check_variable = { size_modifier > 1.1 } }
-			subtract_from_variable = { var = size_modifier value = 0.58 }
-			
-			else = { if = { limit = { check_variable = { size_modifier = 0.22 } }
+		else = { 
+			multiply_variable = { var = size_modifier value = 0.22 }
+			if = { 
+				limit = { check_variable = { size_modifier > 1.1 } }
+				subtract_from_variable = { var = size_modifier value = 0.58 }
+			}
+			else_if = { 
+				limit = { check_variable = { size_modifier = 0.22 } }
 				subtract_from_variable = { var = size_modifier value = 0.14 }
-					
-				else = { if = { limit = { check_variable = { size_modifier = 0.44 } }
-					subtract_from_variable = { var = size_modifier value = 0.30 }
-								
-					else = { if = { limit = { check_variable = { size_modifier = 0.66 } }
-						subtract_from_variable = { var = size_modifier value = 0.43 }
-										
-						else = { if = { limit = { check_variable = { size_modifier = 0.88 } }
-							subtract_from_variable = { var = size_modifier value = 0.50 }
-												
-							else = { if = { limit = { check_variable = { size_modifier = 1.1 } }
-								subtract_from_variable = { var = size_modifier value = 0.56 }
-							} }
-						} }
-					} }
-				} }
-			} }
-		} }
+			}        
+			else_if = { 
+				limit = { check_variable = { size_modifier = 0.44 } }
+				subtract_from_variable = { var = size_modifier value = 0.30 }
+			}                        
+			else_if = { 
+				limit = { check_variable = { size_modifier = 0.66 } }
+				subtract_from_variable = { var = size_modifier value = 0.43 }
+			}                                
+			else_if = { 
+				limit = { check_variable = { size_modifier = 0.88 } }
+				subtract_from_variable = { var = size_modifier value = 0.50 }            
+			}
+			else_if = { 
+				limit = { check_variable = { size_modifier = 1.1 } }
+				subtract_from_variable = { var = size_modifier value = 0.56 }
+			}
+		}
 	}
 }
 
-#To messy not touching - Gearz
+#Rewrote Size Modifier
 ingame_calculate_size_modifier = {
 	
 	set_temp_variable = { size_mod_check = num_of_civilian_factories }
@@ -154,36 +157,42 @@ ingame_calculate_size_modifier = {
 	divide_temp_variable = { var = temp_resource_import value = 6 }
 	add_to_variable = { size_mod_check = temp_resource_import }
 	
-	if = { limit = { check_variable = { size_mod_check = 0 } }
+	if = { 
+		limit = { check_variable = { size_mod_check = 0 } }
 		add_to_temp_variable = { size_mod_check = 0.03 }
-		else = { multiply_temp_variable = { size_mod_check = 0.22 } }
-	}
-	if = { limit = { check_variable = { size_mod_check > 1.1 } }
-		subtract_from_temp_variable = { size_mod_check = 0.58 }	
-			
-		else = { if = { limit = { check_variable = { size_mod_check = 0.22 } }
-			subtract_from_temp_variable = { size_mod_check = 0.14 }
+		else_if = { 
+			multiply_temp_variable = { size_mod_check = 0.22 } 
+		}
+		else = { 
+			limit = { check_variable = { size_mod_check > 1.1 } }
+			subtract_from_temp_variable = { size_mod_check = 0.58 }	
 				
-			else = { if = { limit = { check_variable = { size_mod_check = 0.44 } }
+			else_if = { 
+				limit = { check_variable = { size_mod_check = 0.22 } }
+				subtract_from_temp_variable = { size_mod_check = 0.14 }
+			}		
+			else_if = { 
+				limit = { check_variable = { size_mod_check = 0.44 } }
 				subtract_from_temp_variable = { size_mod_check = 0.30 }
-					
-				else = { if = { limit = { check_variable = { size_mod_check = 0.66 } }
-					subtract_from_temp_variable = { size_mod_check = 0.43 }
-						
-					else = { if = { limit = { check_variable = { size_mod_check = 0.88 } }
-						subtract_from_temp_variable = { size_mod_check = 0.50 }
-							
-						else = { if = { limit = { check_variable = { size_mod_check = 1.1 } }
-							subtract_from_temp_variable = { size_mod_check = 0.56 }
-						} }
-					} }
-				} }
-			} }
-		} }
+			}		
+			else_if = { 
+				limit = { check_variable = { size_mod_check = 0.66 } }
+				subtract_from_temp_variable = { size_mod_check = 0.43 }
+			}		
+			else_if = { 
+				limit = { check_variable = { size_mod_check = 0.88 } }
+				subtract_from_temp_variable = { size_mod_check = 0.50 }
+			}
+			else_if = { 
+				limit = { check_variable = { size_mod_check = 1.1 } }
+				subtract_from_temp_variable = { size_mod_check = 0.56 }
+			}
+		}
 	}
+	
 	### Does it if new civilian factories has been added
-	if = { limit = { check_variable = { var = size_modifier value = size_mod_check compare = not_equals } }
-		
+	if = { 
+		limit = { check_variable = { var = size_modifier value = size_mod_check compare = not_equals } }
 		
 		#Divides/removes previous to avoid distortion
 		add_to_variable = { var = treasury_rate value = expense_gain }
@@ -237,33 +246,36 @@ ingame_calculate_size_modifier = {
 		
 		#subtract_from_variable = { size_modifier = resource_exports }
 		
-		if = { limit = { check_variable = { size_modifier = 0 } }
+		if = {
+			limit = { check_variable = { size_modifier = 0 } }
 			add_to_variable = { var = size_modifier value = 0.03 }
-			else = { multiply_variable = { var = size_modifier value = 0.22 }
-		
-			if = { limit = { check_variable = { size_modifier > 1.1 } }
-				subtract_from_variable = { var = size_modifier value = 0.58 }
-				
-				else = { if = { limit = { check_variable = { size_modifier = 0.22 } }
+			else = { 
+				multiply_variable = { var = size_modifier value = 0.22 }
+				if = { 
+					limit = { check_variable = { size_modifier > 1.1 } }
+					subtract_from_variable = { var = size_modifier value = 0.58 }
+				}
+				else_if = { 
+					limit = { check_variable = { size_modifier = 0.22 } }
 					subtract_from_variable = { var = size_modifier value = 0.14 }
-						
-					else = { if = { limit = { check_variable = { size_modifier = 0.44 } }
-						subtract_from_variable = { var = size_modifier value = 0.30 }
-									
-						else = { if = { limit = { check_variable = { size_modifier = 0.66 } }
-							subtract_from_variable = { var = size_modifier value = 0.43 }
-											
-							else = { if = { limit = { check_variable = { size_modifier = 0.88 } }
-								subtract_from_variable = { var = size_modifier value = 0.50 }
-													
-								else = { if = { limit = { check_variable = { size_modifier = 1.1 } }
-									subtract_from_variable = { var = size_modifier value = 0.56 }
-								} }
-							} }
-						} }
-					} }
-				} }
-			} }
+				}        
+				else_if = { 
+					limit = { check_variable = { size_modifier = 0.44 } }
+					subtract_from_variable = { var = size_modifier value = 0.30 }
+				}                        
+				else_if = { 
+					limit = { check_variable = { size_modifier = 0.66 } }
+					subtract_from_variable = { var = size_modifier value = 0.43 }
+				}                                
+				else_if = { 
+					limit = { check_variable = { size_modifier = 0.88 } }
+					subtract_from_variable = { var = size_modifier value = 0.50 }            
+				}
+				else_if = { 
+					limit = { check_variable = { size_modifier = 1.1 } }
+					subtract_from_variable = { var = size_modifier value = 0.56 }
+				}
+			}
 		}
 		
 		multiply_variable = { var = bureaucracy_gain value = size_modifier }
