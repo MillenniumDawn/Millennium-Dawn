@@ -2823,7 +2823,10 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_ideas = closed_nation
+			swap_ideas = {
+				remove_idea = censored_nation_01
+				add_idea = closed_nation
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Internet_Crackdown executed"
 		}
 		
@@ -4996,7 +4999,7 @@ focus_tree = {
 					recalculate_influence = yes
 				}
 			}
-			log = "[GetDateText]: [This.GetName]: focus CHI_Settle_Territorial_Disputes executed"
+			log = "[GetDateText]: [This.GetName]: focus CHI_Free_Trade_Zone executed"
 		}
 		
 		ai_will_do = {
@@ -13038,7 +13041,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			add_political_power = 25
 			log = "[GetDateText]: [This.GetName]: focus CHI_Regional_Influence executed"
 		}
 		
@@ -13095,7 +13098,13 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			every_other_country = {
+				limit = { OR = { original_tag = MAY original_tag = PHI original_tag = VIE } }
+				add_opinion_modifier = {
+					target = CHI
+					modifier = nine_dash_line
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Enforce_the_9_Dash_Line executed"
 		}
 		
@@ -13123,7 +13132,9 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			USA = {
+				country_event = { id = south_china_sea_clash.7 }
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Provocative_Fleet_Exercises executed"
 		}
 		
@@ -13148,11 +13159,90 @@ focus_tree = {
 		prerequisite = { focus = CHI_Provocative_Fleet_Exercises }
 		
 		available = {
+			if = {
+				limit = { is_ai = no }
+				custom_trigger_tooltip = {
+					tooltip = 5_billion_currently_in_treasury_tt
+					check_variable = { treasury > 4.9 }
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			custom_effect_tooltip = 5_billion_expense_tt
+			subtract_from_variable = { treasury = 5 }
+			custom_effect_tooltip = CHI_island_building_tt
+			hidden_effect = {	
+				526 = {
+					add_building_construction = {
+						type = bunker
+						level = 1
+						instant_build = yes
+						province = {
+							all_provinces = yes
+						}
+					}
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Island_Building executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Ramp_Up_Tensions
+		icon = war4
+		
+		x = -9
+		y = 5
+		relative_position_id = CHI_Regional_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Island_Building }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			unlock_decision_tooltip = provoke_a_clash_malaysia
+			unlock_decision_tooltip = provoke_a_clash_philippines
+			unlock_decision_tooltip = provoke_a_clash_vietnam
+			CHI = {
+				add_ai_strategy = {
+					type = area_priority 
+					id = 526
+					value = 100
+				}
+			}
+			MAY = {
+				add_ai_strategy = {
+					type = area_priority 
+					id = 816
+					value = 100
+				}
+			}
+			PHI = {
+				add_ai_strategy = {
+					type = area_priority 
+					id = 802
+					value = 100
+				}
+			}
+			VIE = {
+				add_ai_strategy = {
+					type = area_priority 
+					id = 801
+					value = 100
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus CHI_Ramp_Up_Tensions executed"
 		}
 		
 		ai_will_do = {
@@ -13180,8 +13270,108 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			every_other_country = {
+				limit = { OR = { original_tag = VIE original_tag = MAY original_tag = PHI } }
+				add_opinion_modifier = {
+					target = CHI
+					modifier = political_outreach
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Signal_Willingness_to_Negotiate executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Joint_Development_Zones
+		icon = oil_production
+		
+		x = -7
+		y = 3
+		relative_position_id = CHI_Regional_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Signal_Willingness_to_Negotiate }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			unlock_decision_tooltip = joint_development_zone_malaysia
+			unlock_decision_tooltip = joint_development_zone_philippines
+			unlock_decision_tooltip = joint_development_zone_vietnam
+			log = "[GetDateText]: [This.GetName]: focus CHI_Joint_Development_Zones executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Negotiate_Maritime_Boundaries
+		icon = treaty
+		
+		x = -7
+		y = 4
+		relative_position_id = CHI_Regional_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Joint_Development_Zones }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			unlock_decision_tooltip = maritime_boundary_malaysia
+			unlock_decision_tooltip = maritime_boundary_philippines
+			unlock_decision_tooltip = maritime_boundary_vietnam
+			log = "[GetDateText]: [This.GetName]: focus CHI_Negotiate_Maritime_Boundaries executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_The_Fate_of_the_Paracels
+		icon = align_to_vietnam
+		
+		x = -7
+		y = 5
+		relative_position_id = CHI_Regional_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Negotiate_Maritime_Boundaries }
+		
+		available = {
+			VIE = {	
+				has_opinion = {
+					target = CHI
+					value > 24
+				}
+			}
+		}
+		
+		completion_reward = {
+			country_event = { id = south_china_sea_clash.10 }
+			log = "[GetDateText]: [This.GetName]: focus CHI_The_Fate_of_the_Paracels executed"
 		}
 		
 		ai_will_do = {
