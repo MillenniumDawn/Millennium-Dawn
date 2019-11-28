@@ -92,12 +92,8 @@ country_event = {
 		}
 	}	
 	fire_only_once = yes 
-	
 	mean_time_to_happen = {
-		days = 60
-		modifier = {
-		
-		}
+		days = 40
 	}
 
 	#Allow the Acqusition
@@ -187,7 +183,10 @@ country_event = {
 			has_country_flag = USA_stopped_microsoft_merger
 			has_country_flag = USA_allowed_microsoft_merger
 		}
-		date > 2000.2.1 
+		date > 2000.2.1
+	}
+	mean_time_to_happen = {
+		days = 40
 	}
 	
 	fire_only_once = yes
@@ -241,7 +240,7 @@ country_event = {
 					rule = USA_AI_BEHAVIOR
 					option = POLITICAL_REVOULUTION
 				}
-				add = 20
+				add = 25
 			}
 			modifier = {
 				is_historical_focus_on = yes 
@@ -435,14 +434,16 @@ country_event = {
 	is_triggered_only = yes
 	
 	trigger = {
+		USA = { has_idea = USA_second_amendment }
 		has_full_control_of_state = 777 #Michigan
 	}
 	
 	option = {
 		name = usa.11.o1
 		log = "[GetDateText]: [This.GetName]: usa.11.o1 executed"
-		add_political_power = -10
-		add_stability = -0.001
+		add_political_power = -50
+		add_stability = -0.01
+		decrease_popularity_2 = yes
 	}
 }
 
@@ -452,32 +453,60 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.12" }
 	title = usa.12.t
 	desc = usa.12.d
-	picture = GFX_report_event_burning_oil_refinery
+	picture = GFX_burning_oil_refinery
 	
-	is_triggered_only = yes
-	
+	fire_only_once = yes 
 	trigger = {
 		has_full_control_of_state = 800	#Texas
+		date > 2000.03.20 
+		date < 2000.04.1
+	}
+	mean_time_to_happen = {
+		days = 10
 	}
 	
-	option = {
+	option = { #Accidents Happen 
 		name = usa.12.o1
 		log = "[GetDateText]: [This.GetName]: usa.12.o1 executed"
-		add_political_power = -5
-		add_stability = -0.01
-		
+		add_stability = -0.04
+		USA_congress_medium_opposition = yes
 		ai_chance = {
-			factor = 0
+			factor = 4
+			modifier = {
+				is_in_array = { ruling_party = 2 }
+				is_in_array = { ruling_party = 3 }
+				is_in_array = { ruling_party = 18 }
+				factor = 0 
+			}
+			modifier = {
+				is_in_array = { ruling_party = 1 }
+				is_in_array = { ruling_party = 14 }
+				is_in_array = { ruling_party = 20 }
+				add = 2 
+			}
 		}
 	}
 	
-	option = {
+	option = { #Launch a Complete Investigation 
 		name = usa.12.o2
 		log = "[GetDateText]: [This.GetName]: usa.12.o2 executed"
-		add_political_power = -25
-		
+		add_political_power = -100
+		add_stability = -0.02 
+		USA_congress_small_opposition = yes
 		ai_chance = {
-			factor = 100
+			factor = 10
+			modifier = {
+				factor = 0 
+				is_in_array = { ruling_party = 1 }
+				is_in_array = { ruling_party = 14 }
+				is_in_array = { ruling_party = 20 }
+			}
+			modifier = {
+				is_in_array = { ruling_party = 2 }
+				is_in_array = { ruling_party = 3 }
+				is_in_array = { ruling_party = 18 }
+				add = 2  
+			}
 		}
 	}
 }
@@ -504,7 +533,7 @@ country_event = {
 	}
 }
 
-#All opposed countries: USA stands against us!
+#All Opposed countries: USA stands against us!
 country_event = {
 	id = usa.14
 	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.14" }
@@ -566,311 +595,189 @@ country_event = {
 	}
 }
 
-#The Sanders Craze
+###Random Elections Events###
+##Main Dispatch Event## 
 country_event = {
-	id = usa.17
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.17" }
-	title = usa.17.t
-	desc = usa.17.d
-	picture = GFX_report_event_bernie_sanders
-	
-	fire_only_once = yes
-	
-	trigger = {
-		tag = USA
-		date > 2016.1.1
-		has_idea = idea_USA_political_establishment
-	}
-	
-	mean_time_to_happen = {
-		days = 10
-	}
-	
-	option = {	#A new era for leftism in America?
-		name = usa.17.o1
-		log = "[GetDateText]: [This.GetName]: usa.17.o1 executed"
-		add_to_variable = {
-			var = Neutral_Green
-			value = 0.01
+	id = usa.1000
+	hidden = yes 
+	is_triggered_only = yes
+	trigger = { tag = USA }
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event usa.1000" 
+		random_list = {
+			20 = {
+				modifier = {
+					has_stability > 0.40
+					factor = 1.5 
+				}
+				modifier = {
+					check_variable = { party_pop_array^2 > 0.10 }
+					check_variable = { party_pop_array^3 > 0.10 }
+					factor = 1.25
+				}
+				modifier = {
+					NOT = { congress_low_support_trigger = yes }
+					factor = 1.25 
+				}
+				country_event = { id = usa.17 days = 20 random = 5 }
+			}
+			60 = {
+				modifier = {
+					NOT = { congress_low_support_trigger = yes }
+					factor = 1.25 
+				}
+				modifier = {
+					has_stability > 0.40 
+					factor = 1.5 
+				}
+				country_event = { id = usa.18 days = 20 random = 5 }
+			}
+			20 = {
+				modifier = {
+					has_stability > 0.40
+					factor = 1.5 
+				}
+				modifier = {
+					check_variable = { party_pop_array^1 > 0.10 }
+					check_variable = { party_pop_array^14 > 0.10 }
+					check_variable = { party_pop_array^20 > 0.10 }
+					factor = 1.25
+				}
+				modifier = {
+					NOT = { congress_low_support_trigger = yes }
+					factor = 1.25 
+				}
+				country_event = { id = usa.19 days = 20 random = 5 }
+			}
 		}
-		add_to_variable = {
-			var = socialism
-			value = 0.01
-		}
-		add_to_variable = {
-			var = liberalism
-			value = 0.01
-		}
-		recalculate_party = yes
-		custom_effect_tooltip = usa.17.o1_tt
 	}
 }
 
+##Leftism Increased
+country_event = {
+	id = usa.17 
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.17" }
+	title = usa.17.t 
+	desc = usa.17.d 
+	picture = GFX_USA_generic
+	
+	is_triggered_only = yes 
+	trigger = {
+		tag = USA
+		USA = {
+			has_idea = idea_USA_political_establishment
+			has_elections = yes
+		}
+	}
+	mean_time_to_happen = {
+		days = 1
+	}
+	
+	option = {
+		name = usa.17.a
+		log = "[GetDateText]: [Root.GetName]: event usa.17.a"
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.02 }
+			add_to_variable = { party_pop_array^2 = 0.02 }
+			add_to_variable = { party_pop_array^3 = 0.02 }
+			add_to_variable = { party_pop_array^6 = 0.02 }
+			recalculate_party = yes 
+		}
+		custom_effect_tooltip = USA_gain_psl_2_TT
+		custom_effect_tooltip = USA_gain_socialdem_2_TT
+		custom_effect_tooltip = USA_gain_liberalism_2_TT
+		
+		hidden_effect = { country_event = { id = usa.1000 days = 70 random = 20 } }
+		ai_chance = {
+			factor = 1 
+		}
+	}
+}
 #Third Party Gains
 country_event = {
 	id = usa.18
 	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.18" }
 	title = usa.18.t
 	desc = usa.18.d
-	picture = GFX_report_event_us_flag
+	picture = GFX_politics_speak
 	
+	is_triggered_only = yes
 	trigger = {
 		tag = USA
-		has_idea = idea_USA_political_establishment
-		has_government = democratic
+		USA = {
+			has_idea = idea_USA_political_establishment
+			has_elections = yes
+		}
 	}
-	
 	mean_time_to_happen = {
-		days = 500
+		days = 1
 	}
 	
 	option = {	#A new alternative?
-		name = usa.18.o1
+		name = usa.18.a
 		log = "[GetDateText]: [This.GetName]: usa.18.o1 executed"
+		hidden_effect = {
+			add_popularity = { ideology = democratic popularity = -0.04 }
+			add_popularity = { ideology = communism popularity = 0.02 }
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			subtract_from_variable = { party_pop_array^2 = 0.02 }
+			subtract_from_variable = { party_pop_array^1 = 0.02 }
+			add_to_variable = { party_pop_array^6 = 0.02 }
+			add_to_variable = { party_pop_array^16 = 0.02 }
+			add_to_variable = { party_pop_array^17 = 0.02 }
+			recalculate_party = yes
+		}
+		custom_effect_tooltip = USA_lose_liberalism_2_TT
+		custom_effect_tooltip = USA_lose_conservatism_2_TT
+		custom_effect_tooltip = USA_gain_libertarian_2_TT
+		custom_effect_tooltip = USA_gain_greenparty_2_TT
+		custom_effect_tooltip = USA_gain_psl_2_TT
 		
-		add_to_variable = {
-			var = liberalism
-			value = -0.02
+		hidden_effect = { country_event = { id = usa.1000 days = 70 random = 20 } }
+		ai_chance = {
+			factor = 1 
 		}
-		add_to_variable = {
-			var = conservatism
-			value = -0.02
-		}
-		recalculate_party = yes
-		custom_effect_tooltip = usa.18.o1_tt
 	}
 }
-
-#Republican Nomination 2016
+##Rise of Traditionalism
 country_event = {
 	id = usa.19
 	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.19" }
-	title = usa.19.t
-	desc = usa.19.d
+	title = usa.19.t 
+	desc = usa.19.desc
+	picture = GFX_politics_far_right
 	
-	is_triggered_only = yes
-	
+	is_triggered_only = yes 
 	trigger = {
-		USA = { has_elections = yes }
-		USA = { has_idea = idea_USA_political_establishment }
+		tag = USA
+		USA = {
+			has_idea = idea_USA_political_establishment
+			has_elections = yes
+		}
+	}
+	mean_time_to_happen = {
+		days = 1
 	}
 	
-	option = {	#I dont care
-		name = usa.19.o1
-		log = "[GetDateText]: [This.GetName]: usa.19.o1 executed"
-		random_list = {
-			80 = { 
-				set_country_flag = republican_nomination_2016_trump
-				if = {
-					limit = { check_variable = { var = conservatism value = 55 compare = less_than_or_equals } }
-					create_country_leader = {
-						name = "Donald Trump"
-						picture = "Donald_Trump.dds"
-						ideology = conservatism
-					}
-				}
-			}
-			15 = { 
-				set_country_flag = republican_nomination_2016_cruz
-				if = {
-					limit = { check_variable = { var = conservatism value = 55 compare = less_than_or_equals } }
-					create_country_leader = {
-						name = "Ted Cruz"
-						picture = "Ted_Cruz.dds"
-						ideology = conservatism
-					}
-				}
-			}
-			4 = { 
-				set_country_flag = republican_nomination_2016_rubio 
-				if = {
-					limit = { check_variable = { var = conservatism value = 55 compare = less_than_or_equals } }
-					create_country_leader = {
-						name = "Marco Rubio"
-						picture = "Marco_Rubio.dds"
-						ideology = conservatism
-					}
-				}
-			}
-			1 = { 
-				set_country_flag = republican_nomination_2016_kasich
-				if = {
-					limit = { check_variable = { var = conservatism value = 55 compare = less_than_or_equals } }
-					create_country_leader = {
-						name = "John Kasich"
-						picture = "John_Kasich.dds"
-						ideology = conservatism
-					}
-				}
-			}
+	option = {
+		name = usa.19.a
+		log = "[GetDateText]: [Root.GetName]: event usa.19.a"
+		hidden_effect = {
+			add_popularity = { ideology = nationalist popularity = 0.02 }
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			add_to_variable = { party_pop_array^1 = 0.02 }
+			add_to_variable = { party_pop_array^20 = 0.02 }
+			add_to_variable = { party_pop_array^14 = 0.02 }
+			recalculate_party = yes 
 		}
+		custom_effect_tooltip = USA_gains_conservatism_2_TT
+		custom_effect_tooltip = USA_gain_right_wing_populist_2_TT
+		custom_effect_tooltip = USA_gain_liberalism_2_TT
+		
+		hidden_effect = { country_event = { id = usa.1000 days = 70 random = 20 } }
 		ai_chance = {
-			factor = 100
-			modifier = {
-				is_historical_focus_on = yes
-				factor = 0
-			}
+			factor = 1 
 		}
-	}
-	
-	option = {	#Trump
-		name = usa.19.o2
-		log = "[GetDateText]: [This.GetName]: usa.19.o2 executed"
-		set_country_flag = republican_nomination_2016_trump
-		if = {
-			limit = { check_variable = { var = conservatism value = 55 compare = less_than_or_equals } }
-			create_country_leader = {
-				name = "Donald Trump"
-				picture = "Donald_Trump.dds"
-				ideology = conservatism
-			}
-		}
-		
-		ai_chance = {
-			factor = 100
-			modifier = {
-				is_historical_focus_on = no
-				factor = 0
-			}
-		}
-	}
-	
-	option = {	#Cruz
-		name = usa.19.o3
-		log = "[GetDateText]: [This.GetName]: usa.19.o3 executed"
-		set_country_flag = republican_nomination_2016_cruz
-		if = {
-			limit = { check_variable = { var = conservatism value = 55 compare = less_than_or_equals } }
-			create_country_leader = {
-				name = "Ted Cruz"
-				picture = "Ted_Cruz.dds"
-				ideology = conservatism
-			}
-		}
-		
-		ai_chance = { factor = 0 }
-	}
-	
-	option = {	#Rubio
-		name = usa.19.o4
-		log = "[GetDateText]: [This.GetName]: usa.19.o4 executed"
-		set_country_flag = republican_nomination_2016_rubio
-		if = {
-			limit = { check_variable = { var = conservatism value = 55 compare = less_than_or_equals } }
-			create_country_leader = {
-				name = "Marco Rubio"
-				picture = "Marco_Rubio.dds"
-				ideology = conservatism
-			}
-		}
-		
-		ai_chance = { factor = 0 }
-	}
-	
-	option = {	#Kasich
-		name = usa.19.o5
-		log = "[GetDateText]: [This.GetName]: usa.19.05 executed"
-		set_country_flag = republican_nomination_2016_kasich
-		if = {
-			limit = { check_variable = { var = conservatism value = 55 compare = less_than_or_equals } }
-			create_country_leader = {
-				name = "John Kasich"
-				picture = "John_Kasich.dds"
-				ideology = conservatism
-			}
-		}
-		
-		ai_chance = { factor = 0 }
-	}
-}
-
-#Democratic Nomination 2016
-country_event = {
-	id = usa.20
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.20" }
-	title = usa.20.t
-	desc = usa.20.d
-	
-	is_triggered_only = yes
-	
-	trigger = {
-		USA = { has_elections = yes }
-		USA = { has_idea = idea_USA_political_establishment }
-	}
-	
-	option = {	#I dont care
-		name = usa.20.o1
-		log = "[GetDateText]: [This.GetName]: usa.20.o1 executed"
-		random_list = {
-			70 = { 
-				set_country_flag = democratic_nomination_2016_clinton
-				if = {
-					limit = { check_variable = { var = liberalism value = 55 compare = less_than_or_equals } }
-					create_country_leader = {
-						name = "Hillary Clinton"
-						picture = "Hillary_Clinton.dds"
-						ideology = liberalism
-					}
-				}
-			}
-			30 = { 
-				set_country_flag = democratic_nomination_2016_sanders 
-				if = {
-					limit = { check_variable = { var = liberalism value = 55 compare = less_than_or_equals } }
-					create_country_leader = {
-						name = "Bernie Sanders"
-						picture = "Bernie_Sanders.dds"
-						ideology = liberalism
-					}
-				}
-			}
-		}
-		
-		ai_chance = {
-			factor = 100
-			modifier = {
-				is_historical_focus_on = yes
-				factor = 0
-			}
-		}
-	}
-	
-	option = {	#Clinton
-		name = usa.20.o2
-		log = "[GetDateText]: [This.GetName]: usa.20.o2 executed"
-		set_country_flag = democratic_nomination_2016_clinton
-		if = {
-			limit = { check_variable = { var = liberalism value = 55 compare = less_than_or_equals } }
-			create_country_leader = {
-				name = "Hillary Clinton"
-				picture = "Hillary_Clinton.dds"
-				ideology = liberalism
-			}
-		}
-		
-		ai_chance = {
-			factor = 100
-			modifier = {
-				is_historical_focus_on = no
-				factor = 0
-			}
-		}
-	}
-	
-	option = {	#Sanders
-		name = usa.20.o3
-		log = "[GetDateText]: [This.GetName]: usa.20.o3 executed"
-		set_country_flag = democratic_nomination_2016_sanders
-		if = {
-			limit = { check_variable = { var = liberalism value = 55 compare = less_than_or_equals } }
-			create_country_leader = {
-				name = "Bernie Sanders"
-				picture = "Bernie_Sanders.dds"
-				ideology = liberalism
-			}
-		}
-		
-		ai_chance = { factor = 0 }
 	}
 }
 
@@ -2664,9 +2571,17 @@ news_event = {
 	
 	fire_only_once = yes
 	major = yes
+	
 	trigger = {
-		
+		date > 2000.10.31
+		date < 2001.1.1
+		has_country_leader = { name = "Al Gore" ruling_only = yes }
 	}
+	
+	mean_time_to_happen = {
+		days = 30 
+	}
+	
 	option = {
 		name = usa_news.newPresident.o1
 		log = "[GetDateText]: [This.GetName]: usa_news.newPresident.o1 executed"
