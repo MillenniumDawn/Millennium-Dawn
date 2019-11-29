@@ -2762,11 +2762,14 @@ focus_tree = {
 				remove_idea = chongqing_model
 				add_idea = nanjie_model
 			}
-			swap_ideas = {
-				remove_idea = industrial_conglomerates
-				add_idea = farmers
+			if = {
+				limit = { has_idea = industrial_conglomerates }
+				swap_ideas = {
+					remove_idea = industrial_conglomerates
+					add_idea = farmers
+				}
+				set_country_flag = positive_farmers
 			}
-			set_country_flag = positive_farmers
 			log = "[GetDateText]: [This.GetName]: focus CHI_Nanjie_Model executed"
 		}
 		
@@ -6183,7 +6186,7 @@ focus_tree = {
 		icon = wolfpacks
 		
 		x = 3
-		y = 6
+		y = 5
 		relative_position_id = CHI_One_China_Policy
 		
 		prerequisite = { focus = CHI_Fight_ROC_Recognition }
@@ -6228,6 +6231,43 @@ focus_tree = {
 	}
 	
 	focus = {
+		id = CHI_Demand_an_End_to_the_Taiwan_Relations_Act
+		icon = backstab
+		
+		x = 3
+		y = 6
+		relative_position_id = CHI_One_China_Policy
+		
+		prerequisite = { focus = CHI_Blockade_Taiwan_Island_Territories }
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+		
+		bypass = {
+			USA ={ NOT = { has_guaranteed = TAI } }
+		}
+		
+		completion_reward = {
+			USA = {
+				country_event = {
+					id = taiwan.15
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus CHI_Demand_an_End_to_the_Taiwan_Relations_Act executed"
+		}
+		
+		ai_will_do = {
+			base = 50
+		}
+	}
+	
+	focus = {
 		id = CHI_Road_to_War
 		icon = anti_pacifism
 		
@@ -6235,7 +6275,7 @@ focus_tree = {
 		y = 7
 		relative_position_id = CHI_One_China_Policy
 		
-		prerequisite = { focus = CHI_Blockade_Taiwan_Island_Territories focus = CHI_Propose_Roadmap_to_Reunification }
+		prerequisite = { focus = CHI_Demand_an_End_to_the_Taiwan_Relations_Act focus = CHI_Propose_Roadmap_to_Reunification }
 		
 		cost = 10
 		
@@ -6253,9 +6293,18 @@ focus_tree = {
 					TAI = { has_country_flag = rejected_roadmap }
 				}
 			}
+			if = {
+				limit = { is_ai = no }
+				custom_trigger_tooltip = {
+					tooltip = 5_billion_currently_in_treasury_tt
+					check_variable = { treasury > 4.9 }
+				}
+			}
 		}
 		
 		completion_reward = {
+			custom_effect_tooltip = 5_billion_expense_tt
+			subtract_from_variable = { treasury = 5 }
 			add_war_support = 0.05
 			CHI = {
 				add_ideas = CHI_war_preparations
@@ -6891,10 +6940,6 @@ focus_tree = {
 				has_idea = chongqing_model
 				has_idea = nanjie_model
 				has_idea = closed_nation
-			}
-			custom_trigger_tooltip = {
-				tooltip = SMBO_tt
-				has_idea = small_medium_business_owners
 			}
 			if = {
 				limit = { has_idea = industrial_conglomerates has_idea = communist_cadres }
@@ -13319,6 +13364,7 @@ focus_tree = {
 		mutually_exclusive = { focus = CHI_Enforce_the_9_Dash_Line }
 		
 		available = {
+			has_war = no
 		}
 		
 		completion_reward = {
@@ -13353,6 +13399,7 @@ focus_tree = {
 		prerequisite = { focus = CHI_Signal_Willingness_to_Negotiate }
 		
 		available = {
+			has_war = no
 		}
 		
 		completion_reward = {
@@ -13383,6 +13430,7 @@ focus_tree = {
 		prerequisite = { focus = CHI_Joint_Development_Zones }
 		
 		available = {
+			has_war = no
 		}
 		
 		completion_reward = {
@@ -13447,6 +13495,7 @@ focus_tree = {
 		prerequisite = { focus = CHI_The_Fate_of_the_Paracels }
 		
 		available = {
+			has_war = no
 			BRM = {	
 				has_opinion = {
 					target = CHI
@@ -13592,8 +13641,18 @@ focus_tree = {
 		available = {
 		}
 		
+		bypass = {
+			USA = { NOT = { has_guaranteed = KOR } }
+		}
+		
 		completion_reward = {
-			add_political_power = 50
+			add_war_support = 0.05
+			USA = {
+				add_opinion_modifier = {
+					target = CHI
+					modifier = criticized_us
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Criticize_the_American_Presence executed"
 		}
 		
@@ -13620,8 +13679,12 @@ focus_tree = {
 		available = {
 		}
 		
+		bypass = {
+			USA = { NOT = { has_guaranteed = KOR } }
+		}
+		
 		completion_reward = {
-			add_political_power = 50
+			USA = { country_event = korea.1 }
 			log = "[GetDateText]: [This.GetName]: focus CHI_Demand_a_Withdrawal executed"
 		}
 		
@@ -13646,10 +13709,40 @@ focus_tree = {
 		prerequisite = { focus = CHI_Demand_a_Withdrawal }
 		
 		available = {
+			custom_trigger_tooltip = {
+				tooltip = CHI_NKO_influence_higher_40_tt
+				NKO = {
+						set_temp_variable = { temp_idx = -1 }
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							if = {
+								limit = { var:v = { tag = CHI } }
+								set_temp_variable = { temp_idx = i }
+								always = yes
+							}
+							else = { always = no }
+						}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.4 }
+				}
+			}
+			if = {
+				limit = { is_ai = no }
+				custom_trigger_tooltip = {
+					tooltip = 5_billion_currently_in_treasury_tt
+					check_variable = { treasury > 4.9 }
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			custom_effect_tooltip = 5_billion_expense_tt
+			subtract_from_variable = { treasury = 5 }
+			NKO = {
+				add_ideas = CHI_war_preparations
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Support_the_Norths_Military_Buildup executed"
 		}
 		
@@ -13674,10 +13767,35 @@ focus_tree = {
 		prerequisite = { focus = CHI_Support_the_Norths_Military_Buildup }
 		
 		available = {
+			custom_trigger_tooltip = {
+				tooltip = CHI_NKO_influence_higher_40_tt
+				NKO = {
+						set_temp_variable = { temp_idx = -1 }
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							if = {
+								limit = { var:v = { tag = CHI } }
+								set_temp_variable = { temp_idx = i }
+								always = yes
+							}
+							else = { always = no }
+						}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.4 }
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			NKO = { 
+				remove_ideas = CHI_war_preparations
+				create_wargoal = {
+					type = annex_everything
+					target = KOR
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Ignite_the_Second_Korean_War executed"
 		}
 		
@@ -13704,10 +13822,14 @@ focus_tree = {
 		mutually_exclusive = { focus = CHI_End_the_Kim_Dynasty }
 		
 		available = {
+			has_war = no
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			every_country = {
+				limit = { OR = { original_tag = KOR original_tag = NKO original_tag = CHI } }
+				add_stability = 0.02
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_The_Status_Quo executed"
 		}
 		
@@ -13732,10 +13854,22 @@ focus_tree = {
 		prerequisite = { focus = CHI_The_Status_Quo }
 		
 		available = {
+			NOT = { has_war_with = KOR }
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			KOR = {
+				add_opinion_modifier = {
+					target = CHI
+					modifier = diplomatic_proximity
+				}
+			}
+			CHI = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = diplomatic_proximity
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Strengthen_Relations_with_the_South executed"
 		}
 		
@@ -13760,10 +13894,70 @@ focus_tree = {
 		prerequisite = { focus = CHI_Strengthen_Relations_with_the_South }
 		
 		available = {
+			NOT = { has_war_with = KOR }
+			KOR = {
+				has_opinion = {
+					target = CHI
+					value > 39
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			add_opinion_modifier = {
+				target = KOR
+				modifier = improve_trade
+			}
+			custom_effect_tooltip = CHI_KOR_small_influence_10_tt
+			hidden_effect = {
+				set_temp_variable = { influence_gain = 10 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = KOR }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+						add_to_array = { influence_array = KOR.id }
+						add_to_array = { influence_array_val = influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+			}
+			KOR = {
+				add_opinion_modifier = {
+					target = CHI
+					modifier = improve_trade
+				}
+				custom_effect_tooltip = CHI_small_influence_10_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = CHI.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_China_Republic_of_Korea_Free_Trade_Agreement executed"
 		}
 		
@@ -13774,7 +13968,7 @@ focus_tree = {
 	
 	focus = {
 		id = CHI_Joint_Condemnation_of_Japan
-		icon = attack_japan2
+		icon = japanese_imperialism
 		
 		x = -5
 		y = 5
@@ -13788,10 +13982,41 @@ focus_tree = {
 		prerequisite = { focus = CHI_China_Republic_of_Korea_Free_Trade_Agreement }
 		
 		available = {
+			NOT = { has_war_with = KOR }
+			KOR = {
+				has_opinion = {
+					target = CHI
+					value > 39
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = CHI_JAP_warcrimes_tt
+				has_opinion_modifier = refuse_to_apologize_for_warcrimes
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			add_war_support = 0.02
+			add_timed_idea = {
+				idea = our_national_enemy
+				days = 180
+			}
+			KOR = {
+				add_timed_idea = {
+					idea = our_national_enemy
+					days = 180
+				}
+			}
+			JAP = {	
+				add_opinion_modifier = {
+					modifier = criticized_us
+					target = CHI
+				}
+				add_opinion_modifier = {
+					modifier = criticized_us
+					target = KOR
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Joint_Condemnation_of_Japan executed"
 		}
 		
@@ -13820,7 +14045,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			NKO = { add_war_support = -0.05 }
 			log = "[GetDateText]: [This.GetName]: focus CHI_Maintain_Commitment_to_Denuclearization executed"
 		}
 		
@@ -13845,10 +14070,38 @@ focus_tree = {
 		prerequisite = { focus = CHI_Maintain_Commitment_to_Denuclearization }
 		
 		available = {
+			NOT = { has_war_with = NKO }
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			add_opinion_modifier = {
+				target = NKO
+				modifier = improve_trade
+			}
+			NKO = {
+				custom_effect_tooltip = CHI_small_influence_10_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = CHI.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Increase_Exports_to_the_North executed"
 		}
 		
@@ -13872,11 +14125,36 @@ focus_tree = {
 		
 		prerequisite = { focus = CHI_Increase_Exports_to_the_North }
 		
+		bypass = {
+			NKO = { NOT = { has_idea = Planned_Economy } }
+		}
+		
 		available = {
+			NOT = { has_war_with = NKO }
+			NOT = { has_idea = Planned_Economy }
+			custom_trigger_tooltip = {
+				tooltip = CHI_NKO_influence_higher_40_tt
+				NKO = {
+						set_temp_variable = { temp_idx = -1 }
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							if = {
+								limit = { var:v = { tag = CHI } }
+								set_temp_variable = { temp_idx = i }
+								always = yes
+							}
+							else = { always = no }
+						}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.4 }
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			NKO = { country_event = { id = korea.2 } }
 			log = "[GetDateText]: [This.GetName]: focus CHI_Encourage_Economic_Reforms executed"
 		}
 		
@@ -13898,15 +14176,35 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 		
-		prerequisite = { focus = CHI_Encourage_Economic_Reforms }
-		prerequisite = { focus = CHI_Joint_Condemnation_of_Japan }
+		prerequisite = { focus = CHI_Establish_a_Puppet_Government focus = CHI_Encourage_Economic_Reforms focus = CHI_Joint_Condemnation_of_Japan }
 		mutually_exclusive = { focus = CHI_Keep_Korea_Divided }
 		
 		available = {
+			KOR = { has_war = no }
+			NKO = { has_war = no }
+			custom_trigger_tooltip = {
+				tooltip = CHI_NKO_influence_higher_40_tt
+				NKO = {
+						set_temp_variable = { temp_idx = -1 }
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							if = {
+								limit = { var:v = { tag = CHI } }
+								set_temp_variable = { temp_idx = i }
+								always = yes
+							}
+							else = { always = no }
+						}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.4 }
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			add_political_power = -100
 			log = "[GetDateText]: [This.GetName]: focus CHI_Mediate_Korean_Peace_Talks executed"
 		}
 		
