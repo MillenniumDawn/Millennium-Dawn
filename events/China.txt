@@ -4,6 +4,7 @@
 
 add_namespace = china
 add_namespace = south_china_sea_clash
+add_namespace = sino_indian
 
 #19th National Congress
 news_event = {
@@ -184,7 +185,7 @@ country_event = {
 	}
 		
 	mean_time_to_happen = {
-		days = 1000
+		days = 2000
 		modifier = {
 			factor = 0.5
 			check_variable = {
@@ -309,7 +310,7 @@ country_event = {
 	}
 		
 	mean_time_to_happen = {
-		days = 1000
+		days = 3000
 		modifier = {
 			factor = 0.5
 			check_variable = {
@@ -454,7 +455,7 @@ country_event = {
 	}
 		
 	mean_time_to_happen = {
-		days = 1200
+		days = 4000
 		modifier = {
 			factor = 0.5
 			check_variable = {
@@ -2005,3 +2006,696 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: south_china_sea_clash.11.a executed"
 	}
 }
+
+#Bhutanese sovereignty is being violated!
+country_event = {
+	id = sino_indian.1
+	title = sino_indian.1.t
+	desc = sino_indian.1.d
+	
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.1.a #We should send troops to stop this incursion!
+		trigger = { original_tag = RAJ }
+		add_war_support = 0.02
+		CHI = { 
+			country_event = { id = sino_indian.3 } 
+			add_opinion_modifier = { target = RAJ modifier = resisted_territorial_ambition }
+		}
+		ai_chance = {
+			factor = 60
+		}
+		log = "[GetDateText]: [This.GetName]: sino_indian.1.a executed"
+	}
+	
+	option = {
+		name = sino_indian.1.b #We can do nothing...
+		trigger = { 
+			OR = { 
+				original_tag = RAJ
+				AND = { 
+					original_tag = BHU 
+					NOT = { 
+						RAJ = { has_guaranteed = BHU } 
+					} 
+				} 
+			} 
+		}
+		add_political_power = -50
+		if = {
+			limit = { NOT = { original_tag = BHU } }
+			BHU = { country_event = { id = sino_indian.2 } }
+			diplomatic_relation = {
+				country = BHU
+				relation = guarantee
+				active = no
+			}
+		}
+		else_if = {
+			custom_effect_tooltip = CHI_large_influence_60_tt
+			hidden_effect = {
+				set_temp_variable = { influence_gain = 60 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = CHI }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+						add_to_array = { influence_array = CHI.id }
+						add_to_array = { influence_array_val = influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+			}
+			every_other_country = { news_event = { id = sino_indian.4 } }
+		}
+		log = "[GetDateText]: [This.GetName]: sino_indian.1.b executed"
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 2
+				ROOT = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.2 }
+				}
+			}
+			modifier = {
+				factor = 2
+				ROOT = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.4 }
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = sino_indian.1.c #Our protectors will come to our defence.
+		trigger = { original_tag = BHU RAJ = { has_guaranteed = BHU } }
+		log = "[GetDateText]: [This.GetName]: sino_indian.1.c executed"
+	}
+	
+	option = {
+		name = sino_indian.1.e #We must defend ourselves!
+		trigger = { 
+			original_tag = BHU 
+			NOT = { RAJ = { has_guaranteed = BHU } }
+		}
+		add_war_support = 0.02
+		CHI = { 
+			country_event = { id = sino_indian.3 }
+			add_opinion_modifier = { target = BHU modifier = resisted_territorial_ambition }			
+		}
+		log = "[GetDateText]: [This.GetName]: sino_indian.1.e executed"
+	}
+}
+
+#It appears that our protectors have abandoned us...
+country_event = {
+	id = sino_indian.2
+	title = sino_indian.2.t
+	desc = sino_indian.2.d
+	
+	picture = GFX_RAJ_generic
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.2.a #We can do nothing...
+		add_political_power = -50
+		custom_effect_tooltip = CHI_large_influence_60_tt
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 60 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = CHI }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = CHI.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		every_other_country = { news_event = { id = sino_indian.4 } }
+		log = "[GetDateText]: [This.GetName]: sino_indian.2.a executed"
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 2
+				ROOT = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.2 }
+				}
+			}
+			modifier = {
+				factor = 2
+				ROOT = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.4 }
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = sino_indian.2.b #We must defend ourselves!
+		add_war_support = 0.02
+		CHI = { 
+			country_event = { id = sino_indian.3 } 
+			add_opinion_modifier = { target = BHU modifier = resisted_territorial_ambition }
+		}
+		ai_chance = {
+			factor = 60
+		}
+		log = "[GetDateText]: [This.GetName]: sino_indian.2.b executed"
+	}
+}
+
+#[FROM.GetName] has deployed troops to halt our road construction
+country_event = {
+	id = sino_indian.3
+	title = sino_indian.3.t
+	desc = sino_indian.3.d
+	
+	picture = GFX_RAJ_generic
+		
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.3.a #We should disengage.
+		BHU = {
+			custom_effect_tooltip = CHI_small_influence_10_tt
+			hidden_effect = {
+				set_temp_variable = { influence_gain = 10 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = CHI }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+						add_to_array = { influence_array = CHI.id }
+						add_to_array = { influence_array_val = influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+			}
+		}
+		every_other_country = { news_event = { id = sino_indian.5 } }
+		ai_chance = {
+			factor = 60
+		}
+		log = "[GetDateText]: [This.GetName]: sino_indian.3.a executed"
+	}
+	
+	option = {
+		name = sino_indian.3.b #We should stand our ground!
+		if = {
+			limit = { RAJ = { has_guaranteed = BHU } }
+			RAJ = { add_opinion_modifier = { target = CHI modifier = territorial_violation } }
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 589
+					num_provinces = 2
+					on_win = sino_indian.6
+					on_lose = sino_indian.7
+					on_cancel = sino_indian.8
+				}
+				defender = {
+					state = 455
+					num_provinces = 1
+					on_win = sino_indian.7
+					on_lose = sino_indian.6
+					on_cancel = sino_indian.8
+				}
+			}
+		}
+		else_if = {
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 589
+					num_provinces = 2
+					on_win = sino_indian.6
+					on_lose = sino_indian.7
+					on_cancel = sino_indian.8
+				}
+				defender = {
+					state = 484
+					num_provinces = 2
+					on_win = sino_indian.7
+					on_lose = sino_indian.6
+					on_cancel = sino_indian.8
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: sino_indian.3.b executed"
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 3
+				has_game_rule = {
+					rule = PRC_ai_behavior
+					option = CHINESE_HEGEMONY
+				}
+			}
+			modifier = {
+				factor = 1000
+				has_game_rule = {
+					rule = PRC_ai_behavior
+					option = RED_DAWN
+				}
+			}
+		}
+	}
+}
+
+#China Extends its Influence over Bhutan
+news_event = {
+	id = sino_indian.4
+	title = sino_indian.4.t
+	desc = sino_indian.4.d
+	
+	picture = GFX_china_indian_border_skirmish
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.4.a #China is pushing outwards.
+		BHU = { custom_effect_tooltip = CHI_large_influence_60_tt }
+		log = "[GetDateText]: [This.GetName]: sino_indian.4.a executed"
+	}
+}
+
+#China has Disengaged from Bhutan
+news_event = {
+	id = sino_indian.5
+	title = sino_indian.5.t
+	desc = sino_indian.5.d
+	
+	picture = GFX_china_indian_border_skirmish
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.5.a #China has backed down, for now.
+		log = "[GetDateText]: [This.GetName]: sino_indian.5.a executed"
+	}
+}
+
+#China has Won the Doklam Clash!
+news_event = {
+	id = sino_indian.6
+	title = sino_indian.6.t
+	
+	desc = { 
+		text = sino_indian.6.d
+		trigger = { original_tag = CHI }
+	}
+	
+	desc = {
+		text = sino_indian.6.d_RAJ
+		trigger = { NOT = { original_tag = CHI } }
+	}
+	
+	picture = GFX_china_indian_border_skirmish
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.6.a #A glorious victory!
+		trigger = { original_tag = CHI }
+		army_experience = 25
+		BHU = {
+			custom_effect_tooltip = CHI_large_influence_60_tt
+			hidden_effect = {
+				set_temp_variable = { influence_gain = 60 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = CHI }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+						add_to_array = { influence_array = CHI.id }
+						add_to_array = { influence_array_val = influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: sino_indian.6.a executed"
+	}
+	
+	option = {
+		name = sino_indian.6.b #A humiliating defeat...
+		trigger = { NOT = { original_tag = CHI } }
+		add_political_power = -100
+		BHU = {
+			custom_effect_tooltip = CHI_large_influence_60_tt
+		}
+		log = "[GetDateText]: [This.GetName]: sino_indian.6.b executed"
+	}
+}
+
+#China has Lost the Doklam Clash!
+news_event = {
+	id = sino_indian.7
+	title = sino_indian.7.t
+	
+	desc = { 
+		text = sino_indian.7.d
+		trigger = { original_tag = CHI }
+	}
+	
+	desc = {
+		text = sino_indian.7.d_RAJ
+		trigger = { NOT = { original_tag = CHI } }
+	}
+	
+	picture = GFX_china_indian_border_skirmish
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.7.a #A glorious victory!
+		trigger = { NOT = { original_tag = CHI } }
+		army_experience = 25
+		log = "[GetDateText]: [This.GetName]: sino_indian.7.a executed"
+	}
+	
+	option = {
+		name = sino_indian.7.b #A humiliating defeat...
+		trigger = { original_tag = CHI }
+		add_political_power = -100
+		log = "[GetDateText]: [This.GetName]: sino_indian.7.b executed"
+	}
+}
+
+#The Doklam Clash Ends Inconclusively
+news_event = {
+	id = sino_indian.8
+	title = sino_indian.8.t
+	
+	desc = { 
+		text = sino_indian.8.d
+		trigger = { original_tag = CHI }
+	}
+	
+	desc = {
+		text = sino_indian.8.d_RAJ
+		trigger = { NOT = { original_tag = CHI } }
+	}
+	
+	picture = GFX_china_indian_border_skirmish
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.8.a #Peace, for now...
+		log = "[GetDateText]: [This.GetName]: sino_indian.8.a executed"
+	}
+}
+
+#China has taken Arunachal Pradesh!
+news_event = {
+	id = sino_indian.9
+	title = sino_indian.9.t
+	
+	desc = { 
+		text = sino_indian.9.d
+		trigger = { original_tag = CHI }
+	}
+	
+	desc = {
+		text = sino_indian.9.d_RAJ
+		trigger = { NOT = { original_tag = CHI } }
+	}
+	
+	picture = GFX_china_indian_border_skirmish
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.9.a #A glorious victory!
+		trigger = { original_tag = CHI }
+		CHI = { transfer_state = 475 }
+		army_experience = 25
+		log = "[GetDateText]: [This.GetName]: sino_indian.9.a executed"
+	}
+	
+	option = {
+		name = sino_indian.9.b #A humiliating defeat...
+		trigger = { NOT = { original_tag = CHI } }
+		add_political_power = -100
+		log = "[GetDateText]: [This.GetName]: sino_indian.9.b executed"
+	}
+}
+
+#China has failed to take Arunachal Pradesh!
+news_event = {
+	id = sino_indian.10
+	title = sino_indian.10.t
+	
+	desc = { 
+		text = sino_indian.10.d
+		trigger = { original_tag = CHI }
+	}
+	
+	desc = {
+		text = sino_indian.10.d_RAJ
+		trigger = { NOT = { original_tag = CHI } }
+	}
+	
+	picture = GFX_china_indian_border_skirmish
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.10.a #A glorious victory!
+		trigger = { NOT = { original_tag = CHI } }
+		army_experience = 25
+		log = "[GetDateText]: [This.GetName]: sino_indian.10.a executed"
+	}
+	
+	option = {
+		name = sino_indian.10.b #A humiliating defeat...
+		trigger = { original_tag = CHI }
+		add_political_power = -100
+		log = "[GetDateText]: [This.GetName]: sino_indian.10.b executed"
+	}
+}
+
+#China is proposing a treaty to improve relations and resolve disputes
+country_event = {
+	id = sino_indian.11
+	title = sino_indian.11.t
+	desc = sino_indian.11.d
+	
+	picture = GFX_politics_negotiations
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.11.a #We should accept this historic offer!
+		475 = { remove_core_of = FROM }
+		591 = { remove_core_of = RAJ }
+		add_opinion_modifier = {
+			target = FROM
+			modifier = declaration_of_friendship
+		}
+		FROM = {
+			add_opinion_modifier = {
+				target = RAJ
+				modifier = declaration_of_friendship
+			}
+		}
+		every_country = { news_event = { id = sino_indian.12 days = 2 } }
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Disengage_from_Pakistan }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_End_Joint_Military_Exercises }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Strategic_Realignment }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Drop_Claims_on_Bhutan }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Signal_Willingness_to_Negotiate }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Joint_Development_Zones }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Negotiate_Maritime_Boundaries }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Respect_Nepalese_Neutrality }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: sino_indian.11.a executed"
+	}
+	
+	option = {
+		name = sino_indian.11.b #The Chinese are not to be trusted!
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Doklam_Road_Standoff }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Support_Nepals_Maoists }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Iron_Brothers }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Joint_Military_Projects }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Militarize_Gwadar_Port }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Yarlung_Tsangpo_Diversion_Project }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Enforce_the_9_Dash_Line }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Provocative_Fleet_Exercises }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Island_Building }
+			}
+			modifier = {
+				factor = 2
+				CHI = { has_completed_focus = CHI_Ramp_Up_Tensions }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: sino_indian.11.b executed"
+	}
+}
+
+#The Sino-Indian Treaty of Friendship
+news_event = {
+	id = sino_indian.12
+	title = sino_indian.12.t
+	desc = sino_indian.12.d
+	
+	picture = GFX_trade_agreement
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sino_indian.12.a #A good day for peace and diplomacy!
+		trigger = { NOT = { original_tag = PAK } }
+		log = "[GetDateText]: [This.GetName]: sino_indian.12.a executed"
+	}
+	
+	option = {
+		name = sino_indian.12.b #An extremely worrying development...
+		trigger = { original_tag = PAK }
+		log = "[GetDateText]: [This.GetName]: sino_indian.12.b executed"
+	}
