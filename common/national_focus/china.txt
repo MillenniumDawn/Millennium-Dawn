@@ -14349,6 +14349,28 @@ focus_tree = {
 					target = CHI
 					modifier = military_cooperation
 				}
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 20 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = CHI.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = CHI_small_influence_20_tt
 			}
 			every_country = {
 				limit = { OR = { original_tag = PAK original_tag = TAJ original_tag = CHI } }
@@ -15295,7 +15317,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			add_war_support = 0.02
 			log = "[GetDateText]: [This.GetName]: focus CHI_Maintain_Historical_Enmity executed"
 		}
 		
@@ -15323,7 +15345,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 5
+			
 			log = "[GetDateText]: [This.GetName]: focus CHI_Demand_the_Diaoyu_Islands executed"
 		}
 		
@@ -15351,7 +15373,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			JAP = { add_opinion_modifier = { target = CHI modifier = xenophobic_agenda } }
 			log = "[GetDateText]: [This.GetName]: focus CHI_Incite_Anti_Japanese_Sentiment executed"
 		}
 		
@@ -15409,7 +15431,10 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			remove_opinion_modifier = {
+				target = JAP
+				modifier = refuse_to_apologize_for_warcrimes
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_A_Pragmatic_Approach executed"
 		}
 		
@@ -15437,7 +15462,16 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			remove_opinion_modifier = {
+				target = ROOT
+				modifier = historic_enemies
+			}
+			JAP = {
+				remove_opinion_modifier = {
+					target = ROOT
+					modifier = historic_enemies
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Assuage_Japanese_Concerns executed"
 		}
 		
@@ -15465,7 +15499,38 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			add_opinion_modifier = {
+				target = JAP
+				modifier = improve_trade
+			}
+			hidden_effect = {
+				set_temp_variable = { influence_gain = 20 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = CHI }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+						add_to_array = { influence_array = JAP.id }
+						add_to_array = { influence_array_val = influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+			}
+			custom_effect_tooltip = JAP_influence_20_tt
+			JAP = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = improve_trade
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Encourage_Appreciation_of_Japanese_Culture executed"
 		}
 		
@@ -15519,10 +15584,55 @@ focus_tree = {
 		prerequisite = { focus = CHI_Sign_Strategic_Partnership_Agreement focus = CHI_Clash_Over_the_East_China_Sea }
 		
 		available = {
+			OR = {
+				has_completed_focus = CHI_Sign_Strategic_Partnership_Agreement
+				JAP = { is_puppet_of = CHI }
+			}
+			JAP = {
+				custom_trigger_tooltip = {
+					tooltip = CHI_influence_higher_30_tt
+					JAP = {
+						set_temp_variable = { temp_idx = -1 }
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							if = {
+								limit = { var:v = { tag = CHI } }
+								set_temp_variable = { temp_idx = i }
+								always = yes
+							}
+							else = { always = no }
+						}
+						check_variable = { temp_idx > -1 }
+						check_variable = { influence_array_calc^temp_idx > 0.3 }
+					}
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 50
+			JAP = {
+				custom_effect_tooltip = 11_BRM_increase_domestic_influence_tt
+				hidden_effect = {
+					add_to_variable = { domestic_influence_amount = 40 }
+					recalculate_influence = yes
+				}
+			}
+			hidden_effect = {
+				827 = { 
+					add_core_of = JAP 
+					remove_core_of = USA
+				}
+			}
+			JAP = { transfer_state = 827 }
+			USA = {	
+				diplomatic_relation = {
+					country = JAP
+					relation = military_access
+					active = no
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Decouple_Japan executed"
 		}
 		
@@ -15532,4 +15642,1060 @@ focus_tree = {
 	}
 	
 	##GLOBAL INFLUENCE TREE##
+	focus = {
+		id = CHI_Global_Influence
+		icon = global_community
+		
+		x = 55
+		y = 8
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Global_Influence executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Favor_Multipolarity
+		icon = national_unity_red
+		
+		x = -1
+		y = 1
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Global_Influence }
+		mutually_exclusive = { focus = CHI_A_Rival_Superpower }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Favor_Multipolarity executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Peacekeeping_Contributions
+		icon = align_to_united_nations
+		
+		x = -2
+		y = 2
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Favor_Multipolarity }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Peacekeeping_Contributions executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Support_Security_Council_Reform
+		icon = united_nations
+		
+		x = -1
+		y = 3
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Peacekeeping_Contributions }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Support_Security_Council_Reform executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_A_Rival_Superpower
+		icon = great_red_menace
+		
+		x = 1
+		y = 1
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Global_Influence }
+		mutually_exclusive = { focus = CHI_Favor_Multipolarity }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_A_Rival_Superpower executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_End_US_Hegemony
+		icon = stage_americas
+		
+		x = 0
+		y = 2
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Favor_Multipolarity focus = CHI_A_Rival_Superpower }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_End_US_Hegemony executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_The_Bears_Backyard
+		icon = war_against_russia2
+		
+		x = 2
+		y = 2
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_A_Rival_Superpower }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_The_Bears_Backyard executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_A_New_Imperium
+		icon = mandate_of_heaven
+		
+		x = 1
+		y = 3
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_The_Bears_Backyard }
+		prerequisite = { focus = CHI_End_US_Hegemony }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_A_New_Imperium executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Form_the_SCO
+		icon = treaty
+		
+		x = -6
+		y = 1
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Global_Influence }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Form_the_SCO executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Emphasize_Economic_Cooperation
+		icon = money
+		
+		x = -8
+		y = 2
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Form_the_SCO }
+		mutually_exclusive = { focus = CHI_Emphasize_Political_Cooperation }
+		mutually_exclusive = { focus = CHI_Emphasize_Military_Cooperation }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Economic_Cooperation executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Civilian_Technology_Sharing
+		icon = research3
+		
+		x = -8
+		y = 3
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Emphasize_Economic_Cooperation }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Civilian_Technology_Sharing executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Development_Assistance
+		icon = better_money
+		
+		x = -9
+		y = 4
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Civilian_Technology_Sharing focus = CHI_Crack_Down_on_the_Three_Evils }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Development_Assistance executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Emphasize_Political_Cooperation
+		icon = tripartite_pact
+		
+		x = -6
+		y = 2
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Form_the_SCO }
+		mutually_exclusive = { focus = CHI_Emphasize_Economic_Cooperation }
+		mutually_exclusive = { focus = CHI_Emphasize_Military_Cooperation }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Political_Cooperation executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Crack_Down_on_the_Three_Evils
+		icon = espionage
+		
+		x = -6
+		y = 3
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Emphasize_Political_Cooperation }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Crack_Down_on_the_Three_Evils executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Emphasize_Military_Cooperation
+		icon = military_deal
+		
+		x = -4
+		y = 2
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Form_the_SCO }
+		mutually_exclusive = { focus = CHI_Emphasize_Economic_Cooperation }
+		mutually_exclusive = { focus = CHI_Emphasize_Political_Cooperation }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Military_Cooperation executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Military_Technology_Sharing
+		icon = small_arms_east
+		
+		x = -4
+		y = 3
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Emphasize_Military_Cooperation }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Military_Technology_Sharing executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Strengthen_Security_Framework
+		icon = defense
+		
+		x = -3
+		y = 4
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Military_Technology_Sharing focus = CHI_Crack_Down_on_the_Three_Evils }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Strengthen_Security_Framework executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Chinese_Dominance
+		icon = peoples_republic_of_china
+		
+		x = -7
+		y = 4
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Civilian_Technology_Sharing focus = CHI_Military_Technology_Sharing focus = CHI_Crack_Down_on_the_Three_Evils }
+		mutually_exclusive = { focus = CHI_Equal_Partners }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Chinese_Dominance executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Equal_Partners
+		icon = align_to_russia
+		
+		x = -5
+		y = 4
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Civilian_Technology_Sharing focus = CHI_Military_Technology_Sharing focus = CHI_Crack_Down_on_the_Three_Evils }
+		mutually_exclusive = { focus = CHI_Chinese_Dominance }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Equal_Partners executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_ASEAN_Integration
+		icon = align_to_asean
+		
+		x = -9
+		y = 5
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Chinese_Dominance focus = CHI_Equal_Partners }
+		prerequisite = { focus = CHI_Development_Assistance }
+		mutually_exclusive = { focus = CHI_Undermine_ASEAN }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_ASEAN_Integration executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Undermine_ASEAN
+		icon = south_east_asian_offensive
+		
+		x = -7
+		y = 5
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Chinese_Dominance focus = CHI_Equal_Partners }
+		prerequisite = { focus = CHI_Development_Assistance }
+		mutually_exclusive = { focus = CHI_ASEAN_Integration }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Undermine_ASEAN executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Split_CSTO
+		icon = russia
+		
+		x = -5
+		y = 5
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Chinese_Dominance }
+		prerequisite = { focus = CHI_Strengthen_Security_Framework }
+		mutually_exclusive = { focus = CHI_Merge_with_CSTO }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Split_CSTO executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Merge_with_CSTO
+		icon = align_to_csto
+		
+		x = -3
+		y = 5
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Equal_Partners }
+		prerequisite = { focus = CHI_Strengthen_Security_Framework }
+		mutually_exclusive = { focus = CHI_Split_CSTO }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_Merge_with_CSTO executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_An_Alliance_to_Rival_NATO
+		icon = renounce_nato
+		
+		x = -4
+		y = 6
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Split_CSTO focus = CHI_Merge_with_CSTO }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: focus CHI_An_Alliance_to_Rival_NATO executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Forum_on_China_African_Cooperation
+		icon = africa
+		
+		x = 6
+		y = 1
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Global_Influence }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_Forum_on_China_African_Cooperation executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_China_Africa_Development_Fund
+		icon = money
+		
+		x = 5
+		y = 2
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Forum_on_China_African_Cooperation }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_China_Africa_Development_Fund executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Invest_in_Cheap_Energy
+		icon = money_on_fire
+		
+		x = 3
+		y = 3
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_China_Africa_Development_Fund }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_Invest_in_Cheap_Energy executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Invest_in_Clean_Energy
+		icon = sustainable_development
+		
+		x = 5
+		y = 3
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_China_Africa_Development_Fund }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_Invest_in_Clean_Energy executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	
+	focus = {
+		id = CHI_Outsource_Cheap_Labor
+		icon = become_puppet
+		
+		x = 3
+		y = 4
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Invest_in_Cheap_Energy focus = CHI_Invest_in_Clean_Energy }
+		mutually_exclusive = { focus = CHI_Workers_Rights }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_Workers_Rights executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Workers_Rights
+		icon = labor_unions
+		
+		x = 5
+		y = 4
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Invest_in_Cheap_Energy focus = CHI_Invest_in_Clean_Energy }
+		mutually_exclusive = { focus = CHI_Outsource_Cheap_Labor }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_Workers_Rights executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Agriculture
+		icon = agriculture2
+		
+		x = 7
+		y = 3
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_China_Africa_Development_Fund }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_Agriculture executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Develop_Hospitals
+		icon = generic_healthcare
+		
+		x = 7
+		y = 4
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Agriculture }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_Develop_Hospitals executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Leverage_Influence
+		icon = stage_africa
+		
+		x = 4
+		y = 5
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Develop_Hospitals focus = CHI_Outsource_Cheap_Labor focus = CHI_Workers_Rights }
+		mutually_exclusive = { focus = CHI_Write_Off_Debts }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_Leverage_Influence executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Write_Off_Debts
+		icon = align_to_africa
+		
+		x = 6
+		y = 5
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Develop_Hospitals focus = CHI_Outsource_Cheap_Labor focus = CHI_Workers_Rights }
+		mutually_exclusive = { focus = CHI_Leverage_Influence }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_Write_Off_Debts executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Friendship_Schools
+		icon = military_academy
+		
+		x = 9
+		y = 2
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Forum_on_China_African_Cooperation }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_Friendship_Schools executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_Joint_Research
+		icon = research3
+		
+		x = 9
+		y = 3
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Friendship_Schools }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_Joint_Research executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
+	
+	focus = {
+		id = CHI_TV_and_Internet_Access
+		icon = social_media
+		
+		x = 9
+		y = 4
+		relative_position_id = CHI_Global_Influence
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = CHI_Joint_Research }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 25
+			log = "[GetDateText]: [This.GetName]: CHI_TV_and_Internet_Access executed"
+		}
+		
+		ai_will_do = {
+			base = 100
+		}
+	}
 }
