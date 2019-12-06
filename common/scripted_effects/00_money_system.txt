@@ -1,17 +1,18 @@
 # Written by Killerrabbit
+# Optimized by Gearz
 
 # Calculating things for the money system
 
 #Interest rates are set in GDP/C - need modifier based on debt_ratio, to avoid rich countries getting infinite rich by taking huge loans and reinvesting abroad
 
 #Variable explanations
-
 #####treasury_rate - How much money your country is making daily#####
 #tax_gain - money your gaining from taxes
 #int_investments_rate - money your gaining from international investments
 #resource_sale_rate - money your gaining from exports
+#size_modifier - total size of the targeted country 
 
-#####expense_gain - total ammount of money your spending#####
+#####expense_gain - total amount of money your spending#####
 #debt_rate - How much money your country owes in debt
 #interest_rate - the interest  rate you pay DAILY on debt.
 #econ_cycle_upg_cost - cost to upgrade economic cycle
@@ -20,19 +21,18 @@
 #health_gain cost of health care law
 #welfare_gain cost of welfare law
 #military_rate cost of military law
-#personnel_cost - how much you pay soldiers and maintainance on equipment
+#personnel_cost - how much you pay soldiers and maintenance on equipment
 
 
 ###Treasury reset###
-#In a couple places I've left a comment saying reffering to tressury reset explanation. This is the explanation
+#In a couple places I've left a comment saying referring to treasury reset explanation. This is the explanation
 #It took me a while to figure out why you add debt_rate to treasury_rate so ill try to explain (Gearz)
 #When your debt_rate changes you need to "reset the treasury_rate" so you return
-#how much you were taking from the treasury before and then take the new ammount you need
+#how much you were taking from the treasury before and then take the new amount you need
 #e.g treasury_rate $10B, you take $2B for your current debt_rate. Treasury rate = $8B
 #Your new debt_rate is $4B. So you need to "reset the treasury" you give the treasury_rate back the $2B
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 ####
-
 
 add_tax_laws = {
 	meta_effect = {
@@ -54,7 +54,6 @@ initial_money_setup = {
 	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
 	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
-	update_AI_NO_WANT_DEBT = yes
 }
 
 #only for released nations
@@ -69,12 +68,10 @@ startup_extra_setup = {
 	set_variable = { econ_cycle_upg_cost = 6 }
 	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
 	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
-	update_AI_NO_WANT_DEBT = yes
 
 }
 
-###To messy not touching - Gearz
-#only for released nations
+#Calculates the "Size" of industry. It uses the resource exports and civilian factories to judge the size of the countries economy. - Bird 
 firsttime_calculate_size_modifier = {
 
 	set_variable = { resource_exports = resource_exported@steel }
@@ -103,41 +100,45 @@ firsttime_calculate_size_modifier = {
 	divide_temp_variable = { var = temp_resource_import value = 6 }
 	add_to_variable = { size_modifier = temp_resource_import }
 	
-	if = { limit = { check_variable = { size_modifier = 0 } }
+	if = {
+		limit = { check_variable = { size_modifier = 0 } }
 		add_to_variable = { var = size_modifier value = 0.03 }
-		else = { multiply_variable = { var = size_modifier value = 0.22 }
-	
-		if = { limit = { check_variable = { size_modifier > 1.1 } }
-			subtract_from_variable = { var = size_modifier value = 0.58 }
-			
-			else = { if = { limit = { check_variable = { size_modifier = 0.22 } }
+		else = { 
+			multiply_variable = { var = size_modifier value = 0.22 }
+			if = { 
+				limit = { check_variable = { size_modifier > 1.1 } }
+				subtract_from_variable = { var = size_modifier value = 0.58 }
+			}
+			else_if = { 
+				limit = { check_variable = { size_modifier = 0.22 } }
 				subtract_from_variable = { var = size_modifier value = 0.14 }
-					
-				else = { if = { limit = { check_variable = { size_modifier = 0.44 } }
-					subtract_from_variable = { var = size_modifier value = 0.30 }
-								
-					else = { if = { limit = { check_variable = { size_modifier = 0.66 } }
-						subtract_from_variable = { var = size_modifier value = 0.43 }
-										
-						else = { if = { limit = { check_variable = { size_modifier = 0.88 } }
-							subtract_from_variable = { var = size_modifier value = 0.50 }
-												
-							else = { if = { limit = { check_variable = { size_modifier = 1.1 } }
-								subtract_from_variable = { var = size_modifier value = 0.56 }
-							} }
-						} }
-					} }
-				} }
-			} }
-		} }
+			}        
+			else_if = { 
+				limit = { check_variable = { size_modifier = 0.44 } }
+				subtract_from_variable = { var = size_modifier value = 0.30 }
+			}                        
+			else_if = { 
+				limit = { check_variable = { size_modifier = 0.66 } }
+				subtract_from_variable = { var = size_modifier value = 0.43 }
+			}                                
+			else_if = { 
+				limit = { check_variable = { size_modifier = 0.88 } }
+				subtract_from_variable = { var = size_modifier value = 0.50 }            
+			}
+			else_if = { 
+				limit = { check_variable = { size_modifier = 1.1 } }
+				subtract_from_variable = { var = size_modifier value = 0.56 }
+			}
+		}
 	}
 }
 
-#To messy not touching - Gearz
+#Rewrote Size Modifier
 ingame_calculate_size_modifier = {
 	
 	set_temp_variable = { size_mod_check = num_of_civilian_factories }
 	
+	##Used to prevent instant bankruptcy
 	set_temp_variable = { temp_resource_import = resource_imported@oil }
 	divide_temp_variable = { var = temp_resource_import value = 6 }
 	add_to_variable = { size_mod_check = temp_resource_import }
@@ -154,36 +155,42 @@ ingame_calculate_size_modifier = {
 	divide_temp_variable = { var = temp_resource_import value = 6 }
 	add_to_variable = { size_mod_check = temp_resource_import }
 	
-	if = { limit = { check_variable = { size_mod_check = 0 } }
+	if = { 
+		limit = { check_variable = { size_mod_check = 0 } }
 		add_to_temp_variable = { size_mod_check = 0.03 }
-		else = { multiply_temp_variable = { size_mod_check = 0.22 } }
-	}
-	if = { limit = { check_variable = { size_mod_check > 1.1 } }
-		subtract_from_temp_variable = { size_mod_check = 0.58 }	
-			
-		else = { if = { limit = { check_variable = { size_mod_check = 0.22 } }
-			subtract_from_temp_variable = { size_mod_check = 0.14 }
+		else_if = { 
+			multiply_temp_variable = { size_mod_check = 0.22 } 
+		}
+		else = { 
+			limit = { check_variable = { size_mod_check > 1.1 } }
+			subtract_from_temp_variable = { size_mod_check = 0.58 }	
 				
-			else = { if = { limit = { check_variable = { size_mod_check = 0.44 } }
+			else_if = { 
+				limit = { check_variable = { size_mod_check = 0.22 } }
+				subtract_from_temp_variable = { size_mod_check = 0.14 }
+			}		
+			else_if = { 
+				limit = { check_variable = { size_mod_check = 0.44 } }
 				subtract_from_temp_variable = { size_mod_check = 0.30 }
-					
-				else = { if = { limit = { check_variable = { size_mod_check = 0.66 } }
-					subtract_from_temp_variable = { size_mod_check = 0.43 }
-						
-					else = { if = { limit = { check_variable = { size_mod_check = 0.88 } }
-						subtract_from_temp_variable = { size_mod_check = 0.50 }
-							
-						else = { if = { limit = { check_variable = { size_mod_check = 1.1 } }
-							subtract_from_temp_variable = { size_mod_check = 0.56 }
-						} }
-					} }
-				} }
-			} }
-		} }
+			}		
+			else_if = { 
+				limit = { check_variable = { size_mod_check = 0.66 } }
+				subtract_from_temp_variable = { size_mod_check = 0.43 }
+			}		
+			else_if = { 
+				limit = { check_variable = { size_mod_check = 0.88 } }
+				subtract_from_temp_variable = { size_mod_check = 0.50 }
+			}
+			else_if = { 
+				limit = { check_variable = { size_mod_check = 1.1 } }
+				subtract_from_temp_variable = { size_mod_check = 0.56 }
+			}
+		}
 	}
+	
 	### Does it if new civilian factories has been added
-	if = { limit = { check_variable = { var = size_modifier value = size_mod_check compare = not_equals } }
-		
+	if = { 
+		limit = { check_variable = { var = size_modifier value = size_mod_check compare = not_equals } }
 		
 		#Divides/removes previous to avoid distortion
 		add_to_variable = { var = treasury_rate value = expense_gain }
@@ -237,33 +244,36 @@ ingame_calculate_size_modifier = {
 		
 		#subtract_from_variable = { size_modifier = resource_exports }
 		
-		if = { limit = { check_variable = { size_modifier = 0 } }
+		if = {
+			limit = { check_variable = { size_modifier = 0 } }
 			add_to_variable = { var = size_modifier value = 0.03 }
-			else = { multiply_variable = { var = size_modifier value = 0.22 }
-		
-			if = { limit = { check_variable = { size_modifier > 1.1 } }
-				subtract_from_variable = { var = size_modifier value = 0.58 }
-				
-				else = { if = { limit = { check_variable = { size_modifier = 0.22 } }
+			else = { 
+				multiply_variable = { var = size_modifier value = 0.22 }
+				if = { 
+					limit = { check_variable = { size_modifier > 1.1 } }
+					subtract_from_variable = { var = size_modifier value = 0.58 }
+				}
+				else_if = { 
+					limit = { check_variable = { size_modifier = 0.22 } }
 					subtract_from_variable = { var = size_modifier value = 0.14 }
-						
-					else = { if = { limit = { check_variable = { size_modifier = 0.44 } }
-						subtract_from_variable = { var = size_modifier value = 0.30 }
-									
-						else = { if = { limit = { check_variable = { size_modifier = 0.66 } }
-							subtract_from_variable = { var = size_modifier value = 0.43 }
-											
-							else = { if = { limit = { check_variable = { size_modifier = 0.88 } }
-								subtract_from_variable = { var = size_modifier value = 0.50 }
-													
-								else = { if = { limit = { check_variable = { size_modifier = 1.1 } }
-									subtract_from_variable = { var = size_modifier value = 0.56 }
-								} }
-							} }
-						} }
-					} }
-				} }
-			} }
+				}        
+				else_if = { 
+					limit = { check_variable = { size_modifier = 0.44 } }
+					subtract_from_variable = { var = size_modifier value = 0.30 }
+				}                        
+				else_if = { 
+					limit = { check_variable = { size_modifier = 0.66 } }
+					subtract_from_variable = { var = size_modifier value = 0.43 }
+				}                                
+				else_if = { 
+					limit = { check_variable = { size_modifier = 0.88 } }
+					subtract_from_variable = { var = size_modifier value = 0.50 }            
+				}
+				else_if = { 
+					limit = { check_variable = { size_modifier = 1.1 } }
+					subtract_from_variable = { var = size_modifier value = 0.56 }
+				}
+			}
 		}
 		
 		multiply_variable = { var = bureaucracy_gain value = size_modifier }
@@ -336,6 +346,7 @@ calculate_tax_gain = {
 		multiply_variable = { var = tax_gain value = 1.10 }
 	}
 	#######################################################
+	##Corruption reduces tax income
 	if = {
 		limit { has_idea = paralyzing_corruption }
 		multiply_variable = { var = tax_gain value = 0.65 }
@@ -483,7 +494,6 @@ calculate_interest_rate_ai = {
 		min = 0.8
 		max = 50
 	}
-	update_AI_NO_WANT_DEBT = yes #need to talk to ducky about this - Gearz
 }
 calculate_interest_rate_player = {
 	
@@ -614,15 +624,13 @@ calculate_interest_rate_player = {
 		set_variable = { var = interest_rate value = array_interest_rate^7 }
 	}
 	else = { set_variable = { var = interest_rate value = array_interest_rate^8 } }
-	
-	
-	update_AI_NO_WANT_DEBT = yes #need to talk to ducky about this - Gearz
 }
 
 
 ### safeproofing - reached here #killerrabbit
 
 #Update the debt rate called mostly when debt is taken
+##The debt rate determines when a country actually goes bankrupt versues when it maintains its current economic standpoint.
 calculate_debt_rate = {
 	
 	#See Treasury reset comment at top of page
@@ -637,7 +645,7 @@ calculate_debt_rate = {
 		limit = { 
 			NOT = { has_country_flag = bailout_happened }
 		}
-		#check for imminent bankrupcy
+		#checks for imminent bankrupcy
 		set_temp_variable = { bankrupcy_check = size_modifier }
 		divide_temp_variable = { bankrupcy_check = 3.6 }
 		if = {
@@ -678,10 +686,9 @@ update_military_rate = {
 	}
 }
 update_military_rate_ai = {
-	### Defence spending ###
+	### Defence Spending ###
 	
 	#There are two parts to Mil spending "Military spending" and personel cost
-	
 	#Military spending is basically Mil/Nav factories modified by defense spending and GDP
 	set_temp_variable = { temp_defence_spend = num_of_military_factories }
 	add_to_temp_variable = { temp_defence_spend = num_of_naval_factories }
