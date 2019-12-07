@@ -912,6 +912,7 @@ country_event = {
 		}
 	}
 }
+
 #####################################################################
 #####################################################################
 
@@ -1316,4 +1317,264 @@ country_event = { #Response event 1 for 4.9.e
 		}
 }
 				
-			
+
+
+# Generic country demands us to submit
+country_event = {
+	id = md4.14
+	immediate = { log = "[GetDateText]: [Root.GetName]: event md4.14" }
+	title = md4.14.t
+	desc = md4.14.d
+	
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+	
+	option = {
+		name = md4.14.a
+		log = "[GetDateText]: [This.GetName]: md4.14.a executed"
+		ai_chance = {
+			factor = 60
+			modifier = {
+				factor = 1.5
+				strength_ratio = {
+					tag = FROM
+					ratio < 0.5
+				}
+			}
+			modifier = {
+				factor = 0.17
+				strength_ratio = {
+					tag = FROM
+					ratio > 1.5
+				}
+			}
+			modifier = {
+				factor = 0
+				strength_ratio = {
+					tag = FROM
+					ratio > 2
+				}
+			}
+		}	
+		FROM = { country_event = { id = md4.15 hours = 6 } }
+	}
+	option = {
+		name = md4.14.b
+		log = "[GetDateText]: [This.GetName]: md4.14.b executed"
+		ai_chance = {
+			factor = 40
+			modifier = {
+				factor = 0.25
+				strength_ratio = {
+					tag = FROM
+					ratio < 0.5
+				}
+			}
+			modifier = {
+				factor = 2.25
+				strength_ratio = {
+					tag = FROM
+					ratio > 1.5
+				}
+			}
+			modifier = {
+				factor = 100
+				strength_ratio = {
+					tag = FROM
+					ratio > 2
+				}
+			}
+		}
+		FROM = { country_event = { id = md4.16 hours = 6 } }	
+	}
+}
+
+# Generic country accepts submission
+country_event = {
+	id = md4.15
+	immediate = { log = "[GetDateText]: [Root.GetName]: event md4.15" }
+	title = md4.15.t
+	desc = md4.15.d
+	
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+	
+	option = {
+		name = md4.15.a
+		log = "[GetDateText]: [This.GetName]: md4.15.a executed"
+		puppet = FROM
+	}
+}
+
+# Generic country rejects submission
+country_event = {
+	id = md4.16
+	immediate = { log = "[GetDateText]: [Root.GetName]: event md4.16" }
+	title = md4.16.t
+	desc = md4.16.d
+	
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+	
+	option = {
+		name = md4.16.a
+		log = "[GetDateText]: [This.GetName]: md4.16.a executed"
+		create_wargoal = {
+			target = FROM
+			type = puppet_wargoal_focus 
+		}
+	}
+}	
+
+# Generic country accepts alliance (use only if country inviting is already in faction, otherwise define a custom faction name, eg. see Syria)
+country_event = {
+	id = md4.17
+	immediate = { log = "[GetDateText]: [Root.GetName]: event md4.17" }
+	title = md4.17.t
+	desc = md4.17.d
+	
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+	
+	option = {
+		name = md4.17.a
+		log = "[GetDateText]: [This.GetName]: md4.17.a executed"
+		ai_chance = { factor = 100 }
+		if = {
+			limit = {
+				is_in_faction = yes
+				is_faction_leader = yes
+			}
+			ROOT = { add_to_faction = FROM }
+		}
+		if = {
+			limit = {
+				is_in_faction = yes
+				is_faction_leader = no
+			}
+			random_country = {
+				limit = {
+					is_in_faction_with = ROOT
+					is_faction_leader = yes
+				}
+				THIS = { add_to_faction = FROM }
+			}
+		}
+		if = {
+			limit = {
+				is_in_faction = no
+			}
+			if = {
+				limit = {
+					original_tag = SYR
+					original_tag = FSA
+					original_tag = NUS
+				}
+				create_faction = Peninsula_Sword
+			}
+			ROOT = { add_to_faction = FROM }
+		}
+		FROM = { 
+			add_ai_strategy = {
+				type = befriend
+				id = ROOT
+				value = 200
+			}
+			add_ai_strategy = {
+				type = alliance
+				id = ROOT
+				value = 200
+			}
+		}			
+	}
+}
+
+# Generic country rejects alliance
+country_event = {
+	id = md4.18
+	immediate = { log = "[GetDateText]: [Root.GetName]: event md4.18" }
+	title = md4.18.t
+	desc = md4.18.d
+	
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+	
+	option = {
+		name = md4.18.a
+		log = "[GetDateText]: [This.GetName]: md4.18.a executed"
+		ai_chance = { factor = 100 }	
+		add_opinion_modifier = {
+			target = ROOT
+			modifier = insult
+		}
+	}
+}	
+
+# Generic country cedes territory
+country_event = {
+	id = md4.19
+	immediate = { log = "[GetDateText]: [Root.GetName]: event md4.19" }
+	title = md4.19.t
+	desc = md4.19.d
+	
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+	
+	option = {
+		name = md4.19.a
+		log = "[GetDateText]: [This.GetName]: md4.19.a executed"
+		ai_chance = { factor = 100 }	
+		FROM = {
+			every_state = {
+				limit = { has_state_flag = SET_STATE_FOR_TRANSFER }
+				ROOT = { transfer_state = PREV }
+				if = {
+					limit = { FROM = { has_country_flag = STATE_TRANSFER_ADD_CORES } }
+					add_core_of = ROOT
+					FROM = { clr_country_flag = STATE_TRANSFER_ADD_CORES }
+				}
+				clr_state_flag = SET_STATE_FOR_TRANSFER
+			}
+		}
+	}
+}	
+
+# Generic country refuses to cede territory
+country_event = {
+	id = md4.20
+	immediate = { log = "[GetDateText]: [Root.GetName]: event md4.20" }
+	title = md4.20.t
+	desc = md4.20.d
+	
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+	
+	option = {
+		name = md4.20.a
+		log = "[GetDateText]: [This.GetName]: md4.20.a executed"
+		ai_chance = { factor = 100 }	
+		FROM = {
+			every_state = {
+				limit = { has_state_flag = SET_STATE_FOR_TRANSFER }
+				add_claim_by = ROOT
+				if = {
+					limit = { FROM = { has_country_flag = STATE_TRANSFER_ADD_CORES } }
+					add_core_of = ROOT
+					FROM = { clr_country_flag = STATE_TRANSFER_ADD_CORES }
+				}
+				clr_state_flag = SET_STATE_FOR_TRANSFER
+			}
+		}
+		create_wargoal = {
+			target = FROM
+			type = annex_everything
+		}
+	}
+}			
