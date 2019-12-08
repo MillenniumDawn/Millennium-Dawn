@@ -1,4 +1,5 @@
 ﻿add_namespace = Japan
+add_namespace = japan_classic
 
 #2000 Naka-Meguro derailment
 country_event = {
@@ -63,5 +64,516 @@ country_event = {
 		add_to_variable = { party_pop_array^4 = -0.0003 }
 		recalculate_party = yes
 		ai_chance = { factor = 10 }
+	}
+}
+
+#Invitation to the Japanese Alliance
+country_event = {
+	id = japan_classic.1
+	title = {
+		text = japan_classic.1.t1
+		trigger = { FROM = { tag = JAP } }
+	}
+	title = {
+		text = japan_classic.1.t2
+		trigger = {
+			NOT = { FROM = { tag = JAP } }
+		}
+	}
+	desc = {
+		text = japan_classic.1.d1
+		trigger = { FROM = { tag = JAP } }
+	}
+	desc = {
+		text = japan_classic.1.d2
+		trigger = { 
+			NOT = { FROM = { tag = JAP } }
+		}
+	}
+	picture = GFX_report_event_japan_classicese_flag
+	
+	is_triggered_only = yes
+	
+	option = {	#We accept
+		name = japan_classic.1.o1
+		set_country_flag = seek_japan_classicese_alliance
+		if = {
+			limit = { JAP = { is_faction_leader = yes } }
+			JAP = { add_to_faction = ROOT }
+		}
+		if = {
+			limit = { JAP = { is_faction_leader = no } }
+			random_country = {
+				limit = {
+					is_in_faction_with = JAP
+					is_faction_leader = yes
+				}
+				add_to_faction = ROOT
+			}
+		}
+		JAP = { country_event = diplomatic_response.1 }
+		ai_chance = {
+			factor = 10
+			modifier = {
+				has_similar_form_of_government = yes
+				add = 50
+			}
+			modifier = {
+				AND = {
+					country_exists = PRC
+					PRC = { has_government = communist }
+					PRC = { is_puppet = no }
+				}
+				add = 50
+			}
+			modifier = {
+				factor = 0
+				is_neutral = yes
+			}
+		}
+	}
+	
+	option = {	#We reject
+		name = japan_classic.1.o2
+		JAP = { country_event = diplomatic_response.2 }
+		ai_chance = {
+			factor = 10
+			modifier = {
+				tag = KOR
+				add = -10
+			}
+			modifier = {
+				tag = CHI
+				add = -10
+			}
+			modifier = {
+				AND = {
+					has_government = communist
+					NOT = { tag = VIN }
+				}
+				add = 1000
+			}
+		}
+	}
+}
+
+#Korean Unification Event: Japanese start
+country_event = {
+	id = japan_classic.2
+	title = japan_classic.2.t
+	desc = japan_classic.2.d
+	picture = GFX_report_event_the_two_koreas
+	
+	is_triggered_only = yes
+	
+	option = {	#We will issue the Ultimatum.
+		name = japan_classic.2.o1
+		KOR = { country_event = { id = japan_classic.3 hours = 6 } }
+	}
+}
+
+#Korean Unification Event: South Korean response
+country_event = {
+	id = japan_classic.3
+	title = japan_classic.3.t
+	desc = japan_classic.3.d
+	picture = GFX_report_event_the_two_koreas
+	
+	is_triggered_only = yes
+	
+	option = {	#A great plan!
+		name = japan_classic.3.o1
+		PRC = { country_event = { id = japan_classic.4 hours = 6 } }
+		JAP = { country_event = diplomatic_response.1 }
+		news_event = news.81
+		ai_chance = { factor = 100 }
+	}
+	
+	option = {	#We would rather not.
+		name = japan_classic.3.o2
+		JAP = { country_event = diplomatic_response.2 }
+		ai_chance = { factor = 0 }
+	}
+}
+
+#Korean Unification: Chinese Intervention
+country_event = {
+	id = japan_classic.4
+	title = japan_classic.4.t
+	desc = japan_classic.4.d
+	picture = GFX_report_event_the_two_koreas
+	
+	is_triggered_only = yes
+	
+	option = {	#We will intervene!
+		name = japan_classic.4.o1
+		JAP = { country_event = { id = japan_classic.5 hours = 6 } }
+		ai_chance = {
+			factor = 25
+			modifier = {
+				add = 40
+				JAP = { has_elections = no }
+			}
+			modifier = {
+				add = 40
+				KOR = { has_elections = no }
+			}
+		}
+	}
+	
+	option = {	#Kim is on his own
+		name = japan_classic.4.o2
+		PRK = { country_event = japan_classic.7 }
+		news_event = news.83
+		diplomatic_relation = { 
+			country = PRK
+			relation = guarantee 
+			active = no
+		}
+		ai_chance = {
+			factor = 50
+		}
+	}
+}
+
+#China intervenes!
+country_event = {
+	id = japan_classic.5
+	title = japan_classic.5.t
+	desc = japan_classic.5.d
+	picture = GFX_report_event_chinese_flag
+	
+	is_triggered_only = yes
+	
+	option = {	#We will stand march forward!
+		name = japan_classic.5.o1
+		PRK = { country_event = { id = japan_classic.6 hours = 6 } }
+		ai_chance = { factor = 50 }
+	}
+	
+	option = {	#We should stand down.
+		name = japan_classic.5.o2
+		news_event = news.82
+		ai_chance = { factor = 50 }
+	}
+}
+
+#North Korea: Outlook on war, China by our side.
+country_event = {
+	id = japan_classic.6
+	title = japan_classic.6.t
+	desc = japan_classic.6.d
+	picture = GFX_report_event_the_two_koreas
+	
+	is_triggered_only = yes
+	
+	option = {	#We will fight to our last breath!
+		name = japan_classic.6.o1
+		set_country_flag = north_korea_has_chinese_aid
+		KOR = { country_event = { id = japan_classic.8 hours = 6 } }
+		ai_chance = { factor = 95 }
+	}
+	
+	option = {	#Let us quickly take a train to China.
+		name = japan_classic.6.o2
+		news_event = news.84
+		KOR = { country_event = { id = japan_classic.9 hours = 6 } }
+		ai_chance = { factor = 5 }
+	}
+}
+
+#North Korea: Outlook on war, China not by our side.
+country_event = {
+	id = japan_classic.7
+	title = japan_classic.7.t
+	desc = japan_classic.7.d
+	picture = GFX_report_event_the_two_koreas
+	
+	is_triggered_only = yes
+	
+	option = {	#We will fight to our last breath!
+		name = japan_classic.7.o1
+		KOR = { country_event = { id = japan_classic.8 hours = 6 } }
+		ai_chance = { factor = 15 }
+	}
+	
+	option = {	#Let us quickly take a train to China.
+		name = japan_classic.7.o2
+		news_event = news.84
+		KOR = { country_event = { id = japan_classic.9 hours = 6 } }
+		ai_chance = { factor = 85 }
+	}
+}
+
+#South Korea: War on North Korea!
+country_event = {
+	id = japan_classic.8
+	title = japan_classic.8.t
+	desc = japan_classic.8.d
+	picture = GFX_report_event_the_two_koreas
+	
+	is_triggered_only = yes
+	
+	option = {	#Let's do it
+		name = japan_classic.8.o1
+		declare_war_on = { 
+			target = PRK
+			type = annex_everything
+		}
+		JAP = {
+			add_to_war = {
+				targeted_alliance = KOR
+				enemy = PRK
+			}
+		}
+		if = {
+			limit = { PRK = { has_country_flag = north_korea_has_chinese_aid } }
+			PRC = {
+				add_to_war = {
+					targeted_alliance = PRK
+					enemy = KOR
+				}
+			}
+		}
+	}
+}
+
+#South Korea: North Korean communists flee the country.
+country_event = {
+	id = japan_classic.9
+	title = japan_classic.9.t
+	desc = japan_classic.9.d
+	picture = GFX_report_event_the_two_koreas
+	
+	is_triggered_only = yes
+	
+	option = {	#Victory
+		name = japan_classic.9.o1
+		south_korea_unites_korea = yes
+	}
+}
+
+#Chinese Ultimatum Start
+country_event = {
+	id = japan_classic.10
+	title = japan_classic.10.t
+	desc = japan_classic.10.d
+	picture = GFX_report_event_japan_classicese_flag
+	
+	is_triggered_only = yes
+	
+	option = {	#Lets go!
+		name = japan_classic.10.o1
+		CHI = { country_event = { id = japan_classic.11 hours = 6 } }
+	}
+}
+
+#Taiwan: The Ultimatum
+country_event = {
+	id = japan_classic.11
+	title = japan_classic.11.t
+	desc = japan_classic.11.d
+	picture = GFX_report_event_japan_classicese_flag
+	
+	is_triggered_only = yes
+	
+	option = {	#Aight
+		name = japan_classic.11.o1
+		PRC = { country_event = { id = japan_classic.12 hours = 6 } }
+		JAP = { country_event = { id = diplomatic_response.1 hours = 6 } }
+		ai_chance = { factor = 95 }
+	}
+	
+	option = {	#Nah
+		name = japan_classic.11.o2
+		JAP = { country_event = { id = diplomatic_response.2 hours = 6 } }
+		ai_chance = { factor = 5 }
+	}
+}
+
+#China: The Ultimatum
+country_event = {
+	id = japan_classic.12
+	title = japan_classic.12.t
+	desc = japan_classic.12.d
+	picture = GFX_report_event_japan_classicese_flag
+	
+	is_triggered_only = yes
+	
+	option = {	#Yeah no
+		name = japan_classic.12.o1
+		CHI = { country_event = { id = japan_classic.13 hours = 6 } }
+		ai_chance = { factor = 100 }
+	}
+	
+	option = {	#Alright we concede
+		name = japan_classic.12.o2
+		CHI = { country_event = { id = japan_classic.14 hours = 6 } }
+		ai_chance = { factor = 0 }
+	}
+}
+
+#Taiwan: China defies us!
+country_event = {
+	id = japan_classic.13
+	title = japan_classic.13.t
+	desc = japan_classic.13.d
+	picture = GFX_report_event_chinese_flag
+	
+	is_triggered_only = yes
+	
+	option = {	#Aight
+		name = japan_classic.13.o1
+		declare_war_on = {
+			target = PRC
+			type = annex_everything
+		}
+		JAP = {
+			add_to_war = {
+				targeted_alliance = CHI
+				enemy = PRC
+			}
+		}
+	}
+}
+
+#Taiwan: Lets annex China
+country_event = {
+	id = japan_classic.14
+	title = japan_classic.14.t
+	desc = japan_classic.14.d
+	picture = GFX_report_event_chinese_flag
+	
+	is_triggered_only = yes
+	
+	option = {	#Victory
+		name = japan_classic.14.o1
+		taiwan_unites_china = yes
+	}
+}
+
+#Keizo Obuchi suffers a stroke
+country_event = {
+	id = japan_classic.15
+	title = japan_classic.15.t
+	desc = japan_classic.15.d
+	picture = GFX_report_event_hospital
+	
+	is_triggered_only = yes
+	
+	trigger = { has_government = conservative }
+	
+	immediate = {
+		hidden_effect = { country_event = { id = japan_classic.16 days = 4 } }
+		hidden_effect = {
+			create_country_leader = {
+				name = "The Diet"
+				ideology = fiscal_conservative
+				picture = "The_Diet.dds"
+				
+				traits = { vacancy }
+			}
+		}
+	}
+	
+	option = {	#Let's pray for the best
+		name = japan_classic.15.o1
+		add_stability = -0.01
+	}
+}
+
+#Keizo Obuchi replaced
+country_event = {
+	id = japan_classic.16
+	title = japan_classic.16.t
+	desc = japan_classic.16.d
+	picture = GFX_report_event_yoshiro_mori
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = { country_event = { id = japan_classic.18 days = 40 } }
+	}
+	
+	option = {
+		name = japan_classic.16.o1
+		create_country_leader = {
+			name = "Yoshirō Mori"
+			ideology = fiscal_conservative
+			picture = "Yoshiro_Mori.dds"
+		}
+	}
+}
+
+#2000 Naka-Meguro derailment
+country_event = {
+	id = japan_classic.17
+	title = japan_classic.17.t
+	desc = japan_classic.17.d
+	picture = GFX_report_event_train_collision
+	
+	is_triggered_only = yes
+	
+	option = {	#We will help where we can.
+		name = japan_classic.17.o1
+		add_political_power = -20
+		ai_chance = { factor = 60 }
+	}
+	
+	option = {	#The region will recover.
+		name = japan_classic.17.o2
+		add_stability = -0.01
+		ai_chance = { factor = 40 }
+	}
+}
+
+#Yoshirō Mori's Emperor gaffe
+country_event = {
+	id = japan_classic.18
+	title = japan_classic.18.t
+	desc = japan_classic.18.d
+	picture = GFX_report_event_yoshiro_mori
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_government = conservative
+	}
+	
+	option = {	#What a fool!
+		name = japan_classic.18.o1
+		add_stability = -0.01
+		add_political_power = -10
+		ai_chance = { factor = 90 }
+	}
+	
+	option = {	#Double down on his statement
+		name = japan_classic.18.o2
+		add_popularity = {
+			ideology = monarchist
+			popularity = 0.03
+		}
+		add_stability = -0.04
+		add_political_power = -25
+		ai_chance = { factor = 10 }
+	}
+}
+
+#Fukushima disaster
+country_event = {
+	id = japan_classic.20
+	title = japan_classic.20.t
+	desc = japan_classic.20.d
+	picture = GFX_report_event_fukushima
+	
+	is_triggered_only = yes
+	
+	option = {	#Oh no!
+		name = japan_classic.20.o1
+		add_stability = -0.05
+		add_political_power = -100
+		hidden_effect = { 
+			news_event = { id = news.89 hours = 8 }
+		}
 	}
 }
