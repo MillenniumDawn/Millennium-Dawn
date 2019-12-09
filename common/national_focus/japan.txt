@@ -2238,6 +2238,10 @@ focus_tree = {
 				add_to_variable = { party_pop_array^23 = 0.1 }
 				recalculate_party = yes
 			}
+			if = {
+				limit = { has_idea = article_nine_jap }
+				remove_ideas = article_nine_jap
+			}			
 			custom_effect_tooltip = JAP_add_pop_Monarchist_10_TT
 		}
 		
@@ -2264,7 +2268,12 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_government_authority"
-			add_popularity = { ideology = nationalist popularity = 0.1 }
+			hidden_effect = {
+				add_popularity = { ideology = nationalist popularity = 0.1 }
+				add_to_variable = { party_pop_array^21 = 0.1 }
+				recalculate_party = yes
+			}	
+			custom_effect_tooltip = JAP_add_pop_fascist_10_TT
 			if = {
 				limit = { has_idea = article_nine_jap }
 				remove_ideas = article_nine_jap
@@ -2494,9 +2503,29 @@ focus_tree = {
 			add_political_power = 30
 			add_war_support = 0.05
 			if = {
-				limit = { has_idea = article_nine_jap }
-				remove_ideas = article_nine_jap
+				limit = { has_idea = idea_JAP_emperor_akihito }
+				remove_ideas = idea_JAP_emperor_akihito
 			}
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 23 }
+				add_to_array = { gov_coalition_array = 21 } #Populists/Fascists
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}			
 		}
 		
 		ai_will_do = {
@@ -2636,7 +2665,12 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_ally_the_united_states"
-			USA = { add_to_faction = JAP }
+			USA = {
+				give_guarantee = JAP
+			}
+			JAP = {
+				give_guarantee = USA
+			}	
 		}
 		
 		ai_will_do = {
@@ -2787,6 +2821,12 @@ focus_tree = {
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 		
+		available = {
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 23 }
+				tooltip = has_monarchist_government_TT
+			}			
+		}
 		prerequisite = { focus = JAP_new_imperial_society }
 		
 		completion_reward = {
@@ -2827,6 +2867,10 @@ focus_tree = {
 		}
 		
 		available = {
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 21 }
+				tooltip = has_fascist_government_TT
+			}		
 			NOT = { is_in_faction_with = KOR }
 			NOT = { is_in_faction_with = NKO }
 		}
@@ -3026,9 +3070,30 @@ focus_tree = {
 		}
 		
 		available = {
-			JAP = { has_government = communist }
-			CHI = { has_government = communist }
+			OR = {
+				custom_trigger_tooltip = {
+					is_in_array = { ruling_party = 4 }
+					tooltip = has_communist_state_government_TT
+				}
+				custom_trigger_tooltip = {
+					is_in_array = { ruling_party = 19 }
+					tooltip = has_neutral_communism_government_TT
+				}
+			}
 			is_puppet = no
+			CHI = {
+				OR = {
+				custom_trigger_tooltip = {
+					is_in_array = { ruling_party = 4 }
+					tooltip = has_communist_state_government_TT
+					}
+				custom_trigger_tooltip = {
+					is_in_array = { ruling_party = 19 }
+					tooltip = has_neutral_communism_government_TT
+					}
+				}
+			}	
+			
 			OR = {
 				CHI = { is_puppet = no }
 				CHI = { is_puppet_of = JAP }
@@ -3036,8 +3101,8 @@ focus_tree = {
 		}
 		
 		bypass = {
-			has_government = communist
-			NOT = { CHI = { has_government = communist } }
+			has_government = communism
+			NOT = { CHI = { has_government = communism } }
 		}
 		
 		mutually_exclusive = {
@@ -3082,7 +3147,16 @@ focus_tree = {
 		}
 		
 		available = {
-			has_government = communist
+			OR = {
+				custom_trigger_tooltip = {
+					is_in_array = { ruling_party = 4 }
+					tooltip = has_communist_state_government_TT
+				}
+				custom_trigger_tooltip = {
+					is_in_array = { ruling_party = 19 }
+					tooltip = has_neutral_communism_government_TT
+				}
+			}	
 			is_in_faction = no
 		}
 		
@@ -3107,6 +3181,13 @@ focus_tree = {
 		y = 6
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
+		
+		available = {
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 23 }
+				tooltip = has_monarchist_government_TT
+			}			
+		}		
 		
 		prerequisite = {
 			focus = JAP_colonize_korea
@@ -3150,6 +3231,10 @@ focus_tree = {
 		}
 		
 		available = {
+			custom_trigger_tooltip = {
+				is_in_array = { ruling_party = 21 }
+				tooltip = has_fascist_government_TT
+			}						
 			NOT = { is_in_faction_with = CHI }
 		}
 		
@@ -3259,7 +3344,7 @@ focus_tree = {
 								is_in_faction = no
 							}
 							FROM = {
-								has_government = democratic 
+								has_government = democratic
 								has_elections = yes
 								is_in_faction = no
 							}
@@ -3318,7 +3403,7 @@ focus_tree = {
 			every_country = {
 				limit = {
 					is_in_asia = yes
-					NOT = { has_government = communist }
+					NOT = { has_government = communism }
 					NOT = { tag = JAP }
 				}
 				JAP = {
@@ -3432,7 +3517,7 @@ focus_tree = {
 	
 	focus = {
 		id = JAP_asian_research_compact
-		icon = research
+		icon = research2
 		x = -3
 		y = 8
 		cost = 10
@@ -3451,6 +3536,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_asian_research_compact"
 			add_research_slot = 1
+			SE_remove_10_treasury = yes
 		}
 		
 		ai_will_do = {
@@ -3474,6 +3560,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_red_association_of_science"
 			add_research_slot = 1
+			SE_remove_10_treasury = yes
 		}
 		
 		ai_will_do = {
@@ -3495,7 +3582,16 @@ focus_tree = {
 		}
 		
 		available = {
-			has_government = communist
+			OR = {
+				custom_trigger_tooltip = {
+					is_in_array = { ruling_party = 4 }
+					tooltip = has_communist_state_government_TT
+				}
+				custom_trigger_tooltip = {
+					is_in_array = { ruling_party = 19 }
+					tooltip = has_neutral_communism_government_TT
+				}
+			}
 			OR = {
 				threat > 0.8
 				has_war = yes
