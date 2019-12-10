@@ -897,43 +897,6 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = JAP_adapt_article_9
-		icon = renounce_treaty
-		x = 1
-		y = 4
-		relative_position_id = JAP_national_renewal
-		cost = 10
-		
-		prerequisite = {
-			focus = JAP_political_renewal
-			focus = JAP_recruitment_programs
-		}
-		
-		available = {
-			OR = {
-				has_completed_focus = JAP_recruitment_programs
-				threat > 0.2
-			}
-		}
-		
-		bypass = {
-			NOT = { has_idea = article_nine_jap }
-		}
-		
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus JAP_adapt_article_9"
-			add_named_threat = {
-				threat = 1
-				name = "Article 9 Revoked"
-			}
-			remove_ideas = article_nine_jap
-		}
-		
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
 		id = JAP_ideological_debate
 		icon = ultimatum2
 		x = 0
@@ -1810,7 +1773,7 @@ focus_tree = {
 	
 	focus = {
 		id = JAP_the_future_of_japan
-		icon = demand_territory
+		icon = japanese_pacific_guardian
 		x = 14
 		y = 7
 		cost = 10
@@ -2211,6 +2174,10 @@ focus_tree = {
 			custom_effect_tooltip = JAP_add_remove_Monarchist_5_TT
 			add_war_support = -0.05
 			news_event = japan_classic.76
+			if = {
+				limit = { has_idea = idea_JAP_emperor_akihito }
+				remove_ideas = idea_JAP_emperor_akihito
+			}
 		}
 		
 		ai_will_do = {
@@ -2535,7 +2502,7 @@ focus_tree = {
 	
 	focus = {
 		id = JAP_japanese_supremacy
-		icon = fascism2
+		icon = japanese_imperialism
 		x = 11
 		y = 4
 		cost = 10
@@ -2606,7 +2573,7 @@ focus_tree = {
 	
 	focus = {
 		id = JAP_east_asian_alliance
-		icon = alliance
+		icon = major_alliance
 		x = -5
 		y = 4
 		cost = 10
@@ -2641,7 +2608,7 @@ focus_tree = {
 	
 	focus = {
 		id = JAP_ally_the_united_states
-		icon = align_to_america
+		icon = alliance_JAP_USA
 		x = -7
 		y = 4
 		cost = 10
@@ -2654,8 +2621,6 @@ focus_tree = {
 		available = {
 			USA = {
 				has_elections = yes
-				is_in_faction = yes
-				is_faction_leader = yes
 			}
 		}
 		
@@ -2665,14 +2630,24 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_ally_the_united_states"
-			USA = {
-				give_guarantee = JAP
-			}
-			JAP = {
-				give_guarantee = USA
+			if = {
+				limit = { USA = { is_in_faction = yes } }
+				
+				USA = {
+					add_to_faction = JAP
+				}
+				else = {
+					limit = { USA = { is_in_faction = no } }
+					
+					USA = {
+						give_guarantee = JAP
+					}
+					JAP = {
+						give_guarantee = USA
+					}
+				}
 			}	
-		}
-		
+		}	
 		ai_will_do = {
 			factor = 1
 			modifier = {
@@ -3387,7 +3362,7 @@ focus_tree = {
 	
 	focus = {
 		id = JAP_revolution_across_asia
-		icon = revolution_across_asia
+		icon = communist_revolution_asia
 		x = 5
 		y = 7
 		cost = 10
@@ -3403,7 +3378,10 @@ focus_tree = {
 			every_country = {
 				limit = {
 					is_in_asia = yes
-					NOT = { has_government = communism }
+					OR = {
+						NOT = { is_in_array = { ruling_party = 19 } }
+						NOT = { is_in_array = { ruling_party = 4 } }
+					}
 					NOT = { tag = JAP }
 				}
 				JAP = {
