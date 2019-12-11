@@ -15927,7 +15927,13 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			every_country = {
+				limit = { has_idea = sco_member }
+				swap_ideas = {
+					remove_idea = sco_member
+					add_idea = sco_member_econ
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Economic_Cooperation executed"
 		}
 		
@@ -16013,7 +16019,13 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			every_country = {
+				limit = { has_idea = sco_member }
+				swap_ideas = {
+					remove_idea = sco_member
+					add_idea = sco_member_pol
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Political_Cooperation executed"
 		}
 		
@@ -16071,7 +16083,13 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			every_country = {
+				limit = { has_idea = sco_member }
+				swap_ideas = {
+					remove_idea = sco_member
+					add_idea = sco_member_mil
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Military_Cooperation executed"
 		}
 		
@@ -16607,7 +16625,31 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			every_other_country = {
+				limit = { is_in_africa = yes }
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 2 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = CHI.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = CHI_small_influence_tt
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_China_Africa_Development_Fund executed"
 		}
 		
@@ -16632,10 +16674,34 @@ focus_tree = {
 		prerequisite = { focus = CHI_China_Africa_Development_Fund }
 		
 		available = {
+			has_idea = CHI_coal
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			custom_effect_tooltip = 25_billion_expense_tt
+			subtract_from_variable = { treasury = 25 }
+			every_other_country = {
+				limit = { 
+					is_in_africa = yes
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.2 }
+				}
+				add_ideas = CHI_coal
+				custom_effect_tooltip = add_5_billion_debt_tt
+				add_to_variable = { debt = 5 }
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_Invest_in_Cheap_Energy executed"
 		}
 		
@@ -16660,10 +16726,61 @@ focus_tree = {
 		prerequisite = { focus = CHI_China_Africa_Development_Fund }
 		
 		available = {
+			OR = { has_idea = CHI_solar_power has_idea  = CHI_nuclear_power }
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			custom_effect_tooltip = 50_billion_expense_tt
+			subtract_from_variable = { treasury = 50 }
+			if = {
+				limit = { has_idea = CHI_nuclear_power }
+				every_other_country = {
+					limit = { 
+						is_in_africa = yes
+						set_temp_variable = { temp_idx = -1 }
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							if = {
+								limit = { var:v = { tag = CHI } }
+								set_temp_variable = { temp_idx = i }
+								always = yes
+							}
+							else = { always = no }
+						}
+						check_variable = { temp_idx > -1 }
+						check_variable = { influence_array_calc^temp_idx > 0.2 }
+					}
+					add_ideas = CHI_nuclear_power
+					custom_effect_tooltip = add_5_billion_debt_tt
+					add_to_variable = { debt = 5 }
+				}
+			}
+			else_if = {
+				every_other_country = {
+					limit = { 
+						is_in_africa = yes
+						set_temp_variable = { temp_idx = -1 }
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							if = {
+								limit = { var:v = { tag = CHI } }
+								set_temp_variable = { temp_idx = i }
+								always = yes
+							}
+							else = { always = no }
+						}
+						check_variable = { temp_idx > -1 }
+						check_variable = { influence_array_calc^temp_idx > 0.2 }
+					}
+					add_ideas = CHI_solar_power
+					custom_effect_tooltip = add_5_billion_debt_tt
+					add_to_variable = { debt = 5 }
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_Invest_in_Clean_Energy executed"
 		}
 		
@@ -16693,7 +16810,26 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			every_other_country = {
+				limit = { 
+					is_in_africa = yes
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.2 }
+				}
+				add_ideas = { Cheap_Labor }
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_Workers_Rights executed"
 		}
 		
@@ -16722,7 +16858,26 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			every_other_country = {
+				limit = { 
+					is_in_africa = yes
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.2 }
+				}
+				add_ideas = { Workers_Rights }
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_Workers_Rights executed"
 		}
 		
@@ -16750,7 +16905,30 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			custom_effect_tooltip = 10_billion_expense_tt
+			subtract_from_variable = { treasury = 10 }
+			every_other_country = {
+				limit = { 
+					is_in_africa = yes
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.1 }
+				}
+				add_stability = 0.02
+				custom_effect_tooltip = add_1_billion_debt_tt
+				add_to_variable = { debt = 1 }
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_Agriculture executed"
 		}
 		
@@ -16778,7 +16956,30 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			custom_effect_tooltip = 20_billion_expense_tt
+			subtract_from_variable = { treasury = 20 }
+			every_other_country = {
+				limit = { 
+					is_in_africa = yes
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.1 }
+				}
+				add_stability = 0.05
+				custom_effect_tooltip = add_5_billion_debt_tt
+				add_to_variable = { debt = 5 }
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_Develop_Hospitals executed"
 		}
 		
@@ -16800,14 +17001,55 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 		
-		prerequisite = { focus = CHI_Develop_Hospitals focus = CHI_Outsource_Cheap_Labor focus = CHI_Workers_Rights }
+		prerequisite = { focus = CHI_Develop_Hospitals }
+		prerequisite = { focus = CHI_Outsource_Cheap_Labor focus = CHI_Workers_Rights }
 		mutually_exclusive = { focus = CHI_Write_Off_Debts }
 		
 		available = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			every_other_country = {
+				limit = { 
+					is_in_africa = yes
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.2 }
+				}
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 40 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = CHI.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = CHI_small_influence_40_tt
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_Leverage_Influence executed"
 		}
 		
@@ -16829,14 +17071,60 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 		
-		prerequisite = { focus = CHI_Develop_Hospitals focus = CHI_Outsource_Cheap_Labor focus = CHI_Workers_Rights }
+		prerequisite = { focus = CHI_Develop_Hospitals }
+		prerequisite = { focus = CHI_Outsource_Cheap_Labor focus = CHI_Workers_Rights }
 		mutually_exclusive = { focus = CHI_Leverage_Influence }
 		
 		available = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			every_other_country = {
+				limit = { 
+					is_in_africa = yes
+					OR = { has_idea = CHI_solar_power has_idea = CHI_nuclear_power has_idea = CHI_coal }
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.2 }
+				}
+				add_stability = 0.05
+				custom_effect_tooltip = subtract_11_billion_debt_tt
+				subtract_from_variable = { debt = 11 }
+			}
+			every_other_country = {
+				limit = { 
+					is_in_africa = yes
+					NOT = { has_idea = CHI_solar_power has_idea = CHI_nuclear_power has_idea = CHI_coal }
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.1 }
+				}
+				add_stability = 0.05
+				custom_effect_tooltip = subtract_6_billion_debt_tt
+				subtract_from_variable = { debt = 6 }
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_Write_Off_Debts executed"
 		}
 		
@@ -16864,7 +17152,12 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			every_other_country = {
+				limit = { 
+					is_in_africa = yes
+				}
+				add_stability = 0.02
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_Friendship_Schools executed"
 		}
 		
@@ -16892,7 +17185,12 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			every_country = {	
+				limit = {
+					OR = { original_tag = CHI is_in_africa = yes }
+				}
+				add_to_tech_sharing_group = China_Africa_Tech_Share
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_Joint_Research executed"
 		}
 		
@@ -16920,7 +17218,26 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			every_other_country = {
+				limit = { 
+					is_in_africa = yes
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.1 }
+				}
+				add_ideas = { TV_Internet_Access }
+			}
 			log = "[GetDateText]: [This.GetName]: CHI_TV_and_Internet_Access executed"
 		}
 		
