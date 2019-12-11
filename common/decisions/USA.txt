@@ -668,13 +668,7 @@ USA_congress_md = {
 				has_government = nationalist
 			}
 		}
-		visible = { 
-			OR = {	
-				has_government = communism 
-				has_government = nationalist
-			}
-			has_elections = yes
-		}
+		visible = { has_elections = yes }
 		cost = 100
 		ai_will_do = {
 			factor = 1
@@ -701,14 +695,18 @@ USA_congress_md = {
 		available = {
 			OR = {
 				custom_trigger_tooltip = {
-					has_government = democratic
-					is_in_array = { ruling_party = 2 }
-					tooltip = USA_democrats_in_power_TT
+					AND = {
+						has_government = democratic
+						is_in_array = { ruling_party = 2 }
+					}
+					tooltip = has_liberalism_government_TT
 				}
 				custom_trigger_tooltip = {
-					has_government = democratic
-					is_in_array = { ruling_party = 4 }
-					tooltip = USA_progressive_in_power_TT
+					AND = {
+						has_government = democratic
+						is_in_array = { ruling_party = 3 }
+					}
+					tooltip = has_socialism_government_TT
 				}
 			}
 			custom_trigger_tooltip = {
@@ -739,7 +737,6 @@ USA_congress_md = {
 	USA_give_tax_break = {
 		icon = ger_mefo_bills
 		available = {
-			has_government = democratic
 			custom_trigger_tooltip = {
 				OR = {
 					check_variable = { senators_support < senators_total }
@@ -756,19 +753,35 @@ USA_congress_md = {
 				factor = 0
 			}
 		}
-		days_remove = 90
+		days_remove = 365
 		modifier = { consumer_goods_factor = 0.05 }
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove USA_give_tax_break"
-			USA_congress_small_support = yes
-			for_loop_effect = {
-				subtract_from_variable = { tax_rate = 1 }
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_give_tax_break"
+			hidden_effect = {
+				remove_tax_cost = yes
+				subtract_from_variable = { tax_rate = 3 }
 				set_tax_cost = yes
 				calculate_tax_gain = yes
 				update_military_rate = yes
 				ingame_calculate_size_modifier = yes
 				calculate_resource_sale_rate = yes
 			}
+			custom_effect_tooltip = reduce_tax_rate_3_tt
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_give_tax_break"
+			USA_congress_small_support = yes
+			hidden_effect = {
+				remove_tax_cost = yes
+				add_to_variable = { tax_rate = 3 }
+				set_tax_cost = yes
+				calculate_tax_gain = yes
+				update_military_rate = yes
+				ingame_calculate_size_modifier = yes
+				calculate_resource_sale_rate = yes
+			}
+			custom_effect_tooltip = add_tax_rate_3_tt
 		}
 	}
 	USA_amend_the_budget = {
@@ -795,11 +808,9 @@ USA_congress_md = {
 	}
 	USA_research_grants = {
 		icon = decision_generic_research
-		available = {
-			congress_medium_support_trigger = yes
-		}
+		available = { congress_medium_support_trigger = yes }
 		visible = { has_government = democratic }
-		cost = 25
+		cost = 100
 		days_remove = 90
 		days_re_enable = 275
 		ai_will_do = {
@@ -818,24 +829,28 @@ USA_congress_md = {
 	USA_statehood_for_puerto_rico = {
 		icon = infiltrate_state
 		available = {
-			815 = { has_state_flag = USA_is_territory_flag }
+			815 = { NOT = { is_core_of = USA } }
 			political_power_daily > 2.50
 			congress_high_support_trigger = yes 
 		}
 		visible = {
-			815 = {
+			815 = { #Puerto Rico
 				is_fully_controlled_by = USA
 			}
+		}
+		highlight_states = {
+			state = 815
 		}
 		ai_will_do = {
 			factor = 1
 			modifier = {
-				is_historical_focus_on = yes
-				factor = 0
+				is_in_array = { ruling_party = 2 } 
+				is_in_array = { ruling_party = 3 }
+				factor = 1
 			}
 			modifier = {
 				is_historical_focus_on = no 
-				factor = 4 
+				factor = 2 
 			}
 		}
 		fire_only_once = yes
@@ -930,7 +945,6 @@ USA_congress_md = {
 				clr_state_flag = USA_congress_build_arms_factory
 				clear_variable = arms_factory_goal
 			}
-			
 			USA_congress_small_opposition = yes 
 			clr_country_flag = USA_congress_investment
 		}
@@ -946,7 +960,6 @@ USA_congress_md = {
 				USA_congress_medium_support = yes 
 				clr_country_flag = USA_congress_investment
 			}
-			
 		}
 	}
 	USA_invest_in_state_dockyard = {
