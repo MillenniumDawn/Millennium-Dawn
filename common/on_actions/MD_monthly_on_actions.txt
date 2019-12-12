@@ -3175,7 +3175,10 @@ on_actions = {
 					}
 					if = { 
 						limit = { 
-							NOT = { has_government = communism }
+							OR = {
+								TAI = { is_puppet_of = CHI }
+								NOT = { has_government = communism }
+							}
 							has_country_flag = AI_STRATEGY_CHI_antagonize_taiwan_active 
 						}
 						add_ai_strategy = { type = antagonize id = "TAI" value = -200 }
@@ -3191,6 +3194,29 @@ on_actions = {
 						add_ai_strategy = { type = alliance id = "USA" value = -200 }
 						add_ai_strategy = { type = support id = "USA" value = -200 }
 						set_country_flag = AI_STRATEGY_CHI_us_relations_active 
+					}
+					
+					#Hedge against Russia
+					if = { 
+						limit = { 
+							NOT = { has_country_flag = AI_STRATEGY_CHI_sov_relations_active }
+							SOV = {
+								OR = {
+									has_completed_focus = SOV_secure_kazakhstan
+									has_completed_focus = SOV_ambitions_in_central_asia
+									has_completed_focus = SOV_territorial_demands
+									has_completed_focus = SOV_approach_nato
+									has_completed_focus = SOV_bastion_of_democracy
+								}
+							}
+						}
+						add_ai_strategy = { type = antagonize id = "SOV" value = 100 }
+						add_ai_strategy = { type = protect id = "KAZ" value = 200 }
+						add_ai_strategy = { type = protect id = "KYR" value = 200 }
+						add_ai_strategy = { type = protect id = "TAJ" value = 200 }
+						add_ai_strategy = { type = protect id = "TRK" value = 200 }
+						add_ai_strategy = { type = protect id = "UZB" value = 200 }
+						set_country_flag = AI_STRATEGY_CHI_sov_relations_active 
 					}
 					
 					#Friendly wih Pakistan
@@ -6131,6 +6157,27 @@ on_actions = {
 						clr_country_flag = AI_STRATEGY_SOV_usa_relations_active
 					}
 					
+					#Strategic Realignment following Chinese Rise
+					if = {
+						limit = {
+							NOT = { has_country_flag = AI_STRATEGY_SOV_usa_chi_active }
+							CHI = {
+								OR = {
+									has_completed_focus = CHI_Chinese_Dominance
+									has_completed_focus = CHI_A_Rival_Superpower
+								}
+							}
+						}
+						add_ai_strategy = { type = antagonize id = "CHI" value = 100 }
+						add_ai_strategy = { type = contain id = "CHI" value = 100 }
+						add_ai_strategy = { type = conquer id = "CHI" value = 200 }
+						add_ai_strategy = { type = send_volunteers_desire id = "CHI" value = -200 }
+						add_ai_strategy = { type = alliance id = "USA" value = 100 }
+						add_ai_strategy = { type = support id = "USA" value = 100 }
+						add_ai_strategy = { type = send_volunteers_desire id = "USA" value = 200 }
+						set_country_flag = AI_STRATEGY_SOV_usa_chi_active 
+					}
+					
 					#Saudi relations
 					if = { 
 						limit = { 
@@ -6921,11 +6968,15 @@ on_actions = {
 					}
 					if = { 
 						limit = {
-							is_in_faction_with = SOV
+							OR = {	
+								is_in_faction_with = SOV
+								CHI = { has_completed_focus = CHI_A_Rival_Superpower }
+							}
 							has_country_flag = AI_STRATEGY_USA_russia_relations_active 
 						}
 						add_ai_strategy = { type = antagonize id = "SOV" value = -50 }
 						add_ai_strategy = { type = alliance id = "SOV" value = 200 }
+						add_ai_strategy = { type = protect id = "SOV" value = 200 }
 						add_ai_strategy = { type = contain id = "SOV" value = -25 }
 						clr_country_flag = AI_STRATEGY_USA_russia_relations_active
 					}
