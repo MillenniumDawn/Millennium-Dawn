@@ -36,9 +36,9 @@ EU_ECB_category = {
 
 		}
 		ai_will_do = {
-			factor = 40
+			factor = 1
 				modifier = {
-					add = 60
+					add = 10
 					any_country = {
 						AND = {
 							has_idea = EU_member
@@ -68,6 +68,11 @@ EU_ECB_category = {
 			has_idea = EU_member
 			has_idea = ECB_president
 			has_idea = ECB_zero_interest_rate_policy
+			any_country = {
+				has_idea = EU_member
+				has_idea = the_euro
+				check_variable = { THIS.interest_rate > 4.0 }			
+			}
 		}
 		
 		visible = { 
@@ -75,40 +80,56 @@ EU_ECB_category = {
 		} 
 		
 		complete_effect = {
+			if = {
+				limit = {
+					has_global_flag = active_OMT
+				}
+				custom_effect_tooltip = "IF has active OMT: "
+				remove_OMT = yes
+			}
 			custom_effect_tooltip = tooltip_ECB_expand_OMT_limit_effect
 			hidden_effect = {		
 					add_to_variable = {
 						var = global.OMT_size_limit
 						value = 200
 					}
-			every_country = { ### contra OMT
-				if = {
-					limit = {
-						has_idea = EU_member
-						has_idea = the_euro
-						check_variable = { THIS.interest_rate < 4.0 }
-					}
-					country_event = {
-						id = EUevent.16 ### ROOT euroscepticism rise 5% ###
-					}			
-				}
-			}
-			every_country = { ### pro OMT
-				if = {
-					limit = {
-						has_idea = EU_member
-						has_idea = the_euro
-						check_variable = { THIS.interest_rate > 4.0 }
-					}				
-					country_event = {
-						id = EUevent.15 ### ROOT euroscepticism decline -5% ###
+				every_country = { ### contra OMT
+					if = {
+						limit = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate < 4.0 }
+						}
+						THIS_eurosceptic_rise_5_percent = yes
+						news_event = {
+							id = EU_news.46 
+						}			
 					}
 				}
-			}
+				every_country = { ### pro OMT
+					if = {
+						limit = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate > 4.0 }
+						}
+						THIS_eurosceptic_decline_5_percent = yes		
+						news_event = {
+							id = EU_news.46 
+						}
+					}
+				}
+			}	
+			if = {
+				limit = {
+					has_global_flag = active_OMT
+				}				
+				custom_effect_tooltip = "IF has active OMT: "
+				execute_OMT = yes
 			}
 		}
 		ai_will_do = {
-			factor = 40
+			factor = 0
 				modifier = {
 					add = 40
 					check_variable = { global.OMT_total_value > 0 }
@@ -127,7 +148,7 @@ EU_ECB_category = {
 							has_idea = EU_member							
 							check_variable = {
 								var = eurosceptic
-								value = 0.6
+								value = 0.4
 								compare = greater_than_or_equals
 							}
 						}
@@ -149,6 +170,14 @@ EU_ECB_category = {
 		} 
 		
 		complete_effect = {
+			if = {
+				limit = {
+					has_global_flag = active_OMT
+				}				
+			
+				custom_effect_tooltip = "IF has active OMT: "
+				remove_OMT = yes
+			}
 			custom_effect_tooltip = tooltip_ECB_reduce_OMT_limit_effect
 			hidden_effect = {		
 					subtract_from_variable = {
@@ -161,34 +190,43 @@ EU_ECB_category = {
 						}
 						set_variable = { global.OMT_size_limit = 0 }
 					}
-			every_country = { ### contra OMT
-				if = {
-					limit = {
-						has_idea = EU_member
-						has_idea = the_euro
-						check_variable = { THIS.interest_rate < 4.0 }
+				every_country = { ### contra OMT
+					if = {
+						limit = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate < 4.0 }
+						}
+						THIS_eurosceptic_decline_5_percent = yes
+						news_event = {
+							id = EU_news.45 
+						}			
 					}
-					country_event = {
-						id = EUevent.15 ### ROOT euroscepticism decline -5% ###
+				}
+				every_country = { ### pro OMT
+					if = {
+						limit = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate > 4.0 }
+						}
+						THIS_eurosceptic_rise_5_percent = yes
+						news_event = {
+							id = EU_news.45 
+						}			
 					}			
 				}
 			}
-			every_country = { ### pro OMT
-				if = {
-					limit = {
-						has_idea = EU_member
-						has_idea = the_euro
-						check_variable = { THIS.interest_rate > 4.0 }
-					}
-					country_event = {
-						id = EUevent.16 ### ROOT euroscepticism rise 5% ###
-					}			
-				}			
+			if = {
+				limit = {
+					has_global_flag = active_OMT
+				}
+				custom_effect_tooltip = "IF has active OMT: "
+				execute_OMT = yes
 			}
 		}
-		}
 		ai_will_do = {
-			factor = 40
+			factor = 0
 				modifier = {
 					add = -80
 					check_variable = { global.OMT_total_value > 0 }
@@ -207,7 +245,7 @@ EU_ECB_category = {
 							has_idea = EU_member							
 							check_variable = {
 								var = eurosceptic
-								value = 0.7
+								value = 0.5
 								compare = greater_than_or_equals
 							}
 						}
@@ -234,210 +272,10 @@ EU_ECB_category = {
 		} 
 		
 		complete_effect = {
-			custom_effect_tooltip = tooltip_ECB_Outright_Monetary_Transactions_complete_effect
-			hidden_effect = {		
-				every_country = {
-					#log = "start OTM interest_rate [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-					if = {
-						limit = {
-							has_idea = EU_member
-							has_idea = the_euro
-							check_variable = {
-								var = THIS.debt
-								value = 10000.0
-								compare = greater_than_or_equals
-							}							
-						}					
-						set_variable = {
-							var = THIS.OMT_account
-							value = 0
-						}
-						while_loop_effect = {	
-								limit = { 
-									check_variable = { THIS.interest_rate > 4.0 }								
-									check_variable = { global.OMT_size_limit > global.OMT_total_value }							
-								}
-								#log = "while_loop_effect interest_rate [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"						
-								if = {
-									limit = { 
-										check_variable = { THIS.interest_rate > 4.0 }											
-									}
-									#log = "[THIS.GetTag] subtract_from_variable = { THIS.debt = 1000.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									subtract_from_variable = { THIS.debt = 1000.0 }
-									#log = "[THIS.GetTag] add_to_variable = { THIS.OMT_account = 1000.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									add_to_variable = { THIS.OMT_account = 1000.0 }
-									#log = "[THIS.GetTag] add_to_variable = { global.OMT_total_value = 1000.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									add_to_variable = { global.OMT_total_value = 1000.0 }
-									#log = "[THIS.GetTag] calculate_interest_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									calculate_interest_rate = yes
-									#log = "[THIS.GetTag] calculate_debt_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									calculate_debt_rate = yes
-								}
-						}
-					}		
-					else_if = {
-						limit = { 
-							has_idea = EU_member
-							has_idea = the_euro	
-							check_variable = { THIS.debt < 10000.0 }							
-							check_variable = { 
-								var = THIS.debt
-								value = 1000.0
-								compare = greater_than_or_equals
-							}
-						}
-						set_variable = {
-							var = THIS.OMT_account
-							value = 0
-						}						
-						while_loop_effect = {	
-							limit = { 
-								check_variable = { THIS.interest_rate > 4.0 }								
-								check_variable = { global.OMT_size_limit > global.OMT_total_value }							
-							}
-								if = {
-									limit = { 
-										check_variable = { THIS.interest_rate > 4.0 }											
-									}							
-								
-									#log = "[THIS.GetTag] subtract_from_variable = { THIS.debt = 100.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									subtract_from_variable = { THIS.debt = 100.0 }
-									#log = "[THIS.GetTag] add_to_variable = { THIS.OMT_account = 100.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									add_to_variable = { THIS.OMT_account = 100.0 }
-									#log = "[THIS.GetTag] add_to_variable = { global.OMT_total_value = 100.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									add_to_variable = { global.OMT_total_value = 100.0 }
-									#log = "[THIS.GetTag] calculate_interest_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									calculate_interest_rate = yes
-									#log = "[THIS.GetTag] calculate_debt_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									calculate_debt_rate = yes
-								}							
-						}
-					}	
-					else_if = {
-						limit = { 
-							has_idea = EU_member
-							has_idea = the_euro	
-							check_variable = { THIS.debt < 1000.0 }							
-							check_variable = { 
-								var = THIS.debt
-								value = 100.0
-								compare = greater_than_or_equals
-							}										
-						}
-						set_variable = {
-							var = THIS.OMT_account
-							value = 0
-						}	
-						while_loop_effect = {	
-								limit = { 
-									check_variable = { THIS.interest_rate > 4.0 }								
-									check_variable = { global.OMT_size_limit > global.OMT_total_value }							
-								}
-								if = {
-									limit = { 
-										check_variable = { THIS.interest_rate > 4.0 }											
-									}
-									
-									#log = "[THIS.GetTag] subtract_from_variable = { THIS.debt = 10.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									subtract_from_variable = { THIS.debt = 10.0 }
-									#log = "[THIS.GetTag] add_to_variable = { THIS.OMT_account = 10.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									add_to_variable = { THIS.OMT_account = 10.0 }
-									#log = "[THIS.GetTag] add_to_variable = { global.OMT_total_value = 10.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									add_to_variable = { global.OMT_total_value = 10.0 }
-									#log = "[THIS.GetTag] calculate_interest_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									calculate_interest_rate = yes
-									#log = "[THIS.GetTag] calculate_debt_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									calculate_debt_rate = yes
-								}
-						}
-					}	
-					else_if = {
-						limit = { 
-						has_idea = EU_member
-						has_idea = the_euro								
-						check_variable = { THIS.debt < 100.0 }							
-						check_variable = { 
-							var = THIS.debt
-							value = 10.0
-							compare = greater_than_or_equals
-							}										
-						}
-						set_variable = {
-							var = THIS.OMT_account
-							value = 0
-						}	
-						while_loop_effect = {	
-								limit = { 
-									check_variable = { THIS.interest_rate > 4.0 }								
-									check_variable = { global.OMT_size_limit > global.OMT_total_value }							
-								}
-								if = {
-									limit = { 
-										check_variable = { THIS.interest_rate > 4.0 }											
-									}							
-							
-									#log = "[THIS.GetTag] subtract_from_variable = { THIS.debt = 1.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									subtract_from_variable = { THIS.debt = 1.0 }
-									#log = "[THIS.GetTag] add_to_variable = { THIS.OMT_account = 1.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									add_to_variable = { THIS.OMT_account = 1.0 }
-									#log = "[THIS.GetTag] add_to_variable = { global.OMT_total_value = 1.0 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									add_to_variable = { global.OMT_total_value = 1.0 }
-									#log = "[THIS.GetTag] calculate_interest_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									calculate_interest_rate = yes
-									#log = "[THIS.GetTag] calculate_debt_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-									calculate_debt_rate = yes
-								}
-						}
-					}	
-					else_if = {
-						limit = {
-						has_idea = EU_member
-						has_idea = the_euro								
-						check_variable = { THIS.debt < 10.0 }							
-						check_variable = { 
-							var = THIS.debt
-							value = 1.0
-							compare = greater_than_or_equals
-							}										
-						}
-						set_variable = {
-							var = THIS.OMT_account
-							value = 0
-						}						
-						while_loop_effect = {	
-							limit = { 
-								check_variable = { THIS.interest_rate > 4.0 }								
-								check_variable = { global.OMT_size_limit > global.OMT_total_value }							
-							}
-							if = {
-								limit = { 
-									check_variable = { THIS.interest_rate > 4.0 }											
-								}							
-							
-								#log = "[THIS.GetTag] subtract_from_variable = { THIS.debt = 0.1 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-								subtract_from_variable = { THIS.debt = 0.1 }
-								#log = "[THIS.GetTag] add_to_variable = { THIS.OMT_account = 0.1 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-								add_to_variable = { THIS.OMT_account = 0.1 }
-								#log = "[THIS.GetTag] add_to_variable = { global.OMT_total_value = 0.1 } [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-								add_to_variable = { global.OMT_total_value = 0.1 }
-								#log = "[THIS.GetTag] calculate_interest_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-								calculate_interest_rate = yes
-								#log = "[THIS.GetTag] calculate_debt_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-								calculate_debt_rate = yes
-							}
-						}	
-					}
-						#log = "[THIS.GetTag] ingame_calculate_size_modifier = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"	
-						ingame_calculate_size_modifier = yes
-						#log = "[THIS.GetTag] update_military_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-						update_military_rate = yes
-						#log = "[THIS.GetTag] calculate_interest_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-						calculate_interest_rate = yes
-						#log = "[THIS.GetTag] calculate_debt_rate = yes [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-						calculate_debt_rate = yes
-				}
-					#log = "END OF LOOP OTM interest_rate [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-			
+			hidden_effect = {
+				set_global_flag = active_OMT
+			}
+				execute_OMT = yes
 				every_country = {
 					if = {
 						limit = {
@@ -449,31 +287,13 @@ EU_ECB_category = {
 						}
 					}
 				}
-			}
+			
 		}
 		remove_effect = {
-			custom_effect_tooltip = tooltip_ECB_Outright_Monetary_Transactions_remove_effect
-			hidden_effect = {		
-				every_country = {
-					if = {
-						limit = {
-							has_idea = EU_member
-							has_idea = the_euro
-						}
-					log = "remove_effect interest_rate [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
-						add_to_variable = { 
-							var = THIS.debt
-							value = THIS.OMT_account
-						}
-						clear_variable = THIS.OMT_account
-						clear_variable = global.OMT_total_value						
-						ingame_calculate_size_modifier = yes
-						update_military_rate = yes
-						calculate_interest_rate = yes
-						calculate_debt_rate = yes
-					log = "remove_effect end interest_rate [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"										
-					}
-				}
+			hidden_effect = {
+				clr_global_flag = active_OMT
+			}		
+				remove_OMT = yes
 				every_country = {
 					if = {
 						limit = {
@@ -484,10 +304,10 @@ EU_ECB_category = {
 						}
 					}
 				}
-			}
+			
 		}
 		ai_will_do = {
-			factor = 40
+			factor = 0
 				modifier = {
 					add = 40
 					any_country = {
