@@ -5,6 +5,7 @@
 add_namespace = china
 add_namespace = south_china_sea_clash
 add_namespace = sino_indian
+add_namespace = sco
 
 #19th National Congress
 news_event = {
@@ -1413,18 +1414,40 @@ country_event = {
 }
 
 #China Accelerates "Belt and Road Initiative"
-news_event = {
+country_event = {
 	id = china.34
 	title = china.34.t
 	desc = china.34.d
 	
-	picture = GFX_china_19th_national_congress
+	picture = GFX_CHI_generic
 	
 	is_triggered_only = yes
 	
 	option = {
-		name = china.34.a #China's global influence is sure to grow.
+		name = china.34.a #Where do we sign?
+		set_country_flag = signed_BRI
 		log = "[GetDateText]: [This.GetName]: china.34.a executed"
+		ai_chance = {
+			factor = 100
+			modifier = {
+				factor = 0
+				OR = {	
+					is_puppet_of = USA
+					is_puppet_of = AST
+					is_puppet_of = JAP
+					is_puppet_of = RAJ
+					original_tag = USA
+					original_tag = AST
+					original_tag = JAP
+					original_tag = RAJ
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = china.34.b #We reject this threat to our independence.
+		log = "[GetDateText]: [This.GetName]: china.34.b executed"
 	}
 }
 
@@ -2582,16 +2605,7 @@ news_event = {
 news_event = {
 	id = sino_indian.8
 	title = sino_indian.8.t
-	
-	desc = { 
-		text = sino_indian.8.d
-		trigger = { original_tag = CHI }
-	}
-	
-	desc = {
-		text = sino_indian.8.d_RAJ
-		trigger = { NOT = { original_tag = CHI } }
-	}
+	desc = sino_indian.8.d
 	
 	picture = GFX_china_indian_border_skirmish
 	
@@ -2820,5 +2834,164 @@ news_event = {
 		name = sino_indian.12.b #An extremely worrying development...
 		trigger = { original_tag = PAK }
 		log = "[GetDateText]: [This.GetName]: sino_indian.12.b executed"
+	}
+}
+
+###SCO
+#[FROM.GetName] has submitted an application for SCO observer status
+country_event = {
+	id = sco.1
+	title = sco.1.t
+	desc = sco.1.d
+	
+	picture = GFX_politics_negotiations
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sco.1.a #We see no reason why their request should not be granted.
+		log = "[GetDateText]: [This.GetName]: sco.1.a executed"
+	}
+	
+	option = {
+		name = sco.1.b #We cannot grant them this status!
+		FROM = { set_country_flag = SCO_observer_status_rejected }
+		log = "[GetDateText]: [This.GetName]: sco.1.b executed"
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+#[FROM.GetName] has submitted an application for SCO member status
+country_event = {
+	id = sco.2
+	title = sco.2.t
+	desc = sco.2.d
+	
+	picture = GFX_politics_negotiations
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sco.2.a #We see no reason why their request should not be granted.
+		log = "[GetDateText]: [This.GetName]: sco.1.a executed"
+	}
+	
+	option = {
+		name = sco.2.b #We cannot grant them this status!
+		FROM = { set_country_flag = SCO_membership_rejected }
+		log = "[GetDateText]: [This.GetName]: sco.2.b executed"
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+#[FROM.GetName] is offering to conduct joint military exercises with us
+country_event = {
+	id = sco.3
+	title = sco.3.t
+	desc = sco.3.d
+	
+	picture = GFX_politics_negotiations
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sco.3.a #This is a welcome opportunity for our troops to hone their skills!
+		set_country_flag = SCO_joint_exercises_accepted
+		FROM = { country_event = { days = 1 id = sco.4 } }
+		log = "[GetDateText]: [This.GetName]: sco.1.a executed"
+		ai_chance = {
+			factor = 40
+		}
+	}
+	
+	option = {
+		name = sco.3.b #Cooperation with [FROM.Getname] is impossible.
+		FROM = { 
+			clr_country_flag = SCO_joint_exercises_offered 
+			country_event = { days = 1 id = sco.5 }
+		}
+		log = "[GetDateText]: [This.GetName]: sco.3.b executed"
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 40
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 40
+				has_opinion = {
+					target = FROM
+					value < -50
+				}
+			}
+		}
+	}
+}
+
+#[FROM.GetName] has accepted our offer!
+country_event = {
+	id = sco.4
+	title = sco.4.t
+	desc = sco.4.d
+	
+	picture = GFX_politics_talks
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sco.4.a #Let the games begin!
+		log = "[GetDateText]: [This.GetName]: sco.4.a executed"
+	}
+}
+
+#[FROM.GetName] has rejected our offer!
+country_event = {
+	id = sco.5
+	title = sco.5.t
+	desc = sco.5.d
+	
+	picture = GFX_treaty_rejected
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sco.5.a #Their loss...
+		log = "[GetDateText]: [This.GetName]: sco.5.a executed"
+	}
+}
+
+#SCO Launches Large-Scale Military Exercises
+news_event = {
+	id = sco.6
+	title = sco.6.t
+	desc = sco.6.d
+	
+	picture = GFX_generic_soldiers
+	
+	is_triggered_only = yes
+	
+	option = {
+		trigger = { has_government = democratic }
+		name = sco.6.a #Are these threatening drills meant for our benefit?
+		log = "[GetDateText]: [This.GetName]: sco.6.a executed"
+	}
+	
+	option = {
+		trigger = { has_government = communism }
+		name = sco.6.b #Only terrorists have anything to fear from this!
+		log = "[GetDateText]: [This.GetName]: sco.6.b executed"
+	}
+	
+	option = {
+		trigger = { NOT = { has_government = communism has_government = democratic } }
+		name = sco.6.c #An interesting development.
+		log = "[GetDateText]: [This.GetName]: sco.6.c executed"
 	}
 }

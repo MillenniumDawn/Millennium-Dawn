@@ -1,5 +1,680 @@
-south_china_sea_category = {
+sco_category = {
 
+	provide_development_assistance = {
+		icon = GFX_decision_generic_construction
+		
+		visible = {
+			is_sco = yes
+			if = {
+				limit = { original_tag = CHI }
+				NOT = { has_completed_focus = CHI_Development_Assistance }
+			}
+		}
+		
+		available = {
+			FROM = {
+				NOT = {
+					has_idea = SCO_development_assistance
+				}
+				NOT = {
+					has_idea = SCO_development_assistance_2
+				}
+				has_war = no
+			}
+		}
+		
+		target_array = global.sco_members
+		
+		target_trigger = {
+			country_exists = FROM
+			FROM = {
+				check_variable = { gdp_capita < ROOT.gdp_capita }
+			}	
+		}
+		
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.4 }
+		}
+		
+		custom_cost_text = cost_1_5
+		
+		days_remove = 90
+		
+		complete_effect = {
+			subtract_from_variable = { treasury = 1.5 }
+			FROM = {
+				add_timed_idea = {
+					idea = SCO_development_assistance
+					days = 90
+				}
+			}
+		}
+		
+		remove_effect = {
+			FROM = {	
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = small_influence_10_tt
+			}
+		}
+		
+		
+	}
+	
+	provide_development_assistance_CHI = {
+		icon = GFX_decision_generic_construction
+		
+		visible = {
+			is_sco = yes
+			original_tag = CHI
+			has_completed_focus = CHI_Development_Assistance
+		}
+		
+		available = {
+			FROM = {
+				NOT = {
+					has_idea = SCO_development_assistance
+				}
+				NOT = {
+					has_idea = SCO_development_assistance_2
+				}
+				has_war = no
+			}
+		}
+		
+		target_array = global.sco_members
+		
+		target_trigger = {
+			country_exists = FROM
+			FROM = {
+				check_variable = { gdp_capita < ROOT.gdp_capita }
+			}
+		}
+		
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.4 }
+		}
+		
+		custom_cost_text = cost_1_5
+		
+		complete_effect = {
+			subtract_from_variable = { treasury = 1.5 }
+			FROM = {
+				add_timed_idea = {
+					idea = SCO_development_assistance_2
+					days = 90
+				}
+			}
+		}
+		
+		days_remove = 90
+		
+		remove_effect = {
+			FROM = {	
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 20 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+				custom_effect_tooltip = small_influence_20_tt
+			}
+		}
+		
+		
+	}
+	
+	apply_to_join_as_an_observer = {
+		icon = GFX_decision_generic_political_discourse
+		
+		visible = {
+			is_puppet = no
+			CHI = {
+				has_completed_focus = CHI_Form_the_SCO
+			}
+			NOT = { 
+				has_idea = sco_member
+				has_idea = sco_observer
+				has_idea = sco_member_econ
+				has_idea = sco_member_pol
+				has_idea = sco_member_mil
+			}
+			if = {
+				limit = { has_idea = ASEAN_Member }
+				CHI = {
+					has_completed_focus = CHI_Undermine_ASEAN
+				}
+			}
+		}
+		
+		available = {
+			NOT = { has_government = democratic }
+			NOT = { 
+				has_war_with = CHI
+			}
+			if = {
+				limit = { CHI = { NOT = { has_completed_focus = CHI_Chinese_Dominance } } }
+				NOT = { has_war_with = SOV } 
+			}
+		}
+		
+		highlight_states = { state = 540 }
+		
+		cost = 100
+		
+		complete_effect = {
+			CHI = {
+				country_event = { id = sco.1 }
+			}
+			if = {
+				limit = { 
+					CHI = { 
+						NOT = { has_completed_focus = CHI_Chinese_Dominance }
+					}
+				}
+				SOV = {
+					country_event = { id = sco.1 }
+				}
+			}
+		}
+		
+		days_remove = 90
+		
+		remove_effect = {
+			if = {
+				limit = { NOT = { has_country_flag = SCO_observer_status_rejected } }
+				add_ideas = sco_observer
+			}
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 20
+				has_government = communism
+			}
+			modifier = {
+				add = 10
+				check_variable = { Chinese_Aggression < -9 }
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+	
+	give_up_observer_status = {
+		icon = GFX_decision_generic_break_treaty
+		
+		visible = {
+			has_idea = sco_observer
+		}
+		
+		cost = 50
+		
+		complete_effect = {
+			remove_ideas = sco_observer
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 20
+				has_government = democratic
+			}
+			modifier = {
+				add = 10
+				NOT = { has_government = communism }
+				check_variable = { Chinese_Aggression > 19 }
+			}
+			modifier = {
+				add = 100
+				has_war_with = CHI
+			}
+			modifier = {
+				add = 100
+				SOV = { is_sco = yes }
+				has_war_with = SOV
+			}
+			modifier = {
+				add = 100
+				RAJ = { is_sco = yes }
+				has_war_with = RAJ
+			}
+			modifier = {
+				add = 100
+				PAK = { is_sco = yes }
+				has_war_with = PAK
+			}
+		}
+	}
+	
+	apply_to_join_as_a_member = {
+		icon = GFX_decision_generic_political_discourse
+		
+		visible = {
+			is_puppet = no
+			CHI = {
+				has_completed_focus = CHI_Form_the_SCO
+			}
+			has_idea = sco_observer
+			NOT = { 
+				has_idea = sco_member
+				has_idea = sco_member_econ
+				has_idea = sco_member_pol
+				has_idea = sco_member_mil
+			}
+			if = {
+				limit = { has_idea = ASEAN_Member }
+				CHI = {
+					has_completed_focus = CHI_Undermine_ASEAN
+				}
+			}
+		}
+		
+		available = {
+			NOT = { has_government = democratic }
+			NOT = { 
+				has_war_with = CHI
+			}
+			if = {
+				limit = { CHI = { NOT = { has_completed_focus = CHI_Chinese_Dominance } } }
+				NOT = { has_war_with = SOV } 
+			}
+		}
+		
+		highlight_states = { state = 540 }
+		
+		cost = 200
+		
+		complete_effect = {
+			CHI = {
+				country_event = { id = sco.2 }
+			}
+			if = {
+				limit = { 
+					CHI = { 
+						NOT = { has_completed_focus = CHI_Chinese_Dominance }
+					}
+				}
+				SOV = {
+					country_event = { id = sco.2 }
+				}
+			}
+		}
+		
+		days_remove = 90
+		
+		remove_effect = {
+			add_to_array =  { global.sco_members = ROOT }
+			if = {
+				limit = { 
+					NOT = { has_country_flag = SCO_membership_rejected } 
+					CHI = { has_idea = sco_member_econ }
+				}
+				add_ideas = sco_member_econ
+			}
+			else_if = {
+				limit = { 
+					NOT = { has_country_flag = SCO_membership_rejected } 
+					CHI = { has_idea = sco_member_pol }
+				}
+				add_ideas = sco_member_pol
+			}
+			else_if = {
+				limit = { 
+					NOT = { has_country_flag = SCO_membership_rejected } 
+					CHI = { has_idea = sco_member_mil }
+				}
+				add_ideas = sco_member_mil
+			}
+			else_if = {
+				limit = { 
+					NOT = { has_country_flag = SCO_membership_rejected } 
+					CHI = { has_idea = sco_member }
+				}
+				add_ideas = sco_member
+			}
+			if = {
+				limit = { CHI = { has_completed_focus = CHI_An_Alliance_to_Rival_NATO } }
+				CHI = { add_to_faction = ROOT }
+			}
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 10
+				has_government = communism
+			}
+			modifier = {
+				add = 10
+				check_variable = { Chinese_Aggression < -19 }
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+	
+	give_up_membership_status = {
+		icon = GFX_decision_generic_break_treaty
+		
+		visible = {
+			is_sco = yes
+			NOT = { original_tag = CHI }
+		}
+		
+		available = {
+			if = {
+				limit = { original_tag = SOV }
+				CHI = { has_completed_focus = CHI_Chinese_Dominance }
+			}
+		}
+		
+		cost = 50
+		
+		complete_effect = {
+			remove_from_array =  { global.sco_members = ROOT }
+			if = {	
+				limit = { has_idea = sco_member }
+				remove_ideas = sco_member
+			}
+			else_if = {	
+				limit = { has_idea = sco_member_econ }
+				remove_ideas = sco_member_econ
+			}
+			else_if = {	
+				limit = { has_idea = sco_member_pol }
+				remove_ideas = sco_member_pol
+			}
+			else_if = {	
+				limit = { has_idea = sco_member_mil }
+				remove_ideas = sco_member_mil
+			}
+			if = {
+				limit = { is_in_faction_with = CHI }
+				leave_faction = yes
+			}
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 20
+				has_government = democratic
+			}
+			modifier = {
+				add = 10
+				NOT = { has_government = communism }
+				check_variable = { Chinese_Aggression > 9 }
+			}
+			modifier = {
+				add = 100
+				has_war_with = CHI
+			}
+			modifier = {
+				add = 100
+				SOV = { is_sco = yes }
+				has_war_with = SOV
+			}
+			modifier = {
+				add = 100
+				RAJ = { is_sco = yes }
+				has_war_with = RAJ
+			}
+			modifier = {
+				add = 100
+				PAK = { is_sco = yes }
+				has_war_with = PAK
+			}
+		}
+	}
+	
+	host_joint_exercises = {
+	
+		icon = GFX_decision_generic_army_support
+		
+		visible = {
+			is_sco = yes
+			OR = {
+				original_tag = CHI
+				AND = {
+					original_tag = SOV
+					CHI = {
+						NOT = { has_completed_focus = CHI_Chinese_Dominance }
+					}
+				}
+			}
+		}
+		
+		available = {
+			custom_trigger_tooltip = {	
+				tooltip = SCO_peace_tt
+				NOT = {
+					any_country = {
+						is_sco = yes
+						has_war = yes
+					}
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = SCO_any_drills_tt
+				NOT = {
+					any_country = {
+						is_sco = yes
+						OR = {
+							has_country_flag = SCO_joint_exercises_accepted
+							has_country_flag = SCO_joint_exercises_offered
+							has_idea = SCO_joint_drill
+							has_idea = SCO_joint_drill_1
+							has_idea = SCO_joint_drill_specific
+						}
+					}
+				}
+			}
+		}
+		
+		custom_cost_trigger = {
+			command_power > 40
+		}
+		
+		custom_cost_text = command_power_more_than_40
+		
+		complete_effect = {
+			add_command_power = -40
+			if = {
+				limit = { has_completed_focus = CHI_Strengthen_Security_Framework }
+				every_country = {
+					limit = { is_sco = yes }
+					add_timed_idea = {
+						idea = SCO_joint_drill_1
+						days = 14
+					}
+				}
+			}
+			else_if = {
+				every_country = {
+					limit = { is_sco = yes }
+					add_timed_idea = {
+						idea = SCO_joint_drill
+						days = 14
+					}
+				}
+			}
+			every_country = {
+				news_event = { days = 1 id = sco.6 }
+			}
+		}
+		
+		days_remove = 14
+		
+		days_re_enable = 730
+		
+		remove_effect = {
+			random_army_leader = {
+				add_skill_level = 1
+			}
+		}
+	}
+	
+	offer_joint_exercises_specific = {
+	
+		icon = GFX_decision_generic_tank
+		
+		visible = {
+			is_sco = yes
+			NOT = { has_country_flag = SCO_joint_exercises_accepted }
+			NOT = { has_country_flag = SCO_joint_exercises_offered }
+		}
+		
+		target_array = global.sco_members
+		
+		target_trigger = {
+			country_exists = FROM
+			FROM = {
+				NOT = { has_country_flag = SCO_joint_exercises_accepted }
+				NOT = { has_country_flag = SCO_joint_exercises_offered }
+			}
+		}
+		
+		available = {
+			has_war = no
+			FROM = { has_war = no }
+			custom_trigger_tooltip = {
+				tooltip = SCO_drills_tt
+				NOT = { has_country_flag = SCO_joint_exercises_accepted }
+				NOT = { has_country_flag = SCO_joint_exercises_offered }
+				NOT = { has_idea = SCO_joint_drill }
+				has_idea = SCO_joint_drill_1
+				NOT = { has_idea = SCO_joint_drill_specific }
+			}
+			FROM = { 
+				custom_trigger_tooltip = {
+					tooltip = SCO_drills_tt
+					NOT = { has_country_flag = SCO_joint_exercises_accepted }
+					NOT = { has_country_flag = SCO_joint_exercises_offered }
+					NOT = { has_idea = SCO_joint_drill }
+					NOT = { has_idea = SCO_joint_drill_specific }
+				}
+			}
+		}
+		
+		cost = 50
+		
+		days_re_enable = 365
+		
+		complete_effect = {
+			set_country_flag = SCO_joint_exercises_offered
+			FROM = {
+				country_event = {
+					id = sco.3
+				}
+			}
+		}
+	}
+	
+	start_joint_exercises_specific = {
+	
+		icon = GFX_decision_generic_tank
+		
+		visible = {
+			is_sco = yes
+			has_country_flag = SCO_joint_exercises_offered
+		}
+		
+		target_array = global.sco_members
+		
+		target_trigger = {
+			country_exists = FROM
+			FROM = { has_country_flag = SCO_joint_exercises_accepted }
+		}
+		
+		available = {
+			has_war = no
+			FROM = { has_war = no }
+		}
+		
+		custom_cost_trigger = {
+			command_power > 20
+		}
+		
+		custom_cost_text = command_power_more_than_20
+		
+		complete_effect = {
+			add_command_power = -20
+			ROOT = {
+				add_timed_idea = {
+					idea = SCO_joint_drill_specific
+					days = 14
+				}
+			}
+			FROM = {
+				add_timed_idea = {
+					idea = SCO_joint_drill_specific
+					days = 14
+				}
+			}
+		}
+		
+		days_remove = 14
+				
+		remove_effect = {
+			add_opinion_modifier = {
+				target = FROM
+				modifier = military_cooperation
+			}
+			clr_country_flag = SCO_joint_exercises_offered
+			FROM = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = military_cooperation
+				}
+				clr_country_flag = SCO_joint_exercises_accepted
+			}
+		}
+		
+	}
+}
+
+south_china_sea_category = {
+	
 	oil_exploration_paracels = {
 		icon = GFX_decision_oil
 		
@@ -2089,6 +2764,7 @@ south_china_sea_category = {
 		custom_cost_text = command_power_more_than_40
 		
 		complete_effect = {
+			add_command_power = -40
 			MAY = {
 				add_opinion_modifier = {
 					target = CHI
@@ -2186,6 +2862,7 @@ south_china_sea_category = {
 		custom_cost_text = command_power_more_than_40
 		
 		complete_effect = {
+			add_command_power = -40
 			PHI = {
 				add_opinion_modifier = {
 					target = CHI
@@ -2260,6 +2937,7 @@ south_china_sea_category = {
 		custom_cost_text = command_power_more_than_40
 		
 		complete_effect = {
+			add_command_power = -40
 			VIE = {
 				add_opinion_modifier = {
 					target = CHI
