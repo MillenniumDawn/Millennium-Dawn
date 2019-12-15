@@ -261,3 +261,215 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: korea.4.a executed"
 	}
 }
+
+#Peace Talks in Beijing
+country_event = {
+	id = korea.5
+	immediate = { log = "[GetDateText]: [Root.GetName]: event korea.5" }
+
+	title = korea.5.t
+	desc = {
+		trigger = { original_tag = KOR }
+		text = korea.5.d
+	}
+	desc = {
+		trigger = { original_tag = NKO }
+		text = korea.5.d_NKO
+	}
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.5.a #Our country will never be whole again unless we take a few risks...
+		set_country_flag = compromise_offered
+		if = {
+			limit = {
+				NKO = { has_country_flag = compromise_offered }
+				KOR = { has_country_flag = compromise_offered }
+			}
+			NKO = { 
+				remove_ideas = NKO_nuclear_tests 
+				remove_opinion_modifier = {
+					target = KOR
+					modifier = imminent_danger_to_national_security
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = peace_talks
+				}
+			}
+			KOR = { 
+				remove_ideas = KOR_joint_us_exercises 
+				remove_opinion_modifier = {
+					target = NKO
+					modifier = imminent_danger_to_national_security
+				}
+				add_opinion_modifier = {
+					target = NKO
+					modifier = peace_talks
+				}
+			}
+			every_country = {
+				news_event = { days = 2 id = korea.7 }
+			}
+		}
+		if = {
+			limit = { has_idea = the_military }
+			visually_display_opinion_fall_the_military = yes
+			set_country_flag = current_the_military
+			decrease_internal_faction_opinion = yes
+		}
+		log = "[GetDateText]: [This.GetName]: korea.5.a executed"
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = CHI } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.2 }
+			}
+			modifier = {
+				factor = 2
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = CHI } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.3 }
+			}
+			modifier = {
+				factor = 2
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = CHI } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.4 }
+			}
+			modifier = {
+				factor = 2
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = CHI } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.5 }
+			}
+			modifier = {
+				factor = 2
+				original_tag = KOR
+				has_opinion = {
+					target = NKO
+					value > -50
+				}
+			}
+			modifier = {
+				factor = 2
+				original_tag = NKO
+				has_opinion = {
+					target = KOR
+					value > -50
+				}
+			}
+			modifier = {
+				factor = 8
+				is_puppet_of = CHI
+			}
+			modifier = {
+				factor = 2
+				original_tag = KOR
+				NKO = { NOT = { has_idea = Planned_Economy } }
+			}
+		}
+	}
+	
+	option = {
+		name = korea.5.b #Some risks are too big too take.
+		log = "[GetDateText]: [This.GetName]: korea.5.b executed"
+		ai_chance = {
+			factor = 40
+			modifier = {
+				factor = 2
+				original_tag = KOR
+				OR = {	
+					is_in_array = { ruling_party = 1 }
+					has_government = nationalist
+				}
+			}
+			modifier = {
+				factor = 2
+				threat > 0.3
+			}
+		}
+	}
+}
+
+### Korean Peace Talks Held in Beijing
+news_event = {
+	id = korea.6
+	immediate = { log = "[GetDateText]: [Root.GetName]: event korea.6" }
+
+	title = korea.6.t
+	desc = korea.6.d
+	picture = GFX_news_press_conference
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.6.a #Can the two sides reach a compromise?
+		log = "[GetDateText]: [This.GetName]: korea.6.a executed"
+	}
+}
+
+### Korean Peace Talks a Success!
+news_event = {
+	id = korea.7
+	immediate = { log = "[GetDateText]: [Root.GetName]: event korea.6" }
+
+	title = korea.7.t
+	desc = korea.7.d
+	picture = GFX_trade_agreement
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.7.a #An encouraging development!
+		log = "[GetDateText]: [This.GetName]: korea.7.a executed"
+	}
+}
