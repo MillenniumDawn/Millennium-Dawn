@@ -582,6 +582,12 @@ focus_tree = {
 			subtract_from_variable = { treasury = 1.5 }
 			custom_effect_tooltip = 1_5_billion_expense_tt
 			every_other_country = {
+				limit = {
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
+				}
 				hidden_effect = {
 					set_temp_variable = { influence_gain = 2 }
 					for_loop_effect = {
@@ -636,6 +642,12 @@ focus_tree = {
 			subtract_from_variable = { treasury = 1.5 }
 			custom_effect_tooltip = 1_5_billion_expense_tt
 			every_other_country = {
+				limit = {
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
+				}
 				hidden_effect = {
 						set_temp_variable = { influence_gain = 2 }
 						for_loop_effect = {
@@ -690,6 +702,12 @@ focus_tree = {
 			subtract_from_variable = { treasury = 3 }
 			custom_effect_tooltip = 3_billion_expense_tt
 			every_other_country = {
+				limit = {
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
+				}
 				hidden_effect = {
 						set_temp_variable = { influence_gain = 2 }
 						for_loop_effect = {
@@ -3541,6 +3559,12 @@ focus_tree = {
 			subtract_from_variable = { treasury = 1 }
 			custom_effect_tooltip = 1_billion_expense_tt
 			every_other_country = {
+				limit = {
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
+				}
 				hidden_effect = {
 					set_temp_variable = { influence_gain = 2 }
 					for_loop_effect = {
@@ -10210,10 +10234,21 @@ focus_tree = {
 			custom_effect_tooltip = 1_billion_expense_tt
 			subtract_from_variable = { treasury = 1 }
 			SRI = { add_to_variable = { treasury = 1 } }
-			CHI = {
-				diplomatic_relation = {
-					country = SRI
-					relation = military_access
+			if = {	
+				limit = { has_dlc = "Man the Guns" }
+				CHI = {
+					diplomatic_relation = {
+						country = SRI
+						relation = docking_rights
+					}
+				}
+			}
+			else_if = {	
+				CHI = {
+					diplomatic_relation = {
+						country = SRI
+						relation = military_access
+					}
 				}
 			}
 			every_other_country = {
@@ -12576,6 +12611,12 @@ focus_tree = {
 		
 		completion_reward = {
 			every_other_country = {
+				limit = {
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
+				}
 				hidden_effect = {
 						set_temp_variable = { influence_gain = 2 }
 						for_loop_effect = {
@@ -12883,7 +12924,13 @@ focus_tree = {
 			custom_effect_tooltip = 8_billion_expense_tt
 			subtract_from_variable = { treasury = 8 }
 			every_other_country = {
-				limit = { has_navy_size = { size > 0 } }
+				limit = { 
+					has_navy_size = { size > 0 } 
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
+				}
 				hidden_effect = {
 						set_temp_variable = { influence_gain = 2 }
 						for_loop_effect = {
@@ -15592,10 +15639,22 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			diplomatic_relation = {
-				country = PAK
-				relation = military_access
-				active = yes
+			if = {	
+				limit = { has_dlc = "Man the Guns" }
+				CHI = {
+					diplomatic_relation = {
+						country = PAK
+						relation = docking_rights
+					}
+				}
+			}
+			else_if = {	
+				CHI = {
+					diplomatic_relation = {
+						country = PAK
+						relation = military_access
+					}
+				}
 			}
 			PAK = {
 				hidden_effect = {
@@ -17251,6 +17310,10 @@ focus_tree = {
 							OR = {
 								is_african_nation = yes
 								is_asian_nation = yes
+								NOT = {
+									has_idea = Non_State_Actor
+									has_idea = Lacks_International_Recognition
+								}
 							}
 							OR = {
 								AND = {
@@ -17328,6 +17391,10 @@ focus_tree = {
 							OR = {
 								is_african_nation = yes
 								is_asian_nation = yes
+							}
+							NOT = {
+								has_idea = Non_State_Actor
+								has_idea = Lacks_International_Recognition
 							}
 							check_variable = { influence_array^0 = USA }			
 						} 
@@ -17655,6 +17722,7 @@ focus_tree = {
 				}
 				add_ideas = sco_member
 			}
+			unlock_decision_category_tooltip = sco_category
 			add_to_array =  { global.sco_members = CHI }
 			add_to_array =  { global.sco_members = KAZ }
 			add_to_array =  { global.sco_members = KYR }
@@ -18110,15 +18178,27 @@ focus_tree = {
 		mutually_exclusive = { focus = CHI_Equal_Partners }
 		
 		available = {
-			SOV = { 
-				custom_trigger_tooltip = {
-					tooltip = lower_gdp_tt
-					check_variable = { gdp_capita < ROOT.gdp_capita }
-				}
+			ic_ratio = {
+				tag = SOV
+				ratio > 2
+			}
+			strength_ratio = {
+				tag = SOV
+				ratio > 2
 			}
 		}
 		
 		completion_reward = {
+			SOV = {	
+				add_opinion_modifier = {
+					target = CHI
+					modifier = diplomatic_distance
+				}
+				custom_effect_tooltip = CHI_SOV_decisions_locked_tt
+			}
+			every_country = {
+				news_event = { id = sco.9 }
+			}
 			custom_effect_tooltip = CHI_increase_aggression_2_tt
 			add_to_variable = { chinese_aggression = 2 }
 			log = "[GetDateText]: [This.GetName]: focus CHI_Chinese_Dominance executed"
@@ -18157,7 +18237,12 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			SOV = {	
+				add_opinion_modifier = {
+					target = CHI
+					modifier = diplomatic_support
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Equal_Partners executed"
 		}
 		
@@ -18229,6 +18314,10 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			every_country = {
+				limit = { has_idea = ASEAN_Member }
+				unlock_decision_category_tooltip = sco_category
+			}
 			custom_effect_tooltip = CHI_increase_aggression_1_tt
 			add_to_variable = { chinese_aggression = 1 }
 			log = "[GetDateText]: [This.GetName]: focus CHI_Undermine_ASEAN executed"
@@ -18260,28 +18349,26 @@ focus_tree = {
 		completion_reward = {
 			every_other_country = {
 				limit = { OR = { has_idea = sco_member has_idea = sco_member_econ } }
-				every_other_country = {
-					hidden_effect = {
-						set_temp_variable = { influence_gain = 40 }
-						for_loop_effect = {
-							end = influence_array^num
-							value = v
-							if = {
-								limit = {
-									check_variable = { influence_array^v = CHI }
-								}
-								add_to_variable = { influence_array_val^v = influence_gain }
-								set_country_flag = found
-							}
-						}
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 40 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
 						if = {
-							limit = { NOT = { has_country_flag = found } }
-								add_to_array = { influence_array = CHI.id }
-								add_to_array = { influence_array_val = influence_gain }
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
 						}
-						clr_country_flag = found
-						recalculate_influence = yes
 					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = CHI.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
 					custom_effect_tooltip = CHI_small_influence_40_tt
 				}
 			}
@@ -18313,9 +18400,23 @@ focus_tree = {
 		mutually_exclusive = { focus = CHI_Merge_with_CSTO }
 		
 		available = {
+			SOV = { 
+				custom_trigger_tooltip = {
+					tooltip = SOV_left_SCO_tt
+					is_sco = no 
+				}
+			}
 		}
 		
 		completion_reward = {
+			every_country = {
+				limit = { 
+					is_sco = yes
+					is_in_faction_with = SOV
+					NOT = { original_tag = SOV }
+				}
+				country_event = { days = 2 id = sco.10 }
+			}
 			custom_effect_tooltip = CHI_increase_aggression_1_tt
 			add_to_variable = { chinese_aggression = 1 }
 			log = "[GetDateText]: [This.GetName]: focus CHI_Split_CSTO executed"
@@ -18372,7 +18473,7 @@ focus_tree = {
 		
 		completion_reward = {
 			every_country = {
-				limit = { is_in_faction_with = SOV NOT = { OR = { has_idea = sco_member has_idea = sco_member_pol has_idea = sco_member_mil } } }
+				limit = { is_in_faction_with = SOV NOT = { original_tag = NKR } NOT = { OR = { has_idea = sco_member has_idea = sco_member_pol has_idea = sco_member_mil } } }
 				if = {
 					limit = { CHI = { has_idea = sco_member_pol } }
 					add_ideas = sco_member_pol
@@ -18411,6 +18512,28 @@ focus_tree = {
 		available = {
 			has_war = no
 			has_completed_focus = CHI_A_Rival_Superpower
+			custom_trigger_tooltip = {
+				tooltip = CHI_dominant_SCO_tt
+				NOT = {
+					any_country = {
+						is_sco = yes
+						set_temp_variable = { temp_idx = -1 }
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							if = {
+								limit = { var:v = { tag = CHI } }
+								set_temp_variable = { temp_idx = i }
+								always = yes
+							}
+							else = { always = no }
+						}
+						check_variable = { temp_idx > -1 }
+						check_variable = { influence_array_calc^temp_idx < 0.3 }
+					}
+				}
+			}
 		}
 		
 		completion_reward = {
@@ -18641,7 +18764,13 @@ focus_tree = {
 		
 		completion_reward = {
 			every_other_country = {
-				limit = { is_african_nation = yes }
+				limit = { 
+					is_african_nation = yes
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
+				}
 				hidden_effect = {
 					set_temp_variable = { influence_gain = 2 }
 					for_loop_effect = {
@@ -18700,6 +18829,10 @@ focus_tree = {
 			every_other_country = {
 				limit = { 
 					is_african_nation = yes
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
 					set_temp_variable = { temp_idx = -1 }
 					any_of = {
 						array = influence_array
@@ -18754,6 +18887,10 @@ focus_tree = {
 				every_other_country = {
 					limit = { 
 						is_african_nation = yes
+						NOT = {
+							has_idea = Non_State_Actor
+							has_idea = Lacks_International_Recognition
+						}
 						set_temp_variable = { temp_idx = -1 }
 						any_of = {
 							array = influence_array
@@ -18778,6 +18915,10 @@ focus_tree = {
 				every_other_country = {
 					limit = { 
 						is_african_nation = yes
+						NOT = {
+							has_idea = Non_State_Actor
+							has_idea = Lacks_International_Recognition
+						}
 						set_temp_variable = { temp_idx = -1 }
 						any_of = {
 							array = influence_array
@@ -18830,6 +18971,10 @@ focus_tree = {
 			every_other_country = {
 				limit = { 
 					is_african_nation = yes
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
 					set_temp_variable = { temp_idx = -1 }
 					any_of = {
 						array = influence_array
@@ -18878,6 +19023,10 @@ focus_tree = {
 			every_other_country = {
 				limit = { 
 					is_african_nation = yes
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
 					set_temp_variable = { temp_idx = -1 }
 					any_of = {
 						array = influence_array
@@ -18927,6 +19076,10 @@ focus_tree = {
 			every_other_country = {
 				limit = { 
 					is_african_nation = yes
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
 					set_temp_variable = { temp_idx = -1 }
 					any_of = {
 						array = influence_array
@@ -18980,6 +19133,10 @@ focus_tree = {
 			every_other_country = {
 				limit = { 
 					is_african_nation = yes
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
 					set_temp_variable = { temp_idx = -1 }
 					any_of = {
 						array = influence_array
@@ -19033,6 +19190,10 @@ focus_tree = {
 			every_other_country = {
 				limit = { 
 					is_african_nation = yes
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
 					set_temp_variable = { temp_idx = -1 }
 					any_of = {
 						array = influence_array
@@ -19105,6 +19266,10 @@ focus_tree = {
 			every_other_country = {
 				limit = { 
 					is_african_nation = yes
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
 					OR = { has_idea = CHI_solar_power has_idea = CHI_nuclear_power has_idea = CHI_coal }
 					set_temp_variable = { temp_idx = -1 }
 					any_of = {
@@ -19128,6 +19293,10 @@ focus_tree = {
 			every_other_country = {
 				limit = { 
 					is_african_nation = yes
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
 					NOT = { has_idea = CHI_solar_power has_idea = CHI_nuclear_power has_idea = CHI_coal }
 					set_temp_variable = { temp_idx = -1 }
 					any_of = {
@@ -19180,6 +19349,10 @@ focus_tree = {
 			every_other_country = {
 				limit = { 
 					is_african_nation = yes
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
 				}
 				add_stability = 0.02
 			}
@@ -19215,7 +19388,10 @@ focus_tree = {
 			every_country = {	
 				limit = {
 					OR = { original_tag = CHI is_african_nation = yes }
-					has_war = no
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
 				}
 				add_to_tech_sharing_group = China_Africa_Tech_Share
 			}
@@ -19251,6 +19427,10 @@ focus_tree = {
 			every_other_country = {
 				limit = { 
 					is_african_nation = yes
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+					}
 					set_temp_variable = { temp_idx = -1 }
 					any_of = {
 						array = influence_array

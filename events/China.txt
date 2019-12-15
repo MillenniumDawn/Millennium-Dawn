@@ -2995,3 +2995,198 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: sco.6.c executed"
 	}
 }
+
+#[FROM.GetName] Gains SCO Membership
+news_event = {
+	id = sco.7
+	title = sco.7.t
+	desc = sco.7.d
+	
+	picture = GFX_trade_agreement
+	
+	is_triggered_only = yes
+	
+	option = {
+		trigger = { has_government = democratic }
+		name = sco.7.a #The Chinese threat continues to grow...
+		log = "[GetDateText]: [This.GetName]: sco.6.a executed"
+	}
+	
+	option = {
+		trigger = { NOT = { has_government = democratic } }
+		name = sco.7.b #A good day for diplomacy!
+		log = "[GetDateText]: [This.GetName]: sco.7.b executed"
+	}
+}
+
+#[FROM.GetName] Leaves the SCO
+news_event = {
+	id = sco.8
+	title = sco.8.t
+	desc = sco.8.d
+	
+	picture = GFX_news_press_conference
+	
+	is_triggered_only = yes
+	
+	option = {
+		trigger = { has_government = democratic }
+		name = sco.8.a #Chinese aggression has alienated this nation.
+		log = "[GetDateText]: [This.GetName]: sco.8.a executed"
+	}
+	
+	option = {
+		trigger = { NOT = { has_government = democratic } }
+		name = sco.8.b #A sad day for international cooperation...
+		log = "[GetDateText]: [This.GetName]: sco.8.b executed"
+	}
+}
+
+#China Seizes the Reins of Power over the SCO from Russia
+news_event = {
+	id = sco.9
+	title = sco.9.t
+	desc = sco.9.d
+	
+	picture = GFX_china_90th_pla_anniversary
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sco.9.a #China is not willing to share the spotlight...
+		log = "[GetDateText]: [This.GetName]: sco.9.a executed"
+	}
+}
+
+#China is demanding that we choose a side
+country_event = {
+	id = sco.10
+	title = sco.10.t
+	desc = sco.10.d
+	
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = sco.10.a #We are nothing if not loyal!
+		if = {
+			limit = { has_idea = sco_member }
+			remove_ideas = sco_member
+		}
+		if = {
+			limit = { has_idea = sco_member_econ }
+			remove_ideas = sco_member_econ
+		}
+		if = {
+			limit = { has_idea = sco_member_pol }
+			remove_ideas = sco_member_pol
+		}
+		if = {
+			limit = { has_idea = sco_member_mil }
+			remove_ideas = sco_member_mil
+		}
+		CHI = { 
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = resisted_territorial_ambition
+			}
+		}
+		SOV = { 
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = has_expressed_loyalty
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: sco.10.a executed"
+		ai_chance = {
+			factor = 40
+		}
+	}
+	
+	option = {
+		name = sco.10.b #Time to leave this sinking ship...
+		leave_faction = yes
+		CHI = { 
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = diplomatic_support
+			}
+		}
+		SOV = { 
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = diplomatic_disloyalty
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: sco.10.be executed"
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 20
+				has_opinion = {
+					target = CHI
+					value > 50
+				}
+			}
+			modifier = {
+				add = 20
+				has_opinion = {
+					target = CHI
+					value > 100
+				}
+			}
+			modifier = {
+				add = 20
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = CHI } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.2 }
+			}
+			modifier = {
+				add = 20
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = CHI } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.3 }
+			}
+			modifier = {
+				add = 20
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = CHI } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.4 }
+			}
+		}
+	}
+}
