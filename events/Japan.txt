@@ -1,4 +1,5 @@
 ﻿add_namespace = Japan
+add_namespace = japan_classic
 
 #2000 Naka-Meguro derailment
 country_event = {
@@ -66,165 +67,44 @@ country_event = {
 	}
 }
 
-#China is Demanding the Senkaku Islands!
+#Akihito abdicates
 country_event = {
 	id = Japan.3
 	immediate = { log = "[GetDateText]: [Root.GetName]: event Japan.3" }
 	title = Japan.3.t
 	desc = Japan.3.d
-	picture = GFX_CHI_generic
 	
-	is_triggered_only = yes
+	picture = GFX_JAP_generic
 	
-	option = {	
-		name = Japan.3.a #Let them have their fishing rights...
+	trigger = {
+		original_tag = JAP
+		has_idea = idea_JAP_emperor_akihito
+		date > 2019.01.01
+	}
+	mean_time_to_happen = { days = 360 }
+	
+	option = {
+		name = Japan.3.a 
 		log = "[GetDateText]: [This.GetName]: Japan.3.a executed"
 		if = {
-			limit = { NOT = { has_government = nationalist } }
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.05
+			limit = { has_idea = idea_JAP_emperor_akihito }
+			swap_ideas = {
+				remove_idea = idea_JAP_emperor_akihito
+				add_idea = idea_JAP_emperor_naruhito
+			}	
+		}
+		create_country_leader = {
+			name = "Naruhito"
+			desc = ""
+			picture = "Naruhito.dds"
+			expire = "2050.1.1"
+			ideology = Monarchist
+			traits = {
+				nationalist_Monarchist
+				emperor_of_japan
 			}
 		}
-		else_if = {
-			add_popularity = {
-				ideology = democratic
-				popularity = 0.05
-			}
-		}
-		recalculate_party = yes
-		custom_effect_tooltip = CHI_small_influence_10_tt
-		hidden_effect = {
-			set_temp_variable = { influence_gain = 10 }
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
-				if = {
-					limit = {
-						check_variable = { influence_array^v = CHI }
-					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-					set_country_flag = found
-				}
-			}
-			if = {
-				limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = CHI.id }
-					add_to_array = { influence_array_val = influence_gain }
-			}
-			clr_country_flag = found
-			recalculate_influence = yes
-		}
-		CHI = { country_event = { days = 2 id = Japan.4 } }
-		ai_chance = {
-			factor = 20
-			modifier = {
-				factor = 2
-				ROOT = {
-					set_temp_variable = { temp_idx = -1 }
-					any_of = {
-						array = influence_array
-						value = v
-						index = i
-						if = {
-							limit = { var:v = { tag = CHI } }
-							set_temp_variable = { temp_idx = i }
-							always = yes
-						}
-						else = { always = no }
-					}
-					check_variable = { temp_idx > -1 }
-					check_variable = { influence_array_calc^temp_idx > 0.2 }
-				}
-			}
-			modifier = {
-				factor = 2
-				ROOT = {
-					set_temp_variable = { temp_idx = -1 }
-					any_of = {
-						array = influence_array
-						value = v
-						index = i
-						if = {
-							limit = { var:v = { tag = CHI } }
-							set_temp_variable = { temp_idx = i }
-							always = yes
-						}
-						else = { always = no }
-					}
-					check_variable = { temp_idx > -1 }
-					check_variable = { influence_array_calc^temp_idx > 0.4 }
-				}
-			}
-			modifier = {
-				factor = 2
-				CHI = { check_variable = { chinese_aggression < 0 } }
-			}
-			modifier = {
-				factor = 2
-				CHI = { check_variable = { chinese_aggression < -10 } }
-			}
-			modifier = {
-				factor = 2
-				CHI = { check_variable = { chinese_aggression < -20 } }
-			}
-			modifier = {
-				factor = 2
-				CHI = { check_variable = { chinese_aggression < -30 } }
-			}
-			modifier = {
-				factor = 4
-				CHI = { has_completed_focus = CHI_End_US_Hegemony }
-			}
-		}
-	}
-	
-	option = {	
-		name = Japan.3.b #Japan will not be intimidated!
-		log = "[GetDateText]: [This.GetName]: Japan.3.b executed"
-		if = {
-			limit = { has_government = nationalist }
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.05
-			}
-		}
-		if = {
-			limit = { has_government = democratic }
-			add_popularity = {
-				ideology = democratic
-				popularity = 0.05
-			}
-		}
-		recalculate_party = yes
-		add_war_support = 0.02
-		CHI = {
-			add_opinion_modifier = {
-				target = JAP
-				modifier = resisted_territorial_ambition
-			}
-		}
-		CHI = { country_event = { days = 2 id = Japan.5 } }
-		ai_chance = { 
-			factor = 80
-			modifier = {
-				factor = 2
-				CHI = { check_variable = { chinese_aggression > 0 } }
-			}
-			modifier = {
-				factor = 2
-				CHI = { check_variable = { chinese_aggression > 10 } }
-			}
-			modifier = {
-				factor = 2
-				CHI = { check_variable = { chinese_aggression > 20 } }
-			}
-			modifier = {
-				factor = 2
-				CHI = { check_variable = { chinese_aggression > 30 } }
-			}
-		}
-	}
+	}	
 }
 
 #Japan has Handed Over the Islands!
@@ -356,7 +236,6 @@ country_event = {
 			}
 		}
 	}
-	
 	option = {	
 		trigger = { any_country = { has_guaranteed = ROOT } }
 		name = Japan.6.b #We should call upon our protectors!
@@ -384,7 +263,6 @@ country_event = {
 			}
 		}
 	}
-	
 	option = {	
 		name = Japan.6.c #This was probably an accident...
 		log = "[GetDateText]: [This.GetName]: Japan.6.c executed"
@@ -423,5 +301,1549 @@ news_event = {
 	option = {	
 		name = Japan.7.a #Is a second Sino-Japanese War on the horizon?
 		log = "[GetDateText]: [This.GetName]: Japan.7.a executed"
+	}
+}
+
+#China is Demanding the Senkaku Islands!
+country_event = {
+	id = Japan.8
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Japan.3" }
+	title = Japan.8.t
+	desc = Japan.8.d
+	
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	
+	option = {	
+		name = Japan.8.a #Let them have their fishing rights...
+		log = "[GetDateText]: [This.GetName]: Japan.8.a executed"
+		if = {
+			limit = { NOT = { has_government = nationalist } }
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.05
+			}
+		}
+		else_if = {
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.05
+			}
+		}
+		recalculate_party = yes
+		custom_effect_tooltip = CHI_small_influence_10_tt
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 10 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = CHI }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = CHI.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		CHI = { country_event = { days = 2 id = Japan.4 } }
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 2
+				ROOT = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.2 }
+				}
+			}
+			modifier = {
+				factor = 2
+				ROOT = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.4 }
+				}
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < 0 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -10 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -20 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -30 } }
+			}
+			modifier = {
+				factor = 4
+				CHI = { has_completed_focus = CHI_End_US_Hegemony }
+			}
+		}
+	}
+}		
+
+#Invitation to the Japanese Alliance
+country_event = {
+	id = japan_classic.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.1" }
+	title = {
+		text = japan_classic.1.t1
+		trigger = { FROM = { tag = JAP } }
+	}
+	title = {
+		text = japan_classic.1.t2
+		trigger = {
+			NOT = { FROM = { tag = JAP } }
+		}
+	}
+	desc = {
+		text = japan_classic.1.d1
+		trigger = { FROM = { tag = JAP } }
+	}
+	desc = {
+		text = japan_classic.1.d2
+		trigger = { 
+			NOT = { FROM = { tag = JAP } }
+		}
+	}
+	picture = GFX_politics_talks
+	
+	is_triggered_only = yes
+	
+	option = {	#We accept
+		name = japan_classic.1.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.1.o1 executed"
+		set_country_flag = seek_japan_classicese_alliance
+		if = {
+			limit = { JAP = { is_faction_leader = yes } }
+			JAP = { add_to_faction = ROOT }
+		}
+		if = {
+			limit = { JAP = { is_faction_leader = no } }
+			random_country = {
+				limit = {
+					is_in_faction_with = JAP
+					is_faction_leader = yes
+				}
+				add_to_faction = ROOT
+			}
+		}
+		JAP = { country_event = diplomatic_response.1 }
+		ai_chance = {
+			factor = 10
+			modifier = {
+				add = 50
+			}
+			modifier = {
+				AND = {
+					country_exists = CHI
+					CHI = { is_in_array = { ruling_party = 19 } }
+					CHI = { is_puppet = no }
+				}
+				add = 50
+			}
+		}
+	}
+	
+	option = {	#We reject
+		name = japan_classic.1.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.1.o2 executed"
+		JAP = { country_event = diplomatic_response.2 }
+		ai_chance = {
+			factor = 10
+			modifier = {
+				tag = KOR
+				add = -10
+			}
+			modifier = {
+				tag = CHI
+				add = -10
+			}
+			modifier = {
+				AND = {
+					has_government = communism
+					NOT = { tag = VIN }
+				}
+				add = 1000
+			}
+		}
+	}
+}
+
+#Korean Unification Event: Japanese start
+country_event = {
+	id = japan_classic.2
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.2" }
+	title = japan_classic.2.t
+	desc = japan_classic.2.d
+	picture = GFX_politics_talks
+	
+	is_triggered_only = yes
+	
+	option = {	#We will issue the Ultimatum.
+		name = japan_classic.2.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.2.o1 executed"
+		KOR = { country_event = { id = japan_classic.3 hours = 6 } }
+	}
+}
+
+#Korean Unification Event: South Korean response
+country_event = {
+	id = japan_classic.3
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.3" }
+	title = japan_classic.3.t
+	desc = japan_classic.3.d
+	picture = GFX_politics_talks
+	
+	is_triggered_only = yes
+	
+	option = {	#A great plan!
+		name = japan_classic.3.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.3.o1 executed"
+		CHI = { country_event = { id = japan_classic.4 hours = 6 } }
+		JAP = { country_event = diplomatic_response.1 }
+		news_event = news.81
+		ai_chance = { factor = 100 }
+	}
+	
+	option = {	#We would rather not.
+		name = japan_classic.3.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.3.o2 executed"
+		JAP = { country_event = diplomatic_response.2 }
+		ai_chance = { factor = 0 }
+	}
+}
+
+#Korean Unification: Chinese Intervention
+country_event = {
+	id = japan_classic.4
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.4" }
+	title = japan_classic.4.t
+	desc = japan_classic.4.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	
+	option = {	#We will intervene!
+		name = japan_classic.4.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.4.o1 executed"
+		JAP = { country_event = { id = japan_classic.5 hours = 6 } }
+		ai_chance = {
+			factor = 25
+			modifier = {
+				add = 40
+				JAP = { has_elections = no }
+			}
+			modifier = {
+				add = 40
+				KOR = { has_elections = no }
+			}
+		}
+	}
+	
+	option = {	
+		name = Japan.3.b #Japan will not be intimidated!
+		log = "[GetDateText]: [This.GetName]: Japan.3.b executed"
+		if = {
+			limit = { has_government = nationalist }
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.05
+			}
+		}
+		if = {
+			limit = { has_government = democratic }
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.05
+			}
+		}
+		recalculate_party = yes
+		add_war_support = 0.02
+		CHI = {
+			add_opinion_modifier = {
+				target = JAP
+				modifier = resisted_territorial_ambition
+			}
+		}
+		CHI = { country_event = { days = 2 id = Japan.5 } }
+		ai_chance = { 
+			factor = 80
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 0 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 10 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 20 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 30 } }
+			}
+		}
+	}
+	option = {	#Kim is on his own
+		name = japan_classic.4.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.4.o2 executed"
+		NKO = { country_event = japan_classic.7 }
+		news_event = news.83
+		diplomatic_relation = { 
+			country = NKO
+			relation = guarantee 
+			active = no
+		}
+		ai_chance = {
+			factor = 50
+		}
+	}
+}
+
+#China intervenes!
+country_event = {
+	id = japan_classic.5
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.5" }
+	title = japan_classic.5.t
+	desc = japan_classic.5.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	
+	option = {	#We will stand march forward!
+		name = japan_classic.5.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.5.o1 executed"
+		NKO = { country_event = { id = japan_classic.6 hours = 6 } }
+		ai_chance = { factor = 50 }
+	}
+	
+	option = {	#We should stand down.
+		name = japan_classic.5.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.5.02 executed"
+		news_event = news.82
+		ai_chance = { factor = 50 }
+	}
+}
+
+#North Korea: Outlook on war, China by our side.
+country_event = {
+	id = japan_classic.6
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.6" }
+	title = japan_classic.6.t
+	desc = japan_classic.6.d
+	picture = GFX_politics_demands
+	
+	is_triggered_only = yes
+	
+	option = {	#We will fight to our last breath!
+		name = japan_classic.6.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.6.o1 executed"
+		set_country_flag = north_korea_has_chinese_aid
+		KOR = { country_event = { id = japan_classic.8 hours = 6 } }
+		ai_chance = { factor = 95 }
+	}
+	
+	option = {	#Let us quickly take a train to China.
+		name = japan_classic.6.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.6.o2 executed"
+		KOR = { country_event = { id = japan_classic.9 hours = 6 } }
+		ai_chance = { factor = 5 }
+	}
+}
+
+#North Korea: Outlook on war, China not by our side.
+country_event = {
+	id = japan_classic.7
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.7" }
+	title = japan_classic.7.t
+	desc = japan_classic.7.d
+	picture = GFX_terrorist_attack
+	
+	is_triggered_only = yes
+	
+	option = {	#We will fight to our last breath!
+		name = japan_classic.7.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.7.o1 executed"
+		KOR = { country_event = { id = japan_classic.8 hours = 6 } }
+		ai_chance = { factor = 15 }
+	}
+	
+	option = {	#Let us quickly take a train to China.
+		name = japan_classic.7.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.7.o2 executed"
+		KOR = { country_event = { id = japan_classic.9 hours = 6 } }
+		ai_chance = { factor = 85 }
+	}
+}
+
+#South Korea: War on North Korea!
+country_event = {
+	id = japan_classic.8
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.8" }
+	title = japan_classic.8.t
+	desc = japan_classic.8.d
+	picture = GFX_the_two_koreas
+	
+	is_triggered_only = yes
+	
+	option = {	#Let's do it
+		name = japan_classic.8.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.8.o1 executed"
+		declare_war_on = { 
+			target = NKO
+			type = annex_everything
+		}
+		JAP = {
+			add_to_war = {
+				targeted_alliance = KOR
+				enemy = NKO
+			}
+		}
+		if = {
+			limit = { NKO = { has_country_flag = north_korea_has_chinese_aid } }
+			CHI = {
+				add_to_war = {
+					targeted_alliance = NKO
+					enemy = KOR
+				}
+			}
+		}
+	}
+}
+
+#South Korea: North Korean communists flee the country.
+country_event = {
+	id = japan_classic.9
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.9" }
+	title = japan_classic.9.t
+	desc = japan_classic.9.d
+	picture = GFX_north_korean_officials
+	
+	is_triggered_only = yes
+	
+	option = {	#Victory
+		name = japan_classic.9.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.9.o1 executed"
+		KOR = {
+			annex_country = {
+			target = NKO
+			transfer_troops = yes
+			}
+		}
+	}
+}
+
+#Chinese Ultimatum Start
+country_event = {
+	id = japan_classic.10
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.10" }
+	title = japan_classic.10.t
+	desc = japan_classic.10.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	
+	option = {	#Lets go!
+		name = japan_classic.10.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.10.o1 executed"
+		CHI = { country_event = { id = japan_classic.11 hours = 6 } }
+	}
+}
+
+#Taiwan: The Ultimatum
+country_event = {
+	id = japan_classic.11
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.11" }
+	title = japan_classic.11.t
+	desc = japan_classic.11.d
+	picture = GFX_TAI_taiwan
+	
+	is_triggered_only = yes
+	
+	option = {	#Aight
+		name = japan_classic.11.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.11.o1 executed"
+		CHI = { country_event = { id = japan_classic.12 hours = 6 } }
+		JAP = { country_event = { id = diplomatic_response.1 hours = 6 } }
+		ai_chance = { factor = 95 }
+	}
+	
+	option = {	#Nah
+		name = japan_classic.11.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.11.o2 executed"
+		JAP = { country_event = { id = diplomatic_response.2 hours = 6 } }
+		ai_chance = { factor = 5 }
+	}
+}
+
+#China: The Ultimatum
+country_event = {
+	id = japan_classic.12
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.12" }
+	title = japan_classic.12.t
+	desc = japan_classic.12.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	
+	option = {	#Yeah no
+		name = japan_classic.12.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.12.o1 executed"
+		CHI = { country_event = { id = japan_classic.13 hours = 6 } }
+		ai_chance = { factor = 100 }
+	}
+	
+	option = {	#Alright we concede
+		name = japan_classic.12.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.12.o2 executed"
+		CHI = { country_event = { id = japan_classic.14 hours = 6 } }
+		ai_chance = { factor = 0 }
+	}
+}
+
+#Taiwan: China defies us!
+country_event = {
+	id = japan_classic.13
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.13" }
+	title = japan_classic.13.t
+	desc = japan_classic.13.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	
+	option = {	#Aight
+		name = japan_classic.13.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.13.o1 executed"
+		declare_war_on = {
+			target = CHI
+			type = annex_everything
+		}
+		JAP = {
+			add_to_war = {
+				targeted_alliance = CHI
+				enemy = CHI
+			}
+		}
+	}
+}
+
+#Taiwan: Lets annex China
+country_event = {
+	id = japan_classic.14
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.14" }
+	title = japan_classic.14.t
+	desc = japan_classic.14.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	
+	option = {	#Victory
+		name = japan_classic.14.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.14.o1 executed"
+		TAI = {
+			annex_country = {
+			target = CHI
+			transfer_troops = yes
+			}
+		}
+	}
+}
+
+#Keizo Obuchi suffers a stroke
+country_event = {
+	id = japan_classic.15
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.15" }
+	title = japan_classic.15.t
+	desc = japan_classic.15.d
+	picture = GFX_hospital
+	
+	is_triggered_only = yes
+	
+	trigger = { 
+		is_in_array = { ruling_party = 1 }
+	}
+	
+	immediate = {
+		hidden_effect = { country_event = { id = japan_classic.16 days = 4 } }
+		hidden_effect = {
+			create_country_leader = {
+				name = "The Diet"
+				ideology = conservative
+				picture = "The_Diet.dds"
+				
+				traits = { }
+			}
+		}
+	}
+	
+	option = {	#Let's pray for the best
+		name = japan_classic.15.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.15.o1 executed"
+		add_stability = -0.01
+	}
+}
+
+#Keizo Obuchi replaced
+country_event = {
+	id = japan_classic.16
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.16" }
+	title = japan_classic.16.t
+	desc = japan_classic.16.d
+	picture = GFX_yoshiro_mori
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = { country_event = { id = japan_classic.18 days = 40 } }
+	}
+	
+	option = {
+		name = japan_classic.16.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.16.o1 executed"
+		create_country_leader = {
+			name = "Yoshirō Mori"
+			ideology = conservative
+			picture = "Yoshiro_Mori.dds"
+		}
+	}
+}
+
+#Yoshirō Mori's Emperor gaffe
+country_event = {
+	id = japan_classic.18
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.18" }
+	title = japan_classic.18.t
+	desc = japan_classic.18.d
+	picture = GFX_yoshiro_mori
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_government = democratic
+	}
+	
+	option = {	#What a fool!
+		name = japan_classic.18.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.18.o1 executed"
+		add_stability = -0.01
+		add_political_power = -10
+		ai_chance = { factor = 90 }
+	}
+	
+	option = {	#Double down on his statement
+		name = japan_classic.18.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.18.o2 executed"
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.03
+		}
+		add_stability = -0.04
+		add_political_power = -25
+		ai_chance = { factor = 10 }
+	}
+}
+
+#Fukushima disaster
+country_event = {
+	id = japan_classic.20
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.19" }
+	title = japan_classic.20.t
+	desc = japan_classic.20.d
+	picture = GFX_rocket_explosion
+	
+	is_triggered_only = yes
+	
+	option = {	#Oh no!
+		name = japan_classic.20.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.20.o1 executed"
+		add_stability = -0.05
+		add_political_power = -100
+		hidden_effect = { 
+			news_event = { id = news.89 hours = 8 }
+		}
+	}
+}
+
+#Japan seeks Chinese Alliance
+news_event = {
+	id = japan_classic.70
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.70" }
+	title = japan_classic.70.t
+	desc = japan_classic.70.d
+	picture = GFX_japan_china
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.70.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.70.o1 executed"
+		trigger = {
+			original_tag = JAP
+		}
+	}
+	
+	option = {
+		name = japan_classic.70.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.70.o2 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = CHI }
+			OR = {
+				is_in_faction_with = JAP
+				is_puppet_of = JAP
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.70.o3
+		log = "[GetDateText]: [This.GetName]: japan_classic.70.o3 executed"
+		trigger = {
+			original_tag = CHI
+		}
+	}
+	
+	option = {
+		name = japan_classic.70.o4
+		log = "[GetDateText]: [This.GetName]: japan_classic.70.o4 executed"
+		trigger = {
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = JAP }
+			OR = {
+				is_in_faction_with = CHI
+				NOT = { is_in_faction_with = JAP }
+				is_puppet_of = CHI
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.70.o5
+		log = "[GetDateText]: [This.GetName]: japan_classic.70.o5 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = CHI }
+			NOT = { is_in_faction_with = JAP }
+			NOT = { is_in_faction_with = CHI }
+			NOT = { is_puppet_of = JAP }
+			NOT = { is_puppet_of = CHI }
+			NOT = { has_war_with = JAP }
+			NOT = { has_war_with = CHI }
+		}
+	}
+	
+	option = {
+		name = japan_classic.70.o6
+		log = "[GetDateText]: [This.GetName]: japan_classic.70.o6 executed"
+		trigger = {
+			OR = {
+				has_war_with = JAP
+				has_war_with = CHI
+			}
+		}
+	}
+}
+
+#Japan: The Path of War
+news_event = {
+	id = japan_classic.71
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.71" }
+	title = japan_classic.71.t
+	desc = japan_classic.71.d
+	picture = GFX_JAP_nationalism2
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.71.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.71.o1 executed"
+		trigger = {
+			original_tag = JAP
+		}
+	}
+	
+	option = {
+		name = japan_classic.71.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.71.o2 executed"
+		trigger = {
+			OR = {
+				is_in_faction_with = JAP
+				is_puppet_of = JAP
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.71.o3
+		log = "[GetDateText]: [This.GetName]: japan_classic.71.o3 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = USA }
+			NOT = { is_in_faction_with = JAP }
+			NOT = { is_puppet_of = JAP }
+			NOT = { has_war_with = JAP }
+		}
+	}
+	
+	option = {
+		name = japan_classic.71.o4
+		log = "[GetDateText]: [This.GetName]: japan_classic.71.o4 executed"
+		trigger = {
+			has_war_with = JAP
+		}
+	}
+	
+	option = {
+		name = japan_classic.71.o5
+		log = "[GetDateText]: [This.GetName]: japan_classic.71.o5 executed"
+		trigger = {
+			original_tag = USA
+			NOT = { is_in_faction_with = JAP }
+			NOT = { is_puppet_of = JAP }
+			NOT = { has_war_with = JAP }
+		}
+	}
+}
+
+#Japan seeks closer trade relationships with China
+news_event = {
+	id = japan_classic.72
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.72" }
+	title = japan_classic.72.t
+	desc = japan_classic.72.d
+	picture = GFX_japan_china
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.72.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.72.o1 executed"
+		trigger = {
+			original_tag = JAP
+		}
+	}
+	
+	option = {
+		name = japan_classic.72.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.72.o2 executed"
+		trigger = {
+			original_tag = CHI
+		}
+	}
+	
+	option = {
+		name = japan_classic.72.o3
+		log = "[GetDateText]: [This.GetName]: japan_classic.72.o3 executed"
+		trigger = {
+			OR = {
+				original_tag = USA
+				original_tag = CHI
+				is_in_faction_with = USA
+			}
+		}
+	}
+	option = {
+		name = japan_classic.72.o4
+		log = "[GetDateText]: [This.GetName]: japan_classic.72.o4 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = USA }
+			NOT = { original_tag = CHI }
+			NOT = { is_in_faction_with = USA }
+		}
+	}
+}
+
+#Japan abandons defensive principles
+news_event = {
+	id = japan_classic.74
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.74" }
+	title = japan_classic.74.t
+	desc = japan_classic.74.d
+	picture = GFX_JAP_nationalism2
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.74.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.74.o1 executed"
+		trigger = {
+			original_tag = JAP
+		}
+	}
+	
+	option = {
+		name = japan_classic.74.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.74.o2 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			OR = {
+				is_in_faction_with = JAP
+				is_puppet_of = JAP
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.74.o3
+		log = "[GetDateText]: [This.GetName]: japan_classic.74.o3 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { is_in_faction_with = JAP }
+			NOT = { is_puppet_of = JAP }
+			NOT = { has_war_with = JAP }
+		}
+	}
+	
+	option = {
+		name = japan_classic.74.o4
+		log = "[GetDateText]: [This.GetName]: japan_classic.74.o4 executed"
+		trigger = {
+			has_war_with = JAP
+		}
+	}
+}
+
+#Japanese Interventionism
+news_event = {
+	id = japan_classic.75
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.75" }
+	title = japan_classic.75.t
+	desc = japan_classic.75.d
+	picture = GFX_generic_soldiers
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.75.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.75.o1 executed"
+		trigger = {
+			original_tag = JAP
+		}
+	}
+	
+	option = {
+		name = japan_classic.75.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.75.o2 executed"
+		trigger = {
+			OR = {
+				is_in_faction_with = JAP
+				is_puppet_of = JAP
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.75.o3
+		log = "[GetDateText]: [This.GetName]: japan_classic.75.o3 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { is_in_faction_with = JAP }
+			NOT = { is_puppet_of = JAP }
+			NOT = { has_war_with = JAP }
+			has_elections = yes
+		}
+	}
+	
+	option = {
+		name = japan_classic.75.o4
+		log = "[GetDateText]: [This.GetName]: japan_classic.75.o4 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { is_in_faction_with = JAP }
+			NOT = { is_puppet_of = JAP }
+			NOT = { has_war_with = JAP }
+			has_elections = yes
+		}
+	}
+	
+	option = {
+		name = japan_classic.75.o5
+		log = "[GetDateText]: [This.GetName]: japan_classic.75.o5 executed"
+		trigger = {
+			has_war_with = JAP
+		}
+	}
+}
+
+#Japan abolishes the Monarchy
+news_event = {
+	id = japan_classic.76
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.76" }
+	title = japan_classic.76.t
+	desc = japan_classic.76.d
+	picture = GFX_JAP_communism
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.76.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.76.o1 executed"
+		trigger = {
+			original_tag = JAP
+		}
+	}
+	
+	option = {
+		name = japan_classic.76.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.76.o2 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+		}
+	}
+}
+
+#Japan empowers the Emperor
+news_event = {
+	id = japan_classic.77
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.77" }
+	title = japan_classic.77.t
+	desc = japan_classic.77.d
+	picture = GFX_JAP_nationalism2
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.77.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.77.o1 executed"
+		trigger = {
+			original_tag = JAP
+		}
+	}
+	
+	option = {
+		name = japan_classic.77.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.77.o2 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			OR = {
+				has_government = nationalist
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.77.o3
+		log = "[GetDateText]: [This.GetName]: japan_classic.77.o3 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { has_government = nationalist }
+		}
+	}
+}
+
+#Japan seeks to spread the Revolution to Korea
+news_event = {
+	id = japan_classic.78
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.78" }
+	title = japan_classic.78.t
+	desc = japan_classic.78.d
+	picture = GFX_JAP_communism
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.78.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.78.o1 executed"
+		trigger = {
+			original_tag = JAP
+		}
+	}
+	
+	option = {
+		name = japan_classic.78.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.78.o2 executed"
+		trigger = {
+			OR = {
+				original_tag = KOR
+				original_tag = NKO
+				original_tag = CHI
+				original_tag = CHI
+				original_tag = PHI
+				original_tag = VIN
+			}
+		}
+	}
+
+	option = {
+		name = japan_classic.78.o3
+		log = "[GetDateText]: [This.GetName]: japan_classic.78.o3 executed"
+		trigger = {
+			has_government = communism
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = KOR }
+			NOT = { original_tag = NKO }
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = VIN }
+			NOT = { original_tag = PHI }
+		}
+	}
+	
+	option = {
+		name = japan_classic.78.o4
+		log = "[GetDateText]: [This.GetName]: japan_classic.78.o4 executed"
+		trigger = {
+			has_elections = no
+			NOT = { has_government = communism }
+			NOT = { is_in_array { ruling_party = 19 } }
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = KOR }
+			NOT = { original_tag = NKO }
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = VIN }
+			NOT = { original_tag = PHI }
+		}
+	}
+	
+	option = {
+		name = japan_classic.78.o5
+		log = "[GetDateText]: [This.GetName]: japan_classic.78.o5 executed"
+		trigger = {
+			has_elections = yes
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = KOR }
+			NOT = { original_tag = NKO }
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = VIN }
+			NOT = { original_tag = PHI }
+		}
+	}
+}
+
+#Japan proclaims Japanese Supremacy
+news_event = {
+	id = japan_classic.79
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.79" }
+	title = japan_classic.79.t
+	desc = japan_classic.79.d
+	picture = GFX_JAP_nationalism2
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.79.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.79.o1 executed"
+		trigger = {
+			original_tag = JAP
+		}
+	}
+	
+	option = {
+		name = japan_classic.79.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.79.o2 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+		}
+	}
+}
+
+#Japan and South Korea push for Unification
+news_event = {
+	id = japan_classic.81
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.81" }
+	title = japan_classic.81.t
+	desc = japan_classic.81.d
+	picture = GFX_the_two_koreas
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.81.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.81.o1 executed"
+		trigger = {
+			OR = {
+				original_tag = JAP
+				original_tag = KOR
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.81.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.81.o2 executed"
+		trigger = {
+			OR = {
+				original_tag = NKO
+				original_tag = CHI
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.81.o3
+		log = "[GetDateText]: [This.GetName]: japan_classic.81.o3 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = KOR }
+			NOT = { original_tag = NKO }
+			NOT = { original_tag = CHI }
+			OR = {
+				is_in_faction_with = JAP
+				is_in_faction_with = KOR
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.81.o4
+		log = "[GetDateText]: [This.GetName]: japan_classic.81.o4 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = KOR }
+			NOT = { original_tag = NKO }
+			NOT = { original_tag = CHI }
+			NOT = { is_in_faction_with = JAP }
+			NOT = { is_in_faction_with = KOR }
+			OR = {
+				is_in_faction_with = CHI
+				is_in_faction_with = NKO
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.81.o5
+		log = "[GetDateText]: [This.GetName]: japan_classic.81.o5 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = KOR }
+			NOT = { original_tag = NKO }
+			NOT = { original_tag = CHI }
+			NOT = { is_in_faction_with = JAP }
+			NOT = { is_in_faction_with = KOR }
+			NOT = { is_in_faction_with = CHI }
+			NOT = { is_in_faction_with = NKO }
+		}
+	}
+}
+
+#Japan falls back
+news_event = {
+	id = japan_classic.82
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.82" }
+	title = japan_classic.82.t
+	desc = japan_classic.82.d
+	picture = GFX_chinese_flag
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.82.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.82.o1 executed"
+		trigger = {
+			OR = {
+				original_tag = JAP
+				original_tag = KOR
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.82.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.82.o2 executed"
+		trigger = {
+			OR = {
+				original_tag = CHI
+				original_tag = NKO
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.82.o3
+		log = "[GetDateText]: [This.GetName]: japan_classic.82.o3 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = KOR }
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = NKO }
+		}
+	}
+}
+
+#China refuses to aid North Korea
+news_event = {
+	id = japan_classic.83
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.83" }
+	title = japan_classic.83.t
+	desc = japan_classic.83.d
+	picture = GFX_japan_china
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.83.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.83.o1 executed"
+		trigger = {
+			OR = {
+				original_tag = JAP
+				original_tag = KOR
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.83.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.83.o2 executed"
+		trigger = {
+			original_tag = CHI
+		}
+	}
+	
+	option = {
+		name = japan_classic.83.o3
+		log = "[GetDateText]: [This.GetName] : japan_classic.83.o3"
+		trigger = {
+			original_tag = NKO
+		}
+	}
+	
+	option = {
+		name = japan_classic.83.o4
+		log = "[GetDateText]: [This.GetName]: japan_classic.83.o4 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = KOR }
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = NKO }
+		}
+	}
+}
+
+#North Korean officials flee the country
+news_event = {
+	id = japan_classic.84
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.84" }
+	title = japan_classic.84.t
+	desc = japan_classic.84.d
+	picture = GFX_north_korean_officials
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.84.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.84.o1 executed"
+		trigger = {
+			OR = {
+				original_tag = JAP
+				original_tag = KOR
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.84.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.84.o2 executed"
+		trigger = {
+			OR = {
+				original_tag = SOV
+				original_tag = CHI
+			}
+		}
+	}
+	
+	option = {
+		name = japan_classic.84.o3
+		log = "[GetDateText]: [This.GetName]: japan_classic.84.o3 executed"
+		trigger = {
+			original_tag = NKO
+		}
+	}
+	
+	option = {
+		name = japan_classic.84.o4
+		log = "[GetDateText]: [This.GetName]: japan_classic.84.o4 executed"
+		trigger = {
+			NOT = { original_tag = JAP }
+			NOT = { original_tag = KOR }
+			NOT = { original_tag = SOV }
+			NOT = { original_tag = CHI }
+			NOT = { original_tag = NKO }
+		}
+	}
+}
+
+#Korea reunited under North Korea
+news_event = {
+	id = japan_classic.85
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.85" }
+	title = japan_classic.85.t
+	desc = japan_classic.85.d
+	picture = GFX_north_korea_flag
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.85.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.85.o1 executed"
+		trigger = { original_tag = NKO }
+	}
+	
+	option = {
+		name = japan_classic.85.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.85.o2 executed"
+		trigger = { NOT = { original_tag = NKO } }
+	}
+}
+
+#Korea reunited under South Korea
+news_event = {
+	id = japan_classic.86
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.86" }
+	title = japan_classic.86.t
+	desc = japan_classic.86.d
+	picture = GFX_news_press_conference
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.86.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.86.o1 executed"
+		trigger = { original_tag = KOR }
+	}
+	
+	option = {
+		name = japan_classic.86.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.86.o2 executed"
+		trigger = { NOT = { original_tag = KOR } }
+	}
+}
+
+#China reunited under China
+news_event = {
+	id = japan_classic.87
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.87" }
+	title = japan_classic.87.t
+	desc = japan_classic.87.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.87.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.87.o1 executed"
+		trigger = { original_tag = CHI }
+	}
+	
+	option = {
+		name = japan_classic.87.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.87.o2 executed"
+		trigger = { NOT = { original_tag = CHI } }
+	}
+}
+
+#China reunited under Taiwan
+news_event = {
+	id = japan_classic.88
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.88" }
+	title = japan_classic.88.t
+	desc = japan_classic.88.d
+	picture = GFX_TAI_taiwan
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.88.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.88.o1 executed"
+		trigger = { original_tag = CHI }
+	}
+	
+	option = {
+		name = japan_classic.88.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.88.o2 executed"
+		trigger = { NOT = { original_tag = CHI } }
+	}
+}
+
+#Fukushima disaster
+news_event = {
+	id = japan_classic.89
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.89" }
+	title = japan_classic.89.t
+	desc = japan_classic.89.d
+	picture = GFX_fukushima
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = japan_classic.89.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.89.o1 executed"
+		trigger = { 
+			NOT = { has_war_with = JAP } 
+			NOT = { has_idea = idea_focus_generic_jihad }
+		}
+	}
+	
+	option = {
+		name = japan_classic.89.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.89.o2 executed"
+		trigger = {
+			OR = {
+				has_war_with = JAP 
+				has_idea = idea_focus_generic_jihad
+			}
+		}
 	}
 }
