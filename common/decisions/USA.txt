@@ -273,9 +273,8 @@ USA_american_economic_decisions_category = {
 		}
 		
 		icon = oil
-		is_good = no 
 		days_remove = 90
-		days_remove = 60
+		days_re_enable = 60
 		cost = 100
 		
 		modifier = {
@@ -386,9 +385,8 @@ USA_american_economic_decisions_category = {
 		}
 		
 		icon = tungsten
-		is_good = no 
-		days_remove = 90
 		days_remove = 60
+		days_re_enable = 90
 		cost = 100
 		
 		modifier = {
@@ -473,9 +471,8 @@ USA_american_economic_decisions_category = {
 		}
 		
 		icon = decision_generic_construction
-		is_good = no 
-		days_remove = 90
 		days_remove = 60
+		days_re_enable = 90
 		cost = 100
 		
 		remove_effect = {
@@ -636,6 +633,8 @@ USA_congress_md = {
 				}
 				tooltip = USA_not_total_support_tt
 			}
+			has_elections = yes
+			has_stability > 0.3 
 		}
 		visible = { 
 			has_elections = yes
@@ -644,8 +643,20 @@ USA_congress_md = {
 		ai_will_do = {
 			factor = 1
 			modifier = {
-				congress_low_support_trigger = yes
+				congress_high_support_trigger = yes
 				factor = 0
+			}
+			modifier = {
+				add = 1 
+				congress_low_support_trigger = yes 
+			}
+			modifier = {
+				has_stability < 0.50
+				factor = 0
+			}
+			modifier = {
+				add = 1 
+				has_government = democratic 
 			}
 		}
 		days_remove = 60
@@ -654,13 +665,13 @@ USA_congress_md = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_use_huac"
 			USA_congress_small_support = yes
 			add_stability = -0.03
-			
 		}
 	}
 	USA_beat_up_opposition = {
 		icon = oppression
 		available = {
 			OR = {	
+				has_stability < 0.20
 				has_government = communism 
 				has_government = nationalist
 			}
@@ -680,32 +691,27 @@ USA_congress_md = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_beat_up_opposition"
 			add_stability = -0.05
 			USA_congress_small_support = yes
-			hidden_effect = {
-				add_popularity = { ideology = nationalist popularity = 0.02 }
-				add_to_variable = { party_pop_array^20 = 0.02 }
+			if = {
+				limit = { has_government = nationalist }
+				hidden_effect = {
+					add_popularity = { ideology = nationalist popularity = 0.02 }
+					add_to_variable = { party_pop_array^20 = 0.02 }
+				}
+				custom_effect_tooltip = USA_gain_right_wing_populist_2_TT
 			}
-			custom_effect_tooltip = USA_gain_right_wing_populist_2_TT
+			if = {
+				limit = { has_government = communism }
+				hidden_effect = {
+					add_popularity = { ideology = communism popularity = 0.02 }
+					add_to_variable = {	 party_pop_array^4 = 0.02 }
+				}
+				custom_effect_tooltip =  USA_gain_communists_2_TT
+			}
 		}
 	}
 	USA_pay_farm_subsidies = {
 		icon = ger_mefo_bills
 		available = {
-			OR = {
-				custom_trigger_tooltip = {
-					AND = {
-						has_government = democratic
-						is_in_array = { ruling_party = 2 }
-					}
-					tooltip = has_liberalism_government_TT
-				}
-				custom_trigger_tooltip = {
-					AND = {
-						has_government = democratic
-						is_in_array = { ruling_party = 3 }
-					}
-					tooltip = has_socialism_government_TT
-				}
-			}
 			custom_trigger_tooltip = {
 				OR = {
 					check_variable = { senators_support < senators_total }
@@ -847,7 +853,20 @@ USA_congress_md = {
 			}
 			modifier = {
 				is_historical_focus_on = no 
-				factor = 2 
+				add = 3
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = 1
+			}
+			modifier = {
+				AND = {
+					is_in_array = { ruling_party = 1 }
+					is_in_array = { ruling_party = 14 }
+					is_in_array = { ruling_party = 4 }
+					is_in_array = { ruling_party = 20 }
+				}
+				factor = 0 
 			}
 		}
 		fire_only_once = yes
@@ -859,8 +878,61 @@ USA_congress_md = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_statehood_for_puerto_rico"
 			USA_congress_add_state = yes
+			815 = { add_core_of = USA }
 			USA_congress_medium_opposition = yes
-			815 = { clr_state_flag = USA_is_territory_flag }
+		}
+	}
+	USA_statehood_for_guam = {
+		icon = infiltrate_state
+		available = {
+			818 = { NOT = { is_core_of = USA } }
+			political_power_daily > 2.50
+			congress_high_support_trigger = yes 
+		}
+		visible = {
+			818 = { #Puerto Rico
+				is_fully_controlled_by = USA
+			}
+		}
+		highlight_states = {
+			state = 818
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				is_in_array = { ruling_party = 2 } 
+				is_in_array = { ruling_party = 3 }
+				factor = 1
+			}
+			modifier = {
+				is_historical_focus_on = no 
+				add = 3
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = 1
+			}
+			modifier = {
+				AND = {
+					is_in_array = { ruling_party = 1 }
+					is_in_array = { ruling_party = 14 }
+					is_in_array = { ruling_party = 4 }
+					is_in_array = { ruling_party = 20 }
+				}
+				factor = 0 
+			}
+		}
+		fire_only_once = yes
+		days_remove = 240
+		cost = 150
+		modifier = {
+			political_power_gain = -2.50
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_statehood_for_puerto_rico"
+			818 = { add_core_of = USA }
+			USA_congress_add_state = yes
+			USA_congress_medium_opposition = yes
 		}
 	}
 	USA_invest_in_state_factory = {
