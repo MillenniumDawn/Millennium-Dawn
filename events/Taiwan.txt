@@ -154,3 +154,519 @@ country_event = {
 		### TODO research bonus for industry
 	}
 }
+
+### CSSTA passed
+news_event = {
+	id = taiwan.6
+	immediate = { log = "[GetDateText]: [Root.GetName]: event taiwan.6" }
+
+	title = taiwan.6.t
+	desc = taiwan.6.d
+	picture = GFX_news_press_conference
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.6.a
+		log = "[GetDateText]: [This.GetName]: taiwan.6.a executed"
+	}
+}
+
+### The Sunflower Movement
+news_event = {
+	id = taiwan.7
+	immediate = { log = "[GetDateText]: [Root.GetName]: event taiwan.7" }
+
+	title = taiwan.7.t
+	desc = taiwan.7.d
+	picture = GFX_news_election_rally
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.7.a
+		log = "[GetDateText]: [This.GetName]: taiwan.7.a executed"
+	}
+}
+
+### CSSTA passed
+country_event = {
+	id = taiwan.8
+	immediate = { log = "[GetDateText]: [Root.GetName]: event taiwan.8" }
+
+	title = taiwan.8.t
+	desc = taiwan.8.d
+	picture = GFX_political_deal
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.8.a
+		add_opinion_modifier = {
+			target = CHI
+			modifier = CSSTA
+		}
+		add_opinion_modifier = {
+			target = CHI
+			modifier = large_commercial_relations
+		}
+		custom_effect_tooltip = TAI_influence_CHI_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 20 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = CHI.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+		CHI = {
+			add_opinion_modifier = {
+				target = TAI
+				modifier = CSSTA
+			}
+			add_opinion_modifier = {
+				target = TAI
+				modifier = large_commercial_relations
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: taiwan.8.a executed"
+	}
+}
+
+### The Sunflower Movement
+country_event = {
+	id = taiwan.9
+	immediate = { log = "[GetDateText]: [Root.GetName]: event taiwan.9" }
+
+	title = taiwan.9.t
+	desc = taiwan.9.d
+	picture = GFX_politics_protest
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.9.a
+		add_political_power = -100
+		add_timed_idea = {
+			idea = legislative_yuan_occupied
+			days = 30
+		}
+		custom_effect_tooltip = CHI_KMT_medium_loss_influence_tt
+		subtract_from_variable = {
+			var = party_pop_array^1
+			value = 0.05
+		}
+		add_to_variable = {
+			var = party_pop_array^2
+			value = 0.05
+		}
+		recalculate_party = yes
+		log = "[GetDateText]: [This.GetName]: taiwan.9.a executed"
+	}
+}
+
+#The PRC's "Roadmap to Reunification" Released
+country_event = {
+	id = taiwan.10
+	title = taiwan.10.t
+	desc = taiwan.10.d
+	
+	picture = GFX_politics_negotiations
+	
+	is_triggered_only = yes
+		
+	option = {
+		name = taiwan.10.a #We should accept the plan.
+		if = {
+			limit = { has_country_flag = rejected_roadmap }
+			clr_country_flag = rejected_roadmap
+		}
+		set_country_flag = accepted_roadmap
+		CHI = { country_event = { days = 2 id = taiwan.16 } }
+		log = "[GetDateText]: [This.GetName]: taiwan.10.a executed"
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				TAI = {
+						set_temp_variable = { temp_idx = -1 }
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							if = {
+								limit = { var:v = { tag = CHI } }
+								set_temp_variable = { temp_idx = i }
+								always = yes
+							}
+							else = { always = no }
+						}
+						check_variable = { temp_idx > -1 }
+						check_variable = { influence_array_calc^temp_idx > 0.3 }
+				}
+			}
+			modifier = {
+				factor = 2
+				TAI = {
+						set_temp_variable = { temp_idx = -1 }
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+							if = {
+								limit = { var:v = { tag = CHI } }
+								set_temp_variable = { temp_idx = i }
+								always = yes
+							}
+							else = { always = no }
+						}
+						check_variable = { temp_idx > -1 }
+						check_variable = { influence_array_calc^temp_idx > 0.4 }
+				}
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					is_in_array = { ruling_party = 1 }
+					is_in_array = { ruling_party = 6 }
+					is_in_array = { ruling_party = 14 }
+				}
+			}
+			modifier = {
+				factor = 10
+				if = {
+					limit = { has_government = communism }
+					CHI = { has_government = communism }
+				}
+				else_if = {
+					limit = { has_government = democratic }
+					CHI = { has_government = democratic }
+				}
+				else_if = {
+					limit = { has_government = neutrality }
+					CHI = { has_government = neutrality }
+				}
+				else_if = {
+					limit = { has_government = nationalist }
+					CHI = { has_government = nationalist }
+				}
+				else_if = {
+					limit = { has_government = fascism }
+					CHI = { has_government = fascism }
+				}
+			}
+			modifier = {
+				factor = 2
+				TAI = { 
+					has_opinion = {
+						target = CHI
+						value > 0
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				TAI = { 
+					has_opinion = {
+						target = CHI
+						value > 24
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				TAI = { 
+					has_opinion = {
+						target = CHI
+						value > 49
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				HKG = { 
+					has_country_flag = continuation
+				}
+			}
+		}
+	}
+	option = {
+		name = taiwan.10.b #Taiwan is not China!
+		if = {
+			limit = { NOT = { has_country_flag = rejected_roadmap } }
+			set_country_flag = rejected_roadmap
+		}
+		CHI = { country_event = { days = 2 id = taiwan.17 } }
+		log = "[GetDateText]: [This.GetName]: taiwan.10.b executed"
+		ai_chance = {
+			factor = 80
+			modifier = {
+				factor = 2
+				HKG = { 
+					has_country_flag = reunification
+				}
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 0 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 10 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 20 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 30 } }
+			}
+		}
+	}
+}
+
+### Suspicious Chinese intelligence activity
+country_event = {
+	id = taiwan.11
+	immediate = { log = "[GetDateText]: [Root.GetName]: event taiwan.11" }
+
+	title = taiwan.11.t
+	desc = taiwan.11.d
+	picture = GFX_politics_eye
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.11.a #Seems harmless
+		set_variable = {
+			var = TAI_preparations
+			value = 0
+		}
+		log = "[GetDateText]: [This.GetName]: taiwan.11.a executed"
+	}
+	
+	option = {
+		name = taiwan.11.b #We should investigate
+		add_political_power = -100
+		set_variable = {
+			var = TAI_preparations
+			value = 5
+		}
+		set_country_flag = TAI_investigated_suspicious_activity
+		log = "[GetDateText]: [This.GetName]: taiwan.11.b executed"
+	}
+}
+
+### Betrayed!
+news_event = {
+	id = taiwan.12
+	immediate = { log = "[GetDateText]: [Root.GetName]: event taiwan.12" }
+
+	title = taiwan.12.t
+	desc = taiwan.12.d
+	picture = GFX_generic_soldiers
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.12.a
+		effect_tooltip = {
+			TAI = {
+				activate_mission = prevent_coup_taiwan
+				add_ideas = taiwanese_coup
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: taiwan.12.a executed"
+	}
+}
+
+### The coup succeeds
+news_event = {
+	id = taiwan.13
+	immediate = { log = "[GetDateText]: [Root.GetName]: event taiwan.13" }
+
+	title = taiwan.13.t
+	desc = taiwan.13.d
+	picture = GFX_generic_soldiers
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.13.a
+		log = "[GetDateText]: [This.GetName]: taiwan.13.a executed"
+	}
+}
+
+### The coup fails!
+news_event = {
+	id = taiwan.14
+	immediate = { log = "[GetDateText]: [Root.GetName]: event taiwan.14" }
+
+	title = taiwan.14.t
+	desc = taiwan.14.d
+	picture = GFX_generic_soldiers
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.14.a
+		trigger = { NOT = { original_tag = CHI } }
+		log = "[GetDateText]: [This.GetName]: taiwan.14.a executed"
+	}
+	
+	option = {
+		name = taiwan.14.b
+		trigger = { original_tag = CHI }
+		log = "[GetDateText]: [This.GetName]: taiwan.14.b executed"
+	}
+}
+
+#China Demands an End to the Taiwan Relations Act!
+country_event = {
+	id = taiwan.15
+	immediate = { log = "[GetDateText]: [Root.GetName]: event taiwan.15" }
+
+	title = taiwan.15.t
+	desc = taiwan.15.d
+	picture = GFX_CHI_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.15.a #This demand is ludicrous!
+		add_political_power = 25
+		ai_chance = {
+			factor = 50
+		}
+		log = "[GetDateText]: [This.GetName]: taiwan.15.a executed"
+	}
+	
+	option = {
+		name = taiwan.15.b #It is better for us to concede...
+		diplomatic_relation = {
+			country = TAI
+			relation = guarantee
+			active = no
+		}
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 2
+				USA = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.25 }
+				}
+			}
+			modifier = {
+				factor = 2
+				USA = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.4 }
+				}
+			}
+			modifier = {
+				factor = 4
+				CHI = { has_completed_focus = CHI_End_US_Hegemony }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < 0 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -10 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -20 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -30 } }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: taiwan.15.b executed"
+	}
+}
+
+#The Roadmap has been Accepted!
+country_event = {
+	id = taiwan.16
+	immediate = { log = "[GetDateText]: [Root.GetName]: event taiwan.16" }
+
+	title = taiwan.16.t
+	desc = taiwan.16.d
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.16.a #Rejoice!
+		log = "[GetDateText]: [This.GetName]: taiwan.16.a executed"
+	}
+}
+
+#The Roadmap has been Rejected!
+country_event = {
+	id = taiwan.17
+	immediate = { log = "[GetDateText]: [Root.GetName]: event taiwan.16" }
+
+	title = taiwan.17.t
+	desc = taiwan.17.d
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.17.a #They will regret this...
+		log = "[GetDateText]: [This.GetName]: taiwan.17.a executed"
+	}
+}
