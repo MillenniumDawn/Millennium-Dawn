@@ -323,14 +323,8 @@ country_event = {
 			}
 		}
 		set_country_flag = usa_elian_gonzalez_kept_in_the_states
-		add_to_variable = {
-			var = liberalism
-			value = 0.02
-		}
-		add_to_variable = {
-			var = Communist-State
-			value = 0.03
-		}
+		add_to_variable = { party_pop_array^2 = 0.02 }
+		add_to_variable = { party_pop_array^4 = 0.03 }
 		recalculate_party = yes
 		custom_effect_tooltip = usa.7.o2_tt	
 		add_named_threat = { 
@@ -354,33 +348,37 @@ country_event = {
 	title = usa.8.t
 	desc = usa.8.d
 	picture = GFX_report_event_submarine
-	
-	is_triggered_only = yes
+	fire_only_once = yes 
+	trigger = {
+		date > 2001.1.1
+		date < 2006.1.1
+	}
+	mean_time_to_happen = {
+		days = 60 
+	}
 	
 	option = {	#Apologize
 		name = usa.8.o1
 		log = "[GetDateText]: [This.GetName]: usa.8.o1 executed"	
 		add_stability = -0.01
+		decrease_popularity_1 = yes 
 	}
 	
 	option = {	#It's their fault
 		name = usa.8.o2
 		log = "[GetDateText]: [This.GetName]: usa.8.o2 executed"
-		add_stability = 0.01
 		add_named_threat = { 
-			threat = 0.03
+			threat = 0.05
 			name = usa.8.t 
 		}
+		decrease_popularity_2 = yes 
 		JAP = {
 			add_opinion_modifier = {
 				target = USA
 				modifier = recent_actions_negative
 			}
 		}
-		add_to_variable = {
-			var = Nat_Populism
-			value = 0.03
-		}
+		add_to_variable = { party_pop_array^20 = 0.02 }
 		custom_effect_tooltip = usa.8.o2_tt
 	}
 }
@@ -391,9 +389,15 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.9" }
 	title = usa.9.t
 	desc = usa.9.d
-	picture = GFX_report_event_plane_crash
-	
-	is_triggered_only = yes
+	picture = GFX_plane_crash
+	fire_only_once = yes 
+	trigger = {
+		date > 2000.1.30
+		date < 2000.6.1
+	}
+	mean_time_to_happen = {
+		days = 10 
+	}
 	
 	option = {
 		name = usa.9.o1
@@ -409,13 +413,35 @@ country_event = {
 	title = usa.10.t
 	desc = usa.10.d
 	picture = GFX_report_event_comic_artist
+	fire_only_once = yes
+	trigger = { 
+		date > 2000.1.1
+		date < 2006.1.1
+		has_elections = yes
+	}
 	
-	is_triggered_only = yes
+	mean_time_to_happen = {
+		days = 40 
+		factor = {
+			has_stability > 0.20 
+			factor = 2.0 
+		}
+	}
 	
+	#Unfortuante
 	option = {
 		name = usa.10.o1
 		log = "[GetDateText]: [This.GetName]: usa.10.o1 executed"
-		add_political_power = 5
+		add_political_power = 10
+	}
+	
+	#Revitalize that Company!
+	option = {
+		name = usa.10.o2 
+		log = "[GetDateText]: [This.GetName]: usa.10.o2"
+		subtract_from_variable = { treasury = 0.5 }
+		custom_effect_tooltip = 0_5_billion_expense_tt
+		add_stability = 0.01
 	}
 }
 
@@ -426,15 +452,18 @@ country_event = {
 	title = usa.11.t
 	desc = usa.11.d
 	picture = GFX_report_event_handgun
-	
-	is_triggered_only = yes
-	
 	trigger = {
 		USA = { has_idea = USA_second_amendment }
 		has_full_control_of_state = 777 #Michigan
+		date > 2000.1.1
+		date < 2001.1.1
+	}
+	fire_only_once = yes
+	mean_time_to_happen = {
+		days = 40 
 	}
 	
-	option = {
+	option = { #An Era of Gun Violence?
 		name = usa.11.o1
 		log = "[GetDateText]: [This.GetName]: usa.11.o1 executed"
 		add_political_power = -50
@@ -3859,8 +3888,7 @@ country_event = {
 	desc = USA_Purchase_Bases_ME.0.d
 	
 	is_triggered_only = yes
-	
-	
+
 	option = { #Yes
 		name = USA_Purchase_Bases_ME.0.a
 		log = "[GetDateText]: [This.GetName]: USA_Purchase_Bases_ME.0.a executed"
