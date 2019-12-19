@@ -4289,22 +4289,32 @@ country_event = {
 	hidden = yes 
 	fire_only_once = yes
 	trigger = {
-		date > 2004.1.1
-		tag = USA 
+		date > 2005.1.1
+		tag = USA
 	}
 	mean_time_to_happen = {
-		days = 100 
+		days = 300 
 		modifier = {
 			factor = 2.5 
 			check_variable = { USA_economic_regulation_var < 90 } 
 		}
+		modifier = {
+			factor = 0.5
+			check_variable = { USA_economic_regulation_var > 90 }
+		}
 		modifier = { 
-			factor = 1.5 
-			check_variable = { USA_strength_of_wall_street_var < 45 }
+			factor = 0.5 
+			check_variable = { USA_strength_of_wall_street_var < 25 }
+		}
+		modifier = {
+			factor = 3.5 
+			check_variable = { USA_strength_of_wall_street_var > 25 }
 		}
 	}
 	immediate = {
+		set_country_flag = usa_great_fiancial_crisis
 		country_event = { id = usa_economic_events.1 days = 10 random = 5 }
+		#CHI = { id = 
 	}
 }
 
@@ -4315,19 +4325,27 @@ country_event = {
 	title = usa_economic_events.1.t
 	desc = usa_economic_events.1.d 
 	is_triggered_only = yes 
-	fire_only_once = yes 
-	
+	fire_only_once = yes
+	#picture = 
 	trigger = {
 		tag = USA 
 	}
 	
 	#Oh no, nationalize it!
 	option = {
-		name = usa_economic_events.1.a 
+		name = usa_economic_events.1.a
+		trigger = { 
+			OR = {
+				has_government = communism 
+				has_government = nationalist
+			}	
+		}
 		subtract_from_variable = { treasury = 90 }
 		custom_effect_tooltip = 90_billion_expense_tt
-		add_ideas = 
 		recession = yes
+		
+		#country_event = { id = 
+		
 		ai_chance = {
 			factor = 0
 			modifier = {
@@ -4343,6 +4361,11 @@ country_event = {
 	#Bailout the bank!
 	option = {
 		name = usa_economic_events.1.b
+		subtract_from_variable = { treasury = 60 }
+		custom_effect_tooltip = 60_billion_expense_tt
+		recession = yes
+		
+		#country_event = { id = 
 		
 		ai_chance = {
 			factor = 2
@@ -4363,7 +4386,15 @@ country_event = {
 	#Let it take its course
 	option = {
 		name = usa_economic_events.1.c 
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			add_to_variable = { party_pop_array^16 = 0.01 }
+			recalculate_party = yes
+		}
+		custom_effect_tooltip = USA_gain_libertarian_2_TT
+		recession = yes
 		
+		#country_event = { id = 
 		
 		ai_chance = {
 			factor = 2 
