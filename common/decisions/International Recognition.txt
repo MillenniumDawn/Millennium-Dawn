@@ -550,57 +550,93 @@ statehood_category = {
 }
 recognition_category = {
 	
-	switch_recognition_to_the_PRC = {
+	switch_recognition = {
 	
-		icon = GFX_decision_generic_china
+		icon = GFX_decision_generic_nationalism
+		
+		target_array = global.rival_governments
+		
+		target_trigger = {
+			country_exists = FROM
+		}
 		
 		visible = {
-			has_country_flag = Recognised_ROC
-			country_exists = CHI
-			country_exists = TAI
 			NOT = {
-				original_tag = CHI
-				original_tag = TAI
-				TAI = {
-					is_puppet = yes
-				}
-				TAI = {
-					has_idea = Lacks_International_Recognition
-				}
 				has_idea = Non_State_Actor
 				has_idea = Lacks_International_Recognition
+				has_idea = Lacks_International_Recognition_Taiwan
+				has_idea = rival_government
+				has_country_flag = rival_government_@FROM
+			}
+			OR = {
+				AND = {	
+					NOT = { has_country_flag = Recognised_@FROM }
+					FROM = { has_idea = rival_government }
+				}
+				FROM = { has_country_flag = recognised_opponent_@ROOT }
 			}
 		}
 		
 		cost = 50
 		
 		complete_effect = {
-			clr_country_flag = Recognised_ROC
-			CHI = {
-				remove_opinion_modifier = {
-					modifier = recognize_taiwan_chi
-					target = ROOT
-				}
+			log = "[GetDateText]: [Root.GetName]: Decision switch_recognition target: [From.GetName]"
+			if = {	
+				limit = { FROM = { has_idea = rival_government } }
+				set_country_flag = Recognised_@FROM
 			}
-			TAI = {
+			FROM = {
 				add_opinion_modifier = {
-					modifier = revoked_recognize_taiwan
 					target = ROOT
+					modifier = recognises_us
 				}
-				remove_opinion_modifier = {
-					modifier = recognize_taiwan
-					target = ROOT
-				}
-			}
-			if = {
-				limit = { has_country_flag = loyal_to_ROC }
-				CHI = {
-					remove_opinion_modifier = {
-						target = ROOT
-						modifier = harsh_sanctions
+				if = {
+					limit = { original_tag = CHI }
+					CHI = {
+						remove_opinion_modifier = {
+							modifier = recognize_taiwan_chi
+							target = ROOT
+						}
+					}
+					if = {
+						limit = { ROOT = { has_country_flag = loyal_to_ROC } }
+						CHI = {
+							remove_opinion_modifier = {
+								target = ROOT
+								modifier = harsh_sanctions
+							}
+						}
+						ROOT = { clr_country_flag = loyal_to_ROC }
 					}
 				}
-				clr_country_flag = loyal_to_ROC
+				news_event = { id = recognition.5 }
+				clr_country_flag = recognised_opponent_@ROOT
+			}
+			every_country = {
+				limit = { 
+					has_country_flag = rival_government_@FROM
+				}
+				if = {
+					limit = { original_tag = TAI }
+					remove_opinion_modifier = {
+						modifier = recognize_taiwan
+						target = ROOT
+					}
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = recognises_them_rival
+				}
+				subtract_from_variable = {
+					var = Granted_Recognition
+					value = 1
+				}
+				set_country_flag = recognised_opponent_@ROOT
+				news_event = { id = recognition.6 }
+			}
+			add_to_variable = {
+				var = FROM.Granted_Recognition
+				value = 1
 			}
 		}
 		
@@ -608,107 +644,465 @@ recognition_category = {
 			factor = 0
 			modifier = {
 				add = 5
-				has_opinion = { target = CHI value > 25 }
+				has_opinion = { target = FROM value > 25 }
 				
 			}
 			modifier = {
 				add = 5
-				has_opinion = { target = CHI value > 50 }
+				has_opinion = { target = FROM value > 50 }
 				
 			}
 			modifier = {
 				add = 5
-				has_opinion = { target = CHI value > 100 }
+				has_opinion = { target = FROM value > 100 }
 				
 			}
 			modifier = {
-				factor = 0
+				add = 20
 				OR = {
-					check_variable = { influence_array^0 = TAI }
-					check_variable = { influence_array^1 = TAI }
-					check_variable = { influence_array^2 = TAI }
+					check_variable = { influence_array^0 = FROM }
+					check_variable = { influence_array^1 = FROM }
+					check_variable = { influence_array^2 = FROM }
 				}
 			}
 			modifier = {
-				add = 5
-				OR = {
-					check_variable = { influence_array^0 = CHI }
-					check_variable = { influence_array^1 = CHI }
-					check_variable = { influence_array^2 = CHI }
-				}
+				add = 40
+				original_tag = USA
+				has_country_flag = USA_recognition_campaign
 			}
-		}
-	
-	}
-	
-	switch_recognition_to_the_ROC = {
-	
-		icon = GFX_decision_generic_taiwan
-		
-		visible = {
-			NOT = { has_country_flag = Recognised_ROC }
-			country_exists = CHI
-			country_exists = TAI
-			NOT = {
+			modifier = {
+				add = 40
+				original_tag = ENG
+				has_country_flag = ENG_recognition_campaign
+			}
+			modifier = {
+				add = 40
+				original_tag = FRA
+				has_country_flag = FRA_recognition_campaign
+			}
+			modifier = {
+				add = 40
+				original_tag = SOV
+				has_country_flag = SOV_recognition_campaign
+			}
+			modifier = {
+				add = 40
 				original_tag = CHI
-				original_tag = TAI
-				TAI = {
-					is_puppet = yes
+				has_country_flag = CHI_recognition_campaign
+			}
+			modifier = {
+				add = 10
+				has_government = democratic
+				USA = {
+					has_government = democratic
+					has_country_flag = Recognised_@FROM
 				}
-				TAI = {
-					has_idea = Lacks_International_Recognition
+			}
+			modifier = {
+				add = 10
+				has_government = communism
+				USA = {
+					has_government = communism
+					has_country_flag = Recognised_@FROM
 				}
-				has_idea = Non_State_Actor
-				has_idea = Lacks_International_Recognition
+			}
+			modifier = {
+				add = 10
+				has_government = neutrality
+				USA = {
+					has_government = neutrality
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = nationalist
+				USA = {
+					has_government = nationalist
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 40
+				check_variable = { influence_array^0 = USA }
+				USA = {
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = -40
+				check_variable = { influence_array^0 = USA }
+				USA = {
+					NOT = { has_country_flag = Recognised_@FROM }
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = democratic
+				ENG = {
+					has_government = democratic
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = communism
+				ENG = {
+					has_government = communism
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = neutrality
+				ENG = {
+					has_government = neutrality
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = nationalist
+				ENG = {
+					has_government = nationalist
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 40
+				check_variable = { influence_array^0 = ENG }
+				ENG = {
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = -40
+				check_variable = { influence_array^0 = ENG }
+				ENG = {
+					NOT = { has_country_flag = Recognised_@FROM }
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = democratic
+				FRA = {
+					has_government = democratic
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = communism
+				FRA = {
+					has_government = communism
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = neutrality
+				FRA = {
+					has_government = neutrality
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = nationalist
+				FRA = {
+					has_government = nationalist
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 40
+				check_variable = { influence_array^0 = FRA }
+				FRA = {
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = -40
+				check_variable = { influence_array^0 = FRA }
+				FRA = {
+					NOT = { has_country_flag = Recognised_@FROM }
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = democratic
+				GER = {
+					has_government = democratic
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = communism
+				GER = {
+					has_government = communism
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = neutrality
+				GER = {
+					has_government = neutrality
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = nationalist
+				GER = {
+					has_government = nationalist
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 40
+				check_variable = { influence_array^0 = GER }
+				GER = {
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = democratic
+				CHI = {
+					has_government = democratic
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = communism
+				CHI = {
+					has_government = communism
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = neutrality
+				CHI = {
+					has_government = neutrality
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = nationalist
+				CHI = {
+					has_government = nationalist
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 40
+				check_variable = { influence_array^0 = CHI }
+				CHI = {
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = -40
+				check_variable = { influence_array^0 = CHI }
+				CHI = {
+					NOT = { has_country_flag = Recognised_@FROM }
+				}
+			}
+			modifier = {
+				add = 10
+				SOV = {
+					has_government = democratic
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				SOV = {
+					has_government = communism
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				SOV = {
+					has_government = neutrality
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				SOV = {
+					has_government = nationalist
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 40
+				check_variable = { influence_array^0 = SOV }
+				SOV = {
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = -40
+				check_variable = { influence_array^0 = SOV }
+				SOV = {
+					NOT = { has_country_flag = Recognised_@FROM }
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = democratic
+				RAJ = {
+					has_government = democratic
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = communism
+				RAJ = {
+					has_government = communism
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = neutrality
+				RAJ = {
+					has_government = neutrality
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 10
+				has_government = nationalist
+				RAJ = {
+					has_government = nationalist
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = 40
+				check_variable = { influence_array^0 = RAJ }
+				RAJ = {
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = -40
+				check_variable = { influence_array^0 = RAJ }
+				RAJ = {
+					NOT = { has_country_flag = Recognised_@FROM }
+				}
+			}
+			modifier = {
+				add = 40
+				check_variable = { influence_array^0 = BRA }
+				BRA = {
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = -40
+				check_variable = { influence_array^0 = BRA }
+				BRA = {
+					NOT = { has_country_flag = Recognised_@FROM }
+				}
+			}
+			modifier = {
+				add = 40
+				check_variable = { influence_array^0 = SAU }
+				SAU = {
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = -40
+				check_variable = { influence_array^0 = SAU }
+				SAU = {
+					NOT = { has_country_flag = Recognised_@FROM }
+				}
+			}
+			modifier = {
+				add = 40
+				check_variable = { influence_array^0 = SAF }
+				SAF = {
+					has_country_flag = Recognised_@FROM
+				}
+			}
+			modifier = {
+				add = -40
+				check_variable = { influence_array^0 = SAF }
+				SAF = {
+					NOT = { has_country_flag = Recognised_@FROM }
+				}
+			}
+			modifier = {
+				add = -10
+				FROM = {
+					has_idea = child_soldiers
+				}
+			}
+			modifier = {
+				add = -40
+				FROM = {
+					has_war = yes
+				}
+			}
+			modifier = {
+				add = 40
+				any_country = {
+					has_war = yes
+					has_country_flag = rival_government_@FROM
+					surrender_progress > 0.5
+				}
+			}
+			modifier = {
+				add = 40
+				NOT = {
+					any_country = {
+						has_country_flag = rival_government_@FROM
+						exists = yes
+					}
+				}
+			}
+			modifier = {
+				add = 40
+				any_country = {
+					has_war = yes
+					has_country_flag = rival_government_@FROM
+					surrender_progress > 0.75
+				}
+			}
+			modifier = {
+				add = -20
+				check_variable = { FROM.Granted_Recognition < 5 }
+			}
+			modifier = {
+				add = -10
+				check_variable = { FROM.Granted_Recognition < 70 }
+			}
+			modifier = {
+				add = -10
+				any_country = {
+					has_country_flag = rival_government_@FROM
+					is_same_government = yes
+				}
+			}
+			modifier = {
+				add = 10
+				FROM = {
+					is_same_government = yes
+				}
 			}
 		}
-		
-		cost = 50
-		
-		complete_effect = {
-			set_country_flag = Recognised_ROC
-			CHI = {
-				add_opinion_modifier = {
-					modifier = recognize_taiwan_chi
-					target = ROOT
-				}
-			}
-			TAI = {
-				add_opinion_modifier = {
-					modifier = recognize_taiwan
-					target = ROOT
-				}
-			}
-		}
-		
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 5
-				has_opinion = { target = TAI value > 100 }			
-			}
-			modifier = {
-				factor = 0
-				has_opinion = { target = CHI value > 25 }
-				
-			}
-			modifier = {
-				factor = 0
-				OR = {
-					check_variable = { influence_array^0 = CHI }
-					check_variable = { influence_array^1 = CHI }
-					check_variable = { influence_array^2 = CHI }
-				}
-			}
-			modifier = {
-				add = 5
-				OR = {
-					check_variable = { influence_array^0 = TAI }
-					check_variable = { influence_array^1 = TAI }
-					check_variable = { influence_array^2 = TAI }
-				}
-			}
-		}
+	
 	}
 	
 	grant_recognition = {
@@ -728,6 +1122,7 @@ recognition_category = {
 				has_idea = Non_State_Actor
 				has_idea = Lacks_International_Recognition
 				has_idea = Lacks_International_Recognition_Taiwan
+				has_idea = rival_government
 			}
 		}
 		
