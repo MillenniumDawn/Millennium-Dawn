@@ -73,6 +73,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event Japan.3" }
 	title = Japan.3.t
 	desc = Japan.3.d
+	
 	picture = GFX_JAP_generic
 	
 	trigger = {
@@ -104,6 +105,369 @@ country_event = {
 			}
 		}
 	}	
+}
+
+#Japan has Handed Over the Islands!
+country_event = {
+	id = Japan.4
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Japan.4" }
+	title = Japan.4.t
+	desc = Japan.4.d
+	picture = GFX_politics_negotiations
+	
+	is_triggered_only = yes
+	
+	option = {	
+		name = Japan.4.a #Perhaps the Japanese have some sense after all!
+		effect_tooltip = {
+			JAP = {
+				if = {
+					limit = { NOT = { has_government = nationalist } }
+					add_popularity = {
+						ideology = nationalist
+						popularity = 0.05
+					}
+				}
+				else_if = {
+					add_popularity = {
+						ideology = democratic
+						popularity = 0.05
+					}
+				}
+				recalculate_party = yes
+				custom_effect_tooltip = CHI_small_influence_10_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = CHI.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: Japan.4.a executed"
+	}
+}
+
+#Japan Remains Defiant!
+country_event = {
+	id = Japan.5
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Japan.5" }
+	title = Japan.5.t
+	desc = Japan.5.d
+	picture = GFX_treaty_rejected
+	
+	is_triggered_only = yes
+	
+	option = {	
+		name = Japan.5.a #They will regret this...
+		effect_tooltip = {
+			JAP = {
+				if = {
+					limit = { has_government = nationalist }
+					add_popularity = {
+						ideology = nationalist
+						popularity = 0.05
+					}
+				}
+				if = {
+					limit = { has_government = democratic }
+					add_popularity = {
+						ideology = democratic
+						popularity = 0.05
+					}
+				}
+				add_war_support = 0.02
+			}
+			CHI = {
+				add_opinion_modifier = {
+					target = JAP
+					modifier = resisted_territorial_ambition
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: Japan.5.a executed"
+	}
+}
+
+#Chinese jets have fired on the aircraft we scrambled to intercept them! 
+country_event = {
+	id = Japan.6
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Japan.6" }
+	title = Japan.6.t
+	desc = Japan.6.d
+	picture = GFX_CAN_airstrikes_iraq_syria
+	
+	is_triggered_only = yes
+	
+	option = {	
+		name = Japan.6.a #We have a right to self-defense!
+		log = "[GetDateText]: [This.GetName]: Japan.6.a executed"
+		create_wargoal = {
+			type = topple_government
+			target = CHI
+		}
+		ai_chance = {
+			factor = 5
+			modifier = {
+				add = 100
+				OR = {
+					CHI = { has_completed_focus = CHI_End_US_Hegemony }
+					USA = { NOT = { has_guaranteed = ROOT } }
+				}
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 0 } }
+			}
+		}
+	}
+	option = {	
+		trigger = { any_country = { has_guaranteed = ROOT } }
+		name = Japan.6.b #We should call upon our protectors!
+		create_wargoal = {
+			type = topple_government
+			target = CHI
+		}
+		every_country = {
+			limit = { has_guaranteed = JAP }
+			create_wargoal = {
+				type = topple_government
+				target = CHI
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: Japan.6.b executed"
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 10 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 20 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 30 } }
+			}
+		}
+	}
+	option = {	
+		name = Japan.6.c #This was probably an accident...
+		log = "[GetDateText]: [This.GetName]: Japan.6.c executed"
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < 0 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -10 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -20 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -30 } }
+			}
+		}
+	}
+}
+
+#Chinese and Japanese Fighter Jets Engage in Aerial Combat
+news_event = {
+	id = Japan.7
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Japan.6" }
+	title = Japan.7.t
+	desc = Japan.7.d
+	picture = GFX_report_event_united_states_air_force
+	
+	is_triggered_only = yes
+	
+	option = {	
+		name = Japan.7.a #Is a second Sino-Japanese War on the horizon?
+		log = "[GetDateText]: [This.GetName]: Japan.7.a executed"
+	}
+}
+
+#China is Demanding the Senkaku Islands!
+country_event = {
+	id = Japan.8
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Japan.3" }
+	title = Japan.8.t
+	desc = Japan.8.d
+	
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	
+	option = {	
+		name = Japan.8.a #Let them have their fishing rights...
+		log = "[GetDateText]: [This.GetName]: Japan.8.a executed"
+		if = {
+			limit = { NOT = { has_government = nationalist } }
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.05
+			}
+		}
+		else_if = {
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.05
+			}
+		}
+		recalculate_party = yes
+		custom_effect_tooltip = CHI_small_influence_10_tt
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 10 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = CHI }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = CHI.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		CHI = { country_event = { days = 2 id = Japan.4 } }
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 2
+				ROOT = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.2 }
+				}
+			}
+			modifier = {
+				factor = 2
+				ROOT = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = CHI } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.4 }
+				}
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < 0 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -10 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -20 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression < -30 } }
+			}
+			modifier = {
+				factor = 4
+				CHI = { has_completed_focus = CHI_End_US_Hegemony }
+			}
+		}
+	}
+	
+	option = {	
+		name = Japan.8.b #Japan will not be intimidated!
+		log = "[GetDateText]: [This.GetName]: Japan.8.b executed"
+		if = {
+			limit = { has_government = nationalist }
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.05
+			}
+		}
+		if = {
+			limit = { has_government = democratic }
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.05
+			}
+		}
+		recalculate_party = yes
+		add_war_support = 0.02
+		CHI = {
+			add_opinion_modifier = {
+				target = JAP
+				modifier = resisted_territorial_ambition
+			}
+		}
+		CHI = { country_event = { days = 2 id = Japan.5 } }
+		ai_chance = { 
+			factor = 80
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 0 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 10 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 20 } }
+			}
+			modifier = {
+				factor = 2
+				CHI = { check_variable = { chinese_aggression > 30 } }
+			}
+		}
+	}
 }		
 
 #Invitation to the Japanese Alliance
@@ -826,7 +1190,6 @@ news_event = {
 			}
 		}
 	}
-	
 	option = {
 		name = japan_classic.72.o4
 		log = "[GetDateText]: [This.GetName]: japan_classic.72.o4 executed"
@@ -1055,7 +1418,7 @@ news_event = {
 			}
 		}
 	}
-	
+
 	option = {
 		name = japan_classic.78.o3
 		log = "[GetDateText]: [This.GetName]: japan_classic.78.o3 executed"
