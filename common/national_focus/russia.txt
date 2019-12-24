@@ -273,7 +273,6 @@ focus_tree = {
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zyuganov"
 			if = {
@@ -286,12 +285,12 @@ focus_tree = {
 					update_party_name = yes
 					set_coalition_drift = yes
 					meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
+						text = {
+							set_country_flag = [META_SET_RULING_PARTY]
+						}
+						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
+					set_leader = yes
 				}
 				set_politics = {
 					ruling_party = communism
@@ -490,9 +489,12 @@ focus_tree = {
 		prerequisite = { focus = SOV_empower_putins_cronies }
 		mutually_exclusive = { }
 		available = { 
-			custom_trigger_tooltip = { 
-				has_country_flag = positive_oligarchs
-				tooltip = SOV_has_positive_oligarchs_TT
+			custom_trigger_tooltip = {
+				tooltip = SOV_oligarchs_positive_tt
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
 		historical_ai = { }
@@ -537,21 +539,17 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_fight_corruption }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_weaken_the_oligarchs"
-			remove_ideas = SOV_corrupt_oligarchy
+			if = {
+				limit = { has_idea = SOV_corrupt_oligarchy }
+				remove_ideas = SOV_corrupt_oligarchy
+			}
 			SOV_fall_in_russian_entrepeneurs_opinion = yes
 			SOV_fall_in_russian_energy_enterprises_opinion = yes 
 			add_stability = 0.05
@@ -571,23 +569,20 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_gazprom }
-		mutually_exclusive = { }
 		available = {
-			custom_trigger_tooltip = { 
-				has_country_flag = positive_oligarchs
-				tooltip = SOV_has_positive_oligarchs_TT
+			custom_trigger_tooltip = {
+				tooltip = SOV_oligarchs_positive_tt
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_secure_putins_position"
 			hidden_effect = {
@@ -4316,6 +4311,10 @@ focus_tree = {
 				add_popularity = { ideology = nationalist popularity = -abc }
 				set_variable = { var = party_pop_array^20 max = 0 }
 				recalculate_party = yes
+				if = {
+					limit = { has_idea = large_far_right_movement } 
+					remove_ideas = large_far_right_movement
+				}
 			}
 			custom_effect_tooltip = SOV_root_out_the_nationalists_TT
 		}
@@ -4426,8 +4425,10 @@ focus_tree = {
 		relative_position_id = SOV_yavlinsky
 		cost = 10
 		
-		prerequisite = { focus = SOV_approach_nato }
-		prerequisite = { focus = SOV_maintain_csto }
+		prerequisite = { 
+			focus = SOV_approach_nato 
+			focus = SOV_maintain_csto
+		}
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -4453,6 +4454,11 @@ focus_tree = {
 					add_ai_strategy = { type = protect id = "TRK" value = 200 }
 					add_ai_strategy = { type = protect id = "UZB" value = 200 }
 				}
+			}
+			if = {
+				limit = { country_exists = USA }
+				add_ai_strategy = { type = befriend id = "USA" value = 50 }
+				USA = { add_ai_strategy = { type = befriend id = "SOV" value = 50 } }
 			}
 			custom_effect_tooltip = SOV_bastion_of_democracy_TT
 		}
@@ -7004,7 +7010,10 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = SOV_oligarchs_positive_tt
-				has_country_flag = positive_oligarchs 
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
 
@@ -7070,9 +7079,13 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = SOV_oligarchs_positive_tt
-				has_country_flag = positive_oligarchs 
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
+
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -7117,7 +7130,10 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = SOV_oligarchs_positive_tt
-				has_country_flag = positive_oligarchs 
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
 
