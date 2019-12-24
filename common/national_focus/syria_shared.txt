@@ -230,6 +230,76 @@ shared_focus = {
 }
 
 shared_focus = {
+	id = SYR_palestinian_unemployment_program
+	icon = union_negotiations
+	cost = 10
+	prerequisite = {
+		focus = SYR_assault_jordan
+	}
+	x = -5
+	y = 4
+	relative_position_id = SYR_greater_syria
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		OR = {
+			owns_state = 211
+			owns_state = 210
+			owns_state = 212
+			JOR = { is_subject_of = ROOT }
+		}
+	}
+	
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_palestinian_unemployment_program"
+		SE_remove_5_treasury = yes
+		if = {
+			limit = {
+				any_owned_state = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+					}
+				}
+			}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+					}
+				}
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		else = {
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+}
+
+shared_focus = {
 	id = SYR_arm_palestinians_to_fight
 	icon = espionage
 	cost = 10
@@ -1423,15 +1493,206 @@ shared_focus = {
 }
 
 ##Military branch
-
 shared_focus = {
 	id = SYR_military_reform
 	icon = GFX_goal_unknown
 	cost = 10
 	x = 28
 	y = 8
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		OR = {
+			has_start_date < 2016.1.1 
+			custom_trigger_tooltip = {
+				tooltip = TT_SYR_POST_WAR_FINISHED
+				has_country_flag = SYR_Post_War_Tree_Finished
+			}
+		}
+	}
+	
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_military_reform"
+		army_experience = 15
+		navy_experience = 15
+		air_experience = 15
+	}
 
 }
+
+shared_focus = {
+	id = SYR_conscription_army
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_military_reform
+	}
+	mutually_exclusive = {
+		focus = SYR_volunteer_army
+	}
+	x = -6
+	y = 1
+	relative_position_id = SYR_military_reform
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+	}
+	
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_conscription_army"
+		add_ideas = draft_army
+		add_ideas = drafted_women 
+	}
+
+}
+
+shared_focus = {
+	id = SYR_volunteer_army
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_military_reform
+	}
+	mutually_exclusive = {
+		focus = SYR_conscription_army
+	}
+	x = -4
+	y = 1
+	relative_position_id = SYR_military_reform
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+	}
+	
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_volunteer_army"
+		add_ideas = volunteer_army 
+		add_ideas = volunteer_women  
+	}
+
+}
+shared_focus = {
+	id = SYR_peoples_army
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_conscription_army
+	}
+	mutually_exclusive = {
+		focus = SYR_loyal_elite
+	}
+	x = -6
+	y = 2
+	relative_position_id = SYR_military_reform
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+	}
+	
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_peoples_army"
+		if = {
+			limit = { has_idea = alawite_high_command }
+			swap_ideas = {
+				add_idea = syrian_peoples_army
+				remove_idea = alawite_high_command
+			}
+		}
+		else = {
+			add_ideas = syrian_peoples_army
+		}
+		if = {
+			limit = { has_idea = the_military }
+			set_country_flag = current_the_military
+			decrease_internal_faction_opinion = yes
+			visually_display_opinion_fall_the_military = yes
+		}			
+	}
+
+}
+
+shared_focus = {
+	id = SYR_loyal_elite
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_conscription_army
+	}
+	prerequisite = {
+		focus = SYR_volunteer_army
+	}
+	mutually_exclusive = {
+		focus = SYR_peoples_army
+	}
+	x = -4
+	y = 2
+	relative_position_id = SYR_military_reform
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+	}
+	
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_peoples_army"
+		if = {
+			limit = { has_idea = alawite_high_command }
+			swap_ideas = {
+				add_idea = alawite_high_command_strengthened
+				remove_idea = alawite_high_command
+			}
+		}
+		else = {
+			add_ideas = alawite_high_command_strengthened
+		}		
+	}
+
+}
+
 shared_focus = {
 	id = SYR_expand_tartus_base
 	icon = GFX_goal_unknown
@@ -1458,36 +1719,6 @@ shared_focus = {
 		focus = SYR_expand_tartus_base
 	}
 	x = 1
-	y = 1
-	relative_position_id = SYR_military_reform
-
-}
-shared_focus = {
-	id = SYR_conscription_army
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_military_reform
-	}
-	mutually_exclusive = {
-		focus = SYR_volunteer_army
-	}
-	x = -6
-	y = 1
-	relative_position_id = SYR_military_reform
-
-}
-shared_focus = {
-	id = SYR_volunteer_army
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_military_reform
-	}
-	mutually_exclusive = {
-		focus = SYR_conscription_army
-	}
-	x = -4
 	y = 1
 	relative_position_id = SYR_military_reform
 
@@ -1619,39 +1850,6 @@ shared_focus = {
 	}
 	x = 5
 	y = 4
-	relative_position_id = SYR_military_reform
-
-}
-shared_focus = {
-	id = SYR_loyal_elite
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_conscription_army
-	}
-	prerequisite = {
-		focus = SYR_volunteer_army
-	}
-	mutually_exclusive = {
-		focus = SYR_peoples_army
-	}
-	x = -4
-	y = 2
-	relative_position_id = SYR_military_reform
-
-}
-shared_focus = {
-	id = SYR_peoples_army
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_conscription_army
-	}
-	mutually_exclusive = {
-		focus = SYR_loyal_elite
-	}
-	x = -6
-	y = 2
 	relative_position_id = SYR_military_reform
 
 }
