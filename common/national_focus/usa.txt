@@ -4546,7 +4546,6 @@ focus_tree = {
 				}
 			}
 			has_elections_trigger_support_medium = yes
-			has_idea = defence_03
 			NOT = { has_idea = no_military }
 		}
 
@@ -4564,7 +4563,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_army_colleges"
 			add_ideas = USA_army_college
-			
 		}
 		
 		ai_will_do = {
@@ -4592,6 +4590,10 @@ focus_tree = {
 			NOT = { has_idea = christian }
 		}
 		
+		bypass = {
+			NOT = { has_idea = christian }
+		}
+		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no 
@@ -4603,6 +4605,14 @@ focus_tree = {
 		
 		ai_will_do = { 
 			factor = 1
+			modifier = { 
+				add = 1
+				has_idea = christian
+			}
+			modifier = {
+				add = 1
+				is_in_array = { ruling_party = 1 }
+			}
 		}
 	}
 	
@@ -4867,6 +4877,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_scientific_investment"
 			add_ideas = USA_scientific_investments_idea
+			add_research_slot = 1 
 		}
 		
 		ai_will_do = {
@@ -4919,6 +4930,15 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_prism"
 			add_ideas = USA_prism_idea
+			if = {
+				limit = { NOT = { has_country_flag = enthusiastic_intelligence_community } } 
+				if = {
+					limit = { has_idea = intelligence_community }
+					visually_display_opinion_rise_intelligence_community = yes
+					set_country_flag = current_intelligence_community
+					increase_internal_faction_opinion = yes
+				}
+			}
 		}
 		
 		ai_will_do = {
@@ -4961,10 +4981,18 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_expand_the_national_guard"
 			add_ideas = USA_expanded_national_guard
+			increase_military_spending = yes
 		}
 		
 		ai_will_do = {
 			factor = 1
+			modifier = { 
+				add = 1
+				OR = {
+					is_in_array = { ruling_party = 1 }
+					is_in_array = { ruling_party = 14 }
+				}
+			}
 		}
 	}
 	
@@ -5049,7 +5077,9 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_resource_production"
-			degregulation_resource_expansion_effect = yes
+			usa_regulations_decreased_by_3 = yes
+			USA_modify_stability_factor_decrease_two = yes 
+			USA_modify_local_resource_factor_add_five = yes
 		}
 		
 		ai_will_do = {
@@ -5058,7 +5088,6 @@ focus_tree = {
 	}
 	
 	#Political Reform Tree
-	
 	focus = {
 		id = USA_political_reform
 		icon = american_political_reform
@@ -5073,7 +5102,10 @@ focus_tree = {
 		mutually_exclusive = { focus = USA_status_quo }
 		mutually_exclusive = { focus = USA_political_revolution }
 		
-		available = { }
+		available = { 
+			has_elections = yes
+			is_puppet = no
+		}
 		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -5082,6 +5114,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_political_reform"
 			news_event = usa_news.8
+			add_political_power = -100
 		}
 		
 		ai_will_do = {
@@ -5123,6 +5156,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_party_funding_reform"
 			add_political_power = 50
+			add_stability = 0.05 
+			add_popularity = { ideology = democratic popularity = -0.03 }
+			recalculate_party = yes 
 		}
 		
 		ai_will_do = {
@@ -5275,7 +5311,10 @@ focus_tree = {
 		
 		prerequisite = { focus = USA_reform_the_electoral_college }
 		
-		available = { }
+		available = { 
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
+		}
 
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -5325,6 +5364,8 @@ focus_tree = {
 				tooltip = USA_green_more_than_10_TT
 				check_variable = { party_pop_array^17 > 0.10 }
 			}
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
 		}
 		
 		cancel_if_invalid = yes
@@ -5366,6 +5407,8 @@ focus_tree = {
 				tooltip = USA_libertarian_more_than_10_TT
 				check_variable = { party_pop_array^16 > 0.10 }
 			}
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
 		}
 		
 		cancel_if_invalid = yes
@@ -5407,6 +5450,8 @@ focus_tree = {
 				tooltip = USA_reactionary_more_than_10_TT
 				check_variable = { party_pop_array^6 > 0.10 }
 			}
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
 		}
 		
 		cancel_if_invalid = yes
@@ -5443,6 +5488,11 @@ focus_tree = {
 		
 		prerequisite = { focus = USA_progressive_ideology }
 		
+		available = {
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
+		}
+		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no
@@ -5471,6 +5521,11 @@ focus_tree = {
 		
 		prerequisite = { focus = USA_libertarian_ideology }
 		
+		available = {
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
+		}
+		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no
@@ -5496,6 +5551,11 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = USA_reactionary_ideology }
+		
+		available = {
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
+		}
 		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -5523,6 +5583,11 @@ focus_tree = {
 		
 		prerequisite = { focus = USA_unite_the_nation }
 		
+		available = {
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
+		}
+		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no
@@ -5549,8 +5614,12 @@ focus_tree = {
 		
 		prerequisite = { focus = USA_end_economic_intervention }
 		
+		
 		available = {
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
 			NOT = { has_government = communism }
+			NOT = { has_government = nationalist }
 		}
 	
 		cancel_if_invalid = yes
@@ -5570,6 +5639,16 @@ focus_tree = {
 				}
 				add_opinion_modifier = { target = ROOT modifier = global_trade }
 			}
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes 
+				}
+			}
+			custom_effect_tooltip = 10_billion_expense_tt
+			subtract_from_variable = { treasury = 10.0 }
 		}
 		
 		ai_will_do = {
@@ -5599,7 +5678,8 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_national_self_sufficiency"
-			degregulation_resource_expansion_effect = yes
+			USA_modify_local_resource_factor_add_five = yes
+			usa_regulations_decreased_by_3 = yes 
 		}
 		
 		ai_will_do = {
