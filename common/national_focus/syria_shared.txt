@@ -2723,7 +2723,6 @@ shared_focus = {
 
 }
 
-
 #Diplomatic branch
 shared_focus = {
 	id = SYR_diplomatic_effort
@@ -2731,16 +2730,706 @@ shared_focus = {
 	cost = 10
 	x = 39
 	y = 0
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+	}
+	
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_diplomatic_effort"
+		add_political_power = 100
+		custom_effect_tooltip = TT_SYR_DIPLOMATIC_EFFORT
+	}
 
 }
+
+shared_focus = {
+	id = SYR_affirm_claims_on_golan
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_diplomatic_effort
+	}
+	mutually_exclusive = {
+		focus = SYR_renounce_claims_on_golan
+	}
+	x = -8
+	y = 1
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		NOT = { has_country_flag = Relinquished_Golan }
+	}
+	
+	bypass = {
+		owns_state = 587
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_affirm_claims_on_golan"
+		add_state_core = 587
+	}
+
+}
+
+shared_focus = {
+	id = SYR_renounce_claims_on_golan
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_diplomatic_effort
+	}
+	mutually_exclusive = {
+		focus = SYR_affirm_claims_on_golan
+	}
+	x = -6
+	y = 1
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+	}
+	
+	bypass = {
+		has_country_flag = Relinquished_Golan
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_renounce_claims_on_golan"
+		remove_state_core = 587
+		remove_state_claim = 587
+	}
+
+}
+
+shared_focus = {
+	id = SYR_meet_hamas
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_affirm_claims_on_golan
+	}
+	mutually_exclusive = {
+		focus = SYR_meet_fatah
+	}
+	x = -10
+	y = 2
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		OR = {
+			country_exists = HAM
+			country_exists = PAL
+		}
+		OR = {
+			HAM = { owns_state = 209 }
+			PAL = { owns_state = 209 }
+		}
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_meet_hamas"
+		if = {	
+			limit = { NOT = { country_exists = HAM } }
+			PAL = { release = HAM }
+			hidden_effect = {
+				every_state = {
+					limit = { is_core_of = PAL }
+					add_core_of = HAM
+				}
+				HAM = { load_oob = HAM_2017 }
+			}
+			ISR = { country_event = { id = SyriaFocus.76 hours = 6 } }
+			PAL = { country_event = { id = SyriaFocus.76 hours = 6 } }
+		}
+		add_opinion_modifier = {
+			target = HAM
+			modifier = declaration_of_friendship 
+		}
+		reverse_add_opinion_modifier = {
+			target = HAM
+			modifier = declaration_of_friendship 
+		}
+		add_ai_strategy = {
+			type = befriend
+			id = "HAM"
+			value = 50
+		}
+		HAM = {
+			add_ai_strategy = {
+				type = befriend
+				id = ROOT
+				value = 50
+			}
+		}
+		HAM = {
+			add_20_influence = yes
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_new_intifada
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_meet_hamas
+	}
+	x = -10
+	y = 3
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		country_exists = HAM
+		HAM = { is_subject = no }
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_new_intifada"
+		HAM = { country_event = { id = SyriaFocus.77 hours = 6 } }
+		ISR = { country_event = { id = SyriaFocus.77 hours = 6 } }
+		hidden_effect = { news_event = { id = SyriaFocusNews.20 hours = 12 } }
+	}
+
+}
+
+shared_focus = {
+	id = SYR_meet_fatah
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_affirm_claims_on_golan
+	}
+	mutually_exclusive = {
+		focus = SYR_meet_hamas
+	}
+	x = -8
+	y = 2
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+	}
+
+	bypass = {
+		
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_meet_fatah"
+		if = {
+			limit = { country_exists = PAL }
+			add_opinion_modifier = {
+				target = PAL
+				modifier = declaration_of_friendship 
+			}
+			reverse_add_opinion_modifier = {
+				target = PAL
+				modifier = declaration_of_friendship 
+			}
+			add_ai_strategy = {
+				type = befriend
+				id = "PAL"
+				value = 50
+			}
+			PAL = {
+				add_ai_strategy = {
+					type = befriend
+					id = ROOT
+					value = 50
+				}
+			}
+			PAL = {
+				add_20_influence = yes
+			}
+		}
+		else = {
+			add_political_power = 100
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_diplomatic_pressure_on_israel
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_meet_fatah
+	}
+	x = -8
+	y = 3
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		NOT = { has_war_with = PAL }
+		is_subject = no
+	}
+
+	bypass = {
+		PAL = { exists = no }
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_diplomatic_pressure_on_israel"
+		give_guarantee = PAL
+		add_ai_strategy = {
+			type = protect
+			id = PAL
+			value = 50
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_repair_relations_with_israel
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_renounce_claims_on_golan
+	}
+	x = -5
+	y = 2
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		ISR = { exists = yes }
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_repair_relations_with_israel"
+		remove_opinion_modifier = {
+			target = ISR
+			modifier = ISR_Arab_Conflict
+		}
+		ISR = {
+			remove_opinion_modifier = {
+				target = ROOT
+				modifier = ISR_Arab_Conflict
+			}
+		}
+		add_ai_strategy = {
+			type = befriend
+			id = "ISR"
+			value = 25
+		}
+		add_ai_strategy = {
+			type = antagonize
+			id = "ISR"
+			value = -25
+		}
+		ISR = {
+			add_ai_strategy = {
+				type = befriend
+				id = ROOT
+				value = 25
+			}
+			add_ai_strategy = {
+				type = antagonize
+				id = ROOT
+				value = -25
+			}
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_one_state_solution
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_repair_relations_with_israel
+	}
+	mutually_exclusive = {
+		focus = SYR_two_state_solution
+	}
+	x = -6
+	y = 3
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		ISR = { exists = yes }
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_one_state_solution"
+		remove_opinion_modifier = {
+			target = ISR
+			modifier = death_to_israel
+		}
+		ISR = {
+			remove_opinion_modifier = {
+				target = ROOT
+				modifier = death_to_israel_ISR
+			}
+		}
+		every_country = {
+			limit = {
+				OR = {
+					has_opinion_modifier = ISR_Arab_Conflict
+					has_opinion_modifier = death_to_israel
+				}
+				NOT = { original_tag = ISR }
+			}
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = ISR_Arab_Conflict
+			}
+			add_ai_strategy = {
+				type = befriend
+				id = ROOT
+				value = -50
+			}
+			add_ai_strategy = {
+				type = antagonize
+				id = ROOT
+				value = 50
+			}
+			add_ai_strategy = {
+				type = contain
+				id = ROOT
+				value = 50
+			}
+			add_ai_strategy = {
+				type = protect
+				id = ROOT
+				value = -50
+			}
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_two_state_solution
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_repair_relations_with_israel
+	}
+	mutually_exclusive = {
+		focus = SYR_one_state_solution
+	}
+	x = -4
+	y = 3
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		ISR = { exists = yes }
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_two_state_solution"
+		remove_opinion_modifier = {
+			target = ISR
+			modifier = death_to_israel
+		}
+		ISR = {
+			remove_opinion_modifier = {
+				target = ROOT
+				modifier = death_to_israel_ISR
+			}
+		}
+		add_opinion_modifier = {
+			target = ISR
+			modifier = neutral_stance_to_israel
+		}
+		reverse_add_opinion_modifier = {
+			target = ISR
+			modifier = neutral_stance_to_israel
+		}
+		if = {
+			limit = { country_exists = PAL }
+			add_opinion_modifier = {
+				target = PAL
+				modifier = neutral_stance_to_israel
+			}
+			reverse_add_opinion_modifier = {
+				target = PAL
+				modifier = neutral_stance_to_israel
+			}
+		}
+		if = {
+			limit = { country_exists = HAM }
+			add_opinion_modifier = {
+				target = HAM
+				modifier = neutral_stance_to_israel
+			}
+			reverse_add_opinion_modifier = {
+				target = HAM
+				modifier = neutral_stance_to_israel
+			}
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_levant_defence_pact
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_one_state_solution
+		focus = SYR_diplomatic_pressure_on_israel
+	}
+	x = -7
+	y = 4
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		ISR = { exists = yes }
+		NOT = { has_war_with = ISR }
+		NOT = { has_war_with = PAL }
+		is_in_faction = no
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_levant_defence_pact"
+		create_faction = Jerusalem_Defence_Pact
+		if = {
+			limit = {
+				has_completed_focus = SYR_diplomatic_pressure_on_israel
+				country_exists = PAL
+			}
+			PAL = { country_event = { id = SyriaFocus.78 hours = 6 } }
+			add_ai_strategy = {
+				type = contain
+				id = "ISR"
+				value = 50
+			}
+			add_ai_strategy = {
+				type = antagonize
+				id = "ISR"
+				value = 50
+			}
+		}
+		if = {
+			limit = {
+				has_completed_focus = SYR_one_state_solution
+				country_exists = ISR
+			}
+			ISR = { country_event = { id = SyriaFocus.78 hours = 6 } }
+			add_ai_strategy = {
+				type = contain
+				id = "PAL"
+				value = 50
+			}
+			add_ai_strategy = {
+				type = antagonize
+				id = "PAL"
+				value = 50
+			}
+			add_ai_strategy = {
+				type = contain
+				id = "HAM"
+				value = 50
+			}
+			add_ai_strategy = {
+				type = antagonize
+				id = "HAM"
+				value = 50
+			}
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_invite_jordan
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_levant_defence_pact
+	}
+	x = -8
+	y = 5
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		JOR = { exists = yes }
+		JOR = { is_in_faction = no }
+		JOR = { is_subject = no }
+		NOT = { has_war_with = JOR }
+		is_in_faction_with = PAL
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_invite_jordan"
+		JOR = { country_event = { id = SyriaFocus.79 hours = 6 } }
+	}
+
+}
+
+shared_focus = {
+	id = SYR_invite_egypt
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_levant_defence_pact
+	}
+	x = -6
+	y = 5
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		EGY = { exists = yes }
+		EGY = { is_in_faction = no }
+		EGY = { is_subject = no }
+		NOT = { has_war_with = EGY }
+		is_in_faction_with = PAL
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_invite_egypt"
+		EGY = { country_event = { id = SyriaFocus.79 hours = 6 } }
+	}
+
+}
+
 shared_focus = {
 	id = SYR_repair_relations_with_iraq
 	icon = GFX_goal_unknown
 	cost = 10
+	prerequisite = {
+		focus = SYR_diplomatic_effort
+	}
 	mutually_exclusive = {
 		focus = SYR_denounce_iraq
 	}
 	x = 3
+	y = 1
+	relative_position_id = SYR_diplomatic_effort
+
+}
+shared_focus = {
+	id = SYR_denounce_iraq
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_diplomatic_effort
+	}
+	mutually_exclusive = {
+		focus = SYR_repair_relations_with_iraq
+	}
+	x = 5
 	y = 1
 	relative_position_id = SYR_diplomatic_effort
 
@@ -2766,21 +3455,6 @@ shared_focus = {
 	}
 	x = 0
 	y = 3
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_denounce_iraq
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_diplomatic_effort
-	}
-	mutually_exclusive = {
-		focus = SYR_repair_relations_with_iraq
-	}
-	x = 5
-	y = 1
 	relative_position_id = SYR_diplomatic_effort
 
 }
@@ -3220,169 +3894,6 @@ shared_focus = {
 	}
 	x = 1
 	y = 2
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_affirm_claims_on_golan
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_diplomatic_effort
-	}
-	mutually_exclusive = {
-		focus = SYR_renounce_claims_on_golan
-	}
-	x = -8
-	y = 1
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_renounce_claims_on_golan
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_diplomatic_effort
-	}
-	mutually_exclusive = {
-		focus = SYR_affirm_claims_on_golan
-	}
-	x = -6
-	y = 1
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_meet_hamas
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_affirm_claims_on_golan
-	}
-	mutually_exclusive = {
-		focus = SYR_meet_fatah
-	}
-	x = -8
-	y = 2
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_meet_fatah
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_affirm_claims_on_golan
-	}
-	mutually_exclusive = {
-		focus = SYR_meet_hamas
-	}
-	x = -10
-	y = 2
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_new_intifada
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_meet_fatah
-	}
-	x = -10
-	y = 3
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_diplomatic_pressure_on_israel
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_meet_hamas
-	}
-	x = -8
-	y = 3
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_repair_relations_with_israel
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_renounce_claims_on_golan
-	}
-	x = -5
-	y = 2
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_one_state_solution
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_repair_relations_with_israel
-	}
-	mutually_exclusive = {
-		focus = SYR_two_state_solution
-	}
-	x = -6
-	y = 3
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_two_state_solution
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_repair_relations_with_israel
-	}
-	mutually_exclusive = {
-		focus = SYR_one_state_solution
-	}
-	x = -4
-	y = 3
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_levant_defence_pact
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_one_state_solution
-		focus = SYR_diplomatic_pressure_on_israel
-	}
-	x = -7
-	y = 4
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_invite_jordan
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_levant_defence_pact
-	}
-	x = -8
-	y = 5
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_invite_lebanon
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_levant_defence_pact
-	}
-	x = -6
-	y = 5
 	relative_position_id = SYR_diplomatic_effort
 
 }
