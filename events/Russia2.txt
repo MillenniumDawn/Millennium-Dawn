@@ -98,7 +98,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event russia.2" }
 	title = russia.2.t
 	desc = russia.2.d
-	picture = GFX_report_event_russian_flag
+	picture = GFX_SOV_generic
 	
 	is_triggered_only = yes
 	
@@ -133,15 +133,30 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event russia.3" }
 	title = russia.3.t
 	desc = russia.3.d
-	picture = GFX_report_event_russian_flag
+	picture = GFX_SOV_generic
 	
 	is_triggered_only = yes
 	
 	option = {
 		name = russia.3.o1
 		log = "[GetDateText]: [This.GetName]: russia.3.o1 executed"
-		effect_tooltip = {
-			puppet = BLR
+		if = {
+			limit = { BLR = { is_puppet_of = SOV } }
+			BLR = { 
+				every_owned_state = {
+					add_core_of = SOV 
+				}
+			}
+			annex_country = { target = BLR transfer_troops = yes }
+		}
+		if = {
+			limit = { BLR = { NOT = { is_puppet_of = SOV } } }
+			BLR = { 
+				every_owned_state = {
+					add_core_of = SOV 
+				}
+			}
+			SOV = { puppet = BLR }
 		}
 		every_country = {
 			limit = {
@@ -160,7 +175,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event russia.4" }
 	title = russia.4.t
 	desc = russia.4.d
-	picture = GFX_report_event_russian_flag
+	picture = GFX_SOV_generic
 	
 	is_triggered_only = yes
 	
@@ -179,7 +194,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event russia.5" }
 	title = russia.5.t
 	desc = russia.5.d
-	picture = GFX_report_event_russian_flag
+	picture = GFX_SOV_generic
 	
 	is_triggered_only = yes
 	
@@ -293,7 +308,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event russia.7" }
 	title = russia.7.t
 	desc = russia.7.d
-	picture = GFX_report_event_russian_flag
+	picture = GFX_SOV_generic
 	
 	is_triggered_only = yes
 	fire_only_once = yes
@@ -337,7 +352,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event russia.8" }
 	title = russia.8.t
 	desc = russia.8.d
-	picture = GFX_report_event_russian_flag
+	picture = GFX_SOV_generic
 	
 	is_triggered_only = yes
 	
@@ -374,7 +389,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event russia.9" }
 	title = russia.9.t
 	desc = russia.9.d
-	picture = GFX_report_event_russian_flag
+	picture = GFX_SOV_generic
 	
 	is_triggered_only = yes
 	
@@ -415,7 +430,7 @@ country_event = {
 		trigger = { BLR = { NOT = { is_puppet_of = SOV } } }
 		text = russia.10.d2
 	}
-	picture = GFX_report_event_russian_flag
+	picture = GFX_SOV_generic
 	
 	is_triggered_only = yes
 	fire_only_once = yes 
@@ -425,21 +440,25 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: russia.10.o1 executed"
 		if = {
 			limit = { BLR = { is_puppet_of = SOV } }
-			BLR = { 
-				every_owned_state = {
-					add_core_of = SOV 
+			effect_tooltip = {
+				BLR = { 
+					every_owned_state = {
+						add_core_of = SOV 
+					}
 				}
+				annex_country = { target = BLR transfer_troops = yes }
 			}
-			annex_country = { target = SOV transfer_troops = yes }
 		}
 		if = {
 			limit = { BLR = { NOT = { is_puppet_of = SOV } } }
-			BLR = { 
-				every_owned_state = {
-					add_core_of = SOV 
+			effect_tooltip = {
+				BLR = { 
+					every_owned_state = {
+						add_core_of = SOV 
+					}
 				}
+				SOV = { puppet = BLR }
 			}
-			SOV = { puppet = BLR }
 		}
 		SOV = {
 			country_event = { id = russia.3 days = 1 }
@@ -508,35 +527,27 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: russia.11.o1 executed"
 		if = {
 			limit = { tag = ABK }
-			ABK = {
-				if = {
-					limit = { any_owned_state = { NOT = { is_core_of = SOV } } }
-					every_owned_state = {
-						add_core_of = SOV
+			effect_tooltip = {
+				ABK = {
+					every_unit_leader = {
+						set_nationality = SOV 
 					}
 				}
-				every_unit_leader = {
-					set_nationality = SOV 
-				}
+				annex_country = { target = ABK transfer_troops = yes }	
+				SOV = { set_country_flag = ABK_accepts_annexation }
 			}
-			annex_country = { target = ABK transfer_troops = yes }	
-			SOV = { set_country_flag = ABK_accepts_annexation }
 		}
 		if = {
 			limit = { tag = SOO }
-			SOO = {
-				if = {
-					limit = { any_owned_state = { NOT = { is_core_of = SOV } } }
-					every_owned_state = {
-						add_core_of = SOV
+			effect_tooltip = {	
+				SOO = {
+					every_unit_leader = {
+						set_nationality = SOV 
 					}
 				}
-				every_unit_leader = {
-					set_nationality = SOV 
-				}
+				annex_country = { target = SOO transfer_troops = yes }
+				SOV = { set_country_flag = SOO_accepts_annexation }
 			}
-			annex_country = { target = SOO transfer_troops = yes }
-			SOV = { set_country_flag = SOO_accepts_annexation }
 		}
 		SOV = { country_event = { id = russia.12 days = 3 } }
 		ai_chance = {
@@ -623,38 +634,34 @@ country_event = {
 		name = russia.12.o1 
 		log = "[GetDateText]: [This.GetName]: russia.12.o1 executed"
 		if = {
-			limit = { tag = ABK }
-			effect_tooltip = { 
-				ABK = {
-					if = {
-						limit = { any_owned_state = { NOT = { is_core_of = SOV } } }
-						every_owned_state = {
-							add_core_of = SOV
-						}
-					}
-					every_unit_leader = {
-						set_nationality = SOV 
+			limit = { has_country_flag = ABK_accepts_annexation }
+			ABK = {
+				if = {
+					limit = { any_owned_state = { NOT = { is_core_of = SOV } } }
+					every_owned_state = {
+						add_core_of = SOV
 					}
 				}
-				annex_country = { target = ABK transfer_troops = yes }
+				every_unit_leader = {
+					set_nationality = SOV 
+				}
 			}
+			annex_country = { target = ABK transfer_troops = yes }
 		}
 		if = {
-			limit = { tag = SOO }
-			effect_tooltip = { 
-				SOO = {
-					if = {
-						limit = { any_owned_state = { NOT = { is_core_of = SOV } } }
-						every_owned_state = {
-							add_core_of = SOV
-						}
-					}
-					every_unit_leader = {
-						set_nationality = SOV 
+			limit = { has_country_flag = SOO_accepts_annexation }
+			SOO = {
+				if = {
+					limit = { any_owned_state = { NOT = { is_core_of = SOV } } }
+					every_owned_state = {
+						add_core_of = SOV
 					}
 				}
-				annex_country = { target = SOO transfer_troops = yes }
+				every_unit_leader = {
+					set_nationality = SOV 
+				}
 			}
+			annex_country = { target = SOO transfer_troops = yes }
 		}
 		if = { 
 			limit = { has_country_flag = ABK_accepts_annexation }
