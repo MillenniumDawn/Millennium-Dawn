@@ -1,7 +1,7 @@
 #Greater Syria branch
 shared_focus = {
 	id = SYR_greater_syria
-	icon = GFX_goal_unknown
+	icon = greater_syria
 	cost = 10
 	x = 9
 	y = 8
@@ -1228,7 +1228,7 @@ shared_focus = {
 
 shared_focus = {
 	id = SYR_divide_turkey
-	icon = GFX_unknown
+	icon = partition_of_turkey
 	cost = 10
 	prerequisite = {
 		focus = SYR_alawite_militias
@@ -2736,6 +2736,13 @@ shared_focus = {
 	}
 	
 	available = {
+		OR = {
+			has_start_date < 2016.1.1 
+			custom_trigger_tooltip = {
+				tooltip = TT_SYR_POST_WAR_FINISHED
+				has_country_flag = SYR_Post_War_Tree_Finished
+			}
+		}
 	}
 	
 	bypass = {
@@ -2747,7 +2754,6 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_diplomatic_effort"
 		add_political_power = 100
-		custom_effect_tooltip = TT_SYR_DIPLOMATIC_EFFORT
 	}
 
 }
@@ -3273,6 +3279,16 @@ shared_focus = {
 		NOT = { has_war_with = ISR }
 		NOT = { has_war_with = PAL }
 		is_in_faction = no
+		OR = {
+			AND = {
+				has_completed_focus = SYR_diplomatic_pressure_on_israel
+				PAL = { is_subject = no }
+			}
+			AND = {
+				has_completed_focus = SYR_one_state_solution
+				ISR = { is_subject = no }
+			}
+		}
 	}
 
 	bypass = {
@@ -3290,6 +3306,7 @@ shared_focus = {
 				country_exists = PAL
 			}
 			PAL = { country_event = { id = SyriaFocus.78 hours = 6 } }
+			custom_effect_tooltip = TT_SYR_ALIGN_PALESTINE
 			add_ai_strategy = {
 				type = contain
 				id = "ISR"
@@ -3307,6 +3324,7 @@ shared_focus = {
 				country_exists = ISR
 			}
 			ISR = { country_event = { id = SyriaFocus.78 hours = 6 } }
+			custom_effect_tooltip = TT_SYR_ALIGN_ISRAEL
 			add_ai_strategy = {
 				type = contain
 				id = "PAL"
@@ -3352,7 +3370,7 @@ shared_focus = {
 		JOR = { is_in_faction = no }
 		JOR = { is_subject = no }
 		NOT = { has_war_with = JOR }
-		is_in_faction_with = PAL
+		NOT = { is_in_faction_with = ISR }
 	}
 
 	bypass = {
@@ -3364,6 +3382,7 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_invite_jordan"
 		JOR = { country_event = { id = SyriaFocus.79 hours = 6 } }
+		custom_effect_tooltip = TT_SYR_ALIGN_JORDAN
 	}
 
 }
@@ -3388,7 +3407,7 @@ shared_focus = {
 		EGY = { is_in_faction = no }
 		EGY = { is_subject = no }
 		NOT = { has_war_with = EGY }
-		is_in_faction_with = PAL
+		NOT = { is_in_faction_with = ISR }
 	}
 
 	bypass = {
@@ -3400,6 +3419,315 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_invite_egypt"
 		EGY = { country_event = { id = SyriaFocus.79 hours = 6 } }
+		custom_effect_tooltip = TT_SYR_ALIGN_EGYPT
+	}
+
+}
+
+shared_focus = {
+	id = SYR_meeting_with_kings
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_diplomatic_effort
+	}
+	x = -1
+	y = 2
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		country_exists = SAU
+		NOT = { has_war_with = SAU }
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_meeting_with_kings"
+		add_ai_strategy = {
+			type = befriend
+			id = SAU
+			value = 15
+		}
+		add_opinion_modifier = {
+			modifier = political_outreach 
+			target = SAU
+		}
+		reverse_add_opinion_modifier = {
+			modifier = political_outreach 
+			target = SAU
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_open_saudi_mosques
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_meeting_with_kings
+	}
+	x = -2
+	y = 3
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		country_exists = SAU
+		NOT = { has_war_with = SAU }
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_open_saudi_mosques"
+		SAU = { custom_effect_tooltip = TT_SYR_COUNTRY_GAINS_10_INFLUENCE }
+		add_ideas = saudi_aid 
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 10 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = SAU }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = SAU.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		if = {
+			limit = { has_idea = wahabi_ulema }
+			set_country_flag = current_wahabi_ulema
+			increase_internal_faction_opinion = yes
+			visually_display_opinion_rise_wahabi_ulema = yes
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_saudi_oil_cooperation
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_meeting_with_kings
+	}
+	x = 0
+	y = 3
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		country_exists = SAU
+		NOT = { has_war_with = SAU }
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_saudi_oil_cooperation"
+		add_opinion_modifier = {
+			modifier = improve_trade 
+			target = SAU
+		}
+		reverse_add_opinion_modifier = {
+			modifier = improve_trade 
+			target = SAU
+		}
+		if = {
+			limit = { has_idea = fossil_fuel_industry }
+			set_country_flag = current_fossil_fuel_industry
+			increase_internal_faction_opinion = yes
+			visually_display_opinion_rise_fossil_fuel_industry = yes
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_join_peninsula_shield
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_open_saudi_mosques
+	}
+	prerequisite = {
+		focus = SYR_saudi_oil_cooperation
+	}
+	x = -1
+	y = 4
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		is_subject = no
+		is_in_faction = no
+		NOT = { has_war_with = SAU }
+		SAU = { is_faction_leader = yes }
+	}
+
+	bypass = {
+		is_in_faction_with = SAU
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_join_peninsula_shield"
+		SAU = { country_event = { id = SyriaFocus.80 days = 3 } }
+		custom_effect_tooltip = TT_SYR_ALIGN_SAUDI_ARABIA
+	}
+
+}
+
+shared_focus = {
+	id = SYR_saudi_military_cooperation
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_join_peninsula_shield
+	}
+	x = -2
+	y = 5
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		is_in_faction_with = SAU
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_saudi_military_cooperation"
+		add_to_tech_sharing_group = GCC_Tech_Share
+	}
+
+}
+
+shared_focus = {
+	id = SYR_saudi_oil_investments
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_join_peninsula_shield
+	}
+	x = 0
+	y = 5
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		is_in_faction_with = SAU
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_saudi_oil_investments"
+		random_owned_state = {
+			add_resource = {
+				type = oil
+				amount = 5
+			}
+		}
+		if = {
+			limit = { has_idea = fossil_fuel_industry }
+			set_country_flag = current_fossil_fuel_industry
+			increase_internal_faction_opinion = yes
+			visually_display_opinion_rise_fossil_fuel_industry = yes
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_trade_deal_with_egypt
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_diplomatic_effort
+	}
+	x = 1
+	y = 2
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		country_exists = EGY
+		NOT = { has_war_with = EGY }
+	}
+
+	bypass = {
+		NOT = { country_exists = EGY }
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_trade_deal_with_egypt"
+		add_opinion_modifier = {
+			modifier = improve_trade 
+			target = EGY
+		}
+		reverse_add_opinion_modifier = {
+			modifier = improve_trade 
+			target = EGY
+		}
 	}
 
 }
@@ -3417,8 +3745,339 @@ shared_focus = {
 	x = 3
 	y = 1
 	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		country_exists = IRQ
+		NOT = { has_war_with = IRQ }
+	}
+
+	bypass = {
+		NOT = { country_exists = IRQ }
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_repair_relations_with_iraq"
+		add_opinion_modifier = {
+			modifier = supports_us  
+			target = IRQ
+		}
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.10
+		}
+		custom_effect_tooltip = TT_SYR_ARMED_FORCES_GAIN_10_POP
+		add_to_variable = { var = party_pop_array^22 value = 10 }
+		recalculate_party = yes
+		IRQ = {
+			add_opinion_modifier = {
+				modifier = supports_us  
+				target = ROOT
+			}
+			add_popularity = {
+				ideology = communism
+				popularity = 0.10
+			}
+			custom_effect_tooltip = TT_SYR_IRAQ_BAATH_PARTY_GAIN_10_POP
+			add_to_variable = { var = party_pop_array^7 value = 10 }
+			recalculate_party = yes
+		}
+		add_ai_strategy = {
+			type = befriend
+			id = "IRQ"
+			value = 50
+		}
+		add_ai_strategy = {
+			type = support
+			id = "IRQ"
+			value = 50
+		}
+	}
 
 }
+
+shared_focus = {
+	id = SYR_revive_baathist_dream
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_trade_deal_with_egypt
+	}
+	prerequisite = {
+		focus = SYR_repair_relations_with_iraq
+	}
+	x = 2
+	y = 3
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		has_government = communism
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_revive_baathist_dream"
+		custom_effect_tooltip = TT_SYR_REVIVE_BAATHISM_COST
+		every_country = {
+			limit = {
+				exists = yes
+				OR = {
+					original_tag = JOR
+					original_tag = LEB
+					original_tag = HEZ
+					original_tag = PAL
+					original_tag = HAM
+					original_tag = SUD
+					original_tag = YEM
+					original_tag = HOU
+					original_tag = AQY
+					original_tag = SYR
+					original_tag = FSA
+					original_tag = NUS
+					original_tag = ALG
+					original_tag = BHR
+					original_tag = EGY
+					original_tag = IRQ
+					original_tag = LBA
+					original_tag = MAU
+					original_tag = TUN
+				}
+			}
+			add_popularity = {
+				ideology = communism
+				popularity = 0.10
+			}
+			custom_effect_tooltip = TT_SYR_BAATHIST_RENAISSANCE
+			add_to_variable = { var = party_pop_array^7 value = 10 }
+			recalculate_party = yes
+			add_to_variable = { ROOT.treasury = -1 }
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_baathist_renaissance
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_revive_baathist_dream
+	}
+	x = 3
+	y = 4
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		has_government = communism
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_baathist_renaissance"
+		custom_effect_tooltip = TT_SYR_REVIVE_BAATHISM_COST
+		every_country = {
+			limit = {
+				exists = yes
+				OR = {
+					original_tag = JOR
+					original_tag = LEB
+					original_tag = HEZ
+					original_tag = PAL
+					original_tag = HAM
+					original_tag = SUD
+					original_tag = YEM
+					original_tag = HOU
+					original_tag = AQY
+					original_tag = SYR
+					original_tag = FSA
+					original_tag = NUS
+					original_tag = ALG
+					original_tag = BHR
+					original_tag = EGY
+					original_tag = IRQ
+					original_tag = LBA
+					original_tag = MAU
+					original_tag = TUN
+				}
+			}
+			add_popularity = {
+				ideology = communism
+				popularity = 0.05
+			}
+			custom_effect_tooltip = TT_SYR_BAATHIST_RENAISSANCE_5
+			add_to_variable = { var = party_pop_array^7 value = 5 }
+			recalculate_party = yes
+			add_to_variable = { ROOT.treasury = -1 }
+			add_10_influence = yes
+		}
+	}
+
+}
+
+shared_focus = {
+	id = SYR_the_arab_union
+	icon = GFX_goal_unknown
+	cost = 10
+	prerequisite = {
+		focus = SYR_revive_baathist_dream
+	}
+	x = 1
+	y = 4
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		is_in_faction = no
+		has_government = communism
+		custom_trigger_tooltip = {
+			tooltip = TT_SYR_BAATHIST_IN_POWER
+			is_in_array = {
+				array = ruling_party
+				value = 7
+			}
+		}
+		EGY = {
+			custom_trigger_tooltip = {
+				tooltip = TT_SYR_BAATHIST_IN_POWER
+				is_in_array = {
+					array = ruling_party
+					value = 7
+				}
+			}
+		}
+			
+	}
+
+	bypass = {
+		EGY = { is_subject_of = ROOT }
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_the_arab_union"
+		set_cosmetic_tag = UNITED_ARAB_REPUBLIC
+		EGY = {
+			set_country_flag = always_say_yes
+			country_event = { id = md4.14 days = 2 }
+		}
+		hidden_effect = { news_event = { id = SyriaFocusNews.21 hours = 6 } }
+	}
+
+}
+
+shared_focus = {
+	id = SYR_integrate_the_union
+	icon = GFX_goal_unknown
+	cost = 20
+	prerequisite = {
+		focus = SYR_the_arab_union
+	}
+	prerequisite = {
+		focus = SYR_baathist_renaissance
+	}
+	x = 2
+	y = 5
+	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		is_in_faction = no
+		has_government = communism
+		custom_trigger_tooltip = {
+			tooltip = TT_SYR_BAATHIST_IN_POWER
+			is_in_array = {
+				array = ruling_party
+				value = 7
+			}
+		}
+	}
+
+	bypass = {
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_integrate_the_union"
+		if = {
+			limit = { EGY = { NOT = { is_subject_of = ROOT } } }
+			effect_tooltip = {
+				every_state = {
+					limit = { is_core_of = EGY }
+					add_core_of = ROOT
+				}
+				annex_country = {
+					target = EGY
+					transfer_troops = yes
+				}
+			}
+		}
+		else = {
+			every_state = {
+				limit = { is_core_of = EGY }
+				add_core_of = ROOT
+			}
+			annex_country = {
+				target = EGY
+				transfer_troops = yes
+			}
+			every_country = {
+				limit = {
+					NOT = { original_tag = EGY }
+					is_arabic_nation = yes
+					is_subject_of = ROOT
+				}
+				every_owned_state = {
+					limit = { is_core_of = THIS }
+					add_core_of = ROOT
+				}
+				ROOT = {
+					annex_country = {
+						target = PREV
+						transfer_troops = yes
+					}
+				}
+			}
+		}
+		custom_effect_tooltip = TT_SYR_INTEGRATE_THE_UNION
+		set_country_flag = leader_of_arab_union
+		set_global_flag = arab_union_formed
+	}
+}
+
 shared_focus = {
 	id = SYR_denounce_iraq
 	icon = GFX_goal_unknown
@@ -3432,30 +4091,53 @@ shared_focus = {
 	x = 5
 	y = 1
 	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_meeting_with_kings
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
 	}
-	x = -1
-	y = 2
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_saudi_oil_cooperation
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_meeting_with_kings
+	
+	available = {
+		country_exists = IRQ
 	}
-	x = 0
-	y = 3
-	relative_position_id = SYR_diplomatic_effort
+
+	bypass = {
+		NOT = { country_exists = IRQ }
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_denounce_iraq"
+		add_opinion_modifier = {
+			target = IRQ
+			modifier = hostile_status
+		}
+		reverse_add_opinion_modifier = {
+			target = IRQ
+			modifier = hostile_status 
+		}
+		add_ai_strategy = {
+			type = befriend
+			id = "IRQ"
+			value = -50
+		}
+		add_ai_strategy = {
+			type = contain
+			id = "IRQ"
+			value = 50
+		}
+		add_ai_strategy = {
+			type = antagonize
+			id = "IRQ"
+			value = 50
+		}
+		add_ai_strategy = {
+			type = support
+			id = "IRQ"
+			value = -50
+		}
+	}
 
 }
 shared_focus = {
@@ -3468,6 +4150,26 @@ shared_focus = {
 	x = 7
 	y = 1
 	relative_position_id = SYR_diplomatic_effort
+	
+	ai_will_do = {
+		factor = 10
+	}
+	
+	available = {
+		country_exists = PER
+		NOT = { has_war_with = PER }
+	}
+
+	bypass = {
+		NOT = { country_exists = PER }
+	}
+	
+	cancel_if_invalid = yes
+	available_if_capitulated = no
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SYR_iranian_sponsorship"
+	}
 
 }
 shared_focus = {
@@ -3882,111 +4584,6 @@ shared_focus = {
 	}
 	x = 24
 	y = 4
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_trade_deal_with_egypt
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_diplomatic_effort
-	}
-	x = 1
-	y = 2
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_open_saudi_mosques
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_meeting_with_kings
-	}
-	x = -2
-	y = 3
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_join_peninsula_shield
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_saudi_military_cooperation
-	}
-	x = -1
-	y = 5
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_saudi_military_cooperation
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_open_saudi_mosques
-	}
-	prerequisite = {
-		focus = SYR_saudi_oil_cooperation
-	}
-	x = -1
-	y = 4
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_revive_baathist_dream
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_trade_deal_with_egypt
-	}
-	prerequisite = {
-		focus = SYR_repair_relations_with_iraq
-	}
-	x = 2
-	y = 3
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_baathist_renaissance
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_revive_baathist_dream
-	}
-	x = 3
-	y = 4
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_the_arab_union
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_revive_baathist_dream
-	}
-	x = 1
-	y = 4
-	relative_position_id = SYR_diplomatic_effort
-
-}
-shared_focus = {
-	id = SYR_integrate_the_union
-	icon = GFX_goal_unknown
-	cost = 10
-	prerequisite = {
-		focus = SYR_the_arab_union
-	}
-	prerequisite = {
-		focus = SYR_baathist_renaissance
-	}
-	x = 2
-	y = 5
 	relative_position_id = SYR_diplomatic_effort
 
 }
