@@ -4483,9 +4483,8 @@ country_event = {
 		}
 	}
 	immediate = {
-		set_country_flag = usa_great_fiancial_crisis
+		set_global_flag = usa_great_fiancial_crisis
 		country_event = { id = usa_economic_events.1 days = 10 random = 5 }
-		#CHI = { id = 
 	}
 }
 
@@ -4521,7 +4520,8 @@ country_event = {
 		#Nationalist/Communist Method - Consolidates Government Power
 		
 		hidden_effect = {
-			news_event = usa_economic_events_news.1 
+			country_event = { id = usa_economic_events.2 days = 40 random = 30 }
+			news_event = { id = usa_economic_events_news.1 days = 1 }
 		}
 		ai_chance = {
 			factor = 0
@@ -4531,6 +4531,14 @@ country_event = {
 					has_government = communism
 				}
 				factor = 2 
+			}
+			modifier = {
+				factor = 0 
+				is_historical_focus_on = yes 
+			}
+			modifier = {
+				nationalist > 0.30 
+				add = 1 
 			}
 		}
 	}
@@ -4546,7 +4554,7 @@ country_event = {
 		#Obama/Democrat Route to handling the crisis
 		
 		hidden_effect = {
-			news_event = usa_economic_events_news.1 
+			news_event = { id = usa_economic_events_news.1 days = 1 }
 		}
 		ai_chance = {
 			factor = 2
@@ -4587,7 +4595,7 @@ country_event = {
 		#Begins the Libertarian/Republican Method of a Laissez Faire Approach 
 		
 		hidden_effect = {
-			news_event = usa_economic_events_news.1 
+			news_event = { id = usa_economic_events_news.1 days = 1 }
 		}
 		ai_chance = {
 			factor = 2 
@@ -4612,6 +4620,7 @@ country_event = {
 }
 
 ###Nationalist Path of Handling the Recession
+##More Major Banks Fail
 country_event = {
 	id = usa_economic_events.2
 	immediate = { log = "[GetDateText]: [Root.GetName] event usa_economic_events.2" }
@@ -4621,9 +4630,310 @@ country_event = {
 	fire_only_once = yes
 	#picture = 
 	
+	#Nationalize Them!
 	option = {
 		name = usa_economic_events.2.a
 		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.2.a"
+		subtract_from_variable = { treasury = 100 }
+		custom_effect_tooltip = 100_billion_expense_tt
+		
+		
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 1 
+				has_government = communism
+				has_government = nationalist
+			}
+			modifier = {
+				add = 0.50
+				nationalist > 0.30 
+			}
+		}
+	}
+	#Bail them out and let them be
+	option = {
+		name = usa_economic_events.2.b
+		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.2.b"
+		
+		ai_chance = {
+			factor = 0.25
+			modifier = {
+				nationalist < 0.30 
+				add = 0.50 
+			}
+		}	
+	}
+	#Live and Let Be 
+	option = {
+		name = usa_economic_events.2.c
+		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.2.c"
+		
+		ai_chance = {
+			factor = 1
+			modifier = {
+				is_historical_focus_on = yes 
+				factor = 0 
+			}
+		}	
+	}
+}
+
+country_event = {
+	id = usa_economic_events.3
+	immediate = { log = "[GetDateText]: [Root.GetName] event usa_economic_events.3" }
+	title = usa_economic_events.3.t
+	desc = usa_economic_events.3.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	#picture = 
+	
+	option = {
+		name = usa_economic_events.3.a
+		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.3.a"
+	}
+}
+
+#Random Events Until Recession is Over 
+country_event = {
+	id = usa_economic_events.30
+	hidden = yes 
+	is_triggered_only = yes
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName] event usa_economic_events.3" 
+		random_list = {
+			##Military Industry Leave the USA 
+			20 = {
+				country_event = { id = usa_economic_events.31 days = 70 random = 35 }
+			}
+			##Civilian Factories Leave the USA 
+			20 = {
+				
+				country_event = { id = usa_economic_events.32 days = 70 random = 35 }
+			}
+			##Company Collapse 
+			30 = {
+			
+				country_event = { id = usa_economic_events.33 days = 70 random = 35 }
+			}
+			##Company Goes Bankrupt
+			30 = {
+			
+				country_event = { id = usa_economic_events.34 days = 70 random = 35 }
+			}
+		}
+	}
+}
+
+#Military Industry Leaves the USA 
+country_event = {
+	id = usa_economic_events.31
+	immediate = { log = "[GetDateText]: [Root.GetName] event usa_economic_events.31" }
+	title = usa_economic_events.31.t
+	desc = usa_economic_events.31.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	#picture = 
+	
+	#Oh no
+	option = {
+		name = usa_economic_events.31.a
+		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.31.a"
+		
+		random_owned_controlled_state = {
+			remove_building = {
+				type = arms_factory
+				level = 1 
+			}
+		}
+		hidden_effect = {
+			if = {
+				limit = { 
+					OR = {	
+						has_idea = USA_economic_crisis_severe_idea
+						has_idea = USA_economic_crisis_medium_idea
+						has_idea = USA_economic_crisis_light_idea
+					}
+				}
+				country_event = { id = usa_economic_events.30 days = 70 random = 35 }
+			}
+			if = {
+				limit = {
+					OR = {
+						NOT = { has_idea = USA_economic_crisis_light_idea }
+						NOT = { has_idea = USA_economic_crisis_medium_idea }
+						NOT = { has_idea = USA_economic_crisis_severe_idea }
+					}
+				}
+				country_event = { id = usa_economic_events.35 days = 10 }
+			}
+		}
+		ai_chance = {
+			factor = 1 
+		}
+	}
+}
+
+#Civilian Industry Leaves the United States
+country_event = {
+	id = usa_economic_events.32
+	immediate = { log = "[GetDateText]: [Root.GetName] event usa_economic_events.32" }
+	title = usa_economic_events.32.t
+	desc = usa_economic_events.32.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	#picture = 
+	
+	#Oh no 
+	option = {
+		name = usa_economic_events.32.a
+		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.32.a"
+		
+		hidden_effect = {
+			if = {
+				limit = { 
+					OR = {	
+						has_idea = USA_economic_crisis_severe_idea
+						has_idea = USA_economic_crisis_medium_idea
+						has_idea = USA_economic_crisis_light_idea
+					}
+					has_idea = recession
+				}
+				country_event = { id = usa_economic_events.30 days = 70 random = 35 }
+			}
+			if = {
+				limit = {
+					OR = {
+						NOT = { has_idea = USA_economic_crisis_light_idea }
+						NOT = { has_idea = USA_economic_crisis_medium_idea }
+						NOT = { has_idea = USA_economic_crisis_severe_idea }
+					}
+					has_idea = recession
+				}
+				country_event = { id = usa_economic_events.35 days = 10 }
+			}
+		}
+		ai_chance = {
+			factor = 1 
+		}
+	}
+}
+
+##American Factories Close 
+country_event = {
+	id = usa_economic_events.33
+	immediate = { log = "[GetDateText]: [Root.GetName] event usa_economic_events.33" }
+	title = usa_economic_events.33.t
+	desc = usa_economic_events.33.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	#picture = 
+	
+	option = {
+		name = usa_economic_events.33.a
+		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.33.a"
+		
+		hidden_effect = {
+			if = {
+				limit = { 
+					OR = {	
+						has_idea = USA_economic_crisis_severe_idea
+						has_idea = USA_economic_crisis_medium_idea
+						has_idea = USA_economic_crisis_light_idea
+					}
+				}
+				country_event = { id = usa_economic_events.30 days = 70 random = 35 }
+			}
+			if = {
+				limit = {
+					OR = {
+						NOT = { has_idea = USA_economic_crisis_light_idea }
+						NOT = { has_idea = USA_economic_crisis_medium_idea }
+						NOT = { has_idea = USA_economic_crisis_severe_idea }
+					}
+				}
+				country_event = { id = usa_economic_events.35 days = 10 }
+			}
+		}
+		ai_chance = {
+			factor = 1 
+		}
+	}
+}
+
+##American Company Goes Bankrupt!
+country_event = {
+	id = usa_economic_events.34
+	immediate = { log = "[GetDateText]: [Root.GetName] event usa_economic_events.34" }
+	title = usa_economic_events.34.t
+	desc = usa_economic_events.34.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	#picture = 
+	
+	option = {
+		name = usa_economic_events.34.a
+		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.34.a"
+		
+		hidden_effect = {
+			if = {
+				limit = { 
+					OR = {	
+						has_idea = USA_economic_crisis_severe_idea
+						has_idea = USA_economic_crisis_medium_idea
+						has_idea = USA_economic_crisis_light_idea
+					}
+				}
+				country_event = { id = usa_economic_events.30 days = 70 random = 35 }
+			}
+			if = {
+				limit = {
+					OR = {
+						NOT = { has_idea = USA_economic_crisis_light_idea }
+						NOT = { has_idea = USA_economic_crisis_medium_idea }
+						NOT = { has_idea = USA_economic_crisis_severe_idea }
+					}
+				}
+				country_event = { id = usa_economic_events.35 days = 10 }
+			}
+		}
+		ai_chance = {
+			factor = 1 
+		}
+	}
+}
+
+#End of the American Recession
+country_event = {
+	id = usa_economic_events.35
+	immediate = { log = "[GetDateText]: [Root.GetName] event usa_economic_events.35" }
+	title = usa_economic_events.35.t
+	desc = usa_economic_events.35.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	#picture = 
+	
+	#Glorious! 
+	option = {
+		name = usa_economic_events.35.a
+		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.35.a"
+	
+		if = {
+			limit = { has_idea = USA_economic_crisis_light_idea }
+			remove_ideas = USA_economic_crisis_light_idea 
+		}
+		if = {
+			limit = { has_idea = USA_economic_crisis_medium_idea }
+			remove_ideas = USA_economic_crisis_medium_idea 
+		}
+		if = {
+			limit = { has_idea = USA_economic_crisis_severe_idea }
+			remove_ideas = USA_economic_crisis_severe_idea 
+		}
+		
+		ai_chance = {
+			factor = 1 
+		}
 	}
 }
 
