@@ -34,6 +34,30 @@ country_event = {
 	}
 }
 
+country_event = {
+	id = EUcheat.2
+	immediate = { log = "[GetDateText]: [Root.GetName]: event EUcheat.2" }
+	title = EUcheat.2.t
+	desc = EUcheat.2.d
+	
+	#picture = GFX_eu
+
+	is_triggered_only = yes
+	
+	option = { #a
+		name = EUcheat.2.a
+		log = "[GetDateText]: [Root.GetName]: event EUcheat.1.a"
+		every_country = {
+			limit = {
+				has_country_flag = EU_potential
+			}
+			add_ideas = {
+				EU_member
+			}
+		}
+	}
+}
+
 ### EUupdate
 
 country_event = {
@@ -228,7 +252,11 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: event EUevent.3.a"
 		EU_set_most_advanced_naval_tech = yes
 		every_country = {
-			limit = {  has_idea = EU_member }
+			limit = {  
+				has_idea = EU_member
+				NOT = { original_tag = ROOT }
+			}
+				set_country_flag = USoE_transfer_navy
 				transfer_navy = {
 					target = EUU
 				}
@@ -239,12 +267,24 @@ country_event = {
 			}		
 		}
 		release = EUU
+		if = {
+			limit = {
+				date < 2017.01.01
+			}
+			EU_load_naval_oob_2000 = yes
+		}
+		else = {
+			EU_load_naval_oob_2017 = yes
+		}
+		every_country = {
+			limit = {  has_idea = EU_member }
+				clr_country_flag = USoE_transfer_navy
+		}			
 		every_country = {
 			limit = {  has_idea = EU_member }
 			country_event = EUevent.4
 		}
 		ROOT = { set_cosmetic_tag = USoE }
-		#EU_load_naval_oob_2000 = yes ### has to be adapted to bookmark and EU countries
 	}
 }
 
@@ -265,12 +305,6 @@ country_event = {
 				limit = {
 					NOT = { original_tag = FROM }
 				}
-				#set_equipment_fraction = 0.0
-				#ROOT = {
-				#	transfer_navy = {
-				#		target = FROM
-				#	}
-				#}
 				FROM = {
 					annex_country = {
 						target = ROOT
