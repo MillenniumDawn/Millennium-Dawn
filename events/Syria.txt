@@ -12,15 +12,15 @@ news_event = {
 	title = Syria.1.t
 	desc = {
 		text = Syria.1.SYR.desc
-		trigger = { tag = SYR }
+		trigger = { original_tag = SYR }
 	}
 	desc = {
 		text = Syria.1.FSA.desc
-		trigger = { tag = FSA }
+		trigger = { original_tag = FSA }
 	}
 	desc = {
 		text = Syria.1.NUS.desc
-		trigger = { tag = NUS }
+		trigger = { original_tag = NUS }
 	}
 	
 	picture = GFX_Syria_Civil_War_Victory
@@ -28,24 +28,27 @@ news_event = {
 	trigger = {
 		OR = {
 			AND = {
-				tag = SYR
+				original_tag = SYR
 				NOT = { country_exists = FSA }
 				NOT = { country_exists = NUS }
 			}
 			AND = {
-				tag = FSA
+				original_tag = FSA
 				NOT = { country_exists = SYR }
 				NOT = { country_exists = NUS }
 			}
 			AND = {
-				tag = NUS
+				original_tag = NUS
 				NOT = { country_exists = SYR }
 				NOT = { country_exists = FSA }
 			}
 		}
 		NOT = { country_exists = ISI }
 		NOT = { has_global_flag = Syria_Civil_War_Over }
-		has_start_date > 2016.1.1
+		OR = {
+			has_start_date > 2016.1.1
+			has_global_flag = SYR_civil_war_started_early
+		}
 	}
 	
 	fire_only_once = yes
@@ -163,29 +166,26 @@ news_event = {
 			if = {
 				limit = { NOT = { has_country_flag = Deal_With_Rojava } }
 				add_state_core = 193
-			}
-			if = {
-				limit = { NOT = { has_country_flag = Deal_With_Rojava } }
 				add_state_core = 571
-			}
-			if = {
-				limit = { NOT = { has_country_flag = Deal_With_Rojava } }
 				add_state_core = 575
 			}
 			set_capital = 186
 			if = {
 				limit = {
 					OR = {
-						tag = NUS
-						tag = FSA
+						original_tag = NUS
+						original_tag = FSA
 					}
 				}
 				set_cosmetic_tag = SYR
+			}
+			if = {
+				limit = { NOT = { has_idea = divided_syria } }
 				add_ideas = divided_syria
 			}
 			if = {
 				limit = {
-					tag = NUS
+					original_tag = NUS
 				}
 				add_ideas = intervention_neo_imperialism
 			}
@@ -196,6 +196,22 @@ news_event = {
 			if = {
 				limit = { has_idea = rival_government }
 				remove_ideas = rival_government
+			}
+			if = {
+				limit = {
+					OR = {
+						original_tag = FSA
+						original_tag = NUS
+					}
+				}
+				add_offsite_building = {
+					type = industrial_complex
+					level = -1
+				}
+				add_offsite_building = {
+					type = arms_factory
+					level = -1
+				}				
 			}
 		}
 	}
