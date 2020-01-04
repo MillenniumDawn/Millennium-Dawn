@@ -18429,7 +18429,53 @@ EU_defense_category = {
 			}				
 			load_oob = "EU_EuroArmy_basic_2000"
 		}				
-	}	
+	}
+
+	EU_create_EDU = {
+	
+		available = {
+			has_idea = European_Security_Council
+			has_idea = EU_foreign_minister
+			has_idea = EU_member
+			#ROOT = {
+			#	influence_on_all_other_EU_members_25_percent = yes
+			#}			
+		}
+		
+		visible = { 
+			has_idea = European_Security_Council
+			has_idea = EU_member
+		} 
+		
+		complete_effect = {
+			set_global_flag = EDU
+			every_country = {
+				limit = {
+					has_idea = EU_member
+					has_idea = NATO_member
+				}
+				remove_ideas = NATO_member
+			}	
+			create_faction = EDU
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				
+				FROM = {
+					add_to_faction = PREV
+				}
+				add_ai_strategy = {
+					type = alliance
+					id = "FROM"
+					value = 200
+				}				
+			}
+			news_event = {
+				id = EU_news.48 ### non-EU NATO members notification of EDU
+			}					
+		}				
+	}
 
 } 
 
@@ -18452,6 +18498,7 @@ EU_apply_for_membership_category = {
 		available = {
 				has_country_flag = EU_candidate
 				NOT = { has_idea = EU_member }
+				NOT = {	has_war = yes }
 		}
 		
 		visible = {
@@ -18463,6 +18510,40 @@ EU_apply_for_membership_category = {
 			ROOT = {
 				add_ideas = EU_member
 			}
+			if = {
+				limit = {
+					has_global_flag = EDU
+					has_idea = NATO_member
+				}
+				remove_ideas = NATO_member
+			}
+			if = {
+				limit = {
+					has_global_flag = EDU
+				}
+				every_country = {
+					limit = {
+						has_idea = EU_member
+						is_faction_leader = yes
+					}
+					add_to_faction = ROOT
+					ROOT = {
+						add_ai_strategy = {
+							type = alliance
+							id = PREV
+							value = 200
+						}					
+					}
+				}
+				every_country = {
+					limit = {
+						has_idea = NATO_member
+					}
+					news_event = {
+						id = EU_news.49 ### NATO members leaves and joins EU and EDU
+					}
+				}				
+			}			
 			every_country = {
 				limit = {
 					has_idea = EU_member
