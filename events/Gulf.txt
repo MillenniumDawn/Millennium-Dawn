@@ -273,3 +273,114 @@ country_event = {
 		}
 	}
 }
+
+#[@FROM_fossil_fuel_industry] IPO
+news_event = {
+	id = gulf.5
+	title = gulf.5.t
+	desc = gulf.5.d
+	
+	picture = GFX_market_crash
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = gulf.5.a #An exciting day for [FROM.GetNameDef]
+		log = "[GetDateText]: [This.GetName]: gulf.5.a executed"
+	}
+}
+
+#hidden event that determines the outcome of the IPO
+country_event = {
+	id = gulf.6
+	title = gulf.6.t
+	desc = gulf.6.d
+	
+	hidden = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = gulf.6.a
+		log = "[GetDateText]: [This.GetName]: gulf.6.a executed"
+		if = {
+			limit = { has_stability < 0.10 }
+			country_event = { id = gulf.8 }
+		}
+		if = {
+			limit = { has_stability > 0.09 has_stability < 0.25 }
+			random_list = {
+				25 = { country_event = { id = gulf.7 } }
+				75 = { country_event = { id = gulf.8 } }
+			}
+		}
+		else_if = {
+			limit = { has_stability > 0.24 has_stability < 0.4 }
+			random_list = {
+				34 = { country_event = { id = gulf.7 } }
+				66 = { country_event = { id = gulf.8 } }
+			}
+		}
+		else_if = {
+			limit = { has_stability > 0.39 has_stability < 0.6 }
+			random_list = {
+				50 = { country_event = { id = gulf.7 } }
+				50 = { country_event = { id = gulf.8 } }
+			}
+		}
+		else_if = {
+			limit = { has_stability > 0.59 has_stability < 0.7 }
+			random_list = {
+				66 = { country_event = { id = gulf.7 } }
+				34 = { country_event = { id = gulf.8 } }
+			}
+		}
+		else_if = {
+			limit = { has_stability > 0.69 has_stability < 0.9 }
+			random_list = {
+				75 = { country_event = { id = gulf.7 } }
+				25 = { country_event = { id = gulf.8 } }
+			}
+		}
+		else_if = {
+			limit = { has_stability > 0.89 }
+			country_event = { id = gulf.7 }
+		}
+	}
+}
+
+#The IPO has gone well
+news_event = {
+	id = gulf.7
+	title = gulf.7.t
+	desc = gulf.7.d
+	
+	picture = GFX_update_gdpc
+		
+	is_triggered_only = yes
+	
+	option = {
+		name = gulf.7.a #Perfect!
+		log = "[GetDateText]: [This.GetName]: gulf.7.a executed"
+		add_political_power = 100
+		set_country_flag = ipo_success
+	}
+}
+
+#The IPO has flopped
+news_event = {
+	id = gulf.8
+	title = gulf.8.t
+	desc = gulf.8.d
+	
+	picture = GFX_market_crash
+		
+	is_triggered_only = yes
+	
+	option = {
+		name = gulf.8.a #A sad day for our country...
+		log = "[GetDateText]: [This.GetName]: gulf.8.a executed"
+		add_political_power = -100
+		set_country_flag = ipo_failure
+	}
+}

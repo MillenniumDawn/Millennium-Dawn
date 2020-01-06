@@ -390,7 +390,8 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			every_country = { news_event = { days = 1 id = gulf.5 } }
+			hidden_effect = { country_event { days = 30 id = gulf.6 } }
 			log = "[GetDateText]: [This.GetName]: focus GCC_stock_market_listing executed"
 		}
 		
@@ -415,11 +416,49 @@ focus_tree = {
 		prerequisite = { focus = GCC_stock_market_listing }
 		
 		available = {
-
+			custom_trigger_tooltip = {
+				tooltip = ipo_tt
+				OR = {
+					has_country_flag = ipo_success
+					has_country_flag = ipo_failure
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			if = {
+				limit = {
+					original_tag = SAU
+					has_country_flag = ipo_success
+				}
+				custom_effect_tooltip = 25_billion_revenue_tt
+				add_to_variable = { treasury = 25 }
+			}
+			else_if = {
+				limit = {
+					original_tag = SAU
+					has_country_flag = ipo_failure
+				}
+				custom_effect_tooltip = 5_billion_revenue_tt
+				add_to_variable = { treasury = 5 }
+			}
+			else_if = {
+				limit = {
+					has_country_flag = ipo_success
+				}
+				custom_effect_tooltip = 10_billion_revenue_tt
+				add_to_variable = { treasury = 10 }
+			}
+			else_if = {
+				limit = {
+					has_country_flag = ipo_failure
+				}
+				custom_effect_tooltip = 2_billion_revenue_tt
+				add_to_variable = { treasury = 2 }
+			}
+			else_if = {
+				custom_effect_tooltip = ipo_revenue_tt
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_sovereign_wealth_fund executed"
 		}
 		
@@ -449,6 +488,36 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			if = {
+				limit = { original_tag = SAU }
+				subtract_from_variable = { treasury = 10 }
+				custom_effect_tooltip = 10_billion_expense_tt
+			}
+			else_if = {
+				subtract_from_variable = { treasury = 5 }
+				custom_effect_tooltip = 5_billion_expense_tt
+			}
+			if = {	
+				limit = { original_tag = SAU }
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 4
+					add_building_construction = {
+						type = fuel_silo
+						level = 4
+						instant_build = yes
+					}
+				}
+			}
+			else_if = {
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = fuel_silo
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
 			if = {
 				limit = { has_idea = saudi_royal_family }
 				visually_display_opinion_rise_saudi_royal_family = yes
@@ -487,6 +556,33 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			if = {
+				limit = { original_tag = SAU }
+				subtract_from_variable = { treasury = 10 }
+				custom_effect_tooltip = 10_billion_expense_tt
+			}
+			else_if = {
+				subtract_from_variable = { treasury = 5 }
+				custom_effect_tooltip = 5_billion_expense_tt
+			}
+			if = {	
+				limit = { NOT = { tag = SAU } }
+				random_owned_state = {
+					add_resource = {
+						type = oil
+						amount = 5
+					}
+				}
+			}
+			else_if = {
+				random_owned_state = {
+					add_resource = {	
+						type = oil
+						amount = 10
+						state = 174
+					}
+				}
+			}
 			if = {
 				limit = { has_idea = saudi_royal_family }
 				visually_display_opinion_fall_saudi_royal_family = yes
@@ -566,6 +662,7 @@ focus_tree = {
 		
 		completion_reward = {
 			increase_social_spending = yes
+			add_5_popularity = yes
 			log = "[GetDateText]: [This.GetName]: focus GCC_deepen_the_safety_net executed"
 		}
 		
@@ -665,6 +762,12 @@ focus_tree = {
 				set_country_flag = current_The_Ulema
 				increase_internal_faction_opinion = yes
 			}
+			if = {
+				limit = { has_idea = landowners }
+				visually_display_opinion_rise_landowners = yes
+				set_country_flag = current_landowners
+				increase_internal_faction_opinion = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_reinforce_patronage_networks executed"
 		}
 		
@@ -742,7 +845,13 @@ focus_tree = {
 		prerequisite = { focus = GCC_the_rentier_state }
 		
 		available = {
-
+			custom_trigger_tooltip = {
+				tooltip = minimum_opinion_positive_royal_family_tt
+				OR = {
+					has_country_flag = positive_saudi_royal_family
+					has_country_flag = enthusiastic_saudi_royal_family
+				}
+			}
 		}
 		
 		completion_reward = {
@@ -800,6 +909,12 @@ focus_tree = {
 		
 		completion_reward = {
 			decrease_social_spending = yes
+			if = {
+				limit = { has_idea = small_medium_business_owners }
+				visually_display_opinion_fall_small_medium_business_owners = yes
+				set_country_flag = small_medium_business_owners
+				decrease_internal_faction_opinion = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_shrink_the_safety_net executed"
 		}
 		
@@ -825,6 +940,7 @@ focus_tree = {
 		
 		available = {
 			NOT = { 
+				has_idea = bureau_03
 				has_idea = bureau_04
 				has_idea = bureau_05
 			}
@@ -832,11 +948,36 @@ focus_tree = {
 		
 		completion_reward = {
 			if = {
-				limit = { has_idea = small_medium_business_owners }
-				visually_display_opinion_rise_small_medium_business_owners = yes
-				set_country_flag = small_medium_business_owners
-				increase_internal_faction_opinion = yes
+				limit = { original_tag = SAU }
+				subtract_from_variable = { treasury = 5 }
+				custom_effect_tooltip = 5_billion_expense_tt
 			}
+			else_if = {
+				subtract_from_variable = { treasury = 2.5 }
+				custom_effect_tooltip = 2.5_billion_expense_tt
+			}
+			if = {	
+				limit = { original_tag = SAU }
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = industrial_complex
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			else_if = {
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			decrease_popularity_10 = yes
 			log = "[GetDateText]: [This.GetName]: focus GCC_private_sector_job_creation executed"
 		}
 		
@@ -874,7 +1015,10 @@ focus_tree = {
 				subtract_from_variable = { treasury = 7.5 }
 				custom_effect_tooltip = 7.5_billion_expense_tt
 			}
-			add_ideas = construction_boom
+			add_timed_idea = {
+				idea = construction_boom
+				days = 365
+			}
 			increase_economic_growth = yes
 			log = "[GetDateText]: [This.GetName]: focus GCC_construction_boom executed"
 		}
@@ -1010,6 +1154,7 @@ focus_tree = {
 			if = {	
 				limit = { original_tag = SAU }
 				random_owned_state = {
+					add_extra_state_shared_building_slots = 4
 					add_building_construction = {
 						type = industrial_complex
 						level = 4
@@ -1019,6 +1164,7 @@ focus_tree = {
 			}
 			else_if = {
 				random_owned_state = {
+					add_extra_state_shared_building_slots = 2
 					add_building_construction = {
 						type = industrial_complex
 						level = 2
@@ -1051,11 +1197,37 @@ focus_tree = {
 		prerequisite = { focus = GCC_inclusive_policies }
 		
 		available = {
-
+			OR = {
+				has_repressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = conservatism_society_less_60_tt
+					check_variable = { social_conservatism_society < 60 }
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			subtract_from_variable = { treasury = 5 }
+			custom_effect_tooltip = 5_billion_expense_tt
+			if = {	
+				limit = { original_tag = SAU }
+				176 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			else_if = {
+				random_owned_state = {
+					add_building_construction = {
+						type = infrastructure
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_the_dubai_model executed"
 		}
 		
@@ -1084,7 +1256,19 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			custom_effect_tooltip = GCC_reduce_vice_prevention_tt
+			if = {
+				limit = { has_idea = wahabi_ulema }
+				visually_display_opinion_fall_wahabi_ulema = yes
+				set_country_flag = current_wahabi_ulema
+				decrease_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = The_Ulema }
+				visually_display_opinion_fall_The_Ulema = yes
+				set_country_flag = current_The_Ulema
+				decrease_internal_faction_opinion = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_reduce_vice_prevention executed"
 		}
 		
@@ -1109,11 +1293,55 @@ focus_tree = {
 		prerequisite = { focus = GCC_reduce_vice_prevention }
 		
 		available = {
-
+			custom_trigger_tooltip = {
+				tooltip = conservatism_government_less_60_tt
+				check_variable = { social_conservatism_government < 60 }
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.05
+			}
+			recalculate_party = yes
+			if = {	
+				limit = { original_tag = SAU }
+				177 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			else_if = {
+				random_owned_state = {
+					add_building_construction = {
+						type = infrastructure
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			if = {
+				limit = { has_idea = small_medium_business_owners }
+				visually_display_opinion_fall_small_medium_business_owners = yes
+				set_country_flag = small_medium_business_owners
+				decrease_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = wahabi_ulema }
+				visually_display_opinion_fall_wahabi_ulema = yes
+				set_country_flag = current_wahabi_ulema
+				decrease_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = The_Ulema }
+				visually_display_opinion_fall_The_Ulema = yes
+				set_country_flag = current_The_Ulema
+				decrease_internal_faction_opinion = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_court_tourism_and_foreign_businesses executed"
 		}
 		
@@ -1124,9 +1352,9 @@ focus_tree = {
 	
 	focus = {
 		id = GCC_end_the_rentier_state
-		icon = sustainable_development
+		icon = anti_establishment
 		
-		x = -2
+		x = -3
 		y = 6
 		relative_position_id = GCC_socio_economic_affairs
 		
@@ -1153,6 +1381,35 @@ focus_tree = {
 	}
 	
 	focus = {
+		id = GCC_end_oil_dependency
+		icon = sustainable_development
+		
+		x = -1
+		y = 6
+		relative_position_id = GCC_socio_economic_affairs
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = GCC_construction_boom focus = GCC_court_tourism_and_foreign_businesses }
+		prerequisite = { focus = GCC_support_manufacturing }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			remove_ideas = oil_dependency
+			log = "[GetDateText]: [This.GetName]: focus GCC_end_oil_dependency executed"
+		}
+		
+		ai_will_do = {
+			base = 1
+		}
+	}
+	
+	focus = {
 		id = GCC_empower_industrial_conglomerates
 		icon = production
 		
@@ -1166,6 +1423,7 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_end_the_rentier_state }
+		prerequisite = { focus = GCC_end_oil_dependency }
 		prerequisite = { focus = GCC_construction_boom }
 		mutually_exclusive = { focus = GCC_secure_the_fossil_fuel_industry }
 		mutually_exclusive = { focus = GCC_untether_the_fossil_fuel_industry }
@@ -1177,6 +1435,36 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			if = {
+				limit = { original_tag = SAU }
+				subtract_from_variable = { treasury = 15 }
+				custom_effect_tooltip = 15_billion_expense_tt
+			}
+			else_if = {
+				subtract_from_variable = { treasury = 7.5 }
+				custom_effect_tooltip = 7.5_billion_expense_tt
+			}
+			if = {	
+				limit = { original_tag = SAU }
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 4
+					add_building_construction = {
+						type = industrial_complex
+						level = 4
+						instant_build = yes
+					}
+				}
+			}
+			else_if = {
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = industrial_complex
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
 			swap_ideas = {
 				remove_idea = small_medium_business_owners
 				add_idea = industrial_conglomerates
@@ -1204,6 +1492,7 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_end_the_rentier_state }
+		prerequisite = { focus = GCC_end_oil_dependency }
 		mutually_exclusive = { focus = GCC_secure_the_fossil_fuel_industry }
 		mutually_exclusive = { focus = GCC_untether_the_fossil_fuel_industry }
 		mutually_exclusive = { focus = GCC_empower_industrial_conglomerates }
@@ -1214,6 +1503,41 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			if = {
+				limit = { original_tag = SAU }
+				subtract_from_variable = { treasury = 7.5 }
+				custom_effect_tooltip = 7.5_billion_expense_tt
+			}
+			else_if = {
+				subtract_from_variable = { treasury = 3 }
+				custom_effect_tooltip = 3_billion_expense_tt
+			}
+			if = {	
+				limit = { original_tag = SAU }
+				176 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 2
+						instant_build = yes
+					}
+				}
+				177 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			else_if = {
+				random_owned_state = {
+					add_building_construction = {
+						type = infrastructure
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
 			if = {
 				limit = { has_idea = small_medium_business_owners }
 				visually_display_opinion_rise_small_medium_business_owners = yes
@@ -1242,6 +1566,7 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_end_the_rentier_state }
+		prerequisite = { focus = GCC_end_oil_dependency }
 		prerequisite = { focus = GCC_court_tourism_and_foreign_businesses }
 		mutually_exclusive = { focus = GCC_secure_the_fossil_fuel_industry }
 		mutually_exclusive = { focus = GCC_untether_the_fossil_fuel_industry }
@@ -1253,6 +1578,16 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			if = {
+				limit = { original_tag = SAU }
+				subtract_from_variable = { treasury = 10 }
+				custom_effect_tooltip = 10_billion_expense_tt
+			}
+			else_if = {
+				subtract_from_variable = { treasury = 5 }
+				custom_effect_tooltip = 5_billion_expense_tt
+			}
+			increase_economic_growth = yes
 			swap_ideas = {
 				remove_idea = small_medium_business_owners
 				add_idea = international_bankers
