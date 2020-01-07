@@ -1918,9 +1918,11 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: event usa.90.a"
 		
 		add_ideas = USA_pro_american_deal_idea
-		MEX = { add_ideas = USA_pro_american_deal_mex_can_idea }
-		CAN = { add_ideas = USA_pro_american_deal_mex_can_idea }
 		
+		effect_tooltip = {
+			MEX = { add_ideas = USA_pro_american_deal_mex_can_idea }
+			CAN = { add_ideas = USA_pro_american_deal_mex_can_idea }
+		}
 		clr_country_flag = USA_renogitate_nafta_flag
 		set_country_flag = USA_pro_american_deal
 		ai_chance = {
@@ -1941,8 +1943,12 @@ country_event = {
 		name = usa.90.b
 		log = "[GetDateText]: [Root.GetName]: event usa.90.b"
 		
+		add_ideas = USA_mutually_benefical_idea
 		
-		
+		effect_tooltip = {
+			MEX = { add_ideas = USA_mutually_benefical_idea }
+			CAN = { add_ideas = USA_mutually_benefical_idea } 
+		}
 		clr_country_flag = USA_renogitate_nafta_flag
 		set_country_flag = USA_mutually_benefical_deal
 		ai_chance = {
@@ -1964,10 +1970,15 @@ country_event = {
 				has_government = nationalist
 			}
 		}
+		
+		add_ideas = USA_pro_american_deal_idea
+		
+		effect_tooltip = {
+			MEX = { add_ideas = USA_america_fist_deal_mex_can_idea } 
+			CAN = { add_ideas = USA_america_fist_deal_mex_can_idea } 
+		}
 		clr_country_flag = USA_renogitate_nafta_flag
 		set_country_flag = USA_american_first_deal
-		
-		
 		ai_chance = {
 			factor = 1 
 			modifier = {
@@ -1976,6 +1987,146 @@ country_event = {
 					has_country_leader = { name = "Donald Trump" ruling_only = yes }
 					has_government = nationalist
 				}
+			}
+		}
+	}
+}
+
+#Accept the Negotiated Deal 
+country_event = {
+	id = usa.91 
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.92" }
+	title = { 
+		text = usa.91.t1
+		trigger = {
+			USA = { has_country_flag = USA_pro_american_deal }
+		}
+	}
+	title = { 
+		text = usa.91.t2
+		trigger = {
+			USA = { has_country_flag = USA_mutually_benefical_deal }
+		}
+	}
+	title = { 
+		text = usa.91.t3
+		trigger = {
+			USA = { has_country_flag = USA_american_first_deal }
+		}
+	}
+	desc = {
+		text = usa.91.d
+		trigger = {
+			USA = { has_country_flag = USA_pro_american_deal }
+		}
+	}
+	desc = {
+		text = usa.91.d
+		trigger = {
+			USA = { has_country_flag = USA_mutually_benefical_deal }
+		}
+	}
+	desc = {
+		text = usa.91.d
+		trigger = {
+			USA = { has_country_flag = USA_american_first_deal }
+		}
+	}
+	picture = GFX_politics_speak
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			tag = MEX 
+			tag = CAN 
+		}
+	}
+	
+	#Accept [USA.GetLeader] Terms
+	option = {
+		name = usa.91.a 
+		log = "[GetDateText]: [Root.GetName]: event usa.91.a"
+		if = { 
+			limit = { 
+				USA = { has_country_flag = USA_pro_american_deal }
+			}
+			add_ideas = USA_pro_american_deal_mex_can_idea
+		}
+		if = {
+			limit = { 
+				USA = { has_country_flag = USA_mutually_benefical_deal }
+			}
+			add_ideas = USA_mutually_benefical_idea
+		}
+		if = {
+			limit = { 
+				USA = { has_country_flag = USA_american_first_deal }
+			}
+			add_ideas = USA_america_fist_deal_mex_can_idea
+		}
+		USA = { country_event = { id = diplomatic_response.1 days = 1 } } 
+		
+		ai_chance = {
+			factor = 1
+			modifier = {
+				OR  = {
+					USA = { has_country_flag = USA_pro_american_deal }
+					USA = { has_country_flag = USA_american_first_deal }
+				}
+				factor = 0.50 
+			}
+			modifier = {
+				USA = { has_country_flag = USA_mutually_benefical_deal }
+				add = 0.50 
+			}
+		}
+	}
+	
+	#Pull out of Nafta
+	option = {
+		name = usa.91.b 
+		log = "[GetDateText]: [Root.GetName]: event usa.91.b"
+		if = { 
+			limit = { 
+				OR = { 
+					USA = { has_country_flag = USA_pro_american_deal }
+					has_idea = USA_pro_american_deal_mex_can_idea
+				}
+			}
+			remove_ideas = USA_pro_american_deal_mex_can_idea
+		}
+		if = {
+			limit = { 
+				OR = {
+					USA = { has_country_flag = USA_mutually_benefical_deal }
+					has_idea = USA_mutually_benefical_idea
+				}
+			}
+			remove_ideas = USA_mutually_benefical_idea
+		}
+		if = {
+			limit = { 
+				OR = {
+					USA = { has_country_flag = USA_american_first_deal }
+					has_idea = USA_america_fist_deal_mex_can_idea
+				}
+			}
+			remove_ideas = USA_america_fist_deal_mex_can_idea
+		}
+		remove_opinion_modifier = { target = USA modifier = large_commercial_relations }
+		USA = { country_event = { id = diplomatic_response.2 days = 1 } } 
+		
+		ai_chance = {
+			factor = 0
+			modifier = {
+				USA = { has_country_flag = USA_mutually_benefical_deal }
+				factor = 0 
+			}
+			modifier = {
+				OR  = {
+					USA = { has_country_flag = USA_pro_american_deal }
+					USA = { has_country_flag = USA_american_first_deal }
+				}
+				factor = 1.75
 			}
 		}
 	}
@@ -2420,7 +2571,7 @@ country_event = {
 	id = usa_vanilla.61
 	title = usa_vanilla.61.t
 	desc = usa_vanilla.61.desc
-	picture = GFX_kiev_construction
+	picture = GFX_generic_factory
 	
 	is_triggered_only = yes
 	trigger = { tag = USA }
@@ -2565,8 +2716,9 @@ news_event = {
 	picture = GFX_report_event_al_gore
 	fire_only_once = yes
 	major = yes
-	
 	trigger = {
+		date > 2000.10.01
+		date < 2000.12.01 
 		has_country_leader = { name = "Al Gore" ruling_only = yes }
 	}
 	mean_time_to_happen = {
@@ -2599,6 +2751,8 @@ news_event = {
 	major = yes
 	fire_only_once = yes
 	trigger = {
+		date > 2000.10.01
+		date < 2000.12.01 
 		has_country_leader = { name = "George W. Bush" ruling_only = yes }
 	}
 	mean_time_to_happen = {
@@ -2632,6 +2786,16 @@ news_event = {
 	major = yes
 	fire_only_once = yes
 	trigger = {
+		OR = {
+			AND = {	
+				date > 2008.10.01
+				date < 2008.12.01
+			}
+			AND = {	
+				date > 2012.10.01
+				date < 2012.12.01
+			}
+		}
 		has_country_leader = { name = "Barack Obama" ruling_only = yes }
 	}
 	mean_time_to_happen = {
@@ -2665,6 +2829,16 @@ news_event = {
 	major = yes
 	fire_only_once = yes
 	trigger = {
+		OR = {
+			AND = {	
+				date > 2016.10.01
+				date < 2016.12.01
+			}
+			AND = {	
+				date > 2020.10.01
+				date < 2020.12.01
+			}
+		}
 		has_country_leader = { name = "Donald Trump" ruling_only = yes }
 	}
 	mean_time_to_happen = {
@@ -2828,17 +3002,44 @@ news_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event USA_FOCUS.1" }
 	title = USA_FOCUS.1.t
 	desc = USA_FOCUS.1.d
-	
-	#hidden = yes
-	#fire_only_once = yes
 	major = yes
 	is_triggered_only = yes
+	picture = GFX_report_event_united_states_army
 
 	option = {
 		name = USA_FOCUS.1.a
 		log = "[GetDateText]: [This.GetName]: USA_FOCUS.1.a executed"
-
-	}	
+		trigger = {
+			tag = USA
+		}
+	}
+	option = {
+		name = USA_FOCUS.1.b
+		log = "[GetDateText]: [This.GetName]: USA_FOCUS.1.b executed"
+		trigger = {
+			OR = {
+				is_in_faction_with = SOV 
+				tag = SOV
+			}
+		}
+	}
+	option = {
+		name = USA_FOCUS.1.c
+		log = "[GetDateText]: [This.GetName]: USA_FOCUS.1.c executed"
+		trigger = {
+			has_idea = NATO_member 
+			NOT = { tag = USA } 
+		}
+	}
+	option = {
+		name = USA_FOCUS.1.d
+		log = "[GetDateText]: [This.GetName]: USA_FOCUS.1.d executed"
+		trigger = {
+			NOT = { tag = SOV }
+			NOT = { tag = USA }
+			NOT = { has_idea = NATO_member } 
+		}
+	}
 }
 
 #US Armoured Brigade in E-Europe Activated - Spawns in Warsaw
@@ -2847,17 +3048,17 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event USA_FOCUS.2" }
 	title = USA_FOCUS.2.t
 	desc = USA_FOCUS.2.d
-	
-	#hidden = yes
-	#fire_only_once = yes
 	major = yes
 	is_triggered_only = yes
+	picture = GFX_american_troops
+	trigger = {
+		tag = USA 
+	}
 
 	option = {
 		name = USA_FOCUS.2.a
 		log = "[GetDateText]: [This.GetName]: USA_FOCUS.2.a executed"
 		USA = {
-			clr_country_flag = Reinforce_NATO_EAST
 			load_oob = USA_NATO_E_BRIGADE
 		}
 	}
@@ -2869,16 +3070,43 @@ news_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event USA_FOCUS.3" }
 	title = USA_FOCUS.3.t
 	desc = USA_FOCUS.3.d
-	
-	#hidden = yes
-	#fire_only_once = yes
+	picture = GFX_report_event_united_states_army
 	major = yes
 	is_triggered_only = yes
 
 	option = {
 		name = USA_FOCUS.3.a
-		log = "[GetDateText]: [This.GetName]: USA_FOCUS.3.a executed"
-
+		log = "[GetDateText]: [This.GetName]: USA_FOCUS.1.a executed"
+		trigger = {
+			tag = USA
+		}
+	}
+	option = {
+		name = USA_FOCUS.3.b
+		log = "[GetDateText]: [This.GetName]: USA_FOCUS.3.b executed"
+		trigger = {
+			OR = {
+				is_in_faction_with = SOV 
+				tag = SOV
+			}
+		}
+	}
+	option = {
+		name = USA_FOCUS.3.c
+		log = "[GetDateText]: [This.GetName]: USA_FOCUS.3.c executed"
+		trigger = {
+			has_idea = NATO_member 
+			NOT = { tag = USA } 
+		}
+	}
+	option = {
+		name = USA_FOCUS.3.d
+		log = "[GetDateText]: [This.GetName]: USA_FOCUS.3.d executed"
+		trigger = {
+			NOT = { tag = SOV }
+			NOT = { tag = USA }
+			NOT = { has_idea = NATO_member } 
+		}
 	}
 }
 
@@ -2888,7 +3116,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event USA_FOCUS.4" }
 	title = USA_FOCUS.4.t
 	desc = USA_FOCUS.4.d
-	
+	picture = GFX_american_troops
 	#hidden = yes
 	fire_only_once = yes
 	major = yes
@@ -2919,7 +3147,6 @@ country_event = {
 	option = {
 		name = USA_FOCUS.5.a
 		log = "[GetDateText]: [This.GetName]: USA_FOCUS.5.a executed"
-
 		RAJ = {
 			add_ideas = { usa_ind_investment }
 		}
