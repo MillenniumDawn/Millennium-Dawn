@@ -3001,7 +3001,43 @@ news_event = {
 	id = USA_FOCUS.1
 	immediate = { log = "[GetDateText]: [Root.GetName]: event USA_FOCUS.1" }
 	title = USA_FOCUS.1.t
-	desc = USA_FOCUS.1.d
+	desc = {
+		text = USA_FOCUS.1.d1
+		trigger = {
+			OR = { 
+				tag = USA 
+				has_idea = NATO_member
+			}
+			NOT = {
+				tag = SOV 
+				is_in_faction_with = SOV 
+			}
+		}
+	}
+	desc = {
+		text = USA_FOCUS.1.d2
+		trigger = {
+			OR = { 
+				tag = SOV 
+				is_in_faction_with = SOV 
+			}
+			NOT = {
+				tag = USA 
+				has_idea = NATO_member
+			}
+		}
+	}
+	desc = {
+		text = USA_FOCUS.1.d3
+		trigger = {
+			NOT = { 
+				tag = USA 
+				has_idea = NATO_member
+				tag = SOV 
+				is_in_faction_with = SOV 
+			}
+		}
+	}
 	major = yes
 	is_triggered_only = yes
 	picture = GFX_report_event_united_states_army
@@ -3013,6 +3049,7 @@ news_event = {
 			tag = USA
 		}
 	}
+	
 	option = {
 		name = USA_FOCUS.1.b
 		log = "[GetDateText]: [This.GetName]: USA_FOCUS.1.b executed"
@@ -3038,6 +3075,15 @@ news_event = {
 			NOT = { tag = SOV }
 			NOT = { tag = USA }
 			NOT = { has_idea = NATO_member } 
+			NOT = { is_in_faction_with = SOV }
+			NOT = { is_in_faction_with = USA }	
+		}
+	}
+	option = {
+		name = USA_FOCUS.1.e
+		log = "[GetDateText]: [This.GetName]: USA_FOCUS.1.e executed"
+		trigger = {
+			tag = POL
 		}
 	}
 }
@@ -3054,13 +3100,18 @@ country_event = {
 	trigger = {
 		tag = USA 
 	}
-
+	
+	#Deploy - the E-Brigade
 	option = {
 		name = USA_FOCUS.2.a
 		log = "[GetDateText]: [This.GetName]: USA_FOCUS.2.a executed"
-		USA = {
-			load_oob = USA_NATO_E_BRIGADE
+		hidden_effect = {
+			USA = {
+				load_oob = USA_NATO_E_BRIGADE
+			}
 		}
+		custom_effect_tooltip = USA_deploy_e_brigade_tt
+		news_event = { id = USA_FOCUS.1 days = 1 }
 	}
 }
 
@@ -3069,14 +3120,50 @@ news_event = {
 	id = USA_FOCUS.3
 	immediate = { log = "[GetDateText]: [Root.GetName]: event USA_FOCUS.3" }
 	title = USA_FOCUS.3.t
-	desc = USA_FOCUS.3.d
+	desc = {
+		text = USA_FOCUS.3.d1
+		trigger = {
+			OR = { 
+				tag = USA 
+				has_idea = NATO_member
+			}
+			NOT = {
+				tag = SOV 
+				is_in_faction_with = SOV 
+			}
+		}
+	}
+	desc = {
+		text = USA_FOCUS.3.d2
+		trigger = {
+			OR = { 
+				tag = SOV 
+				is_in_faction_with = SOV 
+			}
+			NOT = {
+				tag = USA 
+				has_idea = NATO_member
+			}
+		}
+	}
+	desc = {
+		text = USA_FOCUS.3.d3
+		trigger = {
+			NOT = { 
+				tag = USA 
+				has_idea = NATO_member
+				tag = SOV 
+				is_in_faction_with = SOV 
+			}
+		}
+	}
 	picture = GFX_report_event_united_states_army
 	major = yes
 	is_triggered_only = yes
 
 	option = {
 		name = USA_FOCUS.3.a
-		log = "[GetDateText]: [This.GetName]: USA_FOCUS.1.a executed"
+		log = "[GetDateText]: [This.GetName]: USA_FOCUS.3.a executed"
 		trigger = {
 			tag = USA
 		}
@@ -3106,6 +3193,8 @@ news_event = {
 			NOT = { tag = SOV }
 			NOT = { tag = USA }
 			NOT = { has_idea = NATO_member } 
+			NOT = { is_in_faction_with = SOV }
+			NOT = { is_in_faction_with = USA }	
 		}
 	}
 }
@@ -3959,6 +4048,9 @@ country_event = {
 	fire_only_once = yes
 	#major = yes
 	is_triggered_only = yes
+	trigger = {
+		country_exists = ROJ 
+	}
 
 	option = { #Yes
 		name = USA_FOCUS.11.a
@@ -3973,12 +4065,18 @@ country_event = {
 			add_opinion_modifier = { target = USA modifier = USA_TUR_ARM_KURDS }
 		}
 		set_country_flag = USA_Armed_ROJ
-		ai_chance = { factor = 50 }
+		ai_chance = { 
+			factor = 3
+		}
 	}
 	
 	option = { #No
 		name = USA_FOCUS.11.b
 		log = "[GetDateText]: [This.GetName]: USA_FOCUS.11.b executed"
+		
+		ai_chance = {
+			factor = 0.5 
+		}
 	}
 	
 }
@@ -4000,7 +4098,7 @@ country_event = {
 		every_country = {
 			limit = {
 				fascism > 0.20
-				not = {
+				NOT = {
 					has_idea = Enduring_Freedom
 					has_idea = Inherent_Resolve
 					has_idea = Resolute_Support_Mission
@@ -4660,14 +4758,6 @@ country_event = {
 	option = {
 		name = usa_economic_events.1.a
 		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.1.a"
-		trigger = { 
-			OR = {
-				has_government = communism 
-				has_government = nationalist
-				communism > 0.10
-				nationalist > 0.10
-			}	
-		}
 		subtract_from_variable = { treasury = 90 }
 		custom_effect_tooltip = 90_billion_expense_tt
 		recession = yes
