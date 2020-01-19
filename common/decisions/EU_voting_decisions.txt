@@ -18496,7 +18496,283 @@ EU_defense_category = {
 			}					
 		}				
 	}
+	
+	EU_military_exercise = {
+		
+		icon = GFX_decision_infiltrate_state
+		
+		days_remove = 30
+		
+		target_trigger = {
+			FROM = {
+				NOT = {
+					has_idea = EU_member
+				}
+				any_neighbor_country = {
+					has_EU_external_border = yes
+				}
+				OR = {
+					is_major = yes
+					is_in_faction = yes
+				}
 
+			}
+		}
+		
+		available = {
+			NOT = {
+				has_global_flag = EU_military_exercise
+			}
+			#has_idea = European_Security_Council
+			has_idea = EU_foreign_minister
+			has_idea = EU_member			
+		}
+		
+		visible = { 
+			#has_idea = European_Security_Council
+			has_idea = EU_member
+		} 
+		
+		complete_effect = {
+			set_global_flag = EU_military_exercise
+			FROM = {
+				set_country_flag = EU_military_exercise_at_border
+			}
+			set_variable = {
+				var = global.var_EU_military_exercise_target
+				value = FROM
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	
+	EU_ask_to_host_military_exercise = {
+	
+		#days_remove = 365
+		
+		target_trigger = {
+			FROM = {				
+				has_EU_external_border = yes
+				THIS = {
+					any_neighbor_country = {
+						has_country_flag = EU_military_exercise_at_border
+					}
+				}
+			}			
+		}
+		
+		available = {
+			NOT = {
+				any_country = {
+					has_country_flag = EU_host_military_exercise
+				}
+			}
+			#has_idea = European_Security_Council
+			has_idea = EU_foreign_minister
+			has_idea = EU_member			
+		}
+		
+		visible = { 
+			#has_idea = European_Security_Council
+			has_idea = EU_member
+		} 
+		
+		complete_effect = {
+			###move to event
+			FROM = {
+				set_country_flag = EU_host_military_exercise
+				random_owned_state = {
+					limit = {
+						any_neighbor_state = {
+							is_owned_by = global.var_EU_military_exercise_target
+						}
+					}
+					set_variable = {
+						var = global.var_EU_military_exercise_host_state
+						value = THIS
+					}					
+				}
+			}
+			set_variable = {
+				var = global.var_EU_military_exercise_participants
+				value = 0
+			}			
+			
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				activate_mission = EU_military_exercise_deployment_mission
+				add_ai_strategy = {
+					type = garrison
+					id = global.var_EU_military_exercise_host_state
+					value = 200
+				}				
+			}
+			activate_mission = EU_military_exercise_execute_mission
+		}
+		
+		ai_will_do = {
+			factor = 1
+		}
+	}	
+	
+	EU_military_exercise_deployment_mission = {	
+		
+		allowed = { always = no }
+		
+		available = {
+			divisions_in_state = {				
+				size > 0
+				state = global.var_EU_military_exercise_host_state
+			}
+		}
+		
+		activation = {
+			always = no
+		}
+		
+		visible = { 
+			has_idea = EU_member
+		} 
+		
+		days_mission_timeout = 30
+		
+		selectable_mission = yes
+		
+		ai_will_do = {
+			factor = 1
+		}
+		
+		fire_only_once = yes
+		
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"
+			add_command_power = -100
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"
+			add_command_power = 100
+			
+			set_country_flag = EU_military_exercise_force_deployed
+			add_to_variable = {
+				var = global.var_EU_military_exercise_participants
+				value = 1
+			}			
+		}
+	}
+	
+	EU_military_exercise_execute_mission = {	
+		
+		allowed = { always = no }
+		
+		available = {
+			check_variable = { global.var_EU_military_exercise_participants > 0 }
+			divisions_in_state = {				
+				size > 0
+				state = global.var_EU_military_exercise_host_state
+			}
+		}
+		
+		activation = {
+			always = no
+		}
+		
+		visible = { 
+			has_idea = EU_member
+		} 
+		
+		days_mission_timeout = 30
+		
+		selectable_mission = yes
+		
+		ai_will_do = {
+			factor = 1
+		}
+		
+		fire_only_once = yes
+		
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"
+			###effect
+			add_command_power = -100
+			
+			###end of effect
+			
+			###clear all
+			clr_global_flag = EU_military_exercise
+			every_country = {
+				limit = {
+					has_country_flag = EU_military_exercise_at_border
+				}
+				clr_country_flag = EU_military_exercise_at_border
+			}
+			every_country = {
+				limit = {
+					has_country_flag = EU_host_military_exercise
+				}
+				clr_country_flag = EU_host_military_exercise
+			}
+			every_country = {
+				limit = {
+					has_country_flag = EU_military_exercise_force_deployed
+				}
+				clr_country_flag = EU_military_exercise_force_deployed
+			}			
+			clear_variable = global.var_EU_military_exercise_target
+			clear_variable = global.var_EU_military_exercise_host_state
+			clear_variable = global.var_EU_military_exercise_participants
+			### end of clear all
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"
+			###effect
+			set_temp_variable = { temp1 = global.var_EU_military_exercise_participants }
+			multiply_temp_variable = { temp1 = 10 }
+			every_country = {
+				limit = {
+					has_country_flag = EU_military_exercise_force_deployed
+				}
+				army_experience = temp1
+			}
+			set_temp_variable = { temp2 = global.var_EU_military_exercise_participants }
+			multiply_temp_variable = { temp2 = 0.1 }			
+			add_threat = temp2 
+
+			clear_variable = temp1
+			clear_variable = temp2
+			
+			###end of effect
+			
+			###clear all
+			clr_global_flag = EU_military_exercise
+			every_country = {
+				limit = {
+					has_country_flag = EU_military_exercise_at_border
+				}
+				clr_country_flag = EU_military_exercise_at_border
+			}
+			every_country = {
+				limit = {
+					has_country_flag = EU_host_military_exercise
+				}
+				clr_country_flag = EU_host_military_exercise
+			}
+			every_country = {
+				limit = {
+					has_country_flag = EU_military_exercise_force_deployed
+				}
+				clr_country_flag = EU_military_exercise_force_deployed
+			}			
+			clear_variable = global.var_EU_military_exercise_target
+			clear_variable = global.var_EU_military_exercise_host_state
+			clear_variable = global.var_EU_military_exercise_participants
+			### end of clear all		
+		}
+	}
+	
 } 
 
 ##################################
