@@ -78,7 +78,7 @@ Syria_decisions = {
 		}
 		
 		ai_will_do = {
-			factor = 10
+			factor = 1
 			modifier = {
 				factor = 0
 				num_divisions > 50
@@ -128,12 +128,12 @@ Syria_decisions = {
 		ai_will_do = {
 			factor = 0
 			modifier = {
-				add = 50
+				add = 1
 				original_tag = DRU
 				surrender_progress > 0.1
 			}
 			modifier = {
-				add = 50
+				add = 1
 				original_tag = FSA
 				any_other_country = {
 					original_tag = ISR
@@ -178,7 +178,7 @@ Syria_decisions = {
 		ai_will_do = {
 			factor = 0
 			modifier = {
-				add = 50
+				add = 1
 				tag = ALA
 				surrender_progress > 0.1
 			}
@@ -225,6 +225,7 @@ Syria_decisions = {
 			modifier = {
 				add = 50
 				surrender_progress > 0.8
+				is_historical_focus_on = no
 			}
 		}
 	}
@@ -256,7 +257,11 @@ Syria_hafez_succession = {
 		}
 		
 		ai_will_do = {
-			factor = 100
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 	
@@ -282,7 +287,7 @@ Syria_hafez_succession = {
 		}
 		
 		ai_will_do = {
-			factor = 100
+			factor = 1
 		}
 	}
 	
@@ -308,7 +313,11 @@ Syria_hafez_succession = {
 		}
 		
 		ai_will_do = {
-			factor = 100
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 	
@@ -335,7 +344,11 @@ Syria_hafez_succession = {
 		}
 		
 		ai_will_do = {
-			factor = 100
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 	
@@ -362,7 +375,7 @@ Syria_hafez_succession = {
 		}
 		
 		ai_will_do = {
-			factor = 100
+			factor = 1
 		}
 	}
 	
@@ -389,7 +402,11 @@ Syria_hafez_succession = {
 		}
 		
 		ai_will_do = {
-			factor = 100
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 	
@@ -416,7 +433,11 @@ Syria_hafez_succession = {
 		}
 		
 		ai_will_do = {
-			factor = 100
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 	
@@ -443,7 +464,7 @@ Syria_hafez_succession = {
 		}
 		
 		ai_will_do = {
-			factor = 100
+			factor = 1
 		}
 	}
 	
@@ -470,7 +491,11 @@ Syria_hafez_succession = {
 		}
 		
 		ai_will_do = {
-			factor = 100
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 }
@@ -642,6 +667,10 @@ Syria_greater_syria_decisions = {
 	
 	new_jewish_diaspora = {
 	
+		available = {
+			always = no
+		}
+	
 		activation = {
 			owns_state = 205
 			owns_state = 208
@@ -653,6 +682,8 @@ Syria_greater_syria_decisions = {
 		}
 	
 		days_mission_timeout = 180
+		
+		fire_only_once = yes
 		
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision new_jewish_diaspora"
@@ -748,6 +779,8 @@ Syria_greater_syria_decisions = {
 		}
 		
 		cost = 150
+		
+		fire_only_once = yes
 	
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision syria_ally_with_houthis"
@@ -773,11 +806,13 @@ Syria_greater_syria_decisions = {
 		}
 		
 		cost = 150
+		
+		fire_only_once = yes
 	
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision syria_shia_uprising_in_qatif"
 			SAU = { release = QTF }
-			QTF = { declare_war_on = { target = SAU type = annex_everything} }
+			QTF = { declare_war_on = { target = SAU type = annex_everything } }
 			hidden_effect = {
 				QTF = { load_oob = QTF_uprising }
 				SAU = {
@@ -798,7 +833,291 @@ Syria_greater_syria_decisions = {
 			factor = 10
 		}
 	}
+	
+	syria_operation_eastern_whirlwind = {
+	
+		visible = {
+			has_completed_focus = SYR_weaken_iran
+			PER = { NOT = { is_subject_of = ROOT } }
+		}
 		
+		available = {
+			NOT = { is_in_faction_with = PER }
+			NOT = { has_war_with = PER }
+		}
+		
+		days_remove = 30
+		
+		war_with_on_remove = PER
+		
+		fire_only_once = yes
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision syria_operation_eastern_whirlwind"
+			set_country_flag = SYR_attacked_iran
+			declare_war_on = {
+				target = PER
+				type = annex_everything
+			}
+			if = {
+				limit = { has_country_flag = SYR_arabistan_armed }
+				add_state_core = 399
+				hidden_effect = { load_oob = SYR_arab_units }
+			}
+			if = {
+				limit = { has_country_flag = SYR_luristan_armed }
+				PER = { release = LOR }
+				LOR = {	declare_war_on = { target = PER type = annex_everything } }
+				hidden_effect = {
+					LOR = { load_oob = SYR_LOR_units }
+					PER = {
+						set_province_controller = 5050
+						set_province_controller = 9074
+						set_province_controller = 1922
+						set_province_controller = 5005
+						set_province_controller = 3908
+					}
+					if = {
+						limit = { ROOT = { is_in_faction = yes } }
+						ROOT = { add_to_faction = LOR }
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_country_flag = SYR_azerbaijan_armed
+					is_in_faction_with = AZE
+				}
+				AZE = { 
+					add_to_war = {
+						targeted_alliance = ROOT
+						enemy = PER
+					}
+					hidden_effect = { load_oob = SYR_AZE_units }
+				}
+			}
+			if = {
+				limit = { has_country_flag = SYR_turkmens_armed }
+				TRK = { 
+					add_to_war = {
+						targeted_alliance = ROOT
+						enemy = PER
+					}
+					hidden_effect = { load_oob = SYR_TRK_units }
+				}
+			}
+			if = {
+				limit = { has_country_flag = SYR_tabaristan_armed }
+				PER = { release = TAB }
+				TAB = {	declare_war_on = { target = PER type = annex_everything } }
+				hidden_effect = {
+					TAB = { load_oob = SYR_TAB_units }
+					PER = {
+						set_province_controller = 4637
+						set_province_controller = 4580
+						set_province_controller = 10385
+						set_province_controller = 4499
+					}
+					if = {
+						limit = { ROOT = { is_in_faction = yes } }
+						ROOT = { add_to_faction = TAB }
+					}
+				}
+			}
+			if = {
+				limit = { has_country_flag = SYR_balochistan_armed }
+				PER = { release = BLC }
+				BLC = {	declare_war_on = { target = PER type = annex_everything } }
+				hidden_effect = {
+					BLC = { load_oob = SYR_BLC_units }
+					PER = {
+						set_province_controller = 4891
+						set_province_controller = 13082
+						set_province_controller = 1889
+						set_province_controller = 3744
+						set_province_controller = 2039
+						set_province_controller = 3777
+						set_province_controller = 2070
+						set_province_controller = 1986
+						set_province_controller = 12895
+					}
+					if = {
+						limit = { ROOT = { is_in_faction = yes } }
+						ROOT = { add_to_faction = BLC }
+					}
+				}
+			}
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	
+	}
+	
+	syria_iran_recruit_arab_militias = {
+			
+		visible = {
+			PER = { owns_state = 399 }
+			has_completed_focus = SYR_weaken_iran
+			NOT = { has_country_flag = SYR_attacked_iran }
+		}
+		
+		available = {
+		}
+		
+		cost = 20
+		
+		fire_only_once = yes
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision syria_iran_recruit_arab_militias"
+			custom_effect_tooltip = TT_SYR_ARABISTAN_ARMED
+			add_to_variable = { treasury = -1.5 }
+			set_country_flag = SYR_arabistan_armed
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}	
+	
+	syria_iran_recruit_lur_militias = {
+			
+		visible = {
+			PER = { owns_state = 406 }
+			has_completed_focus = SYR_weaken_iran
+			NOT = { has_country_flag = SYR_attacked_iran }
+		}
+		
+		available = {
+		}
+		
+		cost = 100
+		
+		fire_only_once = yes
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision syria_iran_recruit_lur_militias"
+			custom_effect_tooltip = TT_SYR_LURISTAN_ARMED
+			add_to_variable = { treasury = -7.5 }
+			set_country_flag = SYR_luristan_armed
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	
+	syria_iran_recruit_azeri_militias = {
+			
+		visible = {
+			PER = { owns_state = 407 }
+			has_completed_focus = SYR_weaken_iran
+			NOT = { has_country_flag = SYR_attacked_iran }
+		}
+		
+		available = {
+			is_in_faction_with = AZE
+		}
+		
+		cost = 200
+		
+		fire_only_once = yes
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision syria_iran_recruit_azeri_militias"
+			custom_effect_tooltip = TT_SYR_AZERBAIJAN_ARMED
+			add_to_variable = { treasury = -22.5 }
+			set_country_flag = SYR_azerbaijan_armed
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}	
+	
+	syria_iran_recruit_turkmen_militias = {
+			
+		visible = {
+			PER = { owns_state = 404 }
+			has_completed_focus = SYR_weaken_iran
+			NOT = { has_country_flag = SYR_attacked_iran }
+		}
+		
+		available = {
+			is_in_faction_with = TRK
+		}
+		
+		cost = 20
+		
+		fire_only_once = yes
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision syria_iran_recruit_turkmen_militias"
+			custom_effect_tooltip = TT_SYR_TURKMENS_ARMED
+			add_to_variable = { treasury = -1.5 }
+			set_country_flag = SYR_turkmens_armed
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}	
+	
+	syria_iran_recruit_tabaristani_militias = {
+			
+		visible = {
+			PER = { owns_state = 403 }
+			has_completed_focus = SYR_weaken_iran
+			NOT = { has_country_flag = SYR_attacked_iran }
+		}
+		
+		available = {
+		}
+		
+		cost = 80
+		
+		fire_only_once = yes
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision syria_iran_recruit_turkmen_militias"
+			custom_effect_tooltip = TT_SYR_TABARISTAN_ARMED
+			add_to_variable = { treasury = -9 }
+			set_country_flag = SYR_tabaristan_armed
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}	
+	
+	syria_iran_recruit_balochi_militias = {
+			
+		visible = {
+			PER = { owns_state = 401 }
+			has_completed_focus = SYR_weaken_iran
+			NOT = { has_country_flag = SYR_attacked_iran }
+		}
+		
+		available = {
+		}
+		
+		cost = 50
+		
+		fire_only_once = yes
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision syria_iran_recruit_balochi_militias"
+			custom_effect_tooltip = TT_SYR_BALOCHISTAN_ARMED
+			add_to_variable = { treasury = -3 }
+			set_country_flag = SYR_balochistan_armed
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}	
 
 }
 
@@ -837,7 +1156,7 @@ Syria_foreign_policy = {
 		}
 		
 		ai_will_do = {
-			factor = 10
+			factor = 100
 		}
 		
 	}
@@ -874,7 +1193,7 @@ Syria_foreign_policy = {
 		}
 		
 		ai_will_do = {
-			factor = 10
+			factor = 100
 		}
 	
 	}
@@ -910,7 +1229,7 @@ Syria_external_countries = {
 		}
 		
 		ai_will_do = {
-			factor = 10
+			factor = 1
 			modifier = {
 				factor = 0
 				has_war = yes
@@ -923,6 +1242,36 @@ Syria_external_countries = {
 			}
 		}
 		
+	}
+
+}
+
+Syria_united_arab_republic_decisions = {
+	
+	join_the_united_arab_republic = {
+	
+		visible = {
+		}
+		
+		available = {
+		}
+		
+		complete_effect = {
+			random_country = {
+				limit = { has_country_flag = leader_of_arab_union }
+				country_event = { id = SyriaDecisions.15 hours = 6 }
+			}
+			custom_effect_tooltip = GAME_OVER_TT
+			hidden_effect = { news_event = { id = SyriaDecisionsNews.4 days = 2 } }
+		}
+		
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
 	}
 
 }

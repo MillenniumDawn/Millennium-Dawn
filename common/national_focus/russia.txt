@@ -43,7 +43,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 1000
+			factor = 1 
 		}
 	}
 	
@@ -61,7 +61,6 @@ focus_tree = {
 			NOT = { has_war_with = CHE }
 		}
 		
-
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
@@ -73,7 +72,11 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 1000
+			factor = 1 
+			modifier = {
+				date < 2001.1.1
+				add = 5 
+			}
 		}
 	}
 	
@@ -103,7 +106,6 @@ focus_tree = {
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_putin"
 			if = {
@@ -146,10 +148,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				is_historical_focus_on = yes 
-				add = 25 
+				factor = 5 
 			}
 			modifier = { 
 				has_game_rule = {
@@ -231,7 +233,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_game_rule = { 
 					rule = RUS_AI_BEHAVIOR
@@ -269,7 +271,6 @@ focus_tree = {
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zyuganov"
 			if = {
@@ -282,12 +283,12 @@ focus_tree = {
 					update_party_name = yes
 					set_coalition_drift = yes
 					meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
+						text = {
+							set_country_flag = [META_SET_RULING_PARTY]
+						}
+						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
+					set_leader = yes
 				}
 				set_politics = {
 					ruling_party = communism
@@ -312,7 +313,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_game_rule = {
 					rule = RUS_AI_BEHAVIOR
@@ -393,7 +394,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_game_rule = {
 					rule = RUS_AI_BEHAVIOR
@@ -417,17 +418,11 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_putin }
 		mutually_exclusive = { focus = SOV_fight_corruption }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
-		
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_empower_putins_cronies"
 			SOV_rise_in_russian_entrepeneurs_opinion = yes
@@ -438,7 +433,15 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
+			modifier = { 
+				has_idea = SOV_corrupt_oligarchy 
+				add = 1
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = -0.5
+			}
 		}
 	}
 	focus = {
@@ -452,12 +455,19 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_putin }
 		mutually_exclusive = { focus = SOV_empower_putins_cronies }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
+		available = { 
+			OR = {
+				has_idea = paralyzing_corruption
+				has_idea = crippling_corruption
+				has_idea = rampant_corruption
+				has_idea = unrestrained_corruption
+				has_idea = systematic_corruption
+				has_idea = widespread_corruption
+				has_idea = medium_corruption
+				has_idea = modest_corruption
+			}
+		}
+	
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
@@ -471,7 +481,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -486,9 +496,12 @@ focus_tree = {
 		prerequisite = { focus = SOV_empower_putins_cronies }
 		mutually_exclusive = { }
 		available = { 
-			custom_trigger_tooltip = { 
-				has_country_flag = positive_oligarchs
-				tooltip = SOV_has_positive_oligarchs_TT
+			custom_trigger_tooltip = {
+				tooltip = SOV_oligarchs_positive_tt
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
 		historical_ai = { }
@@ -520,7 +533,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -533,28 +546,24 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_fight_corruption }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_weaken_the_oligarchs"
-			remove_ideas = SOV_corrupt_oligarchy
+			if = {
+				limit = { has_idea = SOV_corrupt_oligarchy }
+				remove_ideas = SOV_corrupt_oligarchy
+			}
 			SOV_fall_in_russian_entrepeneurs_opinion = yes
 			SOV_fall_in_russian_energy_enterprises_opinion = yes 
 			add_stability = 0.05
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -567,23 +576,20 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_gazprom }
-		mutually_exclusive = { }
 		available = {
-			custom_trigger_tooltip = { 
-				has_country_flag = positive_oligarchs
-				tooltip = SOV_has_positive_oligarchs_TT
+			custom_trigger_tooltip = {
+				tooltip = SOV_oligarchs_positive_tt
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_secure_putins_position"
 			hidden_effect = {
@@ -598,7 +604,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -719,7 +725,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -756,7 +762,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -811,7 +817,7 @@ focus_tree = {
 			custom_effect_tooltip = 20_billion_expense_tt
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -846,7 +852,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -907,10 +913,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_war = yes 
-				add = 100
+				add = 3
 			}
 		}
 	}
@@ -939,7 +945,7 @@ focus_tree = {
 			custom_effect_tooltip = 10_billion_expense_tt
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -978,7 +984,7 @@ focus_tree = {
 			custom_effect_tooltip = 10_billion_expense_tt
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1008,7 +1014,7 @@ focus_tree = {
 			add_political_power = 150 #Temp 
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1044,7 +1050,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1091,7 +1097,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1117,7 +1123,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1151,7 +1157,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1196,7 +1202,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -1232,7 +1238,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1274,7 +1280,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1323,7 +1329,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1358,7 +1364,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1393,7 +1399,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1424,7 +1430,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1459,7 +1465,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1498,7 +1504,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1555,7 +1561,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1599,7 +1605,7 @@ focus_tree = {
 		}
 	
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1631,7 +1637,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1672,7 +1678,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1710,7 +1716,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1771,7 +1777,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1809,7 +1815,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1847,7 +1853,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1882,7 +1888,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1916,7 +1922,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1950,7 +1956,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1985,7 +1991,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2020,7 +2026,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -2060,7 +2066,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2099,7 +2105,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2136,7 +2142,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2167,7 +2173,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2202,7 +2208,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2239,7 +2245,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2276,7 +2282,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2328,7 +2334,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2355,11 +2361,13 @@ focus_tree = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_persecute_minorities"
-			add_war_support = 0.05
+			add_war_support = 0.075
+			add_manpower = -10000
+			add_stability = -0.02 
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2404,7 +2412,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2435,7 +2443,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2466,7 +2474,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2525,7 +2533,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2558,7 +2566,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2589,10 +2597,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_ensure_military_loyalty"
 			add_ideas = SOV_russian_militarism_idea
+			add_research_slot = 1 
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2625,7 +2634,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2660,10 +2669,19 @@ focus_tree = {
 				target = KAZ 
 				type = puppet_wargoal_focus
 			}
+			CHI = {
+				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
+				add_ai_strategy = { type = contain id = "SOV" value = 200 }
+				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
+				add_ai_strategy = { type = protect id = "KYR" value = 200 }
+				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
+				add_ai_strategy = { type = protect id = "TRK" value = 200 }
+				add_ai_strategy = { type = protect id = "UZB" value = 200 }
+			}
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2729,10 +2747,19 @@ focus_tree = {
 					type = puppet_wargoal_focus
 				}
 			}
+			CHI = {
+				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
+				add_ai_strategy = { type = contain id = "SOV" value = 200 }
+				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
+				add_ai_strategy = { type = protect id = "KYR" value = 200 }
+				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
+				add_ai_strategy = { type = protect id = "TRK" value = 200 }
+				add_ai_strategy = { type = protect id = "UZB" value = 200 }
+			}
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2770,7 +2797,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -2809,7 +2836,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2848,7 +2875,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2884,7 +2911,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2921,7 +2948,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2970,7 +2997,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3005,7 +3032,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3042,7 +3069,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3077,7 +3104,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3125,7 +3152,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3202,7 +3229,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3262,7 +3289,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3291,7 +3318,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 50
+			factor = 0.5
 		}
 	}
 	focus = {
@@ -3321,7 +3348,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 50
+			factor = 3 
 			modifier = {
 				has_war_support > 0.30 
 				add = 10
@@ -3352,7 +3379,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3380,7 +3407,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3405,7 +3432,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3437,7 +3464,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3465,7 +3492,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3563,7 +3590,7 @@ focus_tree = {
 						add_core_of = SOV
 					}
 				}
-				TUR = {
+				TRK = {
 					every_owned_state = {
 						limit = { NOT = { is_core_of = SOV } } 
 						add_core_of = SOV
@@ -3575,13 +3602,70 @@ focus_tree = {
 						add_core_of = SOV
 					}
 				}
+				UKR = {
+					every_owned_state = {
+						limit = { NOT = { is_core_of = SOV } } 
+						add_core_of = SOV 
+					}
+				}
+				MLV = { 
+					every_owned_state = {
+						limit = { NOT = { is_core_of = SOV } } 
+						add_core_of = SOV 
+					}
+				}
+				PMR = { 
+					every_owned_state = {
+						limit = { NOT = { is_core_of = SOV } } 
+						add_core_of = SOV 
+					}
+				}
+				if = {
+					limit = {
+						any_owned_state = { 
+							NOT = { is_core_of = SOV }
+						}
+					}
+					every_owned_state = {
+						limit = { NOT = { is_core_of = SOV } }
+						add_core_of = SOV 
+					}
+				}
 			}
+			##AI Strategy to have Russia Attack the Former Soviet States
+			add_ai_strategy = { type = conquer id = "UKR" value = 100 }
+			add_ai_strategy = { type = conquer id = "PMR" value = 100 }
+			add_ai_strategy = { type = conquer id = "MLV" value = 100 }
+			add_ai_strategy = {	type = conquer id = "NKR" value = 100 }
+			add_ai_strategy = { type = conquer id = "TRK" value = 100 }
+			add_ai_strategy = { type = conquer id = "KAZ" value = 100 }
+			add_ai_strategy = { type = conquer id = "UZB" value = 100 }
+			add_ai_strategy = { type = conquer id = "TAJ" value = 100 }
+			add_ai_strategy = { type = conquer id = "KYR" value = 100 }
+			add_ai_strategy = { type = conquer id = "ARM" value = 100 }
+			add_ai_strategy = { type = conquer id = "AZE" value = 100 }
+			add_ai_strategy = { type = conquer id = "GEO" value = 100 }
+			add_ai_strategy = { type = conquer id = "SOO" value = 100 }
+			add_ai_strategy = { type = conquer id = "ABK" value = 100 }	
+			add_ai_strategy = { type = conquer id = "EST" value = 100 }
+			add_ai_strategy = { type = conquer id = "LIT" value = 100 }
+			add_ai_strategy = { type = conquer id = "LAT" value = 100 }
+			set_country_flag = SOV_seeks_to_restore_the_ussr
 			add_political_power = -300
 			custom_effect_tooltip = SOV_territorial_demands_cores_TT
+			CHI = {
+				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
+				add_ai_strategy = { type = contain id = "SOV" value = 200 }
+				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
+				add_ai_strategy = { type = protect id = "KYR" value = 200 }
+				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
+				add_ai_strategy = { type = protect id = "TRK" value = 200 }
+				add_ai_strategy = { type = protect id = "UZB" value = 200 }
+			}
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3617,7 +3701,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3671,7 +3755,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3721,7 +3805,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3767,7 +3851,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -3808,7 +3892,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3836,7 +3920,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3876,30 +3960,30 @@ focus_tree = {
 					country_exists = LIT 
 					NOT = { has_war_with = SOV }
 				}
-				country_event = { id = russia.14 days = 1 } 
+				LIT = { country_event = { id = russia.14 days = 1 } }
 			}
 			if = {
 				limit = { 
 					country_exists = LAT 
 					NOT = { has_war_with = SOV }
 				}
-				country_event = { id = russia.14 days = 1 } 
+				LAT = { country_event = { id = russia.14 days = 1 } } 
 			}
 			if = {
 				limit = { 
 					country_exists = EST 
 					NOT = { has_war_with = SOV }
 				}
-				country_event = { id = russia.14 days = 1 } 
+				EST = { country_event = { id = russia.14 days = 1 } }
 			}
 			custom_effect_tooltip = SOV_baltic_econ_tooltip_TT
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = { 
 				check_variable = { treasury > 29.99 }
-				add = 20 
+				add = 1 
 			}
 		}
 	}
@@ -3924,7 +4008,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 30
+			factor = 1
 		}
 	}
 	focus = {
@@ -3953,7 +4037,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3988,7 +4072,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4020,7 +4104,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4056,7 +4140,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4090,7 +4174,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4117,7 +4201,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4147,7 +4231,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4174,7 +4258,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4198,7 +4282,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4227,7 +4311,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4257,7 +4341,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4285,12 +4369,16 @@ focus_tree = {
 				add_popularity = { ideology = nationalist popularity = -abc }
 				set_variable = { var = party_pop_array^20 max = 0 }
 				recalculate_party = yes
+				if = {
+					limit = { has_idea = large_far_right_movement } 
+					remove_ideas = large_far_right_movement
+				}
 			}
 			custom_effect_tooltip = SOV_root_out_the_nationalists_TT
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4328,10 +4416,19 @@ focus_tree = {
 				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
 				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
 			}
+			CHI = {
+				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
+				add_ai_strategy = { type = contain id = "SOV" value = 200 }
+				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
+				add_ai_strategy = { type = protect id = "KYR" value = 200 }
+				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
+				add_ai_strategy = { type = protect id = "TRK" value = 200 }
+				add_ai_strategy = { type = protect id = "UZB" value = 200 }
+			}
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				OR = { 
 					has_opinion = { target = ENG value > 10 }
@@ -4374,7 +4471,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4386,8 +4483,10 @@ focus_tree = {
 		relative_position_id = SOV_yavlinsky
 		cost = 10
 		
-		prerequisite = { focus = SOV_approach_nato }
-		prerequisite = { focus = SOV_maintain_csto }
+		prerequisite = { 
+			focus = SOV_approach_nato 
+			focus = SOV_maintain_csto
+		}
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -4402,11 +4501,28 @@ focus_tree = {
 				add_to_variable = { party_pop_array^1 = 0.05 }
 				recalculate_party = yes
 			}
+			if = {
+				limit = { NOT = { CHI = { has_completed_focus = CHI_An_Open_Window } } }
+				CHI = {
+					add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
+					add_ai_strategy = { type = contain id = "SOV" value = 200 }
+					add_ai_strategy = { type = protect id = "KAZ" value = 200 }
+					add_ai_strategy = { type = protect id = "KYR" value = 200 }
+					add_ai_strategy = { type = protect id = "TAJ" value = 200 }
+					add_ai_strategy = { type = protect id = "TRK" value = 200 }
+					add_ai_strategy = { type = protect id = "UZB" value = 200 }
+				}
+			}
+			if = {
+				limit = { country_exists = USA }
+				add_ai_strategy = { type = befriend id = "USA" value = 50 }
+				USA = { add_ai_strategy = { type = befriend id = "SOV" value = 50 } }
+			}
 			custom_effect_tooltip = SOV_bastion_of_democracy_TT
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4471,7 +4587,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4509,7 +4625,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4550,7 +4666,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4584,7 +4700,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4617,7 +4733,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4651,7 +4767,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4690,7 +4806,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4724,7 +4840,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4758,7 +4874,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4796,7 +4912,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4832,7 +4948,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4869,7 +4985,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -4907,7 +5023,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	##Army Reform
@@ -4945,7 +5061,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_war_support < 0.10
 				add = 5 
@@ -4981,7 +5097,7 @@ focus_tree = {
 			add_ideas = SOV_armored_production_idea
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_war = yes 
 				add = 30 
@@ -5027,7 +5143,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			
 		}
 	}
@@ -5074,7 +5190,7 @@ focus_tree = {
 		}
  
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_idea = rifle_production_bonus2
 				add = 30
@@ -5122,7 +5238,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5164,7 +5280,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5208,7 +5324,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5244,7 +5360,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	##Naval Reform
@@ -5279,7 +5395,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5332,7 +5448,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5414,7 +5530,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5491,7 +5607,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	##Air Force Reform
@@ -5528,7 +5644,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5561,7 +5677,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5618,7 +5734,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -5660,7 +5776,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -5699,7 +5815,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5727,7 +5843,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5805,7 +5921,7 @@ focus_tree = {
 			custom_effect_tooltip = 15_billion_expense_tt
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -5832,7 +5948,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5911,7 +6027,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5956,7 +6072,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -5998,7 +6114,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6026,7 +6142,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -6058,7 +6174,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -6137,7 +6253,7 @@ focus_tree = {
 			
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -6180,7 +6296,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6240,7 +6356,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6288,7 +6404,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6336,7 +6452,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6377,7 +6493,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6447,7 +6563,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				GER = { has_completed_focus = GER_nord_stream }
 				add = 20
@@ -6511,7 +6627,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6550,7 +6666,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6579,7 +6695,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6618,7 +6734,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6659,7 +6775,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6702,7 +6818,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6742,7 +6858,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6780,7 +6896,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6817,7 +6933,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6855,7 +6971,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6894,7 +7010,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6932,7 +7048,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6952,7 +7068,10 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = SOV_oligarchs_positive_tt
-				has_country_flag = positive_oligarchs 
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
 
@@ -6999,7 +7118,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -7018,9 +7137,13 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = SOV_oligarchs_positive_tt
-				has_country_flag = positive_oligarchs 
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
+
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
@@ -7040,10 +7163,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				check_variable = { treasury < 20.0 }
-				add = 20
+				add = 2
 			}
 		}
 	}
@@ -7065,7 +7188,10 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = SOV_oligarchs_positive_tt
-				has_country_flag = positive_oligarchs 
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
 
@@ -7081,7 +7207,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -7111,7 +7237,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -7204,7 +7330,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -7246,7 +7372,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 }

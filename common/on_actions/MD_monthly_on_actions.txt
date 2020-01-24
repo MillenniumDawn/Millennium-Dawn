@@ -47,17 +47,23 @@ on_actions = {
 				every_country = {
 					ingame_calculate_size_modifier = yes #updates economics if new factories has been added
 					recalculate_party = yes
+					if = { 
+						limit = { 
+							can_upgrade_gdp = yes 
+							NOT = { has_country_flag = Max_GDPC } 
+							has_global_flag = do_not_do_on_day_one 
+						}
+						Update_GDPC = yes
+						if = {
+							limit = { is_ai = no }
+							news_event = { id = GDPC_Update.1 } #informs that you didn't do it :P
+						}
+					}
 					
 					#player only updates
 					if = { limit = { is_ai = no }
-					
 						update_military_rate = yes
 						2017_state_init_setup = yes		#updates all player states if population has grown enough
-						
-						if = { limit = { can_upgrade_gdp = yes NOT = { has_country_flag = Max_GDPC } has_global_flag = do_not_do_on_day_one }
-							Update_GDPC = yes
-							news_event = { id = GDPC_Update.1 } #informs that you didn't do it :P
-						}
 						set_global_flag = do_not_do_on_day_one
 					}
 				}
@@ -3037,6 +3043,30 @@ on_actions = {
 						clr_country_flag = AI_STRATEGY_BFA_support_afr_active
 					}
 				}
+				
+				BHU = {
+					#Indian ties
+					if = { 
+						limit = { 
+							NOT = { has_country_flag = AI_STRATEGY_BHU_india_relations_active }
+							is_guaranteed_by = RAJ
+						}
+						add_ai_strategy = { type = alliance id = "RAJ" value = 50 }
+						add_ai_strategy = { type = support id = "RAJ" value = 50 }
+						add_ai_strategy = { type = befriend id = "RAJ" value = 150 }
+						set_country_flag = AI_STRATEGY_BHU_india_relations_active 
+					}
+					if = { 
+						limit = {
+							NOT = { is_guaranteed_by = RAJ }
+							has_country_flag = AI_STRATEGY_BHU_india_relations_active 
+						}
+						add_ai_strategy = { type = alliance id = "RAJ" value = -50 }
+						add_ai_strategy = { type = support id = "RAJ" value = -50 }
+						add_ai_strategy = { type = befriend id = "RAJ" value = -150 }
+						clr_country_flag = AI_STRATEGY_BHU_india_relations_active
+					}
+				}
 
 				#BLR Strategies
 				BLR = { 
@@ -3171,16 +3201,17 @@ on_actions = {
 							has_government = communism
 						}
 						add_ai_strategy = { type = antagonize id = "TAI" value = 200 }
-						add_ai_strategy = { type = conquer id = "TAI" value = 100 }
 						set_country_flag = AI_STRATEGY_CHI_antagonize_taiwan_active 
 					}
 					if = { 
 						limit = { 
-							NOT = { has_government = communism }
+							OR = {
+								TAI = { is_puppet_of = CHI }
+								NOT = { has_government = communism }
+							}
 							has_country_flag = AI_STRATEGY_CHI_antagonize_taiwan_active 
 						}
 						add_ai_strategy = { type = antagonize id = "TAI" value = -200 }
-						add_ai_strategy = { type = conquer id = "TAI" value = -100 }
 						clr_country_flag = AI_STRATEGY_CHI_antagonize_taiwan_active
 					}
 					
@@ -3211,7 +3242,10 @@ on_actions = {
 					}
 					if = { 
 						limit = { 
-							has_war_with = PAK
+							OR = {	
+								has_war_with = PAK
+								has_completed_focus = CHI_Strategic_Realignment
+							}
 							has_country_flag = AI_STRATEGY_CHI_friendly_with_pakistan_active 
 						}
 						add_ai_strategy = { type = antagonize id = "PAK" value = 50 }
@@ -3272,8 +3306,7 @@ on_actions = {
 						add_ai_strategy = { type = befriend id = "QAT" value = -100 }
 						add_ai_strategy = { type = alliance id = "QAT" value = -100 }
 						clr_country_flag = AI_STRATEGY_CHI_arabian_relations_active
-					}
-					
+					}					
 				}
 				
 				#CUB Strategies
@@ -4066,12 +4099,12 @@ on_actions = {
 						add_ai_strategy = { type = antagonize id = "UAE" value = 50 }
 						add_ai_strategy = { type = antagonize id = "YEM" value = 50 }
 						add_ai_strategy = { type = antagonize id = "HOU" value = 50 }
-						set_country_flag = AI_STRATEGY_ISR_hamas_relations_active 
+						set_country_flag = AI_STRATEGY_ISR_arab_relations_active 
 					}
 					if = { 
 						limit = {
 							NOT = { has_opinion_modifier = ISR_Arab_Conflict }
-							has_country_flag = AI_STRATEGY_ISR_hamas_relations_active 
+							has_country_flag = AI_STRATEGY_ISR_arab_relations_active 
 						}
 						add_ai_strategy = { type = antagonize id = "LEB" value = -50 }
 						add_ai_strategy = { type = antagonize id = "HEZ" value = -50 }
@@ -4084,7 +4117,7 @@ on_actions = {
 						add_ai_strategy = { type = antagonize id = "UAE" value = -50 }
 						add_ai_strategy = { type = antagonize id = "YEM" value = -50 }
 						add_ai_strategy = { type = antagonize id = "HOU" value = -50 }
-						clr_country_flag = AI_STRATEGY_ISR_hamas_relations_active
+						clr_country_flag = AI_STRATEGY_ISR_arab_relations_active
 					}
 					
 					#Kurdistan relations
@@ -4513,6 +4546,32 @@ on_actions = {
 					}
 				}
 				
+				
+				#NEP Strategies
+				NEP = {
+					#Indian ties
+					if = { 
+						limit = { 
+							NOT = { has_country_flag = AI_STRATEGY_NEP_india_relations_active }
+							NOT = { has_government = communism }
+						}
+						add_ai_strategy = { type = alliance id = "RAJ" value = 50 }
+						add_ai_strategy = { type = support id = "RAJ" value = 50 }
+						add_ai_strategy = { type = befriend id = "RAJ" value = 150 }
+						set_country_flag = AI_STRATEGY_NEP_india_relations_active 
+					}
+					if = { 
+						limit = {
+							has_government = communism
+							has_country_flag = AI_STRATEGY_NEP_india_relations_active 
+						}
+						add_ai_strategy = { type = alliance id = "RAJ" value = -50 }
+						add_ai_strategy = { type = support id = "RAJ" value = -50 }
+						add_ai_strategy = { type = befriend id = "RAJ" value = -150 }
+						clr_country_flag = AI_STRATEGY_NEP_india_relations_active
+					}
+				}
+			
 				#NKO Strategies
 				NKO = {
 					#Korean conflict stage 1
@@ -5750,6 +5809,9 @@ on_actions = {
 						add_ai_strategy = { type = send_volunteers_desire id = "ROJ" value = -200 }
 						add_ai_strategy = { type = send_volunteers_desire id = "TUA" value = -100 }
 						add_ai_strategy = { type = send_volunteers_desire id = "PAK" value = 100 }
+						add_ai_strategy = { type = send_volunteers_desire id = "AQY" value = -200 }
+						add_ai_strategy = { type = send_volunteers_desire id = "GNC" value = -200 }
+						add_ai_strategy = { type = send_volunteers_desire id = "ISI" value = -200 }
 						set_country_flag = AI_STRATEGY_SAU_limit_volunteers_active 
 					}
 					if = { 
@@ -6288,6 +6350,37 @@ on_actions = {
 						add_ai_strategy = { type = befriend id = "DRC" value = -50 }
 						add_ai_strategy = { type = support id = "DRC" value = -100 }
 						clr_country_flag = AI_STRATEGY_SUD_support_kabila_active
+					}
+				}
+				
+				#SYR Strategies
+				SYR = {
+					#Bad blood between Iraqi and Syrian Baathists
+					if = { 
+						limit = { 
+							NOT = { has_country_flag = AI_STRATEGY_SYR_rivalry_with_iraq_active }
+							has_government = communism
+							IRQ = { has_government = nationalist }
+							NOT = { has_completed_focus = SYR_repair_relations_with_iraq }
+						}
+						add_ai_strategy = { type = befriend id = "IRQ" value = -100 }
+						add_ai_strategy = { type = support id = "IRQ" value = -100 }
+						add_ai_strategy = { type = antagonize id = "IRQ" value = 100 }
+						set_country_flag = AI_STRATEGY_SYR_rivalry_with_iraq_active 
+					}
+					if = { 
+						limit = { 
+							OR = {
+								NOT = { has_government = communism }
+								IRQ = { NOT = { has_government = nationalist } }
+								has_completed_focus = SYR_repair_relations_with_iraq
+							}
+							has_country_flag = AI_STRATEGY_SYR_rivalry_with_iraq_active 
+						}
+						add_ai_strategy = { type = befriend id = "IRQ" value = 100 }
+						add_ai_strategy = { type = support id = "IRQ" value = 100 }
+						add_ai_strategy = { type = antagonize id = "IRQ" value = -100 }
+						clr_country_flag = AI_STRATEGY_SYR_rivalry_with_iraq_active
 					}
 				}
 				
@@ -6920,11 +7013,15 @@ on_actions = {
 					}
 					if = { 
 						limit = {
-							is_in_faction_with = SOV
+							OR = {	
+								is_in_faction_with = SOV
+								CHI = { has_completed_focus = CHI_A_Rival_Superpower }
+							}
 							has_country_flag = AI_STRATEGY_USA_russia_relations_active 
 						}
 						add_ai_strategy = { type = antagonize id = "SOV" value = -50 }
 						add_ai_strategy = { type = alliance id = "SOV" value = 200 }
+						add_ai_strategy = { type = protect id = "SOV" value = 200 }
 						add_ai_strategy = { type = contain id = "SOV" value = -25 }
 						clr_country_flag = AI_STRATEGY_USA_russia_relations_active
 					}

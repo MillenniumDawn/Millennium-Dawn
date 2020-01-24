@@ -61,6 +61,7 @@ on_actions = {
 			100 = SyriaFocus.40
 			100 = SyriaFocus.41
 			100 = SyriaFocus.42
+			100 = 0
 		}
 	}
 	
@@ -653,6 +654,28 @@ on_actions = {
 					
 					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
 					country_event = { id = brotherhood.2 }
+
+					#Recognition
+					add_ideas = { rival_government }
+					add_to_array = { global.rival_governments = THIS }
+					set_country_flag = rival_government_@FROM
+				}
+				FROM = {
+					add_to_array = { global.rival_governments = THIS }
+					set_country_flag = rival_government_@ROOT
+					if = {
+						limit = { has_start_date < 2016.01.01 }
+						add_to_variable = {
+							var = Granted_Recognition
+							value = 188
+						}
+					}
+					else_if = {
+						add_to_variable = {
+							var = Granted_Recognition
+							value = 193
+						}
+					}
 				}
 			}
 			hidden_effect = {
@@ -985,6 +1008,9 @@ on_actions = {
 						elections_allowed = yes
 					}
 				}
+				remove_ideas = rival_government
+				remove_from_array = { global.rival_governments = THIS }
+				clr_country_flag = rival_government_@FROM
 			}
 		}
 	}
@@ -1003,6 +1029,17 @@ on_actions = {
 			LIB = { if = { limit = { NOT = { country_exists = LUR } } white_peace = GUI white_peace = SIE } }
 			DRC = { if = { limit = { NOT = { country_exists = MLC } } white_peace = UGA white_peace = RWA } }
 			LIB = { set_law_attitudes = yes } #any country will do
+			
+			#Set correct focus tree for Syria
+			SYR = {	
+				if = {
+					limit = { has_start_date < 2016.1.1 }
+					load_focus_tree = Syria_2000
+				}
+				else = {
+					load_focus_tree = Syria_Focus_2017
+				}
+			}
 			
 			every_country = {
 				add_tax_laws = yes
