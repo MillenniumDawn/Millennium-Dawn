@@ -4578,7 +4578,10 @@ focus_tree = {
 			}
 			modifier = {
 				add = 10
-				jihadist_government = yes
+				OR = {
+					jihadist_government = yes
+					check_variable = { radicalization > 50 }
+				}
 			}
 		}
 	}
@@ -4599,10 +4602,17 @@ focus_tree = {
 		prerequisite = { focus = GCC_a_radical_reorientation }
 		
 		available = {
+			NOT = { has_war_with = AQY }
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			subtract_from_variable = { treasury = 1 }
+			custom_effect_tooltip = 1_billion_expense_tt
+			YEM = {
+				custom_effect_tooltip = terror_threat_increase_tt
+				add_to_variable = { threat_level = 10 }
+				clamp_threat = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_covert_support_for_islamist_radicals executed"
 		}
 		
@@ -4627,16 +4637,21 @@ focus_tree = {
 		prerequisite = { focus = GCC_a_radical_reorientation }
 		
 		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_society_more_80_tt
+				check_variable = { social_conservatism_society > 80 }
+			}
 		}
 		
 		completion_reward = {
-			custom_effect_tooltip = conservatism_government_increase_10_tt
-			add_to_variable = { social_conservatism_government = 10 }
-			clamp_variable = {
-				var = social_conservatism_government
-				min = 0
-				max = 100
+			custom_effect_tooltip = radicalization_increase_tt
+			add_to_variable = { radicalization = 10 }
+			clamp_radicalization = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
 			}
+			recalculate_party = yes
 			shia_resistance_level_up = yes
 			log = "[GetDateText]: [This.GetName]: focus GCC_tolerate_radical_preachers executed"
 		}
@@ -4666,7 +4681,9 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			custom_effect_tooltip = terror_threat_increase_tt
+			add_to_variable = { threat_level = 20 }
+			clamp_threat = yes
 			log = "[GetDateText]: [This.GetName]: focus GCC_welcome_militants executed"
 		}
 		
@@ -4695,7 +4712,9 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			custom_effect_tooltip = terror_threat_increase_tt
+			add_to_variable = { threat_level = 20 }
+			clamp_threat = yes
 			log = "[GetDateText]: [This.GetName]: focus GCC_arms_smuggling executed"
 		}
 		
@@ -4724,7 +4743,69 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			if = {
+				limit = { tag = SAU }
+				start_civil_war = {
+					ideology = fascism
+					ruling_party = fascism
+					size = 0.4
+				}
+				hidden_effect = {
+					set_political_party = {
+						ideology = fascism
+						popularity = 100
+					}
+					set_variable = { party_pop_array^11 = 1 }
+					recalculate_party = yes
+					clear_array = ruling_party
+					add_to_array = { ruling_party = 11 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					if = {
+						limit = { date < 2016.1.2 }
+						create_country_leader = {
+							name = "Osama bin Laden"
+							picture = "osama_bin_laden.dds"
+							ideology = Caliphate
+							traits = {
+								salafist_Caliphate
+							}
+						}
+					}
+					else_if = {
+						create_country_leader = {
+							name = "Ayman Mohammed Rabie al-Zawahiri"
+							picture = "Ayman_Al_Zawahiri.dds"
+							ideology = Caliphate
+							traits = {
+								salafist_Caliphate
+							}
+						}
+					}
+					swap_ideas = {
+						remove_idea = saudi_royal_family
+						add_idea = foreign_jihadis
+					}
+					set_country_flag = positive_foreign_jihadis
+					add_ideas = Non_State_Actor
+					set_cosmetic_tag = SAU_AQ
+					random_other_country = {
+						limit = {
+							original_tag = SAU
+						}
+						remove_ideas = rival_government
+					}
+					every_other_country = {
+						limit = { has_military_access_to = ROOT }
+						diplomatic_relation = {
+							country = ROOT
+							relation = military_access
+							active = no
+						}
+					}
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_start_the_uprising executed"
 		}
 		
