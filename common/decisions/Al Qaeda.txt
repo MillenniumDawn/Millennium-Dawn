@@ -182,7 +182,7 @@ terror_gulf_category = {
 	
 	conduct_border_patrol = {
 	
-		icon = GFX_decision_border_war
+		icon = GFX_decision_generic_prepare_civil_war
 		
 		allowed = {
 			OR = {	
@@ -209,6 +209,15 @@ terror_gulf_category = {
 		
 		available = {
 			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = conducting_patrols_tt
+				FROM = {
+					NOT = {
+						has_country_flag = border_preparations_@ROOT
+						has_country_flag = border_patrol_@ROOT
+					}
+				}
+			}
 		}
 		
 		custom_cost_trigger = {
@@ -219,14 +228,126 @@ terror_gulf_category = {
 		
 		complete_effect = {
 			add_command_power = -20
-			set_country_flag = border_protected_@FROM
+			random_owned_state = {
+				limit = {
+					any_neighbor_state = {
+						is_owned_by = FROM
+					}
+					NOT = { state = 175 }
+				}
+				set_variable = {
+					var = ROOT.var_border_state_@FROM
+					value = THIS
+				}					
+			}
+			FROM = {
+				add_to_array = { ROOT.border_patrol = THIS }
+				set_country_flag = border_preparations_@ROOT
+			}
 			log = "[GetDateText]: [This.GetName]: decision conduct_border_patrol executed"
 		}
+	}
+	
+	border_patrol_mission = {	
 		
-		days_remove = 180
+		icon = GFX_decision_generic_prepare_civil_war
 		
-		remove_effect = {
+		target_array = ROOT.border_patrol
+		
+		target_trigger = {
+			country_exists = FROM
+			FROM = { has_country_flag = border_preparations_@ROOT }
+		}
+		
+		available = {
+			divisions_in_state = {				
+				size > 0
+				state = ROOT.var_border_state_@FROM
+			}
+		}
+		
+		fire_only_once = yes
+		
+		highlight_states = {
+			state = ROOT.var_border_state_@FROM
+		}
+		
+		activation = {
+			always = no
+		}
+		
+		is_good = no
+		
+		days_mission_timeout = 30
+				
+		ai_will_do = {
+			factor = 1
+		}
+		
+		complete_effect = {
+			set_country_flag = border_protected_@FROM
+			FROM = { 
+				clr_country_flag = border_preparations_@ROOT 
+				set_country_flag = border_patrol_@ROOT
+			}
+			log = "[GetDateText]: [Root.GetName]: mission border_patrol_mission"		
+		}
+		
+		timeout_effect = {
+			FROM = { 
+				clr_country_flag = border_preparations_@ROOT
+			}
+		}
+	}
+	
+	conduct_border_patrol_mission = {	
+		
+		icon = GFX_decision_generic_prepare_civil_war
+		
+		target_array = ROOT.border_patrol
+		
+		target_trigger = {
+			country_exists = FROM
+			FROM = { has_country_flag = border_patrol_@ROOT }
+		}
+		
+		highlight_states = {
+			state = ROOT.var_border_state_@FROM
+		}
+		
+		available = {
+			hidden_trigger = {
+				always = no
+			}
+		}
+		
+		fire_only_once = yes
+		
+		cancel_trigger = {
+			divisions_in_state = {				
+				size < 1
+				state = ROOT.var_border_state_@FROM
+			}
+		}
+		
+		activation = {
+			always = no
+		}
+		
+		is_good = yes
+		
+		days_mission_timeout = 90
+				
+		ai_will_do = {
+			factor = 1
+		}
+		
+		timeout_effect = {
 			clr_country_flag = border_protected_@FROM
+			FROM = {
+				remove_from_array = { ROOT.border_patrol = THIS }
+				clr_country_flag = border_patrol_@ROOT
+			}
 		}
 	}
 	
@@ -243,12 +364,11 @@ terror_gulf_category = {
 		target_trigger = {
 			FROM = {
 				OR = {
-					has_country_flag = threat_level_substantial
 					has_country_flag = threat_level_severe
 					has_country_flag = threat_level_critical
 				}
 				no_jihadist_government = yes
-				is_top3_influencer = yes
+				is_influencer = yes
 			}
 		}
 		
@@ -265,13 +385,13 @@ terror_gulf_category = {
 		}
 		
 		custom_cost_trigger = {
-			command_power > 20
+			command_power > 40
 		}
 		
-		custom_cost_text = command_power_more_than_20
+		custom_cost_text = command_power_more_than_40
 		
 		complete_effect = {
-			add_command_power = -20
+			add_command_power = -40
 			set_country_flag = military_advisors_@FROM
 			log = "[GetDateText]: [This.GetName]: decision deploy_military_advisors executed"
 		}
@@ -295,13 +415,13 @@ terror_gulf_category = {
 		}
 		
 		custom_cost_trigger = {
-			command_power > 20
+			command_power > 40
 		}
 		
-		custom_cost_text = command_power_more_than_20
+		custom_cost_text = command_power_more_than_40
 		
 		complete_effect = {
-			add_command_power = -20
+			add_command_power = -40
 			clr_country_flag = military_advisors_@FROM
 			log = "[GetDateText]: [This.GetName]: decision deploy_military_advisors executed"
 		}
@@ -324,7 +444,7 @@ terror_gulf_category = {
 					has_country_flag = threat_level_critical
 				}
 				no_jihadist_government = yes
-				is_top3_influencer = yes
+				is_full_state = yes
 			}
 		}
 		
@@ -340,13 +460,13 @@ terror_gulf_category = {
 		}
 		
 		custom_cost_trigger = {
-			command_power > 20
+			command_power > 40
 		}
 		
-		custom_cost_text = command_power_more_than_20
+		custom_cost_text = command_power_more_than_40
 		
 		complete_effect = {
-			add_command_power = -20
+			add_command_power = -40
 			log = "[GetDateText]: [This.GetName]: decision deploy_special_forces executed"
 		}
 	}
@@ -368,7 +488,7 @@ terror_gulf_category = {
 					has_country_flag = threat_level_critical
 				}
 				no_jihadist_government = yes
-				is_top3_influencer = yes
+				is_full_state = yes
 			}
 		}
 		
@@ -381,22 +501,25 @@ terror_gulf_category = {
 					has_idea = intervention_neo_imperialism
 				}
 			}
-			OR = {
-				has_tech = Air_UAV1
-				has_tech = Air_UAV2
-				has_tech = Air_UAV3
-				has_tech = Air_UAV4
+			FROM = {
+				OR = {
+					is_neighbor_of = ROOT
+					gives_military_access_to = ROOT
+					any_neighbor_country = {
+						gives_military_access_to = ROOT
+					}
+				}
 			}
 		}
 		
 		custom_cost_trigger = {
-			command_power > 20
+			command_power > 40
 		}
 		
-		custom_cost_text = command_power_more_than_20
+		custom_cost_text = command_power_more_than_40
 		
 		complete_effect = {
-			add_command_power = -20
+			add_command_power = -40
 			log = "[GetDateText]: [This.GetName]: decision launch_drone_strike executed"
 		}
 	}
