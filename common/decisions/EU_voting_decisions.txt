@@ -159,7 +159,8 @@ EU_voting_category = {
 			has_country_flag = EU_potential  #unvisible #unvisible #  
 		} 
 		
-		complete_effect = {   						
+		complete_effect = {
+			#add_command_power = 40
 			every_country = {
 				limit = {
 					has_country_flag = EU_military_exercise_at_border_from@ROOT
@@ -174,10 +175,25 @@ EU_voting_category = {
 			}
 			clr_country_flag = EU_military_exercise_prep
 			clear_variable = ROOT.var_EU_military_exercise_target
-			clear_variable = ROOT.var_EU_military_exercise_host_state	
+			clear_variable = ROOT.var_EU_military_exercise_host_state
+			clear_variable = ROOT.var_EU_military_exercise_host_tag			
 		}
 	}				
 
+	EU_tech_test_effect_2 = {
+	
+		available = {			
+			has_country_flag = EU_potential
+		}
+		
+		visible = { 
+			has_country_flag = EU_potential  #unvisible #unvisible #  
+		} 
+		
+		complete_effect = {
+			add_command_power = 40			
+		}
+	}	
 	
 ##############################
 ### End of Testing Section ###
@@ -18454,7 +18470,13 @@ EU_defense_category = {
 		
 		icon = GFX_decision_infiltrate_state
 		
-		days_remove = 30
+		days_remove = 90
+
+		custom_cost_trigger = {
+			command_power > 40
+		}
+		
+		custom_cost_text = command_power_more_than_40
 		
 		target_trigger = {
 			FROM = {
@@ -18489,6 +18511,7 @@ EU_defense_category = {
 		fixed_random_seed = no
 		
 		complete_effect = {
+			add_command_power = -40
 			FROM = {
 				set_country_flag = EU_military_exercise_at_border_from@ROOT
 			}
@@ -18559,7 +18582,11 @@ EU_defense_category = {
 					}					
 				}
 			}
-			activate_mission = EU_military_exercise_mission			
+			activate_mission = EU_military_exercise_mission
+			set_variable = {
+				var = ROOT.var_EU_military_exercise_host_tag
+				value = FROM
+			}			
 		}
 		ai_will_do = {
 			factor = 0
@@ -18585,7 +18612,11 @@ EU_defense_category = {
 			has_idea = EU_member
 		} 
 		
+		is_good = yes
+		
 		days_mission_timeout = 30
+				
+		days_remove = 40
 		
 		selectable_mission = yes
 		
@@ -18597,12 +18628,102 @@ EU_defense_category = {
 		
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"
-			add_command_power = -100
+			add_command_power = -40
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"
-			add_command_power = 100
-			
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"	
+			### mission reward
+			if = {
+				limit = {
+					divisions_in_state = {				
+						size > 10
+						state = ROOT.var_EU_military_exercise_host_state
+					}				
+				}
+				add_named_threat = { 
+					threat = 2 
+					name = EU_military_exercise_threat
+				}
+				army_experience = 100
+				add_command_power = 100
+			}
+			else_if = {
+				limit = {
+					divisions_in_state = {				
+						size > 5
+						state = ROOT.var_EU_military_exercise_host_state
+					}				
+				}
+				add_named_threat = { 
+					threat = 1 
+					name = EU_military_exercise_threat
+				}
+				army_experience = 50
+				add_command_power = 50
+			}
+			else = {
+				add_named_threat = { 
+					threat = 0.5 
+					name = EU_military_exercise_threat
+				}
+				army_experience = 10
+				add_command_power = 10
+			}						
+			### diplo
+			every_country = {
+				limit = {
+					original_tag = ROOT.var_EU_military_exercise_host_tag
+				}			
+				ROOT = {
+					add_opinion_modifier = {
+						target = PREV
+						modifier = hosted_military_exercise
+					}
+				}	
+			}
+			every_country = {
+				limit = {
+					original_tag = ROOT.var_EU_military_exercise_host_tag
+				}
+				ROOT = {
+					reverse_add_opinion_modifier = {
+						target = PREV
+						modifier = executed_military_exercise
+					}
+				}
+			}
+			every_country = {
+				limit = {
+					original_tag = ROOT.var_EU_military_exercise_target
+				}
+				ROOT = {
+					reverse_add_opinion_modifier = {
+						target = PREV
+						modifier = military_exercise_on_border
+					}
+				}
+			}
+
+			### activate counter_military_exercise_mission
+			every_country = {
+				limit = {
+					original_tag = ROOT.var_EU_military_exercise_target
+				}
+				random_owned_state = {
+					limit = {
+						any_neighbor_state = {
+							state = ROOT.var_EU_military_exercise_host_state
+						}
+					}
+					set_variable = {
+						var = PREV.var_counter_military_exercise_state
+						value = THIS
+					}					
+				}				
+				activate_mission = counter_military_exercise_mission
+			}		
+		}
+		remove_effect = {
 			every_country = {
 				limit = {
 					has_country_flag = EU_military_exercise_at_border_from@ROOT
@@ -18617,19 +18738,24 @@ EU_defense_category = {
 			}
 			clr_country_flag = EU_military_exercise_prep
 			clear_variable = ROOT.var_EU_military_exercise_target
-			clear_variable = ROOT.var_EU_military_exercise_host_state			
-		}
+			clear_variable = ROOT.var_EU_military_exercise_host_state
+			clear_variable = ROOT.var_EU_military_exercise_host_tag
+        }
 	}
+
 	
-	EU_military_exercise_execute_mission = {	
+}
+ 
+GEN_political_decisions = { ### temp category
+
+	counter_military_exercise_mission = {	
 		
 		allowed = { always = no }
 		
 		available = {
-			check_variable = { global.var_EU_military_exercise_participants > 0 }
 			divisions_in_state = {				
 				size > 0
-				state = global.var_EU_military_exercise_host_state
+				state = ROOT.var_counter_military_exercise_state
 			}
 		}
 		
@@ -18638,10 +18764,14 @@ EU_defense_category = {
 		}
 		
 		visible = { 
-			has_idea = EU_member
+			
 		} 
 		
+		is_good = yes
+		
 		days_mission_timeout = 30
+				
+		days_remove = 30
 		
 		selectable_mission = yes
 		
@@ -18652,85 +18782,85 @@ EU_defense_category = {
 		fire_only_once = yes
 		
 		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"
-			###effect
-			add_command_power = -100
-			
-			###end of effect
-			
-			###clear all
-			clr_global_flag = EU_military_exercise
-			every_country = {
-				limit = {
-					has_country_flag = EU_military_exercise_at_border
-				}
-				clr_country_flag = EU_military_exercise_at_border
-			}
-			every_country = {
-				limit = {
-					has_country_flag = EU_host_military_exercise
-				}
-				clr_country_flag = EU_host_military_exercise
-			}
-			every_country = {
-				limit = {
-					has_country_flag = EU_military_exercise_force_deployed
-				}
-				clr_country_flag = EU_military_exercise_force_deployed
-			}			
-			clear_variable = global.var_EU_military_exercise_target
-			clear_variable = global.var_EU_military_exercise_host_state
-			clear_variable = global.var_EU_military_exercise_participants
-			### end of clear all
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect counter_military_exercise_mission"
+			add_command_power = -40
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"
-			###effect
-			set_temp_variable = { temp1 = global.var_EU_military_exercise_participants }
-			multiply_temp_variable = { temp1 = 10 }
-			every_country = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect counter_military_exercise_mission"
+			### mission reward
+			if = {
 				limit = {
-					has_country_flag = EU_military_exercise_force_deployed
+					divisions_in_state = {				
+						size > 10
+						state = ROOT.var_EU_military_exercise_host_state
+					}				
 				}
-				army_experience = temp1
+				add_named_threat = { 
+					threat = 2 
+					name = EU_military_exercise_threat
+				}
+				army_experience = 100
+				add_command_power = 100
 			}
-			set_temp_variable = { temp2 = global.var_EU_military_exercise_participants }
-			multiply_temp_variable = { temp2 = 0.1 }			
-			add_threat = temp2 
-
-			clear_variable = temp1
-			clear_variable = temp2
+			else_if = {
+				limit = {
+					divisions_in_state = {				
+						size > 5
+						state = ROOT.var_EU_military_exercise_host_state
+					}				
+				}
+				add_named_threat = { 
+					threat = 1 
+					name = EU_military_exercise_threat
+				}
+				army_experience = 50
+				add_command_power = 50
+			}
+			else = {
+				add_named_threat = { 
+					threat = 0.5 
+					name = EU_military_exercise_threat
+				}
+				army_experience = 10
+				add_command_power = 10
+			}
 			
-			###end of effect
-			
-			###clear all
-			clr_global_flag = EU_military_exercise
+			### diplo
 			every_country = {
 				limit = {
-					has_country_flag = EU_military_exercise_at_border
+					has_country_flag = EU_military_exercise_prep
 				}
-				clr_country_flag = EU_military_exercise_at_border
+				ROOT = {
+					reverse_add_opinion_modifier = {
+						target = PREV
+						modifier = countered_military_exercise
+					}
+				}			
 			}
 			every_country = {
 				limit = {
-					has_country_flag = EU_host_military_exercise
+					has_country_flag = EU_military_exercise_prep
+				}			
+				every_country = {
+					limit = {
+						original_tag = PREV.var_EU_military_exercise_host_tag
+					}
+					ROOT = {
+						reverse_add_opinion_modifier = {
+							target = PREV
+							modifier = military_exercise_on_border
+						}
+					}	
 				}
-				clr_country_flag = EU_host_military_exercise
-			}
-			every_country = {
-				limit = {
-					has_country_flag = EU_military_exercise_force_deployed
-				}
-				clr_country_flag = EU_military_exercise_force_deployed
 			}			
-			clear_variable = global.var_EU_military_exercise_target
-			clear_variable = global.var_EU_military_exercise_host_state
-			clear_variable = global.var_EU_military_exercise_participants
-			### end of clear all		
+			
 		}
+		remove_effect = {
+			clear_variable = ROOT.var_counter_military_exercise_state
+        }
 	}
-	
-} 
+ 
+}
 
 ##################################
 ### End of EU_defense_category ###
