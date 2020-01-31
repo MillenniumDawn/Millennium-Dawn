@@ -37,7 +37,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			add_political_power = 25
 			log = "[GetDateText]: [This.GetName]: focus GCC_socio_economic_affairs executed"
 		}
 		
@@ -5881,7 +5881,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			add_political_power = 25
 			log = "[GetDateText]: [This.GetName]: focus GCC_foreign_affairs executed"
 		}
 		
@@ -5909,7 +5909,38 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			every_country = {
+				limit = {
+					OR = {
+						original_tag = ALB
+						original_tag = BOS
+						original_tag = KOS
+						original_tag = TUR
+					}
+				}
+				custom_effect_tooltip = gain_10_ROOT_influence_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_influence_muslim_europe executed"
 		}
 		
@@ -5935,15 +5966,45 @@ focus_tree = {
 		mutually_exclusive = { focus = GCC_contain_the_turks }
 		
 		available = {
+			NOT = { has_war_with = TUR }
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			every_country = {
+				news_event = { days = 1 id = gulf.14 }
+			}		
+			add_ai_strategy = { type = befriend id = "TUR" value = 100 }
+			TUR = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support 
+				}
+				add_ai_strategy = { type = befriend id = "ROOT" value = 100 }
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_befriend_the_turks executed"
 		}
 		
 		ai_will_do = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				ROOT = {
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = TUR } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.09 }
+				}
+			}
 		}
 	}
 	
@@ -5961,12 +6022,24 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_befriend_the_turks }
-		
+				
 		available = {
+			has_war = no
+			TUR = {
+				has_opinion = {
+					target = ROOT
+					value > 9
+				}
+			}
 		}
 		
 		completion_reward = {
 			give_military_access = TUR
+			custom_effect_tooltip = turkey_strategic_reasons_tt
+			TUR = {
+				add_ai_strategy = { type = support id = "ROOT" value = 100 }
+				add_ai_strategy = { type = protect id = "ROOT" value = 100 }
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_turkish_bases executed"
 		}
 		
@@ -5991,10 +6064,18 @@ focus_tree = {
 		prerequisite = { focus = GCC_turkish_bases }
 		
 		available = {
+			has_war = no
+			TUR = {
+				has_opinion = {
+					target = ROOT
+					value > 49
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			give_guarantee = TUR
+			TUR = { give_guarantee = ROOT }
 			log = "[GetDateText]: [This.GetName]: focus GCC_security_guarantees_turkey executed"
 		}
 		
@@ -6020,15 +6101,101 @@ focus_tree = {
 		mutually_exclusive = { focus = GCC_befriend_the_turks }
 		
 		available = {
+			any_country = {
+				custom_trigger_tooltip = {	
+					tooltip = is_middle_eastern_tt
+					OR = {
+						original_tag = ALA
+						original_tag = AQY
+						original_tag = BHR
+						original_tag = DRU
+						original_tag = FSA
+						original_tag = GNC
+						original_tag = HAM
+						original_tag = HEZ
+						original_tag = HOU
+						original_tag = IRQ
+						original_tag = ISI
+						original_tag = ISR
+						original_tag = JOR
+						original_tag = KUR
+						original_tag = KUW
+						original_tag = LEB
+						original_tag = NUS
+						original_tag = OMA
+						original_tag = PAL
+						original_tag = PER
+						original_tag = PKK
+						original_tag = QAT
+						original_tag = ROJ
+						original_tag = SAU
+						original_tag = SYR
+						original_tag = UAE
+						original_tag = YEM
+					}
+				}
+				OR = {
+					gives_military_access_to = TUR
+					is_puppet_of = TUR
+					has_volunteers_amount_from = {
+						tag = TUR
+						count > 0
+					}
+					has_war_with = TUR
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			every_country = {
+				news_event = { days = 1 id = gulf.15 }
+			}	
+			TUR = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = criticized_us 
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_contain_the_turks executed"
 		}
 		
 		ai_will_do = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				any_country = {
+					OR = {
+						original_tag = ALA
+						original_tag = AQY
+						original_tag = BHR
+						original_tag = DRU
+						original_tag = FSA
+						original_tag = GNC
+						original_tag = HAM
+						original_tag = HEZ
+						original_tag = HOU
+						original_tag = IRQ
+						original_tag = ISI
+						original_tag = ISR
+						original_tag = JOR
+						original_tag = KUR
+						original_tag = KUW
+						original_tag = LEB
+						original_tag = NUS
+						original_tag = OMA
+						original_tag = PAL
+						original_tag = PER
+						original_tag = PKK
+						original_tag = QAT
+						original_tag = ROJ
+						original_tag = SAU
+						original_tag = SYR
+						original_tag = UAE
+						original_tag = YEM
+					}
+					has_war_with = TUR
+				}
+			}
 		}
 	}
 	
@@ -6048,10 +6215,68 @@ focus_tree = {
 		prerequisite = { focus = GCC_contain_the_turks }
 		
 		available = {
+			any_country = {
+				custom_trigger_tooltip = {	
+					tooltip = is_middle_eastern_tt
+					OR = {
+						original_tag = ALA
+						original_tag = AQY
+						original_tag = BHR
+						original_tag = DRU
+						original_tag = FSA
+						original_tag = GNC
+						original_tag = HAM
+						original_tag = HEZ
+						original_tag = HOU
+						original_tag = IRQ
+						original_tag = ISI
+						original_tag = ISR
+						original_tag = JOR
+						original_tag = KUR
+						original_tag = KUW
+						original_tag = LEB
+						original_tag = NUS
+						original_tag = OMA
+						original_tag = PAL
+						original_tag = PER
+						original_tag = PKK
+						original_tag = QAT
+						original_tag = ROJ
+						original_tag = SAU
+						original_tag = SYR
+						original_tag = UAE
+						original_tag = YEM
+					}
+				}
+				OR = {
+					gives_military_access_to = TUR
+					is_puppet_of = TUR
+					has_volunteers_amount_from = {
+						tag = TUR
+						count > 0
+					}
+					has_war_with = TUR
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			TUR = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = sanctions_relations
+				}
+			}
+			add_opinion_modifier = {
+				target = TUR
+				modifier = sanctions
+			}
+			TUR = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = sanctions
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_sanction_turkey executed"
 		}
 		
@@ -6079,7 +6304,38 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			every_country = {
+				limit = {
+					OR = {
+						original_tag = IRQ
+						original_tag = JOR
+						original_tag = LEB
+						original_tag = SYR
+					}
+				}
+				custom_effect_tooltip = gain_10_ROOT_influence_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_influence_the_levant executed"
 		}
 		
@@ -6120,7 +6376,7 @@ focus_tree = {
 	
 	focus = {
 		id = GCC_favor_resistance
-		icon = demand_territory
+		icon = ultimatum
 		
 		x = -5
 		y = 2
@@ -6136,10 +6392,16 @@ focus_tree = {
 		mutually_exclusive = { focus = GCC_jordanian_ties }
 		
 		available = {
+			NOT = { has_war_with = PAL }
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			PAL = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_favor_resistance executed"
 		}
 		
@@ -6164,10 +6426,16 @@ focus_tree = {
 		prerequisite = { focus = GCC_jordanian_ties }
 		
 		available = {
+			NOT = { has_war_with = ISR }
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			ISR = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_friendship_with_israel executed"
 		}
 		
@@ -6365,10 +6633,16 @@ focus_tree = {
 		prerequisite = { focus = GCC_favor_resistance }
 		
 		available = {
+			NOT = { has_war_with = LEB }
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			LEB = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_live_and_let_live executed"
 		}
 		
@@ -6394,10 +6668,16 @@ focus_tree = {
 		prerequisite = { focus = GCC_the_arab_street focus = GCC_expel_us_interests }
 		
 		available = {
+			NOT = { has_war_with = HAM }
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			HAM = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_support_hamas executed"
 		}
 		
@@ -6634,10 +6914,16 @@ focus_tree = {
 		mutually_exclusive = { focus = GCC_antagonize_iran }
 		
 		available = {
+			NOT = { has_war_with = PER }
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			PER = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support 
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_improve_relations_with_iran executed"
 		}
 		
@@ -6888,10 +7174,16 @@ focus_tree = {
 		mutually_exclusive = { focus = GCC_distance_from_america }
 		
 		available = {
+			NOT = { has_war_with = USA }
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			USA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support 
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_strengthen_us_ties executed"
 		}
 		
@@ -7086,10 +7378,16 @@ focus_tree = {
 		mutually_exclusive = { focus = GCC_reject_foreign_interference }
 		
 		available = {
+			NOT = { has_war_with = SOV }
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			SOV = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_friendship_with_russia executed"
 		}
 		
@@ -7142,10 +7440,23 @@ focus_tree = {
 		prerequisite = { focus = GCC_invite_russian_advisors }
 		
 		available = {
+			has_war = no
+			SOV = {
+				has_opinion = {
+					target = ROOT
+					value > 9
+				}
+			}
 		}
 		
 		completion_reward = {
 			give_military_access = SOV
+			custom_effect_tooltip = russia_strategic_reasons_tt
+			SOV = {
+				add_ai_strategy = { type = support id = "ROOT" value = 100 }
+				add_ai_strategy = { type = befriend id = "ROOT" value = 100 }
+				add_ai_strategy = { type = protect id = "ROOT" value = 100 }
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_russian_bases executed"
 		}
 		
@@ -7184,8 +7495,8 @@ focus_tree = {
 	}
 	
 	focus = {
-		id = GCC_war_with_imperialism
-		icon = war
+		id = GCC_attack_foreign_stooges
+		icon = war_in_europe
 		
 		x = 6
 		y = 5
@@ -7197,6 +7508,34 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_reject_foreign_interference }
+		
+		available = {
+		}
+		
+		completion_reward = {
+			add_political_power = 10
+			log = "[GetDateText]: [This.GetName]: focus GCC_attack_foreign_stooges executed"
+		}
+		
+		ai_will_do = {
+			base = 1
+		}
+	}
+	
+	focus = {
+		id = GCC_war_with_imperialism
+		icon = war
+		
+		x = 6
+		y = 6
+		relative_position_id = GCC_foreign_affairs
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = GCC_attack_foreign_stooges }
 		
 		available = {
 		}
@@ -7230,7 +7569,40 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			every_country = {
+				limit = {
+					OR = {
+						original_tag = ALG
+						original_tag = EGY
+						original_tag = LBA
+						original_tag = MOR
+						original_tag = SUD
+						original_tag = TUN
+					}
+				}
+				custom_effect_tooltip = gain_10_ROOT_influence_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_influence_north_africa executed"
 		}
 		
@@ -7473,7 +7845,38 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			every_country = {
+				limit = {
+					OR = {
+						original_tag = BAN
+						original_tag = RAJ
+						original_tag = PAK
+						original_tag = SRI
+					}
+				}
+				custom_effect_tooltip = gain_10_ROOT_influence_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_influence_south_asia executed"
 		}
 		
@@ -7498,10 +7901,16 @@ focus_tree = {
 		prerequisite = { focus = GCC_influence_south_asia }
 		
 		available = {
+			NOT = { has_war_with = PAK }
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			PAK = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support 
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_affirm_pakistani_ties executed"
 		}
 		
@@ -7586,7 +7995,8 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			give_guarantee = PAK
+			PAK = { give_guarantee = ROOT }
 			log = "[GetDateText]: [This.GetName]: focus GCC_security_guarantees executed"
 		}
 		
@@ -7611,10 +8021,16 @@ focus_tree = {
 		prerequisite = { focus = GCC_influence_south_asia }
 		
 		available = {
+			NOT = { has_war_with = RAJ }
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			RAJ = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support 
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_draw_closer_to_india executed"
 		}
 		
@@ -7696,10 +8112,23 @@ focus_tree = {
 		prerequisite = { focus = GCC_end_the_special_relationship }
 		
 		available = {
+			has_war = no
+			RAJ = {
+				has_opinion = {
+					target = ROOT
+					value > 9
+				}
+			}
 		}
 		
 		completion_reward = {
 			give_military_access = RAJ
+			custom_effect_tooltip = india_strategic_reasons_tt
+			RAJ = {
+				add_ai_strategy = { type = support id = "ROOT" value = 100 }
+				add_ai_strategy = { type = befriend id = "ROOT" value = 100 }
+				add_ai_strategy = { type = protect id = "ROOT" value = 100 }
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_indian_bases executed"
 		}
 		
