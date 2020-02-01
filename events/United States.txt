@@ -27,25 +27,192 @@ country_event = {
 	fire_only_once = yes
 	trigger = {
 		tag = USA
-		date > 2000.8.1
-		date < 2001.1.1
+		NOT = { has_start_date > 2016.1.1 }
 	}
 	
 	#They Will be Missed
 	option = {
 		name = usa.2.o1
 		log = "[GetDateText]: [This.GetName]: usa.2.o1 executed"
-		news_event = {
-			hours = 6
-			id = usa_news.18
+		
+		news_event = { hours = 6 id = usa_news.18 }
+		add_named_threat = { threat = 0.5 name = usa.2.t }
+		if = {
+			limit = { 
+				SUD = { exists = yes }
+			}
+			add_opinion_modifier = { target = SUD modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = SUD modifier = recent_actions_negative }
 		}
-		navy_experience = 5
-		add_political_power = -20
-		add_opinion_modifier = {
-			target = SUD
-			modifier = recent_actions_negative
+		else_if = {
+			limit = {
+				SUD = { exists = no }
+			}
+			random_country = {
+				limit = { 
+					has_government = fascism 
+					NOT = { tag = SAU }
+					NOT = { tag = UAE }
+					NOT = { tag = OMA }
+					NOT = { tag = QAT }
+					NOT = { tag = BHR }
+					NOT = { tag = KUW }
+					NOT = { tag = JOR }
+				}	
+				add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+				reverse_add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+			}
 		}
 		USA_congress_small_opposition = yes
+
+		ai_chance = {
+			factor = 1 
+		}
+	}
+
+	#Demand Sudan Repay!
+	option = {
+		name = usa.2.o2
+		log = "[GetDateText]: [This.GetName]: usa.2.o2 executed"
+		
+		news_event = { hours = 6 id = usa_news.18 }
+		navy_experience = 5
+		add_named_threat = {
+			threat = 0.5 
+			name = usa.2.t
+		}
+		if = {
+			limit = { 
+				SUD = { exists = yes }
+			}
+			add_opinion_modifier = { target = SUD modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = SUD modifier = recent_actions_negative }
+			SUD = { country_event = { id = usa.2a days = 7 random = 2 } }
+		}
+		else_if = {
+			limit = {
+				SUD = { exists = no }
+			}
+			random_country = {
+				limit = { 
+					has_government = fascism 
+					NOT = { tag = SAU }
+					NOT = { tag = UAE }
+					NOT = { tag = OMA }
+					NOT = { tag = QAT }
+					NOT = { tag = BHR }
+					NOT = { tag = KUW }
+					NOT = { tag = JOR }
+				}	
+				add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+				reverse_add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+				country_event = { id = usa.2a days = 7 random = 2 }
+			}
+		}
+		USA_congress_small_opposition = yes
+
+		ai_chance = {
+			factor = 0 
+			modifier = {
+				add = 0.25 
+				is_historical_focus_on = no 
+			}
+			modifier = {
+				add = 0.25 
+				has_government = nationalist 
+				has_government = communism
+			}
+		}
+	}
+}
+
+#Sudan - America Demands Repayment for the USS Cole Bombing
+country_event = {
+	id = usa.2a
+	immediate = { log = "[GetDateText]: [This.GetName}: usa.2a" }
+	title = usa.2a.t 
+	desc = usa.2a.d 
+	picture = GFX_uss_cole_bombing
+	is_triggered_only = yes 
+	fire_only_once = yes
+	trigger = {
+		USA = { has_country_flag = usa_uss_cole_attack }
+		NOT = { has_start_date > 2016.1.1 }
+	}
+
+	option = { #Accept
+		name = usa.2a.o1 
+		log = "[GetDateText]: [This.GetName}: usa.2a.o1 executed"
+		effect_tooltip = { 
+			subtract_from_variable = { treasury = 0.250 }
+			custom_effect_tooltip = 250_million_expense_tt
+			USA = {
+				add_to_variable = { treasury = 0.250 }
+				custom_effect_tooltip = 250_million_revenue_tt
+			}
+		}
+
+		ai_chance = {
+			factor = 1 
+		}
+	}
+
+	option = { #Refuse 
+		name = usa.2a.o2 
+		log = "[GetDateText]: [This.GetName}: usa.2a.o2 executed"
+		add_popularity = { ideology = fascism popularity = 0.02 }
+		recalculate_party = yes
+
+
+		ai_chance = {
+			factor = 0 
+		}
+	}
+}
+
+#From.GetName Accepted
+country_event = {
+	id = usa.2b
+	immediate = { log = "[GetDateText]: [This.GetName}: usa.2b" }
+	title = usa.2b.t 
+	desc = usa.2b.d 
+	picture = GFX_uss_cole_bombing
+	is_triggered_only = yes 
+	fire_only_once = yes
+	
+	option = { #Accept
+		name = usa.2b.o1 
+		log = "[GetDateText]: [This.GetName}: usa.2b.o1 executed"
+		subtract_from_variable = { treasury = 0.250 }
+		custom_effect_tooltip = 250_million_expense_tt
+		USA = {
+			add_to_variable = { treasury = 0.250 }
+			custom_effect_tooltip = 250_million_revenue_tt
+		}
+	
+		ai_chance = {
+			factor = 1 
+		}
+	}
+}
+
+#[From.GetName] Refuses
+country_event = {
+	id = usa.2c
+	immediate = { log = "[GetDateText]: [This.GetName}: usa.2c" }
+	title = usa.2c.t 
+	desc = usa.2c.d 
+	picture = GFX_uss_cole_bombing
+	is_triggered_only = yes 
+	fire_only_once = yes
+	
+	option = { #Accept
+		name = usa.2c.o1 
+		log = "[GetDateText]: [This.GetName}: usa.2c.o1 executed"
+
+		ai_chance = {
+			factor = 1 
+		}
 	}
 }
 
@@ -62,6 +229,7 @@ country_event = {
 		date > 2000.1.05
 		date < 2000.1.06
 		has_full_control_of_state = 778	#Illinois
+		NOT = { has_start_date > 2016.1.1 }
 	}
 	mean_time_to_happen = { days = 1 }
 	
@@ -91,6 +259,7 @@ country_event = {
 			NOT = {	is_in_array = { ruling_party = 20 } }
 			NOt = {	is_in_array = { ruling_party = 21 } }
 		}
+		NOT = { has_start_date > 2016.1.1 }
 	}
 	mean_time_to_happen = {
 		days = 40
@@ -191,6 +360,7 @@ country_event = {
 			has_country_flag = USA_allowed_microsoft_merger
 		}
 		date > 2000.2.1
+		date < 2016.01.01
 	}
 	fire_only_once = yes
 	is_triggered_only = yes
@@ -279,28 +449,28 @@ country_event = {
 	picture = GFX_blizzard
 	trigger = {
 		tag = USA
-		date < 2000.3.1
 	}
-	mean_time_to_happen = {
-		days = 30 
-	}
+	is_triggered_only = yes 
+	fire_only_once = yes
 	
 	option = {
 		name = usa.6.o1
 		log = "[GetDateText]: [This.GetName]: usa.6.o1 executed"
-		add_political_power = -15
-		add_stability = -0.04
+		add_political_power = -30
+		add_stability = -0.05
+		
 		ai_chance = { factor = 0 }
 	}
 	
 	option = {
 		name = usa.6.o2
 		log = "[GetDateText]: [This.GetName]: usa.6.o2 executed"
-		add_political_power = -60
-		add_stability = -0.01
+		add_political_power = -75
+		add_stability = -0.03
 		subtract_from_variable = { treasury = 0.5 }
 		custom_effect_tooltip = 0_5_billion_expense_tt
-		ai_chance = { factor = 10 }
+		
+		ai_chance = { factor = 5 }
 	}
 }
 
@@ -318,7 +488,7 @@ country_event = {
 			has_government = communism 
 			exists = yes
 		}
-		date < 2003.1.1 
+		NOT = { has_start_date > 2016.1.1 }
 	}
 	is_triggered_only = yes
 	fire_only_once = yes
@@ -328,18 +498,34 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: usa.7.o1 executed"
 		add_political_power = 50
 		decrease_popularity_2 = yes
+		CUB = {
+			add_opinion_modifier = { target = USA modifier = recent_actions_positive }
+			reverse_add_opinion_modifier = { target = USA modifier = recent_actions_positive }
+		}
 		hidden_effect = {
-			country_event = {
-				id = usa.22
-				days = 102
+			random_list = {
+				80 = {  
+					country_event = { id = usa.22 days = 112 random = 15 }
+				}
+				20 = {
+					country_event = { id = usa.23 days = 112 random = 15 }
+				}
 			}
 		}
-		set_country_flag = usa_elian_gonzalez_sent_to_cuba
+		custom_effect_tooltip = usa.7.o1_tt
+
 		ai_chance = {
-			factor = 5 
+			factor = 1 
 			modifier = { 
-				factor = 10 
+				add = 3
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0.50 
+			}
+			modifier = {
+				is_in_array = { ruling_party = 1 } #Republican
+				add = 0.25
 			}
 		}
 	}
@@ -349,25 +535,28 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: usa.7.o2 executed"
 		add_stability = 0.01
 		CUB = {
-			add_opinion_modifier = {
-				target = USA
-				modifier = recent_actions_negative
-			}
+			add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = USA modifier = recent_actions_negative }
 		}
-		set_country_flag = usa_elian_gonzalez_kept_in_the_states
-		add_to_variable = { party_pop_array^2 = 0.02 }
-		add_to_variable = { party_pop_array^4 = 0.03 }
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.01 }
+			add_to_variable = { party_pop_array^2 = 0.02 }
+			add_to_variable = { party_pop_array^4 = 0.03 }
+		}
 		recalculate_party = yes
 		custom_effect_tooltip = USA_gain_communists_2_TT
-		add_named_threat = { 
-			threat = 0.3
-			name = usa.7.t
-		}
+		custom_effect_tooltip = USA_gain_liberalism_1_TT
+
+		add_named_threat = { threat = 1.5 name = usa.7.t }
 		ai_chance = {
-			factor = 5
+			factor = 1
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 3 
+				is_historical_focus_on = no 
 			}
 		}
 	}
@@ -380,39 +569,64 @@ country_event = {
 	title = usa.8.t
 	desc = usa.8.d
 	picture = GFX_ehimemaru
+	is_triggered_only = yes
 	fire_only_once = yes 
 	trigger = {
 		tag = USA
-		date > 2001.1.1
-		date < 2006.1.1
-	}
-	mean_time_to_happen = {
-		days = 60 
+		NOT = { has_start_date > 2016.1.1 }
 	}
 	
 	option = {	#Apologize
 		name = usa.8.o1
 		log = "[GetDateText]: [This.GetName]: usa.8.o1 executed"	
 		add_stability = -0.01
-		decrease_popularity_1 = yes 
+		decrease_popularity_1 = yes
+		JAP = {
+			add_opinion_modifier = { target = USA modifier = recent_actions_positive }
+			reverse_add_opinion_modifier = { target = USA modifier = recent_actions_positive }
+		}
+
+		ai_chance = {
+			factor = 1 
+			modifier = {
+				add = 0.25 
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 0.10 
+				has_government = democratic
+				has_government = neutrality
+			}
+		}
 	}
 	
 	option = {	#It's their fault
 		name = usa.8.o2
 		log = "[GetDateText]: [This.GetName]: usa.8.o2 executed"
-		add_named_threat = { 
-			threat = 0.05
-			name = usa.8.t 
-		}
+		add_named_threat = { threat = 0.5 name = usa.8.t }
 		decrease_popularity_2 = yes 
 		JAP = {
-			add_opinion_modifier = {
-				target = USA
-				modifier = recent_actions_negative
+			add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = USA modifier = recent_actions_negative }
+		}
+		hidden_effect = { 
+			add_popularity = { ideology = nationalist popularity = 0.01 }
+			add_to_variable = { party_pop_array^20 = 0.02 }
+		}
+		custom_effect_tooltip = usa.8.o2_tt
+
+		ai_chance = {
+			factor = 0 
+			modifier = {
+				has_government = communism
+				has_government = nationalist 
+				add = 0.50 
+			}
+			modifier = {
+				is_historical_focus_on = no 
+				add = 0.25 
 			}
 		}
-		add_to_variable = { party_pop_array^20 = 0.02 }
-		custom_effect_tooltip = usa.8.o2_tt
 	}
 }
 
@@ -423,18 +637,21 @@ country_event = {
 	title = usa.9.t
 	desc = usa.9.d
 	picture = GFX_plane_crash
+	is_triggered_only = yes
 	fire_only_once = yes 
 	trigger = {
-		date > 2000.1.30
-		date < 2000.6.1
-	}
-	mean_time_to_happen = {
-		days = 10 
+		tag = USA
+		NOT = { has_start_date > 2016.1.1 }
 	}
 	
-	option = {
+	option = { #Sad Day
 		name = usa.9.o1
 		log = "[GetDateText]: [This.GetName]: usa.9.01 executed"
+		decrease_popularity_1 = yes #Government Becomes a little less popular
+
+		ai_chance = {
+			factor = 1
+		}
 	}
 }
 
@@ -801,10 +1018,6 @@ country_event = {
 	is_triggered_only = yes 
 	trigger = {
 		tag = USA
-		USA = {
-			has_idea = idea_USA_political_establishment
-			has_elections = yes
-		}
 	}
 	
 	#Okay
@@ -839,7 +1052,6 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		tag = USA
-		has_elections = yes
 	}
 	
 	option = {	#A new alternative?
@@ -847,9 +1059,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: usa.18.o1 executed"
 		hidden_effect = {
 			add_popularity = { ideology = communism popularity = 0.01 }
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-			subtract_from_variable = { party_pop_array^2 = 0.02 }
-			subtract_from_variable = { party_pop_array^1 = 0.02 }
+			add_popularity = { ideology = neutrality popularity = 0.05 }
 			add_to_variable = { party_pop_array^6 = 0.02 }
 			add_to_variable = { party_pop_array^16 = 0.02 }
 			add_to_variable = { party_pop_array^17 = 0.02 }
@@ -877,10 +1087,6 @@ country_event = {
 	is_triggered_only = yes 
 	trigger = {
 		tag = USA
-		has_elections = yes
-	}
-	mean_time_to_happen = {
-		days = 1
 	}
 	
 	option = {
@@ -915,34 +1121,60 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		tag = USA
-		has_elections = yes
 	}
 	
 	option = {	#The establishment is right.
 		name = usa.20.o1
 		log = "[GetDateText]: [This.GetName]: usa.20.o1 executed"
-		add_political_power = 10
-		
+		add_popularity = { ideology = democratic popularity = 0.02 }
+		recalculate_party = yes 
+
 		ai_chance = { 
-			factor = 100 
+			factor = 10
+			modifier = {
+				add = 5 
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 5 
+				is_historical_focus_on = no 
+			}
+			modifier = { 
+				add = 2
+				has_government = democratic
+			}
 		}
 	}
 	
 	option = {	#The environmentalists are right.
 		name = usa.20.o2
 		log = "[GetDateText]: [This.GetName]: usa.20.o2 executed"
-		add_political_power = -10
-		
+		add_popularity = { ideology = neutrality popularity = 0.02 }
+		recalculate_party = yes	
+
 		ai_chance = { 
-			factor = 0 
+			factor = 0
+			modifier = {
+				factor = 0 
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 2 
+				is_historical_focus_on = no 
+			}
+			modifier = { 
+				add = 2
+				has_government = neutrality
+			}
 		}
 	}
 	
 	option = {	#Perhaps we should listen to the nationalists?
 		name = usa.20.o3
 		log = "[GetDateText]: [This.GetName]: usa.20.o3 executed"
-		add_political_power = -10
-		
+		add_popularity = { ideology = nationalist popularity = 0.02 }
+		recalculate_party = yes
+
 		ai_chance = { 
 			factor = 0 
 		}
@@ -958,13 +1190,6 @@ country_event = {
 	is_triggered_only = yes 
 	trigger = {
 		tag = USA
-		USA = {
-			has_idea = idea_USA_political_establishment
-			has_elections = yes
-		}
-	}
-	mean_time_to_happen = {
-		days = 1
 	}
 	
 	option = {
@@ -981,7 +1206,7 @@ country_event = {
 		
 		hidden_effect = { country_event = { id = usa.1000 days = 120 random = 20 } }
 		ai_chance = {
-			factor = 1 
+			factor = 1
 		}
 	}
 }
@@ -1013,329 +1238,27 @@ country_event = {
 	}
 }
 
-#The New President lost the Popular Vote
-country_event = {	
-	id = usa.25
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.25" }
-	title = usa.25.t
-	desc = usa.25.d
-	picture = GFX_USA_generic
+#Elian Gonzalez Alludes Capture
+country_event = {
+	id = usa.23
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.23" }
+	title = usa.23.t
+	desc = usa.23.d
+	picture = GFX_elian_gonzalez
 	is_triggered_only = yes
+	fire_only_once = yes
+	trigger = {
+		tag = USA
+	}
 	
-	option = {
-		name = usa.25.o1
-		log = "[GetDateText]: [This.GetName]: usa.25.o1 executed"
-		add_stability = -0.02
-		decrease_popularity_2 = yes
+	option = {	#Unfortunate
+		name = usa.23.o1
+		log = "[GetDateText]: [This.GetName]: usa.23.o1 executed"
+		add_political_power = -50
 		
 		ai_chance = {
-			factor = 1
+			factor = 1 
 		}
-	}
-}
-
-#The mew NATO Leader
-country_event = {	
-	id = usa.26
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.26" }
-	title = usa.26.t
-	desc = usa.26.d
-	picture = GFX_NATO_picture
-	
-	is_triggered_only = yes
-	
-	option = {	#CAN
-		name = usa.26.o1
-		log = "[GetDateText]: [This.GetName]: usa.26.o1 executed"
-		trigger = {
-			CAN = {
-				has_idea = NATO_member
-				num_of_factories > 49 
-				has_elections = yes 
-				is_puppet = no
-			}
-		}
-		every_country = {
-			limit = {
-				NOT = { tag = CAN }
-				NOT = { tag = USA }
-				OR = {
-					has_idea = NATO_member 
-					is_in_faction_with = USA
-				}
-			}
-			set_country_flag = to_be_added_to_new_nato
-		}
-		CAN = { 
-			create_faction = NATO
-			country_event = usa.27
-		}
-		hidden_effect = {
-			every_country = {
-				limit = { 
-					has_country_flag = to_be_added_to_new_nato
-				}
-				CAN = { add_to_faction = PREV }
-				clr_country_flag = to_be_added_to_new_nato
-				set_country_flag = seeks_canadian_alliance
-			}
-		}
-		dismantle_faction = yes
-	}
-	
-	option = {	#ENG
-		name = usa.26.o2
-		log = "[GetDateText]: [This.GetName]: usa.26.o2 executed"
-		trigger = {
-			ENG = {
-				has_idea = NATO_member
-				num_of_factories > 49 
-				has_elections = yes 
-				is_puppet = no
-			}
-		}
-		every_country = {
-			limit = {
-				NOT = { tag = ENG }
-				NOT = { tag = USA }
-				OR = {	
-					has_idea = NATO_member 
-					is_in_faction_with = USA
-				}
-			}
-			set_country_flag = to_be_added_to_new_nato
-		}
-		ENG = { 
-			create_faction = NATO
-			country_event = usa.27
-		}
-		hidden_effect = {
-			every_country = {
-				limit = { 
-					has_country_flag = to_be_added_to_new_nato
-				}
-				ENG = { add_to_faction = PREV }
-				clr_country_flag = to_be_added_to_new_nato
-				set_country_flag = seeks_british_alliance
-			}
-		}
-		dismantle_faction = yes
-	}
-	
-	option = {	#FRA
-		name = usa.26.o3
-		log = "[GetDateText]: [This.GetName]: usa.26.o3 executed"
-		trigger = {
-			FRA = {
-				has_idea = NATO_member
-				num_of_factories > 49 
-				has_elections = yes 
-				is_puppet = no
-			}
-		}
-		every_country = {
-			limit = {
-				NOT = { tag = FRA }
-				NOT = { tag = USA }
-				OR = {	
-					has_idea = NATO_member
-					is_in_faction_with = USA
-				}
-			}
-			set_country_flag = to_be_added_to_new_nato
-		}
-		FRA = { 
-			create_faction = NATO
-			country_event = usa.27
-		}
-		hidden_effect = {
-			every_country = {
-				limit = { 
-					has_country_flag = to_be_added_to_new_nato
-				}
-				FRA = { add_to_faction = PREV }
-				clr_country_flag = to_be_added_to_new_nato
-				set_country_flag = seeks_french_alliance
-			}
-		}
-		dismantle_faction = yes
-	}
-	
-	option = {	#GER
-		name = usa.26.o4
-		log = "[GetDateText]: [This.GetName]: usa.26.o4 executed"
-		trigger = {
-			GER = {
-				has_idea = NATO_member
-				num_of_factories > 49 
-				has_elections = yes 
-				is_puppet = no
-			}
-		}
-		every_country = {
-			limit = {
-				NOT = { tag = GER }
-				NOT = { tag = USA }
-				OR = {
-					has_idea = NATO_member
-					is_in_faction_with = USA
-				}
-			}
-			set_country_flag = to_be_added_to_new_nato
-		}
-		GER = { 
-			create_faction = NATO
-			country_event = usa.27
-		}
-		hidden_effect = {
-			every_country = {
-				limit = { 
-					has_country_flag = to_be_added_to_new_nato
-				}
-				GER = { add_to_faction = PREV }
-				clr_country_flag = to_be_added_to_new_nato
-				set_country_flag = seeks_german_alliance
-			}
-		}
-		dismantle_faction = yes
-	}
-	
-	option = {	#ITA
-		name = usa.26.o5
-		log = "[GetDateText]: [This.GetName]: usa.26.o5 executed"
-		trigger = {
-			ITA = {
-				has_idea = NATO_member
-				num_of_factories > 49 
-				has_elections = yes 
-				is_puppet = no
-			}
-		}
-		every_country = {
-			limit = {
-				NOT = { tag = ITA }
-				NOT = { tag = USA }
-				OR = {
-					has_idea = NATO_member
-					is_in_faction_with = USA
-				}
-			}
-			set_country_flag = to_be_added_to_new_nato
-		}
-		ITA = { 
-			create_faction = NATO
-			country_event = usa.27
-		}
-		hidden_effect = {
-			every_country = {
-				limit = { 
-					has_country_flag = to_be_added_to_new_nato
-				}
-				ITA = { add_to_faction = PREV }
-				clr_country_flag = to_be_added_to_new_nato
-				set_country_flag = seeks_italian_alliance
-			}
-		}
-		dismantle_faction = yes
-	}
-}
-
-#Focus Tree: USA makes us NATO leader!
-country_event = { 
-	id = usa.27
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.27" }
-	title = usa.27.t
-	desc = usa.27.d
-	picture = GFX_NATO_picture
-	
-	is_triggered_only = yes
-	
-	option = {	#Excellent news!
-		name = usa.27.o1
-		log = "[GetDateText]: [This.GetName]: usa.27.o1 executed"
-		add_political_power = 300
-	}	
-}
-
-#Focus Tree: Invitation to the American Faction
-country_event = { 
-	id = usa.28
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.28" }
-	title = usa.28.t
-	desc = usa.28.d
-	picture = GFX_USA_generic
-	is_triggered_only = yes
-	
-	option = {	#We accept!
-		name = usa.28.o1
-		log = "[GetDateText]: [This.GetName]: usa.28.o1 executed"
-		USA = { add_to_faction = ROOT }
-		hidden_effect = {
-			USA = { country_event = diplomatic_response.1 }
-		}
-		set_country_flag = seeks_american_alliance
-		ai_chance = { 
-			base = 100
-			modifier = {
-				is_faction_leader = yes
-				add = -100
-			}
-		}
-	}
-	
-	option = {	#We refuse!
-		name = usa.28.o2
-		log = "[GetDateText]: [This.GetName]: usa.28.o2 executed"
-		add_political_power = 50
-		hidden_effect = {
-			USA = { country_event = diplomatic_response.2 }
-		}
-		ai_chance = { 
-			base = 0
-			modifier = {
-				is_in_faction = yes 
-				add = 50
-			}
-		}
-	}
-}
-
-#American Infrastructure Investments - Old Needs Updating and Used - Decisions? USAID?
-country_event = { 
-	id = usa.29
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.29" }
-	title = usa.29.t
-	desc = usa.29.d
-	picture = GFX_united_states_dollar
-	is_triggered_only = yes
-	
-	#Excellent
-	option = {	
-		name = usa.29.o1
-		log = "[GetDateText]: [This.GetName]: usa.29.o1 executed"
-		random_owned_controlled_state = {
-			add_building_construction = {
-				type = infrastructure
-				level = 1
-				instant_build = yes
-			}
-		}
-		random_owned_controlled_state = {
-			add_building_construction = {
-				type = infrastructure
-				level = 1
-				instant_build = yes
-			}
-		}
-	}
-	
-	#Fund Other Things!
-	option = {	
-		name = usa.29.o2
-		log = "[GetDateText]: [This.GetName]: usa.29.o2 executed"
-		add_stability = 0.01
-		add_political_power = 10
-		add_stability = 0.01
 	}
 }
 
@@ -1351,9 +1274,7 @@ country_event = {
 	option = {	#Excellent.
 		name = usa.31.o1
 		log = "[GetDateText]: [This.GetName]: usa.31.o1 executed"
-		add_stability = 0.02
-		add_political_power = 100
-		add_stability = 0.03
+		add_war_support = 0.02 
 		army_experience = 50
 		navy_experience = 50
 		air_experience = 50
@@ -1386,6 +1307,8 @@ country_event = {
 		add_popularity = { ideology = nationalist popularity = 0.05 }
 		add_to_variable = { party_pop_array^20 = 0.05 }
 		recalculate_party = yes 
+		add_stability = 0.02
+		add_political_power = 100
 		USA_effect_american_lose_american_influence_10 = yes
 		
 		ai_chance = {
@@ -1416,10 +1339,10 @@ country_event = {
 
 #United States vs Microsoft Corp
 country_event = {
-	id = usa.47
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.47" }
-	title = usa.47.t
-	desc = usa.47.d
+	id = usa.32
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.32" }
+	title = usa.32.t
+	desc = usa.32.d
 	picture = GFX_court
 	is_triggered_only = yes
 	trigger = {
@@ -1428,10 +1351,11 @@ country_event = {
 	
 	#Guilty
 	option = {
-		name = usa.47.o1
-		log = "[GetDateText]: [This.GetName]: usa.12.o1 executed"
+		name = usa.32.o1
+		log = "[GetDateText]: [This.GetName]: usa.32.o1 executed"
 		add_political_power = 100
 		decrease_wall_street_opinion = yes 
+		usa_regulations_increased_by_2 = yes #Greater Regulations to Combat Monopolies
 		
 		ai_chance = {
 			factor = 1 
@@ -1440,11 +1364,11 @@ country_event = {
 	
 	#Not Guilty
 	option = {
-		name = usa.47.o2
-		log = "[GetDateText]: [This.GetName]: usa.12.o1 executed"
+		name = usa.32.o2
+		log = "[GetDateText]: [This.GetName]: usa.32.o2 executed"
 		add_political_power = -50 
 		increase_wall_street_opinion = yes
-		country_event = { id = usa.48 days = 90 random = 20 }
+		country_event = { id = usa.33 days = 90 random = 20 }
 		
 		ai_chance = {
 			factor = 0 
@@ -1454,20 +1378,21 @@ country_event = {
 
 #Microsoft allowed to expand further
 country_event = {
-	id = usa.48
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.48" }
-	title = usa.48.t
-	desc = usa.48.d
+	id = usa.33
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.33" }
+	title = usa.33.t
+	desc = usa.33.d
 	picture = GFX_court
 	is_triggered_only = yes
 	trigger = {
 		tag = USA
 	}
 	
+	#Increased Economic Prosperity
 	option = {
-		name = usa.48.o1
-		log = "[GetDateText]: [This.GetName]: usa.48.o1 executed"
-		add_stability = -0.03
+		name = usa.33.o1
+		log = "[GetDateText]: [This.GetName]: usa.33.o1 executed"
+		slightly_increase_economic_growth = yes
 		if = {
 			limit = {
 				811 = {
@@ -1489,7 +1414,7 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				811 = { 
+				811 = {
 					free_building_slots = {
 						building = industrial_complex
 						size = 0
@@ -1505,18 +1430,20 @@ country_event = {
 				}
 			}
 		}
+
+		set_country_flag = USA_allowed_microsoft_monopoly
 		ai_chance = {
 			factor = 1 
 		}
 	}
 }
 
-#Marine Corps aircraft crash near Marana, Arizona
+#Marine Corps Aircraft Crash near Marana, Arizona
 country_event = {
-	id = usa.49
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.49" }
-	title = usa.49.t
-	desc = usa.49.d
+	id = usa.34
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.34" }
+	title = usa.34.t
+	desc = usa.34.d
 	picture = GFX_plane_crash
 	fire_only_once = yes
 	trigger = {
@@ -1524,17 +1451,206 @@ country_event = {
 		has_full_control_of_state = 806	#Arizona
 		date > 2000.4.7
 		date < 2000.4.14
+		NOT = { has_start_date > 2016.1.1 }
 	}
 	mean_time_to_happen = {
 		days = 3
 	}
 	
 	option = {
-		name = usa.49.o1
-		log = "[GetDateText]: [This.GetName]: usa.49.o1 executed"
-		add_political_power = -25
-		navy_experience = 2
-		air_experience = 2l
+		name = usa.34.o1
+		log = "[GetDateText]: [This.GetName]: usa.34.o1 executed"
+		add_political_power = -50
+		add_manpower = -19
+		
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#Datapoint files for Chapter 11 bankruptcy
+country_event = {
+	id = usa.35
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.35" }
+	title = usa.35.t
+	desc = usa.35.d
+	picture = GFX_computer
+	fire_only_once = yes 
+	trigger = {
+		tag = USA
+		date > 2000.05.10
+		date < 2001.01.01
+		NOT = { has_start_date > 2016.1.1 }
+	}
+	mean_time_to_happen = {
+		days = 60
+	}
+	
+	#It just how it be
+	option = {
+		name = usa.35.o1
+		log = "[GetDateText]: [This.GetName]: usa.35.o1 executed"
+		add_political_power = 150 
+		
+		ai_chance = { #Historic Choice - Makes Life Easier
+			factor = 1
+		}
+	}
+	
+	#Save the Company!
+	option = {
+		name = usa.35.o2
+		log = "[GetDateText]: [This.GetName]: usa.35.o1 executed"
+		subtract_from_variable = { treasury = 0.50 }
+		custom_effect_tooltip = 0_5_billion_expense_tt
+		increase_wall_street_opinion = yes	
+
+		ai_chance = { 
+			factor = 0 
+		}
+	}
+}
+
+#H.L. Hunley
+country_event = {
+	id = usa.36
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.36" }
+	title = usa.36.t
+	desc = usa.36.d
+	picture = GFX_hunley
+	fire_only_once = yes 
+	trigger = {
+		tag = USA 
+		date > 2000.8.07
+		date < 2000.8.15
+	}
+	mean_time_to_happen = {
+		days = 5
+	}
+	
+	#A Succesful Operation
+	option = {
+		name = usa.36.o1
+		log = "[GetDateText]: [This.GetName]: usa.36.o1 executed"
+		#To Simulate Southern Support for Such Procedure
+		USA_congress_small_support = yes
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#Mac OS X - Only Shows Up if Microsoft is Granted A Monopoly in Technology
+country_event = {
+	id = usa.37
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.37" }
+	title = usa.37.t
+	desc = usa.37.d
+	picture = GFX_computer
+	fire_only_once = yes 
+	trigger = {
+		tag = USA 
+		date > 2001.03.15
+		date < 2001.03.30
+		NOT = { 
+			has_start_date > 2016.01.01
+			has_country_flag = USA_allowed_microsoft_monopoly 
+		}
+	}
+	mean_time_to_happen = {
+		days = 5
+	}
+	
+	#The Titans Clash
+	option = {
+		name = usa.37.o1
+		log = "[GetDateText]: [This.GetName]: usa.37.o1 executed"
+		USA_modify_industry_output_add_four = yes
+		increase_wall_street_opinion = yes #Competition Makes Wall Street Happy
+
+		ai_chance = {
+			factor = 1 
+		}
+	}
+
+	#Declare Apple's OS Illegal
+	option = {
+		name = usa.37.o2
+		log = "[GetDateText]: [This.GetName]: usa.37.o2 executed"
+		decrease_wall_street_opinion = yes
+		add_political_power = 100 
+		usa_regulations_increased_by_2 = yes
+
+		ai_chance = {
+			factor = 0 
+		}
+	}
+}
+
+#Martin County Oil Spill
+country_event = {
+	id = usa.38
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.38" }
+	title = usa.38.t
+	desc = usa.38.d
+	picture = GFX_burning_oil_refinery
+	is_triggered_only = yes
+	fire_only_once = yes
+	trigger = {
+		tag = USA
+		date > 2000.10.01 
+		date < 2000.10.31 
+		has_full_control_of_state = 782	#Kentucky
+	}
+	
+	#Send in the Feds 
+	option = {
+		name = usa.38.o1
+		log = "[GetDateText]: [This.GetName]: usa.38.o1 executed"
+		add_political_power = -50
+		subtract_from_variable = { treasury = 40 }
+		custom_effect_tooltip = 40_billion_expense_tt
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+	
+	#The local authorities are capable
+	option = {
+		name = usa.38.o2
+		log = "[GetDateText]: [This.GetName]: usa.38.o2 executed"
+		add_stability = -0.01
+		decrease_popularity_2_5 = yes
+
+		ai_chance = {
+			factor = 0 
+		}
+	}
+}
+
+#The Launch of Wikipedia
+country_event = {
+	id = usa.39
+	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.39" }
+	title = usa.39.t
+	desc = usa.39.d
+	picture = GFX_computer
+	fire_only_once = yes
+	trigger = {
+		tag = USA 
+		date > 2001.01.14
+		date < 2001.01.16
+	}
+	mean_time_to_happen = { days = 1 }
+	
+	#Freedom of Information
+	option = {
+		name = usa.39.o1
+		log = "[GetDateText]: [This.GetName]: usa.39.o1 executed"
+		add_political_power = 25
 	}
 }
 
@@ -1550,6 +1666,7 @@ country_event = {
 	trigger = {
 		tag = USA
 		date < 2000.5.1 
+		NOT = { has_start_date > 2016.1.1 }
 	}
 	
 	option = {
@@ -1577,11 +1694,12 @@ country_event = {
 	option = {
 		name = usa.53.o1
 		log = "[GetDateText]: [This.GetName]: usa.53.o1 executed"
-		add_opinion_modifier = {
-			target = ISR
-			modifier = peace_talks
-		}
+		add_opinion_modifier = { target = ISR modifier = peace_talks }
 		add_political_power = 50 
+
+		ai_chance = {
+			factor = 1 
+		}
 	}
 }
 
@@ -1601,193 +1719,71 @@ country_event = {
 	option = {
 		name = usa.54.o1
 		log = "[GetDateText]: [This.GetName]: usa.54.o1 executed"
-		add_opinion_modifier = {
-			target = SYR
-			modifier = peace_talks
-		}
+		add_opinion_modifier = { target = SYR modifier = peace_talks }
 		add_political_power = 50 
-	}
-}
-
-#Datapoint files for Chapter 11 bankruptcy
-country_event = {
-	id = usa.55
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.55" }
-	title = usa.55.t
-	desc = usa.55.d
-	picture = GFX_computer
-	fire_only_once = yes 
-	trigger = {
-		tag = USA
-		date > 2000.05.10
-	}
-	mean_time_to_happen = {
-		days = 60
-	}
-	
-	#It just how it be
-	option = {
-		name = usa.55.o1
-		log = "[GetDateText]: [This.GetName]: usa.12.o1 executed"
-		add_political_power = 150 
-		
-		ai_chance = { #Historic Choice - Makes Life Easier
-			factor = 1
-		}
-	}
-	
-	#Save the Company!
-	option = {
-		name = usa.55.o2
-		log = "[GetDateText]: [This.GetName]: usa.12.o1 executed"
-		subtract_from_variable = { treasury = 0.50 }
-		custom_effect_tooltip = 0_5_billion_expense_tt
-		increase_wall_street_opinion = yes	
-
-		ai_chance = { 
-			factor = 0 
-		}
-	}
-}
-
-#H.L. Hunley
-country_event = {
-	id = usa.58
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.58" }
-	title = usa.58.t
-	desc = usa.58.d
-	picture = GFX_hunley
-	fire_only_once = yes 
-	trigger = {
-		tag = USA 
-		date > 2000.8.07
-		date < 2000.8.15
-	}
-	mean_time_to_happen = {
-		days = 5
-	}
-	
-	#A Succesful Operation
-	option = {
-		name = usa.58.o1
-		log = "[GetDateText]: [This.GetName]: usa.12.o1 executed"
-		#To Simulate Southern Support for Such Procedure
-		USA_congress_small_support = yes
 
 		ai_chance = {
 			factor = 1
 		}
-	}
-}
-
-#Mac OS X
-country_event = {
-	id = usa.60
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.60" }
-	title = usa.60.t
-	desc = usa.60.d
-	picture = GFX_computer
-	fire_only_once = yes 
-	trigger = {
-		tag = USA 
-		date > 2001.03.15
-		date < 2001.03.30
-	}
-	mean_time_to_happen = {
-		days = 5
-	}
-	
-	#The Titans Clash
-	option = {
-		name = usa.60.o1
-		log = "[GetDateText]: [This.GetName]: usa.60.o1 executed"
-		USA_modify_industry_output_add_four = yes
-		increase_wall_street_opinion = yes #Competition Makes Wall Street Happy
-
-		ai_chance = {
-			factor = 1 
-		}
-	}
-
-	#Declare Apple's OS Illegal
-	option = {
-		name = usa.60.o2
-		log = "[GetDateText]: [This.GetName]: usa.60.o2 executed"
-		decrease_wall_street_opinion = yes
-		add_political_power = 100 
-		usa_regulations_increased_by_2 = yes 
-
-		ai_chance = {
-			factor = 0 
-		}
-	}
-}
-
-#Martin County Oil Spill
-country_event = {
-	id = usa.61
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.61" }
-	title = usa.61.t
-	desc = usa.61.d
-	picture = GFX_report_event_burning_oil_refinery
-	
-	trigger = {
-		has_full_control_of_state = 782	#Kentucky
-	}
-	
-	is_triggered_only = yes
-	
-	option = {
-		name = usa.61.o1
-		log = "[GetDateText]: [This.GetName]: usa.61.o1 executed"
-		add_political_power = -20
-	}
-	
-	option = {
-		name = usa.61.o2
-		log = "[GetDateText]: [This.GetName]: usa.61.o2 executed"
-		add_stability = -0.01
 	}
 }
 
 #Gus Hall dies
 country_event = {
-	id = usa.62
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.62" }
-	title = usa.62.t
-	desc = usa.62.d
-	picture = GFX_report_event_fathers_of_communism
-	
-	is_triggered_only = yes
-	
-	immediate = {
-		set_country_flag = death_of_gus_hall
+	id = usa.60
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event usa.60" 
+		set_country_flag = USA_death_of_gus_hall
+	}
+	title = usa.60.t
+	desc = usa.60.d
+	picture = GFX_fathers_of_communism
+	fire_only_once = yes
+	trigger = {
+		tag = USA
+		NOT = { has_country_flag = USA_death_of_gus_hall }
+		date > 2000.10.01 
+		date < 2001.10.31
+	}
+	mean_time_to_happen = {
+		days = 60 
 	}
 	
 	option = {
-		name = usa.62.o1
-		log = "[GetDateText]: [This.GetName]: usa.62.o1 executed"
+		name = usa.60.o1
+		log = "[GetDateText]: [This.GetName]: usa.60.o1 executed"
+		add_stability = 0.01
+	
 		ai_chance = { factor = 100 }
 	}
 	
 	option = {
-		name = usa.62.o2
-		log = "[GetDateText]: [This.GetName]: usa.62.o2 executed"
+		name = usa.60.o2
+		log = "[GetDateText]: [This.GetName]: usa.60.o2 executed"
 		add_political_power = -50
 		add_stability = -0.02
-		add_to_variable = {
-			var = Communist-State
-			value = 0.01
+		hidden_effect = {
+			add_to_variable = { party_pop_array^4 = 0.02 }
+			add_to_variable = { party_pop_array^5 = 0.01 }
+			recalculate_party = yes
 		}
-		add_to_variable = {
-			var = anarchist_communism
-			value = 0.03
+		if = {
+			limit = {
+				NOT = {
+					is_in_array = { ruling_party = 4 }
+					is_in_array = { gov_coalition_array = 4 }
+				}
+			}
+			add_country_leader_trait = communist_sympathizer
 		}
-		recalculate_party = yes
 		custom_effect_tooltip = usa.62.o2_tt
 		
-		hidden_effect = { country_event = { id = usa.63 days = 1000 } }
-		
+		hidden_effect = { 
+			if = {	
+				limit = { has_government = communism }
+				country_event = { id = usa.63 days = 1000 } 
+			}
+		}
 		ai_chance = { factor = 0 }
 	}
 }
@@ -1800,9 +1796,11 @@ country_event = {
 	desc = usa.63.d
 	picture = GFX_politics_communism
 	is_triggered_only = yes
-	
+	fire_only_once = yes
 	trigger = {
+		tag = USA 
 		has_government = communism
+		has_country_flag = USA_death_of_gus_hall
 	}
 	
 	option = {
@@ -1870,54 +1868,14 @@ country_event = {
 	}
 }
 
-#December 2000 nor'easter
-country_event = {
-	id = usa.67
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.67" }
-	title = usa.67.t
-	desc = usa.67.d
-	picture = GFX_blizzard
-	
-	is_triggered_only = yes
-	
-	option = {
-		name = usa.67.o1
-		log = "[GetDateText]: [This.GetName]: usa.67.o1 executed"
-		add_political_power = -50
-	}
-}
-
-#The Launch of Wikipedia
-country_event = {
-	id = usa.68
-	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.68" }
-	title = usa.68.t
-	desc = usa.68.d
-	picture = GFX_computer
-	fire_only_once = yes
-	trigger = {
-		has_idea = wall_street
-		date > 2001.01.14
-		date < 2001.01.15
-	}
-	mean_time_to_happen = { days = 1 }
-	
-	#Freedom of Information
-	option = {
-		name = usa.68.o1
-		log = "[GetDateText]: [This.GetName]: usa.68.o1 executed"
-		add_political_power = 25
-	}
-}
-
 #Hall State Reversal Event
 country_event = {
 	id = usa.70
 	immediate = { log = "[GetDateText]: [Root.GetName]: event usa.70" }
 	fire_only_once = yes
 	hidden = yes
-	
 	trigger = {
+		tag = USA
 		NOT = { has_government = communism }
 		has_country_flag = washington_dc_renamed_due_to_gus_hall
 	}
@@ -1975,6 +1933,10 @@ country_event = {
 				add = 0.25 
 				has_government = communism
 			}
+			modifier = {
+				add = 0.25 
+				is_historical_focus_on = no
+			}
 		}
 	}
 	
@@ -1984,7 +1946,6 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: event usa.90.b"
 		
 		add_ideas = USA_mutually_benefical_idea
-		
 		effect_tooltip = {
 			MEX = { add_ideas = USA_mutually_benefical_idea }
 			CAN = { add_ideas = USA_mutually_benefical_idea } 
@@ -1996,6 +1957,10 @@ country_event = {
 			modifier = {
 				add = 0.5 
 				has_government = democratic
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = 3
 			}
 		}
 	}
@@ -2012,17 +1977,17 @@ country_event = {
 		}
 		
 		add_ideas = USA_pro_american_deal_idea
-		
 		effect_tooltip = {
 			MEX = { add_ideas = USA_america_fist_deal_mex_can_idea } 
 			CAN = { add_ideas = USA_america_fist_deal_mex_can_idea } 
 		}
 		clr_country_flag = USA_renogitate_nafta_flag
 		set_country_flag = USA_american_first_deal
+
 		ai_chance = {
 			factor = 1 
 			modifier = {
-				add = 3 
+				add = 10
 				OR = {
 					has_country_leader = { name = "Donald Trump" ruling_only = yes }
 					has_government = nationalist
@@ -2055,19 +2020,19 @@ country_event = {
 		}
 	}
 	desc = {
-		text = usa.91.d
+		text = usa.91.d1
 		trigger = {
 			USA = { has_country_flag = USA_pro_american_deal }
 		}
 	}
 	desc = {
-		text = usa.91.d
+		text = usa.91.d2
 		trigger = {
 			USA = { has_country_flag = USA_mutually_benefical_deal }
 		}
 	}
 	desc = {
-		text = usa.91.d
+		text = usa.91.d3
 		trigger = {
 			USA = { has_country_flag = USA_american_first_deal }
 		}
@@ -2179,7 +2144,6 @@ country_event = {
 	title = usa_vanilla.40.t
 	desc = usa_vanilla.40.desc
 	picture = GFX_politics_speak
-
 	immediate = { log = "[GetDateText]: [Root.GetName]: event usa_vanilla.40" }
 	is_triggered_only = yes
 	trigger = { tag = USA }
@@ -2754,11 +2718,14 @@ news_event = {
 	title = usa_news.1.t
 	desc = usa_news.1.d
 	picture = GFX_report_event_al_gore
-	fire_only_once = yes
 	major = yes
+	fire_only_once = yes
+	is_triggerd_only = yes
 	trigger = {
-		date > 2000.10.01
-		date < 2000.12.01 
+		OR = {
+			date > 2000.11.01
+			date < 2000.11.01
+		}
 		has_country_leader = { name = "Al Gore" ruling_only = yes }
 	}
 	mean_time_to_happen = {
