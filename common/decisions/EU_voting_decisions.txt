@@ -18485,6 +18485,16 @@ EU_defense_category = {
 				NOT = {
 					has_idea = EU_member
 				}
+				if = {
+					limit = {
+						ROOT = {
+							has_idea = NATO_member
+						}					
+					}
+					NOT = {
+						has_idea = NATO_member
+					}					
+				}
 				any_neighbor_country = {
 					has_EU_external_border = yes
 				}
@@ -18497,8 +18507,16 @@ EU_defense_category = {
 		}
 		
 		available = {
+			all_country = {
+				if = {	
+					limit = { has_idea = EU_member }
+					NOT = {
+						has_country_flag = EU_military_exercise_prep
+					}
+				}
+			}
 			NOT = {
-				has_country_flag = EU_military_exercise_prep
+				has_war = yes
 			}
 			#has_idea = European_Security_Council
 			#has_idea = EU_foreign_minister
@@ -18569,26 +18587,31 @@ EU_defense_category = {
 		} 
 		
 		complete_effect = {
-			###move to event
 			FROM = {
-				set_country_flag = EU_host_military_exercise@ROOT
-				random_owned_state = {
-					limit = {
-						any_neighbor_state = {
-							is_owned_by = ROOT.var_EU_military_exercise_target
-						}
-					}
-					set_variable = {
-						var = ROOT.var_EU_military_exercise_host_state
-						value = THIS
-					}					
-				}
+				country_event = {
+					id = EUevent.18
+				}				
 			}
-			activate_mission = EU_military_exercise_mission
-			set_variable = {
-				var = ROOT.var_EU_military_exercise_host_tag
-				value = FROM
-			}			
+			###moved to event
+			#FROM = {
+			#	set_country_flag = EU_host_military_exercise@ROOT
+			#	random_owned_state = {
+			#		limit = {
+			#			any_neighbor_state = {
+			#				is_owned_by = ROOT.var_EU_military_exercise_target
+			#			}
+			#		}
+			#		set_variable = {
+			#			var = ROOT.var_EU_military_exercise_host_state
+			#			value = THIS
+			#		}					
+			#	}
+			#}
+			#activate_mission = EU_military_exercise_mission
+			#set_variable = {
+			#	var = ROOT.var_EU_military_exercise_host_tag
+			#	value = FROM
+			#}			
 		}
 		ai_will_do = {
 			factor = 0
@@ -18721,7 +18744,10 @@ EU_defense_category = {
 						var = PREV.var_counter_military_exercise_state
 						value = THIS
 					}					
-				}				
+				}
+				news_event = {
+					id = EU_news.50 ### Military Exercise at border
+				}
 				activate_mission = counter_military_exercise_mission
 			}		
 		}
@@ -18854,12 +18880,20 @@ GEN_political_decisions = { ### temp category
 						}
 					}	
 				}
-			}			
-			
+			}
+			every_country = {
+				limit = {
+					has_country_flag = EU_military_exercise_prep
+				}
+				news_event = {
+					id = EU_news.51 ### Military Exercise countered
+				}
+			}						
 		}
 		remove_effect = {
 			clear_variable = ROOT.var_counter_military_exercise_state
         }
+
 	}
  
 }
