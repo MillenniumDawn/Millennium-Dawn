@@ -14,6 +14,9 @@ focus_tree = {
 				original_tag = BHR
 				original_tag = KUW
 				original_tag = OMA
+				original_tag = NEJ
+				original_tag = HEJ
+				original_tag = QTF
 			}
 		}
 	}
@@ -4074,6 +4077,14 @@ focus_tree = {
 		mutually_exclusive = { focus = GCC_a_radical_reorientation }
 		
 		available = {
+			custom_trigger_tooltip = {
+				tooltip = monarchy_in_power_tt
+				OR = {
+					is_in_array = { ruling_party = 0 }
+					is_in_array = { ruling_party = 10 }
+					is_in_array = { ruling_party = 13 }
+				}
+			}
 		}
 		
 		completion_reward = {
@@ -5899,7 +5910,7 @@ focus_tree = {
 		id = GCC_influence_muslim_europe
 		icon = europe
 		
-		x = -12
+		x = -11
 		y = 1
 		relative_position_id = GCC_foreign_affairs
 		
@@ -5914,36 +5925,79 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			every_country = {
+			if = {	
 				limit = {
 					OR = {
-						original_tag = ALB
-						original_tag = BOS
-						original_tag = KOS
-						original_tag = TUR
+						original_tag = SAU
+						original_tag = UAE
+						original_tag = QAT
 					}
 				}
-				custom_effect_tooltip = gain_10_ROOT_influence_tt
-				hidden_effect = {
-					set_temp_variable = { influence_gain = 10 }
-					for_loop_effect = {
-						end = influence_array^num
-						value = v
-						if = {
-							limit = {
-								check_variable = { influence_array^v = ROOT }
-							}
-							add_to_variable = { influence_array_val^v = influence_gain }
-							set_country_flag = found
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = ALB
+							original_tag = BOS
+							original_tag = KOS
+							original_tag = TUR
 						}
 					}
-					if = {
-						limit = { NOT = { has_country_flag = found } }
-							add_to_array = { influence_array = ROOT.id }
-							add_to_array = { influence_array_val = influence_gain }
+					custom_effect_tooltip = gain_10_ROOT_influence_tt
+					hidden_effect = {
+						set_temp_variable = { influence_gain = 10 }
+						for_loop_effect = {
+							end = influence_array^num
+							value = v
+							if = {
+								limit = {
+									check_variable = { influence_array^v = ROOT }
+								}
+								add_to_variable = { influence_array_val^v = influence_gain }
+								set_country_flag = found
+							}
+						}
+						if = {
+							limit = { NOT = { has_country_flag = found } }
+								add_to_array = { influence_array = ROOT.id }
+								add_to_array = { influence_array_val = influence_gain }
+						}
+						clr_country_flag = found
+						recalculate_influence = yes
 					}
-					clr_country_flag = found
-					recalculate_influence = yes
+				}
+			}
+			else_if = {	
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = ALB
+							original_tag = BOS
+							original_tag = KOS
+							original_tag = TUR
+						}
+					}
+					custom_effect_tooltip = gain_5_ROOT_influence_tt
+					hidden_effect = {
+						set_temp_variable = { influence_gain = 5 }
+						for_loop_effect = {
+							end = influence_array^num
+							value = v
+							if = {
+								limit = {
+									check_variable = { influence_array^v = ROOT }
+								}
+								add_to_variable = { influence_array_val^v = influence_gain }
+								set_country_flag = found
+							}
+						}
+						if = {
+							limit = { NOT = { has_country_flag = found } }
+								add_to_array = { influence_array = ROOT.id }
+								add_to_array = { influence_array_val = influence_gain }
+						}
+						clr_country_flag = found
+						recalculate_influence = yes
+					}
 				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_influence_muslim_europe executed"
@@ -5958,7 +6012,7 @@ focus_tree = {
 		id = GCC_befriend_the_turks
 		icon = align_to_turkey
 		
-		x = -13
+		x = -12
 		y = 2
 		relative_position_id = GCC_foreign_affairs
 		
@@ -5968,6 +6022,7 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_influence_muslim_europe }
+		prerequisite = { focus = GCC_strategic_hedging }
 		mutually_exclusive = { focus = GCC_contain_the_turks }
 		
 		available = {
@@ -5978,13 +6033,13 @@ focus_tree = {
 			every_country = {
 				news_event = { days = 1 id = gulf.14 }
 			}		
-			add_ai_strategy = { type = befriend id = "TUR" value = 100 }
+			add_ai_strategy = { type = befriend id = "TUR" value = 50 }
 			TUR = {
 				add_opinion_modifier = {
 					target = ROOT
 					modifier = diplomatic_support 
 				}
-				add_ai_strategy = { type = befriend id = "ROOT" value = 100 }
+				add_ai_strategy = { type = befriend id = "ROOT" value = 50 }
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_befriend_the_turks executed"
 		}
@@ -6017,7 +6072,7 @@ focus_tree = {
 		id = GCC_turkish_bases
 		icon = fighter_plane
 		
-		x = -13
+		x = -12
 		y = 3
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6057,7 +6112,7 @@ focus_tree = {
 		id = GCC_security_guarantees_turkey
 		icon = tanks2
 		
-		x = -13
+		x = -12
 		y = 4
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6091,9 +6146,9 @@ focus_tree = {
 	
 	focus = {
 		id = GCC_contain_the_turks
-		icon = political_pressure
+		icon = attack_turkey
 		
-		x = -11
+		x = -10
 		y = 2
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6103,6 +6158,7 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_influence_muslim_europe }
+		prerequisite = { focus = GCC_keep_to_the_saudi_line focus = GCC_forge_an_independent_path }
 		mutually_exclusive = { focus = GCC_befriend_the_turks }
 		
 		available = {
@@ -6160,7 +6216,9 @@ focus_tree = {
 					target = ROOT
 					modifier = criticized_us 
 				}
+				add_ai_strategy = { type = contain id = "ROOT" value = 50 }
 			}
+			add_ai_strategy = { type = contain id = "TUR" value = 50 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_contain_the_turks executed"
 		}
 		
@@ -6206,9 +6264,9 @@ focus_tree = {
 	
 	focus = {
 		id = GCC_sanction_turkey
-		icon = attack_turkey
+		icon = dangerous_laws
 		
-		x = -11
+		x = -10
 		y = 3
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6309,36 +6367,79 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			every_country = {
+			if = {	
 				limit = {
 					OR = {
-						original_tag = IRQ
-						original_tag = JOR
-						original_tag = LEB
-						original_tag = SYR
+						original_tag = SAU
+						original_tag = UAE
+						original_tag = QAT
 					}
 				}
-				custom_effect_tooltip = gain_10_ROOT_influence_tt
-				hidden_effect = {
-					set_temp_variable = { influence_gain = 10 }
-					for_loop_effect = {
-						end = influence_array^num
-						value = v
-						if = {
-							limit = {
-								check_variable = { influence_array^v = ROOT }
-							}
-							add_to_variable = { influence_array_val^v = influence_gain }
-							set_country_flag = found
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = IRQ
+							original_tag = JOR
+							original_tag = LEB
+							original_tag = SYR
 						}
 					}
-					if = {
-						limit = { NOT = { has_country_flag = found } }
-							add_to_array = { influence_array = ROOT.id }
-							add_to_array = { influence_array_val = influence_gain }
+					custom_effect_tooltip = gain_10_ROOT_influence_tt
+					hidden_effect = {
+						set_temp_variable = { influence_gain = 10 }
+						for_loop_effect = {
+							end = influence_array^num
+							value = v
+							if = {
+								limit = {
+									check_variable = { influence_array^v = ROOT }
+								}
+								add_to_variable = { influence_array_val^v = influence_gain }
+								set_country_flag = found
+							}
+						}
+						if = {
+							limit = { NOT = { has_country_flag = found } }
+								add_to_array = { influence_array = ROOT.id }
+								add_to_array = { influence_array_val = influence_gain }
+						}
+						clr_country_flag = found
+						recalculate_influence = yes
 					}
-					clr_country_flag = found
-					recalculate_influence = yes
+				}
+			}
+			else_if = {	
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = IRQ
+							original_tag = JOR
+							original_tag = LEB
+							original_tag = SYR
+						}
+					}
+					custom_effect_tooltip = gain_5_ROOT_influence_tt
+					hidden_effect = {
+						set_temp_variable = { influence_gain = 5 }
+						for_loop_effect = {
+							end = influence_array^num
+							value = v
+							if = {
+								limit = {
+									check_variable = { influence_array^v = ROOT }
+								}
+								add_to_variable = { influence_array_val^v = influence_gain }
+								set_country_flag = found
+							}
+						}
+						if = {
+							limit = { NOT = { has_country_flag = found } }
+								add_to_array = { influence_array = ROOT.id }
+								add_to_array = { influence_array_val = influence_gain }
+						}
+						clr_country_flag = found
+						recalculate_influence = yes
+					}
 				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_influence_the_levant executed"
@@ -6366,10 +6467,44 @@ focus_tree = {
 		
 		available = {
 			NOT = { has_government = communism }
+			country_exists = SYR		
+			NOT = { has_war_with = FSA }
+			SYR = {
+				OR= {
+					has_country_leader = {
+						name = "Bashar al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Bushra al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Hafez al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Maher al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Rifaat al-Assad"
+						ruling_only = yes
+					}
+				}
+			}
 		}
 		
-		completion_reward = {
-			add_political_power = 100
+		completion_reward = {	
+			add_ai_strategy = { type = befriend id = "FSA" value = 50 }
+			FSA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support 
+				}
+				add_ai_strategy = { type = befriend id = "ROOT" value = 50 }
+			}
+			unlock_decision_tooltip = send_support_to_the_syrian_opposition
 			log = "[GetDateText]: [This.GetName]: focus GCC_back_the_syrian_opposition executed"
 		}
 		
@@ -6394,18 +6529,64 @@ focus_tree = {
 		prerequisite = { focus = GCC_back_the_syrian_opposition }
 		
 		available = {
+			NOT = { has_government = communism }
+			country_exists = SYR
+			SYR = {
+				OR= {
+					has_country_leader = {
+						name = "Bashar al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Bushra al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Hafez al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Maher al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Rifaat al-Assad"
+						ruling_only = yes
+					}
+				}
+			}
+			country_exists = FSA
+			USA = {
+				has_opinion = {
+					target = ROOT
+					value > 19
+				}
+			}
 		}
 		
 		completion_reward = {
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = SYR
+			USA = {
+				country_event = { id = gulf.16 }
 			}
+			custom_effect_tooltip = GCC_intervention_syria_tt
+			set_country_flag = proposed_coalition_against_assad 
 			log = "[GetDateText]: [This.GetName]: focus GCC_intervene_in_syria executed"
 		}
 		
 		ai_will_do = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				is_historical_focus_on = no
+				OR = {
+					tag = QAT
+					tag = UAE
+					tag = SAU
+				}
+				NOT = {
+					any_country = { has_country_flag = proposed_coalition_against_assad }
+				}
+			}
 		}
 	}
 	
@@ -6426,6 +6607,31 @@ focus_tree = {
 		
 		available = {
 			has_government = communism
+			country_exists = SYR
+			SYR = {
+				OR= {
+					has_country_leader = {
+						name = "Bashar al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Bushra al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Hafez al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Maher al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Rifaat al-Assad"
+						ruling_only = yes
+					}
+				}
+			}
 		}
 		
 		completion_reward = {
@@ -6454,6 +6660,32 @@ focus_tree = {
 		prerequisite = { focus = GCC_denounce_the_opposition }
 		
 		available = {
+			has_government = communism
+			country_exists = SYR
+			SYR = {
+				OR= {
+					has_country_leader = {
+						name = "Bashar al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Bushra al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Hafez al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Maher al-Assad"
+						ruling_only = yes
+					}
+					has_country_leader = {
+						name = "Rifaat al-Assad"
+						ruling_only = yes
+					}
+				}
+			}
 		}
 		
 		completion_reward = {
@@ -6945,12 +7177,13 @@ focus_tree = {
 		available = {
 			OR = {
 				has_government = communism
+				has_government = nationalist
 				jihadist_government = yes
 			}
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			custom_effect_tooltip = GCC_regional_upheaval_tt
 			log = "[GetDateText]: [This.GetName]: focus GCC_forge_an_independent_path executed"
 		}
 		
@@ -6982,7 +7215,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			custom_effect_tooltip = GCC_strategic_hedging_tt
 			log = "[GetDateText]: [This.GetName]: focus GCC_strategic_hedging executed"
 		}
 		
@@ -7024,7 +7257,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			custom_effect_tooltip = GCC_status_quo_tt
 			log = "[GetDateText]: [This.GetName]: focus GCC_keep_to_the_saudi_line executed"
 		}
 		
@@ -7117,6 +7350,7 @@ focus_tree = {
 		prerequisite = { focus = GCC_expel_us_interests }
 		
 		available = {
+			has_government = communism
 		}
 		
 		completion_reward = {
@@ -7177,6 +7411,7 @@ focus_tree = {
 			OR = {
 				has_completed_focus = GCC_keep_to_the_saudi_line
 				jihadist_government = yes
+				has_government = nationalist
 			}
 		}
 		
@@ -7263,6 +7498,9 @@ focus_tree = {
 		prerequisite = { focus = GCC_combat_iranian_influence }
 		
 		available = {
+			any_country = {
+				has_completed_focus = GCC_improve_relations_with_iran
+			}
 		}
 		
 		completion_reward = {
@@ -7385,6 +7623,7 @@ focus_tree = {
 			OR = {
 				has_completed_focus = GCC_mass_arms_purchases 
 				jihadist_government = yes
+				has_government = nationalist
 			}
 		}
 		
@@ -7529,6 +7768,7 @@ focus_tree = {
 		
 		available = {
 			NOT = { has_war_with = SOV }
+			no_jihadist_government = yes
 		}
 		
 		completion_reward = {
@@ -7719,38 +7959,83 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			every_country = {
+			if = {
 				limit = {
 					OR = {
-						original_tag = ALG
-						original_tag = EGY
-						original_tag = LBA
-						original_tag = MOR
-						original_tag = SUD
-						original_tag = TUN
+						original_tag = SAU
+						original_tag = UAE
+						original_tag = QAT
 					}
 				}
-				custom_effect_tooltip = gain_10_ROOT_influence_tt
-				hidden_effect = {
-					set_temp_variable = { influence_gain = 10 }
-					for_loop_effect = {
-						end = influence_array^num
-						value = v
-						if = {
-							limit = {
-								check_variable = { influence_array^v = ROOT }
-							}
-							add_to_variable = { influence_array_val^v = influence_gain }
-							set_country_flag = found
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = ALG
+							original_tag = EGY
+							original_tag = LBA
+							original_tag = MOR
+							original_tag = SUD
+							original_tag = TUN
 						}
 					}
-					if = {
-						limit = { NOT = { has_country_flag = found } }
-							add_to_array = { influence_array = ROOT.id }
-							add_to_array = { influence_array_val = influence_gain }
+					custom_effect_tooltip = gain_10_ROOT_influence_tt
+					hidden_effect = {
+						set_temp_variable = { influence_gain = 10 }
+						for_loop_effect = {
+							end = influence_array^num
+							value = v
+							if = {
+								limit = {
+									check_variable = { influence_array^v = ROOT }
+								}
+								add_to_variable = { influence_array_val^v = influence_gain }
+								set_country_flag = found
+							}
+						}
+						if = {
+							limit = { NOT = { has_country_flag = found } }
+								add_to_array = { influence_array = ROOT.id }
+								add_to_array = { influence_array_val = influence_gain }
+						}
+						clr_country_flag = found
+						recalculate_influence = yes
 					}
-					clr_country_flag = found
-					recalculate_influence = yes
+				}
+			}
+			else_if = {
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = ALG
+							original_tag = EGY
+							original_tag = LBA
+							original_tag = MOR
+							original_tag = SUD
+							original_tag = TUN
+						}
+					}
+					custom_effect_tooltip = gain_5_ROOT_influence_tt
+					hidden_effect = {
+						set_temp_variable = { influence_gain = 5 }
+						for_loop_effect = {
+							end = influence_array^num
+							value = v
+							if = {
+								limit = {
+									check_variable = { influence_array^v = ROOT }
+								}
+								add_to_variable = { influence_array_val^v = influence_gain }
+								set_country_flag = found
+							}
+						}
+						if = {
+							limit = { NOT = { has_country_flag = found } }
+								add_to_array = { influence_array = ROOT.id }
+								add_to_array = { influence_array_val = influence_gain }
+						}
+						clr_country_flag = found
+						recalculate_influence = yes
+					}
 				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_influence_north_africa executed"
@@ -7995,36 +8280,79 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			every_country = {
+			if = {
 				limit = {
 					OR = {
-						original_tag = BAN
-						original_tag = RAJ
-						original_tag = PAK
-						original_tag = SRI
+						original_tag = SAU
+						original_tag = UAE
+						original_tag = QAT
 					}
 				}
-				custom_effect_tooltip = gain_10_ROOT_influence_tt
-				hidden_effect = {
-					set_temp_variable = { influence_gain = 10 }
-					for_loop_effect = {
-						end = influence_array^num
-						value = v
-						if = {
-							limit = {
-								check_variable = { influence_array^v = ROOT }
-							}
-							add_to_variable = { influence_array_val^v = influence_gain }
-							set_country_flag = found
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = BAN
+							original_tag = RAJ
+							original_tag = PAK
+							original_tag = SRI
 						}
 					}
-					if = {
-						limit = { NOT = { has_country_flag = found } }
-							add_to_array = { influence_array = ROOT.id }
-							add_to_array = { influence_array_val = influence_gain }
+					custom_effect_tooltip = gain_10_ROOT_influence_tt
+					hidden_effect = {
+						set_temp_variable = { influence_gain = 10 }
+						for_loop_effect = {
+							end = influence_array^num
+							value = v
+							if = {
+								limit = {
+									check_variable = { influence_array^v = ROOT }
+								}
+								add_to_variable = { influence_array_val^v = influence_gain }
+								set_country_flag = found
+							}
+						}
+						if = {
+							limit = { NOT = { has_country_flag = found } }
+								add_to_array = { influence_array = ROOT.id }
+								add_to_array = { influence_array_val = influence_gain }
+						}
+						clr_country_flag = found
+						recalculate_influence = yes
 					}
-					clr_country_flag = found
-					recalculate_influence = yes
+				}
+			}
+			else_if = {
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = BAN
+							original_tag = RAJ
+							original_tag = PAK
+							original_tag = SRI
+						}
+					}
+					custom_effect_tooltip = gain_5_ROOT_influence_tt
+					hidden_effect = {
+						set_temp_variable = { influence_gain = 5 }
+						for_loop_effect = {
+							end = influence_array^num
+							value = v
+							if = {
+								limit = {
+									check_variable = { influence_array^v = ROOT }
+								}
+								add_to_variable = { influence_array_val^v = influence_gain }
+								set_country_flag = found
+							}
+						}
+						if = {
+							limit = { NOT = { has_country_flag = found } }
+								add_to_array = { influence_array = ROOT.id }
+								add_to_array = { influence_array_val = influence_gain }
+						}
+						clr_country_flag = found
+						recalculate_influence = yes
+					}
 				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_influence_south_asia executed"
