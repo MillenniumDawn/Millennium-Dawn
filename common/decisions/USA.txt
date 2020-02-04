@@ -50,7 +50,7 @@ USA_american_economic_decisions_category = {
 		
 		modifier = {
 			consumer_goods_factor = 0.03
-			political_power_gain = -0.25
+			political_power_factor = -0.10
 		}
 		
 		complete_effect = {
@@ -164,7 +164,7 @@ USA_american_economic_decisions_category = {
 		
 		modifier = {
 			consumer_goods_factor = 0.03
-			political_power_gain = -0.25
+			political_power_factor = -0.10
 		}
 		
 		complete_effect = {
@@ -213,14 +213,14 @@ USA_american_economic_decisions_category = {
 			}
 			modifier = {
 				add = 1
-				
 				OR = {
 					is_historical_focus_on = yes
 					is_historical_focus_on = no 
 				}
 			}
 			modifier = {
-				add = 3
+				add = 2
+				has_country_flag = enthusiastic_wall_street
 				has_country_flag = positive_wall_street
 				has_country_flag = indifferent_wall_street
 			}
@@ -333,6 +333,7 @@ USA_american_economic_decisions_category = {
 			}
 			modifier = {
 				add = 5
+				has_country_flag = enthusiastic_wall_street
 				has_country_flag = positive_wall_street
 				has_country_flag = indifferent_wall_street
 			}
@@ -348,9 +349,9 @@ USA_american_economic_decisions_category = {
 				}
 				NOT = {
 					AND = {
-						has_state_flag = USA_expanded_techmetals_one_flag
-						has_state_flag = USA_expanded_techmetals_two_flag
-						has_state_flag = USA_expanded_techmetals_three_flag
+						has_state_flag = USA_expanded_tungsten_one_flag
+						has_state_flag = USA_expanded_tungsten_two_flag
+						has_state_flag = USA_expanded_tungsten_three_flag
 					}
 				}
 			}
@@ -372,9 +373,9 @@ USA_american_economic_decisions_category = {
 				custom_trigger_tooltip = {	
 					NOT = {
 						AND = {
-							has_state_flag = USA_expanded_techmetals_one_flag
-							has_state_flag = USA_expanded_techmetals_two_flag
-							has_state_flag = USA_expanded_techmetals_three_flag
+							has_state_flag = USA_expanded_tungsten_one_flag
+							has_state_flag = USA_expanded_tungsten_two_flag
+							has_state_flag = USA_expanded_tungsten_three_flag
 						}
 					}
 					tooltip = USA_not_expanded_states_resources_three_times_TT
@@ -394,7 +395,7 @@ USA_american_economic_decisions_category = {
 		
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_resource_techmetals_prospecting_decision"
-			set_country_flag = USA_expanding_techmetals_flag
+			set_country_flag = USA_expanding_states_tungsten_production
 		}
 
 		remove_effect = {
@@ -403,9 +404,9 @@ USA_american_economic_decisions_category = {
 				limit = {
 					NOT = {
 						AND = {
-							has_state_flag = USA_expanded_techmetals_one_flag
-							has_state_flag = USA_expanded_techmetals_two_flag
-							has_state_flag = USA_expanded_techmetals_three_flag
+							has_state_flag = USA_expanded_tungsten_one_flag
+							has_state_flag = USA_expanded_tungsten_two_flag
+							has_state_flag = USA_expanded_tungsten_three_flag
 						}
 					}
 					has_resources_amount = {
@@ -422,7 +423,7 @@ USA_american_economic_decisions_category = {
 				clr_state_flag = USA_expanding_states_techmetals_production
 			}
 			USA_scaling_resource_production_cost_effect = yes
-			clr_country_flag = USA_expanding_techmetals_flag
+			clr_country_flag = USA_expanding_states_tungsten_production
 			USA_congress_small_opposition = yes
 		}
 		
@@ -445,6 +446,7 @@ USA_american_economic_decisions_category = {
 			}
 			modifier = {
 				add = 2
+				has_country_flag = enthusiastic_wall_street
 				has_country_flag = positive_wall_street
 				has_country_flag = indifferent_wall_street
 			}
@@ -479,6 +481,28 @@ USA_american_economic_decisions_category = {
 			USA_modify_local_resource_factor_decrease_two = yes
 			usa_regulations_increased_by_4 = yes 
 		}
+
+		ai_will_do = {
+			factor = 1 
+			modifier = {
+				check_variable = { USA_economic_regulation_var < 65 }
+				add = 5 
+			}
+			modifier = {
+				check_variable = { USA_economic_regulation_var > 65 }
+				factor = 0 
+			}
+			modifier = {
+				add = -0.50 
+				OR = { 
+					is_in_array = { ruling_party = 1 }
+					is_in_array = { ruling_party = 16 }
+					is_in_array = { ruling_party = 20 }
+					is_in_array = { ruling_party = 21 }
+					is_in_array = { ruling_party = 22 }
+				}
+			}
+		}
 	}
 	
 	USA_deregulate_wall_street_decision = {
@@ -509,6 +533,28 @@ USA_american_economic_decisions_category = {
 			USA_modify_local_resource_factor_add_two = yes
 			usa_regulations_decreased_by_4 = yes
 		}
+
+		ai_will_do = {
+			factor = 1 
+			modifier = {
+				check_variable = { USA_economic_regulation_var > 65 }
+				add = 2 
+			}
+			modifier = {
+				check_variable = { USA_economic_regulation_var < 30 }
+				factor = 0 
+			}
+			modifier = {
+				add = 4
+				OR = { 
+					is_in_array = { ruling_party = 1 }
+					is_in_array = { ruling_party = 16 }
+					is_in_array = { ruling_party = 20 }
+					is_in_array = { ruling_party = 21 }
+					is_in_array = { ruling_party = 22 }
+				}
+			}
+		}
 	}
 	
 	USA_industrial_outsourcing_decision = {
@@ -533,11 +579,15 @@ USA_american_economic_decisions_category = {
 		icon = generic_construction 
 		days_remove = 100
 		days_re_enable = 50
-		cost = 150 
-		
+		cost = 150
+
 		remove_effect = { 
 			log = "[GetDateText]: [This.GetName]:Decision remove USA_industrial_outsourcing_decision"
 			USA_modify_construction_speed_add_two = yes
+		}
+
+		ai_will_do = {
+			factor = 0
 		}
 	}
 
@@ -560,6 +610,10 @@ USA_american_economic_decisions_category = {
 		remove_effect = {
 			log = "[GetDateText]: [This.GetName]: Decision Remove USA_bring_microsoft_to_court_decision"
 			country_event = { id = usa.47 days = 1 }
+		}
+
+		ai_will_do = {
+			factor = 25
 		}
 	}
 }
@@ -1567,10 +1621,10 @@ USA_the_trump_agenda = {
 		}
 	}
 	USA_finish_keystone_and_dakota_pipelines = {
-		icon = decision
+		icon = oil
 		
 		fire_only_once = yes
-		cost = 20
+		cost = 50
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_finish_keystone_and_dakota_pipelines"
@@ -1579,7 +1633,7 @@ USA_the_trump_agenda = {
 			set_country_flag = Keystone_Pipeline_Finished
 		}
 		modifier = {
-			production_speed_buildings_factor = 0.02
+			production_speed_buildings_factor = 0.03
 		}
 		days_remove = 365
 		
@@ -1594,7 +1648,7 @@ USA_the_trump_agenda = {
 		}
 		
 		fire_only_once = yes
-		cost = 20
+		cost = 50
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_america_first_energy_plan"
