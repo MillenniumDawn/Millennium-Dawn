@@ -576,7 +576,10 @@ country_event = {
 				limit = {
 					OR = {
 						has_idea = NATO_member
-						has_idea = LoAS_member
+						if = {
+							limit = { NOT = { SYR = { has_idea = LoAS_member } } }
+							has_idea = LoAS_member
+						}
 					}
 					NOT = { tag = SYR }
 					NOT = { tag = FSA }
@@ -588,6 +591,7 @@ country_event = {
 				limit = { threat < 0.1 }
 				add_threat = 10
 			}
+			every_country = { news_event = { days = 2 id = gulf.18 } }
 		}
 		if = {
 			limit = {
@@ -604,24 +608,28 @@ country_event = {
 		add_war_support = 0.05
 		add_political_power = -100
 		ai_chance = {
-			factor = 0
+			factor = 10
 			modifier = {
-				add = 2
+				add = 20
+				has_government = democratic
+			}
+			modifier = {
+				add = 10
 				has_idea = intervention_regional_interventionism
 			}
 			modifier = {
-				add = 2
+				add = 10
 				has_idea = intervention_global_interventionism
 			}
 			modifier = {
-				add = -1
+				add = -10
 				OR = {
 					has_country_flag = Operation_iraqi_freedom
 					has_start_date > 2016.01.01
 				}
 			}
 			modifier = {
-				add = 1
+				add = 10
 				if = {
 					limit = { BHR = { has_country_flag = proposed_coalition_against_assad } }
 					has_opinion = {
@@ -666,7 +674,7 @@ country_event = {
 				}
 			}
 			modifier = {
-				add = 1
+				add = 10
 				if = {
 					limit = { BHR = { has_country_flag = proposed_coalition_against_assad } }
 					has_opinion = {
@@ -711,7 +719,7 @@ country_event = {
 				}
 			}
 			modifier = {
-				add = 2
+				add = 20
 				if = {
 					limit = { BHR = { has_country_flag = proposed_coalition_against_assad } }
 					check_variable = { influence_array^0 = BHR }
@@ -744,17 +752,17 @@ country_event = {
 		name = gulf.16.b #We cannot risk a clash with Russia and Iran.
 		log = "[GetDateText]: [This.GetName]: gulf.16.b executed"
 		ai_chance = {
-			factor = 0
+			factor = 10
 			modifier = {
-				add = 1
+				add = 20
 				has_idea = intervention_local_security
 			}
 			modifier = {
-				add = 1
+				add = 50
 				has_idea = intervention_isolation
 			}
 			modifier = {
-				add = 1
+				add = 50
 				NOT = { has_government = democratic }
 			}
 		}
@@ -774,10 +782,49 @@ country_event = {
 	option = {
 		name = gulf.17.a #We must take matters into our own hands!
 		log = "[GetDateText]: [This.GetName]: gulf.17.a executed"
+		create_wargoal = {
+			type = puppet_wargoal_focus
+			target = SYR
+		}
 	}
 	
 	option = {
 		name = gulf.17.b #We are not ready for an operation of this magnitude...
 		log = "[GetDateText]: [This.GetName]: gulf.17.b executed"
+	}
+}
+
+#International Coalition Begins Operations in Syria
+news_event = {
+	id = gulf.18
+	title = gulf.18.t
+	desc = {
+		text = gulf.18.d
+		trigger = { SYR = { NOT = { has_idea = LoAS_member } } }
+	}
+	desc = {
+		text = gulf.18.d_NATO_only
+		trigger = { SYR = { has_idea = LoAS_member } } 
+	}
+	
+	picture = GFX_afghanistan_war4
+		
+	is_triggered_only = yes
+	
+	option = {
+		trigger = { 
+			OR = {	
+				has_government = democratic 
+				tag = SAU
+			}
+		}
+		name = gulf.18.a #Human rights must be defended!
+		log = "[GetDateText]: [This.GetName]: gulf.18.a executed"
+	}
+	
+	option = {
+		trigger = { NOT = { has_government = democratic tag = SAU } }
+		name = gulf.18.b #This is an unacceptable violation of state sovereignty!
+		log = "[GetDateText]: [This.GetName]: gulf.18.b executed"
 	}
 }
