@@ -6,7 +6,6 @@ add_namespace = usa_economic_events
 add_namespace = USA_FOCUS
 add_namespace = USA_Cabinet_picks
 add_namespace = USA_Repeal_Obama_Care
-add_namespace = USA_Trump_First_Trip
 add_namespace = USA_Russia_Investigation
 add_namespace = USA
 add_namespace = USA_Purchase_Bases_ME
@@ -3127,7 +3126,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event USA_Cabinet_picks.0" }
 	title = USA_Cabinet_picks.0.t
 	desc = USA_Cabinet_picks.0.d
-	picture = GFX_political_activist
+	picture = GFX_trump_desk
 	fire_only_once = yes
 	is_triggered_only = yes
 	immediate = {
@@ -3140,7 +3139,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: USA_Cabinet_picks.0.a executed"
 		add_country_leader_trait = USA_Rex_Tillerson
 		add_opinion_modifier = { target = SOV modifier = USA_Tillerson_EFFECT }
-		SOV = { add_opinion_modifier = { target = USA modifier = USA_Tillerson_EFFECT } }
+		reverse_add_opinion_modifier = { target = SOV modifier = USA_Tillerson_EFFECT }
 		
 		ai_chance = { 
 			factor = 3
@@ -3166,6 +3165,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: USA_Cabinet_picks.0.c executed"
 		add_country_leader_trait = USA_Romney
 		add_stability = -0.02
+		add_political_power = 50
 		
 		ai_chance = {
 			factor = 0 
@@ -3176,12 +3176,22 @@ country_event = {
 		name = USA_Cabinet_picks.0.e
 		log = "[GetDateText]: [This.GetName]: USA_Cabinet_picks.0.e executed"
 		add_country_leader_trait = USA_Alex_Jones
+		add_popularity = { ideology = nationalist popularity = 0.02 }
+		recalculate_party = yes
 		
 		ai_chance = {
 			factor = 0
 			modifier = {
 				add = 0.5 
+				is_historical_focus_on = no 
+			}
+			modifier = {
+				nationalist > 0.15
+				add = 0.25 
+			}
+			modifier = {
 				is_historical_focus_on = yes 
+				factor = 0
 			}
 		}
 	}
@@ -3193,7 +3203,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event USA_Cabinet_picks.1" }
 	title = USA_Cabinet_picks.1.t
 	desc = USA_Cabinet_picks.1.d
-	#picture = GFX_new_years_2017_usa
+	picture = GFX_trump_desk
 	fire_only_once = yes
 	is_triggered_only = yes
 	immediate = {
@@ -3250,7 +3260,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event USA_Cabinet_picks.2" }
 	title = USA_Cabinet_picks.2.t
 	desc = USA_Cabinet_picks.2.d
-	#picture = GFX_new_years_2017_usa
+	picture = GFX_trump_desk
 	fire_only_once = yes
 	is_triggered_only = yes
 	immediate = {
@@ -3262,7 +3272,8 @@ country_event = {
 		name = USA_Cabinet_picks.2.a
 		log = "[GetDateText]: [This.GetName]: USA_Cabinet_picks.2.a executed"
 		add_country_leader_trait = USA_Sessions
-		
+		add_stability = 0.01 
+
 		ai_chance = {
 			factor = 5
 		}
@@ -3272,6 +3283,8 @@ country_event = {
 		name = USA_Cabinet_picks.2.b
 		log = "[GetDateText]: [This.GetName]: USA_Cabinet_picks.2.b executed"
 		add_country_leader_trait = USA_Kris_Kobac
+		add_stability = -0.01 
+		add_war_support = 0.01 
 		
 		ai_chance = {
 			factor = 0
@@ -3285,7 +3298,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event USA_Cabinet_picks.3" }
 	title = USA_Cabinet_picks.3.t
 	desc = USA_Cabinet_picks.3.d
-	#picture = GFX_new_years_2017_usa
+	picture = GFX_trump_desk
 	fire_only_once = yes
 	is_triggered_only = yes
 
@@ -5087,7 +5100,6 @@ news_event = {
 }
 
 #2017 Junk
-add_namespace = USA
 #New Years - Intro Event
 country_event = {
 	id = USA.1
@@ -5120,21 +5132,46 @@ country_event = {
 		ai_chance = { factor = 100 }
 		add_popularity = { ideology = nationalist popularity = 0.05 }
 		add_popularity = { ideology = democratic popularity = -0.05 }
-		create_country_leader = {
-			name = "Donald Trump"
-			desc = "POLITICS_FRANKLIN_DELANO_ROOSEVELT_DESC"
-			picture = "Donald_Trump.dds"
-			expire = "2068.1.1"
-			ideology = conservatism
-			traits = {
-				western_conservatism
-				businessman
-				narcissist
-				greedy
-				likeable
-				emotional
+		recalculate_party = yes 
+		hidden_effect = { 
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 1 } #Repubs
+				add_to_array = { gov_coalition_array = 14 } #Constiutionalists
+				add_to_array = { gov_coalition_array = 20 } #RWP
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+			create_country_leader = {
+				name = "Donald Trump"
+				desc = "DONALD_TRUMP_LEADER_DESC"
+				picture = "Donald_Trump.dds"
+				expire = "2068.1.1"
+				ideology = conservatism
+				traits = {
+					western_conservatism
+					businessman
+					narcissist
+					greedy
+					likeable
+					emotional
+				}
 			}
 		}
+		custom_effect_tooltip = USA_donald_trump_inaugrated_tt
 	}
 }
 
@@ -5163,7 +5200,6 @@ country_event = {
 	}
 }
 
-
 #Agressor against Rio-pact member - hidden event no need for localisation/pics
 country_event = {
 	id = USA.6
@@ -5190,7 +5226,6 @@ country_event = {
 	title = USA.7.t
 	desc = USA.7.d
 	picture = GFX_USA_generic
-
 	is_triggered_only = yes
 	
 	#Intervene, send an ultimatum peace out or war
@@ -5241,15 +5276,12 @@ country_event = {
 	title = USA.8.t
 	desc = USA.8.d
 	picture = GFX_american_troops
-
 	is_triggered_only = yes
-	
 	trigger = {
 		any_country = {
 			has_country_flag = RIO_Pact_War_Member
 		}
 	}
-	
 	
 	#Go to war with RIO-Pact members
 	option = { 
@@ -5326,10 +5358,8 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event donald_trump.0" }
 	title = donald_trump.0.t
 	desc = donald_trump.0.d
-	picture = GFX_USA_Election_2020
-
+	picture = GFX_muslim_ban
 	fire_only_once = yes
-
 	is_triggered_only = yes
 
 	option = { #Keep the ban limited
@@ -5396,9 +5426,7 @@ country_event = {
 		}
 	}
 	picture = GFX_USA_Election_2020
-
 	fire_only_once = yes
-
 	is_triggered_only = yes
 
 	option = { #Revise the ban
@@ -5596,9 +5624,7 @@ country_event = {
 	title = donald_trump.4.t
 	desc = donald_trump.4.d
 	picture = GFX_USA_Election_2020
-
 	fire_only_once = yes
-
 	is_triggered_only = yes
 
 	option = { #Let the process begin
@@ -5637,9 +5663,7 @@ country_event = {
 	title = donald_trump.5.t
 	desc = donald_trump.5.d
 	picture = GFX_USA_Election_2020
-
 	fire_only_once = yes
-
 	is_triggered_only = yes
 
 	option = { #This was a waste of time
@@ -5660,9 +5684,7 @@ country_event = {
 	title = donald_trump.6.t
 	desc = donald_trump.6.d
 	picture = GFX_USA_Election_2020
-
 	fire_only_once = yes
-
 	is_triggered_only = yes
 
 	option = { #We finally have an end to this madness
@@ -5735,8 +5757,7 @@ country_event = {
 	}
 }
 
-########################## Asteroid Mining Event Chain ##########################
-
+########################## Asteroid Mining Event Chain #########################
 #Launching the Asteroid Mining Initiative
 country_event = {
 	id = donald_trump.8
@@ -6580,7 +6601,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event donald_trump.500" }
 	title = donald_trump.500.t
 	desc = donald_trump.500.d
-	picture = GFX_SYR_tahrir_al_sham
+	picture = GFX_Tahrir_Al_Sham
 	fire_only_once = yes
 	is_triggered_only = yes
 
