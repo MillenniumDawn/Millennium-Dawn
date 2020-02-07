@@ -6075,6 +6075,7 @@ focus_tree = {
 			}
 			modifier = {
 				add = 10
+				NOT = { original_tag = SAU }
 				has_completed_focus = GCC_keep_to_the_saudi_line
 				SAU = { has_completed_focus = GCC_befriend_the_turks }
 			}
@@ -6284,6 +6285,7 @@ focus_tree = {
 			}
 			modifier = {
 				add = 10
+				NOT = { original_tag = SAU }
 				has_completed_focus = GCC_keep_to_the_saudi_line
 				SAU = { has_completed_focus = GCC_contain_the_turks }
 			}
@@ -6505,7 +6507,7 @@ focus_tree = {
 			FSA = {
 				add_opinion_modifier = {
 					target = ROOT
-					modifier = diplomatic_support 
+					modifier = military_aid 
 				}
 				add_ai_strategy = { type = befriend id = "ROOT" value = 50 }
 			}
@@ -6689,7 +6691,7 @@ focus_tree = {
 		id = GCC_jordanian_ties #Sideline the Palestinians
 		icon = attack_palestine
 		
-		x = -4
+		x = -2
 		y = 2
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6707,14 +6709,24 @@ focus_tree = {
 		
 		completion_reward = {
 			add_political_power = -50
+			PAL = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_distance
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_jordanian_ties executed"
 		}
 		
 		ai_will_do = {
 			base = 0
 			modifier = {
+				add = 1
+				original_tag = SAU
+			}
+			modifier = {
 				add = 10
-				has_completed_focus = GCC_keep_to_the_saudi_line
+				NOT = { original_tag = SAU }
 				SAU = { has_completed_focus = GCC_jordanian_ties }
 			}
 		}
@@ -6724,7 +6736,7 @@ focus_tree = {
 		id = GCC_pressure_lebanon
 		icon = attack_lebanon
 		
-		x = -4
+		x = -2
 		y = 3
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6734,17 +6746,37 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_jordanian_ties }
+		prerequisite = { focus = GCC_antagonize_iran }
 		
 		available = {
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			LEB = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = unwanted_pressure
+				}
+				add_ai_strategy = { type = contain id = "ROOT" value = 50 }
+			}
+			if = {
+				limit = { original_tag = SAU }
+				every_country = { news_event = { days = 1 id = SAU.1 } }
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_pressure_lebanon executed"
 		}
 		
 		ai_will_do = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				original_tag = SAU
+			}
+			modifier = {
+				add = 10
+				NOT = { original_tag = SAU }
+				SAU = { has_completed_focus = GCC_pressure_lebanon }
+			}
 		}
 	}
 	
@@ -6752,7 +6784,7 @@ focus_tree = {
 		id = GCC_grant_recognition
 		icon = align_to_israel
 		
-		x = -8
+		x = -2
 		y = 4
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6780,12 +6812,33 @@ focus_tree = {
 					target = ROOT
 					modifier = recognises_us
 				}
+				add_ai_strategy = { type = befriend id = "ROOT" value = 50 }
+			}
+			every_country = {
+				limit = { 
+					has_idea = LoAS_member
+					NOT = { has_completed_focus = GCC_grant_recognition } 
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = recognises_israel
+				}
+				add_ai_strategy = { type = befriend id = "ROOT" value = -50 }
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_grant_recognition executed"
 		}
 		
 		ai_will_do = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				original_tag = SAU
+			}
+			modifier = {
+				add = 10
+				NOT = { original_tag = SAU }
+				SAU = { has_completed_focus = GCC_grant_recognition }
+			}
 		}
 	}
 	
@@ -6793,7 +6846,7 @@ focus_tree = {
 		id = GCC_secret_cooperation
 		icon = dangerous_deal2
 		
-		x = -8
+		x = -2
 		y = 5
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6811,15 +6864,36 @@ focus_tree = {
 			}
 			NOT = { has_war_with = ISR }
 			country_exists = ISR
+			ISR = {
+				has_opinion = {
+					target = ROOT
+					value > 25
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			add_to_tech_sharing_group = anti_hezbollah_Tech_Share
+			if = {
+				limit = {
+					ISR = { NOT = { is_in_tech_sharing_group = anti_hezbollah_Tech_Share } }
+				}
+				ISR = { add_to_tech_sharing_group = anti_hezbollah_Tech_Share }
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_secret_cooperation executed"
 		}
 		
 		ai_will_do = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				original_tag = SAU
+			}
+			modifier = {
+				add = 10
+				NOT = { original_tag = SAU }
+				SAU = { has_completed_focus = GCC_secret_cooperation }
+			}
 		}
 	}
 	
@@ -6827,7 +6901,7 @@ focus_tree = {
 		id = GCC_war_with_hezbollah
 		icon = attack_hezbollah
 		
-		x = -8
+		x = -2
 		y = 6
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6859,7 +6933,7 @@ focus_tree = {
 		id = GCC_host_talks
 		icon = union_negotiations
 		
-		x = -6
+		x = -4
 		y = 4
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6889,7 +6963,7 @@ focus_tree = {
 		id = GCC_cash_for_land
 		icon = money
 		
-		x = -6
+		x = -4
 		y = 5
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6917,7 +6991,7 @@ focus_tree = {
 		id = GCC_peace_in_the_middle_east
 		icon = war_is_over
 		
-		x = -6
+		x = -4
 		y = 6
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6946,7 +7020,7 @@ focus_tree = {
 		id = GCC_favor_resistance
 		icon = align_to_palestine
 		
-		x = -2
+		x = -4
 		y = 2
 		relative_position_id = GCC_foreign_affairs
 		
@@ -6983,7 +7057,7 @@ focus_tree = {
 		id = GCC_live_and_let_live
 		icon = align_to_lebanon
 		
-		x = -2
+		x = -4
 		y = 3
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7017,7 +7091,7 @@ focus_tree = {
 		id = GCC_support_hamas
 		icon = align_to_hamas
 		
-		x = -4
+		x = -6
 		y = 4
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7039,7 +7113,7 @@ focus_tree = {
 			HAM = {
 				add_opinion_modifier = {
 					target = ROOT
-					modifier = diplomatic_support
+					modifier = military_aid
 				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_support_hamas executed"
@@ -7054,7 +7128,7 @@ focus_tree = {
 		id = GCC_back_an_intifada
 		icon = flames_of_rebellion
 		
-		x = -4
+		x = -6
 		y = 5
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7082,7 +7156,7 @@ focus_tree = {
 		id = GCC_war_with_israel
 		icon = attack_israel
 		
-		x = -3
+		x = -7
 		y = 6
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7114,7 +7188,7 @@ focus_tree = {
 		id = GCC_promote_populist_islam
 		icon = sunni_politics
 		
-		x = -2
+		x = -8
 		y = 4
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7143,7 +7217,7 @@ focus_tree = {
 		id = GCC_combat_saudi_influence
 		icon = ultimatum
 		
-		x = -2
+		x = -8
 		y = 5
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7280,7 +7354,7 @@ focus_tree = {
 		id = GCC_improve_relations_with_iran
 		icon = align_to_iran
 		
-		x = 0
+		x = 2
 		y = 2
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7319,7 +7393,7 @@ focus_tree = {
 		id = GCC_the_arab_street
 		icon = arabunion
 		
-		x = 0
+		x = 2
 		y = 3
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7347,7 +7421,7 @@ focus_tree = {
 		id = GCC_non_aggression_pact
 		icon = iran_resistence_economy
 		
-		x = 0
+		x = 2
 		y = 4
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7377,7 +7451,7 @@ focus_tree = {
 		id = GCC_align_with_iran
 		icon = small_arms5
 		
-		x = 0
+		x = 2
 		y = 5
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7405,7 +7479,7 @@ focus_tree = {
 		id = GCC_antagonize_iran
 		icon = iran_guard
 		
-		x = 2
+		x = 0
 		y = 2
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7439,7 +7513,7 @@ focus_tree = {
 		id = GCC_denounce_iranian_meddling
 		icon = anti_establishment2
 		
-		x = 2
+		x = 0
 		y = 3
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7467,7 +7541,7 @@ focus_tree = {
 		id = GCC_combat_iranian_influence
 		icon = political_pressure_dark_green
 		
-		x = 2
+		x = 0
 		y = 4
 		relative_position_id = GCC_foreign_affairs
 		
@@ -7496,7 +7570,7 @@ focus_tree = {
 		id = GCC_confront_iranian_partners
 		icon = deadly_deal
 		
-		x = 2
+		x = 0
 		y = 5
 		relative_position_id = GCC_foreign_affairs
 		
