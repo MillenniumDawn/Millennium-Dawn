@@ -898,7 +898,7 @@ country_event = {
 	title = gulf.21.t
 	desc = gulf.21.d
 	
-	picture = GFX_politics_negotiations
+	picture = GFX_treaty_rejected
 		
 	is_triggered_only = yes
 	
@@ -912,31 +912,194 @@ country_event = {
 country_event = {
 	id = gulf.22
 	title = gulf.22.t
-	desc = gulf.22.d
+	desc = {
+		text = gulf.22.d
+		trigger = { original_tag = ISR }
+	}
+	desc = {
+		text = gulf.22.d1
+		trigger = { 
+			original_tag = USA
+			FROM = { has_country_flag = israel_accepted }		
+		}
+	}
+	desc = {
+		text = gulf.22.d2
+		trigger = { 
+			original_tag = USA
+			FROM = { has_country_flag = israel_rejected }
+		}
+	}
+	desc = {
+		text = gulf.22.d3
+		trigger = { 
+			NOT = {
+				original_tag = USA 
+				original_tag = ISR
+			}
+		}
+	}
 	
-	picture = GFX_politics_negotiations
+	picture = GFX_politics_talks
 		
 	is_triggered_only = yes
 	
 	option = {
 		name = gulf.22.a #Our joint forces will annihilate the terrorists!
 		log = "[GetDateText]: [This.GetName]: gulf.22.a executed"
-		FROM = { 
-			country_event = { days = 1 id = gulf.23 }
+		trigger = { NOT = { original_tag = USA } }
+		if = {
+			limit = { original_tag = ISR }
+			set_country_flag = israel_accepted
+			FROM = { 
+				country_event = { days = 1 id = gulf.23 }
+			}
+		}
+		else_if = {
+			if = {
+				limit = {
+					OR = {
+						has_idea = intervention_isolation
+						has_idea = intervention_local_security
+						has_idea = intervention_limited_interventionism
+					}
+				}
+				add_ideas = intervention_regional_interventionism
+			}
+			if = {	
+				limit = { ISR = { has_country_flag = israel_accepted } }
+				add_ai_strategy = { type = send_volunteers_desire id = ISR value = 200 }
+			}
+			if = {	
+				limit = { BHR = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = BHR value = 200 }
+			}
+			if = {	
+				limit = { KUW = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = KUW value = 200 }
+			}
+			if = {	
+				limit = { OMA = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = OMA value = 200 }
+			}
+			if = {	
+				limit = { QAT = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = QAT value = 200 }
+			}
+			if = {	
+				limit = { SAU = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = SAU value = 200 }
+			}
+			if = {	
+				limit = { UAE = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = UAE value = 200 }
+			}
 		}
 		ai_chance = {
-			factor = 1
+			factor = 2
 		}
 	}
 	
 	option = {
 		name = gulf.22.b #We do not want war.
 		log = "[GetDateText]: [This.GetName]: gulf.22.b executed"
-		FROM = { 
-			country_event = { days = 1 id = gulf.24 }
+		trigger = { NOT = { original_tag = USA } }
+		if = {
+			limit = { original_tag = ISR }	
+			set_country_flag = israel_rejected
+			FROM = { 
+				country_event = { days = 1 id = gulf.24 }
+			}
 		}
 		ai_chance = {
-			factor = 0
+			factor = 1
+			modifier = {
+				add = 3
+				OR = {
+					has_idea = intervention_isolation
+					has_idea = intervention_local_security
+				}
+			}
+		}
+	}
+	option = {
+		name = gulf.22.c #We should call on NATO to join the operation!
+		log = "[GetDateText]: [This.GetName]: gulf.22.c executed"
+		trigger = { original_tag = USA }
+		if = {
+			limit = { threat < 0.1 }
+			add_threat = 10
+		}
+		if = {	
+			limit = { ISR = { has_country_flag = israel_accepted } }
+			add_ai_strategy = { type = send_volunteers_desire id = ISR value = 200 }
+		}
+		if = {	
+			limit = { BHR = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = BHR value = 200 }
+		}
+		if = {	
+			limit = { KUW = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = KUW value = 200 }
+		}
+		if = {	
+			limit = { OMA = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = OMA value = 200 }
+		}
+		if = {	
+			limit = { QAT = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = QAT value = 200 }
+		}
+		if = {	
+			limit = { SAU = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = SAU value = 200 }
+		}
+		if = {	
+			limit = { UAE = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = UAE value = 200 }
+		}
+		set_country_flag = USA_accepted_NATO
+		FROM = { 
+			country_event = { days = 1 id = gulf.25 }
+		}
+		every_other_country = {
+			limit = { has_idea = NATO_member }
+			country_event = { days = 1 id = gulf.22 }
+		}
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 1
+				is_in_array = { ruling_party = 1 }
+			}
+		}
+	}
+	option = {
+		name = gulf.22.e #They can do as they wish.
+		log = "[GetDateText]: [This.GetName]: gulf.22.e executed"
+		trigger = { original_tag = USA }
+		set_country_flag = USA_accepted
+		FROM = { 
+			country_event = { days = 1 id = gulf.25 }
+		}
+		ai_chance = {
+			factor = 2
+		}
+	}
+	option = {
+		name = gulf.22.f #This operation cannot be allowed to go ahead!
+		log = "[GetDateText]: [This.GetName]: gulf.22.f executed"
+		trigger = { original_tag = USA }
+		set_country_flag = USA_rejected
+		FROM = { 
+			country_event = { days = 1 id = gulf.26 }
+		}
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 1
+				NOT = { is_in_array = { ruling_party = 1 } }
+			}
 		}
 	}
 }
@@ -947,14 +1110,14 @@ country_event = {
 	title = gulf.23.t
 	desc = gulf.23.d
 	
-	picture = GFX_politics_negotiations
+	picture = GFX_politics_talks
 		
 	is_triggered_only = yes
 	
 	option = {
 		name = gulf.23.a #We should inform the Americans first!
 		log = "[GetDateText]: [This.GetName]: gulf.23.a executed"
-		USA = { country_event = { days = 2 id = gulf.25 } }
+		USA = { country_event = { days = 2 id = gulf.22 } }
 		ai_chance = {
 			factor = 1
 		}
@@ -972,6 +1135,7 @@ country_event = {
 				target = HEZ
 			}
 		}
+		every_country = { news_event = { days = 1 id = gulf.27 } }
 		ai_chance = {
 			factor = 1
 		}
@@ -984,14 +1148,14 @@ country_event = {
 	title = gulf.24.t
 	desc = gulf.24.d
 	
-	picture = GFX_politics_negotiations
+	picture = GFX_treaty_rejected
 		
 	is_triggered_only = yes
 	
 	option = {
 		name = gulf.24.a #We should inform the Americans first!
 		log = "[GetDateText]: [This.GetName]: gulf.24.a executed"
-		USA = { country_event = { days = 2 id = gulf.25 } }
+		USA = { country_event = { days = 2 id = gulf.22 } }
 		ai_chance = {
 			factor = 1
 		}
@@ -1003,6 +1167,7 @@ country_event = {
 			type = topple_government
 			target = HEZ
 		}
+		every_country = { news_event = { days = 1 id = gulf.27 } }
 		ai_chance = {
 			factor = 1
 		}
@@ -1010,6 +1175,155 @@ country_event = {
 	option = {
 		name = gulf.24.c #Without Israel we cannot succeed.
 		log = "[GetDateText]: [This.GetName]: gulf.24.c executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#The Americans will not oppose our operation!
+country_event = {
+	id = gulf.25
+	title = gulf.25.t
+	desc = {
+		text = gulf.25.d
+		trigger = { USA = { has_country_flag = USA_accepted_NATO } }
+	}
+	desc = {
+		text = gulf.25.d1
+		trigger = { USA = { has_country_flag = USA_accepted } }
+	}
+	
+	picture = GFX_USA_generic
+		
+	is_triggered_only = yes
+	
+	option = {
+		name = gulf.25.a #We can proceed!
+		log = "[GetDateText]: [This.GetName]: gulf.25.a executed"
+		create_wargoal = {
+			type = topple_government
+			target = HEZ
+		}
+		ISR = {
+			create_wargoal = {
+				type = topple_government
+				target = HEZ
+			}
+		}
+		every_country = { news_event = { days = 2 id = gulf.27 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#The Americans want us to back down!
+country_event = {
+	id = gulf.26
+	title = gulf.26.t
+	desc = gulf.26.d
+	
+	picture = GFX_USA_generic
+		
+	is_triggered_only = yes
+	
+	option = {
+		name = gulf.26.a #We should proceed regardless!
+		log = "[GetDateText]: [This.GetName]: gulf.26.a executed"
+		create_wargoal = {
+			type = topple_government
+			target = HEZ
+		}
+		ISR = {
+			create_wargoal = {
+				type = topple_government
+				target = HEZ
+			}
+		}
+		USA = { 
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = insult
+			}
+		}
+		every_country = { news_event = { days = 1 id = gulf.27 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+	option = {
+		name = gulf.26.b #We cannot afford to directly oppose the Americans.
+		log = "[GetDateText]: [This.GetName]: gulf.26.b executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#War Breaks Out in Lebanon Following Declaration of War on Hezbollah
+news_event = {
+	id = gulf.27
+	title = gulf.27.t
+	desc = {
+		text = gulf.27.d
+		trigger = {
+			ISR = { has_country_flag = israel_accepted }
+			USA = { has_country_flag = USA_accepted_NATO }
+		}
+	}
+	desc = {
+		text = gulf.27.d1
+		trigger = {
+			ISR = { has_country_flag = israel_accepted }
+			USA = { has_country_flag = USA_accepted }
+		}
+	}
+	desc = {
+		text = gulf.27.d2
+		trigger = {
+			ISR = { has_country_flag = israel_accepted }
+			USA = { has_country_flag = USA_rejected }
+		}
+	}
+	desc = {
+		text = gulf.27.d3
+		trigger = {
+			ISR = { has_country_flag = israel_rejected }
+			USA = { has_country_flag = USA_accepted_NATO }
+		}
+	}
+	desc = {
+		text = gulf.27.d4
+		trigger = {
+			ISR = { has_country_flag = israel_rejected }
+			USA = { has_country_flag = USA_accepted }
+		}
+	}
+	desc = {
+		text = gulf.27.d5
+		trigger = {
+			ISR = { has_country_flag = israel_rejected }
+			USA = { has_country_flag = USA_rejected }
+		}
+	}
+	
+	picture = GFX_news_Hezbollah_Syria
+		
+	is_triggered_only = yes
+	
+	option = {
+		name = gulf.27.a #The terrorists will not be missed.
+		log = "[GetDateText]: [This.GetName]: gulf.27.a executed"
+		trigger = { OR = { has_government = democratic has_idea = idea_gcc_member_state } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+	option = {
+		name = gulf.27.b #This is a blantant violation of Lebanese sovereignty!
+		log = "[GetDateText]: [This.GetName]: gulf.27.b executed"
+		trigger = { NOT = { has_government = democratic has_idea = idea_gcc_member_state } }
 		ai_chance = {
 			factor = 1
 		}

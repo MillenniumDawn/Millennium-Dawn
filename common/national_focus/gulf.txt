@@ -6708,12 +6708,23 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = -50
+			add_political_power = -100
 			PAL = {
 				add_opinion_modifier = {
 					target = ROOT
 					modifier = diplomatic_distance
 				}
+			}
+			add_ai_strategy = { type = befriend id = "ISR" value = 50 }
+			custom_effect_tooltip = israel_peace_deal_tt
+			add_to_variable = { isreali_support = 1 }
+			subtract_from_variable = { palestinian_support = 1 }
+			decrease_popularity_10 = yes
+			if = {
+				limit = { has_idea = sunni }
+				custom_effect_tooltip = radicalization_increase_tt
+				add_to_variable = { radicalization = 10 }
+				clamp_radicalization = yes
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_jordanian_ties executed"
 		}
@@ -6733,8 +6744,8 @@ focus_tree = {
 	}
 	
 	focus = {
-		id = GCC_pressure_lebanon
-		icon = attack_lebanon
+		id = GCC_secret_cooperation
+		icon = align_to_israel
 		
 		x = -2
 		y = 3
@@ -6747,6 +6758,55 @@ focus_tree = {
 		
 		prerequisite = { focus = GCC_jordanian_ties }
 		prerequisite = { focus = GCC_antagonize_iran }
+		
+		available = {
+			if = {
+				limit = { ISR = { no_jihadist_government = yes } }
+				no_jihadist_government = yes
+			}
+			NOT = { has_war_with = ISR }
+			country_exists = ISR
+			ISR = {
+				has_opinion = {
+					target = ROOT
+					value > -1
+				}
+			}
+		}
+		
+		completion_reward = {
+			ISR = { country_event = { days = 1 id = gulf.19 } }
+			log = "[GetDateText]: [This.GetName]: focus GCC_secret_cooperation executed"
+		}
+		
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 1
+				original_tag = SAU
+			}
+			modifier = {
+				add = 10
+				NOT = { original_tag = SAU }
+				SAU = { has_completed_focus = GCC_secret_cooperation }
+			}
+		}
+	}
+	
+	focus = {
+		id = GCC_pressure_lebanon
+		icon = attack_lebanon
+		
+		x = -2
+		y = 4
+		relative_position_id = GCC_foreign_affairs
+		
+		cost = 10
+		
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+		
+		prerequisite = { focus = GCC_secret_cooperation }
 		
 		available = {
 		}
@@ -6782,10 +6842,10 @@ focus_tree = {
 	
 	focus = {
 		id = GCC_grant_recognition
-		icon = align_to_israel
+		icon = dangerous_deal2
 		
 		x = -2
-		y = 4
+		y = 5
 		relative_position_id = GCC_foreign_affairs
 		
 		cost = 10
@@ -6794,8 +6854,6 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_pressure_lebanon }
-		mutually_exclusive = { focus = GCC_host_talks }
-		mutually_exclusive = { focus = GCC_support_hamas }
 		
 		available = {
 			if = {
@@ -6825,6 +6883,16 @@ focus_tree = {
 				}
 				add_ai_strategy = { type = befriend id = "ROOT" value = -50 }
 			}
+			decrease_popularity_20 = yes
+			custom_effect_tooltip = israel_peace_deal_tt
+			add_to_variable = { isreali_support = 2 }
+			subtract_from_variable = { palestinian_support = 2 }
+			if = {
+				limit = { has_idea = sunni }
+				custom_effect_tooltip = radicalization_increase_tt
+				add_to_variable = { radicalization = 10 }
+				clamp_radicalization = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_grant_recognition executed"
 		}
 		
@@ -6843,55 +6911,6 @@ focus_tree = {
 	}
 	
 	focus = {
-		id = GCC_secret_cooperation
-		icon = dangerous_deal2
-		
-		x = -2
-		y = 5
-		relative_position_id = GCC_foreign_affairs
-		
-		cost = 10
-		
-		cancel_if_invalid = yes
-		available_if_capitulated = no
-		
-		prerequisite = { focus = GCC_grant_recognition }
-		
-		available = {
-			if = {
-				limit = { ISR = { no_jihadist_government = yes } }
-				no_jihadist_government = yes
-			}
-			NOT = { has_war_with = ISR }
-			country_exists = ISR
-			ISR = {
-				has_opinion = {
-					target = ROOT
-					value > 24
-				}
-			}
-		}
-		
-		completion_reward = {
-			ISR = { country_event = { days = 1 id = gulf.19 } }
-			log = "[GetDateText]: [This.GetName]: focus GCC_secret_cooperation executed"
-		}
-		
-		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 1
-				original_tag = SAU
-			}
-			modifier = {
-				add = 10
-				NOT = { original_tag = SAU }
-				SAU = { has_completed_focus = GCC_secret_cooperation }
-			}
-		}
-	}
-	
-	focus = {
 		id = GCC_war_with_hezbollah
 		icon = attack_hezbollah
 		
@@ -6904,20 +6923,37 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 		
-		prerequisite = { focus = GCC_secret_cooperation }
+		prerequisite = { focus = GCC_grant_recognition }
 		
 		available = {
 			country_exists = HEZ
 			NOT = { has_war_with = HEZ }
+			if = {
+				limit = { any_country = { has_completed_focus = GCC_war_with_hezbollah } }
+				any_country  { has_war_with = HEZ }
+			}
 		}
 				
 		completion_reward = {
-			ISR = { country_event = { days = 1 id = gulf.22 } }
+			if = {
+				limit = { NOT = { any_country = { has_completed_focus = GCC_war_with_hezbollah } } }
+				ISR = { country_event = { days = 1 id = gulf.22 } }
+			}
+			else_if = {
+				create_wargoal = {
+					type = topple_government
+					target = HEZ
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_war_with_hezbollah executed"
 		}
 		
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 10
+				any_country = { has_completed_focus = GCC_war_with_hezbollah }
+			}
 		}
 	}
 	
@@ -6934,20 +6970,32 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 		
-		prerequisite = { focus = GCC_pressure_lebanon focus = GCC_live_and_let_live }
-		mutually_exclusive = { focus = GCC_grant_recognition }
-		mutually_exclusive = { focus = GCC_support_hamas }
+		prerequisite = { focus = GCC_secret_cooperation focus = GCC_live_and_let_live }
 		
 		available = {
 			no_jihadist_government = yes
+			PAL = { is_influencer = yes }
+			country_exists = PAL
+			PAL = { has_war = no }
+			ISR = { is_influencer = yes }
+			country_exists = ISR
+			ISR = { has_war = no }
 		}
 		
 		completion_reward = {
+			every_country = {
+				news_event = { days = 1 id = peace_plan.1 }
+			}
+			country_event = { days = 1 id = peace_plan.2 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_host_talks executed"
 		}
 		
 		ai_will_do = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				NOT = { any_country = { has_completed_focus = GCC_host_talks } }
+			}
 		}
 	}
 	
@@ -7036,7 +7084,10 @@ focus_tree = {
 					modifier = diplomatic_support
 				}
 			}
-			add_political_power = 50
+			custom_effect_tooltip = palestine_peace_deal_tt
+			subtract_from_variable = { isreali_support = 1 }
+			add_to_variable = { palestinian_support = 1 }
+			add_political_power = 100
 			log = "[GetDateText]: [This.GetName]: focus GCC_favor_resistance executed"
 		}
 		
@@ -7094,8 +7145,6 @@ focus_tree = {
 		
 		prerequisite = { focus = GCC_live_and_let_live }
 		prerequisite = { focus = GCC_the_arab_street focus = GCC_expel_us_interests }
-		mutually_exclusive = { focus = GCC_grant_recognition }
-		mutually_exclusive = { focus = GCC_host_talks }
 		
 		available = {
 			NOT = { has_war_with = HAM }
@@ -7108,6 +7157,9 @@ focus_tree = {
 					modifier = military_aid
 				}
 			}
+			custom_effect_tooltip = palestine_peace_deal_tt
+			subtract_from_variable = { isreali_support = 2 }
+			add_to_variable = { palestinian_support = 2 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_support_hamas executed"
 		}
 		
@@ -7135,7 +7187,9 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			custom_effect_tooltip = palestine_peace_deal_tt
+			subtract_from_variable = { isreali_support = 2 }
+			add_to_variable = { palestinian_support = 2 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_back_an_intifada executed"
 		}
 		
@@ -7224,7 +7278,9 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			custom_effect_tooltip = palestine_peace_deal_tt
+			subtract_from_variable = { isreali_support = 2 }
+			add_to_variable = { palestinian_support = 2 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_combat_saudi_influence executed"
 		}
 		
@@ -7324,9 +7380,7 @@ focus_tree = {
 		prerequisite = { focus = GCC_foreign_affairs }
 		mutually_exclusive = { focus = GCC_forge_an_independent_path }
 		mutually_exclusive = { focus = GCC_strategic_hedging }
-		
-		bypass = { has_completed_focus = GCC_foreign_affairs }
-		
+				
 		available = {
 			no_jihadist_government = yes
 			NOT = { has_government = communism }
