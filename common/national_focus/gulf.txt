@@ -6883,15 +6883,18 @@ focus_tree = {
 				}
 				add_ai_strategy = { type = befriend id = "ROOT" value = -50 }
 			}
-			decrease_popularity_20 = yes
-			custom_effect_tooltip = israel_peace_deal_tt
-			add_to_variable = { isreali_support = 2 }
-			subtract_from_variable = { palestinian_support = 2 }
 			if = {
-				limit = { has_idea = sunni }
-				custom_effect_tooltip = radicalization_increase_tt
-				add_to_variable = { radicalization = 10 }
-				clamp_radicalization = yes
+				limit = { ISR = { has_idea = palestinian_resistance } }
+				decrease_popularity_20 = yes
+				custom_effect_tooltip = israel_peace_deal1_tt
+				add_to_variable = { isreali_support = 2 }
+				subtract_from_variable = { palestinian_support = 2 }
+				if = {
+					limit = { has_idea = sunni }
+					custom_effect_tooltip = radicalization_increase_tt
+					add_to_variable = { radicalization = 10 }
+					clamp_radicalization = yes
+				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_grant_recognition executed"
 		}
@@ -6944,6 +6947,12 @@ focus_tree = {
 					type = topple_government
 					target = HEZ
 				}
+			}
+			if = {
+				limit = { ISR = { has_idea = palestinian_resistance } }
+				custom_effect_tooltip = israel_peace_deal1_tt
+				add_to_variable = { isreali_support = 2 }
+				subtract_from_variable = { palestinian_support = 2 }
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_war_with_hezbollah executed"
 		}
@@ -7016,9 +7025,44 @@ focus_tree = {
 		
 		available = {
 			no_jihadist_government = yes
+			HAM = { has_war = no }
+			country_exists = PAL
+			PAL = { has_war = no }
+			country_exists = ISR
+			ISR = { has_war = no }
+			custom_trigger_tooltip = {
+				tooltip = peace_reached_tt
+				ISR = { has_country_flag = peace_deal_accepted_@ROOT }
+				PAL = { has_country_flag = peace_deal_accepted_@ROOT }
+			}
 		}
 		
 		completion_reward = {
+			subtract_from_variable = { treasury = 50 }
+			custom_effect_tooltip = 50_billion_expense_tt
+			every_country = {
+				limit = { has_idea = large_refugee_population }
+				remove_ideas = large_refugee_population
+			}
+			if = {
+				limit = { has_country_flag = right_of_return_yes }
+				ISR = { 
+					add_timed_idea = {
+						idea = large_refugee_population 
+						days = 365
+					}
+				}
+			}
+			PAL = { 
+				add_timed_idea = {
+					idea = large_refugee_population 
+					days = 365
+				}
+			}
+			if = {
+				limit = { has_country_flag = settlements_yes }
+				PAL = { remove_ideas = israeli_settlements }
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_cash_for_land executed"
 		}
 		
@@ -7044,10 +7088,81 @@ focus_tree = {
 		
 		available = {
 			no_jihadist_government = yes
+			HAM = { has_war = no }
+			country_exists = PAL
+			PAL = { has_war = no }
+			country_exists = ISR
+			ISR = { has_war = no }
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			add_political_power = 500
+			if = {
+				limit = { ISR = { has_idea = palestinian_resistance } }
+				ISR = { remove_ideas = palestinian_resistance }
+			}
+			if = {
+				limit = { 
+					HAM = { has_idea = israeli_blockade } 
+					country_exists = HAM
+				}
+				HAM = { remove_ideas = israeli_blockade }
+			}
+			every_country = {
+				limit = { has_opinion_modifier = ISR_Arab_Conflict NOT = { tag = ISR } }
+				remove_opinion_modifier = {
+					target = ISR
+					modifier = ISR_Arab_Conflict
+				}
+			}
+			hidden_effect = {
+				ISR = {
+					remove_opinion_modifier = {
+						target = LEB
+						modifier = ISR_Arab_Conflict
+					}
+					remove_opinion_modifier = {
+						target = HEZ
+						modifier = ISR_Arab_Conflict
+					}
+					remove_opinion_modifier = {
+						target = JOR
+						modifier = ISR_Arab_Conflict
+					}
+					remove_opinion_modifier = {
+						target = SYR
+						modifier = ISR_Arab_Conflict
+					}
+					remove_opinion_modifier = {
+						target = EGY
+						modifier = ISR_Arab_Conflict
+					}
+					remove_opinion_modifier = {
+						target = PER
+						modifier = ISR_Arab_Conflict
+					}
+					remove_opinion_modifier = {
+						target = SAU
+						modifier = ISR_Arab_Conflict
+					}
+					remove_opinion_modifier = {
+						target = QAT
+						modifier = ISR_Arab_Conflict
+					}
+					remove_opinion_modifier = {
+						target = UAE
+						modifier = ISR_Arab_Conflict
+					}
+					remove_opinion_modifier = {
+						target = YEM
+						modifier = ISR_Arab_Conflict
+					}
+					remove_opinion_modifier = {
+						target = HOU
+						modifier = ISR_Arab_Conflict
+					}
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_peace_in_the_middle_east executed"
 		}
 		
@@ -7148,6 +7263,15 @@ focus_tree = {
 		
 		available = {
 			NOT = { has_war_with = HAM }
+			OR = {
+				country_exists = HAM
+				PAL = {
+					custom_trigger_tooltip = {
+						tooltip = hamas_tt
+						is_in_array = { ruling_party = 12 }
+					}
+				}
+			}
 		}
 		
 		completion_reward = {
@@ -7157,7 +7281,7 @@ focus_tree = {
 					modifier = military_aid
 				}
 			}
-			custom_effect_tooltip = palestine_peace_deal_tt
+			custom_effect_tooltip = palestine_peace_deal1_tt
 			subtract_from_variable = { isreali_support = 2 }
 			add_to_variable = { palestinian_support = 2 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_support_hamas executed"
@@ -7184,10 +7308,11 @@ focus_tree = {
 		prerequisite = { focus = GCC_support_hamas }
 		
 		available = {
+			ISR = { has_idea = palestinian_resistance }
 		}
 		
 		completion_reward = {
-			custom_effect_tooltip = palestine_peace_deal_tt
+			custom_effect_tooltip = palestine_peace_deal1_tt
 			subtract_from_variable = { isreali_support = 2 }
 			add_to_variable = { palestinian_support = 2 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_back_an_intifada executed"
@@ -7215,9 +7340,12 @@ focus_tree = {
 		prerequisite = { focus = GCC_combat_saudi_influence }
 		
 		available = {
+			ISR = { has_idea = palestinian_resistance }
 		}
 		
 		completion_reward = {
+			custom_effect_tooltip = israel_peace_deal_reject_tt
+			subtract_from_variable = { isreali_support = 20 }
 			create_wargoal = {
 				type = annex_everything
 				target = ISR
@@ -7274,11 +7402,12 @@ focus_tree = {
 		
 		prerequisite = { focus = GCC_promote_populist_islam }
 		
-		available = {
+		available = {	
+			ISR = { has_idea = palestinian_resistance }
 		}
 		
 		completion_reward = {
-			custom_effect_tooltip = palestine_peace_deal_tt
+			custom_effect_tooltip = palestine_peace_deal1_tt
 			subtract_from_variable = { isreali_support = 2 }
 			add_to_variable = { palestinian_support = 2 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_combat_saudi_influence executed"
