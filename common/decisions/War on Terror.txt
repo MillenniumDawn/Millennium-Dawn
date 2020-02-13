@@ -13,6 +13,7 @@ war_on_terror_category = {
 				tooltip = TT_OEF_SPENDING_REQUIREMENT
 				check_variable = { treasury > 0.5 }
 			}
+			congress_medium_support_trigger = yes 
 		}
 		
 		cost = 200
@@ -43,8 +44,25 @@ war_on_terror_category = {
 			}
 			set_country_flag = USA_increased_intelligence_efforts
 			custom_effect_tooltip = TT_OEF_INCREASED_CHANCE_OF_DETECTING_TERRORISTS
-		}				
+			USA_congress_medium_opposition = yes
+			if = {
+				limit = { NOT = { has_country_flag = enthusiastic_intelligence_community } } 
+				if = {
+					limit = { has_idea = intelligence_community }
+					visually_display_opinion_rise_intelligence_community = yes
+					set_country_flag = current_intelligence_community
+					increase_internal_faction_opinion = yes
+				}
+			}
+		}	
 		
+		ai_will_do = {
+			factor = 10 
+			modifier = {
+				is_historical_focus_on = yes 
+				factor = 0 
+			}
+		}
 	}
 	
 	#Invasion of Afghanistan storyline
@@ -195,15 +213,19 @@ war_on_terror_category = {
 		
 		available = {
 			NOT = { country_exists = TAL }
+			has_idea = USA_patriot_act_idea
 		}
 		
-		cost = 300
-		
+		cost = 200
+		days_remove = 90
 		fire_only_once = yes
 		
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_homeland_security_act"
-			add_ideas = USA_homeland_security
+			swap_ideas = {
+				remove_idea = USA_patriot_act_idea
+				add_idea = USA_homeland_security
+			}
 		}
 		
 		ai_will_do = {
@@ -262,7 +284,7 @@ war_on_terror_category = {
 			CUB = {
 				add_opinion_modifier = {
 					target = USA
-				modifier = territorial_violation
+					modifier = territorial_violation
 				}
 			}
 			hidden_effect = {
@@ -344,7 +366,7 @@ war_on_terror_category = {
 		}
 		
 		available = {
-			has_war_support > 0.75
+			has_war_support > 0.6
 		}
 		
 		cost = 150
@@ -359,10 +381,10 @@ war_on_terror_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove usa_operation_iraqi_freedom"
 			set_country_flag = Operation_iraqi_freedom
 			#Add threat to allow volunteers to be sent
-			add_named_threat = {
-				threat = 11
-				name = USA_iraqi_freedom
-			}
+			#add_named_threat = {
+			#	threat = 11
+			#	name = USA_iraqi_freedom
+			#}
 			create_wargoal = {
 				target = IRQ
 				type = puppet_wargoal_focus

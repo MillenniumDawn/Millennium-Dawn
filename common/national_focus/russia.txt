@@ -1,7 +1,6 @@
 focus_tree = {
 	
 	id = russia_focus
-	
 	country = {
 		factor = 0
 		
@@ -9,6 +8,11 @@ focus_tree = {
 			add = 30
 			tag = SOV
 		}
+	}
+
+	continuous_focus_position = {
+		x = 2750
+		y = 950
 	}
 	
 	focus = {
@@ -30,7 +34,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -43,7 +47,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 1000
+			factor = 1 
 		}
 	}
 	
@@ -61,8 +65,7 @@ focus_tree = {
 			NOT = { has_war_with = CHE }
 		}
 		
-
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -73,7 +76,11 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 1000
+			factor = 1 
+			modifier = {
+				date < 2001.1.1
+				add = 5 
+			}
 		}
 	}
 	
@@ -99,11 +106,10 @@ focus_tree = {
 				}
 			}
 		} 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_putin"
 			if = {
@@ -146,10 +152,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				is_historical_focus_on = yes 
-				add = 25 
+				factor = 5 
 			}
 			modifier = { 
 				has_game_rule = {
@@ -184,7 +190,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -231,7 +237,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_game_rule = { 
 					rule = RUS_AI_BEHAVIOR
@@ -265,11 +271,10 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zyuganov"
 			if = {
@@ -282,12 +287,12 @@ focus_tree = {
 					update_party_name = yes
 					set_coalition_drift = yes
 					meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
+						text = {
+							set_country_flag = [META_SET_RULING_PARTY]
+						}
+						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
+					set_leader = yes
 				}
 				set_politics = {
 					ruling_party = communism
@@ -312,7 +317,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_game_rule = {
 					rule = RUS_AI_BEHAVIOR
@@ -346,7 +351,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -393,7 +398,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_game_rule = {
 					rule = RUS_AI_BEHAVIOR
@@ -417,17 +422,11 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_putin }
 		mutually_exclusive = { focus = SOV_fight_corruption }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
-		
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_empower_putins_cronies"
 			SOV_rise_in_russian_entrepeneurs_opinion = yes
@@ -438,7 +437,15 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
+			modifier = { 
+				has_idea = SOV_corrupt_oligarchy 
+				add = 1
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = -0.5
+			}
 		}
 	}
 	focus = {
@@ -452,13 +459,20 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_putin }
 		mutually_exclusive = { focus = SOV_empower_putins_cronies }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = no
+		available = { 
+			OR = {
+				has_idea = paralyzing_corruption
+				has_idea = crippling_corruption
+				has_idea = rampant_corruption
+				has_idea = unrestrained_corruption
+				has_idea = systematic_corruption
+				has_idea = widespread_corruption
+				has_idea = medium_corruption
+				has_idea = modest_corruption
+			}
+		}
+	
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -466,11 +480,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_fight_corruption"
 			decrease_corruption = yes
-			remove_ideas = SOV_corrupt_oligarchy
+			SOV_fall_in_russian_entrepeneurs_opinion = yes
+			SOV_fall_in_russian_energy_enterprises_opinion = yes 
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -485,9 +500,12 @@ focus_tree = {
 		prerequisite = { focus = SOV_empower_putins_cronies }
 		mutually_exclusive = { }
 		available = { 
-			custom_trigger_tooltip = { 
-				has_country_flag = positive_oligarchs
-				tooltip = SOV_has_positive_oligarchs_TT
+			custom_trigger_tooltip = {
+				tooltip = SOV_oligarchs_positive_tt
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
 		historical_ai = { }
@@ -495,7 +513,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -519,7 +537,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -532,27 +550,24 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_fight_corruption }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_weaken_the_oligarchs"
+			if = {
+				limit = { has_idea = SOV_corrupt_oligarchy }
+				remove_ideas = SOV_corrupt_oligarchy
+			}
 			SOV_fall_in_russian_entrepeneurs_opinion = yes
 			SOV_fall_in_russian_energy_enterprises_opinion = yes 
 			add_stability = 0.05
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -565,23 +580,20 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_gazprom }
-		mutually_exclusive = { }
 		available = {
-			custom_trigger_tooltip = { 
-				has_country_flag = positive_oligarchs
-				tooltip = SOV_has_positive_oligarchs_TT
+			custom_trigger_tooltip = {
+				tooltip = SOV_oligarchs_positive_tt
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_secure_putins_position"
 			hidden_effect = {
@@ -596,7 +608,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -616,7 +628,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -717,7 +729,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -733,17 +745,9 @@ focus_tree = {
 			focus = SOV_secure_putins_position 
 			focus = SOV_nationalize_oligarch_factories
 		}
-		available = { 
-			custom_trigger_tooltip = {
-				OR = {
-					is_ai = yes
-					check_variable = { treasury > 4.99 }
-				}
-				tooltip = 5_billion_currently_in_treasury_tt
-			}
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 
@@ -762,7 +766,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -777,17 +781,9 @@ focus_tree = {
 		prerequisite = { 
 			focus = SOV_nationalize_oligarch_factories
 		}
-		available = { 
-			custom_trigger_tooltip = {
-				OR = {
-					is_ai = yes 
-					check_variable = { treasury > 19.99 }
-				}
-				tooltip = 20_billion_currently_in_treasury_tt
-			}			
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -825,7 +821,7 @@ focus_tree = {
 			custom_effect_tooltip = 20_billion_expense_tt
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -847,7 +843,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -860,7 +856,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -874,17 +870,9 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_moscow_military_factories }
 		prerequisite = { focus = SOV_republican_industrial_project }
-		available = { 
-			custom_trigger_tooltip = {
-				tooltip = 10_billion_currently_in_treasury_tt
-				OR = {	
-					check_variable = { treasury > 9.99 }
-					is_ai = yes 
-				}
-			}		
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -929,10 +917,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_war = yes 
-				add = 100
+				add = 3
 			}
 		}
 	}
@@ -948,7 +936,7 @@ focus_tree = {
 		prerequisite = { focus = SOV_take_control_of_the_justice_system }
 
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -957,9 +945,11 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_education_reform"
 			increase_education_budget = yes
 			add_research_slot = 1
+			hidden_effect = { add_to_variable = { treasury = -10 } }
+			custom_effect_tooltip = 10_billion_expense_tt
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -973,21 +963,13 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_moscow_military_factories }
 		mutually_exclusive = { }
-		available = {	
-			custom_trigger_tooltip = {
-				tooltip = 10_billion_currently_in_treasury_tt
-				OR = {
-					check_variable = { treasury > 9.99 }
-					is_ai = yes
-				}
-			}
-		}
+		available = { }	
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1006,7 +988,7 @@ focus_tree = {
 			custom_effect_tooltip = 10_billion_expense_tt
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1026,7 +1008,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1036,7 +1018,7 @@ focus_tree = {
 			add_political_power = 150 #Temp 
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1056,7 +1038,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1072,7 +1054,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1086,15 +1068,13 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_take_control_of_local_administrations }
 		mutually_exclusive = { }
-		available = { 
-			has_political_power > 100
-		}
+		available = { }
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1121,7 +1101,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1135,7 +1115,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_oppress_the_opposition }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1147,7 +1127,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1167,7 +1147,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1181,7 +1161,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1202,7 +1182,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1226,7 +1206,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -1251,7 +1231,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1262,7 +1242,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1277,16 +1257,13 @@ focus_tree = {
 		prerequisite = { focus = SOV_russian_national_interests }
 		prerequisite = { focus = SOV_putin }
 		mutually_exclusive = { }
-		available = { 
-			has_political_power > 50
-			
-		}
+		available = { }
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1307,7 +1284,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1336,7 +1313,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1356,7 +1333,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1376,7 +1353,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1391,7 +1368,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1411,7 +1388,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1426,7 +1403,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1446,7 +1423,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1457,7 +1434,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1473,14 +1450,33 @@ focus_tree = {
 			focus = SOV_reassure_belarus
 			focus = SOV_tighten_the_union_state
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		available = { 
+			UKR = { 
+				NOT = { is_subject_of = SOV } 
+				NOT = { has_completed_focus = UKR_pro_russian_government_in_power }
+				NOT = { is_in_faction_with = SOV }
+			}
+		}
+		bypass = {
+			UKR = { 
+				OR = {	
+					is_subject_of = SOV
+					has_completed_focus = UKR_pro_russian_government_in_power
+					is_in_faction_with = SOV
+				}
+			}
+		}
+		cancel = {
+			UKR = { 
+				OR = {	
+					is_subject_of = SOV
+					has_completed_focus = UKR_pro_russian_government_in_power
+					is_in_faction_with = SOV
+				}
+			}
+		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 
@@ -1492,7 +1488,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1507,14 +1503,33 @@ focus_tree = {
 		prerequisite = { 
 			focus = SOV_pressure_ukraine
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		available = { 
+			UKR = { 
+				NOT = { is_subject_of = SOV } 
+				NOT = { has_completed_focus = UKR_pro_russian_government_in_power }
+				NOT = { is_in_faction_with = SOV }
+			}
+		}
+		bypass = {
+			UKR = { 
+				OR = {	
+					is_subject_of = SOV
+					has_completed_focus = UKR_pro_russian_government_in_power
+					is_in_faction_with = SOV
+				}
+			}
+		}
+		cancel = {
+			UKR = { 
+				OR = {	
+					is_subject_of = SOV
+					has_completed_focus = UKR_pro_russian_government_in_power
+					is_in_faction_with = SOV
+				}
+			}
+		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1531,7 +1546,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1549,12 +1564,15 @@ focus_tree = {
 		available = {
 			country_exists = BLR
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
+		bypass = {
+			owns_state = 702 #Must Own all of Belarus and it must NOT exists
+			owns_state = 703 
+			owns_state = 704
+			NOT = { country_exists = BLR }
+		}
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1588,7 +1606,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1607,18 +1625,14 @@ focus_tree = {
 			UKR = { owns_state = 669 }
 			NOT = { SOV = { owns_state = 669 } }
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { 
+		bypass ={
 			SOV = { owns_state = 669 }
 		}
-		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
-		
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_take_crimea"
 			UKR = { 
@@ -1632,7 +1646,7 @@ focus_tree = {
 		}
 	
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1652,7 +1666,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1664,7 +1678,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1679,20 +1693,21 @@ focus_tree = {
 		will_lead_to_war_with = UKR 
 		
 		prerequisite = { focus = SOV_take_crimea }
-		mutually_exclusive = { }
 		available = {
 			custom_trigger_tooltip = {
 				UKR = { check_variable { UKR_chance_of_collapse_var > 5 } }
 				tooltip = UKR_has_cor_over_5_tooltip
 			}
-			has_political_power > 100
+			NOT = { UKR = { is_in_faction_with = SOV } }
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		bypass = {
+			UKR = { is_in_faction_with = SOV }
+		}
+		cancel = {
+			UKR = { is_in_faction_with = SOV }
+		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1705,7 +1720,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1731,7 +1746,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1743,7 +1758,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1767,7 +1782,7 @@ focus_tree = {
 		}
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1804,7 +1819,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1828,7 +1843,7 @@ focus_tree = {
 		}
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1842,7 +1857,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1866,7 +1881,7 @@ focus_tree = {
 		}
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1880,7 +1895,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1901,7 +1916,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1915,7 +1930,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1935,7 +1950,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1949,7 +1964,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -1969,7 +1984,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -1983,7 +1998,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2003,7 +2018,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2018,7 +2033,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2038,7 +2053,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2053,7 +2068,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -2075,7 +2090,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2093,7 +2108,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2113,7 +2128,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2132,7 +2147,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2152,7 +2167,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2169,7 +2184,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2189,7 +2204,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2200,7 +2215,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2221,7 +2236,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2235,7 +2250,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2260,7 +2275,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2272,7 +2287,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2292,7 +2307,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2309,7 +2324,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2334,7 +2349,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2361,7 +2376,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2381,18 +2396,20 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_persecute_minorities"
-			add_war_support = 0.05
+			add_war_support = 0.075
+			add_manpower = -10000
+			add_stability = -0.02 
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2413,7 +2430,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2437,7 +2454,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2457,7 +2474,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2468,7 +2485,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2488,7 +2505,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2499,7 +2516,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2513,17 +2530,11 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_the_end_of_the_republic }
 		mutually_exclusive = { focus = SOV_dictatorial_coup }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
-		
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_claim_the_crown"
 			add_ideas = SOV_the_new_tsar_idea
@@ -2532,7 +2543,6 @@ focus_tree = {
 				add_to_variable = { party_pop_array^23 = P2 }
 				recalculate_party = yes
 			}
-			set_country_flag = no_leader_change 
 			hidden_effect = {
 				clear_array = ruling_party
 				clear_array = gov_coalition_array
@@ -2552,13 +2562,26 @@ focus_tree = {
 					ruling_party = nationalist
 					elections_allowed = no 
 				}
+				create_country_leader = {
+					name = "Tsar Zhirinovsky"
+					picture = "Vladimir_Zhirinovsky.dds"
+					ideology = Monarchist
+					traits = {
+						nationalist_Monarchist
+						king
+
+					}
+				}
 			}
-			clr_country_flag = no_leader_change
 			custom_effect_tooltip = SOV_claim_the_crown_TT
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 0
+			modifier = {
+				is_historical_focus_on = no
+				add = 1.25
+			}
 		}
 	}
 	focus = {
@@ -2571,27 +2594,26 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_dictatorial_coup }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		available = {
+			has_elections = no	
+		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reinforce_the_one_party_state"
-			add_popularity = { ideology = nationalist popularity = 0.10 }
-			recalculate_party = yes  
-			
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			recalculate_party = yes  	
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
+			modifier = {
+				nationalist < 0.50 
+				add = 0.25
+			}
 		}
 	}
 	focus = {
@@ -2607,25 +2629,22 @@ focus_tree = {
 			focus = SOV_claim_the_crown
 			focus = SOV_dictatorial_coup
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		available = {
+			NOT = { has_idea = no_military }
+		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
-		
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_ensure_military_loyalty"
 			add_ideas = SOV_russian_militarism_idea
+			add_research_slot = 1 
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2638,14 +2657,8 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_claim_the_crown }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2654,11 +2667,10 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_honor_the_romanovs"
 			add_popularity = { ideology = nationalist popularity = 0.10 }
 			recalculate_party = yes 
-			
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2679,7 +2691,7 @@ focus_tree = {
 		}
 
 		will_lead_to_war_with = KAZ
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2693,10 +2705,21 @@ focus_tree = {
 				target = KAZ 
 				type = puppet_wargoal_focus
 			}
+			CHI = {
+				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
+				add_ai_strategy = { type = contain id = "SOV" value = 200 }
+				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
+				add_ai_strategy = { type = protect id = "KYR" value = 200 }
+				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
+				add_ai_strategy = { type = protect id = "TRK" value = 200 }
+				add_ai_strategy = { type = protect id = "UZB" value = 200 }
+			}
+			add_ai_strategy = { type = contain id = "CHI" value = 50 }
+			add_ai_strategy = { type = conquer id = "KAZ" value = 150 }
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2711,6 +2734,7 @@ focus_tree = {
 		prerequisite = { focus = SOV_dictatorial_coup }
 		prerequisite = { focus = SOV_secure_kazakhstan }
 		available = {
+			NOT = { country_exists = KAZ }
 			OR = {
 				country_exists = TAJ 
 				country_exists = TRK 
@@ -2728,7 +2752,7 @@ focus_tree = {
 		will_lead_to_war_with = TRK
 		will_lead_to_war_with = UZB
 		will_lead_to_war_with = KYR
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2762,10 +2786,24 @@ focus_tree = {
 					type = puppet_wargoal_focus
 				}
 			}
+			CHI = {
+				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
+				add_ai_strategy = { type = contain id = "SOV" value = 200 }
+				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
+				add_ai_strategy = { type = protect id = "KYR" value = 200 }
+				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
+				add_ai_strategy = { type = protect id = "TRK" value = 200 }
+				add_ai_strategy = { type = protect id = "UZB" value = 200 }
+			}
+			add_ai_strategy = { type = conquer id = "KAZ" value = 200 }
+			add_ai_strategy = { type = conquer id = "KYR" value = 200 }
+			add_ai_strategy = { type = conquer id = "TAJ" value = 200 }
+			add_ai_strategy = { type = conquer id = "TRK" value = 200 }
+			add_ai_strategy = { type = conquer id = "UZB" value = 200 }
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2780,30 +2818,35 @@ focus_tree = {
 		will_lead_to_war_with = FIN
 		prerequisite = { focus = SOV_claim_the_crown }
 		prerequisite = { focus = SOV_secure_kazakhstan }
-		mutually_exclusive = { }
 		available = { 
 			country_exists = FIN
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_secure_the_grand_duchy"
-			create_wargoal = {
-				target = FIN 
-				type = puppet_wargoal_focus
+			if = {
+				limit = { country_exists = FIN }
+				create_wargoal = {
+					target = FIN 
+					type = puppet_wargoal_focus
+				}
+				add_war_support = 0.05 
+			}
+			else_if = {
+				limit = { 
+					NOT = { country_exists = FIN }
+				}
+				add_war_support = 0.15
 			}
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -2826,7 +2869,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2842,7 +2885,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2862,7 +2905,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2881,7 +2924,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2901,7 +2944,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -2917,7 +2960,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2931,30 +2974,26 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_fight_international_capitalists }
 		prerequisite = { focus = SOV_mobilize_the_masses }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
-		
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_crackdown_on_nationalists"
 			hidden_effect = {
 				set_variable = { var = party_pop_array^20 value = 0 }
-				set_variable = { var = party_pop_array^20 max = 0 }
 				recalculate_party = yes
+				if = {
+					limit = { has_idea = large_far_right_movement } 
+					remove_ideas = large_far_right_movement
+				}
 			}
 			custom_effect_tooltip = SOV_ban_the_nationalist_party_TT
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -2967,18 +3006,14 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_mobilize_the_masses }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		available = {
+			is_subject = no 
+		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_the_fifth_international"
 			if = {
@@ -2992,10 +3027,8 @@ focus_tree = {
 			}
 			every_country = {
 				limit = { 
-					AND = {
-						is_in_array = { ruling_party = 4 } 
-						has_opinion = { target = SOV value > 0 }
-					}
+					is_in_array = { ruling_party = 4 } 
+					has_opinion = { target = SOV value > 0 }
 				} 
 				country_event = { id = russia.0 days = 1 }
 			}
@@ -3003,7 +3036,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3017,15 +3050,13 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_weaken_the_banks }
 		mutually_exclusive = { }
-		available = { 
-			has_political_power > 100
-		}
+		available = { }
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3040,7 +3071,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3060,7 +3091,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3077,7 +3108,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3097,7 +3128,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3112,7 +3143,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3134,7 +3165,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3160,7 +3191,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3173,17 +3204,9 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_take_control_of_the_oligarchy }
-		available = {
-			custom_trigger_tooltip = {
-				OR = {
-					check_variable = { treasury > 14.99 }
-					is_ai = yes
-				}
-				tooltip = 15_billion_currently_in_treasury_tt
-			}
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 
@@ -3245,7 +3268,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3258,17 +3281,9 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_take_control_of_the_oligarchy }
-		available = { 
-			custom_trigger_tooltip = {
-				OR = {
-					check_variable = { treasury > 14.99 }
-					is_ai = yes
-				}
-				tooltip = 15_billion_currently_in_treasury_tt
-			}
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3313,7 +3328,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3329,7 +3344,7 @@ focus_tree = {
 		prerequisite = { focus = SOV_military_industrial_councils }
 		mutually_exclusive = { focus = SOV_the_ussr }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3342,7 +3357,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 50
+			factor = 0.5
 		}
 	}
 	focus = {
@@ -3357,7 +3372,7 @@ focus_tree = {
 		prerequisite = { focus = SOV_military_industrial_councils }
 		mutually_exclusive = { focus = SOV_the_sfsr }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3372,7 +3387,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 50
+			factor = 3 
 			modifier = {
 				has_war_support > 0.30 
 				add = 10
@@ -3390,7 +3405,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_civilian_industrial_councils }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3398,10 +3413,12 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_scientific_councils"
 			add_research_slot = 1
 			add_ideas = idea_focus_generic_reckless_progress
+			hidden_effect = { add_to_variable = { treasury = -10 } }
+			custom_effect_tooltip = 10_billion_expense_tt
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3415,7 +3432,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_the_sfsr focus = SOV_the_ussr }
 		
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3429,7 +3446,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3443,7 +3460,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_the_red_army }
 		
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3454,7 +3471,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3468,7 +3485,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_the_ussr }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3486,7 +3503,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3500,7 +3517,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_defensive_precautions_west }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3514,7 +3531,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3527,11 +3544,9 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_communist_ambitions }
-		available = { 
-			has_political_power > 250
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3614,7 +3629,7 @@ focus_tree = {
 						add_core_of = SOV
 					}
 				}
-				TUR = {
+				TRK = {
 					every_owned_state = {
 						limit = { NOT = { is_core_of = SOV } } 
 						add_core_of = SOV
@@ -3626,13 +3641,70 @@ focus_tree = {
 						add_core_of = SOV
 					}
 				}
+				UKR = {
+					every_owned_state = {
+						limit = { NOT = { is_core_of = SOV } } 
+						add_core_of = SOV 
+					}
+				}
+				MLV = { 
+					every_owned_state = {
+						limit = { NOT = { is_core_of = SOV } } 
+						add_core_of = SOV 
+					}
+				}
+				PMR = { 
+					every_owned_state = {
+						limit = { NOT = { is_core_of = SOV } } 
+						add_core_of = SOV 
+					}
+				}
+				if = {
+					limit = {
+						any_owned_state = { 
+							NOT = { is_core_of = SOV }
+						}
+					}
+					every_owned_state = {
+						limit = { NOT = { is_core_of = SOV } }
+						add_core_of = SOV 
+					}
+				}
 			}
+			##AI Strategy to have Russia Attack the Former Soviet States
+			add_ai_strategy = { type = conquer id = "UKR" value = 100 }
+			add_ai_strategy = { type = conquer id = "PMR" value = 100 }
+			add_ai_strategy = { type = conquer id = "MLV" value = 100 }
+			add_ai_strategy = {	type = conquer id = "NKR" value = 100 }
+			add_ai_strategy = { type = conquer id = "TRK" value = 100 }
+			add_ai_strategy = { type = conquer id = "KAZ" value = 100 }
+			add_ai_strategy = { type = conquer id = "UZB" value = 100 }
+			add_ai_strategy = { type = conquer id = "TAJ" value = 100 }
+			add_ai_strategy = { type = conquer id = "KYR" value = 100 }
+			add_ai_strategy = { type = conquer id = "ARM" value = 100 }
+			add_ai_strategy = { type = conquer id = "AZE" value = 100 }
+			add_ai_strategy = { type = conquer id = "GEO" value = 100 }
+			add_ai_strategy = { type = conquer id = "SOO" value = 100 }
+			add_ai_strategy = { type = conquer id = "ABK" value = 100 }	
+			add_ai_strategy = { type = conquer id = "EST" value = 100 }
+			add_ai_strategy = { type = conquer id = "LIT" value = 100 }
+			add_ai_strategy = { type = conquer id = "LAT" value = 100 }
+			set_country_flag = SOV_seeks_to_restore_the_ussr
 			add_political_power = -300
 			custom_effect_tooltip = SOV_territorial_demands_cores_TT
+			CHI = {
+				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
+				add_ai_strategy = { type = contain id = "SOV" value = 200 }
+				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
+				add_ai_strategy = { type = protect id = "KYR" value = 200 }
+				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
+				add_ai_strategy = { type = protect id = "TRK" value = 200 }
+				add_ai_strategy = { type = protect id = "UZB" value = 200 }
+			}
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3646,7 +3718,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_territorial_demands }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3668,7 +3740,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3688,7 +3760,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3722,7 +3794,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3742,7 +3814,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3772,7 +3844,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3794,7 +3866,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3818,7 +3890,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -3842,7 +3914,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3859,7 +3931,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3873,7 +3945,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_yavlinsky }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3887,7 +3959,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -3906,13 +3978,6 @@ focus_tree = {
 				country_exists = LAT
 				country_exists = EST
 			}
-			custom_trigger_tooltip = { 
-				OR = {	
-					check_variable = { treasury > 29.99 }
-					is_ai = yes 
-				}
-				tooltip = 30_billion_currently_in_treasury_tt
-			}
 		}
 		bypass = {
 			AND = {
@@ -3922,7 +3987,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3934,30 +3999,30 @@ focus_tree = {
 					country_exists = LIT 
 					NOT = { has_war_with = SOV }
 				}
-				country_event = { id = russia.14 days = 1 } 
+				LIT = { country_event = { id = russia.14 days = 1 } }
 			}
 			if = {
 				limit = { 
 					country_exists = LAT 
 					NOT = { has_war_with = SOV }
 				}
-				country_event = { id = russia.14 days = 1 } 
+				LAT = { country_event = { id = russia.14 days = 1 } } 
 			}
 			if = {
 				limit = { 
 					country_exists = EST 
 					NOT = { has_war_with = SOV }
 				}
-				country_event = { id = russia.14 days = 1 } 
+				EST = { country_event = { id = russia.14 days = 1 } }
 			}
 			custom_effect_tooltip = SOV_baltic_econ_tooltip_TT
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = { 
 				check_variable = { treasury > 29.99 }
-				add = 20 
+				add = 1 
 			}
 		}
 	}
@@ -3972,7 +4037,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_deals_with_europe }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -3982,7 +4047,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 30
+			factor = 1
 		}
 	}
 	focus = {
@@ -3996,7 +4061,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_national_economic_goals }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4011,7 +4076,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4025,17 +4090,9 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_baltic_economic_cooperation }
 		mutually_exclusive = { }
-		available = {
-			custom_trigger_tooltip = {
-				OR = {	
-					check_variable = { treasury > 19.99 }
-					is_ai = yes
-				}
-				tooltip = 20_billion_currently_in_treasury_tt
-			}
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4054,7 +4111,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4075,7 +4132,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4086,7 +4143,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4106,7 +4163,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4122,7 +4179,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4135,17 +4192,9 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = SOV_kaliningrad_development }
-		available = { 
-			custom_trigger_tooltip = { 
-				OR = {	
-					check_variable = { treasury > 19.99 }
-					is_ai = yes 
-				}
-				tooltip = 20_billion_currently_in_treasury_tt
-			}
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4164,7 +4213,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4178,17 +4227,19 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_european_university_connections }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_expand_the_university_of_moscow"
 			add_research_slot = 1
+			subtract_from_variable = { treasury = 10 }
+			custom_effect_tooltip = 10_billion_expense_tt
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4202,7 +4253,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_democratic_idealism }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4218,7 +4269,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4235,7 +4286,7 @@ focus_tree = {
 			NOT = { has_idea = no_military }
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4245,7 +4296,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4259,7 +4310,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_expand_the_university_of_moscow }
 		
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4269,7 +4320,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4283,7 +4334,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_fight_the_elites }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4298,7 +4349,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4312,7 +4363,7 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_soviet_trials }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4328,7 +4379,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4342,26 +4393,25 @@ focus_tree = {
 		
 		prerequisite = { focus = SOV_soviet_trials }
 		
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_fight_nationalism"
 			hidden_effect = { 
-				set_temp_variable = { party_pop_array^20 = abc }
-				add_to_temp_variable = { party_pop_array^23 = abc } 
-				add_to_temp_variable = { party_pop_array^22 = abc }
-				add_to_temp_variable = { party_pop_array^21 = abc }
-				add_popularity = { ideology = nationalist popularity = -abc }
-				set_variable = { var = party_pop_array^20 max = 0 }
+				add_popularity = { ideology = nationalist popularity = -1.0 }
 				recalculate_party = yes
+				if = {
+					limit = { has_idea = large_far_right_movement } 
+					remove_ideas = large_far_right_movement
+				}
 			}
 			custom_effect_tooltip = SOV_root_out_the_nationalists_TT
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4381,7 +4431,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 	
@@ -4399,10 +4449,19 @@ focus_tree = {
 				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
 				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
 			}
+			CHI = {
+				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
+				add_ai_strategy = { type = contain id = "SOV" value = 200 }
+				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
+				add_ai_strategy = { type = protect id = "KYR" value = 200 }
+				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
+				add_ai_strategy = { type = protect id = "TRK" value = 200 }
+				add_ai_strategy = { type = protect id = "UZB" value = 200 }
+			}
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				OR = { 
 					has_opinion = { target = ENG value > 10 }
@@ -4430,7 +4489,7 @@ focus_tree = {
 			is_faction_leader = yes
 		}
 		
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4445,7 +4504,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4457,10 +4516,12 @@ focus_tree = {
 		relative_position_id = SOV_yavlinsky
 		cost = 10
 		
-		prerequisite = { focus = SOV_approach_nato }
-		prerequisite = { focus = SOV_maintain_csto }
+		prerequisite = { 
+			focus = SOV_approach_nato 
+			focus = SOV_maintain_csto
+		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4473,11 +4534,28 @@ focus_tree = {
 				add_to_variable = { party_pop_array^1 = 0.05 }
 				recalculate_party = yes
 			}
+			if = {
+				limit = { NOT = { CHI = { has_completed_focus = CHI_An_Open_Window } } }
+				CHI = {
+					add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
+					add_ai_strategy = { type = contain id = "SOV" value = 200 }
+					add_ai_strategy = { type = protect id = "KAZ" value = 200 }
+					add_ai_strategy = { type = protect id = "KYR" value = 200 }
+					add_ai_strategy = { type = protect id = "TAJ" value = 200 }
+					add_ai_strategy = { type = protect id = "TRK" value = 200 }
+					add_ai_strategy = { type = protect id = "UZB" value = 200 }
+				}
+			}
+			if = {
+				limit = { country_exists = USA }
+				add_ai_strategy = { type = befriend id = "USA" value = 50 }
+				USA = { add_ai_strategy = { type = befriend id = "SOV" value = 50 } }
+			}
 			custom_effect_tooltip = SOV_bastion_of_democracy_TT
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4497,7 +4575,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4542,7 +4620,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4562,7 +4640,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4580,7 +4658,7 @@ focus_tree = {
 
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4600,7 +4678,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4621,7 +4699,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4644,7 +4722,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4655,7 +4733,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4677,7 +4755,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4688,7 +4766,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4710,7 +4788,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4722,7 +4800,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4746,7 +4824,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4761,7 +4839,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4784,7 +4862,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4795,7 +4873,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4817,7 +4895,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4829,7 +4907,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4853,7 +4931,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4867,7 +4945,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4889,7 +4967,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4903,7 +4981,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -4918,29 +4996,25 @@ focus_tree = {
 		prerequisite = { 
 			focus = SOV_embrace_the_orthodox_church
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_religious_republicanism"
-			swap_ideas = {
-				remove_idea = orthodox_christian
-				add_idea = SOV_russian_orthodox_church_idea
+			if = {
+				limit = { has_idea = orthodox_christian }
+				swap_ideas = {
+					remove_idea = orthodox_christian
+					add_idea = SOV_russian_orthodox_church_idea
+				}
 			}
-			
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -4964,7 +5038,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -4978,7 +5052,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	##Army Reform
@@ -5001,7 +5075,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5016,7 +5090,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_war_support < 0.10
 				add = 5 
@@ -5042,7 +5116,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5052,7 +5126,7 @@ focus_tree = {
 			add_ideas = SOV_armored_production_idea
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_war = yes 
 				add = 30 
@@ -5078,7 +5152,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5098,7 +5172,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			
 		}
 	}
@@ -5121,7 +5195,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5145,7 +5219,7 @@ focus_tree = {
 		}
  
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				has_idea = rifle_production_bonus2
 				add = 30
@@ -5171,7 +5245,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5193,7 +5267,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5208,34 +5282,21 @@ focus_tree = {
 		prerequisite = { 
 			focus = SOV_armored_reform
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
-		
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_t14_armata"
 			add_tech_bonus = {
 				name = mbt_bonus
 				bonus = 0.40
-				technology = MBT_1
-				technology = MBT_2
-				technology = MBT_3
-				technology = MBT_4
-				technology = MBT_5
-				technology = MBT_7
+				category = Cat_MBT	
 			}
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5257,7 +5318,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5265,7 +5326,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_expand_the_speznaz"
 			add_tech_bonus = {
-				name = expand_speznaz
+				name = expand_special_forces
 				bonus = 0.3
 				uses = 2
 				technology = command_control_equipment
@@ -5279,7 +5340,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5304,7 +5365,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5315,7 +5376,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	##Naval Reform
@@ -5338,7 +5399,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5350,7 +5411,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5381,7 +5442,7 @@ focus_tree = {
 		}
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5403,7 +5464,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5449,7 +5510,7 @@ focus_tree = {
 		}
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5485,7 +5546,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5528,7 +5589,7 @@ focus_tree = {
 		}
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5562,7 +5623,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	##Air Force Reform
@@ -5585,7 +5646,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5599,7 +5660,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5621,7 +5682,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5632,7 +5693,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5665,7 +5726,7 @@ focus_tree = {
 		}
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5689,7 +5750,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -5715,7 +5776,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5731,7 +5792,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -5749,16 +5810,9 @@ focus_tree = {
 		}
 		available = { 
 			owns_state = 672
-			custom_trigger_tooltip = {
-				OR = {	
-					check_variable = { treasury > 4.99 }
-					is_ai = yes 
-				}
-				tooltip = 5_billion_currently_in_treasury_tt
-			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5777,7 +5831,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5794,7 +5848,7 @@ focus_tree = {
 		}
 
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5805,7 +5859,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5820,17 +5874,9 @@ focus_tree = {
 		prerequisite = { 
 			focus = SOV_economic_programs
 		}
-		available = { 
-			custom_trigger_tooltip = { 
-				OR = { 
-					is_ai = yes 
-					check_variable = { treasury > 14.99 }
-				}
-				tooltip = 15_billion_currently_in_treasury_tt
-			}
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5891,7 +5937,7 @@ focus_tree = {
 			custom_effect_tooltip = 15_billion_expense_tt
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -5908,7 +5954,7 @@ focus_tree = {
 			focus = SOV_diversify_the_economy
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -5918,7 +5964,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -5933,17 +5979,9 @@ focus_tree = {
 		prerequisite = { 
 			focus = SOV_economic_programs
 		}
-		available = {
-			custom_trigger_tooltip = {
-				OR = {	
-					check_variable = { treasury > 14.99 }
-					is_ai = yes 
-				}
-				tooltip = 15_billion_currently_in_treasury_tt
-			}
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6005,7 +6043,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -6021,18 +6059,9 @@ focus_tree = {
 			focus = SOV_decree_no_585
 		}
 		mutually_exclusive = { }
-		available = { 
-			owns_state = 691
-				custom_trigger_tooltip = { 
-					OR = {	
-						check_variable = { treasury > 4.99 }
-						is_ai = yes 
-					}
-					tooltip = 5_billion_currently_in_treasury_tt
-				}
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6059,7 +6088,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6076,14 +6105,10 @@ focus_tree = {
 			focus = SOV_decree_no_585
 			focus = SOV_expansionary_monetary_policy
 		}
-		available = { 
-			has_political_power > 50
-		}
-		cancel = {
-			has_political_power < 50 
-		}
+		available = { }
+		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6105,7 +6130,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6122,7 +6147,7 @@ focus_tree = {
 			focus = SOV_please_the_moscow_oligarchs
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6133,7 +6158,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -6149,7 +6174,7 @@ focus_tree = {
 			focus = SOV_please_the_moscow_oligarchs
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6165,7 +6190,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -6180,17 +6205,9 @@ focus_tree = {
 		prerequisite = { 
 			focus = SOV_overcome_the_1998_crisis
 		}
-		available = { 
-			custom_trigger_tooltip = {
-				OR = {	
-					check_variable = { treasury > 29.99 }
-					is_ai = yes 
-				}
-				tooltip = 30_billion_currently_in_treasury_tt
-			}
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6252,7 +6269,7 @@ focus_tree = {
 			
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -6274,7 +6291,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6295,7 +6312,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6311,18 +6328,8 @@ focus_tree = {
 		prerequisite = { 
 			focus = SOV_russian_federation_stabilization_fund
 		}
-		mutually_exclusive = { }
-		available = { 
-			has_political_power > 25 
-		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { 
-			has_political_power < 25
-		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6355,11 +6362,12 @@ focus_tree = {
 					amount = 5
 				}
 			}
-			add_political_power = -50
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt 
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6389,7 +6397,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6407,7 +6415,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6436,7 +6444,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6455,7 +6463,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6478,7 +6486,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6496,7 +6504,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6512,17 +6520,9 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_european_interaction_plan
 		}
-		available = {
-			custom_trigger_tooltip = {
-				OR = {	
-					check_variable = { treasury > 4.99 }
-					is_ai = yes 
-				}
-				tooltip = 5_billion_currently_in_treasury_tt
-			}
-		}
+		available = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6574,7 +6574,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				GER = { has_completed_focus = GER_nord_stream }
 				add = 20
@@ -6606,7 +6606,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6638,7 +6638,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6655,7 +6655,7 @@ focus_tree = {
 			focus = SOV_nordstream
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6677,7 +6677,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6695,7 +6695,7 @@ focus_tree = {
 			focus = SOV_discuss_lifting_sanctions
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6706,7 +6706,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6722,14 +6722,10 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_discuss_lifting_sanctions
 		}
-		available = {
-			has_political_power > 50
-		}
-		cancel = { 
-			has_political_power < 25 
-		}
+		available = { }
+		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6749,7 +6745,7 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6774,7 +6770,7 @@ focus_tree = {
 			has_war_with = CHI 
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6790,7 +6786,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6817,7 +6813,7 @@ focus_tree = {
 			has_war_with = NKO 
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6833,7 +6829,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6858,7 +6854,7 @@ focus_tree = {
 			has_war_with = KOR 
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6873,7 +6869,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6890,7 +6886,7 @@ focus_tree = {
 			focus = SOV_trade_with_nko
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6911,7 +6907,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6928,7 +6924,7 @@ focus_tree = {
 			focus = SOV_trade_with_sko
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no 
 		
@@ -6948,7 +6944,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -6966,7 +6962,7 @@ focus_tree = {
 			focus = SOV_trade_with_democratic_countries
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -6986,7 +6982,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -7014,7 +7010,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -7025,7 +7021,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -7052,7 +7048,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -7063,7 +7059,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -7083,11 +7079,14 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = SOV_oligarchs_positive_tt
-				has_country_flag = positive_oligarchs 
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -7130,7 +7129,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -7149,11 +7148,15 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = SOV_oligarchs_positive_tt
-				has_country_flag = positive_oligarchs 
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
 
-		cancel_if_invalid = no
+
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -7171,10 +7174,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 			modifier = {
 				check_variable = { treasury < 20.0 }
-				add = 20
+				add = 2
 			}
 		}
 	}
@@ -7196,11 +7199,14 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = SOV_oligarchs_positive_tt
-				has_country_flag = positive_oligarchs 
+				OR = {	
+					has_country_flag = positive_oligarchs 
+					has_country_flag = enthusiastic_oligarchs
+				}
 			}
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -7212,7 +7218,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -7230,7 +7236,7 @@ focus_tree = {
 			focus = SOV_state_run_capitalism
 		}
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -7242,7 +7248,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	
@@ -7265,7 +7271,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -7335,7 +7341,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 	focus = {
@@ -7360,7 +7366,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = no
+		cancel_if_invalid = yes 
 		continue_if_invalid = yes
 		available_if_capitulated = no
 		
@@ -7377,7 +7383,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 10
+			factor = 1
 		}
 	}
 }

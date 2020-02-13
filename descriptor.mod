@@ -1,14 +1,14 @@
+version="1.1"
 name="Millennium_Dawn DEV"
-path="mod/Millennium_Dawn/"
 tags={
 	"Alternative History"
 	"Gameplay"
 	"Events"
 	"Graphics"
 }
-remote_file_id="1241177173"
-supported_version="1.8.*"
+supported_version="1.8.2"
 picture = "thumbnail.png"
+remote_file_id="719416488"
 
 replace_path = "events"
 replace_path = "common/abilities"

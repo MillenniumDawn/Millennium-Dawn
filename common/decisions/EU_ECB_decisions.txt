@@ -1,0 +1,347 @@
+
+##########################
+##########################
+### EU_ECB_category    ###
+##########################
+##########################
+
+EU_ECB_category = {
+
+	ECB_Start_OMT = { ### whatever it takes
+	
+		available = {
+			has_idea = EU_member
+			has_idea = ECB_zero_interest_rate_policy
+			has_idea = ECB_president
+		}
+		
+		visible = { 
+			has_idea = EU_member 
+		}
+		
+		fire_only_once = yes # Will not re-enable after being removed
+		
+		complete_effect = {
+			custom_effect_tooltip = tooltip_ECB_Start_OMT_effect
+			hidden_effect = {
+					set_variable = {
+						var = global.OMT_size_limit
+						value = 400
+					}
+					set_variable = {
+						var = global.OMT_total_value
+						value = 0
+					}
+			}
+
+		}
+		ai_will_do = {
+			factor = 1
+				modifier = {
+					add = 10
+					any_country = {
+						AND = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate > 4.0 }
+						}			
+					}
+				}	
+				### Euroscepticism
+				modifier = {
+					add = -40
+						any_country = {
+							has_idea = EU_member
+							check_variable = {
+								var = eurosceptic
+								value = 0.6
+								compare = greater_than_or_equals
+							}
+						}
+				}
+		}		
+	}
+
+	ECB_expand_OMT_limit = {
+	
+		available = {
+			has_idea = EU_member
+			has_idea = ECB_president
+			has_idea = ECB_zero_interest_rate_policy
+			any_country = {
+				has_idea = EU_member
+				has_idea = the_euro
+				check_variable = { THIS.interest_rate > 4.0 }			
+			}
+		}
+		
+		visible = { 
+			has_idea = EU_member 
+		} 
+		
+		complete_effect = {
+			if = {
+				limit = {
+					has_global_flag = active_OMT
+				}
+				custom_effect_tooltip = "IF has active OMT: "
+				remove_OMT = yes
+			}
+			custom_effect_tooltip = tooltip_ECB_expand_OMT_limit_effect
+			hidden_effect = {		
+					add_to_variable = {
+						var = global.OMT_size_limit
+						value = 200
+					}
+				every_country = { ### contra OMT
+					if = {
+						limit = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate < 4.0 }
+						}
+						THIS_eurosceptic_rise_5_percent = yes
+						news_event = {
+							id = EU_news.46 
+						}			
+					}
+				}
+				every_country = { ### pro OMT
+					if = {
+						limit = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate > 4.0 }
+						}
+						THIS_eurosceptic_decline_5_percent = yes		
+						news_event = {
+							id = EU_news.46 
+						}
+					}
+				}
+			}	
+			if = {
+				limit = {
+					has_global_flag = active_OMT
+				}				
+				custom_effect_tooltip = "IF has active OMT: "
+				execute_OMT = yes
+			}
+		}
+		ai_will_do = {
+			factor = 0
+				modifier = {
+					add = 40
+					check_variable = { global.OMT_total_value > 0 }
+					any_country = {
+						AND = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate > 4.0 }
+						}			
+					}
+				}	
+				### Euroscepticism
+				modifier = {
+					add = -80
+						any_country = {							
+							has_idea = EU_member							
+							check_variable = {
+								var = eurosceptic
+								value = 0.4
+								compare = greater_than_or_equals
+							}
+						}
+				}
+				modifier = {
+					add = -80
+						all_country = {
+							if = {
+								limit = {
+									has_idea = the_euro
+								}		
+								check_variable = { THIS.interest_rate < 4.0 }
+							}
+						}
+				}
+				modifier = {
+					add = -80		
+						check_variable = { global.OMT_size_limit > 2000 }
+				}							
+		}		
+	}
+
+	ECB_reduce_OMT_limit = {
+	
+		available = {
+			has_idea = EU_member
+			has_idea = ECB_president
+			has_idea = ECB_zero_interest_rate_policy
+			check_variable = { global.OMT_size_limit > 0 }
+		}
+		
+		visible = { 
+			has_idea = EU_member 
+		} 
+		
+		complete_effect = {
+			if = {
+				limit = {
+					has_global_flag = active_OMT
+				}				
+			
+				custom_effect_tooltip = "IF has active OMT: "
+				remove_OMT = yes
+			}
+			custom_effect_tooltip = tooltip_ECB_reduce_OMT_limit_effect
+			hidden_effect = {		
+					subtract_from_variable = {
+						var = global.OMT_size_limit
+						value = 200
+					}
+					if = {
+						limit = {
+							check_variable = { global.OMT_size_limit < 0 }
+						}
+						set_variable = { global.OMT_size_limit = 0 }
+					}
+				every_country = { ### contra OMT
+					if = {
+						limit = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate < 4.0 }
+						}
+						THIS_eurosceptic_decline_5_percent = yes
+						news_event = {
+							id = EU_news.45 
+						}			
+					}
+				}
+				every_country = { ### pro OMT
+					if = {
+						limit = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate > 4.0 }
+						}
+						THIS_eurosceptic_rise_5_percent = yes
+						news_event = {
+							id = EU_news.45 
+						}			
+					}			
+				}
+			}
+			if = {
+				limit = {
+					has_global_flag = active_OMT
+				}
+				custom_effect_tooltip = "IF has active OMT: "
+				execute_OMT = yes
+			}
+		}
+		ai_will_do = {
+			factor = 0
+				modifier = {
+					add = -80
+					check_variable = { global.OMT_total_value > 0 }
+					any_country = {
+						AND = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate > 4.0 }
+						}			
+					}
+				}	
+				### Euroscepticism
+				modifier = {
+					add = 40
+						any_country = {							
+							has_idea = EU_member							
+							check_variable = {
+								var = eurosceptic
+								value = 0.5
+								compare = greater_than_or_equals
+							}
+						}
+				}
+		}
+	}
+
+	ECB_Outright_Monetary_Transactions = {
+		
+		#cost = 100
+		days_remove = 90
+		available = {
+			has_idea = EU_member
+			has_idea = ECB_president
+			has_idea = ECB_zero_interest_rate_policy
+			custom_trigger_tooltip = {
+				tooltip = tooltip_ECB_Outright_Monetary_Transactions_available			
+				check_variable = { global.OMT_size_limit > 0 }
+			}
+		}
+		
+		visible = { 
+			has_idea = EU_member 
+		} 
+		
+		complete_effect = {
+			hidden_effect = {
+				set_global_flag = active_OMT
+			}
+				execute_OMT = yes
+				every_country = {
+					if = {
+						limit = {
+							has_idea = EU_member
+						}
+					
+						news_event = {
+							id = EU_news.32 
+						}
+					}
+				}
+			
+		}
+		remove_effect = {
+			hidden_effect = {
+				clr_global_flag = active_OMT
+			}		
+				remove_OMT = yes
+				every_country = {
+					if = {
+						limit = {
+							has_idea = EU_member
+						}					
+						news_event = {
+							id = EU_news.33 
+						}
+					}
+				}
+			
+		}
+		ai_will_do = {
+			factor = 0
+				modifier = {
+					add = 40
+					any_country = {
+						AND = {
+							has_idea = EU_member
+							has_idea = the_euro
+							check_variable = { THIS.interest_rate > 4.0 }
+						}			
+					}
+				}
+		}
+	}
+
+
+
+	
+} 
+
+###############################
+### End of EU_ECB_category	###
+###############################
+
