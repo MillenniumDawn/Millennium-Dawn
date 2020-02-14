@@ -5826,8 +5826,8 @@ country_event = {
 			}
 		}
 		custom_effect_tooltip = asteroid_mining_orbit_tt
-		set_variable = { asteroid_mining_rate = 2 } #It's set here so the next event's localization isn't screwed up
-		set_variable = { global.asteroid_mining_rate = 2 }
+		add_to_variable = { asteroid_mining_rate = 2 } #It's set here so the next event's localization isn't screwed up
+		add_to_variable = { global.asteroid_mining_rate = 2 }
 	}
 }
 #Profits from Mining Start Pouring in
@@ -5847,14 +5847,14 @@ country_event = {
 		capital_scope = {
 			add_resource = {
 				type = tungsten
-				amount = 2
+				amount = 1
 			}
 			add_resource = {
 				type = steel
 				amount = 2
 			}
 		}
-		set_variable = { global.asteroid_mineral_count = 100 }
+		add_to_variable = { global.asteroid_mineral_count = 100 }
 		custom_effect_tooltip = asteroid_mining_mined_tt
 		add_to_variable = { treasury = asteroid_mining_rate }
 		custom_effect_tooltip = asteroid_mining_revenue_tt
@@ -5875,16 +5875,34 @@ country_event = {
 	option = { #Excellent!
 		name = donald_trump.12.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump.12.o1 executed"
-		custom_effect_tooltip = asteroid_mining_mined_tt
-		add_to_variable = { treasury = asteroid_mining_rate }
-		subtract_from_variable = { global.asteroid_mineral_count = asteroid_mining_rate }
-		custom_effect_tooltip = asteroid_mining_revenue_tt
-		hidden_effect = {
-			every_country = {
-				limit = {
-					num_of_factories > 40
+		if = {
+			limit = {
+				check_variable = { 
+					var = global.asteroid_mineral_count
+					value = asteroid_mining_rate
+					compare = greater_than_or_equals	
 				}
-				country_event = { days = 20 id = donald_trump.13 }
+			}
+			custom_effect_tooltip = asteroid_mining_mined_tt
+			add_to_variable = { treasury = asteroid_mining_rate }
+			subtract_from_variable = { global.asteroid_mineral_count = asteroid_mining_rate }
+			custom_effect_tooltip = asteroid_mining_revenue_tt
+		}
+		else = {
+			custom_effect_tooltip = asteroid_mining_not_enough_tt
+		}
+		hidden_effect = {
+			if = { 
+				limit = {
+					NOT = { has_global_flag = asteroid_mining_start }
+				}
+				set_global_flag = asteroid_mining_start
+				every_country = {
+					limit = {
+						num_of_factories > 40
+					}
+					country_event = { days = 20 id = donald_trump.13 }
+				}
 			}
 		}
 	}
@@ -5896,7 +5914,7 @@ country_event = {
 	title = donald_trump.13.t
 	desc = donald_trump.13.d
 	picture = GFX_asteroid_in_orbit
-
+	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = { #Invest in Asteroid Mining
@@ -5904,13 +5922,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: donald_trump.13.o1 executed"
 		add_political_power = -50
 		subtract_from_variable = { treasury = 25 }
-		set_variable = { asteroid_mining_rate = 1 }
-		set_variable = { global.asteroid_mining_rate = 1 }		
+		add_to_variable = { asteroid_mining_rate = 1 }
+		add_to_variable = { global.asteroid_mining_rate = 1 }		
 		capital_scope = {
-			add_resource = {
-				type = tungsten
-				amount = 1
-			}
 			add_resource = {
 				type = steel
 				amount = 1
