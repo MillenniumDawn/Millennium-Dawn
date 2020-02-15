@@ -60,11 +60,13 @@ focus_tree = {
 		prerequisite = { focus = USA_united_states_army }
 		
 		available = {
-			custom_trigger_tooltip = { 
-				NOT = { is_in_array = { ruling_party = 4 } }
-				tooltip = has_communist_state_government_TT
+			OR = {
+				custom_trigger_tooltip = {
+					has_idea = defense_industry
+					tooltip = has_defense_industry_tt
+				}
+				has_idea = usa_bad_procurment 
 			}
-			has_idea = usa_bad_procurment 
 		}
 		
 		bypass = {
@@ -2688,6 +2690,7 @@ focus_tree = {
 			add_political_power = 100
 			USA_modify_local_resource_factor_add_four = yes
 			USA_modify_construction_speed_add_two = yes
+			usa_regulations_decreased_by_5 = yes
 		}
 		
 		ai_will_do = {
@@ -2936,6 +2939,7 @@ focus_tree = {
 				}
 			}
 			degregulation_resource_expansion_effect = yes
+			usa_regulations_decreased_by_5 = yes
 			subtract_from_variable = { treasury = 60.0 }
 			custom_effect_tooltip = 60_billion_expense_tt
 		}
@@ -2968,6 +2972,17 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_build_additional_steel_factories"
 			degregulation_resource_expansion_effect = yes
+			random_owned_state = {
+				add_resource = { type = steel amount = 2 }
+			}
+			random_owned_state = {
+				add_resource = { type = steel amount = 2 }
+			}
+			random_owned_state = {
+				add_resource = { type = steel amount = 1 }
+			}
+			subtract_from_variable = { treasury = 25 }
+			custom_effect_tooltip = 25_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -3854,6 +3869,579 @@ focus_tree = {
 		}
 	}
 	
+	#################### SPACE ####################
+
+	focus = {
+		id = USA_continue_space_efforts
+		icon = rocketry
+		x = 13
+		y = 6
+		cost = 10
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = {
+			date > 2008.1.1 
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_continue_space_efforts"
+			add_ideas = continued_space_efforts
+		}
+	}
+	focus = {
+		id = USA_finance_nasa
+		icon = invest_nasa
+		prerequisite = { focus = USA_continue_space_efforts }
+		x = -1
+		y = 1
+		relative_position_id = USA_continue_space_efforts
+		cost = 10
+
+		ai_will_do = {
+			factor = 1
+		}
+		
+		mutually_exclusive = {
+			focus = USA_finance_private_space_ventures
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_finance_nasa"
+			add_political_power = 250
+			swap_ideas = {
+				remove_idea = continued_space_efforts
+				add_idea = continued_space_efforts2
+			}
+			custom_effect_tooltip = NASA_tt
+			set_country_flag = finance_nasa
+			subtract_from_variable = { treasury = 20 }
+			custom_effect_tooltip = 20_billion_expense_tt
+		}
+	}
+	focus = {
+		id = USA_finance_private_space_ventures
+		icon = invest_spacex
+		prerequisite = { focus = USA_continue_space_efforts }
+		x = 1
+		y = 1
+		relative_position_id = USA_continue_space_efforts
+		cost = 10
+
+		ai_will_do = {
+			factor = 1
+		}
+		
+		mutually_exclusive = {
+			focus = USA_finance_nasa
+		}
+		
+		
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_finance_private_space_ventures"
+			swap_ideas = {
+				remove_idea = continued_space_efforts
+				add_idea = continued_space_efforts2
+			}
+			custom_effect_tooltip = private_space_ventures_tt
+			set_country_flag = finance_private_space_ventures
+			subtract_from_variable = { treasury = 20 }
+			custom_effect_tooltip = 20_billion_expense_tt
+		}
+	}
+	focus = {
+		id = USA_asteroid_mining
+		icon = asteroid_mining
+		prerequisite = { focus = USA_finance_nasa focus = USA_finance_private_space_ventures }
+		x = 0
+		y = 3
+		relative_position_id = USA_continue_space_efforts
+		cost = 8.6
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_asteroid_mining"
+			country_event = donald_trump.8 #full return time will be roughly 5 years
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = finance_private_space_ventures
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = finance_nasa
+					}
+					add_political_power = 100
+				}
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 40 }
+					custom_effect_tooltip = 40_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 50 }
+					custom_effect_tooltip = 50_billion_expense_tt
+				}
+			}
+			else = {
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 15 }
+					custom_effect_tooltip = 15_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 25 }
+					custom_effect_tooltip = 25_billion_expense_tt
+				}
+			}
+			custom_effect_tooltip = asteroid_mining_tt
+		}
+	}
+	focus = {
+		id = USA_establishment_of_the_space_force
+		icon = space_force
+		prerequisite = { focus = USA_finance_nasa focus = USA_finance_private_space_ventures }
+		x = -1
+		y = 2
+		relative_position_id = USA_continue_space_efforts
+		cost = 10
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_establishment_of_the_space_force"
+			add_ideas = space_force
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = finance_private_space_ventures
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = finance_nasa
+					}
+					add_political_power = 50
+				}
+				subtract_from_variable = { treasury = 50 }
+				custom_effect_tooltip = 100_billion_expense_tt
+			}
+			else = {
+				subtract_from_variable = { treasury = 25 }
+				custom_effect_tooltip = 50_billion_expense_tt
+			}
+		}
+	}
+	focus = {
+		id = USA_launch_pad_in_brazil
+		icon = diplomatic_treaty
+		prerequisite = { focus = USA_establishment_of_the_space_force }
+		x = -1
+		y = 1
+		relative_position_id = USA_establishment_of_the_space_force
+		cost = 10
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = {
+			NOT = { has_war_with = BRA }
+			has_opinion = { target = BRA value > 40 }
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_launch_pad_in_brazil"
+			custom_effect_tooltip = launch_pad_in_brazil_tt
+			set_country_flag = launch_pad_in_brazil
+		}
+	}
+	focus = {
+		id = USA_weaponized_space
+		icon = weaponized_satellites
+		prerequisite = { focus = USA_establishment_of_the_space_force }
+		x = 0
+		y = 2
+		relative_position_id = USA_establishment_of_the_space_force
+		cost = 8.6
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_weaponized_space"
+			swap_ideas = {
+				remove_idea = space_force
+				add_idea = space_force2
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = finance_private_space_ventures
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = finance_nasa
+					}
+					add_political_power = 100
+				}
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 40 }
+					custom_effect_tooltip = 40_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 50 }
+					custom_effect_tooltip = 50_billion_expense_tt
+				}
+			}
+			else = {
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 15 }
+					custom_effect_tooltip = 15_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 25 }
+					custom_effect_tooltip = 25_billion_expense_tt
+				}
+			}
+		}
+	}
+	focus = {
+		id = USA_space_marines
+		icon = paratroopers
+		prerequisite = { focus = USA_weaponized_space }
+		x = 0
+		y = 1
+		relative_position_id = USA_weaponized_space
+		cost = 12.9
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_space_marines"
+			swap_ideas = {
+				remove_idea = space_force2
+				add_idea = space_force3
+			}
+			add_ideas = space_marines
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = finance_private_space_ventures
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = finance_nasa
+					}
+					add_political_power = 150
+				}
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 80 }
+					custom_effect_tooltip = 80_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 100 }
+					custom_effect_tooltip = 100_billion_expense_tt
+				}
+			}
+			else = {
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 30 }
+					custom_effect_tooltip = 30_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 50 }
+					custom_effect_tooltip = 50_billion_expense_tt
+				}
+			}
+		}
+	}
+	focus = {
+		id = USA_mission_to_mars
+		icon = mars
+		prerequisite = { focus = USA_finance_nasa focus = USA_finance_private_space_ventures }
+		x = 1
+		y = 2
+		relative_position_id = USA_continue_space_efforts
+		cost = 10
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_mission_to_mars"
+			swap_ideas = {
+				remove_idea = continued_space_efforts2
+				add_idea = continued_space_efforts3
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = finance_private_space_ventures
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = finance_nasa
+					}
+					add_political_power = 50
+				}
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 12 }
+					custom_effect_tooltip = 12_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 15 }
+					custom_effect_tooltip = 15_billion_expense_tt
+				}
+			}
+			else = {
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 5 }
+					custom_effect_tooltip = 5_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 8 }
+					custom_effect_tooltip = 8_billion_expense_tt
+				}
+			}
+			custom_effect_tooltip = mission_to_mars_tt
+		}
+	}
+	focus = {
+		id = USA_revisit_the_moon
+		icon = orbit_moon
+		prerequisite = { focus = USA_mission_to_mars }
+		x = 0
+		y = 2
+		relative_position_id = USA_mission_to_mars
+		cost = 8.6
+
+		ai_will_do = {
+			factor = 1
+		} 
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_revisit_the_moon"
+			swap_ideas = {
+				remove_idea = continued_space_efforts3
+				add_idea = continued_space_efforts4
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = finance_private_space_ventures
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = finance_nasa
+					}
+					add_political_power = 100
+				}
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 12 }
+					custom_effect_tooltip = 12_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 15 }
+					custom_effect_tooltip = 15_billion_expense_tt
+				}
+			}
+			else = {
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 5 }
+					custom_effect_tooltip = 5_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 8 }
+					custom_effect_tooltip = 8_billion_expense_tt
+				}
+			}
+		}
+	}
+	focus = {
+		id = USA_lunar_outpost
+		icon = moon_relax
+		prerequisite = { focus = USA_revisit_the_moon }
+		x = 0
+		y = 1
+		relative_position_id = USA_revisit_the_moon
+		cost = 12.9
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_lunar_outpost"
+			swap_ideas = {
+				remove_idea = continued_space_efforts4
+				add_idea = continued_space_efforts5
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = finance_private_space_ventures
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = finance_nasa
+					}
+					add_political_power = 150
+				}
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 80 }
+					custom_effect_tooltip = 80_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 100 }
+					custom_effect_tooltip = 100_billion_expense_tt
+				}
+			}
+			else = {
+				if = {
+					limit = {
+						has_country_flag = launch_pad_in_brazil
+					}
+					subtract_from_variable = { treasury = 30 }
+					custom_effect_tooltip = 30_billion_expense_tt
+				}
+				else = {
+					subtract_from_variable = { treasury = 50 }
+					custom_effect_tooltip = 50_billion_expense_tt
+				}
+			}
+			custom_effect_tooltip = lunar_outpost_tt
+		}
+	}
+	
 	##American Ideals 
 	focus = {
 		id = USA_american_ideas
@@ -3872,6 +4460,83 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_status_quo"
 			add_political_power = 100
 			add_stability = 0.05 
+		}
+		
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	
+	focus = {
+		id = USA_the_patriot_act
+		icon = espionage2 
+		
+		x = 3
+		y = 2
+		relative_position_id = USA_american_ideas
+		
+		cost = 10
+		
+		prerequisite = { focus = USA_american_ideas }
+		available = { 
+			has_country_flag = USA_911_happened
+		}
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_the_patriot_act"
+			if = {
+				limit = { NOT = { has_country_flag = enthusiastic_intelligence_community } } 
+				if = {
+					limit = { has_idea = intelligence_community }
+					visually_display_opinion_rise_intelligence_community = yes
+					set_country_flag = current_intelligence_community
+					increase_internal_faction_opinion = yes
+				}
+			}
+			add_ideas = USA_patriot_act_idea
+			decrease_popularity_4 = yes
+		}
+		
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				add = 2
+				has_country_flag = USA_911_happened
+			}
+		}
+	}
+	
+	focus = {
+		id = USA_increased_cia_investment
+		icon = central_intelligence_agency
+		
+		x = 3
+		y = 3
+		relative_position_id = USA_american_ideas
+		
+		cost = 10
+		
+		prerequisite = { focus = USA_the_patriot_act }
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_status_quo"
+			if = {
+				limit = { NOT = { has_country_flag = enthusiastic_intelligence_community } } 
+				if = {
+					limit = { has_idea = intelligence_community }
+					visually_display_opinion_rise_intelligence_community = yes
+					set_country_flag = current_intelligence_community
+					increase_internal_faction_opinion = yes
+				}
+			}
+			increase_policing_budget = yes
+			decrease_popularity_4 = yes
 		}
 		
 		ai_will_do = {
@@ -5102,9 +5767,9 @@ focus_tree = {
 		mutually_exclusive = { focus = USA_status_quo }
 		mutually_exclusive = { focus = USA_political_revolution }
 		
-		available = { 
+		available = {
+			has_elections_trigger_support_medium = yes 
 			has_elections = yes
-			is_puppet = no
 		}
 		
 		cancel_if_invalid = yes
@@ -5149,6 +5814,11 @@ focus_tree = {
 		
 		prerequisite = { focus = USA_political_reform }
 		
+		available = {
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
+		}
+		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no
@@ -5184,6 +5854,11 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = USA_party_funding_reform }
+		
+		available = {
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
+		}
 
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -5228,6 +5903,11 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = USA_party_funding_reform }
+		
+		available = {
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
+		}
 
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -5272,7 +5952,10 @@ focus_tree = {
 		prerequisite = { focus = USA_defund_major_parties }
 		prerequisite = { focus = USA_additional_funds_for_minor_parties }
 		
-		available = { }
+		available = {
+			has_elections_trigger_support_medium = yes 
+			has_elections = yes
+		}
 		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -5692,7 +6375,7 @@ focus_tree = {
 		id = USA_political_revolution
 		icon = american_territorial_demands
 		
-		x = 8
+		x = 9
 		y = 1
 		relative_position_id = USA_american_ideas
 		
@@ -6109,12 +6792,7 @@ focus_tree = {
 		prerequisite = { focus = USA_weaken_the_house }
 		
 		available = { 
-			has_idea = USA_congress_authority
 			has_elections_trigger_support_medium = yes
-		}
-		
-		bypass = { 
-			NOT = { has_idea = USA_congress_authority }
 		}
 		
 		cancel_if_invalid = yes
@@ -6123,7 +6801,6 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_weaken_the_senate"
-			remove_ideas = USA_congress_authority
 			if = {
 				limit = { has_completed_focus = USA_honor_the_confederacy }
 				hidden_effect = { 
@@ -6212,7 +6889,6 @@ focus_tree = {
 		available = {
 			nationalist > 0.3
 			NOT = { has_idea = idea_USA_political_establishment }
-			NOT = { has_idea = USA_congress_authority }
 		}
 		
 		cancel_if_invalid = yes
@@ -6301,7 +6977,6 @@ focus_tree = {
 		available = {
 			communism > 0.3
 			NOT = { has_idea = idea_USA_political_establishment }
-			NOT = { has_idea = USA_congress_authority }
 			OR = {
 				AND = {
 					NOT = { has_idea = USA_first_amendment }
@@ -6365,12 +7040,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_ban_the_democratic_party"
 			hidden_effect = {
-				set_temp_variable = { party_pop_array^2 = abc }
-				add_to_variable = { party_pop_array^2 = -abc }
-				add_to_variable = { party_pop_array^4 = 0.05 }
+				set_variable = { party_pop_array^2 = 0.00 }
 				add_popularity = {
 					ideology = democratic
-					popularity = -0.02
+					popularity = -0.05
 				}	
 				add_popularity = {
 					ideology = communism
@@ -6410,7 +7083,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_national_protectionism"
 			add_stability = 0.03
-			add_ideas = idea_focus_generic_public_service_investment
+			add_timed_idea = { idea = idea_focus_generic_public_service_investment days = 365 }
 		}
 		
 		ai_will_do = {
@@ -6506,6 +7179,8 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			subtract_from_variable = { treasury = 40 }
+			custom_effect_tooltip = 40_billion_expense_tt
 		}
 		
 		ai_will_do = {
@@ -6533,6 +7208,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_censor_public_opinion"
 			add_stability = -0.05
 			remove_ideas = USA_first_amendment
+			decrease_popularity_5 = yes
 		}
 		
 		ai_will_do = {
@@ -6558,8 +7234,8 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_new_foreign_policy"
-			add_war_support = 0.05
-			add_ideas = USA_jingoism
+			add_war_support = 0.10
+			add_timed_idea = { idea = USA_jingoism days = 365 }
 		}
 		
 		ai_will_do = {
@@ -6585,8 +7261,8 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_authoritarian_financial_control"
-			add_stability = 0.05
 			decrease_wall_street_opinion = yes
+			usa_regulations_increased_by_5 = yes
 		}
 		
 		ai_will_do = {
@@ -6916,9 +7592,6 @@ focus_tree = {
 				complete_national_focus = USA_diplomacy_europe
 				complete_national_focus = USA_diplomacy_middle_east
 			}
-			hidden_effect = {
-				country_event = usa.26
-			}
 		}
 		
 		ai_will_do = {
@@ -7229,6 +7902,15 @@ focus_tree = {
 		continue_if_invalid = no
 		available_if_capitulated = no
 		
+		bypass = {
+			CHI = { 
+				OR = { 
+					has_completed_focus = CHI_Greater_Tibetan_Autonomy 
+					has_completed_focus = CHI_Return_of_the_Dalai_Lama 
+				} 
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_condemn_tibet"
 			if = {
@@ -7388,6 +8070,7 @@ focus_tree = {
 				}
 				USA_effect_gain_american_influence_5 = yes
 			}
+			country_event = { id = usa.64 days = 1 }
 		}
 		
 		ai_will_do = {
@@ -7450,6 +8133,12 @@ focus_tree = {
 		prerequisite = { focus = USA_condemn_tibet }
 		
 		available = { }
+		
+		bypass = {
+			CHI = { 
+				has_completed_focus = CHI_Release_the_Falun_Gong 
+			}
+		}
 		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -9328,6 +10017,32 @@ focus_tree = {
 	}
 	
 	focus = {
+		id = USA_the_war_on_drugs
+		icon = ample_cocaine
+		
+		x = -4
+		y = 1
+		relative_position_id = USA_diplomacy_americas
+		
+		cost = 10
+		
+		prerequisite = { focus = USA_diplomacy_americas }
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no 
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_the_war_on_drugs"
+			remove_ideas = cartels_1
+		}
+		 
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	
+	focus = {
 		id = USA_reinforce_the_monroe_doctrine
 		icon = major_alliance3
 		
@@ -9403,6 +10118,33 @@ focus_tree = {
 				factor = 0
 				is_historical_focus_on = yes
 			}
+		}
+	}
+	
+	focus = {
+		id = USA_lift_the_cuban_embargo
+		icon = embargo
+		
+		x = -5
+		y = 2
+		relative_position_id = USA_diplomacy_americas
+		
+		cost = 10
+		
+		prerequisite = { focus = USA_reinforce_the_monroe_doctrine }
+		prerequisite = { focus = USA_the_war_on_drugs }
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no 
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_the_war_on_drugs"
+			CUB = { remove_opinion_modifier = { target = USA modifier = CUB_USA_Embargo } }
+		}
+		 
+		ai_will_do = {
+			factor = 1
 		}
 	}
 	
@@ -9538,7 +10280,7 @@ focus_tree = {
 		x = 3
 		y = 2
 		relative_position_id = USA_diplomacy_americas
-		
+		 
 		cost = 10
 		
 		prerequisite = { focus = USA_strength_in_the_americas }
@@ -9554,8 +10296,40 @@ focus_tree = {
 				threat = 3
 				name = USA_dominate_the_americas
 			}
+			add_war_support = 0.05 
 		}
 		
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	
+	focus = {
+		id = USA_return_guantanamo_bay
+		icon = diplomacy
+		
+		x = -5
+		y = 3
+		relative_position_id = USA_diplomacy_americas
+		
+		cost = 10
+		
+		prerequisite = { focus = USA_lift_the_cuban_embargo }
+		
+		available = {
+			NOT = { has_country_flag = guantanamo_bay_detention_center_established }
+			owns_state = 424
+		}
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no 
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_the_war_on_drugs"
+			CUB = { transfer_state = 424 }
+		}
+		 
 		ai_will_do = {
 			factor = 1
 		}
@@ -9601,7 +10375,12 @@ focus_tree = {
 		
 		cost = 10
 		
-		prerequisite = { focus = USA_the_double_alliance }
+		prerequisite = { 
+			focus = USA_the_double_alliance 
+			focus = USA_nato_first 
+		}
+		
+		mutually_exclusive = { focus = USA_renogitate_nafta }
 		
 		available = {
 			OR = {
@@ -9628,10 +10407,65 @@ focus_tree = {
 				add_opinion_modifier = { target = USA modifier = improve_trade }
 			}
 			add_opinion_modifier = { target = CAN modifier = improve_trade }
+			add_stability = 0.05 
 		}
 		
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				add = 1
+				has_government = democratic
+			}
+		}
+	}
+	
+	focus = {
+		id = USA_renogitate_nafta
+		icon = treaty2
+		
+		x = 1
+		y = 3
+		relative_position_id = USA_diplomacy_americas
+		
+		cost = 10
+		
+		prerequisite = { 
+			focus = USA_the_double_alliance 
+			focus = USA_nato_first 
+		}
+		
+		mutually_exclusive = { focus = USA_reassure_nafta }
+		
+		available = {
+			OR = {
+				CAN = { is_puppet = no }
+				CAN = { is_puppet_of = USA }
+			}
+			OR = {
+				MEX = { is_puppet = no }
+				MEX = { is_puppet_of = USA }
+			}
+		}
+		
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus USA_reassure_nafta"
+			set_country_flag = USA_renogitate_nafta_flag
+			country_event = { id = usa.90 days = 1 }
+		}
+		
+		ai_will_do = {
+			factor = 1
+			modifier = { 
+				add = 2 
+				OR = {
+					has_country_leader = { name = "Donald Trump" ruling_only = yes }
+					has_government = nationalist
+				}
+			}
 		}
 	}
 	
@@ -9721,8 +10555,12 @@ focus_tree = {
 		mutually_exclusive = { focus = USA_cautious_southern_policy }
 		
 		available = {
-			country_exists = MEX
-			MEX = { is_in_faction = no }
+			MEX = {
+				exists = yes
+				is_in_faction = no 
+				NOT = { is_in_faction_with = USA }
+				NOT = { has_idea = NATO_member }
+			}
 		}
 		
 		bypass = {
@@ -9756,7 +10594,7 @@ focus_tree = {
 		
 		prerequisite = {
 			focus = USA_reassure_nafta
-			focus = USA_nato_first
+			focus = USA_renogitate_nafta
 		}
 		mutually_exclusive = { focus = USA_invite_mexico }
 		
@@ -9766,7 +10604,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_cautious_southern_policy"
-			add_war_support = 0.02
+			add_war_support = 0.05
 			MEX = {
 				add_opinion_modifier = {
 					target = USA
@@ -9793,11 +10631,11 @@ focus_tree = {
 		prerequisite = { focus = USA_the_freedom_league }
 		
 		available = {
-			OR = {
-				has_elections = no
-				threat > 0.25
-			}
+			country_exists = CUB
+			CUB = { NOT = { is_subject_of = USA } } 
 		}
+		
+		will_lead_to_war_with = CUB
 		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -9809,6 +10647,7 @@ focus_tree = {
 				target = CUB
 				type = puppet_wargoal_focus
 			}
+			add_ai_strategy = { type = conquer id = "CUB" value = 100 }
 		}
 		
 		ai_will_do = {
@@ -9824,7 +10663,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = USA_diplomacy_americas
 		
-		cost = 10
+		cost = 15
 		
 		prerequisite = { focus = USA_invite_brazil }
 		prerequisite = { focus = USA_invite_mexico }
@@ -9841,6 +10680,10 @@ focus_tree = {
 					is_in_faction = no
 					has_elections = yes
 					NOT = { has_war_with = USA }
+					NOT = { tag = CAN }
+					NOT = { tag = BRA }
+					NOT = { tag = MEX }
+					NOT = { tag = USA }
 					OR = {
 						is_puppet = no
 						is_puppet_of = USA
@@ -9867,8 +10710,16 @@ focus_tree = {
 		
 		prerequisite = { focus = USA_cautious_southern_policy }
 		
+		available = {
+			country_exists = MEX
+			MEX = { NOT = { is_subject_of = USA } }
+		}
+		
 		bypass = {
-			has_war_with = MEX
+			OR = {	
+				has_war_with = MEX
+				NOT = { country_exists = MEX }
+			}
 		}
 		
 		cancel_if_invalid = yes
@@ -9877,63 +10728,58 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_secure_fence_act"
-			add_popularity = {
-				ideology = democratic
-				popularity = 0.02
-			}
-			custom_effect_tooltip = USA_secure_fence_act_tooltip
-			hidden_effect = {
-				800 = {	#Texas
-					add_building_construction = {
-						type = bunker
-						province = 10740
-						level = 2
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 10894
-						level = 2
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 1954
-						level = 2
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 5038
-						level = 2
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 12728
-						level = 2
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 2019
-						level = 2
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 5061
-						level = 2
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 12369
-						level = 2
-						instant_build = yes
-					}
+			800 = {	#Texas
+				add_building_construction = {
+					type = bunker
+					province = 10740
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 10894
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 1954
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 5038
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 12728
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 2019
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 5061
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 12369
+					level = 2
+					instant_build = yes
 				}
 			}
+			subtract_from_variable = { treasury = 50 }
+			custom_effect_tooltip = 50_billion_expense_tt 
 		}
 		
 		ai_will_do = {
@@ -9953,9 +10799,19 @@ focus_tree = {
 		
 		prerequisite = { focus = USA_settle_the_cuban_question }
 		
-		bypass = {
-			has_war_with = CAN
+		
+		available = {
+			country_exists = CAN
+			CAN = { NOT = { is_subject_of = USA } }
 		}
+		bypass = {
+			OR = {	
+				has_war_with = CAN
+				CAN = { is_subject_of = USA }
+			}
+		}
+		
+		will_lead_to_war_with = CAN
 		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -9967,6 +10823,7 @@ focus_tree = {
 				target = CAN
 				type = puppet_wargoal_focus
 			}
+			add_ai_strategy = { type = conquer id = "CAN" value = 100 }
 		}
 		
 		ai_will_do = {
@@ -9986,9 +10843,18 @@ focus_tree = {
 		
 		prerequisite = { focus = USA_settle_the_cuban_question }
 		
-		bypass = {
-			has_war_with = MEX
+		available = {
+			country_exists = MEX
+			MEX = { NOT = { is_subject_of = USA } }
 		}
+		bypass = {
+			OR = { 	
+				has_war_with = MEX
+				MEX = { is_subject_of = USA } 
+			}
+		}
+		
+		will_lead_to_war_with = MEX 
 		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -10000,6 +10866,7 @@ focus_tree = {
 				target = MEX
 				type = puppet_wargoal_focus
 			}
+			add_ai_strategy = { type = conquer id = "MEX" value = 100 }
 		}
 		
 		ai_will_do = {
@@ -10025,117 +10892,112 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus USA_build_the_wall"
-			custom_effect_tooltip = USA_build_the_wall_tooltip
-			
-			hidden_effect = {
-				811 = {	#California
-					add_building_construction = {
-						type = bunker
-						province = 1562
-						level = 4
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 12374
-						level = 4
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 7986
-						level = 4
-						instant_build = yes
-					}
+			811 = {	#California
+				add_building_construction = {
+					type = bunker
+					province = 1562
+					level = 4
+					instant_build = yes
 				}
-				
-				806 = { #Arizona
-					add_building_construction = {
-						type = bunker
-						province = 10783
-						level = 4
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 3834
-						level = 4
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 7920
-						level = 4
-						instant_build = yes
-					}
+				add_building_construction = {
+					type = bunker
+					province = 12374
+					level = 4
+					instant_build = yes
 				}
-				
-				803 = {	#New Mexico
-					add_building_construction = {
-						type = bunker
-						province = 5044
-						level = 4
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 12791
-						level = 4
-						instant_build = yes
-					}
+				add_building_construction = {
+					type = bunker
+					province = 7986
+					level = 4
+					instant_build = yes
 				}
-				
-				800 = {	#Texas
-					add_building_construction = {
-						type = bunker
-						province = 10740
-						level = 3
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 10894
-						level = 3
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 1954
-						level = 3
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 5038
-						level = 3
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 12728
-						level = 3
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 2019
-						level = 3
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 5061
-						level = 3
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = bunker
-						province = 12369
-						level = 3
-						instant_build = yes
-					}
+			}			
+			806 = { #Arizona
+				add_building_construction = {
+					type = bunker
+					province = 10783
+					level = 4
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 3834
+					level = 4
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 7920
+					level = 4
+					instant_build = yes
 				}
 			}
+			803 = {	#New Mexico
+				add_building_construction = {
+					type = bunker
+					province = 5044
+					level = 4
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 12791
+					level = 4
+					instant_build = yes
+				}
+			}
+			800 = {	#Texas
+				add_building_construction = {
+					type = bunker
+					province = 10740
+					level = 3
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 10894
+					level = 3
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 1954
+					level = 3
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 5038
+					level = 3
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 12728
+					level = 3
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 2019
+					level = 3
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 5061
+					level = 3
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 12369
+					level = 3
+					instant_build = yes
+				}
+			}
+			
+			add_ai_strategy = { type = contain id = "MEX" value = 50 }
 		}
 		
 		ai_will_do = {
@@ -10172,6 +11034,16 @@ focus_tree = {
 				has_government = communism
 			}
 		}
+		
+		will_lead_to_war_with = ARG
+		will_lead_to_war_with = BOL
+		will_lead_to_war_with = BRA
+		will_lead_to_war_with = COL
+		will_lead_to_war_with = CHL
+		will_lead_to_war_with = ECU
+		will_lead_to_war_with = PAR
+		will_lead_to_war_with = URG
+		will_lead_to_war_with = VEN
 		
 		cancel_if_invalid = yes
 		continue_if_invalid = no
