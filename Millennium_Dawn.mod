@@ -7,9 +7,9 @@ tags={
 	"Events"
 	"Graphics"
 }
-supported_version="1.8.1"
+supported_version="1.8.2"
 picture = "thumbnail.png"
-remote_file_id="1241177173"
+remote_file_id="719416488"
 
 replace_path = "events"
 replace_path = "common/abilities"
