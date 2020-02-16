@@ -951,9 +951,30 @@ gcc_decisions = {
 		cost = 100
 		
 		complete_effect = {
+			set_country_flag = initiated_blockade_@FROM
 			if = {	
 				limit = { FROM = { original_tag = QAT } }
 				country_event = { id = SAU_GCC_CRISIS.0 }
+			}
+			if = {	
+				limit = { FROM = { original_tag = BHR } }
+				country_event = { id = SAU_GCC_CRISIS.9 }
+			}
+			if = {	
+				limit = { FROM = { original_tag = KUW } }
+				country_event = { id = SAU_GCC_CRISIS.14 }
+			}
+			if = {	
+				limit = { FROM = { original_tag = OMA } }
+				country_event = { id = SAU_GCC_CRISIS.19 }
+			}
+			if = {	
+				limit = { FROM = { original_tag = SAU } }
+				country_event = { id = SAU_GCC_CRISIS.24 }
+			}
+			if = {	
+				limit = { FROM = { original_tag = UAE } }
+				country_event = { id = SAU_GCC_CRISIS.29 }
 			}
 		}
 		
@@ -962,7 +983,138 @@ gcc_decisions = {
 		}
 	}
 	
+	GCC_drop_the_blockade = {
+		icon = GFX_decision_generic_naval
+		
+		target_array = global.iranian_partners
+		
+		target_trigger = { 
+			country_exists = FROM 
+			FROM = { has_country_flag = rejected_blockade_demands }
+			has_country_flag = initiated_blockade_@FROM
+		}
+		
+		cost = 50
+		
+		complete_effect = {
+			clr_country_flag = blockade_@FROM
+			clr_country_flag = initiated_blockade_@FROM
+			every_country = {
+				limit = { has_country_flag = blockade_@FROM }
+				clr_country_flag = blockade_@FROM
+				remove_opinion_modifier = { target = FROM modifier = Blockade }
+				remove_opinion_modifier = { target = FROM modifier = Blockade_Trade }
+			}
+		}
+	}
+	
+	GCC_accept_blockade_demands = {
+		icon = GFX_decision_generic_political_discourse
+		
+		visible = { has_country_flag = rejected_blockade_demands }
+		
+		cost = 50
+		
+		complete_effect = {
+			every_country = {
+				limit = { has_country_flag = blockade_@ROOT }
+				clr_country_flag = blockade_@ROOT
+				clr_country_flag = initiated_blockade_@ROOT
+				remove_opinion_modifier = { target = ROOT modifier = Blockade }
+				remove_opinion_modifier = { target = ROOT modifier = Blockade_Trade }
+			}
+			clr_country_flag = rejected_blockade_demands
+			set_country_flag = accepted_blockade_demands
+			if = {
+				limit = { tag = QAT }
+				news_event = { id = SAU_GCC_CRISIS.8 }
+				remove_ideas = al_jazeera
+				every_country = {
+					limit = { has_idea = al_jazeera_banned }
+					remove_ideas = al_jazeera_banned
+				}
+				every_country = {
+					limit = { has_idea = al_jazeera_allowed }
+					remove_ideas = al_jazeera_allowed
+				}
+			}
+			if = {
+				limit = { NOT = { tag = QAT } }
+				news_event = { id = SAU_GCC_CRISIS.13 }
+			}
+			if = {
+				limit = { gives_military_access_to = TUR }
+				TUR = {
+					diplomatic_relation = {
+						country = ROOT
+						relation = military_access
+						active = no
+					}
+				}
+			}
+			if = {
+				limit = { has_guaranteed = TUR }
+				diplomatic_relation = {
+					country = TUR
+					relation = guarantee
+					active = no
+				}
+			}
+			if = {
+				limit = { is_guaranteed_by = TUR }
+				TUR = {
+					diplomatic_relation = {
+						country = ROOT
+						relation = guarantee
+						active = no
+					}
+				}
+			}
+			if = {
+				limit = { is_in_faction_with = TUR }
+				leave_faction = yes
+			}
+			if = {
+				limit = { gives_military_access_to = PER }
+				PER = {
+					diplomatic_relation = {
+						country = ROOT
+						relation = military_access
+						active = no
+					}
+				}
+			}
+			if = {
+				limit = { has_guaranteed = PER }
+				diplomatic_relation = {
+					country = PER
+					relation = guarantee
+					active = no
+				}
+			}
+			if = {
+				limit = { is_guaranteed_by = PER }
+				PER = {
+					diplomatic_relation = {
+						country = ROOT
+						relation = guarantee
+						active = no
+					}
+				}
+			}
+			if = {
+				limit = { is_in_faction_with = PER }
+				leave_faction = yes
+			}
+		}
+	}
+	
 	apply_to_join_the_gcc = {
+		icon = GFX_decision_generic_political_discourse
+		
+		visible = { NOT = { has_idea = idea_gcc_member_state } }
+		
+		cost = 50
 	}
 }
 
@@ -986,7 +1138,7 @@ subversive_activities = {
 					}
 				}
 			}
-			has_equipment = { Inf_equipment > 100 }
+			has_equipment = { Inf_equipment > 99 }
 		}
 		
 		highlight_states = { state = 209 }
@@ -1029,7 +1181,7 @@ subversive_activities = {
 		
 		available = {
 			country_exists = HEZ
-			has_equipment = { Inf_equipment > 100 }
+			has_equipment = { Inf_equipment > 99 }
 		}
 		
 		highlight_states = { state = 201 }
@@ -1063,7 +1215,7 @@ subversive_activities = {
 		available = {
 			country_exists = IRQ
 			IRQ = { has_government = communism }
-			has_equipment = { Inf_equipment > 100 }
+			has_equipment = { Inf_equipment > 99 }
 		}
 		
 		highlight_states = { state = 557 }
@@ -1121,7 +1273,7 @@ subversive_activities = {
 		available = {
 			country_exists = SYR
 			SYR = { has_government = communism }
-			has_equipment = { Inf_equipment > 100 }
+			has_equipment = { Inf_equipment > 99 }
 		}
 		
 		highlight_states = { state = 186 }
@@ -1177,7 +1329,7 @@ subversive_activities = {
 		}
 		
 		available = {
-			has_equipment = { Inf_equipment > 100 }
+			has_equipment = { Inf_equipment > 99 }
 		}
 		
 		highlight_states = { state = 188 }
@@ -1185,6 +1337,16 @@ subversive_activities = {
 		cost = 20
 		
 		days_remove = 60
+		
+		complete_effect = {
+			if = {	
+				limit = { NOT = { country_exists = FSA } }
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = -100
+				}
+			}
+		}
 		
 		remove_effect = {
 			if = {	
@@ -1200,6 +1362,84 @@ subversive_activities = {
 				add_to_variable = { global.syrian_opposition_strength = 1 }
 			}
 			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_the_syrian_opposition"
+		}
+		
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	
+	send_support_to_arabs = {
+		
+		icon = GFX_decision_generic_prepare_civil_war_new
+		
+		visible = {
+			has_completed_focus = GCC_support_iranian_separatists
+		}
+		
+		available = {
+			has_equipment = { Inf_equipment > 99 }
+			PER = {
+				owns_state = 399
+			}
+		}
+		
+		highlight_states = { state = 399 }
+		
+		cost = 20
+		
+		days_remove = 60
+		
+		complete_effect = {
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -100
+			}
+		}
+		
+		remove_effect = {
+			custom_effect_tooltip = arab_rebels_strengthened_tt
+			add_to_variable = { global.arab_rebels_strength = 1 }
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_arabs"
+		}
+		
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	
+	send_support_to_balochis = {
+		
+		icon = GFX_decision_generic_prepare_civil_war_new
+		
+		visible = {
+			has_completed_focus = GCC_support_iranian_separatists
+		}
+		
+		available = {
+			has_equipment = { Inf_equipment > 99 }
+			PER = {
+				owns_state = 401
+			}
+		}
+		
+		highlight_states = { state = 401 }
+		
+		cost = 20
+		
+		days_remove = 60
+		
+		complete_effect = {
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -100
+			}
+		}
+		
+		remove_effect = {
+			custom_effect_tooltip = balochi_rebels_strengthened_tt
+			add_to_variable = { global.balochi_rebels_strength = 1 }
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_balochis"
 		}
 		
 		ai_will_do = {

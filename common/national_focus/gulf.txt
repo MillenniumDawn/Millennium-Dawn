@@ -7399,7 +7399,10 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				has_government = democratic
+				OR = {
+					has_government = democratic
+					has_country_flag = accepted_blockade_demands
+				}
 			}
 		}
 	}
@@ -7456,7 +7459,10 @@ focus_tree = {
 			}
 			modifier = {
 				factor = 0
-				has_government = democratic
+				OR = {
+					has_government = democratic
+					has_country_flag = accepted_blockade_demands
+				}
 			}
 		}
 	}
@@ -7493,7 +7499,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 0
-				has_government = democratic
+				OR = {
+					has_government = democratic
+					has_country_flag = accepted_blockade_demands
+				}
 			}
 		}
 	}
@@ -7532,7 +7541,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 0
-				has_government = democratic
+				OR = {
+					has_government = democratic
+					has_country_flag = accepted_blockade_demands
+				}
 			}
 		}
 	}
@@ -7562,6 +7574,8 @@ focus_tree = {
 		
 		completion_reward = {
 			custom_effect_tooltip = GCC_regional_upheaval_tt
+			add_ai_strategy = { type = befriend id = "USA" value = -50 }
+			add_ai_strategy = { type = befriend id = "ISR" value = -50 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_forge_an_independent_path executed"
 		}
 		
@@ -7584,15 +7598,22 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_foreign_affairs }
-		mutually_exclusive = { focus = GCC_keep_to_the_saudi_line }
 		
 		available = {
 			no_jihadist_government = yes
 			NOT = { tag = SAU }
+			OR = {
+				NOT = { has_completed_focus = GCC_keep_to_the_saudi_line }
+				SAU = { has_completed_focus = GCC_forge_an_independent_path }
+			}
 		}
 		
 		completion_reward = {
 			custom_effect_tooltip = GCC_strategic_hedging_tt
+			add_ai_strategy = { type = befriend id = "PER" value = 50 }
+			add_ai_strategy = { type = befriend id = "TUR" value = 50 }
+			add_ai_strategy = { type = befriend id = "USA" value = 50 }
+			add_ai_strategy = { type = befriend id = "ISR" value = -50 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_strategic_hedging executed"
 		}
 		
@@ -7623,15 +7644,25 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_foreign_affairs }
-		mutually_exclusive = { focus = GCC_strategic_hedging }
 				
 		available = {
 			no_jihadist_government = yes
 			NOT = { has_government = communism }
+			OR = {
+				NOT = { has_completed_focus = GCC_strategic_hedging }
+				custom_trigger_tooltip = {
+					tooltip = accepted_blockade_demands_tt
+					has_country_flag = accepted_blockade_demands
+				}
+			}
 		}
 		
 		completion_reward = {
 			custom_effect_tooltip = GCC_status_quo_tt
+			add_ai_strategy = { type = befriend id = "PER" value = -50 }
+			add_ai_strategy = { type = befriend id = "TUR" value = -50 }
+			add_ai_strategy = { type = befriend id = "USA" value = 50 }
+			add_ai_strategy = { type = befriend id = "ISR" value = 50 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_keep_to_the_saudi_line executed"
 		}
 		
@@ -7749,6 +7780,13 @@ focus_tree = {
 		
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				OR = {
+					has_government = democratic
+					has_country_flag = accepted_blockade_demands
+				}
+			}
 		}
 	}
 	
@@ -7787,6 +7825,13 @@ focus_tree = {
 		
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				OR = {
+					has_government = democratic
+					has_country_flag = accepted_blockade_demands
+				}
+			}
 		}
 	}
 	
@@ -7804,6 +7849,7 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_non_aggression_pact }
+		mutually_exclusive = { focus = GCC_confront_iranian_partners }
 		
 		available = {
 			has_government = communism
@@ -7819,6 +7865,13 @@ focus_tree = {
 		
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				OR = {
+					has_government = democratic
+					has_country_flag = accepted_blockade_demands
+				}
+			}
 		}
 	}
 	
@@ -8056,6 +8109,7 @@ focus_tree = {
 		available_if_capitulated = no
 
 		prerequisite = { focus = GCC_combat_iranian_influence }
+		mutually_exclusive = { focus = GCC_align_with_iran }
 		
 		available = {
 			any_country = {
@@ -8089,10 +8143,157 @@ focus_tree = {
 		prerequisite = { focus = GCC_align_with_iran focus = GCC_confront_iranian_partners }
 		
 		available = {
+			any_country = { 
+				OR = {
+					has_completed_focus = GCC_antagonize_iran 
+					custom_trigger_tooltip = {
+						tooltip = rejected_blockade_demands_tt
+						has_country_flag = rejected_blockade_demands
+					}
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			if = {
+				limit = {
+					NOT = {
+						has_completed_focus = GCC_confront_iranian_partners
+						has_completed_focus = GCC_align_with_iran
+					}
+				}
+				custom_effect_tooltip = GCC_the_war_within_tt
+			}
+			if = {
+				limit = {
+					has_completed_focus = GCC_confront_iranian_partners
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = BHR }
+						BHR = { has_country_flag = rejected_blockade_demands }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = BHR
+					}
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = KUW }
+						KUW = { has_country_flag = rejected_blockade_demands }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = KUW
+					}
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = OMA }
+						OMA = { has_country_flag = rejected_blockade_demands }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = OMA
+					}
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = QAT }
+						QAT = { has_country_flag = rejected_blockade_demands }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = QAT
+					}
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = UAE }
+						UAE = { has_country_flag = rejected_blockade_demands }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = UAE
+					}
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = SAU }
+						SAU = { has_country_flag = rejected_blockade_demands }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = SAU
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_completed_focus = GCC_align_with_iran
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = BHR }
+						BHR = { has_completed_focus = GCC_antagonize_iran }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = BHR
+					}
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = KUW }
+						KUW = { has_completed_focus = GCC_antagonize_iran }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = KUW
+					}
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = OMA }
+						OMA = { has_completed_focus = GCC_antagonize_iran }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = OMA
+					}
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = QAT }
+						QAT = { has_completed_focus = GCC_antagonize_iran }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = QAT
+					}
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = UAE }
+						UAE = { has_completed_focus = GCC_antagonize_iran }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = UAE
+					}
+				}
+				if = {
+					limit = {
+						NOT = { original_tag = SAU }
+						SAU = { has_completed_focus = GCC_antagonize_iran }
+					}
+					create_wargoal = {
+						type = puppet_wargoal_focus
+						target = SAU
+					}
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_the_war_within executed"
 		}
 		
@@ -8122,6 +8323,7 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			add_political_power = -50
 			USA = {
 				add_opinion_modifier = {
 					target = ROOT
@@ -8170,6 +8372,7 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_strengthen_us_ties }
+		bypass = { is_guaranteed_by = USA }
 		
 		available = {
 			country_exists = USA
@@ -8179,6 +8382,9 @@ focus_tree = {
 		
 		completion_reward = {
 			USA = { give_guarantee = ROOT }
+			custom_effect_tooltip = radicalization_increase_tt
+			add_to_variable = { radicalization = 10 }
+			clamp_radicalization = yes
 			log = "[GetDateText]: [This.GetName]: focus GCC_mass_arms_purchases executed"
 		}
 		
@@ -8241,10 +8447,13 @@ focus_tree = {
 		prerequisite = { focus = GCC_amplify_sectarian_rhetoric }
 		
 		available = {
+			country_exists = PER
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			unlock_decision_tooltip = send_support_to_arabs
+			unlock_decision_tooltip = send_support_to_balochis
+			PER = { add_stability = -0.05 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_support_iranian_separatists executed"
 		}
 		
@@ -8269,6 +8478,7 @@ focus_tree = {
 		prerequisite = { focus = GCC_support_iranian_separatists }
 		
 		available = {
+			country_exists = PER
 		}
 		
 		completion_reward = {
@@ -8297,10 +8507,36 @@ focus_tree = {
 		prerequisite = { focus = GCC_forge_an_independent_path }
 		
 		available = {
+			country_exists = USA
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			add_political_power = 50
+			USA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_distance
+				}
+				add_ai_strategy = { type = contain id = "ROOT" value = 50 }
+			}
+			if = {
+				limit = { has_idea = saudi_royal_family }
+				visually_display_opinion_fall_saudi_royal_family = yes
+				set_country_flag = current_saudi_royal_family
+				decrease_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = wahabi_ulema }
+				visually_display_opinion_rise_wahabi_ulema = yes
+				set_country_flag = current_wahabi_ulema
+				increase_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = The_Ulema has_idea = sunni }
+				visually_display_opinion_rise_The_Ulema = yes
+				set_country_flag = current_The_Ulema
+				increase_internal_faction_opinion = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_distance_from_america executed"
 		}
 		
@@ -8328,7 +8564,68 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			remove_opinion_modifier = {
+				target = USA
+				modifier = supports_us
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = expelled_forces
+				}
+				add_ai_strategy = { type = befriend id = "ROOT" value = -50 }
+				add_ai_strategy = { type = protect id = "ROOT" value = -50 }
+				add_ai_strategy = { type = support id = "ROOT" value = -50 }
+				add_ai_strategy = { type = send_volunteers_desire id = "ROOT" value = -50 }
+			}
+			if = {
+				limit = { gives_military_access_to = USA }
+				USA = {
+					diplomatic_relation = {
+						country = ROOT
+						relation = military_access
+						active = no
+					}
+				}
+			}
+			if = {
+				limit = { is_guaranteed_by = USA }
+				USA = {
+					diplomatic_relation = {
+						country = ROOT
+						relation = guarantee
+						active = no
+					}
+				}
+			}
+			if = {
+				limit = { original_tag = BHR }
+				624 = { add_core_of = ROOT }
+				transfer_state = 624
+			}
+			if = {
+				limit = { original_tag = KUW }
+				488 = { add_core_of = ROOT }
+				transfer_state = 488
+			}
+			if = {
+				limit = { has_idea = saudi_royal_family }
+				visually_display_opinion_fall_saudi_royal_family = yes
+				set_country_flag = current_saudi_royal_family
+				decrease_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = wahabi_ulema }
+				visually_display_opinion_rise_wahabi_ulema = yes
+				set_country_flag = current_wahabi_ulema
+				increase_internal_faction_opinion = yes
+			}
+			if = {
+				limit = { has_idea = The_Ulema has_idea = sunni }
+				visually_display_opinion_rise_The_Ulema = yes
+				set_country_flag = current_The_Ulema
+				increase_internal_faction_opinion = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_expel_us_interests executed"
 		}
 		
@@ -8359,11 +8656,13 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			add_ai_strategy = { type = befriend id = "SOV" value = 50 }
 			SOV = {
 				add_opinion_modifier = {
 					target = ROOT
 					modifier = diplomatic_support
 				}
+				add_ai_strategy = { type = befriend id = "ROOT" value = 50 }
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_friendship_with_russia executed"
 		}
