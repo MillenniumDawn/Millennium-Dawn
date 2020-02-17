@@ -6107,7 +6107,7 @@ focus_tree = {
 			TUR = {
 				has_opinion = {
 					target = ROOT
-					value > 9
+					value > 24
 				}
 			}
 		}
@@ -7488,6 +7488,9 @@ focus_tree = {
 		}
 		
 		completion_reward = {
+			HAM = { country_event = { id = SyriaFocus.77 hours = 6 } }
+			ISR = { country_event = { id = SyriaFocus.77 hours = 6 } }
+			hidden_effect = { news_event = { id = SyriaFocusNews.20 hours = 12 } }
 			custom_effect_tooltip = palestine_peace_deal1_tt
 			subtract_from_variable = { isreali_support = 2 }
 			add_to_variable = { palestinian_support = 2 }
@@ -7647,6 +7650,7 @@ focus_tree = {
 				
 		available = {
 			no_jihadist_government = yes
+			NOT = { has_government = neutrality }
 			NOT = { has_government = communism }
 			OR = {
 				NOT = { has_completed_focus = GCC_strategic_hedging }
@@ -7859,6 +7863,10 @@ focus_tree = {
 			every_other_country = {
 				limit = { has_idea = idea_gcc_member_state NOT = { has_government = communism } }
 				shia_resistance_level_up = yes
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = supported_opposition 
+				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_align_with_iran executed"
 		}
@@ -8047,6 +8055,7 @@ focus_tree = {
 		prerequisite = { focus = GCC_mass_arms_purchases }
 		
 		available = {
+			NOT = { has_completed_focus = GCC_strategic_hedging }
 		}
 		
 		completion_reward = {
@@ -8112,6 +8121,7 @@ focus_tree = {
 		mutually_exclusive = { focus = GCC_align_with_iran }
 		
 		available = {
+			NOT = { has_completed_focus = GCC_strategic_hedging }
 			any_country = {
 				has_completed_focus = GCC_improve_relations_with_iran
 			}
@@ -8143,6 +8153,7 @@ focus_tree = {
 		prerequisite = { focus = GCC_align_with_iran focus = GCC_confront_iranian_partners }
 		
 		available = {
+			NOT = { has_completed_focus = GCC_strategic_hedging }
 			any_country = { 
 				OR = {
 					has_completed_focus = GCC_antagonize_iran 
@@ -8414,6 +8425,7 @@ focus_tree = {
 				jihadist_government = yes
 				has_government = nationalist
 			}
+			NOT = { has_completed_focus = GCC_strategic_hedging }
 			has_completed_focus = GCC_rally_sunnis
 		}
 		
@@ -8448,6 +8460,7 @@ focus_tree = {
 		
 		available = {
 			country_exists = PER
+			NOT = { has_completed_focus = GCC_strategic_hedging }
 		}
 		
 		completion_reward = {
@@ -8479,10 +8492,13 @@ focus_tree = {
 		
 		available = {
 			country_exists = PER
+			PER = { has_government = communism }
+			NOT = { has_completed_focus = GCC_strategic_hedging }
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			set_country_flag = proposed_coalition_against_iran
+			USA = { country_event = { days = 1 id = gulf.30 } }
 			log = "[GetDateText]: [This.GetName]: focus GCC_behead_the_snake executed"
 		}
 		
@@ -8688,10 +8704,17 @@ focus_tree = {
 		prerequisite = { focus = GCC_friendship_with_russia }
 		
 		available = {
+			has_war = no
+			SOV = {
+				has_opinion = {
+					target = ROOT
+					value > 14
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			add_ideas = russian_military_advisors
 			log = "[GetDateText]: [This.GetName]: focus GCC_invite_russian_advisors executed"
 		}
 		
@@ -8720,7 +8743,7 @@ focus_tree = {
 			SOV = {
 				has_opinion = {
 					target = ROOT
-					value > 9
+					value > 24
 				}
 			}
 		}
@@ -8743,7 +8766,7 @@ focus_tree = {
 	
 	focus = {
 		id = GCC_reject_foreign_interference
-		icon = ultimatum
+		icon = war_in_europe
 		
 		x = 8
 		y = 4
@@ -8758,10 +8781,56 @@ focus_tree = {
 		mutually_exclusive = { focus = GCC_friendship_with_russia }
 		
 		available = {
+			OR = {
+				has_government = fascism
+				has_government = nationalist
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			every_country = { news_event = { days = 1 id = gulf.33 } }
+			every_country = {
+				limit = { 
+					OR = {
+						has_military_access_to = BHR 
+						has_military_access_to = KUW
+						has_military_access_to = OMA
+						has_military_access_to = QAT
+						has_military_access_to = SAU
+						has_military_access_to = UAE
+						has_military_access_to = IRQ
+						has_military_access_to = JOR
+						has_military_access_to = LEB
+						has_military_access_to = SYR
+					}
+					NOT = { is_arabic_nation = yes }
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = criticized_us
+				}		
+				add_ai_strategy = { type = contain id = "ROOT" value = 100 }
+			}
+			every_country = {
+				limit = { 
+					has_military_access_to = ROOT 
+					NOT = { is_arabic_nation = yes }
+				}
+				diplomatic_relation = {
+					country = ROOT
+					relation = military_access
+					active = no
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = expelled_forces
+				}
+			}
+			custom_effect_tooltip = increase_domestic_influence_amount_50_TT
+			hidden_effect = {
+				add_to_variable = { domestic_influence_amount = 50 }
+				recalculate_influence = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_reject_foreign_interference executed"
 		}
 		
@@ -8772,7 +8841,7 @@ focus_tree = {
 	
 	focus = {
 		id = GCC_attack_foreign_stooges
-		icon = war_in_europe
+		icon = entente
 		
 		x = 8
 		y = 5
@@ -8789,7 +8858,23 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			every_country = {
+				limit = {
+					is_arabic_nation = yes
+					is_full_state = yes
+					OR = {
+						gives_military_access_to = USA
+						gives_military_access_to = ENG
+						gives_military_access_to = FRA
+						gives_military_access_to = SOV
+						gives_military_access_to = PER
+						gives_military_access_to = ITA
+						gives_military_access_to = CAN
+						gives_military_access_to = AST
+					}
+				}
+				country_event = { days = 1 id = gulf.34 }
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_attack_foreign_stooges executed"
 		}
 		
@@ -8800,7 +8885,7 @@ focus_tree = {
 	
 	focus = {
 		id = GCC_war_with_imperialism
-		icon = war
+		icon = colonialism
 		
 		x = 8
 		y = 6
@@ -8817,7 +8902,150 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 10
+			every_country = { news_event = { days = 1 id = gulf.35 } }
+			if = {
+				limit = { 
+					any_country = {
+						NOT = { is_arabic_nation = yes }
+						has_military_access_to = BHR
+					}
+					NOT = { tag = BHR } 
+				}
+				create_wargoal = {
+					type = liberate_wargoal
+					target = BHR
+				}
+			}
+			if = {
+				limit = { 
+					any_country = {
+						NOT = { is_arabic_nation = yes }
+						has_military_access_to = EGY
+					}
+					NOT = { tag = EGY } 
+				}
+				create_wargoal = {
+					type = liberate_wargoal
+					target = EGY
+				}
+			}
+			if = {
+				limit = { 
+					any_country = {
+						NOT = { is_arabic_nation = yes }
+						has_military_access_to = IRQ
+					}
+					NOT = { tag = IRQ } 
+				}
+				create_wargoal = {
+					type = liberate_wargoal
+					target = IRQ
+				}
+			}
+			if = {
+				limit = { 
+					any_country = {
+						NOT = { is_arabic_nation = yes }
+						has_military_access_to = JOR
+					}
+					NOT = { tag = JOR } 
+				}
+				create_wargoal = {
+					type = liberate_wargoal
+					target = JOR
+				}
+			}
+			if = {
+				limit = { 
+					any_country = {
+						NOT = { is_arabic_nation = yes }
+						has_military_access_to = KUW
+					}
+					NOT = { tag = KUW } 
+				}
+				create_wargoal = {
+					type = liberate_wargoal
+					target = KUW
+				}
+			}
+			if = {
+				limit = { 
+					any_country = {
+						NOT = { is_arabic_nation = yes }
+						has_military_access_to = LEB
+					}
+					NOT = { tag = LEB } 
+				}
+				create_wargoal = {
+					type = liberate_wargoal
+					target = LEB
+				}
+			}
+			if = {
+				limit = { 
+					any_country = {
+						NOT = { is_arabic_nation = yes }
+						has_military_access_to = OMA
+					}
+					NOT = { tag = OMA } 
+				}
+				create_wargoal = {
+					type = liberate_wargoal
+					target = OMA
+				}
+			}
+			if = {
+				limit = { 
+					any_country = {
+						NOT = { is_arabic_nation = yes }
+						has_military_access_to = QAT
+					}
+					NOT = { tag = QAT } 
+				}
+				create_wargoal = {
+					type = liberate_wargoal
+					target = QAT
+				}
+			}
+			if = {
+				limit = { 
+					any_country = {
+						NOT = { is_arabic_nation = yes }
+						has_military_access_to = SAU
+					}
+					NOT = { tag = SAU } 
+				}
+				create_wargoal = {
+					type = liberate_wargoal
+					target = SAU
+				}
+			}
+			if = {
+				limit = { 
+					any_country = {
+						NOT = { is_arabic_nation = yes }
+						has_military_access_to = SYR
+					}
+					NOT = { tag = SYR } 
+				}
+				create_wargoal = {
+					type = liberate_wargoal
+					target = SYR
+				}
+			}
+			if = {
+				limit = { 
+					any_country = {
+						NOT = { is_arabic_nation = yes }
+						has_military_access_to = UAE
+					}
+					NOT = { tag = UAE } 
+				}
+				create_wargoal = {
+					type = liberate_wargoal
+					target = UAE
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_war_with_imperialism executed"
 		}
 		
