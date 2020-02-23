@@ -6153,27 +6153,27 @@ focus_tree = {
 				custom_effect_tooltip = strategic_reasons_protect_tt
 				if = {
 					limit = { ROOT = { tag = BHR } }
-					add_ai_strategy = { type = protect id = "BHR" value = 20 }
+					add_ai_strategy = { type = protect id = "BHR" value = 50 }
 				}
 				if = {
 					limit = { ROOT = { tag = KUW } }
-					add_ai_strategy = { type = protect id = "KUW" value = 20 }
+					add_ai_strategy = { type = protect id = "KUW" value = 50 }
 				}
 				if = {
 					limit = { ROOT = { tag = OMA } }
-					add_ai_strategy = { type = protect id = "OMA" value = 20 }
+					add_ai_strategy = { type = protect id = "OMA" value = 50 }
 				}
 				if = {
 					limit = { ROOT = { tag = QAT } }
-					add_ai_strategy = { type = protect id = "QAT" value = 20 }
+					add_ai_strategy = { type = protect id = "QAT" value = 50 }
 				}
 				if = {
 					limit = { ROOT = { tag = SAU } }
-					add_ai_strategy = { type = protect id = "SAU" value = 20 }
+					add_ai_strategy = { type = protect id = "SAU" value = 50 }
 				}
 				if = {
 					limit = { ROOT = { tag = UAE } }
-					add_ai_strategy = { type = protect id = "UAE" value = 20 }
+					add_ai_strategy = { type = protect id = "UAE" value = 50 }
 				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_turkish_bases executed"
@@ -9201,27 +9201,27 @@ focus_tree = {
 				custom_effect_tooltip = strategic_reasons_protect_tt
 				if = {
 					limit = { ROOT = { tag = BHR } }
-					add_ai_strategy = { type = protect id = "BHR" value = 20 }
+					add_ai_strategy = { type = protect id = "BHR" value = 50 }
 				}
 				if = {
 					limit = { ROOT = { tag = KUW } }
-					add_ai_strategy = { type = protect id = "KUW" value = 20 }
+					add_ai_strategy = { type = protect id = "KUW" value = 50 }
 				}
 				if = {
 					limit = { ROOT = { tag = OMA } }
-					add_ai_strategy = { type = protect id = "OMA" value = 20 }
+					add_ai_strategy = { type = protect id = "OMA" value = 50 }
 				}
 				if = {
 					limit = { ROOT = { tag = QAT } }
-					add_ai_strategy = { type = protect id = "QAT" value = 20 }
+					add_ai_strategy = { type = protect id = "QAT" value = 50 }
 				}
 				if = {
 					limit = { ROOT = { tag = SAU } }
-					add_ai_strategy = { type = protect id = "SAU" value = 20 }
+					add_ai_strategy = { type = protect id = "SAU" value = 50 }
 				}
 				if = {
 					limit = { ROOT = { tag = UAE } }
-					add_ai_strategy = { type = protect id = "UAE" value = 20 }
+					add_ai_strategy = { type = protect id = "UAE" value = 50 }
 				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_russian_bases executed"
@@ -9756,7 +9756,7 @@ focus_tree = {
 			modifier = {
 				add = 1
 				OR = {
-					is_historical_focus_on = yes
+					is_historical_focus_on = no
 					set_temp_variable = { temp_idx = -1 }
 					any_of = {
 						array = influence_array
@@ -10253,7 +10253,17 @@ focus_tree = {
 		}
 		
 		ai_will_do = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				OR = {
+					is_historical_focus_on = no
+					has_opinion = {
+						target = SUD
+						value < -50
+					}
+				}
+			}
 		}
 	}
 	
@@ -10642,6 +10652,7 @@ focus_tree = {
 		
 		available = {
 			NOT = { has_war_with = PAK }
+			country_exists = PAK
 		}
 		
 		completion_reward = {
@@ -10650,7 +10661,32 @@ focus_tree = {
 					target = ROOT
 					modifier = diplomatic_support 
 				}
+				if = {
+					limit = { ROOT = { tag = BHR } }
+					add_ai_strategy = { type = befriend id = "BHR" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = KUW } }
+					add_ai_strategy = { type = befriend id = "KUW" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = OMA } }
+					add_ai_strategy = { type = befriend id = "OMA" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = QAT } }
+					add_ai_strategy = { type = befriend id = "QAT" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = SAU } }
+					add_ai_strategy = { type = befriend id = "SAU" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = UAE } }
+					add_ai_strategy = { type = befriend id = "UAE" value = 20 }
+				}
 			}
+			add_ai_strategy = { type = befriend id = "PAK" value = 20 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_affirm_pakistani_ties executed"
 		}
 		
@@ -10675,10 +10711,76 @@ focus_tree = {
 		prerequisite = { focus = GCC_affirm_pakistani_ties }
 		
 		available = {
+			NOT = { has_war_with = PAK }
+			PAK = {
+				has_opinion = {
+					target = ROOT
+					value > 9
+				}
+			}
+			if = {
+				limit = { PAK = { controls_state = 416 } }
+				416 = {
+					infrastructure > 4
+				}
+			}
+			else_if = {
+				limit = { PAK = { NOT = { controls_state = 416 } } }
+				426 = {
+					infrastructure > 4
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			subtract_from_variable = { treasury = 10 }
+			custom_effect_tooltip = 10_billion_expense_tt
+			PAK = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = joint_resource_projects 
+				}
+				custom_effect_tooltip = gain_10_ROOT_influence_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
+			if = {
+				limit = { PAK = { controls_state = 416 } }
+				416 = {
+					add_resource = {
+						type = oil
+						amount = 2
+					}
+				}
+			}
+			else_if = {
+				limit = { PAK = { NOT = { controls_state = 416 } } }
+				426 = {
+					add_resource = {
+						type = oil
+						amount = 2
+					}
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_oil_refineries_in_pakistan executed"
 		}
 		
@@ -10704,15 +10806,80 @@ focus_tree = {
 		mutually_exclusive = { focus = GCC_end_the_special_relationship }
 		
 		available = {
+			if = {	
+				limit = { PAK = { no_jihadist_government = yes } }
+				no_jihadist_government = yes
+			}
+			NOT = { has_war_with = PAK }
+			PAK = {
+				has_opinion = {
+					target = ROOT
+					value > 24
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			PAK = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = military_cooperation 
+				}
+				custom_effect_tooltip = strategic_reasons_support_tt
+				if = {
+					limit = { ROOT = { tag = BHR } }
+					add_ai_strategy = { type = support id = "BHR" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = KUW } }
+					add_ai_strategy = { type = support id = "KUW" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = OMA } }
+					add_ai_strategy = { type = support id = "OMA" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = QAT } }
+					add_ai_strategy = { type = support id = "QAT" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = SAU } }
+					add_ai_strategy = { type = support id = "SAU" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = UAE } }
+					add_ai_strategy = { type = support id = "UAE" value = 20 }
+				}
+			}
+			add_ai_strategy = { type = support id = "PAK" value = 20 }
+			army_experience = 10
+			navy_experience = 10
+			air_experience = 10
 			log = "[GetDateText]: [This.GetName]: focus GCC_deepen_military_cooperation executed"
 		}
 		
 		ai_will_do = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				OR = {
+					is_historical_focus_on = no
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = PAK } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.15 }
+				}
+			}
 		}
 	}
 	
@@ -10732,11 +10899,49 @@ focus_tree = {
 		prerequisite = { focus = GCC_deepen_military_cooperation }
 		
 		available = {
+			if = {	
+				limit = { PAK = { no_jihadist_government = yes } }
+				no_jihadist_government = yes
+			}
+			has_war = no
+			PAK = {
+				has_opinion = {
+					target = ROOT
+					value > 49
+				}
+			}
 		}
 		
 		completion_reward = {
 			give_guarantee = PAK
 			PAK = { give_guarantee = ROOT }
+			RAJ = {
+				custom_effect_tooltip = strategic_reasons_antagonize_tt
+				if = {
+					limit = { ROOT = { tag = BHR } }
+					add_ai_strategy = { type = antagonize id = "BHR" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = KUW } }
+					add_ai_strategy = { type = antagonize id = "KUW" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = OMA } }
+					add_ai_strategy = { type = antagonize id = "OMA" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = QAT } }
+					add_ai_strategy = { type = antagonize id = "QAT" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = SAU } }
+					add_ai_strategy = { type = antagonize id = "SAU" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = UAE } }
+					add_ai_strategy = { type = antagonize id = "UAE" value = 20 }
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_security_guarantees executed"
 		}
 		
@@ -10762,6 +10967,7 @@ focus_tree = {
 		
 		available = {
 			NOT = { has_war_with = RAJ }
+			country_exists = RAJ
 		}
 		
 		completion_reward = {
@@ -10770,7 +10976,32 @@ focus_tree = {
 					target = ROOT
 					modifier = diplomatic_support 
 				}
+				if = {
+					limit = { ROOT = { tag = BHR } }
+					add_ai_strategy = { type = befriend id = "BHR" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = KUW } }
+					add_ai_strategy = { type = befriend id = "KUW" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = OMA } }
+					add_ai_strategy = { type = befriend id = "OMA" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = QAT } }
+					add_ai_strategy = { type = befriend id = "QAT" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = SAU } }
+					add_ai_strategy = { type = befriend id = "SAU" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = UAE } }
+					add_ai_strategy = { type = befriend id = "UAE" value = 20 }
+				}
 			}
+			add_ai_strategy = { type = befriend id = "RAJ" value = 20 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_draw_closer_to_india executed"
 		}
 		
@@ -10795,10 +11026,70 @@ focus_tree = {
 		prerequisite = { focus = GCC_draw_closer_to_india }
 		
 		available = {
+			NOT = { has_war_with = RAJ }
+			RAJ = {
+				has_opinion = {
+					target = ROOT
+					value > 9
+				}
+			}
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			add_opinion_modifier = {
+				target = RAJ
+				modifier = improve_trade 
+			}
+			custom_effect_tooltip = gain_10_RAJ_influence_tt
+			hidden_effect = {
+				set_temp_variable = { influence_gain = 10 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = RAJ }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+						add_to_array = { influence_array = ROOT.id }
+						add_to_array = { influence_array_val = influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+			}
+			RAJ = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = improve_trade 
+				}
+				custom_effect_tooltip = gain_10_ROOT_influence_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_improve_trade_relations executed"
 		}
 		
@@ -10827,12 +11118,141 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 100
+			if = {
+				limit = { ROOT = { tag = SAU } }
+				remove_opinion_modifier = {
+					target = PAK
+					modifier = historic_friends
+				}
+			}
+			if = {
+				limit = { is_in_faction_with = PAK }
+				leave_faction = yes
+			}
+			if = {
+				limit = { has_military_access_to = PAK }
+				diplomatic_relation = {
+					country = PAK
+					relation = military_access
+					active = no
+				}
+			}
+			if = {
+				limit = { has_guaranteed = PAK }
+				diplomatic_relation = {
+					country = PAK
+					relation = guarantee
+					active = no
+				}
+			}
+			PAK = {
+				if = {
+					limit = { has_military_access_to = ROOT }
+					diplomatic_relation = {
+						country = ROOT
+						relation = military_access
+						active = no
+					}
+				}
+				if = {
+					limit = { has_guaranteed = ROOT }
+					diplomatic_relation = {
+						country = ROOT
+						relation = guarantee
+						active = no
+					}
+				}
+				if = {
+					limit = { ROOT = { tag = SAU } }
+					remove_opinion_modifier = {
+						target = SAU
+						modifier = historic_friends
+					}
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = betrayed_our_cause
+				}
+				custom_effect_tooltip = strategic_reasons_antagonize_tt
+				if = {
+					limit = { ROOT = { tag = BHR } }
+					add_ai_strategy = { type = antagonize id = "BHR" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = KUW } }
+					add_ai_strategy = { type = antagonize id = "KUW" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = OMA } }
+					add_ai_strategy = { type = antagonize id = "OMA" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = QAT } }
+					add_ai_strategy = { type = antagonize id = "QAT" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = SAU } }
+					add_ai_strategy = { type = antagonize id = "SAU" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = UAE } }
+					add_ai_strategy = { type = antagonize id = "UAE" value = 20 }
+				}
+			}
+			add_ai_strategy = { type = antagonize id = "PAK" value = 20 }
+			RAJ = {
+				custom_effect_tooltip = strategic_reasons_support_tt
+				if = {
+					limit = { ROOT = { tag = BHR } }
+					add_ai_strategy = { type = support id = "BHR" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = KUW } }
+					add_ai_strategy = { type = support id = "KUW" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = OMA } }
+					add_ai_strategy = { type = support id = "OMA" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = QAT } }
+					add_ai_strategy = { type = support id = "QAT" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = SAU } }
+					add_ai_strategy = { type = support id = "SAU" value = 20 }
+				}
+				if = {
+					limit = { ROOT = { tag = UAE } }
+					add_ai_strategy = { type = support id = "UAE" value = 20 }
+				}
+			}
+			add_ai_strategy = { type = support id = "RAJ" value = 20 }
 			log = "[GetDateText]: [This.GetName]: focus GCC_end_the_special_relationship executed"
 		}
 		
 		ai_will_do = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				OR = {
+					is_historical_focus_on = no
+					set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = RAJ } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+					check_variable = { temp_idx > -1 }
+					check_variable = { influence_array_calc^temp_idx > 0.15 }
+				}
+			}
 		}
 	}
 	
@@ -10852,22 +11272,46 @@ focus_tree = {
 		prerequisite = { focus = GCC_end_the_special_relationship }
 		
 		available = {
+			NOT = { is_in_faction_with = PAK }
+			NOT = { has_military_access_to = PAK }
+			NOT = { gives_military_access_to = PAK }
 			has_war = no
 			RAJ = {
 				has_opinion = {
 					target = ROOT
-					value > 9
+					value > 49
 				}
 			}
 		}
 		
 		completion_reward = {
 			give_military_access = RAJ
-			custom_effect_tooltip = india_strategic_reasons_tt
 			RAJ = {
-				add_ai_strategy = { type = support id = "ROOT" value = 100 }
-				add_ai_strategy = { type = befriend id = "ROOT" value = 100 }
-				add_ai_strategy = { type = protect id = "ROOT" value = 100 }
+				custom_effect_tooltip = strategic_reasons_protect_tt
+				if = {
+					limit = { ROOT = { tag = BHR } }
+					add_ai_strategy = { type = protect id = "BHR" value = 50 }
+				}
+				if = {
+					limit = { ROOT = { tag = KUW } }
+					add_ai_strategy = { type = protect id = "KUW" value = 50 }
+				}
+				if = {
+					limit = { ROOT = { tag = OMA } }
+					add_ai_strategy = { type = protect id = "OMA" value = 50 }
+				}
+				if = {
+					limit = { ROOT = { tag = QAT } }
+					add_ai_strategy = { type = protect id = "QAT" value = 50 }
+				}
+				if = {
+					limit = { ROOT = { tag = SAU } }
+					add_ai_strategy = { type = protect id = "SAU" value = 50 }
+				}
+				if = {
+					limit = { ROOT = { tag = UAE } }
+					add_ai_strategy = { type = protect id = "UAE" value = 50 }
+				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_indian_bases executed"
 		}
