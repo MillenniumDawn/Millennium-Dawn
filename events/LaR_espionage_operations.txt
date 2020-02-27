@@ -1,0 +1,228 @@
+﻿add_namespace = lar_heavy_water
+
+# Heavy Water Raid - Germany informed that heavy water plant was blown
+country_event = {
+	id = lar_heavy_water.1
+	title = lar_heavy_water.1.t
+	desc = lar_heavy_water.1.desc
+	picture = GFX_report_event_german_troops
+
+	is_triggered_only = yes
+	immediate = { 
+		clr_global_flag = GER_heavy_water_production_underway
+	}
+		
+	# acknowledge
+	option = {
+		name = lar_heavy_water.1.a
+	}
+
+}
+
+# Heavy Water Raid - Instigator told that raid succeeded
+country_event = {
+	id = lar_heavy_water.2
+	title = lar_heavy_water.2.t
+	desc = lar_heavy_water.2.desc
+	picture = GFX_report_event_german_troops
+
+	is_triggered_only = yes
+	
+	# acknowledge
+	option = {
+		name = lar_heavy_water.2.a
+	}
+
+}
+
+add_namespace = lar_bruneval_raid
+
+# Bruneval Raid - Germany informed that raid took place
+country_event = {
+	id = lar_bruneval_raid.1
+	title = lar_bruneval_raid.1.t
+	desc = lar_bruneval_raid.1.desc
+	picture = GFX_report_event_german_troops
+
+	is_triggered_only = yes
+		
+	# acknowledge
+	option = {
+		name = lar_bruneval_raid.1.a
+	}
+
+}
+
+# Bruneval Raid - Instigator told that raid succeeded
+country_event = {
+	id = lar_bruneval_raid.2
+	title = lar_bruneval_raid.2.t
+	desc = lar_bruneval_raid.2.desc
+	picture = GFX_report_event_german_troops
+
+	is_triggered_only = yes
+	
+	# acknowledge
+	option = {
+		name = lar_heavy_water.2.a
+		set_global_flag = bruneval_raid_success
+		add_tech_bonus = {
+			category = radar_tech
+			name = bruneval_raid
+			bonus = 2
+			uses = 1
+		}
+	}
+
+}
+
+add_namespace = lar_capture_tito
+
+# capture tito - raid fails
+country_event = {
+	id = lar_capture_tito.1
+	title = lar_capture_tito.1.t
+	desc = lar_capture_tito.1.desc
+	picture = GFX_report_event_german_troops
+
+	is_triggered_only = yes
+		
+	# acknowledge
+	option = {
+		name = lar_capture_tito.1.a
+		army_experience = 5
+	}
+
+}
+
+# capture tito - raid succeeds
+country_event = {
+	id = lar_capture_tito.2
+	title = lar_capture_tito.2.t
+	desc = lar_capture_tito.2.desc
+	picture = GFX_report_event_german_troops
+
+	is_triggered_only = yes
+	
+	# acknowledge
+	option = {
+		name = lar_capture_tito.2.a
+		if = {
+			limit = {
+				YUG = { has_country_leader = { name = "Josip Broz Tito" } }
+			}
+			YUG = { kill_ideology_leader = communism }
+			set_global_flag = Tito_killed
+		}
+	}
+
+}
+
+add_namespace = lar_rescue_mussolini
+
+# rescue mussolini - raid fails
+country_event = {
+	id = lar_rescue_mussolini.1
+	title = lar_rescue_mussolini.1.t
+	desc = lar_rescue_mussolini.1.desc
+	picture = GFX_report_event_german_troops
+
+	is_triggered_only = yes
+		
+	# acknowledge
+	option = {
+		name = lar_rescue_mussolini.1.a
+		army_experience = 5
+	}
+
+}
+
+# rescue mussolini - raid succeeds
+country_event = {
+	id = lar_rescue_mussolini.2
+	title = lar_rescue_mussolini.2.t
+	desc = lar_rescue_mussolini.2.desc
+	picture = GFX_report_event_german_troops
+
+	is_triggered_only = yes
+	
+	# acknowledge
+	option = {
+		name = lar_rescue_mussolini.2.a
+		add_relation_modifier = {
+			target = ITA
+			modifier = GER_rescued_mussolini
+		}
+		set_global_flag = mussolini_rescued_flag
+	}
+
+}
+
+add_namespace = lar_fake_intel_units
+
+
+# delete old intel units created by script
+country_event = {
+	id = lar_fake_intel_units.1
+	title = lar_fake_intel_units.1.t
+	desc = lar_fake_intel_units.1.d
+	
+	picture = GFX_report_event_generic_factory
+
+	is_triggered_only = yes
+
+	hidden = yes
+
+	immediate = {
+		
+		# delete old intel units
+		# fake_intel_ids_to_delete contains the id of each unit
+		# num_days_for_fake_intel_id@id contains the num hours that it is created
+		
+		clear_temp_array = ids_to_remove
+		
+		for_each_loop = {
+			array = fake_intel_ids_to_delete
+			
+			set_temp_variable = { passed_days = global.num_days }
+			subtract_from_temp_variable = { passed_days = num_days_for_fake_intel_id@var:v }
+			
+			if = {
+				limit = { check_variable = { passed_days > 85 } }
+				add_to_temp_array = { ids_to_remove = v }
+				delete_unit = {
+					id = v
+				}
+			}
+		}
+		
+		for_each_loop = {
+			array = ids_to_remove
+			
+			remove_from_array = { fake_intel_ids_to_delete = v }
+			clear_variable = num_days_for_fake_intel_id@var:v
+		}
+	}
+	
+	option = {
+		name = excellent
+	}
+}
+
+add_namespace = lar_collab_gov
+
+
+# collab government event
+country_event = {
+	id = lar_collab_gov.1
+	title = lar_collab_gov.1.t
+	desc = lar_collab_gov.1.d
+	
+	picture = GFX_report_event_german_troops
+
+	is_triggered_only = yes
+	
+	option = {
+		name = traitors
+	}
+}
