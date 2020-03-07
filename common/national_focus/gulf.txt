@@ -1238,7 +1238,7 @@ focus_tree = {
 		prerequisite = { focus = GCC_diversify_the_economy }
 		prerequisite = { focus = GCC_inclusive_policies }
 		
-		search_filters = {FOCUS_FILTER_SOCIAL_CONSERVATISM}
+		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_SOCIAL_CONSERVATISM}
 		
 		available = {
 			OR = {
@@ -1304,6 +1304,8 @@ focus_tree = {
 		
 		prerequisite = { focus = GCC_the_dubai_model }
 		
+		search_filters = {FOCUS_FILTER_SOCIAL_CONSERVATISM}
+		
 		available = {
 			has_war = no
 			no_jihadist_government = yes
@@ -1346,7 +1348,7 @@ focus_tree = {
 		
 		prerequisite = { focus = GCC_reduce_vice_prevention }
 		
-		search_filters = {FOCUS_FILTER_POLITICAL}
+		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL}
 		
 		available = {
 			has_war = no
@@ -1384,9 +1386,9 @@ focus_tree = {
 			}
 			if = {
 				limit = { has_idea = small_medium_business_owners }
-				visually_display_opinion_fall_small_medium_business_owners = yes
+				visually_display_opinion_rise_small_medium_business_owners = yes
 				set_country_flag = current_small_medium_business_owners
-				decrease_internal_faction_opinion = yes
+				increase_internal_faction_opinion = yes
 			}
 			if = {
 				limit = { has_idea = wahabi_ulema }
@@ -2015,7 +2017,7 @@ focus_tree = {
 				custom_effect_tooltip = GCC_BHR_citizen_tt
 			}
 			if = {
-				limit = { original_tag = BHR }
+				limit = { has_idea = large_shia_population }
 				shia_resistance_level_up = yes
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_open_pathways_to_citizenship executed"
@@ -3465,6 +3467,10 @@ focus_tree = {
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM}
 		
 		available = {
+			OR = { 
+				has_idea = substantial_shia_population 
+				has_idea = large_shia_population
+			}
 		}
 		
 		completion_reward = {
@@ -3506,6 +3512,7 @@ focus_tree = {
 		prerequisite = { focus = GCC_empower_shia_democrats }
 		mutually_exclusive = { focus = GCC_favor_the_shiraziyyin }
 
+		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM}
 		
 		available = {
 			has_government = communism
@@ -3515,9 +3522,10 @@ focus_tree = {
 		completion_reward = {
 			add_ideas = transnational_shiism
 			add_ideas = iranian_aid
-			custom_effect_tooltip = PER_small_influence_10_tt
+			custom_effect_tooltip = PER_small_influence_40_tt
+			custom_effect_tooltip = vilayat_e_faqih_popularity_tt
 			hidden_effect = {
-				set_temp_variable = { influence_gain = 10 }
+				set_temp_variable = { influence_gain = 40 }
 				for_loop_effect = {
 					end = influence_array^num
 					value = v
@@ -3536,6 +3544,8 @@ focus_tree = {
 				}
 				clr_country_flag = found
 				recalculate_influence = yes
+				add_to_variable = { party_pop_array^9 = 0.1 }
+				recalculate_party = yes
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_favor_khomeinism executed"
 		}
@@ -3561,7 +3571,7 @@ focus_tree = {
 		prerequisite = { focus = GCC_empower_shia_democrats }
 		mutually_exclusive = { focus = GCC_favor_khomeinism }
 
-		search_filters = {FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL}
+		search_filters = {FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM}
 		
 		available = {
 			has_government = communism
@@ -3573,10 +3583,13 @@ focus_tree = {
 		
 		completion_reward = {
 			add_ideas = national_shiism
-			custom_effect_tooltip = increase_domestic_influence_amount_TT
+			custom_effect_tooltip = increase_domestic_influence_amount_40_TT
+			custom_effect_tooltip = shirazi_popularity_tt
 			hidden_effect = {
-				add_to_variable = { domestic_influence_amount = 10 }
+				add_to_variable = { domestic_influence_amount = 40 }
 				recalculate_influence = yes
+				add_to_variable = { party_pop_array^8 = 0.1 }
+				recalculate_party = yes
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_favor_the_shiraziyyin executed"
 		}
@@ -4790,7 +4803,10 @@ focus_tree = {
 				popularity = 0.05
 			}
 			recalculate_party = yes
-			shia_resistance_level_up = yes
+			if = {
+				limit = { check_variable = { shia_population > 0 } }
+				shia_resistance_level_up = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_tolerate_radical_preachers executed"
 		}
 		
@@ -5259,7 +5275,10 @@ focus_tree = {
 				set_country_flag = current_The_Ulema
 				decrease_internal_faction_opinion = yes
 			}
-			shia_resistance_level_up = yes
+			if = {
+				limit = { check_variable = { shia_population > 0 } }
+				shia_resistance_level_up = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_revolutionize_the_ulema executed"
 		}
 		
@@ -5354,7 +5373,10 @@ focus_tree = {
 					NOT = { any_country = { has_cosmetic_tag = SAU_AQ } }
 				}
 				add_ideas = al_qaeda_network
-				shia_resistance_level_up = yes
+				if = {
+					limit = { check_variable = { shia_population > 0 } }
+					shia_resistance_level_up = yes
+				}
 				if = {
 					limit = { country_exists = AQY }
 					remove_opinion_modifier = {
@@ -5471,7 +5493,10 @@ focus_tree = {
 				limit = { NOT = { country_exists = ISI } }
 				set_cosmetic_tag = ISI
 			}
-			shia_resistance_level_up = yes
+			if = {
+				limit = { check_variable = { shia_population > 0 } }
+				shia_resistance_level_up = yes
+			}
 			if = {
 				limit = { country_exists = SHB }
 				remove_opinion_modifier = {
@@ -5545,7 +5570,10 @@ focus_tree = {
 					autonomy_state = autonomy_terrorist_branch
 				}
 			}
-			shia_resistance_level_up = yes
+			if = {
+				limit = { check_variable = { shia_population > 0 } }
+				shia_resistance_level_up = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_secure_the_loyalty_of_ansar_al_sharia executed"
 		}
 		
@@ -5611,7 +5639,10 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			shia_resistance_level_up = yes
+			if = {
+				limit = { check_variable = { shia_population > 0 } }
+				shia_resistance_level_up = yes
+			}
 			if = {
 				limit = {
 					country_exists = BHR
@@ -5752,7 +5783,10 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			shia_resistance_level_up = yes
+			if = {
+				limit = { check_variable = { shia_population > 0 } }
+				shia_resistance_level_up = yes
+			}
 			if = {
 				limit = {
 					country_exists = FSA
@@ -5883,7 +5917,10 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			shia_resistance_level_up = yes
+			if = {
+				limit = { check_variable = { shia_population > 0 } }
+				shia_resistance_level_up = yes
+			}
 			if = {
 				limit = {
 					country_exists = ALG
@@ -6004,7 +6041,10 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			shia_resistance_level_up = yes
+			if = {
+				limit = { check_variable = { shia_population > 0 } }
+				shia_resistance_level_up = yes
+			}
 			if = {
 				limit = {
 					country_exists = BFA
@@ -8391,7 +8431,10 @@ focus_tree = {
 		completion_reward = {
 			every_other_country = {
 				limit = { has_idea = idea_gcc_member_state NOT = { has_government = communism } }
-				shia_resistance_level_up = yes
+				if = {
+					limit = { check_variable = { shia_population > 0 } }
+					shia_resistance_level_up = yes
+				}
 				add_opinion_modifier = {
 					target = ROOT
 					modifier = supported_opposition 
@@ -9109,7 +9152,10 @@ focus_tree = {
 			custom_effect_tooltip = radicalization_increase_tt
 			add_to_variable = { radicalization = 10 }
 			clamp_radicalization = yes
-			shia_resistance_level_up = yes
+			if = {
+				limit = { check_variable = { shia_population > 0 } }
+				shia_resistance_level_up = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_amplify_sectarian_rhetoric executed"
 		}
 		
@@ -13121,7 +13167,14 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
+		
 		available = {
+			OR = {
+				has_idea = large_shia_population
+				has_idea = substantial_shia_population
+				has_idea = small_shia_population
+			}
 		}
 		
 		completion_reward = {
@@ -13148,13 +13201,13 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_shia }
-		mutually_exclusive = { focus = GCC_rally_sunnis }
+		search_filters = {FOCUS_FILTER_STABILITY}
 		
 		available = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			add_stability = 0.02
 			log = "[GetDateText]: [This.GetName]: focus GCC_appease_the_shia executed"
 		}
 		
@@ -13178,11 +13231,16 @@ focus_tree = {
 		
 		prerequisite = { focus = GCC_appease_the_shia }
 		
+		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM}
+		
 		available = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			custom_effect_tooltip = 2_billion_expense_tt
+			subtract_from_variable = { treasury = 2 }
+			shia_resistance_level_down = yes
+			decrease_popularity_2_5 = yes
 			log = "[GetDateText]: [This.GetName]: focus GCC_subsidize_shia_mosques executed"
 		}
 		
@@ -13239,7 +13297,12 @@ focus_tree = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			if = {
+				limit = { has_idea = wahabi_ulema }
+				visually_display_opinion_fall_wahabi_ulema = yes
+				set_country_flag = current_wahabi_ulema
+				decrease_internal_faction_opinion = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_condemn_anti_shia_preachers executed"
 		}
 		
@@ -13293,6 +13356,7 @@ focus_tree = {
 		prerequisite = { focus = GCC_release_dissidents }
 		prerequisite = { focus = GCC_condemn_anti_shia_preachers }
 		mutually_exclusive = { focus = GCC_shia_dominance }
+		mutually_exclusive = { focus = GCC_comprehensive_crackdown }
 		
 		available = {
 			has_completed_focus = GCC_free_and_fair_elections
@@ -13311,7 +13375,7 @@ focus_tree = {
 			}
 			if = {
 				limit = {
-					tag = BHR
+					has_idea = large_shia_population
 					has_idea = unrepresentative_government_sunni
 				}
 				remove_ideas = unrepresentative_government_sunni
@@ -13341,6 +13405,7 @@ focus_tree = {
 		prerequisite = { focus = GCC_release_dissidents }
 		prerequisite = { focus = GCC_condemn_anti_shia_preachers }
 		mutually_exclusive = { focus = GCC_fair_representation }
+		mutually_exclusive = { focus = GCC_comprehensive_crackdown }
 		
 		available = {
 			has_government = communism
@@ -13364,14 +13429,14 @@ focus_tree = {
 			remove_shia_resistance = yes
 			if = {
 				limit = {
-					tag = BHR
+					has_idea = large_shia_population
 					has_idea = unrepresentative_government_sunni
 				}
 				remove_ideas = unrepresentative_government_sunni
 			}
 			if = {
 				limit = {
-					NOT = { tag = BHR }
+					NOT = { has_idea = large_shia_population }
 				}
 				add_ideas = unrepresentative_government_shia
 			}
@@ -13404,13 +13469,12 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		prerequisite = { focus = GCC_shia }
-		mutually_exclusive = { focus = GCC_appease_the_shia }
 		
 		available = {
 		}
 		
 		completion_reward = {
-			add_political_power = 25
+			add_war_support = 0.02
 			log = "[GetDateText]: [This.GetName]: focus GCC_rally_sunnis executed"
 		}
 		
@@ -13547,6 +13611,8 @@ focus_tree = {
 		
 		prerequisite = { focus = GCC_counter_terror_operations }
 		prerequisite = { focus = GCC_close_shia_mosques }
+		mutually_exclusive = { focus = GCC_shia_dominance }
+		mutually_exclusive = { focus = GCC_fair_representation }
 		
 		available = {
 		}
