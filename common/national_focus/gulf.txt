@@ -3490,10 +3490,6 @@ focus_tree = {
 					has_government = communism
 				}
 			}
-			custom_trigger_tooltip = {
-				tooltip = intervention_neo_imperialism_tt
-				has_idea = intervention_neo_imperialism
-			}
 		}
 
 		completion_reward = {
@@ -4996,10 +4992,6 @@ focus_tree = {
 		search_filters = {FOCUS_FILTER_SECTARIANISM}
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = conservatism_society_more_80_tt
-				check_variable = { social_conservatism_society > 80 }
-			}
 		}
 
 		completion_reward = {
@@ -8470,6 +8462,10 @@ focus_tree = {
 			OR = {
 				has_government = communism
 				has_government = nationalist
+				if = {
+					limit = { tag = SAU }
+					has_government = neutrality
+				}
 				jihadist_government = yes
 			}
 		}
@@ -8608,7 +8604,16 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 1
+			base = 0
+			modifier = {
+				add = 1
+				OR = {
+					is_historical_focus_on = no
+					original_tag = BHR
+					original_tag = SAU
+					original_tag = UAE
+				}
+			}
 		}
 	}
 
@@ -8732,15 +8737,26 @@ focus_tree = {
 				has_completed_focus = GCC_favor_resistance
 				has_completed_focus = GCC_distance_from_america
 				has_government = neutrality
+				has_government = communism
 			}
 		}
 
 		completion_reward = {
 			every_country = {
 				limit = { is_arabic_nation = yes }
-				add_popularity = {
-					ideology = neutrality
-					popularity = 0.02
+				if = {
+					limit = { ROOT = { NOT = { has_government = communism }}}
+					add_popularity = {
+						ideology = neutrality
+						popularity = 0.02
+					}
+				}
+				else_if = {
+					limit = { ROOT = { has_government = communism }}
+					add_popularity = {
+						ideology = communism
+						popularity = 0.02
+					}
 				}
 				recalculate_party = yes
 			}
@@ -9594,6 +9610,11 @@ focus_tree = {
 		available = {
 			country_exists = USA
 			NOT = { has_war_with = USA }
+			NOT = {
+				has_government = communism
+				has_government = nationalist
+			}
+			no_jihadist_government = yes
 		}
 
 		completion_reward = {
@@ -9700,6 +9721,11 @@ focus_tree = {
 			NOT = { has_war_with = USA }
 			USA = { has_opinion = { target = ROOT value > 74 } }
 			NOT = { has_completed_focus = GCC_increase_autonomy }
+			NOT = {
+				has_government = communism
+				has_government = nationalist
+			}
+			no_jihadist_government = yes
 		}
 
 		completion_reward = {
@@ -9861,13 +9887,21 @@ focus_tree = {
 		available = {
 			NOT = { has_government = communism }
 			country_exists = PER
-			PER = { has_government = communism }
 			NOT = { has_completed_focus = GCC_strategic_hedging }
 		}
 
 		completion_reward = {
-			set_country_flag = proposed_coalition_against_iran
-			USA = { country_event = { days = 1 id = gulf.30 } }
+			if = {
+				limit = { has_completed_focus = GCC_mass_arms_purchases }
+				set_country_flag = proposed_coalition_against_iran
+				USA = { country_event = { days = 1 id = gulf.30 } }
+			}
+			else_if = {
+				create_wargoal = {
+					type = puppet_wargoal_focus
+					target = PER
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_behead_the_snake executed"
 		}
 
