@@ -1346,14 +1346,21 @@
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 		prerequisite = { focus = GCC_political_union }
-		mutually_exclusive = { focus = GCC_increase_autonomy }
-		mutually_exclusive = { focus = GCC_new_partners }
 
 		available = {
 			has_idea = idea_gcc_member_state
 			custom_trigger_tooltip = {
 				tooltip = gcc_dominant_member_tt
 				has_country_flag = gcc_dominant_member
+			}
+			has_completed_focus = GCC_mass_arms_purchases
+			custom_trigger_tooltip = {
+				tooltip = gcc_unity_greater_60_tt
+				check_variable = { global.gcc_unity > 60 }
+			}
+			NOT = {
+				has_completed_focus = GCC_increase_autonomy
+				has_completed_focus = GCC_new_partners
 			}
 		}
 
@@ -1365,7 +1372,7 @@
 		}
 
 		completion_reward = {
-			add_political_power = 25
+			USA = { country_event = { days = 1 id = gcc.11 }}
 			log = "[GetDateText]: [This.GetName]: focus GCC_solidify_pro_american_alignment executed"
 		}
 
@@ -1387,14 +1394,40 @@
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 		prerequisite = { focus = GCC_political_union }
-		mutually_exclusive = { focus = GCC_solidify_pro_american_alignment }
-		mutually_exclusive = { focus = GCC_new_partners }
+
+		search_filters = {FOCUS_FILTER_INFLUENCE}
 
 		available = {
 			has_idea = idea_gcc_member_state
 			custom_trigger_tooltip = {
 				tooltip = gcc_dominant_member_tt
 				has_country_flag = gcc_dominant_member
+			}
+			custom_trigger_tooltip = {
+				tooltip = gcc_unity_greater_60_tt
+				check_variable = { global.gcc_unity > 60 }
+			}
+			NOT = {
+				has_completed_focus = GCC_turkish_bases
+				has_completed_focus = GCC_non_aggression_pact
+				has_completed_focus = GCC_mass_arms_purchases
+				has_completed_focus = GCC_invite_russian_advisors
+				has_completed_focus = GCC_security_guarantees
+				has_completed_focus = GCC_indian_bases
+			}
+			OR = {
+				NOT = { has_completed_focus = GCC_solidify_pro_american_alignment }
+				custom_trigger_tooltip = {
+					tooltip = gcc_usa_rejected_tt
+					has_country_flag = gcc_usa_rejected
+				}
+			}
+			OR = {
+				NOT = { has_completed_focus = GCC_new_partners }
+				custom_trigger_tooltip = {
+					tooltip = gcc_new_partner_rejected_tt
+					has_country_flag = gcc_new_partner_rejected
+				}
 			}
 		}
 
@@ -1406,7 +1439,14 @@
 		}
 
 		completion_reward = {
-			add_political_power = 25
+			every_country = {
+				limit = { has_idea = idea_gcc_member_state }
+				custom_effect_tooltip = increase_domestic_influence_amount_50_TT
+				hidden_effect = {
+					add_to_variable = { domestic_influence_amount = 50 }
+					recalculate_influence = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_increase_autonomy executed"
 		}
 
@@ -1435,6 +1475,18 @@
 				tooltip = gcc_dominant_member_tt
 				has_country_flag = gcc_dominant_member
 			}
+			custom_trigger_tooltip = {
+				tooltip = gcc_unity_greater_75_tt
+				check_variable = { global.gcc_unity > 75 }
+			}
+			NOT = {
+				has_completed_focus = GCC_turkish_bases
+				has_completed_focus = GCC_non_aggression_pact
+				has_completed_focus = GCC_mass_arms_purchases
+				has_completed_focus = GCC_invite_russian_advisors
+				has_completed_focus = GCC_security_guarantees
+				has_completed_focus = GCC_indian_bases
+			}
 		}
 
 		bypass = {
@@ -1445,7 +1497,31 @@
 		}
 
 		completion_reward = {
-			add_political_power = 25
+			every_other_country = {
+				limit = { has_idea = idea_gcc_member_state }
+				custom_effect_tooltip = gain_50_ROOT_influence_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 50 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = ROOT }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_pursue_hegemony executed"
 		}
 
@@ -1475,6 +1551,28 @@
 				tooltip = gcc_dominant_member_tt
 				has_country_flag = gcc_dominant_member
 			}
+			custom_trigger_tooltip = {
+				tooltip = gcc_unity_greater_90_tt
+				check_variable = { global.gcc_unity > 90 }
+			}
+			NOT = {
+				has_completed_focus = GCC_turkish_bases
+				has_completed_focus = GCC_non_aggression_pact
+				has_completed_focus = GCC_mass_arms_purchases
+				has_completed_focus = GCC_invite_russian_advisors
+				has_completed_focus = GCC_security_guarantees
+				has_completed_focus = GCC_indian_bases
+			}
+			custom_trigger_tooltip = {
+				tooltip = GCC_exploit_authority_tt
+				NOT = {
+					any_country = {
+						has_idea = idea_gcc_member_state
+						NOT = { tag = ROOT }
+						NOT = { check_variable = { influence_array^0 = ROOT }}
+					}
+				}
+			}
 		}
 
 		bypass = {
@@ -1485,7 +1583,50 @@
 		}
 
 		completion_reward = {
-			add_political_power = 25
+			if = {
+				limit = { NOT = { original_tag = BHR } BHR = { has_idea = idea_gcc_member_state }}
+				puppet = BHR
+			}
+			if = {
+				limit = { NOT = { original_tag = EGY } EGY = { has_idea = idea_gcc_member_state }}
+				puppet = EGY
+			}
+			if = {
+				limit = { NOT = { original_tag = JOR } JOR = { has_idea = idea_gcc_member_state }}
+				puppet = JOR
+			}
+			if = {
+				limit = { NOT = { original_tag = KUW } KUW = { has_idea = idea_gcc_member_state }}
+				puppet = KUW
+			}
+			if = {
+				limit = { NOT = { original_tag = IRQ } IRQ = { has_idea = idea_gcc_member_state }}
+				puppet = IRQ
+			}
+			if = {
+				limit = { NOT = { original_tag = MOR } MOR = { has_idea = idea_gcc_member_state }}
+				puppet = MOR
+			}
+			if = {
+				limit = { NOT = { original_tag = OMA } OMA = { has_idea = idea_gcc_member_state }}
+				puppet = OMA
+			}
+			if = {
+				limit = { NOT = { original_tag = QAT } QAT = { has_idea = idea_gcc_member_state }}
+				puppet = QAT
+			}
+			if = {
+				limit = { NOT = { original_tag = SAU } SAU = { has_idea = idea_gcc_member_state }}
+				puppet = SAU
+			}
+			if = {
+				limit = { NOT = { original_tag = UAE } UAE = { has_idea = idea_gcc_member_state }}
+				puppet = UAE
+			}
+			if = {
+				limit = { NOT = { original_tag = YEM } YEM = { has_idea = idea_gcc_member_state }}
+				puppet = YEM
+			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_exploit_authority executed"
 		}
 
@@ -1587,8 +1728,6 @@
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 		prerequisite = { focus = GCC_political_union }
-		mutually_exclusive = { focus = GCC_solidify_pro_american_alignment }
-		mutually_exclusive = { focus = GCC_increase_autonomy }
 
 		available = {
 			has_idea = idea_gcc_member_state
@@ -1596,6 +1735,18 @@
 				tooltip = gcc_dominant_member_tt
 				has_country_flag = gcc_dominant_member
 			}
+			custom_trigger_tooltip = {
+				tooltip = gcc_unity_greater_60_tt
+				check_variable = { global.gcc_unity > 60 }
+			}
+			OR = {
+				NOT = { has_completed_focus = GCC_solidify_pro_american_alignment }
+				custom_trigger_tooltip = {
+					tooltip = gcc_usa_rejected_tt
+					has_country_flag = gcc_usa_rejected
+				}
+			}
+			NOT = { has_completed_focus = GCC_increase_autonomy }
 		}
 
 		bypass = {
