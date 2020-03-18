@@ -1,0 +1,92 @@
+jihadist_decisions = {
+    #Radical Islam Decisions
+	allow_foreign_recruitment = {
+		available = {
+			OR = { 
+				tag = ISI
+				AND =  {
+					has_idea = foreign_jihadis
+					is_in_array = { ruling_party = 11 }
+				}
+			}
+		}
+		allowed = {
+			always = yes
+		}
+
+		cost = 150
+
+		days_remove = 7
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove allow_foreign_recruitment"
+			set_country_flag = allowed_foreign_recruitment
+		}
+
+        ai_will_do = {
+            factor = 10 
+            modifier = {
+                factor = 3.0 
+                has_manpower < 10000
+            }
+            modifier = {
+                add = 10 
+                original_tag = ISI 
+            }
+        }
+	}
+	draw_in_foreign_recruits = {
+		available = {
+			has_country_flag = allowed_foreign_recruitment
+			OR = { 
+                AND = { 
+                    fascism > 0.90 
+				    original_tag = ISI
+                }
+				AND =  {
+					has_idea = foreign_jihadis
+					is_in_array = { ruling_party = 11 }
+				}
+			}
+		}
+		allowed = {
+			always = yes
+		}
+
+		cost = 50 
+
+		days_remove = 30 
+		days_re_enable = 60 #2 month recruitments to balance
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove draw_in_foreign_recruits"
+            add_manpower = 1000 
+            custom_effect_tooltip = TT_FOREIGN_RECRUITMENT_CAMPAIGN
+			subtract_from_variable = { treasury = 0.5 }
+            if = {
+                limit = { original_tag = ISI }
+                random_chance = {
+                    95 = {
+                        add_stability = -0.01
+                        add_war_support = 0.01 
+                    }
+                    5 = {
+                        random_chance = {
+                            40 = {
+                                add_popularity = { ideology = communism popularity = 0.02 }
+                            }
+                            50 = {
+                                add_popularity = { ideology = neutrality popularity = 0.02 }
+                            }
+                            10 = {
+                                add_popularity = { ideology = democratic popularity = 0.02 }
+                            }
+                        }
+                    }
+                }
+            }
+            hidden_effect = {
+                recalculate_party = yes
+            }
+		}
+	}
+}
