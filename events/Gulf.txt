@@ -3078,7 +3078,52 @@ country_event = {
 			limit = { NOT = { original_tag = YEM } YEM = { has_idea = idea_gcc_member_state }}
 			give_guarantee = YEM
 		}
+		if = {
+			limit = { tag = TUR }
+			set_global_flag = gcc_pro_turkish
+		}
+		if = {
+			limit = { tag = PER }
+			set_global_flag = gcc_pro_iranian
+		}
+		if = {
+			limit = { tag = SOV }
+			set_global_flag = gcc_pro_russian
+		}
+		if = {
+			limit = { tag = RAJ }
+			set_global_flag = gcc_pro_indian
+		}
+		if = {
+			limit = { tag = PAK }
+			set_global_flag = gcc_pro_pakistani
+		}
 		log = "[GetDateText]: [This.GetName]: gcc.11.a executed"
+
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 25
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 50
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 75
+				}
+			}
+		}
 	}
 
 	option = {
@@ -3092,6 +3137,37 @@ country_event = {
 			}
 			else_if = {
 				set_country_flag = gcc_new_partner_rejected
+			}
+		}
+
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 1
+				tag = USA
+				FROM = { NOT = { has_completed_focus = GCC_antagonize_iran }}
+			}
+			modifier = {
+				add = 1
+				tag = PER
+				FROM = { NOT = { has_completed_focus = GCC_distance_from_america } }
+			}
+			modifier = {
+				add = 2
+				has_government = democratic
+				FROM = { has_government = communism }
+			}
+			modifier = {
+				add = 2
+				has_government = democratic
+				FROM = { has_government = nationalist }
+			}
+			modifier = {
+				add = 2
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
 			}
 		}
 	}
@@ -3126,7 +3202,6 @@ country_event = {
 	option = {
 		trigger = { has_completed_focus = GCC_turkish_bases }
 		name = gcc.13.a #Go with Turkey
-		set_country_flag = gcc_pro_turkish
 		TUR = { country_event = { days = 2 id = gcc.11 }}
 		log = "[GetDateText]: [This.GetName]: gcc.13.a executed"
 	}
@@ -3134,7 +3209,6 @@ country_event = {
 	option = {
 		trigger = { has_completed_focus = GCC_non_aggression_pact }
 		name = gcc.13.b #Go with Iran
-		set_country_flag = gcc_pro_iranian
 		PER = { country_event = { days = 2 id = gcc.11 }}
 		log = "[GetDateText]: [This.GetName]: gcc.13.b executed"
 	}
@@ -3142,7 +3216,6 @@ country_event = {
 	option = {
 		trigger = { has_completed_focus = GCC_indian_bases }
 		name = gcc.13.c #Go with India
-		set_country_flag = gcc_pro_indian
 		RAJ = { country_event = { days = 2 id = gcc.11 }}
 		log = "[GetDateText]: [This.GetName]: gcc.13.c executed"
 	}
@@ -3150,7 +3223,6 @@ country_event = {
 	option = {
 		trigger = { has_completed_focus = GCC_security_guarantees }
 		name = gcc.13.e #Go with Pakistan
-		set_country_flag = gcc_pro_pakistani
 		PAK = { country_event = { days = 2 id = gcc.11 }}
 		log = "[GetDateText]: [This.GetName]: gcc.13.e executed"
 	}
@@ -3158,7 +3230,6 @@ country_event = {
 	option = {
 		trigger = { has_completed_focus = GCC_invite_russian_advisors }
 		name = gcc.13.f #Go with Russia
-		set_country_flag = gcc_pro_russian
 		SOV = { country_event = { days = 2 id = gcc.11 }}
 		log = "[GetDateText]: [This.GetName]: gcc.13.f executed"
 	}
@@ -3904,17 +3975,19 @@ news_event = {
 	is_triggered_only = yes
 
 	option = {
-		name = gcc.20.a #
+		name = gcc.20.a
 		if = {
-			limit = { has_country_flag = being_expelled}
+			limit = { has_country_flag = being_expelled }
 			remove_ideas = idea_gcc_member_state
 			remove_from_array = { global.gcc_members = THIS }
 			add_to_array = { global.possible_gcc_members = THIS }
 			set_country_flag = recently_expelled_from_gcc
 			hidden_effect = {
 				remove_from_tech_sharing_group = GCC_Tech_Share
-				remove_ideas = khaleeji
-				remove_ideas = GCC_joint_military_ventures
+				remove_ideas = {
+					khaleeji
+					joint_gcc_ventures
+				}
 				remove_from_faction = PENINSULA_SHIELD
 				every_country = {
 					limit = { has_idea = idea_gcc_member_state }
@@ -4171,6 +4244,344 @@ news_event = {
 
 	option = {
 		name = gcc.21.a
-		log = "[GetDateText]: [This.GetName]: gc.21.a executed"
+		log = "[GetDateText]: [This.GetName]: gcc.21.a executed"
+	}
+}
+
+#The [FROM.GetAdjective]s are requesting bloc arms sales to the GCC
+country_event = {
+	id = gcc.22
+	title = gcc.22.t
+	desc = gcc.22.d
+
+	picture = GFX_politics_wahabi
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.22.a #Let's give them the guns
+		log = "[GetDateText]: [This.GetName]: gcc.22.a executed"
+		add_to_variable = { treasury = 25 }
+		custom_effect_tooltip = 25_billion_revenue_tt
+		if = {
+			limit = { BHR = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = BHR
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = BHR
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = BHR
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = BHR
+			}
+		}
+		if = {
+			limit = { EGY = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = EGY
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = EGY
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = EGY
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = EGY
+			}
+		}
+		if = {
+			limit = { IRQ = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = IRQ
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = IRQ
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = IRQ
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = IRQ
+			}
+		}
+		if = {
+			limit = { JOR = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = JOR
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = JOR
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = JOR
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = JOR
+			}
+		}
+		if = {
+			limit = { KUW = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = KUW
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = KUW
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = KUW
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = KUW
+			}
+		}
+		if = {
+			limit = { MOR = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = MOR
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = MOR
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = MOR
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = MOR
+			}
+		}
+		if = {
+			limit = { OMA = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = OMA
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = OMA
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = OMA
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = OMA
+			}
+		}
+		if = {
+			limit = { QAT = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = QAT
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = QAT
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = QAT
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = QAT
+			}
+		}
+		if = {
+			limit = { SAU = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = SAU
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = SAU
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = SAU
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = SAU
+			}
+		}
+		if = {
+			limit = { UAE = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = UAE
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = UAE
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = UAE
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = UAE
+			}
+		}
+		if = {
+			limit = { YEM = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = YEM
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = YEM
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = YEM
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = YEM
+			}
+		}
+		every_country = {
+			news_event = { days = 1 id = gcc.23 }
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gcc.22.b #We need them for ourselves
+		log = "[GetDateText]: [This.GetName]: gcc.22.b executed"
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+news_event = {
+	id = gcc.23
+	title = gcc.23.t
+	desc = gcc.23.d
+
+	picture = GFX_report_event_united_states_air_force
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.21.a
+		custom_effect_tooltip = GCC_unity_increase_5_tt
+		if = {
+			limit = { has_country_flag = gcc_dominant_member }
+			subtract_from_variable = { treasury = 25 }
+			custom_effect_tooltip = 25_billion_expense_tt
+			add_to_variable = { global.gcc_unity = 5 }
+			clamp_variable = {
+				var = global.gcc_unity
+				min = 0
+				max = 100
+			}
+		}
+		if = {
+			limit = { has_idea = idea_gcc_member_state }
+			effect_tooltip = {
+				FROM = {
+					send_equipment = {
+						equipment = infantry_weapons
+						amount = 1000
+						target = ROOT
+					}
+					send_equipment = {
+						equipment = util_vehicle_equipment
+						amount = 100
+						target = ROOT
+					}
+					send_equipment = {
+						equipment = MBT_Equipment
+						amount = 20
+						target = ROOT
+					}
+					send_equipment = {
+						equipment = AS_Fighter_equipment
+						amount = 5
+						target = ROOT
+					}
+				}
+			}
+		}
 	}
 }
