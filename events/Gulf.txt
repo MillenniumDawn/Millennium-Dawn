@@ -6,6 +6,9 @@ add_namespace = gulf
 add_namespace = shia_terror
 add_namespace = gcc
 add_namespace = saudi_royal
+add_namespace = uae_royal
+add_namespace = kuwait_royal
+add_namespace = oman_royal
 
 #hidden event that increases radicalization/salafi jihadist/shia revolutionary/islamist popularity
 country_event = {
@@ -4737,7 +4740,6 @@ news_event = {
 			}
 		}
 	}
-
 }
 
 #Death of King Abdullah
@@ -4791,19 +4793,27 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: saudi_royal.2.a executed"
 		if = {
 			limit = { tag = SAU }
-			kill_country_leader = yes
-			create_country_leader = {
-				name = "Salman bin Abdulaziz Al-Saud"
-				picture = "Salman_bin_Abdulaziz_Al_Saud.dds"
-				expire = "2020.1.6"
-				ideology = Kingdom
-				traits = {
-					king
-					salafist_Kingdom
-					pro_american
-					alzheimer
-					incapable
-					greedy
+			if = {
+				limit = {
+					has_country_leader = {
+						name = "Abdullah bin Abdulaziz Al-Saud"
+						ruling_only = yes
+					}
+				}
+				kill_country_leader = yes
+				create_country_leader = {
+					name = "Salman bin Abdulaziz Al-Saud"
+					picture = "Salman_bin_Abdulaziz_Al_Saud.dds"
+					expire = "2020.1.6"
+					ideology = Kingdom
+					traits = {
+						king
+						salafist_Kingdom
+						pro_american
+						alzheimer
+						incapable
+						greedy
+					}
 				}
 			}
 			if = {
@@ -5134,6 +5144,7 @@ country_event = {
 		add_stability = -0.05
 		custom_effect_tooltip = MBS_strengthened_tt
 		add_to_variable = { mbs = 1 }
+		set_country_flag = SAU_purge
 		if = {
 			limit = { has_idea = saudi_royal_family }
 			visually_display_opinion_fall_saudi_royal_family = yes
@@ -5180,11 +5191,362 @@ news_event = {
 }
 
 #Salman abdicates
+news_event = {
+	id = saudi_royal.10
+	title = saudi_royal.10.t
+	desc = saudi_royal.10.d
+
+	picture = GFX_SAU_QAT_CRISIS
+
+	trigger = {
+		tag = SAU
+		is_in_array = { ruling_party = 10 }
+		has_country_leader = {
+			name = "Salman bin Abdulaziz Al-Saud"
+			ruling_only = yes
+		}
+		has_idea = SAU_crown_prince_mbs
+		OR = {
+			has_country_flag = SAU_operatives_punished
+			has_country_flag = SAU_no_action
+		}
+		has_country_flag = SAU_purge
+		check_variable = { mbs > 9 }
+	}
+
+	mean_time_to_happen = { days = 30 }
+
+	option = {
+		name = saudi_royal.10.a #The king is gone, long live the king...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.10.a executed"
+		if = {
+			limit = { tag = SAU }
+			hidden_effect = { kill_country_leader = yes }
+			swap_ideas = {
+				remove_idea = SAU_crown_prince_mbs
+				add_idea = SAU_king_mbs
+			}
+			create_country_leader = {
+				name = "Mohammed bin Salman Al-Saud"
+				picture = "Mohammad_bin_Salman_Al_Saud.dds"
+				ideology = Kingdom
+				traits = {
+					king
+					salafist_Kingdom
+					pro_american
+					pro_israel
+					geopolitical_thinker
+					ruthless
+					rash
+				}
+			}
+			if = {
+				limit = { has_idea = saudi_royal_family }
+				visually_display_opinion_fall_saudi_royal_family = yes
+				set_country_flag = current_saudi_royal_family
+				decrease_internal_faction_opinion = yes
+			}
+			every_other_country = { news_event = { id = saudi_royal.11 }}
+		}
+	}
+}
+
+news_event = {
+	id = saudi_royal.11
+	title = saudi_royal.10.t
+	desc = saudi_royal.10.d
+
+	picture = GFX_SAU_QAT_CRISIS
+
+	is_triggered_only = yes
+
+	option = {
+		name = saudi_royal.10.a #The king is gone, long live the king...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.10.a executed"
+	}
+}
 
 #Death of Zayed bin Sultan
+news_event = {
+	id = uae_royal.1
+	title = uae_royal.1.t
+	desc = {
+		text = uae_royal.1.d1
+		trigger = {
+			UAE = {
+				NOT = { has_completed_focus = GCC_free_and_fair_elections }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.1.d2
+		trigger = {
+			UAE = {
+				has_completed_focus = GCC_free_and_fair_elections
+				NOT = { has_completed_focus = GCC_establish_a_republic }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.1.d3
+		trigger = {
+			UAE = {
+				has_completed_focus = GCC_constitutional_monarchy
+				has_completed_focus = GCC_establish_a_republic
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.1.d4
+		trigger = {
+			UAE = {
+				jihadist_government = yes
+			}
+		}
+	}
+
+	picture = GFX_news_saudi_royal_death
+
+	is_triggered_only = yes
+
+	option = {
+		name = uae_royal.1.a #A sad day for the UAE...
+		log = "[GetDateText]: [This.GetName]: uae_royal.1.a executed"
+		if = {
+			limit = { tag = UAE }
+			if = {
+				limit = {
+					has_country_leader = {
+						name = "Zayed bin Sultan Al Nahyan"
+						ruling_only = yes
+					}
+				}
+				kill_country_leader = yes
+				create_country_leader = {
+					name = "Khalifa bin Zayed Al Nahyan"
+					picture = "khalifa_bin_zayed_al_nahyan.dds"
+					ideology = Western_Autocracy
+					traits = {
+						king
+						western_Western_Autocracy
+						tech_savy
+						greedy
+						capable
+					}
+				}
+			}
+			hidden_effect = {
+				every_other_country = { news_event = { id = uae_royal.1 }}
+				if = {
+					limit = {
+						UAE = {
+							NOT = { has_completed_focus = GCC_free_and_fair_elections }
+							no_jihadist_government = yes
+						}
+					}
+					news_event = { id = uae_royal.2 days = 3348 } #Khalifa's stroke
+				}
+			}
+		}
+	}
+}
 
 #Khalifa bin Zayed Suffers from Stroke
+news_event = {
+	id = uae_royal.2
+	title = uae_royal.2.t
+	desc = {
+		text = uae_royal.2.d1
+		trigger = {
+			UAE = {
+				NOT = { has_completed_focus = GCC_free_and_fair_elections }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.2.d2
+		trigger = {
+			UAE = {
+				has_completed_focus = GCC_free_and_fair_elections
+				NOT = { has_completed_focus = GCC_establish_a_republic }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.2.d3
+		trigger = {
+			UAE = {
+				has_completed_focus = GCC_constitutional_monarchy
+				has_completed_focus = GCC_establish_a_republic
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.2.d4
+		trigger = {
+			UAE = {
+				jihadist_government = yes
+			}
+		}
+	}
+
+	picture = GFX_news_press_conference
+
+	is_triggered_only = yes
+
+	option = {
+		name = uae_royal.2.a #A new power behind the throne...
+		log = "[GetDateText]: [This.GetName]: uae_royal.2.a executed"
+		if = {
+			limit = { tag = UAE }
+			if = {
+				limit = {
+					has_country_leader = {
+						name = "Khalifa bin Zayed Al Nahyan"
+						ruling_only = yes
+					}
+				}
+				hidden_effect = { kill_country_leader = yes }
+				create_country_leader = {
+					name = "Mohammed bin Zayed Al Nahyan"
+					picture = "mohammed_bin_zayed_al_nahyan.dds"
+					ideology = Western_Autocracy
+					traits = {
+						king
+						western_Western_Autocracy
+						military_career
+						pro_american
+						political_dancer
+						sly
+						geopolitical_thinker
+					}
+				}
+				add_ideas = UAE_sheikh_khalifa
+			}
+			every_other_country = { news_event = { id = uae_royal.2 } }
+		}
+	}
+}
 
 #Death of Jaber al-Ahmed al-Sabah
+news_event = {
+	id = kuwait_royal.1
+	title = kuwait_royal.1.t
+	desc = {
+		text = kuwait_royal.1.d1
+		trigger = {
+			KUW = {
+				NOT = { has_completed_focus = GCC_free_and_fair_elections }
+			}
+		}
+	}
+	desc = {
+		text = kuwait_royal.1.d2
+		trigger = {
+			KUW = {
+				has_completed_focus = GCC_free_and_fair_elections
+				NOT = { has_completed_focus = GCC_establish_a_republic }
+			}
+		}
+	}
+	desc = {
+		text = kuwait_royal.1.d3
+		trigger = {
+			KUW = {
+				has_completed_focus = GCC_constitutional_monarchy
+				has_completed_focus = GCC_establish_a_republic
+			}
+		}
+	}
+
+	picture = GFX_news_saudi_royal_death
+
+	is_triggered_only = yes
+
+	option = {
+		name = kuwait_royal.1.a #A sad day for Kuwait...
+		log = "[GetDateText]: [This.GetName]: kuwait_royal.1.a executed"
+		if = {
+			limit = { tag = KUW }
+			if = {
+				limit = {
+					has_country_leader = {
+						name = "Jaber Al-Ahmad Al-Sabah"
+						ruling_only = yes
+					}
+				}
+				kill_country_leader = yes
+				create_country_leader = {
+					name = "Sabah Al-Ahmad Al-Jaber Al-Sabah"
+					picture = "Sabah_Al-Ahmad_Al-Jaber_Al-Sabah.dds"
+					ideology = Western_Autocracy
+					traits = {
+						western_Western_Autocracy
+					}
+				}
+			}
+		}
+	}
+}
 
 #Death of Qaboos bin Said
+country_event = {
+	id = oman_royal.1
+	title = oman_royal.1.t
+	desc = {
+		text = oman_royal.1.d1
+		trigger = {
+			OMA = {
+				NOT = { has_completed_focus = GCC_free_and_fair_elections }
+			}
+		}
+	}
+	desc = {
+		text = oman_royal.1.d2
+		trigger = {
+			OMA = {
+				has_completed_focus = GCC_free_and_fair_elections
+				NOT = { has_completed_focus = GCC_establish_a_republic }
+			}
+		}
+	}
+	desc = {
+		text = oman_royal.1.d3
+		trigger = {
+			OMA = {
+				has_completed_focus = GCC_constitutional_monarchy
+				has_completed_focus = GCC_establish_a_republic
+			}
+		}
+	}
+
+	is_triggered_only = yes
+
+	option = {
+		name = oman_royal.1.a #A sad day for Oman...
+		log = "[GetDateText]: [This.GetName]: oman_royal.1.a executed"
+		if = {
+			limit = {
+				has_country_leader = {
+					name = "Qaboos bin Said al Said"
+					ruling_only = yes
+				}
+			}
+			kill_country_leader = yes
+			create_country_leader = {
+				name = "Qaboos bin Said al Said"
+				picture = "Qaboos_bin_Said_al_Said.dds"
+				ideology = Neutral_Autocracy
+				traits = {
+					neutrality_Neutral_Autocracy
+				}
+			}
+		}
+	}
+}
