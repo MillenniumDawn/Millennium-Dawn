@@ -1590,7 +1590,7 @@ focus_tree = {
 		
 		cost = 10
 		available = {
-			
+			is_subject = no
 		}
 
 		cancel_if_invalid = yes
@@ -1618,7 +1618,7 @@ focus_tree = {
 		cost = 10
 		
 		prerequisite = { focus = DEN_international_diplomacy }
-		mutually_exclusive = { focus = DEN_new_alliances }
+		mutually_exclusive = { focus = DEN_rethink_foreign_policy }
 
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -1633,8 +1633,8 @@ focus_tree = {
 		}
 	}
 
-	focus = {
-		id = DEN_new_alliances
+	focus = { ##Denmark makes a change in foreign policy
+		id = DEN_rethink_foreign_policy
 		icon = alliance_purple
 		
 		relative_position_id = DEN_international_diplomacy
@@ -1651,7 +1651,7 @@ focus_tree = {
 		available_if_capitulated = no
 		
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DEN_new_alliances"
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_rethink_foreign_policy"
 
 		}
 		
@@ -1672,7 +1672,7 @@ focus_tree = {
 		
 		prerequisite = {
 			focus = DEN_reaffirm_nato
-			focus = DEN_new_alliances
+			focus = DEN_rethink_foreign_policy
 		}
 		
 		cancel_if_invalid = yes
@@ -1879,6 +1879,7 @@ focus_tree = {
 		}
 	}
 
+	##EU focuses need to be expanded/cut
 	focus = {
 		id = DEN_eu_focus
 		icon = align_to_europe
@@ -1891,23 +1892,26 @@ focus_tree = {
 		
 		prerequisite = {
 			focus = DEN_reaffirm_nato
-			focus = DEN_new_alliances
+			focus = DEN_rethink_foreign_policy
 		}
-		
-		mutually_exclusive = {
-			
+		search_filters = {FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL}
+		available = { 
+			has_idea = EU_member
 		}
-		
-		available = {}
-		
-		bypass = {}
+		cancel = {
+			NOT = { has_idea = EU_member }
+		}
 		
 		completion_reward = {
-			
+			log = "[GetDateText]: [Root.GetName]: DEN_eu_focus"
 		}
 		
 		ai_will_do = {
 			factor = 1 
+			modifier = {
+				factor = 1.5 
+				has_idea = EU_member
+			}
 		}
 	}
 
@@ -1929,15 +1933,20 @@ focus_tree = {
 			focus = DEN_remain_eu_sceptic
 			focus = DEN_distance_from_eu
 		}
+		search_filters = {FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL}
 		
-		available = {
-			
+		available = { 
+			has_idea = EU_member
+		}
+		cancel = {
+			NOT = { has_idea = EU_member }
 		}
 		
-		bypass = {}
+		bypass = { }
 		
 		completion_reward = {
-			
+			log = "[GetDateText]: [Root.GetName]: DEN_commit_to_eu"
+			ROOT_eurosceptic_decline_3_percent = yes
 		}
 		
 		ai_will_do = {
@@ -1963,6 +1972,7 @@ focus_tree = {
 			focus = DEN_commit_to_eu
 			focus = DEN_distance_from_eu
 		}
+		search_filters = {FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL}
 		
 		available = {
 			
@@ -1971,11 +1981,19 @@ focus_tree = {
 		bypass = {}
 		
 		completion_reward = {
-			
+			log = "[GetDateText]: [Root.GetName]: DEN_commit_to_eu"
+			ROOT_eurosceptic_rise_3_percent = yes
 		}
 		
 		ai_will_do = {
-			factor = 1 
+			factor = 0 
+			modifier = {
+				is_historical_focus_on = no 
+				add = 2 
+			}
+			modifier = {
+				
+			}
 		}
 	}
 
@@ -1997,13 +2015,14 @@ focus_tree = {
 			focus = DEN_commit_to_eu
 			focus = DEN_remain_eu_sceptic
 		}
+		search_filters = {FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL}
 		
 		available = {}
 		
 		bypass = {}
 		
 		completion_reward = {
-			
+			ROOT_eurosceptic_rise_3_percent = yes
 		}
 		
 		ai_will_do = {
@@ -2024,10 +2043,7 @@ focus_tree = {
 		prerequisite = {
 			focus = DEN_commit_to_eu
 		}
-		
-		mutually_exclusive = {
-			
-		}
+		search_filters = {FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL}
 		
 		available = {}
 		
@@ -2055,10 +2071,7 @@ focus_tree = {
 		prerequisite = {
 			focus = DEN_massive_propaganda_effort
 		}
-		
-		mutually_exclusive = {
-			
-		}
+		search_filters = {FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL}
 		
 		available = {}
 		
@@ -2938,11 +2951,11 @@ focus_tree = {
 			focus = DEN_Danish_culture
 		}
 		
-		mutually_exclusive = {}
+		mutually_exclusive = { }
 		
-		available = {}
+		available = { }
 		
-		bypass = {}
+		bypass = { }
 		
 		completion_reward = {
 			#if = {
