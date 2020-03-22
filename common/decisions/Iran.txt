@@ -9,7 +9,7 @@ PER_SYR = {
 				NUS = { has_volunteers_amount_from = { tag = PER count > 0 } }
 				ISI = { has_volunteers_amount_from = { tag = PER count > 0 } }
 			}
-			
+
 		}
 
 
@@ -44,9 +44,158 @@ PER_SYR = {
 			log = "[GetDateText]: [Root.GetName]: Decision per_intervene_SYR"
 			add_political_power = 25
 		}
-		
+
 		ai_will_do = {
 			factor = 1
+		}
+	}
+}
+
+PER_soleimani = {
+	iran_base_attack = {
+		visible = {
+			original_tag = PER
+			OR = {
+				has_country_flag = soleimani_iraq
+				has_country_flag = soleimani_prepare
+			}
+			NOT = { has_country_flag = attacked_american_bases }
+		}
+
+		cost = 40
+		days_remove = 15
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision iran_base_attack"
+			USA = {
+				country_event = {
+					id = usa_soleimani.2
+					days = 2
+				}
+				add_stability = -0.05
+			}
+			set_country_flag = attacked_american_bases
+		}
+
+		remove_effect = {
+			add_to_variable = {
+				var = PER_preparation
+				value = 2
+			}
+		}
+	}
+
+	iraqi_propaganda = {
+		visible = {
+			original_tag = PER
+			has_country_flag = soleimani_iraq
+		}
+
+		cost = 60
+		days_remove = 20
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision iraqi_propaganda"
+			IRA = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 15 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = PER }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = PER.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+					custom_effect_tooltip = PER_increase_influence_5_TT
+				}
+			}
+		}
+
+		remove_effect = {
+			add_to_variable = {
+				var = soleimani_prepare
+				value = 1
+			}
+		}
+
+	}
+	prepare_war_industry = {
+		visible = {
+			original_tag = PER
+			has_country_flag = soleimani_prepare
+		}
+
+		cost = 50
+		days_remove = 20
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision prepare_war_industry"
+			add_stability = -0.05
+		}
+
+		remove_effect = {
+			add_to_variable = {
+				var = PER_preparation
+				value = 1
+			}
+			random_owned_state = {
+				limit = {
+					industrial_complex > 1
+				}
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	declare_war = {
+		visible = {
+			original_tag = PER
+			check_variable	= {
+				soleimani_prepare > 3
+			}
+			has_country_flag = attacked_american_bases
+		}
+
+		cost = 40
+		days_remove = 20
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision declare_war"
+			if = {
+				limit = { country_exists = IRQ }
+				declare_war_on = {
+					target = IRQ
+					type = puppet
+				}
+				USA = {
+					country_event = {
+						id = soleimani.3
+					}
+				}
+				set_country_flag = iraqi_war
+			}
+			add_war_support = 0.15
 		}
 	}
 }
