@@ -4791,6 +4791,21 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: saudi_royal.2.a executed"
 		if = {
 			limit = { tag = SAU }
+			kill_country_leader = yes
+			create_country_leader = {
+				name = "Salman bin Abdulaziz Al-Saud"
+				picture = "Salman_bin_Abdulaziz_Al_Saud.dds"
+				expire = "2020.1.6"
+				ideology = Kingdom
+				traits = {
+					king
+					salafist_Kingdom
+					pro_american
+					alzheimer
+					incapable
+					greedy
+				}
+			}
 			if = {
 				limit = { has_dlc = "La Resistance"}
 				add_ideas = SAU_crown_prince_mbn_lar
@@ -4825,9 +4840,12 @@ country_event = {
 		NOT = { has_idea = SAU_crown_prince_mbs }
 		check_variable = { mbs > 1 }
 		has_idea = restoring_hope
+		NOT = { has_country_flag = SAU_mbs_punished }
 	}
 
 	mean_time_to_happen = { days = 30 }
+
+	fire_only_once = yes
 
 	option = {
 		name = saudi_royal.3.a #Keep MbN
@@ -4907,19 +4925,29 @@ country_event = {
 			ruling_only = yes
 		}
 		has_idea = SAU_crown_prince_mbs
-		check_variable = { mbs > 4 }
+		check_variable = { mbs > 3 }
 	}
 
 	mean_time_to_happen = { days = 30 }
 
+	fire_only_once = yes
+
 	option = {
+		trigger = { check_variable = { mbs < 8 }}
 		name = saudi_royal.5.a #Punish MBS
 		log = "[GetDateText]: [This.GetName]: saudi_royal.5.a executed"
+		set_variable = { mbs = 0 }
 		if = {
 			limit = { has_dlc = "La Resistance"}
 			swap_ideas = {
 				remove_idea = SAU_crown_prince_mbs
 				add_idea = SAU_crown_prince_mbn_lar
+			}
+			if = {
+				limit = { has_idea = saudi_royal_family }
+				visually_display_opinion_rise_saudi_royal_family = yes
+				set_country_flag = current_saudi_royal_family
+				increase_internal_faction_opinion = yes
 			}
 		}
 		else_if = {
@@ -4930,6 +4958,7 @@ country_event = {
 			}
 		}
 		add_political_power = -300
+		set_country_flag = SAU_mbs_punished
 		every_country = { news_event = { id = saudi_royal.6 }}
 		ai_chance = {
 			factor = 0
@@ -4991,6 +5020,8 @@ country_event = {
 				modifier = khashoggi_affair
 			}
 		}
+		custom_effect_tooltip = MBS_strengthened_tt
+		add_to_variable = { mbs = 1 }
 		set_country_flag = SAU_no_action
 		every_country = { news_event = { id = saudi_royal.6 }}
 		ai_chance = {
@@ -5008,11 +5039,11 @@ news_event = {
 	}
 	desc = {
 		text = saudi_royal.6.d2
-		trigger = { SAU = { has_country_flag = SAU_operatives_punished}}
+		trigger = { SAU = { has_country_flag = SAU_operatives_punished }}
 	}
 	desc = {
 		text = saudi_royal.6.d3
-		trigger = { SAU = { has_country_flag = SAU_no_action}}
+		trigger = { SAU = { has_country_flag = SAU_no_action }}
 	}
 
 	picture = GFX_SAU_QAT_CRISIS
@@ -5026,5 +5057,134 @@ news_event = {
 }
 
 #Discontent with MbS
+country_event = {
+	id = saudi_royal.7
+	title = saudi_royal.7.t
+	desc = {
+		text = saudi_royal.7.d
+		trigger = { check_variable = { mbs < 8 }}
+	}
+	desc = {
+		text = saudi_royal.7.d1
+		trigger = { check_variable = { mbs > 7 }}
+	}
+
+	picture = GFX_CAN_tweet_saudi_outrage
+
+	trigger = {
+		tag = SAU
+		is_in_array = { ruling_party = 10 }
+		has_country_leader = {
+			name = "Salman bin Abdulaziz Al-Saud"
+			ruling_only = yes
+		}
+		has_idea = SAU_crown_prince_mbs
+		OR = {
+			has_country_flag = SAU_operatives_punished
+			has_country_flag = SAU_no_action
+		}
+		OR = {
+			has_country_flag = negative_saudi_royal_family
+			has_country_flag = hostile_saudi_royal_family
+		}
+		OR = {
+			has_idea = restoring_hope
+			YEM = { has_government = communism }
+		}
+	}
+
+	mean_time_to_happen = { days = 30 }
+
+	fire_only_once = yes
+
+	option = {
+		trigger = { check_variable = { mbs < 8 }}
+		name = saudi_royal.7.a #Placate the dissenters.
+		log = "[GetDateText]: [This.GetName]: saudi_royal.7.a executed"
+		add_political_power = -300
+		set_variable = { mbs = 0 }
+		if = {
+			limit = { has_dlc = "La Resistance"}
+			swap_ideas = {
+				remove_idea = SAU_crown_prince_mbs
+				add_idea = SAU_crown_prince_mbn_lar
+			}
+			if = {
+				limit = { has_idea = saudi_royal_family }
+				visually_display_opinion_rise_saudi_royal_family = yes
+				set_country_flag = current_saudi_royal_family
+				increase_internal_faction_opinion = yes
+			}
+		}
+		if = {
+			limit = { has_idea = saudi_royal_family }
+			visually_display_opinion_rise_saudi_royal_family = yes
+			set_country_flag = current_saudi_royal_family
+			increase_internal_faction_opinion = yes
+		}
+		every_country = { news_event = { id = saudi_royal.8 }}
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = saudi_royal.7.b #Purge the dissenters.
+		log = "[GetDateText]: [This.GetName]: saudi_royal.7.b executed"
+		add_stability = -0.05
+		custom_effect_tooltip = MBS_strengthened_tt
+		add_to_variable = { mbs = 1 }
+		if = {
+			limit = { has_idea = saudi_royal_family }
+			visually_display_opinion_fall_saudi_royal_family = yes
+			set_country_flag = current_saudi_royal_family
+			decrease_internal_faction_opinion = yes
+		}
+		every_country = { news_event = { id = saudi_royal.9 }}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#MbS demoted
+news_event = {
+	id = saudi_royal.8
+	title = saudi_royal.8.t
+	desc = saudi_royal.8.d
+
+	picture = GFX_SAU_QAT_CRISIS
+
+	is_triggered_only = yes
+
+	option = {
+		name = saudi_royal.8.a #The rising star falls from grace...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.8.a executed"
+	}
+}
+
+#Royals arrested
+news_event = {
+	id = saudi_royal.9
+	title = saudi_royal.9.t
+	desc = saudi_royal.9.d
+
+	picture = GFX_SAU_QAT_CRISIS
+
+	is_triggered_only = yes
+
+	option = {
+		name = saudi_royal.9.a #The crown prince grows stronger...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.9.a executed"
+	}
+}
 
 #Salman abdicates
+
+#Death of Zayed bin Sultan
+
+#Khalifa bin Zayed Suffers from Stroke
+
+#Death of Jaber al-Ahmed al-Sabah
+
+#Death of Qaboos bin Said
