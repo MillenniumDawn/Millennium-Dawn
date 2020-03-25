@@ -1,58 +1,5 @@
 terror_gulf_category = {
 
-	MENA_terror_expel_jihadists = {
-		icon = GFX_decision_generic_prepare_civil_war_new
-
-		visible = {
-			has_country_flag = tolerates_jihadists
-		}
-
-		allowed = {
-			is_middle_eastern_nation = yes
-			NOT = {
-				original_tag = ISR
-				original_tag = PER
-				original_tag = PAL
-				original_tag = HAM
-				original_tag = HEZ
-				is_Caucasus = yes
-			}
-		}
-
-		available = {
-			no_jihadist_government = yes
-		}
-
-		cost = 50
-	}
-
-	MENA_terror_tolerate_jihadists = {
-
-		icon = GFX_decision_generic_prepare_civil_war_new
-
-		visible = {
-			NOT = { has_country_flag = tolerates_jihadists }
-		}
-
-		allowed = {
-			is_middle_eastern_nation = yes
-			NOT = {
-				original_tag = ISR
-				original_tag = PER
-				original_tag = PAL
-				original_tag = HAM
-				original_tag = HEZ
-				is_Caucasus = yes
-			}
-		}
-
-		cost = 50
-
-		complete_effect = {
-			set_country_flag = tolerates_jihadists
-		}
-	}
-
 	MENA_terror_fund_deradicalisation_programmes = {
 
 		icon = GFX_decision_generic_political_discourse
@@ -184,7 +131,7 @@ terror_gulf_category = {
 		days_remove = 30
 
 		ai_will_do = {
-			value = 0
+			factor = 0
 			modifier = {
 				add = 1
 				check_variable = { treasury > 0 }
@@ -232,12 +179,50 @@ terror_gulf_category = {
 				add_to_variable = { ct_training = 1 }
 			}
 			else_if = {
-				limit = { check_variable = { foreign_advisors > 0 } check_variable = { foreign_advisors < 6 } }
+				limit = {
+					OR = {
+						AND = {
+							check_variable = { foreign_advisors > 0 }
+							check_variable = { foreign_advisors < 6 }
+						}
+						AND = {
+							check_variable = { foreign_advisors = 0 }
+							has_idea = officer_advanced_training
+						}
+					}
+				}
 				add_to_variable = { ct_training = 2 }
 			}
 			else_if = {
-				limit = { check_variable = { foreign_advisors > 5 } }
+				limit = {
+					OR = {
+						AND = {
+							check_variable = { foreign_advisors > 5 }
+							check_variable = { foreign_advisors < 11 }
+						}
+						AND = {
+							check_variable = { foreign_advisors < 6 }
+							has_idea = officer_military_school
+						}
+					}
+				}
 				add_to_variable = { ct_training = 3 }
+			}
+			else_if = {
+				limit = {
+					OR = {
+						check_variable = { foreign_advisors > 10 }
+						AND = {
+							check_variable = { foreign_advisors < 11 }
+							has_idea = officer_military_academy
+						}
+						AND = {
+							check_variable = { foreign_advisors < 11 }
+							has_idea = officer_international_education
+						}
+					}
+				}
+				add_to_variable = { ct_training = 4 }
 			}
 			clamp_variable = {
 				var = ct_training
@@ -247,7 +232,7 @@ terror_gulf_category = {
 		}
 
 		ai_will_do = {
-			value = 1
+			factor = 1
 		}
 	}
 
@@ -269,6 +254,15 @@ terror_gulf_category = {
 
 		available = {
 			no_jihadist_government = yes
+			OR = {
+				has_idea = police_03
+				has_idea = police_04
+				has_idea = police_05
+			}
+			custom_trigger_tooltip = {
+				tooltip = low_threat_higher_tt
+				check_variable = { threat_level > 10 }
+			}
 		}
 
 		custom_cost_trigger = {
@@ -285,6 +279,77 @@ terror_gulf_category = {
 		days_remove = 30
 
 		remove_effect = {
+			custom_effect_tooltip = terror_conduct_raid_tt
+			hidden_effect = {
+				if = {
+					limit = {
+						check_variable = { ct_training = 0 }
+					}
+					random_list = {
+						33 = {
+							country_event = { id = terror.1 }
+						}
+						67 = {
+							country_event = { id = terror.2 }
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { ct_training > 0 }
+						check_variable = { ct_training < 5 }
+					}
+					random_list = {
+						50 = {
+							country_event = { id = terror.1 }
+						}
+						50 = {
+							country_event = { id = terror.2 }
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { ct_training > 4 }
+						check_variable = { ct_training < 8 }
+					}
+					random_list = {
+						67 = {
+							country_event = { id = terror.1 }
+						}
+						33 = {
+							country_event = { id = terror.2 }
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { ct_training > 7 }
+						check_variable = { ct_training < 10 }
+					}
+					random_list = {
+						75 = {
+							country_event = { id = terror.1 }
+						}
+						25 = {
+							country_event = { id = terror.2 }
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { ct_training = 10 }
+					}
+					random_list = {
+						90 = {
+							country_event = { id = terror.1 }
+						}
+						10 = {
+							country_event = { id = terror.2 }
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -473,12 +538,8 @@ terror_gulf_category = {
 
 		target_trigger = {
 			FROM = {
-				OR = {
-					has_country_flag = threat_level_severe
-					has_country_flag = threat_level_critical
-				}
 				no_jihadist_government = yes
-				is_influencer = yes
+				is_top5_influencer = yes
 			}
 			NOT = { has_country_flag = military_advisors_@FROM }
 		}
@@ -493,6 +554,36 @@ terror_gulf_category = {
 					has_idea = intervention_limited_interventionism
 				}
 			}
+			custom_trigger_tooltip = {
+				tooltip = superior_officer_law_tt
+				if = {
+					limit = { FROM = { has_idea = officer_baptism_by_fire }}
+					NOT = { has_idea = officer_baptism_by_fire }
+				}
+				if = {
+					limit = { FROM = { has_idea = officer_basic_training }}
+					NOT = { has_idea = officer_baptism_by_fire }
+					NOT = { has_idea = officer_basic_training }
+				}
+				if = {
+					limit = { FROM = { has_idea = officer_advanced_training }}
+					NOT = { has_idea = officer_baptism_by_fire }
+					NOT = { has_idea = officer_basic_training }
+					NOT = { has_idea = officer_advanced_training }
+				}
+				if = {
+					limit = { FROM = { has_idea = officer_military_school }}
+					NOT = { has_idea = officer_baptism_by_fire }
+					NOT = { has_idea = officer_basic_training }
+					NOT = { has_idea = officer_advanced_training }
+					NOT = { has_idea = officer_military_school }
+				}
+				if = {
+					limit = { FROM = { has_idea = officer_military_academy }}
+					has_idea = officer_international_education
+				}
+				FROM = { NOT = { has_idea = officer_international_education }}
+			}
 		}
 
 		custom_cost_trigger = {
@@ -503,6 +594,7 @@ terror_gulf_category = {
 
 		complete_effect = {
 			add_command_power = -40
+			add_manpower = -150
 			set_country_flag = military_advisors_@FROM
 			FROM = { add_to_variable = { foreign_advisors = 1 } }
 			custom_effect_tooltip = deploy_military_advisors_tt
@@ -535,6 +627,7 @@ terror_gulf_category = {
 
 		complete_effect = {
 			add_command_power = -40
+			add_manpower = 150
 			clr_country_flag = military_advisors_@FROM
 			FROM = { subtract_from_variable = { foreign_advisors = 1 } }
 			custom_effect_tooltip = withdraw_military_advisors_tt
