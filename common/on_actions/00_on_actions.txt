@@ -109,79 +109,8 @@ on_actions = {
 					}
 				}
 			}
-			#Possibility of domestic terror attack - military
-			if = {
-				limit = {
-					is_in_array = { global.ct_states = THIS }
-					no_jihadist_government = yes
-					OR = {
-						has_country_flag = threat_level_severe
-						has_country_flag = threat_level_critical
-					}
-				}
-				random_list = {
-					1 = { #terror attack planned
-						random_list = {
-							50 = { #foiled
-								country_event = { id = terror.3 days = 30 random = 2400 }
-							}
-							50 = { #not foiled
-								country_event = { id = terror.5 days = 60 random = 2400 }
-								modifier = {
-									factor = 2
-									has_idea = police_04
-								}
-								modifier = {
-									factor = 3
-									has_idea = police_03
-								}
-								modifier = {
-									factor = 4
-									has_idea = police_02
-								}
-								modifier = {
-									factor = 5
-									has_idea = police_01
-								}
-							}
-						}
-						modifier = {
-							factor = 2
-							has_country_flag = threat_level_severe
-						}
-						modifier = {
-							factor = 4
-							has_country_flag = threat_level_critical
-						}
-					}
-					99 = {
-					}
-				}
-			}
-		}
-	}
-	on_yearly = {
-		effect = {
-			#Radicalization increase
-			if = {
-				limit = { check_variable = { party_pop_array^11 > 0 }}
-				country_event = { id = radicalization.8 }
-			}
-			#CT Training Decay
-			if = {
-				limit = {
-					check_variable = { ct_training > 0 }
-					is_in_array = { global.ct_states = THIS }
-				}
-				subtract_from_variable = { ct_training = 2 }
-				clamp_variable = {
-					var = ct_training
-					min = 0
-					max = 10
-				}
-			}
 			#Possibility of international terror attack - civilian
-			if = {
+			random_country = {
 				limit = {
 					is_in_array = { global.ct_states = THIS }
 					no_jihadist_government = yes
@@ -191,17 +120,12 @@ on_actions = {
 							has_government = democratic
 							has_government = communism
 						}
-						ROOT = {
-							OR = {
-								check_variable = { influence_array^0 = PREV }
-								check_variable = { influence_array^1 = PREV }
-								check_variable = { influence_array^2 = PREV }
-								check_variable = { influence_array^3 = PREV }
-								check_variable = { influence_array^4 = PREV }
-								check_variable = { influence_array^5 = PREV }
-								check_variable = { influence_array^6 = PREV }
-							}
+						OR = {
+							is_western_nation = yes
+							is_East_Asia = yes
+							original_tag = SOV
 						}
+						is_in_array = { ROOT.influence_array = THIS.id }
 					}
 				}
 				random_list = {
@@ -251,8 +175,57 @@ on_actions = {
 					}
 				}
 			}
-			#Possibility of international terror attack - military
+			#Possibility of domestic terror attack - military
 			if = {
+				limit = {
+					is_in_array = { global.ct_states = THIS }
+					no_jihadist_government = yes
+					OR = {
+						has_country_flag = threat_level_severe
+						has_country_flag = threat_level_critical
+					}
+				}
+				random_list = {
+					1 = { #terror attack planned
+						random_list = {
+							50 = { #foiled
+								country_event = { id = terror.3 days = 30 random = 2400 }
+							}
+							50 = { #not foiled
+								country_event = { id = terror.5 days = 60 random = 2400 }
+								modifier = {
+									factor = 2
+									has_idea = police_04
+								}
+								modifier = {
+									factor = 3
+									has_idea = police_03
+								}
+								modifier = {
+									factor = 4
+									has_idea = police_02
+								}
+								modifier = {
+									factor = 5
+									has_idea = police_01
+								}
+							}
+						}
+						modifier = {
+							factor = 2
+							has_country_flag = threat_level_severe
+						}
+						modifier = {
+							factor = 4
+							has_country_flag = threat_level_critical
+						}
+					}
+					99 = {
+					}
+				}
+			}
+			#Possibility of international terror attack - military
+			random_country = {
 				limit = {
 					is_in_array = { global.ct_states = THIS }
 					no_jihadist_government = yes
@@ -265,6 +238,7 @@ on_actions = {
 							has_government = democratic
 							has_government = communism
 						}
+						is_full_state = yes
 						has_military_access_to = ROOT
 					}
 				}
@@ -304,6 +278,28 @@ on_actions = {
 					}
 					75 = {
 					}
+				}
+			}
+		}
+	}
+	on_yearly = {
+		effect = {
+			#Radicalization increase
+			if = {
+				limit = { check_variable = { party_pop_array^11 > 0 }}
+				country_event = { id = radicalization.8 }
+			}
+			#CT Training Decay
+			if = {
+				limit = {
+					check_variable = { ct_training > 0 }
+					is_in_array = { global.ct_states = THIS }
+				}
+				subtract_from_variable = { ct_training = 2 }
+				clamp_variable = {
+					var = ct_training
+					min = 0
+					max = 10
 				}
 			}
 			#Possibility of jihadists crossing the border
