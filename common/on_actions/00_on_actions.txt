@@ -1117,25 +1117,76 @@ on_actions = {
 					country_event = { id = brotherhood.2 }
 
 					#Recognition
-					add_ideas = { rival_government }
-					add_to_array = { global.rival_governments = THIS }
-					set_country_flag = rival_government_@FROM
+					if = {
+						limit = { no_jihadist_government = yes }
+						add_ideas = { rival_government }
+						add_to_array = { global.rival_governments = THIS }
+						set_country_flag = rival_government_@FROM
+					}
+					if = {
+						limit = { jihadist_government = yes }
+						add_named_threat = {
+							threat = 10
+							name = terror.threat
+						}
+						add_ideas = Non_State_Actor
+						if = {
+							limit = { has_idea = saudi_royal_family }
+							swap_ideas = {
+								remove_idea = saudi_royal_family
+								add_idea = foreign_jihadis
+							}
+							set_country_flag = positive_foreign_jihadis
+						}
+						if = {
+							limit = { has_idea = the_military }
+							swap_ideas = {
+								remove_idea = the_military
+								add_idea = foreign_jihadis
+							}
+							set_country_flag = positive_foreign_jihadis
+						}
+						every_other_country = {
+							limit = { has_military_access_to = ROOT }
+							diplomatic_relation = {
+								country = ROOT
+								relation = military_access
+								active = no
+							}
+						}
+						set_political_party = {
+							ideology = fascism
+							popularity = 100
+						}
+						set_variable = { party_pop_array^11 = 1 }
+						recalculate_party = yes
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						add_to_array = { ruling_party = 11 }
+						update_government_coalition_strength = yes
+						update_party_name = yes
+						set_coalition_drift = yes
+						set_country_flag = set_Caliphate
+					}
 				}
 				FROM = {
-					add_to_array = { global.rival_governments = THIS }
-					set_country_flag = rival_government_@ROOT
 					if = {
-						limit = { has_start_date < 2016.01.01 }
-						add_to_variable = {
-							var = Granted_Recognition
-							value = 188
+						limit = { no_jihadist_government = yes }
+						add_to_array = { global.rival_governments = THIS }
+						set_country_flag = rival_government_@ROOT
+						if = {
+							limit = { has_start_date < 2016.01.01 }
+							add_to_variable = {
+								var = Granted_Recognition
+								value = 188
+							}
 						}
-					}
-					else_if = {
-						limit = { has_start_date > 2016.01.01 }
-						add_to_variable = {
-							var = Granted_Recognition
-							value = 193
+						else_if = {
+							limit = { has_start_date > 2016.01.01 }
+							add_to_variable = {
+								var = Granted_Recognition
+								value = 193
+							}
 						}
 					}
 				}

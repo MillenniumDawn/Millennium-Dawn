@@ -4292,5 +4292,472 @@ country_event = {
 }
 
 #jihadist uprising brewing
+country_event = {
+	id = terror.12
+	title = terror.12.t
+	desc = terror.12.d
+
+	trigger = {
+		is_in_array = { global.ct_states = THIS }
+		no_jihadist_government = yes
+		has_country_flag = threat_level_critical
+		NOT = {
+			OR = {
+				tag = ROJ
+				tag = KUR
+				if = {
+					limit = { country_exists = SYR }
+					tag = FSA
+				}
+				if = {
+					limit = { country_exists = YEM }
+					tag = HOU
+				}
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					tag = SYR
+					tag = FSA
+				}
+			}
+			NOT = { country_exists = NUS }
+		}
+		if = {
+			limit = {
+				OR = {
+					tag = HOU
+					tag = YEM
+				}
+			}
+			NOT = { country_exists = AQY }
+		}
+		if = {
+			limit = {
+				tag = IRQ
+			}
+			NOT = { country_exists = ISI }
+		}
+	}
+
+	mean_time_to_happen = { days = 100 }
+
+	picture = GFX_politics_salafism
+
+	option = {
+		name = terror.12.a #We must take action...
+		log = "[GetDateText]: [This.GetName]: terror.12.a executed"
+		set_country_flag = jihadist_uprising_imminent
+	}
+}
 
 #jihadist uprising
+country_event = {
+	id = terror.13
+	title = jihadi.5.t
+	desc = jihadi.5.d
+
+	trigger = {
+		is_in_array = { global.ct_states = THIS }
+		no_jihadist_government = yes
+		has_country_flag = threat_level_critical
+		if = {
+			limit = {
+				OR = {
+					tag = SYR
+					tag = FSA
+					tag = ROJ
+				}
+			}
+			NOT = { country_exists = NUS }
+		}
+		if = {
+			limit = {
+				OR = {
+					tag = HOU
+					tag = YEM
+				}
+			}
+			NOT = { country_exists = AQY }
+		}
+		if = {
+			limit = {
+				OR = {
+					tag = KUR
+					tag = IRQ
+				}
+			}
+			NOT = { country_exists = ISI }
+		}
+		has_country_flag = jihadist_uprising_imminent
+	}
+
+	mean_time_to_happen = { days = 100 }
+
+	picture = GFX_politics_salafism
+
+	option = {
+		name = jihadi.5.a
+		log = "[GetDateText]: [This.GetName]: terror.13.a executed"
+		clr_country_flag = jihadist_uprising_imminent
+		set_country_flag = fighting_jihadis
+		add_popularity = {
+			ideology = fascism
+			popularity = -0.3
+		}
+		recalculate_party = yes
+		if = {
+			limit = { tag = ALG }
+			start_civil_war = {
+				ideology = fascism
+				size = 0.4
+				capital = 385
+				states = { 385 380 379 381 }
+			}
+			every_country_with_original_tag = {
+				original_tag_to_check = ALG
+				limit = { jihadist_government = yes }
+				#Influence system
+				init_influence = yes
+				set_variable = { domestic_influence_amount = 220 }
+				startup_influence = yes
+			}
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+	option = {
+		name = jihadi.5.b
+		log = "[GetDateText]: [This.GetName]: terror.13.b executed"
+		clr_country_flag = jihadist_uprising_imminent
+		add_named_threat = {
+			threat = 10
+			name = terror.threat
+		}
+		add_ideas = Non_State_Actor
+		if = {
+			limit = { has_idea = saudi_royal_family }
+			swap_ideas = {
+				remove_idea = saudi_royal_family
+				add_idea = foreign_jihadis
+			}
+			set_country_flag = positive_foreign_jihadis
+		}
+		if = {
+			limit = { has_idea = the_military }
+			swap_ideas = {
+				remove_idea = the_military
+				add_idea = foreign_jihadis
+			}
+			set_country_flag = positive_foreign_jihadis
+		}
+		every_other_country = {
+			limit = { has_military_access_to = ROOT }
+			diplomatic_relation = {
+				country = ROOT
+				relation = military_access
+				active = no
+			}
+		}
+		if = {
+			limit = { tag = SAU }
+			if = {
+				limit = { has_government = democratic }
+				start_civil_war = {
+					ruling_party = fascism
+					ideology = democratic
+					size = 0.5
+				}
+			}
+			if = {
+				limit = { has_government = communism }
+				start_civil_war = {
+						ruling_party = fascism
+						ideology = communism
+						size = 0.5
+				}
+			}
+			if = {
+				limit = { has_government = neutrality }
+				start_civil_war = {
+					ruling_party = fascism
+					ideology = neutrality
+					size = 0.5
+				}
+			}
+			if = {
+				limit = { has_government = nationalist }
+				start_civil_war = {
+					ruling_party = fascism
+					ideology = nationalist
+					size = 0.5
+				}
+			}
+			if = {
+				limit = { has_government = fascism }
+				start_civil_war = {
+					ideology = fascism
+					ruling_party = fascism
+					size = 0.5
+				}
+			}
+			hidden_effect = {
+				set_political_party = {
+					ideology = fascism
+					popularity = 100
+				}
+				set_variable = { party_pop_array^11 = 1 }
+				recalculate_party = yes
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 11 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				add_to_variable = { Caliphate_leader = 1 }
+				random_other_country = {
+					limit = {
+						original_tag = SAU
+					}
+					remove_ideas = rival_government
+					remove_from_array = { global.rival_governments = THIS }
+					clr_country_flag = rival_government_SAU
+				}
+			}
+			if = {
+				limit = { date < 2016.1.2 }
+				create_country_leader = {
+					name = "Osama bin Laden"
+					picture = "osama_bin_laden.dds"
+					ideology = Caliphate
+					traits = {
+						salafist_Caliphate
+					}
+				}
+			}
+			else_if = {
+				create_country_leader = {
+					name = "Ayman Mohammed Rabie al-Zawahiri"
+					picture = "Ayman_Al_Zawahiri.dds"
+					ideology = Caliphate
+					traits = {
+						salafist_Caliphate
+					}
+				}
+			}
+			set_cosmetic_tag = SAU_AQ
+		}
+		if = {
+			limit = { tag = UAE }
+			if = {
+				limit = { has_government = democratic }
+				start_civil_war = {
+					ruling_party = fascism
+					ideology = democratic
+					size = 0.5
+				}
+			}
+			if = {
+				limit = { has_government = communism }
+				start_civil_war = {
+						ruling_party = fascism
+						ideology = communism
+						size = 0.5
+				}
+			}
+			if = {
+				limit = { has_government = neutrality }
+				start_civil_war = {
+					ruling_party = fascism
+					ideology = neutrality
+					size = 0.5
+				}
+			}
+			if = {
+				limit = { has_government = nationalist }
+				start_civil_war = {
+					ruling_party = fascism
+					ideology = nationalist
+					size = 0.5
+				}
+			}
+			if = {
+				limit = { has_government = fascism }
+				start_civil_war = {
+					ideology = fascism
+					ruling_party = fascism
+					size = 0.5
+				}
+			}
+			hidden_effect = {
+				set_political_party = {
+					ideology = fascism
+					popularity = 100
+				}
+				set_variable = { party_pop_array^11 = 1 }
+				recalculate_party = yes
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 11 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				add_to_variable = { Caliphate_leader = 1 }
+				random_other_country = {
+					limit = {
+						original_tag = UAE
+					}
+					remove_ideas = rival_government
+					remove_from_array = { global.rival_governments = THIS }
+					clr_country_flag = rival_government_UAE
+				}
+			}
+			create_country_leader = {
+				name = "Abd Al-Rahim Al-Nashiri"
+				picture = "Abd_Al-Rahim_Al-Nashiri.dds"
+				ideology = Caliphate
+				traits = {
+					salafist_Caliphate
+				}
+			}
+			if = {
+				limit = { has_idea = little_sparta }
+				remove_ideas = little_sparta
+			}
+			set_cosmetic_tag = SAU_AQ
+		}
+		if = {
+			limit = { tag = BHR }
+			hidden_effect = {
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = no
+				}
+				set_variable = { party_pop_array^11 = 1 }
+				recalculate_party = yes
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 11 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+			}
+			set_cosmetic_tag = SAU_AQ
+		}
+		if = {
+			limit = { tag = QAT }
+			hidden_effect = {
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = no
+				}
+				set_variable = { party_pop_array^11 = 1 }
+				recalculate_party = yes
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 11 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+			}
+			create_country_leader = {
+				name = "Qasim al-Raymi"
+				picture = "qasim_al_raymi.dds"
+				ideology = Caliphate
+				traits = {
+					salafist_Caliphate
+				}
+			}
+			add_to_variable = { Caliphate_leader = 1 }
+			set_cosmetic_tag = SAU_AQ
+			if = {
+				limit = { has_idea = al_jazeera }
+				remove_ideas = al_jazeera
+			}
+		}
+		if = {
+			limit = { tag = KUW }
+			hidden_effect = {
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = no
+				}
+				set_variable = { party_pop_array^11 = 1 }
+				recalculate_party = yes
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 11 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+			}
+			create_country_leader = {
+				name = "Khaled Al-Sultan Bin Essa"
+				picture = "khaled_al_sultan_bin_essa.dds"
+				ideology = Caliphate
+				traits = {
+					salafist_Caliphate
+				}
+			}
+			add_to_variable = { Caliphate_leader = 1 }
+			set_cosmetic_tag = SAU_AQ
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+#threat has passed
+country_event = {
+	id = terror.14
+	title = terror.14.t
+	desc = terror.14.d
+
+	trigger = {
+		is_in_array = { global.ct_states = THIS }
+		no_jihadist_government = yes
+		NOT = { has_country_flag = threat_level_critical }
+		if = {
+			limit = {
+				OR = {
+					tag = SYR
+					tag = FSA
+					tag = ROJ
+				}
+			}
+			NOT = { country_exists = NUS }
+		}
+		if = {
+			limit = {
+				OR = {
+					tag = HOU
+					tag = YEM
+				}
+			}
+			NOT = { country_exists = AQY }
+		}
+		if = {
+			limit = {
+				OR = {
+					tag = KUR
+					tag = IRQ
+				}
+			}
+			NOT = { country_exists = ISI }
+		}
+		has_country_flag = jihadist_uprising_imminent
+	}
+
+	mean_time_to_happen = { days = 2 }
+
+	picture = GFX_politics_salafism
+
+	option = {
+		name = terror.14.a #We must take action...
+		log = "[GetDateText]: [This.GetName]: terror.14.a executed"
+		clr_country_flag = jihadist_uprising_imminent
+	}
+}
