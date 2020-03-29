@@ -1,0 +1,74 @@
+add_namespace = projection
+
+#hidden event that adds flag
+country_event = {
+	id = projection.1
+	
+	hidden = yes
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = projection.1.a
+		log = "[GetDateText]: [This.GetName]: projection.1.a executed"
+		every_country = {
+			limit = { has_military_access_to = ROOT }
+			set_country_flag = military_base_@ROOT
+		}
+	}
+}
+
+#hidden event that subtracts projection
+country_event = {
+	id = projection.2
+	
+	hidden = yes
+	
+	trigger = {
+		any_country = {
+			NOT = { has_military_access_to = ROOT }
+			has_country_flag = military_base_@ROOT
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 2
+	}
+	
+	option = {
+		name = projection.2.a
+		log = "[GetDateText]: [This.GetName]: projection.2.a executed"
+		every_country = {
+			limit = { 
+				NOT = { has_military_access_to = ROOT }
+				has_country_flag = military_base_@ROOT 
+			}
+			subtract_from_variable = { power_projection = 1 }
+			if = {
+				limit = { check_variable = { power_projection = 0 } }
+				remove_ideas = limited_power_projection
+			}
+			else_if = {
+				limit = {
+					has_idea = significant_power_projection
+					check_variable = { power_projection < 10 }
+				}
+				swap_ideas = {
+					remove_idea = significant_power_projection
+					add_idea = limited_power_projection
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = massive_power_projection
+					check_variable = { power_projection < 30 }
+				}
+				swap_ideas = {
+					remove_idea = massive_power_projection
+					add_idea = significant_power_projection
+				}
+			}
+			clr_country_flag = military_base_@ROOT 
+		}
+	}
+}
