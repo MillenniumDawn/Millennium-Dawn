@@ -1118,11 +1118,35 @@ on_actions = {
 
 					#Recognition
 					if = {
-						limit = { no_jihadist_government = yes }
+						limit = {
+							NOT = {
+								has_government = fascism
+								FROM = { has_government = fascism }
+							}
+						}
 						add_ideas = { rival_government }
 						add_to_array = { global.rival_governments = THIS }
 						set_country_flag = rival_government_@FROM
+						FROM = {
+							add_to_array = { global.rival_governments = THIS }
+							set_country_flag = rival_government_@ROOT
+							if = {
+								limit = { has_start_date < 2016.01.01 }
+								add_to_variable = {
+									var = Granted_Recognition
+									value = 188
+								}
+							}
+							else_if = {
+								limit = { has_start_date > 2016.01.01 }
+								add_to_variable = {
+									var = Granted_Recognition
+									value = 193
+								}
+							}
+						}
 					}
+					#Jihadist uprising
 					if = {
 						limit = { jihadist_government = yes }
 						add_named_threat = {
@@ -1171,26 +1195,148 @@ on_actions = {
 						init_influence = yes
 						set_variable = { domestic_influence_amount = 200 }
 						startup_influence = yes
-					}
-				}
-				FROM = {
-					if = {
-						limit = { no_jihadist_government = yes }
-						add_to_array = { global.rival_governments = THIS }
-						set_country_flag = rival_government_@ROOT
+						FROM = { set_country_flag = fighting_jihadis }
 						if = {
-							limit = { has_start_date < 2016.01.01 }
-							add_to_variable = {
-								var = Granted_Recognition
-								value = 188
+							limit = { country_exists = AQY }
+							remove_opinion_modifier = {
+								target = AQY
+								modifier = AlQaida_Are_Terrorists
+							}
+							remove_opinion_modifier = {
+								target = AQY
+								modifier = AlQaida_Are_Terrorists_Trade
 							}
 						}
-						else_if = {
-							limit = { has_start_date > 2016.01.01 }
-							add_to_variable = {
-								var = Granted_Recognition
-								value = 193
+						if = {
+							limit = { country_exists = TAL }
+							remove_opinion_modifier = {
+								target = TAL
+								modifier = AlQaida_Are_Terrorists
 							}
+							remove_opinion_modifier = {
+								target = TAL
+								modifier = AlQaida_Are_Terrorists_Trade
+							}
+						}
+						if = {
+							limit = { country_exists = TTP }
+							remove_opinion_modifier = {
+								target = TTP
+								modifier = AlQaida_Are_Terrorists
+							}
+							remove_opinion_modifier = {
+								target = TTP
+								modifier = AlQaida_Are_Terrorists_Trade
+							}
+						}
+						every_country = {
+							limit = { no_jihadist_government = yes }
+							add_opinion_modifier = {
+								target = ROOT
+								modifier = terrorism_is_no_no
+							}
+							add_opinion_modifier = {
+								target = ROOT
+								modifier = terrorism_is_no_no_trade
+							}
+						}
+						add_ideas = intervention_neo_imperialism
+					}
+					FROM = {
+						if = {
+							limit = { jihadist_government = yes }
+							ROOT = { set_country_flag = fighting_jihadis }
+							add_named_threat = {
+								threat = 10
+								name = terror.threat
+							}
+							add_ideas = Non_State_Actor
+							if = {
+								limit = { has_idea = saudi_royal_family }
+								swap_ideas = {
+									remove_idea = saudi_royal_family
+									add_idea = foreign_jihadis
+								}
+								set_country_flag = positive_foreign_jihadis
+							}
+							if = {
+								limit = { has_idea = the_military }
+								swap_ideas = {
+									remove_idea = the_military
+									add_idea = foreign_jihadis
+								}
+								set_country_flag = positive_foreign_jihadis
+							}
+							every_other_country = {
+								limit = { has_military_access_to = FROM }
+								diplomatic_relation = {
+									country = FROM
+									relation = military_access
+									active = no
+								}
+							}
+							set_political_party = {
+								ideology = fascism
+								popularity = 100
+							}
+							set_variable = { party_pop_array^11 = 1 }
+							recalculate_party = yes
+							clear_array = ruling_party
+							clear_array = gov_coalition_array
+							add_to_array = { ruling_party = 11 }
+							update_government_coalition_strength = yes
+							update_party_name = yes
+							set_coalition_drift = yes
+							set_country_flag = set_Caliphate
+							#Influence system
+							init_influence = yes
+							set_variable = { domestic_influence_amount = 200 }
+							startup_influence = yes
+							if = {
+								limit = { country_exists = AQY }
+								remove_opinion_modifier = {
+									target = AQY
+									modifier = AlQaida_Are_Terrorists
+								}
+								remove_opinion_modifier = {
+									target = AQY
+									modifier = AlQaida_Are_Terrorists_Trade
+								}
+							}
+							if = {
+								limit = { country_exists = TAL }
+								remove_opinion_modifier = {
+									target = TAL
+									modifier = AlQaida_Are_Terrorists
+								}
+								remove_opinion_modifier = {
+									target = TAL
+									modifier = AlQaida_Are_Terrorists_Trade
+								}
+							}
+							if = {
+								limit = { country_exists = TTP }
+								remove_opinion_modifier = {
+									target = TTP
+									modifier = AlQaida_Are_Terrorists
+								}
+								remove_opinion_modifier = {
+									target = TTP
+									modifier = AlQaida_Are_Terrorists_Trade
+								}
+							}
+							every_country = {
+								limit = { no_jihadist_government = yes }
+								add_opinion_modifier = {
+									target = FROM
+									modifier = terrorism_is_no_no
+								}
+								add_opinion_modifier = {
+									target = FROM
+									modifier = terrorism_is_no_no_trade
+								}
+							}
+							add_ideas = intervention_neo_imperialism
 						}
 					}
 				}
