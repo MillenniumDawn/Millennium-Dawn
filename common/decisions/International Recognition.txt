@@ -1111,10 +1111,7 @@ recognition_category = {
 
 		target_trigger = {
 			FROM = { has_idea = Lacks_International_Recognition }
-			OR = {
-				country_exists = FROM
-				FROM = { tag = PAL }
-			}
+			country_exists = FROM
 		}
 
 		visible = {
@@ -1679,10 +1676,7 @@ recognition_category = {
 
 		target_trigger = {
 			FROM = { has_idea = Lacks_International_Recognition }
-			OR = {
-				country_exists = FROM
-				FROM = { tag = PAL }
-			}
+			country_exists = FROM
 		}
 
 		visible = {
@@ -1805,6 +1799,61 @@ recognition_category = {
 				}
 			}
 		}
+	}
 
+	pressure_countries_to_recognize = {
+		icon = GFX_decision_generic_form_nation
+
+		target_array = global.Unrecognised_States
+
+		target_trigger = {
+			FROM = { has_idea = Lacks_International_Recognition }
+			country_exists = FROM
+		}
+
+		visible = {
+			has_country_flag = Recognised_@FROM
+			if = {
+				limit = { original_tag = SWI }
+				has_completed_focus = SWI_join_the_united_nations
+			}
+			FROM = { has_idea = Lacks_International_Recognition }
+			country_exists = FROM
+			is_full_state = yes
+		}
+
+		available = {
+		}
+
+		cost = 200
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision pressure_countries_to_recognize target: [From.GetName]"
+			every_country = {
+				limit = {
+					is_influencer = yes
+					NOT = { has_country_flag = Recognised_@FROM }
+					NOT = { tag = FROM }
+					is_full_state = yes
+				}
+				FROM = {
+					set_country_flag = pressured_to_recognize_@PREV
+				}
+				country_event = { id = recognition.8 }
+			}
+		}
+
+		days_remove = 180
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 100
+				}
+			}
+		}
 	}
 }
