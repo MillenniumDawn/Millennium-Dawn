@@ -2298,6 +2298,11 @@ gcc_decisions = {
 				has_completed_focus = GCC_improve_relations_with_iran
 				NOT = { has_country_flag = accepted_blockade_demands }
 			}
+		}
+
+		visible = {
+			has_idea = idea_gcc_member_state
+			NOT = { any_country = { has_country_flag = blockade_@FROM } }
 			OR = {
 				AND = {
 					FROM = { tag = QAT }
@@ -2305,11 +2310,6 @@ gcc_decisions = {
 				}
 				has_completed_focus = GCC_confront_iranian_partners
 			}
-		}
-
-		visible = {
-			has_idea = idea_gcc_member_state
-			NOT = { any_country = { has_country_flag = blockade_@FROM } }
 		}
 
 		cost = 100
@@ -2557,10 +2557,12 @@ gcc_decisions = {
 
 		target_trigger = {
 			country_exists = FROM
-			NOT = { has_country_flag = supports_membership_@FROM }
 		}
 
-		visible = { has_idea = idea_gcc_member_state }
+		visible = {
+			has_idea = idea_gcc_member_state
+			NOT = { has_country_flag = supports_membership_@FROM }
+		}
 
 		cost = 25
 
@@ -2643,6 +2645,63 @@ gcc_decisions = {
 				tag = BHR
 				FROM = {
 					tag = EGY
+				}
+			}
+		}
+	}
+
+	GCC_pressure_countries_to_support = {
+		icon = GFX_decision_generic_form_nation
+
+		target_array = global.possible_gcc_members
+
+		target_trigger = {
+			country_exists = FROM
+		}
+
+		visible = {
+			has_country_flag = supports_membership_@FROM
+			any_country = {
+				has_idea = idea_gcc_member_state
+				NOT = { has_country_flag = supports_membership_@FROM }
+			}
+		}
+
+		available = {
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision pressure_countries_to_recognize target: [From.GetName]"
+			every_other_country = {
+				limit = {
+					has_idea = idea_gcc_member_state
+					NOT = { has_country_flag = supports_membership_@FROM }
+				}
+				FROM = {
+					set_country_flag = pressured_to_accept_@PREV
+				}
+				country_event = { id = gcc.24 }
+			}
+		}
+
+		days_remove = 180
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 100
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 150
 				}
 			}
 		}
