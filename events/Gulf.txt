@@ -1,0 +1,5583 @@
+###########################
+# 	  Gulf Events	      #
+###########################
+
+add_namespace = gulf
+add_namespace = shia_terror
+add_namespace = gcc
+add_namespace = saudi_royal
+add_namespace = uae_royal
+add_namespace = kuwait_royal
+add_namespace = oman_royal
+
+#[@FROM_fossil_fuel_industry] IPO
+news_event = {
+	id = gulf.5
+	title = gulf.5.t
+	desc = gulf.5.d
+
+	picture = GFX_market_crash
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.5.a #An exciting day for [FROM.GetNameDef]
+		log = "[GetDateText]: [This.GetName]: gulf.5.a executed"
+	}
+}
+
+#hidden event that determines the outcome of the IPO
+country_event = {
+	id = gulf.6
+	title = gulf.6.t
+	desc = gulf.6.d
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.6.a
+		log = "[GetDateText]: [This.GetName]: gulf.6.a executed"
+		if = {
+			limit = { has_stability < 0.10 }
+			country_event = { id = gulf.8 }
+		}
+		if = {
+			limit = { has_stability > 0.09 has_stability < 0.25 }
+			random_list = {
+				25 = { country_event = { id = gulf.7 } }
+				75 = { country_event = { id = gulf.8 } }
+			}
+		}
+		else_if = {
+			limit = { has_stability > 0.24 has_stability < 0.4 }
+			random_list = {
+				34 = { country_event = { id = gulf.7 } }
+				66 = { country_event = { id = gulf.8 } }
+			}
+		}
+		else_if = {
+			limit = { has_stability > 0.39 has_stability < 0.6 }
+			random_list = {
+				50 = { country_event = { id = gulf.7 } }
+				50 = { country_event = { id = gulf.8 } }
+			}
+		}
+		else_if = {
+			limit = { has_stability > 0.59 has_stability < 0.7 }
+			random_list = {
+				66 = { country_event = { id = gulf.7 } }
+				34 = { country_event = { id = gulf.8 } }
+			}
+		}
+		else_if = {
+			limit = { has_stability > 0.69 has_stability < 0.9 }
+			random_list = {
+				75 = { country_event = { id = gulf.7 } }
+				25 = { country_event = { id = gulf.8 } }
+			}
+		}
+		else_if = {
+			limit = { has_stability > 0.89 }
+			country_event = { id = gulf.7 }
+		}
+	}
+}
+
+#The IPO has gone well
+news_event = {
+	id = gulf.7
+	title = gulf.7.t
+	desc = gulf.7.d
+
+	picture = GFX_update_gdpc
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.7.a #Perfect!
+		log = "[GetDateText]: [This.GetName]: gulf.7.a executed"
+		add_political_power = 100
+		set_country_flag = ipo_success
+	}
+}
+
+#The IPO has flopped
+news_event = {
+	id = gulf.8
+	title = gulf.8.t
+	desc = gulf.8.d
+
+	picture = GFX_market_crash
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.8.a #A sad day for our country...
+		log = "[GetDateText]: [This.GetName]: gulf.8.a executed"
+		add_political_power = -100
+		set_country_flag = ipo_failure
+	}
+}
+
+#A Unique Proposal from the New [FROM.GetAdjective] Leadership
+country_event = {
+	id = gulf.9
+	title = gulf.9.t
+	desc = gulf.9.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.9.a #Brothers in arms!
+		log = "[GetDateText]: [This.GetName]: gulf.9.a executed"
+		if = {
+			limit = { is_faction_leader = yes }
+			add_to_faction = FROM
+		}
+		else_if = {
+			limit = { is_faction_leader = no }
+			FROM = { add_to_faction = ROOT }
+		}
+		FROM = {
+			country_event = { days = 1 id = gulf.10  }
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gulf.9.b #We have no need of an alliance.
+		log = "[GetDateText]: [This.GetName]: gulf.9.a executed"
+		FROM = {
+			country_event = { days = 1 id = gulf.11 }
+		}
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 10
+				FROM = { has_war = yes }
+			}
+		}
+	}
+}
+
+#Alliance Established!
+country_event = {
+	id = gulf.10
+	title = gulf.10.t
+	desc = gulf.10.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.10.a #Truly a joyous occasion!
+		log = "[GetDateText]: [This.GetName]: gulf.10.a executed"
+		add_political_power = 10
+	}
+}
+
+#Our offer has been rejected...
+country_event = {
+	id = gulf.11
+	title = gulf.11.t
+	desc = gulf.11.d
+
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.11.a #A dark day...
+		log = "[GetDateText]: [This.GetName]: gulf.11.a executed"
+		add_political_power = -10
+	}
+}
+
+#[FROM.GetAdjective] Irredentism Threatens our Sovereignty
+country_event = {
+	id = gulf.12
+	title = gulf.12.t
+	desc = gulf.12.d
+
+	picture = GFX_report_event_generic_islamic_rally
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.12.a #We should criticize this declaration!
+		log = "[GetDateText]: [This.GetName]: gulf.12.a executed"
+		add_political_power = 50
+		add_opinion_modifier = {
+			target = FROM
+			modifier = territorial_violation
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gulf.12.b #We must strike first!
+		log = "[GetDateText]: [This.GetName]: gulf.12.b executed"
+		add_war_support = 0.05
+		create_wargoal = {
+			type = puppet_wargoal_focus
+			target = FROM
+		}
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 10
+				strength_ratio = {
+					tag = FROM
+					ratio > 2
+				}
+			}
+		}
+	}
+}
+
+#The Establishment of [FROM.GetNameDef]
+news_event = {
+	id = gulf.13
+	title = gulf.13.t
+	desc = gulf.13.d
+
+	picture = GFX_trade_agreement
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.13.a #A republican triumph.
+		log = "[GetDateText]: [This.GetName]: gulf.13.a executed"
+	}
+}
+
+#High Level Summit Held Between Turkey and [FROM.GetNameDef]
+news_event = {
+	id = gulf.14
+	title = gulf.14.t
+	desc = gulf.14.d
+
+	picture = GFX_trade_agreement
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.14.a #Power dynamics are shifting.
+		log = "[GetDateText]: [This.GetName]: gulf.14.a executed"
+	}
+}
+
+#[FROM.GetLeader] Condemns Turkey's Involvement in Regional Politics
+news_event = {
+	id = gulf.15
+	title = gulf.15.t
+	desc = gulf.15.d
+
+	picture = GFX_news_press_conference
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.15.a #Turkey's ambitions are being challenged.
+		log = "[GetDateText]: [This.GetName]: gulf.15.a executed"
+	}
+}
+
+#[FROM.GetLeader] Pushes for Coalition Against Assad
+country_event = {
+	id = gulf.16
+	title = gulf.16.t
+	desc = gulf.16.d
+
+	picture = GFX_Assad_parade
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.16.a #Time to bring down the dictator.
+		log = "[GetDateText]: [This.GetName]: gulf.16.a executed"
+		if = {
+			limit = { tag = USA }
+			every_country = {
+				limit = {
+					OR = {
+						has_idea = NATO_member
+						tag = ISR
+						if = {
+							limit = { NOT = { SYR = { has_idea = LoAS_member } } }
+							has_idea = LoAS_member
+						}
+					}
+					NOT = { tag = SYR }
+					NOT = { tag = FSA }
+					NOT = { has_country_flag = proposed_coalition_against_assad }
+				}
+				country_event = { id = gulf.16 }
+			}
+			if = {
+				limit = { threat < 0.1 }
+				add_threat = 10
+			}
+			every_country = { news_event = { days = 2 id = gulf.18 } }
+		}
+		if = {
+			limit = {
+				OR = {
+					has_idea = intervention_isolation
+					has_idea = intervention_local_security
+					has_idea = intervention_limited_interventionism
+				}
+			}
+			add_ideas = intervention_regional_interventionism
+		}
+		add_ai_strategy = { type = send_volunteers_desire id = FSA value = 200 }
+		add_ai_strategy = { type = support id = FSA value = 200 }
+		add_war_support = 0.05
+		add_political_power = -100
+		ai_chance = {
+			factor = 10
+			modifier = {
+				add = 20
+				has_government = democratic
+			}
+			modifier = {
+				add = 10
+				has_idea = intervention_regional_interventionism
+			}
+			modifier = {
+				add = 10
+				has_idea = intervention_global_interventionism
+			}
+			modifier = {
+				add = -10
+				OR = {
+					has_country_flag = Operation_iraqi_freedom
+					has_start_date > 2016.01.01
+				}
+			}
+			modifier = {
+				add = 10
+				if = {
+					limit = { BHR = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = BHR
+						value > 19
+					}
+				}
+				else_if = {
+					limit = { KUW = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = KUW
+						value > 19
+					}
+				}
+				else_if = {
+					limit = { OMA = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = OMA
+						value > 19
+					}
+				}
+				else_if = {
+					limit = { QAT = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = QAT
+						value > 19
+					}
+				}
+				else_if = {
+					limit = { SAU = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = SAU
+						value > 19
+					}
+				}
+				else_if = {
+					limit = { UAE = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = UAE
+						value > 19
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				if = {
+					limit = { BHR = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = BHR
+						value > 49
+					}
+				}
+				else_if = {
+					limit = { KUW = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = KUW
+						value > 49
+					}
+				}
+				else_if = {
+					limit = { OMA = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = OMA
+						value > 49
+					}
+				}
+				else_if = {
+					limit = { QAT = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = QAT
+						value > 49
+					}
+				}
+				else_if = {
+					limit = { SAU = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = SAU
+						value > 49
+					}
+				}
+				else_if = {
+					limit = { UAE = { has_country_flag = proposed_coalition_against_assad } }
+					has_opinion = {
+						target = UAE
+						value > 49
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				check_variable = { influence_array^0 = FROM }
+			}
+		}
+	}
+
+	option = {
+		name = gulf.16.b #We cannot risk a clash with Russia and Iran.
+		log = "[GetDateText]: [This.GetName]: gulf.16.b executed"
+		ai_chance = {
+			factor = 10
+			modifier = {
+				add = 20
+				has_idea = intervention_local_security
+			}
+			modifier = {
+				add = 50
+				has_idea = intervention_isolation
+			}
+			modifier = {
+				add = 50
+				NOT = { has_government = democratic }
+			}
+		}
+	}
+}
+
+#[USA.GetLeader] Has Refused to Support an Anti-Assad Coalition!
+country_event = {
+	id = gulf.17
+	title = gulf.17.t
+	desc = gulf.17.d
+
+	picture = GFX_USA_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.17.a #We must take matters into our own hands!
+		log = "[GetDateText]: [This.GetName]: gulf.17.a executed"
+		create_wargoal = {
+			type = topple_government
+			target = SYR
+		}
+	}
+
+	option = {
+		name = gulf.17.b #We are not ready for an operation of this magnitude...
+		log = "[GetDateText]: [This.GetName]: gulf.17.b executed"
+	}
+}
+
+#International Coalition Begins Operations in Syria
+news_event = {
+	id = gulf.18
+	title = gulf.18.t
+	desc = {
+		text = gulf.18.d
+		trigger = { SYR = { NOT = { has_idea = LoAS_member } } }
+	}
+	desc = {
+		text = gulf.18.d_NATO_only
+		trigger = { SYR = { has_idea = LoAS_member } }
+	}
+
+	picture = GFX_afghanistan_war4
+
+	is_triggered_only = yes
+
+	option = {
+		trigger = {
+			OR = {
+				has_government = democratic
+				tag = SAU
+			}
+		}
+		name = gulf.18.a #Human rights must be defended!
+		log = "[GetDateText]: [This.GetName]: gulf.18.a executed"
+	}
+
+	option = {
+		trigger = { NOT = { has_government = democratic tag = SAU } }
+		name = gulf.18.b #This is an unacceptable violation of state sovereignty!
+		log = "[GetDateText]: [This.GetName]: gulf.18.b executed"
+	}
+}
+
+#The [FROM.GetAdjective] government has requested a military technology exchange agreement
+country_event = {
+	id = gulf.19
+	title = gulf.19.t
+	desc = gulf.19.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.19.a #Together we can make Hezbollah pay!
+		log = "[GetDateText]: [This.GetName]: gulf.19.a executed"
+		FROM = {
+			add_to_tech_sharing_group = anti_hezbollah_Tech_Share
+			country_event = { days = 1 id = gulf.20 }
+		}
+		if = {
+			limit = {
+				ISR = { NOT = { is_in_tech_sharing_group = anti_hezbollah_Tech_Share } }
+			}
+			ISR = { add_to_tech_sharing_group = anti_hezbollah_Tech_Share }
+		}
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gulf.19.b #We have no need of this partnership.
+		log = "[GetDateText]: [This.GetName]: gulf.19.b executed"
+		FROM = {
+			country_event = { days = 1 id = gulf.21 }
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+#Israel has agreed to share military technology with us!
+country_event = {
+	id = gulf.20
+	title = gulf.20.t
+	desc = gulf.20.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.20.a #Together we can make Hezbollah pay!
+		effect_tooltip = {
+			ROOT = {
+				add_to_tech_sharing_group = anti_hezbollah_Tech_Share
+			}
+			ISR = { add_to_tech_sharing_group = anti_hezbollah_Tech_Share }
+		}
+		ISR = {
+			custom_effect_tooltip = strategic_reasons_support_tt
+			if = {
+				limit = { ROOT = { tag = BHR } }
+				add_ai_strategy = { type = support id = "BHR" value = 20 }
+				add_ai_strategy = { type = befriend id = "BHR" value = 20 }
+			}
+			if = {
+				limit = { ROOT = { tag = KUW } }
+				add_ai_strategy = { type = support id = "KUW" value = 20 }
+				add_ai_strategy = { type = befriend id = "KUW" value = 20 }
+			}
+			if = {
+				limit = { ROOT = { tag = OMA } }
+				add_ai_strategy = { type = support id = "OMA" value = 20 }
+				add_ai_strategy = { type = befriend id = "OMA" value = 20 }
+			}
+			if = {
+				limit = { ROOT = { tag = QAT } }
+				add_ai_strategy = { type = support id = "QAT" value = 20 }
+				add_ai_strategy = { type = befriend id = "QAT" value = 20 }
+			}
+			if = {
+				limit = { ROOT = { tag = SAU } }
+				add_ai_strategy = { type = support id = "SAU" value = 20 }
+				add_ai_strategy = { type = befriend id = "SAU" value = 20 }
+			}
+			if = {
+				limit = { ROOT = { tag = UAE } }
+				add_ai_strategy = { type = support id = "UAE" value = 20 }
+				add_ai_strategy = { type = befriend id = "UAE" value = 20 }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: gulf.20.a executed"
+	}
+}
+
+#Israel has refused to share military technology with us!
+country_event = {
+	id = gulf.21
+	title = gulf.21.t
+	desc = gulf.21.d
+
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.21.a #We do not need their help anyway.
+		log = "[GetDateText]: [This.GetName]: gulf.21.a executed"
+	}
+}
+
+#The [FROM.GetAdjective] government has proposed a joint operation to eradicate Hezbollah
+country_event = {
+	id = gulf.22
+	title = gulf.22.t
+	desc = {
+		text = gulf.22.d
+		trigger = { original_tag = ISR }
+	}
+	desc = {
+		text = gulf.22.d1
+		trigger = {
+			original_tag = USA
+			FROM = { has_country_flag = israel_accepted }
+		}
+	}
+	desc = {
+		text = gulf.22.d2
+		trigger = {
+			original_tag = USA
+			FROM = { has_country_flag = israel_rejected }
+		}
+	}
+	desc = {
+		text = gulf.22.d3
+		trigger = {
+			NOT = {
+				original_tag = USA
+				original_tag = ISR
+			}
+		}
+	}
+
+	picture = GFX_politics_talks
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.22.a #Our joint forces will annihilate the terrorists!
+		log = "[GetDateText]: [This.GetName]: gulf.22.a executed"
+		trigger = { NOT = { original_tag = USA } }
+		if = {
+			limit = { original_tag = ISR }
+			set_country_flag = israel_accepted
+			FROM = {
+				country_event = { days = 1 id = gulf.23 }
+			}
+		}
+		else_if = {
+			if = {
+				limit = {
+					OR = {
+						has_idea = intervention_isolation
+						has_idea = intervention_local_security
+						has_idea = intervention_limited_interventionism
+					}
+				}
+				add_ideas = intervention_regional_interventionism
+			}
+			if = {
+				limit = { ISR = { has_country_flag = israel_accepted } }
+				add_ai_strategy = { type = send_volunteers_desire id = ISR value = 200 }
+			}
+			if = {
+				limit = { BHR = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = BHR value = 200 }
+			}
+			if = {
+				limit = { KUW = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = KUW value = 200 }
+			}
+			if = {
+				limit = { OMA = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = OMA value = 200 }
+			}
+			if = {
+				limit = { QAT = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = QAT value = 200 }
+			}
+			if = {
+				limit = { SAU = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = SAU value = 200 }
+			}
+			if = {
+				limit = { UAE = { has_completed_focus = GCC_war_with_hezbollah } }
+				add_ai_strategy = { type = send_volunteers_desire id = UAE value = 200 }
+			}
+		}
+		ai_chance = {
+			factor = 2
+		}
+	}
+
+	option = {
+		name = gulf.22.b #We do not want war.
+		log = "[GetDateText]: [This.GetName]: gulf.22.b executed"
+		trigger = { NOT = { original_tag = USA } }
+		if = {
+			limit = { original_tag = ISR }
+			set_country_flag = israel_rejected
+			FROM = {
+				country_event = { days = 1 id = gulf.24 }
+			}
+		}
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 3
+				OR = {
+					has_idea = intervention_isolation
+					has_idea = intervention_local_security
+				}
+			}
+		}
+	}
+	option = {
+		name = gulf.22.c #We should call on NATO to join the operation!
+		log = "[GetDateText]: [This.GetName]: gulf.22.c executed"
+		trigger = { original_tag = USA }
+		if = {
+			limit = { threat < 0.1 }
+			add_threat = 10
+		}
+		if = {
+			limit = { ISR = { has_country_flag = israel_accepted } }
+			add_ai_strategy = { type = send_volunteers_desire id = ISR value = 200 }
+		}
+		if = {
+			limit = { BHR = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = BHR value = 200 }
+		}
+		if = {
+			limit = { KUW = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = KUW value = 200 }
+		}
+		if = {
+			limit = { OMA = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = OMA value = 200 }
+		}
+		if = {
+			limit = { QAT = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = QAT value = 200 }
+		}
+		if = {
+			limit = { SAU = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = SAU value = 200 }
+		}
+		if = {
+			limit = { UAE = { has_completed_focus = GCC_war_with_hezbollah } }
+			add_ai_strategy = { type = send_volunteers_desire id = UAE value = 200 }
+		}
+		set_country_flag = USA_accepted_NATO
+		FROM = {
+			country_event = { days = 1 id = gulf.25 }
+		}
+		every_other_country = {
+			limit = { has_idea = NATO_member }
+			country_event = { days = 1 id = gulf.22 }
+		}
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 1
+				is_in_array = { ruling_party = 1 }
+			}
+		}
+	}
+	option = {
+		name = gulf.22.e #They can do as they wish.
+		log = "[GetDateText]: [This.GetName]: gulf.22.e executed"
+		trigger = { original_tag = USA }
+		set_country_flag = USA_accepted
+		FROM = {
+			country_event = { days = 1 id = gulf.25 }
+		}
+		ai_chance = {
+			factor = 2
+		}
+	}
+	option = {
+		name = gulf.22.f #This operation cannot be allowed to go ahead!
+		log = "[GetDateText]: [This.GetName]: gulf.22.f executed"
+		trigger = { original_tag = USA }
+		set_country_flag = USA_rejected
+		FROM = {
+			country_event = { days = 1 id = gulf.26 }
+		}
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 1
+				NOT = { is_in_array = { ruling_party = 1 } }
+			}
+		}
+	}
+}
+
+#Israel has agreed to a joint operation against Hezbollah!
+country_event = {
+	id = gulf.23
+	title = gulf.23.t
+	desc = gulf.23.d
+
+	picture = GFX_politics_talks
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.23.a #We should inform the Americans first!
+		log = "[GetDateText]: [This.GetName]: gulf.23.a executed"
+		USA = { country_event = { days = 2 id = gulf.22 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+	option = {
+		name = gulf.23.b #We cannot afford to wait.
+		log = "[GetDateText]: [This.GetName]: gulf.23.b executed"
+		create_wargoal = {
+			type = topple_government
+			target = HEZ
+		}
+		ISR = {
+			create_wargoal = {
+				type = topple_government
+				target = HEZ
+			}
+		}
+		every_country = { news_event = { days = 1 id = gulf.27 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#Israel has refused to join a military campaign against Hezbollah
+country_event = {
+	id = gulf.24
+	title = gulf.24.t
+	desc = gulf.24.d
+
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.24.a #We should inform the Americans first!
+		log = "[GetDateText]: [This.GetName]: gulf.24.a executed"
+		USA = { country_event = { days = 2 id = gulf.22 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+	option = {
+		name = gulf.24.b #We cannot afford to wait.
+		log = "[GetDateText]: [This.GetName]: gulf.24.b executed"
+		create_wargoal = {
+			type = topple_government
+			target = HEZ
+		}
+		every_country = { news_event = { days = 1 id = gulf.27 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+	option = {
+		name = gulf.24.c #Without Israel we cannot succeed.
+		log = "[GetDateText]: [This.GetName]: gulf.24.c executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#The Americans will not oppose our operation!
+country_event = {
+	id = gulf.25
+	title = gulf.25.t
+	desc = {
+		text = gulf.25.d
+		trigger = { USA = { has_country_flag = USA_accepted_NATO } }
+	}
+	desc = {
+		text = gulf.25.d1
+		trigger = { USA = { has_country_flag = USA_accepted } }
+	}
+
+	picture = GFX_USA_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.25.a #We can proceed!
+		log = "[GetDateText]: [This.GetName]: gulf.25.a executed"
+		create_wargoal = {
+			type = topple_government
+			target = HEZ
+		}
+		ISR = {
+			create_wargoal = {
+				type = topple_government
+				target = HEZ
+			}
+		}
+		every_country = { news_event = { days = 2 id = gulf.27 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#The Americans want us to back down!
+country_event = {
+	id = gulf.26
+	title = gulf.26.t
+	desc = gulf.26.d
+
+	picture = GFX_USA_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.26.a #We should proceed regardless!
+		log = "[GetDateText]: [This.GetName]: gulf.26.a executed"
+		create_wargoal = {
+			type = topple_government
+			target = HEZ
+		}
+		ISR = {
+			create_wargoal = {
+				type = topple_government
+				target = HEZ
+			}
+		}
+		USA = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = insult
+			}
+		}
+		every_country = { news_event = { days = 1 id = gulf.27 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+	option = {
+		name = gulf.26.b #We cannot afford to directly oppose the Americans.
+		log = "[GetDateText]: [This.GetName]: gulf.26.b executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#War Breaks Out in Lebanon Following Declaration of War on Hezbollah
+news_event = {
+	id = gulf.27
+	title = gulf.27.t
+	desc = {
+		text = gulf.27.d
+		trigger = {
+			ISR = { has_country_flag = israel_accepted }
+			USA = { has_country_flag = USA_accepted_NATO }
+		}
+	}
+	desc = {
+		text = gulf.27.d1
+		trigger = {
+			ISR = { has_country_flag = israel_accepted }
+			USA = { has_country_flag = USA_accepted }
+		}
+	}
+	desc = {
+		text = gulf.27.d2
+		trigger = {
+			ISR = { has_country_flag = israel_accepted }
+			USA = { has_country_flag = USA_rejected }
+		}
+	}
+	desc = {
+		text = gulf.27.d3
+		trigger = {
+			ISR = { has_country_flag = israel_rejected }
+			USA = { has_country_flag = USA_accepted_NATO }
+		}
+	}
+	desc = {
+		text = gulf.27.d4
+		trigger = {
+			ISR = { has_country_flag = israel_rejected }
+			USA = { has_country_flag = USA_accepted }
+		}
+	}
+	desc = {
+		text = gulf.27.d5
+		trigger = {
+			ISR = { has_country_flag = israel_rejected }
+			USA = { has_country_flag = USA_rejected }
+		}
+	}
+
+	picture = GFX_news_Hezbollah_Syria
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.27.a #The terrorists will not be missed.
+		log = "[GetDateText]: [This.GetName]: gulf.27.a executed"
+		trigger = { OR = { has_government = democratic has_idea = idea_gcc_member_state } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+	option = {
+		name = gulf.27.b #This is a blantant violation of Lebanese sovereignty!
+		log = "[GetDateText]: [This.GetName]: gulf.27.b executed"
+		trigger = { NOT = { has_government = democratic has_idea = idea_gcc_member_state } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#[FROM.GetLeader] Denounces Israeli Occupation
+news_event = {
+	id = gulf.28
+	title = gulf.28.t
+	desc = gulf.28.d
+
+	picture = GFX_news_press_conference
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.28.a #The Arab-Israeli conflict is heating up.
+		log = "[GetDateText]: [This.GetName]: gulf.28.a executed"
+	}
+}
+
+#[FROM.GetLeader] Condemns Iranian Aggression
+news_event = {
+	id = gulf.29
+	title = gulf.29.t
+	desc = gulf.29.d
+
+	picture = GFX_news_press_conference
+
+	is_triggered_only = yes
+
+	option = {
+		trigger = { OR = { has_government = democratic has_government = fascism } }
+		name = gulf.29.a #About time someone stood up to Iran's actions!
+		log = "[GetDateText]: [This.GetName]: gulf.29.a executed"
+	}
+	option = {
+		trigger = { NOT = { has_government = democratic has_government = fascism } }
+		name = gulf.29.b #`
+		log = "[GetDateText]: [This.GetName]: gulf.29.b executed"
+	}
+}
+
+#[FROM.GetName] Proposes Pre-emptive Strike on Iran
+country_event = {
+	id = gulf.30
+	title = gulf.30.t
+	desc = gulf.30.d
+
+	picture = GFX_rocket_explosion
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.30.a #The Iranian threat must be eliminated!
+		log = "[GetDateText]: [This.GetName]: gulf.30.a executed"
+		if = {
+			limit = { tag = USA }
+			FROM = {
+				create_wargoal = {
+					type = topple_government
+					target = PER
+				}
+			}
+			if = {
+				limit = { check_variable = { global.arab_rebels_strength > 0 } }
+				PER = { release = ARA }
+				ARA = {	declare_war_on = { target = PER type = annex_everything } }
+				hidden_effect = {
+					ARA = { load_oob = SYR_arab_units }
+				}
+			}
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { global.arab_rebels_strength > 1 } }
+					399 = {
+						create_unit = { division = " name = \"2nd Ahwaz Militia\" division_template = \"Arab Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = ARA }
+					}
+				}
+				if = {
+					limit = { check_variable = { global.arab_rebels_strength > 2 } }
+					399 = {
+						create_unit = { division = " name = \"3rd Ahwaz Militia\" division_template = \"Arab Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = ARA }
+					}
+				}
+				if = {
+					limit = { check_variable = { global.arab_rebels_strength > 3 } }
+					399 = {
+						create_unit = { division = " name = \"4th Ahwaz Militia\" division_template = \"Arab Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = ARA }
+					}
+				}
+				if = {
+					limit = { check_variable = { global.arab_rebels_strength > 4 } }
+					399 = {
+						create_unit = { division = " name = \"5th Ahwaz Militia\" division_template = \"Arab Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = ARA }
+					}
+				}
+			}
+			if = {
+				limit = { check_variable = { global.balochi_rebels_strength > 0 } }
+				PER = { release = BLC }
+				BLC = {	declare_war_on = { target = PER type = annex_everything } }
+				hidden_effect = {
+					BLC = { load_oob = SYR_BLC_units }
+				}
+			}
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { global.balochi_rebels_strength > 1 } }
+					401 = {
+						create_unit = { division = " name = \"2nd Balochi Militia\" division_template = \"Balochi Tribal Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = BLC }
+					}
+				}
+				if = {
+					limit = { check_variable = { global.balochi_rebels_strength > 2 } }
+					401 = {
+						create_unit = { division = " name = \"3rd Balochi Militia\" division_template = \"Balochi Tribal Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = BLC }
+
+					}
+				}
+				if = {
+					limit = { check_variable = { global.balochi_rebels_strength > 3 } }
+					401 = {
+						create_unit = { division = " name = \"4th Balochi Militia\" division_template = \"Balochi Tribal Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = BLC }
+					}
+				}
+				if = {
+					limit = { check_variable = { global.balochi_rebels_strength > 4 } }
+					401 = {
+						create_unit = { division = " name = \"5th Balochi Militia\" division_template = \"Balochi Tribal Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = BLC }
+					}
+				}
+			}
+			every_country = {
+				limit = {
+					OR = {
+						has_idea = NATO_member
+						tag = ISR
+						has_idea = LoAS_member
+					}
+					NOT = { has_country_flag = proposed_coalition_against_iran }
+				}
+				country_event = { id = gulf.30 }
+			}
+			every_country = { news_event = { days = 2 id = gulf.32 } }
+		}
+		add_war_support = 0.05
+		add_political_power = -100
+		create_wargoal = {
+			type = topple_government
+			target = PER
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				add = 20
+				OR = {
+					is_in_array = { ruling_party = 0 }
+					is_in_array = { ruling_party = 1 }
+				}
+			}
+			modifier = {
+				add = 10
+				has_idea = intervention_regional_interventionism
+			}
+			modifier = {
+				add = 10
+				has_idea = intervention_global_interventionism
+			}
+			modifier = {
+				add = -10
+				OR = {
+					has_country_flag = Operation_iraqi_freedom
+					has_start_date > 2016.01.01
+				}
+			}
+			modifier = {
+				add = 10
+				check_variable = { influence_array^0 = FROM }
+			}
+		}
+	}
+	option = {
+		trigger = { NOT = { is_arabic_nation = yes } }
+		name = gulf.30.b #Middle Eastern politics is none of our business.
+		log = "[GetDateText]: [This.GetName]: gulf.30.b executed"
+		if = {
+			limit = { tag = USA }
+			FROM = { country_event = { days = 1 id = gulf.31 } }
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				add = 10
+				NOT = {
+					is_in_array = { ruling_party = 0 }
+					is_in_array = { ruling_party = 1 }
+				}
+			}
+			modifier = {
+				add = 10
+				has_idea = intervention_limited_interventionism
+			}
+			modifier = {
+				add = 20
+				has_idea = intervention_local_security
+			}
+			modifier = {
+				add = 50
+				has_idea = intervention_isolation
+			}
+			modifier = {
+				add = 100
+				NOT = { has_government = democratic }
+			}
+		}
+	}
+	option = {
+		trigger = { is_arabic_nation = yes }
+		name = gulf.30.c #We have nothing to gain from [FROM.GetAdjective] adventurism.
+		log = "[GetDateText]: [This.GetName]: gulf.30.c executed"
+		ai_chance = {
+			factor = 10
+			modifier = {
+				add = 20
+				has_idea = intervention_local_security
+			}
+			modifier = {
+				add = 50
+				has_idea = intervention_isolation
+			}
+			modifier = {
+				add = 50
+				NOT = { has_government = democratic }
+			}
+			modifier = {
+				add = 50
+				has_completed_focus = GCC_strategic_hedging
+			}
+		}
+	}
+}
+
+#[USA.GetLeader] Has Refused to Support War with Iran!
+country_event = {
+	id = gulf.31
+	title = gulf.31.t
+	desc = gulf.31.d
+
+	picture = GFX_USA_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.31.a #We must take matters into our own hands!
+		log = "[GetDateText]: [This.GetName]: gulf.31.a executed"
+		add_war_support = 0.05
+		if = {
+			limit = { check_variable = { global.arab_rebels_strength > 0 } }
+			PER = { release = ARA }
+			ARA = {	declare_war_on = { target = PER type = annex_everything } }
+			hidden_effect = {
+				ARA = { load_oob = SYR_arab_units }
+			}
+		}
+		hidden_effect = {
+			if = {
+				limit = { check_variable = { global.arab_rebels_strength > 1 } }
+				399 = {
+					create_unit = { division = " name = \"2nd Ahwaz Militia\" division_template = \"Arab Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = ARA }
+				}
+			}
+			if = {
+				limit = { check_variable = { global.arab_rebels_strength > 2 } }
+				399 = {
+					create_unit = { division = " name = \"3rd Ahwaz Militia\" division_template = \"Arab Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = ARA }
+				}
+			}
+			if = {
+				limit = { check_variable = { global.arab_rebels_strength > 3 } }
+				399 = {
+					create_unit = { division = " name = \"4th Ahwaz Militia\" division_template = \"Arab Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = ARA }
+				}
+			}
+			if = {
+				limit = { check_variable = { global.arab_rebels_strength > 4 } }
+				399 = {
+					create_unit = { division = " name = \"5th Ahwaz Militia\" division_template = \"Arab Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = ARA }
+				}
+			}
+		}
+		if = {
+			limit = { check_variable = { global.balochi_rebels_strength > 0 } }
+			PER = { release = BLC }
+			BLC = {	declare_war_on = { target = PER type = annex_everything } }
+			hidden_effect = {
+				BLC = { load_oob = SYR_BLC_units }
+			}
+		}
+		hidden_effect = {
+			if = {
+				limit = { check_variable = { global.balochi_rebels_strength > 1 } }
+				401 = {
+					create_unit = { division = " name = \"2nd Balochi Militia\" division_template = \"Balochi Tribal Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = BLC }
+				}
+			}
+			if = {
+				limit = { check_variable = { global.balochi_rebels_strength > 2 } }
+				401 = {
+					create_unit = { division = " name = \"3rd Balochi Militia\" division_template = \"Balochi Tribal Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = BLC }
+
+				}
+			}
+			if = {
+				limit = { check_variable = { global.balochi_rebels_strength > 3 } }
+				401 = {
+					create_unit = { division = " name = \"4th Balochi Militia\" division_template = \"Balochi Tribal Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = BLC }
+				}
+			}
+			if = {
+				limit = { check_variable = { global.balochi_rebels_strength > 4 } }
+				401 = {
+					create_unit = { division = " name = \"5th Balochi Militia\" division_template = \"Balochi Tribal Militia\" start_experience_factor = 0.2 start_equipment_factor = 0.75" owner = BLC }
+				}
+			}
+		}
+		create_wargoal = {
+			type = topple_government
+			target = PER
+		}
+		every_country = {
+			limit = {
+				OR = {
+					tag = ISR
+					has_idea = LoAS_member
+				}
+				NOT = { has_country_flag = proposed_coalition_against_iran }
+			}
+			country_event = { id = gulf.30 }
+		}
+		every_country = { news_event = { days = 2 id = gulf.32 } }
+	}
+
+	option = {
+		name = gulf.31.b #We are not ready for an operation of this magnitude...
+		log = "[GetDateText]: [This.GetName]: gulf.31.b executed"
+	}
+}
+
+#Coalition of the Willing Begins Invasion of Iran
+news_event = {
+	id = gulf.32
+	title = gulf.32.t
+	desc = {
+		text = gulf.32.d
+		trigger = {
+			check_variable = { global.arab_rebels_strength = 0 }
+			check_variable = { global.balochi_rebels_strength = 0 }
+		}
+	}
+	desc = {
+		text = gulf.32.d1
+		trigger = {
+			check_variable = { global.arab_rebels_strength > 0 }
+			check_variable = { global.balochi_rebels_strength = 0 }
+		}
+	}
+	desc = {
+		text = gulf.32.d2
+		trigger = {
+			check_variable = { global.arab_rebels_strength = 0 }
+			check_variable = { global.balochi_rebels_strength > 0 }
+		}
+	}
+	desc = {
+		text = gulf.32.d3
+		trigger = {
+			check_variable = { global.arab_rebels_strength > 0 }
+			check_variable = { global.balochi_rebels_strength > 0 }
+		}
+	}
+
+	picture = GFX_USA_War_On_Terrorism
+
+	is_triggered_only = yes
+
+	option = {
+		trigger = { OR = { has_government = democratic has_government = fascism } }
+		name = gulf.32.a #The Iranian regime's days are numbered...
+		log = "[GetDateText]: [This.GetName]: gulf.32.a executed"
+	}
+
+	option = {
+		trigger = { NOT = { has_government = democratic has_government = fascism } }
+		name = gulf.32.b #This is an outrageous act of aggression!
+		log = "[GetDateText]: [This.GetName]: gulf.32.b executed"
+	}
+}
+
+#[FROM.GetLeader] Denounces Foreign Involvement in the Middle East
+news_event = {
+	id = gulf.33
+	title = gulf.33.t
+	desc = gulf.33.d
+
+	picture = GFX_news_iraq_war3
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.33.a #An unexpected turn of events.
+		log = "[GetDateText]: [This.GetName]: gulf.33.a executed"
+	}
+}
+
+#[FROM.GetName] Demands the Expulsion of Foreign Troops
+country_event = {
+	id = gulf.34
+	title = gulf.34.t
+	desc = gulf.34.d
+
+	picture = GFX_politics_demands
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.34.a #We must concede.
+		log = "[GetDateText]: [This.GetName]: gulf.34.a executed"
+		every_country = {
+			limit = {
+				has_military_access_to = ROOT
+				NOT = { is_arabic_nation = yes }
+			}
+			diplomatic_relation = {
+				country = ROOT
+				relation = military_access
+				active = no
+			}
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = expelled_forces
+			}
+		}
+		custom_effect_tooltip = gain_20_FROM_influence_tt
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 20 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = FROM }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = FROM.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 1
+				NOT = {
+					has_government = democratic
+					has_government = communism
+				}
+			}
+		}
+	}
+
+	option = {
+		name = gulf.34.b #We are nothing if not loyal!
+		log = "[GetDateText]: [This.GetName]: gulf.34.b executed"
+		custom_effect_tooltip = GCC_imperial_war_tt
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 1
+				set_temp_variable = { temp_idx = -1 }
+					any_of = {
+						array = influence_array
+						value = v
+						index = i
+						if = {
+							limit = { var:v = { tag = FROM } }
+							set_temp_variable = { temp_idx = i }
+							always = yes
+						}
+						else = { always = no }
+					}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx < 0.20 }
+
+			}
+			modifier = {
+				add = 1
+				strength_ratio = {
+					tag = FROM
+					ratio > 0.75
+				}
+			}
+		}
+	}
+}
+
+#[FROM.GetName] Declares War on "Foreign Stooges"
+news_event = {
+	id = gulf.35
+	title = gulf.35.t
+	desc = gulf.35.d
+
+	picture = GFX_news_peninsula_shield_intervention
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.35.a #A region aflame.
+		log = "[GetDateText]: [This.GetName]: gulf.35.a executed"
+	}
+}
+
+#The [FROM.GetAdjective]s have covertly sent us military equipment!
+country_event = {
+	id = gulf.36
+	title = gulf.36.t
+	desc = gulf.36.d
+
+	is_triggered_only = yes
+
+	picture = GFX_guns
+
+	option = {
+		name = gulf.36.a #The help is appreciated
+		log = "[GetDateText]: [This.GetName]: gulf.36.a executed"
+		effect_tooltip = {
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = 100
+			}
+			add_equipment_to_stockpile = {
+				type = L_AT_Equipment
+				amount = 10
+			}
+			add_equipment_to_stockpile = {
+				type = AA_Equipment
+				amount = 10
+			}
+			add_equipment_to_stockpile = {
+				type = util_vehicle_equipment
+				amount = 5
+			}
+		}
+	}
+}
+
+#Shi'a terror attack small
+news_event = {
+	id = shia_terror.1
+	title = shia_terror.1.t
+	desc = {
+		text = shia_terror.1.d
+		trigger = { FROM = { NOT = { tag = SAU }} }
+	}
+	desc = {
+		text = shia_terror.1.d1
+		trigger = { FROM = { tag = SAU }}
+	}
+
+	picture = GFX_news_gulf_terror
+
+	trigger = {
+		OR = {
+			has_idea = shia_resistance_05
+			has_idea = shia_resistance_06
+			has_idea = shia_resistance_07
+		}
+		if = {
+			limit = { tag = SAU }
+			controls_state = 174
+		}
+	}
+
+	mean_time_to_happen = {
+		days = 2000
+		modifier = {
+			factor = 0.75
+			has_stability < 0.5
+		}
+		modifier = {
+			factor = 0.75
+			has_stability < 0.4
+		}
+		modifier = {
+			factor = 0.75
+			has_stability < 0.3
+		}
+		modifier = {
+			factor = 0.75
+			has_stability < 0.2
+		}
+		modifier = {
+			factor = 0.75
+			has_stability < 0.1
+		}
+		modifier = {
+			factor = 0.75
+			has_idea = shia_resistance_06
+		}
+		modifier = {
+			factor = 0.75
+			has_idea = shia_resistance_07
+		}
+		modifier = {
+			factor = 1.1
+			has_idea = police_05
+		}
+		modifier = {
+			factor = 1.1
+			has_completed_focus = GCC_enhanced_surveillance
+		}
+		modifier = {
+			factor = 1.1
+			has_completed_focus = GCC_build_a_totalitarian_state
+		}
+		modifier = {
+			factor = 1.5
+			has_completed_focus = GCC_counter_terror_operations
+		}
+	}
+
+	option = {
+		name = shia_terror.1.a #A dark day for [FROM.GetNameDef]
+		add_political_power = -50
+		add_manpower = -5
+		add_popularity = {
+			ideology = fascism
+			popularity = 0.02
+		}
+		recalculate_party = yes
+		hidden_effect = { every_other_country = { news_event = { id = shia_terror.2 } } }
+		log = "[GetDateText]: [This.GetName]: shia_terror.1.a executed"
+	}
+}
+
+news_event = {
+	id = shia_terror.2
+	title = shia_terror.1.t
+	desc = {
+		text = shia_terror.1.d
+		trigger = { FROM = { NOT = { tag = SAU }}}
+	}
+	desc = {
+		text = shia_terror.1.d1
+		trigger = { FROM = { tag = SAU }}
+	}
+
+	picture = GFX_news_gulf_terror
+
+	is_triggered_only = yes
+
+	option = {
+		name = shia_terror.1.a #A dark day for [FROM.GetNameDef]
+		log = "[GetDateText]: [This.GetName]: shia_terror.1.a executed"
+	}
+}
+
+#Shi'a terror attack large
+news_event = {
+	id = shia_terror.3
+	title = shia_terror.3.t
+	desc = shia_terror.3.d
+
+	picture = GFX_news_peninsula_shield_intervention
+
+	trigger = {
+		OR = {
+			has_idea = shia_resistance_08
+			has_idea = shia_resistance_09
+		}
+		if = {
+			limit = { tag = SAU }
+			controls_state = 174
+		}
+	}
+
+	mean_time_to_happen = {
+		days = 2000
+		modifier = {
+			factor = 0.75
+			has_stability < 0.5
+		}
+		modifier = {
+			factor = 0.75
+			has_stability < 0.4
+		}
+		modifier = {
+			factor = 0.75
+			has_stability < 0.3
+		}
+		modifier = {
+			factor = 0.75
+			has_stability < 0.2
+		}
+		modifier = {
+			factor = 0.75
+			has_stability < 0.1
+		}
+		modifier = {
+			factor = 0.75
+			has_idea = shia_resistance_09
+		}
+		modifier = {
+			factor = 1.1
+			has_idea = police_05
+		}
+		modifier = {
+			factor = 1.1
+			has_completed_focus = GCC_enhanced_surveillance
+		}
+		modifier = {
+			factor = 1.1
+			has_completed_focus = GCC_build_a_totalitarian_state
+		}
+		modifier = {
+			factor = 1.5
+			has_completed_focus = GCC_counter_terror_operations
+		}
+	}
+
+	option = {
+		name = shia_terror.3.a #We must take action!
+		add_political_power = -100
+		add_stability = -0.01
+		add_manpower = -200
+		add_popularity = {
+			ideology = fascism
+			popularity = 0.05
+		}
+		recalculate_party = yes
+		hidden_effect = { every_other_country = { news_event = { id = shia_terror.4 } } }
+		log = "[GetDateText]: [This.GetName]: shia_terror.3.a executed"
+	}
+}
+
+news_event = {
+	id = shia_terror.4
+	title = shia_terror.3.t
+	desc = shia_terror.3.d
+
+	picture = GFX_news_peninsula_shield_intervention
+
+	is_triggered_only = yes
+
+	option = {
+		name = shia_terror.1.a
+		log = "[GetDateText]: [This.GetName]: shia_terror.4.a executed"
+	}
+}
+
+#Shi'a rebellion
+country_event = {
+	id = shia_terror.5
+	title = shia_terror.5.t
+	desc = {
+		text = shia_terror.5.d
+		trigger = {
+			OR = {
+				original_tag = KUW
+				original_tag = BHR
+				original_tag = QAT
+				original_tag = UAE
+			}
+		}
+	}
+	desc = {
+		text = shia_terror.5.d1
+		trigger = {
+			original_tag = SAU
+		}
+	}
+
+	picture = GFX_politics_shiite
+
+	trigger = {
+		has_idea = shia_resistance_10
+		OR = {
+			AND = {
+				has_idea = small_shia_population
+				communism > 0.1
+			}
+			AND = {
+				has_idea = substantial_shia_population
+				communism > 0.15
+			}
+			AND = {
+				has_idea = large_shia_population
+				communism > 0.4
+			}
+		}
+		if = {
+			limit = { tag = SAU }
+			controls_state = 174
+		}
+	}
+
+	mean_time_to_happen = {
+		days = 100
+	}
+
+	option = {
+		name = shia_terror.5.a #Submit to the rebellion.
+		trigger = {
+			OR = {
+				original_tag = KUW
+				original_tag = BHR
+				original_tag = QAT
+				original_tag = UAE
+			}
+		}
+		set_politics = {
+			ruling_party = communism
+		}
+		set_variable = { party_pop_array^9 = 1 }
+		recalculate_party = yes
+		clear_array = ruling_party
+		clear_array = gov_coalition_array
+		add_to_array = { ruling_party = 9 }
+		update_government_coalition_strength = yes
+		update_party_name = yes
+		set_coalition_drift = yes
+		hidden_effect = { kill_country_leader = yes }
+		add_to_variable = { Vilayat_e_Faqih_leader = 1 }
+		if = {
+			limit = { original_tag = BHR }
+			create_country_leader = {
+				name = "Isa Qassim"
+				picture = "Isa_Qassim.dds"
+				ideology = Vilayat_e_Faqih
+				traits = {
+					emerging_Vilayat_e_Faqih
+				}
+			}
+		}
+		if = {
+			limit = { original_tag = KUW }
+			create_country_leader = {
+				name = "Adnan Zahid Abdulsamad"
+				picture = "Adnan_Zahid_Abdulsamad.dds"
+				ideology = Vilayat_e_Faqih
+				traits = {
+					emerging_Vilayat_e_Faqih
+				}
+			}
+		}
+		if = {
+			limit = { NOT = { has_idea = large_shia_population } }
+			add_ideas = unrepresentative_government_shia
+		}
+		custom_effect_tooltip = PER_small_influence_40_tt
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 40 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = PER }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = PER.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+			add_ideas = iranian_aid
+			swap_ideas = {
+				remove_idea = saudi_royal_family
+				add_idea = iranian_quds_force
+			}
+			set_country_flag = positive_iranian_quds_force
+		}
+		every_country = { news_event = { id = shia_terror.6 } }
+		log = "[GetDateText]: [This.GetName]: shia_terror.5.a executed"
+	}
+
+	option = {
+		name = shia_terror.5.b #Request GCC intervention.
+		trigger = {
+			OR = {
+				original_tag = KUW
+				original_tag = BHR
+				original_tag = QAT
+				original_tag = UAE
+			}
+			has_idea = idea_gcc_member_state
+		}
+		add_political_power = -200
+		add_stability = -0.1
+		custom_effect_tooltip = SAU_small_influence_40_tt
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 40 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = SAU }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = SAU.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		every_country = { news_event = { id = shia_terror.7 } }
+		log = "[GetDateText]: [This.GetName]: shia_terror.5.b executed"
+	}
+
+	option = {
+		name = shia_terror.5.c #We will crush the insurgency!
+		trigger = {
+			original_tag = SAU
+		}
+		SAU = { release = QTF }
+		hidden_effect = {
+			QTF = { load_oob = QTF_uprising }
+		}
+		SAU = {	declare_war_on = { target = QTF type = annex_everything } }
+		QTF = {
+			add_timed_idea = {
+				idea = anti_saudi_sentiment
+				days = 365
+			}
+			add_threat = 10
+		}
+		PER = { add_ai_strategy = { type = send_volunteers_desire id = "QTF" value = 200 } }
+		HEZ = { add_ai_strategy = { type = send_volunteers_desire id = "QTF" value = 200 } }
+		every_country = { news_event = { id = shia_terror.8 } }
+		log = "[GetDateText]: [This.GetName]: shia_terror.5.c executed"
+	}
+
+	option = {
+		name = shia_terror.5.e #We cannot afford open conflict...
+		trigger = {
+			original_tag = SAU
+		}
+		SAU = { release = QTF }
+		hidden_effect = {
+			QTF = { load_oob = QTF_uprising }
+		}
+		PER = {
+			add_ai_strategy = { type = support id = "QTF" value = 100 }
+			add_ai_strategy = { type = send_volunteers_desire id = "QTF" value = 200 }
+		}
+		HEZ = {
+			add_ai_strategy = { type = support id = "QTF" value = 100 }
+			add_ai_strategy = { type = send_volunteers_desire id = "QTF" value = 200 }
+		}
+		every_country = { news_event = { id = shia_terror.8 } }
+		log = "[GetDateText]: [This.GetName]: shia_terror.5.e executed"
+	}
+
+	option = {
+		name = shia_terror.5.f #Switch to Qatif
+		trigger = {
+			original_tag = SAU
+		}
+		SAU = { release = QTF }
+		hidden_effect = {
+			QTF = { load_oob = QTF_uprising }
+		}
+		PER = {
+			add_ai_strategy = { type = support id = "QTF" value = 100 }
+			add_ai_strategy = { type = send_volunteers_desire id = "QTF" value = 200 }
+		}
+		HEZ = {
+			add_ai_strategy = { type = support id = "QTF" value = 100 }
+			add_ai_strategy = { type = send_volunteers_desire id = "QTF" value = 200 }
+		}
+		QTF = { change_tag_from = SAU }
+		every_country = { news_event = { id = shia_terror.8 } }
+		log = "[GetDateText]: [This.GetName]: shia_terror.5.f executed"
+	}
+}
+
+#Shia Hardliners Take Over [FROM.GetNameDef]
+news_event = {
+	id = shia_terror.6
+	title = shia_terror.6.t
+	desc = shia_terror.6.d
+
+	picture = GFX_Yem_CivilWar_End
+
+	is_triggered_only = yes
+
+	option = {
+		name = shia_terror.6.a #This instability is concerning...
+		log = "[GetDateText]: [This.GetName]: shia_terror.6.a executed"
+	}
+}
+
+#Peninsula Shield Forces Crush Shia Uprising in [FROM.GetNameDef]
+news_event = {
+	id = shia_terror.7
+	title = shia_terror.7.t
+	desc = shia_terror.7.d
+
+	picture = GFX_news_peninsula_shield_intervention
+
+	is_triggered_only = yes
+
+	option = {
+		trigger = { NOT = { has_government = communism } }
+		name = shia_terror.7.a #A necessary evil...
+		log = "[GetDateText]: [This.GetName]: shia_terror.7.a executed"
+	}
+
+	option = {
+		trigger = { has_government = communism }
+		name = shia_terror.7.b #The oppression of the [FROM.GetAdjective] state knows no bounds!
+		log = "[GetDateText]: [This.GetName]: shia_terror.7.b executed"
+	}
+}
+
+#[FROM.GetAdjective] Troops Forced to Flee Eastern Province
+news_event = {
+	id = shia_terror.8
+	title = shia_terror.8.t
+	desc = {
+		text = shia_terror.8.d
+		trigger = { SAU = { has_war_with = QTF } }
+	}
+	desc = {
+		text = shia_terror.8.d1
+		trigger = { NOT = { SAU = { has_war_with = QTF } } }
+	}
+
+	picture = GFX_Yem_CivilWar_End
+
+	is_triggered_only = yes
+
+	option = {
+		name = shia_terror.6.a
+		log = "[GetDateText]: [This.GetName]: shia_terror.6.a executed"
+	}
+}
+
+#GCC
+country_event = {
+	id = gcc.1
+	title = gcc.1.t
+	desc = gcc.1.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.1.a #support the initiative
+		log = "[GetDateText]: [This.GetName]: gcc.1.a executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gcc.1.b #veto the initiative
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GCC_veto
+				days = 60
+			}
+		}
+		FROM = { country_event = { id = gcc.5 }}
+		log = "[GetDateText]: [This.GetName]: gcc.1.b executed"
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+		}
+	}
+
+}
+
+country_event = {
+	id = gcc.2
+	title = gcc.1.t
+	desc = gcc.2.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.1.a #support the initiative
+		log = "[GetDateText]: [This.GetName]: gcc.1.a executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gcc.1.b #veto the initiative
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GCC_veto
+				days = 60
+			}
+		}
+		FROM = { country_event = { id = gcc.5 }}
+		log = "[GetDateText]: [This.GetName]: gcc.1.b executed"
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+		}
+	}
+
+}
+
+country_event = {
+	id = gcc.3
+	title = gcc.1.t
+	desc = gcc.3.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.1.a #support the initiative
+		log = "[GetDateText]: [This.GetName]: gcc.1.a executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gcc.1.b #veto the initiative
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GCC_veto
+				days = 60
+			}
+		}
+		FROM = { country_event = { id = gcc.5 }}
+		log = "[GetDateText]: [This.GetName]: gcc.1.b executed"
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+		}
+	}
+
+}
+
+country_event = {
+	id = gcc.4
+	title = gcc.1.t
+	desc = gcc.4.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.1.a #support the initiative
+		log = "[GetDateText]: [This.GetName]: gcc.1.a executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gcc.1.b #veto the initiative
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GCC_veto
+				days = 60
+			}
+		}
+		FROM = { country_event = { id = gcc.5 }}
+		log = "[GetDateText]: [This.GetName]: gcc.1.b executed"
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = gcc.5
+	title = gcc.5.t
+	desc = gcc.5.d
+
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.5.a #a step backward for regional integration...
+		log = "[GetDateText]: [This.GetName]: gcc.5.a executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+country_event = {
+	id = gcc.6
+	title = gcc.1.t
+	desc = gcc.6.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.1.a #support the initiative
+		log = "[GetDateText]: [This.GetName]: gcc.1.a executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gcc.1.b #veto the initiative
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GCC_veto
+				days = 60
+			}
+		}
+		FROM = { country_event = { id = gcc.5 }}
+		log = "[GetDateText]: [This.GetName]: gcc.1.b executed"
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = gcc.7
+	title = gcc.1.t
+	desc = gcc.7.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.1.a #support the initiative
+		log = "[GetDateText]: [This.GetName]: gcc.1.a executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gcc.1.b #veto the initiative
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GCC_veto
+				days = 60
+			}
+		}
+		FROM = { country_event = { id = gcc.5 }}
+		log = "[GetDateText]: [This.GetName]: gcc.1.b executed"
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = gcc.8
+	title = gcc.1.t
+	desc = gcc.8.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.1.a #support the initiative
+		log = "[GetDateText]: [This.GetName]: gcc.1.a executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gcc.1.b #veto the initiative
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GCC_veto
+				days = 60
+			}
+		}
+		FROM = { country_event = { id = gcc.5 }}
+		log = "[GetDateText]: [This.GetName]: gcc.1.b executed"
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+		}
+	}
+}
+
+#GCC formation event
+country_event = {
+	id = gcc.9
+
+	hidden = yes
+
+	trigger = {
+		has_idea = idea_gcc_member_state
+		has_completed_focus = GCC_limited_unified_command
+		NOT = { has_completed_focus = GCC_a_robust_alliance }
+		is_in_faction = no
+		has_defensive_war = yes
+		all_enemy_country = {
+			NOT = { has_idea = idea_gcc_member_state }
+		}
+	}
+
+	mean_time_to_happen = { days = 2 }
+
+	option = {
+		name = gcc.9.a
+		log = "[GetDateText]: [This.GetName]: gcc.9.a executed"
+		every_country = {
+			limit = { has_country_flag = gcc_dominant_member }
+			create_faction = PENINSULA_SHIELD
+			set_country_flag = gcc_formed
+			if = {
+				limit = { NOT = { tag = BHR } BHR = { has_idea = idea_gcc_member_state }}
+				add_to_faction = BHR
+			}
+			if = {
+				limit = { NOT = { tag = KUW } KUW = { has_idea = idea_gcc_member_state }}
+				add_to_faction = KUW
+			}
+			if = {
+				limit = { NOT = { tag = OMA } OMA = { has_idea = idea_gcc_member_state }}
+				add_to_faction = OMA
+			}
+			if = {
+				limit = { NOT = { tag = QAT } QAT = { has_idea = idea_gcc_member_state }}
+				add_to_faction = QAT
+			}
+			if = {
+				limit = { NOT = { tag = SAU } SAU = { has_idea = idea_gcc_member_state }}
+				add_to_faction = SAU
+			}
+			if = {
+				limit = { NOT = { tag = UAE } UAE = { has_idea = idea_gcc_member_state }}
+				add_to_faction = UAE
+			}
+			if = {
+				limit = { NOT = { tag = EGY } EGY = { has_idea = idea_gcc_member_state }}
+				add_to_faction = EGY
+			}
+			if = {
+				limit = { NOT = { tag = IRQ } IRQ = { has_idea = idea_gcc_member_state }}
+				add_to_faction = IRQ
+			}
+			if = {
+				limit = { NOT = { tag = JOR } JOR = { has_idea = idea_gcc_member_state }}
+				add_to_faction = JOR
+			}
+			if = {
+				limit = { NOT = { tag = MOR } MOR = { has_idea = idea_gcc_member_state }}
+				add_to_faction = MOR
+			}
+			if = {
+				limit = { NOT = { tag = YEM } YEM = { has_idea = idea_gcc_member_state }}
+				add_to_faction = YEM
+			}
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#GCC dismantling event
+country_event = {
+	id = gcc.10
+
+	hidden = yes
+
+	trigger = {
+		NOT = {
+			any_country = {
+				has_idea = idea_gcc_member_state
+				OR = {
+					has_war = yes
+					has_completed_focus = GCC_a_robust_alliance
+				}
+			}
+		}
+		any_country = {
+			has_war = no
+			has_idea = idea_gcc_member_state
+			has_country_flag = gcc_formed
+		}
+	}
+
+	mean_time_to_happen = { days = 2 }
+
+	option = {
+		name = gcc.10.a
+		log = "[GetDateText]: [This.GetName]: gcc.10.a executed"
+		every_country = {
+			limit = { has_country_flag = gcc_dominant_member }
+			dismantle_faction = yes
+			clr_country_flag = gcc_formed
+		}
+		every_country = {
+			limit = {
+				has_idea = idea_gcc_member_state
+				has_completed_focus = GCC_joint_defense_agreement
+			}
+			if = {
+				limit = { NOT = { original_tag = BHR } BHR = { has_idea = idea_gcc_member_state }}
+				give_guarantee = BHR
+			}
+			if = {
+				limit = { NOT = { original_tag = EGY } EGY = { has_idea = idea_gcc_member_state }}
+				give_guarantee = EGY
+			}
+			if = {
+				limit = { NOT = { original_tag = JOR } JOR = { has_idea = idea_gcc_member_state }}
+				give_guarantee = JOR
+			}
+			if = {
+				limit = { NOT = { original_tag = KUW } KUW = { has_idea = idea_gcc_member_state }}
+				give_guarantee = KUW
+			}
+			if = {
+				limit = { NOT = { original_tag = IRQ } IRQ = { has_idea = idea_gcc_member_state }}
+				give_guarantee = IRQ
+			}
+			if = {
+				limit = { NOT = { original_tag = MOR } MOR = { has_idea = idea_gcc_member_state }}
+				give_guarantee = MOR
+			}
+			if = {
+				limit = { NOT = { original_tag = OMA } OMA = { has_idea = idea_gcc_member_state }}
+				give_guarantee = OMA
+			}
+			if = {
+				limit = { NOT = { original_tag = QAT } QAT = { has_idea = idea_gcc_member_state }}
+				give_guarantee = QAT
+			}
+			if = {
+				limit = { NOT = { original_tag = SAU } SAU = { has_idea = idea_gcc_member_state }}
+				give_guarantee = SAU
+			}
+			if = {
+				limit = { NOT = { original_tag = UAE } UAE = { has_idea = idea_gcc_member_state }}
+				give_guarantee = UAE
+			}
+			if = {
+				limit = { NOT = { original_tag = YEM } YEM = { has_idea = idea_gcc_member_state }}
+				give_guarantee = YEM
+			}
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#US option to guarantee GCC
+country_event = {
+	id = gcc.11
+	title = gcc.11.t
+	desc = gcc.11.d
+
+	picture = GFX_politics_talks
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.11.a
+		if = {
+			limit = { NOT = { original_tag = BHR } BHR = { has_idea = idea_gcc_member_state }}
+			give_guarantee = BHR
+		}
+		if = {
+			limit = { NOT = { original_tag = EGY } EGY = { has_idea = idea_gcc_member_state }}
+			give_guarantee = EGY
+		}
+		if = {
+			limit = { NOT = { original_tag = JOR } JOR = { has_idea = idea_gcc_member_state }}
+			give_guarantee = JOR
+		}
+		if = {
+			limit = { NOT = { original_tag = KUW } KUW = { has_idea = idea_gcc_member_state }}
+			give_guarantee = KUW
+		}
+		if = {
+			limit = { NOT = { original_tag = IRQ } IRQ = { has_idea = idea_gcc_member_state }}
+			give_guarantee = IRQ
+		}
+		if = {
+			limit = { NOT = { original_tag = MOR } MOR = { has_idea = idea_gcc_member_state }}
+			give_guarantee = MOR
+		}
+		if = {
+			limit = { NOT = { original_tag = OMA } OMA = { has_idea = idea_gcc_member_state }}
+			give_guarantee = OMA
+		}
+		if = {
+			limit = { NOT = { original_tag = QAT } QAT = { has_idea = idea_gcc_member_state }}
+			give_guarantee = QAT
+		}
+		if = {
+			limit = { NOT = { original_tag = SAU } SAU = { has_idea = idea_gcc_member_state }}
+			give_guarantee = SAU
+		}
+		if = {
+			limit = { NOT = { original_tag = UAE } UAE = { has_idea = idea_gcc_member_state }}
+			give_guarantee = UAE
+		}
+		if = {
+			limit = { NOT = { original_tag = YEM } YEM = { has_idea = idea_gcc_member_state }}
+			give_guarantee = YEM
+		}
+		if = {
+			limit = { tag = TUR }
+			set_global_flag = gcc_pro_turkish
+		}
+		if = {
+			limit = { tag = PER }
+			set_global_flag = gcc_pro_iranian
+		}
+		if = {
+			limit = { tag = SOV }
+			set_global_flag = gcc_pro_russian
+		}
+		if = {
+			limit = { tag = RAJ }
+			set_global_flag = gcc_pro_indian
+		}
+		if = {
+			limit = { tag = PAK }
+			set_global_flag = gcc_pro_pakistani
+		}
+		log = "[GetDateText]: [This.GetName]: gcc.11.a executed"
+
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 25
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 50
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 75
+				}
+			}
+		}
+	}
+
+	option = {
+		name = gcc.11.b
+		log = "[GetDateText]: [This.GetName]: gcc.11.b executed"
+		FROM = {
+			country_event = { days = 2 id = gcc.12 }
+			if = {
+				limit = { PREV = { original_tag = USA }}
+				set_global_flag = gcc_usa_rejected
+			}
+			else_if = {
+				set_global_flag = gcc_new_partner_rejected
+			}
+		}
+
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 1
+				tag = USA
+				FROM = { NOT = { has_completed_focus = GCC_antagonize_iran }}
+			}
+			modifier = {
+				add = 1
+				tag = PER
+				FROM = { NOT = { has_completed_focus = GCC_distance_from_america } }
+			}
+			modifier = {
+				add = 2
+				has_government = democratic
+				FROM = { has_government = communism }
+			}
+			modifier = {
+				add = 2
+				has_government = democratic
+				FROM = { has_government = nationalist }
+			}
+			modifier = {
+				add = 2
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
+			}
+		}
+	}
+}
+
+#US rejection
+country_event = {
+	id = gcc.12
+	title = gcc.12.t
+	desc = gcc.12.d
+
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.12.a #Maybe we should turn elsewhere for protection...
+		log = "[GetDateText]: [This.GetName]: gcc.12.a executed"
+	}
+}
+
+#choosing a new partner
+country_event = {
+	id = gcc.13
+	title = gcc.13.t
+	desc = gcc.13.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		trigger = { has_completed_focus = GCC_turkish_bases }
+		name = gcc.13.a #Go with Turkey
+		TUR = { country_event = { days = 2 id = gcc.11 }}
+		log = "[GetDateText]: [This.GetName]: gcc.13.a executed"
+	}
+
+	option = {
+		trigger = { has_completed_focus = GCC_non_aggression_pact }
+		name = gcc.13.b #Go with Iran
+		PER = { country_event = { days = 2 id = gcc.11 }}
+		log = "[GetDateText]: [This.GetName]: gcc.13.b executed"
+	}
+
+	option = {
+		trigger = { has_completed_focus = GCC_indian_bases }
+		name = gcc.13.c #Go with India
+		RAJ = { country_event = { days = 2 id = gcc.11 }}
+		log = "[GetDateText]: [This.GetName]: gcc.13.c executed"
+	}
+
+	option = {
+		trigger = { has_completed_focus = GCC_security_guarantees }
+		name = gcc.13.e #Go with Pakistan
+		PAK = { country_event = { days = 2 id = gcc.11 }}
+		log = "[GetDateText]: [This.GetName]: gcc.13.e executed"
+	}
+
+	option = {
+		trigger = { has_completed_focus = GCC_invite_russian_advisors }
+		name = gcc.13.f #Go with Russia
+		SOV = { country_event = { days = 2 id = gcc.11 }}
+		log = "[GetDateText]: [This.GetName]: gcc.13.f executed"
+	}
+}
+
+news_event = {
+	id = gcc.14
+	title = gcc.14.t
+	desc = gcc.14.d
+
+	picture = GFX_news_gcc
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.14.a #The Gulf states draw closer.
+		log = "[GetDateText]: [This.GetName]: gcc.14.a executed"
+	}
+}
+
+news_event = {
+	id = gcc.15
+	title = gcc.15.t
+	desc = gcc.15.d
+
+	picture = GFX_news_gcc
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.15.a #The GCC grows stronger.
+		log = "[GetDateText]: [This.GetName]: gcc.15.a executed"
+	}
+}
+
+news_event = {
+	id = gcc.16
+	title = gcc.16.t
+	desc = gcc.16.d
+
+	picture = GFX_news_gcc
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.16.a
+		log = "[GetDateText]: [This.GetName]: gcc.16.a executed"
+	}
+}
+
+news_event = {
+	id = gcc.17
+	title = gcc.17.t
+	desc = gcc.17.d
+
+	picture = GFX_news_gcc
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.17.a
+		log = "[GetDateText]: [This.GetName]: gcc.17.a executed"
+	}
+}
+
+#Expulsion from GCC
+country_event = {
+	id = gcc.18
+	title = gcc.18.t
+	desc = {
+		text = gcc.18.d1
+		trigger = { BHR = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.18.d2
+		trigger = { KUW = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.18.d3
+		trigger = { OMA = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.18.d4
+		trigger = { QAT = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.18.d5
+		trigger = { SAU = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.18.d6
+		trigger = { UAE = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.18.d7
+		trigger = { EGY = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.18.d8
+		trigger = { IRQ = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.18.d9
+		trigger = { JOR = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.18.d10
+		trigger = { MOR = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.18.d11
+		trigger = { YEM = { has_country_flag = being_expelled }}
+	}
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.18.a #support the expulsion
+		log = "[GetDateText]: [This.GetName]: gcc.18.a executed"
+		if = {
+			limit = { BHR = { has_country_flag = being_expelled }}
+			set_country_flag = supports_expulsion_BHR
+			if = {
+				limit = {
+					NOT = {
+						any_country = {
+							has_idea = idea_gcc_member_state
+							NOT = { has_country_flag = being_expelled }
+							NOT = { has_country_flag = supports_expulsion_BHR }
+						}
+					}
+				}
+				every_country = { news_event = { days = 2 id = gcc.20 }}
+			}
+		}
+		if = {
+			limit = { KUW = { has_country_flag = being_expelled }}
+			set_country_flag = supports_expulsion_KUW
+			if = {
+				limit = {
+					NOT = {
+						any_country = {
+							has_idea = idea_gcc_member_state
+							NOT = { has_country_flag = being_expelled }
+							NOT = { has_country_flag = supports_expulsion_KUW }
+						}
+					}
+				}
+				every_country = { news_event = { days = 2 id = gcc.20 }}
+			}
+		}
+		if = {
+			limit = { OMA = { has_country_flag = being_expelled }}
+			set_country_flag = supports_expulsion_OMA
+			if = {
+				limit = {
+					NOT = {
+						any_country = {
+							has_idea = idea_gcc_member_state
+							NOT = { has_country_flag = being_expelled }
+							NOT = { has_country_flag = supports_expulsion_OMA }
+						}
+					}
+				}
+				every_country = { news_event = { days = 2 id = gcc.20 }}
+			}
+		}
+		if = {
+			limit = { QAT = { has_country_flag = being_expelled }}
+			set_country_flag = supports_expulsion_QAT
+			if = {
+				limit = {
+					NOT = {
+						any_country = {
+							has_idea = idea_gcc_member_state
+							NOT = { has_country_flag = being_expelled }
+							NOT = { has_country_flag = supports_expulsion_QAT }
+						}
+					}
+				}
+				every_country = { news_event = { days = 2 id = gcc.20 }}
+			}
+		}
+		if = {
+			limit = { SAU = { has_country_flag = being_expelled }}
+			set_country_flag = supports_expulsion_SAU
+			if = {
+				limit = {
+					NOT = {
+						any_country = {
+							has_idea = idea_gcc_member_state
+							NOT = { has_country_flag = being_expelled }
+							NOT = { has_country_flag = supports_expulsion_SAU }
+						}
+					}
+				}
+				every_country = { news_event = { days = 2 id = gcc.20 }}
+			}
+		}
+		if = {
+			limit = { UAE = { has_country_flag = being_expelled }}
+			set_country_flag = supports_expulsion_UAE
+			if = {
+				limit = {
+					NOT = {
+						any_country = {
+							has_idea = idea_gcc_member_state
+							NOT = { has_country_flag = being_expelled }
+							NOT = { has_country_flag = supports_expulsion_UAE }
+						}
+					}
+				}
+				every_country = { news_event = { days = 2 id = gcc.20 }}
+			}
+		}
+		if = {
+			limit = { EGY = { has_country_flag = being_expelled }}
+			set_country_flag = supports_expulsion_EGY
+			if = {
+				limit = {
+					NOT = {
+						any_country = {
+							has_idea = idea_gcc_member_state
+							NOT = { has_country_flag = being_expelled }
+							NOT = { has_country_flag = supports_expulsion_EGY }
+						}
+					}
+				}
+				every_country = { news_event = { days = 2 id = gcc.20 }}
+			}
+		}
+		if = {
+			limit = { IRQ = { has_country_flag = being_expelled }}
+			set_country_flag = supports_expulsion_IRQ
+			if = {
+				limit = {
+					NOT = {
+						any_country = {
+							has_idea = idea_gcc_member_state
+							NOT = { has_country_flag = being_expelled }
+							NOT = { has_country_flag = supports_expulsion_IRQ }
+						}
+					}
+				}
+				every_country = { news_event = { days = 2 id = gcc.20 }}
+			}
+		}
+		if = {
+			limit = { JOR = { has_country_flag = being_expelled }}
+			set_country_flag = supports_expulsion_JOR
+			if = {
+				limit = {
+					NOT = {
+						any_country = {
+							has_idea = idea_gcc_member_state
+							NOT = { has_country_flag = being_expelled }
+							NOT = { has_country_flag = supports_expulsion_JOR }
+						}
+					}
+				}
+				every_country = { news_event = { days = 2 id = gcc.20 }}
+			}
+		}
+		if = {
+			limit = { MOR = { has_country_flag = being_expelled }}
+			set_country_flag = supports_expulsion_MOR
+			if = {
+				limit = {
+					NOT = {
+						any_country = {
+							has_idea = idea_gcc_member_state
+							NOT = { has_country_flag = being_expelled }
+							NOT = { has_country_flag = supports_expulsion_MOR }
+						}
+					}
+				}
+				every_country = { news_event = { days = 2 id = gcc.20 }}
+			}
+		}
+		if = {
+			limit = { YEM = { has_country_flag = being_expelled }}
+			set_country_flag = supports_expulsion_YEM
+			if = {
+				limit = {
+					NOT = {
+						any_country = {
+							has_idea = idea_gcc_member_state
+							NOT = { has_country_flag = being_expelled }
+							NOT = { has_country_flag = supports_expulsion_YEM }
+						}
+					}
+				}
+				every_country = { news_event = { days = 2 id = gcc.20 }}
+			}
+		}
+
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				if = {
+					limit = { BHR = { has_country_flag = recently_expelled_from_gcc }}
+					has_opinion = {
+						target = BHR
+						value > 0
+					}
+				}
+				if = {
+					limit = { KUW = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = KUW
+						value > 0
+					}
+				}
+				if = {
+					limit = { OMA = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = OMA
+						value > 0
+					}
+				}
+				if = {
+					limit = { QAT = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = QAT
+						value > 0
+					}
+				}
+				if = {
+					limit = { SAU = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = SAU
+						value > 0
+					}
+				}
+				if = {
+					limit = { UAE = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = UAE
+						value > 0
+					}
+				}
+				if = {
+					limit = { EGY = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = EGY
+						value > 0
+					}
+				}
+				if = {
+					limit = { IRQ = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = IRQ
+						value > 0
+					}
+				}
+				if = {
+					limit = { JOR = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = JOR
+						value > 0
+					}
+				}
+				if = {
+					limit = { MOR = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = MOR
+						value > 0
+					}
+				}
+				if = {
+					limit = { YEM = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = YEM
+						value > 0
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				if = {
+					limit = { BHR = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = BHR
+						value < -10
+					}
+				}
+				if = {
+					limit = { KUW = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = KUW
+						value < -10
+					}
+				}
+				if = {
+					limit = { OMA = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = OMA
+						value < -10
+					}
+				}
+				if = {
+					limit = { QAT = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = QAT
+						value < -10
+					}
+				}
+				if = {
+					limit = { SAU = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = SAU
+						value < -10
+					}
+				}
+				if = {
+					limit = { UAE = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = UAE
+						value < -10
+					}
+				}
+				if = {
+					limit = { EGY = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = EGY
+						value < -10
+					}
+				}
+				if = {
+					limit = { IRQ = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = IRQ
+						value < -10
+					}
+				}
+				if = {
+					limit = { JOR = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = JOR
+						value < -10
+					}
+				}
+				if = {
+					limit = { MOR = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = MOR
+						value < -10
+					}
+				}
+				if = {
+					limit = { YEM = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = YEM
+						value < -10
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				if = {
+					limit = { BHR = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = BHR
+						value < -50
+					}
+				}
+				if = {
+					limit = { KUW = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = KUW
+						value < -50
+					}
+				}
+				if = {
+					limit = { OMA = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = OMA
+						value < -50
+					}
+				}
+				if = {
+					limit = { QAT = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = QAT
+						value < -50
+					}
+				}
+				if = {
+					limit = { SAU = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = SAU
+						value < -50
+					}
+				}
+				if = {
+					limit = { UAE = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = UAE
+						value < -50
+					}
+				}
+				if = {
+					limit = { EGY = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = EGY
+						value < -50
+					}
+				}
+				if = {
+					limit = { IRQ = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = IRQ
+						value < -50
+					}
+				}
+				if = {
+					limit = { JOR = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = JOR
+						value < -50
+					}
+				}
+				if = {
+					limit = { MOR = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = MOR
+						value < -50
+					}
+				}
+				if = {
+					limit = { YEM = { has_country_flag = being_expelled }}
+					has_opinion = {
+						target = YEM
+						value < -50
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = gcc.18.b #veto the expulsion
+		log = "[GetDateText]: [This.GetName]: gcc.18.b executed"
+		every_other_country = {
+			limit = {
+				has_idea = idea_gcc_member_state
+				NOT = { has_country_flag = being_expelled }
+			}
+			country_event = { days = 1 id = gcc.19 }
+		}
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+		}
+	}
+}
+
+#FROM has opposed the expulsion
+country_event = {
+	id = gcc.19
+	title = gcc.19.t
+	desc = {
+		text = gcc.19.d1
+		trigger = { BHR = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.19.d2
+		trigger = { KUW = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.19.d3
+		trigger = { OMA = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.19.d4
+		trigger = { QAT = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.19.d5
+		trigger = { SAU = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.19.d6
+		trigger = { UAE = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.19.d7
+		trigger = { EGY = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.19.d8
+		trigger = { IRQ = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.19.d9
+		trigger = { JOR = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.19.d10
+		trigger = { MOR = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.19.d11
+		trigger = { YEM = { has_country_flag = being_expelled }}
+	}
+
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.19.a #The GCC remains united?
+		if = {
+			limit = { BHR = { has_country_flag = being_expelled }}
+			BHR = { set_country_flag = gcc_membership_secure }
+		}
+		if = {
+			limit = { KUW = { has_country_flag = being_expelled }}
+			KUW = { set_country_flag = gcc_membership_secure }
+		}
+		if = {
+			limit = { OMA = { has_country_flag = being_expelled }}
+			OMA = { set_country_flag = gcc_membership_secure }
+		}
+		if = {
+			limit = { QAT = { has_country_flag = being_expelled }}
+			QAT = { set_country_flag = gcc_membership_secure }
+		}
+		if = {
+			limit = { SAU = { has_country_flag = being_expelled }}
+			SAU = { set_country_flag = gcc_membership_secure }
+		}
+		if = {
+			limit = { UAE = { has_country_flag = being_expelled }}
+			UAE = { set_country_flag = gcc_membership_secure }
+		}
+		if = {
+			limit = { EGY = { has_country_flag = being_expelled }}
+			EGY = { set_country_flag = gcc_membership_secure }
+		}
+		if = {
+			limit = { IRQ = { has_country_flag = being_expelled }}
+			IRQ = { set_country_flag = gcc_membership_secure }
+		}
+		if = {
+			limit = { JOR = { has_country_flag = being_expelled }}
+			JOR = { set_country_flag = gcc_membership_secure }
+		}
+		if = {
+			limit = { MOR = { has_country_flag = being_expelled }}
+			MOR = { set_country_flag = gcc_membership_secure }
+		}
+		if = {
+			limit = { YEM = { has_country_flag = being_expelled }}
+			YEM = { set_country_flag = gcc_membership_secure }
+		}
+		every_country = { clr_country_flag = being_expelled }
+		log = "[GetDateText]: [This.GetName]: gcc.19.a executed"
+	}
+}
+
+#GCC member expelled following secret conference
+news_event = {
+	id = gcc.20
+	title = gcc.20.t
+	desc = {
+		text = gcc.20.d1
+		trigger = { BHR = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.20.d2
+		trigger = { KUW = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.20.d3
+		trigger = { OMA = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.20.d4
+		trigger = { QAT = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.20.d5
+		trigger = { SAU = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.20.d6
+		trigger = { UAE = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.20.d7
+		trigger = { EGY = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.20.d8
+		trigger = { IRQ = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.20.d9
+		trigger = { JOR = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.20.d10
+		trigger = { MOR = { has_country_flag = being_expelled }}
+	}
+	desc = {
+		text = gcc.20.d11
+		trigger = { YEM = { has_country_flag = being_expelled }}
+	}
+
+	picture = GFX_news_gcc
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.20.a
+		if = {
+			limit = { has_country_flag = being_expelled }
+			remove_ideas = idea_gcc_member_state
+			remove_from_array = { global.gcc_members = THIS }
+			add_to_array = { global.possible_gcc_members = THIS }
+			set_country_flag = recently_expelled_from_gcc
+			hidden_effect = {
+				remove_from_tech_sharing_group = GCC_Tech_Share
+				remove_ideas = {
+					khaleeji
+					joint_gcc_ventures
+				}
+				remove_from_faction = PENINSULA_SHIELD
+				every_country = {
+					limit = { has_idea = idea_gcc_member_state }
+					remove_opinion_modifier = {
+						target = ROOT
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+					diplomatic_relation = {
+						country = ROOT
+						relation = guarantee
+						active = no
+					}
+				}
+				remove_opinion_modifier = {
+					target = BHR
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+				diplomatic_relation = {
+					country = BHR
+					relation = guarantee
+					active = no
+				}
+				remove_opinion_modifier = {
+					target = KUW
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+				diplomatic_relation = {
+					country = KUW
+					relation = guarantee
+					active = no
+				}
+				remove_opinion_modifier = {
+					target = OMA
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+				diplomatic_relation = {
+					country = OMA
+					relation = guarantee
+					active = no
+				}
+				remove_opinion_modifier = {
+					target = QAT
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+				diplomatic_relation = {
+					country = QAT
+					relation = guarantee
+					active = no
+				}
+				remove_opinion_modifier = {
+					target = SAU
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+				diplomatic_relation = {
+					country = SAU
+					relation = guarantee
+					active = no
+				}
+				remove_opinion_modifier = {
+					target = UAE
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+				diplomatic_relation = {
+					country = UAE
+					relation = guarantee
+					active = no
+				}
+				remove_opinion_modifier = {
+					target = EGY
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+				diplomatic_relation = {
+					country = EGY
+					relation = guarantee
+					active = no
+				}
+				remove_opinion_modifier = {
+					target = IRQ
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+				diplomatic_relation = {
+					country = IRQ
+					relation = guarantee
+					active = no
+				}
+				remove_opinion_modifier = {
+					target = JOR
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+				diplomatic_relation = {
+					country = JOR
+					relation = guarantee
+					active = no
+				}
+				remove_opinion_modifier = {
+					target = MOR
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+				diplomatic_relation = {
+					country = MOR
+					relation = guarantee
+					active = no
+				}
+				remove_opinion_modifier = {
+					target = YEM
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+				diplomatic_relation = {
+					country = YEM
+					relation = guarantee
+					active = no
+				}
+			}
+			clr_country_flag = being_expelled
+			if = {
+				limit = {
+					has_country_flag = gcc_dominant_member
+				}
+				clr_country_flag = gcc_dominant_member
+				if = {
+					limit = { SAU = { has_idea = idea_gcc_member_state }}
+					SAU = { set_country_flag = gcc_dominant_member }
+				}
+				else_if = {
+					limit = {
+						UAE = { has_idea = idea_gcc_member_state }
+						SAU = { NOT = { has_idea = idea_gcc_member_state } }
+					}
+					UAE = { set_country_flag = gcc_dominant_member }
+				}
+				else_if = {
+					limit = {
+						QAT = { has_idea = idea_gcc_member_state }
+						UAE = { NOT = { has_idea = idea_gcc_member_state } }
+						SAU = { NOT = { has_idea = idea_gcc_member_state } }
+					}
+					QAT = { set_country_flag = gcc_dominant_member }
+				}
+				else_if = {
+					limit = {
+						OMA = { has_idea = idea_gcc_member_state }
+						QAT = { NOT = { has_idea = idea_gcc_member_state } }
+						UAE = { NOT = { has_idea = idea_gcc_member_state } }
+						SAU = { NOT = { has_idea = idea_gcc_member_state } }
+					}
+					OMA = { set_country_flag = gcc_dominant_member }
+				}
+				else_if = {
+					limit = {
+						KUW = { has_idea = idea_gcc_member_state }
+						OMA = { NOT = { has_idea = idea_gcc_member_state } }
+						QAT = { NOT = { has_idea = idea_gcc_member_state } }
+						UAE = { NOT = { has_idea = idea_gcc_member_state } }
+						SAU = { NOT = { has_idea = idea_gcc_member_state } }
+					}
+					KUW = { set_country_flag = gcc_dominant_member }
+				}
+				else_if = {
+					limit = {
+						BHR = { has_idea = idea_gcc_member_state }
+						KUW = { NOT = { has_idea = idea_gcc_member_state } }
+						OMA = { NOT = { has_idea = idea_gcc_member_state } }
+						QAT = { NOT = { has_idea = idea_gcc_member_state } }
+						UAE = { NOT = { has_idea = idea_gcc_member_state } }
+						SAU = { NOT = { has_idea = idea_gcc_member_state } }
+					}
+					BHR = { set_country_flag = gcc_dominant_member }
+				}
+				else_if = {
+					limit = {
+						JOR = { has_idea = idea_gcc_member_state }
+						BHR = { NOT = { has_idea = idea_gcc_member_state } }
+						KUW = { NOT = { has_idea = idea_gcc_member_state } }
+						OMA = { NOT = { has_idea = idea_gcc_member_state } }
+						QAT = { NOT = { has_idea = idea_gcc_member_state } }
+						UAE = { NOT = { has_idea = idea_gcc_member_state } }
+						SAU = { NOT = { has_idea = idea_gcc_member_state } }
+					}
+					JOR = { set_country_flag = gcc_dominant_member }
+				}
+				else_if = {
+					limit = {
+						MOR = { has_idea = idea_gcc_member_state }
+						JOR = { NOT = { has_idea = idea_gcc_member_state } }
+						BHR = { NOT = { has_idea = idea_gcc_member_state } }
+						KUW = { NOT = { has_idea = idea_gcc_member_state } }
+						OMA = { NOT = { has_idea = idea_gcc_member_state } }
+						QAT = { NOT = { has_idea = idea_gcc_member_state } }
+						UAE = { NOT = { has_idea = idea_gcc_member_state } }
+						SAU = { NOT = { has_idea = idea_gcc_member_state } }
+					}
+					MOR = { set_country_flag = gcc_dominant_member }
+				}
+				else_if = {
+					limit = {
+						EGY = { has_idea = idea_gcc_member_state }
+						MOR = { NOT = { has_idea = idea_gcc_member_state } }
+						JOR = { NOT = { has_idea = idea_gcc_member_state } }
+						BHR = { NOT = { has_idea = idea_gcc_member_state } }
+						KUW = { NOT = { has_idea = idea_gcc_member_state } }
+						OMA = { NOT = { has_idea = idea_gcc_member_state } }
+						QAT = { NOT = { has_idea = idea_gcc_member_state } }
+						UAE = { NOT = { has_idea = idea_gcc_member_state } }
+						SAU = { NOT = { has_idea = idea_gcc_member_state } }
+					}
+					EGY = { set_country_flag = gcc_dominant_member }
+				}
+				else_if = {
+					limit = {
+						IRQ = { has_idea = idea_gcc_member_state }
+						EGY = { NOT = { has_idea = idea_gcc_member_state } }
+						MOR = { NOT = { has_idea = idea_gcc_member_state } }
+						JOR = { NOT = { has_idea = idea_gcc_member_state } }
+						BHR = { NOT = { has_idea = idea_gcc_member_state } }
+						KUW = { NOT = { has_idea = idea_gcc_member_state } }
+						OMA = { NOT = { has_idea = idea_gcc_member_state } }
+						QAT = { NOT = { has_idea = idea_gcc_member_state } }
+						UAE = { NOT = { has_idea = idea_gcc_member_state } }
+						SAU = { NOT = { has_idea = idea_gcc_member_state } }
+					}
+					IRQ = { set_country_flag = gcc_dominant_member }
+				}
+				else_if = {
+					limit = {
+						YEM = { has_idea = idea_gcc_member_state }
+						IRQ = { NOT = { has_idea = idea_gcc_member_state } }
+						EGY = { NOT = { has_idea = idea_gcc_member_state } }
+						MOR = { NOT = { has_idea = idea_gcc_member_state } }
+						JOR = { NOT = { has_idea = idea_gcc_member_state } }
+						BHR = { NOT = { has_idea = idea_gcc_member_state } }
+						KUW = { NOT = { has_idea = idea_gcc_member_state } }
+						OMA = { NOT = { has_idea = idea_gcc_member_state } }
+						QAT = { NOT = { has_idea = idea_gcc_member_state } }
+						UAE = { NOT = { has_idea = idea_gcc_member_state } }
+						SAU = { NOT = { has_idea = idea_gcc_member_state } }
+					}
+					YEM = { set_country_flag = gcc_dominant_member }
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: gcc.20.a executed"
+	}
+}
+
+#FROM accedes to GCC
+news_event = {
+	id = gcc.21
+	title = gcc.21.t
+	desc = gcc.21.d
+
+	picture = GFX_news_gcc
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.21.a
+		log = "[GetDateText]: [This.GetName]: gcc.21.a executed"
+		if = {
+			limit = { has_idea = idea_gcc_member_state }
+			effect_tooltip = {
+				if = {
+					limit = {
+						FROM = {
+							NOT = {
+								has_idea = saudi_royal_family
+							}
+							has_idea = shia
+							has_government = communism
+						}
+					}
+					custom_effect_tooltip = GCC_unity_decrease_25_tt
+					subtract_from_variable = { global.gcc_unity = 25 }
+					clamp_variable = {
+						var = global.gcc_unity
+						min = 0
+						max = 100
+					}
+				}
+				else_if = {
+					limit = {
+						FROM = {
+							NOT = {
+								has_idea = saudi_royal_family
+							}
+							OR = {
+								has_idea = shia
+								has_government = communism
+							}
+						}
+					}
+					custom_effect_tooltip = GCC_unity_decrease_20_tt
+					subtract_from_variable = { global.gcc_unity = 20 }
+					clamp_variable = {
+						var = global.gcc_unity
+						min = 0
+						max = 100
+					}
+				}
+				else_if = {
+					limit = {
+						FROM = {
+							OR = {
+								NOT = {
+									has_idea = saudi_royal_family
+								}
+								has_idea = shia
+								has_government = communism
+							}
+						}
+					}
+					custom_effect_tooltip = GCC_unity_decrease_10_tt
+					subtract_from_variable = { global.gcc_unity = 10 }
+					clamp_variable = {
+						var = global.gcc_unity
+						min = 0
+						max = 100
+					}
+				}
+				else_if = {
+					limit = {
+						FROM = {
+							NOT = {
+								NOT = {
+									has_idea = saudi_royal_family
+								}
+								has_idea = shia
+								has_government = communism
+							}
+						}
+					}
+					custom_effect_tooltip = GCC_unity_decrease_5_tt
+					subtract_from_variable = { global.gcc_unity = 5 }
+					clamp_variable = {
+						var = global.gcc_unity
+						min = 0
+						max = 100
+					}
+				}
+			}
+		}
+	}
+}
+
+#The [FROM.GetAdjective]s are requesting bloc arms sales to the GCC
+country_event = {
+	id = gcc.22
+	title = gcc.22.t
+	desc = gcc.22.d
+
+	picture = GFX_politics_wahabi
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.22.a #Let's give them the guns
+		log = "[GetDateText]: [This.GetName]: gcc.22.a executed"
+		add_to_variable = { treasury = 25 }
+		custom_effect_tooltip = 25_billion_revenue_tt
+		if = {
+			limit = { BHR = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = BHR
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = BHR
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = BHR
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = BHR
+			}
+		}
+		if = {
+			limit = { EGY = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = EGY
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = EGY
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = EGY
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = EGY
+			}
+		}
+		if = {
+			limit = { IRQ = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = IRQ
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = IRQ
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = IRQ
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = IRQ
+			}
+		}
+		if = {
+			limit = { JOR = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = JOR
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = JOR
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = JOR
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = JOR
+			}
+		}
+		if = {
+			limit = { KUW = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = KUW
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = KUW
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = KUW
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = KUW
+			}
+		}
+		if = {
+			limit = { MOR = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = MOR
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = MOR
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = MOR
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = MOR
+			}
+		}
+		if = {
+			limit = { OMA = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = OMA
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = OMA
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = OMA
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = OMA
+			}
+		}
+		if = {
+			limit = { QAT = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = QAT
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = QAT
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = QAT
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = QAT
+			}
+		}
+		if = {
+			limit = { SAU = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = SAU
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = SAU
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = SAU
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = SAU
+			}
+		}
+		if = {
+			limit = { UAE = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = UAE
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = UAE
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = UAE
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = UAE
+			}
+		}
+		if = {
+			limit = { YEM = { has_idea = idea_gcc_member_state }}
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 1000
+				target = YEM
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 100
+				target = YEM
+			}
+			send_equipment = {
+				equipment = MBT_Equipment
+				amount = 20
+				target = YEM
+			}
+			send_equipment = {
+				equipment = AS_Fighter_equipment
+				amount = 5
+				target = YEM
+			}
+		}
+		every_country = {
+			news_event = { days = 1 id = gcc.23 }
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = gcc.22.b #We need them for ourselves
+		log = "[GetDateText]: [This.GetName]: gcc.22.b executed"
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+news_event = {
+	id = gcc.23
+	title = gcc.23.t
+	desc = gcc.23.d
+
+	picture = GFX_report_event_united_states_air_force
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.21.a
+		custom_effect_tooltip = GCC_unity_increase_5_tt
+		if = {
+			limit = { has_country_flag = gcc_dominant_member }
+			subtract_from_variable = { treasury = 25 }
+			custom_effect_tooltip = 25_billion_expense_tt
+			add_to_variable = { global.gcc_unity = 5 }
+			clamp_variable = {
+				var = global.gcc_unity
+				min = 0
+				max = 100
+			}
+		}
+		if = {
+			limit = { has_idea = idea_gcc_member_state }
+			effect_tooltip = {
+				FROM = {
+					send_equipment = {
+						equipment = infantry_weapons
+						amount = 1000
+						target = ROOT
+					}
+					send_equipment = {
+						equipment = util_vehicle_equipment
+						amount = 100
+						target = ROOT
+					}
+					send_equipment = {
+						equipment = MBT_Equipment
+						amount = 20
+						target = ROOT
+					}
+					send_equipment = {
+						equipment = AS_Fighter_equipment
+						amount = 5
+						target = ROOT
+					}
+				}
+			}
+		}
+	}
+}
+
+### [FROM.GetName] is Pressuring Us to Support New GCC Member
+country_event = {
+	id = gcc.24
+	immediate = { log = "[GetDateText]: [Root.GetName]: event gcc.24" }
+
+	title = gcc.24.t
+	desc = gcc.24.d
+	picture = GFX_politics_talks
+
+	is_triggered_only = yes
+
+	option = {
+		name = gcc.24.a #This state deserves membership!
+		log = "[GetDateText]: [This.GetName]: gcc.24.a executed"
+		custom_effect_tooltip = GCC_support_gcc_membership1_tt
+		hidden_effect = {
+			random_country = {
+				limit = { has_country_flag = pressured_to_accept_@ROOT }
+				clr_country_flag = pressured_to_accept_@ROOT
+				ROOT = {
+					set_country_flag = supports_membership_@PREV
+				}
+			}
+		}
+		ai_chance = {
+			factor = 1
+			modifier = {
+				add = 1
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.05 }
+			}
+			modifier = {
+				add = 1
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.1 }
+			}
+			modifier = {
+				add = 1
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.2 }
+			}
+			modifier = {
+				add = 1
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.3 }
+			}
+			modifier = {
+				add = 1
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.4 }
+			}
+			modifier = {
+				add = 1
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.5 }
+			}
+		}
+	}
+
+	option = {
+		name = gcc.24.b #We refuse to support this country's membership!
+		log = "[GetDateText]: [This.GetName]: gcc.24.b executed"
+		hidden_effect = {
+			random_country = {
+				limit = { has_country_flag = pressured_to_accept_@ROOT }
+				clr_country_flag = pressured_to_accept_@ROOT
+			}
+		}
+		if = {
+			limit = {
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.05 }
+				check_variable = { influence_array_calc^temp_idx < 0.1 }
+			}
+			add_political_power = -10
+		}
+		else_if = {
+			limit = {
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.09 }
+				check_variable = { influence_array_calc^temp_idx < 0.2 }
+			}
+			add_political_power = -25
+		}
+		else_if = {
+			limit = {
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.19 }
+				check_variable = { influence_array_calc^temp_idx < 0.3 }
+			}
+			add_political_power = -50
+		}
+		else_if = {
+			limit = {
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.29 }
+				check_variable = { influence_array_calc^temp_idx < 0.4 }
+			}
+			add_political_power = -75
+		}
+		else_if = {
+			limit = {
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.39 }
+				check_variable = { influence_array_calc^temp_idx < 0.5 }
+			}
+			add_political_power = -100
+		}
+		else_if = {
+			limit = {
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = FROM } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.49 }
+			}
+			add_political_power = -150
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+
+###Saudi Succession
+#Death of King Fahd
+news_event = {
+	id = saudi_royal.1
+	title = saudi_royal.1.t
+	desc = {
+		text = saudi_royal.1.d1
+		trigger = {
+			SAU = {
+				NOT = { has_completed_focus = GCC_free_and_fair_elections }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = saudi_royal.1.d2
+		trigger = {
+			SAU = {
+				has_completed_focus = GCC_free_and_fair_elections
+				NOT = { has_completed_focus = GCC_establish_a_republic }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = saudi_royal.1.d3
+		trigger = {
+			SAU = {
+				has_completed_focus = GCC_constitutional_monarchy
+				has_completed_focus = GCC_establish_a_republic
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = saudi_royal.1.d4
+		trigger = {
+			SAU = {
+				jihadist_government = yes
+			}
+		}
+	}
+
+	picture = GFX_news_saudi_royal_death
+
+	is_triggered_only = yes
+
+	option = {
+		name = saudi_royal.1.a #A sad day for Saudi Arabia...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.1.a executed"
+		if = {
+			limit = { tag = SAU }
+			remove_ideas = SAU_ailing_king
+			hidden_effect = {
+				every_other_country = { news_event = { id = saudi_royal.1 }}
+				if = {
+					limit = {
+						SAU = {
+							NOT = { has_completed_focus = GCC_free_and_fair_elections }
+							no_jihadist_government = yes
+						}
+					}
+					news_event = { id = saudi_royal.2 days = 3458 } #death of King Abdullah
+				}
+			}
+		}
+	}
+}
+
+#Death of King Abdullah
+news_event = {
+	id = saudi_royal.2
+	title = saudi_royal.2.t
+	desc = {
+		text = saudi_royal.2.d1
+		trigger = {
+			SAU = {
+				NOT = { has_completed_focus = GCC_free_and_fair_elections }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = saudi_royal.2.d2
+		trigger = {
+			SAU = {
+				has_completed_focus = GCC_free_and_fair_elections
+				NOT = { has_completed_focus = GCC_establish_a_republic }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = saudi_royal.2.d3
+		trigger = {
+			SAU = {
+				has_completed_focus = GCC_constitutional_monarchy
+				has_completed_focus = GCC_establish_a_republic
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = saudi_royal.2.d4
+		trigger = {
+			SAU = {
+				jihadist_government = yes
+			}
+		}
+	}
+
+	picture = GFX_news_saudi_royal_death
+
+	is_triggered_only = yes
+
+	option = {
+		name = saudi_royal.1.a #A sad day for Saudi Arabia...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.2.a executed"
+		if = {
+			limit = { tag = SAU }
+			if = {
+				limit = {
+					has_country_leader = {
+						name = "Abdullah bin Abdulaziz Al-Saud"
+						ruling_only = yes
+					}
+				}
+				kill_country_leader = yes
+				create_country_leader = {
+					name = "Salman bin Abdulaziz Al-Saud"
+					picture = "Salman_bin_Abdulaziz_Al_Saud.dds"
+					expire = "2020.1.6"
+					ideology = Kingdom
+					traits = {
+						king
+						salafist_Kingdom
+						pro_american
+						alzheimer
+						incapable
+						greedy
+					}
+				}
+			}
+			if = {
+				limit = { has_dlc = "La Resistance"}
+				add_ideas = SAU_crown_prince_mbn_lar
+			}
+			else_if = {
+				limit = { NOT = { has_dlc = "La Resistance"} }
+				add_ideas = SAU_crown_prince_mbn
+			}
+			hidden_effect = {
+				every_other_country = { news_event = { id = saudi_royal.2 }}
+			}
+		}
+	}
+
+}
+
+#MbS seeks power
+country_event = {
+	id = saudi_royal.3
+	title = saudi_royal.3.t
+	desc = saudi_royal.3.d
+
+	picture = GFX_CAN_tweet_saudi_outrage
+
+	trigger = {
+		tag = SAU
+		is_in_array = { ruling_party = 10 }
+		has_country_leader = {
+			name = "Salman bin Abdulaziz Al-Saud"
+			ruling_only = yes
+		}
+		NOT = { has_idea = SAU_crown_prince_mbs }
+		check_variable = { mbs > 1 }
+		has_idea = restoring_hope
+		NOT = { has_country_flag = SAU_mbs_punished }
+	}
+
+	mean_time_to_happen = { days = 30 }
+
+	fire_only_once = yes
+
+	option = {
+		name = saudi_royal.3.a #Keep MbN
+		log = "[GetDateText]: [This.GetName]: saudi_royal.3.a executed"
+		add_stability = 0.02
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = saudi_royal.3.b #Go with MbS
+		log = "[GetDateText]: [This.GetName]: saudi_royal.3.b executed"
+		add_political_power = -100
+		if = {
+			limit = { has_dlc = "La Resistance"}
+			swap_ideas = {
+				remove_idea = SAU_crown_prince_mbn_lar
+				add_idea = SAU_crown_prince_mbs
+			}
+		}
+		else_if = {
+			limit = { NOT = { has_dlc = "La Resistance"} }
+			swap_ideas = {
+				remove_idea = SAU_crown_prince_mbn
+				add_idea = SAU_crown_prince_mbs
+			}
+		}
+		if = {
+			limit = {
+				tag = SAU
+				is_in_array = { ruling_party = 10 }
+				has_country_leader = {
+					name = "Salman bin Abdulaziz Al-Saud"
+					ruling_only = yes
+				}
+			}
+			custom_effect_tooltip = MBS_strengthened_tt
+			add_to_variable = { mbs = 1 }
+		}
+		every_other_country = { news_event = { id = sau_royal.4 }}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#MbS named crown prince
+news_event = {
+	id = saudi_royal.4
+	title = saudi_royal.4.t
+	desc = saudi_royal.4.d
+
+	picture = GFX_SAU_QAT_CRISIS
+
+	is_triggered_only = yes
+
+	option = {
+		name = saudi_royal.4.a #The young prince draws closer to the throne...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.4.a executed"
+	}
+}
+
+#Khashoggi affair
+country_event = {
+	id = saudi_royal.5
+	title = saudi_royal.5.t
+	desc = saudi_royal.5.d
+
+	picture = GFX_CAN_tweet_saudi_outrage
+
+	trigger = {
+		tag = SAU
+		is_in_array = { ruling_party = 10 }
+		has_country_leader = {
+			name = "Salman bin Abdulaziz Al-Saud"
+			ruling_only = yes
+		}
+		has_idea = SAU_crown_prince_mbs
+		check_variable = { mbs > 3 }
+	}
+
+	mean_time_to_happen = { days = 30 }
+
+	fire_only_once = yes
+
+	option = {
+		trigger = { check_variable = { mbs < 8 }}
+		name = saudi_royal.5.a #Punish MBS
+		log = "[GetDateText]: [This.GetName]: saudi_royal.5.a executed"
+		set_variable = { mbs = 0 }
+		if = {
+			limit = { has_dlc = "La Resistance"}
+			swap_ideas = {
+				remove_idea = SAU_crown_prince_mbs
+				add_idea = SAU_crown_prince_mbn_lar
+			}
+			if = {
+				limit = { has_idea = saudi_royal_family }
+				visually_display_opinion_rise_saudi_royal_family = yes
+				set_country_flag = current_saudi_royal_family
+				increase_internal_faction_opinion = yes
+			}
+		}
+		else_if = {
+			limit = { NOT = { has_dlc = "La Resistance"} }
+			swap_ideas = {
+				remove_idea = SAU_crown_prince_mbs
+				add_idea = SAU_crown_prince_mbn
+			}
+		}
+		add_political_power = -300
+		set_country_flag = SAU_mbs_punished
+		every_country = { news_event = { id = saudi_royal.6 }}
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = saudi_royal.5.b #Punish "rogue operatives"
+		log = "[GetDateText]: [This.GetName]: saudi_royal.5.b executed"
+		every_other_country = {
+			limit = {
+				OR = {
+					tag = AUS
+					tag = DEN
+					tag = GER
+					tag = HOL
+					tag = NOR
+					tag = SWE
+					tag = TUR
+				}
+			}
+			add_opinion_modifier = {
+				target = SAU
+				modifier = khashoggi_affair
+			}
+		}
+		add_political_power = -150
+		set_country_flag = SAU_operatives_punished
+		every_country = { news_event = { id = saudi_royal.6 }}
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = saudi_royal.5.c #Do nothing.
+		log = "[GetDateText]: [This.GetName]: saudi_royal.5.c executed"
+		every_other_country = {
+			limit = {
+				OR = {
+					has_idea = NATO_member
+					tag = AUS
+					tag = SWE
+				}
+				if = {
+					limit = {
+						USA = {
+							has_country_leader = {
+								name = "Donald Trump"
+								ruling_only = yes
+							}
+						}
+					}
+					NOT = { tag = USA }
+				}
+			}
+			add_opinion_modifier = {
+				target = SAU
+				modifier = khashoggi_affair
+			}
+		}
+		custom_effect_tooltip = MBS_strengthened_tt
+		add_to_variable = { mbs = 1 }
+		set_country_flag = SAU_no_action
+		every_country = { news_event = { id = saudi_royal.6 }}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+news_event = {
+	id = saudi_royal.6
+	title = saudi_royal.5.t
+	desc = {
+		text = saudi_royal.6.d1
+		trigger = { SAU = { NOT = { has_idea = SAU_crown_prince_mbs }}}
+	}
+	desc = {
+		text = saudi_royal.6.d2
+		trigger = { SAU = { has_country_flag = SAU_operatives_punished }}
+	}
+	desc = {
+		text = saudi_royal.6.d3
+		trigger = { SAU = { has_country_flag = SAU_no_action }}
+	}
+
+	picture = GFX_SAU_QAT_CRISIS
+
+	is_triggered_only = yes
+
+	option = {
+		name = saudi_royal.6.a #Truly a tragic state of affairs...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.6.a executed"
+	}
+}
+
+#Discontent with MbS
+country_event = {
+	id = saudi_royal.7
+	title = saudi_royal.7.t
+	desc = {
+		text = saudi_royal.7.d
+		trigger = { check_variable = { mbs < 8 }}
+	}
+	desc = {
+		text = saudi_royal.7.d1
+		trigger = { check_variable = { mbs > 7 }}
+	}
+
+	picture = GFX_CAN_tweet_saudi_outrage
+
+	trigger = {
+		tag = SAU
+		is_in_array = { ruling_party = 10 }
+		has_country_leader = {
+			name = "Salman bin Abdulaziz Al-Saud"
+			ruling_only = yes
+		}
+		has_idea = SAU_crown_prince_mbs
+		OR = {
+			has_country_flag = SAU_operatives_punished
+			has_country_flag = SAU_no_action
+		}
+		OR = {
+			has_country_flag = negative_saudi_royal_family
+			has_country_flag = hostile_saudi_royal_family
+		}
+		OR = {
+			has_idea = restoring_hope
+			YEM = { has_government = communism }
+		}
+	}
+
+	mean_time_to_happen = { days = 30 }
+
+	fire_only_once = yes
+
+	option = {
+		trigger = { check_variable = { mbs < 8 }}
+		name = saudi_royal.7.a #Placate the dissenters.
+		log = "[GetDateText]: [This.GetName]: saudi_royal.7.a executed"
+		add_political_power = -300
+		set_variable = { mbs = 0 }
+		if = {
+			limit = { has_dlc = "La Resistance"}
+			swap_ideas = {
+				remove_idea = SAU_crown_prince_mbs
+				add_idea = SAU_crown_prince_mbn_lar
+			}
+			if = {
+				limit = { has_idea = saudi_royal_family }
+				visually_display_opinion_rise_saudi_royal_family = yes
+				set_country_flag = current_saudi_royal_family
+				increase_internal_faction_opinion = yes
+			}
+		}
+		if = {
+			limit = { has_idea = saudi_royal_family }
+			visually_display_opinion_rise_saudi_royal_family = yes
+			set_country_flag = current_saudi_royal_family
+			increase_internal_faction_opinion = yes
+		}
+		every_country = { news_event = { id = saudi_royal.8 }}
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = saudi_royal.7.b #Purge the dissenters.
+		log = "[GetDateText]: [This.GetName]: saudi_royal.7.b executed"
+		add_stability = -0.05
+		custom_effect_tooltip = MBS_strengthened_tt
+		add_to_variable = { mbs = 1 }
+		set_country_flag = SAU_purge
+		if = {
+			limit = { has_idea = saudi_royal_family }
+			visually_display_opinion_fall_saudi_royal_family = yes
+			set_country_flag = current_saudi_royal_family
+			decrease_internal_faction_opinion = yes
+		}
+		every_country = { news_event = { id = saudi_royal.9 }}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#MbS demoted
+news_event = {
+	id = saudi_royal.8
+	title = saudi_royal.8.t
+	desc = saudi_royal.8.d
+
+	picture = GFX_SAU_QAT_CRISIS
+
+	is_triggered_only = yes
+
+	option = {
+		name = saudi_royal.8.a #The rising star falls from grace...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.8.a executed"
+	}
+}
+
+#Royals arrested
+news_event = {
+	id = saudi_royal.9
+	title = saudi_royal.9.t
+	desc = saudi_royal.9.d
+
+	picture = GFX_SAU_QAT_CRISIS
+
+	is_triggered_only = yes
+
+	option = {
+		name = saudi_royal.9.a #The crown prince grows stronger...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.9.a executed"
+	}
+}
+
+#Salman abdicates
+news_event = {
+	id = saudi_royal.10
+	title = saudi_royal.10.t
+	desc = saudi_royal.10.d
+
+	picture = GFX_SAU_QAT_CRISIS
+
+	trigger = {
+		tag = SAU
+		is_in_array = { ruling_party = 10 }
+		has_country_leader = {
+			name = "Salman bin Abdulaziz Al-Saud"
+			ruling_only = yes
+		}
+		has_idea = SAU_crown_prince_mbs
+		OR = {
+			has_country_flag = SAU_operatives_punished
+			has_country_flag = SAU_no_action
+		}
+		has_country_flag = SAU_purge
+		check_variable = { mbs > 9 }
+	}
+
+	mean_time_to_happen = { days = 30 }
+
+	option = {
+		name = saudi_royal.10.a #The king is gone, long live the king...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.10.a executed"
+		if = {
+			limit = { tag = SAU }
+			hidden_effect = { kill_country_leader = yes }
+			remove_ideas = SAU_crown_prince_mbs
+			create_country_leader = {
+				name = "Mohammed bin Salman Al-Saud"
+				picture = "Mohammad_bin_Salman_Al_Saud.dds"
+				ideology = Kingdom
+				traits = {
+					king
+					salafist_Kingdom
+					pro_american
+					pro_israel
+					rash
+					dictator
+					opposes_muslim_brotherhood
+					interventionist
+				}
+			}
+			if = {
+				limit = { has_idea = saudi_royal_family }
+				visually_display_opinion_fall_saudi_royal_family = yes
+				set_country_flag = current_saudi_royal_family
+				decrease_internal_faction_opinion = yes
+			}
+			every_other_country = { news_event = { id = saudi_royal.11 }}
+		}
+	}
+}
+
+news_event = {
+	id = saudi_royal.11
+	title = saudi_royal.10.t
+	desc = saudi_royal.10.d
+
+	picture = GFX_SAU_QAT_CRISIS
+
+	is_triggered_only = yes
+
+	option = {
+		name = saudi_royal.10.a #The king is gone, long live the king...
+		log = "[GetDateText]: [This.GetName]: saudi_royal.10.a executed"
+	}
+}
+
+#Death of Zayed bin Sultan
+news_event = {
+	id = uae_royal.1
+	title = uae_royal.1.t
+	desc = {
+		text = uae_royal.1.d1
+		trigger = {
+			UAE = {
+				NOT = { has_completed_focus = GCC_free_and_fair_elections }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.1.d2
+		trigger = {
+			UAE = {
+				has_completed_focus = GCC_free_and_fair_elections
+				NOT = { has_completed_focus = GCC_establish_a_republic }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.1.d3
+		trigger = {
+			UAE = {
+				has_completed_focus = GCC_constitutional_monarchy
+				has_completed_focus = GCC_establish_a_republic
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.1.d4
+		trigger = {
+			UAE = {
+				jihadist_government = yes
+			}
+		}
+	}
+
+	picture = GFX_news_saudi_royal_death
+
+	is_triggered_only = yes
+
+	option = {
+		name = uae_royal.1.a #A sad day for the UAE...
+		log = "[GetDateText]: [This.GetName]: uae_royal.1.a executed"
+		if = {
+			limit = { tag = UAE }
+			if = {
+				limit = {
+					has_country_leader = {
+						name = "Zayed bin Sultan Al Nahyan"
+						ruling_only = yes
+					}
+				}
+				kill_country_leader = yes
+				create_country_leader = {
+					name = "Khalifa bin Zayed Al Nahyan"
+					picture = "khalifa_bin_zayed_al_nahyan.dds"
+					ideology = Western_Autocracy
+					traits = {
+						king
+						western_Western_Autocracy
+						tech_savy
+						greedy
+						capable
+					}
+				}
+			}
+			hidden_effect = {
+				every_other_country = { news_event = { id = uae_royal.1 }}
+				if = {
+					limit = {
+						UAE = {
+							NOT = { has_completed_focus = GCC_free_and_fair_elections }
+							no_jihadist_government = yes
+						}
+					}
+					news_event = { id = uae_royal.2 days = 3348 } #Khalifa's stroke
+				}
+			}
+		}
+	}
+}
+
+#Khalifa bin Zayed Suffers from Stroke
+news_event = {
+	id = uae_royal.2
+	title = uae_royal.2.t
+	desc = {
+		text = uae_royal.2.d1
+		trigger = {
+			UAE = {
+				NOT = { has_completed_focus = GCC_free_and_fair_elections }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.2.d2
+		trigger = {
+			UAE = {
+				has_completed_focus = GCC_free_and_fair_elections
+				NOT = { has_completed_focus = GCC_establish_a_republic }
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.2.d3
+		trigger = {
+			UAE = {
+				has_completed_focus = GCC_constitutional_monarchy
+				has_completed_focus = GCC_establish_a_republic
+				no_jihadist_government = yes
+			}
+		}
+	}
+	desc = {
+		text = uae_royal.2.d4
+		trigger = {
+			UAE = {
+				jihadist_government = yes
+			}
+		}
+	}
+
+	picture = GFX_news_press_conference
+
+	is_triggered_only = yes
+
+	option = {
+		name = uae_royal.2.a #A new power behind the throne...
+		log = "[GetDateText]: [This.GetName]: uae_royal.2.a executed"
+		if = {
+			limit = { tag = UAE }
+			if = {
+				limit = {
+					has_country_leader = {
+						name = "Khalifa bin Zayed Al Nahyan"
+						ruling_only = yes
+					}
+				}
+				hidden_effect = { kill_country_leader = yes }
+				create_country_leader = {
+					name = "Mohammed bin Zayed Al Nahyan"
+					picture = "mohammed_bin_zayed_al_nahyan.dds"
+					ideology = Western_Autocracy
+					traits = {
+						king
+						western_Western_Autocracy
+						military_career
+						pro_american
+						political_dancer
+						sly
+						geopolitical_thinker
+						opposes_muslim_brotherhood
+						interventionist
+					}
+				}
+				add_ideas = UAE_sheikh_khalifa
+			}
+			every_other_country = { news_event = { id = uae_royal.2 } }
+		}
+	}
+}
+
+#Death of Jaber al-Ahmed al-Sabah
+news_event = {
+	id = kuwait_royal.1
+	title = kuwait_royal.1.t
+	desc = {
+		text = kuwait_royal.1.d1
+		trigger = {
+			KUW = {
+				NOT = { has_completed_focus = GCC_free_and_fair_elections }
+			}
+		}
+	}
+	desc = {
+		text = kuwait_royal.1.d2
+		trigger = {
+			KUW = {
+				has_completed_focus = GCC_free_and_fair_elections
+				NOT = { has_completed_focus = GCC_establish_a_republic }
+			}
+		}
+	}
+	desc = {
+		text = kuwait_royal.1.d3
+		trigger = {
+			KUW = {
+				has_completed_focus = GCC_constitutional_monarchy
+				has_completed_focus = GCC_establish_a_republic
+			}
+		}
+	}
+
+	picture = GFX_news_saudi_royal_death
+
+	is_triggered_only = yes
+
+	option = {
+		name = kuwait_royal.1.a #A sad day for Kuwait...
+		log = "[GetDateText]: [This.GetName]: kuwait_royal.1.a executed"
+		if = {
+			limit = { tag = KUW }
+			if = {
+				limit = {
+					has_country_leader = {
+						name = "Jaber Al-Ahmad Al-Sabah"
+						ruling_only = yes
+					}
+				}
+				kill_country_leader = yes
+				create_country_leader = {
+					name = "Sabah Al-Ahmad Al-Jaber Al-Sabah"
+					picture = "Sabah_Al-Ahmad_Al-Jaber_Al-Sabah.dds"
+					ideology = Western_Autocracy
+					traits = {
+						western_Western_Autocracy
+					}
+				}
+			}
+		}
+	}
+}
+
+#Death of Qaboos bin Said
+country_event = {
+	id = oman_royal.1
+	title = oman_royal.1.t
+	desc = oman_royal.1.d
+
+
+	trigger = {
+		tag = OMA
+		has_country_leader = {
+			name = "Qaboos bin Said al Said"
+			ruling_only = yes
+		}
+		date > 2020.01.01
+	}
+
+	mean_time_to_happen = { days = 2 }
+
+	option = {
+		name = oman_royal.1.a #Go with Assad.
+		log = "[GetDateText]: [This.GetName]: oman_royal.1.a executed"
+		kill_country_leader = yes
+		create_country_leader = {
+			name = "Assad bin Tariq al Said"
+			picture = "Assad_bin_Tariq_al_Said.dds"
+			ideology = Neutral_Autocracy
+			traits = {
+				neutrality_Neutral_Autocracy
+				military_career
+				polished
+				capable
+				former_armor_commander
+			}
+		}
+		if = {
+			limit = { has_idea = the_military }
+			visually_display_opinion_rise_the_military = yes
+			set_country_flag = current_the_military
+			increase_internal_faction_opinion = yes
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = oman_royal.1.b #Go with Shihab.
+		log = "[GetDateText]: [This.GetName]: oman_royal.1.b executed"
+		kill_country_leader = yes
+		create_country_leader = {
+			name = "Shihab bin Tariq al Said"
+			picture = "Shihab_bin_Tariq_al_Said.dds"
+			ideology = Neutral_Autocracy
+			traits = {
+				neutrality_Neutral_Autocracy
+				military_career
+				honest
+				former_naval_commander
+			}
+		}
+		if = {
+			limit = { has_idea = the_military }
+			visually_display_opinion_rise_the_military = yes
+			set_country_flag = current_the_military
+			increase_internal_faction_opinion = yes
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = oman_royal.1.c #Go with Haitham.
+		log = "[GetDateText]: [This.GetName]: oman_royal.1.c executed"
+		kill_country_leader = yes
+		create_country_leader = {
+			name = "Haitham bin Tariq al Said"
+			picture = "Haitham_bin_Tariq_al_Said.dds"
+			ideology = Neutral_Autocracy
+			traits = {
+				neutrality_Neutral_Autocracy
+				inexperienced
+				captain_of_industry
+			}
+		}
+		if = {
+			limit = { has_idea = small_medium_business_owners }
+			visually_display_opinion_rise_small_medium_business_owners = yes
+			set_country_flag = current_small_medium_business_owners
+			increase_internal_faction_opinion = yes
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
