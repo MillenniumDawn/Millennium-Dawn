@@ -1300,6 +1300,126 @@ gcc_decisions = {
 
 	}
 
+	GCC_offer_joint_exercises_specific = {
+
+		icon = GFX_decision_generic_tank
+
+		visible = {
+			has_idea = idea_gcc_member_state
+			NOT = { has_global_flag = GCC_joint_exercises_offered }
+		}
+
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = gcc_unity_greater_20_tt
+				check_variable = { global.gcc_unity > 20 }
+			}
+		}
+
+		cost = 50
+
+		days_re_enable = 365
+
+		complete_effect = {
+			set_global_flag = GCC_joint_exercises_offered
+			set_country_flag = GCC_joint_exercises_accepted
+			every_other_country = {
+				limit = {
+					has_idea = idea_gcc_member_state
+				}
+				country_event = {
+					id = gcc.26
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_start_joint_exercises_specific = {
+
+		icon = GFX_decision_generic_tank
+
+		visible = {
+			has_idea = idea_gcc_member_state
+			has_global_flag = GCC_joint_exercises_offered
+		}
+
+		available = {
+			has_war = no
+		}
+
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+
+		complete_effect = {
+			add_command_power = -20
+			every_country = {
+				limit = { has_idea = idea_gcc_member_state has_country_flag = GCC_joint_exercises_accepted }
+				add_timed_idea = {
+					idea = GCC_joint_drill
+					days = 30
+				}
+				clr_country_flag = GCC_joint_exercises_accepted
+			}
+		}
+
+		days_remove = 30
+
+		remove_effect = {
+			if = {
+				limit = {
+					check_variable = { global.gcc_exercise > 0 }
+					check_variable = { global.gcc_exercise < 3 }
+				}
+				custom_effect_tooltip = GCC_unity_increase_2_tt
+				add_to_variable = { global.gcc_unity = 2 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { global.gcc_exercise > 2 }
+					check_variable = { global.gcc_exercise < 5 }
+				}
+				custom_effect_tooltip = GCC_unity_increase_5_tt
+				add_to_variable = { global.gcc_unity = 5 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { global.gcc_exercise > 4 }
+				}
+				custom_effect_tooltip = GCC_unity_increase_10_tt
+				add_to_variable = { global.gcc_unity = 10 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			clr_global_flag = GCC_joint_exercises_offered
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+
+	}
+
 	GCC_request_bloc_arms_sales = {
 
 		icon = GFX_decision_ger_military_buildup
@@ -1328,8 +1448,8 @@ gcc_decisions = {
 				has_country_flag = gcc_dominant_member
 			}
 			custom_trigger_tooltip = {
-				tooltip = gcc_unity_greater_50_tt
-				check_variable = { global.gcc_unity > 50 }
+				tooltip = gcc_unity_greater_40_tt
+				check_variable = { global.gcc_unity > 40 }
 			}
 		}
 
@@ -2686,7 +2806,7 @@ gcc_decisions = {
 			}
 		}
 
-		days_remove = 180
+		days_remove = 90
 
 		ai_will_do = {
 			factor = 0
