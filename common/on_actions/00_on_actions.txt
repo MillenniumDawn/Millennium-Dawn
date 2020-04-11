@@ -197,6 +197,36 @@ on_actions = {
 					}
 				}
 			}
+			#GCC
+			if = {
+				limit = {
+					threat > 10
+				}
+				add_to_variable = { global.gcc_unity = 1 }
+			}
+			if = {
+				limit = {
+					threat > 25
+				}
+				add_to_variable = { global.gcc_unity = 2 }
+			}
+			if = {
+				limit = {
+					threat > 50
+				}
+				add_to_variable = { global.gcc_unity = 5 }
+			}
+			if = {
+				limit = {
+					threat > 75
+				}
+				add_to_variable = { global.gcc_unity = 10 }
+			}
+			clamp_variable = {
+				var = global.gcc_unity
+				min = 0
+				max = 100
+			}
 		}
 	}
 	on_yearly = {
@@ -225,6 +255,7 @@ on_actions = {
 					is_in_array = { global.ct_states = THIS }
 					no_jihadist_government = yes
 					NOT = { has_country_flag = threat_level_negligible }
+					is_full_state = yes
 					any_country = {
 						OR = {
 							has_government = democratic
@@ -294,6 +325,7 @@ on_actions = {
 						has_country_flag = threat_level_severe
 						has_country_flag = threat_level_critical
 					}
+					is_full_state = yes
 					any_country = {
 						OR = {
 							has_government = democratic
@@ -342,46 +374,6 @@ on_actions = {
 			if = {
 				limit = { check_variable = { chinese_aggression > 0 } }
 				subtract_from_variable = { chinese_aggression = 1 }
-			}
-			#GCC
-			if = {
-				limit = {
-					threat < 1
-				}
-				subtract_from_variable = { gcc_unity = 2 }
-			}
-			if = {
-				limit = {
-					threat > 0
-					threat < 10
-				}
-				subtract_from_variable = { gcc_unity = 1 }
-			}
-			if = {
-				limit = {
-					threat < 30
-					threat > 19
-				}
-				add_to_variable = { gcc_unity = 1 }
-			}
-			if = {
-				limit = {
-					threat < 40
-					threat > 29
-				}
-				add_to_variable = { gcc_unity = 2 }
-			}
-			if = {
-				limit = {
-					threat > 49
-				}
-				add_to_variable = { gcc_unity = 5 }
-			}
-			if = {
-				limit = {
-					threat > 74
-				}
-				add_to_variable = { gcc_unity = 5 }
 			}
 		}
 	}
@@ -1148,7 +1140,10 @@ on_actions = {
 					}
 					#Jihadist uprising
 					if = {
-						limit = { jihadist_government = yes }
+						limit = {
+							has_government = fascism
+							NOT = { FROM = { has_cosmetic_tag = SAU_AQ } }
+						}
 						add_named_threat = {
 							threat = 10
 							name = terror.threat
@@ -1178,6 +1173,18 @@ on_actions = {
 								active = no
 							}
 						}
+						every_other_country = {
+							limit = { has_guaranteed = ROOT }
+							diplomatic_relation = {
+								country = ROOT
+								relation = guarantee
+								active = no
+							}
+						}
+						if = {
+							limit = { is_in_faction = yes }
+							leave_faction = yes
+						}
 						set_political_party = {
 							ideology = fascism
 							popularity = 100
@@ -1190,7 +1197,13 @@ on_actions = {
 						update_government_coalition_strength = yes
 						update_party_name = yes
 						set_coalition_drift = yes
-						set_country_flag = set_Caliphate
+						meta_effect = {
+							text = {
+								set_country_flag = [META_SET_RULING_PARTY]
+							}
+							META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+						}
+						set_leader = yes
 						#Influence system
 						init_influence = yes
 						set_variable = { domestic_influence_amount = 200 }
@@ -1239,6 +1252,13 @@ on_actions = {
 								target = ROOT
 								modifier = terrorism_is_no_no_trade
 							}
+							add_ai_strategy = { type = befriend id = ROOT value = -200 }
+							add_ai_strategy = { type = support id = ROOT value = -200 }
+							add_ai_strategy = { type = protect id = ROOT value = -200 }
+							add_ai_strategy = { type = send_volunteers_desire id = ROOT value = -200 }
+							add_ai_strategy = { type = contain id = ROOT value = 200 }
+							add_ai_strategy = { type = antagonize id = ROOT value = 200 }
+							add_ai_strategy = { type = conquer id = ROOT value = 200 }
 						}
 						add_ideas = intervention_neo_imperialism
 						add_equipment_to_stockpile = {
@@ -1246,10 +1266,135 @@ on_actions = {
 							amount = 2000
 							producer = SOV
 						}
+						set_variable = { radicalization = 100 }
+						set_variable = { social_conservatism_government = 100 }
+						set_variable = { social_conservatism_society = 100 }
+						if = {
+							limit = { original_tag = SYR }
+							if = {
+								limit = { country_exists = FSA }
+								declare_war_on = {
+									target = FSA
+									type = annex_everything
+								}
+							}
+							if = {
+								limit = { country_exists = ROJ }
+								declare_war_on = {
+									target = ROJ
+									type = annex_everything
+								}
+							}
+						}
+						if = {
+							limit = { original_tag = FSA }
+							if = {
+								limit = { country_exists = SYR }
+								declare_war_on = {
+									target = SYR
+									type = annex_everything
+								}
+							}
+							if = {
+								limit = { country_exists = ROJ }
+								declare_war_on = {
+									target = ROJ
+									type = annex_everything
+								}
+							}
+						}
+						if = {
+							limit = { original_tag = IRQ }
+							if = {
+								limit = { country_exists = KUR }
+								declare_war_on = {
+									target = KUR
+									type = annex_everything
+								}
+							}
+						}
+						if = {
+							limit = { original_tag = GNA }
+							if = {
+								limit = { country_exists = GNC }
+								declare_war_on = {
+									target = GNC
+									type = annex_everything
+								}
+							}
+							if = {
+								limit = { country_exists = HOR }
+								declare_war_on = {
+									target = HOR
+									type = annex_everything
+								}
+							}
+						}
+						if = {
+							limit = { original_tag = GNC }
+							if = {
+								limit = { country_exists = GNA }
+								declare_war_on = {
+									target = GNA
+									type = annex_everything
+								}
+							}
+							if = {
+								limit = { country_exists = HOR }
+								declare_war_on = {
+									target = HOR
+									type = annex_everything
+								}
+							}
+						}
+						if = {
+							limit = { original_tag = HOR }
+							if = {
+								limit = { country_exists = GNC }
+								declare_war_on = {
+									target = GNC
+									type = annex_everything
+								}
+							}
+							if = {
+								limit = { country_exists = GNA }
+								declare_war_on = {
+									target = GNA
+									type = annex_everything
+								}
+							}
+							if = {
+								limit = { country_exists = TUA }
+								declare_war_on = {
+									target = TUA
+									type = annex_everything
+								}
+							}
+						}
+						if = {
+							limit = { original_tag = YEM }
+							if = {
+								limit = { country_exists = HOU }
+								declare_war_on = {
+									target = HOU
+									type = annex_everything
+								}
+							}
+						}
+						if = {
+							limit = { FROM = { has_government = fascism }}
+							set_cosmetic_tag = SAU_AQ
+						}
 					}
 					FROM = {
 						if = {
-							limit = { jihadist_government = yes }
+							limit = {
+								has_government = fascism
+								if = {
+									limit = { ROOT = { has_government = fascism }}
+									has_cosmetic_tag = SAU_AQ
+								}
+							}
 							ROOT = { set_country_flag = fighting_jihadis }
 							add_named_threat = {
 								threat = 10
@@ -1280,6 +1425,18 @@ on_actions = {
 									active = no
 								}
 							}
+							every_other_country = {
+								limit = { has_guaranteed = ROOT }
+								diplomatic_relation = {
+									country = ROOT
+									relation = guarantee
+									active = no
+								}
+							}
+							if = {
+								limit = { is_in_faction = yes }
+								leave_faction = yes
+							}
 							set_political_party = {
 								ideology = fascism
 								popularity = 100
@@ -1292,7 +1449,13 @@ on_actions = {
 							update_government_coalition_strength = yes
 							update_party_name = yes
 							set_coalition_drift = yes
-							set_country_flag = set_Caliphate
+							meta_effect = {
+								text = {
+									set_country_flag = [META_SET_RULING_PARTY]
+								}
+								META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+							}
+							set_leader = yes
 							#Influence system
 							init_influence = yes
 							set_variable = { domestic_influence_amount = 200 }
@@ -1340,12 +1503,134 @@ on_actions = {
 									target = FROM
 									modifier = terrorism_is_no_no_trade
 								}
+								add_ai_strategy = { type = befriend id = FROM value = -200 }
+								add_ai_strategy = { type = support id = FROM value = -200 }
+								add_ai_strategy = { type = protect id = FROM value = -200 }
+								add_ai_strategy = { type = send_volunteers_desire id = FROM value = -200 }
+								add_ai_strategy = { type = contain id = FROM value = 200 }
+								add_ai_strategy = { type = antagonize id = FROM value = 200 }
+								add_ai_strategy = { type = conquer id = FROM value = 200 }
 							}
 							add_ideas = intervention_neo_imperialism
 							add_equipment_to_stockpile = {
 								type = infantry_weapons
 								amount = 2000
 								producer = SOV
+							}
+							set_variable = { radicalization = 100 }
+							set_variable = { social_conservatism_government = 100 }
+							set_variable = { social_conservatism_society = 100 }
+							if = {
+								limit = { original_tag = SYR }
+								if = {
+									limit = { country_exists = FSA }
+									declare_war_on = {
+										target = FSA
+										type = annex_everything
+									}
+								}
+								if = {
+									limit = { country_exists = ROJ }
+									declare_war_on = {
+										target = ROJ
+										type = annex_everything
+									}
+								}
+							}
+							if = {
+								limit = { original_tag = FSA }
+								if = {
+									limit = { country_exists = SYR }
+									declare_war_on = {
+										target = SYR
+										type = annex_everything
+									}
+								}
+								if = {
+									limit = { country_exists = ROJ }
+									declare_war_on = {
+										target = ROJ
+										type = annex_everything
+									}
+								}
+							}
+							if = {
+								limit = { original_tag = IRQ }
+								if = {
+									limit = { country_exists = KUR }
+									declare_war_on = {
+										target = KUR
+										type = annex_everything
+									}
+								}
+							}
+							if = {
+								limit = { original_tag = GNA }
+								if = {
+									limit = { country_exists = GNC }
+									declare_war_on = {
+										target = GNC
+										type = annex_everything
+									}
+								}
+								if = {
+									limit = { country_exists = HOR }
+									declare_war_on = {
+										target = HOR
+										type = annex_everything
+									}
+								}
+							}
+							if = {
+								limit = { original_tag = GNC }
+								if = {
+									limit = { country_exists = GNA }
+									declare_war_on = {
+										target = GNA
+										type = annex_everything
+									}
+								}
+								if = {
+									limit = { country_exists = HOR }
+									declare_war_on = {
+										target = HOR
+										type = annex_everything
+									}
+								}
+							}
+							if = {
+								limit = { original_tag = HOR }
+								if = {
+									limit = { country_exists = GNC }
+									declare_war_on = {
+										target = GNC
+										type = annex_everything
+									}
+								}
+								if = {
+									limit = { country_exists = GNA }
+									declare_war_on = {
+										target = GNA
+										type = annex_everything
+									}
+								}
+								if = {
+									limit = { country_exists = TUA }
+									declare_war_on = {
+										target = TUA
+										type = annex_everything
+									}
+								}
+							}
+							if = {
+								limit = { original_tag = YEM }
+								if = {
+									limit = { country_exists = HOU }
+									declare_war_on = {
+										target = HOU
+										type = annex_everything
+									}
+								}
 							}
 						}
 					}
@@ -1673,9 +1958,16 @@ on_actions = {
 						elections_allowed = yes
 					}
 				}
+				#Recognition
 				remove_ideas = rival_government
 				remove_from_array = { global.rival_governments = THIS }
 				clr_country_flag = rival_government_@FROM
+				#CT
+				if = {
+					limit = { is_in_array = { global.ct_states = THIS }}
+					subtract_from_variable = { threat_level = 15 }
+					clamp_threat = yes
+				}
 			}
 		}
 	}
