@@ -164,124 +164,6 @@ on_actions = {
 					}
 				}
 			}
-			#Possibility of jihadists crossing the border
-			if = {
-				limit = {
-					OR = {
-						has_country_flag = threat_level_severe
-						has_country_flag = threat_level_critical
-					}
-				}
-				every_neighbor_country = {
-					random_owned_state = {
-						limit = {
-							any_neighbor_state = {
-								is_owned_by = ROOT
-							}
-							NOT = { state = 175 }
-						}
-						set_temp_variable = { temp1 = THIS }
-					}
-					random_list = {
-						1 = {
-							country_event = { id = terror.8 days = 45 random = 2400 }
-							modifier = {
-								factor = 5
-								ROOT = { has_country_flag = threat_level_critical }
-							}
-							modifier = {
-								factor = 0.5
-								divisions_in_state = {
-									size > 0
-									state = temp1
-								}
-							}
-							modifier = {
-								factor = 0.5
-								divisions_in_state = {
-									size > 1
-									state = temp1
-								}
-							}
-							modifier = {
-								factor = 0.5
-								divisions_in_state = {
-									size > 2
-									state = temp1
-								}
-							}
-							modifier = {
-								factor = 0.5
-								divisions_in_state = {
-									size > 3
-									state = temp1
-								}
-							}
-							modifier = {
-								factor = 0.5
-								divisions_in_state = {
-									size > 4
-									state = temp1
-								}
-							}
-						}
-						99 = {
-						}
-					}
-				}
-			}
-			#GCC
-			if = {
-				limit = {
-					threat > 10
-				}
-				add_to_variable = { global.gcc_unity = 1 }
-			}
-			if = {
-				limit = {
-					threat > 25
-				}
-				add_to_variable = { global.gcc_unity = 2 }
-			}
-			if = {
-				limit = {
-					threat > 50
-				}
-				add_to_variable = { global.gcc_unity = 5 }
-			}
-			if = {
-				limit = {
-					threat > 75
-				}
-				add_to_variable = { global.gcc_unity = 10 }
-			}
-			clamp_variable = {
-				var = global.gcc_unity
-				min = 0
-				max = 100
-			}
-		}
-	}
-	on_yearly = {
-		effect = {
-			#Radicalization increase
-			if = {
-				limit = { check_variable = { party_pop_array^11 > 0 }}
-				country_event = { id = radicalization.8 }
-			}
-			#CT Training Decay
-			if = {
-				limit = {
-					check_variable = { ct_training > 0 }
-					is_in_array = { global.ct_states = THIS }
-				}
-				subtract_from_variable = { ct_training = 2 }
-				clamp_variable = {
-					var = ct_training
-					min = 0
-					max = 10
-				}
-			}
 			#Possibility of international terror attack - civilian
 			if = {
 				limit = {
@@ -347,6 +229,125 @@ on_actions = {
 					}
 					95 = {
 					}
+				}
+			}
+			#Possibility of jihadists crossing the border
+			if = {
+				limit = {
+					OR = {
+						has_country_flag = threat_level_severe
+						has_country_flag = threat_level_critical
+					}
+				}
+				every_neighbor_country = {
+					limit = { NOT = { original_tag = USA }}
+					random_owned_state = {
+						limit = {
+							any_neighbor_state = {
+								is_owned_by = ROOT
+							}
+							NOT = { state = 175 }
+						}
+						set_temp_variable = { temp1 = THIS }
+					}
+					random_list = {
+						1 = {
+							country_event = { id = terror.8 days = 45 random = 2400 }
+							modifier = {
+								factor = 5
+								ROOT = { has_country_flag = threat_level_critical }
+							}
+							modifier = {
+								factor = 0.5
+								divisions_in_state = {
+									size > 0
+									state = temp1
+								}
+							}
+							modifier = {
+								factor = 0.5
+								divisions_in_state = {
+									size > 1
+									state = temp1
+								}
+							}
+							modifier = {
+								factor = 0.5
+								divisions_in_state = {
+									size > 2
+									state = temp1
+								}
+							}
+							modifier = {
+								factor = 0.5
+								divisions_in_state = {
+									size > 3
+									state = temp1
+								}
+							}
+							modifier = {
+								factor = 0.5
+								divisions_in_state = {
+									size > 4
+									state = temp1
+								}
+							}
+						}
+						99 = {
+						}
+					}
+				}
+			}
+			#GCC
+			if = {
+				limit = {
+					threat < 1
+				}
+				subtract_from_variable = { global.gcc_unity = 1 }
+			}
+			if = {
+				limit = {
+					threat > 25
+				}
+				add_to_variable = { global.gcc_unity = 1 }
+			}
+			if = {
+				limit = {
+					threat > 50
+				}
+				add_to_variable = { global.gcc_unity = 2 }
+			}
+			if = {
+				limit = {
+					threat > 75
+				}
+				add_to_variable = { global.gcc_unity = 5 }
+			}
+			clamp_variable = {
+				var = global.gcc_unity
+				min = 0
+				max = 100
+			}
+		}
+	}
+	on_yearly = {
+		effect = {
+			#Radicalization increase
+			if = {
+				limit = { check_variable = { party_pop_array^11 > 0 }}
+				country_event = { id = radicalization.8 }
+			}
+			#CT Training Decay
+			if = {
+				limit = {
+					check_variable = { ct_training > 0 }
+					is_in_array = { global.ct_states = THIS }
+				}
+				subtract_from_variable = { ct_training = 2 }
+				clamp_variable = {
+					var = ct_training
+					min = 0
+					max = 10
 				}
 			}
 			#Possibility of international terror attack - military
@@ -1475,6 +1476,25 @@ on_actions = {
 									limit = { is_core_of = FROM }
 									add_core_of = TAL
 								}
+								every_country = {
+									limit = { no_jihadist_government = yes }
+									add_opinion_modifier = {
+										target = ROOT
+										modifier = terrorism_is_no_no
+									}
+									add_opinion_modifier = {
+										target = ROOT
+										modifier = terrorism_is_no_no_trade
+									}
+									add_ai_strategy = { type = befriend id = ROOT value = -200 }
+									add_ai_strategy = { type = support id = ROOT value = -200 }
+									add_ai_strategy = { type = protect id = ROOT value = -200 }
+									add_ai_strategy = { type = send_volunteers_desire id = ROOT value = -200 }
+									add_ai_strategy = { type = contain id = ROOT value = 200 }
+									add_ai_strategy = { type = antagonize id = ROOT value = 200 }
+									add_ai_strategy = { type = conquer id = ROOT value = 200 }
+								}
+								add_ideas = intervention_neo_imperialism
 							}
 						}
 						if = {
@@ -1490,10 +1510,50 @@ on_actions = {
 									target = FROM
 									type = annex_everything
 								}
+								if = {
+									limit = { country_exists = SNA }
+									declare_war_on = {
+										target = SNA
+										type = annex_everything
+									}
+								}
+								if = {
+									limit = { country_exists = JUB }
+									declare_war_on = {
+										target = JUB
+										type = annex_everything
+									}
+								}
+								if = {
+									limit = { country_exists = SWS }
+									declare_war_on = {
+										target = SWS
+										type = annex_everything
+									}
+								}
 								every_state = {
 									limit = { is_core_of = FROM }
 									add_core_of = SHB
 								}
+								every_country = {
+									limit = { no_jihadist_government = yes }
+									add_opinion_modifier = {
+										target = ROOT
+										modifier = terrorism_is_no_no
+									}
+									add_opinion_modifier = {
+										target = ROOT
+										modifier = terrorism_is_no_no_trade
+									}
+									add_ai_strategy = { type = befriend id = ROOT value = -200 }
+									add_ai_strategy = { type = support id = ROOT value = -200 }
+									add_ai_strategy = { type = protect id = ROOT value = -200 }
+									add_ai_strategy = { type = send_volunteers_desire id = ROOT value = -200 }
+									add_ai_strategy = { type = contain id = ROOT value = 200 }
+									add_ai_strategy = { type = antagonize id = ROOT value = 200 }
+									add_ai_strategy = { type = conquer id = ROOT value = 200 }
+								}
+								add_ideas = intervention_neo_imperialism
 							}
 						}
 						if = {
@@ -1643,6 +1703,25 @@ on_actions = {
 										}
 									}
 								}
+								every_country = {
+									limit = { no_jihadist_government = yes }
+									add_opinion_modifier = {
+										target = ROOT
+										modifier = terrorism_is_no_no
+									}
+									add_opinion_modifier = {
+										target = ROOT
+										modifier = terrorism_is_no_no_trade
+									}
+									add_ai_strategy = { type = befriend id = ROOT value = -200 }
+									add_ai_strategy = { type = support id = ROOT value = -200 }
+									add_ai_strategy = { type = protect id = ROOT value = -200 }
+									add_ai_strategy = { type = send_volunteers_desire id = ROOT value = -200 }
+									add_ai_strategy = { type = contain id = ROOT value = 200 }
+									add_ai_strategy = { type = antagonize id = ROOT value = 200 }
+									add_ai_strategy = { type = conquer id = ROOT value = 200 }
+								}
+								add_ideas = intervention_neo_imperialism
 							}
 						}
 						if = {
