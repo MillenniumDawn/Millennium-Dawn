@@ -363,3 +363,7 @@
 		'arms_factory',
 		'industrial_complex',
 	}
+
+	NDefines.NOperatives = {
+		BECOME_SPYMASTER_PP_COST = 150,
+	}
