@@ -169,7 +169,12 @@ on_actions = {
 				limit = {
 					is_in_array = { global.ct_states = THIS }
 					no_jihadist_government = yes
-					NOT = { has_country_flag = threat_level_negligible }
+					OR = {
+						has_country_flag = threat_level_moderate
+						has_country_flag = threat_level_substantial
+						has_country_flag = threat_level_severe
+						has_country_flag = threat_level_critical
+					}
 					is_full_state = yes
 					any_country = {
 						OR = {
@@ -185,7 +190,7 @@ on_actions = {
 					}
 				}
 				random_list = {
-					5 = { #terror attack planned
+					1 = { #terror attack planned
 						random_list = {
 							50 = { #foiled
 								country_event = { id = terror.3 days = 15 random = 2400 }
@@ -212,22 +217,72 @@ on_actions = {
 						}
 						modifier = {
 							factor = 2
-							has_country_flag = threat_level_moderate
-						}
-						modifier = {
-							factor = 4
 							has_country_flag = threat_level_substantial
 						}
 						modifier = {
-							factor = 8
+							factor = 4
 							has_country_flag = threat_level_severe
 						}
 						modifier = {
-							factor = 16
+							factor = 6
 							has_country_flag = threat_level_critical
 						}
 					}
-					95 = {
+					99 = {
+					}
+				}
+			}
+			#Possibility of international terror attack - military
+			if = {
+				limit = {
+					is_in_array = { global.ct_states = THIS }
+					no_jihadist_government = yes
+					OR = {
+						has_country_flag = threat_level_severe
+						has_country_flag = threat_level_critical
+					}
+					is_full_state = yes
+					any_country = {
+						OR = {
+							has_government = democratic
+							has_government = communism
+						}
+						is_full_state = yes
+						has_military_access_to = ROOT
+					}
+				}
+				random_list = {
+					1 = { #terror attack planned
+						random_list = {
+							50 = { #foiled
+								country_event = { id = terror.3 days = 30 random = 2400 }
+							}
+							50 = { #not foiled
+								news_event = { id = terror.7 days = 60 random = 2400 }
+								modifier = {
+									factor = 2
+									has_idea = police_04
+								}
+								modifier = {
+									factor = 3
+									has_idea = police_03
+								}
+								modifier = {
+									factor = 4
+									has_idea = police_02
+								}
+								modifier = {
+									factor = 5
+									has_idea = police_01
+								}
+							}
+						}
+						modifier = {
+							factor = 2
+							has_country_flag = threat_level_critical
+						}
+					}
+					99 = {
 					}
 				}
 			}
@@ -301,12 +356,6 @@ on_actions = {
 			#GCC
 			if = {
 				limit = {
-					threat < 1
-				}
-				subtract_from_variable = { global.gcc_unity = 1 }
-			}
-			if = {
-				limit = {
 					threat > 25
 				}
 				add_to_variable = { global.gcc_unity = 1 }
@@ -328,14 +377,10 @@ on_actions = {
 				min = 0
 				max = 100
 			}
-		}
-	}
-	on_yearly = {
-		effect = {
-			#Radicalization increase
+			#Chinese Aggression
 			if = {
-				limit = { check_variable = { party_pop_array^11 > 0 }}
-				country_event = { id = radicalization.8 }
+				limit = { check_variable = { chinese_aggression > 0 } }
+				subtract_from_variable = { chinese_aggression = 1 }
 			}
 			#CT Training Decay
 			if = {
@@ -343,213 +388,25 @@ on_actions = {
 					check_variable = { ct_training > 0 }
 					is_in_array = { global.ct_states = THIS }
 				}
-				subtract_from_variable = { ct_training = 2 }
+				subtract_from_variable = { ct_training = 0.2 }
 				clamp_variable = {
 					var = ct_training
 					min = 0
 					max = 10
 				}
 			}
-			#Possibility of international terror attack - military
+			#Radicalization increase
 			if = {
 				limit = {
+					check_variable = { party_pop_array^11 > 0 }
 					is_in_array = { global.ct_states = THIS }
-					no_jihadist_government = yes
-					OR = {
-						has_country_flag = threat_level_severe
-						has_country_flag = threat_level_critical
-					}
-					is_full_state = yes
-					any_country = {
-						OR = {
-							has_government = democratic
-							has_government = communism
-						}
-						is_full_state = yes
-						has_military_access_to = ROOT
-					}
 				}
-				random_list = {
-					25 = { #terror attack planned
-						random_list = {
-							50 = { #foiled
-								country_event = { id = terror.3 days = 30 random = 2400 }
-							}
-							50 = { #not foiled
-								news_event = { id = terror.7 days = 60 random = 2400 }
-								modifier = {
-									factor = 2
-									has_idea = police_04
-								}
-								modifier = {
-									factor = 3
-									has_idea = police_03
-								}
-								modifier = {
-									factor = 4
-									has_idea = police_02
-								}
-								modifier = {
-									factor = 5
-									has_idea = police_01
-								}
-							}
-						}
-						modifier = {
-							factor = 2
-							has_country_flag = threat_level_critical
-						}
-					}
-					75 = {
-					}
-				}
+				country_event = { id = radicalization.8 }
 			}
-			#Chinese Aggression
-			if = {
-				limit = { check_variable = { chinese_aggression > 0 } }
-				subtract_from_variable = { chinese_aggression = 1 }
-			}
-			#Arab Spring
-			if = {
-				limit = {
-					date > 2000.01.01
-					is_arabic_nation = yes
-					has_war = no
-					NOT = { is_in_array = { ruling_party = 12 } }
-					NOT = {
-						has_global_flag = global_arab_spring
-					}
-					if = {
-						limit = { has_start_date > 2016.01.01 }
-						NOT = {
-							original_tag = EGY
-							original_tag = LBA
-							original_tag = GNA
-							original_tag = GNC
-							original_tag = HOR
-							original_tag = SYR
-							original_tag = TUN
-							original_tag = YEM
-						}
-					}
-				}
-				if = {
-					limit = { has_idea = police_05 }
-					add_to_variable = { arab_spring = 1 }
-				}
-				if = {
-					limit = {
-						has_idea = depression
-					}
-					add_to_variable = { arab_spring = 3 }
-				}
-				if = {
-					limit = {
-						has_idea = recession
-					}
-					add_to_variable = { arab_spring = 2 }
-				}
-				if = {
-					limit = {
-						has_idea = stagnation
-					}
-					add_to_variable = { arab_spring = 1 }
-				}
-				if = {
-					limit = {
-						OR = {
-							has_idea = health_01
-							has_idea = health_02
-							has_idea = health_03
-						}
-					}
-					add_to_variable = { arab_spring = 1 }
-				}
-				if = {
-					limit = {
-						OR = {
-							has_idea = edu_01
-							has_idea = edu_02
-						}
-					}
-					add_to_variable = { arab_spring = 1 }
-				}
-				if = {
-					limit = {
-						OR = {
-							has_idea = social_01
-							has_idea = social_02
-							has_idea = social_03
-						}
-					}
-					add_to_variable = { arab_spring = 1 }
-				}
-				if = {
-					limit = {
-						OR = {
-							has_idea = paralyzing_corruption
-							has_idea = crippling_corruption
-						}
-					}
-					add_to_variable = { arab_spring = 3 }
-				}
-				if = {
-					limit = {
-						has_idea = rampant_corruption
-						has_idea = unrestrained_corruption
-					}
-					add_to_variable = { arab_spring = 2 }
-				}
-				if = {
-					limit = {
-						has_idea = systematic_corruption
-						has_idea = widespread_corruption
-					}
-					add_to_variable = { arab_spring = 1 }
-				}
-				if = {
-					limit = {
-						tag = TUN
-						is_historical_focus_on = yes
-					}
-					add_to_variable = { arab_spring = 5 }
-				}
-				if = {
-					limit = {
-						tag = SYR
-						is_historical_focus_on = yes
-					}
-					add_to_variable = { arab_spring = 2 }
-				}
-				if = {
-					limit = {
-						tag = LBA
-						is_historical_focus_on = yes
-					}
-					add_to_variable = { arab_spring = 2 }
-				}
-				if = {
-					limit = {
-						tag = EGY
-						is_historical_focus_on = yes
-					}
-					add_to_variable = { arab_spring = 2 }
-				}
-				if = {
-					limit = {
-						tag = YEM
-						is_historical_focus_on = yes
-					}
-					add_to_variable = { arab_spring = 2 }
-				}
-				if = {
-					limit = {
-						tag = BHR
-						is_historical_focus_on = yes
-					}
-					add_to_variable = { arab_spring = 2 }
-				}
-			}
+		}
+	}
+	on_yearly = {
+		effect = {
 		}
 	}
 	on_thri_yearly_pulse = {
@@ -2476,6 +2333,25 @@ on_actions = {
 			#power projection setup
 			every_country = {
 				country_event = { id = projection.1 }
+			}
+
+			#Arab Spring
+			every_country = {
+				limit = {
+					if = {
+						limit = { has_start_date > 2016.01.01 }
+						NOT = {
+							original_tag = GNA
+							original_tag = GNC
+							original_tag = HOR
+							original_tag = SYR
+							original_tag = EGY
+							original_tag = TUN
+						}
+					}
+					is_arabic_nation = yes
+				}
+				country_event = { id = arab_spring.16 }
 			}
 			log = "[GetDateText]: [This.GetName]: on_startup init completed"
 		}
