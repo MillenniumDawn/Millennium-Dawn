@@ -235,79 +235,68 @@ news_event = {
 country_event = {
 	id = ukraine_hidden.1
 	immediate = { log = "[GetDateText]: [Root.GetName]: event ukraine_hidden.1" }
-	
-	is_triggered_only = yes
-	
+	is_triggered_only = yes	
 	hidden = yes
-	
 	option = {
 		name = ukraine_hidden.1.a # < 2/3 agree
 		log = "[GetDateText]: [This.GetName]: ukraine_hidden.1.a executed"
 		trigger = {
-			if = {
-				limit = {
-					has_country_flag = ukraine_debates.1.agree
-					has_country_flag = ukraine_debates.2.agree
+			OR = {
+				AND = {
+					has_country_flag = debates.1.agree
+					has_country_flag = debates.2.agree
 				}
-			}
-			if = { 
-				limit = {
-					has_country_flag = ukraine_debates.1.agree
-					has_country_flag = ukraine_debates.3.agree
+				AND = {
+					has_country_flag = debates.1.agree
+					has_country_flag = debates.3.agree
 				}
-			}
-			if = { 
-				limit = {
-					has_country_flag = ukraine_debates.2.agree
-					has_country_flag = ukraine_debates.3.agree
+				AND = {
+					has_country_flag = debates.2.agree
+					has_country_flag = debates.3.agree
 				}
 			}
 		}
 		
 		UKR = { country_event = { id = ukraine_md.1 days = 3 } }
 		
-		clr_country_flag = ukraine_debates.1.agree
-		clr_country_flag = ukraine_debates.2.agree
-		clr_country_flag = ukraine_debates.3.agree
-		
-		clr_country_flag = ukraine_debates.1.disagree
-		clr_country_flag = ukraine_debates.2.disagree
-		clr_country_flag = ukraine_debates.3.disagree
+		clr_country_flag = debates.1.agree
+		clr_country_flag = debates.2.agree
+		clr_country_flag = debates.3.agree
+		##Failsafe to ensure proper thingies
+		clr_country_flag = debates.1.disagree
+		clr_country_flag = debates.2.disagree
+		clr_country_flag = debates.3.disagree
 	}
 	
 	option = {
 		name = ukraine_hidden.1.b # < 2/3 disagree
 		log = "[GetDateText]: [This.GetName]: ukraine_hidden.1.b executed"
 		trigger = {
-			if = {
-				limit = {
-					has_country_flag = ukraine_debates.1.disagree
-					has_country_flag = ukraine_debates.2.disagree
+			OR = {
+				AND = {
+					has_country_flag = debates.1.disagree
+					has_country_flag = debates.2.disagree
 				}
-			}
-			if = { 
-				limit = {
-					has_country_flag = ukraine_debates.1.disagree
-					has_country_flag = ukraine_debates.3.disagree
+				AND = {
+					has_country_flag = debates.1.disagree
+					has_country_flag = debates.3.disagree
 				}
-			}
-			if = { 
-				limit = {
-					has_country_flag = ukraine_debates.2.disagree
-					has_country_flag = ukraine_debates.3.disagree
+				AND = {
+					has_country_flag = debates.2.disagree
+					has_country_flag = debates.3.disagree
 				}
 			}
 		}
 		
 		UKR = { country_event = { id = ukraine_md.2 days = 3 } }
 		
-		clr_country_flag = ukraine_debates.1.agree
-		clr_country_flag = ukraine_debates.2.agree
-		clr_country_flag = ukraine_debates.3.agree
-		
-		clr_country_flag = ukraine_debates.1.disagree
-		clr_country_flag = ukraine_debates.2.disagree
-		clr_country_flag = ukraine_debates.3.disagree
+		clr_country_flag = debates.1.agree
+		clr_country_flag = debates.2.agree
+		clr_country_flag = debates.3.agree
+		##Failsafe to ensure proper thingies
+		clr_country_flag = debates.1.disagree
+		clr_country_flag = debates.2.disagree
+		clr_country_flag = debates.3.disagree
 	}
 }
 
@@ -698,7 +687,7 @@ country_event = { #Open Conversation about a baltic black sea alliance
 	is_triggered_only = yes 
 	
 	option = {
-		name = ukraine_md.10
+		name = ukraine_md.10.a
 		log = "[GetDateText]: [This.GetName]: ukraine_md.10.a executed"
 		set_country_flag = supported_the_baltic_black_sea_union
 		UKR = { country_event = diplomatic_response.1 }
@@ -733,7 +722,7 @@ country_event = { #Open Conversation about a baltic black sea alliance
 	}	
 	
 	option = {
-		name = ukraine_md.10
+		name = ukraine_md.10.b
 		log = "[GetDateText]: [This.GetName]: ukraine_md.10.b executed"
 		set_country_flag = did_not_support_the_balatic_black_sea_union
 		UKR = { country_event = diplomatic_response.2 }
@@ -857,6 +846,10 @@ country_event = { ###Kharkiv Pact
 		}
 		ai_chance = {
 			base = 75
+			modifier = {
+				is_in_faction_with = SOV
+				factor = 2.0 
+			}
 		}
 	}
 	option = {
@@ -864,14 +857,17 @@ country_event = { ###Kharkiv Pact
 		log = "[GetDateText]: [This.GetName]: ukraine_md.12.b executed"
 		UKR = { country_event = diplomatic_response.2 }
 		ai_chance = {
-			base = 25 
+			base = 25
+			modifier = {
+				NOT = { is_in_faction_with = SOV }
+				factor = 2.0 
+			}
 		}
 	}
 }
 
 ############ Revolution Events/Tied to the UKR specific variables
 #New Event goes here/###Euromaidan revolution!
-
 #Help Event in Decisions to better help#
 country_event = {
 	id = ukraine_revolution.0
@@ -1418,11 +1414,11 @@ country_event = {
 			}
 			60 = {
 				modifier = {
-					check_variable { UKR_chance_of_collapse_var > 3 }
+					check_variable = { UKR_chance_of_collapse_var > 3 }
 					factor = 2 
 				}	
 				modifier = {
-					check_variable { UKR_stability_of_ukraine_var > 40 }
+					check_variable = { UKR_stability_of_ukraine_var > 40 }
 					factor = 3 
 				}
 				country_event = { id = ukraine_revolution.11 days = 45 random = 10 } #Light Protests
