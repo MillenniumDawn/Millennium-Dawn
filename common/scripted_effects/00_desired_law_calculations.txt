@@ -1,0 +1,570 @@
+######################
+# Written by mkemper #
+######################
+get_coalition_partner_numbers_bureau = {
+	set_variable = {
+		num_bureau_minus_two_coalition_partners = 0
+	}
+	set_variable = {
+		num_bureau_minus_one_coalition_partners = 0
+	}
+	set_variable = {
+		num_bureau_status_quo_coalition_partners = 0
+	}
+	set_variable = {
+		num_bureau_plus_one_coalition_partners = 0
+	}
+	set_variable = {
+		num_bureau_plus_two_coalition_partners = 0
+	}
+	for_each_loop = {
+		array = gov_coalition_array
+		value = v
+		index = i
+		if = {
+			limit = {
+				check_variable = { v = 16 } # Libertarian
+			}
+			add_to_variable = {
+				num_bureau_minus_two_coalition_partners = 1
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					check_variable = { v = 1 } # conservatism
+					check_variable = { v = 14 } # Neutral_conservatism
+				}
+			}
+			add_to_variable = {
+				num_bureau_minus_one_coalition_partners = 1
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					check_variable = { v = 0 } # Western_Autocracy
+					check_variable = { v = 3 } # socialism
+					check_variable = { v = 5 } # anarchist_communism
+					check_variable = { v = 6 } # Conservative
+					check_variable = { v = 7 } # Autocracy
+					check_variable = { v = 8 } # Vilayat_e_Faqih
+					check_variable = { v = 9 } # Mod_Vilayat_e_Faqih
+					check_variable = { v = 12 } # Neutral_Muslim_Brotherhood
+					check_variable = { v = 13 } # Neutral_Autocracy
+					check_variable = { v = 17 } # Neutral_Green
+					check_variable = { v = 18 } # neutral_Social
+					check_variable = { v = 20 } # Nat_Populism
+					check_variable = { v = 23 } # Monarchist
+				}
+			}
+			add_to_variable = {
+				num_bureau_plus_one_coalition_partners = 1
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					check_variable = { v = 4 } # Communist-State
+					check_variable = { v = 10 } # Kingdom
+					check_variable = { v = 11 } # Caliphate
+					check_variable = { v = 15 } # oligarchism
+					check_variable = { v = 19 } # Neutral_Communism
+					check_variable = { v = 21 } # Nat_Fascism
+					check_variable = { v = 22 } # Nat_Autocracy
+				}
+			}
+			add_to_variable = {
+				num_bureau_plus_two_coalition_partners = 1
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					check_variable = { v = 2 } # Liberalism
+				}
+			}
+			add_to_variable = {
+				num_bureau_status_quo_coalition_partners = 1
+			}
+		}
+	}
+}
+
+recalculate_bureaucracy_desire = {
+	set_variable = {
+		bureaucracy_law_desire = 0.0
+	}
+	get_coalition_partner_numbers_bureau = yes
+	# Basis of calculation is based upon power of nation.
+	if = {
+		limit = {
+			has_idea = non_power
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = 2.0 # Non-power wants bureau_01
+		}
+	}
+	else_if = {
+		limit = {
+			has_idea = minor_power
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = 5.0 # Minor power wants bureau_02
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = large_power
+				has_idea = great_power
+			}
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = 8.0 # Large or Great power wants bureau_03
+		}
+	}
+	else_if = {
+		limit = {
+			has_idea = superpower
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = 11.0 # Superpower wants bureau_04
+		}
+	}
+	# Next, modify based upon GDP/c. Low GDP countries should want lower bureaucracy levels
+	if = {
+		limit = {
+			OR = {
+				has_idea = gdp_1
+				has_idea = gdp_2
+			}
+		}
+		subtract_from_variable = {
+			bureaucracy_law_desire = 6.0 # Extremely impoverished nations want 2 levels lower
+		}
+	}
+	else_if = {
+		limit = {
+			has_idea = gdp_3
+			has_idea = gdp_4
+			has_idea = gdp_5
+		}
+		subtract_from_variable = {
+			bureaucracy_law_desire = 3.0 # Impoverished nations want 1 level lower
+		}
+	}
+	# Next, modify based on corruption levels
+	if = {
+		limit = {
+			OR = {
+				has_idea = paralyzing_corruption
+				has_idea = crippling_corruption
+				has_idea = rampant_corruption
+			}
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = 6 # Corrupt nations want much larger bureaucratic apparatus for all their cronies
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = unrestrained_corruption
+				has_idea = systematic_corruption
+				has_idea = widespread_corruption
+			}
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = 3 # Moderately corrupt nations want larger bureaucratic apparatus for their cronies
+		}
+	}
+	# Next, modify based on ruling ideology, and thus by coalition partners.
+	if = {
+		limit = {
+			ruling_party_wants_bureaucracy_minus_two = yes
+		}
+		subtract_from_variable = {
+			bureaucracy_law_desire = 6 # Two levels lower
+		}
+		set_temp_variable = {
+			coalition_law_modifier = 0
+		}
+		multiply_variable = {
+			num_bureau_minus_two_coalition_partners = 1 # Same desire as ruling party
+		}
+		multiply_variable = {
+			num_bureau_minus_one_coalition_partners = 1 # Minimum distance from ruling party, minimum change
+		}
+		multiply_variable = {
+			num_bureau_status_quo_coalition_partners = 1 # Minor distance from ruling party, minor change
+		}
+		multiply_variable = {
+			num_bureau_plus_one_coalition_partners = 2 # Moderate distance from ruling party, moderate change
+		}
+		multiply_variable = {
+			num_bureau_plus_two_coalition_partners = 3 # Major distance from ruling party, major change
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = var:num_bureau_minus_two_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = var:num_bureau_minus_two_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = var:num_bureau_minus_two_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = var:coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_bureaucracy_minus_one = yes
+		}
+		subtract_from_variable = {
+			bureaucracy_law_desire = 3 # One level lower
+		}
+		set_temp_variable = {
+			coalition_law_modifier = 0
+		}
+		multiply_variable = {
+			num_bureau_minus_two_coalition_partners = 1 # Minor distance from ruling party
+		}
+		multiply_variable = {
+			num_bureau_minus_one_coalition_partners = 1 # Same as ruling party
+		}
+		multiply_variable = {
+			num_bureau_status_quo_coalition_partners = 1 # Minor distance from ruling party, minor change
+		}
+		multiply_variable = {
+			num_bureau_plus_one_coalition_partners = 2 # Moderate distance from ruling party, moderate change
+		}
+		multiply_variable = {
+			num_bureau_plus_two_coalition_partners = 3 # Major distance from ruling party, major change
+		}
+		subtract_from_variable = {
+			bureaucracy_law_desire = 3 # One level lower
+		}
+		set_temp_variable = {
+			coalition_law_modifier = 0
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_minus_two_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = var:num_bureau_minus_one_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = var:num_bureau_minus_one_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = var:num_bureau_minus_one_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = var:coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_bureaucracy_status_quo = yes
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = 0 # No change
+		}
+		set_temp_variable = {
+			coalition_law_modifier = 0
+		}
+		multiply_variable = {
+			num_bureau_minus_two_coalition_partners = 2 # Moderate distance from ruling party
+		}
+		multiply_variable = {
+			num_bureau_minus_one_coalition_partners = 1 # Minor distance from ruling party
+		}
+		multiply_variable = {
+			num_bureau_status_quo_coalition_partners = 1 # Same as ruling party
+		}
+		multiply_variable = {
+			num_bureau_plus_one_coalition_partners = 1 # Minor distance from ruling party
+		}
+		multiply_variable = {
+			num_bureau_plus_two_coalition_partners = 2 # Moderate distance from ruling party
+		}
+		subtract_from_variable = {
+			bureaucracy_law_desire = 3 # One level lower
+		}
+		set_temp_variable = {
+			coalition_law_modifier = 0
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_minus_one_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = var:num_bureau_status_quo_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = var:num_bureau_status_quo_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = var:num_bureau_status_quo_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = var:coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_bureaucracy_plus_one = yes
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = 3 # One level higher
+		}
+		set_temp_variable = {
+			coalition_law_modifier = 0
+		}
+		multiply_variable = {
+			num_bureau_minus_two_coalition_partners = 3 # Major distance from ruling party
+		}
+		multiply_variable = {
+			num_bureau_minus_one_coalition_partners = 2 # Moderate distance from ruling party
+		}
+		multiply_variable = {
+			num_bureau_status_quo_coalition_partners = 1 # Minor distance from ruling party, minor change
+		}
+		multiply_variable = {
+			num_bureau_plus_one_coalition_partners = 1 # Same as ruling party
+		}
+		multiply_variable = {
+			num_bureau_plus_two_coalition_partners = 1 # Minor distance from ruling party
+		}
+		subtract_from_variable = {
+			bureaucracy_law_desire = 3 # One level lower
+		}
+		set_temp_variable = {
+			coalition_law_modifier = 0
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_status_quo_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = var:num_bureau_plus_one_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = var:num_bureau_plus_one_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = var:num_bureau_plus_one_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = var:coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_bureaucracy_plus_two = yes
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = 6 # Two levels higher
+		}
+		set_temp_variable = {
+			coalition_law_modifier = 0
+		}
+		multiply_variable = {
+			num_bureau_minus_two_coalition_partners = 3 # Major distance from ruling party
+		}
+		multiply_variable = {
+			num_bureau_minus_one_coalition_partners = 2 # Moderate distance from party
+		}
+		multiply_variable = {
+			num_bureau_status_quo_coalition_partners = 1 # Minor distance from ruling party, minor change
+		}
+		multiply_variable = {
+			num_bureau_plus_one_coalition_partners = 1 # Minor distance from ruling party, minor change
+		}
+		multiply_variable = {
+			num_bureau_plus_two_coalition_partners = 1 # Same as ruling party
+		}
+		subtract_from_variable = {
+			bureaucracy_law_desire = 3 # One level lower
+		}
+		set_temp_variable = {
+			coalition_law_modifier = 0
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = var:num_bureau_plus_one_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = var:num_bureau_plus_two_coalition_partners
+		# }
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = var:num_bureau_plus_two_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = var:num_bureau_plus_two_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			bureaucracy_law_desire = var:coalition_law_modifier
+		}
+	}
+	# Next, modify based on coalition members. This ends up being a little more complicated than I thought at first.
+	# Coalition members should want to drag the ruling party toward their own desired point. That means taking into account
+	# both the desires of the ruling party *and* that of the coalition partner. If both want -1 level, then the coalition partner
+	# should have no impact. If the ruler wants +2 and the coalition partner wants -1, it should have have a subtractive impact.
+	# however, if the ruler wants -2 and the coalition partner wants -1, it should have an *additive* impact. Further, must also
+	# check for more than one coalition partner - if multiple coalition partners with same desire, there should be more of a drift
+	# toward that position than otherwise.
+
+}
+
+
+
+
+
+
+
+recalculate_law_desires = {
+	recalculate_bureaucracy_desire = yes
+}
