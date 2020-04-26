@@ -576,11 +576,11 @@ clear_law_desire_flags = {
 	clr_country_flag = wants_police_03
 	clr_country_flag = wants_police_04
 	clr_country_flag = wants_police_05
-	clr_country_flag = wants_education_01
-	clr_country_flag = wants_education_02
-	clr_country_flag = wants_education_03
-	clr_country_flag = wants_education_04
-	clr_country_flag = wants_education_05
+	clr_country_flag = wants_edu_01
+	clr_country_flag = wants_edu_02
+	clr_country_flag = wants_edu_03
+	clr_country_flag = wants_edu_04
+	clr_country_flag = wants_edu_05
 	clr_country_flag = wants_health_01
 	clr_country_flag = wants_health_02
 	clr_country_flag = wants_health_03
@@ -592,7 +592,7 @@ clear_law_desire_flags = {
 	clr_country_flag = wants_social_03
 	clr_country_flag = wants_social_04
 	clr_country_flag = wants_social_05
-	clr_country_flag = wants_health_06
+	clr_country_flag = wants_social_06
 }
 
 # Bureaucracy desire is chiefly determined by the size/strength of the nation. More powerful the nation, more it wants a higher level of bureaucracy.
@@ -1530,12 +1530,1356 @@ recalculate_police_desire = {
 	}
 }
 
+# Education desire is highly dependent on wealth and development level. Underdeveloped or developing nations should have edu_01 or edu_02.
+# Most developed nations should never go below edu_03. Richer nations should have edu_04. Also dependent on political policies.
+recalculate_edu_desire = {
+	set_variable = {
+		edu_law_desire = 0.0
+	}
+	# First, set base from GDP
+	if = {
+		limit = {
+			has_idea = gdp_1
+		}
+		add_to_variable = {
+			edu_law_desire = 2.0 # edu_01
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_2
+				has_idea = gdp_3
+				has_idea = gdp_4
+			}
+		}
+		add_to_variable = {
+			edu_law_desire = 5.0 # edu_02
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_5
+				has_idea = gdp_6
+				has_idea = gdp_7
+				has_idea = gdp_8
+				has_idea = gdp_9
+			}
+		}
+		add_to_variable = {
+			edu_law_desire = 8.0 # edu_03
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_10
+				has_idea = gdp_11
+				has_idea = gdp_12
+			}
+		}
+		add_to_variable = {
+			edu_law_desire = 11.0 # edu_04
+		}
+	}
+
+	# Next, modify based upon ruling ideology and coalition partners.
+	set_temp_variable = {
+		coalition_law_modifier = 0
+	}
+	if = {
+		limit = {
+			ruling_party_wants_edu_minus_two = yes
+		}
+		subtract_from_variable = {
+			edu_law_desire = 6.0
+		}
+		multiply_variable = {
+			num_edu_minus_two_coalition_partners = 1 # Same desire as ruling party
+		}
+		multiply_variable = {
+			num_edu_minus_one_coalition_partners = 1 # Minimum distance from ruling party, minimum change
+		}
+		multiply_variable = {
+			num_edu_status_quo_coalition_partners = 1 # Minor distance from ruling party, minor change
+		}
+		multiply_variable = {
+			num_edu_plus_one_coalition_partners = 2 # Moderate distance from ruling party, moderate change
+		}
+		multiply_variable = {
+			num_edu_plus_two_coalition_partners = 3 # Major distance from ruling party, major change
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_edu_minus_two_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_edu_minus_two_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_edu_minus_two_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			edu_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_edu_minus_one = yes
+		}
+		subtract_from_variable = {
+			edu_law_desire = 3.0
+		}
+		multiply_variable = {
+			num_edu_minus_two_coalition_partners = 1 # Minimum distance, minimum change
+		}
+		multiply_variable = {
+			num_edu_minus_one_coalition_partners = 1 # Same desire as ruling party
+		}
+		multiply_variable = {
+			num_edu_status_quo_coalition_partners = 1 # Minor distance from ruling party, minor change
+		}
+		multiply_variable = {
+			num_edu_plus_one_coalition_partners = 2 # Moderate distance from ruling party, moderate change
+		}
+		multiply_variable = {
+			num_edu_plus_two_coalition_partners = 3 # Major distance from ruling party, major change
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_minus_two_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_edu_minus_one_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_edu_minus_one_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_edu_minus_one_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			edu_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_edu_status_quo = yes
+		}
+		add_to_variable = {
+			edu_law_desire = 0.0
+		}
+		multiply_variable = {
+			num_edu_minus_two_coalition_partners = 2 # moderate distance, moderate change
+		}
+		multiply_variable = {
+			num_edu_minus_one_coalition_partners = 1 # minor distance, minor change
+		}
+		multiply_variable = {
+			num_edu_status_quo_coalition_partners = 1 # same as ruling party
+		}
+		multiply_variable = {
+			num_edu_plus_one_coalition_partners = 1 # minor distance, minor change
+		}
+		multiply_variable = {
+			num_edu_plus_two_coalition_partners = 2 # moderate distance, moderate change
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_minus_one_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_edu_status_quo_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_edu_status_quo_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_edu_status_quo_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			edu_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_edu_plus_one = yes
+		}
+		add_to_variable = {
+			edu_law_desire = 3.0
+		}
+		multiply_variable = {
+			num_edu_minus_two_coalition_partners = 3 # Major distance, Major change
+		}
+		multiply_variable = {
+			num_edu_minus_one_coalition_partners = 2 # Moderate distance, moderate change
+		}
+		multiply_variable = {
+			num_edu_status_quo_coalition_partners = 1 # Minor distance, minor change
+		}
+		multiply_variable = {
+			num_edu_plus_one_coalition_partners = 1 # Same as ruling party
+		}
+		multiply_variable = {
+			num_edu_plus_two_coalition_partners = 1 # minor distance, minor change
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_status_quo_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_edu_plus_one_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_edu_plus_one_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_edu_plus_one_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			edu_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_edu_plus_two = yes
+		}
+		add_to_variable = {
+			edu_law_desire = 6.0
+		}
+		multiply_variable = {
+			num_edu_minus_two_coalition_partners = 3 # Major distance, Major change
+		}
+		multiply_variable = {
+			num_edu_minus_one_coalition_partners = 2 # Moderate distance, moderate change
+		}
+		multiply_variable = {
+			num_edu_status_quo_coalition_partners = 1 # Minor distance, minor change
+		}
+		multiply_variable = {
+			num_edu_plus_one_coalition_partners = 1 # Minor distance, minor change
+		}
+		multiply_variable = {
+			num_edu_plus_two_coalition_partners = 1 # Same as ruling party
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_edu_plus_one_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_edu_plus_two_coalition_partners
+		# }
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_edu_plus_two_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_edu_plus_two_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			edu_law_desire = coalition_law_modifier
+		}
+	}
+
+	# Finally, set country flag based on result.
+	if = {
+		limit = {
+			check_variable = {
+				edu_law_desire < 4
+			}
+		}
+		set_country_flag = wants_edu_01
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				edu_law_desire < 7
+			}
+		}
+		set_country_flag = wants_edu_02
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				edu_law_desire < 10
+			}
+		}
+		set_country_flag = wants_edu_03
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				edu_law_desire < 13
+			}
+		}
+		set_country_flag = wants_edu_04
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				var = edu_law_desire
+				value = 13
+				compare = greater_than_or_equals
+			}
+		}
+		set_country_flag = wants_edu_05
+	}
+}
+
+# Health is again highly dependent on development.
+recalculate_health_desire = {
+	set_variable = {
+		health_law_desire = 0.0
+	}
+	# First, set base from GDP
+	if = {
+		limit = {
+			has_idea = gdp_1
+		}
+		add_to_variable = {
+			health_law_desire = 2.0 # health_01
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_2
+			}
+		}
+		add_to_variable = {
+			health_law_desire = 5.0 # health_02
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_3
+				has_idea = gdp_4
+				has_idea = gdp_5
+			}
+		}
+		add_to_variable = {
+			health_law_desire = 8.0 # health_03
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_6
+				has_idea = gdp_7
+			}
+		}
+		add_to_variable = {
+			health_law_desire = 11.0 # health_04
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_8
+				has_idea = gdp_9
+			}
+		}
+		add_to_variable = {
+			health_law_desire = 14.0 # health_05
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_10
+				has_idea = gdp_11
+				has_idea = gdp_12
+			}
+		}
+		add_to_variable = {
+			health_law_desire = 17.0 # health_06
+		}
+	}
+
+	# Next, modify based upon ruling ideology and coalition partners.
+	set_temp_variable = {
+		coalition_law_modifier = 0
+	}
+	if = {
+		limit = {
+			ruling_party_wants_health_minus_two = yes
+		}
+		subtract_from_variable = {
+			health_law_desire = 6.0
+		}
+		multiply_variable = {
+			num_health_minus_two_coalition_partners = 1 # Same desire as ruling party
+		}
+		multiply_variable = {
+			num_health_minus_one_coalition_partners = 1 # Minimum distance from ruling party, minimum change
+		}
+		multiply_variable = {
+			num_health_status_quo_coalition_partners = 1 # Minor distance from ruling party, minor change
+		}
+		multiply_variable = {
+			num_health_plus_one_coalition_partners = 2 # Moderate distance from ruling party, moderate change
+		}
+		multiply_variable = {
+			num_health_plus_two_coalition_partners = 3 # Major distance from ruling party, major change
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_health_minus_two_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_health_minus_two_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_health_minus_two_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			health_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_health_minus_one = yes
+		}
+		subtract_from_variable = {
+			health_law_desire = 3.0
+		}
+		multiply_variable = {
+			num_health_minus_two_coalition_partners = 1 # Minimum distance, minimum change
+		}
+		multiply_variable = {
+			num_health_minus_one_coalition_partners = 1 # Same desire as ruling party
+		}
+		multiply_variable = {
+			num_health_status_quo_coalition_partners = 1 # Minor distance from ruling party, minor change
+		}
+		multiply_variable = {
+			num_health_plus_one_coalition_partners = 2 # Moderate distance from ruling party, moderate change
+		}
+		multiply_variable = {
+			num_health_plus_two_coalition_partners = 3 # Major distance from ruling party, major change
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_minus_two_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_health_minus_one_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_health_minus_one_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_health_minus_one_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			health_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_health_status_quo = yes
+		}
+		add_to_variable = {
+			health_law_desire = 0.0
+		}
+		multiply_variable = {
+			num_health_minus_two_coalition_partners = 2 # moderate distance, moderate change
+		}
+		multiply_variable = {
+			num_health_minus_one_coalition_partners = 1 # minor distance, minor change
+		}
+		multiply_variable = {
+			num_health_status_quo_coalition_partners = 1 # same as ruling party
+		}
+		multiply_variable = {
+			num_health_plus_one_coalition_partners = 1 # minor distance, minor change
+		}
+		multiply_variable = {
+			num_health_plus_two_coalition_partners = 2 # moderate distance, moderate change
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_minus_one_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_health_status_quo_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_health_status_quo_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_health_status_quo_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			health_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_health_plus_one = yes
+		}
+		add_to_variable = {
+			health_law_desire = 3.0
+		}
+		multiply_variable = {
+			num_health_minus_two_coalition_partners = 3 # Major distance, Major change
+		}
+		multiply_variable = {
+			num_health_minus_one_coalition_partners = 2 # Moderate distance, moderate change
+		}
+		multiply_variable = {
+			num_health_status_quo_coalition_partners = 1 # Minor distance, minor change
+		}
+		multiply_variable = {
+			num_health_plus_one_coalition_partners = 1 # Same as ruling party
+		}
+		multiply_variable = {
+			num_health_plus_two_coalition_partners = 1 # minor distance, minor change
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_status_quo_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_health_plus_one_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_health_plus_one_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_health_plus_one_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			health_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_health_plus_two = yes
+		}
+		add_to_variable = {
+			health_law_desire = 6.0
+		}
+		multiply_variable = {
+			num_health_minus_two_coalition_partners = 3 # Major distance, Major change
+		}
+		multiply_variable = {
+			num_health_minus_one_coalition_partners = 2 # Moderate distance, moderate change
+		}
+		multiply_variable = {
+			num_health_status_quo_coalition_partners = 1 # Minor distance, minor change
+		}
+		multiply_variable = {
+			num_health_plus_one_coalition_partners = 1 # Minor distance, minor change
+		}
+		multiply_variable = {
+			num_health_plus_two_coalition_partners = 1 # Same as ruling party
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_health_plus_one_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_health_plus_two_coalition_partners
+		# }
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_health_plus_two_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_health_plus_two_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			health_law_desire = coalition_law_modifier
+		}
+	}
+
+	# Finally, set country flag based on result.
+	if = {
+		limit = {
+			check_variable = {
+				health_law_desire < 4
+			}
+		}
+		set_country_flag = wants_health_01
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				health_law_desire < 7
+			}
+		}
+		set_country_flag = wants_health_02
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				health_law_desire < 10
+			}
+		}
+		set_country_flag = wants_health_03
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				health_law_desire < 13
+			}
+		}
+		set_country_flag = wants_health_04
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				health_law_desire < 16
+			}
+		}
+		set_country_flag = wants_health_05
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				var = health_law_desire
+				value = 16
+				compare = greater_than_or_equals
+			}
+		}
+		set_country_flag = wants_health_06
+	}
+}
+
+# Welfare is highly dependent on development, but with more GDP categories skewing lower.
+recalculate_social_desire = {
+	set_variable = {
+		social_law_desire = 0.0
+	}
+	# First, set base from GDP
+	if = {
+		limit = {
+			has_idea = gdp_1
+			has_idea = gdp_2
+		}
+		add_to_variable = {
+			social_law_desire = 2.0 # social_01
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_3
+				has_idea = gdp_4
+			}
+		}
+		add_to_variable = {
+			social_law_desire = 5.0 # social_02
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_5
+				has_idea = gdp_6
+			}
+		}
+		add_to_variable = {
+			social_law_desire = 8.0 # social_03
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_7
+				has_idea = gdp_8
+				has_idea = gdp_9
+				has_idea = gdp_10
+			}
+		}
+		add_to_variable = {
+			social_law_desire = 11.0 # social_04
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = gdp_11
+				has_idea = gdp_12
+			}
+		}
+		add_to_variable = {
+			social_law_desire = 14.0 # social_05
+		}
+	}
+
+	# Next, modify based upon ruling ideology and coalition partners.
+	set_temp_variable = {
+		coalition_law_modifier = 0
+	}
+	if = {
+		limit = {
+			ruling_party_wants_social_minus_two = yes
+		}
+		subtract_from_variable = {
+			social_law_desire = 6.0
+		}
+		multiply_variable = {
+			num_social_minus_two_coalition_partners = 1 # Same desire as ruling party
+		}
+		multiply_variable = {
+			num_social_minus_one_coalition_partners = 1 # Minimum distance from ruling party, minimum change
+		}
+		multiply_variable = {
+			num_social_status_quo_coalition_partners = 1 # Minor distance from ruling party, minor change
+		}
+		multiply_variable = {
+			num_social_plus_one_coalition_partners = 2 # Moderate distance from ruling party, moderate change
+		}
+		multiply_variable = {
+			num_social_plus_two_coalition_partners = 3 # Major distance from ruling party, major change
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_social_minus_two_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_social_minus_two_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_social_minus_two_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			social_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_social_minus_one = yes
+		}
+		subtract_from_variable = {
+			social_law_desire = 3.0
+		}
+		multiply_variable = {
+			num_social_minus_two_coalition_partners = 1 # Minimum distance, minimum change
+		}
+		multiply_variable = {
+			num_social_minus_one_coalition_partners = 1 # Same desire as ruling party
+		}
+		multiply_variable = {
+			num_social_status_quo_coalition_partners = 1 # Minor distance from ruling party, minor change
+		}
+		multiply_variable = {
+			num_social_plus_one_coalition_partners = 2 # Moderate distance from ruling party, moderate change
+		}
+		multiply_variable = {
+			num_social_plus_two_coalition_partners = 3 # Major distance from ruling party, major change
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_minus_two_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_social_minus_one_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_social_minus_one_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_social_minus_one_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			social_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_social_status_quo = yes
+		}
+		add_to_variable = {
+			social_law_desire = 0.0
+		}
+		multiply_variable = {
+			num_social_minus_two_coalition_partners = 2 # moderate distance, moderate change
+		}
+		multiply_variable = {
+			num_social_minus_one_coalition_partners = 1 # minor distance, minor change
+		}
+		multiply_variable = {
+			num_social_status_quo_coalition_partners = 1 # same as ruling party
+		}
+		multiply_variable = {
+			num_social_plus_one_coalition_partners = 1 # minor distance, minor change
+		}
+		multiply_variable = {
+			num_social_plus_two_coalition_partners = 2 # moderate distance, moderate change
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_minus_one_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_social_status_quo_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_plus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_social_status_quo_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_social_status_quo_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			social_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_social_plus_one = yes
+		}
+		add_to_variable = {
+			social_law_desire = 3.0
+		}
+		multiply_variable = {
+			num_social_minus_two_coalition_partners = 3 # Major distance, Major change
+		}
+		multiply_variable = {
+			num_social_minus_one_coalition_partners = 2 # Moderate distance, moderate change
+		}
+		multiply_variable = {
+			num_social_status_quo_coalition_partners = 1 # Minor distance, minor change
+		}
+		multiply_variable = {
+			num_social_plus_one_coalition_partners = 1 # Same as ruling party
+		}
+		multiply_variable = {
+			num_social_plus_two_coalition_partners = 1 # minor distance, minor change
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_status_quo_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_social_plus_one_coalition_partners
+		# }
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_plus_two_coalition_partners
+		}
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_social_plus_one_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_social_plus_one_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			social_law_desire = coalition_law_modifier
+		}
+	}
+	else_if = {
+		limit = {
+			ruling_party_wants_social_plus_two = yes
+		}
+		add_to_variable = {
+			social_law_desire = 6.0
+		}
+		multiply_variable = {
+			num_social_minus_two_coalition_partners = 3 # Major distance, Major change
+		}
+		multiply_variable = {
+			num_social_minus_one_coalition_partners = 2 # Moderate distance, moderate change
+		}
+		multiply_variable = {
+			num_social_status_quo_coalition_partners = 1 # Minor distance, minor change
+		}
+		multiply_variable = {
+			num_social_plus_one_coalition_partners = 1 # Minor distance, minor change
+		}
+		multiply_variable = {
+			num_social_plus_two_coalition_partners = 1 # Same as ruling party
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_minus_two_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_minus_one_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_status_quo_coalition_partners
+		}
+		add_to_temp_variable = {
+			coalition_law_modifier = num_social_plus_one_coalition_partners
+		}
+		# add_to_temp_variable = {
+		# 	coalition_law_modifier = num_social_plus_two_coalition_partners
+		# }
+		if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier > 0
+				}
+			}
+			subtract_from_temp_variable = {
+				coalition_law_modifier = num_social_plus_two_coalition_partners
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					coalition_law_modifier < 0
+				}
+			}
+			add_to_temp_variable = {
+				coalition_law_modifier = num_social_plus_two_coalition_partners
+			}
+		}
+		clamp_temp_variable = { # Clamp maximum effect of coalition partners to prevent massive shift from ruling party desires
+			var = coalition_law_modifier
+			min = -5
+			max = 5
+		}
+		add_to_variable = {
+			social_law_desire = coalition_law_modifier
+		}
+	}
+
+	# Finally, set country flag based on result.
+	if = {
+		limit = {
+			check_variable = {
+				social_law_desire < 4
+			}
+		}
+		set_country_flag = wants_social_01
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				social_law_desire < 7
+			}
+		}
+		set_country_flag = wants_social_02
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				social_law_desire < 10
+			}
+		}
+		set_country_flag = wants_social_03
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				social_law_desire < 13
+			}
+		}
+		set_country_flag = wants_social_04
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				social_law_desire < 16
+			}
+		}
+		set_country_flag = wants_social_05
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				var = social_law_desire
+				value = 16
+				compare = greater_than_or_equals
+			}
+		}
+		set_country_flag = wants_social_06
+	}
+}
 
 
-
-
+# Wrapper function to do everything in one place.
 recalculate_law_desires = {
 	clear_law_desire_flags = yes # First, clear law desire flags.
 	get_coalition_partner_numbers = yes # Next, get coalition partner modifiers.
 	recalculate_bureaucracy_desire = yes
+	recalculate_police_desire = yes
+	recalculate_edu_desire = yes
+	recalculate_health_desire = yes
 }
