@@ -994,3 +994,105 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arab_spring.18.a executed"
 	}
 }
+
+#[FROM.GetLeader] Requests Peninsula Shield Intervention
+country_event = {
+	id = arab_spring.19
+	title = arab_spring.19.t
+	desc = arab_spring.19.d
+
+	picture = GFX_politics_talks
+
+	is_triggered_only = yes
+
+	option = {
+		name = arab_spring.19.a #We must help our ally!
+		log = "[GetDateText]: [This.GetName]: arab_spring.19.a executed"
+		FROM = { country_event = arab_spring.20 }
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = arab_spring.19.b #Let them fall...
+		log = "[GetDateText]: [This.GetName]: arab_spring.19.b executed"
+		FROM = { country_event = arab_spring.21 }
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+#Our request has been accepted!
+country_event = {
+	id = arab_spring.20
+	title = arab_spring.20.t
+	desc = arab_spring.20.d
+
+	picture = GFX_politics_talks
+
+	is_triggered_only = yes
+
+	option = {
+		name = arab_spring.20.a #
+		log = "[GetDateText]: [This.GetName]: arab_spring.20.a executed"
+		every_country = { news_event = { id = arab_spring.22 days = 1 }}
+		custom_effect_tooltip = FROM_influence_50_tt
+		custom_effect_tooltip = overwhelmingly_weaken_protests_tt
+		hidden_effect = {
+			set_temp_variable = { influence_gain = 50 }
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = FROM }
+					}
+					add_to_variable = { influence_array_val^v = influence_gain }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = FROM.id }
+					add_to_array = { influence_array_val = influence_gain }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		subtract_from_variable = { arab_spring = 75 }
+	}
+}
+
+#Our request has been rejected...
+country_event = {
+	id = arab_spring.21
+	title = arab_spring.21.t
+	desc = arab_spring.21.d
+
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		name = arab_spring.21.a #
+		log = "[GetDateText]: [This.GetName]: arab_spring.21.a executed"
+	}
+}
+
+#Peninsula Shield Troops Deployed to Quell Protests in [FROM.GetNameDef]
+news_event = {
+	id = arab_spring.22
+	title = arab_spring.22.t
+	desc = arab_spring.22.d
+
+	picture = GFX_news_peninsula_shield_intervention
+
+	is_triggered_only = yes
+
+	option = {
+		name = arab_spring.22.a #
+		log = "[GetDateText]: [This.GetName]: arab_spring.22.a executed"
+	}
+}
