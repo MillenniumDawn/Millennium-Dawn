@@ -16,7 +16,7 @@ focus_tree = {
 	##MILITARY##
 	focus = {
 		id = KOR_the_rok_armed_forces
-		icon = military_mission
+		icon = rok_armed_forces
 
 		x = 0
 		y = 0
@@ -208,7 +208,7 @@ focus_tree = {
 
 	focus = {
 		id = KOR_order_f35s
-		icon = modern_fighter
+		icon = f35
 
 		x = -9
 		y = 4
@@ -472,9 +472,9 @@ focus_tree = {
 		completion_reward = {
 			subtract_from_variable = { treasury = 2 }
 			custom_effect_tooltip = 2_billion_expense_tt
-			add_extra_state_shared_building_slots = 2
 			random_owned_state = {
 				limit = { is_coastal = yes }
+				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
 					type = dockyard
 					level = 2
@@ -555,7 +555,7 @@ focus_tree = {
 
 	focus = {
 		id = KOR_modernize_the_army
-		icon = army_reform
+		icon = military_mission
 
 		x = 0
 		y = 1
@@ -1227,73 +1227,11 @@ focus_tree = {
 	}
 
 	focus = {
-		id = KOR_repeal_article_92_6
-		icon = renounce_treaty
-
-		x = 6
-		y = 2
-		relative_position_id = KOR_the_rok_armed_forces
-
-		cost = 10
-
-		cancel_if_invalid = yes
-		available_if_capitulated = no
-
-		prerequisite = { focus = KOR_conscription_policy }
-		mutually_exclusive = { focus = KOR_favor_traditional_values }
-
-		search_filters = {}
-
-		available = {
-		}
-
-		completion_reward = {
-			liberal_policy_effect = yes
-			log = "[GetDateText]: [This.GetName]: focus KOR_repeal_article_92_6 executed"
-		}
-
-		ai_will_do = {
-			base = 1
-		}
-	}
-
-	focus = {
-		id = KOR_favor_traditional_values
-		icon = protestantism
-
-		x = 8
-		y = 2
-		relative_position_id = KOR_the_rok_armed_forces
-
-		cost = 10
-
-		cancel_if_invalid = yes
-		available_if_capitulated = no
-
-		prerequisite = { focus = KOR_conscription_policy }
-		mutually_exclusive = { focus = KOR_repeal_article_92_6 }
-
-		search_filters = {FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL}
-
-		available = {
-		}
-
-		completion_reward = {
-			add_political_power = 25
-			log = "[GetDateText]: [This.GetName]: focus KOR_favor_traditional_values executed"
-		}
-
-		ai_will_do = {
-			base = 1
-		}
-	}
-
-	focus = {
 		id = KOR_tolerate_objectors
 		icon = pro_immigration2
 
 		x = 6
-		y = 3
+		y = 2
 		relative_position_id = KOR_the_rok_armed_forces
 
 		cost = 10
@@ -1301,16 +1239,28 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		prerequisite = { focus = KOR_repeal_article_92_6 focus = KOR_favor_traditional_values }
+		prerequisite = { focus = KOR_conscription_policy }
 		mutually_exclusive = { focus = KOR_maintain_hardline_approach }
 
 		search_filters = {FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL}
+
+		bypass = {
+			OR = {
+				has_idea = no_military
+				has_idea = volunteer_army
+			}
+			NOT = { has_idea = drafted_women }
+		}
 
 		available = {
 		}
 
 		completion_reward = {
-			add_political_power = 25
+			swap_ideas = {
+				remove_idea = KOR_conscientious_objectors
+				add_idea = KOR_conscientious_objectors1
+			}
+			liberal_policy_effect = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_tolerate_objectors executed"
 		}
 
@@ -1324,6 +1274,42 @@ focus_tree = {
 		icon = anti_immigration2
 
 		x = 8
+		y = 2
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = KOR_conscription_policy }
+		mutually_exclusive = { focus = KOR_tolerate_objectors }
+
+		search_filters = {FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT}
+
+		available = {
+			OR = {
+				has_idea = partial_draft_army
+				has_idea = draft_army
+			}
+		}
+
+		completion_reward = {
+			add_war_support = 0.05
+			conservative_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_maintain_hardline_approach executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_repeal_article_92_6
+		icon = renounce_treaty
+
+		x = 6
 		y = 3
 		relative_position_id = KOR_the_rok_armed_forces
 
@@ -1332,8 +1318,54 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		prerequisite = { focus = KOR_repeal_article_92_6 focus = KOR_favor_traditional_values }
-		mutually_exclusive = { focus = KOR_tolerate_objectors }
+		prerequisite = { focus = KOR_tolerate_objectors focus = KOR_maintain_hardline_approach }
+		mutually_exclusive = { focus = KOR_favor_traditional_values }
+
+		search_filters = {FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			if = {
+				limit = { has_idea = KOR_conscientious_objectors }
+				swap_ideas = {
+					remove_idea = KOR_conscientious_objectors
+					add_idea = KOR_conscientious_objectors2
+				}
+			}
+			else_if = {
+				limit = { has_idea = KOR_conscientious_objectors1 }
+				swap_ideas = {
+					remove_idea = KOR_conscientious_objectors1
+					add_idea = KOR_conscientious_objectors3
+				}
+			}
+			progressive_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_repeal_article_92_6 executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_favor_traditional_values
+		icon = protestantism
+
+		x = 8
+		y = 3
+		relative_position_id = KOR_the_rok_armed_forces
+
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = KOR_tolerate_objectors focus = KOR_maintain_hardline_approach }
+		mutually_exclusive = { focus = KOR_repeal_article_92_6 }
 
 		search_filters = {FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL}
 
@@ -1341,8 +1373,8 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			add_political_power = 25
-			log = "[GetDateText]: [This.GetName]: focus KOR_maintain_hardline_approach executed"
+			social_conservative_policy_effect = yes
+			log = "[GetDateText]: [This.GetName]: focus KOR_favor_traditional_values executed"
 		}
 
 		ai_will_do = {
@@ -1363,7 +1395,7 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		prerequisite = { focus = KOR_tolerate_objectors focus = KOR_maintain_hardline_approach }
+		prerequisite = { focus = KOR_repeal_article_92_6 focus = KOR_favor_traditional_values }
 		mutually_exclusive = { focus = KOR_require_naturalized_citizens }
 
 		search_filters = {FOCUS_FILTER_MANPOWER FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_POLITICAL}
@@ -1390,6 +1422,7 @@ focus_tree = {
 					add_idea = partial_draft_army
 				}
 			}
+			liberal_policy_effect = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_reduce_conscription executed"
 		}
 
@@ -1411,16 +1444,17 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		prerequisite = { focus = KOR_tolerate_objectors focus = KOR_maintain_hardline_approach }
+		prerequisite = { focus = KOR_repeal_article_92_6 focus = KOR_favor_traditional_values }
 		mutually_exclusive = { focus = KOR_reduce_conscription }
 
 		search_filters = {FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL}
 
 		available = {
+			has_idea = draft_army
 		}
 
 		completion_reward = {
-			add_political_power = 25
+			add_ideas = KOR_naturalized_citizens_serve
 			log = "[GetDateText]: [This.GetName]: focus KOR_require_naturalized_citizens executed"
 		}
 
