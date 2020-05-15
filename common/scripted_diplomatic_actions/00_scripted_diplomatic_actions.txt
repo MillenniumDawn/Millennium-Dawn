@@ -56,8 +56,28 @@ scripted_diplomatic_actions = {
 		selectable = {
 			custom_trigger_tooltip = {
 				tooltip = EMBARGO_TOOLTIP
-				always = yes
+				THIS = {
+					NOT = { has_country_flag = embargo@ROOT }
+				}
 			}
+			THIS = { NOT = { is_in_faction_with = ROOT } }
+			if = {
+				limit = { 
+					ROOT = {
+						OR = {
+							has_idea = NATO_member
+							has_idea = Major_Non_NATO_Ally
+						}
+					} 
+				}
+				THIS = {
+					NOT = {
+						has_idea = NATO_member
+						has_idea = Major_Non_NATO_Ally
+					}
+				}
+			}
+
 		}
 		cost = 150
 		command_power = 10
@@ -68,9 +88,19 @@ scripted_diplomatic_actions = {
 		show_acceptance_on_action_button = no 
 		icon = 1 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action embargo"
 			set_country_flag = embargo@ROOT
 			add_opinion_modifier = { target = ROOT modifier = embargo }
 			reverse_add_opinion_modifier = { target = ROOT modifier = embargo }
+			add_opinion_modifier = { target = ROOT modifier = embargo_opinion }
+			reverse_add_opinion_modifier = { target = ROOT modifier = embargo_opinion }
+			if = {
+				limit = {
+					ROOT = { tag = USA }
+					has_idea = USA_usaid
+				}
+				THIS = { remove_ideas = USA_usaid }
+			}
 		}
 
 		send_description = EMBARGO_SEND_DESC
@@ -358,7 +388,6 @@ scripted_diplomatic_actions = {
 
 	lift_embargo_country = {
 		allowed = {
-			#ROOT = { is_ai = no }
 			always = yes
 		}
 		visible = { 
@@ -369,7 +398,9 @@ scripted_diplomatic_actions = {
 		selectable = {
 			custom_trigger_tooltip = {
 				tooltip = LIFT_EMBARGO_TOOLTIP
-				always = yes
+				THIS = {
+					has_country_flag = embargo@ROOT
+				}
 			}
 		}
 		cost = 50
@@ -378,10 +409,15 @@ scripted_diplomatic_actions = {
 			always = no
 		}
 		requires_acceptance = no
-		show_acceptance_on_action_button = no 
+		show_acceptance_on_action_button = no
 		icon = 1 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action lift_embargo"
 			remove_opinion_modifier = { target = ROOT modifier = embargo }
+			remove_opinion_modifier = { target = ROOT modifier = embargo_opinion }
+			THIS = {
+				country_event = { id = diplo_action_tools.1 }
+			}
 			add_opinion_modifier = { target = ROOT modifier = recently_embargoed }
 			reverse_add_opinion_modifier = { target = ROOT modifier = recently_embargoed }
 			clr_country_flag = embargo@ROOT

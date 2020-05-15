@@ -5,6 +5,7 @@ add_namespace = bankrupcy
 add_namespace = News_bankrupcy
 add_namespace = influence
 add_namespace = News_influence
+add_namespace = diplo_action_tools
 
 ### Contents ###
 # 1-5 Financial Crisis / Economic Collapse Chain 
@@ -3279,13 +3280,11 @@ country_event = {
 	picture = GFX_foreclosure
 	
 	trigger = {
-		NOT = { 
-			has_idea = depression 
-			has_idea = recession 
-			has_idea = stagnation
-			has_country_flag = possible_housing_bubble
-			has_country_flag = housing_crash
-		}
+		NOT = { has_idea = depression }
+		NOT = { has_idea = recession } 
+		NOT = { has_idea = stagnation }
+		NOT = { has_country_flag = possible_housing_bubble }
+		NOT = { has_country_flag = housing_crash }
 	}
 	
 	mean_time_to_happen = {
@@ -3695,53 +3694,44 @@ country_event = {
 ### Stock Market Crash
 country_event = {
 	id = econvent.3
-	immediate = { 
-		log = "[GetDateText]: [Root.GetName]: event econvent.3" 
-		set_country_flag = {
-			flag = stock_market_crash
-			value = 1
-		}
-	}
+	immediate = { log = "[GetDateText]: [Root.GetName]: event econvent.3" }
 	title = econvent.3.t
 	desc = econvent.3.d
 	picture = GFX_economy_crisis
 	
 	trigger = {
-		OR = {
-			has_country_flag = housing_crash
-			has_country_flag = stock_market_boom_accelerate
-			has_country_flag = stock_market_boom
-		}
-		NOT = { 
-			has_idea = recession
-			has_idea = depression 
-		}
+		has_country_flag = housing_crash
+		NOT = { has_idea = depression }
+		NOT = { has_idea = recession } 
 	}
 	
 	mean_time_to_happen = {
-		days = 2600
+		days = 2400
 		modifier = {
 			factor = 0.4
 			has_idea = economic_boom
 		}
 		modifier = {
-			factor = 0.8
+			factor = 0.7
 			has_idea = fast_growth
 		}
 		modifier = {
-			factor = 0.7
-			OR = {
-				has_country_flag = consumption_slowdown
-				has_country_flag = stock_market_boom
-				has_country_flag = voodoo_economics
-			}
+			factor = 0.5
+			has_country_flag = voodoo_economics
 		}
 		modifier = {
 			factor = 0.5
-			has_country_flag = stock_market_boom_accelerate
+			has_country_flag = consumption_slowdown
 		}
 	}
-
+	
+	immediate = {
+		set_country_flag = {
+			 flag = stock_market_crash
+			 value = 1
+		 }
+	}
+	
 	#Crash Effects
 	option = {
 		name = econvent.3.a
@@ -3860,10 +3850,8 @@ country_event = {
 	trigger = {
 		has_country_flag = housing_crash
 		has_country_flag = stock_market_crash
-		NOT = { 
-			has_idea = recession
-			has_idea = depression 
-		}
+		NOT = { has_idea = depression }
+		NOT = { has_idea = recession } 
 	}
 	
 	mean_time_to_happen = {
@@ -4275,6 +4263,7 @@ country_event = {
 
 
 ### Slowdown in consumption as pessimism and unemployment on the rise ###
+
 country_event = {
 	id = econvent.5
 	immediate = { log = "[GetDateText]: [Root.GetName]: event econvent.5" }
@@ -4692,6 +4681,7 @@ country_event = {
 	title = econvent.7.t
 	desc = econvent.7.d
 	
+	
 	trigger = {
 		is_arid_nation = yes
 		OR = {
@@ -4703,7 +4693,7 @@ country_event = {
 	}
 	
 	mean_time_to_happen = {
-		days = 4500
+		days = 3700
 		modifier = {
 			factor = 0.6
 			is_african_nation = yes #Africa has worst irrigation
@@ -4723,7 +4713,10 @@ country_event = {
 	}
 	
 	immediate = {
-		set_country_flag = { flag = drought value = 1 }
+		set_country_flag = {
+			 flag = drought
+			 value = 1
+		 }
 	}
 	
 	#Not much to do about this
@@ -4841,16 +4834,17 @@ country_event = {
 ### Drought causes famine
 country_event = {
 	id = econvent.8
+	immediate = { log = "[GetDateText]: [Root.GetName]: event econvent.8" }
 	title = econvent.8.t
 	desc = econvent.8.d
 	
 	trigger = {
-		has_country_flag = drought
-		NOT = { has_idea = depression }
+	has_country_flag = drought
+	NOT = { has_idea = depression }
 	}
 	
 	mean_time_to_happen = {
-		days = 3200
+		days = 1600
 		modifier = {
 			factor = 0.7
 			has_idea = gdp_1
@@ -4866,11 +4860,10 @@ country_event = {
 	}
 	
 	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent.8"
-		set_country_flag = { 
-			flag = famine
-			value = 1
-		}
+		set_country_flag = {
+			 flag = famine
+			 value = 1
+		 }
 	}
 	
 	#Not much to do about this
@@ -4985,141 +4978,15 @@ country_event = {
 	}
 }
 
-##Positive Economic Events
-#Increase Consumer Confidence 
-country_event = {
-	id = econvent.9
-	immediate = { 
-		log = "[GetDateText]: [Root.GetName]: event econvent.9" 
-		set_country_flag = increased_consumer_confidence
-	}
-	title = econvent.9.t
-	desc = econvent.9.d
-	
-	trigger = {
-		NOT = {
-			has_country_flag = increased_consumer_confidence
-			has_idea = economic_boom
-			has_idea = bankrupcy 
-		}
-	}
-	
-	mean_time_to_happen = {
-		days = 2000
-		modifier = {
-			factor = 2.5
-			has_idea = fast_growth
-		}
-		modifier = {
-			factor = 1.5
-			has_idea = stable_growth
-		}
-		modifier = {
-			factor = 1.0
-			has_idea = stagnation
-		}
-		modifier = {
-			factor = 0.75
-			has_idea = recession
-		}
-		modifier = {
-			factor = 0.5
-			has_idea = depression
-		}
-	}
-
-	option = {
-		name = econvent.9.a
-		log = "[GetDateText]: [Root.GetName]: event econvent.9.a"
-		slightly_increase_economic_growth = yes
-		calculate_tax_gain = yes
-		hidden_Effect = {
-			country_event = { id = econvent_remove_flag.8 days = 200 }
-		}
-	}
-}
-
-#Stock Market Boom
-country_event = {
-	id = econvent.10
-	immediate = { log = "[GetDateText]: [Root.GetName]: event econvent.10" }
-	title = econvent.10.t
-	desc = econvent.10.d
-	
-	trigger = {
-		NOT = {
-			has_idea = economic_boom
-			has_idea = bankrupcy
-			has_country_flag = stock_market_boom_accelerate
-			has_country_flag = stock_market_boom_slowed
-			has_country_flag = stock_market_boom
-		}
-	}
-	
-	mean_time_to_happen = {
-		days = 3500
-		modifier = {
-			factor = 2.5
-			has_idea = fast_growth
-		}
-		modifier = {
-			factor = 1.5
-			has_idea = stable_growth
-		}
-		modifier = {
-			factor = 1.0
-			has_idea = stagnation
-		}
-		modifier = {
-			factor = 0.75
-			has_idea = recession
-		}
-		modifier = {
-			factor = 0.5
-			has_idea = depression
-		}
-	}
-
-	option = {
-		name = econvent.10.a
-		log = "[GetDateText]: [Root.GetName]: event econvent.10.a"
-		increase_economic_growth = yes
-		calculate_tax_gain = yes
-		hidden_effect = {
-			set_country_flag = stock_market_boom_accelerate 
-			country_event = { id = econvent_remove_flag.9 days = 200 }
-		}
-	}
-	option = {
-		name = econvent.10.b
-		log = "[GetDateText]: [Root.GetName]: event econvent.10.b"
-		slightly_increase_economic_growth = yes
-		calculate_tax_gain = yes
-		hidden_effect = {
-			set_country_flag = stock_market_boom
-			country_event = { id = econvent_remove_flag.10 days = 200 }
-		}
-	}
-	option = {
-		name = econvent.10.a
-		log = "[GetDateText]: [Root.GetName]: event econvent.10.c"
-		add_political_power = 100
-		hidden_effect = {
-			set_country_flag = stock_market_boom_slowed 
-			country_event = { id = econvent_remove_flag.11 days = 200 }
-		}
-	}
-}
-
-
 #clears housing_crash flag
 country_event = {
 	id = econvent_remove_flag.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.1" }
+
 	is_triggered_only = yes
 	hidden = yes
 	
 	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.1"
 		clr_country_flag = housing_crash
 	}
 }
@@ -5127,112 +4994,103 @@ country_event = {
 #clears voodoo_economics flag
 country_event = {
 	id = econvent_remove_flag.2
+	immediate = { log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.2" }
+
 	is_triggered_only = yes
 	hidden = yes
 	
 	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.2"
 		clr_country_flag = voodoo_economics
+	}
+	
+	option = {
+		name = econvent_remove_flag.2.a
+		log = "[GetDateText]: [This.GetName]: econvent_remove_flag.2.a executed"
 	}
 }
 #clears stock_market_crash flag
 country_event = {
 	id = econvent_remove_flag.3
+	immediate = { log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.3" }
+
 	is_triggered_only = yes
 	hidden = yes
 	
 	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.3"
 		clr_country_flag = stock_market_crash
+	}
+	
+	option = {
+		name = econvent_remove_flag.3.a
+		log = "[GetDateText]: [This.GetName]: econvent_remove_flag.3.a executed"
 	}
 }
 #clears bank_crisis flag
 country_event = {
 	id = econvent_remove_flag.4
+	immediate = { log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.4" }
+
 	is_triggered_only = yes
 	hidden = yes
 	
 	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.4"
 		clr_country_flag = bank_crisis
+	}
+	
+	option = {
+		name = econvent_remove_flag.4.a
+		log = "[GetDateText]: [This.GetName]: econvent_remove_flag.4.a executed"
 	}
 }
 #clears consumption_slowdown flag
 country_event = {
 	id = econvent_remove_flag.5
+	immediate = { log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.5" }
+
 	is_triggered_only = yes
 	hidden = yes
 	
 	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.5"
 		clr_country_flag = consumption_slowdown
+	}
+	
+	option = {
+		name = econvent_remove_flag.5.a
+		log = "[GetDateText]: [This.GetName]: econvent_remove_flag.5.a executed"
 	}
 }
 #clears drought flag
 country_event = {
 	id = econvent_remove_flag.6
+	immediate = { log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.6" }
+
 	is_triggered_only = yes
 	hidden = yes
 	
 	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.6"
 		clr_country_flag = drought
+	}
+	
+	option = {
+		name = econvent_remove_flag.6.a
+		log = "[GetDateText]: [This.GetName]: econvent_remove_flag.6.a executed"
 	}
 }
 #clears famine flag
 country_event = {
 	id = econvent_remove_flag.7
+	immediate = { log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.7" }
+
 	is_triggered_only = yes
 	hidden = yes
 	
 	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.7"
 		clr_country_flag = famine
 	}
-}
-#clears increased consumer confidence flag
-country_event = {
-	id = econvent_remove_flag.8
-	is_triggered_only = yes
-	hidden = yes
 	
-	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.8"
-		clr_country_flag = increased_consumer_confidence
-	}
-}
-#clears increased stock market accelerate flag
-country_event = {
-	id = econvent_remove_flag.9
-	is_triggered_only = yes
-	hidden = yes
-	
-	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.9"
-		clr_country_flag = stock_market_boom_accelerate
-	}
-}
-#clears increased stock market boom flag
-country_event = {
-	id = econvent_remove_flag.10
-	is_triggered_only = yes
-	hidden = yes
-	
-	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.10"
-		clr_country_flag = stock_market_boom
-	}
-}
-
-#clears increased stock market slowdown flag
-country_event = {
-	id = econvent_remove_flag.11
-	is_triggered_only = yes
-	hidden = yes
-	
-	immediate = {
-		log = "[GetDateText]: [Root.GetName]: event econvent_remove_flag.11"
-		clr_country_flag = stock_market_boom_slowed
+	option = {
+		name = econvent_remove_flag.7.a
+		log = "[GetDateText]: [This.GetName]: econvent_remove_flag.7.a executed"
 	}
 }
 
@@ -5297,3 +5155,17 @@ country_event = {
 }
 
 
+##Diplo Action Tools
+#Embargo Utitilty to Clean Opinion modifiers
+country_event = { 
+	id = diplo_action_tools.1
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event econvent.102"
+		FROM = { 
+			remove_opinion_modifier = { target = ROOT modifier = embargo }
+			remove_opinion_modifier = { target = ROOT modifier = embargo_opinion }
+		}
+	}
+	hidden = yes
+	is_triggered_only = yes
+}
