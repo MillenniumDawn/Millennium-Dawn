@@ -1,4 +1,3 @@
-
 	NDefines.NGame.START_DATE = "2000.1.1.12"
 	NDefines.NGame.END_DATE = "2070.1.1.1"
 	
@@ -51,6 +50,7 @@
 	NDefines.NCountry.VP_TO_SUPPLY_BONUS_CONVERSION = 0.2
 	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01 --0.01
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
+	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_UNIT = 0.002
 	NDefines.NCountry.RESOURCE_LENDLEASE_PRIORITY = 2
 	NDefines.NCountry.SUPPLY_CONVOY_FACTOR = 0.5
 	NDefines.NCountry.CONVOY_RANGE_FACTOR = 1.5
@@ -60,6 +60,10 @@
 	NDefines.NCountry.WAR_SUPPORT_OFFNSIVE_WAR = -0.1
 	NDefines.NCountry.WAR_SUPPORT_DEFENSIVE_WAR = 0.2 -- 1
 	NDefines.NCountry.MAJOR_MIN_FACTORIES = 70
+	NDefines.NCountry.MAX_INTELLIGENCE_MILITARY_DATA_DEVIATION = 0.5
+	NDefines.NCountry.MAX_INTELLIGENCE_AIR_DATA_DEVIATION = 0.3
+	NDefines.NCountry.MAX_INTELLIGENCE_INDUSTRY_DATA_DEVIATION = 0.2
+	NDefines.NCountry.MAX_INTELLIGENCE_MANPOWER_DATA_DEVIATION = 0.3
 	NDefines.NCountry.STATE_VALUE_BUILDING_SLOTS_MULT = 3.0
 	NDefines.NCountry.STATE_VALUE_RESEOURCE_MULT = 0.4
 	NDefines.NCountry.STATE_OCCUPATION_COST_MULTIPLIER = 0.02
@@ -303,7 +307,9 @@
 	NDefines.NAI.NAVAL_MISSION_INVASION_BASE = 5000					-- 1000
 	NDefines.NAI.SCARY_LEVEL_AVERAGE_DEFENSE = -0.6					-- -0.7
 	NDefines.NAI.ATTACK_HEAVILY_DEFENDED_LIMIT = 1.2					-- 0.45
-	NDefines.NAI.HOUR_BAD_COMBAT_REEVALUATE = 51						-- 100
+	NDefines.NAI.HOUR_BAD_COMBAT_REEVALUATE = 42						-- 100
+	NDefines.NAI.AI_FRONT_MOVEMENT_FACTOR_FOR_READY = 0.15 --default 0.25
+	NDefines.NAI.PLAN_VALUE_TO_EXECUTE = -0.2 --default -0.5
 	NDefines.NAI.REQUEST_LEND_LEASE_CONTAINS_VALUE = 60				-- 100
 	NDefines.NAI.REQUEST_LEND_LEASE_STOCKPILE_RATIO_LAND = 0.5		-- 0.1
 	NDefines.NAI.REQUEST_LEND_LEASE_PRODUCTION_DAYS_LAND = 500		-- 28
@@ -341,6 +347,8 @@
 	--NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 10.0
 	NDefines.NAI.STR_BOMB_MIN_EXCORT_WINGS = 1
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
+
+	--Country Defines
 	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
 	NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 10						-- base amount of fuel gained hourly per excess oil
 	--NDefines.NCountry.BASE_FUEL_GAIN = 3.0							-- base amount of fuel gained hourly, independent of excess oil
@@ -359,3 +367,11 @@
 		'arms_factory',
 		'industrial_complex',
 	}
+
+	-- LaResistance AI Tweaks 
+	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 20.0 --25 in Vanilla
+	NDefines.NOperatives.AGENCY_AI_PER_UPGRADE_FACTORIES = 5.0 --6 in Vanilla
+	
+
+	NDefines.NResistance.GARRISON_MANPOWER_LOST_BY_ATTACK = 0.03 	-- Ratio of manpower lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
+	NDefines.NResistance.GARRISON_EQUIPMENT_LOST_BY_ATTACK = 0.05 	-- Ratio of equipment lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
