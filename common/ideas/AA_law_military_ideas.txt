@@ -1,5 +1,4 @@
 ideas = {
-
 	###Military Spending
 	Military_Spending = {
 		law = yes
@@ -8,11 +7,7 @@ ideas = {
 		defence_00 = {
 			removal_cost = -1
 			level = 1
-			
-			allowed_civil_war = {
-				always = yes
-			}
-			
+			allowed_civil_war = { always = yes }
 			on_add = {
 				custom_effect_tooltip = defence_00_TT
 				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
@@ -23,9 +18,9 @@ ideas = {
 				set_variable = { Military_Spending = 1 }
 				ingame_calculate_size_modifier = yes
 				update_military_rate = yes
-				log = "[GetDateText]: [Root.GetName]: add idea defence_00" 
+				log = "[GetDateText]: [Root.GetName]: add idea defence_00"
 			}
-			
+
 			modifier = {
 				conscription_factor = -1.00
 				industrial_capacity_factory = 0.00
@@ -33,21 +28,20 @@ ideas = {
 				production_speed_arms_factory_factor = -0.5
 				production_speed_dockyard_factor = -0.5
 			}
-			
+
 			ai_will_do = {
-   				factor = 0
+				factor = 0
+				modifier = {
+					add = 100000
+					has_idea = no_military
+				}
 			}
-			
 			cancel_if_invalid = no
 		}
 		defence_01 = {
 			removal_cost = -1
 			level = 2
-			
-			allowed_civil_war = {
-				always = yes
-			}
-			
+			allowed_civil_war = { always = yes }
 			on_add = {
 				custom_effect_tooltip = defence_01_TT
 				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
@@ -60,7 +54,7 @@ ideas = {
 				update_military_rate = yes
 				log = "[GetDateText]: [Root.GetName]: add idea defence_01"
 			}
-			
+
 			modifier = {
 				conscription_factor = -0.95
 				industrial_capacity_factory = 0.1
@@ -68,69 +62,139 @@ ideas = {
 				production_speed_arms_factory_factor = 0.02
 				production_speed_dockyard_factor = 0.02
 			}
-			
+
 			ai_will_do = {
-   				factor = 1
+				factor = 0
+				modifier = { # Regional-Interventionist nations should not want tiny budgets
+					factor = 0
+					OR = {
+						has_idea = intervention_neo_imperialism
+						has_idea = intervention_global_interventionism
+						has_idea = intervention_regional_interventionism
+					}
+				}
+				modifier = { # EU bloc feeling of safety encourages lower spending.
+					factor = 10
+					has_war = no
+					threat < 0.5
+					has_idea = defence_01
+					OR = {
+						has_idea = EU_member
+						has_idea = SWI_swiss_neutrality
+					}
+					all_neighbor_country = {
+						OR = {
+							has_idea = EU_member
+							has_idea = SWI_swiss_neutrality
+						}
+					}
+				}
+				modifier = { # NATO bloc feeling of safety encourages lower spending
+					factor = 10
+					has_war = no
+					threat < 0.5
+					has_idea = defence_01
+					has_idea = NATO_member
+					all_neighbor_country = {
+						has_idea = NATO_member
+					}
+				}
+				modifier = { # Mobility one step either direction.
+					add = 1
+					OR = {
+						has_idea = defence_00
+						has_idea = defence_02
+					}
+				}
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = defence_01
+				}
+				modifier = { # Non-powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = non_power
+					OR = {
+						has_idea = defence_01
+						has_idea = defence_02
+					}
+				}
+				modifier = { # Minor powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = minor_power
+					OR = {
+						has_idea = defence_01
+						has_idea = defence_02
+					}
+				}
+				modifier = {
+					factor = 2
+					has_idea = defence_01
+					has_war = no
+					is_major = no
+					manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+				}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = defence_00
+					has_autocratic_government = yes
+				}
+				modifier = { # Totalitarian governments want larger militaries
+					factor = 2
+					has_idea = defence_00
+					has_totalitarian_government = yes
+				}
+				modifier = { # Nationalist government want larger militaries
+					factor = 2
+					has_idea = defence_00
+					has_government = nationalist
+				}
+				modifier = { # Salafists want to increase military
+					factor = 4
+					has_idea = defence_00
+					has_government = fascism
+				}
+				modifier = { # Consider increasing spending if threat is high
+					factor = 2
+					has_idea = defence_00
+					threat > 0.4
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 4
+					has_idea = defence_00
+					threat > 0.8
+				}
 				modifier = {
 					#Prio if low on manpower
 					factor = 20
 					manpower_per_military_factory < 500
 					has_idea = defence_00
 				}
-				
-				modifier = {
-					factor = 0 
-					OR = {
-						AND = {
-							has_idea = defence_02
-							check_variable = { AI_WAR_SPEND_RATIO > 0.2 }
+				modifier = { # Military buildup while at war
+					factor = 80
+					has_idea = defence_00
+					has_war = yes
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_00
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
 						}
-						
-						check_variable = { AI_WAR_SPEND_RATIO < 0.1 }
 					}
 				}
-				
-				modifier = {
-					factor = 100
-					AND = {
-						has_idea = defence_02
-						check_variable = { AI_WAR_SPEND_RATIO < 0.2 }
-					}
-				}
-								
-				modifier = {
-					factor = 0
-					AND = {
-						NOT = { has_idea = defence_00 }
-						NOT = { has_idea = defence_02 }
-					}
-				}
-				
-
-				
-				modifier = {
-					factor = 100
-					check_variable = {
-						var = AI_WAR_SPEND_RATIO
-						value = 0.1
-						compare = less_than
-					}
-				}
-				
 			}
-			
 			cancel_if_invalid = no
 		}
-		defence_02 = {	
+		defence_02 = {
 			default = yes
-			
 			removal_cost = -1
 			level = 3
-			
-			allowed_civil_war = {
-				always = yes
-			}
-			
+			allowed_civil_war = { always = yes }
 			on_add = {
 				custom_effect_tooltip = defence_02_TT
 				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
@@ -143,7 +207,7 @@ ideas = {
 				update_military_rate = yes
 				log = "[GetDateText]: [Root.GetName]: add idea defence_02"
 			}
-			
+
 			modifier = {
 				conscription_factor = -0.90
 				industrial_capacity_factory = 0.2
@@ -151,124 +215,156 @@ ideas = {
 				production_speed_arms_factory_factor = 0.04
 				production_speed_dockyard_factor = 0.04
 			}
-			
+
 			ai_will_do = {
-   				factor = 1
-				
-				modifier = {
-					factor = 0 
+				factor = 0
+				modifier = { # Global-interventionist nations should not want small budgets
+					factor = 0
 					OR = {
-						AND = {
-							has_idea = defence_03
-							check_variable = { AI_WAR_SPEND_RATIO > 0.3 }
-						}
-						AND = {
-							has_idea = defence_01
-							check_variable = { AI_WAR_SPEND_RATIO < 0.2 }
+						has_idea = intervention_neo_imperialism
+						has_idea = intervention_global_interventionism
+					}
+				}
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = defence_02
+				}
+				modifier = { # EU bloc feeling of safety encourages lower spending.
+					factor = 4
+					has_war = no
+					threat < 0.5
+					has_idea = defence_02
+					OR = {
+						has_idea = EU_member
+						has_idea = SWI_swiss_neutrality
+					}
+					all_neighbor_country = {
+						OR = {
+							has_idea = EU_member
+							has_idea = SWI_swiss_neutrality
 						}
 					}
 				}
-				
+				modifier = { # NATO bloc feeling of safety encourages lower spending
+					factor = 4
+					has_war = no
+					threat < 0.5
+					has_idea = defence_02
+					has_idea = NATO_member
+					all_neighbor_country = {
+						has_idea = NATO_member
+					}
+				}
 				modifier = {
-					factor = 100
-					AND = {
+					factor = 2
+					has_idea = defence_02
+					has_war = no
+					is_major = no
+					manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+				}
+				modifier = {
+					add = 1
+					OR = {
+						has_idea = defence_01
 						has_idea = defence_03
-						check_variable = { AI_WAR_SPEND_RATIO < 0.3 }
 					}
 				}
-				
-				
+				modifier = { # Non-powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = non_power
+					OR = {
+						has_idea = defence_02
+						has_idea = defence_03
+					}
+				}
+				modifier = { # Minor powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = minor_power
+					OR = {
+						has_idea = defence_02
+						has_idea = defence_03
+					}
+				}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = defence_01
+					has_autocratic_government = yes
+				}
+				modifier = { # Totalitarian governments want larger militaries
+					factor = 2
+					has_idea = defence_01
+					has_totalitarian_government = yes
+				}
+				modifier = { # Nationalist government want larger militaries
+					factor = 2
+					has_idea = defence_01
+					has_government = nationalist
+				}
+				modifier = { # Salafists want to increase military
+					factor = 4
+					has_idea = defence_01
+					has_government = fascism
+				}
+				modifier = { # Consider increasing spending if threat is high
+					factor = 2
+					has_idea = defence_01
+					threat > 0.4
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 4
+					has_idea = defence_01
+					threat > 0.8
+				}
 				modifier = {
 					#Prio if low on manpower
 					factor = 21
 					manpower_per_military_factory <  450
 					has_idea = defence_01
 				}
-				
-				modifier = {
-					factor = 0
-					AND = {
-						NOT = { has_idea = defence_01 }
-						NOT = { has_idea = defence_03 }
-					}
-				}
-				
-				modifier = {
-					#Lower chance if has decent amount
-					factor = 0.5
-					OR = {
-						AND = {
-							manpower_per_military_factory >  3000
-							has_war = no
-						}
-						
-						AND = {
-							manpower_per_military_factory > 5000
-							has_war = yes
-							all_enemy_country = {
-								check_variable = { IS_MAJOR = 0 }
-							}
-						}
-						
-						AND = {
-							manpower_per_military_factory > 20000
-							has_war = yes
-							any_enemy_country = {
-								check_variable = { IS_MAJOR = 1 }
-							}
-						}
-					}
-				
-				}
 				modifier = {
 					#Higher chance if doing badly
 					factor = 3
+					has_idea = defence_01
 					surrender_progress > 0.1
-				
 				}
-				#modifier = {
-					#Higher chance if doing badly
-					#factor = 1.1
-					#neighbor_has_higher_mil_spending_by_2 = yes
-				# }
-				modifier = {
-					#Lower chance if not at war
-					factor = 5
-					has_war = no
-					or = {
-						has_idea = defence_09
-						has_idea = defence_08
-						has_idea = defence_07
-					}
-				}
-				
-				modifier = {
-					factor = 200
-					check_variable = {
-						var = AI_WAR_SPEND_RATIO
-						value = 0.2
-						compare = greater_than
-					}
-				}
-				
 				modifier = {
 					factor = 1000
+					has_idea = defence_01
 					any_enemy_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_01
+					has_war = yes
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_03
+					has_war = no
+					manpower_per_military_factory > 10000
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_01
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
 					}
 				}
 			}
-			
 			cancel_if_invalid = no
 		}
 		defence_03 = {
 			removal_cost = -1
 			level = 4
-			
-			allowed_civil_war = {
-				always = yes
-			}
-			
+			allowed_civil_war = { always = yes }
 			on_add = {
 				custom_effect_tooltip = defence_03_TT
 				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
@@ -279,9 +375,9 @@ ideas = {
 				set_variable = { Military_Spending = 4 }
 				ingame_calculate_size_modifier = yes
 				update_military_rate = yes
-				log = "[GetDateText]: [Root.GetName]: add idea defence_03" 
+				log = "[GetDateText]: [Root.GetName]: add idea defence_03"
 			}
-			
+
 			modifier = {
 				conscription_factor = -0.85
 				industrial_capacity_factory = 0.3
@@ -289,125 +385,112 @@ ideas = {
 				production_speed_arms_factory_factor = 0.06
 				production_speed_dockyard_factor = 0.06
 			}
-			
+
 			ai_will_do = {
-   				factor = 1
-				
-				modifier = {
-					factor = 0 
+				factor = 0
+				modifier = { # Imperialist nations should not want medium budgets
+					factor = 0
 					OR = {
-						AND = {
-							has_idea = defence_04
-							check_variable = { AI_WAR_SPEND_RATIO > 0.4 }
-						}
-						AND = {
-							has_idea = defence_02
-							check_variable = { AI_WAR_SPEND_RATIO < 0.3 }
-						}
+						has_idea = intervention_neo_imperialism
 					}
 				}
-				
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = defence_03
+				}
 				modifier = {
-					factor = 100
-					AND = {
-						has_idea = defence_04
-						check_variable = { AI_WAR_SPEND_RATIO < 0.4 }
+					factor = 2
+					has_idea = defence_03
+					has_war = no
+					is_major = no
+					OR = {
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
 					}
 				}
-				
-				
+				modifier = {
+					add = 1
+					has_idea = defence_02
+				}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = defence_02
+					has_autocratic_government = yes
+				}
+				modifier = { # Totalitarian governments want larger militaries
+					factor = 2
+					has_idea = defence_02
+					has_totalitarian_government = yes
+				}
+				modifier = { # Nationalist government want larger militaries
+					factor = 2
+					has_idea = defence_02
+					has_government = nationalist
+				}
+				modifier = { # Salafists want to increase military
+					factor = 4
+					has_idea = defence_02
+					has_government = fascism
+				}
+				modifier = { # Consider increasing spending if threat is high
+					factor = 2
+					has_idea = defence_02
+					threat > 0.4
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 4
+					has_idea = defence_02
+					threat > 0.8
+				}
 				modifier = {
 					#Prio if low on manpower
 					factor = 22
-					manpower_per_military_factory <  400
+					manpower_per_military_factory <  450
+					num_of_military_factories > 0
 					has_idea = defence_02
 				}
-				
-				modifier = {
-					factor = 0
-					AND = {
-						NOT = { has_idea = defence_02 }
-						NOT = { has_idea = defence_04 }
-					}
-				}
-				modifier = {
-					#Lower chance if has decent amount
-					factor = 0.5
-					OR = {
-						AND = {
-							manpower_per_military_factory >  3000
-							has_war = no
-						}
-						
-						AND = {
-							manpower_per_military_factory > 5000
-							has_war = yes
-							all_enemy_country = {
-								check_variable = { IS_MAJOR = 0 }
-							}
-						}
-						
-						AND = {
-							manpower_per_military_factory > 20000
-							has_war = yes
-							any_enemy_country = {
-								check_variable = { IS_MAJOR = 1 }
-							}
-						}
-					}
-				
-				}
 				modifier = {
 					#Higher chance if doing badly
-					factor = 4
+					factor = 3
+					has_idea = defence_02
 					surrender_progress > 0.1
-				
 				}
-				#modifier = {
-					#Higher chance if doing badly
-					#factor = 1.3
-					#neighbor_has_higher_mil_spending_by_2 = yes
-				# }
-				modifier = {
-					#Lower chance if not at war
-					factor = 5
-					has_war = no
-					or = {
-						has_idea = defence_09
-						has_idea = defence_08
-						has_idea = defence_07
-					}
-				}
-
-				modifier = {
-					factor = 300
-					check_variable = {
-						var = AI_WAR_SPEND_RATIO
-						value = 0.3
-						compare = greater_than
-					}
-				}
-				
-				modifier = {
-					factor = 2000
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_02
 					any_enemy_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
-						has_war_with = ROOT
+						is_major = yes
 					}
 				}
-				
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_02
+					has_war = yes
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_04
+					has_war = no
+					manpower_per_military_factory > 8000
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_02
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+					}
+				}
 			}
-			
 			cancel_if_invalid = no
 		}
 		defence_04 = {
 			removal_cost = -1
 			level = 5
-			
-			allowed_civil_war = {
-				always = yes
-			}
-			
+			allowed_civil_war = { always = yes }
 			on_add = {
 				custom_effect_tooltip = defence_04_TT
 				custom_effect_tooltip = defence_tooltip_personnel_cost_TT
@@ -418,9 +501,9 @@ ideas = {
 				set_variable = { Military_Spending = 5 }
 				ingame_calculate_size_modifier = yes
 				update_military_rate = yes
-				log = "[GetDateText]: [Root.GetName]: add idea defence_04" 
+				log = "[GetDateText]: [Root.GetName]: add idea defence_04"
 			}
-			
+
 			modifier = {
 				conscription_factor = -0.775
 				industrial_capacity_factory = 0.45
@@ -428,115 +511,100 @@ ideas = {
 				production_speed_arms_factory_factor = 0.09
 				production_speed_dockyard_factor = 0.09
 			}
-			
+
 			ai_will_do = {
-   				factor = 1
-			
+				factor = 0
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = defence_04
+				}
 				modifier = {
-					factor = 0 
+					factor = 2
+					has_idea = defence_04
+					has_war = no
+					is_major = no
 					OR = {
-						AND = {
-							has_idea = defence_05
-							check_variable = { AI_WAR_SPEND_RATIO > 0.5 }
-						}
-						AND = {
-							has_idea = defence_03
-							check_variable = { AI_WAR_SPEND_RATIO < 0.4 }
-						}
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
 					}
 				}
-				
 				modifier = {
-					factor = 100
-					AND = {
-						has_idea = defence_05
-						check_variable = { AI_WAR_SPEND_RATIO < 0.5 }
-					}
+					add = 1
+					has_idea = defence_03
 				}
-				
-				modifier = {
-					factor = 0
-					AND = {
-						NOT = { has_idea = defence_03 }
-						NOT = { has_idea = defence_05 }
-					}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = defence_03
+					has_autocratic_government = yes
+				}
+				modifier = { # Totalitarian governments want larger militaries
+					factor = 2
+					has_idea = defence_03
+					has_totalitarian_government = yes
+				}
+				modifier = { # Nationalist government want larger militaries
+					factor = 2
+					has_idea = defence_03
+					has_government = nationalist
+				}
+				modifier = { # Salafists want to increase military
+					factor = 4
+					has_idea = defence_03
+					has_government = fascism
+				}
+				modifier = { # Consider increasing spending if threat is high
+					factor = 2
+					has_idea = defence_03
+					threat > 0.4
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 4
+					has_idea = defence_03
+					threat > 0.8
 				}
 				modifier = {
 					#Prio if low on manpower
 					factor = 23
-					manpower_per_military_factory <  380
+					has_war = yes
+					manpower_per_military_factory < 450
+					num_of_military_factories > 0
 					has_idea = defence_03
 				}
 				modifier = {
-					#Lower chance if has decent amount
-					factor = 0.5
-					OR = {
-						AND = {
-							manpower_per_military_factory >  3000
-							has_war = no
-						}
-						
-						AND = {
-							manpower_per_military_factory > 5000
-							has_war = yes
-							all_enemy_country = {
-								check_variable = { IS_MAJOR = 0 }
-							}
-						}
-						
-						AND = {
-							manpower_per_military_factory > 20000
-							has_war = yes
-							any_enemy_country = {
-								check_variable = { IS_MAJOR = 1 }
-							}
-						}
-					}
-				
-				}
-				modifier = {
-					factor = 10
-					check_variable = { AI_VOLUNTEERS = 1 }
-				}
-				modifier = {
 					#Higher chance if doing badly
-					factor = 5
+					factor = 3
+					has_idea = defence_03
 					surrender_progress > 0.1
-				
 				}
-				#modifier = {
-					#Higher chance if doing badly
-					#factor = 1.5
-					#neighbor_has_higher_mil_spending_by_2 = yes
-				# }
-				modifier = {
-					#Lower chance if not at war
-					factor = 5
-					has_war = no
-					or = {
-						has_idea = defence_09
-						has_idea = defence_08
-						has_idea = defence_07
-					}
-				}
-				modifier = {
-					factor = 400
-					check_variable = {
-						var = AI_WAR_SPEND_RATIO
-						value = 0.4
-						compare = greater_than
-					}
-					
-				}
-				
-				modifier = {
-					factor = 3000
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_03
 					any_enemy_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
-						has_war_with = ROOT
+						is_major = yes
 					}
 				}
-				
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_03
+					has_war = yes
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_05
+					has_war = no
+					manpower_per_military_factory > 6000
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_03
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+					}
+				}
 			}
 			
 			cancel_if_invalid = no
@@ -572,125 +640,97 @@ ideas = {
 
 			
 			ai_will_do = {
-   				factor = 1
+				factor = 0
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = defence_05
+				}
 				modifier = {
-					#Prio if low on manpower
-					factor = 24
-					manpower_per_military_factory <  350
+					factor = 2
+					has_idea = defence_05
+					has_war = no
+					OR = {
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
+					}
+				}
+				modifier = {
+					add = 1
 					has_idea = defence_04
 				}
-				
-				modifier = {
-					factor = 0
-					OR = {
-						AND = {
-							has_idea = defence_06
-							check_variable = { AI_WAR_SPEND_RATIO > 0.6 }
-						}
-						AND = {
-							has_idea = defence_04
-							check_variable = { AI_WAR_SPEND_RATIO < 0.5 }
-						}
-					}
-				}
-				
-				modifier = {
-					factor = 100
-					AND = {
-						has_idea = defence_06
-						check_variable = { AI_WAR_SPEND_RATIO < 0.6 }
-					}
-				}
-				
-				modifier = {
-					factor = 0
-					AND = {
-						NOT = { has_idea = defence_04 }
-						NOT = { has_idea = defence_06 }
-					}
-				}
-				modifier = {
-					#Lower chance if has decent amount
-					factor = 0.5
-					OR = {
-						AND = {
-							manpower_per_military_factory >  3000
-							has_war = no
-						}
-						
-						AND = {
-							manpower_per_military_factory > 5000
-							has_war = yes
-							all_enemy_country = {
-								check_variable = { IS_MAJOR = 0 }
-							}
-						}
-						
-						AND = {
-							manpower_per_military_factory > 20000
-							has_war = yes
-							any_enemy_country = {
-								check_variable = { IS_MAJOR = 1 }
-							}
-						}
-					}
-				
-				}
-				
-				modifier = {
-					factor = 10
-					check_variable = { AI_VOLUNTEERS = 1 }
-				}
-				modifier = {
-					#Lower chance if not at war
-					factor = 0.5
-					has_war = no
-				
-				}
-				modifier = {
-					#Higher chance if doing badly
+				modifier = { # Salafists want to increase military
 					factor = 6
+					has_idea = defence_04
+					has_government = fascism
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 6
+					has_idea = defence_04
+					threat > 0.8
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 23
+					manpower_per_military_factory < 450
+					num_of_military_factories > 0
+					has_idea = defence_04
+					has_war = yes
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_war = yes
+					has_idea = defence_04
 					surrender_progress > 0.1
-				
 				}
-				#modifier = {
-					#Higher chance if doing badly
-					#factor = 1.6
-					#neighbor_has_higher_mil_spending_by_2 = yes
-				# }
-				modifier = {
-					#Higher chance if doing badly
-					factor = 10
-					any_country = {
-						is_justifying_wargoal_against = THIS
-						strength_ratio = { tag = THIS ratio > 2.0 } # 2x stronger than THIS
-					}
-				}
-				modifier = {
-					#Lower chance if not at war
-					factor = 4.5
-					has_war = no
-					or = {
-						has_idea = defence_09
-						has_idea = defence_08
-						has_idea = defence_07
-					}
-				}
-				
-				modifier = {
-					factor = 500
-					check_variable = {
-						var = AI_WAR_SPEND_RATIO
-						value = 0.5
-						compare = greater_than
-					}
-				}
-				
-				modifier = {
-					factor = 4000
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_04
+					has_war = yes
 					any_enemy_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
+						is_major = yes
 					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_04
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_06
+					has_war = no
+					manpower_per_military_factory > 3000
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_04
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.0
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.0
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't increase to large spending if lower and significantly stronger than enemies
+					factor = 0
+					OR = {
+						has_idea = defence_04
+					}
+					alliance_strength_ratio > 2
 				}
 			}
 			
@@ -726,127 +766,92 @@ ideas = {
 			}
 			
 			ai_will_do = {
-   				factor = 1
+				factor = 0
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = defence_06
+				}
 				modifier = {
-					#Prio if low on manpower
-					factor = 25
-					manpower_per_military_factory <  330
+					factor = 2
+					has_idea = defence_06
+					has_war = no
+					OR = {
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
+					}
+				}
+				modifier = {
+					add = 1
 					has_idea = defence_05
 				}
-				
-				modifier = {
-					factor = 0 
-					OR = {
-						AND = {
-							has_idea = defence_07
-							check_variable = { AI_WAR_SPEND_RATIO > 0.7 }
-						}
-						AND = {
-							has_idea = defence_05
-							check_variable = { AI_WAR_SPEND_RATIO < 0.6 }
-						}
-					}
-				}
-				
-				modifier = {
-					factor = 100
-					AND = {
-						has_idea = defence_07
-						check_variable = { AI_WAR_SPEND_RATIO < 0.7 }
-					}
-				}
-				
-				modifier = {
-					factor = 0
-					AND = {
-						NOT = { has_idea = defence_05 }
-						NOT = { has_idea = defence_07 }
-					}
-				}
-			
-				modifier = {
-					#Lower chance if has decent amount
-					factor = 0.5
-					OR = {
-						AND = {
-							manpower_per_military_factory >  3000
-							has_war = no
-						}
-						
-						AND = {
-							manpower_per_military_factory > 5000
-							has_war = yes
-							all_enemy_country = {
-								check_variable = { IS_MAJOR = 0 }
-							}
-						}
-						
-						AND = {
-							manpower_per_military_factory > 20000
-							has_war = yes
-							any_enemy_country = {
-								check_variable = { IS_MAJOR = 1 }
-							}
-						}
-					}
-				
+				modifier = { # Salafists want to increase military
+					factor = 6
+					has_idea = defence_05
+					has_government = fascism
 				}
 				modifier = {
-					#Lower chance if not at war
-					factor = 0.3
-					has_war = no
-				
-				}
-				
-				modifier = {
-					factor = 10
-					check_variable = { AI_VOLUNTEERS = 1 }
+					#Prio if low on manpower
+					factor = 23
+					manpower_per_military_factory < 450
+					num_of_military_factories > 0
+					has_idea = defence_05
+					has_war = yes
 				}
 				modifier = {
 					#Higher chance if doing badly
-					factor = 7
+					factor = 3
+					has_idea = defence_05
+					has_war = yes
 					surrender_progress > 0.1
-				
 				}
-				#modifier = {
-					#Higher chance if doing badly
-					#factor = 1.9
-					#neighbor_has_higher_mil_spending_by_2 = yes
-				# }
-				modifier = {
-					#Higher chance if doing badly
-					factor = 11
-					any_country = {
-						is_justifying_wargoal_against = THIS
-						strength_ratio = { tag = THIS ratio > 2.0 } # 2x stronger than THIS
-					}
-				}
-				modifier = {
-					#Lower chance if not at war
-					factor = 4.5
-					has_war = no
-					or = {
-						has_idea = defence_09
-						has_idea = defence_08
-						has_idea = defence_07
-					}
-				}
-				
-				modifier = {
-					factor = 600
-					check_variable = {
-						var = AI_WAR_SPEND_RATIO
-						value = 0.6
-						compare = greater_than
-					}
-				}
-				
-				modifier = {
-					factor = 5000
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_05
+					has_war = yes
 					any_enemy_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
-						has_war_with = ROOT
+						is_major = yes
 					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_05
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_07
+					has_war = no
+					manpower_per_military_factory > 1000
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_05
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.2
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.2
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't increase to very large spending if lower and significantly stronger than enemies
+					factor = 0
+					OR = {
+						has_idea = defence_05
+					}
+					alliance_strength_ratio > 2
 				}
 			}
 			
@@ -884,120 +889,77 @@ ideas = {
 			
 			
 			ai_will_do = {
-   				factor = 1
-				
+				factor = 0
 				modifier = {
-					factor = 0 
-					OR = {
-						AND = {
-							has_idea = defence_08
-							check_variable = { AI_WAR_SPEND_RATIO > 0.8 }
-						}
-						AND = {
-							has_idea = defence_06
-							check_variable = { AI_WAR_SPEND_RATIO < 0.7 }
-						}
-					}
+					add = 4
+					has_idea = defence_07
+					has_war = no
+					manpower_per_military_factory > 1000 # If is a nation without enemies and with sufficient manpower, don't bother increasing
 				}
-				
 				modifier = {
-					factor = 100
-					AND = {
-						has_idea = defence_08
-						check_variable = { AI_WAR_SPEND_RATIO < 0.8 }
-					}
-				}
-				
-				modifier = {
-					#Prio if low on manpower
-					factor = 26
-					manpower_per_military_factory <  300
+					add = 1
 					has_idea = defence_06
 				}
-				
-
 				modifier = {
-					factor = 0
-					AND = {
-						NOT = { has_idea = defence_06 }
-						NOT = { has_idea = defence_08 }
-					}
-				}
-				
-				
-				modifier = {
-					#Lower chance if has decent amount
-					factor = 0.5
-					OR = {
-						AND = {
-							manpower_per_military_factory >  3000
-							has_war = no
-						}
-						
-						AND = {
-							manpower_per_military_factory > 5000
-							has_war = yes
-							all_enemy_country = {
-								is_major = no
-							}
-						}
-						
-						AND = {
-							manpower_per_military_factory > 20000
-							has_war = yes
-							any_enemy_country = {
-								check_variable = { IS_MAJOR = 1 }
-							}
-						}
-					}
-				
-				}
-				modifier = {
-					#Lower chance if not at war
-					factor = 0.1
-					has_war = no
-				
-				}
-				
-				modifier = {
-					factor = 10
-					check_variable = { AI_VOLUNTEERS = 1 }
+					#Prio if low on manpower
+					factor = 27
+					manpower_per_military_factory < 450
+					has_war = yes
+					has_idea = defence_06
 				}
 				modifier = {
 					#Higher chance if doing badly
-					factor = 8
+					factor = 3
+					has_war = yes
+					has_idea = defence_06
 					surrender_progress > 0.1
-				
 				}
-				#modifier = {
-					#Higher chance if doing badly
-					#factor = 2.1
-					#neighbor_has_higher_mil_spending_by_2 = yes
-				# }
-				modifier = {
-					#Higher chance if doing badly
-					factor = 12
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_06
+					has_war = yes
 					any_enemy_country = {
-						is_justifying_wargoal_against = THIS
-						strength_ratio = { tag = THIS ratio > 2.0 } # 2x stronger than THIS
+						is_major = yes
 					}
 				}
-				
-				modifier = {
-					factor = 700
-					check_variable = {
-						var = AI_WAR_SPEND_RATIO
-						value = 0.7
-						compare = greater_than
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_06
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_08
+					has_war = no
+					manpower_per_military_factory > 1000
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_06
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.4
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.4
+							}
+						}
 					}
 				}
-				
-				modifier = {
-					factor = 5000
-					any_enemy_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
-						has_war_with = ROOT
-					}
+				modifier = { # Shouldn't go to huge spending if not at war with powerful enemies.
+					factor = 0
+					has_war = yes
+					alliance_strength_ratio > 0.8
 				}
 			}
 			
@@ -1029,8 +991,8 @@ ideas = {
 					has_war = yes
 					threat > 0.4
 					any_country = {
-						is_justifying_wargoal_against = THIS
-						strength_ratio = { tag = THIS ratio > 2.0 } # 2x stronger than THIS
+						is_justifying_wargoal_against = ROOT # Experimenting on THIS vs ROOT
+						strength_ratio = { tag = ROOT ratio > 2.0 } # 2x stronger than THIS
 					}
 				}
 			}
@@ -1044,121 +1006,73 @@ ideas = {
 			}
 			
 			ai_will_do = {
-   				factor = 1
-				
-				modifier = {
-					factor = 0 
-					OR = {
-						AND = {
-							has_idea = defence_09
-							check_variable = { AI_WAR_SPEND_RATIO > 0.9 }
-						}
-						AND = {
-							has_idea = defence_07
-							check_variable = { AI_WAR_SPEND_RATIO < 0.75 }
-						}
-					}
-				}
-				
-				modifier = {
-					factor = 100
-					AND = {
-						has_idea = defence_06
-						check_variable = { AI_WAR_SPEND_RATIO < 0.9 }
-					}
-				}
-				
-				modifier = {
-					#Prio if low on manpower
-					factor = 27
-					manpower_per_military_factory <  270
-					has_idea = defence_07
-				}
-				
-				modifier = {
+				factor = 0
+				modifier = { # Should never advance to or remain at gigantic spending without war
 					factor = 0
-					AND = {
-						NOT = { has_idea = defence_07 }
-						NOT = { has_idea = defence_09 }
-					}
-				}
-				modifier = {
-					#Lower chance if has decent amount
-					factor = 0.5
-					OR = {
-						AND = {
-							manpower_per_military_factory >  3000
-							has_war = no
-						}
-						
-						AND = {
-							manpower_per_military_factory > 5000
-							has_war = yes
-							all_enemy_country = {
-								is_major = no
-							}
-						}
-						
-						AND = {
-							manpower_per_military_factory > 20000
-							has_war = yes
-							any_enemy_country = {
-								check_variable = { IS_MAJOR = 1 }
-							}
-						}
-					}
-				
-				}
-				modifier = {
-					#Lower chance if not at war
-					factor = 0.1
 					has_war = no
 				}
 				modifier = {
-					factor = 10
-					check_variable = { AI_VOLUNTEERS = 1 }
+					add = 1
+					has_idea = defence_07
 				}
 				modifier = {
-					factor = 2
-					has_war = yes
+					#Prio if low on manpower
+					factor = 27
+					manpower_per_military_factory < 450
+					has_idea = defence_07
 				}
 				modifier = {
 					#Higher chance if doing badly
-					factor = 9
+					factor = 3
+					has_idea = defence_07
 					surrender_progress > 0.1
-				
 				}
-				#modifier = {
-					#Higher chance if doing badly
-					#factor = 2.3
-					#neighbor_has_higher_mil_spending_by_2 = yes
-				# }
-				modifier = {
-					#Higher chance if doing badly
-					factor = 13
-					any_country = {
-						is_justifying_wargoal_against = THIS
-						strength_ratio = { tag = THIS ratio > 2.0 } # 2x stronger than THIS
-					}
-				}
-				
-				modifier = {
-					factor = 800
-					check_variable = {
-						var = AI_WAR_SPEND_RATIO
-						value = 0.75
-						compare = greater_than
-					}
-				}
-				
-				modifier = {
-					factor = 7000
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_07
 					any_enemy_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
-						has_war_with = ROOT
+						is_major = yes
 					}
 				}
-			
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_07
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_09
+					has_war = no
+					manpower_per_military_factory > 500
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_07
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.8
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.8
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't go to gigantic spending if not at war with powerful enemies.
+					factor = 0
+					has_war = yes
+					alliance_strength_ratio > 0.85
+				}
 			}
 			
 			cancel_if_invalid = no
@@ -1204,101 +1118,67 @@ ideas = {
 			}
 			
 			ai_will_do = {
-   				factor = 1
-
+				factor = 0
+				modifier = { # Should never maintain total war spending when not at war
+					factor = 0
+					has_war = no
+				}
+				modifier = {
+					add = 1
+					has_idea = defence_08
+				}
 				modifier = {
 					#Prio if low on manpower
-					factor = 28
-					manpower_per_military_factory <  250
+					factor = 27
+					has_war = yes
+					manpower_per_military_factory < 450
 					has_idea = defence_08
-				}	
-				
-				modifier = {
-					factor = 0
-					NOT = { has_idea = defence_08 }
-				}
-				modifier = {
-					#Lower chance if has decent amount
-					factor = 0.5
-					OR = {
-						AND = {
-							manpower_per_military_factory >  3000
-							has_war = no
-						}
-						
-						AND = {
-							manpower_per_military_factory > 5000
-							has_war = yes
-							all_enemy_country = {
-								is_major = no
-							}
-						}
-						
-						AND = {
-							manpower_per_military_factory > 20000
-							has_war = yes
-							any_enemy_country = {
-								check_variable = { IS_MAJOR = 1 }
-							}
-						}
-					}
-					
-				
-				}
-				modifier = {
-					#Lower chance if not at war
-					factor = 0.1
-					has_war = no
-				
 				}
 				modifier = {
 					#Higher chance if doing badly
+					factor = 3
+					has_idea = defence_08
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
 					factor = 1000
-					surrender_progress > 0.3
-				
+					has_idea = defence_08
+					any_enemy_country = {
+						is_major = yes
+					}
 				}
-				
-				modifier = {
-				factor = 40000
-					AND = {
-						has_war = yes
-						any_enemy_country = {
-							ic_ratio = { 
-								tag = ROOT 
-								ratio > 0.8
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_08
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_08
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.8
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.8
 							}
 						}
 					}
 				}
-				#modifier = {
-					#Higher chance if doing badly
-					#factor = 2.5
-					#neighbor_has_higher_mil_spending_by_2 = yes
-				# }
-				modifier = {
-					#Higher chance if doing badly
-					factor = 2
-					any_country = {
-						is_justifying_wargoal_against = THIS
-						strength_ratio = { tag = THIS ratio > 2.0 } # 2x stronger than THIS
-					}
-				}
-				
-				modifier = {
-					factor = 100000
-					check_variable = {
-						var = AI_WAR_SPEND_RATIO
-						value = 0.9
-						compare = greater_than
-					}
-				}
-				
-				modifier = {
-					factor = 1000000
-					any_enemy_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
-						has_war_with = ROOT
-					}
+				modifier = { # Shouldn't go to total war if not at war with powerful enemies.
+					factor = 0
+					has_war = yes
+					alliance_strength_ratio > 0.9 
 				}
 			}
 			
@@ -1390,35 +1270,63 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				##When to downgrade to volunteer army
-				modifier = {
-					#If we are in a faction, we don't need as big of an army
-					add = 1
-					AND = {
-						has_idea = partial_draft_army
-						is_in_faction = yes
+				## When to stay at volunteer army
+				modifier = { # Inertia to stay at present size
+					add = 5
+					has_idea = volunteer_army
+				}
+				modifier = { # If not at war, less willing to go to draft
+					factor = 2
+					has_war = no
+					has_idea = volunteer_army
+				}
+				modifier = { # If plenty of manpower, less willing to go to draft
+					factor = 2
+					has_idea = volunteer_army
+					manpower_per_military_factory > 1000
+				}
+				modifier = { # Less willing to go to draft if low military budget
+					factor = 2
+					has_idea = volunteer_army
+					OR = {
+						has_idea = defence_01
+						has_idea = defence_02
+						has_idea = defence_03
 					}
 				}
-				modifier = {
-					#Major's less likely to downgrade their military
-					add = -1
-					is_major = yes
+				##When to downgrade to volunteer army
+				modifier = { # If not at war and plenty of manpower, can downgrade
+					add = 20
+					has_idea = partial_draft_army
+					has_war = no
+					manpower_per_military_factory > 1000
+				}
+				modifier = { # Nationalists and autocrats less likely to reduce draft
+					factor = 0.25
+					OR = {
+						has_autocratic_government = yes
+						has_government = nationalist
+					}
 				}
 				##When to switch to volunteers from having no military
 				modifier = {
 					#We want to switch to having an army if tensions are high
-					add = 1
+					add = 20
 					AND = {
 						has_idea = no_military
-						threat > 0.3
+						threat > 0.5
 					}
 				}
 				modifier = {
-					#Nationalists want an army
-					add = 1
+					#Nationalists/autocrats want an army
+					add = 20
 					AND = {
 						has_idea = no_military
-						has_government = nationalist
+						OR = {
+							has_autocratic_government = yes
+							has_government = nationalist
+							has_government = fascism
+						}
 					}
 				}
 			}
@@ -1466,6 +1374,21 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				## When to remain at partial draft
+				modifier = { # Inertia to remain at partial draft
+					add = 5
+					has_idea = partial_draft_army
+				}
+				modifier = { # If not at war, less willing to go to full draft
+					factor = 1.5
+					has_war = no
+					has_idea = partial_draft_army
+				}
+				modifier = { # If plenty of manpower, less willing to go to full draft
+					factor = 1.5
+					has_idea = partial_draft_army
+					manpower_per_military_factory > 1000
+				}
 				##When to downgrade to partial draft
 				modifier = {
 					#If we are in a faction, we don't need as big of an army
@@ -1475,31 +1398,29 @@ ideas = {
 						is_in_faction = yes
 					}
 				}
-				modifier = {
-					#Major's less likely to downgrade their military
-					add = -1
-					is_major = yes
-				}
 				##When to switch from having volunteers to a limited draft
-				modifier = {
-					#We want to switch to a limited draft when in a big war
-					add = 100
-					AND = {
-						has_war = yes
-						has_manpower < 10000
-					}
+				modifier = { # If world tension is high, consider insituting a draft
+					add = 5
+					has_idea = volunteer_army
+					threat > 0.5
 				}
-				modifier = {
-					#We might want to consider draft is tension is high
-					add = 1
-					AND = {
-						has_idea = volunteer_army
-						threat > 0.5
-					}					
+				modifier = { # If at war, consider instituting limited draft
+					add = 10
+					has_idea = volunteer_army
+					has_war = yes
+				}
+				modifier = { # Urgently institute draft if at war with major country and manpower is low
+					factor = 200
+					has_idea = volunteer_army
+					has_war = yes
+					any_enemy_country = {
+						is_major = yes
+					}
+					manpower_per_military_factory < 5000
 				}
 				modifier = {
 					#These ideologies want bigger armies
-					add = 1
+					add = 20
 					AND = {
 						has_idea = volunteer_army
 						OR = {
@@ -1508,22 +1429,6 @@ ideas = {
 						}
 					}
 				}
-				
-				modifier = {
-					add = 20
-					all_enemy_country = {
-						has_war_with = ROOT
-						check_variable = { var = IS_MAJOR value = 0 }
-					}
-				}
-				modifier = {
-					add = 10000
-					any_enemy_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
-						has_war_with = ROOT
-					}
-				}
-				
 			}
 			
 			cancel_if_invalid = no
@@ -1567,60 +1472,57 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				#When to switch from partial draft to full draft
-				modifier = {
-					#We want to switch to a limited draft when in a big war
-					add = 100
-					AND = {
-						has_war = yes
-						has_manpower < 10000
+				## When to remain at partial draft
+				modifier = { # Inertia to remain at full draft
+					add = 5
+					has_idea = draft_army
+				}
+				modifier = { # Less willing to remain at full draft if at peace and not autocratic
+					factor = 0.5
+					has_idea = draft_army
+					has_war = no
+					has_autocratic_government = no
+					NOT = { has_government = fascism }
+				}
+				##When to switch from having partial draft to a full draft
+				modifier = { # Reluctant to expand draft at lower military spending - should encourage AI to increase funding first
+					factor = 0.5
+					has_idea = partial_draft_army
+					OR = {
+						has_idea = defence_01
+						has_idea = defence_02
+						has_idea = defence_03
+						has_idea = defence_04
+						has_idea = defence_05
 					}
 				}
-				modifier = {
-					#We might want to consider draft is tension is high
-					add = 10
-					AND = {
-						has_idea = partial_draft_army
-						threat > 0.7
+				modifier = { # If world tension is high, consider insituting a draft
+					add = 5
+					has_idea = partial_draft_army
+					threat > 0.8
+				}
+				modifier = { # If at war, consider instituting full draft
+					add = 5
+					has_idea = partial_draft_army
+					has_war = yes
+				}
+				modifier = { # Urgently institute full draft if at war with major country and manpower is low
+					factor = 80
+					has_idea = partial_draft_army
+					has_war = yes
+					any_enemy_country = {
+						is_major = yes
 					}
+					manpower_per_military_factory < 2500
 				}
 				modifier = {
 					#These ideologies want bigger armies
-					add = 1
-					AND = {
-						has_idea = volunteer_army
-						OR = {
-							has_government = nationalist
-							has_government = fascism
-						}
-					}
-				}
-				modifier = {
-					#Being next to big scary countries
-					add = 10
-					any_neighbor_country = {
-						NOT = { is_in_faction_with = ROOT }
-						strength_ratio = { tag = ROOT ratio > 2 }
-					}
-				}
-				modifier = {
-					#Being next to possible war targets
-					add = 10
-					any_neighbor_country = {
-						any_owned_state = {
-							OR = {
-								is_claimed_by = ROOT
-								is_core_of = ROOT
-							}
-						}
-					}
-				}
-				
-				modifier = {
-					add = 20000
-						any_enemy_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
-						has_war_with = ROOT
+					add = 20
+					has_idea = partial_draft_army
+					manpower_per_military_factory < 1000
+					OR = {
+						has_government = nationalist
+						has_government = fascism
 					}
 				}
 			}
@@ -1660,16 +1562,16 @@ ideas = {
 			}
 			
 			ai_will_do = {
-				factor = 0
+				factor = 1
 				modifier = {
 					#Women should be protected
-					add = 2
+					factor = 10
 					has_government = nationalist
 					NOT = { original_tag = ERI }
 				}
 				modifier = {
 					#Salafists don't want women in the army
-					add = 2
+					add = 2000
 					has_government = fascism
 				}
 			}
@@ -1692,7 +1594,11 @@ ideas = {
 			}
 			
 			available = {
-				
+				OR = {
+					has_idea = volunteer_army
+					has_idea = partial_draft_army
+					has_idea = draft_army
+				}
 			}
 			
 			cost = 150
@@ -1720,15 +1626,19 @@ ideas = {
 				modifier = {
 					add = 20000
 					any_other_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
+						is_major = yes
 						has_war_with = ROOT
 					}
+				}
+				modifier = { # Salafists will never allow women to serve in combat
+					factor = 0
+					has_government = fascism
 				}
 			}
 			
 			default = yes
 			
-			cancel_if_invalid = no
+			cancel_if_invalid = yes
 			
 		}
 			
@@ -1775,9 +1685,13 @@ ideas = {
 				modifier = {
 					add = 30000
 					any_other_country = {
-						check_variable = { var = IS_MAJOR value = 1 }
+						is_major = yes
 						has_war_with = ROOT
 					}
+				}
+				modifier = { # Salafists will never allow women to serve in combat
+					factor = 0
+					has_government = fascism
 				}
 			}
 			
@@ -1823,6 +1737,13 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				modifier = {
+					add = 20
+					OR = {
+						has_idea = no_military
+						has_idea = defence_00
+					}
+				}
 			}
 			
 			cancel_if_invalid = yes
@@ -1857,6 +1778,13 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				modifier = {
+					add = 1
+					OR = {
+						has_idea = non_power
+						has_idea = minor_power
+					}
+				}
 			}
 			
 			default = yes
@@ -1893,6 +1821,10 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				modifier = {
+					add = 1
+					has_idea = regional_power
+				}
 			}
 			
 			cancel_if_invalid = yes
@@ -1927,6 +1859,10 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				modifier = {
+					add = 1
+					has_idea = great_power
+				}
 			}
 			
 			cancel_if_invalid = yes
@@ -1961,6 +1897,10 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				modifier = {
+					add = 1
+					has_idea = superpower
+				}
 			}
 			
 			cancel_if_invalid = yes
@@ -1999,7 +1939,7 @@ ideas = {
 			ai_will_do = {
 				factor = 0
 				modifier = {
-					factor = 10
+					add = 10
 					has_government = fascism
 				}
 				modifier = {
@@ -2249,6 +2189,20 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
+				modifier = {
+					add = 1
+					OR = {
+						is_in_faction = yes
+						has_idea = NATO_member
+					}
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						has_idea = no_military
+						has_idea = defence_00
+					}
+				}
 			}
 			
 			cancel_if_invalid = yes
