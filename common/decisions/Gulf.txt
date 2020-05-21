@@ -460,6 +460,8 @@ gulf_society = {
 
 	GCC_legalize_alcohol_in_hotels_and_clubs = {
 
+		icon = eng_trade_unions_support
+
 		visible = {
 			NOT = { has_country_flag = limited_alcohol }
 		}
@@ -507,6 +509,8 @@ gulf_society = {
 			has_country_flag = limited_alcohol
 		}
 
+		icon = eng_trade_unions_support
+
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = conservatism_society_more_60_tt
@@ -538,6 +542,8 @@ gulf_society = {
 		visible = {
 			NOT = { has_country_flag = alcohol }
 		}
+
+		icon = eng_trade_unions_support
 
 		available = {
 			OR = {
@@ -586,6 +592,8 @@ gulf_society = {
 			has_country_flag = alcohol
 		}
 
+		icon = eng_trade_unions_support
+
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = conservatism_society_more_50_tt
@@ -617,6 +625,8 @@ gulf_society = {
 		visible = {
 			NOT = { has_country_flag = relaxed_dress_code }
 		}
+
+		icon = eng_trade_unions_support
 
 		available = {
 			OR = {
@@ -661,6 +671,8 @@ gulf_society = {
 			has_country_flag = relaxed_dress_code
 		}
 
+		icon = eng_trade_unions_support
+
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = conservatism_society_more_50_tt
@@ -692,6 +704,8 @@ gulf_society = {
 		visible = {
 			NOT = { has_country_flag = banned_burqa }
 		}
+
+		icon = eng_trade_unions_support
 
 		available = {
 			OR = {
@@ -740,6 +754,8 @@ gulf_society = {
 			has_country_flag = banned_burqa
 		}
 
+		icon = eng_trade_unions_support
+
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = conservatism_society_more_40_tt
@@ -771,6 +787,8 @@ gulf_society = {
 		visible = {
 			NOT = { has_country_flag = banned_head_scarf }
 		}
+
+		icon = eng_trade_unions_support
 
 		available = {
 			OR = {
@@ -818,6 +836,8 @@ gulf_society = {
 		visible = {
 			has_country_flag = banned_head_scarf
 		}
+
+		icon = eng_trade_unions_support
 
 		available = {
 			custom_trigger_tooltip = {
@@ -1292,10 +1312,126 @@ gcc_decisions = {
 
 		ai_will_do = {
 			factor = 0
-			modifier = {
-				add = 1
-				has_country_flag = gcc_dominant_member
+		}
+
+	}
+
+	GCC_offer_joint_exercises_specific = {
+
+		icon = GFX_decision_generic_tank
+
+		visible = {
+			has_idea = idea_gcc_member_state
+			NOT = { has_global_flag = GCC_joint_exercises_offered }
+		}
+
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = gcc_unity_greater_20_tt
+				check_variable = { global.gcc_unity > 20 }
 			}
+		}
+
+		cost = 50
+
+		days_re_enable = 365
+
+		complete_effect = {
+			set_global_flag = GCC_joint_exercises_offered
+			set_country_flag = GCC_joint_exercises_accepted
+			every_other_country = {
+				limit = {
+					has_idea = idea_gcc_member_state
+				}
+				country_event = {
+					id = gcc.26
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_start_joint_exercises_specific = {
+
+		icon = GFX_decision_generic_tank
+
+		visible = {
+			has_idea = idea_gcc_member_state
+			has_global_flag = GCC_joint_exercises_offered
+		}
+
+		available = {
+			has_war = no
+		}
+
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+
+		complete_effect = {
+			add_command_power = -20
+			every_country = {
+				limit = { has_idea = idea_gcc_member_state has_country_flag = GCC_joint_exercises_accepted }
+				add_timed_idea = {
+					idea = GCC_joint_drill
+					days = 30
+				}
+				clr_country_flag = GCC_joint_exercises_accepted
+			}
+		}
+
+		days_remove = 30
+
+		remove_effect = {
+			if = {
+				limit = {
+					check_variable = { global.gcc_exercise > 0 }
+					check_variable = { global.gcc_exercise < 3 }
+				}
+				custom_effect_tooltip = GCC_unity_increase_2_tt
+				add_to_variable = { global.gcc_unity = 2 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { global.gcc_exercise > 2 }
+					check_variable = { global.gcc_exercise < 5 }
+				}
+				custom_effect_tooltip = GCC_unity_increase_5_tt
+				add_to_variable = { global.gcc_unity = 5 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { global.gcc_exercise > 4 }
+				}
+				custom_effect_tooltip = GCC_unity_increase_10_tt
+				add_to_variable = { global.gcc_unity = 10 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			clr_global_flag = GCC_joint_exercises_offered
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 
 	}
@@ -1328,8 +1464,8 @@ gcc_decisions = {
 				has_country_flag = gcc_dominant_member
 			}
 			custom_trigger_tooltip = {
-				tooltip = gcc_unity_greater_50_tt
-				check_variable = { global.gcc_unity > 50 }
+				tooltip = gcc_unity_greater_40_tt
+				check_variable = { global.gcc_unity > 40 }
 			}
 		}
 
@@ -1337,7 +1473,7 @@ gcc_decisions = {
 
 		days_remove = 60
 
-		days_re_enable = 180
+		days_re_enable = 365
 
 		remove_effect = {
 			if = {
@@ -1394,21 +1530,28 @@ gcc_decisions = {
 
 		target_trigger = {
 			country_exists = FROM
+		}
+
+		available = {
 			FROM = {
+				has_idea = idea_gcc_member_state
 				OR = {
 					has_government = nationalist
 					has_government = communism
 					jihadist_government = yes
 					NOT = { has_idea = saudi_royal_family }
 				}
-				has_idea = idea_gcc_member_state
-				NOT = { has_country_flag = gcc_membership_secure }
 			}
 		}
 
 		visible = {
 			has_idea = idea_gcc_member_state
 			NOT = { any_country = { has_country_flag = being_expelled }}
+			FROM = {
+				NOT = { has_country_flag = gcc_membership_secure }
+				NOT = { has_country_flag = being_expelled }
+				NOT = { has_country_flag = recently_expelled_from_gcc }
+			}
 		}
 
 		cost = 50
@@ -2298,18 +2441,19 @@ gcc_decisions = {
 				has_completed_focus = GCC_improve_relations_with_iran
 				NOT = { has_country_flag = accepted_blockade_demands }
 			}
-			OR = {
-				AND = {
-					FROM = { tag = QAT }
-					tag = SAU
-				}
-				has_completed_focus = GCC_confront_iranian_partners
-			}
 		}
 
 		visible = {
 			has_idea = idea_gcc_member_state
 			NOT = { any_country = { has_country_flag = blockade_@FROM } }
+			OR = {
+				AND = {
+					FROM = { tag = QAT }
+					tag = SAU
+					date > 2017.1.1
+				}
+				has_completed_focus = GCC_confront_iranian_partners
+			}
 		}
 
 		cost = 100
@@ -2557,10 +2701,12 @@ gcc_decisions = {
 
 		target_trigger = {
 			country_exists = FROM
-			NOT = { has_country_flag = supports_membership_@FROM }
 		}
 
-		visible = { has_idea = idea_gcc_member_state }
+		visible = {
+			has_idea = idea_gcc_member_state
+			NOT = { has_country_flag = supports_membership_@FROM }
+		}
 
 		cost = 25
 
@@ -2629,7 +2775,7 @@ gcc_decisions = {
 			}
 			modifier = {
 				add = 5
-				has_global_flag = arab_spring
+				has_global_flag = global_arab_spring
 				FROM = {
 					OR = {
 						tag = JOR
@@ -2639,10 +2785,68 @@ gcc_decisions = {
 			}
 			modifier = {
 				add = 5
-				has_global_flag = arab_spring
+				has_global_flag = global_arab_spring
 				tag = BHR
 				FROM = {
 					tag = EGY
+				}
+			}
+		}
+	}
+
+	GCC_pressure_countries_to_support = {
+		icon = GFX_decision_generic_form_nation
+
+		target_array = global.possible_gcc_members
+
+		target_trigger = {
+			country_exists = FROM
+		}
+
+		visible = {
+			has_country_flag = supports_membership_@FROM
+			any_country = {
+				has_idea = idea_gcc_member_state
+				NOT = { has_country_flag = supports_membership_@FROM }
+			}
+			has_idea = idea_gcc_member_state
+		}
+
+		available = {
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision pressure_countries_to_recognize target: [From.GetName]"
+			every_other_country = {
+				limit = {
+					has_idea = idea_gcc_member_state
+					NOT = { has_country_flag = supports_membership_@FROM }
+				}
+				FROM = {
+					set_country_flag = pressured_to_accept_@PREV
+				}
+				country_event = { id = gcc.24 }
+			}
+		}
+
+		days_remove = 90
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 100
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 150
 				}
 			}
 		}
@@ -2652,13 +2856,7 @@ gcc_decisions = {
 		icon = GFX_decision_generic_form_nation
 
 		visible = {
-			OR = {
-				tag = EGY
-				tag = IRQ
-				tag = JOR
-				tag = MOR
-				tag = YEM
-			}
+			is_in_array = { global.possible_gcc_members = THIS }
 			NOT = { has_idea = idea_gcc_member_state }
 		}
 
@@ -2692,6 +2890,13 @@ gcc_decisions = {
 		complete_effect = {
 			unlock_decision_tooltip = GCC_complete_accession_plan
 			set_country_flag = gcc_accession_process
+			every_country = {
+				news_event = { id = gcc.25 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -2705,13 +2910,12 @@ gcc_decisions = {
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = cyber_gdp_requirement_2_tt
+				tooltip = gdp_requirement_10_tt
 				NOT = {
 					has_idea = gdp_1
 					has_idea = gdp_2
 					has_idea = gdp_3
 					has_idea = gdp_4
-					has_idea = gdp_5
 				}
 			}
 		}
@@ -2889,12 +3093,12 @@ gcc_decisions = {
 				}
 			}
 			if = {
-				limit = { any_country = { has_completed_focus = GCC_standardize_regulations }}
+				limit = { has_global_flag = GCC_standardize_regulations_completed }
 				add_to_tech_sharing_group = GCC_Tech_Share
 			}
 			if = {
 				limit = {
-					any_country = { has_completed_focus = GCC_intra_gcc_trade }
+					has_global_flag = GCC_intra_gcc_trade_completed
 				}
 				ROOT = {
 					if = {
@@ -2985,7 +3189,7 @@ gcc_decisions = {
 			}
 			if = {
 				limit = {
-					any_country = { has_completed_focus = GCC_intra_gcc_trade }
+					has_global_flag = GCC_intra_gcc_trade_completed
 				}
 				ROOT = {
 					if = {
@@ -3076,18 +3280,14 @@ gcc_decisions = {
 			}
 			if = {
 				limit = {
-					any_country = {
-						has_completed_focus = GCC_monetary_union
-					}
+					has_global_flag = GCC_monetary_union_completed
 				}
 				add_ideas = khaleeji
 			}
 			if = {
 				limit = {
-					any_country = {
-						has_completed_focus = GCC_joint_defense_agreement
-						NOT = { has_completed_focus = GCC_a_robust_alliance }
-					}
+					has_global_flag = GCC_joint_defense_agreement_completed
+					NOT = { has_global_flag = GCC_a_robust_alliance_completed }
 				}
 				if = {
 					limit = { NOT = { original_tag = BHR } BHR = { has_idea = idea_gcc_member_state }}
@@ -3183,9 +3383,7 @@ gcc_decisions = {
 			}
 			if = {
 				limit = {
-					any_country = {
-						has_completed_focus = GCC_gulf_academy
-					}
+					has_global_flag = GCC_gulf_academy_completed
 				}
 				if = {
 					limit = { has_idea = officer_baptism_by_fire }
@@ -3218,17 +3416,13 @@ gcc_decisions = {
 			}
 			if = {
 				limit = {
-					any_country = {
-						has_completed_focus = GCC_joint_military_ventures
-					}
+					has_global_flag = GCC_joint_military_ventures_completed
 				}
 				add_ideas = joint_gcc_ventures
 			}
 			if = {
 				limit = {
-					any_country = {
-						has_completed_focus = GCC_a_robust_alliance
-					}
+					has_global_flag = GCC_a_robust_alliance_completed
 				}
 				random_country = {
 					limit = { has_country_flag = gcc_dominant_member }
@@ -3283,75 +3477,44 @@ gcc_decisions = {
 			}
 			if = {
 				limit = {
-					NOT = {
-						any_country = {
-							has_idea = idea_gcc_member_state
-							NOT = { is_guaranteed_by = USA }
-						}
-					}
+					has_global_flag = GCC_solidify_pro_american_alignment_completed
+					NOT = { has_global_flag = gcc_usa_rejected }
 				}
 				USA = { give_guarantee = ROOT }
 			}
 			if = {
 				limit = {
-					NOT = {
-						any_country = {
-							has_idea = idea_gcc_member_state
-							NOT = { is_guaranteed_by = TUR }
-						}
-					}
+					has_global_flag = gcc_pro_turkish
 				}
 				TUR = { give_guarantee = ROOT }
 			}
 			if = {
 				limit = {
-					NOT = {
-						any_country = {
-							has_idea = idea_gcc_member_state
-							NOT = { is_guaranteed_by = PER }
-						}
-					}
+					has_global_flag = gcc_pro_iranian
 				}
 				PER = { give_guarantee = ROOT }
 			}
 			if = {
 				limit = {
-					NOT = {
-						any_country = {
-							has_idea = idea_gcc_member_state
-							NOT = { is_guaranteed_by = SOV }
-						}
-					}
+					has_global_flag = gcc_pro_russian
 				}
 				SOV = { give_guarantee = ROOT }
 			}
 			if = {
 				limit = {
-					NOT = {
-						any_country = {
-							has_idea = idea_gcc_member_state
-							NOT = { is_guaranteed_by = RAJ }
-						}
-					}
+					has_global_flag = gcc_pro_indian
 				}
 				RAJ = { give_guarantee = ROOT }
 			}
 			if = {
 				limit = {
-					NOT = {
-						any_country = {
-							has_idea = idea_gcc_member_state
-							NOT = { is_guaranteed_by = PAK }
-						}
-					}
+					has_global_flag = gcc_pro_pakistani
 				}
 				PAK = { give_guarantee = ROOT }
 			}
 			if = {
 				limit = {
-					any_country = {
-						has_completed_focus = GCC_exploit_authority
-					}
+					has_global_flag = GCC_exploit_authority_completed
 				}
 				random_country = {
 					limit = { has_country_flag = gcc_dominant_member }
@@ -3360,9 +3523,7 @@ gcc_decisions = {
 			}
 			if = {
 				limit = {
-					any_country = {
-						has_completed_focus = GCC_gulf_super_state
-					}
+					has_global_flag = GCC_gulf_super_state_completed
 				}
 				random_country = {
 					limit = { has_country_flag = gcc_dominant_member }
@@ -3437,7 +3598,7 @@ subversive_activities = {
 				}
 				HAM = { country_event = { id = gulf.36 } }
 			}
-			else_if = {
+			else = {
 				send_equipment = {
 					equipment = infantry_weapons
 					amount = 100
