@@ -1,16 +1,12 @@
 ideas = {
-
 	economic_cycles = {
 		law = yes
 		use_list_view = yes
-		
 		depression = {
 			cost = 300
 			removal_cost = -1
 			level = 6
-			
 			available = {
-				#has_country_flag = economic_cycle_6
 				has_idea = depression
 			}
 			on_add = {
@@ -19,7 +15,6 @@ ideas = {
 					custom_effect_tooltip = depression_TT
 					custom_effect_tooltip = econ_cycle_upg_cost_TT
 					custom_effect_tooltip = economic_cycle_TT
-					
 					hidden_effect = {
 						set_variable = { law_attitude = 1 }
 						set_variable = { law_change = 6 }
@@ -31,29 +26,22 @@ ideas = {
 						calculate_tax_gain = yes
 					}
 				}
-				log = "[GetDateText]: [Root.GetName]: add idea depression" 
+				log = "[GetDateText]: [Root.GetName]: add idea depression"
 			}
-		
 			modifier = {
 				stability_factor = -0.1
 			}
-			
 			ai_will_do = {
 				factor = 0
 			}
-			
 			cancel_if_invalid = no
 		}
-		
 		recession = {
 			cost = 150
 			removal_cost = -1
 			level = 5
-			
 			available = {
 				OR = {
-					#has_country_flag = economic_cycle_6
-					#has_country_flag = economic_cycle_5
 					has_idea = depression
 					has_idea = recession
 				}
@@ -64,7 +52,6 @@ ideas = {
 					custom_effect_tooltip = recession_TT
 					custom_effect_tooltip = econ_cycle_upg_cost_TT
 					custom_effect_tooltip = economic_cycle_TT
-					
 					hidden_effect = {
 						set_variable = { law_attitude = 1 }
 						set_variable = { law_change = 5 }
@@ -79,44 +66,51 @@ ideas = {
 				}
 				log = "[GetDateText]: [Root.GetName]: add idea recession"
 			}
-			
-		
 			modifier = {
 				production_speed_buildings_factor = 0.30
 				stability_factor = -0.05
 			}
-			
 			ai_will_do = {
-				factor = 10
-				
-				modifier = {
-					add = 10
-					has_political_power > 149
+				factor = 1
+				modifier = { # Treat improving economy as extremely urgent if in depression
+					factor = 320
+					has_idea = depression
 				}
-				modifier = {
-					add = 10
-					has_political_power > 299
+				modifier = { # Extremely corrupt nations less likely to invest in country's future
+					factor = 0.2
+					has_idea = depression
+					OR = {
+						has_idea = paralyzing_corruption
+						has_idea = crippling_corruption
+					}
 				}
-				modifier = {
-					add = 10
-					has_political_power > 449
+				modifier = { # Corrupt nations somewhat less likely to invest in country's future
+					factor = 0.5
+					has_idea = depression
+					OR = {
+						has_idea = rampant_corruption
+						has_idea = unrestrained_corruption
+						has_idea = widespread_corruption
+					}
 				}
-				
-			
+				modifier = { # Set ai_will_do to 0 if in recession to encourage AI to get out of recession - experimental
+					factor = 0
+					has_idea = recession
+				}
+				modifier = { # At war, don't focus efforts on economics
+					factor = 0.5
+					has_idea = depression
+					has_war = yes
+				}
 			}
-			
 			cancel_if_invalid = no
 		}
-		
 		stagnation = {
 			cost = 200
 			removal_cost = -1
 			level = 4
-			
 			available = {
 				OR = {
-					#has_country_flag = economic_cycle_5
-					#has_country_flag = economic_cycle_4
 					has_idea = recession
 					has_idea = stagnation
 				}
@@ -127,7 +121,6 @@ ideas = {
 					custom_effect_tooltip = stagnation_TT
 					custom_effect_tooltip = econ_cycle_upg_cost_TT
 					custom_effect_tooltip = economic_cycle_TT
-					
 					hidden_effect = {
 						set_variable = { law_attitude = 1 }
 						set_variable = { law_change = 4 }
@@ -141,42 +134,69 @@ ideas = {
 					}
 				}
 				log = "[GetDateText]: [Root.GetName]: add idea stagnation"
-			} 
+			}
 			modifier = {
 				production_speed_buildings_factor = 0.75
 				stability_factor = -0.02
 			}
-			
 			ai_will_do = {
-				factor = 10 #urgent
-				
-				#modifiers
-				modifier = {
-					add = 10
-					has_political_power > 199
+				factor = 1
+				modifier = { # Treat improving economy as very urgent if in recession
+					factor = 80
+					has_idea = recession
+				}
+				modifier = { # Extremely corrupt nations less likely to invest in country's future
+					factor = 0.2
+					has_idea = recession
+					OR = {
+						has_idea = paralyzing_corruption
+						has_idea = crippling_corruption
+					}
+				}
+				modifier = { # Corrupt nations somewhat less likely to invest in country's future
+					factor = 0.5
+					has_idea = recession
+					OR = {
+						has_idea = rampant_corruption
+						has_idea = unrestrained_corruption
+						has_idea = widespread_corruption
+					}
+				}
+				modifier = { # Low GDP nations more likely to want higher economic growth rates
+					factor = 12
+					has_idea = recession
+					OR = {
+						has_idea = gdp_1
+						has_idea = gdp_2
+					}
 				}
 				modifier = {
-					add = 10
-					has_political_power > 399
+					factor = 6
+					has_idea = recession
+					OR = {
+						has_idea = gdp_3
+						has_idea = gdp_4
+						has_idea = gdp_5
+					}
 				}
-				modifier = {
-					add = 10
-					has_political_power > 599
+				modifier = { # Set ai_will_do to 0.1 if in stagnation to encourage AI to get out of stagnation - experimental
+					factor = 0.1
+					has_idea = stagnation
+				}
+				modifier = { # At war, don't focus efforts on economics
+					factor = 0.5
+					has_idea = recession
+					has_war = yes
 				}
 			}
-			
 			cancel_if_invalid = no
 		}
-		
 		stable_growth = {
 			cost = 250
 			removal_cost = -1
 			level = 3
-			
 			available = {
 				OR = {
-					#has_country_flag = economic_cycle_4
-					#has_country_flag = economic_cycle_3
 					has_idea = stagnation
 					has_idea = stable_growth
 				}
@@ -199,46 +219,71 @@ ideas = {
 				}
 				log = "[GetDateText]: [Root.GetName]: add idea stable_growth"
 			}
-			
 			default = yes
 			modifier = { production_speed_buildings_factor = 0.9 }
-			
 			ai_will_do = {
-				factor = 5 #less essential
-				
+				factor = 2 # Stable growth should be goal for AI most of the time
 				modifier = {
-					factor = 5
-					has_political_power > 249
+					factor = 12 # Nations should consider reviving a stagnant economy important.
+					has_idea = stagnation
+				}
+				modifier = { # Extremely corrupt nations less likely to invest in country's future
+					factor = 0.2
+					has_idea = stagnation
+					OR = {
+						has_idea = paralyzing_corruption
+						has_idea = crippling_corruption
+					}
+				}
+				modifier = { # Corrupt nations somewhat less likely to invest in country's future
+					factor = 0.5
+					has_idea = stagnation
+					OR = {
+						has_idea = rampant_corruption
+						has_idea = unrestrained_corruption
+						has_idea = widespread_corruption
+					}
+				}
+				modifier = { # Low GDP nations more likely to want higher economic growth rates
+					factor = 10
+					has_idea = stagnation
+					OR = {
+						has_idea = gdp_1
+						has_idea = gdp_2
+					}
 				}
 				modifier = {
 					factor = 5
-					has_political_power > 499
+					has_idea = stagnation
+					OR = {
+						has_idea = gdp_3
+						has_idea = gdp_4
+						has_idea = gdp_5
+					}
 				}
 				modifier = {
-					factor = 5
-					has_political_power > 649
+					factor = 10
+					has_idea = stagnation
+					has_political_power > 750 # If has a great abundance of PP, emphasize growth further I guess? Experimental.
 				}
-				
 				modifier = {
-					factor = 0
+					factor = 0.5 # Should encourage growth when possible
+					has_idea = stable_growth
+				}
+				modifier = {
+					factor = 0.25 # Country shouldn't focus too much on economic growth when at war, but should still want to get to stable growth at a lower priority
+					has_idea = stagnation
 					has_war = yes
 				}
-				
-			
 			}
-			
 			cancel_if_invalid = no
 		}
-		
 		fast_growth = {
 			cost = 300
 			removal_cost = -1
 			level = 2
-			
 			available = {
 				OR = {
-					#has_country_flag = economic_cycle_3
-					#has_country_flag = economic_cycle_2
 					has_idea = stable_growth
 					has_idea = fast_growth
 				}
@@ -263,46 +308,69 @@ ideas = {
 				}
 				log = "[GetDateText]: [Root.GetName]: add idea fast_growth"
 			}
-		
 			modifier = {
 				production_speed_buildings_factor = 1.03
 				stability_factor = 0.02
 			}
-			
 			ai_will_do = {
-				factor = 10
-				
+				factor = 1
 				modifier = {
-					add = 8
-					has_political_power > 299
+					factor = 12 # If an abundance of PP is accumulated, grow economy.
+					has_idea = stable_growth
+					has_political_power > 500
+				}
+				modifier = { # Extremely corrupt nations less likely to invest in country's future
+					factor = 0.2
+					has_idea = stable_growth
+					OR = {
+						has_idea = paralyzing_corruption
+						has_idea = crippling_corruption
+					}
+				}
+				modifier = { # Corrupt nations somewhat less likely to invest in country's future
+					factor = 0.5
+					has_idea = stable_growth
+					OR = {
+						has_idea = rampant_corruption
+						has_idea = unrestrained_corruption
+						has_idea = widespread_corruption
+					}
+				}
+				modifier = { # Low GDP nations more likely to want higher economic growth rates
+					factor = 12
+					has_idea = stable_growth
+					OR = {
+						has_idea = gdp_1
+						has_idea = gdp_2
+					}
 				}
 				modifier = {
-					add = 8
-					has_political_power > 599
+					factor = 6
+					has_idea = stable_growth
+					OR = {
+						has_idea = gdp_3
+						has_idea = gdp_4
+						has_idea = gdp_5
+					}
 				}
 				modifier = {
-					add = 8
-					has_political_power > 899
+					factor = 0.5 # Should encourage growth at low priority when possible
+					has_idea = fast_growth
 				}
-				
-				modifier = {
-					factor = 0
+				modifier = { # Don't bother with economic growth if at war
+					factor = 0.1
 					has_war = yes
+					has_idea = stable_growth
 				}
 			}
-			
 			cancel_if_invalid = no
 		}
-		
 		economic_boom = {
 			cost = 350
 			removal_cost = -1
 			level = 1
-			
 			available = {
 				OR = {
-					#has_country_flag = economic_cycle_2
-					#has_country_flag = economic_cycle_1
 					has_idea = fast_growth
 					has_idea = economic_boom
 				}
@@ -327,50 +395,51 @@ ideas = {
 				}
 				log = "[GetDateText]: [Root.GetName]: add idea economic_boom"
 			}
-		
 			modifier = {
 				production_speed_buildings_factor = 1.13
 				stability_factor = 0.04
 			}
-			
 			ai_will_do = {
-				factor = 1 #less essential
-				
-				#modifiers
-				modifier = {
-					add = 4
-					has_political_power > 349
+				factor = 1
+				modifier = { # Low GDP nations more likely to want higher economic growth rates
+					factor = 6
+					has_idea = stable_growth
+					OR = {
+						has_idea = gdp_1
+						has_idea = gdp_2
+					}
 				}
 				modifier = {
-					add = 4
-					has_political_power > 699
+					factor = 3
+					has_idea = stable_growth
+					OR = {
+						has_idea = gdp_3
+						has_idea = gdp_4
+						has_idea = gdp_5
+					}
 				}
 				modifier = {
-					add = 4
+					factor = 4
 					has_political_power > 990
 				}
-				
-				modifier = {
-					factor = 0
+				modifier = { # Don't bother with economic growth if at war
+					factor = 0.1
+					has_idea = fast_growth
 					has_war = yes
 				}
 			}
-			
 			cancel_if_invalid = no
 		}
 	}
-	
 	trade_laws = {
 		law = yes
 		use_list_view = yes
-
 		consumption_economy = {
 			cost = 150
 			removal_cost = -1
 			level = 1
-			
 			modifier = {
-				min_export = 0
+				min_export = 0.10
 				trade_opinion_factor = 0.2
 				consumer_goods_factor = -0.05
 			}
@@ -379,61 +448,46 @@ ideas = {
 				calculate_resource_sale_rate = yes
 				log = "[GetDateText]: [Root.GetName]: add idea consumption_economy"
 			}
-
 			ai_will_do = {
 				factor = 0
 			}
-			
 			cancel_if_invalid = no
 		}
-		
 		mixed_economy = {
 			cost = 150
 			removal_cost = -1
 			level = 2
-			
 			available = {
-				
 			}
-			
 			modifier = {
 				min_export = 0.5
 				consumer_goods_factor = 0.02
 			}
-			
 			on_add = {
 				calculate_resource_sale_rate = yes
-				log = "[GetDateText]: [Root.GetName]: add idea mixed_economy" 
+				log = "[GetDateText]: [Root.GetName]: add idea mixed_economy"
 			}
-			
 			default = yes
-			
 			ai_will_do = {
 				factor = 0
 			}
-			
 			cancel_if_invalid = no
 		}
-		
 		export_economy = {
-			on_add = { 
-				log = "[GetDateText]: [Root.GetName]: add idea export_economy" 
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea export_economy"
 				calculate_resource_sale_rate = yes
 			}
-			
 			cost = 150
 			removal_cost = -1
-			level = 3		
-			
+			level = 3
 			modifier = {
 				min_export = 0.8
 				consumer_goods_factor = 0.05
 			}
-
 			ai_will_do = {
 				factor = 0
 			}
-			
 			cancel_if_invalid = no
 		}
 	}
