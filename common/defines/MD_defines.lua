@@ -368,8 +368,8 @@
 	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.2
 	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of pirority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
-		'arms_factory',
 		'industrial_complex',
+		'arms_factory',
 	}
 
 	-- LaResistance AI Tweaks
