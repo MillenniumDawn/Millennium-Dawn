@@ -1,6 +1,6 @@
 	NDefines.NGame.START_DATE = "2000.1.1.12"
 	NDefines.NGame.END_DATE = "2070.1.1.1"
-	
+
 	NDefines.NDiplomacy.MAX_OPINION_VALUE = 200
 	NDefines.NDiplomacy.MIN_OPINION_VALUE = -200
 	NDefines.NDiplomacy.BASE_NEGATIVE_OPINION_AFTER_BEING_KICKED = 50
@@ -102,7 +102,7 @@
 	NDefines.NBuildings.OWNER_CHANGE_EXTRA_SHARED_SLOTS_FACTOR = 0.5
 	NDefines.NBuildings.INFRASTRUCTURE_RESOURCE_BONUS = 0.02
 	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 4.0 --Fucked with this to see
-	
+
 	NDefines.NMilitary.HOURLY_ORG_MOVEMENT_IMPACT = -0.1 -- -0.2
 	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.2 -- -0.8
 	NDefines.NMilitary.INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02 -- -0.05
@@ -176,7 +176,7 @@
 	NDefines.NMilitary.XP_GAIN_FOR_SHATTERING = 10.0 -- 30.0
 	NDefines.NMilitary.ANTI_AIR_TARGETTING_TO_CHANCE = 0.02 -- 0.07
 	NDefines.NMilitary.ANTI_AIR_ATTACK_TO_AMOUNT = 0.003 -- 0.005
-	
+
 	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 200 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 200 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 400 -- 100
@@ -205,7 +205,7 @@
 	NDefines.NAir.ANTI_AIR_PLANE_DAMAGE_FACTOR = 0.02 -- 0.1
 	NDefines.NAir.ANTI_AIR_PLANE_DAMAGE_CHANCE = 0.05 -- 0.1
 	NDefines.NAir.AIR_DEPLOYMENT_DAYS = 1 -- 2
-	NDefines.NAir.ANTI_AIR_ATTACK_TO_DAMAGE_REDUCTION_FACTOR = 0.20 -- 1.0 
+	NDefines.NAir.ANTI_AIR_ATTACK_TO_DAMAGE_REDUCTION_FACTOR = 0.20 -- 1.0
 
 	NDefines.NNavy.DETECTION_CHANCE_BALANCE = 1.5 -- 2.5
 	NDefines.NNavy.COMBAT_TORPEDO_ATTACK_MAX_RANGE = 10.0 -- 4
@@ -347,7 +347,7 @@
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 50
 	--`NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 5
 	NDefines.NAI.LLAND_COMBAT_MIN_EXCORT_WINGS = 2
-	NDefines.NAI.MIN_WANTED_MAX_FUEL = 0.1	
+	NDefines.NAI.MIN_WANTED_MAX_FUEL = 0.1
 	--NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 10.0
 	NDefines.NAI.STR_BOMB_MIN_EXCORT_WINGS = 1
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
@@ -360,7 +360,7 @@
 	NDefines.NAI.LAND_COMBAT_OUR_ARMIES_AIR_IMPORTANCE = 100
 	NDefines.NAI.LAND_COMBAT_OUR_COMBATS_AIR_IMPORTANCE = 200		-- Strategic importance of our armies in the combats
 	NDefines.NAI.LAND_COMBAT_FRIEND_ARMIES_AIR_IMPORTANCE = 25
-	
+
 	NDefines.NAI.NUM_AI_MESSAGES = 50
 	NDefines.NAI.AIR_ACTUAL_FUEL_USAGE_WEIGHT_ON_OIL_REQUEST = 0.05
 	NDefines.NAI.LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 0.5
@@ -372,10 +372,9 @@
 		'industrial_complex',
 	}
 
-	-- LaResistance AI Tweaks 
+	-- LaResistance AI Tweaks
 	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 20.0 --25 in Vanilla
-	NDefines.NOperatives.AGENCY_AI_PER_UPGRADE_FACTORIES = 5.0 --6 in Vanilla
-	
-
+	NDefines.NOperatives.AGENCY_AI_PER_UPGRADE_FACTORIES = 10.0 -- 6 in Vanilla
+	NDefines.NOperatives.AGENCY_UPGRADE_DAYS = 90 -- 20 in Vanilla
 	NDefines.NResistance.GARRISON_MANPOWER_LOST_BY_ATTACK = 0.03 	-- Ratio of manpower lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
 	NDefines.NResistance.GARRISON_EQUIPMENT_LOST_BY_ATTACK = 0.05 	-- Ratio of equipment lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
