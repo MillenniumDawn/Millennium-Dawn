@@ -235,79 +235,68 @@ news_event = {
 country_event = {
 	id = ukraine_hidden.1
 	immediate = { log = "[GetDateText]: [Root.GetName]: event ukraine_hidden.1" }
-	
-	is_triggered_only = yes
-	
+	is_triggered_only = yes	
 	hidden = yes
-	
 	option = {
 		name = ukraine_hidden.1.a # < 2/3 agree
 		log = "[GetDateText]: [This.GetName]: ukraine_hidden.1.a executed"
 		trigger = {
-			if = {
-				limit = {
-					has_country_flag = ukraine_debates.1.agree
-					has_country_flag = ukraine_debates.2.agree
+			OR = {
+				AND = {
+					has_country_flag = debates.1.agree
+					has_country_flag = debates.2.agree
 				}
-			}
-			if = { 
-				limit = {
-					has_country_flag = ukraine_debates.1.agree
-					has_country_flag = ukraine_debates.3.agree
+				AND = {
+					has_country_flag = debates.1.agree
+					has_country_flag = debates.3.agree
 				}
-			}
-			if = { 
-				limit = {
-					has_country_flag = ukraine_debates.2.agree
-					has_country_flag = ukraine_debates.3.agree
+				AND = {
+					has_country_flag = debates.2.agree
+					has_country_flag = debates.3.agree
 				}
 			}
 		}
 		
 		UKR = { country_event = { id = ukraine_md.1 days = 3 } }
 		
-		clr_country_flag = ukraine_debates.1.agree
-		clr_country_flag = ukraine_debates.2.agree
-		clr_country_flag = ukraine_debates.3.agree
-		
-		clr_country_flag = ukraine_debates.1.disagree
-		clr_country_flag = ukraine_debates.2.disagree
-		clr_country_flag = ukraine_debates.3.disagree
+		clr_country_flag = debates.1.agree
+		clr_country_flag = debates.2.agree
+		clr_country_flag = debates.3.agree
+		##Failsafe to ensure proper thingies
+		clr_country_flag = debates.1.disagree
+		clr_country_flag = debates.2.disagree
+		clr_country_flag = debates.3.disagree
 	}
 	
 	option = {
 		name = ukraine_hidden.1.b # < 2/3 disagree
 		log = "[GetDateText]: [This.GetName]: ukraine_hidden.1.b executed"
 		trigger = {
-			if = {
-				limit = {
-					has_country_flag = ukraine_debates.1.disagree
-					has_country_flag = ukraine_debates.2.disagree
+			OR = {
+				AND = {
+					has_country_flag = debates.1.disagree
+					has_country_flag = debates.2.disagree
 				}
-			}
-			if = { 
-				limit = {
-					has_country_flag = ukraine_debates.1.disagree
-					has_country_flag = ukraine_debates.3.disagree
+				AND = {
+					has_country_flag = debates.1.disagree
+					has_country_flag = debates.3.disagree
 				}
-			}
-			if = { 
-				limit = {
-					has_country_flag = ukraine_debates.2.disagree
-					has_country_flag = ukraine_debates.3.disagree
+				AND = {
+					has_country_flag = debates.2.disagree
+					has_country_flag = debates.3.disagree
 				}
 			}
 		}
 		
 		UKR = { country_event = { id = ukraine_md.2 days = 3 } }
 		
-		clr_country_flag = ukraine_debates.1.agree
-		clr_country_flag = ukraine_debates.2.agree
-		clr_country_flag = ukraine_debates.3.agree
-		
-		clr_country_flag = ukraine_debates.1.disagree
-		clr_country_flag = ukraine_debates.2.disagree
-		clr_country_flag = ukraine_debates.3.disagree
+		clr_country_flag = debates.1.agree
+		clr_country_flag = debates.2.agree
+		clr_country_flag = debates.3.agree
+		##Failsafe to ensure proper thingies
+		clr_country_flag = debates.1.disagree
+		clr_country_flag = debates.2.disagree
+		clr_country_flag = debates.3.disagree
 	}
 }
 
@@ -698,7 +687,7 @@ country_event = { #Open Conversation about a baltic black sea alliance
 	is_triggered_only = yes 
 	
 	option = {
-		name = ukraine_md.10
+		name = ukraine_md.10.a
 		log = "[GetDateText]: [This.GetName]: ukraine_md.10.a executed"
 		set_country_flag = supported_the_baltic_black_sea_union
 		UKR = { country_event = diplomatic_response.1 }
@@ -733,7 +722,7 @@ country_event = { #Open Conversation about a baltic black sea alliance
 	}	
 	
 	option = {
-		name = ukraine_md.10
+		name = ukraine_md.10.b
 		log = "[GetDateText]: [This.GetName]: ukraine_md.10.b executed"
 		set_country_flag = did_not_support_the_balatic_black_sea_union
 		UKR = { country_event = diplomatic_response.2 }
@@ -785,6 +774,8 @@ country_event = { #Invited Country to the Alliance
 			limit = { has_idea = NATO_member }
 			remove_ideas = NATO_member
 		}
+		add_ai_strategy = { type = befriend id = "UKR" value = 200 }
+		add_ai_strategy = { type = alliance id = "UKR" value = 200 }
 		hidden_effect = {
 			if = { 
 				limit = { 
@@ -855,6 +846,10 @@ country_event = { ###Kharkiv Pact
 		}
 		ai_chance = {
 			base = 75
+			modifier = {
+				is_in_faction_with = SOV
+				factor = 2.0 
+			}
 		}
 	}
 	option = {
@@ -862,14 +857,17 @@ country_event = { ###Kharkiv Pact
 		log = "[GetDateText]: [This.GetName]: ukraine_md.12.b executed"
 		UKR = { country_event = diplomatic_response.2 }
 		ai_chance = {
-			base = 25 
+			base = 25
+			modifier = {
+				NOT = { is_in_faction_with = SOV }
+				factor = 2.0 
+			}
 		}
 	}
 }
 
 ############ Revolution Events/Tied to the UKR specific variables
 #New Event goes here/###Euromaidan revolution!
-
 #Help Event in Decisions to better help#
 country_event = {
 	id = ukraine_revolution.0
@@ -1384,6 +1382,50 @@ country_event = { ###Russia Returns the Crimea
 	}
 }
 
+##Dispatcher Event - triggers random events below 
+country_event = {
+	id = ukraine_revolution.100
+	immediate = { log = "[GetDateText]: [Root.GetName]: event  ukraine_revolution.100" }
+	hidden = yes 
+	is_triggered_only = yes 
+	
+	trigger = { tag = UKR }
+	
+	immediate = {
+		random_list = {
+			10 = {
+				modifier = {
+					check_variable = { UKR_chance_of_collapse_var > 5 }
+					factor = 1
+				}
+				modifier = {
+					check_variable = { UKR_chance_of_collapse_var > 10 }
+					factor = 2.50
+				}
+				modifier = {
+					has_stability < 0.50 
+					factor = 1.0 
+				}
+				country_event = { id = ukraine_revolution.12 days = 45 random = 10 }
+				#violent oppposition
+			}
+			30 = {
+				country_event = { id = ukraine_revolution.13 days = 45 random = 10 }
+			}
+			60 = {
+				modifier = {
+					check_variable = { UKR_chance_of_collapse_var > 3 }
+					factor = 2 
+				}	
+				modifier = {
+					check_variable = { UKR_stability_of_ukraine_var > 40 }
+					factor = 3 
+				}
+				country_event = { id = ukraine_revolution.11 days = 45 random = 10 } #Light Protests
+			}
+		}
+	}
+}
 
 country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
 	id = ukraine_revolution.11
@@ -1398,31 +1440,45 @@ country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
 		tag = UKR 
 		UKR = { NOT = { has_war_with = NOV } }
 	}
-	
-	mean_time_to_happen = {
-		days = 300
-		modifier = {
-			factor = 0.75
-			check_variable = { UKR_stability_of_ukraine_var < 50 }
-		}
-		modifier = {
-			factor = 0.5
-			check_variable = { UKR_stability_of_ukraine_var < 25 }
-		}
-		modifier = { 
-			factor = 0.25
-			check_variable = { UKR_stability_of_ukraine_var < 15 }
-		}
-	}
+	is_triggered_only = yes 
 	
 	option = { ##Crackdown on Protestors
 		name = ukraine_revolution.11.a
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.11.a executed"
 		add_to_variable = { UKR_chance_of_collapse_var = 1 }
 		subtract_from_variable = { UKR_stability_of_ukraine_var = 3 }
+		add_manpower = -125 
 		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_1_TT
 		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_3_TT
-	}
+		
+		hidden_effect = {
+			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
+		}
+		ai_chance = {
+			factor = 5 
+			modifier = {
+				add = 2
+				has_government = nationalist
+				has_government = communism
+			}
+			modifier = {
+				add = -1
+				check_variable = { UKR_stability_of_ukraine_var < 40 }
+			}
+			modifier = {
+				add = 1 
+				check_variable = { UKR_chance_of_collapse_var > 7 }
+			}
+			modifier = {
+				is_historical_focus_on = yes 
+				add = 2 
+			}
+			modifier = {
+				country_exists = NOV 
+				add = 3
+			}
+		}
+	}	
 	option = { ##Let them Protest
 		name = ukraine_revolution.11.b
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.11.b executed"
@@ -1430,6 +1486,30 @@ country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
 		add_to_variable = { UKR_stability_of_ukraine_var = 5 }
 		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_2_TT
 		custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
+		
+		hidden_effect = {
+			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
+		}
+		ai_chance = {
+			factor = 5
+			modifier = {
+				add = 2 
+				has_government = neutrality
+				has_government = democratic
+			}
+			modifier = {
+				add = 1 
+				check_variable = { UKR_stability_of_ukraine_var > 40 }
+			}
+			modifier = {
+				add = 1
+				is_historical_focus_on = no 
+			}
+			modifier = {
+				add = 1
+				country_exists = NOV 
+			}
+		}
 	}
 }
 
@@ -1440,58 +1520,213 @@ country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian 
 	desc = ukraine_revolution.12.d
 	picture = GFX_broken_infrastructure
 	
+	is_triggered_only = yes
 	trigger = {
-		check_variable = { UKR_stability_of_ukraine_var < 60 }
-		check_variable = { UKR_chance_of_collapse_var > 8 }
+		check_variable = { UKR_stability_of_ukraine_var < 80 }
+		check_variable = { UKR_chance_of_collapse_var > 3 }
 		tag = UKR 
-		UKR = { NOT = { has_war_with = NOV } }
+		OR = {
+			UKR = { NOT = { has_war_with = NOV } }
+			NOT = { country_exists = NOV } 
+		}
 		any_owned_state = {
 			industrial_complex > 0 
 		}
 		any_owned_state = {
 			infrastructure > 0
 		}
-	}
-	
-	mean_time_to_happen = {
-		days = 90
-		modifier = {
-			factor = 0.50
-			check_variable = { UKR_stability_of_ukraine_var < 60 }
+		any_owned_state = { 
+			dockyard > 0
 		}
-		modifier = {
-			factor = 0.25
-			check_variable = { UKR_stability_of_ukraine_var < 30 }
-		}
-		modifier = { 
-			factor = 0.10
-			check_variable = { UKR_stability_of_ukraine_var < 15 }
+		any_owned_state = {
+			arms_factory > 0 
 		}
 	}
-	
+
 	option = { ##Sabtoage!
 		name = ukraine_revolution.12.a
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.12.a executed"
-		subtract_from_variable = { UKR_stability_of_ukraine_var = 3 }
-		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_3_TT
-		add_war_support = 0.01 
-		add_stability = -0.01
-		random_owned_state = {
-			limit = {
-				industrial_complex > 0
+		subtract_from_variable = { UKR_stability_of_ukraine_var = 5 }
+		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_5_TT
+		add_to_variable = { UKR_chance_of_collapse_var = 3 } 
+		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_3_TT
+		add_manpower = -25
+		if = {
+			limit = { 
+				check_variable = { UKR_chance_of_collapse_var > 1 } 
+				check_variable = { UKR_chance_of_collapse_var < 6 }
 			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.50
+			random_owned_state = {
+				limit = {
+					industrial_complex > 0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 0.50
+				}
+			}
+			random_owned_state = {
+				limit = {
+					infrastructure > 0
+				}
+				damage_building = {
+					type = infrastructure
+					damage = 0.35
+				}
 			}
 		}
-		random_owned_state = {
-			limit = {
-				infrastructure > 0
+		if = {
+			limit = { 
+				check_variable = { UKR_chance_of_collapse_var > 6 } 
+				check_variable = { UKR_chance_of_collapse_var < 9 }
 			}
-			damage_building = {
-				type = infrastructure
-				damage = 0.35
+			random_owned_state = {
+				limit = {
+					industrial_complex > 0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 0.75
+				}
+			}
+			random_owned_state = {
+				limit = {
+					infrastructure > 0
+				}
+				damage_building = {
+					type = infrastructure
+					damage = 0.50
+				}
+			}
+			random_owned_state = {
+				limit = {
+					is_coastal = yes 
+					dockyard > 0 
+				}
+				damage_building = {
+					type = dockyard
+					damage = 0.35
+				}
+			}
+		}
+		if = {
+			limit = { 
+				check_variable = { UKR_chance_of_collapse_var > 9 }
+			}
+			random_owned_state = {
+				limit = {
+					industrial_complex > 0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 0.75
+				}
+			}
+			random_owned_state = {
+				limit = {
+					industrial_complex > 0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 0.25
+				}
+			}
+			random_owned_state = {
+				limit = {
+					infrastructure > 0
+				}
+				damage_building = {
+					type = infrastructure
+					damage = 0.50
+				}
+			}
+			random_owned_state = {
+				limit = {
+					is_coastal = yes 
+					dockyard > 0 
+				}
+				damage_building = {
+					type = dockyard
+					damage = 0.35
+				}
+			}
+		}
+		
+		hidden_effect = {
+			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
+		}
+		
+		ai_chance = {
+			factor = 1 
+		}
+
+	}
+}
+
+#Random Event - Riots!
+country_event = {
+	id = ukraine_revolution.13 
+	title = ukraine_revolution.13.t 
+	desc = ukraine_revolution.13.d
+	picture = GFX_kurd_riot
+	
+	immediate = { log = "[GetDateText]: [This.GetName]: ukraine_revolution.13" }
+	
+	is_triggered_only = yes
+	trigger = {	tag = UKR }
+
+	#Break the Riots 
+	option = {
+		name = ukraine_revolution.13.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.13.a"
+		add_manpower = -1000
+		hidden_effect = { 
+			subtract_from_variable = { UKR_chance_of_collapse_var = 1 }
+			subtract_from_variable = { UKR_stability_of_ukraine_var = 5 }
+		}
+		custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_1_TT
+		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_5_TT
+		decrease_popularity_1 = yes 
+		
+		hidden_effect = {
+			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
+		}
+		ai_chance = {
+			factor = 5
+			modifier = {
+				has_government = nationalist
+				has_government = communism 
+				add = 3 
+			}
+			modifier = {
+				has_political_power < 100 
+				add = 2 
+			}
+		}
+	}
+	
+	#Negotiate 
+	option = {
+		name = ukraine_revolution.13.b
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.13.b"
+		add_political_power = -100 
+		hidden_effect = {
+			add_to_variable = { UKR_stability_of_ukraine_var = 3 }
+			subtract_from_variable = { UKR_chance_of_collapse_var = 1 }
+		}
+		custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_3_TT
+		custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_1_TT
+		add_1_popularity = yes
+		
+		hidden_effect = {
+			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
+		}
+		ai_chance = {
+			factor = 3 
+			modifier = {
+				has_government = democratic
+				has_government = neutrality
+				add = 3 
 			}
 		}
 	}

@@ -1,14 +1,31 @@
 #### Other Generic Politics ########
-
 generic_coalition_politics_desicions = {
-	
 	retire_current_leader = {
 		icon = eng_trade_unions_support
-		
-		cost = 150
+
+		cost = 100
 		days_remove = 0
 		days_re_enable = 0
-		
+
+		visible = {
+			if = {
+				limit = { tag = SAU }
+				NOT = { is_in_array = { ruling_party = 10 } }
+			}
+			if = {
+				limit = { tag = UAE }
+				NOT = { is_in_array = { ruling_party = 0 } }
+			}
+			if = {
+				limit = { tag = KUW }
+				NOT = { is_in_array = { ruling_party = 0 } }
+			}
+			if = {
+				limit = { tag = OMA }
+				NOT = { is_in_array = { ruling_party = 13 } }
+			}
+		}
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision retire_current_leader"
 			hidden_effect = {
@@ -20,32 +37,96 @@ generic_coalition_politics_desicions = {
 				}
 				set_leader = yes
 			}
-		}	
+			if = {
+				limit = { has_country_flag = arab_spring_active }
+				custom_effect_tooltip = substantially_weaken_protests_tt
+				subtract_from_variable = { arab_spring = 40 }
+				if = {
+					limit = { check_variable = { arab_spring < 26 }}
+					random_list = {
+						80 = {
+							country_event = { id = arab_spring.9 }
+						}
+						20 = {
+							country_event = { id = arab_spring.10 }
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { arab_spring > 25 }
+						check_variable = { arab_spring < 66 }
+					}
+					random_list = {
+						75 = {
+							country_event = { id = arab_spring.9 }
+						}
+						25 = {
+							country_event = { id = arab_spring.10 }
+						}
+					}
+				}
+				else_if = {
+					limit = { check_variable = { arab_spring > 65 } }
+					random_list = {
+						60 = {
+							country_event = { id = arab_spring.9 }
+						}
+						40 = {
+							country_event = { id = arab_spring.10 }
+						}
+					}
+				}
+			}
+		}
 	}
-	
+
 	hold_reelections = {
 		icon = eng_trade_unions_support
-		
-		cost = 200
+		visible = {
+			if = {
+				limit = { tag = CHI }
+				has_completed_focus = CHI_Free_and_Fair_Elections
+			}
+			if = {
+				limit = { tag = BRM }
+				has_completed_focus = BRM_cede_power_to_the_nld
+			}
+			if = {
+				limit = {
+					OR = {
+						tag = BHR
+						tag = KUW
+						tag = QAT
+						tag = OMA
+						tag = SAU
+						tag = UAE
+					}
+				}
+				has_completed_focus = GCC_free_and_fair_elections
+			}
+			NOT = { is_in_array = { ruling_party = 11 } }
+		}
+
+		cost = 90
 		days_remove = 0
 		days_re_enable = 0
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision hold_reelections"
 			country_event = { id = MD4_election_campaign.0 }
-		}	
+		}
 	}
-	
+
 	## Change election laws ##
-	
+
 	permanently_suspend_elections = {
 		icon = oppression
-		
-		cost = 200
+
+		cost = 125
 		days_remove = 0
 		days_re_enable = 0
-		
-		
+
 		visible = {
 			has_elections = yes
 			OR = {
@@ -60,11 +141,17 @@ generic_coalition_politics_desicions = {
 				is_in_array = { ruling_party = 22 } #Nat_Autocracy
 				is_in_array = { ruling_party = 23 } #Monarchist
 			}
+			if = {
+				limit = {
+					tag = USA
+				}
+				has_country_flag = USA_american_elections_suspendable
+			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision permanently_suspend_elections"
-			set_country_flag = no_leader_change
+			set_country_flag = do_not_retire
 			if = {
 				limit = {
 					has_government = democratic
@@ -110,22 +197,48 @@ generic_coalition_politics_desicions = {
 					elections_allowed = no
 				}
 			}
-			clr_country_flag = no_leader_change
+			clr_country_flag = do_not_retire
 		}
 	}
-	
+
 	return_democracy = {
 		icon = eng_puppet_usa
-		
-		cost = 200
+
+		cost = 85
 		days_remove = 0
 		days_re_enable = 0
-		
-		
+
 		visible = {
 			has_elections = no
+			if = {
+				limit = { tag = CHI }
+				has_completed_focus = CHI_Free_and_Fair_Elections
+			}
+			if = {
+				limit = { tag = BRM }
+				has_completed_focus = BRM_cede_power_to_the_nld
+			}
+			if = {
+				limit = {
+					OR = {
+						tag = BHR
+						tag = KUW
+						tag = QAT
+						tag = OMA
+						tag = SAU
+						tag = UAE
+					}
+				}
+				has_completed_focus = GCC_free_and_fair_elections
+			}
+			NOT = {
+				is_in_array = { ruling_party = 11 }
+				tag = ISI 
+				tag = TAL 
+				tag = AQY
+			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision return_democracy"
 			set_country_flag = no_leader_change
@@ -175,22 +288,63 @@ generic_coalition_politics_desicions = {
 				}
 			}
 			clr_country_flag = no_leader_change
+			if = {
+				limit = { has_country_flag = arab_spring_active }
+				custom_effect_tooltip = substantially_weaken_protests_tt
+				subtract_from_variable = { arab_spring = 40 }
+				if = {
+					limit = { check_variable = { arab_spring < 26 }}
+					random_list = {
+						80 = {
+							country_event = { id = arab_spring.9 }
+						}
+						20 = {
+							country_event = { id = arab_spring.10 }
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { arab_spring > 25 }
+						check_variable = { arab_spring < 66 }
+					}
+					random_list = {
+						75 = {
+							country_event = { id = arab_spring.9 }
+						}
+						25 = {
+							country_event = { id = arab_spring.10 }
+						}
+					}
+				}
+				else_if = {
+					limit = { check_variable = { arab_spring > 65 } }
+					random_list = {
+						60 = {
+							country_event = { id = arab_spring.9 }
+						}
+						40 = {
+							country_event = { id = arab_spring.10 }
+						}
+					}
+				}
+			}
 		}
 	}
-	
+
 	increase_election_threshold = {
 		icon = generic
-		
-		cost = 100
+
+		cost = 50
 		days_remove = 0
 		days_re_enable = 0
-		
-		
+
+
 		available = {
 			has_elections = yes
 			NOT = {
 				custom_trigger_tooltip = {
-					tooltip = election_threshold_max	
+					tooltip = election_threshold_max
 					check_variable = { election_threshold > 0.095 }
 				}
 			}
@@ -200,20 +354,20 @@ generic_coalition_politics_desicions = {
 			add_to_variable = { election_threshold = 0.01 }
 		}
 	}
-	
+
 	decrease_election_threshold = {
 		icon = generic
-		
-		cost = 100
+
+		cost = 50
 		days_remove = 0
 		days_re_enable = 0
-		
-		
+
+
 		available = {
 			has_elections = yes
 			NOT = {
 				custom_trigger_tooltip = {
-					tooltip = election_threshold_min	
+					tooltip = election_threshold_min
 					check_variable = { election_threshold < 0.015 }
 				}
 			}
@@ -225,16 +379,16 @@ generic_coalition_politics_desicions = {
 			}
 		}
 	}
-	
+
 	### Extremist Civil Wars
-	
+
 	fascism_extremist_civil_war = {
 		icon = revolt
-		
+
 		cost = 150
 		days_remove = 0
 		days_re_enable = 0
-		
+
 		visible = {
 			check_variable = { party_pop_array^21 > 0.10 } #significant fascism
 			has_civil_war = no
@@ -250,13 +404,13 @@ generic_coalition_politics_desicions = {
 				has_government = nationalist
 			}
 			custom_trigger_tooltip = {
-				tooltip = fascism_20_tt	
+				tooltip = fascism_20_tt
 				check_variable = { party_pop_array^21 > 0.2 } #test
 			}
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision fascism_extremist_civil_war"
-		
+
 			hidden_effect = {
 				#Release copy of existing
 				set_country_flag = no_leader_change
@@ -306,7 +460,7 @@ generic_coalition_politics_desicions = {
 					}
 				}
 				clr_country_flag = no_leader_change
-				
+
 				#replicating current politics
 				random_other_country = {
 					limit = {
@@ -331,7 +485,7 @@ generic_coalition_politics_desicions = {
 					subtract_from_temp_variable = { temp_total = 100 }
 					multiply_temp_variable = { temp_total = -1 }
 					add_to_temp_variable = { temp_nationalist = temp_total }
-					
+
 					set_popularities = {
 						democratic = temp_democratic
 						communism = temp_communism
@@ -356,36 +510,36 @@ generic_coalition_politics_desicions = {
 						value = v
 						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
 					}
-					set_variable = { party_pop_array^21 = 0.01 } #all moved to fight ;) 
+					set_variable = { party_pop_array^21 = 0.01 } #all moved to fight ;)
 					set_variable = { party_pop_elect_array^21 = 0 } #made illegal
 					add_up_party_totals = yes
 					set_party_positions = yes
 					startup_politics = yes
-					
+
 					#VARIABLES
 					set_variable = { tax_rate = PREV.tax_rate }
 					set_variable = { treasury = PREV.treasury }
-					
+
 					#don't get values of original yet - REMINDER -> add it on_civil_war_end
 					set_variable = { debt = 0 }
 					set_variable = { int_investments = 0 }
-					
+
 					#influence
 					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
 					#just copy all
 					for_loop_effect = {
 						end = PREV.influence_array^num
 						value = v
-						
+
 						add_to_array = { influence_array = PREV.influence_array^v }
 						add_to_array = { influence_array_val = PREV.influence_array_val^v }
 					}
 					recalculate_influence = yes
-					
+
 					#GAME VARIABLES
 					add_political_power = PREV.political_power
 					add_political_power = 400 #bonus
-					
+
 					#LAWS
 					set_variable = { gdp_capita = PREV.gdp_capita }
 					meta_effect = {
@@ -429,7 +583,7 @@ generic_coalition_politics_desicions = {
 						}
 						WELFARE_LEVEL = "[?social_budget|0]"
 					}
-					
+
 					set_variable = { Military_Spending = PREV.Military_Spending }
 					subtract_from_variable = { Military_Spending = 1 }
 					meta_effect = {
@@ -439,7 +593,7 @@ generic_coalition_politics_desicions = {
 						DEFENCE_LEVEL = "[?Military_Spending|0]"
 					}
 					set_variable = { Military_Spending = PREV.Military_Spending }
-					
+
 					set_variable = { economic_cycles = PREV.economic_cycles }
 					if = { limit = { check_variable = { economic_cycles = 6 } }
 						add_ideas = depression
@@ -459,7 +613,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { check_variable = { economic_cycles = 1 } }
 						add_ideas = economic_boom
 					}
-					
+
 					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
 						add_ideas = paralyzing_corruption
 					}
@@ -490,7 +644,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
 						add_ideas = negligible_corruption
 					}
-					
+
 					if = { limit = { PREV = { has_idea = consumption_economy } }
 						add_ideas = consumption_economy
 					}
@@ -500,7 +654,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = export_economy } }
 						add_ideas = export_economy
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_military } }
 						add_ideas = no_military
 					}
@@ -513,7 +667,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = draft_army } }
 						add_ideas = draft_army
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_women_in_military } }
 						add_ideas = no_women_in_military
 					}
@@ -523,7 +677,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = drafted_women } }
 						add_ideas = drafted_women
 					}
-					
+
 					if = { limit = { PREV = { has_idea = intervention_isolation } }
 						add_ideas = intervention_isolation
 					}
@@ -542,7 +696,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
 						add_ideas = intervention_neo_imperialism
 					}
-					
+
 					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
 						add_ideas = officer_baptism_by_fire
 					}
@@ -561,7 +715,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = officer_international_education } }
 						add_ideas = officer_international_education
 					}
-					
+
 					### Internal factions
 					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
 						add_ideas = small_medium_business_owners
@@ -600,7 +754,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = farmers
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = communist_cadres
 								ROOT = {
@@ -632,7 +786,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = the_bazaar
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = saudi_royal_family
 								ROOT = {
@@ -647,7 +801,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = saudi_royal_family
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = irgc
 								ROOT = {
@@ -663,7 +817,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = irgc
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = iranian_quds_force
 								ROOT = {
@@ -679,7 +833,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = iranian_quds_force
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = vevak
 								ROOT = {
@@ -695,7 +849,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = vevak
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = foreign_jihadis
 								ROOT = {
@@ -721,17 +875,17 @@ generic_coalition_politics_desicions = {
 					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
 					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
 					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-					
+
 					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
 					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
 					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
 					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
 					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
 					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-					
+
 					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
 					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-					
+
 					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
 					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
 					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
@@ -744,20 +898,20 @@ generic_coalition_politics_desicions = {
 					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
 					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
 					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-					
+
 					add_tax_laws = yes
 					calculate_influence_percentage = yes #set alignment drifts from influence
 					startup_extra_setup = yes 	#money system
 					setup_init_factions = yes 	#flags for int. factions
 					init_neighbor_drift_1 = yes #drift from neighbor
 					init_neighbor_drift_2 = yes #drift from neighbor
-					
+
 					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
 					country_event = { id = brotherhood.2 }
 				}
-				
+
 				#For player:
-				
+
 				set_politics = {
 					ruling_party = nationalist
 					elections_allowed = no
@@ -772,23 +926,23 @@ generic_coalition_politics_desicions = {
 					set_variable = { party_pop_array^21 = 0.7 } #generate the rest
 					startup_politics = yes
 				}
-				
+
 				#Switch to fascist leader
 					set_country_flag = set_Nat_Fascism
 					set_leader = yes
-				
+
 				log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
 			}
 		}
 	}
-	
+
 	monarchist_extremist_civil_war = {
 		icon = revolt
-		
+
 		cost = 150
 		days_remove = 0
 		days_re_enable = 0
-		
+
 		visible = {
 			check_variable = { party_pop_array^23 > 0.10 } #significant fascism
 			has_civil_war = no
@@ -804,13 +958,13 @@ generic_coalition_politics_desicions = {
 				has_government = nationalist
 			}
 			custom_trigger_tooltip = {
-				tooltip = monarchist_20_tt	
+				tooltip = monarchist_20_tt
 				check_variable = { party_pop_array^23 > 0.2 }
 			}
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision monarchist_extremist_civil_war"
-		
+
 			hidden_effect = {
 				#Release copy of existing
 				set_country_flag = no_leader_change
@@ -860,7 +1014,7 @@ generic_coalition_politics_desicions = {
 					}
 				}
 				clr_country_flag = no_leader_change
-				
+
 				#replicating current politics
 				random_other_country = {
 					limit = {
@@ -885,7 +1039,7 @@ generic_coalition_politics_desicions = {
 					subtract_from_temp_variable = { temp_total = 100 }
 					multiply_temp_variable = { temp_total = -1 }
 					add_to_temp_variable = { temp_nationalist = temp_total }
-					
+
 					set_popularities = {
 						democratic = temp_democratic
 						communism = temp_communism
@@ -910,36 +1064,36 @@ generic_coalition_politics_desicions = {
 						value = v
 						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
 					}
-					set_variable = { party_pop_array^23 = 0.01 } #all moved to fight ;) 
+					set_variable = { party_pop_array^23 = 0.01 } #all moved to fight ;)
 					set_variable = { party_pop_elect_array^23 = 0 } #made illegal
 					add_up_party_totals = yes
 					set_party_positions = yes
 					startup_politics = yes
-					
+
 					#VARIABLES
 					set_variable = { tax_rate = PREV.tax_rate }
 					set_variable = { treasury = PREV.treasury }
-					
+
 					#don't get values of original yet - REMINDER -> add it on_civil_war_end
 					set_variable = { debt = 0 }
 					set_variable = { int_investments = 0 }
-					
+
 					#influence
 					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
 					#just copy all
 					for_loop_effect = {
 						end = PREV.influence_array^num
 						value = v
-						
+
 						add_to_array = { influence_array = PREV.influence_array^v }
 						add_to_array = { influence_array_val = PREV.influence_array_val^v }
 					}
 					recalculate_influence = yes
-					
+
 					#GAME VARIABLES
 					add_political_power = PREV.political_power
 					add_political_power = 400 #bonus
-					
+
 					#LAWS
 					set_variable = { gdp_capita = PREV.gdp_capita }
 					meta_effect = {
@@ -983,7 +1137,7 @@ generic_coalition_politics_desicions = {
 						}
 						WELFARE_LEVEL = "[?social_budget|0]"
 					}
-					
+
 					set_variable = { Military_Spending = PREV.Military_Spending }
 					subtract_from_variable = { Military_Spending = 1 }
 					meta_effect = {
@@ -993,7 +1147,7 @@ generic_coalition_politics_desicions = {
 						DEFENCE_LEVEL = "[?Military_Spending|0]"
 					}
 					set_variable = { Military_Spending = PREV.Military_Spending }
-					
+
 					set_variable = { economic_cycles = PREV.economic_cycles }
 					if = { limit = { check_variable = { economic_cycles = 6 } }
 						add_ideas = depression
@@ -1013,7 +1167,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { check_variable = { economic_cycles = 1 } }
 						add_ideas = economic_boom
 					}
-					
+
 					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
 						add_ideas = paralyzing_corruption
 					}
@@ -1044,7 +1198,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
 						add_ideas = negligible_corruption
 					}
-					
+
 					if = { limit = { PREV = { has_idea = consumption_economy } }
 						add_ideas = consumption_economy
 					}
@@ -1054,7 +1208,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = export_economy } }
 						add_ideas = export_economy
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_military } }
 						add_ideas = no_military
 					}
@@ -1067,7 +1221,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = draft_army } }
 						add_ideas = draft_army
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_women_in_military } }
 						add_ideas = no_women_in_military
 					}
@@ -1077,7 +1231,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = drafted_women } }
 						add_ideas = drafted_women
 					}
-					
+
 					if = { limit = { PREV = { has_idea = intervention_isolation } }
 						add_ideas = intervention_isolation
 					}
@@ -1096,7 +1250,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
 						add_ideas = intervention_neo_imperialism
 					}
-					
+
 					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
 						add_ideas = officer_baptism_by_fire
 					}
@@ -1115,7 +1269,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = officer_international_education } }
 						add_ideas = officer_international_education
 					}
-					
+
 					### Internal factions
 					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
 						add_ideas = small_medium_business_owners
@@ -1154,7 +1308,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = farmers
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = communist_cadres
 								ROOT = {
@@ -1186,7 +1340,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = the_bazaar
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = saudi_royal_family
 								ROOT = {
@@ -1201,7 +1355,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = saudi_royal_family
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = irgc
 								ROOT = {
@@ -1217,7 +1371,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = irgc
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = iranian_quds_force
 								ROOT = {
@@ -1233,7 +1387,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = iranian_quds_force
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = vevak
 								ROOT = {
@@ -1249,7 +1403,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = vevak
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = foreign_jihadis
 								ROOT = {
@@ -1270,23 +1424,23 @@ generic_coalition_politics_desicions = {
 					if = { limit = { PREV = { has_idea = chaebols } }
 						add_ideas = chaebols
 					}
-					
+
 					#copy leader throughput
 					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
 					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
 					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
 					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-					
+
 					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
 					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
 					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
 					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
 					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
 					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-					
+
 					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
 					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-					
+
 					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
 					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
 					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
@@ -1299,27 +1453,27 @@ generic_coalition_politics_desicions = {
 					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
 					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
 					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-					
+
 					add_tax_laws = yes
 					calculate_influence_percentage = yes #set alignment drifts from influence
 					startup_extra_setup = yes 	#money system
 					setup_init_factions = yes 	#flags for int. factions
 					init_neighbor_drift_1 = yes #drift from neighbor
 					init_neighbor_drift_2 = yes #drift from neighbor
-					
+
 					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
 					country_event = { id = brotherhood.2 }
 				}
-				
+
 				#For player:
-				
+
 				set_politics = {
 					ruling_party = nationalist
 					elections_allowed = no
 				}
 				add_popularity = {
-						ideology = nationalist
-						popularity = 0.5
+					ideology = nationalist
+					popularity = 0.5
 				}
 				hidden_effect = {
 					start_politics_input = yes
@@ -1327,23 +1481,23 @@ generic_coalition_politics_desicions = {
 					set_variable = { party_pop_array^23 = 0.7 } #generate the rest
 					startup_politics = yes
 				}
-				
+
 				#Switch to monarchist leader
 					set_country_flag = set_Monarchist
 					set_leader = yes
-				
+
 				log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
 			}
 		}
 	}
-	
+
 	caliphate_extremist_civil_war = {
 		icon = revolt
-		
+
 		cost = 150
 		days_remove = 0
 		days_re_enable = 0
-		
+
 		visible = {
 			check_variable = { party_pop_array^11 > 0.10 } #significant jihadist
 			has_civil_war = no
@@ -1353,17 +1507,25 @@ generic_coalition_politics_desicions = {
 					is_in_array = { ruling_party = 11 } #not is ruling party
 				}
 			}
+			NOT = {
+				tag = BHR
+				tag = KUW
+				tag = OMA
+				tag = QAT
+				tag = SAU
+				tag = UAE #should be done through Gulf tree
+			}
 		}
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = caliphate_20_tt	
+				tooltip = caliphate_20_tt
 				check_variable = { party_pop_array^11 > 0.2 }
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision caliphate_extremist_civil_war"
-		
+
 			hidden_effect = {
 				#Release copy of existing
 				set_country_flag = no_leader_change
@@ -1413,7 +1575,7 @@ generic_coalition_politics_desicions = {
 					}
 				}
 				clr_country_flag = no_leader_change
-				
+
 				#replicating current politics
 				random_other_country = {
 					limit = {
@@ -1438,7 +1600,7 @@ generic_coalition_politics_desicions = {
 					subtract_from_temp_variable = { temp_total = 100 }
 					multiply_temp_variable = { temp_total = -1 }
 					add_to_temp_variable = { temp_nationalist = temp_total }
-					
+
 					set_popularities = {
 						democratic = temp_democratic
 						communism = temp_communism
@@ -1463,36 +1625,36 @@ generic_coalition_politics_desicions = {
 						value = v
 						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
 					}
-					set_variable = { party_pop_array^11 = 0.01 } #all moved to fight ;) 
+					set_variable = { party_pop_array^11 = 0.01 } #all moved to fight ;)
 					set_variable = { party_pop_elect_array^11 = 0 } #made illegal
 					add_up_party_totals = yes
 					set_party_positions = yes
 					startup_politics = yes
-					
+
 					#VARIABLES
 					set_variable = { tax_rate = PREV.tax_rate }
 					set_variable = { treasury = PREV.treasury }
-					
+
 					#don't get values of original yet - REMINDER -> add it on_civil_war_end
 					set_variable = { debt = 0 }
 					set_variable = { int_investments = 0 }
-					
+
 					#influence
 					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
 					#just copy all
 					for_loop_effect = {
 						end = PREV.influence_array^num
 						value = v
-						
+
 						add_to_array = { influence_array = PREV.influence_array^v }
 						add_to_array = { influence_array_val = PREV.influence_array_val^v }
 					}
 					recalculate_influence = yes
-					
+
 					#GAME VARIABLES
 					add_political_power = PREV.political_power
 					add_political_power = 400 #bonus
-					
+
 					#LAWS
 					set_variable = { gdp_capita = PREV.gdp_capita }
 					meta_effect = {
@@ -1536,7 +1698,7 @@ generic_coalition_politics_desicions = {
 						}
 						WELFARE_LEVEL = "[?social_budget|0]"
 					}
-					
+
 					set_variable = { Military_Spending = PREV.Military_Spending }
 					subtract_from_variable = { Military_Spending = 1 }
 					meta_effect = {
@@ -1546,7 +1708,7 @@ generic_coalition_politics_desicions = {
 						DEFENCE_LEVEL = "[?Military_Spending|0]"
 					}
 					set_variable = { Military_Spending = PREV.Military_Spending }
-					
+
 					set_variable = { economic_cycles = PREV.economic_cycles }
 					if = { limit = { check_variable = { economic_cycles = 6 } }
 						add_ideas = depression
@@ -1566,7 +1728,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { check_variable = { economic_cycles = 1 } }
 						add_ideas = economic_boom
 					}
-					
+
 					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
 						add_ideas = paralyzing_corruption
 					}
@@ -1597,7 +1759,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
 						add_ideas = negligible_corruption
 					}
-					
+
 					if = { limit = { PREV = { has_idea = consumption_economy } }
 						add_ideas = consumption_economy
 					}
@@ -1607,7 +1769,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = export_economy } }
 						add_ideas = export_economy
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_military } }
 						add_ideas = no_military
 					}
@@ -1620,7 +1782,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = draft_army } }
 						add_ideas = draft_army
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_women_in_military } }
 						add_ideas = no_women_in_military
 					}
@@ -1630,7 +1792,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = drafted_women } }
 						add_ideas = drafted_women
 					}
-					
+
 					if = { limit = { PREV = { has_idea = intervention_isolation } }
 						add_ideas = intervention_isolation
 					}
@@ -1649,7 +1811,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
 						add_ideas = intervention_neo_imperialism
 					}
-					
+
 					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
 						add_ideas = officer_baptism_by_fire
 					}
@@ -1668,7 +1830,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = officer_international_education } }
 						add_ideas = officer_international_education
 					}
-					
+
 					### Internal factions
 					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
 						add_ideas = small_medium_business_owners
@@ -1707,7 +1869,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = farmers
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = communist_cadres
 								ROOT = {
@@ -1739,7 +1901,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = the_bazaar
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = saudi_royal_family
 								ROOT = {
@@ -1754,7 +1916,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = saudi_royal_family
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = irgc
 								ROOT = {
@@ -1770,7 +1932,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = irgc
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = iranian_quds_force
 								ROOT = {
@@ -1786,7 +1948,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = iranian_quds_force
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = vevak
 								ROOT = {
@@ -1802,7 +1964,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = vevak
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = foreign_jihadis
 								ROOT = {
@@ -1823,23 +1985,23 @@ generic_coalition_politics_desicions = {
 					if = { limit = { PREV = { has_idea = chaebols } }
 						add_ideas = chaebols
 					}
-					
+
 					#copy leader throughput
 					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
 					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
 					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
 					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-					
+
 					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
 					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
 					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
 					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
 					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
 					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-					
+
 					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
 					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-					
+
 					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
 					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
 					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
@@ -1852,20 +2014,20 @@ generic_coalition_politics_desicions = {
 					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
 					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
 					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-					
+
 					add_tax_laws = yes
 					calculate_influence_percentage = yes #set alignment drifts from influence
 					startup_extra_setup = yes 	#money system
 					setup_init_factions = yes 	#flags for int. factions
 					init_neighbor_drift_1 = yes #drift from neighbor
 					init_neighbor_drift_2 = yes #drift from neighbor
-					
+
 					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
 					country_event = { id = brotherhood.2 }
 				}
-				
+
 				#For player:
-				
+
 				set_politics = {
 					ruling_party = fascism
 					elections_allowed = no
@@ -1880,23 +2042,23 @@ generic_coalition_politics_desicions = {
 					set_variable = { party_pop_array^11 = 0.9 } #generate the rest
 					startup_politics = yes
 				}
-				
+
 				#Switch to fascist leader
 					set_country_flag = set_Caliphate
 					set_leader = yes
-				
+
 				log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
 			}
 		}
 	}
-	
+
 	communist_state_extremist_civil_war = {
 		icon = revolt
-		
+
 		cost = 150
 		days_remove = 0
 		days_re_enable = 0
-		
+
 		visible = {
 			check_variable = { party_pop_array^4 > 0.10 } #significant communism
 			has_civil_war = no
@@ -1916,14 +2078,14 @@ generic_coalition_politics_desicions = {
 		}
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = communist_state_20_tt	
+				tooltip = communist_state_20_tt
 				check_variable = { party_pop_array^4 > 0.2 }
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision communist_state_extremist_civil_war"
-		
+
 			hidden_effect = {
 				#Release copy of existing
 				set_country_flag = no_leader_change
@@ -1973,7 +2135,7 @@ generic_coalition_politics_desicions = {
 					}
 				}
 				clr_country_flag = no_leader_change
-				
+
 				#replicating current politics
 				random_other_country = {
 					limit = {
@@ -1998,7 +2160,7 @@ generic_coalition_politics_desicions = {
 					subtract_from_temp_variable = { temp_total = 100 }
 					multiply_temp_variable = { temp_total = -1 }
 					add_to_temp_variable = { temp_nationalist = temp_total }
-					
+
 					set_popularities = {
 						democratic = temp_democratic
 						communism = temp_communism
@@ -2023,36 +2185,36 @@ generic_coalition_politics_desicions = {
 						value = v
 						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
 					}
-					set_variable = { party_pop_array^4 = 0.01 } #all moved to fight ;) 
+					set_variable = { party_pop_array^4 = 0.01 } #all moved to fight ;)
 					set_variable = { party_pop_elect_array^4 = 0 } #made illegal
 					add_up_party_totals = yes
 					set_party_positions = yes
 					startup_politics = yes
-					
+
 					#VARIABLES
 					set_variable = { tax_rate = PREV.tax_rate }
 					set_variable = { treasury = PREV.treasury }
-					
+
 					#don't get values of original yet - REMINDER -> add it on_civil_war_end
 					set_variable = { debt = 0 }
 					set_variable = { int_investments = 0 }
-					
+
 					#influence
 					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
 					#just copy all
 					for_loop_effect = {
 						end = PREV.influence_array^num
 						value = v
-						
+
 						add_to_array = { influence_array = PREV.influence_array^v }
 						add_to_array = { influence_array_val = PREV.influence_array_val^v }
 					}
 					recalculate_influence = yes
-					
+
 					#GAME VARIABLES
 					add_political_power = PREV.political_power
 					add_political_power = 400 #bonus
-					
+
 					#LAWS
 					set_variable = { gdp_capita = PREV.gdp_capita }
 					meta_effect = {
@@ -2096,7 +2258,7 @@ generic_coalition_politics_desicions = {
 						}
 						WELFARE_LEVEL = "[?social_budget|0]"
 					}
-					
+
 					set_variable = { Military_Spending = PREV.Military_Spending }
 					subtract_from_variable = { Military_Spending = 1 }
 					meta_effect = {
@@ -2106,7 +2268,7 @@ generic_coalition_politics_desicions = {
 						DEFENCE_LEVEL = "[?Military_Spending|0]"
 					}
 					set_variable = { Military_Spending = PREV.Military_Spending }
-					
+
 					set_variable = { economic_cycles = PREV.economic_cycles }
 					if = { limit = { check_variable = { economic_cycles = 6 } }
 						add_ideas = depression
@@ -2126,7 +2288,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { check_variable = { economic_cycles = 1 } }
 						add_ideas = economic_boom
 					}
-					
+
 					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
 						add_ideas = paralyzing_corruption
 					}
@@ -2157,7 +2319,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
 						add_ideas = negligible_corruption
 					}
-					
+
 					if = { limit = { PREV = { has_idea = consumption_economy } }
 						add_ideas = consumption_economy
 					}
@@ -2167,7 +2329,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = export_economy } }
 						add_ideas = export_economy
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_military } }
 						add_ideas = no_military
 					}
@@ -2180,7 +2342,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = draft_army } }
 						add_ideas = draft_army
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_women_in_military } }
 						add_ideas = no_women_in_military
 					}
@@ -2190,7 +2352,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = drafted_women } }
 						add_ideas = drafted_women
 					}
-					
+
 					if = { limit = { PREV = { has_idea = intervention_isolation } }
 						add_ideas = intervention_isolation
 					}
@@ -2209,7 +2371,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
 						add_ideas = intervention_neo_imperialism
 					}
-					
+
 					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
 						add_ideas = officer_baptism_by_fire
 					}
@@ -2228,7 +2390,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = officer_international_education } }
 						add_ideas = officer_international_education
 					}
-					
+
 					### Internal factions
 					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
 						add_ideas = small_medium_business_owners
@@ -2267,7 +2429,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = farmers
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = communist_cadres
 								ROOT = {
@@ -2299,7 +2461,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = the_bazaar
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = saudi_royal_family
 								ROOT = {
@@ -2314,7 +2476,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = saudi_royal_family
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = irgc
 								ROOT = {
@@ -2330,7 +2492,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = irgc
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = iranian_quds_force
 								ROOT = {
@@ -2346,7 +2508,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = iranian_quds_force
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = vevak
 								ROOT = {
@@ -2362,7 +2524,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = vevak
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = foreign_jihadis
 								ROOT = {
@@ -2383,34 +2545,34 @@ generic_coalition_politics_desicions = {
 					if = { limit = { PREV = { has_idea = chaebols } }
 						add_ideas = chaebols
 					}
-					
+
 					add_tax_laws = yes
 					calculate_influence_percentage = yes #set alignment drifts from influence
 					startup_extra_setup = yes 	#money system
 					setup_init_factions = yes 	#flags for int. factions
 					init_neighbor_drift_1 = yes #drift from neighbor
 					init_neighbor_drift_2 = yes #drift from neighbor
-					
+
 					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
 					country_event = { id = brotherhood.2 }
 				}
-				
+
 				#copy leader throughput
 					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
 					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
 					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
 					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-					
+
 					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
 					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
 					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
 					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
 					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
 					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-					
+
 					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
 					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-					
+
 					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
 					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
 					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
@@ -2423,9 +2585,9 @@ generic_coalition_politics_desicions = {
 					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
 					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
 					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-				
+
 				#For player:
-				
+
 				set_politics = {
 					ruling_party = communism
 					elections_allowed = no
@@ -2443,19 +2605,48 @@ generic_coalition_politics_desicions = {
 				#Switch to commie leader
 				set_country_flag = set_Communist-State
 				set_leader = yes
-				
+
 				log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
 			}
 		}
 	}
-	
+
+	JAP_spirit_of_the_warrior = {
+		icon = japan
+
+		cost = 100
+
+		visible = {
+			original_tag = JAP
+			OR = {
+				is_in_array = { ruling_party = 23 }
+				is_in_array = { ruling_party = 22 }
+				is_in_array = { ruling_party = 21 }
+			}
+			NOT = { has_idea = idea_JAP_spirit_of_the_warrior }
+		}
+
+		available = {
+			OR = {
+				check_variable = { party_pop_array^23 > 0.10 }
+				check_variable = { party_pop_array^22 > 0.10 }
+				check_variable = { party_pop_array^21 > 0.10 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision JAP_spirit_of_the_warrior"
+			add_ideas = idea_JAP_spirit_of_the_warrior
+		}
+	}
+
 	neutral_communist_extremist_civil_war = {
 		icon = revolt
-		
+
 		cost = 150
 		days_remove = 0
 		days_re_enable = 0
-		
+
 		visible = {
 			check_variable = { party_pop_array^19 > 0.10 } #significant communism
 			has_civil_war = no
@@ -2475,13 +2666,13 @@ generic_coalition_politics_desicions = {
 		}
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = neutral_communist_20_tt	
+				tooltip = neutral_communist_20_tt
 				check_variable = { party_pop_array^19 > 0.2 }
 			}
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision neutral_communist_extremist_civil_war"
-		
+
 			hidden_effect = {
 				#Release copy of existing
 				set_country_flag = no_leader_change
@@ -2531,7 +2722,7 @@ generic_coalition_politics_desicions = {
 					}
 				}
 				clr_country_flag = no_leader_change
-				
+
 				#replicating current politics
 				random_other_country = {
 					limit = {
@@ -2556,7 +2747,7 @@ generic_coalition_politics_desicions = {
 					subtract_from_temp_variable = { temp_total = 100 }
 					multiply_temp_variable = { temp_total = -1 }
 					add_to_temp_variable = { temp_nationalist = temp_total }
-					
+
 					set_popularities = {
 						democratic = temp_democratic
 						communism = temp_communism
@@ -2581,36 +2772,36 @@ generic_coalition_politics_desicions = {
 						value = v
 						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
 					}
-					set_variable = { party_pop_array^19 = 0.01 } #all moved to fight ;) 
+					set_variable = { party_pop_array^19 = 0.01 } #all moved to fight ;)
 					set_variable = { party_pop_elect_array^19 = 0 } #made illegal
 					add_up_party_totals = yes
 					set_party_positions = yes
 					startup_politics = yes
-					
+
 					#VARIABLES
 					set_variable = { tax_rate = PREV.tax_rate }
 					set_variable = { treasury = PREV.treasury }
-					
+
 					#don't get values of original yet - REMINDER -> add it on_civil_war_end
 					set_variable = { debt = 0 }
 					set_variable = { int_investments = 0 }
-					
+
 					#influence
 					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
 					#just copy all
 					for_loop_effect = {
 						end = PREV.influence_array^num
 						value = v
-						
+
 						add_to_array = { influence_array = PREV.influence_array^v }
 						add_to_array = { influence_array_val = PREV.influence_array_val^v }
 					}
 					recalculate_influence = yes
-					
+
 					#GAME VARIABLES
 					add_political_power = PREV.political_power
 					add_political_power = 400 #bonus
-					
+
 					#LAWS
 					set_variable = { gdp_capita = PREV.gdp_capita }
 					meta_effect = {
@@ -2654,7 +2845,7 @@ generic_coalition_politics_desicions = {
 						}
 						WELFARE_LEVEL = "[?social_budget|0]"
 					}
-					
+
 					set_variable = { Military_Spending = PREV.Military_Spending }
 					subtract_from_variable = { Military_Spending = 1 }
 					meta_effect = {
@@ -2664,7 +2855,7 @@ generic_coalition_politics_desicions = {
 						DEFENCE_LEVEL = "[?Military_Spending|0]"
 					}
 					set_variable = { Military_Spending = PREV.Military_Spending }
-					
+
 					set_variable = { economic_cycles = PREV.economic_cycles }
 					if = { limit = { check_variable = { economic_cycles = 6 } }
 						add_ideas = depression
@@ -2684,7 +2875,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { check_variable = { economic_cycles = 1 } }
 						add_ideas = economic_boom
 					}
-					
+
 					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
 						add_ideas = paralyzing_corruption
 					}
@@ -2715,7 +2906,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
 						add_ideas = negligible_corruption
 					}
-					
+
 					if = { limit = { PREV = { has_idea = consumption_economy } }
 						add_ideas = consumption_economy
 					}
@@ -2725,7 +2916,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = export_economy } }
 						add_ideas = export_economy
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_military } }
 						add_ideas = no_military
 					}
@@ -2738,7 +2929,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = draft_army } }
 						add_ideas = draft_army
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_women_in_military } }
 						add_ideas = no_women_in_military
 					}
@@ -2748,7 +2939,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = drafted_women } }
 						add_ideas = drafted_women
 					}
-					
+
 					if = { limit = { PREV = { has_idea = intervention_isolation } }
 						add_ideas = intervention_isolation
 					}
@@ -2767,7 +2958,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
 						add_ideas = intervention_neo_imperialism
 					}
-					
+
 					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
 						add_ideas = officer_baptism_by_fire
 					}
@@ -2786,7 +2977,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = officer_international_education } }
 						add_ideas = officer_international_education
 					}
-					
+
 					### Internal factions
 					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
 						add_ideas = small_medium_business_owners
@@ -2825,7 +3016,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = farmers
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = communist_cadres
 								ROOT = {
@@ -2857,7 +3048,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = the_bazaar
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = saudi_royal_family
 								ROOT = {
@@ -2872,15 +3063,13 @@ generic_coalition_politics_desicions = {
 						add_ideas = saudi_royal_family
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = irgc
 								ROOT = {
 									NOT = {
-										OR = {
-											has_government = democratic
-											has_government = fascism
-										}
+										has_government = democratic
+										has_government = fascism
 									}
 								}
 							}
@@ -2888,15 +3077,13 @@ generic_coalition_politics_desicions = {
 						add_ideas = irgc
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = iranian_quds_force
 								ROOT = {
 									NOT = {
-										OR = {
-											has_government = democratic
-											has_government = fascism
-										}
+										has_government = democratic
+										has_government = fascism
 									}
 								}
 							}
@@ -2904,15 +3091,13 @@ generic_coalition_politics_desicions = {
 						add_ideas = iranian_quds_force
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = vevak
 								ROOT = {
 									NOT = {
-										OR = {
-											has_government = democratic
-											has_government = fascism
-										}
+										has_government = democratic
+										has_government = fascism
 									}
 								}
 							}
@@ -2920,7 +3105,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = vevak
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = foreign_jihadis
 								ROOT = {
@@ -2941,23 +3126,23 @@ generic_coalition_politics_desicions = {
 					if = { limit = { PREV = { has_idea = chaebols } }
 						add_ideas = chaebols
 					}
-					
+
 					#copy leader throughput
 					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
 					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
 					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
 					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-					
+
 					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
 					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
 					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
 					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
 					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
 					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-					
+
 					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
 					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-					
+
 					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
 					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
 					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
@@ -2970,7 +3155,7 @@ generic_coalition_politics_desicions = {
 					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
 					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
 					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-					
+
 					add_tax_laws = yes
 					calculate_influence_percentage = yes #set alignment drifts from influence
 					startup_extra_setup = yes 	#money system
@@ -2978,9 +3163,9 @@ generic_coalition_politics_desicions = {
 					init_neighbor_drift_1 = yes #drift from neighbor
 					init_neighbor_drift_2 = yes #drift from neighbor
 				}
-				
+
 				#For player:
-				
+
 				set_politics = {
 					ruling_party = neutrality
 					elections_allowed = no
@@ -2995,11 +3180,11 @@ generic_coalition_politics_desicions = {
 					set_variable = { party_pop_array^19 = 0.9 } #generate the rest
 					startup_politics = yes
 				}
-				
+
 				#Switch to fascist leader
 					set_country_flag = set_Neutral_Communism
 					set_leader = yes
-				
+
 				log = "[GetDateText]: [This.GetName]: communist_state_extremist_civil_war setup finished"
 			}
 		}
@@ -3007,11 +3192,11 @@ generic_coalition_politics_desicions = {
 	#shiite revolutionary
 	vilayat_e_faqih_extremist_civil_war = {
 		icon = revolt
-		
+
 		cost = 150
 		days_remove = 0
 		days_re_enable = 0
-		
+
 		visible = {
 			check_variable = { party_pop_array^9 > 0.10 } #significant shiite theocracy
 			has_civil_war = no
@@ -3034,13 +3219,26 @@ generic_coalition_politics_desicions = {
 				has_government = communism
 			}
 			custom_trigger_tooltip = {
-				tooltip = vilayat_e_faqih_20_tt	
+				tooltip = vilayat_e_faqih_20_tt
 				check_variable = { party_pop_array^9 > 0.2 }
+			}
+			if = {
+				limit = {
+					OR = {
+						tag = BHR
+						tag = KUW
+						tag = OMA
+						tag = QAT
+						tag = SAU
+						tag = UAE
+					}
+				}
+				has_idea = shia_resistance_10
 			}
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision vilayat_e_faqih_extremist_civil_war"
-		
+
 			hidden_effect = {
 				#Release copy of existing
 				set_country_flag = no_leader_change
@@ -3090,7 +3288,7 @@ generic_coalition_politics_desicions = {
 					}
 				}
 				clr_country_flag = no_leader_change
-				
+
 				#replicating current politics
 				random_other_country = {
 					limit = {
@@ -3115,7 +3313,7 @@ generic_coalition_politics_desicions = {
 					subtract_from_temp_variable = { temp_total = 100 }
 					multiply_temp_variable = { temp_total = -1 }
 					add_to_temp_variable = { temp_nationalist = temp_total }
-					
+
 					set_popularities = {
 						democratic = temp_democratic
 						communism = temp_communism
@@ -3140,36 +3338,36 @@ generic_coalition_politics_desicions = {
 						value = v
 						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
 					}
-					set_variable = { party_pop_array^9 = 0.01 } #all moved to fight ;) 
+					set_variable = { party_pop_array^9 = 0.01 } #all moved to fight ;)
 					set_variable = { party_pop_elect_array^9 = 0 } #made illegal
 					add_up_party_totals = yes
 					set_party_positions = yes
 					startup_politics = yes
-					
+
 					#VARIABLES
 					set_variable = { tax_rate = PREV.tax_rate }
 					set_variable = { treasury = PREV.treasury }
-					
+
 					#don't get values of original yet - REMINDER -> add it on_civil_war_end
 					set_variable = { debt = 0 }
 					set_variable = { int_investments = 0 }
-					
+
 					#influence
 					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
 					#just copy all
 					for_loop_effect = {
 						end = PREV.influence_array^num
 						value = v
-						
+
 						add_to_array = { influence_array = PREV.influence_array^v }
 						add_to_array = { influence_array_val = PREV.influence_array_val^v }
 					}
 					recalculate_influence = yes
-					
+
 					#GAME VARIABLES
 					add_political_power = PREV.political_power
 					add_political_power = 400 #bonus
-					
+
 					#LAWS
 					set_variable = { gdp_capita = PREV.gdp_capita }
 					meta_effect = {
@@ -3213,7 +3411,7 @@ generic_coalition_politics_desicions = {
 						}
 						WELFARE_LEVEL = "[?social_budget|0]"
 					}
-					
+
 					set_variable = { Military_Spending = PREV.Military_Spending }
 					subtract_from_variable = { Military_Spending = 1 }
 					meta_effect = {
@@ -3223,7 +3421,7 @@ generic_coalition_politics_desicions = {
 						DEFENCE_LEVEL = "[?Military_Spending|0]"
 					}
 					set_variable = { Military_Spending = PREV.Military_Spending }
-					
+
 					set_variable = { economic_cycles = PREV.economic_cycles }
 					if = { limit = { check_variable = { economic_cycles = 6 } }
 						add_ideas = depression
@@ -3243,7 +3441,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { check_variable = { economic_cycles = 1 } }
 						add_ideas = economic_boom
 					}
-					
+
 					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
 						add_ideas = paralyzing_corruption
 					}
@@ -3274,7 +3472,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
 						add_ideas = negligible_corruption
 					}
-					
+
 					if = { limit = { PREV = { has_idea = consumption_economy } }
 						add_ideas = consumption_economy
 					}
@@ -3284,7 +3482,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = export_economy } }
 						add_ideas = export_economy
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_military } }
 						add_ideas = no_military
 					}
@@ -3297,7 +3495,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = draft_army } }
 						add_ideas = draft_army
 					}
-					
+
 					if = { limit = { PREV = { has_idea = no_women_in_military } }
 						add_ideas = no_women_in_military
 					}
@@ -3307,7 +3505,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = drafted_women } }
 						add_ideas = drafted_women
 					}
-					
+
 					if = { limit = { PREV = { has_idea = intervention_isolation } }
 						add_ideas = intervention_isolation
 					}
@@ -3326,7 +3524,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
 						add_ideas = intervention_neo_imperialism
 					}
-					
+
 					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
 						add_ideas = officer_baptism_by_fire
 					}
@@ -3345,7 +3543,7 @@ generic_coalition_politics_desicions = {
 					else_if = { limit = { PREV = { has_idea = officer_international_education } }
 						add_ideas = officer_international_education
 					}
-					
+
 					### Internal factions
 					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
 						add_ideas = small_medium_business_owners
@@ -3384,7 +3582,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = farmers
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = communist_cadres
 								ROOT = {
@@ -3416,7 +3614,7 @@ generic_coalition_politics_desicions = {
 						add_ideas = the_bazaar
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = saudi_royal_family
 								ROOT = {
@@ -3431,15 +3629,13 @@ generic_coalition_politics_desicions = {
 						add_ideas = saudi_royal_family
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = irgc
 								ROOT = {
 									NOT = {
-										OR = {
-											has_government = democratic
-											has_government = fascism
-										}
+										has_government = democratic
+										has_government = fascism
 									}
 								}
 							}
@@ -3447,15 +3643,13 @@ generic_coalition_politics_desicions = {
 						add_ideas = irgc
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = iranian_quds_force
 								ROOT = {
 									NOT = {
-										OR = {
-											has_government = democratic
-											has_government = fascism
-										}
+										has_government = democratic
+										has_government = fascism
 									}
 								}
 							}
@@ -3463,15 +3657,13 @@ generic_coalition_politics_desicions = {
 						add_ideas = iranian_quds_force
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = vevak
 								ROOT = {
 									NOT = {
-										OR = {
-											has_government = democratic
-											has_government = fascism
-										}
+										has_government = democratic
+										has_government = fascism
 									}
 								}
 							}
@@ -3479,13 +3671,11 @@ generic_coalition_politics_desicions = {
 						add_ideas = vevak
 					}
 					if = {
-						limit = { 
+						limit = {
 							PREV = {
 								has_idea = foreign_jihadis
 								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 11 }
-									}
+									is_in_array = { ruling_party = 11 }
 								}
 							}
 						}
@@ -3500,23 +3690,23 @@ generic_coalition_politics_desicions = {
 					if = { limit = { PREV = { has_idea = chaebols } }
 						add_ideas = chaebols
 					}
-					
+
 					#copy leader throughput
 					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
 					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
 					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
 					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-					
+
 					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
 					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
 					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
 					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
 					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
 					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-					
+
 					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
 					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-					
+
 					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
 					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
 					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
@@ -3529,7 +3719,7 @@ generic_coalition_politics_desicions = {
 					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
 					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
 					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-					
+
 					add_tax_laws = yes
 					calculate_influence_percentage = yes #set alignment drifts from influence
 					startup_extra_setup = yes 	#money system
@@ -3537,9 +3727,9 @@ generic_coalition_politics_desicions = {
 					init_neighbor_drift_1 = yes #drift from neighbor
 					init_neighbor_drift_2 = yes #drift from neighbor
 				}
-				
+
 				#For player:
-				
+
 				set_politics = {
 					ruling_party = communism
 					elections_allowed = no
@@ -3554,34 +3744,34 @@ generic_coalition_politics_desicions = {
 					set_variable = { party_pop_array^9 = 0.9 } #generate the rest
 					startup_politics = yes
 				}
-				
+
 				#Switch to shiite leader
 					set_country_flag = set_Vilayat_e_Faqih
 					set_leader = yes
-				
+
 				#Give support from resistance axis
 				hidden_effect = {
 					PER = {
-						if = { 
+						if = {
 							limit = {
 								OR = {
 									is_in_array = { ruling_party = 8 }
-									is_in_array = { ruling_party = 9 } 
+									is_in_array = { ruling_party = 9 }
 									is_in_array = { ruling_party = 22 } #IRCG
 								}
 							}
 							add_ai_strategy = {
-								type = befriend 
+								type = befriend
 								id = ROOT
 								value = 200
 							}
-							
+
 							add_ai_strategy = {
 								type = send_volunteers_desire
 								id = ROOT
 								value = 200
 							}
-							
+
 							add_ai_strategy = {
 								type = support
 								id = ROOT
@@ -3590,7 +3780,7 @@ generic_coalition_politics_desicions = {
 						}
 					}
 					HEZ = {
-						if = { 
+						if = {
 							limit = {
 								OR = {
 									is_in_array = { ruling_party = 8 }
@@ -3598,17 +3788,17 @@ generic_coalition_politics_desicions = {
 								}
 							}
 							add_ai_strategy = {
-								type = befriend 
+								type = befriend
 								id = ROOT
 								value = 200
 							}
-							
+
 							add_ai_strategy = {
 								type = send_volunteers_desire
 								id = ROOT
 								value = 200
 							}
-							
+
 							add_ai_strategy = {
 								type = support
 								id = ROOT
@@ -3623,23 +3813,23 @@ generic_coalition_politics_desicions = {
 	}
 	### #### TODO: ####
 	### - generic boost outlook temp drift
-	
+
 	### Nationalist Claims ###
-	
-	
+
+
 	### France ###
-	
+
 	FRA_nationalist_claims_BEL = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = FRA }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -3648,7 +3838,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision FRA_nationalist_claims_BEL"
 			add_state_core = 52
@@ -3669,18 +3859,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { BEL = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	FRA_nationalist_claims_SWI = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = FRA }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -3689,7 +3879,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision FRA_nationalist_claims_SWI"
 			add_state_core = 72
@@ -3710,20 +3900,20 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { SWI = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	### Norway ###
-	
+
 	NOR_nationalist_claims_DEN = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = NOR }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -3732,7 +3922,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NOR_nationalist_claims_DEN"
 			add_state_core = 1 #greenland
@@ -3754,18 +3944,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { DEN = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	NOR_nationalist_claims_ICE = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = NOR }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -3774,7 +3964,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NOR_nationalist_claims_ICE"
 			add_state_core = 7 #iceland
@@ -3795,21 +3985,21 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { ICE = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	NOR_nationalist_claims_ENG = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = NOR }
-		
-		visible = { 
+
+		visible = {
 			has_government = nationalist
 			8 = { is_owned_by = ENG }
 		}
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -3818,7 +4008,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NOR_nationalist_claims_ENG"
 			add_state_core = 8 #shetland
@@ -3839,21 +4029,21 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { ENG = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	NOR_nationalist_claims_SCO = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = NOR }
-		
-		visible = { 
+
+		visible = {
 			has_government = nationalist
 			8 = { is_owned_by = SCO }
 		}
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -3862,7 +4052,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision NOR_nationalist_claims_SCO"
 			add_state_core = 8 #shetland
@@ -3883,21 +4073,21 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { SCO = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
-	
+
+
 	### Sweden ###
-	
+
 	SWE_nationalist_claims_FIN = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = SWE }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -3906,7 +4096,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_nationalist_claims_FIN"
 			add_state_core = 104 #�land
@@ -3927,20 +4117,20 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { FIN = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	### Denmark ###
-	
+
 	DEN_nationalist_claims_SWE = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = DEN }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -3949,7 +4139,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision DEN_nationalist_claims_SWE"
 			add_state_core = 550 #sk�ne
@@ -3970,18 +4160,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { SWE = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	DEN_nationalist_claims_GER = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = DEN }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -3990,7 +4180,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision DEN_nationalist_claims_GER"
 			add_state_core = 37 #sclesvig-holstein
@@ -4011,20 +4201,20 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { GER = { add_political_power = 2000 } } #extra to compensate higher cost
 		}
 	}
-	
+
 	### Netherlands ###
-	
+
 	HOL_nationalist_claims_BEL = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = HOL }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4033,7 +4223,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_nationalist_claims_BEL"
 			add_state_core = 50
@@ -4055,20 +4245,20 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { BEL = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	### Italy ###
-	
+
 	ITA_nationalist_claims_SWI = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = ITA }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4077,7 +4267,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ITA_nationalist_claims_SWI"
 			add_state_core = 73
@@ -4098,18 +4288,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { SWI = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	ITA_nationalist_claims_SLV = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = ITA }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4118,7 +4308,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ITA_nationalist_claims_SLV"
 			add_state_core = 124
@@ -4139,18 +4329,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { SLV = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	ITA_nationalist_claims_CRO = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = ITA }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4159,7 +4349,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ITA_nationalist_claims_CRO"
 			add_state_core = 127
@@ -4180,18 +4370,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { CRO = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	ITA_nationalist_claims_FRA = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = ITA }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4200,7 +4390,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ITA_nationalist_claims_FRA"
 			add_state_core = 65 #Corsica
@@ -4221,18 +4411,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { FRA = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	ITA_nationalist_claims_MLT = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = ITA }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4241,7 +4431,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ITA_nationalist_claims_MLT"
 			add_state_core = 85 #Malta
@@ -4262,20 +4452,20 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { MLT = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	### Hungary ###
-	
+
 	HUN_nationalist_claims_UKR = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = HUN }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4284,7 +4474,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HUN_nationalist_claims_UKR"
 			add_state_core = 701
@@ -4305,18 +4495,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { UKR = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	HUN_nationalist_claims_ROM = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = HUN }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4325,7 +4515,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HUN_nationalist_claims_ROM"
 			add_state_core = 909
@@ -4346,20 +4536,20 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { ROM = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	### Austria ##
-	
+
 	AUS_nationalist_claims_ITA = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = AUS }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4368,7 +4558,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AUS_nationalist_claims_ITA"
 			add_state_core = 285
@@ -4389,20 +4579,20 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { ITA = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	### Poland ##
-	
+
 	POL_nationalist_claims_UKR = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = POL }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4411,7 +4601,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision POL_nationalist_claims_UKR"
 			add_state_core = 700
@@ -4432,18 +4622,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { UKR = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	POL_nationalist_claims_BLR = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = POL }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4452,7 +4642,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision POL_nationalist_claims_BLR"
 			add_state_core = 702
@@ -4473,18 +4663,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { BLR = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	POL_nationalist_claims_LIT = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = POL }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4493,7 +4683,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision POL_nationalist_claims_LIT"
 			add_state_core = 110
@@ -4514,23 +4704,23 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { LIT = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	### Albania ##
-	
+
 	ALB_nationalist_claims_KOS = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = ALB }
-		
-		visible = { 
+
+		visible = {
 			has_government = nationalist
 			133 = { is_owned_by = KOS }
 		}
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4539,7 +4729,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ALB_nationalist_claims_KOS"
 			add_state_core = 133
@@ -4562,18 +4752,18 @@ generic_coalition_politics_desicions = {
 	}
 	ALB_nationalist_claims_SER = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = ALB }
-		
-		visible = { 
+
+		visible = {
 			has_government = nationalist
 			133 = { is_owned_by = SER }
 		}
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4582,7 +4772,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ALB_nationalist_claims_SER"
 			add_state_core = 133
@@ -4605,18 +4795,18 @@ generic_coalition_politics_desicions = {
 	}
 	ALB_nationalist_claims_FYR = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = ALB }
-		
-		visible = { 
+
+		visible = {
 			has_government = nationalist
 			135 = { is_owned_by = FYR }
 		}
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4625,7 +4815,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ALB_nationalist_claims_FYR"
 			add_state_core = 135
@@ -4646,20 +4836,20 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { FYR = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	### Germany ###
-	
+
 	GER_nationalist_claims_enable = {
 		icon = decision
-		
+
 		cost = 150
 		days_remove = 0
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = GER }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4668,7 +4858,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_nationalist_claims_enable"
 			add_named_threat = { threat = 20 name = GER_expansionist }
@@ -4680,18 +4870,18 @@ generic_coalition_politics_desicions = {
 			}
 		}
 	}
-	
+
 	GER_nationalist_claims_AUS = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = GER }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4701,7 +4891,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_nationalist_claims_AUS"
 			add_state_core = 286
@@ -4724,18 +4914,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { AUS = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	GER_nationalist_claims_SWI = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = GER }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4745,7 +4935,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_nationalist_claims_SWI"
 			add_state_core = 74
@@ -4766,18 +4956,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { SWI = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	GER_nationalist_claims_FRA = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = GER }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4787,7 +4977,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_nationalist_claims_FRA"
 			add_state_core = 57
@@ -4808,18 +4998,18 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { FRA = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	GER_nationalist_claims_LUX = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = GER }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4829,7 +5019,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_nationalist_claims_LUX"
 			add_state_core = 53
@@ -4852,15 +5042,15 @@ generic_coalition_politics_desicions = {
 	}
 	GER_nationalist_claims_SOV = {
 		icon = decision
-		
+
 		cost = 200
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = GER }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4870,7 +5060,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_nationalist_claims_SOV"
 			add_state_core = 642
@@ -4893,15 +5083,15 @@ generic_coalition_politics_desicions = {
 	}
 	GER_nationalist_claims_POL = {
 		icon = decision
-		
+
 		cost = 300
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = GER }
-		
+
 		visible = { has_government = nationalist }
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4911,7 +5101,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_nationalist_claims_POL"
 			add_state_core = 626
@@ -4937,18 +5127,18 @@ generic_coalition_politics_desicions = {
 	}
 	GER_nationalist_claims_ITA = {
 		icon = decision
-		
+
 		cost = 150
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = GER }
-		
-		visible = { 
+
+		visible = {
 			has_government = nationalist
 			286 = { is_fully_controlled_by = ROOT }
 		}
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -4958,7 +5148,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_nationalist_claims_ITA"
 			add_state_core = 285
@@ -4981,18 +5171,18 @@ generic_coalition_politics_desicions = {
 	}
 	GER_nationalist_claims_SLV = {
 		icon = decision
-		
+
 		cost = 150
 		days_remove = 120
 		fire_only_once = yes
-		
+
 		allowed = { original_tag = GER }
-		
-		visible = { 
+
+		visible = {
 			has_government = nationalist
 			75 = { is_fully_controlled_by = ROOT }
 		}
-		
+
 		available = {
 			NOT = {
 				OR = {
@@ -5002,7 +5192,7 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_nationalist_claims_SLV"
 			add_state_core = 125
@@ -5023,21 +5213,21 @@ generic_coalition_politics_desicions = {
 			hidden_effect = { SLV = { add_political_power = 400 } } #pp to change mil law
 		}
 	}
-	
+
 	#### Promoting Outlooks ###
-	
+
 	promote_outlook_decision_support_pro_western_parties = {
-	
+
 		icon = eng_propaganda_campaigns
 
 		days_remove = 90
 		days_re_enable = 30
-		
-		modifier = { 
+
+		modifier = {
 			democratic_drift = 0.1
 			political_power_factor = -0.25
 		}
-		
+
 		custom_cost_trigger = {
 			always = yes
 		}
@@ -5045,120 +5235,120 @@ generic_coalition_politics_desicions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision promote_outlook_decision_support_pro_western_parties"
-			
+
 			custom_effect_tooltip = treasury_loss_2_bil_TT
-			
+
 			if = { limit = { check_variable = { num_of_factories < 4 } }
 				subtract_from_variable = { treasury = 0.05 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 3 }
 					check_variable = { num_of_factories < 8 }
 				}
 				subtract_from_variable = { treasury = 0.1 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 7 }
 					check_variable = { num_of_factories < 16 }
 				}
 				subtract_from_variable = { treasury = 0.2 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 15 }
 					check_variable = { num_of_factories < 26 }
 				}
 				subtract_from_variable = { treasury = 0.35 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 25 }
 					check_variable = { num_of_factories < 39 }
 				}
 				subtract_from_variable = { treasury = 0.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 38 }
 					check_variable = { num_of_factories < 54 }
 				}
 				subtract_from_variable = { treasury = 0.75 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 53 }
 					check_variable = { num_of_factories < 82 }
 				}
 				subtract_from_variable = { treasury = 1.0 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 81 }
 					check_variable = { num_of_factories < 120 }
 				}
 				subtract_from_variable = { treasury = 1.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 119 }
 					check_variable = { num_of_factories < 164 }
 				}
 				subtract_from_variable = { treasury = 2.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 163 }
 					check_variable = { num_of_factories < 250 }
 				}
 				subtract_from_variable = { treasury = 4.0 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 249 }
 					check_variable = { num_of_factories < 370 }
 				}
 				subtract_from_variable = { treasury = 5.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 369 }
 					check_variable = { num_of_factories < 500 }
 				}
 				subtract_from_variable = { treasury = 7.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 499 }
 				}
 				subtract_from_variable = { treasury = 10.0 }
 			}
 		}
-		
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove promote_outlook_decision_support_pro_western_parties"
 			set_failsafe_values = yes
-			recalculate_party = yes 
+			recalculate_party = yes
 		}
-		
+
 		ai_will_do = {
 			factor = 0
 		}
 	}
-	
+
 	promote_outlook_decision_support_emerging_parties = {
-	
+
 		icon = eng_propaganda_campaigns
 
 		days_remove = 90
 		days_re_enable = 30
-		
-		modifier = { 
+
+		modifier = {
 			communism_drift = 0.1
 			political_power_factor = -0.25
 		}
-		
+
 		custom_cost_trigger = {
 			always = yes
 		}
@@ -5166,120 +5356,120 @@ generic_coalition_politics_desicions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision promote_outlook_decision_support_emerging_parties"
-			
+
 			custom_effect_tooltip = treasury_loss_2_bil_TT
-			
+
 			if = { limit = { check_variable = { num_of_factories < 4 } }
 				subtract_from_variable = { treasury = 0.05 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 3 }
 					check_variable = { num_of_factories < 8 }
 				}
 				subtract_from_variable = { treasury = 0.1 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 7 }
 					check_variable = { num_of_factories < 16 }
 				}
 				subtract_from_variable = { treasury = 0.2 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 15 }
 					check_variable = { num_of_factories < 26 }
 				}
 				subtract_from_variable = { treasury = 0.35 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 25 }
 					check_variable = { num_of_factories < 39 }
 				}
 				subtract_from_variable = { treasury = 0.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 38 }
 					check_variable = { num_of_factories < 54 }
 				}
 				subtract_from_variable = { treasury = 0.75 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 53 }
 					check_variable = { num_of_factories < 82 }
 				}
 				subtract_from_variable = { treasury = 1.0 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 81 }
 					check_variable = { num_of_factories < 120 }
 				}
 				subtract_from_variable = { treasury = 1.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 119 }
 					check_variable = { num_of_factories < 164 }
 				}
 				subtract_from_variable = { treasury = 2.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 163 }
 					check_variable = { num_of_factories < 250 }
 				}
 				subtract_from_variable = { treasury = 4.0 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 249 }
 					check_variable = { num_of_factories < 370 }
 				}
 				subtract_from_variable = { treasury = 5.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 369 }
 					check_variable = { num_of_factories < 500 }
 				}
 				subtract_from_variable = { treasury = 7.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 499 }
 				}
 				subtract_from_variable = { treasury = 10.0 }
 			}
 		}
-		
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove promote_outlook_decision_support_emerging_parties"
 			set_failsafe_values = yes
-			recalculate_party = yes 
+			recalculate_party = yes
 		}
-		
+
 		ai_will_do = {
 			factor = 0
 		}
 	}
-	
+
 	promote_outlook_decision_support_the_non_aligned_parties = {
-	
+
 		icon = eng_propaganda_campaigns
 
 		days_remove = 90
 		days_re_enable = 30
 
-		modifier = { 
+		modifier = {
 			neutrality_drift = 0.1
 			political_power_factor = -0.25
 		}
-		
+
 		custom_cost_trigger = {
 			always = yes
 		}
@@ -5287,122 +5477,122 @@ generic_coalition_politics_desicions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision promote_outlook_decision_support_the_non_aligned_parties"
-			
+
 			custom_effect_tooltip = treasury_loss_2_bil_TT
-			
+
 			if = { limit = { check_variable = { num_of_factories < 4 } }
 				subtract_from_variable = { treasury = 0.05 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 3 }
 					check_variable = { num_of_factories < 8 }
 				}
 				subtract_from_variable = { treasury = 0.1 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 7 }
 					check_variable = { num_of_factories < 16 }
 				}
 				subtract_from_variable = { treasury = 0.2 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 15 }
 					check_variable = { num_of_factories < 26 }
 				}
 				subtract_from_variable = { treasury = 0.35 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 25 }
 					check_variable = { num_of_factories < 39 }
 				}
 				subtract_from_variable = { treasury = 0.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 38 }
 					check_variable = { num_of_factories < 54 }
 				}
 				subtract_from_variable = { treasury = 0.75 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 53 }
 					check_variable = { num_of_factories < 82 }
 				}
 				subtract_from_variable = { treasury = 1.0 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 81 }
 					check_variable = { num_of_factories < 120 }
 				}
 				subtract_from_variable = { treasury = 1.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 119 }
 					check_variable = { num_of_factories < 164 }
 				}
 				subtract_from_variable = { treasury = 2.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 163 }
 					check_variable = { num_of_factories < 250 }
 				}
 				subtract_from_variable = { treasury = 4.0 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 249 }
 					check_variable = { num_of_factories < 370 }
 				}
 				subtract_from_variable = { treasury = 5.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 369 }
 					check_variable = { num_of_factories < 500 }
 				}
 				subtract_from_variable = { treasury = 7.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 499 }
 				}
 				subtract_from_variable = { treasury = 10.0 }
 			}
 		}
-		
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove promote_outlook_decision_support_the_non_aligned_parties"
 			set_failsafe_values = yes
-			recalculate_party = yes 
+			recalculate_party = yes
 		}
-		
+
 		ai_will_do = {
 			factor = 0
 		}
 	}
-	
+
 	promote_outlook_decision_support_the_nationalists = {
-	
+
 		icon = eng_propaganda_campaigns
 
 		is_good = no
 		days_remove = 90
 		days_re_enable = 30
 		fire_only_once = no
-		
-		modifier = { 
+
+		modifier = {
 			nationalist_drift = 0.1
-			political_power_factor = -0.25 
+			political_power_factor = -0.25
 		}
-		
+
 		custom_cost_trigger = {
 			always = yes
 		}
@@ -5410,115 +5600,115 @@ generic_coalition_politics_desicions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision promote_outlook_decision_support_the_nationalists"
-			
+
 			custom_effect_tooltip = treasury_loss_2_bil_TT
-			
+
 			if = { limit = { check_variable = { num_of_factories < 4 } }
 				subtract_from_variable = { treasury = 0.05 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 3 }
 					check_variable = { num_of_factories < 8 }
 				}
 				subtract_from_variable = { treasury = 0.1 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 7 }
 					check_variable = { num_of_factories < 16 }
 				}
 				subtract_from_variable = { treasury = 0.2 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 15 }
 					check_variable = { num_of_factories < 26 }
 				}
 				subtract_from_variable = { treasury = 0.35 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 25 }
 					check_variable = { num_of_factories < 39 }
 				}
 				subtract_from_variable = { treasury = 0.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 38 }
 					check_variable = { num_of_factories < 54 }
 				}
 				subtract_from_variable = { treasury = 0.75 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 53 }
 					check_variable = { num_of_factories < 82 }
 				}
 				subtract_from_variable = { treasury = 1.0 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 81 }
 					check_variable = { num_of_factories < 120 }
 				}
 				subtract_from_variable = { treasury = 1.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 119 }
 					check_variable = { num_of_factories < 164 }
 				}
 				subtract_from_variable = { treasury = 2.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 163 }
 					check_variable = { num_of_factories < 250 }
 				}
 				subtract_from_variable = { treasury = 4.0 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 249 }
 					check_variable = { num_of_factories < 370 }
 				}
 				subtract_from_variable = { treasury = 5.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 369 }
 					check_variable = { num_of_factories < 500 }
 				}
 				subtract_from_variable = { treasury = 7.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 499 }
 				}
 				subtract_from_variable = { treasury = 10.0 }
 			}
 		}
-		
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove promote_outlook_decision_support_the_nationalists"
 			set_failsafe_values = yes
-			recalculate_party = yes 
+			recalculate_party = yes
 		}
-		
+
 		ai_will_do = {
 			factor = 0
 		}
 	}
-	
+
 	promote_outlook_decision_support_the_salafists = {
-	
+
 		icon = eng_propaganda_campaigns
 
 		days_remove = 90
 		days_re_enable = 30
-		
+
 		allowed = {
 			OR = {
 				is_middle_eastern_nation = yes
@@ -5575,12 +5765,12 @@ generic_coalition_politics_desicions = {
 				}
 			}
 		}
-		
-		modifier = { 
+
+		modifier = {
 			fascism_drift = 0.1
-			political_power_factor = -0.25 
+			political_power_factor = -0.25
 		}
-		
+
 		custom_cost_trigger = {
 			always = yes
 		}
@@ -5588,103 +5778,103 @@ generic_coalition_politics_desicions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision promote_outlook_decision_support_the_salafists"
-			
+
 			custom_effect_tooltip = treasury_loss_2_bil_TT
-			
+
 			if = { limit = { check_variable = { num_of_factories < 4 } }
 				subtract_from_variable = { treasury = 0.05 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 3 }
 					check_variable = { num_of_factories < 8 }
 				}
 				subtract_from_variable = { treasury = 0.1 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 7 }
 					check_variable = { num_of_factories < 16 }
 				}
 				subtract_from_variable = { treasury = 0.2 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 15 }
 					check_variable = { num_of_factories < 26 }
 				}
 				subtract_from_variable = { treasury = 0.35 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 25 }
 					check_variable = { num_of_factories < 39 }
 				}
 				subtract_from_variable = { treasury = 0.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 38 }
 					check_variable = { num_of_factories < 54 }
 				}
 				subtract_from_variable = { treasury = 0.75 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 53 }
 					check_variable = { num_of_factories < 82 }
 				}
 				subtract_from_variable = { treasury = 1.0 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 81 }
 					check_variable = { num_of_factories < 120 }
 				}
 				subtract_from_variable = { treasury = 1.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 119 }
 					check_variable = { num_of_factories < 164 }
 				}
 				subtract_from_variable = { treasury = 2.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 163 }
 					check_variable = { num_of_factories < 250 }
 				}
 				subtract_from_variable = { treasury = 4.0 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 249 }
 					check_variable = { num_of_factories < 370 }
 				}
 				subtract_from_variable = { treasury = 5.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 369 }
 					check_variable = { num_of_factories < 500 }
 				}
 				subtract_from_variable = { treasury = 7.5 }
 			}
-			if = { 
-				limit = { 
+			if = {
+				limit = {
 					check_variable = { num_of_factories > 499 }
 				}
 				subtract_from_variable = { treasury = 10.0 }
 			}
 		}
-		
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove promote_outlook_decision_support_the_salafists"
 			set_failsafe_values = yes
-			recalculate_party = yes 
+			recalculate_party = yes
 		}
-		
+
 		ai_will_do = {
 			factor = 0
 		}

@@ -1,0 +1,4136 @@
+gulf_society = {
+	GCC_crack_down_on_muslim_broterhood = {
+
+		icon = oppression
+
+		available = {
+		}
+
+		fire_only_once = yes
+
+		ai_will_do = {
+			factor = 0
+		}
+
+		visible = {
+			NOT = {
+				has_idea = muslim_brotherhood_crackdown
+			}
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GEN_crack_down_on_muslim_broterhood"
+			add_ideas = muslim_brotherhood_crackdown
+		}
+	}
+
+	GCC_stop_crackdowns = {
+
+		icon = generic_political_discourse
+
+		available = {
+			has_idea = muslim_brotherhood_crackdown
+		}
+
+		fire_only_once = yes
+
+		ai_will_do = {
+			factor = 0
+		}
+
+		visible = {
+			has_idea = muslim_brotherhood_crackdown
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GEN_stop_crackdowns"
+			remove_ideas = muslim_brotherhood_crackdown
+			hidden_effect = {
+				every_other_country = { country_event = { id = brotherhood.4 }}
+			}
+		}
+	}
+
+	GCC_ban_al_jazeera = {
+
+		icon = oppression
+
+		available = {
+			has_idea = al_jazeera_allowed
+		}
+
+		fire_only_once = yes
+
+		ai_will_do = {
+			factor = 0
+		}
+
+		visible = {
+			has_idea = al_jazeera_allowed
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GEN_ban_al_jazeera"
+		QAT = { add_opinion_modifier = { target = ROOT modifier = GEN_banned_al_jazeera } }
+		add_political_power = -25
+			swap_ideas = {
+				remove_idea = al_jazeera_allowed
+				add_idea = al_jazeera_banned
+			}
+		}
+	}
+
+	GCC_allow_al_jazeera = {
+
+		icon = generic_civil_support
+
+		available = {
+			has_idea = al_jazeera_banned
+		}
+
+		fire_only_once = yes
+
+		ai_will_do = {
+			factor = 0
+		}
+
+		visible = {
+			has_idea = al_jazeera_banned
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_allow_al_jazeera"
+			QAT = { add_opinion_modifier = { target = ROOT modifier = GEN_allowed_al_jazeera } }
+			swap_ideas = {
+				remove_idea = al_jazeera_banned
+				add_idea = al_jazeera_allowed
+			}
+		}
+	}
+
+	GCC_remove_saudi_aid = {
+
+		icon = generic_break_treaty
+
+		name = GEN_remove_saudi_aid
+
+		available = {
+			has_idea = saudi_aid
+		}
+
+		fire_only_once = yes
+
+		ai_will_do = {
+			factor = 0
+		}
+
+		visible = {
+			has_idea = saudi_aid
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GEN_remove_saudi_aid"
+			add_stability = -0.05
+			remove_ideas = saudi_aid
+			custom_effect_tooltip = conservatism_government_decrease_5_tt
+			subtract_from_variable = { social_conservatism_government = 5 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			SAU = { add_opinion_modifier = { target = ROOT modifier = GEN_banned_saudi_mosques } }
+		}
+	}
+
+	GCC_subsidize_western_culture = {
+
+		icon = GFX_decision_ger_mefo_bills
+
+		available = {
+			no_jihadist_government = yes
+			custom_trigger_tooltip = {
+				tooltip = conservatism_government_more_0_tt
+				check_variable = { social_conservatism_government > 0 }
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.4 }
+		}
+
+		custom_cost_text = cost_1_5
+
+		days_remove = 30
+
+		complete_effect = {
+			subtract_from_variable = { treasury = 1.5 }
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = conservatism_government_decrease_1_tt
+			subtract_from_variable = { social_conservatism_government = 1 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.01
+			}
+			recalculate_party = yes
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_subsidize_western_culture"
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_subsidize_salafism = {
+
+		icon = GFX_decision_ger_mefo_bills
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_government_less_100_tt
+				check_variable = { social_conservatism_government < 100 }
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.4 }
+		}
+
+		custom_cost_text = cost_1_5
+
+		days_remove = 30
+
+		complete_effect = {
+			subtract_from_variable = { treasury = 1.5 }
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = conservatism_government_increase_1_tt
+			add_to_variable = { social_conservatism_government = 1 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.01
+			}
+			recalculate_party = yes
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_subsidize_salafism"
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_encourage_female_representation = {
+
+		visible = {
+			if = {
+				limit = {
+					OR = {
+						tag = BHR
+						tag = KUW
+						tag = OMA
+						tag = QAT
+						tag = SAU
+						tag = UAE
+					}
+				}
+				has_completed_focus = GCC_weaken_the_mutaween
+				has_completed_focus = GCC_women_in_politics
+			}
+		}
+
+		icon = generic_civil_support
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_government_more_0_tt
+				check_variable = { social_conservatism_government > 0 }
+			}
+			no_jihadist_government = yes
+		}
+
+		cost = 25
+
+		days_remove = 30
+
+		days_re_enable = 90
+
+		remove_effect = {
+			custom_effect_tooltip = conservatism_government_decrease_2_tt
+			subtract_from_variable = { social_conservatism_government = 2 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_encourage_female_representation"
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				OR = {
+					has_socialist_government = yes
+					has_liberal_government = yes
+				}
+			}
+		}
+	}
+
+	GCC_discourage_female_representation = {
+
+		visible = {
+			if = {
+				limit = {
+					OR = {
+						tag = BHR
+						tag = KUW
+						tag = OMA
+						tag = QAT
+						tag = SAU
+						tag = UAE
+					}
+				}
+				has_completed_focus = GCC_empower_the_mutaween
+				has_completed_focus = GCC_women_in_politics
+			}
+		}
+
+		icon = oppression
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_government_less_100_tt
+				check_variable = { social_conservatism_government < 100 }
+			}
+		}
+
+		cost = 25
+
+		days_remove = 30
+
+		days_re_enable = 90
+
+		remove_effect = {
+			custom_effect_tooltip = conservatism_government_increase_2_tt
+			add_to_variable = { social_conservatism_government = 2 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_encourage_female_representation"
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_expand_female_employment = {
+
+		visible = {
+			if = {
+				limit = {
+					OR = {
+						tag = BHR
+						tag = KUW
+						tag = OMA
+						tag = QAT
+						tag = SAU
+						tag = UAE
+					}
+				}
+				has_completed_focus = GCC_weaken_the_mutaween
+				has_completed_focus = GCC_women_in_the_economy
+			}
+			no_jihadist_government = yes
+		}
+
+		icon = generic_civil_support
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_government_more_0_tt
+				check_variable = { social_conservatism_government > 0 }
+			}
+		}
+
+		cost = 25
+
+		days_remove = 30
+
+		days_re_enable = 90
+
+		remove_effect = {
+			custom_effect_tooltip = conservatism_government_decrease_2_tt
+			subtract_from_variable = { social_conservatism_government = 2 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_expand_female_employment"
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				OR = {
+					has_socialist_government = yes
+					has_liberal_government = yes
+				}
+			}
+		}
+	}
+
+	GCC_limit_female_employment = {
+
+		visible = {
+			if = {
+				limit = {
+					OR = {
+						tag = BHR
+						tag = KUW
+						tag = OMA
+						tag = QAT
+						tag = SAU
+						tag = UAE
+					}
+				}
+				has_completed_focus = GCC_empower_the_mutaween
+				has_completed_focus = GCC_women_in_the_economy
+			}
+		}
+
+		icon = oppression
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_government_less_100_tt
+				check_variable = { social_conservatism_government < 100 }
+			}
+		}
+
+		cost = 25
+
+		days_remove = 30
+
+		days_re_enable = 90
+
+		remove_effect = {
+			custom_effect_tooltip = conservatism_government_increase_2_tt
+			add_to_variable = { social_conservatism_government = 2 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_limit_female_employment"
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_legalize_alcohol_in_hotels_and_clubs = {
+
+		icon = eng_trade_unions_support
+
+		visible = {
+			NOT = { has_country_flag = limited_alcohol }
+		}
+
+		available = {
+			OR = {
+				has_completed_focus = GCC_reduce_vice_prevention
+				custom_trigger_tooltip = {
+					tooltip = conservatism_society_less_60_tt
+					check_variable = { social_conservatism_society < 60 }
+				}
+			}
+			no_jihadist_government = yes
+		}
+
+		cost = 50
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_decrease_2_tt
+			subtract_from_variable = { social_conservatism_government = 2 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			set_country_flag = limited_alcohol
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_legalize_alcohol_in_hotels_and_clubs"
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				OR = {
+					has_socialist_government = yes
+					has_liberal_government = yes
+				}
+			}
+		}
+	}
+
+	GCC_reverse_limited_alcohol_legalization = {
+
+		visible = {
+			has_country_flag = limited_alcohol
+		}
+
+		icon = eng_trade_unions_support
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_society_more_60_tt
+				check_variable = { social_conservatism_society > 60 }
+			}
+		}
+
+		cost = 50
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_increase_2_tt
+			add_to_variable = { social_conservatism_government = 2 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			clr_country_flag = limited_alcohol
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_reverse_limited_alcohol_legalization"
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_legalize_alcohol = {
+
+		visible = {
+			NOT = { has_country_flag = alcohol }
+		}
+
+		icon = eng_trade_unions_support
+
+		available = {
+			OR = {
+				has_completed_focus = GCC_westernization_policies
+				custom_trigger_tooltip = {
+					tooltip = conservatism_society_less_50_tt
+					check_variable = { social_conservatism_society < 50 }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = legalized_alcohol_private_tt
+				has_country_flag = limited_alcohol
+			}
+			no_jihadist_government = yes
+		}
+
+		cost = 100
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_decrease_5_tt
+			subtract_from_variable = { social_conservatism_government = 5 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			set_country_flag = alcohol
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_legalize_alcohol"
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				OR = {
+					has_socialist_government = yes
+					has_liberal_government = yes
+				}
+			}
+		}
+	}
+
+	GCC_ban_alcohol = {
+
+		visible = {
+			has_country_flag = alcohol
+		}
+
+		icon = eng_trade_unions_support
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_society_more_50_tt
+				check_variable = { social_conservatism_society > 50 }
+			}
+		}
+
+		cost = 100
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_increase_5_tt
+			add_to_variable = { social_conservatism_government = 5 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			clr_country_flag = alcohol
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_ban_alcohol"
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_relax_dress_code = {
+
+		visible = {
+			NOT = { has_country_flag = relaxed_dress_code }
+		}
+
+		icon = eng_trade_unions_support
+
+		available = {
+			OR = {
+				has_completed_focus = GCC_reduce_vice_prevention
+				custom_trigger_tooltip = {
+					tooltip = conservatism_society_less_50_tt
+					check_variable = { social_conservatism_society < 50 }
+				}
+			}
+			no_jihadist_government = yes
+		}
+
+		cost = 50
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_decrease_5_tt
+			subtract_from_variable = { social_conservatism_government = 5 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			set_country_flag = relaxed_dress_code
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_relax_dress_code"
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				OR = {
+					has_socialist_government = yes
+					has_liberal_government = yes
+				}
+			}
+		}
+	}
+
+	GCC_reimpose_dress_code = {
+
+		visible = {
+			has_country_flag = relaxed_dress_code
+		}
+
+		icon = eng_trade_unions_support
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_society_more_50_tt
+				check_variable = { social_conservatism_society > 50 }
+			}
+		}
+
+		cost = 50
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_increase_5_tt
+			add_to_variable = { social_conservatism_government = 5 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			clr_country_flag = relaxed_dress_code
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_reimpose_dress_code"
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_ban_burqa = {
+
+		visible = {
+			NOT = { has_country_flag = banned_burqa }
+		}
+
+		icon = eng_trade_unions_support
+
+		available = {
+			OR = {
+				has_completed_focus = GCC_westernization_policies
+				custom_trigger_tooltip = {
+					tooltip = conservatism_society_less_40_tt
+					check_variable = { social_conservatism_society < 40 }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = relaxed_restrictions_tt
+				has_country_flag = relaxed_dress_code
+			}
+			no_jihadist_government = yes
+		}
+
+		cost = 100
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_decrease_10_tt
+			subtract_from_variable = { social_conservatism_government = 10 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			set_country_flag = banned_burqa
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_ban_burqa"
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				OR = {
+					has_socialist_government = yes
+					has_liberal_government = yes
+				}
+			}
+		}
+	}
+
+	GCC_unban_burqa = {
+
+		visible = {
+			has_country_flag = banned_burqa
+		}
+
+		icon = eng_trade_unions_support
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_society_more_40_tt
+				check_variable = { social_conservatism_society > 40 }
+			}
+		}
+
+		cost = 100
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_increase_10_tt
+			add_to_variable = { social_conservatism_government = 10 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			clr_country_flag = banned_burqa
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_unban_burqa"
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_head_scarves = {
+
+		visible = {
+			NOT = { has_country_flag = banned_head_scarf }
+		}
+
+		icon = eng_trade_unions_support
+
+		available = {
+			OR = {
+				has_completed_focus = GCC_westernization_policies
+				custom_trigger_tooltip = {
+					tooltip = conservatism_society_less_30_tt
+					check_variable = { social_conservatism_society < 30 }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = banned_burqa_tt
+				has_country_flag = banned_burqa
+			}
+			no_jihadist_government = yes
+		}
+
+		cost = 150
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_decrease_15_tt
+			subtract_from_variable = { social_conservatism_government = 15 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			set_country_flag = banned_head_scarf
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_head_scarf"
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				OR = {
+					has_socialist_government = yes
+					has_liberal_government = yes
+				}
+			}
+		}
+	}
+
+	GCC_unban_head_scarves = {
+
+		visible = {
+			has_country_flag = banned_head_scarf
+		}
+
+		icon = eng_trade_unions_support
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_society_more_30_tt
+				check_variable = { social_conservatism_society > 30 }
+			}
+		}
+
+		cost = 150
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_increase_15_tt
+			add_to_variable = { social_conservatism_government = 15 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			clr_country_flag = banned_head_scarf
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_unban_head_scarves"
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_decriminalize_same_sex_relations = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			NOT = { has_country_flag = same_sex_decriminalized }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_society_less_30_tt
+				check_variable = { social_conservatism_society < 30 }
+			}
+			no_jihadist_government = yes
+		}
+
+		cost = 150
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_decrease_15_tt
+			subtract_from_variable = { social_conservatism_government = 15 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			set_country_flag = same_sex_decriminalized
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_decriminalize_same_sex_relations"
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				OR = {
+					has_socialist_government = yes
+					has_liberal_government = yes
+				}
+			}
+		}
+	}
+
+	GCC_recriminalize_same_sex_relations = {
+
+		icon = oppression
+
+		visible = {
+			has_country_flag = same_sex_decriminalized
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_society_more_30_tt
+				check_variable = { social_conservatism_society > 30 }
+			}
+		}
+
+		cost = 150
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_increase_15_tt
+			add_to_variable = { social_conservatism_government = 15 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			clr_country_flag = same_sex_decriminalized
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_recriminalize_same_sex_relations"
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_secularize_the_state = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			NOT = { has_country_flag = secularized }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = conservatism_society_less_20_tt
+				check_variable = { social_conservatism_society < 20 }
+			}
+			NOT = {
+				has_idea = The_Ulema
+				has_idea = wahabi_ulema
+			}
+			no_jihadist_government = yes
+		}
+
+		cost = 150
+
+		complete_effect = {
+			custom_effect_tooltip = conservatism_government_decrease_20_tt
+			subtract_from_variable = { social_conservatism_government = 20 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+			set_country_flag = secularized
+			if = {
+				limit = { has_idea = sunni }
+				swap_ideas = {
+					remove_idea = sunni
+					add_idea = pluralist
+				}
+			}
+			else_if = {
+				limit = { has_idea = ibadi }
+				swap_ideas = {
+					remove_idea = ibadi
+					add_idea = pluralist
+				}
+			}
+			else_if = {
+				limit = { has_idea = shia }
+				swap_ideas = {
+					remove_idea = shia
+					add_idea = pluralist
+				}
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision GCC_secularize_the_state"
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+}
+
+shia_decisions = {
+	encourage_shia_immigration = {
+
+		icon = GFX_decision_infiltrate_state
+
+		visible = {
+			check_variable = { shia_population < 100 }
+		}
+
+		available = {
+			NOT = { has_completed_focus = GCC_impose_quotas }
+		}
+
+		cost = 50
+
+		days_remove = 15
+
+		remove_effect = {
+			custom_effect_tooltip = shia_population_increase_tt
+			add_to_variable = { shia_population = 1 }
+			clamp_shia = yes
+			decrease_popularity_1 = yes
+			if = {
+				limit = {
+					OR = {
+						original_tag = BHR
+						original_tag = QAT
+					}
+				}
+				capital_scope = {
+					add_manpower = 20000
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						original_tag = KUW
+						original_tag = OMA
+					}
+				}
+				capital_scope = {
+					add_manpower = 50000
+				}
+			}
+			if = {
+				limit = {
+					original_tag = UAE
+				}
+				capital_scope = {
+					add_manpower = 100000
+				}
+			}
+			if = {
+				limit = {
+					original_tag = SAU
+				}
+				capital_scope = {
+					add_manpower = 300000
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				OR = {
+					has_game_rule = {
+						rule = BHR_AI_BEHAVIOR
+						option = DAY_OF_RAGE
+					}
+					has_country_flag = BHR_DAY_OF_RAGE_FOCUS_PATH
+					has_game_rule = {
+						rule = SAU_AI_BEHAVIOR
+						option = SHIA_REVIVAL
+					}
+					has_country_flag = SAU_SHIA_REVIVAL_FOCUS_PATH
+				}
+			}
+		}
+	}
+
+	encourage_sunni_immigration = {
+
+		icon = GFX_decision_infiltrate_state
+
+		visible = {
+			check_variable = { shia_population > 0 }
+		}
+
+		available = {
+			NOT = { has_completed_focus = GCC_impose_quotas }
+		}
+
+		cost = 50
+
+		days_remove = 15
+
+		remove_effect = {
+			custom_effect_tooltip = shia_population_decrease_tt
+			subtract_from_variable = { shia_population = 1 }
+			clamp_shia = yes
+			decrease_popularity_1 = yes
+			if = {
+				limit = {
+					OR = {
+						original_tag = BHR
+						original_tag = QAT
+					}
+				}
+				capital_scope = {
+					add_manpower = 20000
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						original_tag = KUW
+						original_tag = OMA
+					}
+				}
+				capital_scope = {
+					add_manpower = 50000
+				}
+			}
+			if = {
+				limit = {
+					original_tag = UAE
+				}
+				capital_scope = {
+					add_manpower = 100000
+				}
+			}
+			if = {
+				limit = {
+					original_tag = SAU
+				}
+				capital_scope = {
+					add_manpower = 300000
+				}
+			}
+		}
+	}
+
+	deport_foreign_shia = {
+
+		icon = GFX_decision_generic_break_treaty
+
+		visible = {
+			check_variable = { shia_population > 0 }
+		}
+
+		available = {
+		}
+
+		cost = 50
+
+		days_remove = 15
+
+		remove_effect = {
+			custom_effect_tooltip = shia_population_decrease_tt
+			subtract_from_variable = { shia_population = 1 }
+			clamp_shia = yes
+			add_1_popularity = yes
+			if = {
+				limit = {
+					OR = {
+						original_tag = BHR
+						original_tag = QAT
+					}
+				}
+				capital_scope = {
+					add_manpower = -20000
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						original_tag = KUW
+						original_tag = OMA
+					}
+				}
+				capital_scope = {
+					add_manpower = -50000
+				}
+			}
+			if = {
+				limit = {
+					original_tag = UAE
+				}
+				capital_scope = {
+					add_manpower = -100000
+				}
+			}
+			if = {
+				limit = {
+					original_tag = SAU
+				}
+				capital_scope = {
+					add_manpower = -300000
+				}
+			}
+		}
+	}
+
+	deport_foreign_sunnis = {
+
+		icon = GFX_decision_generic_break_treaty
+
+		visible = {
+			check_variable = { shia_population < 100 }
+		}
+
+		available = {
+		}
+
+		cost = 50
+
+		days_remove = 15
+
+		remove_effect = {
+			custom_effect_tooltip = shia_population_increase_tt
+			add_to_variable = { shia_population = 1 }
+			clamp_shia = yes
+			add_1_popularity = yes
+			if = {
+				limit = {
+					OR = {
+						original_tag = BHR
+						original_tag = QAT
+					}
+				}
+				capital_scope = {
+					add_manpower = -20000
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						original_tag = KUW
+						original_tag = OMA
+					}
+				}
+				capital_scope = {
+					add_manpower = -50000
+				}
+			}
+			if = {
+				limit = {
+					original_tag = UAE
+				}
+				capital_scope = {
+					add_manpower = -100000
+				}
+			}
+			if = {
+				limit = {
+					original_tag = SAU
+				}
+				capital_scope = {
+					add_manpower = -300000
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				OR = {
+					has_game_rule = {
+						rule = BHR_AI_BEHAVIOR
+						option = DAY_OF_RAGE
+					}
+					has_country_flag = BHR_DAY_OF_RAGE_FOCUS_PATH
+					has_game_rule = {
+						rule = SAU_AI_BEHAVIOR
+						option = SHIA_REVIVAL
+					}
+					has_country_flag = SAU_SHIA_REVIVAL_FOCUS_PATH
+				}
+			}
+		}
+	}
+}
+
+gcc_decisions = {
+
+	GCC_campaign_for_unity = {
+
+		icon = GFX_decision_generic_form_nation
+
+		visible = { has_idea = idea_gcc_member_state }
+
+		cost = 50
+
+		days_remove = 30
+
+		remove_effect = {
+			custom_effect_tooltip = GCC_unity_increase_1_tt
+			add_to_variable = { global.gcc_unity = 1 }
+			clamp_variable = {
+				var = global.gcc_unity
+				min = 0
+				max = 100
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+
+	}
+
+	GCC_offer_joint_exercises_specific = {
+
+		icon = GFX_decision_generic_tank
+
+		visible = {
+			has_idea = idea_gcc_member_state
+			NOT = { has_global_flag = GCC_joint_exercises_offered }
+		}
+
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = gcc_unity_greater_20_tt
+				check_variable = { global.gcc_unity > 20 }
+			}
+		}
+
+		cost = 50
+
+		days_re_enable = 365
+
+		complete_effect = {
+			set_global_flag = GCC_joint_exercises_offered
+			set_country_flag = GCC_joint_exercises_accepted
+			every_other_country = {
+				limit = {
+					has_idea = idea_gcc_member_state
+				}
+				country_event = {
+					id = gcc.26
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GCC_start_joint_exercises_specific = {
+
+		icon = GFX_decision_generic_tank
+
+		visible = {
+			has_idea = idea_gcc_member_state
+			has_global_flag = GCC_joint_exercises_offered
+		}
+
+		available = {
+			has_war = no
+		}
+
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+
+		complete_effect = {
+			add_command_power = -20
+			every_country = {
+				limit = { has_idea = idea_gcc_member_state has_country_flag = GCC_joint_exercises_accepted }
+				add_timed_idea = {
+					idea = GCC_joint_drill
+					days = 30
+				}
+				clr_country_flag = GCC_joint_exercises_accepted
+			}
+		}
+
+		days_remove = 30
+
+		remove_effect = {
+			if = {
+				limit = {
+					check_variable = { global.gcc_exercise > 0 }
+					check_variable = { global.gcc_exercise < 3 }
+				}
+				custom_effect_tooltip = GCC_unity_increase_2_tt
+				add_to_variable = { global.gcc_unity = 2 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { global.gcc_exercise > 2 }
+					check_variable = { global.gcc_exercise < 5 }
+				}
+				custom_effect_tooltip = GCC_unity_increase_5_tt
+				add_to_variable = { global.gcc_unity = 5 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { global.gcc_exercise > 4 }
+				}
+				custom_effect_tooltip = GCC_unity_increase_10_tt
+				add_to_variable = { global.gcc_unity = 10 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			clr_global_flag = GCC_joint_exercises_offered
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+
+	}
+
+	GCC_request_bloc_arms_sales = {
+
+		icon = GFX_decision_ger_military_buildup
+
+		visible = {
+			has_idea = idea_gcc_member_state
+			OR = {
+				AND = {
+					NOT = {
+						has_completed_focus = GCC_increase_autonomy
+						has_completed_focus = GCC_new_partners
+					}
+				}
+				has_global_flag = gcc_pro_iranian
+				has_global_flag = gcc_pro_turkish
+				has_global_flag = gcc_pro_russian
+				has_global_flag = gcc_pro_indian
+				has_global_flag = gcc_pro_pakistani
+			}
+		}
+
+		available = {
+			NOT = { has_completed_focus = GCC_increase_autonomy }
+			custom_trigger_tooltip = {
+				tooltip = gcc_dominant_member_tt
+				has_country_flag = gcc_dominant_member
+			}
+			custom_trigger_tooltip = {
+				tooltip = gcc_unity_greater_40_tt
+				check_variable = { global.gcc_unity > 40 }
+			}
+		}
+
+		cost = 50
+
+		days_remove = 60
+
+		days_re_enable = 365
+
+		remove_effect = {
+			if = {
+				limit = {
+					NOT = {
+						has_completed_focus = GCC_increase_autonomy
+						has_completed_focus = GCC_new_partners
+					}
+				}
+				USA = { country_event = { id = gcc.22 }}
+			}
+			if = {
+				limit = {
+					has_global_flag = gcc_pro_iranian
+				}
+				PER = { country_event = { id = gcc.22 }}
+			}
+			if = {
+				limit = {
+					has_global_flag = gcc_pro_turkish
+				}
+				TUR = { country_event = { id = gcc.22 }}
+			}
+			if = {
+				limit = {
+					has_global_flag = gcc_pro_russian
+				}
+				SOV = { country_event = { id = gcc.22 }}
+			}
+			if = {
+				limit = {
+					has_global_flag = gcc_pro_indian
+				}
+				RAJ = { country_event = { id = gcc.22 }}
+			}
+			if = {
+				limit = {
+					has_global_flag = gcc_pro_pakistani
+				}
+				PAK = { country_event = { id = gcc.22 }}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	GCC_expel = {
+
+		icon = GFX_decision_generic_break_treaty
+
+		target_array = global.gcc_members
+
+		target_trigger = {
+			country_exists = FROM
+		}
+
+		available = {
+			FROM = {
+				has_idea = idea_gcc_member_state
+				OR = {
+					has_government = nationalist
+					has_government = communism
+					jihadist_government = yes
+					NOT = { has_idea = saudi_royal_family }
+				}
+			}
+		}
+
+		visible = {
+			has_idea = idea_gcc_member_state
+			NOT = { any_country = { has_country_flag = being_expelled }}
+			FROM = {
+				NOT = { has_country_flag = gcc_membership_secure }
+				NOT = { has_country_flag = being_expelled }
+				NOT = { has_country_flag = recently_expelled_from_gcc }
+			}
+		}
+
+		cost = 50
+
+		complete_effect = {
+			FROM = { set_country_flag = being_expelled }
+			every_country = { clr_country_flag = recently_expelled_from_gcc }
+			every_other_country = {
+				limit = { has_idea = idea_gcc_member_state NOT = { tag = FROM }}
+				country_event = { id = gcc.18 }
+			}
+			set_country_flag = supports_expulsion_@FROM
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+		}
+	}
+
+	GCC_leadership = {
+
+		icon = GFX_decision_generic_form_nation
+
+		target_array = global.gcc_members
+
+		target_trigger = {
+			country_exists = FROM
+			FROM = {
+				has_country_flag = gcc_dominant_member
+			}
+		}
+
+		visible = {
+			has_idea = idea_gcc_member_state
+		}
+
+		available = {
+			ic_ratio = {
+				tag = FROM
+				ratio > 1
+			}
+			if = {
+				limit = { NOT = { tag = BHR } BHR = { has_idea = idea_gcc_member_state NOT = { has_country_flag = gcc_dominant_member }}}
+				custom_trigger_tooltip = {
+					tooltip = greater_influence_BHR_tt
+					BHR = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = ROOT }
+							}
+							AND = {
+								check_variable = { influence_array^1 = ROOT }
+								NOT = { check_variable = { influence_array^0 = FROM } }
+							}
+							AND = {
+								check_variable = { influence_array^2 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^3 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^4 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^5 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^6 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^7 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+									check_variable = { influence_array^6 = FROM }
+								}
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { tag = EGY } EGY = { has_idea = idea_gcc_member_state NOT = { has_country_flag = gcc_dominant_member }}}
+				custom_trigger_tooltip = {
+					tooltip = greater_influence_EGY_tt
+					EGY = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = ROOT }
+							}
+							AND = {
+								check_variable = { influence_array^1 = ROOT }
+								NOT = { check_variable = { influence_array^0 = FROM } }
+							}
+							AND = {
+								check_variable = { influence_array^2 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^3 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^4 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^5 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^6 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^7 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+									check_variable = { influence_array^6 = FROM }
+								}
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { tag = IRQ } IRQ = { has_idea = idea_gcc_member_state NOT = { has_country_flag = gcc_dominant_member }}}
+				custom_trigger_tooltip = {
+					tooltip = greater_influence_IRQ_tt
+					IRQ = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = ROOT }
+							}
+							AND = {
+								check_variable = { influence_array^1 = ROOT }
+								NOT = { check_variable = { influence_array^0 = FROM } }
+							}
+							AND = {
+								check_variable = { influence_array^2 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^3 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^4 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^5 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^6 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^7 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+									check_variable = { influence_array^6 = FROM }
+								}
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { tag = JOR } JOR = { has_idea = idea_gcc_member_state NOT = { has_country_flag = gcc_dominant_member }}}
+				custom_trigger_tooltip = {
+					tooltip = greater_influence_JOR_tt
+					JOR = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = ROOT }
+							}
+							AND = {
+								check_variable = { influence_array^1 = ROOT }
+								NOT = { check_variable = { influence_array^0 = FROM } }
+							}
+							AND = {
+								check_variable = { influence_array^2 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^3 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^4 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^5 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^6 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^7 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+									check_variable = { influence_array^6 = FROM }
+								}
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { tag = KUW } KUW = { has_idea = idea_gcc_member_state NOT = { has_country_flag = gcc_dominant_member }}}
+				custom_trigger_tooltip = {
+					tooltip = greater_influence_KUW_tt
+					KUW = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = ROOT }
+							}
+							AND = {
+								check_variable = { influence_array^1 = ROOT }
+								NOT = { check_variable = { influence_array^0 = FROM } }
+							}
+							AND = {
+								check_variable = { influence_array^2 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^3 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^4 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^5 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^6 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^7 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+									check_variable = { influence_array^6 = FROM }
+								}
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { tag = MOR } MOR = { has_idea = idea_gcc_member_state NOT = { has_country_flag = gcc_dominant_member }}}
+				custom_trigger_tooltip = {
+					tooltip = greater_influence_MOR_tt
+					MOR = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = ROOT }
+							}
+							AND = {
+								check_variable = { influence_array^1 = ROOT }
+								NOT = { check_variable = { influence_array^0 = FROM } }
+							}
+							AND = {
+								check_variable = { influence_array^2 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^3 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^4 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^5 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^6 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^7 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+									check_variable = { influence_array^6 = FROM }
+								}
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { tag = OMA } OMA = { has_idea = idea_gcc_member_state NOT = { has_country_flag = gcc_dominant_member }}}
+				custom_trigger_tooltip = {
+					tooltip = greater_influence_OMA_tt
+					OMA = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = ROOT }
+							}
+							AND = {
+								check_variable = { influence_array^1 = ROOT }
+								NOT = { check_variable = { influence_array^0 = FROM } }
+							}
+							AND = {
+								check_variable = { influence_array^2 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^3 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^4 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^5 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^6 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^7 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+									check_variable = { influence_array^6 = FROM }
+								}
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { tag = QAT } QAT = { has_idea = idea_gcc_member_state NOT = { has_country_flag = gcc_dominant_member }}}
+				custom_trigger_tooltip = {
+					tooltip = greater_influence_QAT_tt
+					QAT = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = ROOT }
+							}
+							AND = {
+								check_variable = { influence_array^1 = ROOT }
+								NOT = { check_variable = { influence_array^0 = FROM } }
+							}
+							AND = {
+								check_variable = { influence_array^2 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^3 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^4 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^5 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^6 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^7 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+									check_variable = { influence_array^6 = FROM }
+								}
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { tag = SAU } SAU = { has_idea = idea_gcc_member_state NOT = { has_country_flag = gcc_dominant_member }}}
+				custom_trigger_tooltip = {
+					tooltip = greater_influence_SAU_tt
+					SAU = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = ROOT }
+							}
+							AND = {
+								check_variable = { influence_array^1 = ROOT }
+								NOT = { check_variable = { influence_array^0 = FROM } }
+							}
+							AND = {
+								check_variable = { influence_array^2 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^3 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^4 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^5 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^6 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^7 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+									check_variable = { influence_array^6 = FROM }
+								}
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { tag = UAE } UAE = { has_idea = idea_gcc_member_state NOT = { has_country_flag = gcc_dominant_member }}}
+				custom_trigger_tooltip = {
+					tooltip = greater_influence_UAE_tt
+					UAE = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = ROOT }
+							}
+							AND = {
+								check_variable = { influence_array^1 = ROOT }
+								NOT = { check_variable = { influence_array^0 = FROM } }
+							}
+							AND = {
+								check_variable = { influence_array^2 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^3 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^4 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^5 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^6 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^7 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+									check_variable = { influence_array^6 = FROM }
+								}
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { tag = YEM } YEM = { has_idea = idea_gcc_member_state NOT = { has_country_flag = gcc_dominant_member }}}
+				custom_trigger_tooltip = {
+					tooltip = greater_influence_YEM_tt
+					YEM = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = ROOT }
+							}
+							AND = {
+								check_variable = { influence_array^1 = ROOT }
+								NOT = { check_variable = { influence_array^0 = FROM } }
+							}
+							AND = {
+								check_variable = { influence_array^2 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^3 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^4 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^5 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^6 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+								}
+							}
+							AND = {
+								check_variable = { influence_array^7 = ROOT }
+								NOT = {
+									check_variable = { influence_array^0 = FROM }
+									check_variable = { influence_array^1 = FROM }
+									check_variable = { influence_array^2 = FROM }
+									check_variable = { influence_array^3 = FROM }
+									check_variable = { influence_array^4 = FROM }
+									check_variable = { influence_array^5 = FROM }
+									check_variable = { influence_array^6 = FROM }
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		cost = 200
+
+		complete_effect = {
+			FROM = { clr_country_flag = gcc_dominant_member }
+			set_country_flag = gcc_dominant_member
+			custom_effect_tooltip = become_gcc_dominant_member_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	GCC_blockade = {
+
+		icon = GFX_decision_generic_naval
+
+		target_array = global.gcc_members
+
+		target_trigger = {
+			country_exists = FROM
+			FROM = {
+				has_completed_focus = GCC_improve_relations_with_iran
+				NOT = { has_country_flag = accepted_blockade_demands }
+			}
+		}
+
+		visible = {
+			has_idea = idea_gcc_member_state
+			NOT = { any_country = { has_country_flag = blockade_@FROM } }
+			OR = {
+				AND = {
+					FROM = { tag = QAT }
+					tag = SAU
+					date > 2017.1.1
+				}
+				has_completed_focus = GCC_confront_iranian_partners
+			}
+		}
+
+		cost = 100
+
+		complete_effect = {
+			set_country_flag = initiated_blockade_@FROM
+			if = {
+				limit = { FROM = { original_tag = QAT } }
+				country_event = { id = SAU_GCC_CRISIS.0 }
+			}
+			if = {
+				limit = { FROM = { original_tag = BHR } }
+				country_event = { id = SAU_GCC_CRISIS.9 }
+			}
+			if = {
+				limit = { FROM = { original_tag = KUW } }
+				country_event = { id = SAU_GCC_CRISIS.14 }
+			}
+			if = {
+				limit = { FROM = { original_tag = OMA } }
+				country_event = { id = SAU_GCC_CRISIS.19 }
+			}
+			if = {
+				limit = { FROM = { original_tag = SAU } }
+				country_event = { id = SAU_GCC_CRISIS.24 }
+			}
+			if = {
+				limit = { FROM = { original_tag = UAE } }
+				country_event = { id = SAU_GCC_CRISIS.29 }
+			}
+			if = {
+				limit = {
+					FROM = { tag = QAT }
+					tag = SAU
+					is_in_array = { ruling_party = 10 }
+					has_country_leader = {
+						name = "Salman bin Abdulaziz Al-Saud"
+						ruling_only = yes
+					}
+					NOT = { has_country_flag = SAU_mbs_punished }
+				}
+				custom_effect_tooltip = MBS_strengthened_tt
+				add_to_variable = { mbs = 1 }
+			}
+			if = {
+				limit = {
+					has_idea = idea_gcc_member_state
+				}
+				custom_effect_tooltip = GCC_unity_decrease_25_tt
+				subtract_from_variable = { global.gcc_unity = 25 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	GCC_drop_the_blockade = {
+		icon = GFX_decision_generic_naval
+
+		target_array = global.gcc_members
+
+		target_trigger = {
+			country_exists = FROM
+			FROM = { has_country_flag = rejected_blockade_demands }
+		}
+
+		visible = {
+			has_country_flag = initiated_blockade_@FROM
+		}
+
+		cost = 50
+
+		complete_effect = {
+			clr_country_flag = blockade_@FROM
+			clr_country_flag = initiated_blockade_@FROM
+			every_country = {
+				limit = { has_country_flag = blockade_@FROM }
+				clr_country_flag = blockade_@FROM
+				remove_opinion_modifier = { target = FROM modifier = Blockade }
+				remove_opinion_modifier = { target = FROM modifier = Blockade_Trade }
+			}
+			if = {
+				limit = {
+					has_idea = idea_gcc_member_state
+				}
+				custom_effect_tooltip = GCC_unity_increase_25_tt
+				add_to_variable = { global.gcc_unity = 25 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			if = {
+				limit = {
+					FROM = { tag = QAT }
+					tag = SAU
+					is_in_array = { ruling_party = 10 }
+					has_country_leader = {
+						name = "Salman bin Abdulaziz Al-Saud"
+						ruling_only = yes
+					}
+				}
+				custom_effect_tooltip = MBS_weakened_tt
+				subtract_from_variable = { mbs = 1 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+		}
+	}
+
+	GCC_accept_blockade_demands = {
+		icon = GFX_decision_generic_political_discourse
+
+		visible = { has_country_flag = rejected_blockade_demands }
+
+		cost = 50
+
+		complete_effect = {
+			every_country = {
+				limit = { has_country_flag = blockade_@ROOT }
+				clr_country_flag = blockade_@ROOT
+				clr_country_flag = initiated_blockade_@ROOT
+				remove_opinion_modifier = { target = ROOT modifier = Blockade }
+				remove_opinion_modifier = { target = ROOT modifier = Blockade_Trade }
+			}
+			clr_country_flag = rejected_blockade_demands
+			set_country_flag = accepted_blockade_demands
+			if = {
+				limit = { tag = QAT }
+				news_event = { id = SAU_GCC_CRISIS.8 }
+				remove_ideas = al_jazeera
+				every_country = {
+					limit = { has_idea = al_jazeera_banned }
+					remove_ideas = al_jazeera_banned
+				}
+				every_country = {
+					limit = { has_idea = al_jazeera_allowed }
+					remove_ideas = al_jazeera_allowed
+				}
+			}
+			if = {
+				limit = { NOT = { tag = QAT } }
+				news_event = { id = SAU_GCC_CRISIS.13 }
+			}
+			if = {
+				limit = { gives_military_access_to = TUR }
+				TUR = {
+					diplomatic_relation = {
+						country = ROOT
+						relation = military_access
+						active = no
+					}
+				}
+			}
+			if = {
+				limit = { has_guaranteed = TUR }
+				diplomatic_relation = {
+					country = TUR
+					relation = guarantee
+					active = no
+				}
+			}
+			if = {
+				limit = { is_guaranteed_by = TUR }
+				TUR = {
+					diplomatic_relation = {
+						country = ROOT
+						relation = guarantee
+						active = no
+					}
+				}
+			}
+			if = {
+				limit = { is_in_faction_with = TUR }
+				leave_faction = yes
+			}
+			if = {
+				limit = { gives_military_access_to = PER }
+				PER = {
+					diplomatic_relation = {
+						country = ROOT
+						relation = military_access
+						active = no
+					}
+				}
+			}
+			if = {
+				limit = { has_guaranteed = PER }
+				diplomatic_relation = {
+					country = PER
+					relation = guarantee
+					active = no
+				}
+			}
+			if = {
+				limit = { is_guaranteed_by = PER }
+				PER = {
+					diplomatic_relation = {
+						country = ROOT
+						relation = guarantee
+						active = no
+					}
+				}
+			}
+			if = {
+				limit = { is_in_faction_with = PER }
+				leave_faction = yes
+			}
+			if = {
+				limit = {
+					has_idea = idea_gcc_member_state
+				}
+				custom_effect_tooltip = GCC_unity_increase_25_tt
+				add_to_variable = { global.gcc_unity = 25 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+		}
+	}
+
+	GCC_support_gcc_membership = {
+		icon = GFX_decision_generic_political_discourse
+
+		target_array = global.possible_gcc_members
+
+		target_trigger = {
+			country_exists = FROM
+		}
+
+		visible = {
+			has_idea = idea_gcc_member_state
+			NOT = { has_country_flag = supports_membership_@FROM }
+		}
+
+		cost = 25
+
+		complete_effect = {
+			set_country_flag = supports_membership_@FROM
+			custom_effect_tooltip = GCC_support_gcc_membership_tt
+		}
+
+		ai_will_do = {
+			factor = -5
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 25
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 50
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 100
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = FROM
+					value > 150
+				}
+			}
+			modifier = {
+				add = 1
+				FROM = { has_idea = saudi_royal_family }
+			}
+			modifier = {
+				add = -1
+				FROM = { has_idea = shia }
+			}
+			modifier = {
+				add = 1
+				FROM = { NOT = { has_government = communism } }
+			}
+			modifier = {
+				add = 1
+				FROM = { has_government = democratic }
+			}
+			modifier = {
+				add = 1
+				FROM = { has_stability > 0.5 }
+			}
+			modifier = {
+				add = 10
+				tag = KUW
+				FROM = {
+					tag = IRQ
+					NOT = { has_government = nationalist }
+				}
+			}
+			modifier = {
+				add = 5
+				has_global_flag = global_arab_spring
+				FROM = {
+					OR = {
+						tag = JOR
+						tag = MOR
+					}
+				}
+			}
+			modifier = {
+				add = 5
+				has_global_flag = global_arab_spring
+				tag = BHR
+				FROM = {
+					tag = EGY
+				}
+			}
+		}
+	}
+
+	GCC_pressure_countries_to_support = {
+		icon = GFX_decision_generic_form_nation
+
+		target_array = global.possible_gcc_members
+
+		target_trigger = {
+			country_exists = FROM
+		}
+
+		visible = {
+			has_country_flag = supports_membership_@FROM
+			any_country = {
+				has_idea = idea_gcc_member_state
+				NOT = { has_country_flag = supports_membership_@FROM }
+			}
+			has_idea = idea_gcc_member_state
+		}
+
+		available = {
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision pressure_countries_to_recognize target: [From.GetName]"
+			every_other_country = {
+				limit = {
+					has_idea = idea_gcc_member_state
+					NOT = { has_country_flag = supports_membership_@FROM }
+				}
+				FROM = {
+					set_country_flag = pressured_to_accept_@PREV
+				}
+				country_event = { id = gcc.24 }
+			}
+		}
+
+		days_remove = 90
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 100
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 150
+				}
+			}
+		}
+	}
+
+	GCC_show_supporters = {
+		icon = GFX_decision_generic_form_nation
+
+		visible = {
+			is_in_array = { global.possible_gcc_members = THIS }
+			NOT = { has_idea = idea_gcc_member_state }
+		}
+
+		complete_effect = {
+			GCC_show_supporters = yes
+		}
+	}
+
+	GCC_begin_accession_process = {
+		icon = GFX_decision_generic_form_nation
+
+		visible = {
+			is_in_array = { global.possible_gcc_members = THIS }
+			NOT = { has_country_flag = gcc_accession_process }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = every_gcc_member_supports_tt
+				NOT = {
+					any_country = {
+						has_idea = idea_gcc_member_state
+						NOT = { has_country_flag = supports_membership_@ROOT }
+					}
+				}
+			}
+		}
+
+		cost = 25
+
+		complete_effect = {
+			unlock_decision_tooltip = GCC_complete_accession_plan
+			set_country_flag = gcc_accession_process
+			every_country = {
+				news_event = { id = gcc.25 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	GCC_complete_accession_plan = {
+		icon = GFX_decision_generic_form_nation
+
+		visible = {
+			is_in_array = { global.possible_gcc_members = THIS }
+			has_country_flag = gcc_accession_process
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = gdp_requirement_10_tt
+				NOT = {
+					has_idea = gdp_1
+					has_idea = gdp_2
+					has_idea = gdp_3
+					has_idea = gdp_4
+				}
+			}
+		}
+
+		cost = 100
+
+		complete_effect = {
+			clr_country_flag = gcc_accession_process
+			hidden_effect = { every_country = { news_event = { days = 1 id = gcc.21 }}}
+			remove_from_array = { global.possible_gcc_member_state = THIS }
+			add_to_array = { global.gcc_member_state = THIS }
+			add_ideas = idea_gcc_member_state
+			if = {
+				limit = {
+					ROOT = {
+						NOT = {
+							has_idea = saudi_royal_family
+						}
+						has_idea = shia
+						has_government = communism
+					}
+				}
+				custom_effect_tooltip = GCC_unity_decrease_25_tt
+				subtract_from_variable = { global.gcc_unity = 25 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			else_if = {
+				limit = {
+					ROOT = {
+						NOT = {
+							has_idea = saudi_royal_family
+						}
+						OR = {
+							has_idea = shia
+							has_government = communism
+						}
+					}
+				}
+				custom_effect_tooltip = GCC_unity_decrease_20_tt
+				subtract_from_variable = { global.gcc_unity = 20 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			else_if = {
+				limit = {
+					ROOT = {
+						OR = {
+							NOT = {
+								has_idea = saudi_royal_family
+							}
+							has_idea = shia
+							has_government = communism
+						}
+					}
+				}
+				custom_effect_tooltip = GCC_unity_decrease_10_tt
+				subtract_from_variable = { global.gcc_unity = 10 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			else_if = {
+				limit = {
+					ROOT = {
+						NOT = {
+							NOT = {
+								has_idea = saudi_royal_family
+							}
+							has_idea = shia
+							has_government = communism
+						}
+					}
+				}
+				custom_effect_tooltip = GCC_unity_decrease_5_tt
+				subtract_from_variable = { global.gcc_unity = 5 }
+				clamp_variable = {
+					var = global.gcc_unity
+					min = 0
+					max = 100
+				}
+			}
+			ROOT = {
+				if = {
+					limit = { NOT = { original_tag = BHR } BHR = { has_idea = idea_gcc_member_state }}
+					add_opinion_modifier = {
+						target = BHR
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+				}
+				if = {
+					limit = { NOT = { original_tag = EGY } EGY = { has_idea = idea_gcc_member_state }}
+					add_opinion_modifier = {
+						target = EGY
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+				}
+				if = {
+					limit = { NOT = { original_tag = JOR } JOR = { has_idea = idea_gcc_member_state }}
+					add_opinion_modifier = {
+						target = JOR
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+				}
+				if = {
+					limit = { NOT = { original_tag = KUW } KUW = { has_idea = idea_gcc_member_state }}
+					add_opinion_modifier = {
+						target = KUW
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+				}
+				if = {
+					limit = { NOT = { original_tag = IRQ } IRQ = { has_idea = idea_gcc_member_state }}
+					add_opinion_modifier = {
+						target = IRQ
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+				}
+				if = {
+					limit = { NOT = { original_tag = MOR } MOR = { has_idea = idea_gcc_member_state }}
+					add_opinion_modifier = {
+						target = MOR
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+				}
+				if = {
+					limit = { NOT = { original_tag = OMA } OMA = { has_idea = idea_gcc_member_state }}
+					add_opinion_modifier = {
+						target = OMA
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+				}
+				if = {
+					limit = { NOT = { original_tag = QAT } QAT = { has_idea = idea_gcc_member_state }}
+					add_opinion_modifier = {
+						target = QAT
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+				}
+				if = {
+					limit = { NOT = { original_tag = SAU } SAU = { has_idea = idea_gcc_member_state }}
+					add_opinion_modifier = {
+						target = SAU
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+				}
+				if = {
+					limit = { NOT = { original_tag = UAE } UAE = { has_idea = idea_gcc_member_state }}
+					add_opinion_modifier = {
+						target = UAE
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+				}
+				if = {
+					limit = { NOT = { original_tag = YEM } YEM = { has_idea = idea_gcc_member_state }}
+					add_opinion_modifier = {
+						target = YEM
+						modifier = Gulf_Cooperation_Council_Relations
+					}
+				}
+			}
+			every_other_country = {
+				limit = { has_idea = idea_gcc_member_state }
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = Gulf_Cooperation_Council_Relations
+				}
+			}
+			if = {
+				limit = { has_global_flag = GCC_standardize_regulations_completed }
+				add_to_tech_sharing_group = GCC_Tech_Share
+			}
+			if = {
+				limit = {
+					has_global_flag = GCC_intra_gcc_trade_completed
+				}
+				ROOT = {
+					if = {
+						limit = { NOT = { original_tag = BHR } BHR = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = BHR
+							modifier = improve_trade
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = EGY } EGY = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = EGY
+							modifier = improve_trade
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = JOR } JOR = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = JOR
+							modifier = improve_trade
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = KUW } KUW = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = KUW
+							modifier = improve_trade
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = IRQ } IRQ = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = IRQ
+							modifier = improve_trade
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = MOR } MOR = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = MOR
+							modifier = improve_trade
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = OMA } OMA = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = OMA
+							modifier = improve_trade
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = QAT } QAT = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = QAT
+							modifier = improve_trade
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = SAU } SAU = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = SAU
+							modifier = improve_trade
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = UAE } UAE = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = UAE
+							modifier = improve_trade
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = YEM } YEM = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = YEM
+							modifier = improve_trade
+						}
+					}
+				}
+				every_other_country = {
+					limit = { has_idea = idea_gcc_member_state }
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = improve_trade
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_global_flag = GCC_intra_gcc_trade_completed
+				}
+				ROOT = {
+					if = {
+						limit = { NOT = { original_tag = BHR } BHR = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = BHR
+							modifier = common_market
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = EGY } EGY = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = EGY
+							modifier = common_market
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = JOR } JOR = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = JOR
+							modifier = common_market
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = KUW } KUW = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = KUW
+							modifier = common_market
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = IRQ } IRQ = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = IRQ
+							modifier = common_market
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = MOR } MOR = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = MOR
+							modifier = common_market
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = OMA } OMA = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = OMA
+							modifier = common_market
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = QAT } QAT = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = QAT
+							modifier = common_market
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = SAU } SAU = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = SAU
+							modifier = common_market
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = UAE } UAE = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = UAE
+							modifier = common_market
+						}
+					}
+					if = {
+						limit = { NOT = { original_tag = YEM } YEM = { has_idea = idea_gcc_member_state }}
+						add_opinion_modifier = {
+							target = YEM
+							modifier = common_market
+						}
+					}
+				}
+				every_other_country = {
+					limit = { has_idea = idea_gcc_member_state }
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = common_market
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_global_flag = GCC_monetary_union_completed
+				}
+				add_ideas = khaleeji
+			}
+			if = {
+				limit = {
+					has_global_flag = GCC_joint_defense_agreement_completed
+					NOT = { has_global_flag = GCC_a_robust_alliance_completed }
+				}
+				if = {
+					limit = { NOT = { original_tag = BHR } BHR = { has_idea = idea_gcc_member_state }}
+					give_guarantee = BHR
+				}
+				if = {
+					limit = { NOT = { original_tag = EGY } EGY = { has_idea = idea_gcc_member_state }}
+					give_guarantee = EGY
+				}
+				if = {
+					limit = { NOT = { original_tag = JOR } JOR = { has_idea = idea_gcc_member_state }}
+					give_guarantee = JOR
+				}
+				if = {
+					limit = { NOT = { original_tag = KUW } KUW = { has_idea = idea_gcc_member_state }}
+					give_guarantee = KUW
+				}
+				if = {
+					limit = { NOT = { original_tag = IRQ } IRQ = { has_idea = idea_gcc_member_state }}
+					give_guarantee = IRQ
+				}
+				if = {
+					limit = { NOT = { original_tag = MOR } MOR = { has_idea = idea_gcc_member_state }}
+					give_guarantee = MOR
+				}
+				if = {
+					limit = { NOT = { original_tag = OMA } OMA = { has_idea = idea_gcc_member_state }}
+					give_guarantee = OMA
+				}
+				if = {
+					limit = { NOT = { original_tag = QAT } QAT = { has_idea = idea_gcc_member_state }}
+					give_guarantee = QAT
+				}
+				if = {
+					limit = { NOT = { original_tag = SAU } SAU = { has_idea = idea_gcc_member_state }}
+					give_guarantee = SAU
+				}
+				if = {
+					limit = { NOT = { original_tag = UAE } UAE = { has_idea = idea_gcc_member_state }}
+					give_guarantee = UAE
+				}
+				if = {
+					limit = { NOT = { original_tag = YEM } YEM = { has_idea = idea_gcc_member_state }}
+					give_guarantee = YEM
+				}
+				every_other_country = {
+					limit = { has_idea = idea_gcc_member_state }
+					if = {
+						limit = { ROOT = { original_tag = BHR }}
+						give_guarantee = BHR
+					}
+					if = {
+						limit = { ROOT = { original_tag = EGY }}
+						give_guarantee = EGY
+					}
+					if = {
+						limit = { ROOT = { original_tag = JOR }}
+						give_guarantee = JOR
+					}
+					if = {
+						limit = { ROOT = { original_tag = KUW }}
+						give_guarantee = KUW
+					}
+					if = {
+						limit = { ROOT = { original_tag = IRQ }}
+						give_guarantee = IRQ
+					}
+					if = {
+						limit = { ROOT = { original_tag = MOR }}
+						give_guarantee = MOR
+					}
+					if = {
+						limit = { ROOT = { original_tag = OMA }}
+						give_guarantee = OMA
+					}
+					if = {
+						limit = { ROOT = { original_tag = QAT }}
+						give_guarantee = QAT
+					}
+					if = {
+						limit = { ROOT = { original_tag = SAU }}
+						give_guarantee = SAU
+					}
+					if = {
+						limit = { ROOT = { original_tag = UAE }}
+						give_guarantee = UAE
+					}
+					if = {
+						limit = { ROOT = { original_tag = YEM }}
+						give_guarantee = YEM
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_global_flag = GCC_gulf_academy_completed
+				}
+				if = {
+					limit = { has_idea = officer_baptism_by_fire }
+					swap_ideas = {
+						remove_idea = officer_baptism_by_fire
+						add_idea = officer_military_academy
+					}
+				}
+				if = {
+					limit = { has_idea = officer_basic_training }
+					swap_ideas = {
+						remove_idea = officer_basic_training
+						add_idea = officer_military_academy
+					}
+				}
+				if = {
+					limit = { has_idea = officer_advanced_training }
+					swap_ideas = {
+						remove_idea = officer_advanced_training
+						add_idea = officer_military_academy
+					}
+				}
+				if = {
+					limit = { has_idea = officer_military_school }
+					swap_ideas = {
+						remove_idea = officer_military_school
+						add_idea = officer_military_academy
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_global_flag = GCC_joint_military_ventures_completed
+				}
+				add_ideas = joint_gcc_ventures
+			}
+			if = {
+				limit = {
+					has_global_flag = GCC_a_robust_alliance_completed
+				}
+				random_country = {
+					limit = { has_country_flag = gcc_dominant_member }
+					add_to_faction = ROOT
+					ROOT = {
+						if = {
+							limit = { PREV = { tag = SAU }}
+							add_ai_strategy = { type = alliance id = "SAU" value = 1200 }
+						}
+						if = {
+							limit = { PREV = { tag = BHR }}
+							add_ai_strategy = { type = alliance id = "BHR" value = 1200 }
+						}
+						if = {
+							limit = { PREV = { tag = KUW }}
+							add_ai_strategy = { type = alliance id = "KUW" value = 1200 }
+						}
+						if = {
+							limit = { PREV = { tag = OMA }}
+							add_ai_strategy = { type = alliance id = "OMA" value = 1200 }
+						}
+						if = {
+							limit = { PREV = { tag = QAT }}
+							add_ai_strategy = { type = alliance id = "QAT" value = 1200 }
+						}
+						if = {
+							limit = { PREV = { tag = UAE }}
+							add_ai_strategy = { type = alliance id = "UAE" value = 1200 }
+						}
+						if = {
+							limit = { PREV = { tag = EGY }}
+							add_ai_strategy = { type = alliance id = "EGY" value = 1200 }
+						}
+						if = {
+							limit = { PREV = { tag = IRQ }}
+							add_ai_strategy = { type = alliance id = "IRQ" value = 1200 }
+						}
+						if = {
+							limit = { PREV = { tag = JOR }}
+							add_ai_strategy = { type = alliance id = "JOR" value = 1200 }
+						}
+						if = {
+							limit = { PREV = { tag = MOR }}
+							add_ai_strategy = { type = alliance id = "MOR" value = 1200 }
+						}
+						if = {
+							limit = { PREV = { tag = YEM }}
+							add_ai_strategy = { type = alliance id = "YEM" value = 1200 }
+						}
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_global_flag = GCC_solidify_pro_american_alignment_completed
+					NOT = { has_global_flag = gcc_usa_rejected }
+				}
+				USA = { give_guarantee = ROOT }
+			}
+			if = {
+				limit = {
+					has_global_flag = gcc_pro_turkish
+				}
+				TUR = { give_guarantee = ROOT }
+			}
+			if = {
+				limit = {
+					has_global_flag = gcc_pro_iranian
+				}
+				PER = { give_guarantee = ROOT }
+			}
+			if = {
+				limit = {
+					has_global_flag = gcc_pro_russian
+				}
+				SOV = { give_guarantee = ROOT }
+			}
+			if = {
+				limit = {
+					has_global_flag = gcc_pro_indian
+				}
+				RAJ = { give_guarantee = ROOT }
+			}
+			if = {
+				limit = {
+					has_global_flag = gcc_pro_pakistani
+				}
+				PAK = { give_guarantee = ROOT }
+			}
+			if = {
+				limit = {
+					has_global_flag = GCC_exploit_authority_completed
+				}
+				random_country = {
+					limit = { has_country_flag = gcc_dominant_member }
+					puppet = ROOT
+				}
+			}
+			if = {
+				limit = {
+					has_global_flag = GCC_gulf_super_state_completed
+				}
+				random_country = {
+					limit = { has_country_flag = gcc_dominant_member }
+					annex_country = {
+						target = ROOT
+						transfer_troops = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+
+subversive_activities = {
+
+	send_support_to_hamas = {
+
+		icon = GFX_decision_generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = GCC_support_hamas
+		}
+
+		available = {
+			OR = {
+				country_exists = HAM
+				PAL = {
+					custom_trigger_tooltip = {
+						tooltip = hamas_tt
+						is_in_array = { ruling_party = 12 }
+					}
+				}
+			}
+			has_equipment = { Inf_equipment > 99 }
+			has_equipment = { L_AT_Equipment > 9 }
+			has_equipment = { AA_Equipment > 9 }
+			has_equipment = { util_vehicle_equipment > 4 }
+		}
+
+		highlight_states = { state = 209 }
+
+		cost = 20
+
+		days_remove = 60
+
+		remove_effect = {
+			if = {
+				limit = { country_exists = HAM }
+				send_equipment = {
+					equipment = infantry_weapons
+					amount = 100
+					target = HAM
+				}
+				send_equipment = {
+					equipment = L_AT_Equipment
+					amount = 10
+					target = HAM
+				}
+				send_equipment = {
+					equipment = AA_Equipment
+					amount = 10
+					target = HAM
+				}
+				send_equipment = {
+					equipment = util_vehicle_equipment
+					amount = 5
+					target = HAM
+				}
+				HAM = { country_event = { id = gulf.36 } }
+			}
+			else = {
+				send_equipment = {
+					equipment = infantry_weapons
+					amount = 100
+					target = PAL
+				}
+				send_equipment = {
+					equipment = L_AT_Equipment
+					amount = 10
+					target = PAL
+				}
+				send_equipment = {
+					equipment = AA_Equipment
+					amount = 10
+					target = PAL
+				}
+				send_equipment = {
+					equipment = util_vehicle_equipment
+					amount = 5
+					target = PAL
+				}
+				PAL = { country_event = { id = gulf.36 } }
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_hamas"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	send_support_to_hezbollah = {
+
+		icon = GFX_decision_generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = GCC_non_aggression_pact
+		}
+
+		available = {
+			country_exists = HEZ
+			has_equipment = { Inf_equipment > 99 }
+			has_equipment = { L_AT_Equipment > 9 }
+			has_equipment = { AA_Equipment > 9 }
+			has_equipment = { util_vehicle_equipment > 4 }
+		}
+
+		highlight_states = { state = 201 }
+
+		cost = 20
+
+		days_remove = 60
+
+		remove_effect = {
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 100
+				target = HEZ
+			}
+			send_equipment = {
+				equipment = L_AT_Equipment
+				amount = 10
+				target = HEZ
+			}
+			send_equipment = {
+				equipment = AA_Equipment
+				amount = 10
+				target = HEZ
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 5
+				target = HEZ
+			}
+			HEZ = { country_event = { id = gulf.36 } }
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_hezbollah"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	send_support_to_pmu = {
+
+		icon = GFX_decision_generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = GCC_non_aggression_pact
+		}
+
+		available = {
+			country_exists = IRQ
+			IRQ = { has_government = communism }
+			has_equipment = { Inf_equipment > 99 }
+			has_equipment = { L_AT_Equipment > 9 }
+			has_equipment = { AA_Equipment > 9 }
+			has_equipment = { util_vehicle_equipment > 4 }
+		}
+
+		highlight_states = { state = 557 }
+
+		cost = 20
+
+		days_remove = 60
+
+		remove_effect = {
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 100
+				target = IRQ
+			}
+			send_equipment = {
+				equipment = L_AT_Equipment
+				amount = 10
+				target = IRQ
+			}
+			send_equipment = {
+				equipment = AA_Equipment
+				amount = 10
+				target = IRQ
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 5
+				target = IRQ
+			}
+			IRQ = {
+				custom_effect_tooltip = PER_small_influence_10_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = PER }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = PER.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_pmu"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	send_support_to_pro_government_forces = {
+
+		icon = GFX_decision_generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = GCC_non_aggression_pact
+		}
+
+		available = {
+			country_exists = SYR
+			SYR = { has_government = communism }
+			has_equipment = { Inf_equipment > 99 }
+			has_equipment = { L_AT_Equipment > 9 }
+			has_equipment = { AA_Equipment > 9 }
+			has_equipment = { util_vehicle_equipment > 4 }
+		}
+
+		highlight_states = { state = 186 }
+
+		cost = 20
+
+		days_remove = 60
+
+		remove_effect = {
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 100
+				target = SYR
+			}
+			send_equipment = {
+				equipment = L_AT_Equipment
+				amount = 10
+				target = SYR
+			}
+			send_equipment = {
+				equipment = AA_Equipment
+				amount = 10
+				target = SYR
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 5
+				target = SYR
+			}
+			SYR = {
+				custom_effect_tooltip = PER_small_influence_10_tt
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 10 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = PER }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+							set_country_flag = found
+						}
+					}
+					if = {
+						limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = PER.id }
+							add_to_array = { influence_array_val = influence_gain }
+					}
+					clr_country_flag = found
+					recalculate_influence = yes
+				}
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_pro_government_forces"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	send_support_to_the_syrian_opposition = {
+
+		icon = GFX_decision_generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = GCC_back_the_syrian_opposition
+		}
+
+		available = {
+			has_equipment = { Inf_equipment > 99 }
+			has_equipment = { L_AT_Equipment > 9 }
+			has_equipment = { AA_Equipment > 9 }
+			has_equipment = { util_vehicle_equipment > 4 }
+			country_exists = FSA
+		}
+
+		highlight_states = { state = 188 }
+
+		cost = 20
+
+		days_remove = 60
+
+		complete_effect = {
+		}
+
+		remove_effect = {
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 100
+				target = FSA
+			}
+			send_equipment = {
+				equipment = L_AT_Equipment
+				amount = 10
+				target = FSA
+			}
+			send_equipment = {
+				equipment = AA_Equipment
+				amount = 10
+				target = FSA
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 5
+				target = FSA
+			}
+			FSA = { country_event = { id = gulf.36 } }
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_the_syrian_opposition"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	send_support_to_arabs = {
+
+		icon = GFX_decision_generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = GCC_support_iranian_separatists
+		}
+
+		available = {
+			has_equipment = { Inf_equipment > 99 }
+			PER = {
+				owns_state = 399
+			}
+		}
+
+		highlight_states = { state = 399 }
+
+		cost = 20
+
+		days_remove = 60
+
+		complete_effect = {
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -100
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = arab_rebels_strengthened_tt
+			add_to_variable = { global.arab_rebels_strength = 1 }
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_arabs"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	send_support_to_balochis = {
+
+		icon = GFX_decision_generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = GCC_support_iranian_separatists
+		}
+
+		available = {
+			has_equipment = { Inf_equipment > 99 }
+			PER = {
+				owns_state = 401
+			}
+		}
+
+		highlight_states = { state = 401 }
+
+		cost = 20
+
+
+		complete_effect = {
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -100
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = balochi_rebels_strengthened_tt
+			add_to_variable = { global.balochi_rebels_strength = 1 }
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_balochis"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	send_support_to_gna = {
+
+		icon = GFX_decision_generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = GCC_back_the_brotherhood
+			has_completed_focus = GCC_war_in_libya
+			country_exists = GNA
+		}
+
+		available = {
+			has_equipment = { Inf_equipment > 99 }
+			has_equipment = { L_AT_Equipment > 9 }
+			has_equipment = { AA_Equipment > 9 }
+			has_equipment = { util_vehicle_equipment > 4 }
+		}
+
+		highlight_states = { state = 391 }
+
+		cost = 20
+
+
+		complete_effect = {
+
+		}
+
+		remove_effect = {
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 100
+				target = GNA
+			}
+			send_equipment = {
+				equipment = L_AT_Equipment
+				amount = 10
+				target = GNA
+			}
+			send_equipment = {
+				equipment = AA_Equipment
+				amount = 10
+				target = GNA
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 5
+				target = GNA
+			}
+			GNA = { country_event = { id = gulf.36 } }
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_gna"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	send_support_to_gnc = {
+
+		icon = GFX_decision_generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = GCC_back_the_brotherhood
+			has_completed_focus = GCC_war_in_libya
+			country_exists = GNC
+			NOT = { country_exists = GNA }
+		}
+
+		available = {
+			has_equipment = { Inf_equipment > 99 }
+			has_equipment = { L_AT_Equipment > 9 }
+			has_equipment = { AA_Equipment > 9 }
+			has_equipment = { util_vehicle_equipment > 4 }
+		}
+
+		highlight_states = { state = 391 }
+
+		cost = 20
+
+
+		complete_effect = {
+
+		}
+
+		remove_effect = {
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 100
+				target = GNC
+			}
+			send_equipment = {
+				equipment = L_AT_Equipment
+				amount = 10
+				target = GNC
+			}
+			send_equipment = {
+				equipment = AA_Equipment
+				amount = 10
+				target = GNC
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 5
+				target = GNC
+			}
+			GNC = { country_event = { id = gulf.36 } }
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_gnc"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	send_support_to_hor = {
+
+		icon = GFX_decision_generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = GCC_back_the_strongman
+			has_completed_focus = GCC_war_in_libya
+			country_exists = HOR
+		}
+
+		available = {
+			has_equipment = { Inf_equipment > 99 }
+			has_equipment = { L_AT_Equipment > 9 }
+			has_equipment = { AA_Equipment > 9 }
+			has_equipment = { util_vehicle_equipment > 4 }
+		}
+
+		highlight_states = { state = 396 }
+
+		cost = 20
+
+
+		complete_effect = {
+
+		}
+
+		remove_effect = {
+			send_equipment = {
+				equipment = infantry_weapons
+				amount = 100
+				target = HOR
+			}
+			send_equipment = {
+				equipment = L_AT_Equipment
+				amount = 10
+				target = HOR
+			}
+			send_equipment = {
+				equipment = AA_Equipment
+				amount = 10
+				target = HOR
+			}
+			send_equipment = {
+				equipment = util_vehicle_equipment
+				amount = 5
+				target = HOR
+			}
+			HOR = { country_event = { id = gulf.36 } }
+			log = "[GetDateText]: [Root.GetName]: Decision send_support_to_hor"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}

@@ -2,49 +2,43 @@
 
 # Increase Economic Growth
 increase_economic_growth = {
+	set_country_flag = disable_cycle_costs
 	if = {
 		limit = { has_idea = depression }
-		swap_ideas = { remove_idea = depression add_idea = stable_growth }
-		else = {
-			if = {
-				limit = { has_idea = recession }
-				swap_ideas = { remove_idea = recession add_idea = stable_growth }
-				else = {
-					if = {
-						limit = { has_idea = stagnation }
-						swap_ideas = { remove_idea = stagnation add_idea = fast_growth }
-						else = {
-							if = {
-								limit = { has_idea = stable_growth }
-								swap_ideas = { remove_idea = stable_growth add_idea = economic_boom }
-								else = {
-									if = {
-										limit = { has_idea = fast_growth }
-										swap_ideas = { remove_idea = fast_growth add_idea = economic_boom }
-										else = {
-											if = {
-												limit = { has_idea = economic_boom }
-												add_political_power = 150	#If country has maximum level it earns political power instead.
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+		swap_ideas = { remove_idea = depression add_idea = recession }
 	}
+	else_if = {
+		limit = { has_idea = recession }
+		swap_ideas = { remove_idea = recession add_idea = stagnation }
+	}
+	else_if = {
+		limit = { has_idea = stagnation }
+		swap_ideas = { remove_idea = stagnation add_idea = stable_growth }
+	}
+	else_if = {
+		limit = { has_idea = stable_growth }
+		swap_ideas = { remove_idea = stable_growth add_idea = fast_growth }
+	}
+	else_if = {
+		limit = { has_idea = fast_growth }
+		swap_ideas = { remove_idea = fast_growth add_idea = economic_boom }
+	}
+	else_if = {
+		limit = { has_idea = economic_boom }
+		add_political_power = 100 #if desired economic level is reached before PP is rewarded instead
+		add_stability = 0.05
+	}
+	clr_country_flag = disable_cycle_costs
 	set_growth_flag = yes
 	calculate_tax_gain = yes
 	update_military_rate = yes
 	ingame_calculate_size_modifier = yes
-	calculate_resource_sale_rate = yes
+	calculate_resource_sale_rate = yes 
 }
 
 # Decrease Economic Growth
 decrease_economic_growth = {
+	set_country_flag = disable_cycle_costs
 	if = {
 		limit = { has_idea = economic_boom }
 		swap_ideas = { remove_idea = economic_boom add_idea = fast_growth }
@@ -79,11 +73,154 @@ decrease_economic_growth = {
 			}
 		}
 	}
+	clr_country_flag = disable_cycle_costs
 	set_growth_flag = yes
 	calculate_tax_gain = yes
 	update_military_rate = yes
 	ingame_calculate_size_modifier = yes
 	calculate_resource_sale_rate = yes
+}
+
+slightly_increase_economic_growth = {
+	set_country_flag = disable_cycle_costs
+	if = {
+		limit = { 
+			has_idea = depression 
+		}
+		swap_ideas = { 
+			remove_idea = depression 
+			add_idea = recession 
+		}
+		else = {
+			if = {
+				limit = { 
+					has_idea = recession 
+				}
+				swap_ideas = { 
+				remove_idea = recession 
+					add_idea = stagnation 
+				}
+				else = {
+					if = {
+						limit = { 
+							has_idea = stagnation 
+						}
+						swap_ideas = { 
+							remove_idea = stagnation 
+							add_idea = stable_growth 
+						}
+						else = {
+							if = {
+								limit = { 
+									has_idea = stable_growth 
+								}
+								swap_ideas = { 
+									remove_idea = stable_growth 
+									add_idea = fast_growth 
+								}
+								else = {
+									if = {
+										limit = { 
+											has_idea = fast_growth 
+										}
+										swap_ideas = { 
+											remove_idea = fast_growth 
+											add_idea = economic_boom 
+										}
+										else = {
+											if = {
+												limit = { 
+													has_idea = economic_boom 
+												}
+												add_political_power = 150	#If country has maximum level it earns political power instead.
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	set_growth_flag = yes
+	calculate_tax_gain = yes
+	update_military_rate = yes
+	ingame_calculate_size_modifier = yes
+	calculate_resource_sale_rate = yes
+	clr_country_flag = disable_cycle_costs
+}
+
+slightly_decrease_economic_growth = {
+	set_country_flag = disable_cycle_costs
+	if = {
+		limit = { 
+			has_idea = economic_boom 
+		}
+		swap_ideas = { 
+			remove_idea = economic_boom 
+			add_idea = fast_growth 
+		}
+		else = {
+			if = {
+				limit = { 
+					has_idea = fast_growth 
+				}
+				swap_ideas = { 
+					remove_idea = fast_growth 
+					add_idea = stable_growth 
+				}
+				else = {
+					if = {
+						limit = { 
+							has_idea = stable_growth 
+						}
+						swap_ideas = { 
+							remove_idea = stable_growth 
+							add_idea = stagnation 
+						}
+						else = {
+							if = {
+								limit = { 
+									has_idea = stagnation 
+								}
+								swap_ideas = { 
+									remove_idea = stagnation 
+									add_idea = recession 
+								}
+								else = {
+									if = {
+										limit = { 
+											has_idea = recession 
+										}
+										swap_ideas = { 
+											remove_idea = recession 
+											add_idea = depression 
+										}
+										else = {
+											if = {
+												limit = { 
+													has_idea = depression 
+												}
+												add_political_power = -150	#If country has maximum level it earns political power instead.
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	set_growth_flag = yes
+	calculate_tax_gain = yes
+	update_military_rate = yes
+	ingame_calculate_size_modifier = yes
+	calculate_resource_sale_rate = yes
+	clr_country_flag = disable_cycle_costs
 }
 
 #Bureau Adjustment - Decrease Bureau Law
@@ -715,7 +852,12 @@ increase_policing_budget = {
 	else_if = {
 		limit = { has_idea = police_04 }
 		swap_ideas = { remove_idea = police_04 add_idea = police_05 }
-	} #this will increase policing 
+	} 
+	else_if = {
+		limit = { has_idea = police_05 }
+		add_political_power = 150
+	}
+	#this will increase policing 
 	calculate_tax_gain = yes
 	update_military_rate = yes
 	ingame_calculate_size_modifier = yes

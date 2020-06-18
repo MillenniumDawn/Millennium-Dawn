@@ -5,54 +5,58 @@ add_namespace = SyriaNews
 
 #Victory for a faction
 news_event = {
-	
+
 	id = Syria.1
 	immediate = { log = "[GetDateText]: [Root.GetName]: event Syria.1" }
 
 	title = Syria.1.t
 	desc = {
 		text = Syria.1.SYR.desc
-		trigger = { tag = SYR }
+		trigger = { original_tag = SYR }
 	}
 	desc = {
 		text = Syria.1.FSA.desc
-		trigger = { tag = FSA }
+		trigger = { original_tag = FSA }
 	}
 	desc = {
 		text = Syria.1.NUS.desc
-		trigger = { tag = NUS }
+		trigger = { original_tag = NUS }
 	}
-	
+
 	picture = GFX_Syria_Civil_War_Victory
-	
+
 	trigger = {
 		OR = {
 			AND = {
-				tag = SYR
+				original_tag = SYR
 				NOT = { country_exists = FSA }
 				NOT = { country_exists = NUS }
 			}
 			AND = {
-				tag = FSA
+				original_tag = FSA
 				NOT = { country_exists = SYR }
 				NOT = { country_exists = NUS }
 			}
 			AND = {
-				tag = NUS
+				original_tag = NUS
 				NOT = { country_exists = SYR }
 				NOT = { country_exists = FSA }
 			}
 		}
 		NOT = { country_exists = ISI }
 		NOT = { has_global_flag = Syria_Civil_War_Over }
+		OR = {
+			has_start_date > 2016.1.1
+			has_global_flag = SYR_civil_war_started_early
+		}
 	}
-	
+
 	fire_only_once = yes
-	
+
 	mean_time_to_happen = {
 		days = 2
 	}
-	
+
 	immediate = {
 		hidden_effect = {
 			#Remove ISIS
@@ -66,6 +70,8 @@ news_event = {
 				remove_claim_by = ISI
 				remove_core_of = ISI
 			}
+			subtract_from_variable = { threat_level = 30 }
+			clamp_threat = yes
 			#Reset Core Status
 			587 = {			#Golan
 				remove_core_of = SYR
@@ -162,29 +168,56 @@ news_event = {
 			if = {
 				limit = { NOT = { has_country_flag = Deal_With_Rojava } }
 				add_state_core = 193
-			}
-			if = {
-				limit = { NOT = { has_country_flag = Deal_With_Rojava } }
 				add_state_core = 571
-			}
-			if = {
-				limit = { NOT = { has_country_flag = Deal_With_Rojava } }
 				add_state_core = 575
 			}
 			set_capital = 186
 			if = {
 				limit = {
 					OR = {
-						tag = NUS
-						tag = FSA
+						original_tag = NUS
+						original_tag = FSA
 					}
 				}
 				set_cosmetic_tag = SYR
+			}
+			if = {
+				limit = { NOT = { has_idea = divided_syria } }
 				add_ideas = divided_syria
+			}
+			if = {
+				limit = {
+					original_tag = NUS
+				}
+				add_ideas = intervention_neo_imperialism
+			}
+			if = {
+				limit = { has_idea = Non_State_Actor }
+				remove_ideas = Non_State_Actor
+			}
+			if = {
+				limit = { has_idea = rival_government }
+				remove_ideas = rival_government
+			}
+			if = {
+				limit = {
+					OR = {
+						original_tag = FSA
+						original_tag = NUS
+					}
+				}
+				add_offsite_building = {
+					type = industrial_complex
+					level = -1
+				}
+				add_offsite_building = {
+					type = arms_factory
+					level = -1
+				}
 			}
 		}
 	}
-	
+
 	option = {
 		name = "Syria.1.a"
 		log = "[GetDateText]: [This.GetName]: Syria.1.a executed"
@@ -192,60 +225,60 @@ news_event = {
 		set_global_flag = Syria_Civil_War_Over
 		hidden_effect = { news_event = { id = SyriaNews.1 hours = 6 } }
 	}
-	
+
 }
 
 #Situation with Tahrir Al-Sham and FSA
 country_event = {
-	
+
 	id = Syria.2
 	immediate = { log = "[GetDateText]: [Root.GetName]: event Syria.2" }
-	
+
 	title = Syria.2.t
 	desc = Syria.2.desc
 	picture = GFX_Tahrir_Al_Sham
-	
+
 	trigger = {
 		tag = FSA
 		country_exists = NUS
 		NOT = { country_exists = SYR }
 		NOT = { has_war_with = NUS }
 	}
-	
+
 	mean_time_to_happen = {
 		days = 2
 	}
-	
+
 	fire_only_once = yes
-	
+
 	option = {
 		name = Syria.2.a
 		log = "[GetDateText]: [This.GetName]: Syria.2.a executed"		#Offer them representation
 		ai_chance = {
 			factor = 10
 			modifier = {
-				factor = 1.5			
+				factor = 1.5
 				AND = {
 					fascism > 20
 					fascism < 30
 				}
 			}
 			modifier = {
-				factor = 2			
+				factor = 2
 				AND = {
 					fascism > 30
 					fascism < 40
 				}
 			}
 			modifier = {
-				factor = 3			
+				factor = 3
 				fascism > 40
 			}
 			modifier = {
 				factor = 4
 				has_government = fascism
 			}
-		}				
+		}
 		add_political_power = -50
 		NUS = { country_event = { days = 3 id = Syria.3 } }
 	}
@@ -262,18 +295,18 @@ country_event = {
 				}
 			}
 			modifier = {
-				factor = 0.65			
+				factor = 0.65
 				AND = {
 					fascism > 30
 					fascism < 40
 				}
 			}
 			modifier = {
-				factor = 0.35			
+				factor = 0.35
 				fascism > 40
 			}
 			modifier = {
-				factor = 0			
+				factor = 0
 				has_government = fascism
 			}
 		}
@@ -284,22 +317,22 @@ country_event = {
 
 #FSA offers representation
 country_event = {
-	
+
 	id = Syria.3
 	immediate = { log = "[GetDateText]: [Root.GetName]: event Syria.3" }
 	title = Syria.3.t
 	desc = Syria.3.desc
 	picture = GFX_Tahrir_Al_Sham
-	
+
 	is_triggered_only = yes
-	
+
 	option = {
 		name = Syria.3.a
 		log = "[GetDateText]: [This.GetName]: Syria.3.a executed"			#Agree
 		ai_chance = {
 			factor = 25
 			modifier = {
-				factor = 4			
+				factor = 4
 				FSA = { same_ideology = yes }
 			}
 		}
@@ -313,7 +346,7 @@ country_event = {
 		ai_chance = {
 			factor = 75
 			modifier = {
-				factor = 0			
+				factor = 0
 				FSA = { same_ideology = yes }
 			}
 		}
@@ -324,15 +357,15 @@ country_event = {
 
 #NUS agrees
 country_event = {
-	
+
 	id = Syria.4
 	immediate = { log = "[GetDateText]: [Root.GetName]: event Syria.4" }
 	title = Syria.4.t
 	desc = Syria.4.desc
 	picture = GFX_Tahrir_Al_Sham
-	
+
 	is_triggered_only = yes
-	
+
 	option = {
 		name = Syria.4.a
 		log = "[GetDateText]: [This.GetName]: Syria.4.a executed"
@@ -341,20 +374,20 @@ country_event = {
 		add_popularity = { ideology = fascism popularity = 0.1 }
 		hidden_effect = { news_event = { id = SyriaNews.3 hours = 6 } }
 	}
-	
+
 }
 
 #NUS refuses
 country_event = {
-	
+
 	id = Syria.5
 	immediate = { log = "[GetDateText]: [Root.GetName]: event Syria.5" }
 	title = Syria.5.t
 	desc = Syria.5.desc
 	picture = GFX_Tahrir_Al_Sham
-	
+
 	is_triggered_only = yes
-	
+
 	option = {
 		name = Syria.5.a
 		log = "[GetDateText]: [This.GetName]: Syria.5.a executed"
@@ -362,7 +395,7 @@ country_event = {
 		create_wargoal = { type = annex_everything target = NUS }
 		hidden_effect = { news_event = { id = SyriaNews.2 hours = 6 } }
 	}
-	
+
 }
 
 #FSA is alive, but Tahrir al Sham is close to defeat
@@ -373,11 +406,11 @@ country_event = {
 	title = Syria.15.t
 	desc = Syria.15.d
 	picture = GFX_Tahrir_Al_Sham
-	
+
 	mean_time_to_happen = {
 		days = 2
 	}
-	
+
 	trigger = {
 		tag = FSA
 		country_exists = FSA
@@ -411,11 +444,11 @@ country_event = {
 	title = Syria.16.t
 	desc = Syria.16.d
 	picture = GFX_Tahrir_Al_Sham
-	
+
 	mean_time_to_happen = {
 		days = 2
 	}
-	
+
 	trigger = {
 		tag = NUS
 		country_exists = FSA
@@ -452,11 +485,11 @@ news_event = {
 	title = SyriaNews.1.t
 	desc = SyriaNews.1.d
 	picture = GFX_Syria_Civil_War_Victory
-	
+
 	major = yes
-	
+
 	is_triggered_only = yes
-	
+
 	trigger = {
 		NOT = {		#These get their own event
 			tag = SYR
@@ -464,27 +497,27 @@ news_event = {
 			tag = NUS
 		}
 	}
-	
+
 	option = {
 		name = SyriaNews.1.a
 		log = "[GetDateText]: [This.GetName]: SyriaNews.1.a executed"
 	}
-	
+
 }
 
 #FSA and Al-Nusra hostile towards each other
 news_event = {
-	
+
 	id = SyriaNews.2
 	immediate = { log = "[GetDateText]: [Root.GetName]: event SyriaNews.2" }
 	title = SyriaNews.2.t
 	desc = SyriaNews.2.d
 	picture = GFX_news_fsa_and_al_nusra
-	
+
 	major = yes
-	
+
 	is_triggered_only = yes
-	
+
 	option = {
 		name = SyriaNews.2.a
 		log = "[GetDateText]: [This.GetName]: SyriaNews.2.a executed"
@@ -493,17 +526,17 @@ news_event = {
 
 #FSA and Al-Nusra friendly towards each other
 news_event = {
-	
+
 	id = SyriaNews.3
 	immediate = { log = "[GetDateText]: [Root.GetName]: event SyriaNews.3" }
 	title = SyriaNews.3.t
 	desc = SyriaNews.3.d
 	picture = GFX_news_fsa_and_al_nusra
-	
+
 	major = yes
-	
+
 	is_triggered_only = yes
-	
+
 	option = {
 		name = SyriaNews.3.a
 		log = "[GetDateText]: [This.GetName]: SyriaNews.3.a executed"
@@ -517,11 +550,11 @@ news_event = {
 	title = SyriaNews.8.t
 	desc = SyriaNews.8.d
 	picture = GFX_news_rise_of_taliban
-	
+
 	major = yes
-	
+
 	is_triggered_only = yes
-	
+
 	option = {
 		name = SyriaNews.8.a
 		log = "[GetDateText]: [This.GetName]: SyriaNews.8.a executed"
@@ -535,11 +568,11 @@ news_event = {
 	title = SyriaNews.9.t
 	desc = SyriaNews.9.d
 	picture = GFX_news_rise_of_taliban
-	
+
 	major = yes
-	
+
 	is_triggered_only = yes
-	
+
 	option = {
 		name = SyriaNews.9.a
 		log = "[GetDateText]: [This.GetName]: SyriaNews.9.a executed"

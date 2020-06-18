@@ -1,0 +1,244 @@
+﻿###########################
+# Internal Faction Events #
+###########################
+
+add_namespace = internal_faction
+
+#random event where the military requests more funding
+country_event = {
+
+	id = internal_faction.1
+	title = internal_faction.1.t
+	desc = internal_faction.1.d
+	
+	picture = GFX_politics_negotiations
+	
+	trigger = {
+		original_tag = CHI #limited to China for now
+		has_idea = the_military
+	}
+	
+	mean_time_to_happen = {
+		days = 365
+		modifier = {
+			factor = 0.7
+			has_country_flag = negative_the_military
+		}
+		modifier = {
+			factor = 0.7
+			has_country_flag = indifferent_the_military
+		}
+		modifier = {
+			factor = 0.7
+			has_country_flag = positive_the_military
+		}
+		modifier = {
+			factor = 0.7
+			has_country_flag = enthusiastic_the_military
+		}
+	}
+	
+	option = {
+		name = internal_faction.1.a
+		increase_military_spending = yes
+		visually_display_opinion_rise_the_military = yes
+		set_country_flag = current_the_military
+		increase_internal_faction_opinion = yes
+		log = "[GetDateText]: [This.GetName]: internal_faction.1.a executed"
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				OR = {
+					has_conservative_government = yes
+					has_reactionary_government = yes
+					has_autocratic_government = yes
+				}
+			}
+		}
+	}
+	option = {
+		name = internal_faction.1.b
+		visually_display_opinion_fall_the_military = yes
+		set_country_flag = current_the_military
+		decrease_internal_faction_opinion = yes
+		log = "[GetDateText]: [This.GetName]: internal_faction.1.b executed"
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				has_liberal_government = yes
+			}
+		}
+	}
+}
+
+#random event where corruption is uncovered
+country_event = {
+
+	id = internal_faction.2
+	title = internal_faction.2.t
+	desc = internal_faction.2.d
+	
+	picture = GFX_politics_negotiations
+	
+	trigger = {
+		original_tag = CHI #limited to China for now
+		has_idea = communist_cadres
+		OR = {
+			is_in_array = { ruling_party = 4 }
+			is_in_array = { ruling_party = 19 }
+		}
+	}
+	
+	mean_time_to_happen = {
+		days = 365
+		modifier = {
+			factor = 0.7
+			has_country_flag = negative_communist_cadres
+		}
+		modifier = {
+			factor = 0.7
+			has_country_flag = indifferent_communist_cadres
+		}
+		modifier = {
+			factor = 0.7
+			has_country_flag = positive_communist_cadres
+		}
+		modifier = {
+			factor = 0.7
+			has_country_flag = enthusiastic_communist_cadres
+		}
+	}
+	
+	option = {
+		name = internal_faction.2.a
+		if = {
+			limit = { is_in_array = { ruling_party = 4 } }
+			custom_effect_tooltip = reduce_ruling_popularity_5_tt
+			subtract_from_variable = {
+				var = party_pop_array^4
+				value = 0.05
+			}
+			recalculate_party = yes
+		}
+		else_if = {
+			limit = { is_in_array = { ruling_party = 19 } }
+			custom_effect_tooltip = reduce_ruling_popularity_5_tt
+			subtract_from_variable = {
+				var = party_pop_array^19
+				value = 0.05
+			}
+			recalculate_party = yes
+		}
+		increase_corruption = yes
+		visually_display_opinion_rise_communist_cadres = yes
+		set_country_flag = current_communist_cadres
+		increase_internal_faction_opinion = yes
+		log = "[GetDateText]: [This.GetName]: internal_faction.2.a executed"
+		ai_chance = {
+			factor = 10
+		}
+	}
+	option = {
+		name = internal_faction.2.b
+		if = {
+			limit = { is_in_array = { ruling_party = 4 } }
+			custom_effect_tooltip = increase_ruling_popularity_5_tt
+			add_to_variable = {
+				var = party_pop_array^4
+				value = 0.05
+			}
+			recalculate_party = yes
+		}
+		else_if = {
+			limit = { is_in_array = { ruling_party = 19 } }
+			custom_effect_tooltip = increase_ruling_popularity_5_tt
+			add_to_variable = {
+				var = party_pop_array^19
+				value = 0.05
+			}
+			recalculate_party = yes
+		}
+		add_stability = -0.02
+		visually_display_opinion_fall_communist_cadres = yes
+		set_country_flag = current_communist_cadres
+		decrease_internal_faction_opinion = yes
+		log = "[GetDateText]: [This.GetName]: internal_faction.2.b executed"
+		ai_chance = {
+			factor = 10
+		}
+	}
+}
+
+#random event where industrial conglomerates request tax breaks
+country_event = {
+
+	id = internal_faction.3
+	title = internal_faction.3.t
+	desc = internal_faction.3.d
+	
+	picture = GFX_politics_negotiations
+	
+	trigger = {
+		original_tag = CHI #limited to China for now
+		has_idea = industrial_conglomerates
+	}
+	
+	mean_time_to_happen = {
+		days = 365
+		modifier = {
+			factor = 0.7
+			has_country_flag = negative_industrial_conglomerates
+		}
+		modifier = {
+			factor = 0.7
+			has_country_flag = indifferent_industrial_conglomerates
+		}
+		modifier = {
+			factor = 0.7
+			has_country_flag = positive_industrial_conglomerates
+		}
+		modifier = {
+			factor = 0.7
+			has_country_flag = enthusiastic_industrial_conglomerates
+		}
+	}
+	
+	option = {
+		name = internal_faction.3.a
+		ROOT = { add_political_power = -50 }
+		remove_tax_cost = yes
+		subtract_from_variable = { tax_rate = 1 }
+		set_tax_cost = yes
+		calculate_tax_gain = yes
+		update_military_rate = yes
+		ingame_calculate_size_modifier = yes
+		calculate_resource_sale_rate = yes
+		set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
+		set_variable = { law_change = -1 } #-1 decrease, 1 for increase
+		law_attitude_change = yes
+		visually_display_opinion_rise_industrial_conglomerates = yes
+		set_country_flag = current_industrial_conglomerates
+		increase_internal_faction_opinion = yes
+		custom_effect_tooltip = DECREASE_TAX_TT
+		log = "[GetDateText]: [This.GetName]: internal_faction.3.a executed"
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				has_conservative_government = yes
+			}
+		}
+	}
+	option = {
+		name = internal_faction.3.b
+		visually_display_opinion_fall_industrial_conglomerates = yes
+		set_country_flag = current_industrial_conglomerates
+		decrease_internal_faction_opinion = yes
+		log = "[GetDateText]: [This.GetName]: internal_faction.2.b executed"
+		ai_chance = {
+			factor = 10
+		}
+	}
+}

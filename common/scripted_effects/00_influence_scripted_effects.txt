@@ -1,5 +1,4 @@
 #Written by Killerrabbit and SWF541
-
 #for not oversizing the array for having both 2000 and 2017 values
 init_influence = {
 	clear_array = influence_array_val
@@ -19,11 +18,11 @@ recalculate_influence = {
 }
 
 sort_influence = {
-	resize_temp_array = { 
+	resize_temp_array = {
 		array = influence_array_val_temp #values
 		size = influence_array_val^num
 	}
-	resize_temp_array = { 
+	resize_temp_array = {
 		array = influence_array_temp #tags
 		size = influence_array_val^num
 	}
@@ -31,7 +30,7 @@ sort_influence = {
 		end = influence_array_val^num
 		value = v
 		find_highest_in_array = {
-			array = influence_array_val 
+			array = influence_array_val
 			value = max
 			index = max_index
 		}
@@ -58,7 +57,7 @@ sort_influence = {
 	clear_temp_array = influence_array_temp
 	set_variable = { domestic_influence_amount_calc = domestic_influence_amount }
 	add_to_variable = { influence_total = domestic_influence_amount_calc }
-	
+
 	for_each_loop = {
 		array = influence_array_calc
 		round_variable = influence_array_calc^i
@@ -66,12 +65,12 @@ sort_influence = {
 		clamp_variable = { var = influence_array_calc^i min = 0 max = 1 }
 		clamp_variable = { var = influence_array_val^i min = 0 max = influence_total }
 	}
-	
+
 	round_variable = domestic_influence_amount_calc
 	divide_variable = { domestic_influence_amount_calc = influence_total }
 	clamp_variable = { var = domestic_influence_amount_calc min = 0 max = 1 }
 	clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-	
+
 	#hostile_influence_target = yes
 }
 
@@ -87,26 +86,26 @@ calculate_influence_percentage = {
 		end = influence_array_calc^num
 		if = {
 			limit = { var:influence_array^v = { has_government = democratic } }
-			add_to_temp_variable = { influence_democratic = influence_array_calc^v }	
+			add_to_temp_variable = { influence_democratic = influence_array_calc^v }
 		}
 		else_if = {
 			limit = { var:influence_array^v = { has_government = neutrality } }
-			add_to_temp_variable = { influence_neutrality = influence_array_calc^v }	
+			add_to_temp_variable = { influence_neutrality = influence_array_calc^v }
 		}
 		else_if = {
 			limit = { var:influence_array^v = { has_government = communism } }
-			add_to_temp_variable = { influence_communism = influence_array_calc^v }	
+			add_to_temp_variable = { influence_communism = influence_array_calc^v }
 		}
 		else_if = {
 			limit = { var:influence_array^v = { has_government = nationalist } }
-			add_to_temp_variable = { influence_nationalist = influence_array_calc^v }	
+			add_to_temp_variable = { influence_nationalist = influence_array_calc^v }
 		}
 		else_if = {
 			limit = { var:influence_array^v = { has_government = fascism } }
-			add_to_temp_variable = { influence_fascism = influence_array_calc^v }	
+			add_to_temp_variable = { influence_fascism = influence_array_calc^v }
 		}
 	}
-	
+
 	### see ideology_drifts.txt: ###
 	clear_influence_count_ideas = yes
 
@@ -120,15 +119,15 @@ calculate_influence_percentage = {
 ### Assign target for hostile influence ###
 
 hostile_influence_target = {
-	
+
 }
 
 ### Actions ###
 
 spread_influence = {
-			
+
 	PREV = { add_political_power = -80 }
-	
+
 	set_temp_variable = { influence_gain = PREV.influence_multiplier } #from global rank idea
 	multiply_temp_variable = { influence_gain = 10 } #base gain
 	for_loop_effect = {
@@ -167,7 +166,7 @@ make_puppet_action = {
 			THISTAG = "[?var:influence_array^v.GetTag]"
 		}
 	}
-	
+
 	PREV = {
 		set_autonomy = {
 			target = PREV
@@ -188,14 +187,14 @@ make_puppet_action = {
 }
 
 economic_exploitation_action = {
-	
+
 	meta_effect = {
 		text = {
 			add_ideas = [ROOTTAG]_tribute_idea
 		}
 		ROOTTAG = "[?var:influence_array^0.GetTag]"
 	}
-	
+
 	#remove 10% influence
 	set_temp_variable = { influence_reduce = influence_total } #from global rank idea
 	multiply_temp_variable = { influence_reduce = 0.1 } #10%
@@ -210,7 +209,7 @@ economic_exploitation_action = {
 		}
 	}
 	recalculate_influence = yes
-	
+
 	#opinions
 	add_opinion_modifier = {
 		target = PREV
@@ -225,7 +224,7 @@ economic_exploitation_action = {
 }
 
 
-manipulate_politics_action = {				
+manipulate_politics_action = {
 	#Add +5 to our outlook
 	if = {
 		limit = {
@@ -272,15 +271,15 @@ manipulate_politics_action = {
 			popularity = 0.05
 		}
 	}
-	
+
 	#add +5 to our party
-	
+
 	for_each_loop = {
 		array = PREV.ruling_party
 		value = v
 		add_to_variable = { party_pop_array^v = 0.05 }
 	}
-	
+
 	#remove 10% influence
 	set_temp_variable = { influence_reduce = influence_total } #from global rank idea
 	multiply_temp_variable = { influence_reduce = 0.1 } #10%
@@ -295,7 +294,7 @@ manipulate_politics_action = {
 		}
 	}
 	recalculate_influence = yes
-	
+
 	#reduce relations if different gov
 	if = {
 		limit = {
