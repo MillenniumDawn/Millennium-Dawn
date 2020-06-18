@@ -15,7 +15,7 @@ focus_tree = {
 		id = GENERIC_political_reform
 		icon = demand_territory
 		
-		x = -3
+		x = -5
 		y = 0
 		
 		cost = 10
@@ -512,6 +512,7 @@ focus_tree = {
 		prerequisite = { focus = GENERIC_station_in_the_world }
 		mutually_exclusive = { focus = GENERIC_eastern_emergence }
 		mutually_exclusive = { focus = GENERIC_the_nationalist_rise }
+		mutually_exclusive = { focus = GENERIC_the_salafist_rise }
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -549,6 +550,7 @@ focus_tree = {
 		prerequisite = { focus = GENERIC_station_in_the_world }
 		mutually_exclusive = { focus = GENERIC_the_nationalist_rise }
 		mutually_exclusive = { focus = GENERIC_the_west }
+		mutually_exclusive = { focus = GENERIC_the_salafist_rise }
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -586,6 +588,7 @@ focus_tree = {
 		prerequisite = { focus = GENERIC_station_in_the_world }
 		mutually_exclusive = { focus = GENERIC_eastern_emergence }
 		mutually_exclusive = { focus = GENERIC_the_west }
+		mutually_exclusive = { focus = GENERIC_the_salafist_rise }
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -601,6 +604,174 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_the_nationalist_rise"
 			add_ideas = generic_nationalist_boost_idea
 			add_popularity = { ideology = nationalist popularity = 0.025 }
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	
+	focus = {
+		id = GENERIC_the_salafist_rise
+		icon = isis_allegiance
+		
+		x = 6
+		y = 3
+		relative_position_id = GENERIC_political_reform
+		
+		cost = 10
+		
+		search_filters = {FOCUS_FILTER_POLITICAL}
+		prerequisite = { focus = GENERIC_station_in_the_world }
+		mutually_exclusive = { focus = GENERIC_eastern_emergence }
+		mutually_exclusive = { focus = GENERIC_the_west }
+		mutually_exclusive = { focus = GENERIC_the_nationalist_rise }
+		allow_branch = { 
+			OR = {
+				has_idea = sunni
+				has_game_rule = {
+					rule = RULE_SALAFIST_BRANCH
+					option = yes  
+				} 
+			}
+		}
+		historical_ai = { }
+		select_effect = { }
+		bypass = { }
+		cancel = { }
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+		
+		complete_tooltip = { }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_the_salafist_rise"
+			if = {
+				limit = {
+					NOT = {has_idea = sunni}
+					has_game_rule = {
+						rule = RULE_SALAFIST_BRANCH
+						option = yes  
+					}
+				}
+				add_popularity = { ideology = fascism popularity = 0.025 }
+				if = {
+					limit = {has_government = democratic}
+					start_civil_war = {
+						ideology  = democratic
+						ruling_party = fascism
+					}
+				}
+				else_if = {
+					limit = {has_government = communism}
+					start_civil_war = {
+						ideology  = communism
+						ruling_party = fascism
+					}
+				}
+				else_if = {
+					limit = {has_government = neutrality}
+					start_civil_war = {
+						ideology  = neutrality
+						ruling_party = fascism
+					}
+				}
+				else_if = {
+					limit = {has_government = nationalist}
+					start_civil_war = {
+						ideology  = nationalist
+						ruling_party = fascism
+					}
+				}
+				if = {
+					limit = {has_idea =  shia}
+					swap_ideas = {
+						remove_idea = shia
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  sufi_islam}
+					swap_ideas = {
+						remove_idea = sufi_islam
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  ibadi}
+					swap_ideas = {
+						remove_idea = ibadi
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  christian}
+					swap_ideas = {
+						remove_idea = christian
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  orthodox_christian}
+					swap_ideas = {
+						remove_idea = orthodox_christian
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  pluralist}
+					swap_ideas = {
+						remove_idea = pluralist
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  buddism}
+					swap_ideas = {
+						remove_idea = buddism
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  hindu}
+					swap_ideas = {
+						remove_idea = hindu
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  judaism}
+					swap_ideas = {
+						remove_idea = judaism
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  shinto}
+					swap_ideas = {
+						remove_idea = shinto
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  cheondo}
+					swap_ideas = {
+						remove_idea = cheondo
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  fifty_fifty_divide}
+					swap_ideas = {
+						remove_idea = cheondo
+						add_idea  = sunni
+					}
+				}
+			}
+			add_ideas = generic_salafist_boost_idea
+			add_popularity = { ideology = fascism popularity = 0.025 }
 			recalculate_party = yes
 		}
 
@@ -718,6 +889,44 @@ focus_tree = {
 				add_idea = generic_nationalist_boost_idea2
 			}
 			add_popularity = { ideology = nationalist popularity = 0.05 }
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1 
+		}
+	}
+	focus = {
+		id = GENERIC_jihad
+		icon = jihad
+		
+		x = 6
+		y = 4
+		relative_position_id = GENERIC_political_reform
+		
+		cost = 10
+		
+		search_filters = {FOCUS_FILTER_POLITICAL}
+		prerequisite = { focus = GENERIC_the_salafist_rise }
+		mutually_exclusive = { }
+		available = { }
+		historical_ai = { }
+		select_effect = { }
+		bypass = { }
+		cancel = { }
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+		
+		complete_tooltip = { }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_jihad"
+			swap_ideas = {
+				remove_idea = generic_salafist_boost_idea
+				add_idea = generic_salafist_boost_idea2
+			}
+			add_popularity = { ideology = fascism popularity = 0.05 }
 			recalculate_party = yes
 		}
 
