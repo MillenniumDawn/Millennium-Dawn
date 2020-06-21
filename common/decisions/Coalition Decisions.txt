@@ -6,15 +6,17 @@ coalition_desicions = {
 	###Desicion countdown ###
 	#activate_decision
 	#remove_decision
-	
 	coalition_countdown = {
 		icon = eng_trade_unions_support
 		
 		#need to complete
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = has_formed_coalition_TT
-				check_variable = { government_coalition_strength_elect > majority_threshold }
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = has_formed_coalition_TT
+					check_variable = { government_coalition_strength_elect > majority_threshold }
+				}
+				has_elections = no
 			}
 		}
 		
@@ -37,60 +39,212 @@ coalition_desicions = {
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout coalition_countdown"
 			add_political_power = -300
-			custom_effect_tooltip = AI_form_government_TT
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				
-				set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
-				subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^max_index_1 }
+			if = {
+				limit = { is_ai = yes }
+				custom_effect_tooltip = AI_form_government_TT
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					
+					set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
+					subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^max_index_1 }
 
-				set_temp_variable = { majority_threshold_2 = majority_threshold } #need one that does not include second biggest party
-				subtract_from_temp_variable = { majority_threshold_2 = party_pop_elect_array^max_index_2 }
-				
-				make_affinity_arrays = yes
-				reduce_affinity_array_party_1 = yes
-				reduce_affinity_array_party_2 = yes
-				
-				if = {
-					limit = {
-						#coalition 1 is prefered - lowest
-						check_variable = {
-							var = cost1
-							value = cost2
-							compare = less_than_or_equals
-						}
-					}
-					add_to_array = { ruling_party = max_index_1 }
-					for_each_loop = {
-						array = party_pop_elect_array
-						index = i1
-						if = {
-							limit = {
-								check_variable = { party_1_affinity_array^i1 > 0 }
+					set_temp_variable = { majority_threshold_2 = majority_threshold } #need one that does not include second biggest party
+					subtract_from_temp_variable = { majority_threshold_2 = party_pop_elect_array^max_index_2 }
+					
+					make_affinity_arrays = yes
+					reduce_affinity_array_party_1 = yes
+					reduce_affinity_array_party_2 = yes
+					
+					if = {
+						limit = {
+							#coalition 1 is prefered - lowest
+							check_variable = {
+								var = cost1
+								value = cost2
+								compare = less_than_or_equals
 							}
-							add_to_array = { gov_coalition_array = i1 }
 						}
-					}
-				}
-				else_if = {
-					limit = {
-						check_variable = { cost1 > cost2 } #coalition 2 is prefered - lowest
-					}
-					add_to_array = { ruling_party = max_index_2 }
-					for_each_loop = {
-						array = party_pop_elect_array
-						index = i2
-						if = {
-							limit = {
-								check_variable = { party_2_affinity_array^i2 > 0 }
+						add_to_array = { ruling_party = max_index_1 }
+						for_each_loop = {
+							array = party_pop_elect_array
+							index = i1
+							if = {
+								limit = {
+									check_variable = { party_1_affinity_array^i1 > 0 }
+								}
+								add_to_array = { gov_coalition_array = i1 }
 							}
-							add_to_array = { gov_coalition_array = i2 }
 						}
 					}
+					else_if = {
+						limit = {
+							check_variable = { cost1 > cost2 } #coalition 2 is prefered - lowest
+						}
+						add_to_array = { ruling_party = max_index_2 }
+						for_each_loop = {
+							array = party_pop_elect_array
+							index = i2
+							if = {
+								limit = {
+									check_variable = { party_2_affinity_array^i2 > 0 }
+								}
+								add_to_array = { gov_coalition_array = i2 }
+							}
+						}
+					}
+					
+					#Set the correct Outlook
+					if = { limit = { is_in_array = { array = ruling_party value = 0 } }
+						set_country_flag = set_Western_Autocracy
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 1 } }
+						set_country_flag = set_conservatism
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 2 } }
+						set_country_flag = set_liberalism
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 3 } }
+						set_country_flag = set_socialism
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 4 } }
+						set_country_flag = set_Communist-State
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 5 } }
+						set_country_flag = set_anarchist_communism
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 6 } }
+						set_country_flag = set_Conservative
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 7 } }
+						set_country_flag = set_Autocracy
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 8 } }
+						set_country_flag = set_Mod_Vilayat_e_Faqih
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 9 } }
+						set_country_flag = set_Vilayat_e_Faqih
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 10 } }
+						set_country_flag = set_Kingdom
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 11 } }
+						set_country_flag = set_Caliphate
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 12 } }
+						set_country_flag = set_Neutral_Muslim_Brotherhood
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 13 } }
+						set_country_flag = set_Neutral_Autocracy
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 14 } }
+						set_country_flag = set_Neutral_conservatism
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 15 } }
+						set_country_flag = set_oligarchism
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 16 } }
+						set_country_flag = set_Neutral_Libertarian
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 17 } }
+						set_country_flag = set_Neutral_green
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 18 } }
+						set_country_flag = set_neutral_Social
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 19 } }
+						set_country_flag = set_Neutral_Communism
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 20 } }
+						set_country_flag = set_Nat_Populism
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 21 } }
+						set_country_flag = set_Nat_Fascism
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 22 } }
+						set_country_flag = set_Nat_Autocracy
+					}
+					if = { limit = { is_in_array = { array = ruling_party value = 23 } }
+						set_country_flag = set_Monarchist
+					}
+					if = {
+						limit = {
+							OR = {
+								is_in_array = { array = ruling_party value = 0 }
+								is_in_array = { array = ruling_party value = 1 }
+								is_in_array = { array = ruling_party value = 2 }
+								is_in_array = { array = ruling_party value = 3 }
+							}
+						}
+						set_politics = {
+							ruling_party = democratic
+							elections_allowed = yes
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								is_in_array = { array = ruling_party value = 4 }
+								is_in_array = { array = ruling_party value = 5 }
+								is_in_array = { array = ruling_party value = 6 }
+								is_in_array = { array = ruling_party value = 7 }
+								is_in_array = { array = ruling_party value = 8 }
+								is_in_array = { array = ruling_party value = 9 }
+							}
+						}
+						set_politics = {
+							ruling_party = communism
+							elections_allowed = yes
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								is_in_array = { array = ruling_party value = 10 }
+								is_in_array = { array = ruling_party value = 11 }
+							}
+						}
+						set_politics = {
+							ruling_party = fascism
+							elections_allowed = yes
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								is_in_array = { array = ruling_party value = 12 }
+								is_in_array = { array = ruling_party value = 13 }
+								is_in_array = { array = ruling_party value = 14 }
+								is_in_array = { array = ruling_party value = 15 }
+								is_in_array = { array = ruling_party value = 16 }
+								is_in_array = { array = ruling_party value = 17 }
+								is_in_array = { array = ruling_party value = 18 }
+								is_in_array = { array = ruling_party value = 19 }
+							}
+						}
+						set_politics = {
+							ruling_party = neutrality
+							elections_allowed = yes
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								is_in_array = { array = ruling_party value = 20 }
+								is_in_array = { array = ruling_party value = 21 }
+								is_in_array = { array = ruling_party value = 22 }
+								is_in_array = { array = ruling_party value = 23 }
+							}
+						}
+						set_politics = {
+							ruling_party = nationalist
+							elections_allowed = yes
+						}
+					}
+					set_leader = yes	
 				}
-				clr_country_flag = coalition_forming
 			}
+			clr_country_flag = coalition_forming	
 		}
 
 		complete_effect = {
@@ -231,14 +385,12 @@ coalition_desicions = {
 					check_variable = { party_pop_elect_array^1 < election_threshold } #failed elections
 					is_in_array = { gov_coalition_array = 1 } #is already in coalition
 					is_in_array = { ruling_party = 1 } #is already in coalition
-					
 				}
 			}
 		}
 		available = {
 			NOT = {
 				OR = {
-					
 					custom_trigger_tooltip = {
 						tooltip = is_biggest_party	
 						check_variable = { max_index_1 = 1 }
@@ -277,7 +429,7 @@ coalition_desicions = {
 						is_in_array = { ruling_party = 19 } #neutral communist
 						is_in_array = { ruling_party = 21 } #fascist
 					#}
-						#won't join social democrats if both are strong
+					#won't join social democrats if both are strong
 					custom_trigger_tooltip = {
 						tooltip = mutual_socialism_20_tt
 						AND = {

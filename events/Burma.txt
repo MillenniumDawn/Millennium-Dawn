@@ -530,7 +530,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: Burma.6.b executed"
 		
 		send_equipment = {
-			equipment = Cat_INF_WEP
+			equipment = Inf_equipment
 			amount = 10000
 			target = WAA
 		}
@@ -792,6 +792,126 @@ country_event = {
 	}
 }
 
+#Myanmar Requests a Military Alliance
+country_event = {
+	id = Burma.14
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Burma.14" }
+	title = Burma.14.t
+	desc = Burma.14.d
+	
+	picture = GFX_political_deal
+	
+	is_triggered_only = yes
+		
+	option = {
+		name = Burma.14.a #We stand together!
+		log = "[GetDateText]: [This.GetName]: Burma.14.a executed"
+		effect_tooltip = {
+			CHI = {
+				add_to_faction = BRM
+				custom_effect_tooltip = CHI_increase_aggression_1_tt
+			}
+			BRM = {
+				hidden_effect = {
+					set_temp_variable = { influence_gain = 80 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = {
+								check_variable = { influence_array^v = CHI }
+							}
+							add_to_variable = { influence_array_val^v = influence_gain }
+						}
+					}
+					recalculate_influence = yes
+				}
+			}
+			custom_effect_tooltip = 11_BRM_China_80_tt
+		}
+		add_to_variable = { chinese_aggression = 1 }
+		BRM = {
+			country_event = {
+				id = Burma.15
+				days = 1
+			}
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				BRM = { has_war = yes }
+			}
+		}
+	}
+	
+	option = {
+		name = Burma.14.b #Myanmar is not a worthy ally...
+		log = "[GetDateText]: [This.GetName]: Burma.14.b executed"
+		BRM = {
+			country_event = {
+				id = Burma.16
+				days = 1
+			}
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#China has Agreed to a Military Alliance!
+country_event = {
+	id = Burma.15
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Burma.15" }
+	title = Burma.15.t
+	desc = Burma.15.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+		
+	option = {
+		name = Burma.15.a #Our friendship shall be ever-lasting!
+		log = "[GetDateText]: [This.GetName]: Burma.15.a executed"
+		CHI = {
+			add_to_faction = BRM
+		}
+		BRM = {
+			hidden_effect = {
+				set_temp_variable = { influence_gain = 80 }
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = CHI }
+						}
+						add_to_variable = { influence_array_val^v = influence_gain }
+					}
+				}
+				recalculate_influence = yes
+			}
+		}
+		custom_effect_tooltip = 11_BRM_China_80_tt
+	}
+}
+
+#China has Refused our Offer!
+country_event = {
+	id = Burma.16
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Burma.16" }
+	title = Burma.16.t
+	desc = Burma.16.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+		
+	option = {
+		name = Burma.16.a #Disappointing...
+		log = "[GetDateText]: [This.GetName]: Burma.16.a executed"
+	}
+}
+
 ##Insurgency
 #Clashes with the Kachin
 country_event = {
@@ -884,22 +1004,6 @@ country_event = {
 		name = Insurgency.5.a #To the victor, the spoils
 		trigger = { tag = BRM }
 		log = "[GetDateText]: [This.GetName]: Insurgency.5.a executed"
-		add_manpower = -100
-		add_equipment_to_stockpile = {
-			type = infantry_weapons				
-			amount = 300
-			producer = SOV			
-		}
-		add_equipment_to_stockpile = {
-			type = infantry_weapons				
-			amount = 200
-			producer = USA			
-		}
-		add_equipment_to_stockpile = {
-			type = infantry_weapons1
-			amount = 100				
-			producer = KAC			
-		}
 		custom_effect_tooltip = 11_BRM_rebel_influence_gain_tt
 	}
 	
@@ -907,11 +1011,6 @@ country_event = {
 		name = Insurgency.5.b #These losses are temporary...
 		trigger = { NOT = { tag = BRM } }
 		log = "[GetDateText]: [This.GetName]: Insurgency.5.b executed"
-		add_manpower = -1000
-		add_equipment_to_stockpile = {
-			type = infantry_weapons				
-			amount = -600
-		}
 		hidden_effect = {
 			set_temp_variable = { influence_gain = 20 }
 			for_loop_effect = {
@@ -946,17 +1045,6 @@ country_event = {
 		name = Insurgency.6.a #To the victor, the spoils
 		trigger = { NOT = { tag = BRM } }
 		log = "[GetDateText]: [This.GetName]: Insurgency.6.a executed"
-		add_manpower = -100
-		add_equipment_to_stockpile = {
-			type = infantry_weapons				
-			amount = 1000
-			producer = BRM			
-		}
-		add_equipment_to_stockpile = {
-			type = infantry_weapons2
-			amount = 500				
-			producer = BRM			
-		}
 		hidden_effect = {
 			set_temp_variable = { influence_gain = -20 }
 			for_loop_effect = {
@@ -977,19 +1065,6 @@ country_event = {
 		name = Insurgency.6.b #These losses are temporary...
 		trigger = { tag = BRM }
 		log = "[GetDateText]: [This.GetName]: Insurgency.6.b executed"
-		add_manpower = -1000
-		add_equipment_to_stockpile = {
-			type = Inf_equipment			
-			amount = -1500
-		}
-		add_equipment_to_stockpile = {
-			type = APC_Equipment
-			amount = -50				
-		}
-		add_equipment_to_stockpile = {
-			type = IFV_Equipment
-			amount = -50				
-		}
 		custom_effect_tooltip = 11_BRM_rebel_influence_loss_tt
 	}
 }
@@ -1009,11 +1084,6 @@ country_event = {
 	option = {
 		name = Insurgency.7.a #A stalemate, for now
 		log = "[GetDateText]: [This.GetName]: Insurgency.7.a executed"
-		add_manpower = -200
-		add_equipment_to_stockpile = {
-			type = Inf_equipment			
-			amount = -200
-		}
 	}
 }
 
@@ -1037,7 +1107,7 @@ country_event = {
 	hidden = yes
 	
 	mean_time_to_happen = {
-		days = 30
+		days = 90
 	}
 	
 	option = {

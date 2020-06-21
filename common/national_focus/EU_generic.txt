@@ -69,11 +69,12 @@ focus_tree = {
 		id = EU_GENERIC_political_reform
 		icon = demand_territory
 		
-		x = -3
+		x = -5
 		y = 0
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { }
 		mutually_exclusive = { }
 		available = { }
@@ -106,6 +107,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_political_reform }
 		mutually_exclusive = { }
 		available = { }
@@ -139,6 +141,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_political_reform }
 		mutually_exclusive = { }
 		available = { }
@@ -172,6 +175,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_cabinet_reform }
 		prerequisite = { focus = EU_GENERIC_strengthen_government }
 		mutually_exclusive = { }
@@ -209,6 +213,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_STABILITY FOCUS_FILTER_WAR_SUPPORT}
 		prerequisite = { focus = EU_GENERIC_political_games }
 		mutually_exclusive = { }
 		available = { }
@@ -243,6 +248,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_political_games }
 		mutually_exclusive = { }
 		available = { }
@@ -279,6 +285,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_STABILITY}
 		prerequisite = { focus = EU_GENERIC_public_service_annoucement }
 		prerequisite = { focus = EU_GENERIC_the_establishment }
 		mutually_exclusive = { }
@@ -317,6 +324,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_political_reform }
 		mutually_exclusive = { }
 		available = { }
@@ -372,6 +380,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = EU_GENERIC_expand_the_secret_service }
 		mutually_exclusive = { }
 		available = { }
@@ -480,6 +489,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INFLUENCE}
 		prerequisite = { focus = EU_GENERIC_international_diplomacy }
 		mutually_exclusive = { }
 		available = { }
@@ -517,6 +527,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_diplomatic_positions }
 		prerequisite = { focus = EU_GENERIC_our_place }
 		mutually_exclusive = { }
@@ -551,9 +562,11 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_station_in_the_world }
 		mutually_exclusive = { focus = EU_GENERIC_eastern_emergence }
 		mutually_exclusive = { focus = EU_GENERIC_the_nationalist_rise }
+		mutually_exclusive = { focus = EU_GENERIC_the_salafist_rise }
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -587,9 +600,11 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_station_in_the_world }
 		mutually_exclusive = { focus = EU_GENERIC_the_nationalist_rise }
 		mutually_exclusive = { focus = EU_GENERIC_the_west }
+		mutually_exclusive = { focus = EU_GENERIC_the_salafist_rise }
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -623,9 +638,11 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_station_in_the_world }
 		mutually_exclusive = { focus = EU_GENERIC_eastern_emergence }
 		mutually_exclusive = { focus = EU_GENERIC_the_west }
+		mutually_exclusive = { focus = EU_GENERIC_the_salafist_rise }
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -648,6 +665,173 @@ focus_tree = {
 			factor = 1
 		}
 	}
+	focus = {
+		id = EU_GENERIC_the_salafist_rise
+		icon = isis_allegiance
+		
+		x = 6
+		y = 3
+		relative_position_id = EU_GENERIC_political_reform
+		
+		cost = 10
+		
+		search_filters = {FOCUS_FILTER_POLITICAL}
+		prerequisite = { focus = EU_GENERIC_station_in_the_world }
+		mutually_exclusive = { focus = EU_GENERIC_eastern_emergence }
+		mutually_exclusive = { focus = EU_GENERIC_the_west }
+		mutually_exclusive = { focus = EU_GENERIC_the_nationalist_rise }
+		allow_branch = { 
+			OR = {
+				has_idea = sunni
+				has_game_rule = {
+					rule = RULE_SALAFIST_BRANCH
+					option = yes  
+				} 
+			}
+		}
+		historical_ai = { }
+		select_effect = { }
+		bypass = { }
+		cancel = { }
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+		
+		complete_tooltip = { }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EU_GENERIC_the_salafist_rise"
+			if = {
+				limit = {
+					NOT = {has_idea = sunni}
+					has_game_rule = {
+						rule = RULE_SALAFIST_BRANCH
+						option = yes  
+					}
+				}
+				add_popularity = { ideology = fascism popularity = 0.025 }
+				if = {
+					limit = {has_government = democratic}
+					start_civil_war = {
+						ideology  = democratic
+						ruling_party = fascism
+					}
+				}
+				else_if = {
+					limit = {has_government = communism}
+					start_civil_war = {
+						ideology  = communism
+						ruling_party = fascism
+					}
+				}
+				else_if = {
+					limit = {has_government = neutrality}
+					start_civil_war = {
+						ideology  = neutrality
+						ruling_party = fascism
+					}
+				}
+				else_if = {
+					limit = {has_government = nationalist}
+					start_civil_war = {
+						ideology  = nationalist
+						ruling_party = fascism
+					}
+				}
+				if = {
+					limit = {has_idea =  shia}
+					swap_ideas = {
+						remove_idea = shia
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  sufi_islam}
+					swap_ideas = {
+						remove_idea = sufi_islam
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  ibadi}
+					swap_ideas = {
+						remove_idea = ibadi
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  christian}
+					swap_ideas = {
+						remove_idea = christian
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  orthodox_christian}
+					swap_ideas = {
+						remove_idea = orthodox_christian
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  pluralist}
+					swap_ideas = {
+						remove_idea = pluralist
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  buddism}
+					swap_ideas = {
+						remove_idea = buddism
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  hindu}
+					swap_ideas = {
+						remove_idea = hindu
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  judaism}
+					swap_ideas = {
+						remove_idea = judaism
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  shinto}
+					swap_ideas = {
+						remove_idea = shinto
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  cheondo}
+					swap_ideas = {
+						remove_idea = cheondo
+						add_idea  = sunni
+					}
+				}
+				else_if = {
+					limit = {has_idea =  fifty_fifty_divide}
+					swap_ideas = {
+						remove_idea = cheondo
+						add_idea  = sunni
+					}
+				}
+			}
+			add_ideas = generic_salafist_boost_idea
+			add_popularity = { ideology = fascism popularity = 0.025 }
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
 	
 	focus = {
 		id = EU_GENERIC_western_ideas
@@ -659,6 +843,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_the_west }
 		mutually_exclusive = { }
 		available = { }
@@ -697,6 +882,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_eastern_emergence }
 		mutually_exclusive = { }
 		available = { }
@@ -724,6 +910,44 @@ focus_tree = {
 			factor = 1
 		}
 	}
+	focus = {
+		id = EU_GENERIC_jihad
+		icon = jihad
+		
+		x = 6
+		y = 4
+		relative_position_id = EU_GENERIC_political_reform
+		
+		cost = 10
+		
+		search_filters = {FOCUS_FILTER_POLITICAL}
+		prerequisite = { focus = EU_GENERIC_the_salafist_rise }
+		mutually_exclusive = { }
+		available = { }
+		historical_ai = { }
+		select_effect = { }
+		bypass = { }
+		cancel = { }
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+		
+		complete_tooltip = { }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EU_GENERIC_jihad"
+			swap_ideas = {
+				remove_idea = generic_salafist_boost_idea
+				add_idea = generic_salafist_boost_idea2
+			}
+			add_popularity = { ideology = fascism popularity = 0.05 }
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1 
+		}
+	}
 	
 	focus = {
 		id = EU_GENERIC_us_above_all
@@ -735,6 +959,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_the_nationalist_rise }
 		mutually_exclusive = { }
 		available = { }
@@ -880,6 +1105,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = EU_GENERIC_international_diplomacy }
 		prerequisite = { focus = EU_GENERIC_build_roads }
 		mutually_exclusive = { }
@@ -950,6 +1176,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_international_diplomacy }
 		mutually_exclusive = { }
 		available = { }
@@ -1002,6 +1229,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = EU_GENERIC_alignment_debate }
 		mutually_exclusive = { focus = EU_GENERIC_interventionism }
 		available = { 
@@ -1052,6 +1280,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_MILITARY_LAWS}
 		prerequisite = { focus = EU_GENERIC_alignment_debate }
 		mutually_exclusive = { focus = EU_GENERIC_neutrality }
 		available = { 
@@ -1152,6 +1381,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_MANPOWER}
 		prerequisite = { focus = EU_GENERIC_interventionism }
 		mutually_exclusive = { }
 		available = { }
@@ -1195,6 +1425,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INDUSTRY}
 		prerequisite = { focus = EU_GENERIC_build_fortifications }
 		mutually_exclusive = { }
 		available = { }
@@ -1276,6 +1507,7 @@ focus_tree = {
 		
 		prerequisite = { }
 		mutually_exclusive = { }
+		search_filters = {FOCUS_FILTER_INDUSTRY}
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -1321,6 +1553,7 @@ focus_tree = {
 		
 		prerequisite = { focus = EU_GENERIC_build_roads }
 		mutually_exclusive = { }
+		search_filters = {FOCUS_FILTER_INDUSTRY}
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -1366,6 +1599,7 @@ focus_tree = {
 		
 		prerequisite = { focus = EU_GENERIC_build_roads }
 		mutually_exclusive = { }
+		search_filters = {FOCUS_FILTER_INDUSTRY}
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -1412,6 +1646,7 @@ focus_tree = {
 		prerequisite = { focus = EU_GENERIC_build_railways }
 		prerequisite = { focus = EU_GENERIC_mobilize_the_working_class }
 		mutually_exclusive = { }
+		search_filters = {FOCUS_FILTER_INDUSTRY}
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -1449,6 +1684,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = EU_GENERIC_build_highways }
 		prerequisite = { focus = EU_GENERIC_expand_urban_areas }
 		mutually_exclusive = { }
@@ -1512,6 +1748,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESOURCE}
 		prerequisite = { focus = EU_GENERIC_developmentalism }
 		mutually_exclusive = { }
 		available = { }
@@ -1618,6 +1855,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE}
 		prerequisite = { focus = EU_GENERIC_expand_urban_areas }
 		mutually_exclusive = { }
 		available = { }
@@ -1650,6 +1888,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESOURCE}
 		prerequisite = { focus = EU_GENERIC_economic_autonomy }
 		mutually_exclusive = { }
 		available = { }
@@ -1682,6 +1921,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = EU_GENERIC_build_railways }
 		prerequisite = { focus = EU_GENERIC_mobilize_the_working_class }
 		mutually_exclusive = { }
@@ -1731,6 +1971,7 @@ focus_tree = {
 		
 		prerequisite = { }
 		mutually_exclusive = { }
+		search_filters = {FOCUS_FILTER_INDUSTRY}
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -1763,6 +2004,7 @@ focus_tree = {
 		
 		prerequisite = { focus = EU_GENERIC_ease_of_business_reforms }
 		mutually_exclusive = { }
+		search_filters = {FOCUS_FILTER_INDUSTRY}
 		available = { }
 		historical_ai = { }
 		select_effect = { }
@@ -1793,6 +2035,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT}
 		prerequisite = { focus = EU_GENERIC_ease_of_business_reforms }
 		prerequisite = { focus = EU_GENERIC_light_industry_investments }
 		mutually_exclusive = { }
@@ -1839,6 +2082,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INDUSTRY}
 		prerequisite = { }
 		mutually_exclusive = { }
 		available = { }
@@ -1878,6 +2122,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = EU_GENERIC_light_industry_investments }
 		mutually_exclusive = { }
 		available = { num_of_factories > 7 }
@@ -1995,6 +2240,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY}
 		prerequisite = { focus = EU_GENERIC_mobilize_the_working_class }
 		mutually_exclusive = { }
 		available = {
@@ -2060,6 +2306,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = EU_GENERIC_satisfy_the_middle_class }
 		mutually_exclusive = { }
 		available = { 
@@ -2084,9 +2331,9 @@ focus_tree = {
 			add_stability = 0.01
 			if = {
 				limit = { has_idea = the_priesthood }
-				set_country_flag = current_industrial_conglomerates
+				set_country_flag = current_the_priesthood
 				increase_internal_faction_opinion = yes
-				visually_display_opinion_rise_industrial_conglomerates = yes
+				visually_display_opinion_rise_the_priesthood = yes
 			}
 			if = {
 				limit = { has_idea = The_Ulema }
@@ -2122,6 +2369,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY}
 		prerequisite = { focus = EU_GENERIC_satisfy_the_middle_class }
 		mutually_exclusive = { }
 		available = {
@@ -2163,6 +2411,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_please_the_upper_class }
 		mutually_exclusive = { }
 		available = {
@@ -2209,6 +2458,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESOURCE}
 		prerequisite = { focus = EU_GENERIC_please_the_upper_class }
 		mutually_exclusive = { }
 		available = { }
@@ -2254,6 +2504,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_please_the_upper_class }
 		mutually_exclusive = { }
 		available = { }
@@ -2292,6 +2543,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = EU_GENERIC_import_foreign_automobiles }
 		mutually_exclusive = { }
 		available = { }
@@ -2413,6 +2665,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { }
 		mutually_exclusive = { }
 		available = { }
@@ -2445,6 +2698,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_build_primary_schools }
 		mutually_exclusive = { }
 		available = { }
@@ -2477,6 +2731,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_assure_access_to_education }
 		prerequisite = { focus = EU_GENERIC_satisfy_the_middle_class }
 		mutually_exclusive = { }
@@ -2520,6 +2775,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_expand_the_universities }
 		prerequisite = { focus = EU_GENERIC_assure_intellectual_freedoms }
 		mutually_exclusive = { }
@@ -2554,6 +2810,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { }
 		mutually_exclusive = { }
 		available = { any_owned_state = { is_coastal = yes } }
@@ -2592,6 +2849,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = EU_GENERIC_naval_reform }
 		mutually_exclusive = { }
 		available = { }
@@ -2644,6 +2902,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_naval_reform }
 		mutually_exclusive = { }
 		available = { num_of_naval_factories > 3 }
@@ -2680,6 +2939,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_naval_reform }
 		mutually_exclusive = { }
 		available = { num_of_naval_factories > 3 }
@@ -2716,6 +2976,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = EU_GENERIC_naval_bases }
 		mutually_exclusive = { }
 		available = { }
@@ -2771,6 +3032,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_submarines }
 		mutually_exclusive = { }
 		available = { num_of_naval_factories > 7 }
@@ -2807,6 +3069,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_naval_reform }
 		mutually_exclusive = { }
 		available = { }
@@ -2843,6 +3106,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_surface_ships }
 		prerequisite = { focus = EU_GENERIC_fighter_planes }
 		mutually_exclusive = { }
@@ -2880,6 +3144,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_naval_doctrine_innovations }
 		mutually_exclusive = { }
 		available = { }
@@ -2917,6 +3182,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { }
 		mutually_exclusive = { }
 		available = { }
@@ -2954,6 +3220,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_air_force_reform }
 		mutually_exclusive = { }
 		available = { num_of_military_factories > 3 }
@@ -2990,6 +3257,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { 
 			focus = EU_GENERIC_air_force_reform 
 			focus = EU_GENERIC_military_emergency 
@@ -3029,6 +3297,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = {
 			focus = EU_GENERIC_fighter_planes
 			focus = EU_GENERIC_air_doctrine_innovations
@@ -3068,6 +3337,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = {
 			focus = EU_GENERIC_fighter_planes
 		}
@@ -3106,6 +3376,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_air_doctrine_innovations }
 		prerequisite = { focus = EU_GENERIC_infantry_equipment_development }
 		mutually_exclusive = { }
@@ -3143,6 +3414,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = {
 			focus = EU_GENERIC_countermeasures_against_aircraft
 		}
@@ -3252,6 +3524,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { 
 			focus = EU_GENERIC_army_reform
 			focus = EU_GENERIC_military_emergency
@@ -3323,6 +3596,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_MILITARY_LAWS}
 		prerequisite = { focus = EU_GENERIC_army_reform }
 		mutually_exclusive = { }
 		available = { }
@@ -3355,6 +3629,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_land_doctrine_innovations }
 		mutually_exclusive = { }
 		available = { num_of_military_factories > 2 }
@@ -3391,6 +3666,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_land_doctrine_innovations }
 		mutually_exclusive = { }
 		available = { }
@@ -3427,6 +3703,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_military_exercises }
 		mutually_exclusive = { }
 		available = { num_of_military_factories > 3 }
@@ -3463,6 +3740,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_infantry_equipment_development }
 		mutually_exclusive = { }
 		available = { }
@@ -3507,6 +3785,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_land_doctrine_expertise }
 		prerequisite = { focus = EU_GENERIC_artillery_experiments }
 		mutually_exclusive = { }
@@ -3544,6 +3823,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_artillery_experiments }
 		mutually_exclusive = { }
 		available = { num_of_military_factories > 5 }
@@ -3580,6 +3860,7 @@ focus_tree = {
 		
 		cost = 10
 		
+		search_filters = {FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = EU_GENERIC_develop_armor_prototypes }
 		mutually_exclusive = { }
 		available = { num_of_military_factories > 5 }

@@ -1,19 +1,15 @@
 ﻿#Written by hiddengearz, edited and improved by Angriest Bird
-
 add_namespace = war
 add_namespace = anti_bully
 add_namespace = Def_Spending_Warning
-
 news_event = {
 	id = war.0
 	immediate = { log = "[GetDateText]: [Root.GetName]: event war.0" }
 	title = war.0.t
 	desc = war.0.d
-	
 	picture = GFX_news_event_war
 	major = yes
 	is_triggered_only = yes
-
 
 	option = {
 		name = war.0.a
@@ -25,7 +21,6 @@ news_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event war.1" }
 	title = war.1.t
 	desc = war.1.d
-	
 	picture = GFX_news_event_war
 	major = yes
 	is_triggered_only = yes
@@ -34,33 +29,21 @@ news_event = {
 	option = {
 		name = war.1.a
 		log = "[GetDateText]: [This.GetName]: war.1.a executed"
-	
 	}
 }
 
 ################### WAR 1 ############################
-#Used just to trigger event 2, event 1 doesnt seem to work imediately via on action
+#Used just to trigger event 2, event 1 does not seem to work immediately via on action
 country_event = {
 	id = anti_bully.1
 	immediate = { log = "[GetDateText]: [Root.GetName]: event anti_bully.1" }
 	title = anti_bully.1.t
 	desc = anti_bully.1.d
-	
 	hidden = yes
-	#fire_only_once = yes
-	
 	is_triggered_only = yes
-	
 	immediate = {
 		country_event = { id = anti_bully.2 days = 1 }
 	}
-	option = {
-		name = anti_bully.1.a
-		log = "[GetDateText]: [This.GetName]: anti_bully.1.a executed"
-		#this = { gearz_test = yes }
-	}
-	
-	
 }
 
 #Triggers the Public War Weariness System
@@ -69,63 +52,47 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event anti_bully.2" }
 	title = anti_bully.2.t
 	desc = anti_bully.2.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
 	is_triggered_only = yes
-	
 	trigger = {
-		this = {
+		THIS = {
 			has_offensive_war_with = event_target:AB_DEFF
 		}
 	}
-	
 	immediate = {
-		
-		if = {
-			limit = { has_country_flag = { flag = total_AB_wars value = 0 } } #Has 0 AB wars
-			event_target:AB_ATT = {
-				modify_country_flag = { flag = total_AB_wars value = 1 }
-				AB_war_main = yes
-			}
-			else = {
+		hidden_effect = {
+			if = {
+				limit = { has_country_flag = { flag = total_AB_wars value = 0 } } #Has 0 AB wars
 				event_target:AB_ATT = {
 					modify_country_flag = { flag = total_AB_wars value = 1 }
+					AB_war_main = yes
+				}
+				else = {
+					event_target:AB_ATT = {
+						modify_country_flag = { flag = total_AB_wars value = 1 }
+					}
 				}
 			}
+			event_target:AB_ATT = {
+				AB_war_second = yes
+			}
 		}
-		event_target:AB_ATT = {
-			AB_war_second = yes
-		}
-		
 	}
-		
 	option = {
 		name = anti_bully.2.a
 		log = "[GetDateText]: [This.GetName]: anti_bully.2.a executed"
 	}
-	
-	
 }
 
-#
 country_event = {
 	id = anti_bully.3
 	immediate = { log = "[GetDateText]: [Root.GetName]: event anti_bully.3" }
 	title = anti_bully.3.t
 	desc = anti_bully.3.d
-	
 	hidden = yes
-	#fire_only_once = yes
-	
 	is_triggered_only = yes
-	
-	
 	immediate = {
 		AB_war_main = yes
 	}
-	
 	option = {
 		name = anti_bully.3.a
 		log = "[GetDateText]: [This.GetName]: anti_bully.3.a executed" #We have lost national unity
@@ -138,34 +105,24 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event anti_bully.4" }
 	title = anti_bully.4.t
 	desc = anti_bully.4.d
-	
 	hidden = yes
-	#fire_only_once = yes
-	
 	is_triggered_only = yes
-	
 	immediate = {
 		AB_war_second = yes
 	}
-	
 	option = { #attacker offers white peace
 		name = anti_bully.4.a
 		log = "[GetDateText]: [This.GetName]: anti_bully.4.a executed"
-		
 	}
-	
 }
 
-#Deffender accepts/declines white peace
+#Defender accepts/declines white peace
 country_event = {
 	id = anti_bully.5
 	immediate = { log = "[GetDateText]: [Root.GetName]: event anti_bully.5" }
 	title = anti_bully.5.t
 	desc = anti_bully.5.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
+	picture = GFX_politics_talks
 	is_triggered_only = yes
 
 	option = {
@@ -173,14 +130,14 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: anti_bully.5.a executed" #Accept & war ends
 		every_state = {
 			limit = {
-				is_owned_by = This
+				is_owned_by = ROOT
 				is_controlled_by = FROM
 			}
 			FROM = { transfer_state = PREV }
 		}
+		FROM = { country_event = { id = anti_bully.6 } }
 		white_peace = FROM
 		#hidden_effect = { clr_country_flag = stalemate@FROM }
-		
 		if = {
 			limit = { #If you're in a faction, not a major and not the leader
 				event_target:AB_event_target = {
@@ -200,36 +157,119 @@ country_event = {
 				event_target:AB_event_target = { remove_ideas = NATO_member }
 			}
 		}
-		
 		ai_chance = {
-			factor = 10			
+			factor = 1
 			modifier = {
-				factor = 10
-				or = {
+				add = 2
+				ROOT = { surrender_progress > 0.20 }
+			}
+			modifier = {
+				add = 2
+				ROOT = { surrender_progress > 0.30 }
+			}
+			modifier = {
+				add = 2
+				ROOT = { surrender_progress > 0.40 }
+			}
+			modifier = {
+				add = 2
+				ROOT = { surrender_progress > 0.50 }
+			}
+			modifier = {
+				add = 2
+				ROOT = { surrender_progress > 0.60 }
+			}
+			modifier = {
+				add = 2
+				ROOT = { surrender_progress > 0.70 }
+			}
+			modifier = {
+				add = 2
+				ROOT = { surrender_progress > 0.80 }
+			}
+			modifier = {
+				add = 2
+				ROOT = { surrender_progress > 0.90 }
+			}
+			modifier = {
+				factor = 5
+				OR = {
 					strength_ratio = { tag = FROM ratio > 1.5 }
 					has_stability > 0.35
+					has_war_support < 0.30
 				}
-			}		
+			}
 		}
 	}
-	
+
 	option = {
 		name = anti_bully.5.b
-		log = "[GetDateText]: [This.GetName]: anti_bully.5.b executed" #nothing
+		log = "[GetDateText]: [This.GetName]: anti_bully.5.b executed" #Decline the Ceasefire!
+		FROM = { country_event = { id = anti_bully.7 days = 1 } }
 		ai_chance = {
-			factor = 10			
+			factor = 1
 			modifier = {
-				factor = 10
-				or = {
-					not = { strength_ratio = { tag = FROM ratio > 1.5 } }
-					not = { has_stability > 0.35 }
+				add = 2
+				surrender_progress < 0.20
+			}
+			modifier = {
+				add = 2
+				FROM = { surrender_progress > 0.20 }
+			}
+			modifier = {
+				add = 4
+				FROM = { surrender_progress > 0.40 }
+			}
+			modifier = {
+				add = 4
+				FROM = { surrender_progress > 0.60 }
+			}
+			modifier = {
+				add = 4
+				FROM = { surrender_progress > 0.80 }
+			}
+			modifier = {
+				factor = 5
+				NOT = {
+					has_stability > 0.35
+					has_war_support < 0.30
+					strength_ratio = { tag = FROM ratio > 1.5 }
 				}
-			}		
+			}
 		}
 	}
-	
 }
 
+country_event = { #Accepts Ceasefire
+	id = anti_bully.6
+	immediate = { log = "[GetDateText]: [Root.GetName]: event anti_bully.6" }
+	title = anti_bully.6.t
+	desc = anti_bully.6.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+
+	option = {
+		name = anti_bully.6.a
+		log = "[GetDateText]: [This.GetName]: anti_bully.7.a executed"
+		custom_effect_tooltip = accepted_ceasefire_tt
+	}
+}
+
+country_event = { #Decline Ceasefire
+	id = anti_bully.7
+	immediate = { log = "[GetDateText]: [Root.GetName]: event anti_bully.7" }
+	title = anti_bully.7.t
+	desc = anti_bully.7.d
+	picture = GFX_treaty_rejected
+	is_triggered_only = yes
+
+	option = {
+		name = anti_bully.7.a
+		log = "[GetDateText]: [This.GetName]: anti_bully.7.a executed"
+		FROM = { add_timed_idea = { idea = recent_ceasefire_attempt days = 30 } }
+		add_timed_idea = { idea = recent_ceasefire_attempt days = 30 }
+	}
+}
 
 
 #####Military Spending Events
@@ -238,19 +278,12 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event Def_Spending_Warning.0" }
 	title = Def_Spending_Warning.0.t
 	desc = Def_Spending_Warning.0.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
 	is_triggered_only = yes
 	major = yes
-		
 	option = {
 		name = Def_Spending_Warning.0.a
 		log = "[GetDateText]: [This.GetName]: Def_Spending_Warning.0.a executed"
-		
 	}
-	
 }
 #For testing
 country_event = {
@@ -258,23 +291,14 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event Def_Spending_Warning.1" }
 	title = Def_Spending_Warning.1.t
 	desc = Def_Spending_Warning.1.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
 	trigger = {
 		neighbor_has_higher_mil_spending_by_2 = yes
 	}
-	
 	is_triggered_only = yes
-	
-		
 	option = {
 		name = Def_Spending_Warning.1.a
 		log = "[GetDateText]: [This.GetName]: Def_Spending_Warning.1.a executed"
-		
 	}
-	
 }
 #For testing
 country_event = {
@@ -282,20 +306,13 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event Def_Spending_Warning.2" }
 	title = Def_Spending_Warning.2.t
 	desc = Def_Spending_Warning.2.d
-	
-	#hidden = yes
-	#fire_only_once = yes
-	
 	is_triggered_only = yes
-	
-		
+
 	option = {
 		name = Def_Spending_Warning.2.a
 		log = "[GetDateText]: [This.GetName]: Def_Spending_Warning.2.a executed"
 		GUA = {
 			swap_ideas = { remove_idea = defence_01 add_idea = defence_06 }
 		}
-		
 	}
-	
 }

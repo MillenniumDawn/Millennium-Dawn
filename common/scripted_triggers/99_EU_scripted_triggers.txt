@@ -13,6 +13,7 @@ influence_on_all_other_EU_members_3_percent = {
 			if = {	
 				limit = { has_idea = EU_member }
 				OR = {
+					tag = PREV
 					AND = {
 						set_temp_variable = { temp_idx = -1 }
 						any_of = {
@@ -29,8 +30,6 @@ influence_on_all_other_EU_members_3_percent = {
 						check_variable = { temp_idx > -1 }
 						check_variable = { influence_array_calc^temp_idx > 0.03 }
 					}
-					tag = PREV
-					NOT = { has_idea = EU_member }
 				}
 			}
 		}
@@ -44,6 +43,7 @@ influence_on_all_other_EU_members_5_percent = {
 			if = {	
 				limit = { has_idea = EU_member }
 				OR = {
+					tag = PREV
 					AND = {
 						set_temp_variable = { temp_idx = -1 }
 						any_of = {
@@ -60,8 +60,6 @@ influence_on_all_other_EU_members_5_percent = {
 						check_variable = { temp_idx > -1 }
 						check_variable = { influence_array_calc^temp_idx > 0.05 }
 					}
-					tag = PREV
-					NOT = { has_idea = EU_member }
 				}
 			}
 		}
@@ -75,6 +73,7 @@ influence_on_all_other_EU_members_10_percent = {
 			if = {	
 				limit = { has_idea = EU_member }
 				OR = {
+					tag = PREV
 					AND = {
 						set_temp_variable = { temp_idx = -1 }
 						any_of = {
@@ -91,8 +90,6 @@ influence_on_all_other_EU_members_10_percent = {
 						check_variable = { temp_idx > -1 }
 						check_variable = { influence_array_calc^temp_idx > 0.10 }
 					}
-					tag = PREV
-					NOT = { has_idea = EU_member }
 				}
 			}
 		}
@@ -106,6 +103,7 @@ influence_on_all_other_EU_members_25_percent = {
 			if = {	
 				limit = { has_idea = EU_member }
 				OR = {
+					tag = PREV
 					AND = {
 						set_temp_variable = { temp_idx = -1 }
 						any_of = {
@@ -122,10 +120,30 @@ influence_on_all_other_EU_members_25_percent = {
 						check_variable = { temp_idx > -1 }
 						check_variable = { influence_array_calc^temp_idx > 0.25 }
 					}
-					tag = PREV
-					NOT = { has_idea = EU_member }
 				}
 			}
+		}
+	}
+}
+
+##########################
+### EU external border ###
+##########################
+
+has_EU_external_border = {
+	has_idea = EU_member
+	NOT = {
+		all_neighbor_country = {
+			has_idea = EU_member
+		}
+	}	
+}
+
+has_EU_external_home_border = {
+	has_idea = EU_member
+	any_home_area_neighbor_country = {
+		NOT = {
+			has_idea = EU_member
 		}
 	}
 }
@@ -136,7 +154,7 @@ influence_on_all_other_EU_members_25_percent = {
 ##########################
 
 is_leader_of_EU_foreign_policy = {
-	has_idea = EU_member
+	has_idea = EU_member	
 	OR = {
 		has_idea = EU_foreign_minister
 		AND = {
@@ -164,7 +182,7 @@ is_leader_of_EU_foreign_policy = {
 }
 
 is_leader_of_EU_trade_policy = {
-	has_idea = EU_member
+	has_idea = EU_member	
 	OR = {
 		has_idea = EU_commission_president
 		AND = {
@@ -191,6 +209,70 @@ is_leader_of_EU_trade_policy = {
 	}
 }
 
+######################################
+## influence on EU leader triggers ###
+######################################
+
+influence_on_leader_of_EU_foreign_policy_25_percent = {
+	custom_trigger_tooltip = {
+		tooltip = tooltip_influence_on_leader_of_EU_foreign_policy_25_percent
+		any_country = {
+			is_leader_of_EU_foreign_policy = yes
+		}
+		all_country = {
+			if = {	
+				limit = {
+					is_leader_of_EU_foreign_policy = yes
+				}				
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = ROOT } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.25 }
+			}
+		}
+	}
+}
+
+influence_on_leader_of_EU_trade_policy_25_percent = {
+	custom_trigger_tooltip = {
+		tooltip = tooltip_influence_on_leader_of_EU_trade_policy_25_percent
+		any_country = {
+			is_leader_of_EU_trade_policy = yes
+		}
+		all_country = {
+			if = {	
+				limit = {
+					is_leader_of_EU_trade_policy = yes
+				}				
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					if = {
+						limit = { var:v = { tag = ROOT } }
+						set_temp_variable = { temp_idx = i }
+						always = yes
+					}
+					else = { always = no }
+				}
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx > 0.25 }
+			}
+		}
+	}
+}
+
 
 ##############################################
 ### ratification of international treaties ###
@@ -203,6 +285,9 @@ EU_ratify_international_treaty = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_leader_of_EU_foreign_policy_influence_5_percent			
+			any_country = {
+				is_leader_of_EU_foreign_policy = yes
+			}			
 			all_country = {
 				OR = {
 					AND = {
@@ -220,7 +305,10 @@ EU_ratify_international_treaty = {
 				influence_on_all_other_EU_members_3_percent = yes
 			}
 			custom_trigger_tooltip = {
-				tooltip = tooltip_leader_of_EU_foreign_policy_influence_3_percent
+				tooltip = tooltip_leader_of_EU_foreign_policy_influence_3_percent				
+				any_country = {
+					is_leader_of_EU_foreign_policy = yes
+				}				
 				all_country = {
 					OR = {
 						AND = {
@@ -244,6 +332,9 @@ EU_ratify_trade_agreement = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_leader_of_EU_trade_policy_influence_5_percent			
+			any_country = {
+				is_leader_of_EU_trade_policy = yes
+			}			
 			all_country = {
 				OR = {
 					AND = {
@@ -262,6 +353,9 @@ EU_ratify_trade_agreement = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = tooltip_leader_of_EU_trade_policy_influence_3_percent
+				any_country = {
+					is_leader_of_EU_trade_policy = yes
+				}				
 				all_country = {
 					OR = {
 						AND = {
@@ -1058,14 +1152,14 @@ stop_pro_european_campaign = {
 				}
 				check_variable = {
 					var = THIS.eurosceptic
-					value = 0.15
+					value = 0.25 ### was 0.15
 					compare = less_than
 				}			
 			}	
 			AND = {
 				check_variable = {
 					var = THIS.eurosceptic
-					value = 0.15
+					value = 0.25 ### was 0.15
 					compare = less_than
 				}
 				NOT = {
@@ -1121,3 +1215,4 @@ stop_euroscepticism_campaign = {
 		}
 	}	
 }
+
