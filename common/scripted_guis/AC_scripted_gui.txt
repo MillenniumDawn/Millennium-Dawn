@@ -5,8 +5,8 @@
 #Inspired by the original Allied Construction Project https://steamcommunity.com/sharedfiles/filedetails/?id=1368202826
 #This reworked system allows you to have 5 of each project active per country.
 #So you can have 5 CIC projects, 5 INF projects, 5 MIC projects etc in every country in the game
-#There are 8 project types * 5 of each allowed per country = 40 investments possibile in one country * 210 countries the player can invest in = 8400 possibile investments for the player
-#Now if the AI also does the same that's 210 * 8400 = 1,764,000 possibile investments possibile
+#There are 8 project types * 5 of each allowed per country = 40 investments possible in one country * 210 countries the player can invest in = 8400 possibile investments for the player
+#Now if the AI also does the same that's 210 * 8400 = 1,764,000 possible investments possible
 
 
 #Root is investor
@@ -14,13 +14,13 @@
 #Prev = { controller = { is country being invested in
 
 #AC_build_amount determines how many buildings to build
-#AC_building_type_selected = 1 = Infastructure
+#AC_building_type_selected = 1 = Infrastructure
 #AC_building_type_selected = 2 = Airbase
 #AC_building_type_selected = 3 = Anti Air
 #AC_building_type_selected = 4 = Radar
 #AC_building_type_selected = 5 = Military Industry
 #AC_building_type_selected = 6 = Civilian Industry
-#AC_building_type_selected = 7 = naval Industry
+#AC_building_type_selected = 7 = Naval Industry
 #AC_building_type_selected = 8 = Refinery
 
 @BUILD_COST_INFRASTRUCTURE = 10
@@ -33,25 +33,23 @@
 @BUILD_COST_REFINERY = 10
 
 scripted_gui = {
-	
 	AC_show_Investment_window = {
-		context_type = selected_state_context		
+		context_type = selected_state_context
 		window_name = "AC_show_Investment_window"
-		
+
 		parent_window_token = selected_state_view
-		
-		
+
 		visible = {
 			ROOT = { has_country_flag = AC_hide_investment_window }
 		}
-		
+
 		effects = {
 			AC_up_arrow_click = {
 				ROOT = { clr_country_flag = AC_hide_investment_window }
 			}
 		}
 	}
-	
+
 	AC_allied_construction_window = {
 
 		context_type = selected_state_context
@@ -69,31 +67,24 @@ scripted_gui = {
 			AC_building_infra_button = {
 				image = "[AC_GetInfraButtonTexture]"
 			}
-			
 			AC_building_airbase_button = {
 				image = "[AC_GetAirbaseButtonTexture]"
 			}
-			
 			AC_building_antiair_button = {
 				image = "[AC_GetAntiairButtonTexture]"
 			}
-			
 			AC_building_radar_button = {
 				image = "[AC_GetRadarButtonTexture]"
 			}
-
 			AC_building_mic_button = {
 				image = "[AC_GetMicButtonTexture]"
 			}
-			
 			AC_building_cic_button = {
 				image = "[AC_GetCicButtonTexture]"
 			}
-			
 			AC_building_nic_button = {
 				image = "[AC_GetNicButtonTexture]"
 			}
-			
 			AC_building_ref_button = {
 				image = "[AC_GetRefButtonTexture]"
 			}
@@ -103,33 +94,25 @@ scripted_gui = {
 			AC_down_arrow_click = { #hides investment window
 				ROOT = { set_country_flag = AC_hide_investment_window }
 			}
-			
 			AC_build_button_click = { #starts investment if building slots available
 				if = {
-					#checks to see if you don't have a project active in this state
-					limit = {  ROOT = { AC_project_type_not_active = yes } } 
-
+					#Checks to see if there is an active project
+					limit = {  ROOT = { AC_project_type_not_active = yes } }
 					AC_start_project = yes
-					
 				}
-				else = { 
+				else = {
 					#If you do have a project active then the button will say cancel instead of build
-					#If you press it you cancel the project - scripted localisation
+					#If you press it you cancel the project - scripted localization
 					ROOT = { AC_end_project = yes }
 				}
 			}
-			
 			###
 			###
-
 			###
-
 			AC_building_amount_increase_button_click = { #increases AC_build_amount & update build time/cost
 				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
-					
-					### max amount depends on the selected building
-				
+					### Max amount depends on the selected building
 					if = { limit = { check_variable = { AC_building_type_selected = 3 } }
 						#Can't have more than level 5 Anti Air
 						if = { limit = { check_variable = { AC_build_amount < 5 } }
@@ -178,42 +161,33 @@ scripted_gui = {
 				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
 					### max amount depends on the selected building
-				
 					if = { limit = { check_variable = { AC_building_type_selected = 3 } }
-
 						if = { limit = { check_variable = { AC_build_amount > 1 } }
 							add_to_variable = { AC_build_amount = -1 }
-
 							else = {
 								set_variable = { AC_build_amount = 5 }
 							}
 						}
 					}
 					else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
-
 						if = { limit = { check_variable = { AC_build_amount > 1 } }
 							add_to_variable = { AC_build_amount = -1 }
-
 							else = {
 								set_variable = { AC_build_amount = 5 }
 							}
 						}
 					}
 					else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
-
 						if = { limit = { check_variable = { AC_build_amount > 1 } }
 							add_to_variable = { AC_build_amount = -1 }
-
 							else = {
 								set_variable = { AC_build_amount = 3 }
 							}
 						}
 					}
 					else = {
-
 						if = { limit = { check_variable = { AC_build_amount > 1 } }
 							add_to_variable = { AC_build_amount = -1 }
-
 							else = {
 								set_variable = { AC_build_amount = 10 }
 							}
@@ -224,9 +198,8 @@ scripted_gui = {
 				}
 			}
 			######### STATE BUILDINGS
-			
 			#AC_buiding_xxxx_button_click sets variables for specific building and updated build time/cost
-			AC_building_infra_button_click = { 
+			AC_building_infra_button_click = {
 				ROOT = { log = "[GetDateText]: [This.GetName]: infra investment on [FROM.Owner.GetName]. Treasury:[?treasury] int investments:[?int_investments]  debt:[?debt]" }
 				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
@@ -236,11 +209,8 @@ scripted_gui = {
 				}
 				if = { #cheat for ai
 					limit = {  ROOT = { is_ai = yes AC_project_type_not_active = yes } }
-
 					AC_start_project = yes
-					
 				}
-				
 			}
 
 			AC_building_airbase_button_click = {
@@ -291,9 +261,7 @@ scripted_gui = {
 				}
 				if = {
 					limit = {  ROOT = { is_ai = yes AC_project_type_not_active = yes } }
-
 					AC_start_project = yes
-					
 				}
 			}
 
@@ -317,29 +285,21 @@ scripted_gui = {
 		}
 
 		triggers = {
-			
 			###I feel below is self explanatory
-			AC_build_button_click_enabled = { 
+			AC_build_button_click_enabled = {
 				ROOT = { check_variable = { AC_Selected_state = PREV.id } }
-				
 				#Must have a building selected
 				ROOT = { check_variable = { AC_building_type_selected > 0 } }
 				AC_Building_available = yes
-				
 				NOT = { has_state_flag = Investment_pause_@ROOT }
 				if = {
 					limit = { AC_project_type_not_active2 = yes }
 					CONTROLLER = { NOT = { AC_has_max_investments = yes } }
 					ROOT = { check_variable = { treasury > AC_build_cost } }
 				}
-				
-				
 			}
 
-			
-
 			AC_building_amount_increase_button_click_enabled = {
-				
 				ROOT = {
 					check_variable = { AC_build_amount < 11 }
 					AC_project_type_not_active = yes
@@ -348,7 +308,6 @@ scripted_gui = {
 			}
 
 			AC_building_amount_decrease_button_click_enabled = {
-				
 				ROOT = {
 					check_variable = { AC_build_amount > 1 }
 					AC_project_type_not_active = yes
@@ -361,7 +320,6 @@ scripted_gui = {
 				AC_building_infra_available = yes
 				if = {
 					limit = { ROOT = { is_ai = yes } }
-					
 					NOT = { has_state_flag = Investment_pause_@ROOT }
 					if = {
 						limit = { AC_project_type_not_active2 = yes }
@@ -399,7 +357,7 @@ scripted_gui = {
 				AC_building_cic_available = yes
 				if = {
 					limit = { ROOT = { is_ai = yes } }
-					
+
 					NOT = { has_state_flag = Investment_pause_@ROOT }
 					if = {
 						limit = { AC_project_type_not_active2 = yes }
@@ -426,7 +384,7 @@ scripted_gui = {
 		# ai_enabled = {
 			# always = yes
 		# }
-		
+
 		# ai_check = {
 			# ROOT = { check_variable = { treasury > 150 } }
 		# }
@@ -437,26 +395,26 @@ scripted_gui = {
 			# ai_test_scopes = test_neighbouring_states
 			# ai_test_scopes = test_ally_owned_states
 		##}
-			
-		
-		
+
+
+
 		# ai_test_scopes = test_neighbouring_ally_states
 		# ai_test_scopes = test_ally_owned_states
 		# ai_test_scopes = test_our_neighbouring_states
 		# ai_test_scopes = test_our_neighbouring_states_against_allies
-		
+
 		# ai_check_scope = {
 			##ROOT = {
 			##	has_opinion = { target = PREV value > 10 }
 			##}
 		# }
-		
+
 		# ai_test_parent = ""
-		
+
 		# ai_test_interval = 120
 		# ai_test_variance = 0.1
 		# ai_max_weight_taken_per_test = 1
-		
+
 		# ai_weights = {
 			# AC_building_cic_button_click = {
 				# weight = 1
@@ -470,8 +428,8 @@ scripted_gui = {
 					# factor = 999
 				# }
 			# }
-			
+
 		# }
-		
+
 	}
 }
