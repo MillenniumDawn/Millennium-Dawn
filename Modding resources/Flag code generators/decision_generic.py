@@ -1,5 +1,5 @@
 #Don't replace existing decisions
-TAG_LIST = {"SSU","SOM","SPR","SRI","SSU","SUD","TNZ"}
+TAG_LIST = {"TAJ","TRK","UZB"}
 
 
 for TAG in TAG_LIST:
