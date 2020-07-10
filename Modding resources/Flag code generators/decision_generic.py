@@ -1,8 +1,5 @@
 #Don't replace existing decisions
-TAG_LIST = {"AFG","AGL","ALG","ARG","AST","BAN","BOL","BOT","BRA","BRM","CAM","CAN","CAR","CBD","CDI","CHA","CHI","CHL","CNG","COL",
-            "ECU","EGU","EGY","ETH","GAB","GAH","IND","ISR","JAP","KAZ","KEN","KOR","KYR","LAO","LAT",
-            "LBA","LEB","LIB","MAD","MAL","MAU","MAY","MEX","MLW","MOR","MOZ","NAM","NEP","NGR","NIG","NKO","PAK","PER","PHI","PRU","RAJ","SAF","SAU",
-            "SIA","SOV","SYR","USA","MON","SIE","VIE"}
+TAG_LIST = {"SSU","SOM","SPR","SRI","SSU","SUD","TNZ"}
 
 
 for TAG in TAG_LIST:
