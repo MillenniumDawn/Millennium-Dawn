@@ -1,5 +1,9 @@
 #Don't replace existing decisions
-TAG_LIST = {"TAJ","TRK","UZB"}
+TAG_LIST = {"TAJ","TRK","UZB","SRI","TNZ",
+            "ALG","ARG","AST","BAN","BOL","BOT","BRA","CAM","CAN","CBD","CDI","CHA","CHI","CHL","CNG","COL",
+            "ECU","EGU","EGY","ERI","ETH","GAB","GAH","IND","ISR","JAP","KAZ","KEN","KOR","KYR","LAO",
+            "MAD","MAL","MAU","MAY","MEX","MLW","MOR","MOZ","NAM","NEP","NGR","NIG","NKO","PAK","PER","PHI","PRU","RAJ","SAU",
+            "SIA","USA","VIE"}
 
 
 for TAG in TAG_LIST:
@@ -141,17 +145,7 @@ for TAG in TAG_LIST:
     print("		visible = {")
     print("			original_tag = "+TAG)
     print("			has_civil_war = yes")				
-    print("			OR = {")
-    print("				"+TAG+" = { has_cosmetic_tag = "+TAG+" }")
-    print("				AND = {")
-    print("					"+TAG+" = { has_cosmetic_tag = "+TAG+"_AUTH }")
-    print("					OR = {")
-    print("						has_country_leader_with_trait = western_Western_Autocracy")
-    print("						has_country_leader_with_trait = emerging_Autocracy")
-    print("						has_country_leader_with_trait = neutrality_Neutral_Autocracy")
-    print("					}")
-    print("				}")
-    print("			}")		
+    print("			"+TAG+" = { has_cosmetic_tag = "+TAG+" }")
     print("			NOT = {")
     print("				has_cosmetic_tag = "+TAG+"_REB")
     print("				tag = "+TAG)
@@ -164,6 +158,9 @@ for TAG in TAG_LIST:
     print("				has_country_leader_with_trait = salafist_Kingdom")
     print("				has_country_leader_with_trait = salafist_Caliphate")
     print("				has_country_leader_with_trait = nationalist_Monarchist")
+    print("				has_country_leader_with_trait = western_Western_Autocracy")
+    print("				has_country_leader_with_trait = emerging_Autocracy")
+    print("			    	has_country_leader_with_trait = neutrality_Neutral_Autocracy")
     print("			}")
     print("		}")
     print("		complete_effect = {")

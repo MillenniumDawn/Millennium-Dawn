@@ -1,6 +1,6 @@
 #Exclude self contained cosmetic change
-TAG_LIST = {"ALB","ARM","AUS","AZE","BEL","BLR","BOS","BUL","CRO","CZE","DEN","ENG","EST","FIN","FRA","FYR","GEO","GER","GRE",
-            "HOL","HUN","IRE","ITA","LAT","LIT","MLV","NOR","POL","POR","ROM","SER","SWE","SWI","UKR","TUR"}
+TAG_LIST = {"ALB","ARM","AUS","AZE","BEL","BLR","BOS","BUL","CRO","CZE","DEN","EST","FIN","FYR","GRE",
+            "HOL","IRE","LAT","LIT","MLV","NOR","POR","ROM","SWE","SWI","UKR","TUR", "SPR"}
 EXCLUDE = "USoE"
 
 for TAG in TAG_LIST:
@@ -161,18 +161,8 @@ for TAG in TAG_LIST:
     print("		allowed = { original_tag = "+TAG+"}")
     print("		visible = {")
     print("			original_tag = "+TAG)
-    print("			has_civil_war = yes")				
-    print("			OR = {")
-    print("				"+TAG+" = { has_cosmetic_tag = "+TAG+" }")
-    print("				AND = {")
-    print("					"+TAG+" = { has_cosmetic_tag = "+TAG+"_AUTH }")
-    print("					OR = {")
-    print("						has_country_leader_with_trait = western_Western_Autocracy")
-    print("						has_country_leader_with_trait = emerging_Autocracy")
-    print("						has_country_leader_with_trait = neutrality_Neutral_Autocracy")
-    print("					}")
-    print("				}")
-    print("			}")		
+    print("			has_civil_war = yes")
+    print("			"+TAG+" = { has_cosmetic_tag = "+TAG+" }")	
     print("			NOT = {")
     print("				has_cosmetic_tag = "+TAG+"_REB")
     print("				tag = "+TAG)
@@ -185,6 +175,9 @@ for TAG in TAG_LIST:
     print("				has_country_leader_with_trait = salafist_Kingdom")
     print("				has_country_leader_with_trait = salafist_Caliphate")
     print("				has_country_leader_with_trait = nationalist_Monarchist")
+    print("				has_country_leader_with_trait = western_Western_Autocracy")
+    print("				has_country_leader_with_trait = emerging_Autocracy")
+    print("				has_country_leader_with_trait = neutrality_Neutral_Autocracy")
     print("			}")
     print("		}")
     print("		complete_effect = {")
