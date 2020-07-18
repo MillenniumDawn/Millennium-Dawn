@@ -431,6 +431,7 @@ country_event = {
 				hours = 6
 			}
 		}
+		add_country_leader_trait = war_on_terror_leader
 	}
 	option = {
 		name = wot.8.b
@@ -443,6 +444,7 @@ country_event = {
 				hours = 6
 			}
 		}
+		add_country_leader_trait = war_on_terror_leader
 	}
 }
 
@@ -522,6 +524,16 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: wot.11.a executed"
 		ai_chance = { factor = 100 }
 		set_country_flag = Cooperation_with_taleban
+		hidden_effect = {
+			random_list = {
+				90 = {
+					country_event = { id = wot.20 days = 7 }	#bin Laden escapes
+				}
+				10 = {
+					country_event = { id = wot.21 days = 7 }	#bin Laden captured
+				}
+			}
+		}
 	}
 	
 }
@@ -926,6 +938,257 @@ country_event = {
 	}
 }
 
+#bin Laden escapes
+country_event = {
+	id = wot.20
+	immediate = { log = "[GetDateText]: [Root.GetName]: event wot.20" }
+	title = wot.20.t
+	desc = wot.20.d
+	picture = GFX_bin_laden
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.20.a
+		log = "[GetDateText]: [This.GetName]: wot.20.a executed"
+		ai_chance = { factor = 100 }
+		add_stability = -0.05
+		decrease_popularity_10 = yes
+		recalculate_party = yes
+		custom_effect_tooltip = TT_SYR_RULING_PARTY_LOSE_10_POP
+		set_temp_variable_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.10 }
+		add_relative_party_popularity = yes
+		#If there is a salafist country, bin Laden goes there
+		if = {
+			limit = {
+				any_country = {
+					NOT = { original_tag = TAL }
+					NOT = { original_tag = AFG }
+					NOT = { original_tag = SAU }
+					has_government = fascism
+				}
+			}
+			random_country = {
+				limit = {
+					NOT = { original_tag = TAL }
+					NOT = { original_tag = AFG }
+					NOT = { original_tag = SAU }
+					has_government = fascism
+					has_idea = sunni
+				}
+				save_global_event_target_as = hideout_of_bin_laden
+				set_country_flag = hideout_of_bin_laden
+			}
+		}
+		#If no Salafist countries, go to a random Sunni country, with priority on Pakistan
+		else_if = {
+			limit = { country_exists = PAK }
+			random_list = {
+				70 = {
+					PAK = {
+						save_global_event_target_as = hideout_of_bin_laden
+						set_country_flag = hideout_of_bin_laden
+					}						
+				}
+				30 = {
+					random_country = {
+						limit = {
+							NOT = { original_tag = TAL }
+							NOT = { original_tag = AFG }
+							NOT = { original_tag = PAK }
+							has_idea = sunni
+						}
+						save_global_event_target_as = hideout_of_bin_laden
+						set_country_flag = hideout_of_bin_laden
+					}
+				}
+			}
+		}
+		#If Pakistan doesn't exist, just go to a random Sunni country
+		else_if = {
+			limit = { NOT = { country_exists = PAK } }
+			random_country = {
+				limit = {
+					NOT = { original_tag = TAL }
+					NOT = { original_tag = AFG }
+					has_idea = sunni
+				}
+				save_global_event_target_as = hideout_of_bin_laden
+				set_country_flag = hideout_of_bin_laden
+			}
+		}
+	}
+	
+}
+
+#bin Laden captured
+country_event = {
+	id = wot.21
+	immediate = { log = "[GetDateText]: [Root.GetName]: event wot.21" }
+	title = wot.21.t
+	desc = wot.21.d
+	picture = GFX_bin_laden
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.21.a
+		log = "[GetDateText]: [This.GetName]: wot.21.a executed"
+		ai_chance = { factor = 100 }
+		add_stability = 0.05
+		add_10_popularity = yes
+		recalculate_party = yes
+		custom_effect_tooltip = TT_SYR_RULING_PARTY_GAIN_10_POP
+		set_temp_variable_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		hidden_effect = { news_event = { id = wotnews.15 hours = 6 } }
+		set_global_flag = bin_laden_out_of_the_game
+	}
+	
+}
+
+#bin Laden found by security services
+country_event = {
+	id = wot.22
+	immediate = { log = "[GetDateText]: [Root.GetName]: event wot.22" }
+	title = wot.22.t
+	desc = wot.22.d
+	picture = GFX_bin_laden
+	
+	trigger = {
+		original_tag = USA
+		any_country = {
+			exists = yes
+			has_country_flag = hideout_of_bin_laden
+		}
+	}
+	
+	fire_only_once = yes
+	
+	mean_time_to_happen = {
+		months = 144
+	}
+	
+	option = {
+		name = wot.22.a
+		log = "[GetDateText]: [This.GetName]: wot.22.a executed"
+		ai_chance = { factor = 90 }
+		event_target:hideout_of_bin_laden = { country_event = wot.23 days = 1 }
+	}
+	
+	option = {
+		name = wot.22.b
+		log = "[GetDateText]: [This.GetName]: wot.22.b executed"
+		ai_chance = { factor = 10 }
+	}
+	
+}
+
+#US asks permission for operation against bin Laden
+country_event = {
+	id = wot.23
+	immediate = { log = "[GetDateText]: [Root.GetName]: event wot.23" }
+	title = wot.23.t
+	desc = wot.23.d
+	picture = GFX_bin_laden
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.23.a		#Allow the operation
+		log = "[GetDateText]: [This.GetName]: wot.23.a executed"
+		ai_chance = { 
+			factor = 80 
+			modifier = {
+				factor = 4
+				has_government = democratic
+			}
+			modifier = {
+				factor = 0.8
+				OR = {
+					has_government = communism
+					has_government = nationalist
+				}
+			}
+			modifier = {
+				factor = 0.1
+				has_government = fascism
+			}
+		}
+		FROM = { country_event = { id = wot.24 days = 1 } }
+	}
+	
+	option = {
+		name = wot.23.b		#Disallow the operation
+		log = "[GetDateText]: [This.GetName]: wot.23.b executed"
+		ai_chance = { 
+			factor = 20 
+			modifier = {
+				factor = 0.25
+				has_government = democratic
+			}
+			modifier = {
+				factor = 1.25
+				OR = {
+					has_government = communism
+					has_government = nationalist
+				}
+			}
+			modifier = {
+				factor = 10
+				has_government = fascism
+			}
+		}
+		FROM = { country_event = { id = wot.25 days = 1 } }
+	}
+	
+}
+
+#Country agrees to operation
+country_event = {
+	id = wot.24
+	immediate = { log = "[GetDateText]: [Root.GetName]: event wot.24" }
+	title = wot.24.t
+	desc = wot.24.d
+	picture = GFX_bin_laden
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.24.a		#
+		log = "[GetDateText]: [This.GetName]: wot.24.a executed"
+		ai_chance = { factor = 100 }
+		hidden_effect = { news_event = { id = wotnews.16 days = 4 } }
+	}
+	
+}
+
+#Country doesn't allow operation
+country_event = {
+	id = wot.25
+	immediate = { log = "[GetDateText]: [Root.GetName]: event wot.25" }
+	title = wot.25.t
+	desc = wot.25.d
+	picture = GFX_bin_laden
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = wot.25.a		#
+		log = "[GetDateText]: [This.GetName]: wot.25.a executed"
+		ai_chance = { factor = 100 }
+	}
+	option = {
+		name = wot.25.b		#
+		log = "[GetDateText]: [This.GetName]: wot.25.b executed"
+		ai_chance = { factor = 100 }
+	}
+	
+}
+	
+
 ### NEWS EVENTS ###
 #9/11 News Event
 news_event = {
@@ -1203,5 +1466,54 @@ news_event = {
 	option = {
 		name = wotnews.14.a
 		log = "[GetDateText]: [This.GetName]: wotnews.14.a executed"
+	}
+}
+
+#Osama bin Laden captured
+news_event = {
+	id = wotnews.15
+	immediate = { log = "[GetDateText]: [Root.GetName]: event wotnews.15" }
+	title = wotnews.15.t
+	desc = wotnews.15.d
+	picture = GFX_news_bin_laden_captured
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.15.a
+		log = "[GetDateText]: [This.GetName]: wotnews.15.a executed"
+	}
+}
+#Osama bin Laden killed
+news_event = {
+	id = wotnews.16
+	immediate = { log = "[GetDateText]: [Root.GetName]: event wotnews.16" }
+	title = wotnews.16.t
+	desc = wotnews.16.d
+	picture = GFX_news_bin_laden_captured
+	
+	is_triggered_only = yes
+	major = yes
+	
+	option = {
+		name = wotnews.16.a
+		log = "[GetDateText]: [This.GetName]: wotnews.16.a executed"
+		if = {
+			limit = { original_tag = USA }
+			set_global_flag = bin_laden_out_of_the_game
+		}
+		if = {
+			limit = { has_country_flag = hideout_of_bin_laden }
+			clear_global_event_target = hideout_of_bin_laden
+			clr_global_flag = hideout_of_bin_laden
+			add_popularity = { ideology = democratic popularity = -0.10 }
+		}
+		if = {
+			limit = { is_in_array = { global.ct_states = ROOT } }
+			custom_effect_tooltip = terror_threat_decrease_medium_tt
+			subtract_from_variable = { threat_level = 5 }
+			clamp_threat = yes	
+		}
 	}
 }
