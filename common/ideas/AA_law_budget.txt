@@ -1,18 +1,13 @@
 ideas = {
 	bureaucracy = {
 		law = yes
+		use_list_view = yes
 
 		bureau_01 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea bureau_01" }
-			
 			cost = 200
 			removal_cost = -1
 			level = 1
-			
-			
-			modifier = {
-			}
-			
+			modifier = { }
 			on_add = {
 				custom_effect_tooltip = bureau_01_TT
 				set_variable = { law_attitude = 3 }
@@ -20,60 +15,82 @@ ideas = {
 				subtract_from_variable = { law_change = bureaucracy }
 				law_attitude_change = yes
 				set_variable = { bureaucracy = 1 }
-				
+
 				update_bureaucracy_rate = yes
-				
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea bureau_01"
+				if = {
+					limit = {
+						has_country_flag = wants_bureau_01
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_01"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_02
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_02"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_03
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_03"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_04
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_04"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_05
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_05"
+				}
+				else = {
+					log = "[GetDateText]: [Root.GetName]: Error: No bureaucracy law desire found"
+				}
 			}
-			
+
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # High priority to downsize if major economic problems
+					add = 4
+					has_idea = bureau_02
+					ai_has_major_economic_problems = yes
+				}
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 2
+					has_idea = bureau_02
+					ai_has_moderate_economic_problems = yes
+				}
+				modifier = { # Low priority to downsize if minor economic problems
 					add = 1
+					has_idea = bureau_02
+					ai_has_minor_economic_problems = yes
+				}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = bureau_02
+					has_country_flag = wants_bureau_01
+				}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
 					OR = {
-						has_idea = bureau_02
+						has_idea = bureau_01
 					}
-				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.1
-					AND = {
-						has_idea = bureau_02
-						ai_has_minor_economic_problems = yes
-					}
-				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.1
-					AND = {
-						has_idea = bureau_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
-					}
-				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.1
-					AND = {
-						has_idea = bureau_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
-					}
+					has_country_flag = wants_bureau_01
 				}
 			}
 
 			cancel_if_invalid = no
 		}
 		bureau_02 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea bureau_02" }
-			
 			cost = 80
 			removal_cost = -1
 			level = 2
-			
 			on_add = {
 				custom_effect_tooltip = bureau_02_TT
 				set_variable = { law_attitude = 3 }
@@ -81,79 +98,113 @@ ideas = {
 				subtract_from_variable = { law_change = bureaucracy }
 				law_attitude_change = yes
 				set_variable = { bureaucracy = 2 }
-				
 				update_bureaucracy_rate = yes
-				
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea bureau_02"
+				if = {
+					limit = {
+						has_country_flag = wants_bureau_01
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_01"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_02
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_02"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_03
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_03"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_04
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_04"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_05
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_05"
+				}
+				else = {
+					log = "[GetDateText]: [Root.GetName]: Error: No bureaucracy law desire found"
+				}
 			}
-			
+
 			modifier = {
 				political_power_gain = 0.12
 				production_speed_arms_factory_factor = 0.05
 			}
-			
+
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = bureau_01
+					has_idea = bureau_01
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 8
+					AND = {
 						has_idea = bureau_03
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 4
+					AND = {
+						has_idea = bureau_03
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 2
 					AND = {
 						has_idea = bureau_03
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
-					AND = {
-						has_idea = bureau_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = bureau_01
+					OR = {
+						has_country_flag = wants_bureau_02
+						has_country_flag = wants_bureau_03
+						has_country_flag = wants_bureau_04
+						has_country_flag = wants_bureau_05
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
-					AND = {
-						has_idea = bureau_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = bureau_03
+					OR = {
+						has_country_flag = wants_bureau_01
+						has_country_flag = wants_bureau_02
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = bureau_01
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = bureau_02
 					}
+					has_country_flag = wants_bureau_02
 				}
 			}
 
 			cancel_if_invalid = no
 		}
 		bureau_03 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea bureau_03" }
-		
 			default = yes
-			
 			removal_cost = -1
 			level = 3
-			
 			on_add = {
 				custom_effect_tooltip = bureau_03_TT
 				set_variable = { law_attitude = 3 }
@@ -161,79 +212,113 @@ ideas = {
 				subtract_from_variable = { law_change = bureaucracy }
 				law_attitude_change = yes
 				set_variable = { bureaucracy = 3 }
-				
 				update_bureaucracy_rate = yes
-				
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea bureau_03"
+				if = { #Debugging 
+					limit = {
+						has_country_flag = wants_bureau_01
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_01"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_02
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_02"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_03
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_03"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_04
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_04"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_05
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_05"
+				}
+				else = {
+					log = "[GetDateText]: [Root.GetName]: Error: No bureaucracy law desire found"
+				}
 			}
-			
 			modifier = {
 				political_power_gain = 0.25
 				stability_factor = 0.01
 				production_speed_arms_factory_factor = 0.1
 			}
-			
+
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = bureau_02
+					has_idea = bureau_02
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 16
+					AND = {
 						has_idea = bureau_04
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.3
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 8
+					AND = {
+						has_idea = bureau_04
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 4
 					AND = {
 						has_idea = bureau_04
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.3
-					AND = {
-						has_idea = bureau_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = bureau_02
+					OR = {
+						has_country_flag = wants_bureau_03
+						has_country_flag = wants_bureau_04
+						has_country_flag = wants_bureau_05
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.3
-					AND = {
-						has_idea = bureau_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = bureau_04
+					OR = {
+						has_country_flag = wants_bureau_01
+						has_country_flag = wants_bureau_02
+						has_country_flag = wants_bureau_03
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = bureau_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = bureau_03
 					}
+					has_country_flag = wants_bureau_03
 				}
 			}
 
 			cancel_if_invalid = no
 		}
 		bureau_04 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea bureau_04" }
-			
 			cost = 30
 			removal_cost = -1
 			level = 4
-			
 			on_add = {
 				custom_effect_tooltip = bureau_04_TT
 				set_variable = { law_attitude = 3 }
@@ -241,10 +326,41 @@ ideas = {
 				subtract_from_variable = { law_change = bureaucracy }
 				law_attitude_change = yes
 				set_variable = { bureaucracy = 4 }
-				
 				update_bureaucracy_rate = yes
-				
 				ingame_calculate_size_modifier = yes
+				if = {
+					limit = {
+						has_country_flag = wants_bureau_01
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_01"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_02
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_02"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_03
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_03"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_04
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_04"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_05
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_05"
+				}
+				else = {
+					log = "[GetDateText]: [Root.GetName]: Error: No bureaucracy law desire found"
+				}
 			}
 			
 			modifier = {
@@ -255,61 +371,65 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = bureau_03
+					has_idea = bureau_03
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 32
+					AND = {
 						has_idea = bureau_05
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.3
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 16
+					AND = {
+						has_idea = bureau_05
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 8
 					AND = {
 						has_idea = bureau_05
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.3
-					AND = {
-						has_idea = bureau_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = bureau_03
+					OR = {
+						has_country_flag = wants_bureau_04
+						has_country_flag = wants_bureau_05
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.3
-					AND = {
-						has_idea = bureau_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = bureau_05
+					OR = {
+						has_country_flag = wants_bureau_01
+						has_country_flag = wants_bureau_02
+						has_country_flag = wants_bureau_03
+						has_country_flag = wants_bureau_04
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = bureau_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = bureau_04
 					}
+					has_country_flag = wants_bureau_04
 				}
 			}
 
 			cancel_if_invalid = no
 		}
-		bureau_05 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea bureau_05" }
-			
+		bureau_05 = {			
 			cost = 10
 			removal_cost = -1
 			level = 5
@@ -325,6 +445,39 @@ ideas = {
 				update_bureaucracy_rate = yes
 				
 				ingame_calculate_size_modifier = yes
+				if = {
+					limit = {
+						has_country_flag = wants_bureau_01
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_01"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_02
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_02"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_03
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_03"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_04
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_04"
+				}
+				else_if = {
+					limit = {
+						has_country_flag = wants_bureau_05
+					}
+					log = "[GetDateText]: [Root.GetName]: Bureaucracy law desire: bureau_05"
+				}
+				else = {
+					log = "[GetDateText]: [Root.GetName]: Error: No bureaucracy law desire found"
+				}
 			}
 			
 			modifier = {
@@ -335,23 +488,25 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = edu_04
-					}
+					has_idea = bureau_04
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = bureau_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = bureau_04
+					has_country_flag = wants_bureau_05
+				}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = bureau_05
 					}
+					has_country_flag = wants_bureau_05
 				}
 			}
 
@@ -360,10 +515,9 @@ ideas = {
 	}
 	crime_fighting = {
 		law = yes
+		use_list_view = yes
 
 		police_01 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea police_01" }
-			
 			removal_cost = -1
 			level = 1
 			
@@ -378,6 +532,7 @@ ideas = {
 				update_police_rate = yes
 				
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea police_01"
 			}
 			
 			modifier = {
@@ -385,52 +540,48 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
-					add = 1
-					OR = {
+				modifier = { # High priority to downsize if major economic problems
+					add = 4
+					AND = {
 						has_idea = police_02
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.1
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 2
+					AND = {
+						has_idea = police_02
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 1
 					AND = {
 						has_idea = police_02
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.1
-					AND = {
-						has_idea = police_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
-					}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = police_02
+					has_country_flag = wants_police_01
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.1
-					AND = {
-						has_idea = police_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = police_01
 					}
+					has_country_flag = wants_police_01
 				}
 			}
 
 			cancel_if_invalid = no
 		}
 		police_02 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea police_02" }
-			
 			default = yes
 			removal_cost = -1
 			level = 2
-			
+
 			on_add = {
 				custom_effect_tooltip = police_02_TT
 				set_variable = { law_attitude = 5 }
@@ -438,12 +589,10 @@ ideas = {
 				subtract_from_variable = { law_change = crime_fighting }
 				law_attitude_change = yes
 				set_variable = { crime_fighting = 2 }
-				
 				update_police_rate = yes
-				
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea police_02"
 			}
-			
 			modifier = {
 				political_power_cost = 0.1
 				stability_factor = 0.02
@@ -451,64 +600,72 @@ ideas = {
 				decryption = 1
 				planning_speed = 0.10
 			}
-			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = police_01
+					has_idea = police_01
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Totalitarian governments less willing to reduce police/security spending
+					factor = 0.5
+					has_idea = police_03
+					has_totalitarian_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 8
+					AND = {
 						has_idea = police_03
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 4
+					AND = {
+						has_idea = police_03
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 2
 					AND = {
 						has_idea = police_03
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
-					AND = {
-						has_idea = police_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = police_01
+					OR = {
+						has_country_flag = wants_police_02
+						has_country_flag = wants_police_03
+						has_country_flag = wants_police_04
+						has_country_flag = wants_police_05
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
-					AND = {
-						has_idea = police_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = police_03
+					OR = {
+						has_country_flag = wants_police_01
+						has_country_flag = wants_police_02
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = police_01
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = police_02
 					}
+					has_country_flag = wants_police_02
 				}
 			}
 
 			cancel_if_invalid = no
 		}
 		police_03 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea police_03" }
-			
 			removal_cost = -1
 			level = 3
 			
@@ -519,12 +676,11 @@ ideas = {
 				subtract_from_variable = { law_change = crime_fighting }
 				law_attitude_change = yes
 				set_variable = { crime_fighting = 3 }
-				
 				update_police_rate = yes
-				
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea police_03"
 			}
-			
+
 			modifier = {
 				political_power_cost = 0.2
 				stability_factor = 0.03
@@ -534,67 +690,78 @@ ideas = {
 				encryption = 1
 				planning_speed = 0.15
 			}
-			
+
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
+					has_idea = police_02
 					OR = {
-						has_idea = police_02
-						has_idea = police_04
+						has_totalitarian_government = yes
+						AND = {
+							ai_has_major_economic_problems = no
+							ai_has_moderate_economic_problems = no
+							ai_has_minor_economic_problems = no
+						}
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.3
+				modifier = { # Totalitarian governments less willing to reduce police/security spending
+					factor = 0.5
+					has_idea = police_04
+					has_totalitarian_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 8
+					AND = {
+						has_idea = police_04
+						ai_has_major_economic_problems = yes
+					}
+				}
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 4
+					AND = {
+						has_idea = police_04
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 2
 					AND = {
 						has_idea = police_04
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.3
-					AND = {
-						has_idea = police_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = police_02
+					OR = {
+						has_country_flag = wants_police_03
+						has_country_flag = wants_police_04
+						has_country_flag = wants_police_05
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.3
-					AND = {
-						has_idea = police_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = police_04
+					OR = {
+						has_country_flag = wants_police_01
+						has_country_flag = wants_police_02
+						has_country_flag = wants_police_03
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = police_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = police_03
 					}
+					has_country_flag = wants_police_03
 				}
-			}	
-
+			}
 			cancel_if_invalid = no
 		}
 		police_04 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea police_04" }
-			
 			removal_cost = -1
 			level = 4
-			
 			on_add = {
 				custom_effect_tooltip = police_04_TT
 				set_variable = { law_attitude = 5 }
@@ -602,12 +769,11 @@ ideas = {
 				subtract_from_variable = { law_change = crime_fighting }
 				law_attitude_change = yes
 				set_variable = { crime_fighting = 4 }
-				
 				update_police_rate = yes
-				
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea police_04"
 			}
-			
+
 			modifier = {
 				political_power_cost = 0.3
 				stability_factor = 0.05
@@ -617,67 +783,80 @@ ideas = {
 				encryption = 1
 				planning_speed = 0.20
 			}
-			
+
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
+					has_idea = police_03
 					OR = {
-						has_idea = police_03
-						has_idea = police_05
+						has_totalitarian_government = yes
+						AND = {
+							ai_has_major_economic_problems = no
+							ai_has_moderate_economic_problems = no
+							ai_has_minor_economic_problems = no
+						}
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.4
+				modifier = { # Totalitarian governments less willing to reduce police/security spending
+					factor = 0.5
+					has_idea = police_05
+					has_totalitarian_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 8
+					AND = {
+						has_idea = police_05
+						ai_has_major_economic_problems = yes
+					}
+				}
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 4
+					AND = {
+						has_idea = police_05
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 2
 					AND = {
 						has_idea = police_05
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.4
-					AND = {
-						has_idea = police_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = police_03
+					OR = {
+						has_country_flag = wants_police_04
+						has_country_flag = wants_police_05
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.4
-					AND = {
-						has_idea = police_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = police_05
+					OR = {
+						has_country_flag = wants_police_01
+						has_country_flag = wants_police_02
+						has_country_flag = wants_police_03
+						has_country_flag = wants_police_04
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = police_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = police_04
 					}
+					has_country_flag = wants_police_04
 				}
 			}
 
 			cancel_if_invalid = no
 		}
 		police_05 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea police_05" }
-			
 			removal_cost = -1
 			level = 5
-			
+
 			on_add = {
 				custom_effect_tooltip = police_05_TT
 				set_variable = { law_attitude = 5 }
@@ -685,12 +864,11 @@ ideas = {
 				subtract_from_variable = { law_change = crime_fighting }
 				law_attitude_change = yes
 				set_variable = { crime_fighting = 5 }
-				
 				update_police_rate = yes
-				
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea police_05"
 			}
-			
+
 			modifier = {
 				political_power_cost = 0.5
 				stability_factor = 0.06
@@ -700,26 +878,32 @@ ideas = {
 				encryption = 2
 				planning_speed = 0.20
 			}
-			
+
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
+					has_idea = police_04
 					OR = {
-						has_idea = police_04
-					}
-				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = police_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
+						has_totalitarian_government = yes
+						AND = {
+							ai_has_major_economic_problems = no
+							ai_has_moderate_economic_problems = no
+							ai_has_minor_economic_problems = no
 						}
 					}
+				}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = police_04
+					has_country_flag = wants_police_05
+				}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = police_05
+					}
+					has_country_flag = wants_police_05
 				}
 			}
 
@@ -728,9 +912,9 @@ ideas = {
 	}
 	education_budget = {
 		law = yes
+		use_list_view = yes
 
 		edu_01 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea edu_01" }
 			cost = 200
 			removal_cost = -1
 			level = 1
@@ -744,44 +928,48 @@ ideas = {
 				set_variable = { education_budget = 1 }
 				update_education_rate = yes
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea edu_01"
 			}
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
-					add = 1
-					OR = {
+				modifier = { # High priority to downsize if major economic problems
+					add = 4
+					AND = {
 						has_idea = edu_02
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 2
+					AND = {
+						has_idea = edu_02
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 1
 					AND = {
 						has_idea = edu_02
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
-					AND = {
-						has_idea = edu_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
-					}
+				modifier = { # Socialist governments less willing to reduce education spending
+					factor = 0.5
+					has_idea = edu_02
+					has_socialist_government = yes
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
-					AND = {
-						has_idea = edu_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = edu_02
+					has_country_flag = wants_edu_01
+				}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = edu_01
 					}
+					has_country_flag = wants_edu_01
 				}
 			}
 			
@@ -791,9 +979,7 @@ ideas = {
 			
 			cancel_if_invalid = no
 		}
-		edu_02 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea edu_02" }
-			
+		edu_02 = {			
 			default = yes
 			cost = 80
 			removal_cost = -1
@@ -810,57 +996,69 @@ ideas = {
 				
 				update_education_rate = yes
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea edu_02"
 			}
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = edu_01
+					has_idea = edu_01
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Socialist governments less willing to reduce education spending
+					factor = 0.5
+					has_idea = edu_03
+					has_socialist_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 8
+					AND = {
 						has_idea = edu_03
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.5
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 4
+					AND = {
+						has_idea = edu_03
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 2
 					AND = {
 						has_idea = edu_03
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.5
-					AND = {
-						has_idea = edu_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = edu_01
+					OR = {
+						has_country_flag = wants_edu_02
+						has_country_flag = wants_edu_03
+						has_country_flag = wants_edu_04
+						has_country_flag = wants_edu_05
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.5
-					AND = {
-						has_idea = edu_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = edu_03
+					OR = {
+						has_country_flag = wants_edu_01
+						has_country_flag = wants_edu_02
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = edu_01
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = edu_02
 					}
+					has_country_flag = wants_edu_02
 				}
 			}
 			
@@ -872,9 +1070,7 @@ ideas = {
 			
 			cancel_if_invalid = no
 		}
-		edu_03 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea edu_03" }
-			
+		edu_03 = {			
 			removal_cost = -1
 			level = 3
 			
@@ -886,60 +1082,71 @@ ideas = {
 				law_attitude_change = yes
 				set_variable = { education_budget = 3 }
 				
-				
 				update_education_rate = yes
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea edu_03"
 			}
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = edu_02
+					has_idea = edu_02
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Socialist governments less willing to reduce education spending
+					factor = 0.5
+					has_idea = edu_04
+					has_socialist_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 8
+					AND = {
 						has_idea = edu_04
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.6
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 4
+					AND = {
+						has_idea = edu_04
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 2
 					AND = {
 						has_idea = edu_04
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.6
-					AND = {
-						has_idea = edu_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = edu_02
+					OR = {
+						has_country_flag = wants_edu_03
+						has_country_flag = wants_edu_04
+						has_country_flag = wants_edu_05
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.6
-					AND = {
-						has_idea = edu_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = edu_04
+					OR = {
+						has_country_flag = wants_edu_01
+						has_country_flag = wants_edu_02
+						has_country_flag = wants_edu_03
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = edu_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = edu_03
 					}
+					has_country_flag = wants_edu_03
 				}
 			}
 			
@@ -951,9 +1158,7 @@ ideas = {
 			
 			cancel_if_invalid = no
 		}
-		edu_04 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea edu_04" }
-			
+		edu_04 = {			
 			cost = 30
 			removal_cost = -1
 			level = 4
@@ -968,57 +1173,69 @@ ideas = {
 				
 				update_education_rate = yes
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea edu_04"
 			}
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = edu_03
+					has_idea = edu_03
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Socialist governments less willing to reduce education spending
+					factor = 0.5
+					has_idea = edu_05
+					has_socialist_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 16
+					AND = {
 						has_idea = edu_05
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.7
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 8
+					AND = {
+						has_idea = edu_05
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 4
 					AND = {
 						has_idea = edu_05
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.7
-					AND = {
-						has_idea = edu_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = edu_03
+					OR = {
+						has_country_flag = wants_edu_04
+						has_country_flag = wants_edu_05
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.7
-					AND = {
-						has_idea = edu_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = edu_05
+					OR = {
+						has_country_flag = wants_edu_01
+						has_country_flag = wants_edu_02
+						has_country_flag = wants_edu_03
+						has_country_flag = wants_edu_04
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = edu_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = edu_04
 					}
+					has_country_flag = wants_edu_04
 				}
 			}
 			
@@ -1033,7 +1250,6 @@ ideas = {
 			cancel_if_invalid = no
 		}
 		edu_05 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea edu_05" }
 			cost = 10
 			removal_cost = -1
 			level = 5
@@ -1046,30 +1262,32 @@ ideas = {
 				law_attitude_change = yes
 				set_variable = { education_budget = 5 }
 				
-				
 				update_education_rate = yes
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea edu_05"
 			}
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = edu_04
-					}
+					has_idea = edu_04
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = edu_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = edu_04
+					has_country_flag = wants_edu_05
+				}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = edu_05
 					}
+					has_country_flag = wants_edu_05
 				}
 			}
 			
@@ -1086,9 +1304,9 @@ ideas = {
 	}
 	health_budget = {
 		law = yes
+		use_list_view = yes
 
 		health_01 = {
-			
 			cost = 200
 			removal_cost = -1
 			level = 1
@@ -1107,40 +1325,43 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
-					add = 1
-					OR = {
+				modifier = { # High priority to downsize if major economic problems
+					add = 4
+					AND = {
 						has_idea = health_02
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 2
+					AND = {
+						has_idea = health_02
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 1
 					AND = {
 						has_idea = health_02
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
-					AND = {
-						has_idea = health_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
-					}
+				modifier = { # Socialist governments less willing to reduce health spending
+					factor = 0.5
+					has_idea = health_02
+					has_socialist_government = yes
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
-					AND = {
-						has_idea = health_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = health_02
+					has_country_flag = wants_health_01
+				}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = health_01
 					}
+					has_country_flag = wants_health_01
 				}
 			}
 			
@@ -1149,8 +1370,7 @@ ideas = {
 			
 			cancel_if_invalid = no
 		}
-		health_02 = {
-			
+		health_02 = {		
 			cost = 80
 			default = yes
 			removal_cost = -1
@@ -1171,60 +1391,73 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = health_01
+					has_idea = health_01
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Socialist governments less willing to reduce health spending
+					factor = 0.5
+					has_idea = health_03
+					has_socialist_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 8
+					AND = {
 						has_idea = health_03
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.4
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 4
+					AND = {
+						has_idea = health_03
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 2
 					AND = {
 						has_idea = health_03
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.4
-					AND = {
-						has_idea = health_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = health_01
+					OR = {
+						has_country_flag = wants_health_02
+						has_country_flag = wants_health_03
+						has_country_flag = wants_health_04
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.4
-					AND = {
-						has_idea = health_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = health_03
+					OR = {
+						has_country_flag = wants_health_01
+						has_country_flag = wants_health_02
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = health_01
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = health_02
 					}
+					has_country_flag = wants_health_02
 				}
 			}
 			
 			modifier = {
 				political_power_gain = 0.05
 				monthly_population = 0.1
-				war_stability_factor = 0.05
+				offensive_war_stability_factor = 0.05
+				defensive_war_stability_factor = 0.05
 				army_morale_factor = 0.025
 			}
 			
@@ -1250,60 +1483,73 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = health_02
+					has_idea = health_02
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Socialist governments less willing to reduce health spending
+					factor = 0.5
+					has_idea = health_04
+					has_socialist_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 12
+					AND = {
 						has_idea = health_04
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.6
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 6
 					AND = {
-						has_idea = health_03
+						has_idea = health_04
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 3
+					AND = {
+						has_idea = health_04
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.6
-					AND = {
-						has_idea = health_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = health_02
+					OR = {
+						has_country_flag = wants_health_03
+						has_country_flag = wants_health_04
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.6
-					AND = {
-						has_idea = health_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = health_04
+					OR = {
+						has_country_flag = wants_health_01
+						has_country_flag = wants_health_02
+						has_country_flag = wants_health_03
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = health_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = health_03
 					}
+					has_country_flag = wants_health_03
 				}
 			}
 			
 			modifier = {
 				political_power_gain = 0.1
 				monthly_population = 0.25
-				war_stability_factor = 0.10
+				offensive_war_stability_factor = 0.10
+				defensive_war_stability_factor = 0.10
 				army_morale_factor = 0.05
 				consumer_goods_factor = -0.01	
 			}
@@ -1330,60 +1576,73 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = health_03
+					has_idea = health_03
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Socialist governments less willing to reduce health spending
+					factor = 0.5
+					has_idea = health_05
+					has_socialist_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 16
+					AND = {
 						has_idea = health_05
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.8
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 8
+					AND = {
+						has_idea = health_05
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 4
 					AND = {
 						has_idea = health_05
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.8
-					AND = {
-						has_idea = health_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = health_03
+					OR = {
+						has_country_flag = wants_health_04
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.8
-					AND = {
-						has_idea = health_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = health_05
+					OR = {
+						has_country_flag = wants_health_01
+						has_country_flag = wants_health_02
+						has_country_flag = wants_health_03
+						has_country_flag = wants_health_04
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = health_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = health_04
 					}
+					has_country_flag = wants_health_04
 				}
 			}
 			
 			modifier = {
 				political_power_gain = 0.15
 				monthly_population = 0.40
-				war_stability_factor = 0.15
+				offensive_war_stability_factor = 0.15
+				defensive_war_stability_factor = 0.15
 				army_morale_factor = 0.075
 				consumer_goods_factor = -0.02
 			}
@@ -1410,60 +1669,73 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = health_04
+					has_idea = health_04
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Socialist governments less willing to reduce health spending
+					factor = 0.5
+					has_idea = health_06
+					has_socialist_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 20
+					AND = {
 						has_idea = health_06
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.8
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 10
+					AND = {
+						has_idea = health_06
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 5
 					AND = {
 						has_idea = health_06
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.8
-					AND = {
-						has_idea = health_06
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = health_04
+					OR = {
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.8
-					AND = {
-						has_idea = health_06
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = health_06
+					OR = {
+						has_country_flag = wants_health_01
+						has_country_flag = wants_health_02
+						has_country_flag = wants_health_03
+						has_country_flag = wants_health_04
+						has_country_flag = wants_health_05
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = health_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = health_05
 					}
+					has_country_flag = wants_health_05
 				}
 			}
 			
 			modifier = {
 				political_power_gain = 0.2
 				monthly_population = 0.55
-				war_stability_factor = 0.20
+				offensive_war_stability_factor = 0.20
+				defensive_war_stability_factor = 0.20
 				army_morale_factor = 0.100
 				consumer_goods_factor = -0.03
 			}
@@ -1490,30 +1762,33 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = health_05
-					}
+					has_idea = health_05
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = health_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = health_05
+					has_country_flag = wants_health_06
+				}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = health_06
 					}
+					has_country_flag = wants_health_06
 				}
 			}
 			
 			modifier = {
 				political_power_gain = 0.25
 				monthly_population = 0.75
-				war_stability_factor = 0.25
+				offensive_war_stability_factor = 0.25
+				defensive_war_stability_factor = 0.25
 				army_morale_factor = 0.125
 				consumer_goods_factor = -0.04
 			}
@@ -1523,10 +1798,9 @@ ideas = {
 	}
 	social_budget = {
 		law = yes
-
+		use_list_view = yes
+		
 		social_01 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea social_01 [social_budget idea_law]" }
-
 			cost = 200
 			removal_cost = -1
 			level = 1
@@ -1542,6 +1816,7 @@ ideas = {
 				
 				update_social_rate = yes
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea social_01 [social_budget idea_law]" 
 			}
 			
 			modifier = {
@@ -1552,47 +1827,48 @@ ideas = {
 
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
-					add = 1
-					OR = {
+				modifier = { # High priority to downsize if major economic problems
+					add = 4
+					AND = {
 						has_idea = social_02
+						ai_has_major_economic_problems = yes
 					}
 				}
-				
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 2
+					AND = {
+						has_idea = social_02
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 1
 					AND = {
 						has_idea = social_02
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
-					AND = {
-						has_idea = social_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
-					}
+				modifier = { # Socialist governments less willing to reduce social spending
+					factor = 0.5
+					has_idea = social_02
+					has_socialist_government = yes
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.2
-					AND = {
-						has_idea = social_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = social_02
+					has_country_flag = wants_social_01
+				}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = social_01
 					}
+					has_country_flag = wants_social_01
 				}
 			}
 			
 		}
-		social_02 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea social_02 [social_budget idea_law]" }
-			
+		social_02 = {			
 			default = yes
 			cost = 80
 			removal_cost = -1
@@ -1609,6 +1885,7 @@ ideas = {
 				
 				update_social_rate = yes
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea social_02 [social_budget idea_law]"
 			}
 			
 			modifier = {
@@ -1621,60 +1898,70 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = social_01
+					has_idea = social_01
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Socialist governments less willing to reduce social spending
+					factor = 0.5
+					has_idea = social_03
+					has_socialist_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 8
+					AND = {
 						has_idea = social_03
+						ai_has_major_economic_problems = yes
 					}
 				}
-				
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.4
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 4
+					AND = {
+						has_idea = social_03
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 2
 					AND = {
 						has_idea = social_03
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.4
-					AND = {
-						has_idea = social_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = social_01
+					OR = {
+						has_country_flag = wants_social_02
+						has_country_flag = wants_social_03
+						has_country_flag = wants_social_04
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.4
-					AND = {
-						has_idea = social_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = social_03
+					OR = {
+						has_country_flag = wants_social_01
+						has_country_flag = wants_social_02
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = social_01
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = social_02
 					}
+					has_country_flag = wants_social_02
 				}
 			}
 			
 		}
-		social_03 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea social_03 [social_budget idea_law]" }
-			
+		social_03 = {			
 			removal_cost = -1
 			level = 3
 			
@@ -1689,6 +1976,7 @@ ideas = {
 				
 				update_social_rate = yes
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea social_03 [social_budget idea_law]"
 			}
 			
 			modifier = {
@@ -1701,59 +1989,69 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = social_02
+					has_idea = social_02
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Socialist governments less willing to reduce social spending
+					factor = 0.5
+					has_idea = social_04
+					has_socialist_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 12
+					AND = {
 						has_idea = social_04
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.8
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 6
+					AND = {
+						has_idea = social_04
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 3
 					AND = {
 						has_idea = social_04
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.8
-					AND = {
-						has_idea = social_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = social_02
+					OR = {
+						has_country_flag = wants_social_03
+						has_country_flag = wants_social_04
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 1.8
-					AND = {
-						has_idea = social_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = social_04
+					OR = {
+						has_country_flag = wants_social_01
+						has_country_flag = wants_social_02
+						has_country_flag = wants_social_03
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = social_02
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = social_03
 					}
+					has_country_flag = wants_social_03
 				}
 			}
 		}
 		social_04 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea social_04 [social_budget idea_law]" }
-			
 			cost = 40
 			removal_cost = -1
 			level = 4
@@ -1769,6 +2067,7 @@ ideas = {
 				
 				update_social_rate = yes
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea social_04 [social_budget idea_law]" 
 			}
 			
 			modifier = {
@@ -1781,59 +2080,69 @@ ideas = {
 
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = social_03
+					has_idea = social_03
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Socialist governments less willing to reduce social spending
+					factor = 0.5
+					has_idea = social_05
+					has_socialist_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 16
+					AND = {
 						has_idea = social_05
+						ai_has_major_economic_problems = yes
 					}
 				}
-
-				modifier = { # Downsize if economics is getting bad
-					factor = 2.0
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 8
+					AND = {
+						has_idea = social_05
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 4
 					AND = {
 						has_idea = social_05
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 2.0
-					AND = {
-						has_idea = social_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = social_03
+					OR = {
+						has_country_flag = wants_social_04
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 2.0
-					AND = {
-						has_idea = social_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = social_05
+					OR = {
+						has_country_flag = wants_social_01
+						has_country_flag = wants_social_02
+						has_country_flag = wants_social_03
+						has_country_flag = wants_social_04
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = social_03
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = social_04
 					}
+					has_country_flag = wants_social_04
 				}
 			}
 		}
-		social_05 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea social_05 [social_budget idea_law]" }
-			
+		social_05 = {			
 			cost = 30
 			removal_cost = -1
 			level = 5
@@ -1849,6 +2158,7 @@ ideas = {
 				
 				update_social_rate = yes
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea social_05 [social_budget idea_law]" 
 			}
 			
 			modifier = {
@@ -1862,59 +2172,69 @@ ideas = {
 		
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
-				add = 1
-					OR = {
-						has_idea = social_04
+				modifier = { # Low priority to increase, if no economic issues
+					add = 1
+					has_idea = social_04
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
+				}
+				modifier = { # Socialist governments less willing to reduce social spending
+					factor = 0.5
+					has_idea = social_06
+					has_socialist_government = yes
+				}
+				modifier = { # High priority to downsize if major economic problems
+					add = 20
+					AND = {
 						has_idea = social_06
+						ai_has_major_economic_problems = yes
 					}
 				}
-				
-				modifier = { # Downsize if economics is getting bad
-					factor = 2.0
+				modifier = { # Moderate priority to downsize if moderate economic problems
+					add = 10
+					AND = {
+						has_idea = social_06
+						ai_has_moderate_economic_problems = yes
+					}
+				}
+				modifier = { # Low priority to downsize if minor economic problems
+					add = 5
 					AND = {
 						has_idea = social_06
 						ai_has_minor_economic_problems = yes
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 2.0
-					AND = {
-						has_idea = social_06
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = social_04
+					OR = {
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
 					}
 				}
-				modifier = { # Downsize if economics is getting bad
-					factor = 2.0
-					AND = {
-						has_idea = social_06
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to reduce if is above desired level
+					add = 8
+					has_idea = social_06
+					OR = {
+						has_country_flag = wants_social_01
+						has_country_flag = wants_social_02
+						has_country_flag = wants_social_03
+						has_country_flag = wants_social_04
+						has_country_flag = wants_social_05
 					}
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = social_04
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = social_05
 					}
+					has_country_flag = wants_social_05
 				}
 			}
 		}
 		social_06 = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea social_06 [social_budget idea_law]" }
-			
 			cost = 10
 			removal_cost = -1
 			level = 6
@@ -1930,6 +2250,7 @@ ideas = {
 				
 				update_social_rate = yes
 				ingame_calculate_size_modifier = yes
+				log = "[GetDateText]: [Root.GetName]: add idea social_06 [social_budget idea_law]"
 			}
 			
 			modifier = {
@@ -1943,23 +2264,25 @@ ideas = {
 			
 			ai_will_do = {
 				factor = 0
-				modifier = { # Increase decrease gradually
+				modifier = { # Low priority to increase, if no economic issues
 					add = 1
-					OR = {
-						has_idea = social_05
-					}
+					has_idea = social_05
+					ai_has_major_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_minor_economic_problems = no
+					ai_has_acceptable_deficit = yes
 				}
-
-				modifier = { # Dont increase if we cant afford
-					factor = 0
-					AND = {
-						has_idea = social_05
-						OR = {
-							ai_has_minor_economic_problems = yes
-							ai_has_moderate_economic_problems = yes
-							ai_has_major_economic_problems = yes
-						}
+				modifier = { # Make law more appealing to raise if is below desired level
+					factor = 8
+					has_idea = social_05
+					has_country_flag = wants_social_06
+				}
+				modifier = { # Make law more appealing to keep if is at desired level
+					add = 4
+					OR = {
+						has_idea = social_06
 					}
+					has_country_flag = wants_social_06
 				}
 			}
 		}
