@@ -108,7 +108,9 @@ EU_parliament_show_members = {
 }
 
 #######################
+#######################
 ### focus decisions ###
+#######################
 #######################
 
 #############
@@ -156,7 +158,7 @@ EU_parliament_focus_EU001_EP_agenda = {
 	ai_will_do = {
 		factor = 0
 			modifier = {
-				add = 100
+				add = 1
 					OR = {
 						has_country_flag = focus_EU001
 						has_country_flag = focus_EU001_QMV
@@ -168,7 +170,10 @@ EU_parliament_focus_EU001_EP_agenda = {
 
 EU_parliament_focus_EU001_approve = {	
 	available = {
-		check_variable { global.focus_EU001_MEP_support > global.MEP_Majority }
+		custom_trigger_tooltip = {
+			tooltip = tooltip_focus_EU001_Majority_trigger
+			check_variable { global.focus_EU001_MEP_support > global.MEP_Majority }
+		}
 		focus_EU001_draft = yes
 		NOT = {
 			focus_EU001_accepted = yes
@@ -196,13 +201,16 @@ EU_parliament_focus_EU001_approve = {
 		}
 	}
 	ai_will_do = {
-		factor = 100
+		factor = 1
 	}
 }
 
 EU_parliament_focus_EU001_overrule = {
 	available = {
-		check_variable { global.focus_EU001_MEP_support > global.MEP_Supermajority }
+		custom_trigger_tooltip = {
+			tooltip = tooltip_focus_EU001_Supermajority_trigger		
+			check_variable { global.focus_EU001_MEP_support > global.MEP_Supermajority }
+		}	
 		focus_EU001_draft = yes
 		NOT = {
 			focus_EU001_accepted = yes
@@ -226,7 +234,7 @@ EU_parliament_focus_EU001_overrule = {
 		}
 	}
 	ai_will_do = {
-		factor = 0
+		factor = 1
 	}
 }
 
@@ -235,7 +243,9 @@ EU_parliament_focus_EU001_overrule = {
 EU_parliament_focus_EU001_invite_PG_Western_Autocracy = {
 	cost = global.PI_PG_Western_Autocracy
 	available = {
-		has_country_flag = focus_EU001_EP_agenda
+		hidden_trigger = {
+			has_country_flag = focus_EU001_EP_agenda
+		}
 		focus_EU001_draft = yes
 		NOT = {
 			focus_EU001_accepted = yes
@@ -249,6 +259,7 @@ EU_parliament_focus_EU001_invite_PG_Western_Autocracy = {
 		has_idea = EU_member
 	}	
 	visible = {
+		has_global_flag = EU_parliament_PG_Western_Autocracy
 		check_variable { THIS.focus_EU001_desire > 0 }	### THIS desire vs PG desire
 		has_country_flag = focus_EU001_EP_agenda
 		NOT = {
@@ -277,12 +288,23 @@ EU_parliament_focus_EU001_invite_PG_Western_Autocracy = {
 	}
 	ai_will_do = {
 		factor = 0
+		modifier = {
+			add = 1
+				check_variable { global.focus_EU001_MEP_support < global.MEP_Majority }
+		}
+		modifier = {
+			add = 1
+				focus_EU001_EP_overrule_option = yes
+				check_variable { global.focus_EU001_MEP_support < global.MEP_Supermajority }
+		}		
 	}
 }
 
 EU_parliament_focus_EU001_together_PG_Western_Autocracy = {
 	available = {
-		has_country_flag = focus_EU001_EP_agenda
+		hidden_trigger = {
+			has_country_flag = focus_EU001_EP_agenda
+		}
 		focus_EU001_draft = yes
 		NOT = {
 			focus_EU001_accepted = yes
@@ -296,6 +318,7 @@ EU_parliament_focus_EU001_together_PG_Western_Autocracy = {
 		has_idea = EU_member 
 	}
 	visible = {
+		has_global_flag = EU_parliament_PG_Western_Autocracy
 		check_variable { THIS.focus_EU001_desire = 0 }	### THIS desire vs PG desire
 		has_country_flag = focus_EU001_EP_agenda
 		NOT = {
@@ -322,13 +345,15 @@ EU_parliament_focus_EU001_together_PG_Western_Autocracy = {
 		}
 	}
 	ai_will_do = {
-		factor = 0
+		factor = 1
 	}
 }
 
 EU_parliament_focus_EU001_support_PG_Western_Autocracy = {
 	available = {
-		has_country_flag = focus_EU001_EP_agenda		
+		hidden_trigger = {
+			has_country_flag = focus_EU001_EP_agenda
+		}
 		focus_EU001_draft = yes
 		NOT = {
 			focus_EU001_accepted = yes
@@ -342,6 +367,7 @@ EU_parliament_focus_EU001_support_PG_Western_Autocracy = {
 		has_idea = EU_member 
 	}
 	visible = {
+		has_global_flag = EU_parliament_PG_Western_Autocracy
 		check_variable { THIS.focus_EU001_desire < 0 }	### THIS desire vs PG desire
 		has_country_flag = focus_EU001_EP_agenda
 		NOT = {
@@ -372,9 +398,11 @@ EU_parliament_focus_EU001_support_PG_Western_Autocracy = {
 		}
 	}
 	ai_will_do = {
-		factor = 0
+		factor = 1
 	}
 }
+
+
 
 
 
