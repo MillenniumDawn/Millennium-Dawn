@@ -34,19 +34,44 @@ EU_parliament_category = {
 
 	### For testing ### remove has_country_flag = unvisible
 
-	EU_parliament_focus_EUXXX = { 
+	EU_parliament_focus_test = { 
 	
 		available = {
 			has_idea = EU_member
 		}
 		
 		visible = {
-			#has_country_flag = unvisible 
+			has_country_flag = unvisible 
 			has_idea = EU_member 
 		}
 		
 		complete_effect = {
 			set_country_flag = focus_EU001
+		}
+		ai_will_do = {
+			factor = 0
+		}		
+	}
+
+	EU_parliament_test_meta = { 
+	
+		available = {
+			has_idea = EU_member
+		}
+		
+		visible = {
+			has_country_flag = unvisible 
+			has_idea = EU_member 
+		}
+		
+		complete_effect = {
+			meta_effect = {
+				text = {
+					set_country_flag = [IDX]
+					
+				}
+				IDX = "[test_meta_loc]"
+			}
 		}
 		ai_will_do = {
 			factor = 0
@@ -113,6 +138,7 @@ EU_parliament_show_members = {
 #######################
 #######################
 
+
 #############
 ### EU001 ###
 #############
@@ -168,36 +194,105 @@ EU_parliament_focus_EU001_EP_agenda = {
 	}
 }
 
-EU_parliament_focus_EU001_approve = {	
+#############
+### EUXXX ###
+#############
+
+EU_parliament_focus_EUXXX_approve = {	
 	available = {
-		custom_trigger_tooltip = {
-			tooltip = tooltip_focus_EU001_Majority_trigger
-			check_variable { global.focus_EU001_MEP_support > global.MEP_Majority }
-		}
-		focus_EU001_draft = yes
-		NOT = {
-			focus_EU001_accepted = yes
-		}
-		NOT = {
-			focus_EU001_EP_approval = yes
-		}
-		has_idea = EU_member 
+		meta_trigger = {
+			text = {
+				custom_trigger_tooltip = {
+					tooltip = tooltip_focus_[EUXXX]_Majority_trigger
+					check_variable { global.focus_[EUXXX]_MEP_support > global.MEP_Majority }
+				}
+				focus_[EUXXX]_draft = yes
+				NOT = {
+					focus_[EUXXX]_accepted = yes
+				}
+				NOT = {
+					focus_[EUXXX]_EP_approval = yes
+				}
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"	
+		}	 
 	}	
 	visible = {
-		focus_EU001_draft = yes
-		NOT = {
-			focus_EU001_accepted = yes
-		}
-		NOT = {
-			focus_EU001_EP_approval = yes
-		}
-		has_idea = EU_member
+		meta_trigger = {
+			text = {		
+				focus_[EUXXX]_draft = yes
+				NOT = {
+					focus_[EUXXX]_accepted = yes
+				}
+				NOT = {
+					focus_[EUXXX]_EP_approval = yes
+				}
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"
+		}			
 	}	
 	complete_effect = {
-		custom_effect_tooltip = tooltip_EU_parliament_focus_EU001_approve
-		hidden_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_EU001_approve"		
-			set_global_flag = focus_EU001_EP_approval
+		meta_effect = {
+			text = {
+				custom_effect_tooltip = tooltip_EU_parliament_focus_[EUXXX]_approve
+				hidden_effect = {
+					log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_approve"		
+					set_global_flag = focus_[EUXXX]_EP_approval
+				}
+			}	
+			EUXXX = "[EUXXX_EP_agenda]"	
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+EU_parliament_focus_EUXXX_overrule = {
+	available = {
+		meta_trigger = {
+			text = {		
+				custom_trigger_tooltip = {
+					tooltip = tooltip_focus_[EUXXX]_Supermajority_trigger		
+					check_variable { global.focus_[EUXXX]_MEP_support > global.MEP_Supermajority }
+				}	
+				focus_[EUXXX]_draft = yes
+				NOT = {
+					focus_[EUXXX]_accepted = yes
+				}
+				focus_[EUXXX]_EP_overrule_option = yes		
+				has_idea = EU_member 
+	
+			}
+			EUXXX = "[EUXXX_EP_agenda]"
+		}
+	}	
+	visible = {
+		meta_trigger = {
+			text = {
+				focus_[EUXXX]_draft = yes
+				NOT = {
+					focus_[EUXXX]_accepted = yes
+				}
+				focus_[EUXXX]_EP_overrule_option = yes		
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}
+	}	
+	complete_effect = {
+		meta_effect = {
+			text = {		
+				custom_effect_tooltip = tooltip_EU_parliament_focus_[EUXXX]_approve
+				hidden_effect = {
+					log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_overrule"		
+					### focus effect ###
+					focus_[EUXXX]_effect = yes
+				}
+			}
+			EUXXX = "[EUXXX_EP_agenda]"		
 		}
 	}
 	ai_will_do = {
@@ -205,203 +300,1105 @@ EU_parliament_focus_EU001_approve = {
 	}
 }
 
-EU_parliament_focus_EU001_overrule = {
+EU_parliament_focus_EUXXX_remove = {	
 	available = {
-		custom_trigger_tooltip = {
-			tooltip = tooltip_focus_EU001_Supermajority_trigger		
-			check_variable { global.focus_EU001_MEP_support > global.MEP_Supermajority }
-		}	
-		focus_EU001_draft = yes
-		NOT = {
-			focus_EU001_accepted = yes
-		}
-		focus_EU001_EP_overrule_option = yes		
-		has_idea = EU_member 
+		meta_trigger = {
+			text = {
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				NOT = {
+					focus_[EUXXX]_EP_approval = yes
+				}
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"	
+		}	 
 	}	
 	visible = {
-		focus_EU001_draft = yes
-		NOT = {
-			focus_EU001_accepted = yes
-		}
-		focus_EU001_EP_overrule_option = yes		
-		has_idea = EU_member
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				NOT = {
+					focus_[EUXXX]_EP_approval = yes
+				}
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"
+		}			
 	}	
 	complete_effect = {
-		custom_effect_tooltip = tooltip_EU_parliament_focus_EU001_approve
-		hidden_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_EU001_overrule"		
-			### focus effect ###
-		}
-	}
-	ai_will_do = {
-		factor = 1
-	}
-}
-
-### Western_Autocracy ### 
-
-EU_parliament_focus_EU001_invite_PG_Western_Autocracy = {
-	cost = global.PI_PG_Western_Autocracy
-	available = {
-		hidden_trigger = {
-			has_country_flag = focus_EU001_EP_agenda
-		}
-		focus_EU001_draft = yes
-		NOT = {
-			focus_EU001_accepted = yes
-		}
-		OR = {
-			NOT = {
-				focus_EU001_EP_approval = yes
-			}
-			focus_EU001_EP_overrule_option = yes
-		}
-		has_idea = EU_member
-	}	
-	visible = {
-		has_global_flag = EU_parliament_PG_Western_Autocracy
-		check_variable { THIS.focus_EU001_desire > 0 }	### THIS desire vs PG desire
-		has_country_flag = focus_EU001_EP_agenda
-		NOT = {
-			has_global_flag = PG_Western_Autocracy_support_focus_EU001
+		meta_effect = {
+			text = {
+				custom_effect_tooltip = tooltip_EU_parliament_focus_[EUXXX]_remove
+				hidden_effect = {
+					log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_remove"		
+					clr_country_flag = focus_[EUXXX]_EP_agenda
+					clr_country_flag = [PG_X]_influence
+				}
+			}	
+			EUXXX = "[EUXXX_EP_agenda]"
+			PG_X = "[PG_X_influence]"	
 		}	
-		focus_EU001_draft = yes
-		NOT = {
-			focus_EU001_accepted = yes
-		}
-		OR = {
-			NOT = {
-				focus_EU001_EP_approval = yes
-			}
-			focus_EU001_EP_overrule_option = yes
-		}
-		has_idea = EU_member
-	}	
-	complete_effect = {
-		custom_effect_tooltip = tooltip_EU_parliament_focus_EU001_invite_PG_Western_Autocracy
-		hidden_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_EU001_invite_PG_Western_Autocracy"
-			set_global_flag = PG_Western_Autocracy_support_focus_EU001
-			add_to_variable = { global.PI_PG_Western_Autocracy = global.MEP_PG_Western_Autocracy }
-			add_to_variable = { global.focus_EU001_MEP_support = global.MEP_PG_Western_Autocracy }
-		}
 	}
 	ai_will_do = {
 		factor = 0
-		modifier = {
-			add = 1
-				check_variable { global.focus_EU001_MEP_support < global.MEP_Majority }
-		}
-		modifier = {
-			add = 1
-				focus_EU001_EP_overrule_option = yes
-				check_variable { global.focus_EU001_MEP_support < global.MEP_Supermajority }
-		}		
 	}
 }
 
-EU_parliament_focus_EU001_together_PG_Western_Autocracy = {
+### PG_X ### 
+
+EU_parliament_focus_EUXXX_invite_PG_X = {		
 	available = {
-		hidden_trigger = {
-			has_country_flag = focus_EU001_EP_agenda
-		}
-		focus_EU001_draft = yes
-		NOT = {
-			focus_EU001_accepted = yes
-		}
-		OR = {
-			NOT = {
-				focus_EU001_EP_approval = yes
+		meta_trigger = {
+			text = {
+				has_political_power > global.MEP_[PG_X]
+				hidden_trigger = {
+					has_country_flag = focus_[EUXXX]_EP_agenda
+				}
+				focus_[EUXXX]_draft = yes
+				NOT = {
+					focus_[EUXXX]_accepted = yes
+				}
+				OR = {
+					NOT = {
+						focus_[EUXXX]_EP_approval = yes
+					}
+					focus_[EUXXX]_EP_overrule_option = yes
+				}
+				has_idea = EU_member
 			}
-			focus_EU001_EP_overrule_option = yes
-		}
-		has_idea = EU_member 
-	}
-	visible = {
-		has_global_flag = EU_parliament_PG_Western_Autocracy
-		check_variable { THIS.focus_EU001_desire = 0 }	### THIS desire vs PG desire
-		has_country_flag = focus_EU001_EP_agenda
-		NOT = {
-			has_global_flag = PG_Western_Autocracy_support_focus_EU001
+			EUXXX = "[EUXXX_EP_agenda]"
+			PG_X = "[PG_X_influence]"
 		}		
-		focus_EU001_draft = yes
-		NOT = {
-			focus_EU001_accepted = yes
-		}
-		OR = {
-			NOT = {
-				focus_EU001_EP_approval = yes
+	}	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_global_flag = EU_parliament_[PG_X]
+				check_variable { THIS.focus_[EUXXX]_desire > 0 }	### THIS desire vs PG desire
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				NOT = {
+					has_global_flag = [PG_X]_support
+				}	
+				focus_[EUXXX]_draft = yes
+				NOT = {
+					focus_[EUXXX]_accepted = yes
+				}
+				OR = {
+					NOT = {
+						focus_[EUXXX]_EP_approval = yes
+					}
+					focus_[EUXXX]_EP_overrule_option = yes
+				}
+				has_idea = EU_member
 			}
-			focus_EU001_EP_overrule_option = yes
-		}
-		has_idea = EU_member 
+			EUXXX = "[EUXXX_EP_agenda]"
+			PG_X = "[PG_X_influence]"
+		}				
 	}	
 	complete_effect = {
-		custom_effect_tooltip = tooltip_EU_parliament_focus_EU001_together_PG_Western_Autocracy
+		meta_effect = {
+			text = {
+				set_temp_variable = { temp1 = global.MEP_[PG_X] }
+				multiply_temp_variable = { temp1 = -1 }
+				add_political_power = temp1		
+				custom_effect_tooltip = tooltip_EU_parliament_focus_[EUXXX]_invite_[PG_X]
+				hidden_effect = {
+					log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_invite_[PG_X]"
+					set_global_flag = [PG_X]_support_focus_[EUXXX]
+					add_to_variable = { global.PI_[PG_X] = global.MEP_[PG_X] }
+					add_to_variable = { global.focus_[EUXXX]_MEP_support = global.MEP_[PG_X] }
+					clr_country_flag = [PG_X]_influence
+				}
+
+			}
+			EUXXX = "[EUXXX_EP_agenda]"
+			PG_X = "[PG_X_influence]"
+		}				
+	}
+	ai_will_do = {
+		factor = 0
+			modifier = {
+				add = 1
+				meta_trigger = {
+					text = {
+						check_variable { global.focus_[EUXXX]_MEP_support < global.MEP_Majority }
+					}				
+					EUXXX = "[EUXXX_EP_agenda]"				
+				}
+			}									
+			modifier = {
+				add = 1
+				meta_trigger = {
+					text = {
+						focus_[EUXXX]_EP_overrule_option = yes
+						check_variable { global.focus_[EUXXX]_MEP_support < global.MEP_Supermajority }
+					}
+					EUXXX = "[EUXXX_EP_agenda]"		
+				}			
+			}
+	}
+}
+
+EU_parliament_focus_EUXXX_together_PG_X = {
+	available = {
+		meta_trigger = {
+			text = {
+				hidden_trigger = {
+					has_country_flag = focus_[EUXXX]_EP_agenda
+				}
+				focus_[EUXXX]_draft = yes
+				NOT = {
+					focus_[EUXXX]_accepted = yes
+				}
+				OR = {
+					NOT = {
+						focus_[EUXXX]_EP_approval = yes
+					}
+					focus_[EUXXX]_EP_overrule_option = yes
+				}
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"
+			PG_X = "[PG_X_influence]"
+		}				 
+	}
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_global_flag = EU_parliament_[PG_X]
+				check_variable { THIS.focus_[EUXXX]_desire = 0 }	### THIS desire vs PG desire
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				NOT = {
+					has_global_flag = [PG_X]_support
+				}		
+				focus_[EUXXX]_draft = yes
+				NOT = {
+					focus_[EUXXX]_accepted = yes
+				}
+				OR = {
+					NOT = {
+						focus_[EUXXX]_EP_approval = yes
+					}
+					focus_[EUXXX]_EP_overrule_option = yes
+				}
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"
+			PG_X = "[PG_X_influence]"
+		}				 
+	}	
+	complete_effect = {
+		meta_effect = {
+			text = {		
+				custom_effect_tooltip = tooltip_EU_parliament_focus_[EUXXX]_together_[PG_X]
+				hidden_effect = {		
+					log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_together_[PG_X]"
+					set_global_flag = [PG_X]_support_focus_[EUXXX]
+					add_to_variable = { global.focus_[EUXXX]_MEP_support = global.MEP_[PG_X] }
+					clr_country_flag = [PG_X]_influence
+				}
+			}
+			EUXXX = "[EUXXX_EP_agenda]"
+			PG_X = "[PG_X_influence]"
+		}				
+	}
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+EU_parliament_focus_[EUXXX]_support_[PG_X] = {
+	available = {
+		meta_trigger = {
+			text = {
+				hidden_trigger = {
+					has_country_flag = focus_[EUXXX]_EP_agenda
+				}
+				focus_[EUXXX]_draft = yes
+				NOT = {
+					focus_[EUXXX]_accepted = yes
+				}
+				OR = {
+					NOT = {
+						focus_[EUXXX]_EP_approval = yes
+					}
+					focus_[EUXXX]_EP_overrule_option = yes
+				}
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"
+			PG_X = "[PG_X_influence]"
+		}				 
+	}
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_global_flag = EU_parliament_[PG_X]
+				check_variable { THIS.focus_[EUXXX]_desire < 0 }	### THIS desire vs PG desire
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				NOT = {
+					has_global_flag = [PG_X]_support
+				}		
+				focus_[EUXXX]_draft = yes
+				NOT = {
+					focus_[EUXXX]_accepted = yes
+				}
+				OR = {
+					NOT = {
+						focus_[EUXXX]_EP_approval = yes
+					}
+					focus_[EUXXX]_EP_overrule_option = yes
+				}	
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"
+			PG_X = "[PG_X_influence]"
+		}				 
+	}	
+	complete_effect = {
+		meta_effect = {
+			text = {		
+				add_political_power = global.MEP_[PG_X]
+				custom_effect_tooltip = tooltip_EU_parliament_focus_[EUXXX]_support_[PG_X]
+				hidden_effect = {
+					log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_support_[PG_X]"
+					set_global_flag = [PG_X]_support_focus_[EUXXX]
+					set_temp_variable = { temp1 = global.PI_[PG_X] }
+					multiply_temp_variable = { temp1 = -1 }
+					add_to_variable = { global.PI_[PG_X] = temp1 }
+					add_to_variable = { global.focus_[EUXXX]_MEP_support = global.MEP_[PG_X] }
+					clr_country_flag = [PG_X]_influence			
+				}
+			}
+			EUXXX = "[EUXXX_EP_agenda]"
+			PG_X = "[PG_X_influence]"
+		}				
+	}
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+####################
+### influence PG ###
+####################
+
+### Western_Autocracy ###
+
+EU_parliament_PG_Western_Autocracy_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Western_Autocracy
+				NOT = {
+					has_country_flag = PG_Western_Autocracy_influence
+				}
+				NOT = { is_in_array = { ruling_party = 0 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Western_Autocracy_influence
 		hidden_effect = {		
-			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_EU001_together_PG_Western_Autocracy"
-			set_global_flag = PG_Western_Autocracy_support_focus_EU001
-			add_to_variable = { global.focus_EU001_MEP_support = global.MEP_PG_Western_Autocracy }
-		}
-	}
-	ai_will_do = {
-		factor = 1
-	}
-}
-
-EU_parliament_focus_EU001_support_PG_Western_Autocracy = {
-	available = {
-		hidden_trigger = {
-			has_country_flag = focus_EU001_EP_agenda
-		}
-		focus_EU001_draft = yes
-		NOT = {
-			focus_EU001_accepted = yes
-		}
-		OR = {
-			NOT = {
-				focus_EU001_EP_approval = yes
-			}
-			focus_EU001_EP_overrule_option = yes
-		}
-		has_idea = EU_member 
-	}
-	visible = {
-		has_global_flag = EU_parliament_PG_Western_Autocracy
-		check_variable { THIS.focus_EU001_desire < 0 }	### THIS desire vs PG desire
-		has_country_flag = focus_EU001_EP_agenda
-		NOT = {
-			has_global_flag = PG_Western_Autocracy_support_focus_EU001
-		}		
-		focus_EU001_draft = yes
-		NOT = {
-			focus_EU001_accepted = yes
-		}
-		OR = {
-			NOT = {
-				focus_EU001_EP_approval = yes
-			}
-			focus_EU001_EP_overrule_option = yes
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Western_Autocracy_influence"
+			set_country_flag = PG_Western_Autocracy_influence
 		}	
-		has_idea = EU_member 
-	}	
-	complete_effect = {
-		add_political_power = global.MEP_PG_Western_Autocracy
-		custom_effect_tooltip = tooltip_EU_parliament_focus_EU001_support_PG_Western_Autocracy
-		hidden_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_EU001_support_PG_Western_Autocracy"
-			set_global_flag = PG_Western_Autocracy_support_focus_EU001
-			set_temp_variable = { temp1 = global.PI_PG_Western_Autocracy }
-			multiply_temp_variable = { temp1 = -1 }
-			add_to_variable = { global.PI_PG_Western_Autocracy = temp1 }
-			add_to_variable = { global.focus_EU001_MEP_support = global.MEP_PG_Western_Autocracy }			
-		}
 	}
 	ai_will_do = {
 		factor = 1
-	}
+	}		
 }
+### conservatism ###
 
+EU_parliament_PG_conservatism_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_conservatism
+				NOT = {
+					has_country_flag = PG_conservatism_influence
+				}
+				NOT = { is_in_array = { ruling_party = 1 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_conservatism_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_conservatism_influence"
+			set_country_flag = PG_conservatism_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### liberalism ###
+
+EU_parliament_PG_liberalism_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_liberalism
+				NOT = {
+					has_country_flag = PG_liberalism_influence
+				}
+				NOT = { is_in_array = { ruling_party = 2 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_liberalism_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_liberalism_influence"
+			set_country_flag = PG_liberalism_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### socialism ###
+
+EU_parliament_PG_socialism_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_socialism
+				NOT = {
+					has_country_flag = PG_socialism_influence
+				}
+				NOT = { is_in_array = { ruling_party = 3 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_socialism_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_socialism_influence"
+			set_country_flag = PG_socialism_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Communist-State ###
+
+EU_parliament_PG_Communist-State_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Communist-State
+				NOT = {
+					has_country_flag = PG_Communist-State_influence
+				}
+				NOT = { is_in_array = { ruling_party = 4 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Communist-State_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Communist-State_influence"
+			set_country_flag = PG_Communist-State_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### anarchist_communism ###
+
+EU_parliament_PG_anarchist_communism_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_anarchist_communism
+				NOT = {
+					has_country_flag = PG_anarchist_communism_influence
+				}
+				NOT = { is_in_array = { ruling_party = 5 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_anarchist_communism_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_anarchist_communism_influence"
+			set_country_flag = PG_anarchist_communism_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Conservative ###
+
+EU_parliament_PG_Conservative_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Conservative
+				NOT = {
+					has_country_flag = PG_Conservative_influence
+				}
+				NOT = { is_in_array = { ruling_party = 6 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Conservative_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Conservative_influence"
+			set_country_flag = PG_Conservative_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Autocracy ###
+
+EU_parliament_PG_Autocracy_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Autocracy
+				NOT = {
+					has_country_flag = PG_Autocracy_influence
+				}
+				NOT = { is_in_array = { ruling_party = 7 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Autocracy_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Autocracy_influence"
+			set_country_flag = PG_Autocracy_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Mod_Vilayat_e_Faqih ###
+
+EU_parliament_PG_Mod_Vilayat_e_Faqih_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Mod_Vilayat_e_Faqih
+				NOT = {
+					has_country_flag = PG_Mod_Vilayat_e_Faqih_influence
+				}
+				NOT = { is_in_array = { ruling_party = 8 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Mod_Vilayat_e_Faqih_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Mod_Vilayat_e_Faqih_influence"
+			set_country_flag = PG_Mod_Vilayat_e_Faqih_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Vilayat_e_Faqih ###
+
+EU_parliament_PG_Vilayat_e_Faqih_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Vilayat_e_Faqih
+				NOT = {
+					has_country_flag = PG_Vilayat_e_Faqih_influence
+				}
+				NOT = { is_in_array = { ruling_party = 9 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Vilayat_e_Faqih_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Vilayat_e_Faqih_influence"
+			set_country_flag = PG_Vilayat_e_Faqih_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Kingdom ###
+
+EU_parliament_PG_Kingdom_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Kingdom
+				NOT = {
+					has_country_flag = PG_Kingdom_influence
+				}
+				NOT = { is_in_array = { ruling_party = 10 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Kingdom_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Kingdom_influence"
+			set_country_flag = PG_Kingdom_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Caliphate ###
+
+EU_parliament_PG_Caliphate_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Caliphate
+				NOT = {
+					has_country_flag = PG_Caliphate_influence
+				}
+				NOT = { is_in_array = { ruling_party = 11 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Caliphate_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Caliphate_influence"
+			set_country_flag = PG_Caliphate_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Neutral_Muslim_Brotherhood ###
+
+EU_parliament_PG_Neutral_Muslim_Brotherhood_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Neutral_Muslim_Brotherhood
+				NOT = {
+					has_country_flag = PG_Neutral_Muslim_Brotherhood_influence
+				}
+				NOT = { is_in_array = { ruling_party = 12 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Neutral_Muslim_Brotherhood_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Neutral_Muslim_Brotherhood_influence"
+			set_country_flag = PG_Neutral_Muslim_Brotherhood_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Neutral_Autocracy ###
+
+EU_parliament_PG_Neutral_Autocracy_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Neutral_Autocracy
+				NOT = {
+					has_country_flag = PG_Neutral_Autocracy_influence
+				}
+				NOT = { is_in_array = { ruling_party = 13 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Neutral_Autocracy_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Neutral_Autocracy_influence"
+			set_country_flag = PG_Neutral_Autocracy_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Neutral_conservatism ###
+
+EU_parliament_PG_Neutral_conservatism_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Neutral_conservatism
+				NOT = {
+					has_country_flag = PG_Neutral_conservatism_influence
+				}
+				NOT = { is_in_array = { ruling_party = 14 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Neutral_conservatism_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Neutral_conservatism_influence"
+			set_country_flag = PG_Neutral_conservatism_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### oligarchism ###
+
+EU_parliament_PG_oligarchism_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_oligarchism
+				NOT = {
+					has_country_flag = PG_oligarchism_influence
+				}
+				NOT = { is_in_array = { ruling_party = 15 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_oligarchism_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_oligarchism_influence"
+			set_country_flag = PG_oligarchism_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Neutral_Libertarian ###
+
+EU_parliament_PG_Neutral_Libertarian_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Neutral_Libertarian
+				NOT = {
+					has_country_flag = PG_Neutral_Libertarian_influence
+				}
+				NOT = { is_in_array = { ruling_party = 16 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Neutral_Libertarian_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Neutral_Libertarian_influence"
+			set_country_flag = PG_Neutral_Libertarian_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Neutral_green ###
+
+EU_parliament_PG_Neutral_green_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Neutral_green
+				NOT = {
+					has_country_flag = PG_Neutral_green_influence
+				}
+				NOT = { is_in_array = { ruling_party = 17 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Neutral_green_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Neutral_green_influence"
+			set_country_flag = PG_Neutral_green_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### neutral_Social ###
+
+EU_parliament_PG_neutral_Social_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_neutral_Social
+				NOT = {
+					has_country_flag = PG_neutral_Social_influence
+				}
+				NOT = { is_in_array = { ruling_party = 18 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_neutral_Social_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_neutral_Social_influence"
+			set_country_flag = PG_neutral_Social_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Neutral_Communism ###
+
+EU_parliament_PG_Neutral_Communism_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Neutral_Communism
+				NOT = {
+					has_country_flag = PG_Neutral_Communism_influence
+				}
+				NOT = { is_in_array = { ruling_party = 19 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Neutral_Communism_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Neutral_Communism_influence"
+			set_country_flag = PG_Neutral_Communism_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Nat_Populism ###
+
+EU_parliament_PG_Nat_Populism_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Nat_Populism
+				NOT = {
+					has_country_flag = PG_Nat_Populism_influence
+				}
+				NOT = { is_in_array = { ruling_party = 20 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Nat_Populism_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Nat_Populism_influence"
+			set_country_flag = PG_Nat_Populism_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Nat_Fascism ###
+
+EU_parliament_PG_Nat_Fascism_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Nat_Fascism
+				NOT = {
+					has_country_flag = PG_Nat_Fascism_influence
+				}
+				NOT = { is_in_array = { ruling_party = 21 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Nat_Fascism_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Nat_Fascism_influence"
+			set_country_flag = PG_Nat_Fascism_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Nat_Autocracy ###
+
+EU_parliament_PG_Nat_Autocracy_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Nat_Autocracy
+				NOT = {
+					has_country_flag = PG_Nat_Autocracy_influence
+				}
+				NOT = { is_in_array = { ruling_party = 22 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Nat_Autocracy_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Nat_Autocracy_influence"
+			set_country_flag = PG_Nat_Autocracy_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
+### Monarchist ###
+
+EU_parliament_PG_Monarchist_influence = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {
+		meta_trigger = {
+			text = {		
+				has_country_flag = focus_[EUXXX]_EP_agenda
+				has_global_flag = EU_parliament_PG_Monarchist
+				NOT = {
+					has_country_flag = PG_Monarchist_influence
+				}
+				NOT = { is_in_array = { ruling_party = 23 } }
+				has_idea = EU_member
+			}
+			EUXXX = "[EUXXX_EP_agenda]"			
+		}				 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = tooltip_EU_parliament_PG_Monarchist_influence
+		hidden_effect = {		
+			log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_PG_Monarchist_influence"
+			set_country_flag = PG_Monarchist_influence
+		}	
+	}
+	ai_will_do = {
+		factor = 1
+	}		
+}
 
 
 
