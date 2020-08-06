@@ -3,13 +3,13 @@ scripted_gui = {
 	scripted_influence_option_buttons = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
-		
+
 		window_name = "influence_option_buttons"
-		
-		visible = { 
+
+		visible = {
 			always = yes
 		}
-		
+
 		properties = {
 			opt_influence_action_button = {
 				image = "[select_influence_action_button]"
@@ -36,7 +36,7 @@ scripted_gui = {
 				image = "[select_make_puppet_button]"
 			}
 		}
-		
+
 		triggers = {
 			opt_influence_action_button_click_enabled = {
 				OR = {
@@ -82,7 +82,7 @@ scripted_gui = {
 					}
 				}
 			}
-			
+
 			opt_aid_button_click_enabled = {
 				#our country is a top 7 influencer
 				is_influencer = yes
@@ -91,9 +91,9 @@ scripted_gui = {
 				#Num of Civ Greater
 				check_variable = { size_modifier < ROOT.size_modifier }
 			}
-			
+
 			opt_manipulate_politics_button_click_enabled = {
-				
+
 				OR = {
 					AND = {
 						check_variable = { influence_array^0 = ROOT }
@@ -109,9 +109,9 @@ scripted_gui = {
 					}
 				}
 			}
-			
+
 			opt_make_puppet_button_click_enabled = {
-				
+
 				AND = {
 					check_variable = { influence_array^0 = ROOT }
 					check_variable = { influence_array_calc^0 > 0.8 }
@@ -119,14 +119,14 @@ scripted_gui = {
 					NOT = { is_subject_of = ROOT }
 					NOT = { has_war = yes }
 				}
-				 
+
 			}
-			
+
 			opt_coup_button_click_enabled = {
-				
+
 				NOT = { is_same_government = yes }
 				NOT = { is_puppet_of = ROOT }
-				NOT = { has_war = yes }
+				#NOT = { has_war = yes }
 				OR = {
 					AND = {
 						has_idea = negligible_corruption
@@ -169,7 +169,7 @@ scripted_gui = {
 						ROOT = { has_political_power > 100 }
 					}
 				}
-				
+
 				OR = {
 					AND = {
 						check_variable = { influence_array^0 = ROOT }
@@ -181,7 +181,7 @@ scripted_gui = {
 					}
 				}
 			}
-			
+
 			opt_economic_exploitation_button_click_enabled = {
 				AND = {
 					check_variable = { influence_array^0 = ROOT }
@@ -289,7 +289,7 @@ scripted_gui = {
 					}
 				}
 			}
-			
+
 			#hide for yourself
 			opt_influence_action_button_visible = {
 				NOT = {
@@ -332,9 +332,9 @@ scripted_gui = {
 				}
 			}
 		}
-		
+
 		effects = {
-			
+
 			#influence
 			opt_influence_action_button_click = {
 				if = {
@@ -375,10 +375,10 @@ scripted_gui = {
 				}
 				else = { ROOT = { add_political_power = -50 } }
 				#set_variable = { influence_array^0 = 0}
-				
+
 				#check_variable = { influence_array^0 = ROOT }
 				set_temp_variable = { influence_gain = ROOT.influence_multiplier } #from global rank idea
-				multiply_temp_variable = { influence_gain = 10 } #base gain
+				multiply_temp_variable = { influence_gain = 20 } #base gain #was 10
 				for_loop_effect = {
 					end = influence_array^num
 					value = v
@@ -398,29 +398,29 @@ scripted_gui = {
 				clr_country_flag = found
 				recalculate_influence = yes
 			}
-			
+
 			# give gift of money
 			opt_aid_button_click = {
-				
+
 				ROOT = {
 					PREV = {
 						country_event = { id = influence.0 }
 					}
 				}
 			}
-			
+
 			##target select influence
 			opt_target_other_button_click = {
-				
+
 				ROOT = {
 					PREV = {
 						country_event = { id = influence.2 }
 					}
 				}
 			}
-			
+
 			opt_manipulate_politics_button_click = {
-				
+
 				#Add +5 to our outlook
 				if = {
 					limit = {
@@ -792,7 +792,7 @@ scripted_gui = {
 						}
 					}
 				}
-				
+
 				#add +5 to our party
 				ROOT = {
 					for_each_loop = {
@@ -837,7 +837,7 @@ scripted_gui = {
 						else = { add_to_variable = { PREV.party_pop_array^v = 0.10 } }
 					}
 				}
-				
+
 				#remove 10% influence
 				set_temp_variable = { influence_reduce = influence_total } #from global rank idea
 				multiply_temp_variable = { influence_reduce = 0.1 } #10%
@@ -852,7 +852,7 @@ scripted_gui = {
 					}
 				}
 				recalculate_influence = yes
-				
+
 				#reduce relations if different gov
 				if = {
 					limit = {
@@ -865,18 +865,18 @@ scripted_gui = {
 				}
 			}
 			opt_coup_button_click = {
-				
+
 				ROOT = {
 					PREV = {
 						country_event = { id = influence.4 }
 					}
 				}
 			}
-			
-	####################################		
-			
+
+	####################################
+
 			opt_make_puppet_button_click = {
-			
+
 				#eventually remove explotation idea (shouldn't double up)
 				for_loop_effect = {
 					end = influence_array^num
@@ -893,7 +893,7 @@ scripted_gui = {
 						THISTAG = "[?var:influence_array^v.GetTag]"
 					}
 				}
-				
+
 				ROOT = {
 					set_autonomy = {
 						target = PREV
@@ -913,16 +913,18 @@ scripted_gui = {
 					}
 				}
 			}
-			
+
 			opt_economic_exploitation_button_click = {
-				
 				meta_effect = {
 					text = {
-						add_ideas = [ROOTTAG]_tribute_idea
+						add_timed_idea = {
+							idea = [ROOTTAG]_tribute_idea
+							days = 90
+						}
 					}
 					ROOTTAG = "[?var:influence_array^0.GetTag]"
 				}
-				
+
 				#remove 10% influence
 				set_temp_variable = { influence_reduce = influence_total } #from global rank idea
 				multiply_temp_variable = { influence_reduce = 0.1 } #10%
@@ -937,7 +939,7 @@ scripted_gui = {
 					}
 				}
 				recalculate_influence = yes
-				
+
 				#opinions
 				add_opinion_modifier = {
 					target = ROOT
@@ -956,9 +958,9 @@ scripted_gui = {
 	domestic_influence_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
-		
+
 		window_name = "domestic_influence_diplo"
-		
+
 		visible = {
 			always = yes
 		}
@@ -966,9 +968,9 @@ scripted_gui = {
 	position_1_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
-		
+
 		window_name = "position_1_diplo"
-		
+
 		visible = {
 			always = yes
 		}
@@ -976,9 +978,9 @@ scripted_gui = {
 	position_2_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
-		
+
 		window_name = "position_2_diplo"
-		
+
 		visible = {
 			always = yes
 		}
@@ -986,9 +988,9 @@ scripted_gui = {
 	position_3_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
-		
+
 		window_name = "position_3_diplo"
-		
+
 		visible = {
 			always = yes
 		}
@@ -996,9 +998,9 @@ scripted_gui = {
 	position_4_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
-		
+
 		window_name = "position_4_diplo"
-		
+
 		visible = {
 		  always = yes
 		}
@@ -1006,9 +1008,9 @@ scripted_gui = {
 	position_5_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
-		
+
 		window_name = "position_5_diplo"
-		
+
 		visible = {
 		  always = yes
 		}
@@ -1016,9 +1018,9 @@ scripted_gui = {
 	position_6_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
-		
+
 		window_name = "position_6_diplo"
-		
+
 		visible = {
 			always = yes
 		}
@@ -1026,9 +1028,9 @@ scripted_gui = {
 	position_7_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
-		
+
 		window_name = "position_7_diplo"
-		
+
 		visible = {
 			always = yes
 		}
