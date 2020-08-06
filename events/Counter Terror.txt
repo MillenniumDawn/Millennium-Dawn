@@ -611,9 +611,7 @@ country_event = {
 	option = {
 		name = radicalization.8.a
 		log = "[GetDateText]: [This.GetName]: radicalization.8.a executed"
-		set_temp_variable = { temp_pop = party_pop_array^11 }
-		multiply_temp_variable = { temp_pop = 100 }
-		add_to_variable = { radicalization = temp_pop }
+		add_to_variable = { radicalization = party_pop_array^11 }
 		clamp_radicalization = yes
 	}
 }
@@ -1106,20 +1104,22 @@ news_event = {
 	desc = {
 		text = terror.6.d1
 		trigger = {
-			check_variable = { ct_training < 5 }
+			FROM = { check_variable = { ct_training < 5 } }
 		}
 	}
 	desc = {
 		text = terror.6.d2
 		trigger = {
-			check_variable = { ct_training > 4 }
-			check_variable = { ct_training < 8 }
+			FROM = {
+				check_variable = { ct_training > 4 }
+				check_variable = { ct_training < 8 }
+			}
 		}
 	}
 	desc = {
 		text = terror.6.d3
 		trigger = {
-			check_variable = { ct_training > 7 }
+			FROM = { check_variable = { ct_training > 7 } }
 		}
 	}
 
@@ -1933,47 +1933,11 @@ country_event = {
 						has_idea = police_03
 					}
 				}
-				20 = {
+				35 = {
 					country_event = { id = terror.4 days = 60 random = 240 }
 				}
-				10 = {
-					country_event = { id = terror.5 days = 60 random = 240 }
-				}
 				15 = {
-					country_event = { id = terror.6 days = 60 random = 240 }
-					modifier = {
-						factor = 0
-						NOT = {
-							any_country = {
-								OR = {
-									has_government = democratic
-									has_government = communism
-								}
-								OR = {
-									is_western_nation = yes
-									is_East_Asia = yes
-									original_tag = SOV
-								}
-								is_in_array = { ROOT.influence_array = THIS.id }
-							}
-						}
-					}
-				}
-				5 = {
-					country_event = { id = terror.7 days = 60 random = 240 }
-					modifier = {
-						factor = 0
-						NOT = {
-							any_country = {
-								OR = {
-									has_government = democratic
-									has_government = communism
-								}
-								is_full_state = yes
-								has_military_access_to = ROOT
-							}
-						}
-					}
+					country_event = { id = terror.5 days = 60 random = 240 }
 				}
 			}
 		}
@@ -2154,6 +2118,18 @@ country_event = {
 			}
 			NOT = { country_exists = ISI }
 		}
+		if = {
+			limit = {
+				tag = SOM
+			}
+			NOT = { country_exists = SHB }
+		}
+		if = {
+			limit = {
+				tag = AFG
+			}
+			NOT = { country_exists = TAL }
+		}
 		NOT = { has_country_flag = jihadist_uprising_imminent }
 		NOT = {
 			any_home_area_neighbor_country = {
@@ -2214,6 +2190,18 @@ country_event = {
 			}
 			NOT = { country_exists = ISI }
 		}
+		if = {
+			limit = {
+				tag = SOM
+			}
+			NOT = { country_exists = SHB }
+		}
+		if = {
+			limit = {
+				tag = AFG
+			}
+			NOT = { country_exists = TAL }
+		}
 		has_country_flag = jihadist_uprising_imminent
 		NOT = {
 			any_home_area_neighbor_country = {
@@ -2235,6 +2223,33 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: terror.13.a executed"
 		clr_country_flag = jihadist_uprising_imminent
 		if = {
+			limit = { tag = PAK }
+			set_country_flag = fighting_jihadis
+			hidden_effect = {		#clear out TTP cores, they have their own country now
+				every_owned_state = {
+					remove_core_of = TTP
+				}
+			}
+			start_civil_war = {
+				ideology = fascism
+				size = 0.4
+				capital = 418
+				states = { 417 418 416 419 }
+			}
+			random_other_country = {
+				limit = {
+					original_tag = PAK
+					has_government = fascism
+				}
+				annex_country = { target = TTP transfer_troops = yes }
+			}
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.3
+			}
+			recalculate_party = yes
+		}
+		else_if = {
 			limit = {
 				fascism < 0.1
 				NOT = { has_government = fascism }
@@ -2396,6 +2411,63 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: terror.13.b executed"
 		clr_country_flag = jihadist_uprising_imminent
 		if = {
+			limit = { tag = PAK }
+			set_capital = 418
+			hidden_effect = {		#clear out TTP cores, they have their own country now
+				every_owned_state = {
+					remove_core_of = TTP
+				}
+			}
+			if = {
+				limit = { has_government = democratic }
+				start_civil_war = {
+					ruling_party = fascism
+					ideology = democratic
+					size = 0.65
+					capital = 422
+					states = { 422 573 563 426 420 421 }
+				}
+			}
+			if = {
+				limit = { has_government = communism }
+				start_civil_war = {
+					ruling_party = fascism
+					ideology = communism
+					size = 0.65
+					capital = 422
+					states = { 422 573 563 426 420 421 }
+				}
+			}
+			if = {
+				limit = { has_government = neutrality }
+				start_civil_war = {
+					ruling_party = fascism
+					ideology = neutrality
+					size = 0.65
+					capital = 422
+					states = { 422 573 563 426 420 421 }
+				}
+			}
+			if = {
+				limit = { has_government = nationalist }
+				start_civil_war = {
+					ruling_party = fascism
+					ideology = nationalist
+					size = 0.65
+					capital = 422
+					states = { 422 573 563 426 420 421 }
+				}
+			}
+			annex_country = { target = TTP transfer_troops = yes }
+			random_other_country = {
+				limit = {
+					original_tag = PAK
+					has_government = fascism
+				}
+				set_country_flag = fighting_jihadis
+			}
+		}
+		else_if = {
 			limit = { num_of_controlled_states > 1 }
 			if = {
 				limit = { has_government = democratic }
@@ -3022,5 +3094,764 @@ country_event = {
 		name = terror.14.a #We must take action...
 		log = "[GetDateText]: [This.GetName]: terror.14.a executed"
 		clr_country_flag = jihadist_uprising_imminent
+	}
+}
+
+#successful strike
+country_event = {
+	id = terror.15
+	title = terror.15.t
+	desc = {
+		text = terror.15.d1
+		trigger = {
+			check_variable = { ct_training < 5 }
+		}
+	}
+	desc = {
+		text = terror.15.d2
+		trigger = {
+			check_variable = { ct_training > 4 }
+			check_variable = { ct_training < 8 }
+		}
+	}
+	desc = {
+		text = terror.15.d3
+		trigger = {
+			check_variable = { ct_training > 7 }
+		}
+	}
+
+	is_triggered_only = yes
+
+	picture = GFX_CAN_airstrikes_iraq_syria
+
+	option = {
+		name = terror.15.a
+		log = "[GetDateText]: [This.GetName]: terror.15.a executed"
+		custom_effect_tooltip = terror_threat_decrease_large_tt
+		custom_effect_tooltip = radicalization_increase_medium_tt
+		add_political_power = 25
+		add_1_popularity = yes
+		subtract_from_variable = { threat_level = 10 }
+		clamp_threat = yes
+		add_to_variable = { radicalization = 5 }
+		clamp_radicalization = yes
+	}
+}
+
+#unsuccessful strike
+country_event = {
+	id = terror.16
+	title = terror.16.t
+	desc = {
+		text = terror.16.d1
+		trigger = {
+			check_variable = { ct_training < 5 }
+		}
+	}
+	desc = {
+		text = terror.16.d2
+		trigger = {
+			check_variable = { ct_training > 4 }
+			check_variable = { ct_training < 8 }
+		}
+	}
+	desc = {
+		text = terror.16.d3
+		trigger = {
+			check_variable = { ct_training > 7 }
+		}
+	}
+
+	is_triggered_only = yes
+
+	picture = GFX_egyptian_christian_massacre
+
+	option = {
+		name = terror.16.a
+		log = "[GetDateText]: [This.GetName]: terror.16.a executed"
+		custom_effect_tooltip = radicalization_increase_large_tt
+		add_manpower = -50
+		decrease_popularity_5 = yes
+		add_to_variable = { radicalization = 10 }
+		clamp_radicalization = yes
+	}
+}
+
+#successful strike operation
+country_event = {
+	id = terror.17
+	title = terror.17.t
+	desc = {
+		text = terror.17.d1
+		trigger = { no_jihadist_government = yes }
+	}
+	desc = {
+		text = terror.17.d2
+		trigger = { jihadist_government = yes }
+	}
+
+	is_triggered_only = yes
+
+	picture = GFX_CAN_airstrikes_iraq_syria
+
+	immediate = {
+		hidden_effect = {
+			FROM.FROM = {
+				random_army_leader = {
+					set_unit_leader_flag = killed
+					if = {
+						limit = { FROM = { NOT = { tag = SOV }}}
+						if = {
+							limit = { has_id = 1301 }
+							FROM = { news_event = { id = isisNews.1301 hours = 6 } }
+						}
+						if = {
+							limit = { has_id = 1302 }
+							FROM = { news_event = { id = isisNews.1302 hours = 6 } }
+						}
+						if = {
+							limit = { has_id = 1303 }
+							FROM = { news_event = { id = isisNews.1303 hours = 6 } }
+						}
+						if = {
+							limit = { has_id = 1304 }
+							FROM = { news_event = { id = isisNews.1304 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1305 }
+							FROM = { news_event = { id = isisNews.1305 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1306 }
+							FROM = { news_event = { id = isisNews.1306 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1307 }
+							FROM = { news_event = { id = isisNews.1307 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1308 }
+							FROM = { news_event = { id = isisNews.1308 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1309 }
+							FROM = { news_event = { id = isisNews.1309 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1310 }
+							FROM = { news_event = { id = isisNews.1310 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1311 }
+							FROM = { news_event = { id = isisNews.1311 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1312 }
+							FROM = { news_event = { id = isisNews.1312 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1313 }
+							FROM = { news_event = { id = isisNews.1313 hours = 6 }}
+						}
+					}
+					else_if = {
+						if = {
+							limit = { has_id = 1301 }
+							FROM = { news_event = { id = isisNews.11301 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1302 }
+							FROM = { news_event = { id = isisNews.11302 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1303 }
+							FROM = { news_event = { id = isisNews.11303 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1304 }
+							FROM = { news_event = { id = isisNews.11304 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1305 }
+							FROM = { news_event = { id = isisNews.11305 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1306 }
+							FROM = { news_event = { id = isisNews.11306 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1307 }
+							FROM = { news_event = { id = isisNews.11307 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1308 }
+							FROM = { news_event = { id = isisNews.11308 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1309 }
+							FROM = { news_event = { id = isisNews.11309 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1310 }
+							FROM = { news_event = { id = isisNews.11310 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1311 }
+							FROM = { news_event = { id = isisNews.11311 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1312 }
+							FROM = { news_event = { id = isisNews.11312 hours = 6 }}
+						}
+						if = {
+							limit = { has_id = 1313 }
+							FROM = { news_event = { id = isisNews.11313 hours = 6 }}
+						}
+					}
+				}
+				every_neighbor_country = {
+					limit = { is_in_array = { global.ct_states = THIS }}
+					custom_effect_tooltip = terror_threat_decrease_large_tt
+					custom_effect_tooltip = radicalization_increase_medium_tt
+					subtract_from_variable = { threat_level = 10 }
+					clamp_threat = yes
+					add_to_variable = { radicalization = 5 }
+					clamp_radicalization = yes
+				}
+			}
+		}
+	}
+
+	option = {
+		trigger = { no_jihadist_government = yes }
+		name = terror.17.a
+		log = "[GetDateText]: [This.GetName]: terror.17.a executed"
+		add_political_power = 50
+		effect_tooltip = {
+			FROM.FROM = {
+				random_army_leader = {
+					limit = { has_unit_leader_flag = killed }
+					custom_effect_tooltip = kia_tt
+				}
+				every_neighbor_country = {
+					limit = { is_in_array = { global.ct_states = THIS }}
+					custom_effect_tooltip = terror_threat_decrease_large_tt
+					custom_effect_tooltip = radicalization_increase_medium_tt
+				}
+			}
+		}
+	}
+
+	option = {
+		trigger = { jihadist_government = yes }
+		name = terror.17.b
+		log = "[GetDateText]: [This.GetName]: terror.17.b executed"
+		add_political_power = -50
+		FROM.FROM = {
+			random_army_leader = {
+				limit = { has_unit_leader_flag = killed }
+				clr_unit_leader_flag = killed
+				retire = yes
+				custom_effect_tooltip = kia_tt
+			}
+			effect_tooltip = {
+				every_neighbor_country = {
+					limit = { is_in_array = { global.ct_states = THIS }}
+					custom_effect_tooltip = terror_threat_decrease_large_tt
+					custom_effect_tooltip = radicalization_increase_medium_tt
+				}
+			}
+		}
+	}
+}
+
+#strike failed
+country_event = {
+	id = terror.18
+	title = terror.18.t
+	desc = terror.18.d
+
+	is_triggered_only = yes
+
+	picture = GFX_CAN_airstrikes_iraq_syria
+
+	option = {
+		name = terror.18.a #Accept
+		log = "[GetDateText]: [This.GetName]: terror.18.a executed"
+		FROM.FROM = {
+			every_neighbor_country = {
+				limit = { is_in_array = { global.ct_states = THIS }}
+				custom_effect_tooltip = radicalization_increase_large_tt
+				add_to_variable = { radicalization = 10 }
+				clamp_radicalization = yes
+			}
+		}
+		decrease_popularity_10 = yes
+
+	}
+
+	option = {
+		name = terror.18.b #Deny
+		log = "[GetDateText]: [This.GetName]: terror.18.b executed"
+		FROM.FROM = {
+			every_neighbor_country = {
+				limit = { is_in_array = { global.ct_states = THIS }}
+				custom_effect_tooltip = radicalization_increase_large_tt
+				add_to_variable = { radicalization = 10 }
+				clamp_radicalization = yes
+			}
+		}
+		custom_effect_tooltip = potential_leak_tt
+		hidden_effect = {
+			random_list = {
+				67 = {
+				}
+				33 = {
+					country_event = { id = terror.21 days = 180 }
+				}
+			}
+		}
+	}
+}
+
+#successful kill/capture raid
+country_event = {
+	id = terror.19
+	title = terror.19.t
+	desc = {
+		text = terror.19.d1
+		trigger = {
+			no_jihadist_government = yes
+			FROM = { has_country_flag = captured_commander }
+		}
+	}
+	desc = {
+		text = terror.19.d2
+		trigger = {
+			jihadist_government = yes
+			FROM = { has_country_flag = captured_commander }
+		}
+	}
+	desc = {
+		text = terror.19.d3
+		trigger = {
+			no_jihadist_government = yes
+			FROM = { has_country_flag = killed_commander }
+		}
+	}
+	desc = {
+		text = terror.19.d4
+		trigger = {
+			jihadist_government = yes
+			FROM = { has_country_flag = killed_commander }
+		}
+	}
+
+	is_triggered_only = yes
+
+	picture = GFX_special_forces
+
+	immediate = {
+		hidden_effect = {
+			FROM.FROM = {
+				random_army_leader = {
+					set_unit_leader_flag = killed
+				}
+				every_neighbor_country = {
+					limit = { is_in_array = { global.ct_states = THIS }}
+					custom_effect_tooltip = terror_threat_decrease_large_tt
+					custom_effect_tooltip = radicalization_increase_medium_tt
+					subtract_from_variable = { threat_level = 10 }
+					clamp_threat = yes
+					add_to_variable = { radicalization = 5 }
+					clamp_radicalization = yes
+				}
+			}
+		}
+	}
+
+	option = {
+		trigger = { no_jihadist_government = yes FROM = { has_country_flag = captured_commander }}
+		name = terror.17.a
+		log = "[GetDateText]: [This.GetName]: terror.19.a executed"
+		add_political_power = 75
+		effect_tooltip = {
+			FROM.FROM = {
+				random_army_leader = {
+					limit = { has_unit_leader_flag = killed }
+					custom_effect_tooltip = captured_tt
+				}
+				every_neighbor_country = {
+					limit = { is_in_array = { global.ct_states = THIS }}
+					custom_effect_tooltip = terror_threat_decrease_large_tt
+					custom_effect_tooltip = radicalization_increase_medium_tt
+				}
+			}
+		}
+		clr_country_flag = captured_commander
+	}
+
+	option = {
+		trigger = { jihadist_government = yes FROM = { has_country_flag = captured_commander }}
+		name = terror.19.b
+		log = "[GetDateText]: [This.GetName]: terror.19.b executed"
+		add_political_power = -75
+		random_army_leader = {
+			limit = { has_unit_leader_flag = killed }
+			clr_unit_leader_flag = killed
+			retire = yes
+			custom_effect_tooltip = captured_tt
+		}
+		effect_tooltip = {
+			every_neighbor_country = {
+				limit = { is_in_array = { global.ct_states = THIS }}
+				custom_effect_tooltip = terror_threat_decrease_large_tt
+				custom_effect_tooltip = radicalization_increase_medium_tt
+			}
+		}
+	}
+
+	option = {
+		trigger = { no_jihadist_government = yes FROM = { has_country_flag = killed_commander }}
+		name = terror.17.a
+		log = "[GetDateText]: [This.GetName]: terror.19.a executed"
+		add_political_power = 50
+		effect_tooltip = {
+			FROM.FROM = {
+				random_army_leader = {
+					limit = { has_unit_leader_flag = killed }
+					custom_effect_tooltip = kia_tt
+				}
+				every_neighbor_country = {
+					limit = { is_in_array = { global.ct_states = THIS }}
+					custom_effect_tooltip = terror_threat_decrease_large_tt
+					custom_effect_tooltip = radicalization_increase_medium_tt
+				}
+			}
+		}
+		clr_country_flag = killed_commander
+	}
+
+	option = {
+		trigger = { jihadist_government = yes FROM = { has_country_flag = killed_commander }}
+		name = terror.17.b
+		log = "[GetDateText]: [This.GetName]: terror.19.b executed"
+		add_political_power = -50
+		random_army_leader = {
+			limit = { has_unit_leader_flag = killed }
+			clr_unit_leader_flag = killed
+			retire = yes
+			custom_effect_tooltip = kia_tt
+		}
+		effect_tooltip = {
+			every_neighbor_country = {
+				limit = { is_in_array = { global.ct_states = THIS }}
+				custom_effect_tooltip = terror_threat_decrease_large_tt
+				custom_effect_tooltip = radicalization_increase_medium_tt
+			}
+		}
+	}
+}
+
+#raid failed
+country_event = {
+	id = terror.20
+	title = terror.18.t
+	desc = terror.20.d
+
+	is_triggered_only = yes
+
+	picture = GFX_special_forces
+
+	option = {
+		name = terror.18.a
+		log = "[GetDateText]: [This.GetName]: terror.20.a executed"
+		FROM.FROM = {
+			every_neighbor_country = {
+				limit = { is_in_array = { global.ct_states = THIS }}
+				custom_effect_tooltip = radicalization_increase_large_tt
+				add_to_variable = { radicalization = 10 }
+				clamp_radicalization = yes
+			}
+		}
+		decrease_popularity_10 = yes
+	}
+
+	option = {
+		name = terror.18.b #Deny
+		log = "[GetDateText]: [This.GetName]: terror.20.b executed"
+		FROM.FROM = {
+			every_neighbor_country = {
+				limit = { is_in_array = { global.ct_states = THIS }}
+				custom_effect_tooltip = radicalization_increase_large_tt
+				add_to_variable = { radicalization = 10 }
+				clamp_radicalization = yes
+			}
+		}
+		custom_effect_tooltip = potential_leak_tt
+		hidden_effect = {
+			random_list = {
+				67 = {
+				}
+				33 = {
+					country_event = { id = terror.21 days = 180 }
+				}
+			}
+		}
+	}
+}
+
+#leak reveals failed counter-terror operation
+country_event = {
+	id = terror.21
+	title = terror.21.t
+	desc = terror.21.d
+
+	is_triggered_only = yes
+
+	picture = GFX_politics_eye
+
+	option = {
+		name = terror.21.a
+		log = "[GetDateText]: [This.GetName]: terror.21.a executed"
+		decrease_popularity_20 = yes
+	}
+}
+
+#successful strike operation - arms cache
+country_event = {
+	id = terror.22
+	title = terror.22.t
+	desc = {
+		text = terror.22.d1
+		trigger = { no_jihadist_government = yes }
+	}
+	desc = {
+		text = terror.22.d2
+		trigger = { jihadist_government = yes }
+	}
+
+	is_triggered_only = yes
+
+	picture = GFX_guns
+
+	immediate = {
+		hidden_effect = {
+			FROM.FROM = {
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = -200
+				}
+				add_equipment_to_stockpile = {
+					type = L_AT_Equipment
+					amount = -50
+				}
+				add_equipment_to_stockpile = {
+					type = AA_Equipment
+					amount = -50
+				}
+				every_neighbor_country = {
+					limit = { is_in_array = { global.ct_states = THIS }}
+					custom_effect_tooltip = terror_threat_decrease_medium_tt
+					custom_effect_tooltip = radicalization_increase_small_tt
+					subtract_from_variable = { threat_level = 5 }
+					clamp_threat = yes
+					add_to_variable = { radicalization = 2 }
+					clamp_radicalization = yes
+				}
+			}
+		}
+	}
+
+	option = {
+		trigger = { no_jihadist_government = yes }
+		name = terror.17.a
+		log = "[GetDateText]: [This.GetName]: terror.22.a executed"
+		add_political_power = 25
+		effect_tooltip = {
+			FROM.FROM = {
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = -200
+				}
+				add_equipment_to_stockpile = {
+					type = L_AT_Equipment
+					amount = -50
+				}
+				add_equipment_to_stockpile = {
+					type = AA_Equipment
+					amount = -50
+				}
+				every_neighbor_country = {
+					limit = { is_in_array = { global.ct_states = THIS }}
+					custom_effect_tooltip = terror_threat_decrease_medium_tt
+					custom_effect_tooltip = radicalization_increase_small_tt
+					subtract_from_variable = { threat_level = 5 }
+					clamp_threat = yes
+					add_to_variable = { radicalization = 2 }
+					clamp_radicalization = yes
+				}
+			}
+		}
+	}
+
+	option = {
+		trigger = { jihadist_government = yes }
+		name = terror.22.b
+		log = "[GetDateText]: [This.GetName]: terror.22.b executed"
+		add_political_power = -25
+		effect_tooltip = {
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -200
+			}
+			add_equipment_to_stockpile = {
+				type = L_AT_Equipment
+				amount = -50
+			}
+			add_equipment_to_stockpile = {
+				type = AA_Equipment
+				amount = -50
+			}
+			every_neighbor_country = {
+				limit = { is_in_array = { global.ct_states = THIS }}
+				custom_effect_tooltip = terror_threat_decrease_medium_tt
+				custom_effect_tooltip = radicalization_increase_small_tt
+				subtract_from_variable = { threat_level = 5 }
+				clamp_threat = yes
+				add_to_variable = { radicalization = 2 }
+				clamp_radicalization = yes
+			}
+		}
+	}
+}
+
+#successful arms cache raid
+country_event = {
+	id = terror.23
+	title = terror.23.t
+	desc = {
+		text = terror.23.d1
+		trigger = {
+			no_jihadist_government = yes
+			FROM = { NOT = { has_country_flag = seized_intel } }
+		}
+	}
+	desc = {
+		text = terror.23.d2
+		trigger = {
+			jihadist_government = yes
+			FROM = { NOT = { has_country_flag = seized_intel } }
+		}
+	}
+	desc = {
+		text = terror.23.d3
+		trigger = {
+			no_jihadist_government = yes
+			FROM = { has_country_flag = seized_intel }
+		}
+	}
+	desc = {
+		text = terror.23.d4
+		trigger = {
+			jihadist_government = yes
+			FROM = { has_country_flag = seized_intel }
+		}
+	}
+
+	is_triggered_only = yes
+
+	picture = GFX_guns
+
+	immediate = {
+		hidden_effect = {
+			FROM.FROM = {
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = -200
+				}
+				add_equipment_to_stockpile = {
+					type = L_AT_Equipment
+					amount = -50
+				}
+				add_equipment_to_stockpile = {
+					type = AA_Equipment
+					amount = -50
+				}
+				every_neighbor_country = {
+					limit = { is_in_array = { global.ct_states = THIS }}
+					custom_effect_tooltip = terror_threat_decrease_medium_tt
+					custom_effect_tooltip = radicalization_increase_small_tt
+					subtract_from_variable = { threat_level = 5 }
+					clamp_threat = yes
+					add_to_variable = { radicalization = 2 }
+					clamp_radicalization = yes
+				}
+			}
+		}
+	}
+
+	option = {
+		trigger = { no_jihadist_government = yes }
+		name = terror.17.a
+		log = "[GetDateText]: [This.GetName]: terror.23.a executed"
+		add_political_power = 25
+		effect_tooltip = {
+			FROM.FROM = {
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = -200
+				}
+				add_equipment_to_stockpile = {
+					type = L_AT_Equipment
+					amount = -50
+				}
+				add_equipment_to_stockpile = {
+					type = AA_Equipment
+					amount = -50
+				}
+				every_neighbor_country = {
+					limit = { is_in_array = { global.ct_states = THIS }}
+					custom_effect_tooltip = terror_threat_decrease_medium_tt
+					custom_effect_tooltip = radicalization_increase_small_tt
+					subtract_from_variable = { threat_level = 5 }
+					clamp_threat = yes
+					add_to_variable = { radicalization = 2 }
+					clamp_radicalization = yes
+				}
+			}
+		}
+		clr_country_flag = seized_intel
+	}
+
+	option = {
+		trigger = { jihadist_government = yes }
+		name = terror.22.b
+		log = "[GetDateText]: [This.GetName]: terror.23.b executed"
+		add_political_power = -25
+		effect_tooltip = {
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -200
+			}
+			add_equipment_to_stockpile = {
+				type = L_AT_Equipment
+				amount = -50
+			}
+			add_equipment_to_stockpile = {
+				type = AA_Equipment
+				amount = -50
+			}
+			every_neighbor_country = {
+				limit = { is_in_array = { global.ct_states = THIS }}
+				custom_effect_tooltip = terror_threat_decrease_medium_tt
+				custom_effect_tooltip = radicalization_increase_small_tt
+				subtract_from_variable = { threat_level = 5 }
+				clamp_threat = yes
+				add_to_variable = { radicalization = 2 }
+				clamp_radicalization = yes
+			}
+		}
 	}
 }
