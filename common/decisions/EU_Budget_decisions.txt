@@ -14,6 +14,7 @@ EU_budget_category = {
 		}
 		
 		visible = { 
+			has_country_flag = unvisible
 			has_idea = EU_member 
 		}
 		
@@ -41,35 +42,76 @@ EU_budget_category = {
 		}
 		
 		visible = {
-			has_country_flag = unvisible 
+			#has_country_flag = unvisible 
 			has_idea = EU_member 
 		}
 		
 		complete_effect = {
-			set_country_flag = focus_EU001
+			set_variable = { global.EU_budget_call_rate = 1.00 }
+			update_EU_gdp = yes
+			update_EU_total_budget = yes
 		}
 		ai_will_do = {
 			factor = 0
 		}		
 	}
 
+	EU_budget_exp_test = { 
+	
+		available = {
+			has_idea = EU_member
+		}
+		
+		visible = {
+			#has_country_flag = unvisible 
+			has_idea = EU_member 
+		}
+		
+		complete_effect = {
+			set_EU_expenditure = yes
+		}
+		ai_will_do = {
+			factor = 0
+		}		
+	}
+
+	EU_budget_start_mff = { 
+	
+		available = {
+			has_idea = EU_member
+		}
+		
+		visible = {
+			#has_country_flag = unvisible 
+			has_idea = EU_member 
+		}
+		
+		complete_effect = {
+			clr_global_flag = EU_budget_mff
+			activate_mission = EU_budget_mff_negotiations
+		}
+		ai_will_do = {
+			factor = 0
+		}		
+	}
 ##############################
 ### End of Testing section ###
 ##############################	
 
-EU_multiannual_financial_framework = {
+EU_budget_mff_negotiations = {
 	allowed = {
 		always = yes
 	}
 	available = {
-	 
+		influence_on_all_other_EU_members_5_percent = yes
 	}	
 	activation = {
 		always = no
 	}
 	
 	visible = { 
-
+		has_idea = EU_member
+		NOT = { has_global_flag = EU_budget_mff }
 	} 
 	
 	days_mission_timeout = 180
@@ -79,10 +121,10 @@ EU_multiannual_financial_framework = {
 	fire_only_once = yes
 
 	complete_effect = {
-	
+		set_global_flag = EU_budget_mff
 	}
 	timeout_effect = {
-	
+		set_global_flag = EU_budget_mff
 	}	
 	ai_will_do = {
 		factor = 1
@@ -90,7 +132,171 @@ EU_multiannual_financial_framework = {
 
 }
 
+### global ###
 
+EU_budget_raise_global_call_rate = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {		 
+		has_idea = EU_member
+		NOT = { has_global_flag = EU_budget_mff }
+	}
+	
+	complete_effect = {
+		add_to_variable = { global.EU_budget_call_rate = 0.05 }
+		update_EU_total_budget = yes
+	}
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
+EU_budget_lower_global_call_rate = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {		
+		has_idea = EU_member
+		NOT = { has_global_flag = EU_budget_mff } 
+	}
+	
+	complete_effect = {
+		subtract_from_variable = { global.EU_budget_call_rate = 0.05 }
+		update_EU_total_budget = yes
+	}
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
+### THIS ###
+
+EU_budget_raise_THIS_call_rate = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {		 
+		has_idea = EU_member
+		NOT = { has_global_flag = EU_budget_mff } 
+	}
+	
+	complete_effect = {
+		add_to_variable = { THIS.EU_budget_call_rate = 0.05 }
+		update_EU_budget_call_rate = yes
+		THIS_eurosceptic_rise_5_percent = yes
+		hidden_effect = {
+			THIS_eurosceptic_rise_3_percent = yes
+		}
+		EU_eurosceptic_decline_3_percent = yes
+	}
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
+EU_budget_lower_THIS_call_rate = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {		
+		has_idea = EU_member
+		NOT = { has_global_flag = EU_budget_mff } 
+	}
+	
+	complete_effect = {
+		subtract_from_variable = { THIS.EU_budget_call_rate = 0.05 }
+		update_EU_budget_call_rate = yes
+		THIS_eurosceptic_decline_5_percent = yes
+		hidden_effect = {
+			THIS_eurosceptic_decline_3_percent = yes
+		}
+		EU_eurosceptic_rise_3_percent = yes
+	}
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
+### FROM ###
+
+EU_budget_raise_FROM_call_rate = { 
+	target_trigger = {
+		FROM = {			
+			has_idea = EU_member
+			OR = {
+				NOT = {
+					check_variable = { FROM.EU_budget_call_rate = global.EU_budget_call_rate }
+				}
+				check_variable = { FROM.eurosceptic > 0.40 }
+			}
+		}		
+	}	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {		 
+		has_idea = EU_member
+		NOT = { has_global_flag = EU_budget_mff } 
+	}
+	
+	complete_effect = {
+		add_to_variable = { FROM.EU_budget_call_rate = 0.05 }
+		update_EU_budget_call_rate = yes
+		FROM_eurosceptic_rise_5_percent = yes
+		hidden_effect = {
+			FROM_eurosceptic_rise_3_percent = yes
+		}			
+		EU_eurosceptic_decline_3_percent = yes		
+	}
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
+EU_budget_lower_FROM_call_rate = {
+	target_trigger = {
+		FROM = {			
+			has_idea = EU_member
+			OR = {
+				NOT = {
+					check_variable = { FROM.EU_budget_call_rate = global.EU_budget_call_rate }
+				}
+				check_variable = { FROM.eurosceptic > 0.40 }
+			}
+		}
+	}	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = {		
+		has_idea = EU_member
+		NOT = { has_global_flag = EU_budget_mff } 
+	}
+	
+	complete_effect = {
+		subtract_from_variable = { FROM.EU_budget_call_rate = 0.05 }
+		update_EU_budget_call_rate = yes
+		FROM_eurosceptic_decline_5_percent = yes
+		hidden_effect = {
+			FROM_eurosceptic_decline_3_percent = yes
+		}			
+		EU_eurosceptic_rise_3_percent = yes		
+	}
+	ai_will_do = {
+		factor = 0
+	}		
+}
 
 
 } 

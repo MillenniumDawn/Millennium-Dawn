@@ -1,0 +1,74 @@
+##################################
+### EU Budget scripted effects ###
+##################################
+
+update_EU_gdp = {
+	### EU GDP
+	set_variable = { global.EU_size_modifier = 0 }	
+	every_country = {
+		limit = {
+			has_idea = EU_member
+		}
+		add_to_variable = { global.EU_size_modifier = THIS.size_modifier }
+	}
+	set_variable = { global.EU_gdp = global.EU_size_modifier }
+	multiply_variable = { global.EU_gdp = 365 }
+	### EU GDP per capita
+	#set_variable = { global.EU_gdp_capita = 1000000 }
+	set_variable = { global.EU_gdp_capita = global.EU_gdp }
+	divide_variable = { global.EU_gdp_capita = global.var_EUpopTotal }
+	### GDP per billion, Pop per k
+	multiply_variable = { global.EU_gdp_capita = 1000000 }
+	#set_variable = { global.EU_mff_total = global.EU_size_modifier }
+}
+
+update_EU_total_budget = {
+	### EU Total Budget
+	set_variable = { global.EU_total_budget = global.EU_gdp }
+	multiply_variable = { global.EU_total_budget = global.EU_budget_call_rate }
+	divide_variable = { global.EU_total_budget = 100 }
+	set_variable = { global.EU_mff_total = global.EU_total_budget }
+	multiply_variable = { global.EU_mff_total = 5 }
+	### member state contribution
+	every_country = {
+		limit = {
+			has_idea = EU_member
+		}
+		set_variable = { THIS.EU_budget_call_rate = global.EU_budget_call_rate }
+		set_variable = { THIS.EU_budget_contribution = THIS.size_modifier }
+		multiply_variable = { THIS.EU_budget_contribution = 365 }
+		multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
+		divide_variable = { THIS.EU_budget_contribution = 100 }
+		set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
+		divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }
+	}
+	### budget of next year
+
+}
+
+update_EU_budget_call_rate = {
+	set_variable = { THIS.EU_budget_contribution = THIS.size_modifier }
+	multiply_variable = { THIS.EU_budget_contribution = 365 }
+	multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
+	divide_variable = { THIS.EU_budget_contribution = 100 }
+	set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
+	divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }	
+}
+
+set_EU_expenditure = {
+	set_variable = { global.EU_total_exp = global.EU_total_budget }
+	set_variable = { global.EU_growth_exp_ratio = 0.44 }
+	set_variable = { global.EU_natural_exp_ratio = 0.44 }
+	set_variable = { global.EU_global_exp_ratio = 0.06 }
+	set_variable = { global.EU_admin_exp_ratio = 0.06 }
+	set_variable = { global.EU_growth_exp_total = global.EU_growth_exp_ratio }
+	set_variable = { global.EU_natural_exp_total = global.EU_natural_exp_ratio }
+	set_variable = { global.EU_global_exp_total = global.EU_global_exp_ratio }
+	set_variable = { global.EU_admin_exp_total = global.EU_admin_exp_ratio }
+	
+	multiply_variable = { global.EU_growth_exp_total = global.EU_total_exp }
+	multiply_variable = { global.EU_natural_exp_total = global.EU_total_exp }
+	multiply_variable = { global.EU_global_exp_total = global.EU_total_exp }
+	multiply_variable = { global.EU_admin_exp_total = global.EU_total_exp }	
+}
+
