@@ -298,11 +298,52 @@ EU_budget_lower_FROM_call_rate = {
 	}		
 }
 
+### budget draft ###
+
+EU_budget_draft = {
+
+	available = {
+		NOT = {
+			any_country = {
+				has_country_flag = EU_budget_draft
+			}
+		}	
+		has_idea = EU_member
+	}
+	
+	visible = {		
+		has_idea = EU_member 
+	}
+	
+	complete_effect = {
+		###
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			add_political_power = 100
+		}	
+		###
+		set_country_flag = EU_budget_draft
+		set_variable = { global.EU_budget_draft_invested_PP = 0 }
+	}
+	days_remove = 30
+	remove_effect = {
+		clr_country_flag = EU_budget_draft
+	}	
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
+
 ### EU_expenditure ###
+
+
 
 ### growth/natural ###
 EU_budget_growth_up_natural_down = { 
-	
+	cost = 100
 	available = {
 		has_idea = EU_member
 	}
@@ -311,20 +352,51 @@ EU_budget_growth_up_natural_down = {
 		has_idea = EU_member
 		check_variable = { global.EU_natural_exp_ratio > 0.10 }
 		check_variable = { global.EU_growth_exp_ratio < 0.80 }
+		any_country = {
+			has_country_flag = EU_budget_draft
+		}		
 	}
 	
-	complete_effect = {		
+	complete_effect = {
+		log = "[GetDateText]: [ROOT.GetName]: decision EU_budget_growth_up_natural_down"		
 		add_to_variable = { global.EU_growth_exp_ratio = 0.05 }		
 		subtract_from_variable = { global.EU_natural_exp_ratio = 0.05 }
 		update_EU_expenditure = yes
+		add_to_variable = { global.EU_budget_draft_invested_PP = 100 }
 	}
 	ai_will_do = {
 		factor = 0
+		modifier = {
+			add = 1
+			check_variable = { global.EU_growth_exp_ratio < 0.60 }
+			OR = {
+				is_in_array = { ruling_party = 3 } ### socialism
+				is_in_array = { ruling_party = 18 } ### neutral_Social
+				is_in_array = { ruling_party = 17 } ### Neutral_green
+			}
+		}
+		modifier = {
+			add = 1
+			check_variable = { global.EU_growth_exp_ratio < 0.70 }
+			OR = {
+				is_in_array = { ruling_party = 2 } ### liberalism
+				is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
+			}
+		}
+		modifier = {
+			add = 1
+			check_variable = { global.EU_growth_exp_ratio < 0.60 }
+			OR = {
+				is_in_array = { ruling_party = 4 } ### Communist-State
+				is_in_array = { ruling_party = 5 } ### anarchist_communism
+				is_in_array = { ruling_party = 19 } ### Neutral_Communism
+			}
+		}										
 	}		
 }
 
 EU_budget_growth_down_natural_up = { 
-	
+	cost = 100
 	available = {
 		has_idea = EU_member
 	}
@@ -332,22 +404,41 @@ EU_budget_growth_down_natural_up = {
 	visible = {		
 		has_idea = EU_member
 		check_variable = { global.EU_growth_exp_ratio > 0.10 }
-		check_variable = { global.EU_natural_exp_ratio < 0.80 }		 
+		check_variable = { global.EU_natural_exp_ratio < 0.80 }
+		any_country = {
+			has_country_flag = EU_budget_draft
+		}				 
 	}
 	
 	complete_effect = {
+		log = "[GetDateText]: [ROOT.GetName]: decision EU_budget_growth_down_natural_up"
 		subtract_from_variable = { global.EU_growth_exp_ratio = 0.05 }
 		add_to_variable = { global.EU_natural_exp_ratio = 0.05 }
 		update_EU_expenditure = yes
+		add_to_variable = { global.EU_budget_draft_invested_PP = 100 }
 	}
 	ai_will_do = {
 		factor = 0
+		modifier = {
+			add = 1
+			check_variable = { global.EU_natural_exp_ratio < 0.60 }
+			OR = {
+				is_in_array = { ruling_party = 1 } ### conservatism
+				is_in_array = { ruling_party = 6 } ### Conservative
+				is_in_array = { ruling_party = 14 } ### Neutral_conservatism
+			}
+		}
+		modifier = {
+			add = 1
+			check_variable = { global.EU_natural_exp_ratio < 0.60 }
+			is_in_array = { ruling_party = 17 } ### Neutral_green
+		}				
 	}		
 }
 
 ### global ###
 EU_budget_raise_global_exp = { 
-	
+	cost = 100
 	available = {
 		has_idea = EU_member
 	}
@@ -357,21 +448,39 @@ EU_budget_raise_global_exp = {
 		check_variable = { global.EU_global_exp_ratio < 0.80 }
 		check_variable = { global.EU_growth_exp_ratio > 0.07 }
 		check_variable = { global.EU_natural_exp_ratio > 0.07 }
+		any_country = {
+			has_country_flag = EU_budget_draft
+		}		
 	}
 	
 	complete_effect = {
+		log = "[GetDateText]: [ROOT.GetName]: decision EU_budget_raise_global_exp"
 		add_to_variable = { global.EU_global_exp_ratio = 0.04 }
 		subtract_from_variable = { global.EU_growth_exp_ratio = 0.02 }
 		subtract_from_variable = { global.EU_natural_exp_ratio = 0.02 }		
 		update_EU_expenditure = yes
+		add_to_variable = { global.EU_budget_draft_invested_PP = 100 }
 	}
 	ai_will_do = {
 		factor = 0
+		modifier = {
+			add = 1
+			check_variable = { global.EU_global_exp_ratio < 0.12 }
+			OR = {
+				is_in_array = { ruling_party = 2 } ### liberalism
+				is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
+			}
+		}
+		modifier = {
+			add = 4
+			check_variable = { global.EU_global_exp_ratio < 0.18 }
+			is_leader_of_EU_foreign_policy = yes
+		}
 	}		
 }
 
 EU_budget_lower_global_exp = { 
-	
+	cost = 100
 	available = {
 		has_idea = EU_member
 	}
@@ -380,23 +489,38 @@ EU_budget_lower_global_exp = {
 		has_idea = EU_member
 		check_variable = { global.EU_global_exp_ratio > 0.09 }
 		check_variable = { global.EU_growth_exp_ratio < 0.80 }
-		check_variable = { global.EU_natural_exp_ratio < 0.80 }		 
+		check_variable = { global.EU_natural_exp_ratio < 0.80 }
+		any_country = {
+			has_country_flag = EU_budget_draft
+		}				 
 	}
 	
 	complete_effect = {
+		log = "[GetDateText]: [ROOT.GetName]: decision EU_budget_lower_global_exp"
 		subtract_from_variable = { global.EU_global_exp_ratio = 0.04 }
 		add_to_variable = { global.EU_growth_exp_ratio = 0.02 }
 		add_to_variable = { global.EU_natural_exp_ratio = 0.02 }
 		update_EU_expenditure = yes
+		add_to_variable = { global.EU_budget_draft_invested_PP = 100 }
 	}
 	ai_will_do = {
 		factor = 0
+		modifier = {
+			add = 1
+			check_variable = { global.EU_global_exp_ratio > 0.09 }
+			OR = {
+				is_in_array = { ruling_party = 20 } ### Nat_Populism
+				is_in_array = { ruling_party = 21 } ### Nat_Fascism
+				is_in_array = { ruling_party = 22 } ### Nat_Autocracy
+				is_in_array = { ruling_party = 23 } ### Monarchist
+			}
+		}		
 	}		
 }
 
 ### admin ###
 EU_budget_raise_admin_exp = { 
-	
+	cost = 100
 	available = {
 		has_idea = EU_member
 	}
@@ -405,22 +529,37 @@ EU_budget_raise_admin_exp = {
 		has_idea = EU_member
 		check_variable = { global.EU_admin_exp_ratio < 0.80 }
 		check_variable = { global.EU_growth_exp_ratio > 0.05 }
-		check_variable = { global.EU_natural_exp_ratio > 0.05 }		 
+		check_variable = { global.EU_natural_exp_ratio > 0.05 }
+		any_country = {
+			has_country_flag = EU_budget_draft
+		}				 
 	}
 	
-	complete_effect = {		
+	complete_effect = {
+		log = "[GetDateText]: [ROOT.GetName]: decision EU_budget_raise_admin_exp"		
 		add_to_variable = { global.EU_admin_exp_ratio = 0.04 }
 		subtract_from_variable = { global.EU_growth_exp_ratio = 0.02 }
 		subtract_from_variable = { global.EU_natural_exp_ratio = 0.02 }	
 		update_EU_expenditure = yes
+		add_to_variable = { global.EU_budget_draft_invested_PP = 100 }
 	}
 	ai_will_do = {
 		factor = 0
+		modifier = {
+			add = 1
+			check_variable = { global.EU_admin_exp_ratio < 0.18 }
+			OR = {
+				is_in_array = { ruling_party = 20 } ### Nat_Populism
+				is_in_array = { ruling_party = 21 } ### Nat_Fascism
+				is_in_array = { ruling_party = 22 } ### Nat_Autocracy
+				is_in_array = { ruling_party = 23 } ### Monarchist
+			}
+		}		
 	}		
 }
 
 EU_budget_lower_admin_exp = { 
-	
+	cost = 100
 	available = {
 		has_idea = EU_member
 	}
@@ -430,16 +569,29 @@ EU_budget_lower_admin_exp = {
 		check_variable = { global.EU_admin_exp_ratio > 0.09 }
 		check_variable = { global.EU_growth_exp_ratio < 0.80 }
 		check_variable = { global.EU_natural_exp_ratio < 0.80 }
+		any_country = {
+			has_country_flag = EU_budget_draft
+		}		
 	}
 	
 	complete_effect = {
+		log = "[GetDateText]: [ROOT.GetName]: decision EU_budget_lower_admin_exp"
 		subtract_from_variable = { global.EU_admin_exp_ratio = 0.04 }
 		add_to_variable = { global.EU_growth_exp_ratio = 0.02 }
 		add_to_variable = { global.EU_natural_exp_ratio = 0.02 }
 		update_EU_expenditure = yes
+		add_to_variable = { global.EU_budget_draft_invested_PP = 100 }
 	}
 	ai_will_do = {
 		factor = 0
+		modifier = {
+			add = 1
+			check_variable = { global.EU_admin_exp_ratio > 0.09 }
+			OR = {
+				is_in_array = { ruling_party = 2 } ### liberalism
+				is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
+			}
+		}		
 	}		
 }
 
