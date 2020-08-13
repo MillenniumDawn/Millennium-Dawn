@@ -14,14 +14,14 @@ EU_budget_category = {
 		}
 		
 		visible = { 
-			has_country_flag = unvisible
+			#has_country_flag = unvisible
 			has_idea = EU_member 
 		}
 		
 		complete_effect = {
 			custom_effect_tooltip = "Update EU Budget"
 			hidden_effect = {
-				###
+				distribute_EU_budget = yes
 			}
 		}
 		ai_will_do = {
@@ -101,6 +101,99 @@ EU_budget_category = {
 ### End of Testing section ###
 ##############################	
 
+### budget UI
+
+EU_budget_show_contribution_member_states = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = { 
+		NOT = { has_country_flag = show_EU_contribution_member_states }
+		has_idea = EU_member 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = "Show Contribution of the member states"
+		hidden_effect = {
+			set_country_flag = show_EU_contribution_member_states
+		}
+	}
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
+EU_budget_hide_contribution_member_states = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = { 
+		has_country_flag = show_EU_contribution_member_states
+		has_idea = EU_member 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = "Hide Contribution of the member states"
+		hidden_effect = {
+			clr_country_flag = show_EU_contribution_member_states
+		}
+	}
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
+
+EU_budget_show_distribution_member_states = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = { 
+		NOT = { has_country_flag = show_EU_distribution_member_states }
+		has_idea = EU_member 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = "Show Distribution to the member states"
+		hidden_effect = {
+			set_country_flag = show_EU_distribution_member_states
+		}
+	}
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
+EU_budget_hide_distribution_member_states = { 
+	
+	available = {
+		has_idea = EU_member
+	}
+	
+	visible = { 
+		has_country_flag = show_EU_distribution_member_states
+		has_idea = EU_member 
+	}
+	
+	complete_effect = {
+		custom_effect_tooltip = "Hide Distribution to the member states"
+		hidden_effect = {
+			clr_country_flag = show_EU_distribution_member_states
+		}
+	}
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
+###
+
 EU_budget_mff_negotiations = {
 	allowed = {
 		always = yes
@@ -135,22 +228,63 @@ EU_budget_mff_negotiations = {
 
 }
 
-### global ###
+### budget draft ###
 
-EU_budget_raise_global_call_rate = { 
-	
+EU_budget_mff_draft = {
+
 	available = {
+		NOT = {
+			any_country = {
+				has_country_flag = EU_mff_draft
+			}
+		}	
 		has_idea = EU_member
 	}
 	
-	visible = {		 
-		has_idea = EU_member
-		NOT = { has_global_flag = EU_budget_mff }
+	visible = {		
+		has_idea = EU_member 
 	}
 	
 	complete_effect = {
+		###
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			add_political_power = 100
+		}	
+		###
+		set_country_flag = EU_mff_draft
+		set_variable = { global.EU_mff_draft_invested_PP = 0 }
+	}
+	days_remove = 30
+	remove_effect = {
+		clr_country_flag = EU_mff_draft
+	}	
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
+### global ###
+
+EU_budget_raise_global_call_rate = { 
+	cost = 100
+	available = {
+		has_idea = EU_member
+	}
+	visible = {		 
+		has_idea = EU_member
+		NOT = { has_global_flag = EU_budget_mff }
+		any_country = {
+			has_country_flag = EU_mff_draft
+		}		
+	}	
+	complete_effect = {
 		add_to_variable = { global.EU_budget_call_rate = 0.05 }
 		set_EU_total_budget = yes
+		add_to_variable = { global.EU_mff_draft_invested_PP = 100 }
+		add_to_variable = { THIS.EU_mff_draft_invested_PP = 100 }		
 	}
 	ai_will_do = {
 		factor = 0
@@ -164,19 +298,22 @@ EU_budget_raise_global_call_rate = {
 }
 
 EU_budget_lower_global_call_rate = { 
-	
+	cost = 100
 	available = {
 		has_idea = EU_member
 	}
-	
 	visible = {		
 		has_idea = EU_member
-		NOT = { has_global_flag = EU_budget_mff } 
+		NOT = { has_global_flag = EU_budget_mff }
+		any_country = {
+			has_country_flag = EU_mff_draft
+		}		 
 	}
-	
 	complete_effect = {
 		subtract_from_variable = { global.EU_budget_call_rate = 0.05 }
 		set_EU_total_budget = yes
+		add_to_variable = { global.EU_mff_draft_invested_PP = 100 }
+		add_to_variable = { THIS.EU_mff_draft_invested_PP = 100 }		
 	}
 	ai_will_do = {
 		factor = 0
@@ -190,16 +327,17 @@ EU_budget_lower_global_call_rate = {
 ### THIS ###
 
 EU_budget_raise_THIS_call_rate = { 
-	
+	cost = 100
 	available = {
 		has_idea = EU_member
-	}
-	
+	}	
 	visible = {		 
 		has_idea = EU_member
-		NOT = { has_global_flag = EU_budget_mff } 
-	}
-	
+		NOT = { has_global_flag = EU_budget_mff }
+		any_country = {
+			has_country_flag = EU_mff_draft
+		}		 
+	}	
 	complete_effect = {
 		add_to_variable = { THIS.EU_budget_call_rate = 0.05 }
 		update_EU_budget_call_rate = yes
@@ -208,6 +346,8 @@ EU_budget_raise_THIS_call_rate = {
 			THIS_eurosceptic_rise_3_percent = yes
 		}
 		EU_eurosceptic_decline_3_percent = yes
+		add_to_variable = { global.EU_mff_draft_invested_PP = 100 }
+		add_to_variable = { THIS.EU_mff_draft_invested_PP = 100 }		
 	}
 	ai_will_do = {
 		factor = 0
@@ -223,16 +363,17 @@ EU_budget_raise_THIS_call_rate = {
 }
 
 EU_budget_lower_THIS_call_rate = { 
-	
+	cost = 100
 	available = {
 		has_idea = EU_member
-	}
-	
+	}	
 	visible = {		
 		has_idea = EU_member
-		NOT = { has_global_flag = EU_budget_mff } 
-	}
-	
+		NOT = { has_global_flag = EU_budget_mff }
+		any_country = {
+			has_country_flag = EU_mff_draft
+		}		 
+	}	
 	complete_effect = {
 		subtract_from_variable = { THIS.EU_budget_call_rate = 0.05 }
 		update_EU_budget_call_rate = yes
@@ -241,6 +382,8 @@ EU_budget_lower_THIS_call_rate = {
 			THIS_eurosceptic_decline_3_percent = yes
 		}
 		EU_eurosceptic_rise_3_percent = yes
+		add_to_variable = { global.EU_mff_draft_invested_PP = 100 }
+		add_to_variable = { THIS.EU_mff_draft_invested_PP = 100 }		
 	}
 	ai_will_do = {
 		factor = 0
@@ -253,13 +396,18 @@ EU_budget_lower_THIS_call_rate = {
 			add = 1
 			check_variable = { THIS.EU_budget_call_rate > 0.85 }
 			tag = ENG
-		}		
+		}
+		modifier = {
+			factor = 0
+			check_variable = { THIS.eurosceptic < 0.2 }
+		}				
 	}		
 }
 
 ### FROM ###
 
-EU_budget_raise_FROM_call_rate = { 
+EU_budget_raise_FROM_call_rate = {
+	cost = 100 
 	target_trigger = {
 		FROM = {			
 			has_idea = EU_member
@@ -273,13 +421,14 @@ EU_budget_raise_FROM_call_rate = {
 	}	
 	available = {
 		has_idea = EU_member
-	}
-	
+	}	
 	visible = {		 
 		has_idea = EU_member
-		NOT = { has_global_flag = EU_budget_mff } 
-	}
-	
+		NOT = { has_global_flag = EU_budget_mff }
+		any_country = {
+			has_country_flag = EU_mff_draft
+		}		 
+	}	
 	complete_effect = {
 		add_to_variable = { FROM.EU_budget_call_rate = 0.05 }
 		update_EU_budget_call_rate = yes
@@ -287,7 +436,9 @@ EU_budget_raise_FROM_call_rate = {
 		hidden_effect = {
 			FROM_eurosceptic_rise_3_percent = yes
 		}			
-		EU_eurosceptic_decline_3_percent = yes		
+		EU_eurosceptic_decline_3_percent = yes
+		add_to_variable = { global.EU_mff_draft_invested_PP = 100 }
+		add_to_variable = { THIS.EU_mff_draft_invested_PP = 100 }				
 	}
 	ai_will_do = {
 		factor = 0
@@ -302,6 +453,7 @@ EU_budget_raise_FROM_call_rate = {
 }
 
 EU_budget_lower_FROM_call_rate = {
+	cost = 100
 	target_trigger = {
 		FROM = {			
 			has_idea = EU_member
@@ -315,13 +467,14 @@ EU_budget_lower_FROM_call_rate = {
 	}	
 	available = {
 		has_idea = EU_member
-	}
-	
+	}	
 	visible = {		
 		has_idea = EU_member
-		NOT = { has_global_flag = EU_budget_mff } 
-	}
-	
+		NOT = { has_global_flag = EU_budget_mff }
+		any_country = {
+			has_country_flag = EU_mff_draft
+		}		 
+	}	
 	complete_effect = {
 		subtract_from_variable = { FROM.EU_budget_call_rate = 0.05 }
 		update_EU_budget_call_rate = yes
@@ -329,7 +482,9 @@ EU_budget_lower_FROM_call_rate = {
 		hidden_effect = {
 			FROM_eurosceptic_decline_3_percent = yes
 		}			
-		EU_eurosceptic_rise_3_percent = yes		
+		EU_eurosceptic_rise_3_percent = yes
+		add_to_variable = { global.EU_mff_draft_invested_PP = 100 }
+		add_to_variable = { THIS.EU_mff_draft_invested_PP = 100 }				
 	}
 	ai_will_do = {
 		factor = 0
