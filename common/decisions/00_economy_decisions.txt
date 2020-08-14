@@ -1,0 +1,462 @@
+economy_decisions = {
+	infrastructure_building_slot = {
+		icon = generic_construction
+		allowed = { always = yes }
+		custom_cost_trigger = {
+			always = yes
+		}
+		custom_cost_text = [propaganda_cost]
+		fire_only_once = no
+		days_re_enable = 60
+
+		available = {
+			any_owned_state = {
+				NOT = { has_state_flag = infrastructure_building_slot_flag }
+				is_fully_controlled_by = ROOT
+				free_building_slots = {
+					building = infrastructure
+					size < 1
+				}
+			}
+		}
+
+		complete_effect = {
+			random_owned_state = {
+				limit = {
+					is_owned_and_controlled_by = ROOT
+					free_building_slots = {
+						building = industrial_complex
+						size > 1
+						include_locked = yes
+					}
+					free_building_slots = {
+						building = infrastructure
+						size < 1
+					}
+					NOT = { has_state_flag = infrastructure_building_slot_flag }
+				}
+				add_extra_state_shared_building_slots = 1
+				set_state_flag = infrastructure_building_slot_flag
+			}
+			if = { limit = { check_variable = { num_of_factories < 4 } }
+				subtract_from_variable = { treasury = 0.05 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 3 }
+					check_variable = { num_of_factories < 8 }
+				}
+				subtract_from_variable = { treasury = 0.1 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 7 }
+					check_variable = { num_of_factories < 16 }
+				}
+				subtract_from_variable = { treasury = 0.2 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 15 }
+					check_variable = { num_of_factories < 26 }
+				}
+				subtract_from_variable = { treasury = 0.35 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 25 }
+					check_variable = { num_of_factories < 39 }
+				}
+				subtract_from_variable = { treasury = 0.5 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 38 }
+					check_variable = { num_of_factories < 54 }
+				}
+				subtract_from_variable = { treasury = 0.75 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 53 }
+					check_variable = { num_of_factories < 82 }
+				}
+				subtract_from_variable = { treasury = 1.0 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 81 }
+					check_variable = { num_of_factories < 120 }
+				}
+				subtract_from_variable = { treasury = 1.5 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 119 }
+					check_variable = { num_of_factories < 164 }
+				}
+				subtract_from_variable = { treasury = 2.5 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 163 }
+					check_variable = { num_of_factories < 250 }
+				}
+				subtract_from_variable = { treasury = 4.0 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 249 }
+					check_variable = { num_of_factories < 370 }
+				}
+				subtract_from_variable = { treasury = 5.5 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 369 }
+					check_variable = { num_of_factories < 500 }
+				}
+				subtract_from_variable = { treasury = 7.5 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 499 }
+				}
+				subtract_from_variable = { treasury = 10.0 }
+			}
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 10
+				any_owned_state = { free_building_slots = { building = industrial_complex size < 1 include_locked = no } }
+			}
+		}
+	}
+
+    war_building_slot = {
+    	icon = generic_construction
+        allowed = { always = yes }
+        custom_cost_trigger = {
+			always = yes
+		}
+		custom_cost_text = [propaganda_cost]
+        fire_only_once = no
+
+		visible = {
+			has_war = yes
+		}
+        available = {
+            has_war = yes
+            any_owned_state = {
+            	NOT = { has_state_flag = war_building_slot_flag }
+            	is_fully_controlled_by = ROOT
+            }
+        }
+
+        complete_effect = {
+        	add_war_support = -0.025
+			add_stability = -0.025
+			if = {
+				limit = {
+					any_owned_state = {
+						is_fully_controlled_by = ROOT
+            			free_building_slots = {
+							building = industrial_complex
+							size > 1
+							include_locked = yes
+						}
+						NOT = { has_state_flag = war_building_slot_flag }
+						infrastructure > 8
+					}
+				}
+				random_owned_state = {
+					limit = {
+						is_fully_controlled_by = ROOT
+            			free_building_slots = {
+							building = industrial_complex
+							size > 1
+							include_locked = yes
+						}
+						NOT = { has_state_flag = war_building_slot_flag }
+						infrastructure > 8
+					}
+					add_extra_state_shared_building_slots = 1
+					set_state_flag = war_building_slot_flag
+				}
+			}
+			else_if = {
+				limit = {
+					any_owned_state = {
+						is_fully_controlled_by = ROOT
+            			free_building_slots = {
+							building = industrial_complex
+							size > 1
+							include_locked = yes
+						}
+						NOT = { has_state_flag = war_building_slot_flag }
+						infrastructure > 5
+					}
+				}
+				random_owned_state = {
+					limit = {
+						is_fully_controlled_by = ROOT
+            			free_building_slots = {
+							building = industrial_complex
+							size > 1
+							include_locked = yes
+						}
+						NOT = { has_state_flag = war_building_slot_flag }
+						infrastructure > 5
+					}
+					add_extra_state_shared_building_slots = 1
+					set_state_flag = war_building_slot_flag
+				}
+			}
+			else = {
+				random_owned_state = {
+					limit = {
+						is_fully_controlled_by = ROOT
+            			free_building_slots = {
+							building = industrial_complex
+							size > 1
+							include_locked = yes
+						}
+						NOT = { has_state_flag = war_building_slot_flag }
+						infrastructure > 8
+					}
+					add_extra_state_shared_building_slots = 1
+					set_state_flag = war_building_slot_flag
+				}
+			}
+			if = { limit = { check_variable = { num_of_factories < 4 } }
+				subtract_from_variable = { treasury = 0.05 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 3 }
+					check_variable = { num_of_factories < 8 }
+				}
+				subtract_from_variable = { treasury = 0.1 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 7 }
+					check_variable = { num_of_factories < 16 }
+				}
+				subtract_from_variable = { treasury = 0.2 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 15 }
+					check_variable = { num_of_factories < 26 }
+				}
+				subtract_from_variable = { treasury = 0.35 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 25 }
+					check_variable = { num_of_factories < 39 }
+				}
+				subtract_from_variable = { treasury = 0.5 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 38 }
+					check_variable = { num_of_factories < 54 }
+				}
+				subtract_from_variable = { treasury = 0.75 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 53 }
+					check_variable = { num_of_factories < 82 }
+				}
+				subtract_from_variable = { treasury = 1.0 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 81 }
+					check_variable = { num_of_factories < 120 }
+				}
+				subtract_from_variable = { treasury = 1.5 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 119 }
+					check_variable = { num_of_factories < 164 }
+				}
+				subtract_from_variable = { treasury = 2.5 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 163 }
+					check_variable = { num_of_factories < 250 }
+				}
+				subtract_from_variable = { treasury = 4.0 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 249 }
+					check_variable = { num_of_factories < 370 }
+				}
+				subtract_from_variable = { treasury = 5.5 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 369 }
+					check_variable = { num_of_factories < 500 }
+				}
+				subtract_from_variable = { treasury = 7.5 }
+			}
+			if = {
+				limit = {
+					check_variable = { num_of_factories > 499 }
+				}
+				subtract_from_variable = { treasury = 10.0 }
+			}
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 10
+				all_owned_state = { free_building_slots = { building = industrial_complex size < 1 include_locked = no } }
+			}
+			modifier = {
+				any_owned_state = {
+					infrastructure > 5
+					free_building_slots = { building = industrial_complex size > 0 include_locked = no }
+				}
+				factor = 0
+			}
+		}
+	}
+
+	lease_military_factories = {
+		icon = ger_mefo_bills
+		allowed = { always = yes }
+		custom_cost_trigger = {
+			always = yes
+		}
+		custom_cost_text = [propaganda_cost]
+		fire_only_once = no
+
+		available = {
+			NOT = { has_decision = lease_civilian_factories }
+		}
+
+		complete_effect = {
+			add_offsite_building = {
+				level = 2
+				type = arms_factory
+			}
+		}
+
+		remove_effect = {
+			add_offsite_building = {
+				level = -2
+				type = arms_factory
+			}
+		}
+	}
+
+	lease_civilian_factories = {
+		icon = ger_mefo_bills
+		allowed = { always = yes }
+		custom_cost_trigger = {
+			always = yes
+		}
+		custom_cost_text = [propaganda_cost]
+		fire_only_once = no
+
+		available = {
+			NOT = { has_decision = lease_military_factories }
+		}
+
+		complete_effect = {
+			add_offsite_building = {
+				level = 2
+				type = industrial_complex
+			}
+		}
+
+		remove_effect = {
+			add_offsite_building = {
+				level = -2
+				type = industrial_complex
+			}
+		}
+	}
+
+	industrial_projects = {
+		icon = generic_construction
+		allowed = { always = yes }
+		custom_cost_trigger = {
+			always = yes
+		}
+		custom_cost_text = [propaganda_cost]
+		fire_only_once = no
+		days_remove = 120
+
+		available = {
+
+		}
+		modifier = {
+			production_speed_industrial_complex_factor = 0.25
+		}
+	}
+
+	infrastructure_projects = {
+		icon = generic_construction
+		allowed = { always = yes }
+		custom_cost_trigger = {
+			always = yes
+		}
+		custom_cost_text = [propaganda_cost]
+		fire_only_once = no
+		days_remove = 120
+
+		available = {
+
+		}
+		modifier = {
+			production_speed_infrastructure_factor = 0.25
+		}
+	}
+
+	arms_factory_projects = {
+		icon = generic_construction
+		allowed = { always = yes }
+		custom_cost_trigger = {
+			always = yes
+		}
+		custom_cost_text = [propaganda_cost]
+		fire_only_once = no
+		days_remove = 120
+
+		available = {
+
+		}
+		modifier = {
+			production_speed_arms_factory_factor = 0.25
+		}
+	}
+
+	arms_factory_projects = {
+		icon = generic_construction
+		allowed = { always = yes }
+		custom_cost_trigger = {
+			always = yes
+		}
+		custom_cost_text = [propaganda_cost]
+		fire_only_once = no
+		days_remove = 120
+
+		available = {
+
+		}
+		modifier = {
+			production_speed_dockyard_factor = 0.25
+		}
+	}
+}
