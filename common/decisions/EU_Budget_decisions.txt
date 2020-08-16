@@ -7,14 +7,14 @@
 
 EU_budget_category = {
 
-	EU_budget_update = { 
+	EU_budget_update_test_old = { 
 	
 		available = {
 			has_idea = EU_member
 		}
 		
 		visible = { 
-			#has_country_flag = unvisible
+			has_country_flag = unvisible #old
 			has_idea = EU_member 
 		}
 		
@@ -35,14 +35,14 @@ EU_budget_category = {
 
 	### For testing ### remove has_country_flag = unvisible
 
-	EU_budget_test = { 
+	EU_budget_test_old = { 
 	
 		available = {
 			#as_idea = EU_member
 		}
 		
 		visible = {
-			#has_country_flag = unvisible 
+			has_country_flag = unvisible #old
 			has_idea = EU_member 
 		}
 		
@@ -59,39 +59,19 @@ EU_budget_category = {
 		}		
 	}
 
-	EU_budget_exp_test = { 
+	EU_budget_exp_test_old = { 
 	
 		available = {
 			has_idea = EU_member
 		}
 		
 		visible = {
-			#has_country_flag = unvisible 
+			has_country_flag = unvisible #old
 			has_idea = EU_member 
 		}
 		
 		complete_effect = {
 			set_EU_expenditure = yes
-		}
-		ai_will_do = {
-			factor = 0
-		}		
-	}
-
-	EU_budget_start_mff = { 
-	
-		available = {
-			has_idea = EU_member
-		}
-		
-		visible = {
-			#has_country_flag = unvisible 
-			has_idea = EU_member 
-		}
-		
-		complete_effect = {
-			clr_global_flag = EU_budget_mff
-			activate_mission = EU_budget_mff_negotiations
 		}
 		ai_will_do = {
 			factor = 0
@@ -110,15 +90,43 @@ EU_budget_category = {
 		}
 		
 		complete_effect = {
-			set_country_flag = focus_EU_mff_EP_agenda
-			set_country_flag = EU_mff_draft
-			set_country_flag = focus_on_EP_agenda
+			activate_mission = EU_mff_preparations
+			#set_country_flag = EU_mff_draft
+			### EP
+			#set_country_flag = focus_EU_mff_EP_agenda			
+			#set_country_flag = focus_on_EP_agenda
+			#set_ruling_party_PG_support = yes
+			#activate_mission = EU_parliament_focus_EUXXX_approve
 		}
 		ai_will_do = {
 			factor = 0
 		}		
 	}
 
+	EU_budget_EU_budget_EP_test = { 
+	
+		available = {
+			has_idea = EU_member
+		}
+		
+		visible = {
+			#has_country_flag = unvisible
+			has_idea = EU_member 
+		}
+		
+		complete_effect = {
+			activate_mission = EU_budget_preparations
+			#set_country_flag = EU_budget_draft
+			### EP
+			#set_country_flag = focus_EU_budget_EP_agenda			
+			#set_country_flag = focus_on_EP_agenda
+			#set_ruling_party_PG_support = yes
+			#activate_mission = EU_parliament_focus_EUXXX_approve
+		}
+		ai_will_do = {
+			factor = 0
+		}		
+	}
 
 ##############################
 ### End of Testing section ###
@@ -217,12 +225,72 @@ EU_budget_hide_distribution_member_states = {
 
 ###
 
-EU_budget_mff_negotiations = {
+EU_mff_preparations = { ### WIP start of mff
 	allowed = {
 		always = yes
 	}
 	available = {
-		influence_on_all_other_EU_members_5_percent = yes
+		has_global_flag = focus_EU_mff_EP_approval
+		has_country_flag = EU_mff_draft
+	}	
+	activation = {
+		always = no
+	}	
+	visible = { 
+		has_idea = EU_member
+		NOT = { has_global_flag = EU_budget_mff }
+	} 	
+	days_mission_timeout = 30	
+	selectable_mission = yes	
+	fire_only_once = yes
+	complete_effect = {
+		set_global_flag = EU_budget_mff
+		add_political_power = global.EU_mff_draft_invested_PP
+		clear_variable = global.EU_mff_draft_invested_PP
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			activate_mission = EU_budget_mff_active
+			remove_mission = EU_mff_preparations
+			remove_mission = EU_mff_draft_mission
+			if = {
+				limit = {
+					has_country_flag = focus_EU_mff_EP_agenda
+				}
+				remove_mission = EU_parliament_focus_EUXXX_approve
+			}			
+		}
+	}
+	timeout_effect = {
+		set_global_flag = EU_budget_mff
+		clear_variable = global.EU_mff_draft_invested_PP
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			activate_mission = EU_budget_mff_active
+			remove_mission = EU_mff_preparations
+			remove_mission = EU_mff_draft_mission
+			if = {
+				limit = {
+					has_country_flag = focus_EU_mff_EP_agenda
+				}
+				remove_mission = EU_parliament_focus_EUXXX_approve
+			}			
+		}		
+	}	
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+EU_budget_mff_active = {
+	allowed = {
+		always = yes
+	}
+	available = {
+		NOT = { has_global_flag = EU_budget_mff }	
 	}	
 	activation = {
 		always = no
@@ -230,30 +298,43 @@ EU_budget_mff_negotiations = {
 	
 	visible = { 
 		has_idea = EU_member
-		NOT = { has_global_flag = EU_budget_mff }
+		#has_global_flag = EU_budget_mff
 	} 
 	
-	days_mission_timeout = 180
+	days_mission_timeout = 4
 	
-	selectable_mission = yes
+	selectable_mission = no
 	
 	fire_only_once = yes
 
 	complete_effect = {
-		set_global_flag = EU_budget_mff
+
 	}
 	timeout_effect = {
-		set_global_flag = EU_budget_mff
+		clr_global_flag = EU_budget_mff
+		clr_global_flag = focus_EU_mff_EP_approval
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			clr_country_flag = EU_mff_draft
+			activate_mission = EU_mff_preparations
+			remove_mission = EU_budget_mff_active
+		}
+		set_variable = { global.EU_budget_call_rate = 1.00 }
+		set_EU_gdp = yes
+		set_EU_total_budget = yes
+		update_EU_average_gdp_lvl = yes
+		update_EU_average_eco_lvl = yes		
 	}	
 	ai_will_do = {
-		factor = 1
+		factor = 0
 	}
-
 }
 
-### budget draft ###
+### mff draft ###
 
-EU_budget_mff_draft = {
+EU_budget_mff_draft = { ### WIP for testing
 
 	available = {
 		NOT = {
@@ -262,31 +343,82 @@ EU_budget_mff_draft = {
 			}
 		}	
 		has_idea = EU_member
-	}
-	
-	visible = {		
+	}	
+	visible = {
+		any_country = {
+			NOT = {
+				has_country_flag = EU_mff_draft
+			}	
+			has_active_mission = EU_mff_preparations
+		}				
 		has_idea = EU_member 
 	}
-	
 	complete_effect = {
 		###
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-			add_political_power = 100
-		}	
+		#every_country = {
+		#	limit = {
+		#		has_idea = EU_member
+		#	}
+		#	add_political_power = 100
+		#}	
 		###
 		set_country_flag = EU_mff_draft
 		set_variable = { global.EU_mff_draft_invested_PP = 0 }
+		activate_mission = EU_mff_draft_mission
 	}
-	days_remove = 30
-	remove_effect = {
-		clr_country_flag = EU_mff_draft
-	}	
+	#days_remove = 14
+	#remove_effect = {
+		#clr_country_flag = EU_mff_draft
+		#set_country_flag = focus_EU_mff_EP_agenda			
+		#set_country_flag = focus_on_EP_agenda
+		#set_ruling_party_PG_support = yes
+		#activate_mission = EU_parliament_focus_EUXXX_approve		
+	#}	
 	ai_will_do = {
 		factor = 0
 	}		
+}
+
+EU_mff_draft_mission = { 
+	allowed = {
+		always = yes
+	}
+	available = {
+		OR = {
+			influence_on_all_other_EU_members_10_percent = yes
+			AND = {
+				has_idea = EU_council_president
+				influence_on_all_other_EU_members_5_percent = yes
+			}
+			has_idea = EU_finance_minister
+		}
+	}	
+	activation = {
+		always = no
+	}
+	visible = { 
+		has_idea = EU_member
+		has_country_flag = EU_mff_draft
+		NOT = { has_global_flag = EU_budget_mff }
+	} 
+	days_mission_timeout = 14
+	selectable_mission = yes
+	fire_only_once = yes
+	complete_effect = {
+		set_country_flag = focus_EU_mff_EP_agenda			
+		set_country_flag = focus_on_EP_agenda
+		set_ruling_party_PG_support = yes
+		activate_mission = EU_parliament_focus_EUXXX_approve
+	}
+	timeout_effect = {
+		set_country_flag = focus_EU_mff_EP_agenda			
+		set_country_flag = focus_on_EP_agenda
+		set_ruling_party_PG_support = yes
+		activate_mission = EU_parliament_focus_EUXXX_approve		
+	}	
+	ai_will_do = {
+		factor = 1
+	}
 }
 
 ### global ###
@@ -296,11 +428,12 @@ EU_budget_raise_global_call_rate = {
 	available = {
 		has_idea = EU_member
 	}
-	visible = {		 
+	visible = {				 
 		has_idea = EU_member
 		NOT = { has_global_flag = EU_budget_mff }
 		any_country = {
 			has_country_flag = EU_mff_draft
+			has_active_mission = EU_mff_draft_mission
 		}		
 	}	
 	complete_effect = {
@@ -330,6 +463,7 @@ EU_budget_lower_global_call_rate = {
 		NOT = { has_global_flag = EU_budget_mff }
 		any_country = {
 			has_country_flag = EU_mff_draft
+			has_active_mission = EU_mff_draft_mission
 		}		 
 	}
 	complete_effect = {
@@ -359,6 +493,7 @@ EU_budget_raise_THIS_call_rate = {
 		NOT = { has_global_flag = EU_budget_mff }
 		any_country = {
 			has_country_flag = EU_mff_draft
+			has_active_mission = EU_mff_draft_mission
 		}		 
 	}	
 	complete_effect = {
@@ -395,6 +530,7 @@ EU_budget_lower_THIS_call_rate = {
 		NOT = { has_global_flag = EU_budget_mff }
 		any_country = {
 			has_country_flag = EU_mff_draft
+			has_active_mission = EU_mff_draft_mission
 		}		 
 	}	
 	complete_effect = {
@@ -450,6 +586,7 @@ EU_budget_raise_FROM_call_rate = {
 		NOT = { has_global_flag = EU_budget_mff }
 		any_country = {
 			has_country_flag = EU_mff_draft
+			has_active_mission = EU_mff_draft_mission
 		}		 
 	}	
 	complete_effect = {
@@ -496,6 +633,7 @@ EU_budget_lower_FROM_call_rate = {
 		NOT = { has_global_flag = EU_budget_mff }
 		any_country = {
 			has_country_flag = EU_mff_draft
+			has_active_mission = EU_mff_draft_mission
 		}		 
 	}	
 	complete_effect = {
@@ -524,9 +662,109 @@ EU_budget_lower_FROM_call_rate = {
 	}		
 }
 
-### budget draft ###
+### budget draft of the next fiscal year ###
 
-EU_budget_draft = {
+### WIP mission for start of budget
+
+
+EU_budget_preparations = { ### WIP start of mff
+	allowed = {
+		always = yes
+	}
+	available = {
+		has_global_flag = focus_EU_budget_EP_approval
+		has_country_flag = EU_budget_draft
+	}	
+	activation = {
+		always = no
+	}	
+	visible = { 
+		has_idea = EU_member
+		NOT = { has_global_flag = EU_budget_nfy } ### does exist??? yes
+	} 	
+	days_mission_timeout = 30	
+	selectable_mission = yes	
+	fire_only_once = yes
+	complete_effect = {
+		set_global_flag = EU_budget_nfy
+		add_political_power = global.EU_budget_draft_invested_PP
+		clear_variable = global.EU_budget_draft_invested_PP
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			activate_mission = EU_budget_nfy_active
+			remove_mission = EU_budget_preparations
+			remove_mission = EU_budget_draft_mission
+			if = {
+				limit = {
+					has_country_flag = focus_EU_budget_EP_agenda
+				}
+				remove_mission = EU_parliament_focus_EUXXX_approve
+			}
+		}
+	}
+	timeout_effect = {
+		set_global_flag = EU_budget_nfy
+		clear_variable = global.EU_budget_draft_invested_PP
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			activate_mission = EU_budget_nfy_active
+			remove_mission = EU_budget_preparations
+			remove_mission = EU_budget_draft_mission
+			if = {
+				limit = {
+					has_country_flag = focus_EU_budget_EP_agenda
+				}
+				remove_mission = EU_parliament_focus_EUXXX_approve
+			}						
+		}		
+	}	
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+EU_budget_nfy_active = {
+	allowed = {
+		always = yes
+	}
+	available = {
+		NOT = { has_global_flag = EU_budget_nfy }	
+	}	
+	activation = {
+		always = no
+	}	
+	visible = { 
+		has_idea = EU_member
+	} 	
+	days_mission_timeout = 4	
+	selectable_mission = no	
+	fire_only_once = yes
+	complete_effect = {
+		#non
+	}
+	timeout_effect = {
+		clr_global_flag = EU_budget_nfy
+		clr_global_flag = focus_EU_budget_EP_approval
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			clr_country_flag = EU_budget_draft
+			activate_mission = EU_budget_preparations
+			remove_mission = EU_budget_nfy_active
+		}
+		set_EU_expenditure = yes
+	}	
+	ai_will_do = {
+		factor = 0
+	}
+}
+
+EU_budget_draft = { ### WIP for testing
 
 	available = {
 		NOT = {
@@ -538,30 +776,81 @@ EU_budget_draft = {
 	}
 	
 	visible = {		
+		any_country = {
+			NOT = {
+				has_country_flag = EU_budget_draft
+			}	
+			has_active_mission = EU_budget_preparations
+		}				
 		has_idea = EU_member 
 	}
 	
 	complete_effect = {
 		###
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-			add_political_power = 100
-		}	
+		#every_country = {
+		#	limit = {
+		#		has_idea = EU_member
+		#	}
+		#	add_political_power = 100
+		#}	
 		###
 		set_country_flag = EU_budget_draft
 		set_variable = { global.EU_budget_draft_invested_PP = 0 }
-		set_variable = { var_EU_budget_draft_TAG = THIS }
+		activate_mission = EU_budget_draft_mission
+		#set_variable = { var_EU_budget_draft_TAG = THIS } ### has no effect ??? scripted loc via flag???
 	}
-	days_remove = 30
-	remove_effect = {
-		clr_country_flag = EU_budget_draft
-	}	
+	#days_remove = 30
+	#remove_effect = {
+	#	clr_country_flag = EU_budget_draft
+	#}	
 	ai_will_do = {
 		factor = 0
 	}		
 }
+
+
+EU_budget_draft_mission = { 
+	allowed = {
+		always = yes
+	}
+	available = {
+		OR = {
+			influence_on_all_other_EU_members_10_percent = yes
+			AND = {
+				has_idea = EU_commission_president
+				influence_on_all_other_EU_members_5_percent = yes
+			}
+			has_idea = EU_finance_minister
+		}
+	}	
+	activation = {
+		always = no
+	}
+	visible = { 
+		has_idea = EU_member
+		has_country_flag = EU_budget_draft
+		NOT = { has_global_flag = EU_budget_nfy }
+	} 
+	days_mission_timeout = 14
+	selectable_mission = yes
+	fire_only_once = yes
+	complete_effect = {
+		set_country_flag = focus_EU_budget_EP_agenda			
+		set_country_flag = focus_on_EP_agenda
+		set_ruling_party_PG_support = yes
+		activate_mission = EU_parliament_focus_EUXXX_approve
+	}
+	timeout_effect = {
+		set_country_flag = focus_EU_budget_EP_agenda			
+		set_country_flag = focus_on_EP_agenda
+		set_ruling_party_PG_support = yes
+		activate_mission = EU_parliament_focus_EUXXX_approve		
+	}	
+	ai_will_do = {
+		factor = 1
+	}
+}
+
 
 
 ### EU_expenditure ###
@@ -581,6 +870,7 @@ EU_budget_growth_up_natural_down = {
 		check_variable = { global.EU_growth_exp_ratio < 0.80 }
 		any_country = {
 			has_country_flag = EU_budget_draft
+			has_active_mission = EU_budget_draft_mission
 		}		
 	}
 	
@@ -647,6 +937,7 @@ EU_budget_growth_down_natural_up = {
 		check_variable = { global.EU_natural_exp_ratio < 0.80 }
 		any_country = {
 			has_country_flag = EU_budget_draft
+			has_active_mission = EU_budget_draft_mission
 		}				 
 	}
 	
@@ -704,6 +995,7 @@ EU_budget_raise_global_exp = {
 		check_variable = { global.EU_natural_exp_ratio > 0.07 }
 		any_country = {
 			has_country_flag = EU_budget_draft
+			has_active_mission = EU_budget_draft_mission
 		}		
 	}
 	
@@ -751,6 +1043,7 @@ EU_budget_lower_global_exp = {
 		check_variable = { global.EU_natural_exp_ratio < 0.80 }
 		any_country = {
 			has_country_flag = EU_budget_draft
+			has_active_mission = EU_budget_draft_mission
 		}				 
 	}
 	
@@ -796,6 +1089,7 @@ EU_budget_raise_admin_exp = {
 		check_variable = { global.EU_natural_exp_ratio > 0.05 }
 		any_country = {
 			has_country_flag = EU_budget_draft
+			has_active_mission = EU_budget_draft_mission
 		}				 
 	}
 	
@@ -840,6 +1134,7 @@ EU_budget_lower_admin_exp = {
 		check_variable = { global.EU_natural_exp_ratio < 0.80 }
 		any_country = {
 			has_country_flag = EU_budget_draft
+			has_active_mission = EU_budget_draft_mission
 		}		
 	}
 	
