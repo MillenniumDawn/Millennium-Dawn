@@ -41,12 +41,61 @@ on_actions = {
 	on_startup = {
 		effect = {
 			EUU = {
+				log = "[GetDateText]: [ROOT.GetName]: on_startup EUupdate.1"				
 				country_event = {
 					id = EUupdate.1					
 				}			
-			}				
-		}
-		
+			}
+			EUU = {
+				log = "[GetDateText]: [ROOT.GetName]: on_startup EU_mff EU_budget"			
+				### EU_mff
+				# from EU_budget_mff_active timeout_effect
+				every_country = {
+					limit = {
+						has_idea = EU_member
+					}					
+					activate_mission = EU_mff_preparations
+				}
+				set_variable = { global.EU_budget_call_rate = 1.00 }
+				set_EU_gdp = yes
+				set_EU_total_budget = yes
+				update_EU_average_gdp_lvl = yes
+				update_EU_average_eco_lvl = yes
+				### EU_budget
+				# from EU_budget_nfy_active timeout_effect
+				every_country = {
+					limit = {
+						has_idea = EU_member
+					}
+					activate_mission = EU_budget_preparations
+				}
+				set_EU_expenditure = yes
+				distribute_EU_budget = yes				
+			}
+			EUU = {
+				log = "[GetDateText]: [ROOT.GetName]: on_start EU budget"				
+				every_country = {
+					limit = {
+						has_idea = EU_member
+						NOT = { has_idea = EUU_subsidies_suspended }
+					}
+					news_event = {
+						id = EU_news.55
+						days = 31
+					}
+				}
+				every_country = {
+					limit = {
+						has_idea = EU_member
+						has_idea = EUU_subsidies_suspended
+					}
+					news_event = {
+						id = EU_news.56
+						days = 31
+					}
+				}								
+			}					
+		}		
 	}
 	on_daily = {
 		effect = {
@@ -54,10 +103,39 @@ on_actions = {
 				limit = {
 					has_country_flag = EU_potential
 				}
+				log = "[GetDateText]: [ROOT.GetName]: on_daily check_breach_of_EU_value"
 				check_breach_of_EU_value = yes
 			}	
 		}			
 	}
+	on_yearly = {
+		effect = {
+			EUU = {
+				log = "[GetDateText]: [ROOT.GetName]: on_start EU budget"				
+				every_country = {
+					limit = {
+						has_idea = EU_member
+						NOT = { has_idea = EUU_subsidies_suspended }
+					}
+					news_event = {
+						id = EU_news.55
+						days = 31
+					}
+				}
+				every_country = {
+					limit = {
+						has_idea = EU_member
+						has_idea = EUU_subsidies_suspended
+					}
+					news_event = {
+						id = EU_news.56
+						days = 31
+					}
+				}								
+			}			
+		}			
+	}
+
 	###### anyone existing EU country must execute the effects
 	on_weekly_ALB = {
 		effect = {
