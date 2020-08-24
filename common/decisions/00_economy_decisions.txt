@@ -193,7 +193,13 @@ economy_decisions = {
 				type = arms_factory
 			}
 			lease_military_factories_cost = yes
-			decrease_defense_industry_opinion = yes
+			if = {
+				limit = {
+					NOT = { has_country_flag = recently_leased_military_factories }
+				}
+				set_country_flag = { flag = recently_leased_military_factories days = 185 }
+				decrease_defense_industry_opinion = yes
+			}
 		}
 
 		remove_effect = {
@@ -214,8 +220,17 @@ economy_decisions = {
 				has_war = yes
 			}
 			modifier = {
-				factor = 10l
+				factor = 0.50
+				threat < 0.16
 			}
+			modifier = {
+				AND = {
+					threat > 0.15
+					threat < 0.26
+				}
+				add = 2
+			}
+
 		}
 	}
 
@@ -240,11 +255,17 @@ economy_decisions = {
 				level = 3
 				type = industrial_complex
 			}
-			increase_industrial_conglomerates_opinion = yes
-			increase_small_medium_business_owners_opinion = yes
-			increase_the_donju_opinion = yes
-			increase_the_bazaar_opinion = yes
-			increase_chaebols_opinion = yes
+			if = {
+				limit = {
+					NOT = { has_country_flag = recently_supported_small_business}
+				}
+				set_country_flag = { flag = recently_supported_small_business days = 365 }
+				increase_industrial_conglomerates_opinion = yes
+				increase_small_medium_business_owners_opinion = yes
+				increase_the_donju_opinion = yes
+				increase_the_bazaar_opinion = yes
+				increase_chaebols_opinion = yes
+			}
 			custom_effect_tooltip = treasury_loss_lease_mils_TT
 			lease_civilian_complex_cost = yes
 		}
@@ -259,8 +280,16 @@ economy_decisions = {
 		ai_will_do = {
 			factor = 1
 			modifier = {
-				factor = 50
+				factor = 5
 				has_war = no
+			}
+			modifier = { ##Try and conserve funds for more important things like military units
+				factor = 0.05
+				has_war = yes
+			}
+			modifier = { ##Countries with lack of industry will be more likely to use these to boost production
+				factor = 5
+				num_of_available_civilian_factories < 15
 			}
 		}
 	}
@@ -285,11 +314,17 @@ economy_decisions = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision industrial_projects"
-			increase_industrial_conglomerates_opinion = yes
-			increase_small_medium_business_owners_opinion = yes
-			increase_the_donju_opinion = yes
-			increase_the_bazaar_opinion = yes
-			increase_chaebols_opinion = yes
+			if = {
+				limit = {
+					NOT = { has_country_flag = recently_supported_small_business}
+				}
+				set_country_flag = { flag = recently_supported_small_business days = 365 }
+				increase_industrial_conglomerates_opinion = yes
+				increase_small_medium_business_owners_opinion = yes
+				increase_the_donju_opinion = yes
+				increase_the_bazaar_opinion = yes
+				increase_chaebols_opinion = yes
+			}
 			custom_effect_tooltip = treasury_loss_project_TT
 			propaganda_cost_scripted_effect = yes
 		}
@@ -299,8 +334,22 @@ economy_decisions = {
 		ai_will_do = {
 			factor = 1
 			modifier = {
-				add = 5
+				factor = 2
 				has_war = no
+			}
+			modifier = {
+				factor = 2
+				any_owned_state = {
+					free_building_slots = {
+						building = infrastructure
+						size < 1
+						include_locked = no
+					}
+				}
+			}
+			modifier = { ##Try to conserve money in times of war
+				factor = 0.10
+				has_war = yes
 			}
 		}
 	}
@@ -325,11 +374,6 @@ economy_decisions = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision infrastructure_projects"
-			increase_industrial_conglomerates_opinion = yes
-			increase_small_medium_business_owners_opinion = yes
-			increase_the_donju_opinion = yes
-			increase_the_bazaar_opinion = yes
-			increase_chaebols_opinion = yes
 			custom_effect_tooltip = treasury_loss_project_TT
 			propaganda_cost_scripted_effect = yes
 		}
@@ -338,6 +382,10 @@ economy_decisions = {
 		}
 		ai_will_do = {
 			factor = 1
+			modifier = { ##Try to conserve money in times of war
+				factor = 0.10
+				has_war = yes
+			}
 		}
 	}
 
@@ -370,6 +418,10 @@ economy_decisions = {
 		}
 		ai_will_do = {
 			factor = 1
+			modifier = { ##Spend more on arms factories
+				factor = 2
+				has_war = yes
+			}
 		}
 	}
 
@@ -385,6 +437,9 @@ economy_decisions = {
 		days_re_enable = 45
 
 		available = {
+			any_owned_state = {
+				is_coastal = no
+			}
 			NOT = {
 				has_decision = infrastructure_projects
 				has_decision = arms_factory_projects
@@ -402,12 +457,28 @@ economy_decisions = {
 		}
 		ai_will_do = {
 			factor = 1
+			modifier = { ##Spend more on dockyards
+				factor = 2
+				has_war = yes
+			}
+			modifier = {
+				any_owned_state = {
+					is_coastal = no
+				}
+				factor = 0
+			}
 		}
 	}
 
 	temporary_tax_cuts = {
 		icon = ger_mefo_bills
 		allowed = { always = yes }
+		available = {
+			custom_trigger_tooltip = {
+				check_variable = { tax_rate > 5 }
+				tooltip = has_tax_rate_5_at_least_tt
+			}
+		}
 		cost = 100
 		fire_only_once = no
 		days_remove = 120
@@ -421,6 +492,9 @@ economy_decisions = {
 				update_military_rate = yes
 				ingame_calculate_size_modifier = yes
 				calculate_resource_sale_rate = yes
+				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
+				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
+				law_attitude_change = yes
 			}
 			custom_effect_tooltip = reduce_tax_rate_2_tt
 		}
@@ -442,6 +516,13 @@ economy_decisions = {
 			modifier = {
 				add = 3
 				has_war = no
+			}
+			modifier = { #Save money for more important stuff
+				factor = 0
+				OR = {
+					has_idea = recession
+					has_idea = stagnation
+				}
 			}
 		}
 	}
