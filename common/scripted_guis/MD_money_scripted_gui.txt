@@ -7,7 +7,7 @@ scripted_gui = {
 		visible = {
 			ROOT = { NOT = { has_country_flag = hide_money } }
 		}
- 
+
 		effects = {
 			hide_money_bg_click = {
 				ROOT = { set_country_flag = hide_money }
@@ -77,8 +77,8 @@ scripted_gui = {
 					subtract_from_variable = { treasury = 1 }
 					subtract_from_variable = { debt = 1 }
 					ingame_calculate_size_modifier = yes
-					#update_military_rate = yes
-					#calculate_interest_rate = yes
+					update_military_rate = yes
+					calculate_interest_rate = yes
 					calculate_debt_rate = yes
 					log = "[GetDateText]: [Root.GetName]: 1k debt repayed ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
 				}
@@ -198,7 +198,7 @@ scripted_gui = {
 						}
 					}
 				}
-				
+
 			}
 		}
 	}
@@ -326,19 +326,19 @@ scripted_gui = {
 		ai_weights = {
 			small_plus_button_bg_click = {
 				ai_will_do = {
-					factor = 0
-					modifier = { # If we have pp to spare considder
+					base = 0
+					modifier = { # If we have pp to spare consider
 						add = 1
 						has_political_power > 100
 					}
-					modifier = { # If we have pp to spare considder
-						add = 5
+					modifier = { # If we have pp to spare consider
+						add = 1000
 						has_political_power > 50
 						check_variable = { treasury_rate < -2.10 }
 					}
 
 
-					modifier = { # considder increase taxes if income is low and intrest is high
+					modifier = { # consider increase taxes if income is low and intrest is high
 						add = 1
 						OR = {
 							AND = {
@@ -364,26 +364,30 @@ scripted_gui = {
 						}
 					}
 
-					modifier = { # increase taxes if our expences is two high
+					modifier = { # increase taxes if our expenses is two high
 						add = 5
 						check_variable = { treasury_rate < -1.25 }
 					}
 
 					modifier = { # Dont lower taxes if our industry dont generate income
-						add = -1
+						factor = 0.01
 						num_of_available_civilian_factories < 2
 					}
 					modifier = {
-						add = -1
+						factor = 0.25
 						num_of_available_civilian_factories < 3
 					}
 					modifier = {
-						add = -1
+						factor = 0.50
 						num_of_available_civilian_factories < 6
 					}
 					modifier = {
-						add = -1
+						factor = 0.75
 						num_of_available_civilian_factories < 8
+					}
+					modifier = { ##Try to keep tax rate between 25-40% This should help assuage issues
+						factor = 0
+						check_variable = { tax_rate > 40 }
 					}
 				}
 
@@ -430,40 +434,40 @@ scripted_gui = {
 		ai_weights = {
 			small_minus_button_bg_click = {
 				ai_will_do = {
-					factor = 0
+					base = 0
 
-					modifier = { # If we have pp to spare considder
+					modifier = { # If we have pp to spare consider
 						add = 1
 						has_political_power > 100
 					}
 
 					modifier = { # Dont decrease taxes if we have economic problems
-						add = -1
+						factor = 0.10
 						OR = {
 							has_idea = depression
 							has_idea = recession
 							has_idea = stagnation
-							check_variable = { interest_rate > 8.00 } 
+							check_variable = { interest_rate > 8.00 }
 						}
 					}
 					modifier = {
-						add = -1
+						factor = 0.20
 						OR = {
 							has_idea = depression
 							has_idea = recession
-							check_variable = { interest_rate > 8.00 } 
+							check_variable = { interest_rate > 8.00 }
 						}
 					}
 					modifier = {
-						add = -1
+						factor = 0.40
 						OR = {
 							has_idea = depression
-							check_variable = { interest_rate > 8.00 } 
+							check_variable = { interest_rate > 8.00 }
 						}
 					}
 
-					modifier = { # considder lower taxes if income is high and intrest is low
-						add = 1
+					modifier = { # consider lower taxes if income is high and intrest is low
+						factor = 2.5
 						OR = {
 							AND = {
 								has_communist_government = yes
@@ -510,9 +514,13 @@ scripted_gui = {
 						check_variable = { treasury_rate > 1.000 }
 					}
 
-					modifier = { # Ai like to have money befor lowering taxes
-						add = -10
+					modifier = { # Ai like to have money before lowering taxes
+						factor = 0
 						check_variable = { treasury < 10 }
+					}
+					modifier = { ##Failsafe. AI should keep around 25%
+						factor = 0
+						check_variable = { tax_rate < 25 }
 					}
 				}
 			}
@@ -540,10 +548,10 @@ scripted_gui = {
 	}
 	refresh_tax_rates = {
 		context_type = player_context
-		
+
 		window_name = "refresh_tax_rates_politics_tab"
 		parent_window_token = politics_tab
-		
+
 		visible = {
 			always = yes
 		}
