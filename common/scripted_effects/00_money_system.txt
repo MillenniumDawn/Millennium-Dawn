@@ -315,7 +315,15 @@ calculate_tax_gain = {
 	subtract_from_variable = { var = treasury_rate value = tax_gain }
 	set_variable = { var = tax_gain value = tax_rate }
 
-	multiply_variable = { tax_gain = 10 }
+	if = {
+		limit = { ##Soft buff to AI tax gain for better balance
+			is_ai = yes
+		}
+		multiply_variable = { tax_gain = 12.5 }
+	}
+	else = {
+		multiply_variable = { tax_gain = 10 }
+	}
 
 	multiply_variable = { var = tax_gain value = size_modifier }
 	if = {
@@ -2192,7 +2200,7 @@ calculate_int_investments_rate = {
 	update_display_income = yes
 }
 
-calculate_resource_sale_rate = { #Calculates income from rescouresc
+calculate_resource_sale_rate = { #Calculates income from resources
 	#See Treasury reset comment at top of page
 	subtract_from_variable = { var = treasury_rate value = resource_sale_rate }
 
@@ -2200,11 +2208,84 @@ calculate_resource_sale_rate = { #Calculates income from rescouresc
 	add_to_variable = { resource_exports = resource_exported@oil }
 	add_to_variable = { resource_exports = resource_exported@aluminium }
 	add_to_variable = { resource_exports = resource_exported@tungsten }
-	multiply_variable = { resource_exports = 0.166 }
+	multiply_variable = { resource_exports = 0.166 } ##This is equivalent to 1/6 1 factory = 6 resources
+	if = {
+		limit = {
+			has_idea = rentier_state
+		}
+		##Boosts income by around 25%
+		multiply_variable = { resource_exports = 0.208 } ##Roughly worth 25% more than the 1/6. So a factory should count for 125% more
+	}
+	else = {
+		multiply_variable = { resource_exports = 0.166 } ##This is equivalent to 1/6 1 factory = 6 resources
+	}
 	round_variable = resource_exports
-
 	set_variable = { var = resource_sale_rate value = resource_exports }
-	divide_variable = { var = resource_sale_rate value = 250 }
+	if = {
+		limit = { ##If you have a single resource over 100 units. You should have significant gain from resources
+			OR = {
+				has_idea = rentier_state
+				check_variable = { resource_exported@steel > 99 }
+				check_variable = { resource_exported@oil > 99 }
+				check_variable = { resource_exported@aluminium > 99 }
+				check_variable = { resource_exported@tungsten > 99 }
+			}
+		}
+		if = {
+			limit = {
+				num_of_factories < 25
+			}
+			divide_variable = { resource_sale_rate = 250 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 24
+				num_of_factories < 50
+			}
+			divide_variable = { resource_sale_rate = 225 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 49
+				num_of_factories < 80
+			}
+			divide_variable = { resource_sale_rate = 200 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 79
+				num_of_factories < 125
+			}
+			divide_variable = { resource_sale_rate = 175 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 124
+				num_of_factories < 160
+			}
+			divide_variable = { resource_sale_rate = 150 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 159
+				num_of_factories < 200
+			}
+			divide_variable = { resource_sale_rate = 125 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 199
+			}
+			divide_variable = { resource_sale_rate = 100 }
+		}
+		else = { ##This is just a failsafe. If not just use the standard rat
+			divide_variable = { resource_sale_rate = 200 }
+		}
+
+	}
+	else = { ##Flat resource gain for now
+		divide_variable = { resource_sale_rate = 200 }
+	}
 
 	add_to_variable = { var = treasury_rate value = resource_sale_rate }
 	update_display_income = yes
