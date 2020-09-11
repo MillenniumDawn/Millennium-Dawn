@@ -3,20 +3,942 @@
 #############################
 
 update_EU_military_leaders = {
+	custom_effect_tooltip = "Remove trait Military Reorganization from every unit leader."
 	every_unit_leader = {
 		limit = {
 			has_unit_leader_flag = USoE_unit_leader
-		}
-		custom_effect_tooltip = "Remove trait Military Reorganization."	
+		}			
 		remove_unit_leader_trait = military_reorganization
 	}	
 }
 
 update_EU_country_leaders = {
+	custom_effect_tooltip = "Country leader from all member states become availible."
 
 }
 
 create_eurosphere = {
-	
+	every_country = {		
+		limit = {
+			capital_scope = {
+				OR = {
+					is_on_continent = europe
+					is_on_continent = africa
+					is_on_continent = middle_east
+				}
+			}	
+			is_neighbor_of = PREV
+			ROOT_influence_on_THIS_50_percent =	no	
+		}
+		custom_effect_tooltip = tooltip_create_eurosphere
+		add_influence_50pts = yes
+	}
+}
+
+catholic_leadership = {
+	every_country = {
+		limit = {  has_idea = christian }
+		add_opinion_modifier = {
+			target = ROOT
+			modifier = friendly_monarchy
+		}
+		reverse_add_opinion_modifier = {
+			target = ROOT
+			modifier = friendly_monarchy
+		}
+	}	
+}
+
+christian_leadership = {
+	every_country = {
+		limit = {  
+			OR = {
+				has_idea = christian
+				has_idea = orthodox_christian
+			}
+		}	
+		add_opinion_modifier = {
+			target = ROOT
+			modifier = friendly_monarchy
+		}
+		reverse_add_opinion_modifier = {
+			target = ROOT
+			modifier = friendly_monarchy
+		}						
+	}
+}
+
+add_influence_50pts = {
+	for_loop_effect = { 
+		end = influence_array^num value = v 
+			if = { 
+				limit = { 
+					check_variable = { influence_array^v = ROOT } 
+				} 
+				add_to_variable = { influence_array_val^v = 50 }
+				set_country_flag = found 
+			} 
+	} 
+	if = { 
+		limit = { 
+			NOT = { has_country_flag = found } 
+		} 
+		add_to_array = { influence_array = ROOT.id }
+		add_to_array = { influence_array_val = 50 } 
+	} 
+	clr_country_flag = found
+	recalculate_influence = yes
+}
+
+########################################
+### USoE focus tree complete effects ###
+########################################
+
+#Constitute the new European Nation
+focus_USoE001_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE001"
+	remove_ideas = EU_member
+	add_political_power = 100
+}
+#A European Officer Corps
+focus_USoE002_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE002"
+	update_EU_military_leaders = yes
+}
+#European Political Parties
+focus_USoE003_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE003"
+	update_EU_country_leaders = yes
+}
+#European Patriotism
+focus_USoE004_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE004"
+	add_ideas = european_spirit
+	show_ideas_tooltip = european_spirit
+}
+#The New Great Game
+focus_USoE005_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE005"
+	add_war_support = 0.1
+}
+#Europe's Heart and Soul
+focus_USoE006_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE006"
+	add_stability = 0.1
+}
+#A Game of Spheres
+focus_USoE100_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE100"
+	add_war_support = 0.1
+}
+#Engage the Eagle
+focus_USoE101_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE101"
+	create_wargoal = {
+		type = puppet_wargoal_focus
+		target = USA
+	}
+}
+#Brawl with the Bear
+focus_USoE102_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE102"
+	create_wargoal = {
+		type = puppet_wargoal_focus
+		target = SOV
+	}
+}
+#Dance with the Dragon
+focus_USoE103_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE103"
+	create_wargoal = {
+		type = puppet_wargoal_focus
+		target = CHI
+	}
+}
+#A Heart of Iron
+focus_USoE104_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE104"
+	add_ideas = USoE_heart_of_iron
+	show_ideas_tooltip = USoE_heart_of_iron
+}
+#Peaceful Coexistence
+focus_USoE200_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE200"
+	add_political_power = 100
+}
+#America First
+focus_USoE201_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE201"
+	USA = {
+		country_event = {
+			id = USoEevent.1
+		}
+	}
+}
+#Russosphere
+focus_USoE202_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE202"
+	SOV = {
+		country_event = {
+			id = USoEevent.1
+		}
+	}
+}
+#Shinosphere
+focus_USoE203_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE203"
+	CHI = {
+		country_event = {
+			id = USoEevent.1
+		}
+	}
+}
+#Eurosphere
+focus_USoE204_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE204"
+	set_country_flag = eurosphere
+	custom_effect_tooltip = "Get decision Create the Euroshpere"
+	custom_effect_tooltip = tooltip_create_eurosphere
+}
+#Clash of Civilizations
+focus_USoE300_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE300"
+	add_named_threat = {
+		threat = 10
+		name = USoE_clash_of_civilizations
+	}
+}
+#The Rest of the West
+focus_USoE301_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE301"
+	remove_ideas = NATO_member
+	USA = {
+		add_opinion_modifier = {
+			target = ROOT
+			modifier = major_breach_of_trust
+		}
+		reverse_add_opinion_modifier = {
+			target = ROOT
+			modifier = major_breach_of_trust
+		}
+	}
+}
+#Cross and Crescent
+focus_USoE302_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE302"
+	add_popularity = {
+		ideology = democratic
+		popularity = 0.05
+	}
+	custom_effect_tooltip = tooltip_USoE_conservatism_rise_5
+	add_to_variable = { party_pop_array^1 = 0.05 }
+	recalculate_party = yes
+	add_popularity = {
+		ideology = nationalist
+		popularity = 0.10
+	}
+	custom_effect_tooltip = tooltip_USoE_Nat_Autocracy_rise_5
+	add_to_variable = { party_pop_array^22 = 0.05 }
+	custom_effect_tooltip = tooltip_USoE_Monarchist_rise_5
+	add_to_variable = { party_pop_array^23 = 0.05 }
+	recalculate_party = yes
+	add_ideas = christian
+	show_ideas_tooltip = christian
+	increase_The_Clergy_opinion = yes
+	add_war_support = 0.1
+}
+#The Pope and the Patriarch
+focus_USoE303_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE303"
+	SOV = {
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.30
+		}
+		custom_effect_tooltip = tooltip_USoE_Nat_Autocracy_rise_15
+		add_to_variable = { party_pop_array^22 = 0.15 }
+		custom_effect_tooltip = tooltip_USoE_Monarchist_rise_15
+		add_to_variable = { party_pop_array^23 = 0.15 }
+		recalculate_party = yes
+ 	}
+}
+#Two Crosses
+focus_USoE304_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE304"
+	SOV = {
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.30
+		}
+		custom_effect_tooltip = tooltip_USoE_conservatism_rise_10
+		add_to_variable = { party_pop_array^1 = 0.10 }
+		custom_effect_tooltip = tooltip_USoE_liberalism_rise_10
+		add_to_variable = { party_pop_array^2 = 0.10 }
+		custom_effect_tooltip = tooltip_USoE_socialism_rise_10
+		add_to_variable = { party_pop_array^3 = 0.10 }
+		recalculate_party = yes
+ 	}
+}
+#Eurasian Alliance
+focus_USoE305_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE305"
+	SOV = {
+		country_event = {
+			id = USoEevent.2
+		}
+	}	
+}
+#Constantinople
+focus_USoE306_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE306"
+	create_wargoal = {
+		type = take_state_focus
+		target = TUR
+		generator = {
+			934 155 156 157 161 162 158 ###162 need to be changed to Gaziantep
+		}
+	}
+}
+#Antioch
+focus_USoE307_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE307"
+	create_wargoal = {
+		type = take_state_focus
+		target = SYR
+		generator = {
+			189 190 575 571 566 188
+		}
+	}
+}
+#Tripoli
+focus_USoE308_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE308"
+	create_wargoal = {
+		type = annex_everything
+		target = LEB
+	}
+	create_wargoal = {
+		type = annex_everything
+		target = HEZ
+	}
+}
+#Jerusalem
+focus_USoE309_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE309"
+	if = {
+		limit = {
+			ROOT = { has_government = democratic }
+		}
+		if = {
+			limit = {
+				ISR = {
+					NOT = {
+						has_government = democratic
+					}
+				}
+			}	
+				create_wargoal = {
+					type = annex_everything
+					target = ISR
+				}			
+		}
+		else = {
+			ISR = {
+				country_event = {
+					id = USoEevent.3
+				}
+			}
+		}
+	}
+	else = {
+		create_wargoal = {
+			type = annex_everything
+			target = ISR
+		}
+	}
+	create_wargoal = {
+		type = annex_everything
+		target = PAL
+	}
+}
+#Knights of Malta
+focus_USoE310_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE310"
+	EGY = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	LBA = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	TUN = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	ALG = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	MOR = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+}
+#Arabian Westernization
+focus_USoE311_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE311"
+	IRQ = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	KUR = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	JOR = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	KUW = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	SAU = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	BHR = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	QAT = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	UAE = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	OMA = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	YEM = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+}
+#Indian Westernization
+focus_USoE312_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE312"
+	RAJ = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	PAK = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+}
+#The Republic of Persia
+focus_USoE313_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE313"
+	PER = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+}
+#The West vs the Rest
+focus_USoE320_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE320"
+	add_political_power = 100
+	add_war_support = 0.1
+}
+#Asian Westernization
+focus_USoE321_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE321"
+	add_political_power = 100
+	add_named_threat = {
+		threat = 10
+		name = USoE_asian_westernization
+	}
+}
+#The Four Tigers
+focus_USoE322_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE322"
+	SIN = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	HKG = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	TAI = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+	KOR = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+}
+#Japan
+focus_USoE323_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE323"
+	JAP = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+}
+#China
+focus_USoE324_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE324"
+	CHI = {
+		custom_effect_tooltip = tooltip_USoE_westernize_THIS
+		set_country_flag = USoE_westernize_THIS
+	}
+}
+#Operation Unthinkable 2.0
+focus_USoE325_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE325"
+	create_wargoal = {
+		type = annex_everything
+		target = SOV
+	}
+}
+#The Torch of Freedom
+focus_USoE400_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE400"
+	add_popularity = {
+		ideology = democratic
+		popularity = 0.30
+	}
+	custom_effect_tooltip = tooltip_USoE_conservatism_rise_10
+	add_to_variable = { party_pop_array^1 = 0.10 }
+	custom_effect_tooltip = tooltip_USoE_liberalism_rise_10
+	add_to_variable = { party_pop_array^2 = 0.10 }
+	custom_effect_tooltip = tooltip_USoE_socialism_rise_10
+	add_to_variable = { party_pop_array^3 = 0.10 }
+	recalculate_party = yes
+}
+#Digital Democracy
+focus_USoE401_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE401"
+	add_popularity = {
+		ideology = democratic
+		popularity = 0.15
+	}
+	custom_effect_tooltip = tooltip_USoE_conservatism_rise_5
+	add_to_variable = { party_pop_array^1 = 0.05 }
+	custom_effect_tooltip = tooltip_USoE_liberalism_rise_5
+	add_to_variable = { party_pop_array^2 = 0.05 }
+	custom_effect_tooltip = tooltip_USoE_socialism_rise_5
+	add_to_variable = { party_pop_array^3 = 0.05 }
+	recalculate_party = yes
+	add_ideas = USoE_digital_democracy
+	show_ideas_tooltip = USoE_digital_democracy
+}
+#Hammer and Sickle
+focus_USoE402_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE402"
+	add_popularity = {
+		ideology = communism
+		popularity = 0.20
+	}
+	custom_effect_tooltip = tooltip_USoE_Communist-State_rise_10
+	add_to_variable = { party_pop_array^4 = 0.10 }
+	custom_effect_tooltip = tooltip_USoE_anarchist_communism_rise_10
+	add_to_variable = { party_pop_array^5 = 0.10 }
+	recalculate_party = yes
+}
+#EUSSR
+focus_USoE403_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE403"
+	add_popularity = {
+		ideology = communism
+		popularity = 0.20
+	}
+	custom_effect_tooltip = tooltip_USoE_Communist-State_rise_10
+	add_to_variable = { party_pop_array^4 = 0.10 }
+	custom_effect_tooltip = tooltip_USoE_anarchist_communism_rise_10
+	add_to_variable = { party_pop_array^5 = 0.10 }
+	recalculate_party = yes
+}
+#AI Government
+focus_USoE404_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE404"
+	add_ideas = USoE_AI_government
+	show_ideas_tooltip = USoE_AI_government
+}
+#The Green Future
+focus_USoE500_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE500"
+	add_popularity = {
+		ideology = neutrality
+		popularity = 0.20
+	}
+	custom_effect_tooltip = tooltip_USoE_Neutral_green_rise_20
+	add_to_variable = { party_pop_array^17 = 0.20 }
+	recalculate_party = yes
+	increase_farmers_opinion = yes
+	increase_small_medium_business_owners_opinion = yes
+	decrease_industrial_conglomerates_opinion = yes
+	decrease_fossil_fuel_industry_opinion = yes
+}
+#Environmental Empire
+focus_USoE501_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE501"
+	decrease_industrial_conglomerates_opinion = yes
+	decrease_fossil_fuel_industry_opinion = yes
+}
+#Environmental Imperialism
+focus_USoE502_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE502"
+	increase_farmers_opinion = yes
+	increase_international_bankers_opinion = yes
+}
+#The Cross and the Crown
+focus_USoE600_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE600"
+	add_popularity = {
+		ideology = nationalist
+		popularity = 0.20
+	}
+	custom_effect_tooltip = tooltip_USoE_Nat_Autocracy_rise_10
+	add_to_variable = { party_pop_array^22 = 0.10 }
+	custom_effect_tooltip = tooltip_USoE_Monarchist_rise_10
+	add_to_variable = { party_pop_array^23 = 0.10 }
+	recalculate_party = yes
+	add_ideas = christian
+	show_ideas_tooltip = christian
+	increase_The_Clergy_opinion = yes
+	add_war_support = 0.1
+}
+#The New Knights
+focus_USoE601_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE601"
+	increase_the_military_opinion = yes
+	increase_defense_industry_opinion = yes
+	increase_maritime_industry_opinion = yes
+}
+#General of the European Armies
+focus_USoE602_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE602"
+	increase_the_military_opinion = yes
+	increase_defense_industry_opinion = yes
+}
+#Air Marshal of Europe
+focus_USoE603_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE603"
+	increase_the_military_opinion = yes
+	increase_intelligence_community_opinion = yes
+}
+#Fleet Admiral of Europe
+focus_USoE604_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE604"
+	increase_the_military_opinion = yes
+	increase_maritime_industry_opinion = yes
+}
+#European Empire
+focus_USoE605_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE605"
+	add_war_support = 0.2
+	add_stability = -0.1
+}
+#The New Emperor
+focus_USoE620_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE620"
+	add_political_power = 100
+	add_stability = 0.1
+}
+#Choose a House
+focus_USoE621_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE621"
+	add_political_power = 100
+}
+#House of Savoy
+focus_USoE622_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE622"
+	increase_intelligence_community_opinion = yes
+}
+#House of Wittelsbach
+focus_USoE623_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE623"
+	increase_small_medium_business_owners_opinion = yes
+}
+#House of Borbón-Anjou
+focus_USoE624_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE624"
+	increase_The_Clergy_opinion = yes
+}
+#House of Bourbon
+focus_USoE625_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE625"
+	increase_defense_industry_opinion = yes
+}
+#House of Hanover
+focus_USoE626_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE626"
+	increase_farmers_opinion = yes
+}
+#House of Glücksburg
+focus_USoE627_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE627"
+	increase_maritime_industry_opinion = yes
+}
+#House of Windsor
+focus_USoE628_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE628"
+	increase_international_bankers_opinion = yes
+}
+#House of Orange-Nassau
+focus_USoE629_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE629"
+	increase_fossil_fuel_industry_opinion = yes
+}
+#House of Habsburg-Lorraine
+focus_USoE630_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE630"
+	increase_intelligence_community_opinion = yes
+	increase_landowners_opinion = yes
+}
+#House of Bonaparte
+focus_USoE631_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE631"
+	increase_the_military_opinion = yes
+	increase_defense_industry_opinion = yes
+}
+#House of Hohenzollern
+focus_USoE632_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE632"
+	increase_landowners_opinion = yes
+	increase_the_military_opinion = yes
+}
+#Choose a Palace 
+focus_USoE633_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE633"
+	add_political_power = 100
+}
+#Quirinal Palace
+focus_USoE634_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE634"
+	set_capital = 81
+	81 = {
+		add_extra_state_shared_building_slots = 4
+		add_building_construction = {
+			type = industrial_complex
+			level = 4
+			instant_build = yes
+		}
+		every_neighbor_state = {
+			add_extra_state_shared_building_slots = 4
+			add_building_construction = {
+				type = industrial_complex
+				level = 4
+				instant_build = yes
+			}	
+		}
+	}
+}
+#Neuschwanstein Castle
+focus_USoE635_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE635"
+	set_capital = 43
+	43 = {
+		add_extra_state_shared_building_slots = 2
+		add_building_construction = {
+			type = industrial_complex
+			level = 2
+			instant_build = yes
+		}
+		every_neighbor_state = {
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = industrial_complex
+				level = 2
+				instant_build = yes
+			}	
+		}
+	}
+}
+#Royal Palace of Madrid
+focus_USoE636_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE636"
+	set_capital = 91
+	91 = {
+		add_extra_state_shared_building_slots = 4
+		add_building_construction = {
+			type = industrial_complex
+			level = 4
+			instant_build = yes
+		}
+		every_neighbor_state = {
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = industrial_complex
+				level = 2
+				instant_build = yes
+			}	
+		}
+	}
+}
+#Palace of Versailles
+focus_USoE637_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE637"
+	set_capital = 56
+	56 = {
+		add_extra_state_shared_building_slots = 6
+		add_building_construction = {
+			type = industrial_complex
+			level = 6
+			instant_build = yes
+		}
+		every_neighbor_state = {
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = industrial_complex
+				level = 2
+				instant_build = yes
+			}	
+		}
+	}
+}
+#Buckingham Palace
+focus_USoE638_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE638"
+	set_capital = 13
+	13 = {
+		add_extra_state_shared_building_slots = 7
+		add_building_construction = {
+			type = industrial_complex
+			level = 7
+			instant_build = yes
+		}
+		every_neighbor_state = {
+			add_extra_state_shared_building_slots = 3
+			add_building_construction = {
+				type = industrial_complex
+				level = 3
+				instant_build = yes
+			}	
+		}
+	}
+}
+#Hofburg
+focus_USoE639_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE639"
+	set_capital = 76
+	76 = {
+		add_extra_state_shared_building_slots = 2
+		add_building_construction = {
+			type = industrial_complex
+			level = 2
+			instant_build = yes
+		}
+		every_neighbor_state = {
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = industrial_complex
+				level = 2
+				instant_build = yes
+			}	
+		}
+	}
+}
+#Sanssouci
+focus_USoE640_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE640"
+	set_capital = 45
+	45 = {
+		add_extra_state_shared_building_slots = 4
+		add_building_construction = {
+			type = industrial_complex
+			level = 4
+			instant_build = yes
+		}
+		every_neighbor_state = {
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = industrial_complex
+				level = 2
+				instant_build = yes
+			}	
+		}
+	}
+}
+#A New Palace
+focus_USoE641_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE641"
+	set_capital = 50
+	50 = {
+		add_extra_state_shared_building_slots = 4
+		add_building_construction = {
+			type = industrial_complex
+			level = 4
+			instant_build = yes
+		}
+		every_neighbor_state = {
+			add_extra_state_shared_building_slots = 3
+			add_building_construction = {
+				type = industrial_complex
+				level = 3
+				instant_build = yes
+			}	
+		}
+	}
+}
+#Coronation
+focus_USoE642_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE642"
+	add_political_power = 100
+}
+#The Imperial Crown
+focus_USoE643_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE643"
+	catholic_leadership = yes
+}
+#A New Ecumenical Crown
+focus_USoE644_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE644"
+	christian_leadership = yes
+}
+#By the Pope
+focus_USoE645_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE645"
+	increase_The_Clergy_opinion = yes
+}
+#By the People
+focus_USoE646_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE646"
+	decrease_The_Clergy_opinion = yes
+}
+#The Holy European Empire
+focus_USoE647_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE647"
+	add_ideas = USoE_heart_of_iron
+	show_ideas_tooltip = USoE_heart_of_iron
+}
+#Pax Occidentalis
+focus_USoE700_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE700"
+	add_ideas = USoE_pax_occidentalis
+	show_ideas_tooltip = USoE_pax_occidentalis
+}
+#Guardians of World Peace
+focus_USoE701_effect = {
+	log = "[GetDateText]: [Root.GetName]: Focus USoE701"
+	add_ideas = USoE_guardians_of_world_peace
+	show_ideas_tooltip = USoE_guardians_of_world_peace
+	USA = {
+		add_ideas = USoE_guardians_of_world_peace
+	}
+	SOV = {
+		add_ideas = USoE_guardians_of_world_peace
+	}
+	CHI = {
+		add_ideas = USoE_guardians_of_world_peace
+	}
 }
 
