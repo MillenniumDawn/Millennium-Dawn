@@ -331,9 +331,11 @@ EU_USoE_category = {
 	}
 
 	EU_USoE_environmental_imperialism_decision = {
+		cost = 100
 		target_trigger = {
 			FROM = {
-				num_of_civilian_factories > 10
+				num_of_civilian_factories > 20
+				synthetic_refinery < num_owned_states
 				OR = {
 					AND = {
 						ROOT = {
@@ -411,11 +413,121 @@ EU_USoE_category = {
 		} 
 		
 		complete_effect = {
-
+			FROM = {
+				activate_mission = EU_USoE_environmental_imperialism_mission
+				set_country_flag = EU_USoE_environmental_imperialism_target
+			}
 		}
 		ai_will_do = {
 			factor = 1
 		}			
+	}
+}
+
+##################################
+### Category economy_decisions ###
+##################################
+
+economy_decisions = {
+
+	EU_USoE_environmental_imperialism_mission = {
+		allowed = {
+			always = yes
+		}
+		available = {
+			synthetic_refinery > num_owned_states	
+		}	
+		activation = {
+			always = no
+		}
+
+		days_mission_timeout = 365
+		is_good = no
+		selectable_mission = yes
+		
+		fire_only_once = yes
+	
+		complete_effect = {
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.20
+			}			
+			custom_effect_tooltip = tooltip_USoE_Neutral_green_rise_20
+			add_to_variable = { party_pop_array^17 = 0.20 }
+			FROM = {
+				country_event = {
+					id = USoEevent.5
+				}
+			}
+			clr_country_flag = EU_USoE_environmental_imperialism_target	
+		}
+		timeout_effect = {
+			add_ideas = USoE_environmental_sanctions
+			#show_ideas_tooltip = USoE_environmental_sanctions
+			clr_country_flag = EU_USoE_environmental_imperialism_target
+		}	
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	EU_USoE_environmental_imperialism_restructure_industry_decision = {	
+		cost = 100	
+		available = {						
+			has_country_flag = EU_USoE_environmental_imperialism_target
+		}
+		
+		visible = { 
+			has_country_flag = EU_USoE_environmental_imperialism_target
+			any_owned_state = {
+				synthetic_refinery < 1
+			}
+		} 
+		complete_effect = {
+			random_owned_state = {
+				limit = {
+					synthetic_refinery < 2 ####WIP
+					industrial_complex > 0
+				}
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { party_pop_array^17 < 0.50 }
+				}						
+				add_popularity = {
+					ideology = neutrality
+					popularity = 0.05
+				}			
+				custom_effect_tooltip = tooltip_USoE_Neutral_green_rise_5
+				add_to_variable = { party_pop_array^17 = 0.05 }
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}	
+	test_trigger_enviro_imp = {
+	
+		available = {			
+			synthetic_refinery > num_owned_states			
+		}
+		
+		visible = { 
+			always = yes
+		} 
+		
+		complete_effect = {   						
+
+		}				
 	}
 
 }
