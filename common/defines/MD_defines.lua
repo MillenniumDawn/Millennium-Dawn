@@ -90,10 +90,13 @@
 	NDefines.NProduction.LICENSE_EQUIPMENT_BASE_SPEED = -0.2 -- -0.2 exp
 	NDefines.NProduction.LICENSE_EQUIPMENT_TECH_SPEED_PER_YEAR = -0.01
 	NDefines.NProduction.LICENSE_EQUIPMENT_TECH_SPEED_MAX_YEARS = 40
+	NDefines.NProduction.EQUIPMENT_MODULE_ADD_XP_COST = 5.0					-- XP cost for adding a new equipment module in an empty slot when creating an equipment variant.
+	NDefines.NProduction.EQUIPMENT_MODULE_REPLACE_XP_COST = 6.0				-- XP cost for replacing one equipment module with an unrelated module when creating an equipment variant.
+	NDefines.NProduction.EQUIPMENT_MODULE_CONVERT_XP_COST = 3.0				-- XP cost for converting one equipment module to a related module when creating an equipment variant.
 
 	NDefines.NTechnology.MAX_SUBTECHS = 5
 	NDefines.NTechnology.BASE_YEAR_AHEAD_PENALTY_FACTOR = 0.3
-	NDefines.NTechnology.BASE_TECH_COST = 170 -- 85 is vanilla
+	NDefines.NTechnology.BASE_TECH_COST = 210 -- 85 is vanilla --300 was the old MD cost
 	NDefines.NTechnology.DEFAULT_XP_RESEARCH_COST = 100 -- 100 is vanilla
 	NDefines.NTechnology.MIN_RESEARCH_SPEED = 0.05 -- 0.10 in vanilla
 
@@ -112,9 +115,9 @@
 	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.2 -- -0.8
 	NDefines.NMilitary.INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02 -- -0.05
 	NDefines.NMilitary.WAR_SCORE_AIR_WORTH = 0.2 -- 0.1
-	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 15 --24
+	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 24 -- Returned to Vanilla Value
 	NDefines.NMilitary.FIELD_MARSHAL_DIVISIONS_CAP = 15 --24
-	NDefines.NMilitary.FIELD_MARSHAL_ARMIES_CAP = 3 --5
+	NDefines.NMilitary.FIELD_MARSHAL_ARMIES_CAP = 5 -- Returned to Vanilla Value
 	NDefines.NMilitary.BASE_DIVISION_SUPPORT_SLOT_COST = 5 -- 10
 	NDefines.NMilitary.COMBAT_MINIMUM_TIME = 8 -- 4
 	NDefines.NMilitary.LAND_COMBAT_ORG_DICE_SIZE = 2 -- 4
@@ -134,7 +137,7 @@
 	NDefines.NMilitary.TACTIC_SWAP_FREQUENCEY = 36 -- 24
 	NDefines.NMilitary.BASE_COMBAT_WIDTH = 120 -- 80
 	NDefines.NMilitary.ADDITIONAL_COMBAT_WIDTH = 60 -- 40
-	NDefines.NMilitary.LAND_SPEED_MODIFIER = 0.01 -- 0.05
+	NDefines.NMilitary.LAND_SPEED_MODIFIER = 0.05 -- 0.05
 	NDefines.NMilitary.RIVER_CROSSING_PENALTY = -0.2 -- -0.3
 	NDefines.NMilitary.RIVER_CROSSING_PENALTY_LARGE = -0.4 -- -0.6
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY = -0.15 -- -0.25
@@ -170,7 +173,10 @@
 	NDefines.NMilitary.STRATEGIC_SPEED_BASE = 30.0 -- 10.0
 	NDefines.NMilitary.STRATEGIC_INFRA_SPEED = 12.0 -- 10.0
 	NDefines.NMilitary.STRATEGIC_REDEPLOY_ORG_RATIO = 0.5 -- 0.1
-	NDefines.NMilitary.LAND_EQUIPMENT_BASE_COST = 5 -- 10
+	NDefines.NMilitary.LAND_EQUIPMENT_BASE_COST = 5 -- 10 --Used to determine Upgrade Cost
+	NDefines.NMilitary.LAND_EQUIPMENT_RAMP_COST = 3 -- 5
+	NDefines.NMilitary.NAVAL_EQUIPMENT_BASE_COST = 15 -- 25
+	NDefines.NMilitary.AIR_EQUIPMENT_BASE_COST = 15 -- 25
 	NDefines.NMilitary.FASTER_ORG_REGAIN_MULT = 0.40 -- 1.0
 	NDefines.NMilitary.SLOWER_ORG_REGAIN_MULT = -0.6 -- -0.5
 	NDefines.NMilitary.FRONT_MIN_PATH_TO_REDEPLOY = 3 -- 8
@@ -181,6 +187,9 @@
 	NDefines.NMilitary.XP_GAIN_FOR_SHATTERING = 10.0 -- 30.0
 	NDefines.NMilitary.ANTI_AIR_TARGETTING_TO_CHANCE = 0.005 -- 0.07
 	NDefines.NMilitary.ANTI_AIR_ATTACK_TO_AMOUNT = 0.001 -- 0.005
+	NDefines.NMilitary.MAX_ARMY_EXPERIENCE = 1000 --500 --Increased AMax Experience cuz reasons
+	NDefines.NMilitary.MAX_AIR_EXPERIENCE = 1000 --500
+	NDefines.NMilitary.MAX_NAVY_EXPERIENCE = 1000 --500
 
 	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 200 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 200 -- 100
