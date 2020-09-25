@@ -1,0 +1,1229 @@
+# Randomized Iterative Quicksort by Yard1
+# Feel free to use in your mods, but give credits to Yard1 (both in code, with comments; and on your download page)
+
+# Main function
+# Arguments (set in a non-temporary variable before calling):
+#     arr = array to sort
+#     low = starting index (you probably want 0)
+#     high = ending index (you probably want arr^num - 1)
+# modifies arr in place
+quicksort = {
+	# set up the auxilary stack
+	set_temp_variable = { stack_size = high }
+	subtract_from_temp_variable = { stack_size = low }
+	add_to_temp_variable = { stack_size = 1 }
+	resize_temp_array = {
+		array = stack
+		value = 0
+		size = stack_size
+	}
+
+	set_temp_variable = { top = 0 }
+	set_temp_variable = { stack^top = low }
+	add_to_temp_variable = { top = 1 }
+	set_temp_variable = { stack^top = high }
+
+	while_loop_effect = {
+		limit = { 
+			check_variable = {
+				var = top
+				value = 0
+				compare = greater_than_or_equals
+			}
+		}
+		set_variable = { high = stack^top }
+		subtract_from_temp_variable = { top = 1 }
+		set_variable = { low = stack^top }
+		subtract_from_temp_variable = { top = 1 }
+
+		quicksort_partition = yes # returns qs_partition_return
+
+		set_temp_variable = { qs_partition_return_plus_1 = qs_partition_return }
+		set_temp_variable = { qs_partition_return_minus_1 = qs_partition_return }
+		add_to_temp_variable = { qs_partition_return_plus_1 = 1 } 
+		subtract_from_temp_variable = { qs_partition_return_minus_1 = 1 } 
+
+		if = {
+			limit = { check_variable = { qs_partition_return_minus_1 > low } }
+			add_to_temp_variable = { top = 1 }
+			set_temp_variable = { stack^top = low }
+			add_to_temp_variable = { top = 1 }
+			set_temp_variable = { stack^top = qs_partition_return_minus_1 }
+		}
+
+		if = {
+			limit = { check_variable = { qs_partition_return_plus_1 < high } }
+			add_to_temp_variable = { top = 1 }
+			set_temp_variable = { stack^top = qs_partition_return_plus_1 }
+			add_to_temp_variable = { top = 1 }
+			set_temp_variable = { stack^top = high }
+		}
+	}
+
+	# clear "temporary" variables
+	clear_variable = qs_partition_return
+	clear_variable = random_pivot
+}
+
+# Partition function (using a random pivot)
+quicksort_partition = {
+	# Get random pivot
+	set_variable = { random_pivot = random }
+	multiply_variable = { random_pivot = high }
+	round_variable = random_pivot
+	add_to_variable = { random_pivot = low }
+	clamp_variable = {
+		var = random_pivot
+		min = low
+		max = high
+	}
+	set_temp_variable = { swap = arr^high }
+	set_variable = { arr^high = arr^random_pivot }
+	set_variable = { arr^random_pivot = swap }
+
+	set_temp_variable = { idx = low }
+	subtract_from_temp_variable = { idx = 1 }
+
+	set_temp_variable = { min = arr^high }
+  
+	for_loop_effect = {
+		start = low
+		end = high
+		if = {
+			limit = {
+				check_variable = {
+					var = arr^v
+					value = min
+					compare = less_than_or_equals # can be changed to greater_than_or_equals to give reverse order
+				}
+			}
+			add_to_temp_variable = { idx = 1 }
+			set_temp_variable = { swap = arr^idx }
+			set_variable = { arr^idx = arr^v }
+			set_variable = { arr^v = swap }
+		}
+	}
+
+	add_to_temp_variable = { idx = 1 }
+	set_temp_variable = { swap = arr^idx }
+	set_variable = { arr^idx = arr^high }
+	set_variable = { arr^high = swap }
+
+	# we return the index
+    set_variable = { qs_partition_return = idx }
+}
+
+# run this in an event/decision/whatever to test
+sorting_test = {
+	set_up_array = yes #creates an array with 1000 preset random values
+	quicksort_test = yes
+
+	#naive_sorting_test = yes # 19.64 times slower than quicksort
+	#insertion_sort_test = yes # 21.94 times slower than quicksort
+}
+
+quicksort_test = {
+	# Set arguments
+	set_variable = { high = arr^num }
+	subtract_from_variable = { high = 1 }
+
+	set_variable = { low = 0 }
+
+	# Arguments: arr, high, low
+	quicksort = yes
+
+	log = "Sorted array is:"
+	for_each_loop = {
+		array = arr
+		log = "[?v|0]"
+	}
+}
+
+naive_sorting_test = {
+	# Arguments: arr
+	naive_sorting = yes
+
+	log = "Sorted array is:"
+	for_each_loop = {
+		array = arr
+		log = "[?v|0]"
+	}
+}
+
+# Essentially a selection sort using find_lowest_in_array
+# Implemented by Strategy Gamer
+naive_sorting = {
+	set_temp_variable = { length_temp = arr^num }
+	for_loop_effect = {
+		start = 0
+		end = length_temp
+		add = 1
+		value = v
+		find_lowest_in_array = {
+			array = arr
+			value = max
+			index = max_index
+		}
+		remove_from_array = {
+			array = arr
+			index = max_index
+		}
+		add_to_temp_array = { 
+			array = arr_temp
+			value = max 
+		}
+	}
+	clear_array = arr
+	for_each_loop = {
+		array = arr_temp
+		add_to_array = {
+			arr = v
+		}
+	}
+}
+
+insertion_sort_test = {
+	# Arguments: arr
+	insertion_sort = yes
+
+	log = "Sorted array is:"
+	for_each_loop = {
+		array = arr
+		log = "[?v|0]"
+	}
+}
+
+# Standard insertion sort
+insertion_sort = {
+	for_each_loop = {
+		array = arr
+		set_temp_variable = { j = i }
+		subtract_from_temp_variable = { j = 1 }
+		while_loop_effect = {
+			limit = {
+				check_variable = {
+					var = j
+					value = 0
+					compare = greater_than_or_equals
+				}
+				check_variable = {
+					var = v
+					value = arr^j
+					compare = less_than
+				}
+			}
+			set_temp_variable = { j_plus_1 = j }
+			add_to_temp_variable = { j_plus_1 = 1 }
+			set_variable = { arr^j_plus_1 = arr^j }
+			subtract_from_temp_variable = { j = 1 }
+		}
+		set_temp_variable = { j_plus_1 = j }
+		add_to_temp_variable = { j_plus_1 = 1 }
+		set_variable = { arr^j_plus_1 = v }
+	}
+}
+
+# 1000 random integers in 1-1000 range from random.org
+set_up_array = {
+	clear_array = arr
+	add_to_array = { arr = 227 }
+	add_to_array = { arr = 726 }
+	add_to_array = { arr = 950 }
+	add_to_array = { arr = 995 }
+	add_to_array = { arr = 300 }
+	add_to_array = { arr = 203 }
+	add_to_array = { arr = 929 }
+	add_to_array = { arr = 429 }
+	add_to_array = { arr = 784 }
+	add_to_array = { arr = 978 }
+	add_to_array = { arr = 72 }
+	add_to_array = { arr = 434 }
+	add_to_array = { arr = 518 }
+	add_to_array = { arr = 569 }
+	add_to_array = { arr = 430 }
+	add_to_array = { arr = 257 }
+	add_to_array = { arr = 147 }
+	add_to_array = { arr = 850 }
+	add_to_array = { arr = 708 }
+	add_to_array = { arr = 749 }
+	add_to_array = { arr = 542 }
+	add_to_array = { arr = 178 }
+	add_to_array = { arr = 215 }
+	add_to_array = { arr = 946 }
+	add_to_array = { arr = 233 }
+	add_to_array = { arr = 506 }
+	add_to_array = { arr = 876 }
+	add_to_array = { arr = 201 }
+	add_to_array = { arr = 709 }
+	add_to_array = { arr = 897 }
+	add_to_array = { arr = 562 }
+	add_to_array = { arr = 996 }
+	add_to_array = { arr = 816 }
+	add_to_array = { arr = 598 }
+	add_to_array = { arr = 281 }
+	add_to_array = { arr = 493 }
+	add_to_array = { arr = 569 }
+	add_to_array = { arr = 717 }
+	add_to_array = { arr = 495 }
+	add_to_array = { arr = 825 }
+	add_to_array = { arr = 364 }
+	add_to_array = { arr = 879 }
+	add_to_array = { arr = 140 }
+	add_to_array = { arr = 643 }
+	add_to_array = { arr = 537 }
+	add_to_array = { arr = 268 }
+	add_to_array = { arr = 764 }
+	add_to_array = { arr = 398 }
+	add_to_array = { arr = 762 }
+	add_to_array = { arr = 206 }
+	add_to_array = { arr = 960 }
+	add_to_array = { arr = 840 }
+	add_to_array = { arr = 665 }
+	add_to_array = { arr = 759 }
+	add_to_array = { arr = 776 }
+	add_to_array = { arr = 833 }
+	add_to_array = { arr = 360 }
+	add_to_array = { arr = 428 }
+	add_to_array = { arr = 503 }
+	add_to_array = { arr = 620 }
+	add_to_array = { arr = 865 }
+	add_to_array = { arr = 808 }
+	add_to_array = { arr = 364 }
+	add_to_array = { arr = 594 }
+	add_to_array = { arr = 948 }
+	add_to_array = { arr = 30 }
+	add_to_array = { arr = 800 }
+	add_to_array = { arr = 502 }
+	add_to_array = { arr = 545 }
+	add_to_array = { arr = 790 }
+	add_to_array = { arr = 941 }
+	add_to_array = { arr = 251 }
+	add_to_array = { arr = 48 }
+	add_to_array = { arr = 369 }
+	add_to_array = { arr = 79 }
+	add_to_array = { arr = 490 }
+	add_to_array = { arr = 157 }
+	add_to_array = { arr = 302 }
+	add_to_array = { arr = 248 }
+	add_to_array = { arr = 837 }
+	add_to_array = { arr = 863 }
+	add_to_array = { arr = 768 }
+	add_to_array = { arr = 829 }
+	add_to_array = { arr = 317 }
+	add_to_array = { arr = 859 }
+	add_to_array = { arr = 13 }
+	add_to_array = { arr = 762 }
+	add_to_array = { arr = 810 }
+	add_to_array = { arr = 21 }
+	add_to_array = { arr = 85 }
+	add_to_array = { arr = 499 }
+	add_to_array = { arr = 941 }
+	add_to_array = { arr = 333 }
+	add_to_array = { arr = 126 }
+	add_to_array = { arr = 452 }
+	add_to_array = { arr = 982 }
+	add_to_array = { arr = 922 }
+	add_to_array = { arr = 286 }
+	add_to_array = { arr = 968 }
+	add_to_array = { arr = 837 }
+	add_to_array = { arr = 35 }
+	add_to_array = { arr = 255 }
+	add_to_array = { arr = 995 }
+	add_to_array = { arr = 124 }
+	add_to_array = { arr = 677 }
+	add_to_array = { arr = 777 }
+	add_to_array = { arr = 11 }
+	add_to_array = { arr = 811 }
+	add_to_array = { arr = 507 }
+	add_to_array = { arr = 681 }
+	add_to_array = { arr = 495 }
+	add_to_array = { arr = 829 }
+	add_to_array = { arr = 394 }
+	add_to_array = { arr = 325 }
+	add_to_array = { arr = 503 }
+	add_to_array = { arr = 898 }
+	add_to_array = { arr = 143 }
+	add_to_array = { arr = 784 }
+	add_to_array = { arr = 224 }
+	add_to_array = { arr = 167 }
+	add_to_array = { arr = 807 }
+	add_to_array = { arr = 903 }
+	add_to_array = { arr = 481 }
+	add_to_array = { arr = 400 }
+	add_to_array = { arr = 508 }
+	add_to_array = { arr = 295 }
+	add_to_array = { arr = 327 }
+	add_to_array = { arr = 56 }
+	add_to_array = { arr = 513 }
+	add_to_array = { arr = 674 }
+	add_to_array = { arr = 910 }
+	add_to_array = { arr = 12 }
+	add_to_array = { arr = 334 }
+	add_to_array = { arr = 704 }
+	add_to_array = { arr = 143 }
+	add_to_array = { arr = 360 }
+	add_to_array = { arr = 371 }
+	add_to_array = { arr = 375 }
+	add_to_array = { arr = 944 }
+	add_to_array = { arr = 724 }
+	add_to_array = { arr = 619 }
+	add_to_array = { arr = 682 }
+	add_to_array = { arr = 150 }
+	add_to_array = { arr = 785 }
+	add_to_array = { arr = 406 }
+	add_to_array = { arr = 183 }
+	add_to_array = { arr = 731 }
+	add_to_array = { arr = 148 }
+	add_to_array = { arr = 660 }
+	add_to_array = { arr = 525 }
+	add_to_array = { arr = 834 }
+	add_to_array = { arr = 597 }
+	add_to_array = { arr = 514 }
+	add_to_array = { arr = 986 }
+	add_to_array = { arr = 875 }
+	add_to_array = { arr = 867 }
+	add_to_array = { arr = 112 }
+	add_to_array = { arr = 263 }
+	add_to_array = { arr = 34 }
+	add_to_array = { arr = 594 }
+	add_to_array = { arr = 823 }
+	add_to_array = { arr = 390 }
+	add_to_array = { arr = 870 }
+	add_to_array = { arr = 549 }
+	add_to_array = { arr = 661 }
+	add_to_array = { arr = 761 }
+	add_to_array = { arr = 386 }
+	add_to_array = { arr = 533 }
+	add_to_array = { arr = 379 }
+	add_to_array = { arr = 88 }
+	add_to_array = { arr = 246 }
+	add_to_array = { arr = 33 }
+	add_to_array = { arr = 522 }
+	add_to_array = { arr = 93 }
+	add_to_array = { arr = 410 }
+	add_to_array = { arr = 980 }
+	add_to_array = { arr = 171 }
+	add_to_array = { arr = 701 }
+	add_to_array = { arr = 755 }
+	add_to_array = { arr = 559 }
+	add_to_array = { arr = 699 }
+	add_to_array = { arr = 505 }
+	add_to_array = { arr = 233 }
+	add_to_array = { arr = 8 }
+	add_to_array = { arr = 343 }
+	add_to_array = { arr = 635 }
+	add_to_array = { arr = 600 }
+	add_to_array = { arr = 399 }
+	add_to_array = { arr = 730 }
+	add_to_array = { arr = 693 }
+	add_to_array = { arr = 743 }
+	add_to_array = { arr = 179 }
+	add_to_array = { arr = 912 }
+	add_to_array = { arr = 385 }
+	add_to_array = { arr = 182 }
+	add_to_array = { arr = 623 }
+	add_to_array = { arr = 771 }
+	add_to_array = { arr = 136 }
+	add_to_array = { arr = 18 }
+	add_to_array = { arr = 532 }
+	add_to_array = { arr = 539 }
+	add_to_array = { arr = 934 }
+	add_to_array = { arr = 138 }
+	add_to_array = { arr = 731 }
+	add_to_array = { arr = 400 }
+	add_to_array = { arr = 327 }
+	add_to_array = { arr = 108 }
+	add_to_array = { arr = 188 }
+	add_to_array = { arr = 899 }
+	add_to_array = { arr = 488 }
+	add_to_array = { arr = 326 }
+	add_to_array = { arr = 196 }
+	add_to_array = { arr = 942 }
+	add_to_array = { arr = 637 }
+	add_to_array = { arr = 632 }
+	add_to_array = { arr = 660 }
+	add_to_array = { arr = 578 }
+	add_to_array = { arr = 85 }
+	add_to_array = { arr = 56 }
+	add_to_array = { arr = 500 }
+	add_to_array = { arr = 177 }
+	add_to_array = { arr = 610 }
+	add_to_array = { arr = 157 }
+	add_to_array = { arr = 271 }
+	add_to_array = { arr = 236 }
+	add_to_array = { arr = 255 }
+	add_to_array = { arr = 956 }
+	add_to_array = { arr = 201 }
+	add_to_array = { arr = 564 }
+	add_to_array = { arr = 199 }
+	add_to_array = { arr = 212 }
+	add_to_array = { arr = 23 }
+	add_to_array = { arr = 916 }
+	add_to_array = { arr = 674 }
+	add_to_array = { arr = 343 }
+	add_to_array = { arr = 780 }
+	add_to_array = { arr = 847 }
+	add_to_array = { arr = 406 }
+	add_to_array = { arr = 457 }
+	add_to_array = { arr = 363 }
+	add_to_array = { arr = 624 }
+	add_to_array = { arr = 265 }
+	add_to_array = { arr = 711 }
+	add_to_array = { arr = 28 }
+	add_to_array = { arr = 993 }
+	add_to_array = { arr = 867 }
+	add_to_array = { arr = 724 }
+	add_to_array = { arr = 712 }
+	add_to_array = { arr = 922 }
+	add_to_array = { arr = 309 }
+	add_to_array = { arr = 588 }
+	add_to_array = { arr = 132 }
+	add_to_array = { arr = 419 }
+	add_to_array = { arr = 188 }
+	add_to_array = { arr = 880 }
+	add_to_array = { arr = 105 }
+	add_to_array = { arr = 630 }
+	add_to_array = { arr = 765 }
+	add_to_array = { arr = 131 }
+	add_to_array = { arr = 369 }
+	add_to_array = { arr = 920 }
+	add_to_array = { arr = 383 }
+	add_to_array = { arr = 384 }
+	add_to_array = { arr = 780 }
+	add_to_array = { arr = 694 }
+	add_to_array = { arr = 817 }
+	add_to_array = { arr = 880 }
+	add_to_array = { arr = 790 }
+	add_to_array = { arr = 793 }
+	add_to_array = { arr = 250 }
+	add_to_array = { arr = 771 }
+	add_to_array = { arr = 734 }
+	add_to_array = { arr = 8 }
+	add_to_array = { arr = 595 }
+	add_to_array = { arr = 420 }
+	add_to_array = { arr = 221 }
+	add_to_array = { arr = 579 }
+	add_to_array = { arr = 447 }
+	add_to_array = { arr = 974 }
+	add_to_array = { arr = 49 }
+	add_to_array = { arr = 625 }
+	add_to_array = { arr = 246 }
+	add_to_array = { arr = 553 }
+	add_to_array = { arr = 18 }
+	add_to_array = { arr = 914 }
+	add_to_array = { arr = 529 }
+	add_to_array = { arr = 38 }
+	add_to_array = { arr = 101 }
+	add_to_array = { arr = 976 }
+	add_to_array = { arr = 225 }
+	add_to_array = { arr = 729 }
+	add_to_array = { arr = 507 }
+	add_to_array = { arr = 514 }
+	add_to_array = { arr = 366 }
+	add_to_array = { arr = 107 }
+	add_to_array = { arr = 546 }
+	add_to_array = { arr = 916 }
+	add_to_array = { arr = 310 }
+	add_to_array = { arr = 601 }
+	add_to_array = { arr = 120 }
+	add_to_array = { arr = 55 }
+	add_to_array = { arr = 473 }
+	add_to_array = { arr = 406 }
+	add_to_array = { arr = 9 }
+	add_to_array = { arr = 768 }
+	add_to_array = { arr = 836 }
+	add_to_array = { arr = 341 }
+	add_to_array = { arr = 627 }
+	add_to_array = { arr = 756 }
+	add_to_array = { arr = 760 }
+	add_to_array = { arr = 768 }
+	add_to_array = { arr = 658 }
+	add_to_array = { arr = 32 }
+	add_to_array = { arr = 427 }
+	add_to_array = { arr = 535 }
+	add_to_array = { arr = 346 }
+	add_to_array = { arr = 427 }
+	add_to_array = { arr = 559 }
+	add_to_array = { arr = 804 }
+	add_to_array = { arr = 694 }
+	add_to_array = { arr = 9 }
+	add_to_array = { arr = 816 }
+	add_to_array = { arr = 89 }
+	add_to_array = { arr = 139 }
+	add_to_array = { arr = 224 }
+	add_to_array = { arr = 123 }
+	add_to_array = { arr = 533 }
+	add_to_array = { arr = 86 }
+	add_to_array = { arr = 621 }
+	add_to_array = { arr = 162 }
+	add_to_array = { arr = 396 }
+	add_to_array = { arr = 672 }
+	add_to_array = { arr = 96 }
+	add_to_array = { arr = 886 }
+	add_to_array = { arr = 177 }
+	add_to_array = { arr = 229 }
+	add_to_array = { arr = 455 }
+	add_to_array = { arr = 836 }
+	add_to_array = { arr = 317 }
+	add_to_array = { arr = 441 }
+	add_to_array = { arr = 102 }
+	add_to_array = { arr = 510 }
+	add_to_array = { arr = 81 }
+	add_to_array = { arr = 722 }
+	add_to_array = { arr = 966 }
+	add_to_array = { arr = 603 }
+	add_to_array = { arr = 605 }
+	add_to_array = { arr = 789 }
+	add_to_array = { arr = 505 }
+	add_to_array = { arr = 868 }
+	add_to_array = { arr = 758 }
+	add_to_array = { arr = 264 }
+	add_to_array = { arr = 381 }
+	add_to_array = { arr = 828 }
+	add_to_array = { arr = 122 }
+	add_to_array = { arr = 944 }
+	add_to_array = { arr = 16 }
+	add_to_array = { arr = 818 }
+	add_to_array = { arr = 847 }
+	add_to_array = { arr = 343 }
+	add_to_array = { arr = 820 }
+	add_to_array = { arr = 893 }
+	add_to_array = { arr = 509 }
+	add_to_array = { arr = 51 }
+	add_to_array = { arr = 789 }
+	add_to_array = { arr = 719 }
+	add_to_array = { arr = 783 }
+	add_to_array = { arr = 379 }
+	add_to_array = { arr = 200 }
+	add_to_array = { arr = 339 }
+	add_to_array = { arr = 167 }
+	add_to_array = { arr = 532 }
+	add_to_array = { arr = 631 }
+	add_to_array = { arr = 273 }
+	add_to_array = { arr = 627 }
+	add_to_array = { arr = 30 }
+	add_to_array = { arr = 653 }
+	add_to_array = { arr = 536 }
+	add_to_array = { arr = 77 }
+	add_to_array = { arr = 439 }
+	add_to_array = { arr = 570 }
+	add_to_array = { arr = 994 }
+	add_to_array = { arr = 56 }
+	add_to_array = { arr = 720 }
+	add_to_array = { arr = 148 }
+	add_to_array = { arr = 723 }
+	add_to_array = { arr = 529 }
+	add_to_array = { arr = 238 }
+	add_to_array = { arr = 270 }
+	add_to_array = { arr = 373 }
+	add_to_array = { arr = 992 }
+	add_to_array = { arr = 752 }
+	add_to_array = { arr = 251 }
+	add_to_array = { arr = 305 }
+	add_to_array = { arr = 635 }
+	add_to_array = { arr = 574 }
+	add_to_array = { arr = 267 }
+	add_to_array = { arr = 602 }
+	add_to_array = { arr = 640 }
+	add_to_array = { arr = 320 }
+	add_to_array = { arr = 254 }
+	add_to_array = { arr = 289 }
+	add_to_array = { arr = 121 }
+	add_to_array = { arr = 487 }
+	add_to_array = { arr = 875 }
+	add_to_array = { arr = 47 }
+	add_to_array = { arr = 549 }
+	add_to_array = { arr = 611 }
+	add_to_array = { arr = 456 }
+	add_to_array = { arr = 541 }
+	add_to_array = { arr = 228 }
+	add_to_array = { arr = 680 }
+	add_to_array = { arr = 378 }
+	add_to_array = { arr = 335 }
+	add_to_array = { arr = 792 }
+	add_to_array = { arr = 882 }
+	add_to_array = { arr = 801 }
+	add_to_array = { arr = 205 }
+	add_to_array = { arr = 784 }
+	add_to_array = { arr = 382 }
+	add_to_array = { arr = 495 }
+	add_to_array = { arr = 53 }
+	add_to_array = { arr = 758 }
+	add_to_array = { arr = 439 }
+	add_to_array = { arr = 835 }
+	add_to_array = { arr = 910 }
+	add_to_array = { arr = 298 }
+	add_to_array = { arr = 940 }
+	add_to_array = { arr = 618 }
+	add_to_array = { arr = 283 }
+	add_to_array = { arr = 355 }
+	add_to_array = { arr = 185 }
+	add_to_array = { arr = 4 }
+	add_to_array = { arr = 383 }
+	add_to_array = { arr = 342 }
+	add_to_array = { arr = 927 }
+	add_to_array = { arr = 59 }
+	add_to_array = { arr = 268 }
+	add_to_array = { arr = 461 }
+	add_to_array = { arr = 84 }
+	add_to_array = { arr = 108 }
+	add_to_array = { arr = 41 }
+	add_to_array = { arr = 898 }
+	add_to_array = { arr = 432 }
+	add_to_array = { arr = 711 }
+	add_to_array = { arr = 439 }
+	add_to_array = { arr = 179 }
+	add_to_array = { arr = 133 }
+	add_to_array = { arr = 762 }
+	add_to_array = { arr = 166 }
+	add_to_array = { arr = 539 }
+	add_to_array = { arr = 959 }
+	add_to_array = { arr = 395 }
+	add_to_array = { arr = 797 }
+	add_to_array = { arr = 815 }
+	add_to_array = { arr = 851 }
+	add_to_array = { arr = 468 }
+	add_to_array = { arr = 161 }
+	add_to_array = { arr = 426 }
+	add_to_array = { arr = 297 }
+	add_to_array = { arr = 7 }
+	add_to_array = { arr = 715 }
+	add_to_array = { arr = 489 }
+	add_to_array = { arr = 527 }
+	add_to_array = { arr = 476 }
+	add_to_array = { arr = 463 }
+	add_to_array = { arr = 413 }
+	add_to_array = { arr = 349 }
+	add_to_array = { arr = 9 }
+	add_to_array = { arr = 452 }
+	add_to_array = { arr = 588 }
+	add_to_array = { arr = 86 }
+	add_to_array = { arr = 800 }
+	add_to_array = { arr = 305 }
+	add_to_array = { arr = 486 }
+	add_to_array = { arr = 184 }
+	add_to_array = { arr = 134 }
+	add_to_array = { arr = 674 }
+	add_to_array = { arr = 59 }
+	add_to_array = { arr = 367 }
+	add_to_array = { arr = 94 }
+	add_to_array = { arr = 820 }
+	add_to_array = { arr = 617 }
+	add_to_array = { arr = 6 }
+	add_to_array = { arr = 501 }
+	add_to_array = { arr = 693 }
+	add_to_array = { arr = 811 }
+	add_to_array = { arr = 778 }
+	add_to_array = { arr = 69 }
+	add_to_array = { arr = 789 }
+	add_to_array = { arr = 39 }
+	add_to_array = { arr = 492 }
+	add_to_array = { arr = 346 }
+	add_to_array = { arr = 781 }
+	add_to_array = { arr = 166 }
+	add_to_array = { arr = 726 }
+	add_to_array = { arr = 952 }
+	add_to_array = { arr = 316 }
+	add_to_array = { arr = 625 }
+	add_to_array = { arr = 260 }
+	add_to_array = { arr = 594 }
+	add_to_array = { arr = 53 }
+	add_to_array = { arr = 560 }
+	add_to_array = { arr = 477 }
+	add_to_array = { arr = 150 }
+	add_to_array = { arr = 299 }
+	add_to_array = { arr = 130 }
+	add_to_array = { arr = 669 }
+	add_to_array = { arr = 815 }
+	add_to_array = { arr = 639 }
+	add_to_array = { arr = 500 }
+	add_to_array = { arr = 405 }
+	add_to_array = { arr = 385 }
+	add_to_array = { arr = 942 }
+	add_to_array = { arr = 383 }
+	add_to_array = { arr = 471 }
+	add_to_array = { arr = 18 }
+	add_to_array = { arr = 727 }
+	add_to_array = { arr = 582 }
+	add_to_array = { arr = 772 }
+	add_to_array = { arr = 353 }
+	add_to_array = { arr = 261 }
+	add_to_array = { arr = 749 }
+	add_to_array = { arr = 838 }
+	add_to_array = { arr = 461 }
+	add_to_array = { arr = 198 }
+	add_to_array = { arr = 13 }
+	add_to_array = { arr = 969 }
+	add_to_array = { arr = 889 }
+	add_to_array = { arr = 385 }
+	add_to_array = { arr = 256 }
+	add_to_array = { arr = 198 }
+	add_to_array = { arr = 701 }
+	add_to_array = { arr = 761 }
+	add_to_array = { arr = 425 }
+	add_to_array = { arr = 882 }
+	add_to_array = { arr = 644 }
+	add_to_array = { arr = 183 }
+	add_to_array = { arr = 167 }
+	add_to_array = { arr = 193 }
+	add_to_array = { arr = 979 }
+	add_to_array = { arr = 234 }
+	add_to_array = { arr = 576 }
+	add_to_array = { arr = 449 }
+	add_to_array = { arr = 249 }
+	add_to_array = { arr = 573 }
+	add_to_array = { arr = 587 }
+	add_to_array = { arr = 96 }
+	add_to_array = { arr = 434 }
+	add_to_array = { arr = 403 }
+	add_to_array = { arr = 518 }
+	add_to_array = { arr = 58 }
+	add_to_array = { arr = 900 }
+	add_to_array = { arr = 528 }
+	add_to_array = { arr = 399 }
+	add_to_array = { arr = 197 }
+	add_to_array = { arr = 957 }
+	add_to_array = { arr = 874 }
+	add_to_array = { arr = 986 }
+	add_to_array = { arr = 732 }
+	add_to_array = { arr = 469 }
+	add_to_array = { arr = 908 }
+	add_to_array = { arr = 992 }
+	add_to_array = { arr = 664 }
+	add_to_array = { arr = 351 }
+	add_to_array = { arr = 416 }
+	add_to_array = { arr = 569 }
+	add_to_array = { arr = 82 }
+	add_to_array = { arr = 114 }
+	add_to_array = { arr = 8 }
+	add_to_array = { arr = 333 }
+	add_to_array = { arr = 529 }
+	add_to_array = { arr = 336 }
+	add_to_array = { arr = 954 }
+	add_to_array = { arr = 416 }
+	add_to_array = { arr = 921 }
+	add_to_array = { arr = 362 }
+	add_to_array = { arr = 389 }
+	add_to_array = { arr = 422 }
+	add_to_array = { arr = 263 }
+	add_to_array = { arr = 110 }
+	add_to_array = { arr = 854 }
+	add_to_array = { arr = 490 }
+	add_to_array = { arr = 836 }
+	add_to_array = { arr = 97 }
+	add_to_array = { arr = 524 }
+	add_to_array = { arr = 865 }
+	add_to_array = { arr = 91 }
+	add_to_array = { arr = 710 }
+	add_to_array = { arr = 148 }
+	add_to_array = { arr = 476 }
+	add_to_array = { arr = 529 }
+	add_to_array = { arr = 919 }
+	add_to_array = { arr = 715 }
+	add_to_array = { arr = 240 }
+	add_to_array = { arr = 258 }
+	add_to_array = { arr = 779 }
+	add_to_array = { arr = 334 }
+	add_to_array = { arr = 803 }
+	add_to_array = { arr = 976 }
+	add_to_array = { arr = 734 }
+	add_to_array = { arr = 199 }
+	add_to_array = { arr = 633 }
+	add_to_array = { arr = 386 }
+	add_to_array = { arr = 201 }
+	add_to_array = { arr = 57 }
+	add_to_array = { arr = 95 }
+	add_to_array = { arr = 313 }
+	add_to_array = { arr = 734 }
+	add_to_array = { arr = 527 }
+	add_to_array = { arr = 770 }
+	add_to_array = { arr = 984 }
+	add_to_array = { arr = 852 }
+	add_to_array = { arr = 156 }
+	add_to_array = { arr = 816 }
+	add_to_array = { arr = 223 }
+	add_to_array = { arr = 888 }
+	add_to_array = { arr = 874 }
+	add_to_array = { arr = 341 }
+	add_to_array = { arr = 66 }
+	add_to_array = { arr = 453 }
+	add_to_array = { arr = 357 }
+	add_to_array = { arr = 963 }
+	add_to_array = { arr = 721 }
+	add_to_array = { arr = 834 }
+	add_to_array = { arr = 639 }
+	add_to_array = { arr = 836 }
+	add_to_array = { arr = 481 }
+	add_to_array = { arr = 580 }
+	add_to_array = { arr = 362 }
+	add_to_array = { arr = 698 }
+	add_to_array = { arr = 808 }
+	add_to_array = { arr = 212 }
+	add_to_array = { arr = 438 }
+	add_to_array = { arr = 713 }
+	add_to_array = { arr = 948 }
+	add_to_array = { arr = 157 }
+	add_to_array = { arr = 584 }
+	add_to_array = { arr = 759 }
+	add_to_array = { arr = 981 }
+	add_to_array = { arr = 139 }
+	add_to_array = { arr = 202 }
+	add_to_array = { arr = 660 }
+	add_to_array = { arr = 92 }
+	add_to_array = { arr = 188 }
+	add_to_array = { arr = 355 }
+	add_to_array = { arr = 221 }
+	add_to_array = { arr = 475 }
+	add_to_array = { arr = 233 }
+	add_to_array = { arr = 534 }
+	add_to_array = { arr = 9 }
+	add_to_array = { arr = 576 }
+	add_to_array = { arr = 289 }
+	add_to_array = { arr = 396 }
+	add_to_array = { arr = 726 }
+	add_to_array = { arr = 959 }
+	add_to_array = { arr = 274 }
+	add_to_array = { arr = 413 }
+	add_to_array = { arr = 933 }
+	add_to_array = { arr = 960 }
+	add_to_array = { arr = 865 }
+	add_to_array = { arr = 602 }
+	add_to_array = { arr = 976 }
+	add_to_array = { arr = 313 }
+	add_to_array = { arr = 679 }
+	add_to_array = { arr = 433 }
+	add_to_array = { arr = 750 }
+	add_to_array = { arr = 312 }
+	add_to_array = { arr = 160 }
+	add_to_array = { arr = 547 }
+	add_to_array = { arr = 795 }
+	add_to_array = { arr = 978 }
+	add_to_array = { arr = 511 }
+	add_to_array = { arr = 506 }
+	add_to_array = { arr = 840 }
+	add_to_array = { arr = 744 }
+	add_to_array = { arr = 841 }
+	add_to_array = { arr = 693 }
+	add_to_array = { arr = 206 }
+	add_to_array = { arr = 164 }
+	add_to_array = { arr = 683 }
+	add_to_array = { arr = 145 }
+	add_to_array = { arr = 916 }
+	add_to_array = { arr = 830 }
+	add_to_array = { arr = 916 }
+	add_to_array = { arr = 527 }
+	add_to_array = { arr = 241 }
+	add_to_array = { arr = 507 }
+	add_to_array = { arr = 215 }
+	add_to_array = { arr = 187 }
+	add_to_array = { arr = 384 }
+	add_to_array = { arr = 598 }
+	add_to_array = { arr = 268 }
+	add_to_array = { arr = 626 }
+	add_to_array = { arr = 669 }
+	add_to_array = { arr = 720 }
+	add_to_array = { arr = 340 }
+	add_to_array = { arr = 125 }
+	add_to_array = { arr = 196 }
+	add_to_array = { arr = 102 }
+	add_to_array = { arr = 322 }
+	add_to_array = { arr = 550 }
+	add_to_array = { arr = 614 }
+	add_to_array = { arr = 166 }
+	add_to_array = { arr = 797 }
+	add_to_array = { arr = 881 }
+	add_to_array = { arr = 777 }
+	add_to_array = { arr = 292 }
+	add_to_array = { arr = 425 }
+	add_to_array = { arr = 236 }
+	add_to_array = { arr = 682 }
+	add_to_array = { arr = 373 }
+	add_to_array = { arr = 649 }
+	add_to_array = { arr = 714 }
+	add_to_array = { arr = 379 }
+	add_to_array = { arr = 433 }
+	add_to_array = { arr = 728 }
+	add_to_array = { arr = 384 }
+	add_to_array = { arr = 471 }
+	add_to_array = { arr = 906 }
+	add_to_array = { arr = 24 }
+	add_to_array = { arr = 404 }
+	add_to_array = { arr = 749 }
+	add_to_array = { arr = 9 }
+	add_to_array = { arr = 713 }
+	add_to_array = { arr = 306 }
+	add_to_array = { arr = 728 }
+	add_to_array = { arr = 667 }
+	add_to_array = { arr = 370 }
+	add_to_array = { arr = 805 }
+	add_to_array = { arr = 686 }
+	add_to_array = { arr = 471 }
+	add_to_array = { arr = 643 }
+	add_to_array = { arr = 895 }
+	add_to_array = { arr = 337 }
+	add_to_array = { arr = 611 }
+	add_to_array = { arr = 478 }
+	add_to_array = { arr = 620 }
+	add_to_array = { arr = 219 }
+	add_to_array = { arr = 453 }
+	add_to_array = { arr = 601 }
+	add_to_array = { arr = 164 }
+	add_to_array = { arr = 568 }
+	add_to_array = { arr = 352 }
+	add_to_array = { arr = 942 }
+	add_to_array = { arr = 793 }
+	add_to_array = { arr = 819 }
+	add_to_array = { arr = 301 }
+	add_to_array = { arr = 29 }
+	add_to_array = { arr = 295 }
+	add_to_array = { arr = 85 }
+	add_to_array = { arr = 15 }
+	add_to_array = { arr = 318 }
+	add_to_array = { arr = 858 }
+	add_to_array = { arr = 642 }
+	add_to_array = { arr = 5 }
+	add_to_array = { arr = 484 }
+	add_to_array = { arr = 739 }
+	add_to_array = { arr = 427 }
+	add_to_array = { arr = 140 }
+	add_to_array = { arr = 815 }
+	add_to_array = { arr = 826 }
+	add_to_array = { arr = 462 }
+	add_to_array = { arr = 236 }
+	add_to_array = { arr = 703 }
+	add_to_array = { arr = 176 }
+	add_to_array = { arr = 678 }
+	add_to_array = { arr = 824 }
+	add_to_array = { arr = 162 }
+	add_to_array = { arr = 188 }
+	add_to_array = { arr = 881 }
+	add_to_array = { arr = 713 }
+	add_to_array = { arr = 570 }
+	add_to_array = { arr = 624 }
+	add_to_array = { arr = 985 }
+	add_to_array = { arr = 864 }
+	add_to_array = { arr = 93 }
+	add_to_array = { arr = 593 }
+	add_to_array = { arr = 796 }
+	add_to_array = { arr = 702 }
+	add_to_array = { arr = 536 }
+	add_to_array = { arr = 197 }
+	add_to_array = { arr = 828 }
+	add_to_array = { arr = 453 }
+	add_to_array = { arr = 557 }
+	add_to_array = { arr = 490 }
+	add_to_array = { arr = 429 }
+	add_to_array = { arr = 506 }
+	add_to_array = { arr = 615 }
+	add_to_array = { arr = 971 }
+	add_to_array = { arr = 234 }
+	add_to_array = { arr = 958 }
+	add_to_array = { arr = 575 }
+	add_to_array = { arr = 696 }
+	add_to_array = { arr = 598 }
+	add_to_array = { arr = 240 }
+	add_to_array = { arr = 925 }
+	add_to_array = { arr = 215 }
+	add_to_array = { arr = 940 }
+	add_to_array = { arr = 880 }
+	add_to_array = { arr = 72 }
+	add_to_array = { arr = 281 }
+	add_to_array = { arr = 624 }
+	add_to_array = { arr = 120 }
+	add_to_array = { arr = 411 }
+	add_to_array = { arr = 22 }
+	add_to_array = { arr = 857 }
+	add_to_array = { arr = 872 }
+	add_to_array = { arr = 758 }
+	add_to_array = { arr = 475 }
+	add_to_array = { arr = 786 }
+	add_to_array = { arr = 67 }
+	add_to_array = { arr = 646 }
+	add_to_array = { arr = 867 }
+	add_to_array = { arr = 569 }
+	add_to_array = { arr = 249 }
+	add_to_array = { arr = 485 }
+	add_to_array = { arr = 148 }
+	add_to_array = { arr = 664 }
+	add_to_array = { arr = 357 }
+	add_to_array = { arr = 68 }
+	add_to_array = { arr = 610 }
+	add_to_array = { arr = 467 }
+	add_to_array = { arr = 87 }
+	add_to_array = { arr = 733 }
+	add_to_array = { arr = 390 }
+	add_to_array = { arr = 893 }
+	add_to_array = { arr = 989 }
+	add_to_array = { arr = 198 }
+	add_to_array = { arr = 679 }
+	add_to_array = { arr = 611 }
+	add_to_array = { arr = 283 }
+	add_to_array = { arr = 824 }
+	add_to_array = { arr = 402 }
+	add_to_array = { arr = 32 }
+	add_to_array = { arr = 10 }
+	add_to_array = { arr = 462 }
+	add_to_array = { arr = 459 }
+	add_to_array = { arr = 178 }
+	add_to_array = { arr = 444 }
+	add_to_array = { arr = 926 }
+	add_to_array = { arr = 26 }
+	add_to_array = { arr = 938 }
+	add_to_array = { arr = 22 }
+	add_to_array = { arr = 600 }
+	add_to_array = { arr = 620 }
+	add_to_array = { arr = 467 }
+	add_to_array = { arr = 284 }
+	add_to_array = { arr = 404 }
+	add_to_array = { arr = 267 }
+	add_to_array = { arr = 429 }
+	add_to_array = { arr = 571 }
+	add_to_array = { arr = 239 }
+	add_to_array = { arr = 560 }
+	add_to_array = { arr = 421 }
+	add_to_array = { arr = 158 }
+	add_to_array = { arr = 6 }
+	add_to_array = { arr = 967 }
+	add_to_array = { arr = 955 }
+	add_to_array = { arr = 250 }
+	add_to_array = { arr = 111 }
+	add_to_array = { arr = 303 }
+	add_to_array = { arr = 868 }
+	add_to_array = { arr = 29 }
+	add_to_array = { arr = 512 }
+	add_to_array = { arr = 569 }
+	add_to_array = { arr = 805 }
+	add_to_array = { arr = 992 }
+	add_to_array = { arr = 483 }
+	add_to_array = { arr = 234 }
+	add_to_array = { arr = 963 }
+	add_to_array = { arr = 808 }
+	add_to_array = { arr = 267 }
+	add_to_array = { arr = 45 }
+	add_to_array = { arr = 9 }
+	add_to_array = { arr = 731 }
+	add_to_array = { arr = 122 }
+	add_to_array = { arr = 673 }
+	add_to_array = { arr = 217 }
+	add_to_array = { arr = 568 }
+	add_to_array = { arr = 242 }
+	add_to_array = { arr = 882 }
+	add_to_array = { arr = 389 }
+	add_to_array = { arr = 865 }
+	add_to_array = { arr = 430 }
+	add_to_array = { arr = 827 }
+	add_to_array = { arr = 778 }
+	add_to_array = { arr = 218 }
+	add_to_array = { arr = 264 }
+	add_to_array = { arr = 28 }
+	add_to_array = { arr = 223 }
+	add_to_array = { arr = 341 }
+	add_to_array = { arr = 301 }
+	add_to_array = { arr = 346 }
+	add_to_array = { arr = 810 }
+	add_to_array = { arr = 562 }
+	add_to_array = { arr = 133 }
+	add_to_array = { arr = 643 }
+	add_to_array = { arr = 799 }
+	add_to_array = { arr = 217 }
+	add_to_array = { arr = 771 }
+	add_to_array = { arr = 256 }
+	add_to_array = { arr = 231 }
+	add_to_array = { arr = 366 }
+	add_to_array = { arr = 940 }
+	add_to_array = { arr = 109 }
+	add_to_array = { arr = 302 }
+	add_to_array = { arr = 524 }
+	add_to_array = { arr = 537 }
+	add_to_array = { arr = 511 }
+	add_to_array = { arr = 251 }
+	add_to_array = { arr = 273 }
+	add_to_array = { arr = 773 }
+	add_to_array = { arr = 91 }
+	add_to_array = { arr = 773 }
+	add_to_array = { arr = 28 }
+	add_to_array = { arr = 842 }
+	add_to_array = { arr = 238 }
+	add_to_array = { arr = 907 }
+	add_to_array = { arr = 85 }
+	add_to_array = { arr = 750 }
+	add_to_array = { arr = 77 }
+	add_to_array = { arr = 298 }
+	add_to_array = { arr = 282 }
+	add_to_array = { arr = 612 }
+	add_to_array = { arr = 806 }
+	add_to_array = { arr = 938 }
+	add_to_array = { arr = 726 }
+	add_to_array = { arr = 665 }
+	add_to_array = { arr = 399 }
+	add_to_array = { arr = 783 }
+	add_to_array = { arr = 117 }
+	add_to_array = { arr = 830 }
+	add_to_array = { arr = 214 }
+	add_to_array = { arr = 813 }
+	add_to_array = { arr = 818 }
+	add_to_array = { arr = 811 }
+	add_to_array = { arr = 295 }
+	add_to_array = { arr = 694 }
+	add_to_array = { arr = 142 }
+	add_to_array = { arr = 650 }
+	add_to_array = { arr = 383 }
+	add_to_array = { arr = 412 }
+	add_to_array = { arr = 985 }
+	add_to_array = { arr = 383 }
+	add_to_array = { arr = 330 }
+	add_to_array = { arr = 919 }
+	add_to_array = { arr = 851 }
+	add_to_array = { arr = 170 }
+	add_to_array = { arr = 766 }
+	add_to_array = { arr = 253 }
+	add_to_array = { arr = 829 }
+	add_to_array = { arr = 202 }
+	add_to_array = { arr = 728 }
+	add_to_array = { arr = 753 }
+	add_to_array = { arr = 345 }
+	add_to_array = { arr = 360 }
+	add_to_array = { arr = 675 }
+	add_to_array = { arr = 693 }
+	add_to_array = { arr = 630 }
+	add_to_array = { arr = 551 }
+	add_to_array = { arr = 522 }
+	add_to_array = { arr = 588 }
+	add_to_array = { arr = 314 }
+	add_to_array = { arr = 501 }
+	add_to_array = { arr = 296 }
+	add_to_array = { arr = 418 }
+	add_to_array = { arr = 184 }
+	add_to_array = { arr = 381 }
+	add_to_array = { arr = 405 }
+	add_to_array = { arr = 83 }
+	add_to_array = { arr = 337 }
+	add_to_array = { arr = 436 }
+	add_to_array = { arr = 223 }
+	add_to_array = { arr = 353 }
+	add_to_array = { arr = 537 }
+	add_to_array = { arr = 793 }
+	add_to_array = { arr = 755 }
+	add_to_array = { arr = 368 }
+	add_to_array = { arr = 197 }
+	add_to_array = { arr = 258 }
+	add_to_array = { arr = 341 }
+	add_to_array = { arr = 976 }
+	add_to_array = { arr = 999 }
+	add_to_array = { arr = 713 }
+	add_to_array = { arr = 31 }
+	add_to_array = { arr = 129 }
+	add_to_array = { arr = 639 }
+	add_to_array = { arr = 835 }
+	add_to_array = { arr = 563 }
+	add_to_array = { arr = 387 }
+	add_to_array = { arr = 48 }
+	add_to_array = { arr = 622 }
+	add_to_array = { arr = 6 }
+	add_to_array = { arr = 418 }
+	add_to_array = { arr = 637 }
+	add_to_array = { arr = 518 }
+	add_to_array = { arr = 890 }
+	add_to_array = { arr = 81 }
+	add_to_array = { arr = 769 }
+}
