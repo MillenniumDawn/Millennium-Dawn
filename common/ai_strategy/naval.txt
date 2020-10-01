@@ -1,6 +1,8 @@
 ###Non-MTG Generic Naval Unit production###
 MD4_minor_Naval_unit_prod_non_mtg = { #Screen's only | mil 0 - 10
+	allowed = { always = no }
 	enable = {
+
 		num_of_military_factories < 11 #10 or less
 	}
 
@@ -90,6 +92,7 @@ MD4_minor_Naval_unit_prod_non_mtg = { #Screen's only | mil 0 - 10
 	}
 }
 MD4_Low_Secondary_Naval_unit_prod_non_mtg = { #Screen's/subs | Mil 11 - 20
+	allowed = { always = no }
 	enable = {
 		num_of_military_factories > 10 #11 or greater
 		num_of_military_factories < 21 #20 or less
@@ -164,6 +167,7 @@ MD4_Low_Secondary_Naval_unit_prod_non_mtg = { #Screen's/subs | Mil 11 - 20
 }
 
 MD4_High_Secondary_Naval_unit_prod = { #carrier/capital/Screen's/subs | mil 21 - 35
+	allowed = { always = no }
 	enable = {
 		num_of_military_factories > 20 #21 or greater
 		num_of_military_factories < 36 #35 or less
@@ -239,6 +243,7 @@ MD4_High_Secondary_Naval_unit_prod = { #carrier/capital/Screen's/subs | mil 21 -
 
 }
 MD4_Major_Naval_unit_prod = { #carrier/capital/Screen's/subs | Mil 36+
+	allowed = { always = no }
 	enable = {
 
 		num_of_military_factories > 35 #36 or greater
@@ -315,155 +320,46 @@ MD4_Major_Naval_unit_prod = { #carrier/capital/Screen's/subs | Mil 36+
 }
 
 default_role_ratios = {
-	enable = {
-		not = {
-			has_dlc = "Man the Guns"
-		}
-	}
+	enable = { always = yes }
 
-	ai_strategy = {
-		type = role_ratio
-		id = naval_capital
-		value = 100
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_carrier
-		value = 100
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_sub
-		value = 100
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_screen
-		value = 100
-	}
+	ai_strategy = { type = role_ratio id = naval_screen value = 100 }
+	ai_strategy = { type = role_ratio id = naval_submarine value = 25}
+	ai_strategy = { type = role_ratio id = naval_capital_bb value = -100 } ##Avoid Heavy vessels where you can
+	ai_strategy = { type = role_ratio id = naval_capital_bc value = -25 }
+	ai_strategy = { type = role_ratio id = naval_carrier value = -50 }
+	ai_strategy = { type = role_ratio id = naval_cruiser_light value = 25 } ##Cruisers later on.
+	ai_strategy = { type = role_ratio id = naval_cruiser_heavy value = 20 }
+	ai_strategy = { type = role_ratio id = naval_mine_sweeper value = 15 }
+	ai_strategy = { type = role_ratio id = naval_mine_layer value = 15 }
 }
 
-default_role_ratios = {
+convoy_production_strategy_1 = {
 	enable = {
-		has_dlc = "Man the Guns"
-		not = {
-			OR = {
-				original_tag = GER
-				original_tag = ENG
-				original_tag = USA
-				original_tag = JAP
-				original_tag = SOV
+		num_of_naval_factories > 0
+		if = {
+			limit = {
+				OR = {
+					original_tag = USA ##MD Majors
+					original_tag = CHI
+					original_tag = FRA
+					original_tag = ENG
+					original_tag = SOV
+					original_tag = JAP
+					original_tag = BRA
+					original_tag = ARG
+					original_tag = SAF
+					original_tag = ITA
+					original_tag = GER
+				}
 			}
+			stockpile_ratio = { archetype = convoy ratio < 1000 }
+		}
+		else = {
+			stockpile_ratio = { archetype = convoy ratio < 500 }
 		}
 	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_capital_bb
-		value = -80
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_capital_bc
-		value = -20
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_carrier
-		value = -70
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_submarine
-		value = 100
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_screen
-		value = 65
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_escort
-		value = 35
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_cruiser_light
-		value = 25
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_cruiser_heavy
-		value = 20
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_mine_sweeper
-		value = 15
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_mine_layer
-		value = 20
-	}
-}
-
-convoy_voy_voy_voy = {
-	enable = {
-		has_dlc = "Man the Guns"
-		convoy_threat > 0.2
-	}
-	abort = {
-		convoy_threat < 0.2
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_cruiser_light
-		value = -20
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_escort
-		value = 25
-	}
-
-	ai_strategy = {
-		type = role_ratio
-		id = naval_mine_layer
-		value = -10
-	}
-	ai_strategy = {
-		type = unit_ratio
-		id = screen_ship
-		value = 30
-	}
-
-	ai_strategy = {
-		type = unit_ratio
-		id = capital_ship
-		value = -10
-	}
-
-	ai_strategy = {
-		type = unit_ratio
-		id = convoy
-		value = 25
-	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = equipment_production_min_factories id = convoy value = 2 } #Minimally assigns 2 factories to convoys
 }
 
 ill_show_you_mine = {
