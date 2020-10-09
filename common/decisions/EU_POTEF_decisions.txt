@@ -1,0 +1,360 @@
+##########################
+##########################
+### EU_voting_category ###
+##########################
+##########################
+
+
+### Environmental Imperialism
+EU_environmental_imperialism_category = {
+
+	EU_POTEF_environmental_imperialism_decision = {
+		cost = 100
+		target_trigger = {
+			FROM = {
+				NOT = { has_country_flag = EU_POTEF_environmental_imperialism_target }
+				NOT = { has_idea = USoE_environmental_sanctions }			
+				OR = { 
+						has_idea = regional_power						
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = superpower
+				}					
+				synthetic_refinery < num_owned_states
+				OR = {
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_europe
+						}
+						capital_scope = {
+							is_on_continent = europe
+						}	
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_north_america
+						}
+						capital_scope = {
+							is_on_continent = north_america
+						}	
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_south_america
+						}
+						capital_scope = {
+							is_on_continent = south_america
+						}	
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_africa
+						}
+						capital_scope = {
+							is_on_continent = africa
+						}	
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_asia
+						}
+						capital_scope = {
+							is_on_continent = asia
+						}	
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_middle_east
+						}
+						capital_scope = {
+							is_on_continent = middle_east
+						}	
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_pacific
+						}
+						capital_scope = {
+							is_on_continent = pacific
+						}	
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_oceania
+						}
+						capital_scope = {
+							is_on_continent = oceania
+						}	
+					}																														
+				}
+			}
+		}	
+		available = {			
+			has_country_flag = environmental_imperialism
+		}
+		
+		visible = { 
+			has_country_flag = environmental_imperialism
+			has_idea = EU_president			
+			FROM = {
+				NOT = { has_country_flag = EU_POTEF_environmental_imperialism_target }  
+			}
+			FROM = {
+				NOT = { has_idea = USoE_environmental_sanctions } 
+			}
+			FROM = {
+				NOT = { has_country_flag = fossil_energy_pact }
+			}
+			FROM = {
+				NOT = { has_country_flag = break_environmental_sanctions }
+			}
+		} 
+		
+		complete_effect = {
+			FROM = {
+				activate_mission = EU_POTEF_environmental_imperialism_mission
+				set_country_flag = EU_POTEF_environmental_imperialism_target
+				custom_effect_tooltip = "If they don't complete the mission they get:"
+				show_ideas_tooltip = USoE_environmental_sanctions
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}			
+	}
+}
+
+
+##################################
+### Category economy_decisions ###
+##################################
+
+economy_decisions = {
+
+	EU_POTEF_environmental_imperialism_mission = {		
+		allowed = {
+			always = yes
+		}
+		available = {
+			#synthetic_refinery > num_owned_states
+			set_temp_variable = { a = num_owned_states }
+			subtract_from_temp_variable = { a = 1 }
+			synthetic_refinery > a
+		}	
+		activation = {
+			always = no
+		}
+
+		days_mission_timeout = 30
+		is_good = no
+		selectable_mission = yes
+		
+		fire_only_once = yes
+	
+		complete_effect = {
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.05
+			}			
+			custom_effect_tooltip = tooltip_USoE_Neutral_green_rise_5
+			add_to_variable = { party_pop_array^17 = 0.05 }
+			recalculate_party = yes
+			#custom_effect_tooltip = tooltip_EU_USoE_environmental_puppet
+			#set_country_flag = EU_USoE_environmental_puppet
+			every_country = {
+				limit = {
+					has_idea = EU_president
+				}			
+				country_event = {
+					id = USoEevent.5
+				}
+			}
+			clr_country_flag = EU_POTEF_environmental_imperialism_target	
+		}
+		timeout_effect = {
+			add_ideas = USoE_environmental_sanctions
+			#show_ideas_tooltip = USoE_environmental_sanctions
+			clr_country_flag = EU_POTEF_environmental_imperialism_target
+			every_country = {
+				limit = {
+					has_idea = EU_president
+				}
+				country_event = {
+					id = USoEevent.6
+				}
+			}
+		}	
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	
+	#Green Energy Reconstruction
+	EU_POTEF_environmental_imperialism_restructure_industry_decision = {	
+		cost = 100			
+		available = {						
+			has_country_flag = EU_POTEF_environmental_imperialism_target
+		}
+		
+		visible = { 
+			has_country_flag = EU_POTEF_environmental_imperialism_target
+			any_owned_state = {
+				synthetic_refinery < 2
+				industrial_complex > 0
+			}
+		} 
+		complete_effect = {
+			set_temp_variable = { temp1 = 0 }			
+			every_owned_state = {
+				limit = {
+					synthetic_refinery < 2
+					industrial_complex > 0
+				}
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+				add_to_temp_variable = { temp1 = 1 }
+			}
+			subtract_from_variable = { treasury = temp1 }
+			custom_effect_tooltip = tooltip_green_energy_reconstruction
+			for_loop_effect = {
+				end = temp1
+				if = {
+					limit = {
+						check_variable = { party_pop_array^17 < 0.50 }
+					}						
+					add_popularity = {
+						ideology = neutrality
+						popularity = 0.05
+					}					
+					add_to_variable = { party_pop_array^17 = 0.05 }
+					recalculate_party = yes
+				}
+			}	
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	EU_POTEF_break_environmental_sanctions_decision = {
+		target_trigger = {
+			FROM = {
+				has_idea = EU_president
+			}
+		}				
+		cost = 100			
+		available = {						
+			has_idea = USoE_environmental_sanctions
+		}
+		
+		visible = { 
+			has_idea = USoE_environmental_sanctions
+		} 
+		complete_effect = {
+			remove_ideas = USoE_environmental_sanctions
+			set_country_flag = break_environmental_sanctions
+			FROM = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = betrayed_our_cause
+				}
+				reverse_add_opinion_modifier = {
+					target = ROOT
+					modifier = betrayed_our_cause
+				}
+			}
+			FROM = {
+				create_wargoal = {
+					type = topple_government
+					target = ROOT
+				}
+			}
+			FROM = {
+				country_event = {
+					id = USoEevent.7
+				}				
+			}
+			if = {
+				limit = {
+					NOT = { has_global_flag = fossil_energy_pact }
+					NOT = {	is_in_faction = yes }
+				}
+				create_faction = "Fossil Energy Pact"
+				set_global_flag = fossil_energy_pact
+				set_country_flag = fossil_energy_pact
+			}
+			else_if = {
+				limit = {
+					has_global_flag = fossil_energy_pact
+					NOT = {	is_in_faction = yes }
+				}
+				random_country = {
+					limit = {
+						has_country_flag = fossil_energy_pact
+						is_faction_leader = yes
+					}					
+					THIS = { add_to_faction = ROOT }
+				}
+				set_country_flag = fossil_energy_pact	
+			}
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				strength_ratio = {
+					tag = FROM
+					ratio > 0.7
+				}
+			}
+			modifier = {
+				add = 1
+				any_country = {
+					if = {
+						limit = {
+							has_country_flag = fossil_energy_pact
+							is_faction_leader = yes						
+						}				
+						strength_ratio = {
+							tag = FROM
+							ratio > 0.5
+						}
+					}	
+				}
+				strength_ratio = {
+					tag = FROM
+					ratio > 0.1
+				}					
+			}
+			modifier = {
+				add = 1
+				any_country = {
+					if = {
+						limit = {
+							has_country_flag = fossil_energy_pact
+							is_faction_leader = yes						
+						}				
+						strength_ratio = {
+							tag = FROM
+							ratio > 0.7
+						}
+					}	
+				}					
+			}
+			modifier = {
+				add = 1
+				ic_ratio = {
+					tag = FROM
+					ratio > 0.6
+				}
+			}			
+		}
+	}	
+}
