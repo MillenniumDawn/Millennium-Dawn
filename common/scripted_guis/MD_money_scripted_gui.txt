@@ -315,11 +315,15 @@ scripted_gui = {
 			small_plus_button_bg_click_enabled = {
 				check_variable = { tax_rate < 50 }
 				ROOT = { has_political_power > 50 }
+				if = {
+					limit = { original_tag = USA }
+					NOT = { has_decision = USA_give_tax_break }
+				}
 			}
 		}
 
 		ai_enabled = { always = yes }
-		ai_test_interval = 340
+		ai_test_interval = 168
 		ai_check = {
 			check_variable = { treasury_rate < 0 }
 		}
@@ -328,16 +332,33 @@ scripted_gui = {
 				ai_will_do = {
 					base = 0
 					modifier = { # If we have pp to spare consider
-						add = 1
+						factor = 1.50
 						has_political_power > 100
 					}
 					modifier = { # If we have pp to spare consider
-						add = 1000
+						factor = 500
 						has_political_power > 50
 						check_variable = { treasury_rate < -2.10 }
 					}
-
-
+					modifier = {
+						factor = 5
+						ai_has_major_economic_problems = yes
+					}
+					modifier = {
+						factor = 2.5
+						ai_has_moderate_economic_problems = yes
+					}
+					modifier = {
+						factor = 1.25
+						ai_has_minor_economic_problems = yes
+					}
+					modifier = {
+						factor = 0.50
+						OR = {
+							ai_has_acceptable_deficit = yes
+							ai_has_acceptable_surplus = yes
+						}
+					}
 					modifier = { # consider increase taxes if income is low and intrest is high
 						add = 1
 						OR = {
@@ -389,6 +410,10 @@ scripted_gui = {
 						factor = 0
 						check_variable = { tax_rate > 40 }
 					}
+					modifier = {
+						factor = 2
+						check_variable = { tax_rate < 25 }
+					}
 				}
 
 			}
@@ -430,17 +455,15 @@ scripted_gui = {
 		ai_check = {
 			check_variable = { treasury_rate > 0 }
 		}
-		ai_test_interval = 340
+		ai_test_interval = 168
 		ai_weights = {
 			small_minus_button_bg_click = {
 				ai_will_do = {
 					base = 0
-
 					modifier = { # If we have pp to spare consider
-						add = 1
+						factor = 1.50
 						has_political_power > 100
 					}
-
 					modifier = { # Dont decrease taxes if we have economic problems
 						factor = 0.10
 						OR = {
@@ -451,7 +474,7 @@ scripted_gui = {
 						}
 					}
 					modifier = {
-						factor = 0.20
+						factor = 0.05
 						OR = {
 							has_idea = depression
 							has_idea = recession
@@ -459,13 +482,31 @@ scripted_gui = {
 						}
 					}
 					modifier = {
-						factor = 0.40
+						factor = 0.01
 						OR = {
 							has_idea = depression
 							check_variable = { interest_rate > 8.00 }
 						}
 					}
-
+					modifier = {
+						factor = 0.5
+						ai_has_major_economic_problems = yes
+					}
+					modifier = {
+						factor = 0.25
+						ai_has_moderate_economic_problems = yes
+					}
+					modifier = {
+						factor = 0.125
+						ai_has_minor_economic_problems = yes
+					}
+					modifier = {
+						factor = 1.50
+						OR = {
+							ai_has_acceptable_deficit = yes
+							ai_has_acceptable_surplus = yes
+						}
+					}
 					modifier = { # consider lower taxes if income is high and intrest is low
 						factor = 2.5
 						OR = {
@@ -521,6 +562,10 @@ scripted_gui = {
 					modifier = { ##Failsafe. AI should keep around 25%
 						factor = 0
 						check_variable = { tax_rate < 25 }
+					}
+					modifier = {
+						factor =2
+						check_variable = { tax_rate > 24  }
 					}
 				}
 			}
