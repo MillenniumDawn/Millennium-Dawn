@@ -2,9 +2,10 @@
 ### EU events ### for EU voting events see EU_voting_events.txt
 #################
 
-add_namespace = EUevent ### next free ID 19
+add_namespace = EUevent ### next free ID 20
 add_namespace = EUcheat
 add_namespace = EUupdate
+add_namespace = EUelection
 
 country_event = {
 	id = EUcheat.1
@@ -30,7 +31,7 @@ country_event = {
 		name = EUcheat.1.c
 		log = "[GetDateText]: [Root.GetName]: event EUcheat.1.c"
 		clr_global_flag = EU_voting_cheat_yes
-		clr_global_flag = EU_voting_cheat_yes		
+		clr_global_flag = EU_voting_cheat_no		
 	}
 }
 
@@ -81,7 +82,21 @@ country_event = {
 				}
 				add_ideas = EUU_monitor				
 				activate_mission = EU_update_vars_mission
-				activate_mission = EU_clear_voting_mission				
+				activate_mission = EU_clear_voting_mission
+				if = {
+					limit = {
+						has_start_date < 2000.01.02
+					}
+					country_event = {
+						id = EUelection.2
+					}
+				}
+				else = {
+					country_event = {
+						id = EUelection.3
+					}
+				}
+				activate_mission = EU_election_5_years				
 		}
 	}
 }
@@ -279,7 +294,7 @@ country_event = {
 	
 	option = { #a
 		name = EUevent.3.a
-		log = "[GetDateText]: [Root.GetName]: event EUevent.3.a"
+		log = "[GetDateText]: [Root.GetName]: event EUevent.3.a"		
 		EU_set_most_advanced_naval_tech = yes
 		every_country = {
 			limit = {  
@@ -309,12 +324,26 @@ country_event = {
 		every_country = {
 			limit = {  has_idea = EU_member }
 				clr_country_flag = USoE_transfer_navy
+				set_country_flag = USoE_member
+				every_unit_leader = {
+					set_unit_leader_flag = USoE_unit_leader
+					set_nationality = ROOT
+					add_unit_leader_trait = military_reorganization
+				}				
 		}
 		every_country = {
 			limit = {  has_idea = EU_member }			
 				every_owned_state = { 
-					limit = { 
-						is_on_continent = Europe 
+					limit = {
+						OR = { 
+							is_on_continent = europe
+							is_core_of = GEO
+							is_core_of = ARM
+							is_core_of = AZE
+							is_core_of = TUR
+							is_core_of = POR
+							is_core_of = SPR
+						}
 						NOT = { is_core_of = ROOT }
 					}
 					add_core_of = ROOT 
@@ -327,6 +356,7 @@ country_event = {
 		ROOT = {
 			set_cosmetic_tag = USoE
 			set_country_flag = USoE
+			add_ideas = multi_ethnic_state_idea
 		}
 	}
 }
@@ -1419,5 +1449,109 @@ country_event = {
 			factor = 0
 		}
 	}	
+}
+
+
+country_event = {
+	id = EUevent.19
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event EUevent.19"
+		set_THIS_desire = yes
+		set_PG_desire = yes
+	}
+	title = EUevent.19.t
+	desc = EUevent.19.d
+	
+	#picture = GFX_eu
+	hidden = yes
+	is_triggered_only = yes
+	
+	option = { #a yes
+		name = EUevent.19.a
+		log = "[GetDateText]: [Root.GetName]: event EUevent.19.a"
+	}
+}
+
+
+### EU election ###
+
+country_event = {
+	id = EUelection.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event EUelection.1" }
+	title = EUelection.1.t
+	desc = EUelection.1.d
+	
+	#picture = GFX_eu
+
+	is_triggered_only = yes
+	
+	option = { #a
+		name = EUelection.1.a
+		log = "[GetDateText]: [Root.GetName]: event EUelection.1.a"
+		clear_EU_Parliament = yes
+		election_EU_Parliament = yes
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			news_event = { ### Result of EU Parliament elections
+				id = EU_news.52				
+			}
+		}		
+	}
+}
+
+country_event = {
+	id = EUelection.2
+	immediate = { log = "[GetDateText]: [Root.GetName]: event EUelection.2" }
+	title = EUelection.2.t
+	desc = EUelection.2.d
+	
+	#picture = GFX_eu
+
+	is_triggered_only = yes
+	
+	option = { #a
+		name = EUelection.2.a
+		log = "[GetDateText]: [Root.GetName]: event EUelection.2.a"
+		clear_EU_Parliament = yes
+		election_EU_Parliament = yes
+		activate_mission = EU_election_2004
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			#news_event = { ### Result of EU Parliament elections
+			#	id = EU_news.53				
+			#}
+		}		
+	}
+}
+
+country_event = {
+	id = EUelection.3
+	immediate = { log = "[GetDateText]: [Root.GetName]: event EUelection.3" }
+	title = EUelection.3.t
+	desc = EUelection.3.d
+	
+	#picture = GFX_eu
+
+	is_triggered_only = yes
+	
+	option = { #a
+		name = EUelection.3.a
+		log = "[GetDateText]: [Root.GetName]: event EUelection.3.a"
+		clear_EU_Parliament = yes
+		election_EU_Parliament = yes
+		activate_mission = EU_election_2019
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			#news_event = { ### Result of EU Parliament elections
+			#	id = EU_news.54				
+			#}
+		}		
+	}
 }
 		

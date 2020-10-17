@@ -7,7 +7,7 @@ tags={
 	"Events"
 	"Graphics"
 }
-supported_version="1.9.*"
+supported_version="1.10.*"
 picture = "thumbnail.png"
 remote_file_id="719416488"
 

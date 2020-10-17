@@ -333,6 +333,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus NIG_continue_sharia_law executed"
 			NIG_religious_idea_switch_muslim_majority = yes
+			custom_effect_tooltip = terror_threat_increase_small_tt
+			add_to_variable = { threat_level = 2 }
+			clamp_threat = yes
+			custom_effect_tooltip = radicalization_increase_small_tt
+			add_to_variable = { radicalization = 2 }
+			clamp_radicalization = yes
 		}
 	}
 
@@ -416,6 +422,12 @@ focus_tree = {
 				load_oob = "NIG_boko_haram"
 			}
 			custom_effect_tooltip = NIG_enlist_boko_haram_TT
+			custom_effect_tooltip = terror_threat_increase_medium_tt
+			add_to_variable = { threat_level = 5 }
+			clamp_threat = yes
+			custom_effect_tooltip = radicalization_increase_tt
+			add_to_variable = { radicalization = 5 }
+			clamp_radicalization = yes
 		}
 	}
 
@@ -457,6 +469,9 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus NIG_convert_the_christians executed"
 			NIG_religious_idea_switch_muslim_majority = yes
 			unlock_decision_category_tooltip = NIG_religious_divide_decisions_category
+			custom_effect_tooltip = radicalization_increase_tt
+			add_to_variable = { radicalization = 5 }
+			clamp_radicalization = yes
 		}
 	}
 
@@ -497,6 +512,9 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus NIG_justify_radcialism executed"
 			NIG_religious_idea_switch_muslim_majority = yes
 			add_stability = 0.035
+			custom_effect_tooltip = radicalization_increase_small_tt
+			add_to_variable = { radicalization = 2 }
+			clamp_radicalization = yes
 		}
 	}
 
@@ -534,12 +552,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus NIG_disarm_the_militias executed"
-			hidden_effect = {
-				delete_unit_template_and_units = { division_template = "Christian Militas" }
-				add_manpower = 2000
+			if = {
+				limit = {
+					has_template = "Christian Militias"
+				}
+				hidden_effect = {
+					delete_unit_template_and_units = { division_template = "Christian Militias" }
+					add_manpower = 2000
+				}
+				custom_effect_tooltip = NIG_disarm_the_militias_toolie_TT
 			}
 			NIG_religious_idea_switch_muslim_majority = yes
-			custom_effect_tooltip = NIG_disarm_the_militias_toolie_TT
+
 		}
 	}
 
@@ -1227,11 +1251,17 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus NIG_enlist_the_militas executed"
 			NIG_religious_idea_switch_christian_majority = yes
 			hidden_effect = {
-				delete_unit_template_and_units = { division_template = "Islamic Militas" }
-				delete_unit_template_and_units = { division_template = "Christian Militas" }
+				if = {
+					limit = {
+						has_template = "Christian Militias"
+						has_template = "Islamic Militias"
+					}
+					delete_unit_template_and_units = { division_template = "Islamic Militias" }
+					delete_unit_template_and_units = { division_template = "Christian Militias" }
+				}
 				NIG = {
 					division_template = {
-						name = "Reorganized Militas"
+						name = "Reorganized Militias"
 						is_locked = yes
 						regiments = {
 							L_Inf_Bat = { x = 0 y = 0 }
@@ -1248,7 +1278,7 @@ focus_tree = {
 				NIG = {
 					337 = { #Should Spawn in Abuja
 						create_unit = {
-							division = " name = \"Reorgnaized Militas\" division_template = \"Reorganized Militas\" start_experience_factor = 0.5"
+							division = " name = \"Reorgnaized Militias\" division_template = \"Reorganized Militias\" start_experience_factor = 0.5"
 							owner = NIG
 							prioritize_location = 2025
 						}
@@ -5748,11 +5778,6 @@ focus_tree = {
 			factor = 1
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus NIG_national_guard executed"
 			if = {
@@ -5762,8 +5787,14 @@ focus_tree = {
 				}
 				hidden_effect = {
 					load_oob = "NIG_establish_ng"
-					delete_unit_template_and_units = { division_template = "Chrisitan Militas" }
-					delete_unit_template_and_units = { division_template = "Islamic Militas" }
+					if = {
+						limit = {
+							has_template = "Christian Militias"
+							has_template = "Islamic Militias"
+						}
+						delete_unit_template_and_units = { division_template = "Islamic Militias" }
+						delete_unit_template_and_units = { division_template = "Christian Militias" }
+					}
 				}
 				subtract_from_variable = { treasury = 2.5 }
 				custom_effect_tooltip = NIG_establish_ng_TT
@@ -6154,7 +6185,7 @@ focus_tree = {
 		prerequisite = { focus = NIG_nigerian_coastal_forces }
 		mutually_exclusive = { }
 		search_filters = {FOCUS_FILTER_INDUSTRY}
-		
+
 		ai_will_do = {
 			factor = 1
 		}
