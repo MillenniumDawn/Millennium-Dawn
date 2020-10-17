@@ -15,7 +15,7 @@
 #econ_cycle_upg_cost - cost to upgrade economic cycle
 #bureaucracy_gain cost for bureaucracy law
 #education_gain cost of education law
-#health_gain cost of health care law
+#health_gain cost of health care lawu
 #welfare_gain cost of welfare law
 #military_rate cost of military law
 #personnel_cost - how much you pay soldiers and maintenance on equipment
@@ -315,7 +315,15 @@ calculate_tax_gain = {
 	subtract_from_variable = { var = treasury_rate value = tax_gain }
 	set_variable = { var = tax_gain value = tax_rate }
 
-	multiply_variable = { tax_gain = 10 }
+	if = {
+		limit = { ##Soft buff to AI tax gain for better balance
+			is_ai = yes
+		}
+		multiply_variable = { tax_gain = 12.5 }
+	}
+	else = {
+		multiply_variable = { tax_gain = 10 }
+	}
 
 	multiply_variable = { var = tax_gain value = size_modifier }
 	if = {
@@ -471,17 +479,17 @@ calculate_interest_rate_ai = {
 		subtract_from_variable = { var = interest_rate value = 9 }
 	}
 	if = {
-		limit = { 
-			OR = { 
-				has_idea = wall_street 
-				has_idea = international_bankers 
-			} 
+		limit = {
+			OR = {
+				has_idea = wall_street
+				has_idea = international_bankers
+			}
 		}
 		subtract_from_variable = { var = interest_rate value = 1 }
 	}
 	if = {
 		limit = { has_country_flag = bailout_given }
-		subtract_from_variable = { var = interest_rate value = 8 }
+		subtract_from_variable = { var = interest_rate value = 10 }
 	}
 	if = {
 		limit = { has_idea = NIG_efficent_government_spending_reform_idea }
@@ -558,17 +566,17 @@ calculate_interest_rate_player = {
 			subtract_from_temp_variable = { var = temp_interest_rate^i value = 9 }
 		}
 		if = {
-			limit = { 
-				OR = { 
-					has_idea = wall_street 
-					has_idea = international_bankers 
-				} 
+			limit = {
+				OR = {
+					has_idea = wall_street
+					has_idea = international_bankers
+				}
 			}
 			subtract_from_temp_variable = { var = temp_interest_rate^i value = 1 }
 		}
 		if = {
 			limit = { has_country_flag = bailout_given }
-			subtract_from_temp_variable = { var = temp_interest_rate^i value = 8 }
+			subtract_from_temp_variable = { var = temp_interest_rate^i value = 10 }
 		}
 		if = {
 			limit = { has_idea = NIG_efficent_government_spending_reform_idea }
@@ -1367,7 +1375,6 @@ update_bureaucracy_rate_ai = {
 
 }
 update_bureaucracy_rate_player = {
-
 	subtract_from_variable = { var = expense_gain value = bureaucracy_gain }
 	add_to_variable = { var = treasury_rate value = bureaucracy_gain }
 
@@ -1383,7 +1390,6 @@ update_bureaucracy_rate_player = {
 			array = temp_bureaucracy_spend
 			value = size_modifier
 		}
-
 	}
 
 	multiply_temp_variable = { var = temp_bureaucracy_spend^0 value = 0.01 }
@@ -1534,7 +1540,6 @@ update_police_rate_player = {
 		}
 
 	}
-
 	multiply_temp_variable = { var = temp_security_spend^0 value = 0.005 }
 	multiply_temp_variable = { var = temp_security_spend^1 value = 0.01 }
 	multiply_temp_variable = { var = temp_security_spend^2 value = 0.02 }
@@ -1583,8 +1588,13 @@ update_police_rate_player = {
 		}
 	}
 
-	set_variable = { var = security_gain value = array_security_spend^security_index }
+	#Modifiers
+	if = {
+		limit = { has_tech = DNA_fingerprinting } ##5% reduction in cost for security
+		multiply_variable = { var = array_security_spend^security_index value = 0.95 }
+	}
 
+	set_variable = { var = security_gain value = array_security_spend^security_index }
 	add_to_variable = { var = expense_gain value = security_gain }
 	subtract_from_variable = { var = treasury_rate value = security_gain }
 }
@@ -1846,6 +1856,47 @@ update_education_rate_player = {
 		}
 	}
 
+	###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
+	if = {
+		limit = {
+			has_tech = internet1
+		}
+		multiply_variable = { var = array_education_spend^education_index value = 0.97 } #3% education cost
+	}
+	if = {
+		limit = {
+			has_tech = internet2
+		}
+		multiply_variable = { var = array_education_spend^education_index value = 0.95}
+	}
+	if = {
+		limit = {
+			has_tech = internet3
+		}
+		multiply_variable = { var = array_education_spend^education_index value = 0.97}
+	}
+	if = {
+		limit = {
+			has_tech = internet4
+		}
+		multiply_variable = { var = array_education_spend^education_index value = 0.95}
+	}
+
+	if = {
+		limit = {
+			has_tech = internet5
+		}
+		multiply_variable = { var = array_education_spend^education_index value = 0.97}
+	}
+	if = {
+		limit = {
+			has_tech = internet6
+		}
+		multiply_variable = { var = array_education_spend^education_index value = 0.95}
+	}
+
+
+
 	set_variable = { var = education_gain value = array_education_spend^education_index }
 
 	add_to_variable = { var = expense_gain value = education_gain }
@@ -1957,7 +2008,6 @@ update_health_rate_player = {
 			array = temp_health_spend
 			value = size_modifier
 		}
-
 	}
 
 	multiply_temp_variable = { var = temp_health_spend^0 value = 0.01 }
@@ -2012,6 +2062,13 @@ update_health_rate_player = {
 		}
 	}
 
+	##Modifiers to Healthcare Costs
+	if = {
+		limit = {
+			has_tech = nanocellulose_in_medicine
+		}
+		multiply_variable = { var = array_health_spend^health_index value = 0.90 }
+	}
 	set_variable = { var = health_gain value = array_health_spend^health_index }
 
 	add_to_variable = { var = expense_gain value = health_gain }
@@ -2107,7 +2164,6 @@ update_social_rate_ai = {
 
 }
 update_social_rate_player = {
-
 	subtract_from_variable = { var = expense_gain value = welfare_gain }
 	add_to_variable = { var = treasury_rate value = welfare_gain }
 
@@ -2123,7 +2179,6 @@ update_social_rate_player = {
 			array = temp_social_spend
 			value = size_modifier
 		}
-
 	}
 
 	multiply_temp_variable = { var = temp_social_spend^0 value = 0.02 }
@@ -2194,25 +2249,97 @@ calculate_int_investments_rate = {
 	update_display_income = yes
 }
 
-calculate_resource_sale_rate = {
-
+calculate_resource_sale_rate = { #Calculates income from resources
 	#See Treasury reset comment at top of page
 	subtract_from_variable = { var = treasury_rate value = resource_sale_rate }
 
-	set_variable = { resource_exports = resource_exported@steel }
+	set_variable = { resource_exports = resource_exported@steel } #Uses the value to judge
 	add_to_variable = { resource_exports = resource_exported@oil }
 	add_to_variable = { resource_exports = resource_exported@aluminium }
 	add_to_variable = { resource_exports = resource_exported@tungsten }
-	multiply_variable = { resource_exports = 0.166 }
+	if = {
+		limit = {
+			has_idea = rentier_state
+		}
+		##Boosts income by around 25%
+		multiply_variable = { resource_exports = 0.208 } ##Roughly worth 25% more than the 1/6. So a factory should count for 125% more
+	}
+	else = {
+		multiply_variable = { resource_exports = 0.166 } ##This is equivalent to 1/6 1 factory = 6 resources
+	}
 	round_variable = resource_exports
-
 	set_variable = { var = resource_sale_rate value = resource_exports }
-	divide_variable = { var = resource_sale_rate value = 70 }
+	if = {
+		limit = { ##If you have a single resource over 100 units. You should have significant gain from resources
+			OR = {
+				has_idea = rentier_state
+				has_idea = export_economy ##Export economies should utilize this as well
+				has_idea = globalized_trade_economy
+				check_variable = { resource_exported@steel > 99 }
+				check_variable = { resource_exported@oil > 99 }
+				check_variable = { resource_exported@aluminium > 99 }
+				check_variable = { resource_exported@tungsten > 99 }
+			}
+		}
+		if = {
+			limit = {
+				num_of_factories < 25
+			}
+			divide_variable = { resource_sale_rate = 50 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 24
+				num_of_factories < 50
+			}
+			divide_variable = { resource_sale_rate = 60 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 49
+				num_of_factories < 80
+			}
+			divide_variable = { resource_sale_rate = 70 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 79
+				num_of_factories < 125
+			}
+			divide_variable = { resource_sale_rate = 80 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 124
+				num_of_factories < 160
+			}
+			divide_variable = { resource_sale_rate = 90 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 159
+				num_of_factories < 200
+			}
+			divide_variable = { resource_sale_rate = 100 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 199
+			}
+			divide_variable = { resource_sale_rate = 115 }
+		}
+		else = { ##This is just a failsafe. If not just use the standard rat
+			divide_variable = { resource_sale_rate = 100 }
+		}
+
+	}
+	else = { ##Flat resource gain for now
+		divide_variable = { resource_sale_rate = 100 }
+	}
 
 	add_to_variable = { var = treasury_rate value = resource_sale_rate }
 	update_display_income = yes
 }
-
 
 update_display_expense = {
 	set_variable = { var = display_expense value = expense_gain }
