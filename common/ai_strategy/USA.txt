@@ -3,7 +3,7 @@ seek_american_alliance = {
 		NOT = { tag = USA }
 		has_country_flag = seeks_american_alliance
 	}
-	
+
 	abort = {
 		OR = {
 			NOT = { has_country_flag = seeks_american_alliance }
@@ -11,7 +11,7 @@ seek_american_alliance = {
 			is_in_faction_with = USA
 		}
 	}
-	
+
 	ai_strategy = {
 		type = befriend
 		id = "USA"
@@ -21,5 +21,168 @@ seek_american_alliance = {
 		type = alliance
 		id = "USA"
 		value = 150
+	}
+}
+
+USA_strike_force_pacific = { #Essentially used to push out in the pacific
+	allowed = { tag = USA }
+	enable = {
+		NOT = { any_home_area_neighbor_country = { has_war_with = ROOT } }
+		any_enemy_country = {
+			capital_scope = {
+				OR = {
+					is_on_continent = asia
+					is_on_continent = australia
+				}
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = strike_force_home_base id = 817 }
+	ai_strategy=  { type = strike_force_home_base id = 827 }
+	ai_strategy = { type = area_priority id = pacific value = 250 }
+	ai_strategy = { type = area_priority id = asia value = 250 }
+	ai_strategy = { type = naval_avoid_region id = 88 value = 1000 } #Bering Straits -This is here to keep the AI protecting the cores regions
+	ai_strategy = { type = naval_avoid_region id = 171 value = 1000 } #Alaskan Coast
+	ai_strategy = { type = naval_avoid_region id = 32 value = 1000 }
+	ai_strategy = { type = naval_avoid_region id = 112 value = 1000 }
+
+}
+
+USA_strike_force_europe = {
+	allowed = { tag = USA }
+	enable = {
+		NOT = { any_home_area_neighbor_country = { has_war_with = ROOT } }
+		any_enemy_country = {
+			OR = {
+				capital_scope = {
+					is_on_continent = europe
+				}
+				tag = SOV
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = strike_force_home_base id = 773 }
+	ai_strategy = { type = area_priority id = europe value = 250 }
+}
+
+USA_defend_the_coasts = { #This AI Strategy should keep the USA at bay in case of severe loss. All production goes to homeland defense
+	allowed = { tag = USA }
+	enable = {
+		any_neighbor_country = {
+			has_war_with = ROOT
+		}
+		alliance_naval_strength_ratio < 1.0
+		any_enemy_country = {
+			strength_ratio = { tag = USA ratio = 0.5 }
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = area_priority id = north_america value = 1000 }
+	ai_strategy = { type = area_priority id = united_states_coasts value = 100000 } #America Must Stand Strong
+	ai_strategy = {
+		type = put_unit_buffers
+		ratio = 0.75
+		states = {
+			809 808 799 792 768
+			810 805 798 795 767
+			811 788 797 791 765
+			806 789 798 790 764
+			803 804 796 770 772
+			808 800 794 769 771
+		}
+		subtract_fronts_from_need = no
+		subtract_invasions_from_need = no
+	}
+}
+
+USA_attack_china = {
+	allowed = { tag = USA }
+	enable = {
+		has_war_with = CHI
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = invade id = "CHI" value = 4000 }
+	ai_strategy = { type = area_priority id = chinese_coast value = 100000 } #This should mega focus here
+
+	ai_strategy = {
+		type = put_unit_buffers
+		ratio = 0.05
+		states = {
+			827 819 818 817
+		}
+		subtract_invasions_from_need = no
+		subtract_fronts_from_need = no
+	}
+}
+
+USA_attack_russia = {
+	allowed = { tag = USA }
+	enable = {
+		has_war_with = SOV
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = invade id = "SOV" value = 4000 }
+	ai_strategy = { type = area_priority id = europe value = 10000 }
+}
+
+USA_garrison_default = {
+	allowed = { tag = USA }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = garrison value = 50 }
+}
+
+USA_defend_nato_historical = {
+	allowed = {
+		tag = USA
+		is_historical_focus_on = yes
+	}
+	enable = {
+		has_idea = NATO_member
+		is_faction_leader = yes
+		NOT = {
+			has_war_with = CHI
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = force_defend_ally_borders id = "FRA" value = 25 }
+	ai_strategy = { type = force_defend_ally_borders id = "GER" value = 25 }
+	ai_strategy = { type = force_defend_ally_borders id = "ITA" value = 25 }
+	ai_strategy = { type = force_defend_ally_borders id = "ENG" value = 25 }
+	ai_strategy = { type = force_defend_ally_borders id = "SPR" value = 25 }
+}
+
+USA_garrison_oversea_bases = {
+	allowed = { tag = USA } #These are needed to actually defend American interest
+	enable = { #Should trigger if you own at least 1 of these
+		count_triggers = {
+			amount = 1
+			controls_state = 824
+			controls_state = 624
+			controls_state = 488
+			controls_state = 827
+			controls_state = 817
+			controls_state = 825
+			controls_state = 818
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = put_unit_buffers
+		ratio = 0.05
+		order_id = 999
+		states = { 824 624 488 827 817 825 818 }
+		subtract_invasions_from_need = no
+		subtract_fronts_from_need = no
 	}
 }
