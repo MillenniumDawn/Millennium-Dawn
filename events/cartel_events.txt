@@ -1,5 +1,6 @@
 add_namespace = cartel_event
 
+# Begins the event chain for the narco rebellion in Mexico
 country_event = {
 	id = cartel_event.1
 	immediate = { log = "[GetDateText]: [Root.GetName]: event cartel_event.1" }
@@ -8,4 +9,94 @@ country_event = {
 
 	fire_only_once = yes
 	is_triggered_only = yes
+
+	option = {
+		name = cartel_event.1.a
+		log = "[GetDateText]: [This.GetName]: cartel_event.1.a executed"
+		remove_ideas = cartels_4
+		if = {
+			limit = { has_idea = cartels_4 }
+			remove_ideas = cartels_4
+		}
+		else_if = {
+			limit = { has_idea = cartels_3 }
+			remove_ideas = cartels_3
+		}
+		else_if = {
+			limit = { has_idea = cartels_2 }
+			remove_ideas = cartels_2
+		}
+		else = {
+			remove_ideas = cartels_1	
+		}
+		country_event = {
+			id = cartel_event.2
+			days = 14
+		}
+	}
+}
+
+# Splitting Up Mexico
+country_event = {
+	id = cartel_event.2
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event cartel_event.2"
+
+		# Baja California 
+		if = {
+			limit = { 
+				AND = {
+					828 = { check_variable = { MEX_sinola_state_control > MEX_state_control } }
+					828 = { check_variable = { MEX_sinola_state_control > MEX_tierra_state_control } }
+				}
+			}
+			SLA = { transfer_state = 828 }
+		}
+		else_if = {
+			limit = { 
+				AND = {
+					828 = { check_variable = { MEX_tierra_state_control > MEX_state_control } }
+					828 = { check_variable = { MEX_tierra_state_control > MEX_sinola_state_control } }
+				}
+			}
+			TRC = { transfer_state = 828 }
+		}
+		else_if = {
+			limit = { 
+				AND = {
+					828 = { check_variable = { MEX_tierra_state_control = MEX_sinola_state_control } }
+					828 = { check_variable = { MEX_state_control < MEX_sinola_state_control } }
+					828 = { check_variable = { MEX_state_control < MEX_tierra_state_control } }
+				}
+			}
+			random_list = {
+				50 = { SLA = { transfer_state = 828 } }
+				50 = { TRC = { transfer_state = 828 } }
+			}
+		}
+		# Sonora
+		if = {
+			limit = { 829 = { check_variable = { MEX_sinola_state_control > MEX_state_control } } }
+			SLA = { transfer_state = 829 }
+		}
+		# Chihuahua
+		if = {
+			limit = { 830 = { check_variable = { MEX_sinola_state_control > MEX_state_control } } }
+			SLA = { transfer_state = 830 }
+		}
+		# Sinola-Durango
+		if = {
+			limit = { 831 = { check_variable = { MEX_sinola_state_control > MEX_state_control } } }
+			SLA = { transfer_state = 831 }
+		}
+		# Coahuila
+		if = {
+			limit = { 833 = { check_variable = { MEX_tamaulpas_state_control > MEX_state_control } } }
+			TAM = { transfer_state = 833 }
+		}
+	}
+	 
+	fire_only_once = yes
+	is_triggered_only = yes
+	hidden = yes
 }
