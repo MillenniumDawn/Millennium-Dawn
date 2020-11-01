@@ -15,23 +15,28 @@ scripted_gui = {
 
 		triggers = {
 			launch_nuke_button_click_enabled = {
-				if = {
-					limit = {
-						NOT = {
-							has_game_rule = {
-								rule = nukes_game_rule
-								option = yes
-							}
-						}
-					}
-				}
-				owner = { has_war_with = ROOT }
+			#	if = {
+			#		limit = {
+			#			NOT = {
+			#				has_game_rule = {
+			#					rule = nukes_game_rule
+			#					option = yes
+			#				}
+			#			}
+			#		}
+			#	}
+			#	owner = { has_war_with = ROOT }
+			#	ROOT = {
+			#		has_political_power > 99
+			#		num_of_nukes > 0
+			#		has_deployed_air_force_size = {
+			#			size > 0
+			#			type = strategic_bomber
+			#		}
+			#	}
 				ROOT = {
-					has_political_power > 99
-					num_of_nukes > 0
-					has_deployed_air_force_size = {
-						size > 0
-						type = strategic_bomber
+					has_equipment = {
+						ballistic_missile_equipment_1 > 0
 					}
 				}
 			}
@@ -39,13 +44,28 @@ scripted_gui = {
 
 		effects = {
 			launch_nuke_button_click = {
-				ROOT = {
-					add_political_power = -100
-					launch_nuke = {
-						state = PREV
-						use_nuke = yes
+			#	ROOT = {
+			#		add_political_power = -100
+			#		launch_nuke = {
+			#			state = PREV
+			#			use_nuke = yes
+			#		}
+			#	}
+				every_state = {
+					limit = {
+						OR = { 
+							is_coastal = yes
+							missile_silo > 0
+						}
+						distance_to = {
+							value < 2000
+							target = PREV
+						}
 					}
+					set_state_flag = missile_launch_point
 				}
+				set_state_flag = missile_target_point
+
 			}
 		}
 	}

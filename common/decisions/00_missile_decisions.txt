@@ -37,27 +37,45 @@
 
         complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision missile_test_target"
+			###
 			set_variable = { var_accuracy = 0.7 }
 			set_variable = { var_salvo = 100 }
 			set_variable = { var_intercept_chance = 0.1 }
-			set_variable = { var_missile_hit = 1 }
+			set_variable = { var_intercept_capacity = 10 }
+			###
+			set_variable = { var_missile_trajectory = 1 }
 			set_variable = { var_missile_target_hit = 0 }
+			set_variable = { var_missile_interception = 0 }
 			while_loop_effect = {
 				limit = {
 					check_variable = { var_salvo > 0 }
 				}
 				randomize_variable = {  
-					var = var_missile_hit
+					var = var_missile_trajectory
 					distribution = uniform
 					min = 0
 					max = 1
-				}
-				add_to_variable = { var_missile_hit = var_accuracy }
-				subtract_from_variable = { var_missile_hit = var_intercept_chance }
+				}				
 				if = {
-					limit = { check_variable = { var_missile_hit > 1 } }
-					add_to_variable = { var_missile_target_hit = 1 }
+					limit = {						
+						check_variable = { var_intercept_capacity > 0 }
+						check_variable = { var_missile_trajectory < var_intercept_chance }
+					}
+					add_to_variable = { var_missile_interception = 1 }
+				}
+				if = {
+					limit = {						
+						check_variable = { var_intercept_capacity > 0 }
+					}	
+					subtract_from_variable = { var_intercept_capacity = 1 }	
+				}
+				else = {
+					add_to_variable = { var_missile_trajectory = var_accuracy }					
+					if = {
+						limit = { check_variable = { var_missile_trajectory > 1 } }
+						add_to_variable = { var_missile_target_hit = 1 }
 
+					}					
 				}
 				subtract_from_variable = { var_salvo = 1 }
 			}	
@@ -133,13 +151,19 @@ missile_launch_point = {
 			has_state_flag = missile_launch_point
 		}
 	}	
-	available = {		
-		meta_trigger = {
-			text = {
-				sea_launch_point_[LPID] = yes
+	available = {
+		OR = {
+			meta_trigger = {
+				text = {
+					sea_launch_point_[LPID] = yes
+				}
+				LPID = "[FROM.GetID]"
 			}
-			LPID = "[FROM.GetID]"
-		}		
+			FROM = {
+				is_controlled_by = ROOT
+				missile_silo > 0
+			}
+		}			
 	}
 	visible = {
 		
