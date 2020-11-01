@@ -31,15 +31,36 @@
 			
 		}
 		visible = {
-			has_country_flag = invisible
+			##has_country_flag = invisible
 		}
 
 
         complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision missile_test_target"
-			642 = {
-				set_state_flag = missile_strike_target
-			}
+			set_variable = { var_accuracy = 0.7 }
+			set_variable = { var_salvo = 100 }
+			set_variable = { var_intercept_chance = 0.1 }
+			set_variable = { var_missile_hit = 1 }
+			set_variable = { var_missile_target_hit = 0 }
+			while_loop_effect = {
+				limit = {
+					check_variable = { var_salvo > 0 }
+				}
+				randomize_variable = {  
+					var = var_missile_hit
+					distribution = uniform
+					min = 0
+					max = 1
+				}
+				add_to_variable = { var_missile_hit = var_accuracy }
+				subtract_from_variable = { var_missile_hit = var_intercept_chance }
+				if = {
+					limit = { check_variable = { var_missile_hit > 1 } }
+					add_to_variable = { var_missile_target_hit = 1 }
+
+				}
+				subtract_from_variable = { var_salvo = 1 }
+			}	
 		}
 		ai_will_do = {
 			factor = 0
