@@ -512,7 +512,7 @@ mafia_ITA = {
 	seize_drug_shipment = {
 		icon = generic_decision
 		available = {
-		has_idea = ITA_mafia
+			has_idea = ITA_mafia
 		}
 		custom_cost_trigger = {
 			command_power > 40
@@ -536,7 +536,7 @@ mafia_ITA = {
 	seize_weapons_shipment = {
 		icon = generic_decision
 		available = {
-		has_idea = ITA_mafia
+			has_idea = ITA_mafia
 		}
 		custom_cost_trigger = {
 			command_power > 40
@@ -560,7 +560,7 @@ mafia_ITA = {
 	expose_illicit_waste_dumps = {
 		icon = generic_decision
 		available = {
-		has_idea = ITA_mafia
+			has_idea = ITA_mafia
 		}
 		custom_cost_trigger = {
 			command_power > 40
@@ -584,7 +584,7 @@ mafia_ITA = {
 	seize_illegal_migrant_boats = {
 		icon = generic_decision
 		available = {
-		has_idea = ITA_mafia
+			has_idea = ITA_mafia
 		}
 		custom_cost_trigger = {
 			command_power > 40
@@ -608,10 +608,13 @@ mafia_ITA = {
 	infiltrate_mafia_organizations = {
 		icon = generic_decision
 		available = {
-		has_idea = ITA_mafia
-		has_completed_focus = ITA_eradicating_mafia
-		check_variable = { undercover_agents < 10 }
-		}
+			has_idea = ITA_mafia
+			has_completed_focus = ITA_eradicating_mafia
+			check_variable = { undercover_agents < 10 }
+		}		
+		visible = {
+            has_completed_focus = ITA_eradicating_mafia
+        }
 		custom_cost_trigger = {
 			command_power > 40
 		}
@@ -622,7 +625,6 @@ mafia_ITA = {
 			add_command_power = -40
 			log = "[GetDateText]: [This.GetName]: decision infiltrate_mafia_organizations executed"
 		}
-		days_remove = 0
 		days_re_enable = 30
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove infiltrate_mafia_organizations"
@@ -633,9 +635,12 @@ mafia_ITA = {
 	leverage_clan_infighting = {
 		icon = generic_decision
 		available = {
-		has_idea = ITA_mafia
-		has_completed_focus = ITA_eradicating_mafia
+			has_idea = ITA_mafia
+			has_completed_focus = ITA_eradicating_mafia
 		}
+		visible = {
+            has_completed_focus = ITA_eradicating_mafia
+        }
 		custom_cost_trigger = {
 			command_power > 50
 		}
@@ -706,7 +711,90 @@ mafia_ITA = {
 							country_event = { id = mafia.2 }
 						}
 					}
-			}	}
+				}
+			}
+		}
+	}
+	attack_clan_hideouts = {
+		icon = generic_decision
+		available = {
+			has_idea = ITA_mafia
+			has_completed_focus = ITA_war_with_mafia
+			check_variable = { undercover_agents > 5 }
+			custom_effect_tooltip = requires_undercover_agents_TT
+		}
+		visible = {
+            has_completed_focus = ITA_war_with_mafia
+        }
+		custom_cost_trigger = {
+			command_power > 25
+		}
+		custom_cost_text = command_power_more_than_25
+		complete_effect = {
+			add_command_power = -25
+			log = "[GetDateText]: [This.GetName]: decision attack_clan_hideouts executed"
+		}
+		days_remove = 5
+		days_re_enable = 365
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove attack_clan_hideouts"
+			set_country_flag = ITA_attacked_hideouts
+			custom_effect_tooltip = mafia_strength_decrease_tt
+			add_to_variable = { cosa_nostra_strength = -0.05 }
+			add_to_variable = { camorra_strength = -0.05 }
+			add_to_variable = { ndrangheta_strength = -0.05 }
+			add_to_variable = { sacra_corona_unita_strength = -0.05 }
+		}
+	}
+	army_in_the_streets = {
+		icon = generic_decision
+		available = {
+			has_idea = ITA_mafia
+			has_completed_focus = ITA_war_with_mafia
+		}
+		visible = {
+            has_completed_focus = ITA_war_with_mafia
+        }
+		custom_cost_trigger = {
+			command_power > 100
+		}
+		custom_cost_text = command_power_more_than_100
+		complete_effect = {
+			add_command_power = -100
+			log = "[GetDateText]: [This.GetName]: decision army_in_the_streets executed"
+		}
+		fire_only_once = yes
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove army_in_the_streets"
+			set_country_flag = ITA_deployed_army_against_mafia
+			custom_effect_tooltip = mafia_strength_decrease_tt
+			subtract_from_variable = { treasury = 5.0 }
+			custom_effect_tooltip = 5_billion_expense_tt
+			custom_effect_tooltip = ITA_ruling_party_popularity_change_decision_TT
+			if = { limit = { has_government = fascism } add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}}
+			    else_if = { limit = { has_government = communism } add_popularity = {
+				ideology = communism
+				popularity = 0.05
+			}}
+				else_if = { limit = { has_government = democratic } add_popularity = {
+				ideology = democratic
+				popularity = 0.05
+			}}
+				else_if = { limit = { has_government = neutrality } add_popularity = {
+				ideology = neutrality
+				popularity = 0.05
+			}}
+				else_if = { limit = { has_government = nationalist } add_popularity = {
+				ideology = nationalist
+				popularity = 0.05
+			}}
+			add_to_variable = { cosa_nostra_strength = -0.02 }
+			add_to_variable = { camorra_strength = -0.02 }
+			add_to_variable = { ndrangheta_strength = -0.02 }
+			add_to_variable = { sacra_corona_unita_strength = -0.02 }
 		}
 	}
 }

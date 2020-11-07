@@ -8132,10 +8132,28 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			add_political_power = 100
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_safeguard_european_development_funds"
-			}
+			ROOT_eurosceptic_decline_5_percent = yes
 		}
+	}
+
+	focus = {
+		id = ITA_protect_foreign_investment
+		icon = factory_planning
+		relative_position_id = ITA_safeguard_european_development_funds
+		x = 0
+		y = 1
+		cost = 10
+
+		search_filters = {}
+		prerequisite = {
+			focus = ITA_safeguard_european_development_funds
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_protect_foreign_investment"
+		}
+	}
 
 	focus = {
 		id = ITA_let_companies_fail
@@ -8335,6 +8353,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_refound_IRI"
+			custom_effect_tooltip = ITA_debt_market_trust_decrease_TT
+			add_to_variable = { bond_markets_trust = 0.25 }
 			subtract_from_variable = { treasury = 100.0 }
 			custom_effect_tooltip = 100_billion_expense_tt
 			custom_effect_tooltip = ITA_ruling_party_popularity_change_focus_TT
@@ -8383,6 +8403,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_sell_government_shares_in_companies"
 			add_ideas = ITA_privatizations
+			custom_effect_tooltip = ITA_debt_market_trust_increase_TT
+			add_to_variable = { bond_markets_trust = -0.5 }
 			add_to_variable = { treasury = 100.0 }
 			custom_effect_tooltip = 100_billion_revenue_tt
 			custom_effect_tooltip = ITA_ruling_party_popularity_change_focus_TT
@@ -9156,8 +9178,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_fight_scientific_illiteracy"
 			add_stability = -0.0025
-			}
+			custom_effect_tooltip = decrease_nimby_culture_2_TT
+			add_to_variable = { nimby_culture_var = 0.1 }
 		}
+	}
 
 	focus = {
 		id = ITA_stop_the_brain_drain
@@ -9194,6 +9218,8 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_great_projects"
+			custom_effect_tooltip = decrease_nimby_culture_2_TT
+			add_to_variable = { nimby_culture_var = 0.1 }
 			}
 		}
 
@@ -9236,6 +9262,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_bypass_the_1987_referendum"
 			add_stability = -0.05
+			custom_effect_tooltip = decrease_nimby_culture_TT
+			add_to_variable = { nimby_culture_var = 0.05 }
 			subtract_from_variable = { treasury = 100.0 }
 			custom_effect_tooltip = 100_billion_expense_tt
 			add_timed_idea = { idea = ITA_building_nuclear_reactors  days = 2000 }
@@ -9283,7 +9311,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_increase_ASI_funding"
-			add_political_power = 100
+			custom_effect_tooltip = ITA_increase_ASI_funding_TT
 			}
 		}
 
@@ -9302,6 +9330,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_messina_strait_bridge"
+			custom_effect_tooltip = decrease_nimby_culture_TT
+			add_to_variable = { nimby_culture_var = 0.05 }
 			if = {
 				limit = {
 					NOT = { has_idea = ITA_mafia }
@@ -9359,18 +9389,26 @@ focus_tree = {
 					add_to_variable = { ndrangheta_strength = 0.07 }
 					add_to_variable = { sacra_corona_unita_strength = 0.07 }
 			}
-			83 = {
-				remove_dynamic_modifier = {
-					modifier = unfinished_infrastructures				
-				}
-				add_dynamic_modifier = {
-					modifier = messina_strait_bridge				
-				}
+			if = {
+				limit = { controls_state = 83 }
+					83 = {
+						remove_dynamic_modifier = {
+							modifier = unfinished_infrastructures				
+						}
+						add_dynamic_modifier = {
+							modifier = messina_strait_bridge				
+						}
+						add_extra_state_shared_building_slots = 1
+					}
 			}
-			956 = {
-				remove_dynamic_modifier = {
-					modifier = unfinished_infrastructures
-				}
+			if = {
+				limit = { controls_state = 956 }
+					956 = {
+						remove_dynamic_modifier = {
+							modifier = unfinished_infrastructures
+						}
+						add_extra_state_shared_building_slots = 1
+					}
 			}
 		}
 	}
@@ -9391,8 +9429,76 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_mose_venezia"
+			custom_effect_tooltip = decrease_nimby_culture_TT
+			add_to_variable = { nimby_culture_var = 0.05 }
+			if = {
+				limit = {
+					NOT = { has_idea = ITA_mafia }
+				}
+					subtract_from_variable = { treasury = 5.0 }
+					custom_effect_tooltip = 5_billion_expense_tt
 			}
+			else_if = {
+				limit = {
+					check_variable = { mafia_strength < 0.100 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 6.0 }
+					custom_effect_tooltip = 6_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.005 }
+					add_to_variable = { camorra_strength = 0.005 }
+					add_to_variable = { ndrangheta_strength = 0.005 }
+					add_to_variable = { sacra_corona_unita_strength = 0.005 }
+			}
+			else_if = {
+				limit = { 
+					check_variable = { mafia_strength > 0.099 }
+					check_variable = { mafia_strength < 0.400 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 7.0 }
+					custom_effect_tooltip = 7_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.01 }
+					add_to_variable = { camorra_strength = 0.01 }
+					add_to_variable = { ndrangheta_strength = 0.01 }
+					add_to_variable = { sacra_corona_unita_strength = 0.01 }
+			}
+			else_if = {
+				limit = { 
+					check_variable = { mafia_strength > 0.399 }
+					check_variable = { mafia_strength < 0.666 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 8.0 }
+					custom_effect_tooltip = 8_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.015 }
+					add_to_variable = { camorra_strength = 0.015 }
+					add_to_variable = { ndrangheta_strength = 0.015 }
+					add_to_variable = { sacra_corona_unita_strength = 0.015 }
+			}
+			else_if = {
+				limit = { 
+					check_variable = { mafia_strength > 0.665 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 10.0 }
+					custom_effect_tooltip = 10_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.03 }
+					add_to_variable = { camorra_strength = 0.03 }
+					add_to_variable = { ndrangheta_strength = 0.03 }
+					add_to_variable = { sacra_corona_unita_strength = 0.03 }
+			}
+			if = {
+				limit = { controls_state = 78 }
+					78 = {
+						remove_dynamic_modifier = {
+							modifier = frequent_high_tides				
+						}
+						add_extra_state_shared_building_slots = 1
+					}
+			} 
 		}
+	}
 
 	focus = {
 		id = ITA_tav_torino_lione
@@ -9409,8 +9515,78 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_tav_torino_lione"
+			custom_effect_tooltip = decrease_nimby_culture_2_TT
+			add_to_variable = { nimby_culture_var = 0.1 }
+			if = {
+				limit = {
+					NOT = { has_idea = ITA_mafia }
+				}
+					subtract_from_variable = { treasury = 5.0 }
+					custom_effect_tooltip = 5_billion_expense_tt
+			}
+			else_if = {
+				limit = {
+					check_variable = { mafia_strength < 0.100 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 6.0 }
+					custom_effect_tooltip = 6_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.005 }
+					add_to_variable = { camorra_strength = 0.005 }
+					add_to_variable = { ndrangheta_strength = 0.005 }
+					add_to_variable = { sacra_corona_unita_strength = 0.005 }
+			}
+			else_if = {
+				limit = { 
+					check_variable = { mafia_strength > 0.099 }
+					check_variable = { mafia_strength < 0.400 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 7.0 }
+					custom_effect_tooltip = 7_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.01 }
+					add_to_variable = { camorra_strength = 0.01 }
+					add_to_variable = { ndrangheta_strength = 0.01 }
+					add_to_variable = { sacra_corona_unita_strength = 0.01 }
+			}
+			else_if = {
+				limit = { 
+					check_variable = { mafia_strength > 0.399 }
+					check_variable = { mafia_strength < 0.666 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 8.0 }
+					custom_effect_tooltip = 8_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.015 }
+					add_to_variable = { camorra_strength = 0.015 }
+					add_to_variable = { ndrangheta_strength = 0.015 }
+					add_to_variable = { sacra_corona_unita_strength = 0.015 }
+			}
+			else_if = {
+				limit = { 
+					check_variable = { mafia_strength > 0.665 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 10.0 }
+					custom_effect_tooltip = 10_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.03 }
+					add_to_variable = { camorra_strength = 0.03 }
+					add_to_variable = { ndrangheta_strength = 0.03 }
+					add_to_variable = { sacra_corona_unita_strength = 0.03 }
+			}
+			if = {
+				limit = { controls_state = 77 }
+				77 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
 			}
 		}
+	}
 
 	focus = {
 		id = ITA_brennero_tunnel
@@ -9427,8 +9603,78 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_brennero_tunnel"
+			custom_effect_tooltip = decrease_nimby_culture_TT
+			add_to_variable = { nimby_culture_var = 0.05 }
+			if = {
+				limit = {
+					NOT = { has_idea = ITA_mafia }
+				}
+					subtract_from_variable = { treasury = 5.0 }
+					custom_effect_tooltip = 5_billion_expense_tt
+			}
+			else_if = {
+				limit = {
+					check_variable = { mafia_strength < 0.100 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 6.0 }
+					custom_effect_tooltip = 6_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.005 }
+					add_to_variable = { camorra_strength = 0.005 }
+					add_to_variable = { ndrangheta_strength = 0.005 }
+					add_to_variable = { sacra_corona_unita_strength = 0.005 }
+			}
+			else_if = {
+				limit = { 
+					check_variable = { mafia_strength > 0.099 }
+					check_variable = { mafia_strength < 0.400 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 7.0 }
+					custom_effect_tooltip = 7_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.01 }
+					add_to_variable = { camorra_strength = 0.01 }
+					add_to_variable = { ndrangheta_strength = 0.01 }
+					add_to_variable = { sacra_corona_unita_strength = 0.01 }
+			}
+			else_if = {
+				limit = { 
+					check_variable = { mafia_strength > 0.399 }
+					check_variable = { mafia_strength < 0.666 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 8.0 }
+					custom_effect_tooltip = 8_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.015 }
+					add_to_variable = { camorra_strength = 0.015 }
+					add_to_variable = { ndrangheta_strength = 0.015 }
+					add_to_variable = { sacra_corona_unita_strength = 0.015 }
+			}
+			else_if = {
+				limit = { 
+					check_variable = { mafia_strength > 0.665 }
+				}
+					custom_effect_tooltip = mafia_infiltrations_focus_TT
+					subtract_from_variable = { treasury = 10.0 }
+					custom_effect_tooltip = 10_billion_expense_tt
+					add_to_variable = { cosa_nostra_strength = 0.03 }
+					add_to_variable = { camorra_strength = 0.03 }
+					add_to_variable = { ndrangheta_strength = 0.03 }
+					add_to_variable = { sacra_corona_unita_strength = 0.03 }
+			}
+			if = {
+				limit = { controls_state = 285 }
+				285 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
 			}
 		}
+	}
 
 	focus = {
 		id = ITA_integrative_restoration
@@ -9445,6 +9691,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_integrative_restoration"
+			custom_effect_tooltip = integrative_restoration_decisions_unlocked_TT
 			}
 		}
 
