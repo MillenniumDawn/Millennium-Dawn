@@ -1,0 +1,53 @@
+#######################################
+### POTEF election scripted effects ###
+#######################################
+
+election_POTEF_in_member_state = {
+	clear_array = party_pop_POTEF_array	
+	for_loop_effect = {
+		end = party_pop_array^num
+		value = v
+		set_variable = { party_pop_POTEF_array^v = party_pop_array^v }
+		set_variable = { THIS.POTEF_pop_vote_^v = party_pop_POTEF_array^v }
+		multiply_variable = { THIS.POTEF_pop_vote_^v = THIS.max_manpower_k }
+		#add_to_variable = { global.POTEF_pop_vote_^v = THIS.POTEF_pop_vote_^v }
+		add_to_array = { POTEF_pop_vote_array^v = THIS.POTEF_pop_vote_^v }
+		add_to_variable = { global.POTEF_pop_vote_total = THIS.POTEF_pop_vote_^v }
+		find_highest_in_array = {
+			array = party_pop_POTEF_array
+			value = max_1_tmp
+			index = max_index_1_tmp
+		}
+		set_variable = { THIS.POTEF_winner_value = max_1_tmp }
+		set_variable = { THIS.POTEF_winner = max_index_1_tmp }
+		add_to_array = { POTEF_winner_array^max_index_1_tmp = 1 }
+	}
+}
+
+set_POTEF_winner = {
+	if = {
+		limit = {
+			#majority of member states
+			set_temp_variable = { temp1 = global.var_EUmemberstatesTotal }
+			divide_temp_variable = { temp1 = 2 }
+			find_highest_in_array = {
+				array = POTEF_winner_array
+				value = max_1_tmp
+				index = max_index_1_tmp
+			}
+			check_variable = { max_1_tmp > temp1 }	
+			#majority of popular vote
+			set_temp_variable = { temp2 = global.POTEF_pop_vote_total }
+			divide_temp_variable = { temp2 = 2 }	
+			find_highest_in_array = {
+				array = POTEF_pop_vote_array
+				value = max_2_tmp
+				index = max_index_2_tmp
+			}
+			check_variable = { temp2 > max_2_tmp }
+		}
+		set_variable = { POTEF_winner = max_index_2_tmp }
+	}	
+}
+
+
