@@ -388,16 +388,55 @@ EU_office_category = {
 	
 	EU_POTEF_nominee = {
 	
-		available = {			
-			
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = tooltip_EU_POTEF_nominee_trigger						
+				any_of = {
+					array = ruling_party
+					value = v
+					index = i
+					if = {
+						limit = {
+							is_in_array = { ruling_party = v }
+						}
+						set_temp_variable = { temp_idx = v }					
+					}
+				}
+				all_country = {
+					if = {
+						limit = {
+							has_idea = EU_member
+							is_in_array = { ruling_party = temp_idx }
+							NOT = { tag = ROOT }
+						}
+						is_top3_influencer = yes
+					}
+				}
+			}								
 		}
 		
 		visible = { 
 			has_idea = EU_member
 		} 
 		
-		complete_effect = {			
-			
+		complete_effect = {
+			for_each_loop = {
+				array = ruling_party
+				value = v
+				index = i
+				if = {
+					limit = {
+						is_in_array = { ruling_party = v }
+					}
+					set_variable = { var_gov_index = v }	
+				}
+			}
+			meta_effect = {
+				text = {
+					set_country_flag = POTEF_nominee_[subideology]
+				}
+				subideology = "[?var_gov_index|0]"	
+			}		
 		}
 
 		ai_will_do = {
