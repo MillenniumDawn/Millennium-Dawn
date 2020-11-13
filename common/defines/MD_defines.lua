@@ -45,7 +45,7 @@
 	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 10
 	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.25  -- was -0.7
 
-	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 --Returned RSs back to normal from Vanilla - BIRD
+	NDefines.NCountry.BASE_RESEARCH_SLOTS = 3 --Returned RSs back to normal from Vanilla - BIRD
 	NDefines.NCountry.VP_TO_SUPPLY_BASE = 0.1
 	NDefines.NCountry.VP_TO_SUPPLY_BONUS_CONVERSION = 0.2
 	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01 --0.01
