@@ -2632,7 +2632,7 @@ focus = {
 
 	focus = {
 		id = BRA_foreign_companies
-		icon = union_negotiations
+		icon = brazil_foreign_companies
 
 		x = 0
 		y = 4
@@ -3521,8 +3521,8 @@ focus = {
 					instant_build = yes
 			}
 			}
-			 subtract_from_variable = { treasury = 25.0 }
-			 custom_effect_tooltip = BRA_lose_25_billion_tt
+			 subtract_from_variable = { treasury = 15.0 }
+			 custom_effect_tooltip = BRA_lose_15_billion_tt
 		}
 		ai_will_do = {
 			factor = 1
@@ -7956,6 +7956,7 @@ focus = {
 		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_mst"
+			add_ideas = BRA_idea_agrarian_reform
 		 }
 
 		ai_will_do = {
@@ -8280,6 +8281,11 @@ focus = {
 		completion_reward = { 
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_fight_foreign_influence"
 			add_ideas = BRA_fight_influence
+			hidden_effect = {
+				add_to_variable = { domestic_influence_amount = 10 }
+				recalculate_influence = yes
+			}
+			custom_effect_tooltip = gain_10_domestic_influence_TT
 		}
 
 		ai_will_do = {
@@ -8314,6 +8320,11 @@ focus = {
 		completion_reward = { 
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_no_ideology"
 			add_political_power = 100
+			hidden_effect = {
+				add_to_variable = { domestic_influence_amount = 5 }
+				recalculate_influence = yes
+			}
+			custom_effect_tooltip = gain_5_domestic_influence_TT
 		}
 
 		ai_will_do = {
@@ -10315,8 +10326,9 @@ focus = {
 			 log = "[GetDateText]: [Root.GetName]: Focus BRA_restoration_image"
 			 add_popularity = {
 				ideology = democratic
-				popularity = 0.025
+				popularity = 0.05
 			}
+			remove_ideas = BRA_idea_nationalism_rise
 		}
 
 		ai_will_do = {
@@ -10352,7 +10364,7 @@ focus = {
 			 log = "[GetDateText]: [Root.GetName]: Focus BRA_underdog"
 			 add_popularity = {
 				ideology = democratic
-				popularity = 0.025
+				popularity = 0.05
 			}
 		}
 
@@ -10370,8 +10382,15 @@ focus = {
 		relative_position_id =   BRA_psdb_pdt_coalition
 		cost = 5
 
-		prerequisite = { focus =  BRA_cardoso_legacy }
-		available = { }
+		prerequisite = { 
+			focus = BRA_psdb_pdt_coalition
+			}
+		available = { 
+			custom_trigger_tooltip = {
+				tooltip = BRA_psdb_win_TT
+				has_country_flag = BRA_psdb_win
+			}
+		}
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no
@@ -10446,7 +10465,53 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_ciro_gomes"
-		
+			if = {
+				limit = { has_idea = labour_unions }
+				visually_display_opinion_rise_labour_unions = yes
+				set_country_flag = current_labour_unions
+				increase_internal_faction_opinion = yes
+			}
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.10
+			}
+			hidden_effect = {
+					add_to_variable = { party_pop_array^3 = 0.1 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id =  BRA_agrarian_reform
+		icon = communism6
+
+		x = 0
+		y = 1
+		relative_position_id =   BRA_ciro_gomes
+		cost = 5
+
+
+		prerequisite = { focus =  BRA_ciro_gomes }
+
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+		complete_tooltip = { }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BRA_mobilize_working_class"
+			if = {
+				limit = { has_idea = labour_unions }
+				visually_display_opinion_rise_labour_unions = yes
+				set_country_flag = current_labour_unions
+				increase_internal_faction_opinion = yes
+			}
+			add_ideas = BRA_idea_agrarian_reform
 		}
 
 		ai_will_do = {
@@ -10497,9 +10562,18 @@ focus = {
 		cost = 5
 
 
-		prerequisite = { focus =  BRA_cardoso_legacy }
+		prerequisite = { 
+			focus = BRA_cardoso_legacy
+			 }
 		ai_will_do = {
 			factor = 1
+		}
+
+		available = { 
+			custom_trigger_tooltip = {
+				tooltip = BRA_psdb_win_TT
+				has_country_flag = BRA_psdb_win
+			}
 		}
 
 		cancel_if_invalid = yes
@@ -10515,6 +10589,37 @@ focus = {
 	}
 
 	focus = {
+		id =  BRA_align_with_other_parties
+		icon = meeting
+
+		x = 3
+		y = 1
+		relative_position_id = BRA_liberal_resurgence
+		cost = 5
+
+
+		prerequisite = { 
+			focus = BRA_liberal_resurgence
+			 }
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = { }
+
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+
+		complete_tooltip = { }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BRA_liberal_resurgence"
+			country_event = { id = brazil.35 days = 0 }
+		}
+	}
+
+	focus = {
 			id =  BRA_expansive_spending
 			icon = unknown
 
@@ -10524,7 +10629,7 @@ focus = {
 			cost = 5
 
 	
-			prerequisite = { focus = BRA_social_programs }
+			prerequisite = { focus = BRA_business_deregulation focus = BRA_business_regulation }
 
 			mutually_exclusive = {focus = BRA_foreign_buyouts}
 
@@ -10553,7 +10658,7 @@ focus = {
 		relative_position_id = BRA_social_programs
 		cost = 5			
 		
-		prerequisite = { focus = BRA_social_programs }
+		prerequisite = { focus = BRA_business_deregulation focus = BRA_business_regulation }
 
 		mutually_exclusive = {focus = BRA_expansive_spending}
 		ai_will_do = {
@@ -10684,6 +10789,15 @@ focus = {
 			search_filters = { FOCUS_FILTER_POLITICAL }
 			completion_reward = {
 				log = "[GetDateText]: [Root.GetName]: Focus BRA_social_programs"
+				add_stability = 0.05
+				add_political_power = 150
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.10
+				}
+				hidden_effect = {
+					add_to_variable = { party_pop_array^2 = 0.1 }
+				}
 			 }
 		}
 
@@ -10697,9 +10811,12 @@ focus = {
 			cost = 5
 
 
-			prerequisite = { focus =  BRA_reduce_debts }
-			prerequisite = { focus =  BRA_electoral_upset }
-			prerequisite = { focus =  BRA_liberal_resurgence }
+			prerequisite = { focus =  BRA_restoration_image }
+			prerequisite = { focus =  BRA_underdog }
+			prerequisite = {
+			 focus =  BRA_social_democracy 
+			 focus =  BRA_liberal_resurgence
+			}
 
 			mutually_exclusive = { }
 
@@ -10723,13 +10840,13 @@ focus = {
 		id =  BRA_business_deregulation
 		icon = unknown
 
-		x = 3
+		x = -1
 		y = 1
-		relative_position_id = BRA_social_programs
+		relative_position_id = BRA_rise_of_moderates
 		cost = 5
 		
 
-		prerequisite = { focus = BRA_rise_of_moderates }
+		prerequisite = { focus = BRA_reduce_debts }
 
 		mutually_exclusive = {focus = BRA_business_regulation}
 
@@ -10753,12 +10870,12 @@ focus = {
 		id =  BRA_business_regulation
 		icon = unknown
 
-		x = 1
+		x = -3
 		y = 1
-		relative_position_id = BRA_social_programs
+		relative_position_id = BRA_rise_of_moderates
 		cost = 5
 
-
+		prerequisite = { focus = BRA_reduce_debts }
 
 		mutually_exclusive = {focus = BRA_business_deregulation}
 
@@ -10787,7 +10904,7 @@ focus = {
 		relative_position_id = BRA_social_programs
 		cost = 5
 
-
+		prerequisite = { focus = BRA_social_programs }
 
 		ai_will_do = {
 			factor = 1
@@ -10814,7 +10931,7 @@ focus = {
 		relative_position_id = BRA_rise_of_moderates
 		cost = 5
 
-
+		prerequisite = { focus = BRA_rise_of_moderates }
 
 		ai_will_do = {
 			factor = 1
@@ -10828,7 +10945,11 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_seek_young_vote"
-			##WIP
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.10
+			}
+			add_ideas = BRA_idea_pro_psdb_youth
 		}
 	}
 
@@ -10841,10 +10962,9 @@ focus = {
 		relative_position_id = BRA_business_deregulation
 		cost = 5
 
-		prerequisite = { focus =  BRA_business_deregulation OR BRA_business_regulation }
+		prerequisite = { focus =  BRA_business_deregulation focus = BRA_business_regulation }
 		prerequisite = { focus =  BRA_fight_corruption }
 		prerequisite = { focus =  BRA_seek_young_vote }
-		prerequisite = { focus =  BRA_expansive_spending OR BRA_foreign_buyouts }
 
 		available = {
 			has_full_control_of_state = 883
@@ -10879,6 +10999,12 @@ focus = {
 					instant_build = yes
 				}
 			}
+			if = {
+				limit = { has_idea = industrial_conglomerates }
+				visually_display_opinion_rise_industrial_conglomerates = yes
+				set_country_flag = current_industrial_conglomerates
+				increase_internal_faction_opinion = yes
+			}
 		}
 	}
 
@@ -10891,10 +11017,9 @@ focus = {
 		relative_position_id = BRA_business_regulation
 		cost = 5
 
-		prerequisite = { focus =  BRA_business_deregulation OR BRA_business_regulation }
+		prerequisite = { focus =  BRA_business_deregulation focus = BRA_business_regulation }
 		prerequisite = { focus =  BRA_fight_corruption }
 		prerequisite = { focus =  BRA_seek_young_vote }
-		prerequisite = { focus =  BRA_expansive_spending OR BRA_foreign_buyouts }
 
 		ai_will_do = {
 			factor = 1
@@ -10922,10 +11047,10 @@ focus = {
 		relative_position_id = BRA_fight_corruption
 		cost = 5
 
-		prerequisite = { focus =  BRA_business_deregulation OR  = BRA_business_regulation }
 		prerequisite = { focus =  BRA_fight_corruption }
-		prerequisite = { focus =  BRA_seek_young_vote }
-		prerequisite = { focus =  BRA_expansive_spending OR BRA_foreign_buyouts }
+		prerequisite = { focus =  BRA_industrial_congolmerates }
+		prerequisite = { focus =  BRA_revitalize_economy }
+		prerequisite = { focus =  BRA_expansive_spending focus = BRA_foreign_buyouts }
 
 		ai_will_do = {
 			factor = 1
@@ -10952,7 +11077,7 @@ focus = {
 		relative_position_id = BRA_seek_young_vote
 		cost = 5
 
-		prerequisite = { focus =  BRA_fight_corruption }
+		prerequisite = { focus =  BRA_social_programs }
 		prerequisite = { focus =  BRA_seek_young_vote }
 
 		ai_will_do = {
@@ -10980,9 +11105,10 @@ focus = {
 		relative_position_id = BRA_industrial_congolmerates
 		cost = 5
 
-		prerequisite = { focus =  BRA_industrial_congolmerates}
+		prerequisite = { focus =  BRA_fight_corruption }
+		prerequisite = { focus =  BRA_industrial_congolmerates }
 		prerequisite = { focus =  BRA_revitalize_economy }
-		prerequisite = { focus =  BRA_healthcare_reforms }
+		prerequisite = { focus =  BRA_expansive_spending focus = BRA_foreign_buyouts }
 
 		ai_will_do = {
 			factor = 1
@@ -10996,7 +11122,12 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_agri_buissneses"
-			##WIP
+			if = {
+				limit = { has_idea = farmers }
+				visually_display_opinion_rise_farmers = yes
+				set_country_flag = current_farmers
+				increase_internal_faction_opinion = yes
+			}
 		}
 	}
 
@@ -11009,9 +11140,10 @@ focus = {
 		relative_position_id = BRA_revitalize_economy
 		cost = 5
 
-		prerequisite = { focus =  BRA_industrial_congolmerates}
+		prerequisite = { focus =  BRA_fight_corruption }
+		prerequisite = { focus =  BRA_industrial_congolmerates }
 		prerequisite = { focus =  BRA_revitalize_economy }
-		prerequisite = { focus =  BRA_healthcare_reforms }
+		prerequisite = { focus =  BRA_expansive_spending focus = BRA_foreign_buyouts }
 
 		ai_will_do = {
 			factor = 1
@@ -11025,6 +11157,11 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_alliances_with_unions"
-			##WIP
+			if = {
+				limit = { has_idea = labour_unions }
+				visually_display_opinion_rise_labour_unions = yes
+				set_country_flag = current_labour_unions
+				increase_internal_faction_opinion = yes
+			}
 		}
 	}
