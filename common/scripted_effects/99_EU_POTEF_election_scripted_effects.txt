@@ -2,17 +2,30 @@
 ### POTEF election scripted effects ###
 #######################################
 
-election_POTEF_in_member_state = {
-	#clear_array = party_pop_POTEF_array	
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = v
-		#set_variable = { party_pop_POTEF_array^v = party_pop_array^v }
-		set_variable = { THIS.POTEF_pop_vote_^v = party_pop_array^v }
-		multiply_variable = { THIS.POTEF_pop_vote_^v = THIS.max_manpower_k }
-		#add_to_variable = { global.POTEF_pop_vote_^v = THIS.POTEF_pop_vote_^v }
-		add_to_array = { POTEF_pop_vote_array^v = THIS.POTEF_pop_vote_^v }
-		add_to_variable = { global.POTEF_pop_vote_total = THIS.POTEF_pop_vote_^v }
+POTEF_election = {
+	clear_POTEF_variables = yes
+	clear_array = POTEF_winner_array
+	clear_array = POTEF_pop_vote_array
+	clear_array = POTEF_pop_vote_ratio_array
+	resize_array = { POTEF_winner_array = 23 }
+	resize_array = { POTEF_pop_vote_array = 23 }
+	resize_array = { POTEF_pop_vote_ratio_array = 23 }			
+	every_country = {
+		limit = {
+			has_idea = EU_member
+		}				   						
+		election_POTEF_in_member_state = yes
+	}
+	update_POTEF_arrays = yes	
+}
+
+election_POTEF_in_member_state = {		
+	for_each_loop = {
+		array = party_pop_array		
+		set_variable = { THIS.POTEF_pop_vote^i = party_pop_array^i }
+		multiply_variable = { THIS.POTEF_pop_vote^i = THIS.max_manpower_k }
+		add_to_variable = { global.POTEF_pop_vote^i = THIS.POTEF_pop_vote^i }		
+		add_to_variable = { global.POTEF_pop_vote_total = THIS.POTEF_pop_vote^i }
 	}	
 	find_highest_in_array = {
 		array = party_pop_array
@@ -21,11 +34,51 @@ election_POTEF_in_member_state = {
 	}
 	set_variable = { THIS.POTEF_winner_value = max_1_tmp }
 	set_variable = { THIS.POTEF_winner = max_index_1_tmp }
-	add_to_array = { 
-		array = POTEF_winner_array 
-		value = 1
-		index = THIS.POTEF_winner
-	}
+	add_to_variable = { global.POTEF_winner^max_index_1_tmp = 1 }
+}
+
+clear_POTEF_variables = {
+	clear_variable = global.POTEF_pop_vote_total
+	for_each_loop = {
+		array = POTEF_winner_array	
+		clear_variable = global.POTEF_winner^i
+	}	
+	for_each_loop = {
+		array = POTEF_pop_vote_array	
+		clear_variable = global.POTEF_pop_vote^i
+	}		
+	for_each_loop = {
+		array = POTEF_pop_vote_ratio_array
+		clear_variable = POTEF_pop_vote_ratio_array^i
+	}		
+}
+
+update_POTEF_arrays = {
+	for_each_loop = {
+		array = POTEF_winner_array	
+		add_to_array = { 
+			array = POTEF_winner_array
+			value = global.POTEF_winner^i
+			index = i 
+		}
+	}	
+	for_each_loop = {
+		array = POTEF_pop_vote_array	
+		add_to_array = { 
+			array = POTEF_pop_vote_array
+			value = global.POTEF_pop_vote^i
+			index = i 
+		}
+	}		
+	for_each_loop = {
+		array = POTEF_pop_vote_ratio_array		
+		add_to_array = {
+			array = POTEF_pop_vote_ratio_array
+			value = POTEF_pop_vote_array^i
+			index = i 
+		}
+		divide_variable = { POTEF_pop_vote_ratio_array^i = global.POTEF_pop_vote_total }
+	}	
 }
 
 set_POTEF_winner = {
