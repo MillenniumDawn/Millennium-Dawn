@@ -1,4 +1,5 @@
 #Written by Killerrabbit and SWF541
+#Optimized and Reworked by Angriest Bird
 #for not oversizing the array for having both 2000 and 2017 values
 init_influence = {
 	clear_array = influence_array_val
@@ -75,7 +76,6 @@ sort_influence = {
 }
 
 calculate_influence_percentage = {
-
 	set_temp_variable = { influence_democratic = 0 }
 	set_temp_variable = { influence_neutrality = 0 }
 	set_temp_variable = { influence_communism = 0 }
@@ -125,11 +125,12 @@ hostile_influence_target = {
 ### Actions ###
 
 spread_influence = {
-
 	PREV = { add_political_power = -80 }
 
-	set_temp_variable = { influence_gain = PREV.influence_multiplier } #from global rank idea
-	multiply_temp_variable = { influence_gain = 20 } #base gain #was 10
+	set_temp_variable = { influence_gain = influence_total } #1000
+	multiply_temp_variable = { influence_gain = 0.02 } #2% of ROOT influence total
+	multiply_temp_variable = { influence_gain = PREV.influence_multiplier } #from global rank idea 20 * 1.6 = 32
+	add_to_temp_variable = { influence_gain = 20 } #base gain - DEBUG TOOL - temped to prevent 0 addition
 	for_loop_effect = {
 		end = influence_array^num
 		value = v
@@ -143,10 +144,11 @@ spread_influence = {
 	}
 	if = {
 		limit = { NOT = { has_country_flag = found } }
-			add_to_array = { influence_array = PREV.id }
-			add_to_array = { influence_array_val = influence_gain }
+		add_to_array = { influence_array = PREV.id }
+		add_to_array = { influence_array_val = influence_gain }
 	}
 	clr_country_flag = found
+	delete_influencer_check = yes
 	recalculate_influence = yes
 }
 
@@ -187,7 +189,6 @@ make_puppet_action = {
 }
 
 economic_exploitation_action = {
-
 	meta_effect = {
 		text = {
 			add_ideas = [ROOTTAG]_tribute_idea
@@ -195,7 +196,7 @@ economic_exploitation_action = {
 		ROOTTAG = "[?var:influence_array^0.GetTag]"
 	}
 
-	#remove 10% influence
+	#Remove 10% influence
 	set_temp_variable = { influence_reduce = influence_total } #from global rank idea
 	multiply_temp_variable = { influence_reduce = 0.1 } #10%
 	for_loop_effect = {
@@ -210,16 +211,10 @@ economic_exploitation_action = {
 	}
 	recalculate_influence = yes
 
-	#opinions
-	add_opinion_modifier = {
-		target = PREV
-		modifier = exploited_us
-	}
+	#Opinion Modifiers
+	add_opinion_modifier = { target = PREV modifier = exploited_us }
 	every_neighbor_country = {
-		add_opinion_modifier = {
-			target = PREV
-			modifier = exploited_neighbor
-		}
+		add_opinion_modifier = { target = PREV modifier = exploited_neighbor }
 	}
 }
 
@@ -230,50 +225,34 @@ manipulate_politics_action = {
 		limit = {
 			PREV = { has_government = fascism }
 		}
-		add_popularity = {
-			ideology = fascism
-			popularity = 0.05
-		}
+		add_popularity = { ideology = fascism popularity = 0.05 }
 	}
 	if = {
 		limit = {
 			PREV = { has_government = neutrality }
 		}
-		add_popularity = {
-			ideology = neutrality
-			popularity = 0.05
-		}
+		add_popularity = { ideology = neutrality popularity = 0.05 }
 	}
 	if = {
 		limit = {
 			PREV = { has_government = communism }
 		}
-		add_popularity = {
-			ideology = communism
-			popularity = 0.05
-		}
+		add_popularity = { ideology = communism popularity = 0.05 }
 	}
 	if = {
 		limit = {
 			PREV = { has_government = nationalist }
 		}
-		add_popularity = {
-			ideology = nationalist
-			popularity = 0.05
-		}
+		add_popularity = { ideology = nationalist popularity = 0.05 }
 	}
 	if = {
 		limit = {
 			PREV = { has_government = democratic }
 		}
-		add_popularity = {
-			ideology = democratic
-			popularity = 0.05
-		}
+		add_popularity = { ideology = democratic popularity = 0.05 }
 	}
 
 	#add +5 to our party
-
 	for_each_loop = {
 		array = PREV.ruling_party
 		value = v
@@ -538,4 +517,31 @@ reduce_third_influencer_by_4_percent = {
 		delete_influencer_check = yes
 		recalculate_influence = yes
 	}
+}
+
+##General give influence of ROOT - ROOT being player country while THIS
+generic_grant_2_percent_influence_of_ROOT = {
+	set_temp_variable = { influence_gain = influence_total }
+	multiply_temp_variable = { influence_gain = 0.02 } #2%
+	add_to_temp_variable = { influence_gain = 10 } #10 Debugging value to prevent additions by 0
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
+		if = {
+			limit = {
+				check_variable = { influence_array^v = FRA }
+			}
+			add_to_variable = { influence_array_val^v = influence_gain }
+			set_country_flag = found
+		}
+	}
+	if = {
+		limit = { NOT = { has_country_flag = found } }
+		add_to_array = { influence_array = ROOT.id }
+		add_to_array = { influence_array_val = influence_gain }
+	}
+	clr_country_flag = found
+	delete_influencer_check = yes
+	recalculate_influence = yes
+	custom_effect_tooltip = improve_ROOT_influence_2_percent_TT
 }
