@@ -388,20 +388,199 @@ EU_office_category = {
 	
 	EU_POTEF_nominee = {
 	
-		available = {			
-			
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = tooltip_EU_POTEF_nominee_trigger						
+				any_of = {
+					array = ruling_party
+					value = v
+					index = i
+					if = {
+						limit = {
+							is_in_array = { ruling_party = v }
+						}
+						set_temp_variable = { temp_idx = v }					
+					}
+				}
+				all_country = {
+					if = {
+						limit = {
+							has_idea = EU_member
+							is_in_array = { ruling_party = temp_idx }
+							NOT = { tag = ROOT }
+						}
+						is_top3_influencer = yes
+					}
+				}
+			}								
 		}
 		
 		visible = { 
 			has_idea = EU_member
 		} 
 		
-		complete_effect = {			
-			
+		complete_effect = {
+			for_each_loop = {
+				array = ruling_party
+				value = v
+				index = i
+				if = {
+					limit = {
+						is_in_array = { ruling_party = v }
+					}
+					set_variable = { var_gov_index = v }	
+				}
+			}
+			meta_effect = {
+				text = {
+					set_country_flag = POTEF_nominee_[subideology]
+				}
+				subideology = "[?var_gov_index|0]"	
+			}		
 		}
 
 		ai_will_do = {
 			factor = 0
 		}		
 	}
+
+	EU_POTEF_show_election_polls = {
+	
+		available = {
+			
+		}
+		
+		visible = {
+			#has_global_flag = european_federation 
+			NOT = { has_country_flag = POTEF_polls } 
+		} 
+		
+		complete_effect = {
+			set_country_flag = POTEF_polls
+		}				
+	}
+
+	EU_POTEF_hide_election_polls = {
+	
+		available = {
+			
+		}
+		
+		visible = {
+			#has_global_flag = european_federation 
+			has_country_flag = POTEF_polls 
+		} 
+		
+		complete_effect = {
+			clr_country_flag = POTEF_polls
+		}				
+	}	
+
+	EU_POTEF_election_test = {
+	
+		available = {
+			has_country_flag = EU_potential
+		}
+		
+		visible = { 
+			has_country_flag = EU_potential 
+		} 
+		
+		complete_effect = {
+			clear_POTEF_variables = yes
+			clear_array = POTEF_winner_array
+			clear_array = POTEF_pop_vote_array
+			clear_array = POTEF_pop_vote_ratio_array
+			resize_array = { POTEF_winner_array = 23 }
+			resize_array = { POTEF_pop_vote_array = 23 }
+			resize_array = { POTEF_pop_vote_ratio_array = 23 }			
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}				   						
+				election_POTEF_in_member_state = yes
+			}
+			update_POTEF_arrays = yes	
+		}				
+	}
+
+	EU_POTEF_trigger_test_1 = {
+	
+		available = {
+			absolute_majority_member_states = yes
+		}
+		
+		visible = { 
+			has_country_flag = EU_potential 
+		} 
+		
+		complete_effect = {
+	
+		}				
+	}
+
+	EU_POTEF_trigger_test_2 = {
+	
+		available = {
+			absolute_majority_popular_vote = yes
+		}
+		
+		visible = { 
+			has_country_flag = EU_potential 
+		} 
+		
+		complete_effect = {
+	
+		}				
+	}
+
+	EU_POTEF_trigger_test_3 = {
+	
+		available = {
+			relative_majority_member_states = yes
+		}
+		
+		visible = { 
+			has_country_flag = EU_potential 
+		} 
+		
+		complete_effect = {
+	
+		}				
+	}
+
+	EU_POTEF_trigger_test_4 = {
+	
+		available = {
+			relative_majority_popular_vote = yes
+		}
+		
+		visible = { 
+			has_country_flag = EU_potential 
+		} 
+		
+		complete_effect = {
+	
+		}				
+	}
+	
+	EU_POTEF_trigger_test_5 = {
+	
+		available = {
+			
+		}
+		
+		visible = { 
+			has_country_flag = EU_potential 
+		} 
+		
+		complete_effect = {
+			add_to_array = { 
+				array = POTEF_winner_array 
+				value = 1
+				index = 2
+			}
+		}				
+	}	
+
 }	
