@@ -22,6 +22,7 @@ add_namespace = diplo_action_tools
 
 ### Influence Action events ###
 
+##Economic Aid MASTER Event - Triggered Via the Scripted GUI
 country_event = {
 	id = influence.0
 	immediate = { log = "[GetDateText]: [Root.GetName]: event influence.0" }
@@ -30,7 +31,7 @@ country_event = {
 	is_triggered_only = yes
 	hidden = yes
 
-	immediate = {
+	immediate = { #Determines "SIZE" of the influx of cash
 		set_variable = { gift_sum = size_modifier }
 		multiply_variable = { gift_sum = 10 }
 		clamp_variable = {
@@ -41,6 +42,7 @@ country_event = {
 		FROM = { country_event = { id = influence.1 } }
 	}
 
+	#Tempo Choice -- Automatically occurs due to hidden = yes
 	option = {
 		name = influence.0.a
 		log = "[GetDateText]: [This.GetName]: influence.0.a executed"
@@ -2399,7 +2401,99 @@ news_event = {
 	}
 }
 
+##Military Aid
+country_event = { #FIXME:
+	id = influence.50
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event influence.50"
+		event_target:influence_sender = { country_event = { id = influence.51 } }
+	}
+	title = "You shouldn't see this. REE DONT TRIGGER MY EVENTS"
+	desc = "Why you be triggering my events?"
+	hidden = yes
+	is_triggered_only = yes
+}
 
+#Send Military Aid to [THIS.GetName]
+country_event = {
+	id = influence.51
+	immediate = { log = "[GetDateText]: [Root.GetName]: event influence.51" }
+	title = influence.51.t
+	desc = influence.51.d
+	picture = GFX_handgun
+	is_triggered_only = yes
+
+	#Consider the Military Offer
+	option = {
+		name = influence.51.a
+		log = "[GetDateText]: [This.GetName]: influence.1.a executed"
+
+		custom_effect_tooltip = "You get to decide what equipment you forward!"
+		country_event = { id = influence.52 }
+
+		hidden_effect = {
+			save_event_target_as = FROM_military_aid_recipient
+			set_country_flag = FROM_mil_aid_recipient@FROM
+			FROM = {
+				save_event_target_as = ROOT_military_receiver
+				set_country_flag = FROM_mil_aid_recipient@ROOT
+			}
+		}
+
+		ai_chance = {
+			factor = 10
+		}
+	}
+
+	option = {
+		name = influence.51.b
+		log = "[GetDateText]: [This.GetName]: influence.1.b executed"
+
+		custom_effect_tooltip = "On second thought. I need them guns!"
+		ai_chance = {
+			factor = 10
+		}
+	}
+}
+
+#What weapons do you want?
+country_event = {
+	id = influence.52
+	immediate = { log = "[GetDateText]: [Root.GetName]: event influence.51" }
+	title = influence.52.t
+	desc = influence.52.d
+	picture = GFX_handgun
+	is_triggered_only = yes
+
+	#Infantry Equipment
+	option = {
+		name = influence.52.a
+		trigger = {
+			OR = {
+				has_equipment = { Inf_equipment > 250 }
+			}
+		}
+		set_country_flag = shipment_of_Inf_equipment
+		effect_tooltip = {
+			event_target:ROOT_military_receiver = {
+				add_equipment_to_stockpile = {
+					amount = 250
+					type = Inf_equipment
+					producer = event_target:FROM_military_aid_recipient
+				}
+			}
+			event_target:FROM_military_aid_recipient = {
+				add_equipment_to_stockpile = {
+					amount = 20
+					type = Inf_equipment
+				}
+			}
+		}
+		event_target:ROOT_military_receiver = {
+			country_event = { id = influence.53 }
+		}
+	}
+}
 
 ### Bailout needed ###
 country_event = {
