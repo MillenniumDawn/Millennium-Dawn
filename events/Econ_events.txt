@@ -90,35 +90,13 @@ country_event = {
 		}
 		custom_effect_tooltip = influence_0_TT
 		subtract_from_variable = { treasury = FROM.gift_sum }
-
-		custom_effect_tooltip = aid_influence_gain_relative_TT
-
-		reverse_add_opinion_modifier = {
-				target = FROM
-				modifier = given_gift
-		}
+		#set_country_flag = { flag = recently_sent_aid@FROM value = 1 days = 21 }
 		FROM = {
-			#influence addition
-			set_temp_variable = { influence_gain = ROOT.influence_multiplier } #from global rank idea
-			multiply_temp_variable = { influence_gain = 5 } #base gain
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
-				if = {
-					limit = {
-						check_variable = { influence_array^v = ROOT }
-					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-					set_country_flag = found
-				}
+			effect_tooltip = {
+				custom_effect_tooltip = "If accepted you will receive the following in [THIS.GetName]:"
+				custom_effect_tooltip = improve_ROOT_influence_3_percent_TT
+				reverse_add_opinion_modifier = { target = FROM modifier = given_gift }
 			}
-			if = {
-				limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = ROOT.id }
-					add_to_array = { influence_array_val = influence_gain }
-			}
-			clr_country_flag = found
-			recalculate_influence = yes
 			news_event = { id = News_influence.0 }
 		}
 
@@ -132,13 +110,10 @@ country_event = {
 		#AI Here
 		ai_chance = {
 			factor = 10
-			#modifier = {
 
-			#}
 		}
 	}
 }
-
 
 news_event = {
 	id = News_influence.0
@@ -146,11 +121,7 @@ news_event = {
 	title = News_influence.0.t
 	desc = News_influence.0.d
 	picture = GFX_update_gdpc
-
 	is_triggered_only = yes
-
-	immediate = {
-	}
 
 	#yeah...
 	option = {
@@ -158,6 +129,50 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: News_influence.0.a executed"
 		custom_effect_tooltip = influence_from_0_TT
 		add_to_variable = { treasury = gift_sum }
+		generic_grant_2_percent_influence_of_ROOT = yes
+		reverse_add_opinion_modifier = { target = FROM modifier = given_gift }
+		ai_chance = {
+			factor = 1
+			modifier = {
+				check_variable = { domestic_influence_amount_calc > 0.80 }
+				factor = 0.25
+			}
+			modifier = {
+				OR = {
+					has_idea = superpower
+					has_idea = great_power
+				}
+				factor = 0.10
+			}
+		}
+	}
+
+	#REJECT THE FUCKERS YEAAAAAAAH
+	option = {
+		name = "Reject the Aid"
+		log = "[GetDateText]: [This.GetName]: News_influence.0.b executed"
+		add_political_power = 50
+		add_popularity = { ideology = nationalist popularity = 0.02 }
+		recalculate_party = yes
+		ROOT = {
+			custom_effect_tooltip = influence_from_0_TT
+			add_to_variable = { treasury = gift_sum }
+		}
+
+		ai_chance = {
+			factor = 1
+			modifier = {
+				check_variable = { domestic_influence_amount_calc < 0.80 }
+				factor = 0.25
+			}
+			modifier = {
+				OR = {
+					has_idea = superpower
+					has_idea = great_power
+				}
+				factor = 100
+			}
+		}
 	}
 }
 

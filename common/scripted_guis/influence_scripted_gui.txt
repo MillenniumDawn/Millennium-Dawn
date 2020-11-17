@@ -90,6 +90,8 @@ scripted_gui = {
 				check_variable = { gdp_capita < ROOT.gdp_capita }
 				#Num of Civ Greater
 				check_variable = { size_modifier < ROOT.size_modifier }
+				#Recently Sent Aid
+				NOT = { has_country_flag = recently_sent_aid@FROM }
 			}
 
 			opt_manipulate_politics_button_click_enabled = {
@@ -374,35 +376,11 @@ scripted_gui = {
 				}
 				else = { ROOT = { add_political_power = -50 } }
 
-				#Influencer Variable mathematics
-				set_temp_variable = { influence_gain = influence_total }
-				multiply_temp_variable = { influence_gain = 0.02 } #2% of ROOT influence totoal
-				multiply_temp_variable = { influence_gain = ROOT.influence_multiplier } #from global rank idea
-				add_to_temp_variable = { influence_gain = 20 } #base gain #was 10 - Added to ensure no additions of 0
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						add_to_variable = { influence_array_val^v = influence_gain }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { NOT = { has_country_flag = found } }
-						add_to_array = { influence_array = ROOT.id }
-						add_to_array = { influence_array_val = influence_gain }
-				}
-				clr_country_flag = found
-				delete_influencer_check = yes
-				recalculate_influence = yes
+				generic_grant_2_percent_influence_of_ROOT = yes
 			}
 
 			# give gift of money
 			opt_aid_button_click = {
-
 				ROOT = {
 					PREV = {
 						country_event = { id = influence.0 }
