@@ -1,32 +1,34 @@
 Anti_Bully = {
 	AB_offer_stalemate_Atk = {
-
 		icon = jap_conquer_china
 		target_array = enemies
 		target_trigger = {
-			from = { has_defensive_war_with = ROOT } #deffender
-			has_offensive_war_with = FROM #attacker
+			FROM = { has_defensive_war_with = ROOT } #Defender
+			has_offensive_war_with = FROM #Attacker
 		}
-		
 		available = {
 			has_offensive_war_with = FROM #attacker
-			or = {
+			OR = {
 				has_war_support < 0.51
-				from = { surrender_progress > 0.49 }
+				FROM = { surrender_progress > 0.49 }
 			}
-			not = { has_idea = three_months_of_war }
+			NOT = {
+				has_idea = three_months_of_war
+				has_idea = recent_ceasefire_attempt
+			}
 		}
-
 		visible = {
+			NOT = {
+				tag = ISI
+			}
 			has_offensive_war_with = FROM #attacker
 		}
-		
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AB_offer_stalemate_Atk target: [From.GetName]"
 			hidden_effect = { save_event_target_as = AB_event_target set_country_flag = FC_with_@FROM }
-			from = {
+			FROM = {
 				hidden_effect = { set_country_flag = FC_with_@ROOT }
-				country_event = { id = anti_bully.5 days = 1 }  
+				country_event = { id = anti_bully.5 days = 1 }
 			}
 			effect_tooltip = {
 				if = {
@@ -47,27 +49,26 @@ Anti_Bully = {
 				}
 			}
 		}
-
 	}
-	
-	AB_offer_stalemate_Def = {
 
+	AB_offer_stalemate_Def = {
 		icon = jap_conquer_china
 		target_array = enemies
 		target_trigger = {
 			from = { has_offensive_war_with = ROOT } #attacker
-			has_defensive_war_with = FROM #deffender
+			has_defensive_war_with = FROM #defender
 		}
-		
 		available = {
 			has_defensive_war_with = FROM #attacker
-			or = {
+			OR = {
 				has_war_support < 0.51
-				from = { surrender_progress > 0.49 }
+				FROM = { surrender_progress > 0.49 }
 			}
-			not = { has_idea = three_months_of_war }
+			NOT = {
+				has_idea = three_months_of_war
+				has_idea = recent_ceasefire_attempt
+			}
 			custom_trigger_tooltip = { tooltip = anti_bully2.tt has_country_flag = stalemate@FROM }
-			
 		}
 
 		visible = {
@@ -79,7 +80,7 @@ Anti_Bully = {
 			hidden_effect = { save_event_target_as = AB_event_target set_country_flag = FC_with_@FROM }
 			from = {
 				hidden_effect = { set_country_flag = FC_with_@ROOT }
-				country_event = { id = anti_bully.5 days = 1 }  
+				country_event = { id = anti_bully.5 days = 1 }
 			}
 			effect_tooltip = {
 				if = {
@@ -97,67 +98,53 @@ Anti_Bully = {
 						limit = { has_idea = NATO_member }
 						remove_ideas = NATO_member
 					}
-					
 				}
 			}
 		}
 	}
-	
 	AB_war_support_campaigns = {
 		cost = 100
 		icon = eng_propaganda_campaigns
-		
 		available = {
-			has_war_support < 0.40
+			has_war_support < 0.80
 			has_war = yes
 		}
-		visible = { 
+		visible = {
 			has_war = yes
 		}
-		is_good = no
 		days_remove = 90
 		days_re_enable = 30
 		fire_only_once = no
-		
 		modifier = {
 			war_support_weekly = 0.001
 		}
-		
 		ai_will_do = {
 			factor = 5
-
 			modifier = {
 				add = 50
 				has_war_support < 0.40
 			}
 		}
 	}
-	
 	AB_promises_of_pecae = {
 		cost = 100
 		icon = decision
-		
-		available = { 
-			has_war = yes 
-			has_war_support < 0.50
+		available = {
+			has_war = yes
+			has_stability < 0.80
 		}
-		
-		visible = { 
+		visible = {
 			has_war = yes
 		}
-		is_good = no
 		days_remove = 90
 		days_re_enable = 30
 		fire_only_once = no
-		
 		modifier = {
 			stability_weekly = 0.001
 			war_support_weekly = -0.001
 		}
-		
 		ai_will_do = {
 			factor = 5
-
 			modifier = {
 				add = 50
 				has_stability < 0.30
