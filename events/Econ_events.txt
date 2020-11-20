@@ -48,7 +48,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.0.a executed"
 	}
 }
-
+##AI Economic Aid Master Event - Triggered via the on_action
 country_event = {
 	id = influence.11
 	immediate = { log = "[GetDateText]: [Root.GetName]: event influence.11" }
@@ -154,7 +154,7 @@ news_event = {
 		name = "Reject the Aid"
 		log = "[GetDateText]: [This.GetName]: News_influence.0.b executed"
 		if = {
-			limit = { NOT = { has_country_flag = recently_refused_aid }
+			limit = { NOT = { has_country_flag = recently_refused_aid } }
 			add_political_power = 100
 			set_country_flag = { flag = recently_refused_aid value = 1 days = 60 }
 		}
@@ -186,11 +186,6 @@ news_event = {
 					has_government = nationalist
 				}
 				factor = 25
-			}
-			modifier = {
-				OR = {
-
-				}
 			}
 			modifier = {
 				has_autocratic_governemnt_or_in_coalition = yes
@@ -2427,12 +2422,15 @@ news_event = {
 	}
 }
 
-##Military Aid
-country_event = { #FIXME:
+##Military Aid - NONAI Master Event
+country_event = {
 	id = influence.50
 	immediate = {
 		log = "[GetDateText]: [Root.GetName]: event influence.50"
-		event_target:influence_sender = { country_event = { id = influence.51 } }
+		FROM = { #
+			save_event_target_as = military_aid_sender
+			country_event = { id = influence.51 }
+		}
 	}
 	title = "You shouldn't see this. REE DONT TRIGGER MY EVENTS"
 	desc = "Why you be triggering my events?"
@@ -2457,17 +2455,8 @@ country_event = {
 		custom_effect_tooltip = "You get to decide what equipment you forward!"
 		country_event = { id = influence.52 }
 
-		hidden_effect = {
-			save_event_target_as = FROM_military_aid_recipient
-			set_country_flag = FROM_mil_aid_recipient@FROM
-			FROM = {
-				save_event_target_as = ROOT_military_receiver
-				set_country_flag = FROM_mil_aid_recipient@ROOT
-			}
-		}
-
 		ai_chance = {
-			factor = 10
+			factor = 1
 		}
 	}
 
@@ -2477,12 +2466,12 @@ country_event = {
 
 		custom_effect_tooltip = "On second thought. I need them guns!"
 		ai_chance = {
-			factor = 10
+			factor = 0
 		}
 	}
 }
 
-#What weapons do you want?
+#What weapons do you want to send?
 country_event = {
 	id = influence.52
 	immediate = { log = "[GetDateText]: [Root.GetName]: event influence.51" }
@@ -2491,32 +2480,83 @@ country_event = {
 	picture = GFX_handgun
 	is_triggered_only = yes
 
-	#Infantry Equipment
+	#Infantry Equipment - Shoots another event to "send" the equipment
 	option = {
 		name = influence.52.a
 		trigger = {
 			OR = {
 				has_equipment = { Inf_equipment > 250 }
+				has_equipment = { L_AT_Equipment > 10 }
+				has_equipment = { AA_Equipment > 10 }
 			}
 		}
+		log = "[GetDateText]: [This.GetName]: influence.52.a executed"
 		set_country_flag = shipment_of_Inf_equipment
-		effect_tooltip = {
-			event_target:ROOT_military_receiver = {
-				add_equipment_to_stockpile = {
-					amount = 250
-					type = Inf_equipment
-					producer = event_target:FROM_military_aid_recipient
+		custom_effect_tooltip = they_will_receive_tt
+		if = {
+			limit = { has_equipment = { Inf_equipment > 250 } }
+			effect_tooltip = {
+				FROM = {
+					add_equipment_to_stockpile = {
+						amount = -250
+						type = Inf_equipment
+						producer = PREV
+					}
 				}
-			}
-			event_target:FROM_military_aid_recipient = {
-				add_equipment_to_stockpile = {
-					amount = 20
-					type = Inf_equipment
+				FROM.FROM = { #Should be the targeted influencing nation
+					add_equipment_to_stockpile = {
+						amount = 250
+						type = Inf_equipment
+						producer = FROM
+					}
 				}
 			}
 		}
-		event_target:ROOT_military_receiver = {
-			country_event = { id = influence.53 }
+		if = {
+			limit = { has_equipment = { L_AT_Equipment > 10 } }
+			effect_tooltip = {
+				FROM = {
+					add_equipment_to_stockpile = {
+						amount = -10
+						type = L_AT_Equipment
+						producer = PREV
+					}
+				}
+				FROM.FROM = { #Should be the targeted influencing nation
+					add_equipment_to_stockpile = {
+						amount = 10
+						type = L_AT_Equipment
+						producer = FROM
+					}
+				}
+			}
+		}
+		if = {
+			limit = { has_equipment = { AA_Equipment > 10 } }
+			effect_tooltip = {
+				FROM = {
+					add_equipment_to_stockpile = {
+						amount = -10
+						type = AA_Equipment
+						producer = PREV
+					}
+				}
+				FROM.FROM = { #Should be the targeted influencing nation
+					add_equipment_to_stockpile = {
+						amount = 10
+						type = AA_Equipment
+						producer = FROM
+					}
+				}
+			}
+		}
+		effect_tooltip = {
+			FROM.FROM = {
+				generic_grant_4_percent_influence_of_ROOT = yes
+			}
+		}
+		FROM.FROM = { #Targeted Influencer should recieve this
+			country_event = { id = influence.53 } #Infantry Equipment
 		}
 	}
 
@@ -2525,7 +2565,294 @@ country_event = {
 		name = influence.52.b
 		trigger = {
 			OR = {
-				has_equipment = {  }
+				has_equipment = { APC_Equipment > 10 }
+				has_equipment = { IFV_Equipment > 10 }
+				has_equipment = { util_vehicle_equipment > 10 }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: influence.52.b executed"
+		custom_effect_tooltip = they_will_receive_tt
+		set_country_flag = forwarding_light_armor_vehicles
+		if = {
+			limit = {
+				has_equipment = { APC_Equipment > 10 }
+			}
+			effect_tooltip = {
+				FROM = {
+					add_equipment_to_stockpile = {
+						amount = -10
+						type = APC_Equipment
+						producer = PREV
+					}
+				}
+				FROM.FROM = { #Should be the targeted influencing nation
+					add_equipment_to_stockpile = {
+						amount = 10
+						type = APC_Equipment
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_equipment = { IFV_Equipment > 10 }
+			}
+			effect_tooltip = {
+				FROM = {
+					add_equipment_to_stockpile = {
+						amount = -10
+						type = IFV_Equipment
+						producer = PREV
+					}
+				}
+				FROM.FROM = { #Should be the targeted influencing nation
+					add_equipment_to_stockpile = {
+						amount = 10
+						type = IFV_Equipment
+						producer = FROM
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_equipment = { util_vehicle_equipment > 10 }
+			}
+			effect_tooltip = {
+				FROM = {
+					add_equipment_to_stockpile = {
+						amount = -10
+						type = util_vehicle_equipment
+						producer = PREV
+					}
+				}
+				FROM.FROM = { #Should be the targeted influencing nation
+					add_equipment_to_stockpile = {
+						amount = 10
+						type = util_vehicle_equipment
+						producer = FROM
+					}
+				}
+			}
+		}
+		effect_tooltip = {
+			FROM.FROM = {
+				generic_grant_4_percent_influence_of_ROOT = yes
+			}
+		}
+		FROM.FROM = { #Targeted Influencer should receive this
+			country_event = { id = influence.53 } #Infantry Equipment
+		}
+	}
+
+	option = {
+		name = influence.52.c
+		log = "[GetDateText]: [This.GetName]: influence.52.c executed"
+	}
+}
+
+#Receiver Event -- Basiclly haha I gain guns or light vehicles!
+country_event = {
+	id = influence.53
+	immediate = { log = "[GetDateText]: [Root.GetName]: event influence.53" }
+	title = influence.53.t
+	desc = influence.53.d
+	picture = GFX_handgun
+	is_triggered_only = yes
+
+	option = {
+		name = influence.53.a
+		trigger = {
+			FROM = { has_country_flag = shipment_of_Inf_equipment }
+		}
+		log = "[GetDateText]: [This.GetName]: influence.53.a executed"
+		FROM = { clr_country_flag = shipment_of_Inf_equipment }
+		if = {
+			limit = { FROM = { has_equipment = { Inf_equipment > 250 } } }
+			FROM = {
+				add_equipment_to_stockpile = {
+					amount = -250
+					type = Inf_equipment
+					producer = PREV
+				}
+			}
+			add_equipment_to_stockpile = {
+				amount = 250
+				type = Inf_equipment
+				producer = FROM
+			}
+		}
+		if = {
+			limit = { FROM = { has_equipment = { L_AT_Equipment > 10 } } }
+			FROM = {
+				add_equipment_to_stockpile = {
+					amount = -10
+					type = L_AT_Equipment
+					producer = PREV
+				}
+			}
+			add_equipment_to_stockpile = {
+				amount = 10
+				type = L_AT_Equipment
+				producer = FROM
+			}
+		}
+		if = {
+			limit = { FROM = { has_equipment = { AA_Equipment > 10 } } }
+			FROM = {
+				add_equipment_to_stockpile = {
+					amount = -10
+					type = AA_Equipment
+					producer = PREV
+				}
+			}
+			add_equipment_to_stockpile = {
+				amount = 10
+				type = AA_Equipment
+				producer = FROM
+			}
+		}
+		generic_grant_4_percent_influence_of_ROOT = yes
+
+		ai_chance = {
+			factor = 1
+			modifier = { #Sacrifice Influence for free guns
+				OR = {
+					has_equipment = { Inf_equipment < 250 }
+					has_equipment = { L_AT_Equipment < 10 }
+					has_equipment = { AA_Equipment < 10 }
+				}
+				factor = 100
+			}
+			modifier = {
+				factor = 0.01
+				has_government = nationalist
+			}
+			modifier = {
+				has_war = yes
+				factor = 1.5
+			}
+			modifier = {
+				any_neighbor_country = {
+					is_justifying_wargoal_against = THIS
+				}
+				factor = 2.0
+			}
+			modifier = {
+				factor = 0.01
+				has_government = fascism
+				ROOT = { NOT = { has_government = fascism }}
+			}
+		}
+	}
+
+	option = {
+		name = influence.53.b
+		trigger = {
+			FROM = { has_country_flag = forwarding_light_armor_vehicles }
+		}
+		log = "[GetDateText]: [This.GetName]: influence.53.b executed"
+		FROM = { clr_country_flag = forwarding_light_armor_vehicles }
+		if = {
+			limit = { FROM = { has_equipment = { APC_Equipment > 10 } } }
+			FROM = {
+				add_equipment_to_stockpile = {
+					amount = -10
+					type = APC_Equipment
+					producer = PREV
+				}
+			}
+			add_equipment_to_stockpile = {
+				amount = 10
+				type = APC_Equipment
+				producer = FROM
+			}
+		}
+		if = {
+			limit = { FROM = { has_equipment = { IFV_Equipment > 10 } } }
+			FROM = {
+				add_equipment_to_stockpile = {
+					amount = -10
+					type = IFV_Equipment
+					producer = PREV
+				}
+			}
+			add_equipment_to_stockpile = {
+				amount = 10
+				type = IFV_Equipment
+				producer = FROM
+			}
+		}
+		if = {
+			limit = { FROM = { has_equipment = { util_vehicle_equipment > 10 } } }
+			FROM = {
+				add_equipment_to_stockpile = {
+					amount = -10
+					type = util_vehicle_equipment
+					producer = PREV
+				}
+			}
+			add_equipment_to_stockpile = {
+				amount = 10
+				type = util_vehicle_equipment
+				producer = FROM
+			}
+		}
+		generic_grant_4_percent_influence_of_ROOT = yes
+
+		ai_chance = {
+			factor = 1
+			modifier = { #Sacrifice Influence for free guns
+				OR = {
+					has_equipment = { Inf_equipment < 250 }
+					has_equipment = { L_AT_Equipment < 10 }
+					has_equipment = { AA_Equipment < 10 }
+				}
+				factor = 100
+			}
+			modifier = {
+				factor = 0.01
+				has_government = nationalist
+			}
+			modifier = {
+				has_war = yes
+				factor = 1.5
+			}
+			modifier = {
+				any_neighbor_country = {
+					is_justifying_wargoal_against = THIS
+				}
+				factor = 2.0
+			}
+		}
+	}
+
+	#Refusal
+	option = {
+		name = influence.53.c
+		trigger = {
+			FROM = {
+				OR = {
+					has_country_flag = shipment_of_Inf_equipment
+					has_country_flag = forwarding_light_armor_vehicles
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: influence.53.c executed"
+		boost_domestic_influence_2_percent = yes
+
+		ai_chance = { #Should be more likely to reject if they don't need it
+			factor = 5
+			modifier = {
+				factor = 100
+				has_idea = no_military
+			}
+			modifier = {
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
+				factor = 1.5
 			}
 		}
 	}
