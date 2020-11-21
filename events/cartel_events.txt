@@ -45,28 +45,28 @@ country_event = {
 		# Baja California 
 		if = {
 			limit = { 
-				AND = {
-					828 = { check_variable = { MEX_sinola_state_control > MEX_state_control } }
-					828 = { check_variable = { MEX_sinola_state_control > MEX_tierra_state_control } }
+				828 = {
+					check_variable = { MEX_sinola_state_control > MEX_state_control }
+					check_variable = { MEX_sinola_state_control > MEX_tierra_state_control }
 				}
 			}
 			SLA = { transfer_state = 828 }
 		}
 		else_if = {
 			limit = { 
-				AND = {
-					828 = { check_variable = { MEX_tierra_state_control > MEX_state_control } }
-					828 = { check_variable = { MEX_tierra_state_control > MEX_sinola_state_control } }
+				828 = { 
+					check_variable = { MEX_tierra_state_control > MEX_state_control }
+					check_variable = { MEX_tierra_state_control > MEX_sinola_state_control }
 				}
 			}
 			TRC = { transfer_state = 828 }
 		}
 		else_if = {
 			limit = { 
-				AND = {
-					828 = { check_variable = { MEX_tierra_state_control = MEX_sinola_state_control } }
-					828 = { check_variable = { MEX_state_control < MEX_sinola_state_control } }
-					828 = { check_variable = { MEX_state_control < MEX_tierra_state_control } }
+				828 = { 
+					check_variable = { MEX_tierra_state_control = MEX_sinola_state_control } 
+					check_variable = { MEX_state_control < MEX_sinola_state_control }
+					check_variable = { MEX_state_control < MEX_tierra_state_control }
 				}
 			}
 			random_list = {
@@ -99,8 +99,514 @@ country_event = {
 			limit = { 834 = { check_variable = { MEX_tamaulpas_state_control > MEX_state_control } } }
 			TAM = { transfer_state = 834 }
 		}
+		# Nuevo Leon
+		if = {
+			limit = { 832 = { check_variable = { MEX_tamaulpas_state_control > MEX_state_control } } }
+			TAM = { transfer_state = 832 }
+		}
+		# Jalisco
+		if = {
+			limit = { 836 = { check_variable = { MEX_tierra_state_control > MEX_state_control } } }
+			TRC = { transfer_state = 836 }
+		}
+		# Guerrero-Oaxaco
+		if = {
+			limit = { 837 = { check_variable = { MEX_tierra_state_control > MEX_state_control } } }
+			TRC = { transfer_state = 837 }
+		}
+		# Veracruz
+		if = {
+			limit = { 
+				838 = { 
+					check_variable = { MEX_tierra_state_control > MEX_state_control }
+					check_variable = { MEX_tierra_state_control > MEX_tamaulpas_state_control }
+				}
+			}
+			TRC = { transfer_state = 838 }
+		}
+		else_if = {
+			limit = {
+				838 = { 
+					check_variable = { MEX_tamaulpas_state_control > MEX_state_control }
+					check_variable = { MEX_tamaulpas_state_control > MEX_tierra_state_control }
+				}
+			}
+			TAM = { transfer_state = 838 }
+		}
+		else_if = {
+			limit = { 
+				838 = { 
+					check_variable = { MEX_tierra_state_control = MEX_tamaulpas_state_control } 
+					check_variable = { MEX_state_control < MEX_tamaulpas_state_control }
+					check_variable = { MEX_state_control < MEX_tierra_state_control }
+				}
+			}
+			random_list = {
+				50 = { TAM = { transfer_state = 838 } }
+				50 = { TRC = { transfer_state = 838 } }
+			}
+		}
+		# Chiapas
+		if = {
+			limit = { 839 = { check_variable = { MEX_tamaulpas_state_control > MEX_state_control } } }
+			TAM = { transfer_state = 839 }
+		}
+		# Yucatan
+		if = {
+			limit = { 840 = { check_variable = { MEX_tamaulpas_state_control > MEX_state_control } } }
+			TAM = { transfer_state = 840 }
+		}
+
+		# goes to event based on which factions exist. I have to do it this way because there is no way to hide options so
+		# this dumb solution has to be used
+		# All 3 Cartels exist
+		if = {
+			limit = {
+				country_exists = SLA
+				country_exists = TRC
+				country_exists = TAM
+			}
+			country_event = {
+				id = cartel_event.3
+				days = 1
+			}
+		}
+		# SLA && TRC && !TAM
+		else_if = {
+			limit = {
+				country_exists = SLA
+				country_exists = TRC
+				NOT = { country_exists = TAM }
+			}
+			country_event = {
+				id = cartel_event.4
+				days = 1
+			}
+		}
+		# SLA && !TRC && TAM
+		else_if = {
+			limit = {
+				country_exists = SLA
+				country_exists = TAM
+				NOT = { country_exists = TRC }
+			}
+			country_event = {
+				id = cartel_event.5
+				days = 1
+			}
+		}
+		# SLA && !(TRC && TAM)
+		else_if = {
+			limit = {
+				country_exists = SLA
+				NOT = { country_exists = TAM }
+				NOT = { country_exists = TRC }
+			}
+			country_event = {
+				id = cartel_event.6
+				days = 1
+			}
+		}
+		# !SLA && TRC && TAM
+		else_if = {
+			limit = {
+				NOT = { country_exists = SLA }
+				country_exists = TAM
+				country_exists = TRC
+			}
+			country_event = {
+				id = cartel_event.7
+				days = 1
+			}
+		}
+		# !SLA && TRC && !TAM
+		else_if = {
+			limit = {
+				NOT = { country_exists = SLA }
+				NOT = { country_exists = TAM }
+				country_exists = TRC
+			}
+			country_event = {
+				id = cartel_event.8
+				days = 1
+			}
+		}
+		# !SLA && !TRC && TAM
+		else_if = {
+			limit = {
+				NOT = { country_exists = SLA }
+				NOT = { country_exists = TRC }
+				country_exists = TAM
+			}
+			country_event = {
+				id = cartel_event.9
+				days = 1
+			}
+		}
+		# No Cartels YAY! or boo if you're a sick bastard
+		else = {
+			country_event = {
+				id = cartel_event.10
+				days = 1
+			}
+		}
 	}
 	 
+	fire_only_once = yes
+	is_triggered_only = yes
+	hidden = yes
+}
+
+# Pick from All 3 factions
+country_event = {
+	id = cartel_event.3
+	immediate = { log = "[GetDateText]: [Root.GetName]: event cartel_event.3" }
+	title = cartel_event.3.t
+	desc = cartel_event.3.d
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	# Side with SLA
+	option = {
+		name = cartel_event.3.a
+		log = "[GetDateText]: [This.GetName]: cartel_event.3.a executed"
+		SLA = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Side with TRC
+	option = {
+		name = cartel_event.3.b
+		log = "[GetDateText]: [This.GetName]: cartel_event.3.b executed"
+		TRC = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Side with TAM
+	option = {
+		name = cartel_event.3.c
+		log = "[GetDateText]: [This.GetName]: cartel_event.3.c executed"
+		TAM = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Stick with Mexico
+	option = {
+		name = cartel_event.3.e
+		log = "[GetDateText]: [This.GetName]: cartel_event.3.e executed"
+	}
+}
+
+# Pick from SLA or TRC
+country_event = {
+	id = cartel_event.4
+	immediate = { log = "[GetDateText]: [Root.GetName]: event cartel_event.4" }
+	title = cartel_event.3.t
+	desc = cartel_event.3.d
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	# Side with SLA
+	option = {
+		name = cartel_event.3.a
+		log = "[GetDateText]: [This.GetName]: cartel_event.4.a executed"
+		SLA = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Side with TRC
+	option = {
+		name = cartel_event.3.b
+		log = "[GetDateText]: [This.GetName]: cartel_event.4.b executed"
+		TRC = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Stick with Mexico
+	option = {
+		name = cartel_event.3.e
+		log = "[GetDateText]: [This.GetName]: cartel_event.4.e executed"
+	}
+}
+
+#Pick from SLA or TAM
+country_event = {
+	id = cartel_event.5
+	immediate = { log = "[GetDateText]: [Root.GetName]: event cartel_event.5" }
+	title = cartel_event.3.t
+	desc = cartel_event.3.d
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	# Side with SLA
+	option = {
+		name = cartel_event.3.a
+		log = "[GetDateText]: [This.GetName]: cartel_event.5.a executed"
+		SLA = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Side with TRC
+	option = {
+		name = cartel_event.3.c
+		log = "[GetDateText]: [This.GetName]: cartel_event.5.c executed"
+		TAM = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Stick with Mexico
+	option = {
+		name = cartel_event.3.e
+		log = "[GetDateText]: [This.GetName]: cartel_event.5.e executed"
+	}
+}
+
+# Pick from SLA or MEX
+country_event = {
+	id = cartel_event.6
+	immediate = { log = "[GetDateText]: [Root.GetName]: event cartel_event.6" }
+	title = cartel_event.3.t
+	desc = cartel_event.3.d
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	# Side with SLA
+	option = {
+		name = cartel_event.3.a
+		log = "[GetDateText]: [This.GetName]: cartel_event.6.a executed"
+		SLA = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Stick with Mexico
+	option = {
+		name = cartel_event.3.e
+		log = "[GetDateText]: [This.GetName]: cartel_event.6.e executed"
+	}
+}
+
+# Pick from TRC or TAM
+country_event = {
+	id = cartel_event.7
+	immediate = { log = "[GetDateText]: [Root.GetName]: event cartel_event.7" }
+	title = cartel_event.3.t
+	desc = cartel_event.3.d
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	# Side with TRC
+	option = {
+		name = cartel_event.3.b
+		log = "[GetDateText]: [This.GetName]: cartel_event.7.b executed"
+		TRC = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Side with TAM
+	option = {
+		name = cartel_event.3.c
+		log = "[GetDateText]: [This.GetName]: cartel_event.7.c executed"
+		TAM = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Stick with Mexico
+	option = {
+		name = cartel_event.3.e
+		log = "[GetDateText]: [This.GetName]: cartel_event.7.e executed"
+	}
+}
+
+# pick from TRC and MEX
+country_event = {
+	id = cartel_event.8
+	immediate = { log = "[GetDateText]: [Root.GetName]: event cartel_event.8" }
+	title = cartel_event.3.t
+	desc = cartel_event.3.d
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	# Side with TRC
+	option = {
+		name = cartel_event.3.b
+		log = "[GetDateText]: [This.GetName]: cartel_event.8.b executed"
+		TRC = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Stick with Mexico
+	option = {
+		name = cartel_event.3.e
+		log = "[GetDateText]: [This.GetName]: cartel_event.8.e executed"
+	}
+}
+
+#Pick from TAM or MEX
+country_event = {
+	id = cartel_event.9
+	immediate = { log = "[GetDateText]: [Root.GetName]: event cartel_event.9" }
+	title = cartel_event.3.t
+	desc = cartel_event.3.d
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	# Side with TAM
+	option = {
+		name = cartel_event.3.c
+		log = "[GetDateText]: [This.GetName]: cartel_event.9.c executed"
+		TAM = { change_tag_from = ROOT }
+		country_event = {
+			id = cartel_event.11
+			days = 1
+		}
+	}
+	# Stick with Mexico
+	option = {
+		name = cartel_event.3.e
+		log = "[GetDateText]: [This.GetName]: cartel_event.9.e executed"
+	}
+}
+
+# No Cartels yay! party time eskettit
+country_event = {
+	id = cartel_event.10
+	immediate = { log = "[GetDateText]: [Root.GetName]: event cartel_event.10" }
+	title = cartel_event.10.t
+	desc = cartel_event.10.d
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = cartel_event.10.a
+		log = "[GetDateText]: [This.GetName]: cartel_event.10.a executed"
+	}
+}
+
+# Decide what happens to Mexico State because PDX conditionals makes me suffer, luckily MEX is never at a whole number so
+# This process is less AIDS unless PDX math says 0.99 = 1 then they really do want me to suffer
+country_event = {
+	id = cartel_event.11
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event cartel_event.11"
+		if = {
+			limit = {
+				835 = {
+					check_variable = { MEX_sinola_state_control > MEX_state_control }
+					check_variable = { MEX_sinola_state_control > MEX_tierra_state_control }
+					check_variable = { MEX_sinola_state_control > MEX_tamaulpas_state_control }
+				}
+			}
+			SLA = { transfer_state = 835 }
+		}
+		else_if = {
+			limit = {
+				835 = {
+					check_variable = { MEX_tierra_state_control > MEX_state_control }
+					check_variable = { MEX_tierra_state_control > MEX_sinola_state_control }
+					check_variable = { MEX_tierra_state_control > MEX_tamaulpas_state_control }
+				}
+			}
+			TRC = { transfer_state = 835 }
+		}
+		else_if = {
+			limit = {
+				835 = {
+					check_variable = { MEX_tamaulpas_state_control > MEX_state_control }
+					check_variable = { MEX_tamaulpas_state_control > MEX_sinola_state_control }
+					check_variable = { MEX_tamaulpas_state_control > MEX_tierra_state_control }
+				}
+			}
+			TAM = { transfer_state = 835 }
+		}
+		# If all 3 are tied
+		else_if = {
+			limit = {
+				835 = {
+					check_variable = { MEX_tamaulpas_state_control = MEX_sinola_state_control }
+					check_variable = { MEX_sinola_state_control = MEX_tierra_state_control }
+					check_variable = { MEX_tamaulpas_state_control > MEX_state_control }
+				}
+			}
+			random_list = {
+				33 = { SLA = { transfer_state = 835 } }
+				33 = { TAM = { transfer_state = 835 } }
+				34 = { TRC = { transfer_state = 835 } }
+			}
+		}
+		# If SLA == TAM > TRC
+		else_if = {
+			limit = {
+				835 = {
+					check_variable = { MEX_tamaulpas_state_control = MEX_sinola_state_control }
+					check_variable = { MEX_sinola_state_control > MEX_tierra_state_control }
+					check_variable = { MEX_tamaulpas_state_control > MEX_state_control }
+				}
+			}
+			random_list = {
+				50 = { SLA = { transfer_state = 835 } }
+				50 = { TAM = { transfer_state = 835 } }
+			}
+		}
+		# If SLA == TRC > TAM
+		else_if = {
+			limit = {
+				835 = {
+					check_variable = { MEX_tierra_state_control = MEX_sinola_state_control }
+					check_variable = { MEX_sinola_state_control > MEX_tamaulpas_state_control }
+					check_variable = { MEX_tierra_state_control > MEX_state_control }
+				}
+			}
+			random_list = {
+				50 = { SLA = { transfer_state = 835 } }
+				50 = { TAM = { transfer_state = 835 } }
+			}
+		}
+		# TAM == TRC > SLA
+		else_if = {
+			limit = {
+				835 = {
+					check_variable = { MEX_tamaulpas_state_control = MEX_tierra_state_control }
+					check_variable = { MEX_tamaulpas_state_control > MEX_sinola_state_control }
+					check_variable = { MEX_tierra_state_control > MEX_state_control }
+				}
+			}
+			random_list = {
+				50 = { TRC = { transfer_state = 835 } }
+				50 = { TAM = { transfer_state = 835 } }
+			}
+		}
+	}
+
 	fire_only_once = yes
 	is_triggered_only = yes
 	hidden = yes
