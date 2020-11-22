@@ -17,14 +17,26 @@ influence_desicions = {
 		}
 
 		ai_will_do = {
-			base = 20
+			base = 5
 			modifier = {
-				factor = 0
-				check_variable = { domestic_influence_amount_calc > 0.6 }
+				factor = 1.5
+				OR = {
+					has_autocratic_governemnt_or_in_coalition = yes
+					has_reactionary_governemnt_or_in_coalition = yes
+					has_conservative_governemnt_or_in_coalition = yes
+				}
 			}
 			modifier = {
-				factor = 20
+				factor = 3.0
+				has_totalitarian_government_or_in_coalition = yes
+			}
+			modifier = {
+				factor = 10
 				check_variable = { domestic_influence_amount_calc < 0.3 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { domestic_influence_amount_calc > 0.80 }
 			}
 		}
 	}
@@ -59,16 +71,41 @@ influence_desicions = {
 		ai_will_do = {
 			factor = 1
 			modifier = {
-				factor = 0
-				check_variable = { domestic_influence_amount_calc > 0.6 }
-			}
-			modifier = {
-				factor = 20
+				factor = 2
 				check_variable = { domestic_influence_amount_calc < 0.3 }
 			}
 			modifier = {
-				factor = 20
+				factor = 2
 				check_variable = { domestic_influence_amount_calc < 0.15 }
+			}
+			modifier = {
+				factor = 0
+				NOT = {
+					has_government = communism
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
+			modifier = {
+				factor = 1.25
+				has_government = communism
+			}
+			modifier = {
+				factor = 1.75
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
+			modifier = {
+				factor = 0.5
+				OR = {
+					is_ai = yes
+				}
+			}
+			modifier = {
+				factor = 0
+				check_variable = { domestic_influence_amount_calc > 0.6 }
 			}
 		}
 	}
@@ -98,25 +135,95 @@ influence_desicions = {
 
 		ai_will_do = {
 			factor = 1
-			modifier = {
-				factor = 0
-				check_variable = { domestic_influence_amount_calc > 0.50 }
+			modifier = { #Reduce down to nothing if you have high relations.
+				factor = 0.15
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value > 49 }
+					}
+				}
 			}
 			modifier = {
-				factor = 50
-				check_variable = { domestic_influence_amount_calc < 0.50 }
+				factor = 1.0
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 50 }
+					}
+				}
 			}
 			modifier = {
-				factor = 10
+				factor = 1.25
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 25 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.50
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 15 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.75
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 0 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.0
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -20 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.5
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -50 }
+					}
+				}
+			}
+			#Domestic Influence Calculation
+			modifier = {
+				factor = 2.5
+				check_variable = { domestic_influence_amount_calc < 0.15 }
+			}
+			modifier = {
+				factor = 2.0
+				check_variable = { domestic_influence_amount_calc < 0.25 }
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { domestic_influence_amount_calc < 0.45 }
+			}
+			modifier = {
+				factor = 1.25
+				check_variable = { domestic_influence_amount_calc < 0.60 }
+			}
+			#Should be more worthwhile if they have a high rate
+			modifier = {
+				factor = 2
 				check_variable = { influence_array_val^0 > 0.20 }
 			}
 			modifier = {
-				factor = 10
+				factor = 4
 				check_variable = { influence_array_val^0 > 0.40 }
 			}
 			modifier = {
-				factor = 10
+				factor = 5
 				check_variable = { influence_array_val^0 > 0.60 }
+			}
+			modifier = { #Should only execute this if you have under 60% domestic influence percent
+				factor = 0
+				check_variable = { domestic_influence_amount_calc > 0.60 }
 			}
 		}
 	}
@@ -138,7 +245,7 @@ influence_desicions = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_biggest_influencer_decision"
-			var:FROM.influence_array^0 = {
+			var:FROM.influence_array^1 = {
 				news_event = { id = News_influence.1 }
 			}
 			reduce_second_influencer_by_4_percent = yes
@@ -146,21 +253,95 @@ influence_desicions = {
 
 		ai_will_do = {
 			factor = 1
-			modifier = {
-				factor = 0
-				check_variable = { domestic_influence_amount_calc > 0.50 }
+			modifier = { #Reduce down to nothing if you have high relations.
+				factor = 0.15
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value > 49 }
+					}
+				}
 			}
 			modifier = {
-				factor = 50
-				check_variable = { domestic_influence_amount_calc < 0.50 }
+				factor = 1.0
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 50 }
+					}
+				}
 			}
 			modifier = {
-				factor = 10
+				factor = 1.25
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 25 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.50
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 15 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.75
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 0 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.0
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -20 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.5
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -50 }
+					}
+				}
+			}
+			#Domestic Influence Calculation
+			modifier = {
+				factor = 2.5
+				check_variable = { domestic_influence_amount_calc < 0.15 }
+			}
+			modifier = {
+				factor = 2.0
+				check_variable = { domestic_influence_amount_calc < 0.25 }
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { domestic_influence_amount_calc < 0.45 }
+			}
+			modifier = {
+				factor = 1.25
+				check_variable = { domestic_influence_amount_calc < 0.60 }
+			}
+			#Should be more worthwhile if they have a high rate
+			modifier = {
+				factor = 2
 				check_variable = { influence_array_val^1 > 0.20 }
 			}
 			modifier = {
-				factor = 10
+				factor = 4
 				check_variable = { influence_array_val^1 > 0.40 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { influence_array_val^1 > 0.60 }
+			}
+			modifier = { #Should only execute this if you have under 60% domestic influence percent
+				factor = 0
+				check_variable = { domestic_influence_amount_calc > 0.60 }
 			}
 		}
 	}
@@ -182,7 +363,7 @@ influence_desicions = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_biggest_influencer_decision"
-			var:FROM.influence_array^0 = {
+			var:FROM.influence_array^2 = {
 				news_event = { id = News_influence.1 }
 			}
 			reduce_third_influencer_by_4_percent = yes
@@ -190,21 +371,95 @@ influence_desicions = {
 
 		ai_will_do = {
 			factor = 1
-			modifier = {
-				factor = 0
-				check_variable = { domestic_influence_amount_calc > 0.50 }
+			modifier = { #Reduce down to nothing if you have high relations.
+				factor = 0.15
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value > 49 }
+					}
+				}
 			}
 			modifier = {
-				factor = 50
-				check_variable = { domestic_influence_amount_calc < 0.50 }
+				factor = 1.0
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 50 }
+					}
+				}
 			}
 			modifier = {
-				factor = 10
+				factor = 1.25
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 25 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.50
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 15 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.75
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 0 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.0
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -20 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.5
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -50 }
+					}
+				}
+			}
+			#Domestic Influence Calculation
+			modifier = {
+				factor = 2.5
+				check_variable = { domestic_influence_amount_calc < 0.15 }
+			}
+			modifier = {
+				factor = 2.0
+				check_variable = { domestic_influence_amount_calc < 0.25 }
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { domestic_influence_amount_calc < 0.45 }
+			}
+			modifier = {
+				factor = 1.25
+				check_variable = { domestic_influence_amount_calc < 0.60 }
+			}
+			#Should be more worthwhile if they have a high rate
+			modifier = {
+				factor = 2
 				check_variable = { influence_array_val^2 > 0.20 }
 			}
 			modifier = {
-				factor = 10
+				factor = 4
 				check_variable = { influence_array_val^2 > 0.40 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { influence_array_val^2 > 0.60 }
+			}
+			modifier = { #Should only execute this if you have under 60% domestic influence percent
+				factor = 0
+				check_variable = { domestic_influence_amount_calc > 0.60 }
 			}
 		}
 	}
