@@ -343,6 +343,39 @@ EU_budget_mff_active = {
 	}
 }
 
+EU_budget_mff_renegotiate = {
+	cost = 300
+	available = {
+		has_active_mission = EU_budget_mff_active
+		has_idea = EU_member
+	}	
+	visible = {
+		has_active_mission = EU_budget_mff_active
+		has_idea = EU_member 
+	}
+	complete_effect = {
+		EU_eurosceptic_rise_5_percent = yes
+		clr_global_flag = EU_budget_mff
+		clr_global_flag = focus_EU_mff_EP_approval
+		every_country = {
+			limit = {
+				has_idea = EU_member
+			}
+			clr_country_flag = EU_mff_draft
+			activate_mission = EU_mff_preparations
+			remove_mission = EU_budget_mff_active
+		}
+		set_variable = { global.EU_budget_call_rate = 1.00 }
+		set_EU_gdp = yes
+		set_EU_total_budget = yes
+		update_EU_average_gdp_lvl = yes
+		update_EU_average_eco_lvl = yes
+	}
+	ai_will_do = {
+		factor = 0
+	}		
+}
+
 ### mff draft ###
 
 EU_budget_mff_draft = {
@@ -396,6 +429,11 @@ EU_mff_draft_mission = {
 			}
 			has_idea = EU_finance_minister
 		}
+		NOT = {
+			any_country = {				
+				has_country_flag = focus_on_EP_agenda
+			}
+		}		
 	}	
 	activation = {
 		always = no
@@ -418,12 +456,21 @@ EU_mff_draft_mission = {
 		}
 	}
 	timeout_effect = {
-		custom_effect_tooltip = "Puts the draft on the agenda of the European Parliament"
-		hidden_effect = {
-			set_country_flag = focus_EU_mff_EP_agenda			
-			set_country_flag = focus_on_EP_agenda
-			set_ruling_party_PG_support = yes
-			activate_mission = EU_parliament_focus_EUXXX_approve
+		if = {
+			limit = {
+				NOT = {
+					any_country = {				
+						has_country_flag = focus_on_EP_agenda
+					}
+				}					
+			}
+			custom_effect_tooltip = "Puts the draft on the agenda of the European Parliament"
+			hidden_effect = {			
+				set_country_flag = focus_EU_mff_EP_agenda			
+				set_country_flag = focus_on_EP_agenda
+				set_ruling_party_PG_support = yes
+				activate_mission = EU_parliament_focus_EUXXX_approve				
+			}
 		}	
 	}	
 	ai_will_do = {
@@ -902,6 +949,11 @@ EU_budget_draft_mission = {
 			}
 			has_idea = EU_finance_minister
 		}
+		NOT = {
+			any_country = {				
+				has_country_flag = focus_on_EP_agenda
+			}
+		}
 	}	
 	activation = {
 		always = no
@@ -924,13 +976,22 @@ EU_budget_draft_mission = {
 		}
 	}
 	timeout_effect = {
-		custom_effect_tooltip = "Puts the draft on the agenda of the European Parliament"
-		hidden_effect = {
-			set_country_flag = focus_EU_budget_EP_agenda			
-			set_country_flag = focus_on_EP_agenda
-			set_ruling_party_PG_support = yes
-			activate_mission = EU_parliament_focus_EUXXX_approve
-		}		
+		if = {
+			limit = {
+				NOT = {
+					any_country = {				
+						has_country_flag = focus_on_EP_agenda
+					}
+				}					
+			}
+			custom_effect_tooltip = "Puts the draft on the agenda of the European Parliament"
+			hidden_effect = {				
+				set_country_flag = focus_EU_budget_EP_agenda			
+				set_country_flag = focus_on_EP_agenda
+				set_ruling_party_PG_support = yes
+				activate_mission = EU_parliament_focus_EUXXX_approve
+			}
+		}
 	}	
 	ai_will_do = {
 		factor = 1
