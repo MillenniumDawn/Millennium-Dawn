@@ -1,0 +1,141 @@
+#######################################
+### POTEF election scripted effects ###
+#######################################
+
+POTEF_election = {
+	clear_POTEF_variables = yes
+	clear_array = POTEF_winner_array
+	clear_array = POTEF_pop_vote_array
+	clear_array = POTEF_pop_vote_ratio_array
+	resize_array = { POTEF_winner_array = 23 }
+	resize_array = { POTEF_pop_vote_array = 23 }
+	resize_array = { POTEF_pop_vote_ratio_array = 23 }			
+	every_country = {
+		limit = {
+			has_idea = EU_member
+		}				   						
+		election_POTEF_in_member_state = yes
+	}
+	update_POTEF_arrays = yes	
+}
+
+election_POTEF_in_member_state = {		
+	for_each_loop = {
+		array = party_pop_array		
+		set_variable = { THIS.POTEF_pop_vote^i = party_pop_array^i }
+		multiply_variable = { THIS.POTEF_pop_vote^i = THIS.max_manpower_k }
+		add_to_variable = { global.POTEF_pop_vote^i = THIS.POTEF_pop_vote^i }		
+		add_to_variable = { global.POTEF_pop_vote_total = THIS.POTEF_pop_vote^i }
+	}	
+	find_highest_in_array = {
+		array = party_pop_array
+		value = max_1_tmp
+		index = max_index_1_tmp	
+	}
+	set_variable = { THIS.POTEF_winner_value = max_1_tmp }
+	set_variable = { THIS.POTEF_winner = max_index_1_tmp }
+	add_to_variable = { global.POTEF_winner^max_index_1_tmp = 1 }
+}
+
+clear_POTEF_variables = {
+	clear_variable = global.POTEF_pop_vote_total
+	for_loop_effect = {
+		end = 23
+		value = i
+		clear_variable = global.POTEF_winner^i
+		clear_variable = global.POTEF_pop_vote^i
+		clear_variable = global.POTEF_pop_vote_ratio^i
+	}		
+}
+
+update_POTEF_arrays = {
+	for_each_loop = {
+		array = POTEF_winner_array	
+		add_to_array = { 
+			array = POTEF_winner_array
+			value = global.POTEF_winner^i
+			index = i 
+		}
+	}	
+	for_each_loop = {
+		array = POTEF_pop_vote_array	
+		add_to_array = { 
+			array = POTEF_pop_vote_array
+			value = global.POTEF_pop_vote^i
+			index = i 
+		}
+	}		
+	for_each_loop = {
+		array = POTEF_pop_vote_ratio_array		
+		set_variable = { global.POTEF_pop_vote_ratio^i = global.POTEF_pop_vote^i }
+		divide_variable = { global.POTEF_pop_vote_ratio^i = global.POTEF_pop_vote_total }
+		add_to_array = {
+			array = POTEF_pop_vote_ratio_array
+			value = global.POTEF_pop_vote_ratio^i
+			index = i 
+		}		
+	}	
+}
+
+set_POTEF_elect = {
+	if = {
+		limit = {
+			absolute_majority_member_states = yes
+			absolute_majority_popular_vote = yes
+			#identical?
+			check_variable = { max_index_1_tmp = max_2_tmp }
+		}
+		set_variable = { POTEF_elect = max_index_2_tmp }
+		### five-year term
+	}
+	else_if = {
+		limit = {
+			relative_majority_member_states = yes	
+			absolute_majority_popular_vote = yes
+			#identical?
+			check_variable = { max_index_1_tmp = max_2_tmp }			
+		}
+		set_variable = { POTEF_elect = max_index_2_tmp }
+		### three-year term
+	}
+	else_if = {
+		limit = {
+			absolute_majority_member_states = yes	
+			relative_majority_popular_vote = yes
+			#identical?
+			check_variable = { max_index_1_tmp = max_2_tmp }			
+		}
+		set_variable = { POTEF_elect = max_index_2_tmp }
+		### three-year term
+	}
+	else_if = {
+		limit = {
+			relative_majority_member_states = yes	
+			relative_majority_popular_vote = yes
+			#identical?
+			check_variable = { max_index_1_tmp = max_2_tmp }			
+		}
+		set_variable = { POTEF_elect = max_index_2_tmp }
+		### two-year term
+		else_if = {
+			limit = {	
+				relative_majority_popular_vote = yes
+			}	
+			set_variable = { POTEF_elect = max_index_2_tmp }
+			### one-year term		
+	}			
+	meta_effect = {
+		text = {
+			every_country = {
+				limit = {
+					has_idea = EU_member
+					has_country_flag = POTEF_nominee_[subideology]
+				}					
+			}
+			add_ideas = EU_president
+		}
+		subideology = "[?POTEF_elect|0]"
+	}					
+}
+
+
