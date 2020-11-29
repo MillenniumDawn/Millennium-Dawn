@@ -121,16 +121,19 @@ EU_voting_category = {
 
 
 	EU_test_effect_1 = {
-	
+		#allowed = { is_debug = yes }
 		available = {			
-			has_country_flag = EU_potential		
+			any_of_scopes = {
+				array = global.EU_member
+				has_idea = EU_commission_president
+			}		
 			#FRA = {
 			#	is_USoE_member = yes
 			#}
 		}
 		
 		visible = { 
-			has_country_flag = unvisible #EU_potential #  #unvisible #  
+			has_country_flag = EU_potential #unvisible #  #unvisible #  
 		} 
 		
 		complete_effect = {
@@ -139,7 +142,7 @@ EU_voting_category = {
 	}
 
 	EU_test_effect_2 = {
-	
+		#allowed = { is_debug = yes }
 		available = {			
 			has_country_flag = EU_potential		
 			#FRA = {
@@ -148,7 +151,7 @@ EU_voting_category = {
 		}
 		
 		visible = { 
-			has_country_flag = unvisible #EU_potential #  #unvisible #  
+			has_country_flag = EU_potential #unvisible #  #unvisible #  
 		} 
 		
 		complete_effect = {
@@ -161,22 +164,26 @@ EU_voting_category = {
 	}
 
 	EU_test_effect_3 = {
-	
-		available = {			
-			has_country_flag = EU_potential		
+		#allowed = { is_debug = yes }
+		available = {
+			is_in_array = {
+				array = global.EU_member
+				value = THIS
+			}			
+			#has_country_flag = EU_potential		
 			#FRA = {
 			#	is_USoE_member = yes
 			#}
 		}
 		
 		visible = { 
-			has_country_flag = unvisible #EU_potential #  #unvisible #  
+			has_country_flag = EU_potential #unvisible #  #unvisible #  
 		} 
 		
 		complete_effect = {
-			set_country_flag = USoE_country_leader
-			set_country_flag = USoE_imperial_crown
-			set_country_flag = USoE_house_of_savoy
+			#set_country_flag = USoE_country_leader
+			#set_country_flag = USoE_imperial_crown
+			#set_country_flag = USoE_house_of_savoy
 			#set_country_flag = USoE_house_of_wittelsbach
 			#set_country_flag = USoE_house_of_borbon_anjou
 			#set_country_flag = USoE_house_of_bourbon
@@ -197,21 +204,36 @@ EU_voting_category = {
 	}
 
 	EU_test_effect_4 = {
-	
+		#allowed = { is_debug = yes }	
 		available = {			
-			has_country_flag = EU_potential		
-			#FRA = {
-			#	is_USoE_member = yes
-			#}
+			custom_trigger_tooltip = {
+				tooltip = tooltip_influence_on_all_other_EU_members_3_percent
+				all_of_scopes = { 
+					array = global.EU_member		
+					OR = {
+						tag = PREV
+						AND = {
+							set_temp_variable = { temp_idx = -1 }
+							any_of = {
+								array = influence_array
+								check_variable = { v = ROOT }
+							}
+							set_temp_variable = { temp_idx = i }
+							check_variable = { temp_idx > -1 }
+							check_variable = { influence_array_calc^temp_idx > 0.03 }
+						}
+					}
+				}
+			}			
 		}
 		
 		visible = { 
-			has_country_flag = unvisible #EU_potential #  #unvisible #  
+			has_country_flag = EU_potential #unvisible #  #unvisible #  
 		} 
 		
 		complete_effect = {
 			#focus_USoE645_effect = yes
-			focus_USoE646_effect = yes
+			#focus_USoE646_effect = yes
 			#set_country_flag = USoE_country_leader
 			#set_country_flag = USoE_house_of_savoy
 			#set_country_flag = USoE_new_crown
@@ -1325,10 +1347,11 @@ EU_office_category = {
 ### President of the European Commission ###
 	claim_office_EU_commission_president = {
 		available = {
-			has_idea = EU_member
+			#has_idea = EU_member
 			#OR = { has_global_flag = european_constitution has_global_flag = treaty_of_lisbon }
 			NOT = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					has_idea = EU_commission_president
 				}
 			}
@@ -1352,28 +1375,7 @@ EU_office_category = {
 			custom_trigger_tooltip = {
 				tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states OR a Population greater than 5% of the Total EU Population."
 				OR = {
-					all_country = {
-					OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.05 }
-							}
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}
+					influence_on_all_other_EU_members_5_percent = yes					
 					check_variable = { THIS.var_EUpopRatio > 0.05 }
 				}
 			}
@@ -1411,10 +1413,11 @@ EU_office_category = {
 ### President of the European Council ###
 	claim_office_EU_council_president = {
 		available = {
-			has_idea = EU_member
+			#has_idea = EU_member
 			OR = { has_global_flag = european_constitution has_global_flag = treaty_of_lisbon }
 			NOT = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					has_idea = EU_council_president
 				}
 			}
@@ -1438,28 +1441,7 @@ EU_office_category = {
 			custom_trigger_tooltip = {
 				tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states OR a Population greater than 5% of the Total EU Population."
 				OR = {
-					all_country = {
-					OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.05 }
-							}
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}
+					influence_on_all_other_EU_members_5_percent = yes					
 					check_variable = { THIS.var_EUpopRatio > 0.05 }
 				}
 			}
@@ -1497,10 +1479,11 @@ EU_office_category = {
 ### High Representative of the Union for Foreign Affairs and Security Policy ###
 	claim_office_EU_foreign_minister = {
 		available = {
-			has_idea = EU_member
-			has_global_flag = EU_foreign_minister
+			#has_idea = EU_member
+			#has_global_flag = EU_foreign_minister
 			NOT = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					has_idea = EU_foreign_minister
 				}
 			}
@@ -1524,28 +1507,7 @@ EU_office_category = {
 			custom_trigger_tooltip = {
 				tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states OR a Population greater than 5% of the Total EU Population."
 				OR = {
-					all_country = {
-					OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.05 }
-							}
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}
+					influence_on_all_other_EU_members_5_percent = yes					
 					check_variable = { THIS.var_EUpopRatio > 0.05 }
 				}
 			}
@@ -1583,10 +1545,11 @@ EU_office_category = {
 ### President of the European Parliament ###
 	claim_office_EU_parliament_president = {
 		available = {
-			has_idea = EU_member
-			OR = { has_global_flag = european_constitution has_global_flag = treaty_of_lisbon }
+			#has_idea = EU_member
+			#OR = { has_global_flag = european_constitution has_global_flag = treaty_of_lisbon }
 			NOT = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					has_idea = EU_parliament_president
 				}
 			}
@@ -1610,28 +1573,7 @@ EU_office_category = {
 			custom_trigger_tooltip = {
 				tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states OR a Population greater than 5% of the Total EU Population."
 				OR = {
-					all_country = {
-					OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.05 }
-							}
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}
+					influence_on_all_other_EU_members_5_percent = yes					
 					check_variable = { THIS.var_EUpopRatio > 0.05 }
 				}
 			}
@@ -1669,10 +1611,11 @@ EU_office_category = {
 ### President of the European Central Bank ###
 	claim_office_ECB_president = {
 		available = {
-			has_idea = EU_member
-			has_idea = the_euro
+			#has_idea = EU_member
+			#has_idea = the_euro
 			NOT = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					has_idea = ECB_president
 				}
 			}
@@ -1696,28 +1639,7 @@ EU_office_category = {
 			custom_trigger_tooltip = {
 				tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states OR a Population greater than 5% of the Total EU Population."
 				OR = {
-					all_country = {
-					OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.05 }
-							}
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}
+					influence_on_all_other_EU_members_5_percent = yes					
 					check_variable = { THIS.var_EUpopRatio > 0.05 }
 				}
 			}
@@ -1755,10 +1677,11 @@ EU_office_category = {
 ### European Minister of Economy and Finance ###
 	claim_office_EU_finance_minister = {
 		available = {
-			has_idea = EU_member
-			has_global_flag = EU_finance_minister
+			#has_idea = EU_member
+			#has_global_flag = EU_finance_minister
 			NOT = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					has_idea = EU_finance_minister
 				}
 			}
@@ -1782,28 +1705,7 @@ EU_office_category = {
 			custom_trigger_tooltip = {
 				tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states OR a Population greater than 5% of the Total EU Population."
 				OR = {
-					all_country = {
-					OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.05 }
-							}
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}
+					influence_on_all_other_EU_members_5_percent = yes					
 					check_variable = { THIS.var_EUpopRatio > 0.05 }
 				}
 			}
@@ -1841,10 +1743,11 @@ EU_office_category = {
 ### Frontex Executive Director ###
 	claim_office_frontex_ExDir = {
 		available = {
-			has_idea = EU_member
-			has_global_flag = frontex_ExDir
+			#has_idea = EU_member
+			#has_global_flag = frontex_ExDir
 			NOT = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					has_idea = frontex_ExDir
 				}
 			}
@@ -1868,28 +1771,7 @@ EU_office_category = {
 			custom_trigger_tooltip = {
 				tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states OR a Population greater than 5% of the Total EU Population."
 				OR = {
-					all_country = {
-					OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.05 }
-							}
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}
+					influence_on_all_other_EU_members_5_percent = yes					
 					check_variable = { THIS.var_EUpopRatio > 0.05 }
 				}
 			}
@@ -1927,10 +1809,11 @@ EU_office_category = {
 ### Secretary General of EuroArmy ###
 	claim_office_EUU_euroarmy_sc = {
 		available = {
-			has_idea = EU_member
-			has_global_flag = EuroArmy
+			#has_idea = EU_member
+			#has_global_flag = EuroArmy
 			NOT = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					has_idea = EUU_euroarmy_sc
 				}
 			}
@@ -1954,28 +1837,7 @@ EU_office_category = {
 			custom_trigger_tooltip = {
 				tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states OR a Population greater than 5% of the Total EU Population."
 				OR = {
-					all_country = {
-					OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.05 }
-							}
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}
+					influence_on_all_other_EU_members_5_percent = yes					
 					check_variable = { THIS.var_EUpopRatio > 0.05 }
 				}
 			}
@@ -2013,10 +1875,11 @@ EU_office_category = {
 ### Secretary General of EuroNavy ###
 	claim_office_EUU_euronavy_sc = {
 		available = {
-			has_idea = EU_member
-			has_global_flag = EuroNavy
+			#has_idea = EU_member
+			#has_global_flag = EuroNavy
 			NOT = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					has_idea = EUU_euronavy_sc
 				}
 			}
@@ -2040,28 +1903,7 @@ EU_office_category = {
 			custom_trigger_tooltip = {
 				tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states OR a Population greater than 5% of the Total EU Population."
 				OR = {
-					all_country = {
-					OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.05 }
-							}
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}
+					influence_on_all_other_EU_members_5_percent = yes					
 					check_variable = { THIS.var_EUpopRatio > 0.05 }
 				}
 			}
@@ -2099,10 +1941,11 @@ EU_office_category = {
 ### Ambassador of the Union to the United Nations ###
 	claim_office_EUU_ambassador_UNSC = {
 		available = {
-			has_idea = EU_member
-			has_global_flag = EU_UNSC
+			#has_idea = EU_member
+			#has_global_flag = EU_UNSC
 			NOT = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					has_idea = EUU_ambassador_unsc
 				}
 			}
@@ -2126,28 +1969,7 @@ EU_office_category = {
 			custom_trigger_tooltip = {
 				tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states OR a Population greater than 5% of the Total EU Population."
 				OR = {
-					all_country = {
-					OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.05 }
-							}
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}
+					influence_on_all_other_EU_members_5_percent = yes					
 					check_variable = { THIS.var_EUpopRatio > 0.05 }
 				}
 			}
@@ -2189,10 +2011,11 @@ EU_office_category = {
 ### President of the European Federation ###
 	claim_office_EU_president = {
 		available = {
-			has_idea = EU_member
-			has_global_flag = european_federation
+			#has_idea = EU_member
+			#has_global_flag = european_federation
 			NOT = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					has_idea = EU_president
 				}
 			}
@@ -2216,28 +2039,7 @@ EU_office_category = {
 			custom_trigger_tooltip = {
 				tooltip = "[ROOT.GetNameWithFlag] must have > 5% influence on all member states OR a Population greater than 5% of the Total EU Population."
 				OR = {
-					all_country = {
-					OR = {
-							AND = {
-								set_temp_variable = { temp_idx = -1 }
-								any_of = {
-									array = influence_array
-									value = v
-									index = i
-									if = {
-										limit = { var:v = { tag = ROOT } }
-										set_temp_variable = { temp_idx = i }
-										always = yes
-									}
-									else = { always = no }
-								}
-								check_variable = { temp_idx > -1 }
-								check_variable = { influence_array_calc^temp_idx > 0.05 }
-							}
-							tag = PREV
-							NOT = { has_idea = EU_member }
-						}
-					}
+					influence_on_all_other_EU_members_5_percent = yes					
 					check_variable = { THIS.var_EUpopRatio > 0.05 }
 				}
 			}
@@ -2277,20 +2079,20 @@ EU_office_category = {
 		cost = 50
 		days_remove = 90
 		available = {
-			OR = {
-				has_idea = EU_commission_president
-				has_idea = EU_council_president
-				has_idea = EU_foreign_minister
-				has_idea = EU_parliament_president
-				has_idea = ECB_president
-				has_idea = EU_finance_minister
-				has_idea = frontex_ExDir
-				has_idea = EUU_euronavy_sc
-				has_idea = EUU_euroarmy_sc
-				has_idea = EUU_ambassador_unsc
-				has_idea = EU_president
-			}		
-			has_idea = EU_member
+			#OR = {
+			#	has_idea = EU_commission_president
+			#	has_idea = EU_council_president
+			#	has_idea = EU_foreign_minister
+			#	has_idea = EU_parliament_president
+			#	has_idea = ECB_president
+			#	has_idea = EU_finance_minister
+			#	has_idea = frontex_ExDir
+			#	has_idea = EUU_euronavy_sc
+			#	has_idea = EUU_euroarmy_sc
+			#	has_idea = EUU_ambassador_unsc
+			#	has_idea = EU_president
+			#}		
+			#has_idea = EU_member
 		}
 		
 		visible = {
@@ -2362,7 +2164,8 @@ EU_fiscal_category = {
 		allowed = { always = no }
 		
 		available = {
-			any_country = {
+			any_of_scopes = {
+				array = global.EU_member
 				OR = {
 					### European Banking Union
 					has_country_flag = focus_EU202_yes
@@ -2371,7 +2174,8 @@ EU_fiscal_category = {
 				}
 			}	
 			OR = {
-				any_country = {
+				any_of_scopes = {
+					array = global.EU_member
 					OR = {
 						### Eurobonds
 						has_country_flag = focus_EU203_yes
@@ -2379,7 +2183,8 @@ EU_fiscal_category = {
 						has_country_flag = focus_EU203_maj_yes
 					}
 				}
-				any_country = {	
+				any_of_scopes = {
+					array = global.EU_member
 					OR = {
 						### European Stability Mechanism (ESM)
 						has_country_flag = focus_EU205_yes
@@ -2463,7 +2268,8 @@ EU_fiscal_category = {
 		}
 		
 		cancel_trigger = {
-			any_country = {
+			any_of_scopes = {
+				array = global.EU_member
 				has_global_flag = eurozone_reforms
 			}
 		}
@@ -2597,7 +2403,7 @@ EU_exit_category = {
 	EU_Article_50 = {
 	
 		available = {
-			has_idea = EU_member
+			#has_idea = EU_member
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_Article_50_available
 				ROOT = { has_country_flag = focus_EU701_completed }
@@ -2637,7 +2443,7 @@ EU_exit_category = {
 	EU_Revoke_Article_50 = {
 	
 		available = {
-			has_idea = EU_member
+			#has_idea = EU_member
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_Revoke_Article_50_available
 				has_country_flag = Article_50
@@ -2824,33 +2630,12 @@ EU_exit_category = {
 	EU_extend_Article_50 = {
 	
 		available = {
-			has_idea = EU_member
+			#has_idea = EU_member
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_extend_Article_50_available
 				ROOT = { has_country_flag = focus_EU701_completed }
 				has_country_flag = Article_50
-					all_country = {
-						OR = {
-								AND = {
-									set_temp_variable = { temp_idx = -1 }
-									any_of = {
-										array = influence_array
-										value = v
-										index = i
-										if = {
-											limit = { var:v = { tag = ROOT } }
-											set_temp_variable = { temp_idx = i }
-											always = yes
-										}
-										else = { always = no }
-									}
-									check_variable = { temp_idx > -1 }
-									check_variable = { influence_array_calc^temp_idx > 0.05 }
-								}
-								tag = PREV
-								NOT = { has_idea = EU_member }
-						}
-					}
+				influence_on_all_other_EU_members_5_percent = yes
 			}	
 		}
 		
@@ -3040,10 +2825,10 @@ EU_exit_category = {
 	EU_withdrawal_treaty = {
 	
 		available = {
-			has_idea = EU_member
+			#has_idea = EU_member
 			ROOT = { has_country_flag = focus_EU702_completed }
 			has_country_flag = Article_50
-				influence_on_all_other_EU_members_5_percent = yes			
+			influence_on_all_other_EU_members_5_percent = yes			
 		}
 		
 		visible = { 
@@ -3138,8 +2923,8 @@ EU_defense_category = {
 	EU_Frontex_take_control = {
 	
 		available = {
-			has_idea = EU_member
-			has_idea = frontex_ExDir
+			#has_idea = EU_member
+			#has_idea = frontex_ExDir
 		}
 		
 		visible = { 
@@ -3163,7 +2948,8 @@ EU_defense_category = {
 				}
 				if = {
 					limit = {
-						any_country = { 
+						any_of_scopes = {
+							array = global.EU_member 
 							NOT = { has_template = "European Border Guard Team" }
 						}
 					}
@@ -3191,8 +2977,8 @@ EU_defense_category = {
 	EU_EuroNavy_take_control = {
 	
 		available = {
-			has_idea = EU_member
-			has_idea = EUU_euronavy_sc
+			#has_idea = EU_member
+			#has_idea = EUU_euronavy_sc
 		}
 		
 		visible = { 
@@ -3215,8 +3001,8 @@ EU_defense_category = {
 	EU_EuroArmy_take_control = {
 	
 		available = {
-			has_idea = EU_member
-			has_idea = EUU_euroarmy_sc
+			#has_idea = EU_member
+			#has_idea = EUU_euroarmy_sc
 		}
 		
 		visible = { 
@@ -3240,7 +3026,8 @@ EU_defense_category = {
 					}
 					if = {
 						limit = {
-							any_country = { 
+							any_of_scopes = {
+								array = global.EU_member
 								NOT = { has_template = "EuroArmy Brigade" }
 							}
 						}
@@ -3260,9 +3047,9 @@ EU_defense_category = {
 	EU_create_EDU = {
 	
 		available = {
-			has_idea = European_Security_Council
+			#has_idea = European_Security_Council
 			has_idea = EU_foreign_minister
-			has_idea = EU_member
+			#has_idea = EU_member
 			ROOT = {
 				influence_on_all_other_EU_members_25_percent = yes
 			}			
@@ -3349,12 +3136,10 @@ EU_defense_category = {
 		}
 		
 		available = {
-			all_country = {
-				if = {	
-					limit = { has_idea = EU_member }
-					NOT = {
-						has_country_flag = EU_military_exercise_prep
-					}
+			all_of_scopes = { 
+			array = global.EU_member
+				NOT = {
+					has_country_flag = EU_military_exercise_prep
 				}
 			}
 			NOT = {
@@ -3410,12 +3195,10 @@ EU_defense_category = {
 		}
 		
 		available = {
-			all_country = {
-				if = {	
-					limit = { has_idea = EU_member }
-					NOT = {
-						has_country_flag = EU_host_military_exercise@ROOT
-					}
+			all_of_scopes = { 
+				array = global.EU_member
+				NOT = {
+					has_country_flag = EU_host_military_exercise@ROOT
 				}	
 			}
 			has_country_flag = EU_military_exercise_prep
@@ -3768,7 +3551,7 @@ EU_apply_for_membership_category = {
 					check_variable = { THIS.breach_of_EU_value < 3 }
 				}
 				has_country_flag = EU_candidate
-				NOT = { has_idea = EU_member }
+				#NOT = { has_idea = EU_member }
 				NOT = {	has_war = yes }
 		}
 		
@@ -3842,7 +3625,7 @@ EU_apply_for_membership_category = {
 		
 		
 		available = {
-			has_idea = EU_member
+			#has_idea = EU_member
 		}
 		
 		visible = { 
@@ -3857,13 +3640,14 @@ EU_apply_for_membership_category = {
 					### focus_EU100 effect
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU101_yes
-						has_country_flag = focus_EU101_QMV_yes
-						has_country_flag = focus_EU101_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU101_yes
+							has_country_flag = focus_EU101_QMV_yes
+							has_country_flag = focus_EU101_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU101 effect
@@ -3877,13 +3661,14 @@ EU_apply_for_membership_category = {
 					### focus_EU200 effect
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU201_yes
-						has_country_flag = focus_EU201_QMV_yes
-						has_country_flag = focus_EU201_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU201_yes
+							has_country_flag = focus_EU201_QMV_yes
+							has_country_flag = focus_EU201_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU201 effect
@@ -3893,13 +3678,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU202_yes
-						has_country_flag = focus_EU202_QMV_yes
-						has_country_flag = focus_EU202_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU202_yes
+							has_country_flag = focus_EU202_QMV_yes
+							has_country_flag = focus_EU202_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU202 effect
@@ -3908,13 +3694,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU203_yes
-						has_country_flag = focus_EU203_QMV_yes
-						has_country_flag = focus_EU203_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU203_yes
+							has_country_flag = focus_EU203_QMV_yes
+							has_country_flag = focus_EU203_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU203 effect
@@ -3924,13 +3711,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU204_yes
-						has_country_flag = focus_EU204_QMV_yes
-						has_country_flag = focus_EU204_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU204_yes
+							has_country_flag = focus_EU204_QMV_yes
+							has_country_flag = focus_EU204_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU204 effect
@@ -3939,13 +3727,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU205_yes
-						has_country_flag = focus_EU205_QMV_yes
-						has_country_flag = focus_EU205_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU205_yes
+							has_country_flag = focus_EU205_QMV_yes
+							has_country_flag = focus_EU205_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU205 effect
@@ -3955,13 +3744,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU206_yes
-						has_country_flag = focus_EU206_QMV_yes
-						has_country_flag = focus_EU206_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU206_yes
+							has_country_flag = focus_EU206_QMV_yes
+							has_country_flag = focus_EU206_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU206 effect
@@ -3970,13 +3760,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU207_yes
-						has_country_flag = focus_EU207_QMV_yes
-						has_country_flag = focus_EU207_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU207_yes
+							has_country_flag = focus_EU207_QMV_yes
+							has_country_flag = focus_EU207_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU207 effect
@@ -3987,13 +3778,14 @@ EU_apply_for_membership_category = {
 					### focus_EU300 effect
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU301_yes
-						has_country_flag = focus_EU301_QMV_yes
-						has_country_flag = focus_EU301_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU301_yes
+							has_country_flag = focus_EU301_QMV_yes
+							has_country_flag = focus_EU301_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU301 effect
@@ -4002,13 +3794,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU302_yes
-						has_country_flag = focus_EU302_QMV_yes
-						has_country_flag = focus_EU302_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU302_yes
+							has_country_flag = focus_EU302_QMV_yes
+							has_country_flag = focus_EU302_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					modify_tech_sharing_bonus = { id = EU_Tech_Share bonus = 0.01 }
@@ -4016,13 +3809,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU303_yes
-						has_country_flag = focus_EU303_QMV_yes
-						has_country_flag = focus_EU303_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU303_yes
+							has_country_flag = focus_EU303_QMV_yes
+							has_country_flag = focus_EU303_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU303 effect
@@ -4031,13 +3825,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU304_yes
-						has_country_flag = focus_EU304_QMV_yes
-						has_country_flag = focus_EU304_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU304_yes
+							has_country_flag = focus_EU304_QMV_yes
+							has_country_flag = focus_EU304_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU304 effect
@@ -4049,13 +3844,14 @@ EU_apply_for_membership_category = {
 					### focus_EU307 effect
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU308_yes
-						has_country_flag = focus_EU308_QMV_yes
-						has_country_flag = focus_EU308_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU308_yes
+							has_country_flag = focus_EU308_QMV_yes
+							has_country_flag = focus_EU308_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU308 effect
@@ -4065,13 +3861,14 @@ EU_apply_for_membership_category = {
 					### focus_EU400 effect
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU401_yes
-						has_country_flag = focus_EU401_QMV_yes
-						has_country_flag = focus_EU401_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU401_yes
+							has_country_flag = focus_EU401_QMV_yes
+							has_country_flag = focus_EU401_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU401 effect
@@ -4081,13 +3878,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU402_yes
-						has_country_flag = focus_EU402_QMV_yes
-						has_country_flag = focus_EU402_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU402_yes
+							has_country_flag = focus_EU402_QMV_yes
+							has_country_flag = focus_EU402_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU402 effect
@@ -4104,13 +3902,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU403_yes
-						has_country_flag = focus_EU403_QMV_yes
-						has_country_flag = focus_EU403_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU403_yes
+							has_country_flag = focus_EU403_QMV_yes
+							has_country_flag = focus_EU403_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU403 effect
@@ -4123,13 +3922,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU404_yes
-						has_country_flag = focus_EU404_QMV_yes
-						has_country_flag = focus_EU404_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU404_yes
+							has_country_flag = focus_EU404_QMV_yes
+							has_country_flag = focus_EU404_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU404 effect
@@ -4142,13 +3942,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU405_yes
-						has_country_flag = focus_EU405_QMV_yes
-						has_country_flag = focus_EU405_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU405_yes
+							has_country_flag = focus_EU405_QMV_yes
+							has_country_flag = focus_EU405_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU405 effect
@@ -4157,13 +3958,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU406_yes
-						has_country_flag = focus_EU406_QMV_yes
-						has_country_flag = focus_EU406_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU406_yes
+							has_country_flag = focus_EU406_QMV_yes
+							has_country_flag = focus_EU406_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU406 effect
@@ -4174,13 +3976,14 @@ EU_apply_for_membership_category = {
 			}
 			if = {
 				limit = {
-				any_country = {
-					OR = {
-						has_country_flag = focus_EU407_yes
-						has_country_flag = focus_EU407_QMV_yes
-						has_country_flag = focus_EU407_maj_yes
+					any_of_scopes = {
+						array = global.EU_member
+						OR = {
+							has_country_flag = focus_EU407_yes
+							has_country_flag = focus_EU407_QMV_yes
+							has_country_flag = focus_EU407_maj_yes
+						}
 					}
-				}
 				}
 				ROOT = {
 					### focus_EU407 effect
@@ -4212,8 +4015,8 @@ EU_apply_for_membership_category = {
 	
 		cost = 100
 		available = {
-			has_idea = EU_member
-			NOT = { has_idea = the_euro }
+			#has_idea = EU_member
+			#NOT = { has_idea = the_euro }
 				check_variable = {
 					var = ROOT.interest_rate
 					value = 3.5
@@ -4282,7 +4085,7 @@ EU_apply_for_membership_category = {
 				tooltip = "Has formed the United States of Europe"			
 				has_country_flag = USoE
 			}	
-			has_idea = EU_member
+			#has_idea = EU_member
 		}
 		
 		visible = {
