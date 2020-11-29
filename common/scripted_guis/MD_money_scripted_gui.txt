@@ -146,59 +146,225 @@ scripted_gui = {
 			}
 		}
 
-		ai_enabled = {
-			has_available_treasury = yes
-		}
-		ai_test_interval = 48
-
+		ai_enabled = { always = yes }
+		ai_test_interval = 96
 		ai_check = {
-			always = yes
+			OR = {
+				has_available_treasury = yes
+
+				#Debt Conditions
+				needs_to_take_1_debt = yes
+				needs_to_take_10_debt = yes
+				needs_to_take_100_debt = yes
+				NOT = {
+					has_idea = depression
+					has_idea = recession
+				}
+			}
 		}
 
 		ai_weights = {
-			debt_bg_shift_click = {
+			debt_bg_shift_click = { #Adds debt -- 100 billion
 				ai_will_do = {
-					factor = 0
-					modifier = { # Take a lone
-						add = 1
+					factor = 1
+					modifier = { # Generic Loan conditions
+						factor = 1.5
 						AND = {
 							check_variable = { interest_rate < 1.85 }
-							check_variable = { treasury_rate > -1.00 }
-							check_variable = { treasury < 125 }
-							NOT = { has_idea = depression }
-							NOT = { has_idea = recession }
+							check_variable = { treasury_rate < -1.00 }
+							check_variable = { treasury < 50 }
 						}
+					}
+					modifier = { #Use big option if needed
+						factor = 1.25
+						num_of_factories > 49
+					}
+					modifier = {
+						factor = 1.50
+						num_of_factories > 75
+					}
+					modifier = {
+						factor = 2.0
+						OR = {
+							tag = USA
+							tag = CHI
+							tag = SOV
+						}
+					}
+					modifier = {
+						factor = 1.5
+						check_variable = { treasury < -50.0 }
+					}
+					modifier = {
+						factor = 1.5
+						check_variable = { treasury < -100.0 }
+					}
+					modifier = {
+						factor = 0.10
+						has_country_flag = AI_economic_downspiral
+					}
+					#Debt Taking "Killswitches"
+					modifier = { #Don't take debt if bankruptcy is looming or already bankrupt.
+						factor = 0.0
+						OR = {
+							check_variable = { bankrupcy_check < debt_rate }
+							has_idea = bankrupcy
+						}
+					}
+					modifier = {
+						add = 5
+						ai_has_low_treasury = yes
+					}
+					modifier = { #If you have over -10 treasury. Don't take 100 debt. Kinda overkill
+						factor = 0
+						check_variable = { treasury > -10.0 }
+					}
+					modifier = {
+						factor = 0
+						check_variable = { treasury_rate > 50 } #If you are making income. Don't take debt
+					}
+					modifier = {
+						factor = 0
+						num_of_factories < 50
 					}
 				}
 			}
-			debt_bg_control_click = {
+			debt_bg_control_click = { #Adds debt -- 10billion
 				ai_will_do = {
-					factor = 0
-					modifier = { # Take a lone
-						add = 1
+					factor = 1
+					modifier = { # Take a loan
+						factor = 1.5
 						AND = {
 							check_variable = { interest_rate < 3.00 }
 							check_variable = { treasury_rate > -1.00 }
 							check_variable = { treasury < 25 }
-							NOT = { has_idea = depression }
-							NOT = { has_idea = recession }
 						}
+					}
+					modifier = {
+						factor = 1.5
+						num_of_factories > 10
+					}
+					modifier = {
+						factor = 1.5
+						num_of_factories > 49
+					}
+					modifier = {
+						factor = 1.5
+						check_variable = { treasury < 0 }
+					}
+					modifier = {
+						add = 5
+						ai_has_low_treasury = yes
+					}
+					#Debt Taking "Killswitches"
+					modifier = { #Don't take debt if bankruptcy is looming or already bankrupt.
+						factor = 0.0
+						OR = {
+							check_variable = { bankrupcy_check < debt_rate }
+							has_idea = bankrupcy
+						}
+					}
+					modifier = {
+						factor = 0
+						check_variable = { treasury_rate > 25 } #If you are making income. Don't take debt
+					}
+					modifier = {
+						factor = 0
+						num_of_factories < 20
+					}
+					modifier = {
+						factor = 0.10
+						has_country_flag = AI_economic_downspiral
 					}
 				}
 			}
-			debt_bg_control_right_click = {
+			debt_bg_click = { #Adds debt -- 1 billion
 				ai_will_do = {
 					factor = 0
-					modifier = { # Repay debth
-						add = 1
-						AND = {
-							check_variable = { interest_rate > 3.80 }
-							check_variable = { treasury_rate > -0.05 }
-							check_variable = { treasury > 15 }
-						}
+				}
+			}
+			#Repaying Debt AI
+			debt_bg_right_click = {
+				ai_will_do = {
+					factor = 1
+					modifier = {
+						factor = 0
+						check_variable = { treasury_rate < 0 }
+					}
+					modifier = {
+						factor = 2.0
+						check_variable = { treasury_rate > 0.50 }
+					}
+					modifier = {
+						factor = 1.5
+						ai_has_high_intrest = yes
+					}
+					modifier = {
+						factor = 1.75
+						ai_has_major_economic_problems = yes
+					}
+					modifier = {
+						factor = 1.5
+						ai_has_moderate_economic_problems = yes
+					}
+					modifier = {
+						factor = 1.25
+						ai_has_minor_economic_problems = yes
+					}
+					modifier = {
+						factor = 2.0
+						ai_has_acceptable_surplus = yes
+					}
+					modifier = {
+						factor = 0.25
+						ai_has_acceptable_deficit = yes
+					}
+					modifier = {
+						factor = 0.01
+						ai_has_low_intrest = yes
 					}
 				}
-
+			}
+			debt_bg_control_right_click = { #Repay debt -- 10 debt
+				ai_will_do = {
+					factor = 1
+					modifier = {
+						factor = 0
+						check_variable = { treasury_rate < 0 }
+					}
+					modifier = {
+						factor = 2.0
+						check_variable = { treasury_rate > 0.50 }
+					}
+					modifier = {
+						factor = 1.5
+						ai_has_high_intrest = yes
+					}
+					modifier = {
+						factor = 1.75
+						ai_has_major_economic_problems = yes
+					}
+					modifier = {
+						factor = 1.5
+						ai_has_moderate_economic_problems = yes
+					}
+					modifier = {
+						factor = 1.25
+						ai_has_minor_economic_problems = yes
+					}
+					modifier = {
+						factor = 2.0
+						ai_has_acceptable_surplus = yes
+					}
+					modifier = {
+						factor = 0.25
+						ai_has_acceptable_deficit = yes
+					}
+					modifier = {
+						factor = 0.01
+						ai_has_low_intrest = yes
+					}
+				}
 			}
 		}
 	}
@@ -323,14 +489,15 @@ scripted_gui = {
 		}
 
 		ai_enabled = { always = yes }
-		ai_test_interval = 168
+		ai_test_interval = 120
 		ai_check = {
+			has_political_power > 50
 			check_variable = { treasury_rate < 0 }
 		}
 		ai_weights = {
 			small_plus_button_bg_click = {
 				ai_will_do = {
-					base = 0
+					base = 1
 					modifier = { # If we have pp to spare consider
 						factor = 1.50
 						has_political_power > 100
@@ -339,6 +506,10 @@ scripted_gui = {
 						factor = 500
 						has_political_power > 50
 						check_variable = { treasury_rate < -2.10 }
+					}
+					modifier = {
+						factor = 100
+						check_variable = { treasury_rate < 0.0 }
 					}
 					modifier = {
 						factor = 5
@@ -459,7 +630,7 @@ scripted_gui = {
 		ai_weights = {
 			small_minus_button_bg_click = {
 				ai_will_do = {
-					base = 0
+					base = 1
 					modifier = { # If we have pp to spare consider
 						factor = 1.50
 						has_political_power > 100
