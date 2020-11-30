@@ -17,7 +17,7 @@ focus_tree = {
 	focus = {
 		id = ITA_diplomatic_focus
 		icon = improve_relations
-		x = 105
+		x = 110
 		y = 0
 		cost = 1
 
@@ -29,6 +29,24 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+		}
+	}
+
+	focus = {
+		id = ITA_territorial_claims
+		icon = demand_territory
+		x = 100
+		y = 0
+		cost = 1
+		
+		available = {
+			has_autocratic_government = yes
+		}
+
+		search_filters = {}		
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_territorial_claims"
 		}
 	}
 
@@ -2875,7 +2893,6 @@ focus_tree = {
 		}
 		search_filters = {FOCUS_FILTER_RESOURCE}
 		mutually_exclusive = {
-			focus = ITA_arabian_black_gold
 		}
 
 		bypass = {
@@ -2903,7 +2920,7 @@ focus_tree = {
 	focus = {
 		id = ITA_ideology_focus
 		icon = home_defense
-		x = 58
+		x = 65
 		y = 0
 		cost = 10
 		search_filters = {FOCUS_FILTER_POLITICAL}
@@ -2917,7 +2934,7 @@ focus_tree = {
 		id = ITA_our_past
 		icon = fascism
 		relative_position_id = ITA_ideology_focus
-		x = -7
+		x = -14
 		y = 1
 		cost = 20
 
@@ -2926,9 +2943,6 @@ focus_tree = {
 		}
 
 		available = {
-			NOT = {
-				has_idea = EU_member
-			}
 		}
 
 		mutually_exclusive = {
@@ -2939,15 +2953,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_our_past"
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.10
-			}
-			add_to_variable = { party_pop_array^21 = 0.08 }
-			add_to_variable = { party_pop_array^23 = 0.02 }
-			recalculate_party = yes
-			add_stability = -0.05
-			add_ideas = idea_focus_generic_national_strength
+			add_stability = -0.1
 		}
 
 		ai_will_do = {
@@ -3234,13 +3240,16 @@ focus_tree = {
 	focus = {
 		id = ITA_strike_gaul
 		icon = attack_france
-		relative_position_id = ITA_divide_et_impera
+		relative_position_id = ITA_territorial_claims
 		x = 0
 		y = 1
 		cost = 10
 
 		prerequisite = {
-			focus = ITA_divide_et_impera
+			focus = ITA_territorial_claims
+		}
+		available = {
+			has_completed_focus = ITA_reestablish_rome
 		}
 		search_filters = {FOCUS_FILTER_ANNEXATION}
 		bypass = {
@@ -3609,35 +3618,36 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_march_on_rome
 		}
+		
+		available = {
+			country_exists = HLS
+		}
+		
+		bypass = {
+			NOT = { country_exists = HLS }
+		}
 
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_renew_lateran_treaties"
-			increase_The_Clergy_opinion = yes
-			if = {
-				limit = { country_exists = HLS }
-				add_stability = 0.03
-				add_political_power = 75
-			}
-			if = {
-				limit = { NOT = { country_exists = HLS } }
-				add_stability = 0.03
-				add_political_power = 75
-			}
+			add_stability = 0.03
+			add_political_power = 75
+			HLS = { country_event = italy_md.33 }
 		}
+		
 	}
 
 	focus = {
 		id = ITA_pesky_states
 		icon = war3
-		relative_position_id = ITA_renew_lateran_treaties
-		x = 0
+		relative_position_id = ITA_territorial_claims
+		x = -2
 		y = 1
 		cost = 10
 
 		prerequisite = {
-			focus = ITA_renew_lateran_treaties
+			focus = ITA_territorial_claims
 		}
 		search_filters = {FOCUS_FILTER_ANNEXATION}
 		bypass = {
@@ -3645,15 +3655,18 @@ focus_tree = {
 				AND = {
 					NOT = { country_exists = HLS }
 					NOT = { country_exists = MLT }
+					NOT = { country_exists = SMA }
 				}
 				AND = {
 					HLS = { is_in_faction_with = ITA }
 					MLT = { is_in_faction_with = ITA }
+					SMA = { is_in_faction_with = ITA }
  				}
 				AND = {
 					HLS = { is_puppet_of = ITA }
 					MLT = { is_puppet_of = ITA }
-					}
+					SMA = { is_puppet_of = ITA }
+				}
 			}
 		}
 
@@ -3670,6 +3683,14 @@ focus_tree = {
 					country_exists = MLT
 				}
 				MLT = { country_event = italy_md.3 }
+			}
+			if = {
+				limit = {
+					NOT = { is_in_faction_with = SMA }
+					NOT = { SMA = { is_puppet_of = ITA } }
+					country_exists = SMA
+				}
+				SMA = { country_event = italy_md.3 }
 			}
 			if = {
 				limit = {
@@ -3785,7 +3806,7 @@ focus_tree = {
 
 	focus = {
 		id = ITA_retake_african_coast
-		icon = demand_territory
+		icon = attack_egypt
 		relative_position_id = ITA_strike_gaul
 		x = 0
 		y = 1
@@ -3875,7 +3896,7 @@ focus_tree = {
 
 	focus = {
 		id = ITA_recover_balkans
-		icon = demand_territory2
+		icon = attack_serbia
 		relative_position_id = ITA_retake_african_coast
 		x = 0
 		y = 1
@@ -4285,41 +4306,8 @@ focus_tree = {
 	}
 
 	focus = {
-		id = ITA_arabian_black_gold
-		icon = war
-		relative_position_id = ITA_our_lands_balkans
-		x = 0
-		y = 2
-		cost = 10
-
-		prerequisite = {
-			focus = ITA_our_lands_balkans
-		}
-		search_filters = {FOCUS_FILTER_ANNEXATION}
-		mutually_exclusive = {
-			focus = ITA_support_eni_arabia
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_arabian_black_gold"
-			create_wargoal = {
-				type = annex_everything
-				target = SAU
-			}
-			hidden_effect = {
-				SAU = {
-					remove_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-				}
-			}
-		}
-	}
-
-	focus = {
 		id = ITA_recover_anatolia
-		icon = demand_territory
+		icon = attack_turkey
 		relative_position_id = ITA_recover_balkans
 		x = 0
 		y = 1
@@ -4599,9 +4587,9 @@ focus_tree = {
 
 	focus = {
 		id = ITA_demand_crown_albania
-		icon = dangerous_deal
-		relative_position_id = ITA_settle_southern_question
-		x = 0
+		icon = attack_albania
+		relative_position_id = ITA_territorial_claims
+		x = 2
 		y = 1
 		cost = 10
 
@@ -4614,7 +4602,7 @@ focus_tree = {
 		}
 
 		prerequisite = {
-			focus = ITA_settle_southern_question
+			focus = ITA_territorial_claims
 		}
 
 		search_filters = {FOCUS_FILTER_ANNEXATION}
@@ -4625,88 +4613,16 @@ focus_tree = {
 		}
 	}
 
-
 	focus = {
-		id = ITA_italian_empire
-		icon = the_emperor
-		relative_position_id = ITA_demand_crown_albania
+		id = ITA_our_savoie
+		icon = attack_france
+		relative_position_id = ITA_our_lands_balkans
 		x = 0
 		y = 1
 		cost = 10
 
 		prerequisite = {
-			focus = ITA_demand_crown_albania
-		}
-
-		search_filters = {FOCUS_FILTER_ANNEXATION}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_italian_empire"
-			add_state_claim = 391
-			add_state_claim = 920
-			add_state_claim = 393
-			add_state_claim = 918
-			add_state_claim = 392
-			add_state_claim = 919
-			add_state_claim = 397
-			add_state_claim = 395
-			add_state_claim = 396 #Libya - States upwards
-			add_state_claim = 228
-			add_state_claim = 229 #Eritrea - States Upwards
-			add_state_claim = 581
-			add_state_claim = 584
-			add_state_claim = 593
-			add_state_claim = 240
-			add_state_claim = 239
-			add_state_claim = 928
-			add_state_claim = 200 #Somalia
-			every_country = {
-				limit = {
-					OR = {
-						owns_state = 391
-						owns_state = 920
-						owns_state = 393
-						owns_state = 918
-						owns_state = 392
-						owns_state = 919
-						owns_state = 397
-						owns_state = 395
-						owns_state = 396 #Libya - States upwards
-						owns_state = 228
-						owns_state = 229 #Eritrea - States Upwards
-						owns_state = 581
-						owns_state = 584
-						owns_state = 593
-						owns_state = 240
-						owns_state = 239
-						owns_state = 928
-						owns_state = 200 #Somalia
-					}
-				}
-				add_opinion_modifier = {
-					target = ITA
-					modifier = declaration_of_hostility
-				}
-				hidden_effect = {
-					remove_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-				}
-			}
-		}
-	}
-
-	focus = {
-		id = ITA_our_savoie
-		icon = attack_france
-		relative_position_id = ITA_italian_empire
-		x = 0
-		y = 2
-		cost = 10
-
-		prerequisite = {
-			focus = ITA_italian_empire
+			focus = ITA_our_lands_balkans
 		}
 
 		search_filters = {FOCUS_FILTER_ANNEXATION}
@@ -4781,9 +4697,41 @@ focus_tree = {
 	}
 
 	focus = {
+		id = ITA_arabian_black_gold
+		icon = attack_saudi_arabia
+		relative_position_id = ITA_our_savoie
+		x = 0
+		y = 1
+		cost = 10
+
+		prerequisite = {
+			focus = ITA_our_savoie
+		}
+		search_filters = {FOCUS_FILTER_ANNEXATION}
+		mutually_exclusive = {
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_arabian_black_gold"
+			create_wargoal = {
+				type = annex_everything
+				target = SAU
+			}
+			hidden_effect = {
+				SAU = {
+					remove_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+				}
+			}
+		}
+	}
+
+	focus = {
 		id = ITA_attack_on_america
 		icon = attack_america
-		relative_position_id = ITA_strike_germans_before_they_can
+		relative_position_id = ITA_arabian_black_gold
 		x = 0
 		y = 1
 		cost = 10
@@ -4792,9 +4740,7 @@ focus_tree = {
 		}
 
 		prerequisite = {
-			focus = ITA_our_savoie
 			focus = ITA_arabian_black_gold
-			focus = ITA_strike_germans_before_they_can
 		}
 
 		search_filters = {FOCUS_FILTER_ANNEXATION}
@@ -4809,10 +4755,36 @@ focus_tree = {
 	}
 
 	focus = {
+		id = ITA_crush_third_rome
+		icon = attack_russia
+		relative_position_id = ITA_strike_germans_before_they_can
+		x = 0
+		y = 1
+		cost = 10
+
+		bypass = {
+		}
+
+		prerequisite = {
+			focus = ITA_strike_germans_before_they_can
+		}
+
+		search_filters = {FOCUS_FILTER_ANNEXATION}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_crush_third_rome"
+			create_wargoal = {
+				type = annex_everything
+				target = SOV
+			}
+		}
+	}
+
+	focus = {
 		id = ITA_what_we_are
 		icon = democracy
 		relative_position_id = ITA_ideology_focus
-		x = 11
+		x = 14
 		y = 1
 		cost = 10
 
@@ -4842,11 +4814,11 @@ focus_tree = {
 	}
 
 	focus = {
-		id = ITA_new_parties
+		id = ITA_liberal_parties
 		icon = social_democracy
 		relative_position_id = ITA_what_we_are
 		x = 7
-		y = 1
+		y = 2
 		cost = 10
 
 		prerequisite = {
@@ -4859,12 +4831,13 @@ focus_tree = {
 			NOT = {
 				has_completed_focus = ITA_old_parties
 				has_completed_focus = ITA_with_populism
-				has_completed_focus = ITA_communism_nostalgia
+				has_completed_focus = ITA_new_left
+				has_completed_focus = ITA_communism_resurgence
 			}
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_new_parties"
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_liberal_parties"
 			hidden_effect = {
 				add_popularity = { ideology = democratic popularity = 0.15 }
 				add_popularity = { ideology = neutrality popularity = 0.15 } 
@@ -4882,8 +4855,8 @@ focus_tree = {
 		id = ITA_old_parties
 		icon = democracy2
 		relative_position_id = ITA_what_we_are
-		x = 7
-		y = 6
+		x = 14
+		y = 7
 		cost = 10
 
 		bypass = {
@@ -4897,9 +4870,10 @@ focus_tree = {
 		}
 		available = {
 			NOT = {
-				has_completed_focus = ITA_new_parties
+				has_completed_focus = ITA_liberal_parties
 				has_completed_focus = ITA_with_populism
-				has_completed_focus = ITA_communism_nostalgia
+				has_completed_focus = ITA_new_left
+				has_completed_focus = ITA_communism_resurgence
 			}
 		}
 
@@ -4927,8 +4901,8 @@ focus_tree = {
 		id = ITA_with_populism
 		icon = propaganda
 		relative_position_id = ITA_what_we_are
-		x = -7
-		y = 6
+		x = 0
+		y = 7
 		cost = 10
 
 		prerequisite = {
@@ -4939,8 +4913,9 @@ focus_tree = {
 		available = {
 			NOT = {
 				has_completed_focus = ITA_old_parties
-				has_completed_focus = ITA_new_parties
-				has_completed_focus = ITA_communism_nostalgia
+				has_completed_focus = ITA_liberal_parties
+				has_completed_focus = ITA_new_left
+				has_completed_focus = ITA_communism_resurgence
 			}
 		}
 
@@ -4958,11 +4933,11 @@ focus_tree = {
 	}
 	
 	focus = {
-		id = ITA_communism_nostalgia
+		id = ITA_new_left
 		icon = marxism
 		relative_position_id = ITA_what_we_are
 		x = -7
-		y = 1
+		y = 2
 		cost = 10
 
 		prerequisite = {
@@ -4974,19 +4949,111 @@ focus_tree = {
 			NOT = {
 				has_completed_focus = ITA_old_parties
 				has_completed_focus = ITA_with_populism
-				has_completed_focus = ITA_new_parties
+				has_completed_focus = ITA_liberal_parties
+				has_completed_focus = ITA_communism_resurgence
 			}
 		}
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_communism_nostalgia"
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_new_left"
 			hidden_effect = {
 				add_popularity = { ideology = neutrality popularity = 0.3 }
 			}
 			add_15_neutrality_greens = yes
 			add_15_neutrality_neutral_social = yes
+		}
+	}
+	
+	focus = {
+		id = ITA_communism_resurgence
+		icon = marxism
+		relative_position_id = ITA_what_we_are
+		x = -14
+		y = 7
+		cost = 10
+
+		prerequisite = {
+			focus = ITA_what_we_are
+		}
+		mutually_exclusive = {
+		}
+		available = {
+			NOT = {
+				has_completed_focus = ITA_old_parties
+				has_completed_focus = ITA_with_populism
+				has_completed_focus = ITA_liberal_parties
+				has_completed_focus = ITA_new_left
+			}
+		}
+
+		search_filters = {FOCUS_FILTER_POLITICAL}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_communism"
+			hidden_effect = {
+				add_popularity = { ideology = neutrality popularity = 0.15 }
+				add_popularity = { ideology = communism popularity = 0.15 }
+			}
+			add_15_emerging_communist = yes
+			add_15_neutrality_neutral_communism = yes
+		}
+	}
+
+	focus = {
+		id = ITA_align_to_the_east
+		icon = national_unity
+		relative_position_id = ITA_communism_resurgence
+		x = -2
+		y = 1
+		cost = 10
+
+		prerequisite = {
+			focus = ITA_communism_resurgence
+		}
+		mutually_exclusive = {
+			focus = ITA_non_aligned_communism
+		}
+
+
+		search_filters = {FOCUS_FILTER_POLITICAL}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_align_to_the_east"
+			hidden_effect = {
+				add_popularity = { ideology = communism popularity = 0.2 }
+			}
+			add_20_emerging_communist = yes
+			country_event = { id = MD4_election_campaign.0 }				
+		}
+	}
+
+	focus = {
+		id = ITA_non_aligned_communism
+		icon = national_unity
+		relative_position_id = ITA_communism_resurgence
+		x = 2
+		y = 1
+		cost = 10
+
+		prerequisite = {
+			focus = ITA_communism_resurgence
+		}
+		mutually_exclusive = {
+			focus = ITA_align_to_the_east
+		}
+
+
+		search_filters = {FOCUS_FILTER_POLITICAL}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_non_aligned_communism"
+			hidden_effect = {	
+				add_popularity = { ideology = communism popularity = 0.2 }
+			}
+			add_20_neutrality_neutral_communism = yes
+			country_event = { id = MD4_election_campaign.0 }
 		}
 	}
 
@@ -5048,13 +5115,13 @@ focus_tree = {
 	focus = {
 		id = ITA_liberals
 		icon = national_unity
-		relative_position_id = ITA_new_parties
+		relative_position_id = ITA_liberal_parties
 		x = -2
 		y = 1
 		cost = 10
 
 		prerequisite = {
-			focus = ITA_new_parties
+			focus = ITA_liberal_parties
 		}
 		mutually_exclusive = {
 			focus = ITA_libertarians
@@ -5075,13 +5142,13 @@ focus_tree = {
 	focus = {
 		id = ITA_libertarians
 		icon = national_unity
-		relative_position_id = ITA_new_parties
+		relative_position_id = ITA_liberal_parties
 		x = 2
 		y = 1
 		cost = 10
 
 		prerequisite = {
-			focus = ITA_new_parties
+			focus = ITA_liberal_parties
 		}
 		mutually_exclusive = {
 			focus = ITA_liberals
@@ -5156,13 +5223,13 @@ focus_tree = {
 	focus = {
 		id = ITA_leu
 		icon = national_unity
-		relative_position_id = ITA_communism_nostalgia
+		relative_position_id = ITA_new_left
 		x = -2
 		y = 1
 		cost = 10
 
 		prerequisite = {
-			focus = ITA_communism_nostalgia
+			focus = ITA_new_left
 		}
 		mutually_exclusive = {
 			focus = ITA_greens
@@ -5183,13 +5250,13 @@ focus_tree = {
 	focus = {
 		id = ITA_greens
 		icon = national_unity
-		relative_position_id = ITA_communism_nostalgia
+		relative_position_id = ITA_new_left
 		x = 2
 		y = 1
 		cost = 10
 
 		prerequisite = {
-			focus = ITA_communism_nostalgia
+			focus = ITA_new_left
 		}
 		mutually_exclusive = {
 			focus = ITA_leu
@@ -5252,7 +5319,7 @@ focus_tree = {
 	focus = {
 		id = ITA_let_companies_fail
 		icon = better_money
-		relative_position_id = ITA_new_parties
+		relative_position_id = ITA_liberal_parties
 		x = 1
 		y = 2
 		cost = 5
@@ -5297,7 +5364,7 @@ focus_tree = {
 	focus = {
 		id = ITA_modify_article_18_2
 		icon = forced_labour
-		relative_position_id = ITA_new_parties
+		relative_position_id = ITA_liberal_parties
 		x = -1
 		y = 2
 		cost = 5
@@ -5435,7 +5502,7 @@ focus_tree = {
 	focus = {
 		id = ITA_sell_government_shares_in_companies_2
 		icon = economic_prosperity
-		relative_position_id = ITA_new_parties
+		relative_position_id = ITA_liberal_parties
 		x = 3
 		y = 2
 		cost = 10
@@ -5497,7 +5564,7 @@ focus_tree = {
 	focus = {
 		id = ITA_save_struggling_companies
 		icon = economic_prosperity2
-		relative_position_id = ITA_communism_nostalgia
+		relative_position_id = ITA_new_left
 		x = 1
 		y = 2
 		cost = 10
@@ -5693,7 +5760,7 @@ focus_tree = {
 	focus = {
 		id = ITA_tax_the_rich
 		icon = placeholder
-		relative_position_id = ITA_communism_nostalgia
+		relative_position_id = ITA_new_left
 		x = -1
 		y = 2
 		cost = 5
@@ -6100,7 +6167,7 @@ focus_tree = {
 	focus = {
 		id = ITA_without_europe
 		icon = align_to_italy
-		relative_position_id = ITA_communism_nostalgia
+		relative_position_id = ITA_new_left
 		x = -3
 		y = 2
 		cost = 10
@@ -6130,7 +6197,7 @@ focus_tree = {
 	focus = {
 		id = ITA_military_focus
 		icon = italian_armed_forces
-		x = 95
+		x = 120
 		y = 0
 		cost = 10
 
@@ -8521,8 +8588,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_integrative_restoration"
 			custom_effect_tooltip = integrative_restoration_decisions_unlocked_TT
-			}
 		}
+	}
 
 	focus = {
 		id = ITA_building_amnesty
@@ -8542,13 +8609,13 @@ focus_tree = {
 			custom_effect_tooltip = ITA_ruling_party_popularity_change_focus_TT
 			add_10_popularity_sub = yes
 			add_political_power = 200
-			}
 		}
+	}
 
 	focus = {
 		id = ITA_stop_building_abuse
 		icon = land_reform
-		relative_position_id = ITA_new_parties
+		relative_position_id = ITA_liberal_parties
 		x = -3
 		y = 2
 		cost = 10
@@ -8562,8 +8629,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_stop_building_abuse"
 			remove_ideas = ITA_building_abuse_1
-			}
 		}
+	}
 		
 
 	
