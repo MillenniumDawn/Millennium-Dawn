@@ -164,6 +164,7 @@ scripted_gui = {
 		}
 
 		ai_weights = {
+			##Debt Adders!
 			debt_bg_shift_click = { #Adds debt -- 100 billion
 				ai_will_do = {
 					factor = 1
@@ -176,19 +177,22 @@ scripted_gui = {
 						}
 					}
 					modifier = { #Use big option if needed
-						factor = 1.25
+						factor = 1.45
 						num_of_factories > 49
 					}
 					modifier = {
-						factor = 1.50
+						factor = 1.80
 						num_of_factories > 75
 					}
 					modifier = {
 						factor = 2.0
+						num_of_factories > 125
+					}
+					modifier = {
+						factor = 100
 						OR = {
 							tag = USA
 							tag = CHI
-							tag = SOV
 						}
 					}
 					modifier = {
@@ -226,6 +230,10 @@ scripted_gui = {
 					modifier = {
 						factor = 0
 						num_of_factories < 50
+					}
+					modifier = {
+						factor = 0
+						has_country_flag = AI_economic_downspiral
 					}
 				}
 			}
@@ -273,14 +281,46 @@ scripted_gui = {
 						num_of_factories < 20
 					}
 					modifier = {
-						factor = 0.10
+						factor = 0
 						has_country_flag = AI_economic_downspiral
+					}
+					modifier = {
+						factor = 0.50
+						OR = {
+							tag = USA
+							tag = CHI
+						}
+					}
+					modifier = {
+						factor = 1.10
+						OR = {
+							tag = SOV
+							tag = FRA
+							tag = GER
+							tag = ENG
+							tag = ITA
+							tag = CAN
+							tag = MEX
+							tag = SPR
+						}
 					}
 				}
 			}
-			debt_bg_click = { #Adds debt -- 1 billion
+			debt_bg_click = { #Adds debt -- 1 billion ##Need to write AI for small nations
 				ai_will_do = {
-					factor = 0
+					factor = 1
+					modifier = {
+						factor = 0
+						has_country_flag = AI_economic_downspiral
+					}
+					modifier = { #Nations with less then 20 factories should use this option
+						factor = 1
+						num_of_factories < 20
+					}
+					modifier = {
+						factor = 0
+						num_of_factories > 20 #Ignore if you have a large industrial base
+					}
 				}
 			}
 			#Repaying Debt AI
@@ -322,6 +362,10 @@ scripted_gui = {
 					modifier = {
 						factor = 0.01
 						ai_has_low_intrest = yes
+					}
+					modifier = { #Try to focus on paying down debts if you have looming crisis
+						factor = 1.4
+						has_country_flag = AI_economic_downspiral
 					}
 				}
 			}
@@ -489,7 +533,7 @@ scripted_gui = {
 		}
 
 		ai_enabled = { always = yes }
-		ai_test_interval = 120
+		ai_test_interval = 48
 		ai_check = {
 			has_political_power > 50
 			check_variable = { treasury_rate < 0 }
@@ -497,7 +541,15 @@ scripted_gui = {
 		ai_weights = {
 			small_plus_button_bg_click = {
 				ai_will_do = {
-					base = 1
+					factor = 1
+					modifier = { #Early on Killswitch if Nation is running a surplus.
+						factor = 0
+						ai_has_acceptable_deficit_factories = yes
+					}
+					modifier = {
+						factor = 0
+						ai_has_acceptable_surplus_factories = yes
+					}
 					modifier = { # If we have pp to spare consider
 						factor = 1.50
 						has_political_power > 100
@@ -525,10 +577,15 @@ scripted_gui = {
 					}
 					modifier = {
 						factor = 0.50
-						OR = {
-							ai_has_acceptable_deficit = yes
-							ai_has_acceptable_surplus = yes
-						}
+						ai_has_acceptable_deficit_factories = yes
+					}
+					modifier = {
+						factor = 1.45
+						ai_has_low_taxes = yes
+					}
+					modifier = {
+						factor = 0.25
+						ai_has_high_taxes = yes
 					}
 					modifier = { # consider increase taxes if income is low and intrest is high
 						add = 1
@@ -561,7 +618,7 @@ scripted_gui = {
 						check_variable = { treasury_rate < -1.25 }
 					}
 
-					modifier = { # Dont lower taxes if our industry dont generate income
+					modifier = { # Dont increase taxes if our industry dont generate income
 						factor = 0.01
 						num_of_available_civilian_factories < 2
 					}
@@ -581,12 +638,7 @@ scripted_gui = {
 						factor = 0
 						check_variable = { tax_rate > 40 }
 					}
-					modifier = {
-						factor = 2
-						check_variable = { tax_rate < 25 }
-					}
 				}
-
 			}
 		}
 	}
@@ -630,46 +682,38 @@ scripted_gui = {
 		ai_weights = {
 			small_minus_button_bg_click = {
 				ai_will_do = {
-					base = 1
+					factor = 1
+					modifier = { #Early on Killswitch if Nation is running a surplus or an acceptable deficit
+						factor = 0
+						ai_has_acceptable_deficit_factories = yes
+					}
+					modifier = {
+						factor = 0
+						ai_has_acceptable_surplus_factories = yes
+					}
 					modifier = { # If we have pp to spare consider
 						factor = 1.50
 						has_political_power > 100
 					}
 					modifier = { # Dont decrease taxes if we have economic problems
-						factor = 0.10
-						OR = {
-							has_idea = depression
-							has_idea = recession
-							has_idea = stagnation
-							check_variable = { interest_rate > 8.00 }
-						}
-					}
-					modifier = {
-						factor = 0.05
-						OR = {
-							has_idea = depression
-							has_idea = recession
-							check_variable = { interest_rate > 8.00 }
-						}
-					}
-					modifier = {
 						factor = 0.01
-						OR = {
-							has_idea = depression
-							check_variable = { interest_rate > 8.00 }
-						}
-					}
-					modifier = {
-						factor = 0.5
 						ai_has_major_economic_problems = yes
 					}
 					modifier = {
-						factor = 0.25
+						factor = 0.05
 						ai_has_moderate_economic_problems = yes
 					}
 					modifier = {
-						factor = 0.125
+						factor = 0.10
 						ai_has_minor_economic_problems = yes
+					}
+					modifier = {
+						factor = 2.0
+						ai_has_high_taxes = yes
+					}
+					modifier = {
+						factor = 0.10
+						ai_has_low_taxes = yes
 					}
 					modifier = {
 						factor = 1.50
@@ -703,40 +747,35 @@ scripted_gui = {
 							}
 						}
 					}
-
-					modifier = { # Lower taxes if our industry dont generate income
-						add = 1
+					modifier = { # Lower taxes if we don't have any available industry
+						factor = 1.25
 						num_of_available_civilian_factories < 2
 					}
 					modifier = {
-						add = 1
+						factor = 1.45
 						num_of_available_civilian_factories < 3
 					}
 					modifier = {
-						add = 1
+						factor = 1.55
 						num_of_available_civilian_factories < 6
 					}
 					modifier = {
-						add = 1
+						factor = 1.6
 						num_of_available_civilian_factories < 8
 					}
 
 					modifier = { # lower taxes if the income is high
-						add = 2
+						factor = 1.5
 						check_variable = { treasury_rate > 1.000 }
 					}
 
 					modifier = { # Ai like to have money before lowering taxes
 						factor = 0
-						check_variable = { treasury < 10 }
+						check_variable = { treasury < 25 }
 					}
 					modifier = { ##Failsafe. AI should keep around 25%
 						factor = 0
-						check_variable = { tax_rate < 25 }
-					}
-					modifier = {
-						factor =2
-						check_variable = { tax_rate > 24  }
+						check_variable = { tax_rate > 4 }
 					}
 				}
 			}
