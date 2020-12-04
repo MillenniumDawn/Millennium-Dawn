@@ -2970,15 +2970,36 @@ focus_tree = {
 	}
 
 	focus = {
-		id = ITA_mantain_the_republic
-		icon = placeholder
+		id = ITA_dismantle_parliament
+		icon = dismantle_the_parliament
 		relative_position_id = ITA_our_past
-		x = -3
+		x = 0
 		y = 1
 		cost = 10
 
 		prerequisite = {
 			focus = ITA_our_past
+		}
+		search_filters = {FOCUS_FILTER_POLITICAL}
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_dismantle_parliament"
+		   add_political_power = 50
+		   add_ideas = { ITA_parliament_dismantled }
+		   add_stability = -0.03
+		}
+	}
+
+	focus = {
+		id = ITA_mantain_the_republic
+		icon = placeholder
+		relative_position_id = ITA_dismantle_parliament
+		x = -5
+		y = 1
+		cost = 10
+
+		prerequisite = {
+			focus = ITA_dismantle_parliament
 		}
 		search_filters = {FOCUS_FILTER_POLITICAL}
 		mutually_exclusive = {
@@ -2987,11 +3008,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_mantain_the_republic"
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.15
+			hidden_effect = {
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.15
+				}
+				add_popularity = {
+					ideology = neutrality
+					popularity = 0.15
+				}
+				add_15_neutrality_oligarchs = yes
+				add_15_nationalist_fascists = yes
 			}
-			add_to_variable = { party_pop_array^21 = 0.15 }
+			add_15_neutrality_oligarchs = yes
+			add_15_nationalist_fascists = yes
 			recalculate_party = yes
 		}
 	}
@@ -2999,13 +3029,13 @@ focus_tree = {
 	focus = {
 		id = ITA_towards_monarchy
 		icon = italian_monarchy
-		relative_position_id = ITA_our_past
-		x = 3
+		relative_position_id = ITA_dismantle_parliament
+		x = 5
 		y = 1
 		cost = 10
 
 		prerequisite = {
-			focus = ITA_our_past
+			focus = ITA_dismantle_parliament
 		}
 		search_filters = {FOCUS_FILTER_POLITICAL}
 		mutually_exclusive = {
@@ -3014,11 +3044,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_towards_monarchy"
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.15
+			hidden_effect = {
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.15
+				}
+				add_15_nationalist_monarchists = yes
+				add_popularity = {
+					ideology = neutrality
+					popularity = 0.15
+				}
+				add_15_neutrality_autocrats = yes
 			}
-			add_to_variable = { party_pop_array^23 = 0.15 }
+			add_15_neutrality_autocrats = yes
+			add_15_nationalist_monarchists = yes
 			recalculate_party = yes
 		}
 	}
@@ -3034,11 +3073,7 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_towards_monarchy
 		}
-		available = {
-			nationalist > 0.20
-		}
 		mutually_exclusive = {
-			focus = ITA_march_on_rome
 			focus = ITA_reestablish_rome
 		}
 		search_filters = {FOCUS_FILTER_POLITICAL}
@@ -3048,13 +3083,15 @@ focus_tree = {
 			add_ideas = { ITA_kingdom_restored }
 			add_ideas = { ITA_southern_question }
 			hidden_effect = {
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.2
+				}
+				add_20_nationalist_monarchists = yes
 				clear_array = ruling_party
 				clear_array = gov_coalition_array
 				add_to_array = { ruling_party = 23 }
-				add_to_array = { gov_coalition_array = 21 }
-				add_to_array = { gov_coalition_array = 20 }
 				update_government_coalition_strength = yes
-				update_party_name = yes
 				set_coalition_drift = yes
 				meta_effect = {
 					text = {
@@ -3070,7 +3107,7 @@ focus_tree = {
 			}
 			custom_effect_tooltip = ITA_empower_the_king_TT
 			news_event = italy_news.2
-			add_to_variable = { party_pop_array^23 = 0.15 }
+			add_20_nationalist_monarchists = yes
 			recalculate_party = yes
 		}
 	}
@@ -3080,7 +3117,7 @@ focus_tree = {
 		icon = roman_empire
 		relative_position_id = ITA_our_past
 		x = 0
-		y = 2
+		y = 3
 		cost = 10
 
 		prerequisite = {
@@ -3099,74 +3136,30 @@ focus_tree = {
 				limit = {
 					has_completed_focus = ITA_mantain_the_republic
 				}
-
+				add_20_neutrality_oligarchs = yes
 				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 15 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+					add_popularity = {
+						ideology = neutrality
+						popularity = 0.20
 					}
-					set_leader = yes
-				}
-				set_politics = {
-					ruling_party = neutrality
-					elections_allowed = no
-				}
-				create_country_leader = {
-					name = "Roman Senate"
-					picture = "roman_senate.dds"
-					ideology = oligarchism
-					traits = {
-						warmonger
-					}
-				}
-				add_popularity = {
-					ideology = neutrality
-					popularity = 0.15
 				}
 				recalculate_party = yes
 				drop_cosmetic_tag = yes
-				set_country_flag = ITA_a_new_roman_senate_fasc
 				set_cosmetic_tag = ITA_RomanEmpire
 			}
 			if = {
 				limit = {
 					has_completed_focus = ITA_towards_monarchy
 				}
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 23 }
-					add_to_array = { gov_coalition_array = 20 } #Nat_Populism
-					add_to_array = { gov_coalition_array = 21 } #Nat_Fascism
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				add_20_neutrality_autocrats = yes
+				hidden_effect = {					
+					add_20_neutrality_autocrats = yes
+					add_popularity = {
+						ideology = neutrality
+						popularity = 0.2
 					}
-					set_leader = yes
-				} ##All Nationalist Parties will Support the King
-				set_politics = {
-					ruling_party = nationalist
-					elections_allowed = no
-				}
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.15
 				}
 				recalculate_party = yes
-				set_country_flag = ITA_towards_monarchy_monch
 				drop_cosmetic_tag = yes
 				set_cosmetic_tag = ITA_RomanEmpire2
 			}
@@ -3192,26 +3185,217 @@ focus_tree = {
 	}
 
 	focus = {
-		id = ITA_dismantle_parliament
-		icon = dismantle_the_parliament
-		relative_position_id = ITA_empower_the_king
-		x = 0
-		y = 1
+		id = ITA_empower_the_senate
+		icon = placeholder
+		relative_position_id = ITA_reestablish_rome
+		x = -2
+		y = 2
 		cost = 10
 
 		prerequisite = {
-			focus = ITA_empower_the_king
+			focus = ITA_reestablish_rome
+		}
+		prerequisite = {
+			focus = ITA_mantain_the_republic
 		}
 		search_filters = {FOCUS_FILTER_POLITICAL}
-		available = {
-			has_government = nationalist
-		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_dismantle_parliament"
-		   add_political_power = 50
-		   add_ideas = { ITA_parliament_dismantled }
-		   add_stability = -0.03
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_empower_the_senate"
+			add_20_neutrality_oligarchs = yes			
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+			hidden_effect = {
+				add_popularity = { ideology = neutrality popularity = 0.2 }
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 15 }
+				add_to_array = { gov_coalition_array = 23 }
+				add_to_array = { gov_coalition_array = 13 }
+				update_government_coalition_strength = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+			create_country_leader = {
+					name = "Roman Senate"
+					picture = "roman_senate.dds"
+					ideology = oligarchism
+					traits = {
+						warmonger
+					}
+			}
+			recalculate_party = yes
+		}
+	}
+
+	focus = {
+		id = ITA_empower_the_emperor
+		icon = placeholder
+		relative_position_id = ITA_reestablish_rome
+		x = 2
+		y = 2
+		cost = 10
+
+		prerequisite = {
+			focus = ITA_towards_monarchy
+		}
+		prerequisite = {
+			focus = ITA_reestablish_rome
+		}
+		search_filters = {FOCUS_FILTER_POLITICAL}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_empower_the_emperor"
+			add_20_neutrality_autocrats = yes
+			hidden_effect = {
+				add_20_neutrality_autocrats = yes
+				add_popularity = { ideology = neutrality popularity = 0.2 }
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 13 }
+				add_to_array = { gov_coalition_array = 15 }
+				add_to_array = { gov_coalition_array = 23 }
+				update_government_coalition_strength = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+			recalculate_party = yes
+		}
+	}
+
+	focus = {
+		id = ITA_western_alignment
+		icon = placeholder
+		relative_position_id = ITA_empower_the_emperor
+		x = 0
+		y = 2
+		cost = 10
+
+		prerequisite = {
+			focus = ITA_empower_the_emperor
+		}
+		mutually_exclusive = {
+			focus = ITA_unaligned_empire
+			focus = ITA_eastern_sympathies
+		}
+		search_filters = {FOCUS_FILTER_POLITICAL}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_western_alignment"
+			hidden_effect = {
+				add_40_western_autocracy = yes
+				add_popularity = { ideology = democratic popularity = 0.4 }
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 0 }
+				add_to_array = { gov_coalition_array = 15 }
+				add_to_array = { gov_coalition_array = 13 }
+				update_government_coalition_strength = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+			add_40_western_autocracy = yes			
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = no
+			}
+			recalculate_party = yes
+		}
+	}
+
+	focus = {
+		id = ITA_eastern_sympathies
+		icon = placeholder
+		relative_position_id = ITA_empower_the_emperor
+		x = 4
+		y = 2
+		cost = 10
+
+		prerequisite = {
+			focus = ITA_empower_the_emperor
+		}
+		mutually_exclusive = {
+			focus = ITA_unaligned_empire
+			focus = ITA_western_alignment
+		}
+		search_filters = {FOCUS_FILTER_POLITICAL}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_eastern_sympathies"
+			hidden_effect = {
+				add_40_emerging_autocrats = yes
+				add_popularity = { ideology = democratic popularity = 0.4 }
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 7 }
+				add_to_array = { gov_coalition_array = 15 }
+				add_to_array = { gov_coalition_array = 13 }
+				update_government_coalition_strength = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+			add_40_emerging_autocrats = yes			
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+			recalculate_party = yes
+		}
+	}
+
+	focus = {
+		id = ITA_unaligned_empire
+		icon = placeholder
+		relative_position_id = ITA_empower_the_emperor
+		x = 2
+		y = 2
+		cost = 10
+
+		prerequisite = {
+			focus = ITA_empower_the_emperor
+		}
+		mutually_exclusive = {
+			focus = ITA_eastern_sympathies
+			focus = ITA_western_alignment
+		}
+		search_filters = {FOCUS_FILTER_POLITICAL}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_unaligned_empire"
+			hidden_effect = {
+				add_10_neutrality_autocrats = yes
+			}
+			add_10_neutrality_autocrats = yes
 		}
 	}
 
@@ -3227,9 +3411,6 @@ focus_tree = {
 			focus = ITA_reestablish_rome
 		}
 		search_filters = {FOCUS_FILTER_POLITICAL}
-		#mutually_exclusive = {
-			#focus = ITA_federation_of_romans
-		#}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_divide_et_impera"
@@ -3491,14 +3672,8 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_mantain_the_republic
 		}
-
-		available = {
-			nationalist > 0.20
-		}
-
 		mutually_exclusive = {
 			focus = ITA_reestablish_rome
-			focus = ITA_empower_the_king
 		}
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
@@ -3508,14 +3683,12 @@ focus_tree = {
 			if = {
 				limit = {
 					NOT = { has_government = nationalist }
-					date < 2016.12.31
 				}
 				hidden_effect = {
 					clear_array = ruling_party
 					clear_array = gov_coalition_array
 					add_to_array = { ruling_party = 21 }
 					update_government_coalition_strength = yes
-					update_party_name = yes
 					set_coalition_drift = yes
 					meta_effect = {
 						text = {
@@ -3530,31 +3703,14 @@ focus_tree = {
 					elections_allowed = no
 				}
 			}
-			if = {
-				limit = {
-					NOT = { has_government = nationalist }
-					date > 2016.12.31
+			hidden_effect = {				
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.2
 				}
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 21 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					set_leader = yes
-				}
-				set_politics = {
-					ruling_party = nationalist
-					elections_allowed = no
-				}
+				add_20_nationalist_fascists = yes
 			}
+			add_20_nationalist_fascists = yes
 			add_ideas = { ITA_new_march_on_rome }
 			custom_effect_tooltip = ITA_march_on_rome_TT
 			news_event = italy_news.1
@@ -4517,7 +4673,7 @@ focus_tree = {
 	focus = {
 		id = ITA_settle_southern_question
 		icon = southern_question
-		relative_position_id = ITA_dismantle_parliament
+		relative_position_id = ITA_empower_the_king
 		x = 0
 		y = 1
 		cost = 20
@@ -4527,7 +4683,7 @@ focus_tree = {
 		}
 
 		prerequisite = {
-			focus = ITA_dismantle_parliament
+			focus = ITA_empower_the_king
 		}
 
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY}
@@ -5880,6 +6036,64 @@ focus_tree = {
 			add_to_variable = { ITA_tax_multiplier_var = 0.01 }
 			custom_effect_tooltip = ITA_ruling_party_popularity_change_focus_TT
 			add_10_popularity_sub = yes
+		}
+	}
+
+	focus = {
+		id = ITA_flat_tax
+		icon = placeholder
+		relative_position_id = ITA_right_wing_populism
+		x = 2
+		y = 2
+		cost = 5
+
+		prerequisite = {
+			focus = ITA_right_wing_populism
+		}
+		available = {
+			NOT = {
+				has_completed_focus = ITA_repeal_former_government_measures_2
+			}
+		}
+
+		search_filters = {FOCUS_FILTER_POLITICAL}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_flat_tax"
+			add_1_ruling_party_drift = yes
+			add_ideas = ITA_flat_tax
+			custom_effect_tooltip = ITA_flat_tax_TT
+			add_to_variable = { ITA_tax_multiplier_var = -0.05 }
+			custom_effect_tooltip = ITA_ruling_party_popularity_change_focus_TT
+			add_5_popularity_sub = yes
+		}
+	}
+
+	focus = {
+		id = ITA_carbon_tax
+		icon = placeholder
+		relative_position_id = ITA_greens
+		x = 4
+		y = 2
+		cost = 5
+
+		prerequisite = {
+			focus = ITA_greens
+		}
+		available = {
+			NOT = {
+				has_completed_focus = ITA_repeal_former_government_measures_3
+			}
+		}
+
+		search_filters = {FOCUS_FILTER_POLITICAL}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_carbon_tax"
+			add_1_ruling_party_drift = yes
+			add_ideas = ITA_carbon_tax
+			custom_effect_tooltip = ITA_carbon_tax_TT
+			add_to_variable = { ITA_tax_multiplier_var = 0.05 }
 		}
 	}
 
