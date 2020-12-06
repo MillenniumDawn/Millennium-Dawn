@@ -6,6 +6,7 @@
 #Author: Angriest Bird and Amtoj
 
 add_namespace = canada
+add_namespace = canada_news
 add_namespace = canada_md_politics
 add_namespace = keystonepipeline_can
 add_namespace = keystonepipeline_usa
@@ -608,7 +609,7 @@ country_event = {
 	title = canada.502.t
 	desc = canada.502.d
 	picture = GFX_Canadian_elections
-    
+
 	trigger = {
 		original_tag = CAN
 	}
@@ -686,11 +687,8 @@ country_event = {
 	title = canada.504.t
 	desc = canada.504.d
 	picture = GFX_Canadian_elections
-
 	fire_only_once = yes
-
 	is_triggered_only = yes
-
 	trigger = {
 		tag = CAN
 	}
@@ -698,8 +696,44 @@ country_event = {
 	option = {
 		name = canada.504.a
 		log = "[GetDateText]: [This.GetName]: canada.504.a executed"
-		hidden_effect = {
+		subtract_from_variable = {
+			var = treasury
+			value = 15
+			tooltip = 15_billion_expense_tt
+		}
+		add_ideas = CAN_infrastructure
 
+		ai_chance = {
+			factor = 100
+		}
+	}
+
+	option = {
+		name = canada.504.b
+		log = "[GetDateText]: [This.GetName]: canada.504.b executed"
+		subtract_from_variable = {
+			var = treasury
+			value = 10
+			tooltip = 10_billion_expense_tt
+		}
+		add_ideas = CAN_infrastructure1
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = canada.504.c
+		log = "[GetDateText]: [This.GetName]: canada.504.c executed"
+		subtract_from_variable = {
+			var = treasury
+			value = 5
+			tooltip = 5_billion_expense_tt
+		}
+		add_ideas = CAN_infrastructure2
+		ai_chance = {
+			factor = 0
 		}
 	}
 }
@@ -2139,5 +2173,97 @@ country_event = {
 			}
 		}
 		custom_effect_tooltip = keystonepipeline_can_1_tt
+	}
+}
+
+#Generic Country Events
+##CAN NA OIL Treaty
+country_event = {
+	id = canada.20
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.20" }
+	title = canada.20.t
+	desc = canada.20.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	trigger = {
+		tag = CAN
+	}
+
+	option = {
+		name = "Propose the Deal to the United States"
+	}
+}
+
+country_event = {
+	id = canada.21
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.21" }
+	title = canada.21.t
+	desc = canada.21.d
+	is_triggered_only = yes
+	fire_only_once = yes
+
+
+	option = {
+		name = "Accept the Deal"
+		news_event = { id = canada_news.1 days = 1 }
+	}
+	option = {
+		name = "Reject the Deal"
+		CAN = { country_event = { id = canada.22 days = 1 } }
+	}
+}
+
+#America Rejects the NA Oil Treaty
+country_event = {
+	id = canada.22
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.22" }
+	title = canada.22.t
+	desc = canada.22.d
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = "Unfortunate News"
+		add_opinion_modifier = { target = USA modifier = CAN_america_rejects_treaty }
+
+	}
+}
+
+
+##News
+#American Accepts the Deal
+news_event = {
+	id = canada_news.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.20" }
+	title = canada.20.t
+	desc = canada.20.d
+	is_triggered_only = yes
+	major = yes
+
+	option  = {
+		trigger  = {
+			tag = CAN
+		}
+		name = "Amazing News!"
+		add_opinion_modifier = { target =  USA modifier = CAN_america_accepts_treaty }
+		add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
+		reverse_add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
+	}
+	option = {
+		trigger = {
+			tag = USA
+		}
+		name = "A Great Deal!"
+		effect_tooltip = {
+			add_opinion_modifier = { target =  USA modifier = CAN_america_accepts_treaty }
+			add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
+			reverse_add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
+		}
+	}
+	option = {
+		trigger = {
+			NOT = { tag = USA tag = CAN }
+		}
+		name = "Ok"
 	}
 }
