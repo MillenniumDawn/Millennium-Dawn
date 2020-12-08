@@ -427,11 +427,9 @@ EU_office_category = {
 		
 		visible = {
 			has_global_flag = european_federation
-			#has_idea = EUU_monitor
-			#is_ai = yes
 		} 
 		
-		days_mission_timeout = 14 # 90
+		days_mission_timeout = 90 # 90 # for testing 14
 		
 		selectable_mission = yes
 		
@@ -532,6 +530,34 @@ EU_office_category = {
 			any_country = {
 				has_active_mission = EU_POTEF_election_campaign
 			}
+			NOT = {
+				OR = {
+					has_country_flag = POTEF_nominee_0
+					has_country_flag = POTEF_nominee_1
+					has_country_flag = POTEF_nominee_2
+					has_country_flag = POTEF_nominee_3
+					has_country_flag = POTEF_nominee_4
+					has_country_flag = POTEF_nominee_5
+					has_country_flag = POTEF_nominee_6
+					has_country_flag = POTEF_nominee_7
+					has_country_flag = POTEF_nominee_8
+					has_country_flag = POTEF_nominee_9
+					has_country_flag = POTEF_nominee_10
+					has_country_flag = POTEF_nominee_11
+					has_country_flag = POTEF_nominee_12
+					has_country_flag = POTEF_nominee_13
+					has_country_flag = POTEF_nominee_14
+					has_country_flag = POTEF_nominee_15
+					has_country_flag = POTEF_nominee_16
+					has_country_flag = POTEF_nominee_17
+					has_country_flag = POTEF_nominee_18
+					has_country_flag = POTEF_nominee_19
+					has_country_flag = POTEF_nominee_20
+					has_country_flag = POTEF_nominee_21
+					has_country_flag = POTEF_nominee_22
+					has_country_flag = POTEF_nominee_23
+				}
+			}
 		} 
 		
 		complete_effect = {
@@ -602,6 +628,220 @@ EU_office_category = {
 		}				
 	}	
 
+	EU_POTEF_campaign_in_member_state = {
+		allowed = {
+			is_EU_potential = yes
+		}
+		target_root_trigger = {
+			has_idea = EU_member
+			OR = {
+				has_country_flag = POTEF_nominee_0
+				has_country_flag = POTEF_nominee_1
+				has_country_flag = POTEF_nominee_2
+				has_country_flag = POTEF_nominee_3
+				has_country_flag = POTEF_nominee_4
+				has_country_flag = POTEF_nominee_5
+				has_country_flag = POTEF_nominee_6
+				has_country_flag = POTEF_nominee_7
+				has_country_flag = POTEF_nominee_8
+				has_country_flag = POTEF_nominee_9
+				has_country_flag = POTEF_nominee_10
+				has_country_flag = POTEF_nominee_11
+				has_country_flag = POTEF_nominee_12
+				has_country_flag = POTEF_nominee_13
+				has_country_flag = POTEF_nominee_14
+				has_country_flag = POTEF_nominee_15
+				has_country_flag = POTEF_nominee_16
+				has_country_flag = POTEF_nominee_17
+				has_country_flag = POTEF_nominee_18
+				has_country_flag = POTEF_nominee_19
+				has_country_flag = POTEF_nominee_20
+				has_country_flag = POTEF_nominee_21
+				has_country_flag = POTEF_nominee_22
+				has_country_flag = POTEF_nominee_23
+			}
+		}
+		target_trigger = {
+			FROM = {			
+				has_idea = EU_member
+			}		
+		}
+		target_array = global.EU_member
+		cost = 100
+		days_remove = 30
+		available = {
+								
+		}	
+		visible = {
+
+		}	
+		complete_effect = {
+			custom_effect_tooltip = tooltip_EU_POTEF_campaign_in_member_state_effect			
+			hidden_effect = {
+				log = "[GetDateText]: [Root.GetName]: decision EU_POTEF_campaign_in_member_state"
+				for_each_loop = {
+					array = ruling_party
+					value = v
+					index = i
+					if = {
+						limit = {
+							is_in_array = { ruling_party = v }
+						}
+						set_variable = { var_gov_index = v }	
+					}
+				}
+				random_list = {
+					3 = {
+						modifier = {
+							add = 1
+							FROM = {
+								is_in_array = { ruling_party = var_gov_index }
+							}	
+						}					
+						modifier = {
+							add = 1
+							FROM = {
+								ROOT_influence_on_THIS_5_percent = yes
+							}	
+						}
+						modifier = {
+							add = 1
+							FROM = {
+								ROOT_influence_on_THIS_10_percent = yes
+							}	
+						}
+						modifier = {
+							add = 1
+							FROM = {
+								ROOT_influence_on_THIS_20_percent = yes
+							}	
+						}										
+						modifier = {
+							add = -1
+							check_variable = { FROM.eurosceptic > 0.10 }
+						}
+						modifier = {
+							add = -1
+							check_variable = { FROM.eurosceptic > 0.20 }
+						}											
+						if = {
+							limit = { has_government = democratic }
+							FROM = {
+								add_popularity = {
+									ideology = democratic
+									popularity = 0.05
+								}
+							}	
+						}
+						else_if = {
+							limit = { has_government = communism }
+							FROM = {
+								add_popularity = {
+									ideology = communism
+									popularity = 0.05
+								}
+							}	
+						}
+						else_if = {
+							limit = { has_government = fascism }
+							FROM = {
+								add_popularity = {
+									ideology = fascism
+									popularity = 0.05
+								}
+							}	
+						}
+						else_if = {
+							limit = { has_government = neutrality }
+							FROM = {
+								add_popularity = {
+									ideology = neutrality
+									popularity = 0.05
+								}
+							}	
+						}
+						else_if = {
+							limit = { has_government = nationalist }
+							FROM = {
+								add_popularity = {
+									ideology = nationalist
+									popularity = 0.05
+								}
+							}	
+						}
+						add_to_variable = { FROM.party_pop_array^var_gov_index = 0.05 }
+						recalculate_party = yes			
+						every_country = {
+							limit = {
+								has_idea = EU_member
+							}
+							news_event = {
+								id = EU_POTEF_news.5
+							}
+						}
+					}
+					1 = {
+						modifier = {
+							factor = 0
+							FROM = {
+								is_in_array = { ruling_party = var_gov_index }
+							}
+							check_variable = { FROM.eurosceptic < 0.10 }
+							FROM = {
+								ROOT_influence_on_THIS_20_percent = yes
+							}												
+						}
+						modifier = {
+							add = 5
+							FROM = {
+								OR = {
+									has_country_flag = POTEF_nominee_0
+									has_country_flag = POTEF_nominee_1
+									has_country_flag = POTEF_nominee_2
+									has_country_flag = POTEF_nominee_3
+									has_country_flag = POTEF_nominee_4
+									has_country_flag = POTEF_nominee_5
+									has_country_flag = POTEF_nominee_6
+									has_country_flag = POTEF_nominee_7
+									has_country_flag = POTEF_nominee_8
+									has_country_flag = POTEF_nominee_9
+									has_country_flag = POTEF_nominee_10
+									has_country_flag = POTEF_nominee_11
+									has_country_flag = POTEF_nominee_12
+									has_country_flag = POTEF_nominee_13
+									has_country_flag = POTEF_nominee_14
+									has_country_flag = POTEF_nominee_15
+									has_country_flag = POTEF_nominee_16
+									has_country_flag = POTEF_nominee_17
+									has_country_flag = POTEF_nominee_18
+									has_country_flag = POTEF_nominee_19
+									has_country_flag = POTEF_nominee_20
+									has_country_flag = POTEF_nominee_21
+									has_country_flag = POTEF_nominee_22
+									has_country_flag = POTEF_nominee_23			
+								}
+							}								
+						}							
+						every_country = {
+							limit = {
+								has_idea = EU_member
+							}
+							news_event = {
+								id = EU_POTEF_news.6
+							}
+						}
+					}	
+				}
+			}		
+		}
+		ai_will_do = {
+			factor = 1
+	
+		}	
+	}
+	
+	
+
 	EU_POTEF_election_test = {
 	
 		available = {
@@ -609,7 +849,7 @@ EU_office_category = {
 		}
 		
 		visible = { 
-			has_country_flag = EU_potential #unvisible # 
+			has_country_flag = unvisible #EU_potential # 
 		} 
 		
 		complete_effect = {
@@ -648,7 +888,7 @@ EU_office_category = {
 		}
 		
 		visible = { 
-			has_country_flag = unvisible #EU_potential 
+			has_country_flag = EU_potential #unvisible # 
 		} 
 		
 		complete_effect = {
