@@ -479,7 +479,7 @@ EU_office_category = {
 
 
 	EU_POTEF_nominee = {
-	
+		
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_POTEF_nominee_trigger						
@@ -494,16 +494,53 @@ EU_office_category = {
 						set_temp_variable = { temp_idx = v }					
 					}
 				}
-				all_country = {
-					if = {
-						limit = {
-							has_idea = EU_member
-							is_in_array = { ruling_party = temp_idx }
-							NOT = { tag = ROOT }
-						}
-						is_top3_influencer = yes
+				OR = {
+					all_of_scopes = { 
+						array = global.EU_member
+						if = {
+							limit = {							
+								is_in_array = { ruling_party = temp_idx }
+								NOT = { tag = ROOT }
+							}
+							is_top3_influencer = yes
+						}					
 					}
-				}
+					### AI cheat
+					AND = {
+						all_of_scopes = { 
+							array = global.EU_member
+							if = {
+								limit = {							
+									is_in_array = { ruling_party = temp_idx }								
+								}
+								is_ai = yes								
+							}					
+						}
+						any_of_scopes = { 
+							array = global.EU_member
+							if = {
+								limit = {							
+									is_in_array = { ruling_party = temp_idx }								
+								}
+								check_variable = { THIS.var_EUpopRatio > 0.05 }								
+							}					
+						}
+						check_variable = { THIS.var_EUpopRatio > 0.05 }
+					}
+					### AI cheat
+					AND = {
+						all_of_scopes = { 
+							array = global.EU_member
+							if = {
+								limit = {							
+									is_in_array = { ruling_party = temp_idx }								
+								}
+								is_ai = yes
+								check_variable = { THIS.var_EUpopRatio < 0.05 }								
+							}					
+						}
+					}
+				}		
 			}
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_POTEF_nominee_trigger_2
@@ -576,6 +613,7 @@ EU_office_category = {
 			meta_effect = {
 				text = {
 					set_country_flag = POTEF_nominee_[subideology]
+					set_variable = { global.var_POTEF_nominee_[subideology] = THIS }
 				}
 				subideology = "[?var_gov_index|0]"	
 			}
@@ -667,7 +705,7 @@ EU_office_category = {
 			}		
 		}
 		target_array = global.EU_member
-		cost = 100
+		cost = 200
 		days_remove = 30
 		available = {
 								
@@ -888,7 +926,7 @@ EU_office_category = {
 		}
 		
 		visible = { 
-			has_country_flag = EU_potential #unvisible # 
+			has_country_flag = unvisible #EU_potential # 
 		} 
 		
 		complete_effect = {
