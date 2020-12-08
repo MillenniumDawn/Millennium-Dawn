@@ -21,16 +21,17 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Canadian_Economy"
-			add_stability = 0.02
 			custom_effect_tooltip = CAN_economy_tt
 			hidden_effect = {
-				set_variable = { CAN_stability_factor_var = 0.05 }
-				set_variable = { CAN_industrial_capacity_factory_var = 0.05 }
-				set_variable = { CAN_production_speed_buildings_var = 0.05 }
-				set_variable = { CAN_production_speed_infrastructure_factor_var = 0.05}
-				set_variable = { CAN_production_oil_var = 0 }
+				set_variable = { CAN_stability_factor_var = 0.01 }
+				set_variable = { CAN_industrial_capacity_factory_var = 0.01 }
+				set_variable = { CAN_production_speed_buildings_var = 0.01 }
+				set_variable = { CAN_production_speed_infrastructure_factor_var = 0.01 }
+				set_variable = { CAN_production_oil_var = 0.01 }
+				set_variable = { CAN_subsidy_total = 0 }
 			}
 			add_dynamic_modifier = { modifier = CAN_canadian_economy_dynamic_modifier }
+			unlock_decision_category_tooltip = CAN_canadian_subsidies_projects
 		}
 
 		ai_will_do = {
@@ -64,13 +65,10 @@ focus_tree = {
 		relative_position_id = CAN_Canadian_Economy
 
 		prerequisite = { focus = CAN_Canadian_Economy }
-
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
-
 		available = {
 			NOT = { has_idea = bankrupcy } ##Can't expand your economy while Bankruptcy
 		}
-
 		cancel = {
 			has_idea = bankrupcy ##Cancels if we go bankrupt
 		}
@@ -100,13 +98,10 @@ focus_tree = {
 		relative_position_id = CAN_Canadian_Economy
 
 		prerequisite = { focus = CAN_Prospects_Oil }
-
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
-
 		available = {
 			NOT = { has_idea = bankrupcy } ##Can't expand your economy while Bankruptcy
 		}
-
 		cancel = {
 			has_idea = bankrupcy ##Cancels if we go bankrupt
 		}
@@ -150,22 +145,30 @@ focus_tree = {
 		relative_position_id = CAN_Canadian_Economy
 
 		prerequisite = { focus = CAN_National_Companies }
-
-		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
-
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESOURCE }
 		available = {
 			NOT = { has_idea = bankrupcy } ##Can't expand your economy while Bankruptcy
 		}
-
 		cancel = {
 			has_idea = bankrupcy ##Cancels if we go bankrupt
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Suncor_Energy"
-			subtract_from_variable = { treasury = 0.2 } #Subsidizes the company
-			custom_effect_tooltip = 200_million_expense_tt
-			add_ideas = CAN_suncor_energy_idea
+			subtract_from_variable = { treasury = 0.5 } #Subsidizes the company
+			custom_effect_tooltip = 500_million_expense_tt
+			boost_domestic_influence_2_percent = yes
+			if = {
+				limit = { has_idea = CAN_national_companies_subsidies }
+				swap_ideas = {
+					remove_idea = CAN_national_companies_subsidies
+					add_idea = CAN_national_companies_subsidies1
+				}
+			}
+			else = {
+				add_ideas = CAN_national_companies_subsidies
+			}
+			increase_fossil_fuel_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -334,7 +337,6 @@ focus_tree = {
 			subtract_from_variable = { treasury = 0.38 }
 			custom_effect_tooltip = 380_million_expense_tt
 			756 = {
-
 				add_extra_state_shared_building_slots = 2
 			}
 		}
@@ -372,8 +374,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Bakken_Shale_Refineries"
 			subtract_from_variable = {
 				var = treasury
-				value = 1
-				tooltip = 1_billion_expense_tt
+				value = 7
+				tooltip = 7_billion_expense_tt
 			}
 			756 = {
 				add_extra_state_shared_building_slots = 1
@@ -443,7 +445,7 @@ focus_tree = {
 		relative_position_id = CAN_Canadian_Economy
 
 		prerequisite = { focus = CAN_National_Companies }
-		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESOURCE }
 		available = {
 			NOT = { has_idea = bankrupcy } ##Can't expand your economy while Bankruptcy
 		}
@@ -456,7 +458,18 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Imperial_Oil"
 			subtract_from_variable = { treasury = 0.5 }
 			custom_effect_tooltip = 500_million_expense_tt
-			add_ideas = CAN_imperial_oil_idea
+			boost_domestic_influence_2_percent = yes
+			if = {
+				limit = { has_idea = CAN_national_companies_subsidies }
+				swap_ideas = {
+					remove_idea = CAN_national_companies_subsidies
+					add_idea = CAN_national_companies_subsidies1
+				}
+			}
+			else = {
+				add_ideas = CAN_national_companies_subsidies
+			}
+			increase_fossil_fuel_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -477,9 +490,7 @@ focus_tree = {
 		relative_position_id = CAN_Canadian_Economy
 
 		prerequisite = { focus = CAN_Prospects_Oil }
-
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
-
 		available = {
 			NOT = { has_idea = bankrupcy } ##Can't expand your economy while Bankruptcy
 		}
@@ -1088,6 +1099,28 @@ focus_tree = {
 				remove_idea = CAN_oil_prospects_idea3
 				add_idea = CAN_oil_prospects_idea4
 			}
+			if = {
+				limit = {
+					has_idea = CAN_overburdened_economy
+				}
+				swap_ideas = {
+					remove_idea = CAN_overburdened_economy
+					add_idea = CAN_overburdened_economy1
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = CAN_overburdened_economy1
+				}
+				swap_ideas = {
+					remove_idea = CAN_overburdened_economy1
+					add_idea = CAN_overburdened_economy2
+				}
+			}
+			else_if = {
+				limit = { has_idea = CAN_overburdened_economy2 }
+				remove_ideas = CAN_overburdened_economy2
+			}
 		}
 
 		ai_will_do = {
@@ -1308,7 +1341,7 @@ focus_tree = {
 			hidden_effect = {
 				CAN_update_french_happiness = yes
 			}
-			add_ideas = CAN_exports_steel
+			add_ideas = CAN_exports_steel_quebec
 		}
 
 		ai_will_do = {
@@ -1461,6 +1494,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_north_steel_exports"
 			add_ideas = CAN_exports_north
+			subtract_from_variable = {
+				var = french_happiness_var
+				value = 5
+				tooltip = CAN_french_happiness_decrease_5_tt
+			}
 		}
 
 		ai_will_do = {
@@ -1485,7 +1523,46 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_mine_expert"
-			add_ideas = CAN_mines_experts
+			if = {
+				limit = {
+					has_idea = CAN_exports_north
+				}
+				swap_ideas = {
+					remove_idea = CAN_exports_north
+					add_idea = CAN_mines_experts_northern
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = CAN_exports_steel_quebec
+				}
+				swap_ideas = {
+					remove_idea = CAN_exports_steel_quebec
+					add_idea = CAN_mines_experts_quebec
+				}
+			}
+			if = {
+				limit = {
+					has_idea = CAN_overburdened_economy
+				}
+				swap_ideas = {
+					remove_idea = CAN_overburdened_economy
+					add_idea = CAN_overburdened_economy1
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = CAN_overburdened_economy1
+				}
+				swap_ideas = {
+					remove_idea = CAN_overburdened_economy1
+					add_idea = CAN_overburdened_economy2
+				}
+			}
+			else_if = {
+				limit = { has_idea = CAN_overburdened_economy2 }
+				remove_ideas = CAN_overburdened_economy2
+			}
 		}
 
 		ai_will_do = {
@@ -2001,6 +2078,28 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Industrial_Expertise"
 			add_ideas = CAN_expertise
+			if = {
+				limit = {
+					has_idea = CAN_overburdened_economy
+				}
+				swap_ideas = {
+					remove_idea = CAN_overburdened_economy
+					add_idea = CAN_overburdened_economy1
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = CAN_overburdened_economy1
+				}
+				swap_ideas = {
+					remove_idea = CAN_overburdened_economy1
+					add_idea = CAN_overburdened_economy2
+				}
+			}
+			else_if = {
+				limit = { has_idea = CAN_overburdened_economy2 }
+				remove_ideas = CAN_overburdened_economy2
+			}
 		}
 
 		ai_will_do = {
@@ -2153,7 +2252,7 @@ focus_tree = {
 		id = CAN_Ministry_Of_Culture
 		icon = propaganda
 		cost = 10
-		x = -10
+		x = 0
 		y = 1
 		relative_position_id = CAN_Focus_On_Political_Spectrum
 
@@ -2179,7 +2278,7 @@ focus_tree = {
 		id = CAN_Two_Language_State
 		icon = CAN_two_language_state
 		cost = 10
-		x = -8
+		x = -6
 		y = 1
 		relative_position_id = CAN_Ministry_Of_Culture
 
@@ -2195,18 +2294,7 @@ focus_tree = {
 			focus = CAN_One_Language_State
 		}
 
-		available = {
 
-		}
-
-		bypass = {
-
-		}
-
-
-		complete_tooltip = {
-
-		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Two_Language_State"
@@ -2219,17 +2307,11 @@ focus_tree = {
 		id = CAN_Autonomie_Quebecoise
 		icon = political_pressure_blue
 		cost = 10
-		x = -1
-		y = 2
-		relative_position_id = CAN_Ministry_Of_Culture
+		x = 0
+		y = 1
+		relative_position_id = CAN_Two_Language_State
 
-		ai_will_do = {
-			factor = 1
-		}
-
-		prerequisite = {
-			focus = CAN_Two_Language_State
-		}
+		prerequisite = { focus = CAN_Two_Language_State }
 
 
 		completion_reward = {
@@ -2237,28 +2319,25 @@ focus_tree = {
 
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	focus = {
 		id = CAN_quebec_sar
 		cost = 10
 		icon = quebec_deal
-		x = -1
-		y = 3
-		relative_position_id = CAN_Ministry_Of_Culture
+		x = 0
+		y = 1
+		relative_position_id = CAN_Autonomie_Quebecoise
 		ai_will_do = {
 			factor = 1
 		}
 
 		prerequisite = { focus =  CAN_Autonomie_Quebecoise}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_quebec_sar "
 		}
@@ -2268,7 +2347,7 @@ focus_tree = {
 		id = CAN_One_Language_State
 		icon = CAN_one_language_state
 		cost = 10
-		x = 2
+		x = 0
 		y = 1
 		relative_position_id = CAN_Ministry_Of_Culture
 
@@ -2276,26 +2355,13 @@ focus_tree = {
 			factor = 1
 		}
 
-		prerequisite = {
-			focus = CAN_Ministry_Of_Culture
-		}
+		prerequisite = { focus = CAN_Ministry_Of_Culture }
 
 		mutually_exclusive = {
 			focus = CAN_Two_Language_State
 		}
 
-		available = {
 
-		}
-
-		bypass = {
-
-		}
-
-
-		complete_tooltip = {
-
-		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_One_Language_State"
@@ -2311,50 +2377,33 @@ focus_tree = {
 		id = CAN_French_Government
 		cost = 10
 		icon = CAN_french_government
-
-		x = 1
+		x = 0
 		y = 2
 		relative_position_id = CAN_Ministry_Of_Culture
 
-		ai_will_do = {
-			factor = 1
-		}
+		prerequisite = { focus = CAN_One_Language_State }
+		mutually_exclusive = { focus = CAN_English_Government }
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_POLITICAL }
 
-		prerequisite = {
-			focus = CAN_One_Language_State
-		}
-
-		mutually_exclusive = {
-			focus = CAN_English_Government
-		}
-
-		available = {
-
-		}
-
-		bypass = {
-
-		}
-
-
-		complete_tooltip = {
-
-		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_French_Government"
 			add_stability = 0.10
-			add_political_power = -200
-        }
+			add_political_power = -250
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
     }
 
 	focus = {
 		id = CAN_Glorification_Of_Quebec
 		icon = quebec_deal
 		cost = 10
-		x = 1
-		y = 3
-		relative_position_id = CAN_Ministry_Of_Culture
+		x = 0
+		y = 1
+		relative_position_id = CAN_French_Government
 
 		ai_will_do = {
 			factor = 1
@@ -2376,22 +2425,16 @@ focus_tree = {
 		id = CAN_french_schools
 		cost = 10
 		icon = university
-		x = 1
-		y = 4
-		relative_position_id = CAN_Ministry_Of_Culture
+		x = 0
+		y = 2
+		relative_position_id = CAN_French_Government
 		ai_will_do = {
 			factor = 1
 		}
 
 		prerequisite = { focus =  CAN_Glorification_Of_Quebec}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_french_schools "
 		    increase_education_budget = yes
@@ -2403,7 +2446,7 @@ focus_tree = {
 		id = CAN_move_capital
 		cost = 10
 		icon = parliament_box
-		x = -2
+		x = -1
 		y = 1
 		relative_position_id = CAN_french_schools
 		ai_will_do = {
@@ -2424,7 +2467,7 @@ focus_tree = {
 		id = CAN_reclaim_canada
 		cost = 10
 		icon = grand_battleplan
-		x = 0
+		x = 1
 		y = 1
 		relative_position_id = CAN_french_schools
 		ai_will_do = {
@@ -2445,7 +2488,7 @@ focus_tree = {
 		id = CAN_new_charter
 		cost = 10
 		icon = equality
-		x = -4
+		x = -2
 		y = 2
 		relative_position_id = CAN_french_schools
 		ai_will_do = {
@@ -2466,7 +2509,7 @@ focus_tree = {
 		id = CAN_quebec_conscription
 		cost = 10
 		icon = volunteers
-		x = 0
+		x = 2
 		y = 2
 		relative_position_id = CAN_french_schools
 		ai_will_do = {
@@ -2487,24 +2530,38 @@ focus_tree = {
 		id = CAN_french_companies
 		cost = 10
 		icon = total_sa
-		x = -2
+		x = 0
 		y = 2
 		relative_position_id = CAN_french_schools
-		ai_will_do = {
-			factor = 1
-		}
 
-		prerequisite = { focus =  CAN_move_capital}
+		prerequisite = { focus = CAN_move_capital }
+		prerequisite = { focus = CAN_reclaim_canada }
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
 
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_french_companies"
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_french_companies"
 		    add_tech_bonus = {
-                bonus = 0.10
+				name = industry
+                bonus = 0.50
                 uses = 2
                 category = industry
-            }
+			}
+			762 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 2
+					instant_build = yes
+				}
+			}
+			subtract_from_variable = {
+				var = treasury
+				value = 8
+				tooltip = 8_billion_expense_tt
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
     }
 
@@ -2512,21 +2569,20 @@ focus_tree = {
 		id = CAN_enforce_language
 		cost = 10
 		icon = literacy_rate_improvment
-		x = -4
+		x = -2
 		y = 3
 		relative_position_id = CAN_french_schools
-		ai_will_do = {
-			factor = 1
-		}
 
-		prerequisite = { focus =  CAN_new_charter}
-
-
-
+		prerequisite = { focus = CAN_new_charter }
+		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_enforce_language"
 		    add_stability = -0.20
 			add_political_power = 200
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
     }
 
@@ -2534,7 +2590,7 @@ focus_tree = {
 		id = CAN_tax_english_companies
 		cost = 10
 		icon = radical_tax_reform
-		x = -4
+		x = -2
 		y = 4
 		relative_position_id = CAN_french_schools
 		ai_will_do = {
@@ -2555,24 +2611,25 @@ focus_tree = {
 		id = CAN_new_sectors
 		cost = 10
 		icon = coins
-		x = -2
+		x = 0
 		y = 3
 		relative_position_id = CAN_french_schools
-		ai_will_do = {
-			factor = 1
-		}
 
-		prerequisite = { focus =  CAN_french_companies}
+		prerequisite = { focus = CAN_french_companies }
+		search_filters = { FOCUS_FILTER_RESEARCH }
 
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_new_sectors "
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_new_sectors "
 		    add_tech_bonus = {
-                bonus = 0.10
+				name = industry
+                bonus = 0.25
                 uses = 1
                 category = industry
             }
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -2580,16 +2637,20 @@ focus_tree = {
 		id = CAN_french_industry
 		cost = 10
 		icon = construction4
-		x = -2
+		x = 0
 		y = 4
 		relative_position_id = CAN_french_schools
 
 		prerequisite = { focus = CAN_new_sectors }
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
 
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_french_industry "
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_french_industry"
+			subtract_from_variable = {
+				var = treasury
+				value = 15
+				tooltip = 15_billion_expense_tt
+			}
 		    762 = {
 				add_building_construction = {
                     type = industrial_complex
@@ -2615,7 +2676,7 @@ focus_tree = {
 		id = CAN_discharge_generals
 		cost = 10
 		icon = examine_foreign_small_arms
-		x = 0
+		x = 2
 		y = 3
 		relative_position_id = CAN_french_schools
 
@@ -2638,7 +2699,7 @@ focus_tree = {
 		id = CAN_ccp_military
 		cost = 10
 		icon = anti_democracy3
-		x = 0
+		x = 2
 		y = 4
 		relative_position_id = CAN_french_schools
 
@@ -2661,28 +2722,23 @@ focus_tree = {
 		id = CAN_nation_divided
 		cost = 10
 		icon = break_free2
-		x = -2
+		x = 0
 		y = 5
 		relative_position_id = CAN_french_schools
 
-		ai_will_do = {
-			factor = 1
-		}
-
-		prerequisite = { focus =  CAN_tax_english_companies}
-
-		prerequisite = {focus =  CAN_french_industry}
-
-		prerequisite = {focus =  CAN_ccp_military }
-
-
-
+		prerequisite = { focus = CAN_tax_english_companies }
+		prerequisite = { focus = CAN_french_industry }
+		prerequisite = { focus = CAN_ccp_military }
 
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_nation_divided "
 		    add_political_power = 200
 			add_stability = -0.10
 			add_war_support = -0.10
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -2694,37 +2750,25 @@ focus_tree = {
 		y = 2
 		relative_position_id = CAN_Ministry_Of_Culture
 
-		ai_will_do = {
-			factor = 1
-		}
-
-		prerequisite = {
-			focus = CAN_One_Language_State
-		}
-
-		mutually_exclusive = {
-			focus = CAN_French_Government
-		}
-
-		available = {
-
-		}
-
-		bypass = {
-
-		}
-
-
-		complete_tooltip = {
-
-		}
+		prerequisite = { focus = CAN_One_Language_State }
+		mutually_exclusive = { focus = CAN_French_Government }
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_English_Government"
-            add_stability = -0.05
+			add_stability = -0.05
 			add_political_power = 100
+			subtract_from_variable = {
+				var = french_happiness_var
+				value = 10
+				tooltip = CAN_french_happiness_decrease_10_tt
+			}
 		}
-    }
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
 
 	focus = {
 		id = CAN_Integration_Of_Quebec
@@ -2734,18 +2778,16 @@ focus_tree = {
 		y = 3
 		relative_position_id = CAN_Ministry_Of_Culture
 
-		ai_will_do = {
-			factor = 1
-		}
-
-		prerequisite = {
-			focus = CAN_English_Government
-		}
-
+		prerequisite = { focus = CAN_English_Government }
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Integration_Of_Quebec"
-            add_stability = -0.10
+			add_stability = -0.10
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -2757,22 +2799,28 @@ focus_tree = {
 		y = 4
 		relative_position_id = CAN_Ministry_Of_Culture
 
-		ai_will_do = {
-			factor = 1
-		}
-
 		prerequisite = { focus =  CAN_Integration_Of_Quebec }
+		mutually_exclusive = { focus = CAN_treaty_of_quebec }
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
 
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_forced_integration "
-		    every_owned_state = {
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_forced_integration "
+			every_owned_state = {
 				limit = {
 					is_core_of = QUE
 				}
 				remove_core_of = QUE
 			}
-			add_political_power = 50
+			add_stability = -0.10
+			subtract_from_variable = {
+				var = french_happiness_var
+				value = 10
+				tooltip = CAN_french_happiness_decrease_10_tt
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
     }
 
@@ -2927,7 +2975,7 @@ focus_tree = {
 		id = CAN_Focus_On_Canada
 		icon = stolen_papers2
 		cost = 10
-		x = 0
+		x = 12
 		y = 1
 		relative_position_id = CAN_Focus_On_Political_Spectrum
 
@@ -2951,8 +2999,8 @@ focus_tree = {
 		icon = generic_canadian_flag
 		cost = 10
 		x = 0
-		y = 2
-		relative_position_id = CAN_Focus_On_Political_Spectrum
+		y = 1
+		relative_position_id = CAN_Focus_On_Canada
 
 		ai_will_do = {
 			factor = 1
@@ -2974,8 +3022,8 @@ focus_tree = {
 		icon = nafta
 		cost = 10
 		x = 0
-		y = 3
-		relative_position_id = CAN_Focus_On_Political_Spectrum
+		y = 2
+		relative_position_id = CAN_Focus_On_Canada
 
 		ai_will_do = {
 			factor = 1
@@ -3004,8 +3052,8 @@ focus_tree = {
 		icon = stability
 		cost = 10
 		x = 0
-		y = 4
-		relative_position_id = CAN_Focus_On_Political_Spectrum
+		y = 3
+		relative_position_id = CAN_Focus_On_Canada
 
 		ai_will_do = {
 			factor = 1
@@ -3019,18 +3067,7 @@ focus_tree = {
 			focus = CAN_Strengthen_Position_In_Nato
 		}
 
-		available = {
 
-		}
-
-		bypass = {
-
-		}
-
-
-		complete_tooltip = {
-
-		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Stand_Alone"
@@ -3080,7 +3117,7 @@ focus_tree = {
 		id = CAN_Western_Shift
 		icon = nato2
 		cost = 10
-		x = 6
+		x = 20
 		y = 1
 		relative_position_id = CAN_Focus_On_Political_Spectrum
 
@@ -3092,18 +3129,7 @@ focus_tree = {
 
 		mutually_exclusive = { focus =  CAN_Eastern_Shift }
 
-		available = {
 
-		}
-
-		bypass = {
-
-		}
-
-
-		complete_tooltip = {
-
-		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Western_Shift"
@@ -3241,18 +3267,7 @@ focus_tree = {
 			focus = CAN_Stand_Alone
 		}
 
-		available = {
 
-		}
-
-		bypass = {
-
-		}
-
-
-		complete_tooltip = {
-
-		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Strengthen_Position_In_Nato"
@@ -3307,7 +3322,7 @@ focus_tree = {
 		id = CAN_Eastern_Shift
 		icon = align_to_russia
 		cost = 5
-		x = 15
+		x = 30
 		y = 1
 		relative_position_id = CAN_Focus_On_Political_Spectrum
 
@@ -3323,18 +3338,7 @@ focus_tree = {
 
 		}
 
-		available = {
 
-		}
-
-		bypass = {
-
-		}
-
-
-		complete_tooltip = {
-
-		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Eastern_Shift"
@@ -3562,13 +3566,7 @@ focus_tree = {
 		prerequisite = { focus =  CAN_Russo_Chinese_Canadian_Sphere }
 
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_rus_training "
 		    army_experience = 50
@@ -3591,13 +3589,7 @@ focus_tree = {
 		prerequisite = { focus =  CAN_Russo_Chinese_Canadian_Sphere }
 
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_chinese_industry "
 		    add_ideas = CAN_chi_industry
@@ -3611,31 +3603,25 @@ focus_tree = {
 		x = -4
 		y = 1
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
-		}
 
 		prerequisite = { focus =  CAN_Russo_Chinese_Canadian_Sphere }
+		search_filters = { FOCUS_FILTER_RESEARCH }
 
-
-		mutually_exclusive =  {}
-
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_chinese_lavs "
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_chinese_lavs "
 		    add_opinion_modifier = {
                 target = CHI
                 modifier = free_trade_agreement
             }
 			add_tech_bonus = {
+				name = Cat_MBT
                 bonus = 0.50
                 uses = 1
                 category = Cat_MBT
             }
+		}
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -3646,31 +3632,26 @@ focus_tree = {
 		x = 3
 		y = 1
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
-		}
 
 		prerequisite = { focus =  CAN_Russo_Chinese_Canadian_Sphere }
+		search_filters = { FOCUS_FILTER_RESEARCH }
 
-
-		mutually_exclusive =  {}
-
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_rus_dockyards "
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_rus_dockyards "
 		    add_opinion_modifier = {
                 target = SOV
                 modifier = free_trade_agreement
             }
 			add_tech_bonus = {
+				name = Cat_SUB
                 bonus = 0.50
                 uses = 1
                 category = Cat_SUB
             }
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -3688,13 +3669,7 @@ focus_tree = {
 		prerequisite = { focus =  CAN_rus_dockyards }
 
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_bc_ports "
 		    754 = {
@@ -3721,13 +3696,7 @@ focus_tree = {
 		prerequisite = { focus =  CAN_rus_dockyards }
 
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_investments "
 		    add_ideas = CAN_naval_investments
@@ -3773,13 +3742,7 @@ focus_tree = {
 		prerequisite = { focus =  CAN_bc_ports }
 
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_investments2 "
 		    760 = {
@@ -3806,13 +3769,7 @@ focus_tree = {
 		prerequisite = { focus =  CAN_chinese_lavs }
 
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_tank_facilities "
 		    760 = {
@@ -3839,13 +3796,7 @@ focus_tree = {
 		prerequisite = { focus =  CAN_chinese_industry }
 
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_heavy_industry "
 		    swap_ideas = {
@@ -3868,13 +3819,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_rus_training}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_russian_military "
 		    add_ideas = CAN_russian_training
@@ -3894,13 +3839,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_russian_military}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_global_army "
 		    add_tech_bonus = {
@@ -3924,13 +3863,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_heavy_industry}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_railway_projects "
 		    add_ideas = CAN_rail_project
@@ -3950,13 +3883,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_heavy_industry}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_industry_projects "
 			763 = {
@@ -3984,13 +3911,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_railway_projects}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_global_companys "
 		    add_political_power = 100
@@ -4211,20 +4132,22 @@ focus_tree = {
 		x = -2
 		y = 3
 		relative_position_id = CAN_global_companys
-		ai_will_do = {
-			factor = 1
+
+		prerequisite = { focus = CAN_sat_tech }
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_advanced_radar "
+			add_tech_bonus = {
+				name = radar_tech
+				bonus = 0.50
+				uses = 2
+				category = radar_tech
+			}
 		}
 
-		prerequisite = { focus =  CAN_sat_tech}
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_advanced_radar "
-		    add_tech_bonus = {
-                bonus = 0.50
-                uses = 2
-                category = radar_tech
-            }
+		ai_will_do = {
+			factor = 1
 		}
     }
 
@@ -4233,7 +4156,7 @@ focus_tree = {
 		id = CAN_Canadian_Armed_Forces
 		icon = canadian_armed_forces
 		cost = 10
-		x = 100
+		x = 97
 		y = 1
 
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_MILITARY_LAWS }
@@ -4250,7 +4173,6 @@ focus_tree = {
 			factor = 1
 		}
 	}
-
 
     focus = {
 		id = CAN_the_infantry
@@ -4282,9 +4204,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = CAN_Canadian_Armed_Forces
 
-		ai_will_do = {
-			factor = 1
-		}
+
 
 		prerequisite = { focus =  CAN_the_infantry
 		}
@@ -4297,16 +4217,20 @@ focus_tree = {
 
 		complete_tooltip = {}
 
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_new_rifles"
-		add_tech_bonus = {
-			name = infantry_weapons
-			bonus = 0.50
-			category = Cat_INF_WEP
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_new_rifles"
+			add_tech_bonus = {
+				name = infantry_weapons
+				bonus = 0.50
+				category = Cat_INF_WEP
+			}
+		}
 
+		ai_will_do = {
+			factor = 1
 		}
     }
 
-}
     focus = {
 		id = CAN_new_manufacturers
 		cost = 10
@@ -4613,13 +4537,7 @@ focus_tree = {
 
 		}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_rcaf"
 	        add_ideas = CAN_air
@@ -4640,13 +4558,7 @@ focus_tree = {
 
 		prerequisite = { focus = CAN_rcaf }
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_air_focus"
 	        add_tech_bonus = {
@@ -4736,13 +4648,7 @@ focus_tree = {
 		prerequisite = { focus = CAN_air_model_uk focus = CAN_air_model_us
 		}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_air_factories"
 		    763 = {
@@ -4858,13 +4764,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_rcaf}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_new_helicopters"
 		    add_tech_bonus = {
@@ -5004,13 +4904,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_Canadian_Armed_Forces}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_international_wargames "
 		    army_experience = 50
@@ -5029,16 +4923,7 @@ focus_tree = {
 		relative_position_id = CAN_Canadian_Armed_Forces
 
 		prerequisite = { focus = CAN_Canadian_Armed_Forces }
-
-		mutually_exclusive =  {}
-
-		available = {
-
-		}
-
-		bypass = {}
-
-		complete_tooltip = {}
+		search_filters = { FOCUS_FILTER_MANPOWER }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_navy"
@@ -5058,29 +4943,22 @@ focus_tree = {
 		y = 2
 		relative_position_id = CAN_Canadian_Armed_Forces
 
+		prerequisite = { focus = CAN_navy }
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_navy_carrier"
+			add_tech_bonus = {
+				name = Cat_CARRIER
+				bonus = 0.50
+				uses = 1
+				category = Cat_CARRIER
+			}
+		}
+
 		ai_will_do = {
 			factor = 1
 		}
-
-		prerequisite = { focus =  CAN_navy
-
-		}
-
-		mutually_exclusive =  {}
-
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_navy_carrier"
-		    add_tech_bonus = {
-			    name = "Carrier Bonus"
-			    bonus = 0.50
-			    category = Cat_CARRIER
-            }
-	    }
     }
 
 	focus = {
@@ -5090,26 +4968,22 @@ focus_tree = {
 		x = 5
 		y = 2
 		relative_position_id = CAN_Canadian_Armed_Forces
-		ai_will_do = {
-			factor = 1
-		}
 
-		prerequisite = { focus =  CAN_navy}
+		prerequisite = { focus =  CAN_navy }
+		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		mutually_exclusive =  {}
-
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_destroyers"
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_destroyers"
 		    add_tech_bonus = {
+				name = Cat_DESTROYER
                 bonus = 0.50
                 uses = 2
                 category = Cat_DESTROYER
             }
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -5127,13 +5001,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_navy}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_ship_training "
 		    navy_experience = 100
@@ -5154,17 +5022,11 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_navy_carrier}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_aircraft "
 		    add_tech_bonus = {
-				category = Cat_CV_L_S_FIGHTER
+				name = Cat_CV_L_S_FIGHTER
                 bonus = 0.50
                 uses = 2
                 category = Cat_CV_L_S_FIGHTER
@@ -5186,18 +5048,12 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_ship_training}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_doctrines"
 		    add_tech_bonus = {
-				category = naval_doctrine
+				name = naval_doctrine
                 bonus = 0.50
                 uses = 2
                 category = naval_doctrine
@@ -5213,21 +5069,16 @@ focus_tree = {
 		y = 3
 		relative_position_id = CAN_Canadian_Armed_Forces
 
-		ai_will_do = {
-			factor = 1
-		}
-
 		prerequisite = { focus =  CAN_destroyers }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
 
-		mutually_exclusive =  {}
-
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_dockyards "
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_dockyards"
+			subtract_from_variable = {
+				var = treasury
+				value = 10
+				tooltip = 10_billion_expense_tt
+			}
 		    760 = {
 				add_building_construction = {
                     type = dockyard
@@ -5243,6 +5094,11 @@ focus_tree = {
 				}
             }
 		}
+
+		ai_will_do = {
+			factor = 1
+		}
+
     }
 
     focus = {
@@ -5252,36 +5108,27 @@ focus_tree = {
 		x = 6
 		y = 5
 		relative_position_id = CAN_Canadian_Armed_Forces
+
+		prerequisite = { focus = CAN_naval_dockyards }
+		prerequisite = { focus = CAN_naval_doctrines }
+		prerequisite = { focus = CAN_naval_aircraft }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_bluewater"
+			add_ideas= CAN_bluwater_navy
+		}
+
 		ai_will_do = {
 			factor = 1
 		}
-
-		prerequisite = { focus =  CAN_naval_dockyards}
-
-		prerequisite = { focus =  CAN_naval_doctrines}
-
-		prerequisite = { focus =  CAN_naval_aircraft}
-
-		mutually_exclusive =  {}
-
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_bluewater "
-		    add_ideas= CAN_bluwater_navy
-		}
 	}
 
-
-	##Nationalist Section -- Requires Destroy Reservations and NOT TAKING WESTERN OR EASTERN
+	##English Nationalist Section -- Requires Destroy Reservations and NOT TAKING WESTERN OR EASTERN
     focus = {
 		id = CAN_national
 		cost = 10
 		icon = ultranationalist_volunteers
-		x = -2
+		x = -1
 		y = 1
 		relative_position_id = CAN_State_Of_Terror
 
@@ -5292,15 +5139,9 @@ focus_tree = {
 		prerequisite = { focus = CAN_State_Of_Terror }
 		prerequisite = { focus = CAN_forced_integration }
 
-		mutually_exclusive =  {}
-
-		available = { nationalist > 0.50}
-
-		bypass = {}
-
-		complete_tooltip = {}
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_national "
+		available = { nationalist > 0.50 }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_national"
 		    set_politics = {
 				ruling_party = nationalist
 				elections_allowed = no
@@ -5315,27 +5156,21 @@ focus_tree = {
 		x = -1
 		y = 1
 		relative_position_id = CAN_national
+
+		prerequisite = { focus = CAN_national }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_global_influence "
+			add_political_power = 100
+		}
+
 		ai_will_do = {
 			factor = 1
 		}
+	}
 
-		prerequisite = { focus =  CAN_national }
-
-
-		mutually_exclusive =  {}
-
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_global_influence "
-		    add_political_power = 100
-		}
-    }
-
-    focus = {
+	focus = {
 		id = CAN_regional_diplomacy
 		cost = 10
 		icon = north_america
@@ -5349,13 +5184,7 @@ focus_tree = {
 		prerequisite = { focus =  CAN_national }
 
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_regional_diplomacy "
 		    add_political_power = 100
@@ -5376,13 +5205,7 @@ focus_tree = {
 		prerequisite = { focus =  CAN_regional_diplomacy }
 
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_alaska "
 		    USA = {
@@ -5405,13 +5228,7 @@ focus_tree = {
 		prerequisite = { focus =  CAN_regional_diplomacy }
 
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_greenland "
 		    DEN = {
@@ -5435,13 +5252,7 @@ focus_tree = {
 
         prerequisite = { focus =  CAN_alaska }
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_dominate_america "
 		    create_wargoal = {
@@ -5464,13 +5275,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_dominate_america }
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_golden_circle "
 			create_wargoal = {
@@ -5493,13 +5298,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_global_influence}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_opposition "
 		    add_popularity = {
@@ -5530,13 +5329,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_opposition}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_nationlist_agenda "
 		    add_popularity = {
@@ -5560,13 +5353,7 @@ focus_tree = {
 
 		prerequisite = { focus =  CAN_opposition}
 
-		mutually_exclusive =  {}
 
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_destroy_charter "
 		    add_political_power = 200
@@ -5685,9 +5472,10 @@ focus_tree = {
 		id = CAN_economy
 		cost = 10
 		icon = money
-		x = 33
+		x = -19
 		y = 1
 		relative_position_id = CAN_Focus_On_Political_Spectrum
+		prerequisite = { focus = CAN_Canadian_Economy }
 		prerequisite = { focus = CAN_Focus_On_Political_Spectrum }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -5709,18 +5497,15 @@ focus_tree = {
 		y = 1
 		relative_position_id = CAN_economy
 
+		prerequisite = { focus = CAN_economy }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_economy_investments_global "
+			add_political_power = 150
+		}
 
 		ai_will_do = {
 			factor = 1
-		}
-
-		prerequisite = {focus =  CAN_economy}
-
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: CAN_economy_investments_global "
-		    add_political_power = 50
 		}
     }
 
@@ -5728,25 +5513,25 @@ focus_tree = {
 		id = CAN_economy_investments_internal
 		cost = 10
 		icon = construct_infrastructure
-		x = 5
+		x = 3
 		y = 1
 		relative_position_id = CAN_economy
-		ai_will_do = {
-			factor = 1
-		}
 
-		prerequisite = {focus =  CAN_economy}
+		prerequisite = { focus = CAN_economy }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
 
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: CAN_economy_investments_internal "
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_economy_investments_internal "
 		    subtract_from_variable = { treasury = 20 }
 		    custom_effect_tooltip = 20_billion_expense_tt
 			add_timed_idea = {
                 idea = CAN_investments
                 days = 200
             }
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
     }
 
@@ -5789,16 +5574,16 @@ focus_tree = {
 		id = CAN_saskatchewan_invest
 		cost = 10
 		icon = factory_complex
-		x = 3
-		y = 2
+		x = 2
+		y = 3
 		relative_position_id = CAN_economy
 
 		ai_will_do = {
 			factor = 1
 		}
 
-		prerequisite = {focus =  CAN_economy_investments_internal}
-
+		prerequisite = { focus = CAN_alberta_invest }
+		prerequisite = { focus = CAN_bc_invest }
 
 
 
@@ -5824,7 +5609,7 @@ focus_tree = {
 		id = CAN_bc_invest
 		cost = 10
 		icon = industrial_complexes
-		x = 5
+		x = 3
 		y = 2
 		relative_position_id = CAN_economy
 
@@ -5859,8 +5644,8 @@ focus_tree = {
 		id = CAN_manitoba_invest
 		cost = 10
 		icon = industry3
-		x = 7
-		y = 2
+		x = 4
+		y = 3
 		relative_position_id = CAN_economy
 
 
@@ -5868,7 +5653,8 @@ focus_tree = {
 			factor = 1
 		}
 
-		prerequisite = {focus =  CAN_economy_investments_internal}
+		prerequisite = { focus = CAN_bc_invest }
+		prerequisite = { focus = CAN_ontario_invest }
 
 
 
@@ -5895,76 +5681,72 @@ focus_tree = {
 		id = CAN_ontario_invest
 		cost = 10
 		icon = infrastructure1
-		x = 9
+		x = 5
 		y = 2
 		relative_position_id = CAN_economy
+
+		prerequisite = { focus = CAN_economy_investments_internal }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = { log = "[GetDateText]: [Root.GetName]: CAN_ontario_invest "
+			763 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 2
+					instant_build = yes
+				}
+			}
+			763 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
 
 		ai_will_do = {
 			factor = 1
 		}
-
-		prerequisite = {focus =  CAN_economy_investments_internal}
-
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: CAN_ontario_invest "
-		    763 = {
-				add_building_construction = {
-                    type = industrial_complex
-                    level = 2
-                    instant_build = yes
-				}
-            }
-			763 = {
-				add_building_construction = {
-                    type = infrastructure
-                    level = 2
-                    instant_build = yes
-				}
-            }
-		}
-    }
+	}
 
 	focus = {
 		id = CAN_complete_invest
 		cost = 10
 		icon = economic_prosperity2
-		x = 5
-		y = 3
+		x = 3
+		y = 4
 		relative_position_id = CAN_economy
 
+		prerequisite = { focus = CAN_saskatchewan_invest }
+		prerequisite = { focus = CAN_manitoba_invest }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_complete_invest "
+		    subtract_from_variable = { treasury = 20 }
+		    custom_effect_tooltip = 20_billion_expense_tt
+			every_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = infrastructure
+						size > 1
+					}
+				}
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
 
 		ai_will_do = {
 			factor = 1
 		}
+	}
 
-		prerequisite = {focus =  CAN_alberta_invest}
-
-        prerequisite = {focus =  CAN_saskatchewan_invest}
-
-        prerequisite = {focus =  CAN_manitoba_invest}
-
-		prerequisite = {focus =  CAN_ontario_invest}
-
-		prerequisite = {focus =  CAN_bc_invest}
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: CAN_complete_invest "
-		    subtract_from_variable = { treasury = 5 }
-		    custom_effect_tooltip = 5_billion_expense_tt
-			every_owned_state = {
-				add_building_construction = {
-                    type = infrastructure
-                    level = 1
-                    instant_build = yes
-				}
-			}
-		}
-    }
-
-    focus = {
+	focus = {
 		id = CAN_europe_invest
 		cost = 10
 		icon = europe
@@ -5972,18 +5754,16 @@ focus_tree = {
 		y = 2
 		relative_position_id = CAN_economy
 
-		ai_will_do = {
-			factor = 1
+		prerequisite = { focus = CAN_economy_investments_global }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_europe_invest "
+		    add_political_power = 100
 		}
 
-		prerequisite = {focus =  CAN_economy_investments_global}
-
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: CAN_europe_invest "
-		    subtract_from_variable = { treasury = 10 }
-		    custom_effect_tooltip = 10_billion_expense_tt
+		ai_will_do = {
+			factor = 1
 		}
     }
 
@@ -5994,20 +5774,19 @@ focus_tree = {
 		x = -2
 		y = 2
 		relative_position_id = CAN_economy
+
+		prerequisite = { focus = CAN_economy_investments_global }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_asia_invest"
+			add_political_power = 100
+		}
+
 		ai_will_do = {
 			factor = 1
 		}
-
-		prerequisite = {focus =  CAN_economy_investments_global}
-
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: CAN_asia_invest "
-		    subtract_from_variable = { treasury = 10 }
-		    custom_effect_tooltip = 10_billion_expense_tt
-		}
-    }
+	}
 
     focus = {
 		id = CAN_greece_invest
@@ -6017,30 +5796,57 @@ focus_tree = {
 		y = 4
 		relative_position_id = CAN_economy
 
-		ai_will_do = {
-			factor = 1
+		prerequisite = { focus =  CAN_europe_invest }
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INDUSTRY }
+		available = {
+			GRE = {
+				custom_trigger_tooltip = {
+					tooltip = CAN_influence_higher_15_tt
+					OR = {
+						AND = {
+							set_temp_variable = { temp_idx = -1 }
+							any_of = {
+								array = influence_array
+								if = {
+									limit = { check_variable = { v = CAN } }
+									set_temp_variable = { temp_idx = i }
+								}
+								else = { always = no }
+							}
+							check_variable = { temp_idx > -1 }
+							check_variable = { influence_array_calc^temp_idx > 0.15 }
+						}
+						CAN = { is_ai = yes }
+					}
+				}
+				NOT = { has_war_with = CAN }
+				has_opinion = { target = CAN value > 0 }
+				if = {
+					limit = { is_subject = yes }
+					is_subject_of = CAN
+				}
+				if = {
+					limit = { is_in_faction = yes }
+					is_in_faction_with = CAN
+				}
+			}
 		}
 
-		prerequisite = {focus =  CAN_europe_invest}
-
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: CAN_greece_invest "
-		    141 = {
-				add_building_construction = {
-                    type = industrial_complex
-                    level = 2
-                    instant_build = yes
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_norway_invest "
+			GRE = {
+				random_owned_controlled_state = {
+					invest_cic = yes
 				}
-            }
-			141 = {
-				add_building_construction = {
-                    type = infrastructure
-                    level = 2
-                    instant_build = yes
+				random_owned_controlled_state = {
+					invest_infra = yes
 				}
-            }
+			}
+			custom_effect_tooltip = CAN_canadian_investments_tt
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
     }
 
@@ -6052,30 +5858,57 @@ focus_tree = {
 		y = 3
 		relative_position_id = CAN_economy
 
-		ai_will_do = {
-			factor = 1
+		prerequisite = { focus = CAN_europe_invest }
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INDUSTRY }
+		available = {
+			NOR = {
+				custom_trigger_tooltip = {
+					tooltip = CAN_influence_higher_15_tt
+					OR = {
+						AND = {
+							set_temp_variable = { temp_idx = -1 }
+							any_of = {
+								array = influence_array
+								if = {
+									limit = { check_variable = { v = CAN } }
+									set_temp_variable = { temp_idx = i }
+								}
+								else = { always = no }
+							}
+							check_variable = { temp_idx > -1 }
+							check_variable = { influence_array_calc^temp_idx > 0.15 }
+						}
+						CAN = { is_ai = yes }
+					}
+				}
+				NOT = { has_war_with = CAN }
+				has_opinion = { target = CAN value > 0 }
+				if = {
+					limit = { is_subject = yes }
+					is_subject_of = CAN
+				}
+				if = {
+					limit = { is_in_faction = yes }
+					is_in_faction_with = CAN
+				}
+			}
 		}
 
-		prerequisite = { focus = CAN_europe_invest}
-
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: CAN_norway_invest "
-		    32 = {
-				add_building_construction = {
-                    type = industrial_complex
-                    level = 2
-                    instant_build = yes
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_norway_invest "
+			NOR = {
+				random_owned_controlled_state = {
+					invest_cic = yes
 				}
-            }
-			32 = {
-				add_building_construction = {
-                    type = infrastructure
-                    level = 2
-                    instant_build = yes
+				random_owned_controlled_state = {
+					invest_infra = yes
 				}
-            }
+			}
+			custom_effect_tooltip = CAN_canadian_investments_tt
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
     }
 
@@ -6087,7 +5920,7 @@ focus_tree = {
 		y = 3
 		relative_position_id = CAN_economy
 
-		prerequisite = { focus = CAN_europe_invest}
+		prerequisite = { focus = CAN_europe_invest }
 		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INDUSTRY }
 		available = {
 			EST = {
@@ -6098,13 +5931,16 @@ focus_tree = {
 							set_temp_variable = { temp_idx = -1 }
 							any_of = {
 								array = influence_array
-								check_variable = { v = CAN }
+								if = {
+									limit = { check_variable = { v = CAN } }
+									set_temp_variable = { temp_idx = i }
+								}
+								else = { always = no }
 							}
-							set_temp_variable = { temp_idx = i }
 							check_variable = { temp_idx > -1 }
-							check_variable = { influence_array_calc^temp_idx > 0.20 }
+							check_variable = { influence_array_calc^temp_idx > 0.15 }
 						}
-						is_ai = yes
+						CAN = { is_ai = yes }
 					}
 				}
 				NOT = { has_war_with = CAN }
@@ -6130,7 +5966,7 @@ focus_tree = {
 					invest_infra = yes
 				}
 			}
-			custom_effect_tooltip = "[CAN.GetNamewithFlag] invests in §YInfrastructure§! and §YCivilian Industry§! at market price."
+			custom_effect_tooltip = CAN_canadian_investments_tt
 		}
 
 		ai_will_do = {
@@ -6157,13 +5993,16 @@ focus_tree = {
 							set_temp_variable = { temp_idx = -1 }
 							any_of = {
 								array = influence_array
-								check_variable = { v = CAN }
+								if = {
+									limit = { check_variable = { v = CAN } }
+									set_temp_variable = { temp_idx = i }
+								}
+								else = { always = no }
 							}
-							set_temp_variable = { temp_idx = i }
 							check_variable = { temp_idx > -1 }
-							check_variable = { influence_array_calc^temp_idx > 0.20 }
+							check_variable = { influence_array_calc^temp_idx > 0.15 }
 						}
-						is_ai = yes
+						CAN = { is_ai = yes }
 					}
 				}
 				NOT = { has_war_with = CAN }
@@ -6189,7 +6028,7 @@ focus_tree = {
 					invest_infra = yes
 				}
 			}
-			custom_effect_tooltip = "[CAN.GetNamewithFlag] invests in §YInfrastructure§! and §YCivilian Industry§! at market price."
+			custom_effect_tooltip = CAN_canadian_investments_tt
 		}
 
 		ai_will_do = {
@@ -6216,13 +6055,16 @@ focus_tree = {
 							set_temp_variable = { temp_idx = -1 }
 							any_of = {
 								array = influence_array
-								check_variable = { v = CAN }
+								if = {
+									limit = { check_variable = { v = CAN } }
+									set_temp_variable = { temp_idx = i }
+								}
+								else = { always = no }
 							}
-							set_temp_variable = { temp_idx = i }
 							check_variable = { temp_idx > -1 }
-							check_variable = { influence_array_calc^temp_idx > 0.20 }
+							check_variable = { influence_array_calc^temp_idx > 0.15 }
 						}
-						is_ai = yes
+						CAN = { is_ai = yes }
 					}
 				}
 				NOT = { has_war_with = CAN }
@@ -6238,7 +6080,8 @@ focus_tree = {
 			}
 		}
 
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: CAN_south_korea_invest"
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_south_korea_invest"
 			KOR = {
 				random_owned_controlled_state = {
 					prioritize = { 604 }
@@ -6249,7 +6092,7 @@ focus_tree = {
 					invest_infra = yes
 				}
 			}
-			custom_effect_tooltip = "[CAN.GetNamewithFlag] invests in §YInfrastructure§! and §YCivilian Industry§! at market price."
+			custom_effect_tooltip = CAN_canadian_investments_tt
 		}
 
 		ai_will_do = {
@@ -6276,13 +6119,16 @@ focus_tree = {
 							set_temp_variable = { temp_idx = -1 }
 							any_of = {
 								array = influence_array
-								check_variable = { v = CAN }
+								if = {
+									limit = { check_variable = { v = CAN } }
+									set_temp_variable = { temp_idx = i }
+								}
+								else = { always = no }
 							}
-							set_temp_variable = { temp_idx = i }
 							check_variable = { temp_idx > -1 }
-							check_variable = { influence_array_calc^temp_idx > 0.20 }
+							check_variable = { influence_array_calc^temp_idx > 0.15 }
 						}
-						is_ai = yes
+						CAN = { is_ai = yes }
 					}
 				}
 				NOT = { has_war_with = CAN }
@@ -6298,7 +6144,8 @@ focus_tree = {
 			}
 		}
 
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: focus CAN_indonesia_invest"
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus CAN_indonesia_invest"
 			IND = {
 				random_owned_controlled_state = {
 					prioritize = { 631 }
@@ -6309,7 +6156,7 @@ focus_tree = {
 					invest_infra = yes
 				}
 			}
-			custom_effect_tooltip = "[CAN.GetNamewithFlag] invests in §YInfrastructure§! and §YCivilian Industry§! at market price."
+			custom_effect_tooltip = CAN_canadian_investments_tt
 		}
 
 		ai_will_do = {
