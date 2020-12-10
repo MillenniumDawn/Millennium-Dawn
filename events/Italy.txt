@@ -1319,15 +1319,38 @@ country_event = {
 	option = {
 		name = italy_md.34.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.34.o1 executed"
-		ITA = {
-			random_owned_controlled_state = {
-				invest_cic = yes
-            }
-			country_event = italy_md.35
-			add_opinion_modifier = {
-				target = ROOT
-				modifier = accepted_investment_request 
-			}
+		if = {
+			limit = { tag = CHI }
+				set_country_flag = trade_agreement@ITA
+				add_opinion_modifier = { target = ITA modifier = mutual_trade_agreement }
+                add_opinion_modifier = { target = ITA modifier = mutual_trade_opinion }
+                reverse_add_opinion_modifier = { target = ITA modifier = mutual_trade_opinion }
+                reverse_add_opinion_modifier = { target = ITA modifier = mutual_trade_agreement }
+				ITA = {
+					set_country_flag = trade_agreement@CHI
+					random_owned_controlled_state = {
+						invest_cic = yes
+					}
+					country_event = italy_md.35
+					add_opinion_modifier = {
+						target = CHI
+						modifier = accepted_investment_request 
+					}
+				}
+		}
+		else_if = {
+			limit = { NOT = { tag = CHI } }
+				ITA = {
+					random_owned_controlled_state = {
+						invest_cic = yes
+					}
+					THIS_eurosceptic_decline_5_percent = yes
+					country_event = italy_md.35
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = accepted_investment_request 
+					}
+				}
 		}
 	}
 	option = {
@@ -1335,10 +1358,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: italy_md.34.o2 executed"
 		ITA = {
 			country_event = italy_md.36
-			add_opinion_modifier = {
-				target = ROOT
-				modifier = denied_investment_request 
-			}
+		}
+		add_opinion_modifier = {
+			target = ITA
+			modifier = denied_investment_request 
 		}
 	}
 }
@@ -1370,6 +1393,26 @@ country_event = {
 	option = {
 		name = italy_md.36.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.36.o1 executed"
+	}
+}
+#tag switch to PAD
+country_event = {
+	id = italy_md.37
+	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.37" }
+	title = italy_md.37.t
+	desc = italy_md.37.d
+	picture = GFX_report_event_political_deal2
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = italy_md.37.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.37.o1 executed"
+		PAD = { change_tag_from = ITA }
+	}
+	option = {
+		name = italy_md.37.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.37.o2 executed"
 	}
 }
 add_namespace = mafia

@@ -2637,25 +2637,6 @@ focus_tree = {
 	}
 
 	focus = {
-		id = ITA_research_slot_2
-		icon = research
-		relative_position_id = ITA_north_miracle
-		x = 0
-		y = 1
-		cost = 10
-		prerequisite = {
-			focus = ITA_north_miracle
-		}
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		completion_reward = {
-			subtract_from_variable = { treasury = 20.0 }
-			custom_effect_tooltip = 20_billion_expense_tt
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_research_slot_2"
-			add_research_slot = 1
-		}
-	}
-
-	focus = {
 		id = ITA_oil_fields_sicily
 		icon = oil_production
 		relative_position_id = ITA_invest_south
@@ -8051,7 +8032,24 @@ focus_tree = {
 			release = PAD
 			PAD = {
 				inherit_technology = ITA
+				set_temp_variable = { var = temp_debt value = ITA.debt}
+				set_temp_variable = { var = temp_treasury value = ITA.treasury }
+				set_temp_variable = { var = temp_int_investments value = ITA.int_investments }
+				divide_temp_variable = { var = temp_debt value = 2 }
+				divide_temp_variable = { var = temp_treasury value = 2 }
+				divide_temp_variable = { var = temp_int_investments value = 2 }	
+				set_variable = { var = debt value = temp_debt}
+				set_variable = { var = treasury value = temp_treasury }
+				set_variable = { var = tax_rate value = ITA.tax_rate }
+				set_variable = { var = int_investments value = temp_int_investments }
+			}			
+			if = {
+				limit = { is_ai = no }
+				country_event = italy_md.37
 			}
+			divide_variable = { var = debt value = 2 }
+			divide_variable = { var = treasury value = 2 }
+			divide_variable = { var = int_investments value = 2 }
 		}
 	}
 
@@ -8086,7 +8084,24 @@ focus_tree = {
 			release = PAD
 			PAD = {
 				inherit_technology = ITA
+				set_temp_variable = { var = temp_debt value = ITA.debt}
+				set_temp_variable = { var = temp_treasury value = ITA.treasury }
+				set_temp_variable = { var = temp_int_investments value = ITA.int_investments }
+				multiply_temp_variable = { var = temp_debt value = 0.66 }
+				multiply_temp_variable = { var = temp_treasury value = 0.66 }
+				multiply_temp_variable = { var = temp_int_investments value = 0.66 }	
+				set_variable = { var = debt value = temp_debt}
+				set_variable = { var = treasury value = temp_treasury }
+				set_variable = { var = tax_rate value = ITA.tax_rate }
+				set_variable = { var = int_investments value = temp_int_investments }
 			}
+			if = {
+				limit = { is_ai = no }
+				country_event = italy_md.37
+			}
+			multiply_variable = { var = debt value = 0.34 }
+			multiply_variable = { var = treasury value = 0.34 }
+			multiply_variable = { var = int_investments value = 0.34 }
 		}
 	}
 
@@ -8542,7 +8557,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_seek_european_help"
 			add_1_ruling_party_drift = yes
-			ROOT_eurosceptic_decline_10_percent = yes
 			FRA = {
 				country_event = italy_md.34
 			}
@@ -8888,13 +8902,13 @@ focus_tree = {
 
 		search_filters = {}
 		prerequisite = {
-			focus = ITA_fight_scientific_illiteracy
-		}
-		prerequisite = {
 			focus = ITA_great_projects
 		}
 		available = {
 			NOT = { has_completed_focus = ITA_ban_nuclear_power }
+		}		
+		available = {
+			has_completed_focus = ITA_fight_scientific_illiteracy
 		}
 
 		completion_reward = {
@@ -8918,8 +8932,8 @@ focus_tree = {
 		cost = 10
 
 		search_filters = {}
-		prerequisite = {
-			focus = ITA_fight_scientific_illiteracy
+		available = {
+			has_completed_focus = ITA_fight_scientific_illiteracy
 		}
 		prerequisite = {
 			focus = ITA_great_projects
@@ -8931,8 +8945,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_encourage_gmos"
 			add_ideas = ITA_gmos_encouraged
-			}
 		}
+	}
 
 	focus = {
 		id = ITA_increase_ASI_funding
@@ -8943,8 +8957,8 @@ focus_tree = {
 		cost = 10
 
 		search_filters = {}
-		prerequisite = {
-			focus = ITA_fight_scientific_illiteracy
+		available = {
+			has_completed_focus = ITA_fight_scientific_illiteracy
 		}
 		prerequisite = {
 			focus = ITA_great_projects
@@ -8952,9 +8966,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_increase_ASI_funding"
-			custom_effect_tooltip = ITA_increase_ASI_funding_TT
-			}
+			#custom_effect_tooltip = ITA_increase_ASI_funding_TT
+			subtract_from_variable = { treasury = 20.0 }
+			custom_effect_tooltip = 20_billion_expense_tt
+			add_research_slot = 1
 		}
+	}
 
 	focus = {
 		id = ITA_messina_strait_bridge
@@ -9329,10 +9346,26 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_great_projects
 		}
+		available = {
+			OR = {
+				has_completed_focus = ITA_attract_foreign_tourists
+				AND = {
+					has_completed_focus = ITA_empower_the_senate
+					NOT = { has_completed_focus = ITA_repeal_former_government_measures_6 }
+				}
+				AND = {
+					has_completed_focus = ITA_empower_the_emperor
+					NOT = { has_completed_focus = ITA_repeal_former_government_measures_8 }
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_integrative_restoration"
 			custom_effect_tooltip = integrative_restoration_decisions_unlocked_TT
+			81 = {
+				add_dynamic_modifier = { modifier = monuments_restored }
+			}
 		}
 	}
 
