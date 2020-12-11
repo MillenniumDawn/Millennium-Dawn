@@ -1,7 +1,6 @@
 ﻿###########################
 # 	  Canadian Events	  #
 ###########################
-
 #Author: Captain Gen
 #Author: Angriest Bird and Amtoj
 
@@ -11,9 +10,7 @@ add_namespace = canada_md_politics
 add_namespace = keystonepipeline_can
 add_namespace = keystonepipeline_usa
 
-############################################
-############Election Events 0-99############
-############################################
+##2019 Election Events
 # Prepare for the Elections (2019)
 country_event = {
 	id = canada.0
@@ -31,7 +28,7 @@ country_event = {
 		name = canada.0.a
 		log = "[GetDateText]: [This.GetName]: canada.0.a executed"
 		add_political_power = -75
-		# complete_national_focus = CAN_elections
+
 		hidden_effect = {
 			set_country_flag = CAN_campaigning_early
 			country_event = { id = canada.3 days = 100 }
@@ -55,10 +52,8 @@ country_event = {
 	title = canada.1.t
 	desc = canada.1.d
 	picture = GFX_Canadian_elections
-
 	fire_only_once = yes
 	is_triggered_only = yes
-
 	trigger = {
 		tag = CAN
 	}
@@ -67,7 +62,6 @@ country_event = {
 		name = canada.1.a
 		log = "[GetDateText]: [This.GetName]: canada.1.a executed"
 		add_political_power = -50
-		# complete_national_focus = CAN_elections
 		hidden_effect = {
 			set_country_flag = CAN_campaigning_normal
 			country_event = { id = canada.3 days = 50 }
@@ -103,7 +97,7 @@ country_event = {
 		name = canada.2.a
 		log = "[GetDateText]: [This.GetName]: canada.2.a executed"
 		add_political_power = -25
-		# complete_national_focus = CAN_elections
+
 		hidden_effect = {
 			set_country_flag = CAN_campaigning_late
 			country_event = { id = canada.3 days = 7 }
@@ -183,9 +177,7 @@ country_event = {
 	title = canada.5.t
 	desc = canada.5.d
 	picture = GFX_Canadian_elections
-
 	is_triggered_only = yes
-
 	trigger = {
 		tag = CAN
 	}
@@ -200,19 +192,31 @@ country_event = {
 			set_country_flag = CAN_try_fix_happiness_flag
 			#country_event = { id = canada.x days = 7 }
 			random_list = {
-					5 = {
-						add_to_variable = { french_happiness_var = 2 }
+				5 = {
+					modifier = {
+						factor = 2.5
+						has_idea = recession
 					}
-					55 = {
-						add_to_variable = { french_happiness_var = 6 }
+					modifier = {
+						factor = 5
+						has_idea = depression
 					}
-					35 = {
-						add_to_variable = { french_happiness_var = 9 }
-					}
-					5 = {
-						add_to_variable = { french_happiness_var = 12 }
-					}
+					add_to_variable = { french_happiness_var = 2 }
 				}
+				55 = {
+					modifier = {
+						factor = 5
+						has_idea = stagnation
+					}
+					add_to_variable = { french_happiness_var = 6 }
+				}
+				35 = {
+					add_to_variable = { french_happiness_var = 9 }
+				}
+				5 = {
+					add_to_variable = { french_happiness_var = 12 }
+				}
+			}
 			CAN_update_french_happiness = yes
 		}
 	}
@@ -466,12 +470,6 @@ country_event = {
 	}
 }
 
-
-############################################
-############FLavor Events 100-500###########
-############################################
-
-
 #Air Canada acquires Canadian Airlines
 country_event = {
 	id = canada.100
@@ -479,20 +477,16 @@ country_event = {
 	title = canada.100.t
 	desc = canada.100.d
 	picture = GFX_passenger_plane
-
 	is_triggered_only = yes
+	fire_only_once = yes
 
 	#Excellent!
 	option = {
 		name = canada.100.a
 		log = "[GetDateText]: [This.GetName]: canada.100.a executed"
-		air_experience = 15
-		add_popularity = {
-			ideology = democratic
-			popularity = 0.02
-		}
-		add_to_variable = { party_pop_array^1 = 0.002 }
-		recalculate_party = yes
+		air_experience = 25
+		add_popularity = { ideology = democratic popularity = 0.02 }
+		add_2_western_conservatism = yes
 		ai_chance = { factor = 95 }
 	}
 
@@ -537,7 +531,8 @@ country_event = {
 		name = canada.501.a
 		log = "[GetDateText]: [This.GetName]: canada.501.a executed"
 
-		add_stability = 0.10
+		add_stability = 0.05
+		custom_effect_tooltip = "The divide between English and French Culture in Canada"
 
 		ai_chance = {
 			factor = 1
@@ -555,7 +550,7 @@ country_event = {
 	fire_only_once = yes
 	is_triggered_only = yes
 	trigger = {
-		original_tag = CAN
+		tag = CAN
 	}
 
 	option = { #now?
@@ -572,6 +567,10 @@ country_event = {
 					add_to_variable = { CAN_subsidy_total = 1.5 }
 				}
 				20 = {
+					modifier = {
+						factor = 1.5
+						always = yes
+					}
 					subtract_from_variable = { treasury = 2 }
 					add_to_variable = { CAN_subsidy_total = 2 }
 				}
@@ -586,12 +585,25 @@ country_event = {
 			}
 		}
 		custom_effect_tooltip = CAN_oil_subsidies_tt
+
+		if = {
+			limit = {
+				has_country_flag = enthusiastic_fossil_fuel_industry
+			}
+			increase_fossil_fuel_industry_opinion = yes
+		}
 	}
 
 	option = {
 		name = canada.502.b
 		log = "[GetDateText]: [This.GetName]: canada.502.n executed"
 		custom_effect_tooltip = "Refuse to Subsidize the Oil Companies"
+		if = {
+			limit = {
+				has_country_flag = hostile_fossil_fuel_industry
+			}
+			decrease_fossil_fuel_industry_opinion = yes
+		}
 	}
 }
 
@@ -602,11 +614,8 @@ country_event = {
 	title = canada.503.t
 	desc = canada.503.d
 	picture = GFX_stock_market
-
 	fire_only_once = yes
-
 	is_triggered_only = yes
-
 	trigger = {
 		tag = CAN
 	}
@@ -784,6 +793,89 @@ country_event = {
 	}
 }
 
+#The move towards a two language state
+country_event = {
+	id = canada.520
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.511" }
+	title = canada.520.t
+	desc = canada.520.d
+	picture = GFX_CAN_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = CAN
+	}
+
+	#The Move
+	option = {
+		name = canada.520.a
+		log = "[GetDateText]: [This.GetName]: canada.520.a executed"
+		add_stability = 0.03
+	}
+}
+
+
+###Canadian Recession Events
+country_event = { #The American Recession Ripples through Canada
+	id = canada.600
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.600" }
+	title = canada.600.t
+	desc = canada.600.d
+	picture = GFX_foreclosure
+	is_triggered_only = yes
+	fire_only_once = yes
+	trigger = {
+		tag = CAN
+	}
+
+	option = {
+		name = canada.600.a
+		log = "[GetDateText]: [This.GetName]: canada.600.a executed"
+		decrease_economic_growth = yes
+
+		hidden_effect = {
+			country_event = { id = canada.601 days = 500 random_days = 120 }
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+
+country_event = { ###End of the Great Recession in Canada --Needs Finished
+	id = canada.601
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.601" }
+	title = canada.601.t
+	desc = canada.601.d
+	picture = GFX_CAN_end_great_recession
+	is_triggered_only = yes
+	fire_only_once = yes
+	trigger = {
+		tag = CAN
+	}
+
+	option = {
+		name = canada.601.a
+		log = "[GetDateText]: [This.GetName]: canada.601.a executed"
+		if = {
+			limit = {
+				NOT = {
+					has_idea = stable_growth
+					has_idea = economic_boom
+					has_idea = fast_growth
+				}
+			}
+			slightly_increase_economic_growth = yes
+		}
+		boost_domestic_influence_2_percent = yes
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
 
 ######Canada Political Work
 country_event = { ###The Clarity Act
@@ -792,32 +884,40 @@ country_event = { ###The Clarity Act
 	title = canada_md_politics.1.t
 	desc = canada_md_politics.1.d
 	picture = GFX_CAN_the_clarity_act
-
 	fire_only_once = yes
-
+	is_triggered_only = yes
 	trigger = {
-		date > 2000.3.14
 		tag = CAN
-		is_ai = no
 	}
-
-	mean_time_to_happen = {
-		days = 1
-	}
-
 	option = {
 		name = canada_md_politics.1.a
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.1.a executed"
 		add_political_power = -25
-		add_to_variable = { french_happiness_var = -2 }
+
+		add_to_variable = {
+			var = french_happiness_var
+			value = -2
+			tooltip = CAN_french_happiness_decrease_2_tt
+		}
 		CAN_update_french_happiness = yes
+		ai_chance = {
+			factor = 1
+		}
 	}
 	option = {
 		name = canada_md_politics.1.b
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.1.b executed"
 		add_stability = -0.05
-		add_to_variable = { french_happiness_var = 2 }
+
+		add_to_variable = {
+			var = french_happiness_var
+			value = 2
+			tooltip = CAN_french_happiness_increase_2_tt
+		}
 		CAN_update_french_happiness = yes
+		ai_chance = {
+			factor = 1
+		}
 	}
 }
 
@@ -827,14 +927,8 @@ country_event = { ###Operation Yellow Ribbon
 	title = canada_md_politics.2.t
 	desc = canada_md_politics.2.d
 	picture = GFX_CAN_operation_yellow_ribbon
-
 	fire_only_once = yes
-
 	is_triggered_only = yes ##Referenced by the War on Terror Events
-
-	mean_time_to_happen = {
-		days = 1
-	}
 
 	option = {
 		name = canada_md_politics.2.a
@@ -867,18 +961,10 @@ country_event = { ###Softwood Lumber Dispute
 	title = canada_md_politics.3.t
 	desc = canada_md_politics.3.d
 	picture = GFX_CAN_softwood_lumber_dispute
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		has_start_date < 2017.1.1
 		tag = CAN
-		date > 2002.04.24
-		is_ai = no
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -889,6 +975,10 @@ country_event = { ###Softwood Lumber Dispute
 		add_to_variable = { treasury = 4.0 }
 		custom_effect_tooltip = adds_4_to_treasury_TT
 		generic_grant_1_percent_influence_of_USA = yes
+
+		ai_chance = {
+			factor = 0
+		}
 	}
 	option = {
 		name = canada_md_politics.3.b
@@ -898,6 +988,10 @@ country_event = { ###Softwood Lumber Dispute
 		add_to_variable = { treasury = 5.5 }
 		custom_effect_tooltip = add_5_5_to_treasury_TT
 		generic_grant_2_percent_influence_of_USA = yes
+
+		ai_chance = {
+			factor = 1
+		}
 	}
 }
 
@@ -907,32 +1001,61 @@ country_event = { ###Ontario Goes Dark
 	title = canada_md_politics.4.t
 	desc = canada_md_politics.4.d
 	picture = GFX_CAN_ontario_goes_dark
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
 		tag = CAN
-		date > 2003.08.13
-		has_start_date < 2017.1.1
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
 		name = canada_md_politics.4.a
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.4.a executed"
-		add_political_power = 25
+		subtract_from_variable = {
+			var = treasury
+			value = 10
+			tooltip = 10_billion_expense_tt
+		}
+		763 = {
+			damage_building = {
+				type = industrial_complex
+				damage = 5
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 2
+			}
+		}
+
+		ai_chance = {
+			factor = 1
+		}
 	}
+
 	option = {
 		name = canada_md_politics.4.b
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.4.b executed"
-		add_stability = 0.05
-		subtract_from_variable = { treasury = 6.0 }
-		custom_effect_tooltip = removes_6_from_treasury_TT
 		USA = {
+			subtract_from_variable = {
+				var = treasury
+				value = 6
+				tooltip = 6_billion_expense_tt
+			}
 			generic_grant_2_percent_influence_of_CAN = yes
+		}
+
+		763 = {
+			damage_building = {
+				type = industrial_complex
+				damage = 2.5
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+		}
+
+		ai_chance = {
+			factor = 0
 		}
 	}
 }
@@ -943,29 +1066,28 @@ country_event = { ###The Sponsorship Scandal
 	title = canada_md_politics.5.t
 	desc = canada_md_politics.5.d
 	picture = GFX_CAN_the_sponsorship_scandal
-
 	fire_only_once = yes
-
+	is_triggered_only = yes
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2004.02.09
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
 		name = canada_md_politics.5.a
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.5.a executed"
-		add_political_power = -50
+		add_political_power = -75
+		ai_chance = {
+			factor = 0
+		}
 	}
 	option = {
 		name = canada_md_politics.5.b
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.5.b executed"
-		subtract_from_variable = { party_pop_array^2 = 0.05 } ###TEMP
-		custom_effect_tooltip = CAN_liberals_lose_5_TT
+		subtract_5_western_liberalism = yes
+
+		ai_chance = {
+			factor = 1
+		}
 	}
 }
 
@@ -975,29 +1097,18 @@ country_event = { ###American Submarines in the Northwest Passage
 	title = canada_md_politics.6.t
 	desc = canada_md_politics.6.d
 	picture = GFX_CAN_american_submarine_northwest
-
 	fire_only_once = yes
-
+	is_triggered_only = yes
 	trigger = {
-		is_ai = no
- 		tag = CAN
-		date > 2005.11.28
-	}
-
-	mean_time_to_happen = {
-		days = 1
+		tag = CAN
 	}
 
 	option = {
 		name = canada_md_politics.6.a
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.6.a executed"
-		add_political_power = 50
+		add_political_power = 150
 		add_opinion_modifier = { target = USA modifier = trespassing }
-		diplomatic_relation = {
-			country = USA
-			relation = military_access
-			active = no
-		}
+		diplomatic_relation = { country = USA relation = military_access active = no }
 	}
 	option = {
 		name = canada_md_politics.6.b
@@ -1012,17 +1123,10 @@ country_event = { ###The Toronto 18
 	title = canada_md_politics.7.t
 	desc = canada_md_politics.7.d
 	picture = GFX_CAN_the_toronto_18
-
 	fire_only_once = yes
-
+	is_triggered_only = yes
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2006.02.06
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -1031,6 +1135,7 @@ country_event = { ###The Toronto 18
 		add_stability = -0.05
 		add_war_support = 0.05
 	}
+
 	option = {
 		name = canada_md_politics.7.b
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.7.b executed"
@@ -1044,23 +1149,16 @@ country_event = { ##Operation Medusa
 	title = canada_md_politics.8.t
 	desc = canada_md_politics.8.d
 	picture = GFX_CAN_operation_medusa_commences
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2003.07.31
 		OR = {
 			USA = {
 				has_war_with = TAL
 			}
 			AFG = { has_volunteers_amount_from = { tag = USA count > 0 } }
 		}
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -1082,17 +1180,10 @@ country_event = { ###Quebecois Nation Motion
 	title = canada_md_politics.9.t
 	desc = canada_md_politics.9.d
 	picture = GFX_CAN_quebecois_nation_motion
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2006.11.27
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -1117,17 +1208,10 @@ country_event = { ###Indigenous Day of Action
 	title = canada_md_politics.10.t
 	desc = canada_md_politics.10.d
 	picture = GFX_CAN_indigenous_day_action
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2007.06.29
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -1150,17 +1234,10 @@ country_event = { ###RCMP Raid on Conservative Headquarters
 	title = canada_md_politics.11.t
 	desc = canada_md_politics.11.d
 	picture = GFX_CAN_rcmp_raid_conservative
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2008.04.15
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -1178,57 +1255,16 @@ country_event = { ###RCMP Raid on Conservative Headquarters
 	}
 }
 
-country_event = { ###End of the Great Recession in Canada --Needs Finished
-	id = canada_md_politics.12
-	immediate = { log = "[GetDateText]: [Root.GetName]: event canada_md_politics.12" }
-	title = canada_md_politics.12.t
-	desc = canada_md_politics.12.d
-	picture = GFX_CAN_end_great_recession
-
-	fire_only_once = yes
-
-	trigger = {
-		is_ai = no
-		tag = CAN
-		date > 2009.11.30
-	}
-
-	mean_time_to_happen = {
-		days = 1
-	}
-
-	option = {
-		name = canada_md_politics.12.a
-		log = "[GetDateText]: [This.GetName]: canada_md_politics.12.a executed"
-		USA = {
-			generic_grant_2_percent_influence_of_CAN = yes
-		}
-	}
-	option = {
-		name = canada_md_politics.12.b
-		log = "[GetDateText]: [This.GetName]: canada_md_politics.12.b executed"
-		add_to_variable = { treasury = 13.5 }
-		custom_effect_tooltip = add_13_5_to_treasury_TT
-	}
-}
-
 country_event = { ###The Golden Goal
 	id = canada_md_politics.13
 	immediate = { log = "[GetDateText]: [Root.GetName]: event canada_md_politics.13" }
 	title = canada_md_politics.13.t
 	desc = canada_md_politics.13.d
 	picture = GFX_CAN_the_golden_goal
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2010.02.28
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -1249,17 +1285,10 @@ country_event = { ###G20 Summit Riots in Toronto
 	title = canada_md_politics.14.t
 	desc = canada_md_politics.14.d
 	picture = GFX_CAN_g20_riots_toronto
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2010.06.28
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -1281,41 +1310,22 @@ country_event = { ###Withdrawing the Security Council Bid
 	title = canada_md_politics.15.t
 	desc = canada_md_politics.15.d
 	picture = GFX_CAN_withdraw_security_bid
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2010.10.12
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
 		name = canada_md_politics.15.a
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.15.a executed"
 		add_war_support = 0.025
-		if = {
-			limit = { has_idea = intervention_limited_interventionism }
-			swap_ideas = {
-				remove_idea = intervention_limited_interventionism
-				add_idea = intervention_regional_interventionism
-			}
-		}
+		increase_intervention_law_effect = yes
 	}
 	option = {
 		name = canada_md_politics.15.b
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.15.b executed"
-		if = {
-			limit = { has_idea = intervention_limited_interventionism }
-			swap_ideas = {
-				remove_idea = intervention_limited_interventionism
-				add_idea = intervention_local_security
-			}
-		}
+		decrease_intervention_law_effect = yes
 		add_stability = 0.025
 	}
 }
@@ -1326,32 +1336,28 @@ country_event = { ###An Orange Wave
 	title = canada_md_politics.16.t
 	desc = canada_md_politics.16.d
 	picture = GFX_CAN_an_orange_wave
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2011.04.20
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
 		name = canada_md_politics.16.a
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.16.a executed"
-		add_to_variable = { party_pop_array^3 = 0.05 }
-		subtract_from_variable = { party_pop_array^1 = 0.05 }
-		custom_effect_tooltip = CAN_socialism_gains_5_TT
-		custom_effect_tooltip = CAN_conservatives_lose_5_TT
+		hidden_effect = {
+			add_popularity = { ideology = democratic popularity = 0.10 }
+		}
+		add_5_western_social_democrat = yes
+		add_5_western_liberalism = yes
 	}
 	option = {
 		name = canada_md_politics.16.b
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.16.b executed"
-		subtract_from_variable = { party_pop_array^3 = 0.05 }
-		custom_effect_tooltip = CAN_socialism_loses_5_TT
+		hidden_effect = {
+			add_popularity = { ideology = democratic popularity = -0.05 }
+		}
+		subtract_5_western_social_democrat = yes
 	}
 }
 
@@ -1361,17 +1367,10 @@ country_event = { ###War of 1812 Bicentennial
 	title = canada_md_politics.17.t
 	desc = canada_md_politics.17.d
 	picture = GFX_CAN_war_1812_bicentennial
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2012.06.18
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -1392,17 +1391,10 @@ country_event = { ###International Space Station Expedition 35
 	title = canada_md_politics.18.t
 	desc = canada_md_politics.18.d
 	picture = GFX_CAN_space_expedition_35
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2013.05.13
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -1431,17 +1423,10 @@ country_event = { ###Negotiations with the European Union on CETA Conclude
 	title = canada_md_politics.19.t
 	desc = canada_md_politics.19.d
 	picture = GFX_CAN_negotiations_ceta_conclude
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2014.08.01
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -1480,17 +1465,10 @@ country_event = { ###Terror in the Capital
 	title = canada_md_politics.20.t
 	desc = canada_md_politics.20.d
 	picture = GFX_CAN_terror_in_capital
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2014.10.22
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -1502,22 +1480,7 @@ country_event = { ###Terror in the Capital
 	option = {
 		name = canada_md_politics.20.b
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.20.b executed"
-		if = {
-			limit = { has_idea = police_01 }
-			swap_ideas = { remove_idea = police_01 add_idea = police_02 }
-		}
-		else_if = {
-			limit = { has_idea = police_02 }
-			swap_ideas = { remove_idea = police_02 add_idea = police_03 }
-		}
-		else_if = {
-			limit = { has_idea = police_03 }
-			swap_ideas = { remove_idea = police_03 add_idea = police_04 }
-		}
-		else_if = {
-			limit = { has_idea = police_04 }
-			swap_ideas = { remove_idea = police_04 add_idea = police_05 }
-		} #this will increase policing
+		increase_policing_budget = yes
 	}
 }
 
@@ -1527,17 +1490,11 @@ country_event = { ###Airstrikes in Syria and Iraq
 	title = canada_md_politics.21.t
 	desc = canada_md_politics.21.d
 	picture = GFX_CAN_airstrikes_iraq_syria
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
+		country_exists = ISI
 		tag = CAN
-		date > 2015.10.20
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = { ##Supported Strikes
@@ -1561,35 +1518,24 @@ country_event = { ##The Case of Omar Khadr
 	title = canada_md_politics.22.t
 	desc = canada_md_politics.22.d
 	picture = GFX_CAN_case_omar_khadr
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2016.02.18
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = { ##He was Just a Boy
 		name = canada_md_politics.22.a
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.22.a executed"
 		add_war_support = -0.05
-		subtract_from_variable = { party_pop_array^2 = 0.05 }
-		recalculate_party = yes
-		custom_effect_tooltip = CAN_liberals_lose_5_TT
+		subtract_5_western_liberalism = yes
 	}
 
 	option = { ##We Cannot Allow Him to Walk
 		name = canada_md_politics.22.b
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.22.b executed "
 		add_stability = -0.05
-		subtract_from_variable = { party_pop_array^1 = 0.05 }
-		recalculate_party = yes
-		custom_effect_tooltip = CAN_conservatives_lose_5_TT
+		subtract_5_western_conservatism = yes
 	}
 }
 
@@ -1599,17 +1545,10 @@ country_event = { ###Fate of the Bombardier CSeries
 	title = canada_md_politics.23.t
 	desc = canada_md_politics.23.d
 	picture = GFX_CAN_fate_bombardier_cseries
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2017.10.16
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = { ###Better Europeans then Americans
@@ -1649,39 +1588,6 @@ country_event = { ###Fate of the Bombardier CSeries
 	}
 }
 
-country_event = { ###The USA wants to Renegotiate NAFTA
-	id = canada_md_politics.24
-	immediate = { log = "[GetDateText]: [Root.GetName]: event canada_md_politics.24" }
-	title = canada_md_politics.24.t
-	desc = canada_md_politics.24.d
-	picture = GFX_CAN_intent_renegotiate_nafta
-
-	fire_only_once = yes
-
-	trigger = {
-		is_ai = no
-		tag = CAN
-		date > 2017.05.18
-	}
-
-	mean_time_to_happen = {
-		days = 1
-	}
-
-	option = { ###Stand United with Mexico
-		name = canada_md_politics.24.a
-		log = "[GetDateText]: [This.GetName]: canada_md_politics.24.a executed"
-		MEX = {
-			generic_grant_2_percent_influence_of_CAN = yes
-		}
-		generic_grant_2_percent_influence_of_MEX = yes
-	}
-
-	option = { ###Who Cares
-		name = canada_md_politics.24.b
-		log = "[GetDateText]: [This.GetName]: canada_md_politics.24.b executed"
-	}
-}
 
 country_event = { ###Plans to Increase Military Spending
 	id = canada_md_politics.25
@@ -1689,17 +1595,10 @@ country_event = { ###Plans to Increase Military Spending
 	title = canada_md_politics.25.t
 	desc = canada_md_politics.25.d
 	picture = GFX_CAN_increase_military_spending
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2017.06.07
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = { ###Canada Must Do More
@@ -1722,17 +1621,10 @@ country_event = { ###Canada Celebrates 150 Years
 	title = canada_md_politics.26.t
 	desc = canada_md_politics.26.d
 	picture = GFX_CAN_canada_150_celebrations
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
 	trigger = {
-		is_ai = no
 		tag = CAN
-		date > 2017.07.01
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = { ###Glorious Day for Canada
@@ -2153,12 +2045,14 @@ country_event = {
 	desc = canada.20.d
 	is_triggered_only = yes
 	fire_only_once = yes
+	picture = GFX_CAN_generic
 	trigger = {
 		tag = CAN
 	}
 
 	option = {
-		name = "Propose the Deal to the United States"
+		name = canada.20.a
+		log = "[GetDateText]: [Root.GetName]: event canada.20.a"
 	}
 }
 
@@ -2169,14 +2063,19 @@ country_event = {
 	desc = canada.21.d
 	is_triggered_only = yes
 	fire_only_once = yes
-
+	picture = GFX_CAN_generic
+	trigger = {
+		tag = CAN
+	}
 
 	option = {
-		name = "Accept the Deal"
+		name = canada.21.a
+		log = "[GetDateText]: [Root.GetName]: event canada.21.a"
 		news_event = { id = canada_news.1 days = 1 }
 	}
 	option = {
-		name = "Reject the Deal"
+		name = canada.21.b
+		log = "[GetDateText]: [Root.GetName]: event canada.21.b"
 		CAN = { country_event = { id = canada.22 days = 1 } }
 	}
 }
@@ -2189,11 +2088,13 @@ country_event = {
 	desc = canada.22.d
 	is_triggered_only = yes
 	fire_only_once = yes
+	trigger = {
+		tag = CAN
+	}
 
 	option = {
-		name = "Unfortunate News"
+		name = canada.22.a
 		add_opinion_modifier = { target = USA modifier = CAN_america_rejects_treaty }
-
 	}
 }
 
@@ -2212,7 +2113,7 @@ news_event = {
 		trigger  = {
 			tag = CAN
 		}
-		name = "Amazing News!"
+		name = canada_news.1.a
 		add_opinion_modifier = { target =  USA modifier = CAN_america_accepts_treaty }
 		add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
 		reverse_add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
@@ -2221,7 +2122,7 @@ news_event = {
 		trigger = {
 			tag = USA
 		}
-		name = "A Great Deal!"
+		name = canada_news.1.b
 		effect_tooltip = {
 			add_opinion_modifier = { target =  USA modifier = CAN_america_accepts_treaty }
 			add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
@@ -2232,6 +2133,6 @@ news_event = {
 		trigger = {
 			NOT = { tag = USA tag = CAN }
 		}
-		name = "Ok"
+		name = canada_news.1.c
 	}
 }
