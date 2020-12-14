@@ -1,6 +1,7 @@
 #Exclude self contained cosmetic change
-TAG_LIST = {"ALB","ARM","AUS","AZE","BEL","BLR","BOS","BUL","CRO","CZE","DEN","EST","FIN","FYR","GRE",
-            "HOL","IRE","LAT","LIT","MLV","NOR","POR","ROM","SWE","SWI","UKR","TUR", "SPR"}
+TAG_LIST = {"ALB","ARM","AUS","AZE","BEL","BLR","BOS","BUL","CAT","CRO","CZE","DEN","ENG","EST","FIN",
+            "FYR","GER","GRE","GEO",
+            "HOL","IRE","LAT","LIT","MLV","NOR","POR","ROM","SWE","SWI","UKR","TUR", "SPR","SLV","SLO","HUN"}
 EXCLUDE = "USoE"
 
 for TAG in TAG_LIST:
@@ -15,10 +16,7 @@ for TAG in TAG_LIST:
     print("			has_elections = yes")
     print("			NOT = {")
     print("				has_cosmetic_tag = "+TAG)
-    print("				has_cosmetic_tag = "+EXCLUDE)
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH")
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH_S")
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH_SS")
+    print("				has_country_tag = "+EXCLUDE)
     print("				AND = {")
     print("					has_civil_war = yes")
     print("					OR = {")
@@ -53,10 +51,7 @@ for TAG in TAG_LIST:
     print("			}")
     print("			NOT = {")
     print("				has_cosmetic_tag = "+TAG+"_AUTH")
-    print("				has_cosmetic_tag = "+EXCLUDE)
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH")
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH_S")
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH_SS")
+    print("				has_country_tag = "+EXCLUDE)
     print("				AND = {")
     print("					has_civil_war = yes")
     print("					OR = {")
@@ -93,10 +88,7 @@ for TAG in TAG_LIST:
     print("			has_elections = no")
     print("			NOT = {")
     print("				has_cosmetic_tag = "+TAG+"_AUTH_S")
-    print("				has_cosmetic_tag = "+EXCLUDE)
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH")
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH_S")
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH_SS")
+    print("				has_country_tag = "+EXCLUDE)
     print("			}")    
     print("			OR = {")
     print("				has_country_leader_with_trait = salafist_Kingdom")
@@ -134,10 +126,7 @@ for TAG in TAG_LIST:
     print("			has_elections = no")
     print("			NOT = {")
     print("				has_cosmetic_tag = "+TAG+"_AUTH_SS")
-    print("				has_cosmetic_tag = "+EXCLUDE)
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH")
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH_S")
-    print("				has_cosmetic_tag = "+EXCLUDE+"_AUTH_SS")
+    print("				has_country_tag = "+EXCLUDE)
     print("			}")
     print("			OR = {")
     print("				has_country_leader_with_trait = nationalist_Nat_Fascism")
