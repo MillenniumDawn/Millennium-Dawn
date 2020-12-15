@@ -13,7 +13,7 @@ add_namespace = keystonepipeline_usa
 ##2019 Election Events
 # Prepare for the Elections (2019)
 country_event = {
-	id = canada.0
+	id = canada.0 #UNUSUED
 	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.0" }
 	title = canada.0.t
 	desc = canada.0.d
@@ -47,7 +47,7 @@ country_event = {
 
 # Prepare for the Elections 2 (2019)
 country_event = {
-	id = canada.1
+	id = canada.1 #UNUSUED
 	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.1" }
 	title = canada.1.t
 	desc = canada.1.d
@@ -80,7 +80,7 @@ country_event = {
 
 # Prepare for the Elections 3 (2019)
 country_event = {
-	id = canada.2
+	id = canada.2 #UNUSUED
 	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.2" }
 	title = canada.2.t
 	desc = canada.2.d
@@ -107,7 +107,7 @@ country_event = {
 
 # Statistics for highest funding
 country_event = {
-	id = canada.3
+	id = canada.3 #UNUSUED
 	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.3" }
 	title = canada.3.t
 	desc = canada.3.d
@@ -170,6 +170,7 @@ country_event = {
 	}
 }
 
+##French Canadian Events
 #Very Low French Canadian Happiness
 country_event = {
 	id = canada.5
@@ -435,38 +436,335 @@ country_event = {
 		name = canada.8.b
 		log = "[GetDateText]: [This.GetName]: canada.8.b executed"
 		if = {
-				limit = {
-					check_variable = {
-						var = french_happiness_var
-						value = 0
-						compare = greater_than_or_equals
-					}
-					check_variable = {
-						var = french_happiness_var
-						value = 10
-						compare = less_than_or_equals
-					}
+			limit = {
+				check_variable = {
+					var = french_happiness_var
+					value = 0
+					compare = greater_than_or_equals
 				}
+				check_variable = {
+					var = french_happiness_var
+					value = 10
+					compare = less_than_or_equals
+				}
+			}
 			country_event = { id = canada.7 days = 7 }
 		}
 		hidden_effect = {
 			set_country_flag = CAN_rejected_quebec_proposal_flag
 			random_list = {
-					25 = {
-						add_to_variable = { french_happiness_var = -2 }
-					}
-					25 = {
-						add_to_variable = { french_happiness_var = -4 }
-					}
-					25 = {
-						add_to_variable = { french_happiness_var = -6 }
-					}
-					25 = {
-						add_to_variable = { french_happiness_var = -8 }
-					}
+				25 = {
+					add_to_variable = { french_happiness_var = -2 }
+				}
+				25 = {
+					add_to_variable = { french_happiness_var = -4 }
+				}
+				25 = {
+					add_to_variable = { french_happiness_var = -6 }
+				}
+				25 = {
+					add_to_variable = { french_happiness_var = -8 }
+				}
 			}
 			CAN_update_french_happiness = yes
 		}
+	}
+}
+
+#French Canadian Events
+country_event = { #Riots in Quebec
+	id = canada.700
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.601" }
+	title = canada.700.t
+	desc = canada.700.d
+	picture = GFX_CAN_g20_riots_toronto
+	is_triggered_only = yes
+	fire_only_once = yes
+	trigger = {
+		tag = CAN
+	}
+
+	option = { #Crack down on the protestors. Jail them beat them!
+		name = canada.700.a
+		log = "[GetDateText]: [This.GetName]: canada.700.a executed"
+		trigger = {
+			OR = {
+				has_completed_focus = CAN_English_Government
+				has_government = nationalist
+				has_idea = police_04
+				has_idea = police_05
+				has_stability < 0.25
+			}
+		}
+		subtract_from_variable = {
+			var = french_happiness_var
+			value = 2
+			tooltip = CAN_french_happiness_decrease_2_tt
+		}
+		hidden_effect = {
+			CAN_update_french_happiness = yes
+		}
+		762 = {
+			damage_building = {
+				type = industrial_complex
+				damage = 3
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 2
+			}
+		}
+		hidden_effect = {
+			add_popularity = { ideology = nationalist popularity = 0.10 }
+		}
+		add_5_nationalist_right_wing_populists = yes
+		add_2_nationalist_fascists = yes
+	}
+
+	option = { #Pay Concessions
+		name = canada.700.b
+		trigger = {
+			check_variable = { treasury > 0.500 }
+		}
+		log = "[GetDateText]: [This.GetName]: canada.700.b executed"
+		subtract_from_variable = {
+			var = treasury
+			value = 0.50
+			tooltip = 500_million_expense_tt
+		}
+		add_to_variable = {
+			var = french_happiness_var
+			value = 2
+			tooltip = CAN_french_happiness_increase_2_tt
+		}
+		hidden_effect = {
+			CAN_update_french_happiness = yes
+		}
+		762 = {
+			damage_building = {
+				type = industrial_complex
+				damage = 2
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+		}
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = { #Political Concessions
+		name = canada.700.c
+		log = "[GetDateText]: [This.GetName]: canada.700.c executed"
+		add_political_power = -150
+		add_to_variable = {
+			var = french_happiness_var
+			value = 1
+			tooltip = CAN_french_happiness_increase_1_tt
+		}
+		hidden_effect = {
+			CAN_update_french_happiness = yes
+		}
+		762 = {
+			damage_building = {
+				type = industrial_complex
+				damage = 1
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 0.5
+			}
+		}
+	}
+}
+
+country_event = { #Peaceful Protests
+	id = canada.701
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.701" }
+	title = canada.701.t
+	desc = canada.701.d
+	picture = GFX_CAN_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = CAN
+	}
+
+	option = {
+		name = canada.701.a
+		trigger = {
+			OR = {
+				has_completed_focus = CAN_English_Government
+				has_government = nationalist
+				has_idea = police_04
+				has_idea = police_05
+				has_stability < 0.25
+			}
+		}
+		log = "[GetDateText]: [Root.GetName]: event canada.701.a"
+		subtract_from_variable = {
+			var = french_happiness_var
+			value = 5
+			tooltip = CAN_french_happiness_decrease_5_tt
+		}
+		hidden_effect = {
+			CAN_update_french_happiness = yes
+		}
+		add_5_popularity_sub = yes
+	}
+
+	option = {
+		name = canada.701.b
+		trigger = {
+			check_variable = { treasury > 0.100 }
+		}
+		log = "[GetDateText]: [Root.GetName]: event canada.701.b"
+		add_to_variable = {
+			var = french_happiness_var
+			value = 3
+			tooltip = CAN_french_happiness_increase_3_tt
+		}
+		hidden_effect = {
+			CAN_update_french_happiness = yes
+		}
+		subtract_from_variable = {
+			var = treasury
+			value = 0.100
+			tooltip = 100_million_expense_tt
+		}
+	}
+
+	option = {
+		name = canada.701.c
+		log = "[GetDateText]: [Root.GetName]: event canada.701.c"
+		add_to_variable = {
+			var = french_happiness_var
+			value = 2
+			tooltip = CAN_french_happiness_increase_2_tt
+		}
+		hidden_effect = {
+			CAN_update_french_happiness = yes
+		}
+		add_political_power = -50
+	}
+}
+
+country_event = { #Anti-Government Speaker
+	id = canada.702
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.702" }
+	title = canada.702.t
+	desc = canada.702.d
+	picture = GFX_CAN_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = CAN
+	}
+
+	option = {
+		name = canada.702.a
+		log = "[GetDateText]: [Root.GetName]: event canada.702.a"
+
+	}
+
+	option = {
+		name = canada.702.b
+		log = "[GetDateText]: [Root.GetName]: event canada.702.b"
+	}
+
+	option = {
+		name = canada.702.c
+		log = "[GetDateText]: [Root.GetName]: event canada.702.c"
+	}
+}
+
+country_event = { #Anti-Government Speaker
+	id = canada.702
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.702" }
+	title = canada.702.t
+	desc = canada.702.d
+	picture = GFX_CAN_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = CAN
+	}
+
+	option = {
+		name = canada.702.a
+		log = "[GetDateText]: [Root.GetName]: event canada.702.a"
+
+	}
+
+	option = {
+		name = canada.702.b
+		log = "[GetDateText]: [Root.GetName]: event canada.702.b"
+	}
+
+	option = {
+		name = canada.702.c
+		log = "[GetDateText]: [Root.GetName]: event canada.702.c"
+	}
+}
+
+country_event = { #Pro-Government Speaker
+	id = canada.703
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.703" }
+	title = canada.703.t
+	desc = canada.703.d
+	picture = GFX_CAN_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = CAN
+	}
+
+	option = {
+		name = canada.703.a
+		log = "[GetDateText]: [Root.GetName]: event canada.703.a"
+
+	}
+
+	option = {
+		name = canada.703.b
+		log = "[GetDateText]: [Root.GetName]: event canada.703.b"
+	}
+
+	option = {
+		name = canada.703.c
+		log = "[GetDateText]: [Root.GetName]: event canada.703.c"
+	}
+}
+
+country_event = { #Quebec Supports the Government
+	id = canada.704
+	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.704" }
+	title = canada.704.t
+	desc = canada.704.d
+	picture = GFX_CAN_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = CAN
+	}
+
+	option = {
+		name = canada.704.a
+		log = "[GetDateText]: [Root.GetName]: event canada.704.a"
+
+	}
+
+	option = {
+		name = canada.704.b
+		log = "[GetDateText]: [Root.GetName]: event canada.704.b"
+	}
+
+	option = {
+		name = canada.704.c
+		log = "[GetDateText]: [Root.GetName]: event canada.704.c"
 	}
 }
 
@@ -929,301 +1227,6 @@ country_event = { ###End of the Great Recession in Canada --Needs Finished
 		}
 		boost_domestic_influence_2_percent = yes
 
-		ai_chance = {
-			factor = 1
-		}
-	}
-}
-
-#French Canadian Events
-country_event = { #Riots in Quebec
-	id = canada.700
-	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.601" }
-	title = canada.700.t
-	desc = canada.700.d
-	picture = GFX_CAN_generic
-	is_triggered_only = yes
-	fire_only_once = yes
-	trigger = {
-		tag = CAN
-	}
-
-	option = { #Crack down on the protestors. Jail them beat them!
-		name = canada.700.a
-		log = "[GetDateText]: [This.GetName]: canada.700.a executed"
-		trigger = {
-			OR = {
-				has_completed_focus = CAN_English_Government
-				has_idea = police_04
-				has_idea = police_05
-				stability < 0.25
-			}
-		}
-		subtract_from_variable = {
-			var = french_happiness_var
-			value = 2
-			tooltip = CAN_french_happiness_decrease_2_tt
-		}
-		hidden_effect = {
-			CAN_update_french_happiness = yes
-		}
-		762 = {
-			damage_building = {
-				type = industrial_complex
-				damage = 3
-			}
-			damage_building = {
-				type = infrastructure
-				damage = 2
-			}
-		}
-		hidden_effect = {
-			add_popularity = { ideology = nationalist popularity = 0.10 }
-		}
-		add_5_nationalist_right_wing_populists = yes
-		add_2_nationalist_fascists = yes
-	}
-
-	option = { #Pay Concessions
-		name = canada.700.b
-		log = "[GetDateText]: [This.GetName]: canada.700.b executed"
-		subtract_from_variable = {
-			var = treasury
-			value = 0.50
-			tooltip = 500_million_expense_tt
-		}
-		add_to_variable = {
-			var = french_happiness_var
-			value = 2
-			tooltip = CAN_french_happiness_increase_2_tt
-		}
-		hidden_effect = {
-			CAN_update_french_happiness = yes
-		}
-		762 = {
-			damage_building = {
-				type = industrial_complex
-				damage = 3
-			}
-			damage_building = {
-				type = infrastructure
-				damage = 2
-			}
-		}
-
-		ai_chance = {
-			factor = 1
-		}
-	}
-
-	option = { #Political Concessions
-		name = canada.700.c
-		log = "[GetDateText]: [This.GetName]: canada.700.c executed"
-		add_political_power = -150
-		add_to_variable = {
-			var = french_happiness_var
-			value = 1
-			tooltip = CAN_french_happiness_increase_1_tt
-		}
-		hidden_effect = {
-			CAN_update_french_happiness = yes
-		}
-		762 = {
-			damage_building = {
-				type = industrial_complex
-				damage = 3
-			}
-			damage_building = {
-				type = infrastructure
-				damage = 2
-			}
-		}
-	}
-}
-
-country_event = { #Peaceful Protests
-	id = canada.701
-	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.701" }
-	title = canada.701.t
-	desc = canada.701.d
-	picture = GFX_CAN_generic
-	fire_only_once = yes
-	is_triggered_only = yes
-	trigger = {
-		tag = CAN
-	}
-
-	option = {
-		name = canada.701.a
-		log = "[GetDateText]: [Root.GetName]: event canada.701.a"
-
-	}
-
-	option = {
-		name = canada.701.b
-		log = "[GetDateText]: [Root.GetName]: event canada.701.b"
-	}
-
-	option = {
-		name = canada.701.c
-		log = "[GetDateText]: [Root.GetName]: event canada.701.c"
-	}
-}
-
-country_event = { #Anti-Government Speaker
-	id = canada.702
-	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.702" }
-	title = canada.702.t
-	desc = canada.702.d
-	picture = GFX_CAN_generic
-	fire_only_once = yes
-	is_triggered_only = yes
-	trigger = {
-		tag = CAN
-	}
-
-	option = {
-		name = canada.702.a
-		log = "[GetDateText]: [Root.GetName]: event canada.702.a"
-
-	}
-
-	option = {
-		name = canada.702.b
-		log = "[GetDateText]: [Root.GetName]: event canada.702.b"
-	}
-
-	option = {
-		name = canada.702.c
-		log = "[GetDateText]: [Root.GetName]: event canada.702.c"
-	}
-}
-
-country_event = { #Anti-Government Speaker
-	id = canada.702
-	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.702" }
-	title = canada.702.t
-	desc = canada.702.d
-	picture = GFX_CAN_generic
-	fire_only_once = yes
-	is_triggered_only = yes
-	trigger = {
-		tag = CAN
-	}
-
-	option = {
-		name = canada.702.a
-		log = "[GetDateText]: [Root.GetName]: event canada.702.a"
-
-	}
-
-	option = {
-		name = canada.702.b
-		log = "[GetDateText]: [Root.GetName]: event canada.702.b"
-	}
-
-	option = {
-		name = canada.702.c
-		log = "[GetDateText]: [Root.GetName]: event canada.702.c"
-	}
-}
-
-country_event = { #Pro-Government Speaker
-	id = canada.703
-	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.703" }
-	title = canada.703.t
-	desc = canada.703.d
-	picture = GFX_CAN_generic
-	fire_only_once = yes
-	is_triggered_only = yes
-	trigger = {
-		tag = CAN
-	}
-
-	option = {
-		name = canada.703.a
-		log = "[GetDateText]: [Root.GetName]: event canada.703.a"
-
-	}
-
-	option = {
-		name = canada.703.b
-		log = "[GetDateText]: [Root.GetName]: event canada.703.b"
-	}
-
-	option = {
-		name = canada.703.c
-		log = "[GetDateText]: [Root.GetName]: event canada.703.c"
-	}
-}
-
-country_event = { #Quebec Supports the Government
-	id = canada.704
-	immediate = { log = "[GetDateText]: [Root.GetName]: event canada.704" }
-	title = canada.704.t
-	desc = canada.704.d
-	picture = GFX_CAN_generic
-	fire_only_once = yes
-	is_triggered_only = yes
-	trigger = {
-		tag = CAN
-	}
-
-	option = {
-		name = canada.704.a
-		log = "[GetDateText]: [Root.GetName]: event canada.704.a"
-
-	}
-
-	option = {
-		name = canada.704.b
-		log = "[GetDateText]: [Root.GetName]: event canada.704.b"
-	}
-
-	option = {
-		name = canada.704.c
-		log = "[GetDateText]: [Root.GetName]: event canada.704.c"
-	}
-}
-
-######Canada Political Work
-country_event = { ###The Clarity Act
-	id = canada_md_politics.1
-	immediate = { log = "[GetDateText]: [Root.GetName]: event canada_md_politics.1" }
-	title = canada_md_politics.1.t
-	desc = canada_md_politics.1.d
-	picture = GFX_CAN_the_clarity_act
-	fire_only_once = yes
-	is_triggered_only = yes
-	trigger = {
-		tag = CAN
-	}
-	option = {
-		name = canada_md_politics.1.a
-		log = "[GetDateText]: [This.GetName]: canada_md_politics.1.a executed"
-		add_political_power = -25
-
-		add_to_variable = {
-			var = french_happiness_var
-			value = -2
-			tooltip = CAN_french_happiness_decrease_2_tt
-		}
-		CAN_update_french_happiness = yes
-		ai_chance = {
-			factor = 1
-		}
-	}
-	option = {
-		name = canada_md_politics.1.b
-		log = "[GetDateText]: [This.GetName]: canada_md_politics.1.b executed"
-		add_stability = -0.05
-
-		add_to_variable = {
-			var = french_happiness_var
-			value = 2
-			tooltip = CAN_french_happiness_increase_2_tt
-		}
-		CAN_update_french_happiness = yes
 		ai_chance = {
 			factor = 1
 		}
