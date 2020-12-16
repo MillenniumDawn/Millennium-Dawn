@@ -1,5 +1,7 @@
 ﻿add_namespace = italy_md
 
+#unused event numbers : 31 30 23 22 11
+
 #Lateran Treaties Accepted
 country_event = {
 	id = italy_md.1
@@ -357,137 +359,6 @@ country_event = {
 		}
 	}
 }
-#Invitation to Roman Empire
-country_event = {
-	id = italy_md.11
-	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.11" }
-	title = italy_md.11.t
-	desc = italyf_md.11.d
-	picture = GFX_report_event_political_deal2
-	
-	is_triggered_only = yes
-	
-	option = {	#Accept
-		name = italy_md.11.o1
-		log = "[GetDateText]: [This.GetName]: italy_md.11.o1 executed"
-		ITA = { add_to_faction = ROOT }
-		set_country_flag = seeks_italian_alliance
-		ITA = { country_event = diplomatic_response.1 }
-		hidden_effect = {
-			set_temp_variable = { influence_gain = 50 }
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
-				if = {
-					limit = {
-						check_variable = { influence_array^v = ITA }
-					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-					set_country_flag = found
-				}
-			}
-			if = {
-				limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = ITA.id }
-					add_to_array = { influence_array_val = influence_gain }
-			}
-			clr_country_flag = found
-			recalculate_influence = yes
-		}
-		hidden_effect = { 
-			add_popularity = { ideology = nationalist popularity = 0.10 }
-			recalculate_party = yes
-		}
-		ai_chance = {
-			factor = 40
-			modifier = {
-				add = 10
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = ITA } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
-					}
-					else = { always = no }
-				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.2 }
-			}
-			modifier = {
-				add = 20
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = ITA } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
-					}
-					else = { always = no }
-				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.4 }
-			}
-			modifier = {
-				add = 30
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = ITA } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
-					}
-					else = { always = no }
-				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.8 }
-			}
-			modifier = {
-				factor = 0
-				is_in_faction = yes
-			}
-		}
-	}
-	
-	option = {	#Decline
-		name = italy_md.11.o2
-		log = "[GetDateText]: [This.GetName]: italy_md.11.o1 executed"
-		ITA = { country_event = diplomatic_response.2 }
-		ai_chance = {
-			base = 60
-			modifier = { 
-				add = 100
-				has_war_with = ITA
-			}
-			modifier = { 
-				add = 10
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = ITA } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
-					}
-					else = { always = no }
-				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.2 }
-			}
-		}
-	}
-}
 #Attempt to Join SCO
 country_event = {
 	id = italy_md.12
@@ -513,58 +384,44 @@ country_event = {
 		ai_chance = { factor = 10 }
 	}
 }
-#Eastern Investments
+#waste dumps campania
 country_event = {
 	id = italy_md.13
 	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.13" }
 	title = italy_md.13.t
 	desc = italy_md.13.d
-	picture = GFX_report_event_european_union
-	
-	is_triggered_only = yes
+	picture = GFX_report_event_italy
+		
+	hidden = yes
+	mean_time_to_happen = {
+		months = 3
+	}
 	
 	option = {
 		name = italy_md.13.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.13.o1 executed"
-		add_political_power = 10
-		random_owned_state = {
-			limit = {
-				free_building_slots = {
-					building = infrastructure
-					size > 0
-					include_locked = yes
-				}
-			}
-			add_building_construction = {
-				type = infrastructure
-				level = 1
-				instant_build = yes
-			}
-		}
+		set_country_flag = ITA_illicit_waste_dumps_in_campania
+		add_to_variable = { camorra_strength = 0.020 }
 	}
 }
-#EU Military Cooperation
+#weapons smugglers puglia
 country_event = {
 	id = italy_md.14
 	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.14" }
 	title = italy_md.14.t
 	desc = italy_md.14.d
-	picture = GFX_report_event_european_union
-	
-	is_triggered_only = yes
+	picture = GFX_report_event_italy
+		
+	hidden = yes
+	mean_time_to_happen = {
+		months = 3
+	}
 	
 	option = {
 		name = italy_md.14.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.14.o1 executed"
-		army_experience = 5
-		navy_experience = 10
-		air_experience = 10
-		add_tech_bonus = {
-			name = infantry_tech
-			bonus = 0.5
-			uses = 1
-			category = Cat_INF
-		}
+		set_country_flag = ITA_weapons_smuggled_into_puglia
+		add_to_variable = { sacra_corona_unita_strength = 0.020 }
 	}
 }
 #24th of August 2016 Earthquake
@@ -817,56 +674,6 @@ country_event = {
 		ROOT_eurosceptic_decline_10_percent = yes
 	}
 }
-#Reactionary Election
-country_event = {
-	id = italy_md.22
-	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.22" }
-	title = italy_md.22.t
-	desc = italy_md.22.d
-	picture = GFX_report_event_italy
-		
-	fire_only_once = yes	
-		
-	is_triggered_only = yes
-	
-	option = {
-		name = italy_md.22.o1
-		log = "[GetDateText]: [This.GetName]: italy_md.22.o1 executed"
-		set_politics = {
-			ruling_party = communism
-			elections_allowed = yes
-		}
-		set_country_flag = ITA_elected_reactionary_party
-		hidden_effect = {
-			country_event = { id = italy_md.25 days = 2 }
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 6 }
-			update_government_coalition_strength = yes
-			update_party_name = yes
-			set_coalition_drift = yes
-		}
-	}
-}
-#Reacionary Influence in Neighbor
-country_event = {
-	id = italy_md.23
-	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.23" }
-	title = italy_md.23.t
-	desc = italy_md.23.d
-	picture = GFX_report_event_italy
-		
-	fire_only_once = yes	
-		
-	is_triggered_only = yes
-	
-	option = {
-		name = italy_md.23.o1
-		log = "[GetDateText]: [This.GetName]: italy_md.23.o1 executed"
-		add_to_variable = { party_pop_array^6 = 0.10 }
-		custom_effect_tooltip = ITA_reactionary_party_tt
-	}
-}
 #Salerno-to-Reggio Calabria Motorway
 country_event = {
 	id = italy_md.24
@@ -904,7 +711,7 @@ country_event = {
 		}
 	}
 }
-#Rise of Opposition
+#migrant smugglers sicily
 country_event = {
 	id = italy_md.25
 	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.25" }
@@ -912,26 +719,19 @@ country_event = {
 	desc = italy_md.25.d
 	picture = GFX_report_event_italy
 		
-	fire_only_once = yes	
-		
-	is_triggered_only = yes
+	hidden = yes
+	mean_time_to_happen = {
+		months = 3
+	}
 	
 	option = {
 		name = italy_md.25.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.25.o1 executed"
-		trigger = {
-			has_country_flag = ITA_elected_reactionary_party
-		}		
-	}
-	option = {
-		name = italy_md.25.o2
-		log = "[GetDateText]: [This.GetName]: italy_md.25.o1 executed"
-		trigger = {
-			has_country_flag = ITA_political_reforms_done
-		}
+		set_country_flag = ITA_illegal_migrant_boats
+		add_to_variable = { cosa_nostra_strength = 0.020 }
 	}
 }
-#drug smugglers
+#drug smugglers calabria
 country_event = {
 	id = italy_md.26
 	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.26" }
