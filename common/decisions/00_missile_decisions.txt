@@ -141,6 +141,26 @@
 		}
 	}
 
+	missile_test_set_vars = {
+    	icon = GFX_decision_generic_ignite_civil_war
+ 		available = {
+			
+		}
+		visible = {
+			##has_country_flag = invisible
+		}
+
+
+        complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision missile_test_set_vars"
+			### test effects ###
+			set_missile_trajectory_test_vars = yes	
+		}
+		ai_will_do = {
+			factor = 0
+
+		}
+	}	
 
 	missile_test_phases = {
     	icon = GFX_decision_generic_ignite_civil_war
@@ -153,221 +173,13 @@
 
 
         complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision missile_test_target"
-			###
-			set_variable = { var_accuracy = 0.7 }
-			set_variable = { var_salvo = 40 }
-			set_variable = { var_MIRV = 10 }
-			set_variable = { var_decoy = 5 }
-			set_variable = { var_intercept_chance_boost = 0.1 }
-			set_variable = { var_intercept_capacity_boost = 20 }
-			set_variable = { var_intercept_chance_midcourse = 0.1 }
-			set_variable = { var_intercept_capacity_midcourse = 30 }
-			set_variable = { var_intercept_chance_terminal = 0.1 }
-			set_variable = { var_intercept_capacity_terminal = 60 }
-			###
-			set_variable = { var_missile_trajectory = 1 }
-			set_variable = { var_missile_target_hit = 0 }
-			set_variable = { var_missile_target_miss = 0 }
-			set_variable = { var_missile_interception_boost = 0 }
-			set_variable = { var_missile_interception_midcourse = 0 }
-			set_variable = { var_missile_interception_terminal = 0 }						
-			while_loop_effect = {
-				limit = {
-					check_variable = { var_salvo > 0 }
-				}
-				randomize_variable = {  
-					var = var_missile_trajectory
-					distribution = uniform
-					min = 0
-					max = 1
-				}
-				subtract_from_variable = { var_salvo = 1 }
-				###	boost			
-				if = {
-					limit = {						
-						check_variable = { var_intercept_capacity_boost > 0 }
-					}	
-					subtract_from_variable = { var_intercept_capacity_boost = 1 }
-					if = {
-						limit = {	
-							check_variable = { var_missile_trajectory < var_intercept_chance_boost }
-						}					
-						add_to_variable = { var_missile_interception_boost = 1 }
-					}
-					### midcourse
-					else_if = {
-						limit = {						
-							check_variable = { var_intercept_capacity_midcourse > 0 }
-						}	
-						subtract_from_variable = { var_intercept_capacity_midcourse = 1 }
-						if = {
-							limit = {	
-								check_variable = { var_missile_trajectory < var_intercept_chance_midcourse }
-							}					
-							add_to_variable = { var_missile_interception_midcourse = 1 }
-						}
-						### terminal
-						else = {
-							if = {
-								limit = {						
-									check_variable = { var_intercept_capacity_terminal > 0 }
-								}
-								subtract_from_variable = { var_intercept_capacity_terminal = var_decoy }
-							}
-							set_temp_variable = { temp1 = var_MIRV }	
-							while_loop_effect = {					
-								limit = {
-									check_variable = { temp1 > 0 }
-								}
-								subtract_from_variable = { temp1 = 1 }
-								if = {
-									limit = {						
-										check_variable = { var_intercept_capacity_terminal > 0 }
-									}	
-									subtract_from_variable = { var_intercept_capacity_terminal = 1 }
-									if = {
-										limit = {	
-											check_variable = { var_missile_trajectory < var_intercept_chance_terminal }
-										}					
-										add_to_variable = { var_missile_interception_terminal = 1 }
-									}
-									else = {
-										add_to_variable = { var_missile_trajectory = var_accuracy }					
-										if = {
-											limit = { check_variable = { var_missile_trajectory > 1 } }
-											add_to_variable = { var_missile_target_hit = 1 }		
-										}
-										else = {								
-											add_to_variable = { var_missile_target_miss = 1 }		
-										}					
-									}
-								}
-								else = {
-									add_to_variable = { var_missile_trajectory = var_accuracy }					
-									if = {
-										limit = { check_variable = { var_missile_trajectory > 1 } }
-										add_to_variable = { var_missile_target_hit = 1 }	
-									}
-									else = {								
-										add_to_variable = { var_missile_target_miss = 1 }		
-									}											
-								}
-							}
-						}
-					}
-				}
-				### midcourse
-				else_if = {
-					limit = {						
-						check_variable = { var_intercept_capacity_midcourse > 0 }
-					}	
-					subtract_from_variable = { var_intercept_capacity_midcourse = 1 }
-					if = {
-						limit = {	
-							check_variable = { var_missile_trajectory < var_intercept_chance_midcourse }
-						}					
-						add_to_variable = { var_missile_interception_midcourse = 1 }
-					}
-					### terminal
-					else = {
-						if = {
-							limit = {						
-								check_variable = { var_intercept_capacity_terminal > 0 }
-							}
-							subtract_from_variable = { var_intercept_capacity_terminal = var_decoy }
-						}
-						set_temp_variable = { temp1 = var_MIRV }	
-						while_loop_effect = {					
-							limit = {
-								check_variable = { temp1 > 0 }
-							}
-							subtract_from_variable = { temp1 = 1 }
-							if = {
-								limit = {						
-									check_variable = { var_intercept_capacity_terminal > 0 }
-								}	
-								subtract_from_variable = { var_intercept_capacity_terminal = 1 }
-								if = {
-									limit = {	
-										check_variable = { var_missile_trajectory < var_intercept_chance_terminal }
-									}					
-									add_to_variable = { var_missile_interception_terminal = 1 }
-								}
-								else = {
-									add_to_variable = { var_missile_trajectory = var_accuracy }					
-									if = {
-										limit = { check_variable = { var_missile_trajectory > 1 } }
-										add_to_variable = { var_missile_target_hit = 1 }		
-									}
-									else = {								
-										add_to_variable = { var_missile_target_miss = 1 }		
-									}					
-								}
-							}
-							else = {
-								add_to_variable = { var_missile_trajectory = var_accuracy }					
-								if = {
-									limit = { check_variable = { var_missile_trajectory > 1 } }
-									add_to_variable = { var_missile_target_hit = 1 }	
-								}
-								else = {								
-									add_to_variable = { var_missile_target_miss = 1 }		
-								}											
-							}
-						}
-					}					
-				}
-				### terminal
-				else = {
-					if = {
-						limit = {						
-							check_variable = { var_intercept_capacity_terminal > 0 }
-						}
-						subtract_from_variable = { var_intercept_capacity_terminal = var_decoy }
-					}
-					set_temp_variable = { temp1 = var_MIRV }	
-					while_loop_effect = {					
-						limit = {
-							check_variable = { temp1 > 0 }
-						}
-						subtract_from_variable = { temp1 = 1 }
-						if = {
-							limit = {						
-								check_variable = { var_intercept_capacity_terminal > 0 }
-							}	
-							subtract_from_variable = { var_intercept_capacity_terminal = 1 }
-							if = {
-								limit = {	
-									check_variable = { var_missile_trajectory < var_intercept_chance_terminal }
-								}					
-								add_to_variable = { var_missile_interception_terminal = 1 }
-							}
-							else = {
-								add_to_variable = { var_missile_trajectory = var_accuracy }					
-								if = {
-									limit = { check_variable = { var_missile_trajectory > 1 } }
-									add_to_variable = { var_missile_target_hit = 1 }		
-								}
-								else = {								
-									add_to_variable = { var_missile_target_miss = 1 }		
-								}					
-							}
-						}
-						else = {
-							add_to_variable = { var_missile_trajectory = var_accuracy }					
-							if = {
-								limit = { check_variable = { var_missile_trajectory > 1 } }
-								add_to_variable = { var_missile_target_hit = 1 }	
-							}
-							else = {								
-								add_to_variable = { var_missile_target_miss = 1 }		
-							}											
-						}
-					}
-				}	
-			}		
-	
+			log = "[GetDateText]: [Root.GetName]: Decision missile_test_phases"
+			### boost phase vs defense ###
+			boost_phase_defense = yes
+			### midcourse phase vs defense ###
+			midcourse_phase_defense = yes
+			### terminal phase vs defense ###
+			terminal_phase_defense = yes	
 		}
 		ai_will_do = {
 			factor = 0
