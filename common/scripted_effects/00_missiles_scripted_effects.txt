@@ -28,11 +28,32 @@ set_missile_trajectory_test_vars = {
 	set_variable = { var_missile_target_miss = 0 }		
 }
 
+set_missile_defense_vars = {
+	set_variable = { var_intercept_capacity_boost = 0 }
+	set_variable = { var_intercept_capacity_midcourse = 0 }
+	set_variable = { var_intercept_capacity_terminal = 0 }
+	### boost phase defense ###
+	every_controlled_state = {
+		limit = {
+			anti_air_building > 0
+			distance_to = {
+				value < 1000
+				target = 38
+			}
+		}
+		add_to_variable = { var_intercept_capacity_boost = anti_air_building }
+		multiply_variable = { var_intercept_capacity_boost = var_SAM_launcher_tech }
+	}
+
+
+}
+
 ### boost phase vs defense ###
 boost_phase_defense = {
+	set_temp_variable = { temp1 = var_salvo }
 	while_loop_effect = {
 		limit = {
-			check_variable = { var_salvo > 0 }
+			check_variable = { temp1 > 0 }
 		}
 		randomize_variable = {  
 			var = var_missile_trajectory
@@ -40,7 +61,7 @@ boost_phase_defense = {
 			min = 0
 			max = 1
 		}
-		subtract_from_variable = { var_salvo = 1 }	
+		subtract_from_temp_variable = { temp1 = 1 }	
 		if = {
 			limit = {						
 				check_variable = { var_intercept_capacity_boost > 0 }
@@ -64,10 +85,10 @@ boost_phase_defense = {
 
 ### midcourse phase vs defense ###
 midcourse_phase_defense = {
-	set_temp_variable = { temp1 = var_missile_boost_completed }
+	set_temp_variable = { temp2 = var_missile_boost_completed }
 	while_loop_effect = {
 		limit = {
-			check_variable = { temp1 > 0 }
+			check_variable = { temp2 > 0 }
 		}
 		randomize_variable = {  
 			var = var_missile_trajectory
@@ -75,7 +96,7 @@ midcourse_phase_defense = {
 			min = 0
 			max = 1
 		}
-		subtract_from_temp_variable = { temp1 = 1 }	
+		subtract_from_temp_variable = { temp2 = 1 }	
 		if = {
 			limit = {						
 				check_variable = { var_intercept_capacity_midcourse > 0 }
@@ -99,11 +120,22 @@ midcourse_phase_defense = {
 
 ### terminal phase vs defense ###
 terminal_phase_defense = {
-	set_temp_variable = { temp2 = var_missile_midcourse_completed }
-	multiply_temp_variable = { temp2 = var_MIRV }
+	set_temp_variable = { temp3 = var_missile_midcourse_completed }
+	multiply_temp_variable = { temp3 = var_MIRV }
+	set_temp_variable = { temp4 = var_missile_midcourse_completed }
+	multiply_temp_variable = { temp4 = var_decoy }	
+	if = {
+		limit = {						
+			check_variable = { temp4 > var_intercept_capacity_terminal }
+		}
+		set_variable = { var_intercept_capacity_terminal = 0 }		
+	}
+	else = {		
+		subtract_from_variable = { var_intercept_capacity_terminal = temp4 }
+	}	
 	while_loop_effect = {
 		limit = {
-			check_variable = { temp2 > 0 }
+			check_variable = { temp3 > 0 }
 		}
 		randomize_variable = {  
 			var = var_missile_trajectory
@@ -111,8 +143,7 @@ terminal_phase_defense = {
 			min = 0
 			max = 1
 		}
-		subtract_from_temp_variable = { temp2 = 1 }
-		subtract_from_variable = { var_intercept_capacity_terminal = var_decoy }	
+		subtract_from_temp_variable = { temp3 = 1 }			
 		if = {
 			limit = {						
 				check_variable = { var_intercept_capacity_terminal > 0 }
@@ -145,6 +176,7 @@ terminal_phase_defense = {
 				add_to_variable = { var_missile_target_miss = 1 }		
 			}
 		}
-	}	
+	}
+	
 }
 
