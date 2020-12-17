@@ -2465,9 +2465,9 @@ focus_tree = {
 		id = CAN_economy
 		cost = 5
 		icon = liberalization
-		x = -19
+		x = 19
 		y = 1
-		relative_position_id = CAN_Focus_On_Political_Spectrum
+		relative_position_id = CAN_Canadian_Economy
 		prerequisite = { focus = CAN_Canadian_Economy }
 		prerequisite = { focus = CAN_Focus_On_Political_Spectrum }
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -4460,7 +4460,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_English_Government"
 			add_stability = -0.05
 			add_political_power = 100
-			country_event = { id = canada.520 days = 1 }
+			country_event = { id = canada.522 days = 1 }
 		}
 
 		ai_will_do = {
@@ -5498,7 +5498,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_research "
-			add_research_slots = 1
+			add_research_slot = 1
 			subtract_from_variable = {
 				var = treasury
 				value = 4
@@ -5744,27 +5744,18 @@ focus_tree = {
 	}
 
 
+	##Eastern Shift
 	focus = {
 		id = CAN_Eastern_Shift
 		icon = align_to_russia
 		cost = 5
-		x = 30
+		x = 31
 		y = 1
 		relative_position_id = CAN_Focus_On_Political_Spectrum
 
-		ai_will_do = {
-			factor = 1
-		}
-
-		prerequisite = {
-			focus = CAN_Focus_On_Political_Spectrum
-		}
-
-		mutually_exclusive = { focus =  CAN_Western_Shift
-
-		}
-
-
+		prerequisite = { focus = CAN_Focus_On_Political_Spectrum }
+		mutually_exclusive = { focus = CAN_Western_Shift }
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Eastern_Shift"
@@ -5777,163 +5768,214 @@ focus_tree = {
 				add_opinion_modifier = { target = ITA modifier = broke_off_diplomatic_relations }
 				news_event = NATO.16
 			}
-        }
+
+			hidden_effect = {
+				add_popularity = { ideology = communism popularity = 0.10 }
+			}
+			add_10_emerging_reactionary = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
     }
 
 	focus = {
 		id = CAN_Russian_Cooperationism
 		icon = align_to_russia2
-		cost = 10
+		cost = 5
 		x = -1
 		y = 1
 		relative_position_id = CAN_Eastern_Shift
 
-		ai_will_do = {
-			factor = 1
-		}
-
-		prerequisite = {
-			focus = CAN_Eastern_Shift
-		}
-
+		prerequisite = { focus = CAN_Eastern_Shift }
+		search_filters = { FOCUS_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Russian_Cooperationism"
-			add_opinion_modifier = {
-                target = SOV
-                modifier = supports_us
-            }
-        }
+			add_opinion_modifier = { target = SOV modifier = supports_us }
+			reverse_add_opinion_modifier = { target = SOV modifier = supports_us }
+			SOV = {
+				generic_grant_1_percent_influence_of_CAN = yes
+			}
+			generic_grant_1_percent_influence_of_SOV = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
     }
 
 	focus = {
 		id = CAN_Chinese_Agreements
 		icon = align_to_china
-		cost = 10
+		cost = 5
 		x = 1
 		y = 1
 		relative_position_id = CAN_Eastern_Shift
 
-		ai_will_do = {
-			factor = 1
-		}
-
-		prerequisite = {
-			focus = CAN_Eastern_Shift
-		}
-
+		prerequisite = { focus = CAN_Eastern_Shift }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Chinese_Agreements"
-			add_opinion_modifier = {
-                target = CHI
-                modifier = supports_us
-            }
-        }
-    }
+			add_opinion_modifier = { target = CHI modifier = supports_us }
+			reverse_add_opinion_modifier = { target = CHI modifier = supports_us }
+			CHI = {
+				generic_grant_1_percent_influence_of_CAN = yes
+			}
+			generic_grant_1_percent_influence_of_CHI = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
 
 	focus = {
 		id = CAN_Investments_From_East
 		icon = tripartite_pact
-		cost = 10
+		cost = 5
 		x = 0
 		y = 2
 		relative_position_id = CAN_Eastern_Shift
 
-		ai_will_do = {
-			factor = 1
-		}
-
-		prerequisite = {
-			focus = CAN_Chinese_Agreements
-		}
-		prerequisite = {
-			focus = CAN_Russian_Cooperationism
-		}
-
+		prerequisite = { focus = CAN_Chinese_Agreements }
+		prerequisite = { focus = CAN_Russian_Cooperationism }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Investments_From_East"
-				763 = {
-				    add_building_construction = {
-                        type = industrial_complex
-                        level = 2
-                        instant_build = yes
-					}
+			if = {
+				limit = {
+					country_exists = CHI
+					NOT = { has_war_with = CHI }
 				}
-            }
-        }
+				hidden_effect = {
+					CHI = { country_event = { id = canada.800 days = 2 } }
+				}
+				custom_effect_tooltip = "Requests Foreign Investment from China"
+			}
+			if = {
+				limit = {
+					country_exists = SOV
+					NOT = { has_war_with = SOV }
+				}
+				hidden_effect = {
+					country_event = { id = canada.800 days = 2 }
+				}
+				custom_effect_tooltip = "Requests Foreign Investment from Russia"
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
 
 	focus = {
 		id = CAN_Expand_Arctic_Routes
 		icon = treaty3
-		cost = 10
+		cost = 5
 		x = -1
 		y = 3
 		relative_position_id = CAN_Eastern_Shift
 
-		ai_will_do = {
-			factor = 1
-		}
-
-		prerequisite = {
-			focus = CAN_Investments_From_East
-		}
-
+		prerequisite = { focus = CAN_Investments_From_East }
+		search_filters = { FOCUS_FILTER_NAVAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Expand_Arctic_Routes"
 			add_political_power = 100
-        }
+			add_tech_bonus = {
+				name = Cat_SUB
+				bonus = 0.50
+				uses = 1
+				category = Cat_SUB
+			}
+		}
+
+
+		ai_will_do = {
+			factor = 1
+		}
     }
 
 	focus = {
 		id = CAN_Russo_Canadian_Trade_Agreement
 		icon = trade_with_russia
-		cost = 10
+		cost = 7.9
 		x = 1
 		y = 3
 		relative_position_id = CAN_Eastern_Shift
 
-		ai_will_do = {
-			factor = 1
+		prerequisite = { focus = CAN_Investments_From_East }
+		available = {
+			SOV = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = SOV
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = SOV
+			}
 		}
-
-		prerequisite = {
-			focus = CAN_Investments_From_East
+		cancel = {
+			OR = {
+				CHI = { has_opinion = { target = SOV value < 50 } }
+				has_war_with = SOV
+			}
 		}
-
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESEARCH }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Russo_Canadian_Trade_Agreement"
-			add_opinion_modifier = {
-                target = SOV
-                modifier = global_trade
-            }
+			add_opinion_modifier = { target = SOV modifier = global_trade }
+			reverse_add_opinion_modifier = { target = SOV modifier = global_trade }
 			add_tech_bonus = {
 				name = Cat_FUEL_OIL
                 bonus = 0.50
                 uses = 2
                 category = Cat_FUEL_OIL
-            }
-        }
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = enthusiastic_fossil_fuel_industry }
+				}
+				increase_fossil_fuel_industry_opinion = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
     }
 
 	focus = {
 		id = CAN_China_Canada_Commerce_Council
 		icon = trade_with_china
-		cost = 10
+		cost = 7.9
 		x = 2
 		y = 2
 		relative_position_id = CAN_Eastern_Shift
 
-		ai_will_do = {
-			factor = 1
+		prerequisite = { focus = CAN_Chinese_Agreements }
+		available = {
+			CHI = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = CHI
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = CHI
+			}
 		}
-
-		prerequisite = {
-			focus = CAN_Chinese_Agreements
+		cancel = {
+			OR = {
+				CHI = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = CHI
+			}
 		}
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESEARCH }
 
 
 		completion_reward = {
@@ -5947,103 +5989,167 @@ focus_tree = {
                 bonus = 0.50
                 uses = 2
                 category = industry
-            }
-        }
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = enthusiastic_small_medium_business_owners }
+				}
+				increase_small_medium_business_owners_opinion = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+
     }
 
 	focus = {
 		id = CAN_Russo_Chinese_Canadian_Sphere
 		icon = global_community
-		cost = 10
+		cost = 7.9
 		x = 2
 		y = 4
 		relative_position_id = CAN_Eastern_Shift
 
-		ai_will_do = {
-			factor = 1
-		}
-
-		prerequisite = {
-			focus = CAN_Russo_Canadian_Trade_Agreement
-		}
-		prerequisite = {
-			focus = CAN_China_Canada_Commerce_Council
-		}
+		prerequisite = { focus = CAN_Russo_Canadian_Trade_Agreement }
+		prerequisite = { focus = CAN_China_Canada_Commerce_Council }
+		search_filters = { FOCUS_FILTER_INFLUENCE }
 
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Russo_Chinese_Canadian_Sphere"
-			add_political_power = 150
-        }
+			CHI = {
+				generic_grant_1_percent_influence_of_SOV = yes
+				generic_grant_1_percent_influence_of_CAN = yes
+			}
+			SOV = {
+				generic_grant_1_percent_influence_of_CHI = yes
+				generic_grant_1_percent_influence_of_CAN = yes
+			}
+			generic_grant_1_percent_influence_of_SOV = yes
+			generic_grant_1_percent_influence_of_CHI = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	focus = {
 		id = CAN_rus_training
-		cost = 10
+		cost = 5
 		icon = russian_armed_forces
 		x = 0
 		y = 1
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
 
-		ai_will_do = {
-			factor = 1
+		prerequisite = { focus =  CAN_Russo_Chinese_Canadian_Sphere }
+		available = {
+			SOV = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = SOV
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = SOV
+			}
+		}
+		cancel = {
+			OR = {
+				SOV = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = SOV
+			}
+		}
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_rus_training "
+		    army_experience = 25
+			air_experience = 25
+			navy_experience = 25
 		}
 
-		prerequisite = { focus =  CAN_Russo_Chinese_Canadian_Sphere }
-
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_rus_training "
-		    army_experience = 50
-			air_experience = 50
-			navy_experience = 50
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
     focus = {
 		id = CAN_chinese_industry
-		cost = 10
+		cost = 7.9
 		icon = better_money_on_fire
-		x = -2
+		x = -3
 		y = 1
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
-		}
 
 		prerequisite = { focus =  CAN_Russo_Chinese_Canadian_Sphere }
+		available = {
+			CHI = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = CHI
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = CHI
+			}
+		}
+		cancel = {
+			OR = {
+				CHI = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = CHI
+			}
+		}
+		search_filters = { FOCUS_FILTER_FOREIGN_CAPITAL }
 
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_chinese_industry "
+			add_ideas = CAN_chi_industry
+			hidden_effect = {
+				CHI = { country_event = { id = canada.800 days = 2 } }
+			}
+			custom_effect_tooltip = "Requests Foreign Investment from France"
+		}
 
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_chinese_industry "
-		    add_ideas = CAN_chi_industry
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
     focus = {
 		id = CAN_chinese_lavs
-		cost = 10
+		cost = 5
 		icon = industry_military
-		x = -4
+		x = -5
 		y = 1
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
 
 		prerequisite = { focus =  CAN_Russo_Chinese_Canadian_Sphere }
+		available = {
+			CHI = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = CHI
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = CHI
+			}
+		}
+		cancel = {
+			OR = {
+				CHI = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = CHI
+			}
+		}
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_chinese_lavs "
-		    add_opinion_modifier = {
-                target = CHI
-                modifier = free_trade_agreement
-            }
 			add_tech_bonus = {
-				name = Cat_MBT
+				name = Cat_IFV
                 bonus = 0.50
                 uses = 1
-                category = Cat_MBT
+                category = Cat_IFV
             }
 		}
 		ai_will_do = {
@@ -6053,13 +6159,29 @@ focus_tree = {
 
 	focus = {
 		id = CAN_rus_dockyards
-		cost = 10
+		cost = 5
 		icon = naval_industry
 		x = 3
 		y = 1
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
 
 		prerequisite = { focus =  CAN_Russo_Chinese_Canadian_Sphere }
+		available = {
+			SOV = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = SOV
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = SOV
+			}
+		}
+		cancel = {
+			OR = {
+				SOV = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = SOV
+			}
+		}
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		completion_reward = {
@@ -6083,51 +6205,64 @@ focus_tree = {
 
     focus = {
 		id = CAN_bc_ports
-		cost = 10
+		cost = 7.9
 		icon = navy
 		x = 4
 		y = 2
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
-		}
 
-		prerequisite = { focus =  CAN_rus_dockyards }
+		prerequisite = { focus = CAN_rus_dockyards }
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_NAVY }
 
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_bc_ports "
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_bc_ports "
+			subtract_from_variable = {
+				var = treasury
+				value = 10
+				tooltip = 10_billion_expense_tt
+			}
 		    754 = {
+				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
                     type = dockyard
                     level = 2
                     instant_build = yes
 				}
+				add_building_construction = {
+					type = naval_base
+					level = 2
+					instant_build = yes
+					province = 4428
+				}
             }
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
 	focus = {
 		id = CAN_naval_investments
-		cost = 10
-		icon = russian_ruble
+		cost = 7.9
+		icon = construction
 		x = 2
 		y = 2
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
 
-		prerequisite = { focus =  CAN_rus_dockyards }
+		prerequisite = { focus = CAN_rus_dockyards }
 		search_filters = { FOCUS_FILTER_NAVY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_investments "
 		    subtract_from_variable = {
 				var = treasury
-				value = 6
-				tooltip = 6_billion_expense_tt
+				value = 8
+				tooltip = 8_billion_expense_tt
 			}
 			random_owned_controlled_state = {
 				limit = {
+					is_coastal = yes
 					free_building_slots = {
 						building = dockyard
 						size > 0
@@ -6150,217 +6285,273 @@ focus_tree = {
 
 	focus = {
 		id = CAN_increase_ship_production
-		cost = 10
+		cost = 5
 		icon = battleships2
 		x = 2
 		y = 3
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
-		}
 
-		prerequisite = { focus =  CAN_naval_investments}
-
-
-
+		prerequisite = { focus = CAN_naval_investments }
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_NAVY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CCAN_increase_ship_production "
-		    add_tech_bonus = {
-                bonus = 0.50
-                uses = 2
-                category = Cat_NAVAL_EQP
-            }
+			add_tech_bonus = {
+				name = Cat_NAVAL_EQP
+				bonus = 0.50
+				uses = 2
+				category = Cat_NAVAL_EQP
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
     }
 
 	focus = {
 		id = CAN_naval_investments2
-		cost = 10
+		cost = 7.9
 		icon = naval_dockyard
 		x = 4
 		y = 3
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
-		}
 
-		prerequisite = { focus =  CAN_bc_ports }
+		prerequisite = { focus = CAN_bc_ports }
+		search_filters = { FOCUS_FILTER_NAVY }
 
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_investments2 "
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_investments2 "
 		    760 = {
 				add_building_construction = {
                     type = naval_base
                     level = 2
-                    instant_build = yes
+					instant_build = yes
+					province = 4623
 				}
-            }
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			subtract_from_variable = {
+				var = treasury
+				value = 8
+				tooltip = 8_billion_expense_tt
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
     focus = {
 		id = CAN_tank_facilities
-		cost = 10
+		cost = 7.9
 		icon = m1a1_abrams
-		x = -4
+		x = -5
 		y = 2
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
+
+		prerequisite = { focus = CAN_chinese_lavs }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_tank_facilities "
+			760 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+			subtract_from_variable = {
+				var = treasury
+				value = 6
+				tooltip = 6_billion_expense_tt
+			}
 		}
 
-		prerequisite = { focus =  CAN_chinese_lavs }
-
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_tank_facilities "
-		    760 = {
-				add_building_construction = {
-                    type = arms_factory
-                    level = 1
-                    instant_build = yes
-				}
-            }
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
     focus = {
 		id = CAN_heavy_industry
-		cost = 10
+		cost = 7.9
 		icon = central_planned_economy
-		x = -2
+		x = -3
 		y = 2
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
-		}
 
 		prerequisite = { focus =  CAN_chinese_industry }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
 
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_heavy_industry"
+			swap_ideas = {
+				remove_idea = CAN_chi_industry
+				add_idea = CAN_chi_industry2
+			}
+		}
 
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_heavy_industry "
-		    swap_ideas = {
-                remove_idea = CAN_chi_industry
-                add_idea = CAN_chi_industry2
-            }
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
 	focus = {
 		id = CAN_russian_military
-		cost = 10
+		cost = 7.9
 		icon = winter_warfare
 		x = 0
 		y = 2
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
+
+		prerequisite = { focus = CAN_rus_training }
+		available = {
+			SOV = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = SOV
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = SOV
+			}
+		}
+		cancel = {
+			OR = {
+				SOV = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = SOV
+			}
+		}
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_russian_military "
+			add_ideas = CAN_russian_training
+			if = {
+				limit = { has_war_support < 0.70 }
+				add_war_support = 0.05
+			}
 		}
 
-		prerequisite = { focus =  CAN_rus_training}
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_russian_military "
-		    add_ideas = CAN_russian_training
+		ai_will_do = {
+			factor = 1
 		}
     }
 
     focus = {
 		id = CAN_global_army
-		cost = 10
+		cost = 5
 		icon = combined_arms
 		x = 0
 		y = 3
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
+
+		prerequisite = { focus = CAN_russian_military }
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_global_army "
+		    add_tech_bonus = {
+				name = Cat_INF
+				bonus = 0.50
+				uses = 2
+				category = Cat_INF
+			}
 		}
 
-		prerequisite = { focus =  CAN_russian_military}
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_global_army "
-		    add_tech_bonus = {
-                bonus = 0.50
-                uses = 2
-                category = Cat_INF
-            }
+		ai_will_do = {
+			factor = 1
 		}
     }
 
 	focus = {
 		id = CAN_railway_projects
-		cost = 10
+		cost = 7.9
 		icon = construct_infrastructure
 		x = -2
 		y = 3
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		prerequisite = { focus = CAN_heavy_industry }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_railway_projects "
+			add_timed_idea = {
+				idea = CAN_rail_project
+				days = 180
+			}
+		}
+
 		ai_will_do = {
 			factor = 1
 		}
-
-		prerequisite = { focus =  CAN_heavy_industry}
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_railway_projects "
-		    add_ideas = CAN_rail_project
-		}
-    }
+	}
 
 	focus = {
 		id = CAN_industry_projects
-		cost = 10
+		cost = 7.9
 		icon = mining_truck
 		x = -4
 		y = 3
 		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
+
+		prerequisite = { focus = CAN_heavy_industry }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_industry_projects "
+			763 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = industrial_complex
+					level = 2
+					instant_build = yes
+				}
+			}
+			subtract_from_variable = {
+				var = treasury
+				value = 10
+				tooltip = 10_billion_expense_tt
+			}
 		}
 
-		prerequisite = { focus =  CAN_heavy_industry}
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_industry_projects "
-			763 = {
-				add_building_construction = {
-                    type = industrial_complex
-                    level = 2
-                    instant_build = yes
-				}
-            }
+		ai_will_do = {
+			factor = 1
 		}
     }
 
+	##Shared Between NATO/Eastern Shift
 	focus = {
 		id = CAN_global_companys
-		cost = 10
+		cost = 1.5
 		icon = liberalization
-		x = -3
-		y = 4
-		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
-		ai_will_do = {
-			factor = 1
+		x = -4.5
+		y = 1
+		relative_position_id = CAN_Eastern_Shift
+
+		prerequisite = {
+			focus = CAN_Western_Shift
+			focus = CAN_Eastern_Shift
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_global_companys"
+			custom_effect_tooltip = "In this path, we sacrifice some light influence and request these companies come to Canada."
 		}
 
-		prerequisite = { focus =  CAN_industry_projects}
-
-		prerequisite = { focus =  CAN_railway_projects}
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_global_companys "
-		    add_political_power = 100
+		ai_will_do = {
+			factor = 1
 		}
     }
 
@@ -6371,27 +6562,21 @@ focus_tree = {
 		x = -2
 		y = 1
 		relative_position_id = CAN_global_companys
+
+		prerequisite = { focus =  CAN_global_companys }
+		mutually_exclusive = { focus = CAN_hyundai }
+		mutually_exclusive = { focus = CAN_ak }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_huawai "
+		    add_ideas = CAN_huawei
+		}
+
 		ai_will_do = {
 			factor = 1
 		}
-
-		prerequisite = { focus =  CAN_global_companys}
-
-
-		mutually_exclusive =  {focus =  CAN_hyundai}
-
-		mutually_exclusive =  {focus =  CAN_ak}
-
-		available = {}
-
-		bypass = {}
-
-		complete_tooltip = {}
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_huawai "
-		    add_ideas = CAN_huawei
-		}
-    }
+	}
 
 	focus = {
 		id = CAN_hyundai
@@ -6501,79 +6686,85 @@ focus_tree = {
 
 	focus = {
 		id = CAN_vehicle_industry
-		cost = 10
+		cost = 7.9
 		icon = tank_destroyer_doctrine
 		x = 0
 		y = 2
 		relative_position_id = CAN_global_companys
-		ai_will_do = {
-			factor = 1
-		}
 
-		prerequisite = { focus =  CAN_hyundai}
+		prerequisite = { focus = CAN_hyundai }
+		search_Filters = { FOCUS_FILTER_RESEARCH }
 
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_vehicle_industry "
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_vehicle_industry "
 		    add_tech_bonus = {
-                bonus = 0.50
+				name = Cat_IFV
+				bonus = 0.50
                 uses = 2
                 category = Cat_IFV
             }
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
     }
 
 	focus = {
 		id = CAN_advanced_ultility_vehicle
-		cost = 10
+		cost = 7.9
 		icon = apc
 		x = 0
 		y = 3
 		relative_position_id = CAN_global_companys
-		ai_will_do = {
-			factor = 1
+
+		prerequisite = { focus = CAN_vehicle_industry }
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_advanced_ultility_vehicle "
+			add_tech_bonus = {
+				name = Cat_UTIL
+				bonus = 0.50
+				uses = 2
+				category = Cat_UTIL
+			}
 		}
 
-		prerequisite = { focus =  CAN_vehicle_industry}
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_advanced_ultility_vehicle "
-		    add_tech_bonus = {
-                bonus = 0.50
-                uses = 2
-                category = Cat_UTIL
-            }
+		ai_will_do = {
+			factor = 1
 		}
     }
 
 	focus = {
 		id = CAN_sat_tech
-		cost = 10
+		cost = 7.9
 		icon = weaponized_satellites
 		x = -2
 		y = 2
 		relative_position_id = CAN_global_companys
-		ai_will_do = {
-			factor = 1
+
+		prerequisite = { focus = CAN_huawai }
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_sat_tech "
+		    add_tech_bonus = {
+				name = electronics
+				bonus = 0.50
+                uses = 2
+				category = electronics
+			}
 		}
 
-		prerequisite = { focus =  CAN_huawai}
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_sat_tech "
-		    add_tech_bonus = {
-                bonus = 0.50
-                uses = 2
-                category = electronics
-            }
+		ai_will_do = {
+			factor = 1
 		}
     }
 
 	focus = {
 		id = CAN_advanced_radar
-		cost = 10
+		cost = 7.9
 		icon = radar
 		x = -2
 		y = 3
@@ -6602,7 +6793,7 @@ focus_tree = {
 		id = CAN_Canadian_Armed_Forces
 		icon = canadian_armed_forces
 		cost = 3.6
-		x = 97
+		x = 98
 		y = 1
 
 		available = {
@@ -6736,6 +6927,16 @@ focus_tree = {
 			if = {
 				limit = { is_subject = yes }
 				is_subject_of = SOV
+			}
+		}
+		cancel = {
+			OR = {
+				has_war_with = SOV
+				SOV = { has_opinion = { target = CAN value < 50 } }
+				if = {
+					limit = { is_subject = yes }
+					NOT = { is_subject_of = SOV }
+				}
 			}
 		}
 		completion_reward = {
@@ -7477,7 +7678,8 @@ focus_tree = {
 
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_train"
 		    add_tech_bonus = {
-                bonus = 0.100
+				name = Cat_INT_FIGHTER
+                bonus = 0.25
                 uses = 1
                 category = Cat_INT_FIGHTER
             }
@@ -7812,22 +8014,41 @@ focus_tree = {
 		y = 1
 		relative_position_id = CAN_State_Of_Terror
 
-		ai_will_do = {
-			factor = 1
-		}
-
 		prerequisite = { focus = CAN_State_Of_Terror }
 		prerequisite = { focus = CAN_forced_integration }
+		available = {
+			nationalist > 0.40
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		available = { nationalist > 0.50 }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_national"
-		    set_politics = {
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 20 }
+				add_to_array = { gov_coalition_array = 21 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [meta_set_ruling_party]
+					}
+					meta_set_ruling_party = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+			set_politics = {
 				ruling_party = nationalist
 				elections_allowed = no
 			}
 		}
-    }
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
 
     focus = {
 		id = CAN_global_influence
@@ -7872,25 +8093,26 @@ focus_tree = {
     }
 
 	focus = {
-		id = CAN_alaska
+		id = CAN_fortify_the_borders
 		cost = 10
 		icon = demand_territory3
 		x = 3
 		y = 2
 		relative_position_id = CAN_national
-		ai_will_do = {
-			factor = 1
-		}
 
 		prerequisite = { focus =  CAN_regional_diplomacy }
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
 
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_alaska "
-		    USA = {
-				country_event = canada.506
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_fortify_the_borders "
+			add_timed_idea = {
+				idea = defensive_constructions3
+				days = 730
 			}
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
     }
 
@@ -7903,7 +8125,14 @@ focus_tree = {
 		relative_position_id = CAN_national
 
 		prerequisite = { focus =  CAN_regional_diplomacy }
+		available = {
+			DEN = { owns_state = 1 }
+		}
+		bypass = {
+			owns_state = 1
+		}
 		search_filters = { FOCUS_FILTER_ANNEX }
+		will_lead_to_war_with = DEN
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_greenland "
@@ -7927,21 +8156,29 @@ focus_tree = {
 		x = 3
 		y = 3
 		relative_position_id = CAN_national
-		ai_will_do = {
-			factor = 1
+
+		prerequisite = { focus = CAN_greenland }
+		prerequisite = { focus = CAN_fortify_the_borders }
+		available = {
+			NOT = {
+				USA = { is_subject_of = CAN }
+			}
+			country_exists = USA
+
+		}
+		search_filters = { FOCUS_FILTER_ANNEX }
+		will_lead_to_war_with = USA
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_dominate_america "
+			create_wargoal = {
+				type = annex_everything
+				target = USA
+			}
 		}
 
-		prerequisite = { focus =  CAN_greenland }
-
-        prerequisite = { focus =  CAN_alaska }
-
-
-
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_dominate_america "
-		    create_wargoal = {
-                type = annex_everything
-                target = USA
-            }
+		ai_will_do = {
+			factor = 1
 		}
     }
 
