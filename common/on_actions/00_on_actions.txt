@@ -37,6 +37,10 @@ on_actions = {
 	}
 
 	on_weekly = {
+		effect = {
+			##Influence Checks This is just to keep the influence arrays down and remove all non-existing nations
+			delete_influencer_check = yes
+		}
 	}
 
 	on_monthly = {
@@ -586,7 +590,82 @@ on_actions = {
 	on_capitulation = {
 		effect = {
 			news_event = { id = country_capitulated.0 days = 1 }
-
+			
+			#Fuck your shitty dynamic tag system pdx
+			FROM = {
+				if = {
+					limit = { 
+						has_country_flag = dynamic_flag
+						has_civil_war = yes
+						NOT = { 
+							TAG = original_tag
+							has_country_flag = is_civil_war_faction
+						}
+					}
+					clr_country_flag = dynamic_flag
+					clr_country_flag = dynamic_rebel_flag
+					set_country_flag = fix_your_broken_dynamic_tags
+					if = {
+						limit = {
+							OR = {
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 7 }
+								is_in_array = { ruling_party = 13 }
+								is_in_array = { ruling_party = 22 }
+							}
+						}
+						meta_effect = {
+							text = { set_cosmetic_tag = [ROOTTAG]_AUTH }
+							ROOTTAG = "[?original_tag.GetTag]"
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 7 }
+								is_in_array = { ruling_party = 13 }
+								is_in_array = { ruling_party = 22 }
+							}
+						}
+						meta_effect = {
+							text = { set_cosmetic_tag = [ROOTTAG]_AUTH_S }
+							ROOTTAG = "[?original_tag.GetTag]"
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								is_in_array = { ruling_party = 4 }
+								is_in_array = { ruling_party = 10 }
+								is_in_array = { ruling_party = 19 }
+								is_in_array = { ruling_party = 23 }
+							}
+						}
+						meta_effect = {
+							text = { set_cosmetic_tag = [ROOTTAG]_AUTH_S }
+							ROOTTAG = "[?original_tag.GetTag]"
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								is_in_array = { ruling_party = 9 }
+								is_in_array = { ruling_party = 11 }
+								is_in_array = { ruling_party = 21 }
+							}
+						}
+						meta_effect = {
+							text = { set_cosmetic_tag = [ROOTTAG]_AUTH_SS }
+							ROOTTAG = "[?original_tag.GetTag]"
+						}
+					}
+					else = {
+						set_cosmetic_tag = original_tag
+					}
+				}
+			}
+			
 			#Special capitulation for ISIS
 			if = {
 				limit = {
@@ -2065,6 +2144,7 @@ on_actions = {
 						OR = {
 							is_in_array = { ruling_party = 4 }
 							is_in_array = { ruling_party = 7 }
+							is_in_array = { ruling_party = 9 }
 						}
 					}
 					set_politics = {
@@ -2078,7 +2158,6 @@ on_actions = {
 							is_in_array = { ruling_party = 5 }
 							is_in_array = { ruling_party = 6 }
 							is_in_array = { ruling_party = 8 }
-							is_in_array = { ruling_party = 9 }
 						}
 					}
 					set_politics = {
