@@ -37,10 +37,16 @@ on_actions = {
 	}
 
 	on_weekly = {
+		effect = {
+			##Influence Checks This is just to keep the influence arrays down and remove all non-existing nations
+			delete_influencer_check = yes
+		}
 	}
 
 	on_monthly = {
 		effect = {
+			#Generic
+			ai_update_build_units = yes
 			#Possibility of domestic terror attack - civilian
 			if = {
 				limit = {
@@ -427,6 +433,130 @@ on_actions = {
 				update_unstable_neighbors = yes
 				clr_country_flag = LS_neighbor_count
 			}
+			#check if influencer
+			if = {
+				limit = {
+					any_other_country = {
+						no_jihadist_government = yes
+						is_top5_influencer = yes
+						is_middle_eastern_nation = yes
+						NOT = {
+							original_tag = ISR
+							original_tag = PER
+							original_tag = PAL
+							original_tag = HAM
+							original_tag = HEZ
+							original_tag = TUA
+							original_tag = SHA
+							is_Caucasus = yes
+						}
+					}
+				}
+				set_country_flag = middle_east_influencer
+			}
+			if = {
+				limit = {
+					NOT = {
+						any_other_country = {
+							no_jihadist_government = yes
+							is_top5_influencer = yes
+							is_middle_eastern_nation = yes
+							NOT = {
+								original_tag = ISR
+								original_tag = PER
+								original_tag = PAL
+								original_tag = HAM
+								original_tag = HEZ
+								original_tag = TUA
+								original_tag = SHA
+								is_Caucasus = yes
+							}
+						}
+					}
+					has_country_flag = middle_east_influencer
+				}
+				clr_country_flag = middle_east_influencer
+			}
+			if = {
+				limit = {
+					any_other_country = {
+						no_jihadist_government = yes
+						is_top5_influencer = yes
+						OR = {
+							original_tag = BFA
+							original_tag = CHA
+							original_tag = MAL
+							original_tag = MAU
+							original_tag = NIG
+							original_tag = NGR
+							original_tag = SEN
+							original_tag = SUD
+							original_tag = SOM
+						}
+					}
+				}
+				set_country_flag = africa_influencer
+			}
+			if = {
+				limit = {
+					NOT = {
+						any_other_country = {
+							no_jihadist_government = yes
+							is_top5_influencer = yes
+							OR = {
+								original_tag = BFA
+								original_tag = CHA
+								original_tag = MAL
+								original_tag = MAU
+								original_tag = NIG
+								original_tag = NGR
+								original_tag = SEN
+								original_tag = SUD
+								original_tag = SOM
+							}
+						}
+					}
+					has_country_flag = africa_influencer
+				}
+				clr_country_flag = africa_influencer
+			}
+			if = {
+				limit = {
+					any_other_country = {
+						no_jihadist_government = yes
+						is_top5_influencer = yes
+						OR = {
+							original_tag = AFG
+							original_tag = KYR
+							original_tag = TAJ
+							original_tag = TRK
+							original_tag = PAK
+							original_tag = UZB
+						}
+					}
+				}
+				set_country_flag = asia_influencer
+			}
+			if = {
+				limit = {
+					NOT = {
+						any_other_country = {
+							no_jihadist_government = yes
+							is_top5_influencer = yes
+							OR = {
+								original_tag = AFG
+								original_tag = KYR
+								original_tag = TAJ
+								original_tag = TRK
+								original_tag = PAK
+								original_tag = UZB
+							}
+						}
+					}
+					has_country_flag = asia_influencer
+				}
+				clr_country_flag = asia_influencer
+			}
 		}
 	}
 	on_yearly = {
@@ -584,6 +714,81 @@ on_actions = {
 	on_capitulation = {
 		effect = {
 			news_event = { id = country_capitulated.0 days = 1 }
+
+			#Fuck your shitty dynamic tag system pdx
+			FROM = {
+				if = {
+					limit = {
+						has_country_flag = dynamic_flag
+						has_civil_war = yes
+						NOT = {
+							TAG = original_tag
+							has_country_flag = is_civil_war_faction
+						}
+					}
+					clr_country_flag = dynamic_flag
+					clr_country_flag = dynamic_rebel_flag
+					set_country_flag = fix_your_broken_dynamic_tags
+					if = {
+						limit = {
+							OR = {
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 7 }
+								is_in_array = { ruling_party = 13 }
+								is_in_array = { ruling_party = 22 }
+							}
+						}
+						meta_effect = {
+							text = { set_cosmetic_tag = [ROOTTAG]_AUTH }
+							ROOTTAG = "[?original_tag.GetTag]"
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								is_in_array = { ruling_party = 0 }
+								is_in_array = { ruling_party = 7 }
+								is_in_array = { ruling_party = 13 }
+								is_in_array = { ruling_party = 22 }
+							}
+						}
+						meta_effect = {
+							text = { set_cosmetic_tag = [ROOTTAG]_AUTH_S }
+							ROOTTAG = "[?original_tag.GetTag]"
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								is_in_array = { ruling_party = 4 }
+								is_in_array = { ruling_party = 10 }
+								is_in_array = { ruling_party = 19 }
+								is_in_array = { ruling_party = 23 }
+							}
+						}
+						meta_effect = {
+							text = { set_cosmetic_tag = [ROOTTAG]_AUTH_S }
+							ROOTTAG = "[?original_tag.GetTag]"
+						}
+					}
+					else_if = {
+						limit = {
+							OR = {
+								is_in_array = { ruling_party = 9 }
+								is_in_array = { ruling_party = 11 }
+								is_in_array = { ruling_party = 21 }
+							}
+						}
+						meta_effect = {
+							text = { set_cosmetic_tag = [ROOTTAG]_AUTH_SS }
+							ROOTTAG = "[?original_tag.GetTag]"
+						}
+					}
+					else = {
+						set_cosmetic_tag = original_tag
+					}
+				}
+			}
 
 			#Special capitulation for ISIS
 			if = {
@@ -1933,9 +2138,9 @@ on_actions = {
 				}
 				custom_effect_tooltip = TT_RIO_PACT
 				hidden_effect = {
-					FROM = { country_event = { id = USA.6 } }
+					FROM = { country_event = { id = rio_pact_event.1 } }
 				}
-				ROOT = { country_event = { id = USA.8 days = 20 } }
+				ROOT = { country_event = { id =  rio_pact_event.3 days = 20 } }
 			}
 
 			#Chinese aggression increase
@@ -1946,28 +2151,10 @@ on_actions = {
 		}
 	}
 
-	#Ask for Mil access - From is target country
+	#Ask for Mil access - FROM is target country
 	on_military_access = {
 		effect = {
-			#country_event = { id = init.1 }
-			#FROM = { add_ideas = USA_usaid }
-			# if = {
-				# limit = { has_government = fascism } #Salafist
-			# }
-			# if = {
-				# limit = { has_government = democratic } #Western
-			# }
-			# if = {
-				# limit = { has_government = communism  } #Emerging
-			# }
-			# if = {
-				# limit = { has_government = neutrality  } #neutrality
-			# }
-			# if = {
-				# limit = { has_government = nationalist  } #nationalist
-			# }
 			FROM = {
-				add_40_influence = yes
 				country_event = { id = projection.1 }
 			}
 			add_to_variable = { power_projection = 1 }
@@ -2011,8 +2198,6 @@ on_actions = {
 	#offer for Mil access to your country - From is target country
 	on_offer_military_access = {
 		effect = {
-			#FROM = { country_event = { id = init.1 } }
-			#add_ideas = USA_usaid
 		}
 	}
 	#try on_revoke_guarantee
@@ -2083,6 +2268,7 @@ on_actions = {
 						OR = {
 							is_in_array = { ruling_party = 4 }
 							is_in_array = { ruling_party = 7 }
+							is_in_array = { ruling_party = 9 }
 						}
 					}
 					set_politics = {
@@ -2096,7 +2282,6 @@ on_actions = {
 							is_in_array = { ruling_party = 5 }
 							is_in_array = { ruling_party = 6 }
 							is_in_array = { ruling_party = 8 }
-							is_in_array = { ruling_party = 9 }
 						}
 					}
 					set_politics = {
@@ -2205,6 +2390,13 @@ on_actions = {
 				}
 			}
 
+			ITA = {
+				resize_array = { 
+  					array = abandon_coalition_threshold
+ 					size = 24
+				}
+			}
+
 			every_country = {
 				add_tax_laws = yes
 				calculate_influence_percentage = yes #set alignment drifts from influence
@@ -2301,9 +2493,9 @@ on_actions = {
 				}
 				if = {
 					limit = { has_start_date > 2016.1.1 }
-					country_event = { id = USA.1 days = 1 }
-					country_event = { id = USA.2 days = 19 }
-					country_event = { id = USA.3 days = 50 random = 10 }
+					country_event = { id = donald_trump.1000 days = 1 }
+					country_event = { id = donald_trump.1001 days = 19 }
+					country_event = { id = donald_trump.1002 days = 50 random = 10 }
 				}
 				#9/11
 				if = {
@@ -2375,13 +2567,72 @@ on_actions = {
 				}
 				country_event = { id = arab_spring.16 }
 			}
+			#check if influencer
+			every_country = {
+				if = {
+					limit = {
+						any_other_country = {
+							no_jihadist_government = yes
+							is_top5_influencer = yes
+							is_middle_eastern_nation = yes
+							NOT = {
+								original_tag = ISR
+								original_tag = PER
+								original_tag = PAL
+								original_tag = HAM
+								original_tag = HEZ
+								original_tag = TUA
+								original_tag = SHA
+								is_Caucasus = yes
+							}
+						}
+					}
+					set_country_flag = middle_east_influencer
+				}
+				if = {
+					limit = {
+						any_other_country = {
+							no_jihadist_government = yes
+							is_top5_influencer = yes
+							OR = {
+								original_tag = BFA
+								original_tag = CHA
+								original_tag = MAL
+								original_tag = MAU
+								original_tag = NIG
+								original_tag = NGR
+								original_tag = SEN
+								original_tag = SUD
+								original_tag = SOM
+							}
+						}
+					}
+					set_country_flag = africa_influencer
+				}
+				if = {
+					limit = {
+						any_other_country = {
+							no_jihadist_government = yes
+							is_top5_influencer = yes
+							OR = {
+								original_tag = AFG
+								original_tag = KYR
+								original_tag = TAJ
+								original_tag = TRK
+								original_tag = PAK
+								original_tag = UZB
+							}
+						}
+					}
+					set_country_flag = asia_influencer
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: on_startup init completed"
 		}
 
 	}
 	on_government_change = {
-		effect = {
-
+		effect = {			
 			every_neighbor_country = {
 				clear_neighbor_count_ideas = yes
 				set_country_flag = { flag = neighbor_count value = 0 }

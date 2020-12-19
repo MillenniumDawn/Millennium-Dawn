@@ -1,32 +1,476 @@
 influence_desicions = {
 	combat_foreign_influence = {
-
 		icon = generic_independence
-		
 		cost = 100
-		days_remove = 30
+		days_remove = 45
 		days_re_enable = 0
-		
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "Foreign influence is present"
+				check_variable = { influence_array^0 > 0 }
+			}
+		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_foreign_influence"
-			custom_effect_tooltip = increase_domestic_influence_amount_TT
-			hidden_effect = {
-				add_to_variable = { domestic_influence_amount = 10 }
-				recalculate_influence = yes
-			}
+			boost_domestic_influence_2_percent = yes
 		}
 
 		ai_will_do = {
-			base = 20
+			base = 5
+			modifier = {
+				factor = 1.5
+				OR = {
+					has_autocratic_governemnt_or_in_coalition = yes
+					has_reactionary_governemnt_or_in_coalition = yes
+					has_conservative_governemnt_or_in_coalition = yes
+				}
+			}
+			modifier = {
+				factor = 3.0
+				has_totalitarian_government_or_in_coalition = yes
+			}
+			modifier = {
+				factor = 10
+				check_variable = { domestic_influence_amount_calc < 0.3 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { domestic_influence_amount_calc > 0.80 }
+			}
+		}
+	}
+
+	propaganda_campaign_decision = {
+		icon = generic_independence
+		cost = 100
+		days_remove = 100
+		days_re_enable = 30
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "Foreign influence is present"
+				check_variable = { influence_array^0 > 0 }
+			}
+			NOT = {
+				has_decision = combat_biggest_influencer_decision
+				has_decision = combat_second_influencer_decision
+				has_decision = combat_third_influencer_decision
+			}
+		}
+		modifier = {
+			political_power_factor = -0.25
+			nationalist_drift = 0.10
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision propaganda_campaign_decision"
+			custom_effect_tooltip = treasury_loss_2_bil_TT
+			propaganda_cost_scripted_effect = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision propaganda_campaign_decision"
+			add_stability = -0.05
+			boost_domestic_influence_10_percent = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 2
+				check_variable = { domestic_influence_amount_calc < 0.3 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { domestic_influence_amount_calc < 0.15 }
+			}
+			modifier = {
+				factor = 0
+				NOT = {
+					has_government = communism
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
+			modifier = {
+				factor = 1.25
+				has_government = communism
+			}
+			modifier = {
+				factor = 1.75
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
+			modifier = {
+				factor = 0.5
+				is_ai = yes
+			}
 			modifier = {
 				factor = 0
 				check_variable = { domestic_influence_amount_calc > 0.6 }
 			}
+		}
+	}
+
+	combat_biggest_influencer_decision = {
+		icon = generic_independence
+		cost = 200
+		days_remove = 60
+		days_re_enable = 30
+
+		visible = {
+			check_variable = { influence_array^0 > 0 }
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "Foreign influence is present"
+				check_variable = { influence_array^0 > 0 }
+			}
+			NOT = {
+				has_decision = propaganda_campaign_decision
+				has_decision = combat_second_influencer_decision
+				has_decision = combat_third_influencer_decision
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision combat_biggest_influencer_decision"
+			reduce_biggest_influencer_by_4_percent = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = { #Reduce down to nothing if you have high relations.
+				factor = 0.15
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value > 49 }
+					}
+				}
+			}
 			modifier = {
-				factor = 20
-				check_variable = { domestic_influence_amount_calc < 0.3 }
+				factor = 1.0
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 50 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.25
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 25 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.50
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 15 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.75
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 0 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.0
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -20 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.5
+				var:FROM.influence_array^0 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -50 }
+					}
+				}
+			}
+			#Domestic Influence Calculation
+			modifier = {
+				factor = 2.5
+				check_variable = { domestic_influence_amount_calc < 0.15 }
+			}
+			modifier = {
+				factor = 2.0
+				check_variable = { domestic_influence_amount_calc < 0.25 }
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { domestic_influence_amount_calc < 0.45 }
+			}
+			modifier = {
+				factor = 1.25
+				check_variable = { domestic_influence_amount_calc < 0.60 }
+			}
+			#Should be more worthwhile if they have a high rate
+			modifier = {
+				factor = 2
+				check_variable = { influence_array_val^0 > 0.20 }
+			}
+			modifier = {
+				factor = 4
+				check_variable = { influence_array_val^0 > 0.40 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { influence_array_val^0 > 0.60 }
+			}
+			modifier = { #Should only execute this if you have under 60% domestic influence percent
+				factor = 0
+				check_variable = { domestic_influence_amount_calc > 0.60 }
 			}
 		}
 	}
-	
+
+	combat_second_influencer_decision = {
+		icon = generic_independence
+		cost = 150
+		days_remove = 60
+		days_re_enable = 30
+
+		visible = {
+			check_variable = { influence_array^1 > 0 }
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "Foreign influence is present"
+				check_variable = { influence_array^0 > 0 }
+			}
+			NOT = {
+				has_decision = combat_biggest_influencer_decision
+				has_decision = propaganda_campaign_decision
+				has_decision = combat_third_influencer_decision
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision combat_biggest_influencer_decision"
+			reduce_second_influencer_by_4_percent = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = { #Reduce down to nothing if you have high relations.
+				factor = 0.15
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value > 49 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.0
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 50 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.25
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 25 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.50
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 15 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.75
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 0 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.0
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -20 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.5
+				var:FROM.influence_array^1 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -50 }
+					}
+				}
+			}
+			#Domestic Influence Calculation
+			modifier = {
+				factor = 2.5
+				check_variable = { domestic_influence_amount_calc < 0.15 }
+			}
+			modifier = {
+				factor = 2.0
+				check_variable = { domestic_influence_amount_calc < 0.25 }
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { domestic_influence_amount_calc < 0.45 }
+			}
+			modifier = {
+				factor = 1.25
+				check_variable = { domestic_influence_amount_calc < 0.60 }
+			}
+			#Should be more worthwhile if they have a high rate
+			modifier = {
+				factor = 2
+				check_variable = { influence_array_val^1 > 0.20 }
+			}
+			modifier = {
+				factor = 4
+				check_variable = { influence_array_val^1 > 0.40 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { influence_array_val^1 > 0.60 }
+			}
+			modifier = { #Should only execute this if you have under 60% domestic influence percent
+				factor = 0
+				check_variable = { domestic_influence_amount_calc > 0.60 }
+			}
+		}
+	}
+
+	combat_third_influencer_decision = {
+		icon = generic_independence
+		cost = 150
+		days_remove = 60
+		days_re_enable = 30
+
+		visible = {
+			check_variable = { influence_array^2 > 0 }
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "Foreign influence is present"
+				check_variable = { influence_array^0 > 0 }
+			}
+			NOT = {
+				has_decision = combat_biggest_influencer_decision
+				has_decision = propaganda_campaign_decision
+				has_decision = combat_second_influencer_decision
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision combat_biggest_influencer_decision"
+			reduce_third_influencer_by_4_percent = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = { #Reduce down to nothing if you have high relations.
+				factor = 0.15
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value > 49 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.0
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 50 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.25
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 25 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.50
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 15 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.75
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < 0 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.0
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -20 }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.5
+				var:FROM.influence_array^2 = {
+					ROOT = {
+						has_opinion = { target = PREV value < -50 }
+					}
+				}
+			}
+			#Domestic Influence Calculation
+			modifier = {
+				factor = 2.5
+				check_variable = { domestic_influence_amount_calc < 0.15 }
+			}
+			modifier = {
+				factor = 2.0
+				check_variable = { domestic_influence_amount_calc < 0.25 }
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { domestic_influence_amount_calc < 0.45 }
+			}
+			modifier = {
+				factor = 1.25
+				check_variable = { domestic_influence_amount_calc < 0.60 }
+			}
+			#Should be more worthwhile if they have a high rate
+			modifier = {
+				factor = 2
+				check_variable = { influence_array_val^2 > 0.20 }
+			}
+			modifier = {
+				factor = 4
+				check_variable = { influence_array_val^2 > 0.40 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { influence_array_val^2 > 0.60 }
+			}
+			modifier = { #Should only execute this if you have under 60% domestic influence percent
+				factor = 0
+				check_variable = { domestic_influence_amount_calc > 0.60 }
+			}
+		}
+	}
+
 }
