@@ -1,5 +1,7 @@
 ﻿add_namespace = italy_md
 
+#unused event numbers : 31 30 23 22 11
+
 #Lateran Treaties Accepted
 country_event = {
 	id = italy_md.1
@@ -14,6 +16,7 @@ country_event = {
 		name = italy_md.1.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.1.o1 executed"
 		add_political_power = 10
+		increase_The_Clergy_opinion = yes
 		add_opinion_modifier = {
 			target = HLS
 			modifier = lateran_treaties_accepted
@@ -34,6 +37,7 @@ country_event = {
 		name = italy_md.2.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.2.o1 executed"
 		clr_country_flag = HLS_lateran_treaties
+		decrease_The_Clergy_opinion = yes
 		add_opinion_modifier = {
 			target = HLS
 			modifier = lateran_treaties_refused
@@ -355,138 +359,7 @@ country_event = {
 		}
 	}
 }
-#Invitation to Roman Empire
-country_event = {
-	id = italy_md.11
-	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.11" }
-	title = italy_md.11.t
-	desc = italyf_md.11.d
-	picture = GFX_report_event_political_deal2
-	
-	is_triggered_only = yes
-	
-	option = {	#Accept
-		name = italy_md.11.o1
-		log = "[GetDateText]: [This.GetName]: italy_md.11.o1 executed"
-		ITA = { add_to_faction = ROOT }
-		set_country_flag = seeks_italian_alliance
-		ITA = { country_event = diplomatic_response.1 }
-		hidden_effect = {
-			set_temp_variable = { influence_gain = 50 }
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
-				if = {
-					limit = {
-						check_variable = { influence_array^v = ITA }
-					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-					set_country_flag = found
-				}
-			}
-			if = {
-				limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = ITA.id }
-					add_to_array = { influence_array_val = influence_gain }
-			}
-			clr_country_flag = found
-			recalculate_influence = yes
-		}
-		hidden_effect = { 
-			add_popularity = { ideology = nationalist popularity = 0.10 }
-			recalculate_party = yes
-		}
-		ai_chance = {
-			factor = 40
-			modifier = {
-				add = 10
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = ITA } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
-					}
-					else = { always = no }
-				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.2 }
-			}
-			modifier = {
-				add = 20
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = ITA } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
-					}
-					else = { always = no }
-				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.4 }
-			}
-			modifier = {
-				add = 30
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = ITA } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
-					}
-					else = { always = no }
-				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.8 }
-			}
-			modifier = {
-				factor = 0
-				is_in_faction = yes
-			}
-		}
-	}
-	
-	option = {	#Decline
-		name = italy_md.11.o2
-		log = "[GetDateText]: [This.GetName]: italy_md.11.o1 executed"
-		ITA = { country_event = diplomatic_response.2 }
-		ai_chance = {
-			base = 60
-			modifier = { 
-				add = 100
-				has_war_with = ITA
-			}
-			modifier = { 
-				add = 10
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = ITA } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
-					}
-					else = { always = no }
-				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.2 }
-			}
-		}
-	}
-}
-#Attempt to Join [Faction]
+#Attempt to Join SCO
 country_event = {
 	id = italy_md.12
 	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.12" }
@@ -499,7 +372,7 @@ country_event = {
 	option = {	#Accept
 		name = italy_md.12.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.12.o1 executed"
-		add_to_faction = ITA
+		set_country_flag = accepted_italy_as_sco_candidate
 		ITA = { country_event = diplomatic_response.1 }
 		ai_chance = { factor = 90 }
 	}
@@ -511,58 +384,44 @@ country_event = {
 		ai_chance = { factor = 10 }
 	}
 }
-#Eastern Investments
+#waste dumps campania
 country_event = {
 	id = italy_md.13
 	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.13" }
 	title = italy_md.13.t
 	desc = italy_md.13.d
-	picture = GFX_report_event_european_union
-	
-	is_triggered_only = yes
+	picture = GFX_report_event_italy
+		
+	hidden = yes
+	mean_time_to_happen = {
+		months = 3
+	}
 	
 	option = {
 		name = italy_md.13.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.13.o1 executed"
-		add_political_power = 10
-		random_owned_state = {
-			limit = {
-				free_building_slots = {
-					building = infrastructure
-					size > 0
-					include_locked = yes
-				}
-			}
-			add_building_construction = {
-				type = infrastructure
-				level = 1
-				instant_build = yes
-			}
-		}
+		set_country_flag = ITA_illicit_waste_dumps_in_campania
+		add_to_variable = { camorra_strength = 0.020 }
 	}
 }
-#EU Military Cooperation
+#weapons smugglers puglia
 country_event = {
 	id = italy_md.14
 	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.14" }
 	title = italy_md.14.t
 	desc = italy_md.14.d
-	picture = GFX_report_event_european_union
-	
-	is_triggered_only = yes
+	picture = GFX_report_event_italy
+		
+	hidden = yes
+	mean_time_to_happen = {
+		months = 3
+	}
 	
 	option = {
 		name = italy_md.14.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.14.o1 executed"
-		army_experience = 5
-		navy_experience = 10
-		air_experience = 10
-		add_tech_bonus = {
-			name = infantry_tech
-			bonus = 0.5
-			uses = 1
-			category = Cat_INF
-		}
+		set_country_flag = ITA_weapons_smuggled_into_puglia
+		add_to_variable = { sacra_corona_unita_strength = 0.020 }
 	}
 }
 #24th of August 2016 Earthquake
@@ -573,20 +432,42 @@ country_event = {
 	desc = italy_md.15.d
 	picture = GFX_report_event_earthquake
 		
-	is_triggered_only = yes
+	trigger = {
+		has_full_control_of_state = 960
+		date > 2009.8.23
+	}
+	fire_only_once = yes
 	
 	option = {
 		name = italy_md.15.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.15.o1 executed"
-		2 = {
-			damage_building = {
-				type = industrial_complex
-				damage = 0.4
-			}
-			damage_building = {
-				type = infrastructure
-				damage = 0.1
-			}
+		if = {
+			limit = { has_idea = ITA_building_abuse_1 }
+				960 = {
+					damage_building = {
+						type = industrial_complex
+						damage = 1
+					}
+					damage_building = {
+						type = infrastructure
+						damage = 1
+					}
+				}
+				add_political_power = -200
+				add_stability = -0.15
+		}
+		else_if = {
+			limit = { has_completed_focus = ITA_stop_building_abuse }
+				960 = {
+					damage_building = {
+						type = industrial_complex
+						damage = 0.5
+					}
+					damage_building = {
+						type = infrastructure
+						damage = 0.2
+					}
+				}
 		}
 	}
 }
@@ -597,25 +478,43 @@ country_event = {
 	title = italy_md.16.t
 	desc = italy_md.16.d
 	picture = GFX_report_event_earthquake
-		
-	is_triggered_only = yes
 	
 	trigger = {
-		has_full_control_of_state = 157
+		has_full_control_of_state = 960
+		date > 2009.4.5
 	}
+	fire_only_once = yes
 	
 	option = {
 		name = italy_md.16.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.16.o1 executed"
-		157 = {
-			damage_building = {
-				type = industrial_complex
-				damage = 0.5
-			}
-			damage_building = {
-				type = infrastructure
-				damage = 0.2
-			}
+		if = {
+			limit = { has_idea = ITA_building_abuse_1 }
+				960 = {
+					damage_building = {
+						type = industrial_complex
+						damage = 1
+					}
+					damage_building = {
+						type = infrastructure
+						damage = 1
+					}
+				}
+				add_political_power = -200
+				add_stability = -0.15
+		}
+		else_if = {
+			limit = { has_completed_focus = ITA_stop_building_abuse }
+				960 = {
+					damage_building = {
+						type = industrial_complex
+						damage = 0.5
+					}
+					damage_building = {
+						type = infrastructure
+						damage = 0.2
+					}
+				}
 		}
 	}
 }
@@ -775,56 +674,6 @@ country_event = {
 		ROOT_eurosceptic_decline_10_percent = yes
 	}
 }
-#Reactionary Election
-country_event = {
-	id = italy_md.22
-	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.22" }
-	title = italy_md.22.t
-	desc = italy_md.22.d
-	picture = GFX_report_event_italy
-		
-	fire_only_once = yes	
-		
-	is_triggered_only = yes
-	
-	option = {
-		name = italy_md.22.o1
-		log = "[GetDateText]: [This.GetName]: italy_md.22.o1 executed"
-		set_politics = {
-			ruling_party = communism
-			elections_allowed = yes
-		}
-		set_country_flag = ITA_elected_reactionary_party
-		hidden_effect = {
-			country_event = { id = italy_md.25 days = 2 }
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 6 }
-			update_government_coalition_strength = yes
-			update_party_name = yes
-			set_coalition_drift = yes
-		}
-	}
-}
-#Reacionary Influence in Neighbor
-country_event = {
-	id = italy_md.23
-	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.23" }
-	title = italy_md.23.t
-	desc = italy_md.23.d
-	picture = GFX_report_event_italy
-		
-	fire_only_once = yes	
-		
-	is_triggered_only = yes
-	
-	option = {
-		name = italy_md.23.o1
-		log = "[GetDateText]: [This.GetName]: italy_md.23.o1 executed"
-		add_to_variable = { party_pop_array^6 = 0.10 }
-		custom_effect_tooltip = ITA_reactionary_party_tt
-	}
-}
 #Salerno-to-Reggio Calabria Motorway
 country_event = {
 	id = italy_md.24
@@ -862,7 +711,7 @@ country_event = {
 		}
 	}
 }
-#Rise of Opposition
+#migrant smugglers sicily
 country_event = {
 	id = italy_md.25
 	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.25" }
@@ -870,26 +719,19 @@ country_event = {
 	desc = italy_md.25.d
 	picture = GFX_report_event_italy
 		
-	fire_only_once = yes	
-		
-	is_triggered_only = yes
+	hidden = yes
+	mean_time_to_happen = {
+		months = 3
+	}
 	
 	option = {
 		name = italy_md.25.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.25.o1 executed"
-		trigger = {
-			has_country_flag = ITA_elected_reactionary_party
-		}		
-	}
-	option = {
-		name = italy_md.25.o2
-		log = "[GetDateText]: [This.GetName]: italy_md.25.o1 executed"
-		trigger = {
-			has_country_flag = ITA_political_reforms_done
-		}
+		set_country_flag = ITA_illegal_migrant_boats
+		add_to_variable = { cosa_nostra_strength = 0.020 }
 	}
 }
-#Political Reforms
+#drug smugglers calabria
 country_event = {
 	id = italy_md.26
 	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.26" }
@@ -897,18 +739,16 @@ country_event = {
 	desc = italy_md.26.d
 	picture = GFX_report_event_italy
 		
-	fire_only_once = yes	
-		
-	is_triggered_only = yes
+	hidden = yes
+	mean_time_to_happen = {
+		months = 3
+	}
 	
 	option = {
 		name = italy_md.26.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.26.o1 executed"
-		add_political_power = 50
-		set_country_flag = ITA_political_reforms_done
-		hidden_effect = {
-			country_event = { id = italy_md.25 days = 2 }
-		}
+		set_country_flag = ITA_drug_smuggled_into_calabria
+		add_to_variable = { ndrangheta_strength = 0.020 }
 	}
 }
 #Investments Abroad
@@ -948,7 +788,7 @@ country_event = {
 	fire_only_once = yes
 	
 	trigger = {
-		has_idea = ITA_mafia_curtailed
+		has_country_flag = ITA_attacked_hideouts
 		any_owned_state = {
 			industrial_complex > 0
 		}
@@ -959,42 +799,7 @@ country_event = {
 	
 	mean_time_to_happen = {
 		months = 1
-	}
-	
-	option = {
-		name = italy_md.28.o1
-		log = "[GetDateText]: [This.GetName]: italy_md.28.o1 executed"
-		swap_ideas = {
-			add_idea = ITA_mafia
-			remove_idea = ITA_mafia_curtailed
-			
-		}
-		random_owned_state = {
-			limit = {
-				industrial_complex > 0
-			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.35
-			}
-		}
-		random_owned_state = {
-			limit = {
-				infrastructure > 0
-			}
-			damage_building = {
-				type = infrastructure
-				damage = 0.35
-			}
-		}
-		add_stability = -0.025
-		news_event = { id = italy_news.7 }
-		custom_effect_tooltip = ITA_stop_war_on_mafia_tt
-		ai_chance = {
-			factor = 0
-		}
-	}
-	
+	}	
 	option = {
 		name = italy_md.28.o2
 		log = "[GetDateText]: [This.GetName]: italy_md.28.o2 executed"
@@ -1006,7 +811,7 @@ country_event = {
 			}
 			damage_building = {
 				type = industrial_complex
-				damage = 1
+				damage = 0.5
 			}
 		}
 		random_owned_state = {
@@ -1015,10 +820,9 @@ country_event = {
 			}
 			damage_building = {
 				type = infrastructure
-				damage = 1
+				damage = 0.5
 			}
-		}
-		custom_effect_tooltip = ITA_continue_war_on_mafia_tt		
+		}		
 		ai_chance = {
 			factor = 100
 		}
@@ -1035,8 +839,7 @@ country_event = {
 	fire_only_once = yes
 	
 	trigger = {
-		has_country_flag = ITA_mafia_sabotages_1
-		has_idea = ITA_mafia_curtailed
+		has_country_flag = ITA_deployed_army_against_mafia
 		any_owned_state = {
 			arms_factory > 0
 		}
@@ -1047,42 +850,6 @@ country_event = {
 	
 	mean_time_to_happen = {
 		months = 1
-	}
-	
-	option = {
-		name = italy_md.29.o1
-		log = "[GetDateText]: [This.GetName]: italy_md.29.o1 executed"
-		swap_ideas = {
-			add_idea = ITA_mafia
-			remove_idea = ITA_mafia_curtailed
-			
-		}
-		random_owned_state = {
-			limit = {
-				industrial_complex > 0
-			}
-			damage_building = {
-				type = industrial_complex
-				damage = 0.3
-			}
-		}
-		random_owned_state = {
-			limit = {
-				arms_factory > 0
-			}
-			damage_building = {
-				type = arms_factory
-				damage = 0.3
-			}
-		}
-		clr_country_flag = ITA_mafia_sabotages_1
-		add_stability = -0.01
-		add_stability = -0.025
-		news_event = { id = italy_news.7 }
-		custom_effect_tooltip = ITA_stop_war_on_mafia_tt
-		ai_chance = {
-			factor = 0
-		}
 	}
 	
 	option = {
@@ -1115,151 +882,6 @@ country_event = {
 		}
 	}
 }
-#Mafia Sabotages 3
-country_event = {
-	id = italy_md.30
-	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.30" }
-	title = italy_md.30.t
-	desc = italy_md.30.d
-	picture = GFX_report_event_damaged_industry
-	
-	fire_only_once = yes
-	
-	trigger = {
-		has_country_flag = ITA_mafia_sabotages_1
-		has_country_flag = ITA_mafia_sabotages_2
-		has_idea = ITA_mafia_curtailed
-		any_owned_state = {
-			infrastructure > 0
-		}
-		any_owned_state = {
-			arms_factory > 0
-		}
-	}
-	
-	mean_time_to_happen = {
-		months = 1
-	}
-	
-	option = {
-		name = italy_md.30.o1
-		log = "[GetDateText]: [This.GetName]: italy_md.30.o1 executed"
-		swap_ideas = {
-			add_idea = ITA_mafia
-			remove_idea = ITA_mafia_curtailed
-			
-		}
-		random_owned_state = {
-			limit = {
-				infrastructure > 0
-			}
-			damage_building = {
-				type = infrastructure
-				damage = 0.3
-			}
-		}
-		random_owned_state = {
-			limit = {
-				arms_factory > 0
-			}
-			damage_building = {
-				type = arms_factory
-				damage = 0.3
-			}
-		}
-		clr_country_flag = ITA_mafia_sabotages_1
-		clr_country_flag = ITA_mafia_sabotages_2
-		add_stability = -0.01
-		add_stability = -0.025
-		news_event = { id = italy_news.7 }
-		custom_effect_tooltip = ITA_stop_war_on_mafia_tt
-		ai_chance = {
-			factor = 0
-		}
-	}
-	
-	option = {
-		name = italy_md.30.o2
-		log = "[GetDateText]: [This.GetName]: italy_md.30.o2 executed"
-		set_country_flag = ITA_mafia_sabotages_3
-		
-		random_owned_state = {
-			limit = {
-				infrastructure > 0
-			}
-			damage_building = {
-				type = infrastructure
-				damage = 1
-			}
-		}
-		random_owned_state = {
-			limit = {
-				arms_factory > 0
-			}
-			damage_building = {
-				type = arms_factory
-				damage = 1
-			}
-		}
-		add_timed_idea = { idea = ITA_mafia_sabotages_industry days = 180 }
-		custom_effect_tooltip = ITA_continue_war_on_mafia_tt
-		ai_chance = {
-			factor = 100
-		}
-	}
-}
-#Mafia Sabotages 4
-country_event = {
-	id = italy_md.31
-	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.31" }
-	title = italy_md.31.t
-	desc = italy_md.31.d
-	picture = GFX_report_event_italy
-	
-	fire_only_once = yes
-	
-	trigger = {
-		has_country_flag = ITA_mafia_sabotages_1
-		has_country_flag = ITA_mafia_sabotages_2
-		has_idea = ITA_mafia_curtailed
-	}
-	
-	mean_time_to_happen = {
-		months = 1
-	}
-	
-	option = {
-		name = italy_md.31.o1
-		log = "[GetDateText]: [This.GetName]: italy_md.31.o1 executed"
-		swap_ideas = {
-			add_idea = ITA_mafia
-			remove_idea = ITA_mafia_curtailed
-			
-		}
-		clr_country_flag = ITA_mafia_sabotages_1
-		clr_country_flag = ITA_mafia_sabotages_2
-		clr_country_flag = ITA_mafia_sabotages_3
-		add_stability = -0.03
-		add_stability = -0.025
-		news_event = { id = italy_news.7 }
-		custom_effect_tooltip = ITA_stop_war_on_mafia_tt
-		ai_chance = {
-			factor = 0
-		}
-	}
-	
-	option = {
-		name = italy_md.31.o2
-		log = "[GetDateText]: [This.GetName]: italy_md.31.o2 executed"
-		set_country_flag = ITA_mafia_sabotages_4
-		
-		add_timed_idea = { idea = ITA_mafia_sabotages_military days = 90 }
-		custom_effect_tooltip = ITA_continue_war_on_mafia_tt
-		ai_chance = {
-			factor = 100
-		}
-	}
-}
 #Victory over Mafia
 country_event = {
 	id = italy_md.32
@@ -1268,32 +890,14 @@ country_event = {
 	desc = italy_md.32.d
 	picture = GFX_report_event_italy
 	
-	fire_only_once = yes
-	
-	trigger = {
-		has_country_flag = ITA_mafia_sabotages_1
-		has_country_flag = ITA_mafia_sabotages_2
-		has_country_flag = ITA_mafia_sabotages_3
-		has_country_flag = ITA_mafia_sabotages_4
-		has_idea = ITA_mafia_curtailed
-		AND = { 
-			NOT = {
-				has_idea = ITA_mafia_sabotages_industry
-				has_idea = ITA_mafia_sabotages_military
-			}
-		}
-	}
-	
-	mean_time_to_happen = {
-		days = 1
-	}
+	is_triggered_only = yes
 	
 	option = {
 		name = italy_md.32.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.32.o1 executed"
 		swap_ideas = {
 			add_idea = ITA_victory_over_mafia
-			remove_idea = ITA_mafia_curtailed
+			remove_idea = ITA_mafia
 			
 		}
 		clr_country_flag = ITA_mafia_sabotages_1
@@ -1303,5 +907,268 @@ country_event = {
 		add_stability = 0.10
 		news_event = { id = italy_news.8 }
 		custom_effect_tooltip = ITA_end_war_on_mafia_tt
+		82 = {
+			remove_dynamic_modifier = { modifier = camorra_infiltrations_modifier }
+			set_variable = { camorra_infiltrations_var = 0 }
+			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
+		}
+		956 = {
+			remove_dynamic_modifier = { modifier = ndrangheta_infiltrations_modifier }
+			set_variable = { ndrangheta_infiltrations_var = 0 }
+			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
+		}
+		957 = {
+			remove_dynamic_modifier = { modifier = sacra_corona_unita_infiltrations_modifier }
+			set_variable = { sacra_corona_unita_infiltrations_var = 0 }
+			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
+		}
+		83 = {
+			remove_dynamic_modifier = { modifier = cosa_nostra_infiltrations_modifier }		
+			set_variable = { cosa_nostra_infiltrations_var = 0 }
+			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
+		}
+		remove_ideas = ITA_war_with_Mafia
+	}
+}
+#lateran treaties
+country_event = {
+	id = italy_md.33
+	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.33" }
+	title = italy_md.33.t
+	desc = italy_md.33.d
+	picture = GFX_report_event_political_deal2
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = italy_md.33.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.33.o1 executed"
+		add_stability = 0.05
+		add_political_power = -200
+		ITA = {
+			set_country_flag = HLS_lateran_treaties
+			country_event = italy_md.1
+		}
+	}
+	option = {
+		name = italy_md.33.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.33.o2 executed"
+		add_stability = -0.05
+		add_political_power = 200
+		ITA = {
+			country_event = italy_md.2
+		}
+	}
+}
+#seek foreign investments
+country_event = {
+	id = italy_md.34
+	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.34" }
+	title = italy_md.34.t
+	desc = italy_md.34.d
+	picture = GFX_report_event_political_deal2
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = italy_md.34.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.34.o1 executed"
+		if = {
+			limit = { tag = CHI }
+				set_country_flag = italy_china_trade_deal
+				ITA = {
+					set_country_flag = italy_china_trade_deal
+					random_owned_controlled_state = {
+						invest_cic = yes
+					}
+					country_event = italy_md.35
+					add_opinion_modifier = {
+						target = CHI
+						modifier = accepted_investment_request 
+					}
+					reverse_add_opinion_modifier = {
+						target = CHI
+						modifier = accepted_investment_request 
+					}
+				}
+		}
+		else_if = {
+			limit = { NOT = { tag = CHI } }
+				ITA = {
+					random_owned_controlled_state = {
+						invest_cic = yes
+					}
+					THIS_eurosceptic_decline_5_percent = yes
+					country_event = italy_md.35
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = accepted_investment_request 
+					}
+				}
+		}
+	}
+	option = {
+		name = italy_md.34.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.34.o2 executed"
+		ITA = {
+			country_event = italy_md.36
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = denied_investment_request 
+			}
+		}
+		
+	}
+}
+#foreign investments request accepted
+country_event = {
+	id = italy_md.35
+	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.35" }
+	title = italy_md.35.t
+	desc = italy_md.35.d
+	picture = GFX_report_event_political_deal2
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = italy_md.34.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.35.o1 executed"
+	}
+}
+#foreign investments request denied
+country_event = {
+	id = italy_md.36
+	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.36" }
+	title = italy_md.36.t
+	desc = italy_md.36.d
+	picture = GFX_report_event_political_deal2
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = italy_md.36.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.36.o1 executed"
+	}
+}
+#tag switch to PAD
+country_event = {
+	id = italy_md.37
+	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.37" }
+	title = italy_md.37.t
+	desc = italy_md.37.d
+	picture = GFX_report_event_political_deal2
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = italy_md.37.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.37.o1 executed"
+		PAD = { change_tag_from = ITA }
+	}
+	option = {
+		name = italy_md.37.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.37.o2 executed"
+	}
+}
+#government lost popularity: elections or nothing
+country_event = {
+	id = italy_md.38
+	immediate = { log = "[GetDateText]: [Root.GetName]: event italy_md.38" }
+	title = italy_md.38.t
+	desc = italy_md.38.d
+	picture = GFX_report_event_political_deal2
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = italy_md.38.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.38.o1 executed"
+		country_event = { id = MD4_election_campaign.0 }
+	}
+	option = {
+		name = italy_md.38.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.38.o2 executed"		
+		add_10_popularity_sub = yes
+		add_stability = -0.03
+	}
+}
+add_namespace = mafia
+#success in provoking infighting
+country_event = {
+	id = mafia.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event mafia.1" }
+	title = mafia.1.t
+	desc = {
+		text = mafia.1.d1		
+	}
+
+	is_triggered_only = yes
+
+	picture = GFX_ITA_generic
+
+	option = {
+		name = mafia.1.a
+		log = "[GetDateText]: [This.GetName]: mafia.1.a executed"
+		custom_effect_tooltip = mafia_strength_decrease_tt
+		add_political_power = -100
+	}
+}
+#insuccess in provoking infighting
+country_event = {
+	id = mafia.2
+	immediate = { log = "[GetDateText]: [Root.GetName]: event mafia.2" }
+	title = mafia.2.t
+	desc = {
+		text = mafia.2.d1		
+	}
+
+	is_triggered_only = yes
+
+	picture = GFX_ITA_generic
+
+	option = {
+		name = mafia.2.a
+		log = "[GetDateText]: [This.GetName]: mafia.2.a executed"
+		add_political_power = -50
+	}
+}
+#success in attacking hideout
+country_event = {
+	id = mafia.3
+	immediate = { log = "[GetDateText]: [Root.GetName]: event mafia.3" }
+	title = mafia.3.t
+	desc = {
+		text = mafia.3.d1		
+	}
+
+	is_triggered_only = yes
+
+	picture = GFX_ITA_generic
+
+	option = {
+		name = mafia.3.a
+		log = "[GetDateText]: [This.GetName]: mafia.3.a executed"
+		custom_effect_tooltip = mafia_strength_decrease_tt
+		add_political_power = 50
+		add_5_popularity_sub = yes
+	}
+}
+#insuccess in attacking hideout
+country_event = {
+	id = mafia.4
+	immediate = { log = "[GetDateText]: [Root.GetName]: event mafia.4" }
+	title = mafia.4.t
+	desc = {
+		text = mafia.4.d1		
+	}
+
+	is_triggered_only = yes
+
+	picture = GFX_ITA_generic
+
+	option = {
+		name = mafia.4.a
+		log = "[GetDateText]: [This.GetName]: mafia.4.a executed"
+		add_political_power = -50
 	}
 }
