@@ -1,13 +1,12 @@
 version="1.1"
 name="Millennium_Dawn DEV"
-path="mod/Millennium_Dawn/"
 tags={
 	"Alternative History"
 	"Gameplay"
 	"Events"
 	"Graphics"
 }
-supported_version="1.9.*"
+supported_version="1.10.*"
 picture = "thumbnail.png"
 remote_file_id="719416488"
 
@@ -45,3 +44,4 @@ replace_path = "history/countries/"
 replace_path = "events/"
 replace_path = "gfx/loadingscreens"
 replace_path = "portraits"
+path="C:/Users/Jackson/Documents/Paradox Interactive/Hearts of Iron IV/mod/Millennium_Dawn"
