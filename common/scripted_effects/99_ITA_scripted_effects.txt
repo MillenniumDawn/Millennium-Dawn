@@ -1461,6 +1461,45 @@ stop_elections = {
 		}
 	}
 }
+weekly_stability_dynamic_modifier_update = {	
+	set_variable = { base_stability = stability }
+	subtract_from_variable = { base_stability = modifier@stability_factor }
+	if = { 
+		limit = { has_government = fascism }
+			set_variable = { party_pop_stab = party_popularity@fascism }
+			multiply_variable = { party_pop_stab = 0.15 }
+	}
+	else_if ={
+		limit = { has_government = communism }
+			set_variable = { party_pop_stab = party_popularity@communism }
+			multiply_variable = { party_pop_stab = 0.15 }
+	}
+	else_if = { 
+		limit = { has_government = democratic } 
+			set_variable = { party_pop_stab = party_popularity@democratic }
+			multiply_variable = { party_pop_stab = 0.15 }
+	}
+	else_if = { 
+		limit = { has_government = neutrality }
+			set_variable = { party_pop_stab = party_popularity@neutrality }
+			multiply_variable = { party_pop_stab = 0.15 }
+	}
+	else_if = { 
+		limit = { has_government = nationalist }
+			set_variable = { party_pop_stab = party_popularity@nationalist }
+			multiply_variable = { party_pop_stab = 0.15 }
+	}
+	subtract_from_variable = { base_stability = party_pop_stab }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { base_stability > 0.999 }
+				check_variable = { base_stability < 0.001 }
+			}
+		}
+		add_to_variable = { stability_weekly_stuck_var = modifier@stability_weekly }
+	}
+}
 
 add_40_western_autocracy = {
 	add_to_variable =  {
