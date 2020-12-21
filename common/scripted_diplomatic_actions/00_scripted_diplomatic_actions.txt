@@ -191,7 +191,11 @@ scripted_diplomatic_actions = {
 
 	propose_improved_trade_agreement = {
 		allowed = { always = yes }
-		visible = { THIS = { NOT = { has_country_flag = trade_agreement@ROOT } } }
+		visible = {
+			THIS = {
+				NOT = { has_country_flag = trade_agreement@ROOT }
+			}
+		}
 		selectable = {
 			custom_trigger_tooltip = {
 				tooltip = PROPOSE_TRADE_AGREEMENT_TOOLTIP
@@ -199,24 +203,31 @@ scripted_diplomatic_actions = {
 					NOT = { has_country_flag = trade_agreement@ROOT }
 				}
 			}
-			custom_trigger_tooltip = {
-				tooltip = "Does Not Have a Pending Offer from Us"
-				THIS = {
-					ROOT = {
-						NOT = { has_country_flag = sent_offer@PREV }
-					}
-					NOT = { has_country_flag = pending_offer@ROOT }
-				}
-			}
 			THIS = {
 				if = {
-					limit = { THIS = { is_in_faction = yes } }
-					any_allied_country = {
-						has_opinion = { target = ROOT value > 0 }
+					limit = {
+						ROOT = { NOT = { has_idea = EU_member } }
+						THIS = { tag = SWI }
 					}
+					if = {
+						limit = { THIS = { is_in_faction = yes } }
+						any_allied_country = {
+							has_opinion = { target = ROOT value > 50 }
+						}
+					}
+					NOT = { has_war_with = ROOT }
+					has_opinion = { target = ROOT value > 50 }
 				}
-				NOT = { has_war_with = ROOT }
-				has_opinion = { target = ROOT value > 0 }
+				else = {
+					if = {
+						limit = { THIS = { is_in_faction = yes } }
+						any_allied_country = {
+							has_opinion = { target = ROOT value > 10 }
+						}
+					}
+					NOT = { has_war_with = ROOT }
+					has_opinion = { target = ROOT value > 10 }
+				}
 			}
 			NOT = {
 				any_allied_country = {
@@ -228,26 +239,18 @@ scripted_diplomatic_actions = {
 			}
 		}
 		cost = 50
-		can_be_sent = { always = no }
 		requires_acceptance = yes
 		show_acceptance_on_action_button = yes
 		icon = 1
 		send_description = PROPOSE_TRADE_AGREEMENT_DESC
 
-		on_sent_effect = {
-			THIS = {
-				set_country_flag = pending_offer@ROOT
-				ROOT = {
-					set_country_flag = sent_offer@PREV
-				}
-			}
-		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action propose_improved_trade_agreement"
-
 			set_country_flag = trade_agreement@ROOT
+			clr_country_flag = pending_offer@ROOT
 			ROOT = {
 				set_country_flag = trade_agreement@PREV
+				clr_country_flag = pending_offer
 			}
 			THIS = {
 				add_opinion_modifier = { target = ROOT modifier = mutual_trade_agreement }
@@ -256,17 +259,7 @@ scripted_diplomatic_actions = {
 				reverse_add_opinion_modifier = { target = ROOT modifier = mutual_trade_agreement }
 				generic_grant_1_percent_influence_of_ROOT = yes
 				ROOT = {
-					clr_country_flag = sent_offer@PREV
 					generic_grant_1_percent_influence_of_PREV = yes
-				}
-				clr_country_flag = pending_offer@ROOT
-			}
-		}
-		reject_effect = {
-			THIS = {
-				clr_country_flag = pending_offer@ROOT
-				ROOT = {
-					clr_country_flag = sent_offer@PREV
 				}
 			}
 		}
@@ -284,9 +277,43 @@ scripted_diplomatic_actions = {
 					THIS = { has_country_flag = italy_china_trade_deal }
 					add = 50
 				}
+			}
+			condition_two = {
+				base = 0
 				modifier = {
-					add = 1
+					add = 5
 					is_same_government_THIS_ROOT = yes
+				}
+				modifier = {
+					add = -50
+					THIS = { has_government = nationalist }
+				}
+			}
+			condition_three = {
+				base = 0
+				modifier = {
+					add = -10
+					THIS = { has_opinion = { target = ROOT value < 0 } }
+					THIS = { has_opinion = { target = ROOT value > -25 } }
+				}
+				modifier = {
+					add = -15
+					THIS = { has_opinion = { target = ROOT value < -24 } }
+					THIS = { has_opinion = { target = ROOT value > -50 } }
+				}
+				modifier = {
+					add = -20
+					THIS = { has_opinion = { target = ROOT value < -49 } }
+					THIS = { has_opinion = { target = ROOT value > -100 } }
+				}
+				modifier = {
+					add = -30
+					THIS = { has_opinion = { target = ROOT value < -99 } }
+					THIS = { has_opinion = { target = ROOT value > -150 } }
+				}
+				modifier = {
+					add = -50
+					THIS = { has_opinion = { target = ROOT value < -150 } }
 				}
 				modifier = {
 					add = 5
@@ -312,37 +339,18 @@ scripted_diplomatic_actions = {
 					add = 30
 					THIS = { has_opinion = { target = ROOT value > 149 } }
 				}
+			}
+			condition_four = {
+				base = 0
 				modifier = {
-					THIS = { tag = ENG }
-					add = -25
+					ROOT = { has_idea = NATO_member }
+					THIS = { has_idea = NATO_member }
+					add = 10
 				}
+			}
+			condition_five = {
+				base = 0
 				modifier = {
-					add = -25
-					THIS = {
-						NOT = {
-							OR = {
-								has_idea = EU_member
-								tag = SWI
-							}
-						}
-						has_government = neutrality
-					}
-				}
-				modifier = {
-					THIS = {
-						set_temp_variable = { temp_idx = -1 }
-						any_of = {
-							array = influence_array
-							check_variable = { v = ROOT }
-						}
-						set_temp_variable = { temp_idx = i }
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx > 0.05 }
-					}
-					add = 2
-				}
-				modifier = {
-					add = 5
 					THIS = {
 						OR = {
 							has_idea = EU_member
@@ -350,24 +358,14 @@ scripted_diplomatic_actions = {
 						}
 					}
 					ROOT = { has_idea = EU_member }
-				}
-				modifier = {
-					add = -50
-					THIS = { has_government = nationalist }
-				}
-				modifier = {
-					ROOT = { has_idea = EU_member }
-					THIS = { has_idea = EU_member }
 					add = 15
 				}
-				modifier = {
-					ROOT = { has_idea = NATO_member }
-					THIS = { has_idea = NATO_member }
-					add = 10
-				}
+			}
+			condition_six = {
+				base = 0
 				modifier = {
 					ROOT = { is_in_faction_with = PREV }
-					factor = 2.0
+					add = 10
 				}
 			}
 		}
@@ -455,7 +453,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		cost = 100
-		can_be_sent = { always = no }
+		can_be_sent = { always = yes }
 		show_acceptance_on_action_button = no
 		requires_acceptance = no
 		icon = 1
