@@ -1,0 +1,182 @@
+on_actions = {
+	on_daily_ITA = { 
+		effect = {
+			if = { #to update the cost of bureaucracy from starting ideas
+				limit = { has_idea = ITA_inefficient_administration_4 }
+					ingame_calculate_size_modifier = yes
+					update_bureaucracy_rate = yes
+					calculate_interest_rate = yes
+					calculate_debt_rate = yes
+			}
+			add_to_variable = { rsde_counter = 1 } #i have to do this because i can't add extra decimals
+			if = {
+				limit = { check_variable = { rsde_counter = 20 } }
+					ruling_subparty_drift_effect = yes #related to reform expectance dynamic modifier
+					set_variable = { rsde_counter = 1 }
+			}
+			if = {
+				limit = { has_idea = ITA_mafia }					
+					clamp_variable = {
+						var = cosa_nostra_strength
+						min = 0
+						max = 1
+					}
+					clamp_variable = {
+						var = camorra_strength
+						min = 0
+						max = 1
+					}
+					clamp_variable = {
+						var = ndrangheta_strength
+						min = 0
+						max = 1
+					}
+					clamp_variable = {
+						var = sacra_corona_unita_strength
+						min = 0
+						max = 1
+					}
+					update_mafia_strength = yes
+			}
+		}
+	}
+	on_weekly_ITA = {
+		effect = {
+			if = { #infiltrations_var increase state construction time
+				limit = { has_idea = ITA_mafia }
+					update_police_effectivness = yes
+					83 = {
+						set_variable = { cosa_nostra_infiltrations_var = ROOT.cosa_nostra_strength }
+						multiply_variable = { cosa_nostra_infiltrations_var = 100 }
+						round_variable = cosa_nostra_infiltrations_var
+						divide_variable = { cosa_nostra_infiltrations_var = -100 }
+					}
+					82 = {
+						set_variable = { camorra_infiltrations_var = ROOT.camorra_strength }
+						multiply_variable = { camorra_infiltrations_var = 100 }
+						round_variable = camorra_infiltrations_var
+						divide_variable = { camorra_infiltrations_var = -100 }
+					}
+					956 = {
+						set_variable = { ndrangheta_infiltrations_var = ROOT.ndrangheta_strength }
+						multiply_variable = { ndrangheta_infiltrations_var = 100 }
+						round_variable = ndrangheta_infiltrations_var
+						divide_variable = { ndrangheta_infiltrations_var = -100 }
+					}
+					957 = {
+						set_variable = { sacra_corona_unita_infiltrations_var = ROOT.sacra_corona_unita_strength }
+						multiply_variable = { sacra_corona_unita_infiltrations_var = 100 }
+						round_variable = sacra_corona_unita_infiltrations_var
+						divide_variable = { sacra_corona_unita_infiltrations_var = -100 }
+					}
+					if = {
+						limit = { check_variable = { mafia_strength < 0.1 }}
+							add_to_variable = { mafia_defeat_counter = 1 }
+					}
+					else_if = {
+						limit = {
+							AND = {
+								check_variable = { mafia_strength > 0.099 }
+								check_variable = { mafia_defeat_counter > 0 }
+							}
+						}
+							add_to_variable = { mafia_defeat_counter = -1 }
+					}
+					if = {
+						limit = { check_variable = { mafia_defeat_counter > 99 }}
+							country_event = italy_md.32
+							set_variable = { mafia_defeat_counter = 0 }
+					}
+			}
+			if = {
+				limit = { has_elections = yes }
+					small_parties_leave_coalition = yes
+			}
+			weekly_stability_dynamic_modifier_update = yes
+		}
+	}
+	on_monthly_ITA = {
+		effect = {
+			if = { #monthly drifts in mafia strength, base value plus focus effects
+				limit = { has_idea = ITA_mafia }
+					if = {
+						limit = {
+							check_variable = { mafia_strength < 0.100 }
+						}							
+							add_to_variable = { cosa_nostra_strength = 0.012 }
+							add_to_variable = { camorra_strength = 0.012 }
+							add_to_variable = { ndrangheta_strength = 0.012 }
+							add_to_variable = { sacra_corona_unita_strength = 0.012 }
+					}
+					else_if = {
+						limit = { 
+							check_variable = { mafia_strength > 0.099 }
+							check_variable = { mafia_strength < 0.400 }
+						}
+							add_to_variable = { cosa_nostra_strength = 0.006 }
+							add_to_variable = { camorra_strength = 0.006 }
+							add_to_variable = { ndrangheta_strength = 0.006 }
+							add_to_variable = { sacra_corona_unita_strength = 0.006 }
+					}
+					else_if = {
+						limit = { 
+							check_variable = { mafia_strength > 0.399 }
+							check_variable = { mafia_strength < 0.666 }
+						}
+							add_to_variable = { cosa_nostra_strength = 0.004 }
+							add_to_variable = { camorra_strength = 0.004 }
+							add_to_variable = { ndrangheta_strength = 0.004 }
+							add_to_variable = { sacra_corona_unita_strength = 0.004 }
+					}
+					else_if = {
+						limit = { 
+							check_variable = { mafia_strength > 0.665 }
+						}
+							add_to_variable = { cosa_nostra_strength = 0.002 }
+							add_to_variable = { camorra_strength = 0.002 }
+							add_to_variable = { ndrangheta_strength = 0.002 }
+							add_to_variable = { sacra_corona_unita_strength = 0.002 }
+					}
+					if = {
+						limit = { has_idea = ITA_legalized_light_drugs }
+							add_to_variable = { cosa_nostra_strength = -0.004 }
+							add_to_variable = { camorra_strength = -0.4 }
+							add_to_variable = { ndrangheta_strength = -0.004 }
+							add_to_variable = { sacra_corona_unita_strength = -0.004 }
+					}
+					if = {
+						limit = { has_completed_focus = ITA_anti_mafia_education }
+							add_to_variable = { cosa_nostra_strength = -0.004 }
+							add_to_variable = { camorra_strength = -0.004 }
+							add_to_variable = { ndrangheta_strength = -0.004 }
+							add_to_variable = { sacra_corona_unita_strength = -0.004 }
+					}
+					if = {
+						limit = { has_completed_focus = ITA_seek_support_of_the_church }
+							add_to_variable = { cosa_nostra_strength = -0.003 }
+							add_to_variable = { camorra_strength = -0.003 }
+							add_to_variable = { ndrangheta_strength = -0.003 }
+							add_to_variable = { sacra_corona_unita_strength = -0.003 }
+					}
+					if = {
+						limit = { has_completed_focus = ITA_turn_the_population_against_them }
+							add_to_variable = { cosa_nostra_strength = -0.002 }
+							add_to_variable = { camorra_strength = -0.002 }
+							add_to_variable = { ndrangheta_strength = -0.002 }
+							add_to_variable = { sacra_corona_unita_strength = -0.002 }
+					}
+					if = {
+						limit = { has_completed_focus = ITA_safeguard_european_development_funds }
+							add_to_variable = { cosa_nostra_strength = -0.002 }
+							add_to_variable = { camorra_strength = -0.002 }
+							add_to_variable = { ndrangheta_strength = -0.002 }
+							add_to_variable = { sacra_corona_unita_strength = -0.002 }
+					}
+			}
+			if = {
+				limit = { has_elections = yes }
+					government_crisis_check = yes
+			}
+		}
+	}
+}
