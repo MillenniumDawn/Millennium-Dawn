@@ -1,8 +1,8 @@
 	NDefines.NGame.START_DATE = "2000.1.1.12"
 	NDefines.NGame.END_DATE = "2070.1.1.1"
 
-	NDefines.NDiplomacy.MAX_OPINION_VALUE = 200
-	NDefines.NDiplomacy.MIN_OPINION_VALUE = -200
+	NDefines.NDiplomacy.MAX_OPINION_VALUE = 250
+	NDefines.NDiplomacy.MIN_OPINION_VALUE = -250
 	NDefines.NDiplomacy.BASE_NEGATIVE_OPINION_AFTER_BEING_KICKED = 50
 	NDefines.NDiplomacy.DECAY_RATE_OF_NEGATIVE_OPINION_AFTER_BEING_KICKED = 0.5
 	NDefines.NDiplomacy.TRUCE_BREAK_COST_PP = 100
@@ -25,8 +25,8 @@
 	NDefines.NDiplomacy.VOLUNTEERS_DIVISIONS_REQUIRED = 7
 	NDefines.NDiplomacy.TENSION_STATE_VALUE = 4
 	NDefines.NDiplomacy.TENSION_CIVIL_WAR_IMPACT = 0.4
-	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 15
-	NDefines.NDiplomacy.TENSION_CB_WAR = 8
+	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 13
+	NDefines.NDiplomacy.TENSION_CB_WAR = 7
 	NDefines.NDiplomacy.TENSION_ANNEX_NO_CLAIM = 3
 	NDefines.NDiplomacy.TENSION_ANNEX_CLAIM = 2
 	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.5
@@ -246,7 +246,7 @@
 	NDefines.NNavy.ANTI_AIR_TARGETING = 20.7 -- 0.9
 	NDefines.NNavy.ANTI_AIR_TARGETTING_TO_CHANCE = 0.005 -- 0.07
 	NDefines.NNavy.ANTI_AIR_ATTACK_TO_AMOUNT = 0.001 -- 0.005
-	NDefines.NNavy.MISSIONS_FUEL_COSTS = {
+	NDefines.NNavy.MISSION_FUEL_COSTS = {
 		0.0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		0.75, -- PATROL
 		1.0, -- STRIKE FORCE (does not cost fuel at base, and uses IN_COMBAT_FUEL_COST in combat. this is just for the movement in between)
@@ -263,7 +263,18 @@
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.005		-- ai will try to build a silo per this ratio of civ factories
 	NDefines.NAI.NUM_SILOS_PER_MILITARY_FACTORIES = 0.020		-- ai will try to build a silo per this ratio of mil factories
 	NDefines.NAI.NUM_SILOS_PER_DOCKYARDS = 0.03
-	NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_
+	NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
+		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+		200, -- PATROL
+		200, -- STRIKE FORCE
+		200, -- CONVOY RAIDING
+		100, -- CONVOY ESCORT
+		200, -- MINES PLANTING
+		100, -- MINES SWEEPING
+		0, -- TRAIN
+		0, -- RESERVE_FLEET
+		100, -- NAVAL INVASION SUPPORT
+	}
 
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
 	NDefines.NTrade.BASE_LAND_TRADE_RANGE = 350 -- 1000
@@ -390,10 +401,10 @@
 	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0.25 					-- countries will exit fuel saving mode if they have more fuel ratio than this
 	NDefines.NAI.LAND_COMBAT_CAS_WINGS_PER_ENEMY_ARMY_LIMIT = 5	-- Limit of CAS wings requested by enemy armies
 	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- Amount of CAS planes requested per enemy army
-	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 50
-	--`NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 5
+	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 65
+	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
 	NDefines.NAI.LLAND_COMBAT_MIN_EXCORT_WINGS = 2
-	NDefines.NAI.MIN_WANTED_MAX_FUEL = 0.1
+	NDefines.NAI.MIN_WANTED_MAX_FUEL = 25
 	--NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 10.0
 	NDefines.NAI.STR_BOMB_MIN_EXCORT_WINGS = 1
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
@@ -401,7 +412,7 @@
 	--Country Defines
 	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
 	NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 25						-- base amount of fuel gained hourly per excess oil
-	--NDefines.NCountry.BASE_FUEL_GAIN = 3.0							-- base amount of fuel gained hourly, independent of excess oil
+	NDefines.NCountry.BASE_FUEL_GAIN = 1.0							-- base amount of fuel gained hourly, independent of excess oil
 	NDefines.NCountry.BASE_FUEL_CAPACITY = 500000
 	NDefines.NAI.LAND_COMBAT_OUR_ARMIES_AIR_IMPORTANCE = 100
 	NDefines.NAI.LAND_COMBAT_OUR_COMBATS_AIR_IMPORTANCE = 200		-- Strategic importance of our armies in the combats
@@ -423,6 +434,8 @@
 	NDefines.NOperatives.AGENCY_UPGRADE_DAYS = 90 -- 20 in Vanilla
 	NDefines.NResistance.GARRISON_MANPOWER_LOST_BY_ATTACK = 0.03 	-- Ratio of manpower lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
 	NDefines.NResistance.GARRISON_EQUIPMENT_LOST_BY_ATTACK = 0.05 	-- Ratio of equipment lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
+	NDefines.NResistance.RESISTANCE_GROWTH_BASE = 0.1 --base resistance growth
+	NDefines.NResistance.COMPLIANCE_GROWTH_BASE = 0.1 --base compliance gain
 
 	-- Faction related stuff
 	NDefines.NDiplomacy.TRUCE_PERIOD_AFTER_KICKING_FROM_FACTION = 30				-- Truce period after kicking someone from faction in days.
