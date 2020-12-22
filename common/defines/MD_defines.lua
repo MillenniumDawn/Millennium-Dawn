@@ -204,9 +204,9 @@
 	NDefines.NAir.COMBAT_ONE_ON_ONE_CHANCE = 0.5 -- 0.6
 	NDefines.NAir.COMBAT_SITUATION_WIN_CHANCE_FROM_STATS = 3.5 -- 0.3
 	NDefines.NAir.COMBAT_SITUATION_WIN_CHANCE_FROM_GANG = 0.8 -- 0.3
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 500 -- 10000
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 500 -- 10000
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 500 -- 10000
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 5000 -- 10000
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 2500 -- 10000
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 2000 -- 10000
 	NDefines.NAir.DETECT_CHANCE_FROM_AIRCRAFTS_EFFECTIVE_COUNT = 150 -- 3000
 	NDefines.NAir.DETECT_CHANCE_FROM_NIGHT = -0.05 -- -0.2
 	NDefines.NAir.CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 3 -- 4
@@ -246,12 +246,30 @@
 	NDefines.NNavy.ANTI_AIR_TARGETING = 20.7 -- 0.9
 	NDefines.NNavy.ANTI_AIR_TARGETTING_TO_CHANCE = 0.005 -- 0.07
 	NDefines.NNavy.ANTI_AIR_ATTACK_TO_AMOUNT = 0.001 -- 0.005
+	NDefines.NNavy.MISSIONS_FUEL_COSTS = {
+		0.0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+		0.75, -- PATROL
+		1.0, -- STRIKE FORCE (does not cost fuel at base, and uses IN_COMBAT_FUEL_COST in combat. this is just for the movement in between)
+		1.0, -- CONVOY RAIDING
+		0.50, -- CONVOY ESCORT
+		1.0, -- MINES PLANTING
+		1.0, -- MINES SWEEPING
+		0.4, -- TRAIN
+		0.0, -- RESERVE_FLEET (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+		1.0, -- NAVAL_INVASION_SUPPORT (does not cost fuel at base, only costs while doing bombardment and escorting units)
+	}
+	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.15
+	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.15
+	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.005		-- ai will try to build a silo per this ratio of civ factories
+	NDefines.NAI.NUM_SILOS_PER_MILITARY_FACTORIES = 0.020		-- ai will try to build a silo per this ratio of mil factories
+	NDefines.NAI.NUM_SILOS_PER_DOCKYARDS = 0.03
+	NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_
 
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
-	NDefines.NTrade.BASE_LAND_TRADE_RANGE = 200 -- 1000
+	NDefines.NTrade.BASE_LAND_TRADE_RANGE = 350 -- 1000
 	NDefines.NTrade.ANTI_MONOPOLY_TRADE_FACTOR_THRESHOLD = 0.7 -- 0.5
 
-	NDefines.NAI.BASE_RELUCTANCE = 35 -- 20
+	NDefines.NAI.BASE_RELUCTANCE = 40 -- 20
 	NDefines.NAI.DIPLOMATIC_ACTION_PROPOSE_SCORE = 25 -- 50
 	NDefines.NAI.DILPOMATIC_ACTION_DECLARE_WAR_WARGOAL_BASE = 75 -- 50
 	NDefines.NAI.DIPLOMACY_IMPROVE_RELATION_COST_FACTOR = 10.0 -- 5
@@ -329,7 +347,30 @@
 	NDefines.NAI.INVASION_DISTANCE_RANDOMNESS = 200					-- 300
 	NDefines.NAI.NAVAL_TRANSFER_AIR_IMPORTANCE = 25.0				-- 0
 	NDefines.NAI.FOCUS_TREE_CONTINUE_FACTOR = 1		-- Factor for score of how likely the AI is to keep going down a focus tree rather than starting a new path.
-
+	NDefines.NAI.HIGH_PRIO_NAVAL_MISSION_SCORES = {
+		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+		100000, -- PATROL
+		1000, -- STRIKE FORCE
+		1500, -- CONVOY RAIDING
+		1000, -- CONVOY ESCORT
+		-1, -- MINES PLANTING
+		300, -- MINES SWEEPING
+		100, -- TRAIN
+		0, -- RESERVE_FLEET
+		1000, -- NAVAL INVASION SUPPORT
+	}
+	NDefines.NAI.MAX_MISSION_PER_TASKFORCE = {
+		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+		1.5, -- PATROL
+		6, -- STRIKE FORCE
+		1.5, -- CONVOY RAIDING
+		4, -- CONVOY ESCORT
+		2, -- MINES PLANTING
+		2, -- MINES SWEEPING
+		1, -- TRAIN
+		0, -- RESERVE_FLEET
+		10, -- NAVAL INVASION SUPPORT
+	}
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_LAND_FORT_LEVEL = 7			-- 15
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5		-- 10
 	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.4
@@ -344,9 +385,9 @@
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_REGULAR_FUEL_MODE = 2.0				-- fuel consumptions will be limited by this ratio in regular fuel mode
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_AGRESSIVE_FUEL_MODE = 5.0				-- fuel consumptions will be limited by this ratio in aggressive fuel usage mode
 	NDefines.NAI.AIR_SUPERIORITY_FACTOR = 2.7
-	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE = 1				-- countries will enter fuel saving mode if they will be out of fuel in this number of days and their fuel ratio is below next define
-	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE_FUEL_RATIO = 0.01
-	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0.01 					-- countries will exit fuel saving mode if they have more fuel ratio than this
+	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE = 25				-- countries will enter fuel saving mode if they will be out of fuel in this number of days and their fuel ratio is below next define
+	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE_FUEL_RATIO = 0.15
+	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0.25 					-- countries will exit fuel saving mode if they have more fuel ratio than this
 	NDefines.NAI.LAND_COMBAT_CAS_WINGS_PER_ENEMY_ARMY_LIMIT = 5	-- Limit of CAS wings requested by enemy armies
 	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- Amount of CAS planes requested per enemy army
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 50
@@ -359,7 +400,7 @@
 
 	--Country Defines
 	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
-	NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 10						-- base amount of fuel gained hourly per excess oil
+	NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 25						-- base amount of fuel gained hourly per excess oil
 	--NDefines.NCountry.BASE_FUEL_GAIN = 3.0							-- base amount of fuel gained hourly, independent of excess oil
 	NDefines.NCountry.BASE_FUEL_CAPACITY = 500000
 	NDefines.NAI.LAND_COMBAT_OUR_ARMIES_AIR_IMPORTANCE = 100
