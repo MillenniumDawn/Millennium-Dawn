@@ -89,10 +89,13 @@ peace_time_naval_missions = {
 
 halt_sub_missions = {
 	enable = {
-		any_enemy_country = {
-			strength_ratio = { tag = ROOT ratio = 0.25 }
+		OR = {
+			any_enemy_country = {
+				strength_ratio = { tag = ROOT ratio = 0.25 }
+			}
+			alliance_naval_strength_ratio < 0.25
+			fuel_ratio < 0.20
 		}
-		alliance_naval_strength_ratio < 0.25
 	}
 	abort_when_not_enabled = yes
 
@@ -100,9 +103,28 @@ halt_sub_missions = {
 }
 
 conserve_fuel = {
-	enable = { is_major = yes fuel_ratio < 0.25 }
-	abort = { NOT = { fuel_ratio < 0.5 } }
+	enable = { fuel_ratio < 0.25 }
+	abort = { fuel_ratio > 0.5 }
 
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_STRIKE_FORCE" value = 200000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_CONVOY_RAIDING" value = 200000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_MINES_PLANTING" value = 200000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_MINES_SWEEPING" value = 200000 }
+}
+
+conserve_fuel_if_fighting_landlocked_nations = {
+	enable = {
+		all_enemy_country = {
+			any_owned_state = {
+				is_coastal = no
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_PATROL" value = 200000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_STRIKE_FORCE" value = 200000 }
+	ai_strategy = { type = naval_mission_threshold id = "MISSION_CONVOY_ESCORT" value = 200000 }
 	ai_strategy = { type = naval_mission_threshold id = "MISSION_CONVOY_RAIDING" value = 200000 }
 	ai_strategy = { type = naval_mission_threshold id = "MISSION_MINES_PLANTING" value = 200000 }
 	ai_strategy = { type = naval_mission_threshold id = "MISSION_MINES_SWEEPING" value = 200000 }
