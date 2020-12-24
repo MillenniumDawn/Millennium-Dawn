@@ -204,9 +204,9 @@
 	NDefines.NAir.COMBAT_ONE_ON_ONE_CHANCE = 0.5 -- 0.6
 	NDefines.NAir.COMBAT_SITUATION_WIN_CHANCE_FROM_STATS = 3.5 -- 0.3
 	NDefines.NAir.COMBAT_SITUATION_WIN_CHANCE_FROM_GANG = 0.8 -- 0.3
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 5000 -- 10000
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 2500 -- 10000
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 2000 -- 10000
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 7500 -- 10000 --Upped the count to ensure more airusages and coverage
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 5000 -- 10000
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 2500 -- 10000
 	NDefines.NAir.DETECT_CHANCE_FROM_AIRCRAFTS_EFFECTIVE_COUNT = 150 -- 3000
 	NDefines.NAir.DETECT_CHANCE_FROM_NIGHT = -0.05 -- -0.2
 	NDefines.NAir.CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 3 -- 4
@@ -408,6 +408,7 @@
 	--NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 10.0
 	NDefines.NAI.STR_BOMB_MIN_EXCORT_WINGS = 1
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
+	NDefines.NAI.NAVAL_MIN_EXCORT_WINGS = 1 --Updated AI Air prioties
 
 	--Country Defines
 	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
@@ -436,6 +437,11 @@
 	NDefines.NResistance.GARRISON_EQUIPMENT_LOST_BY_ATTACK = 0.05 	-- Ratio of equipment lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
 	NDefines.NResistance.RESISTANCE_GROWTH_BASE = 0.1 --base resistance growth
 	NDefines.NResistance.COMPLIANCE_GROWTH_BASE = 0.1 --base compliance gain
+	NDefines.NOperatives.BASE_COUNTER_INTELLIGENCE_RATING = 1.0 -- Set to 1 to prevent weird negatives
+	NDefines.NOperatives.AGENCY_UPGRADE_PER_OPERATIVE_SLOT = 4 -- Reduced from vanilla
+	NDefines.NOperatives.BECOME_SPYMASTER_MIN_UPGRADES = 5 -- Boosted from 3
+	NDefines.NOperatives.QUIET_INTEL_NETWORK_DAILY_XP_GAIN = 0.05 -- Better than 0
+
 
 	-- Faction related stuff
 	NDefines.NDiplomacy.TRUCE_PERIOD_AFTER_KICKING_FROM_FACTION = 30				-- Truce period after kicking someone from faction in days.
