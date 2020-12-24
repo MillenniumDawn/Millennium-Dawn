@@ -190,6 +190,8 @@
 	NDefines.NMilitary.MAX_ARMY_EXPERIENCE = 1000 --500 --Increased AMax Experience cuz reasons
 	NDefines.NMilitary.MAX_AIR_EXPERIENCE = 1000 --500
 	NDefines.NMilitary.MAX_NAVY_EXPERIENCE = 1000 --500
+	NDefines.NMilitary.ATTACHED_WINGS_ORDER_UPDATE_DAYS = 3 -- 5 Reduce from 5 to make AI updates more frequent so its more responsive
+
 
 	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 200 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 200 -- 100
@@ -204,9 +206,9 @@
 	NDefines.NAir.COMBAT_ONE_ON_ONE_CHANCE = 0.5 -- 0.6
 	NDefines.NAir.COMBAT_SITUATION_WIN_CHANCE_FROM_STATS = 3.5 -- 0.3
 	NDefines.NAir.COMBAT_SITUATION_WIN_CHANCE_FROM_GANG = 0.8 -- 0.3
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 5000 -- 10000
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 2500 -- 10000
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 2000 -- 10000
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 7500 -- 10000 --Upped the count to ensure more airusages and coverage
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 5000 -- 10000
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 2500 -- 10000
 	NDefines.NAir.DETECT_CHANCE_FROM_AIRCRAFTS_EFFECTIVE_COUNT = 150 -- 3000
 	NDefines.NAir.DETECT_CHANCE_FROM_NIGHT = -0.05 -- -0.2
 	NDefines.NAir.CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 3 -- 4
@@ -275,6 +277,21 @@
 		0, -- RESERVE_FLEET
 		100, -- NAVAL INVASION SUPPORT
 	}
+	NDefines.NAI.MAX_MISSION_PER_TASKFORCE = {  -- max mission region/taskforce ratio
+		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+		2, -- PATROL
+		4, -- STRIKE FORCE
+		2, -- CONVOY RAIDING
+		4, -- CONVOY ESCORT
+		2, -- MINES PLANTING
+		2, -- MINES SWEEPING
+		0, -- TRAIN
+		0, -- RESERVE_FLEET
+		10, -- NAVAL INVASION SUPPORT
+	}
+	NDefines.NAI.NAVAL_MISSION_DISTANCE_BASE = 4000					-- Base value when AI is evaluating distance score to places
+	NDefines.NAI.NAVAL_MISSION_INVASION_BASE = 1500					-- Base score for region with naval invasion (modified dynamically by prioritizing orders)
+	NDefines.NAI.MANPOWER_FREE_USAGE_THRESHOLD = 50000 -- Manpower is much more scrace in MD. Therefore smaller number allows more dynamic AI
 
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
 	NDefines.NTrade.BASE_LAND_TRADE_RANGE = 350 -- 1000
@@ -408,6 +425,8 @@
 	--NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 10.0
 	NDefines.NAI.STR_BOMB_MIN_EXCORT_WINGS = 1
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
+	NDefines.NAI.DAYS_BETWEEN_AIR_PRIORITIES_UPDATE = 2 -- Update AI Air Priorities
+	NDefines.NAI.NAVAL_MIN_EXCORT_WINGS = 1 --Updated AI Air prioties
 
 	--Country Defines
 	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
@@ -427,6 +446,19 @@
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of pirority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
 		'industrial_complex', -- Deleted Arms Factory to help minimize conversion issues
 	}
+		-- these values are used for ai_desire_ variables that are used occupation law selection
+	NDefines.NAI.OIL_WANT_PER_POTENTIAL_LAND_CONSUMPTION_K = 0.1       	-- how much extra oil requested on top of balance for country's potential oil consumptions
+	NDefines.NAI.OIL_WANT_PER_POTENTIAL_NAVY_CONSUMPTION_K = 0.1
+	NDefines.NAI.OIL_WANT_PER_POTENTIAL_AIR_CONSUMPTION_K = 0.1
+	NDefines.NAI.OIL_WANT_PER_POTENTIAL_MISC_CONSUMPTION_K = 0.1
+	NDefines.NAI.OIL_WANT_AT_PEACE_PER_POTENTIAL_LAND_CONSUMPTION_K = 0.05
+	NDefines.NAI.OIL_WANT_AT_PEACE_PER_POTENTIAL_NAVY_CONSUMPTION_K = 0.05
+	NDefines.NAI.OIL_WANT_AT_PEACE_PER_POTENTIAL_AIR_CONSUMPTION_K = 0.05
+	NDefines.NAI.OIL_WANT_AT_PEACE_PER_POTENTIAL_MISC_CONSUMPTION_K = 0.,
+	NDefines.NAI.RESOURCE_WANT_PER_MISSING_BALANCE = 0.25,					-- negative balance increases the desire on a resource
+	NDefines.NAI.RESOURCE_WANT_PER_CONSUMED = 0.10,							-- if resource is being used in production, increase the desire
+		-- ~end
+
 
 	-- LaResistance AI Tweaks
 	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 20.0 --25 in Vanilla
@@ -436,6 +468,11 @@
 	NDefines.NResistance.GARRISON_EQUIPMENT_LOST_BY_ATTACK = 0.05 	-- Ratio of equipment lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
 	NDefines.NResistance.RESISTANCE_GROWTH_BASE = 0.1 --base resistance growth
 	NDefines.NResistance.COMPLIANCE_GROWTH_BASE = 0.1 --base compliance gain
+	NDefines.NOperatives.BASE_COUNTER_INTELLIGENCE_RATING = 1.0 -- Set to 1 to prevent weird negatives
+	NDefines.NOperatives.AGENCY_UPGRADE_PER_OPERATIVE_SLOT = 4 -- Reduced from vanilla
+	NDefines.NOperatives.BECOME_SPYMASTER_MIN_UPGRADES = 5 -- Boosted from 3
+	NDefines.NOperatives.QUIET_INTEL_NETWORK_DAILY_XP_GAIN = 0.05 -- Better than 0
+
 
 	-- Faction related stuff
 	NDefines.NDiplomacy.TRUCE_PERIOD_AFTER_KICKING_FROM_FACTION = 30				-- Truce period after kicking someone from faction in days.
