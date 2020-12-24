@@ -454,9 +454,9 @@
 	NDefines.NAI.OIL_WANT_AT_PEACE_PER_POTENTIAL_LAND_CONSUMPTION_K = 0.05
 	NDefines.NAI.OIL_WANT_AT_PEACE_PER_POTENTIAL_NAVY_CONSUMPTION_K = 0.05
 	NDefines.NAI.OIL_WANT_AT_PEACE_PER_POTENTIAL_AIR_CONSUMPTION_K = 0.05
-	NDefines.NAI.OIL_WANT_AT_PEACE_PER_POTENTIAL_MISC_CONSUMPTION_K = 0.,
-	NDefines.NAI.RESOURCE_WANT_PER_MISSING_BALANCE = 0.25,					-- negative balance increases the desire on a resource
-	NDefines.NAI.RESOURCE_WANT_PER_CONSUMED = 0.10,							-- if resource is being used in production, increase the desire
+	NDefines.NAI.OIL_WANT_AT_PEACE_PER_POTENTIAL_MISC_CONSUMPTION_K = 0.05
+	NDefines.NAI.RESOURCE_WANT_PER_MISSING_BALANCE = 0.25					-- negative balance increases the desire on a resource
+	NDefines.NAI.RESOURCE_WANT_PER_CONSUMED = 0.10						-- if resource is being used in production, increase the desire
 		-- ~end
 
 
