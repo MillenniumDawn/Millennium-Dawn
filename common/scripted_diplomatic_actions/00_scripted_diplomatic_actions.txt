@@ -238,16 +238,27 @@ scripted_diplomatic_actions = {
 				}
 			}
 		}
+		can_be_sent = {
+			if = {
+				limit = { ROOT = { is_ai = yes } }
+				THIS = { NOT = { has_country_flag = ai_send@ROOT } }
+			}
+			else = { always = yes }
+		}
 		cost = 50
 		requires_acceptance = yes
 		show_acceptance_on_action_button = yes
 		icon = 1
 		send_description = PROPOSE_TRADE_AGREEMENT_DESC
 
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect propose_improved_trade_agreement"
+			set_country_flag = ai_send@ROOT
+		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action propose_improved_trade_agreement"
 			set_country_flag = trade_agreement@ROOT
-			clr_country_flag = pending_offer@ROOT
+			clr_country_flag = ai_send@ROOT
 			ROOT = {
 				set_country_flag = trade_agreement@PREV
 				clr_country_flag = pending_offer
@@ -260,8 +271,13 @@ scripted_diplomatic_actions = {
 				generic_grant_1_percent_influence_of_ROOT = yes
 				ROOT = {
 					generic_grant_1_percent_influence_of_PREV = yes
+					recalculate_influence = yes
 				}
 			}
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect propose_improved_trade_agreement"
+			clr_country_flag = ai_send@ROOT
 		}
 
 		accept_title = PROPOSE_TRADE_AGREEMENT_ACCEPT_TT
