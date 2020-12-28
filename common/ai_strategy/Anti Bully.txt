@@ -1,6 +1,151 @@
 #Written by Hiddengearz
 ##Adding Military division limiter and other AI strategies in the AB system
 
+##NATO Relations
+NATO_members_relations = {
+	allowed = {
+		has_game_rule = { #Can't disable NATO to get this
+			rule = rule_disable_nato
+			option = no
+		}
+	}
+	enable = { has_idea = NATO_member }
+	abort_when_not_enabled = yes
+	ai_strategy = { type = antagonize id = "SOV" value = 25 }
+}
+
+###UNIT LIMITER###
+division_limiter = {
+	allowed = {
+		has_game_rule = { rule = allow_division_limiter option = yes }
+	}
+	enable = {
+		set_temp_variable = { upper_limit = num_of_factories } #100
+		multiply_temp_variable = { upper_limit = 1.30 } #130
+		if = { limit = { has_war = yes }
+			multiply_temp_variable = { upper_limit = 1.25 } #81.25
+		}
+		else = {
+			multiply_temp_variable = { upper_limit = 0.85 }
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = ai_yes_unit_build
+					has_country_flag = AI_is_threatened
+				}
+			}
+			multiply_temp_variable = { upper_limit = 1.25 } #101.563
+		}
+		if = { limit = { is_major = yes }
+			multiply_temp_variable = { upper_limit = 1.15 } #116.8
+		}
+		if = { limit = { has_idea = NATO_member }
+			multiply_temp_variable = { upper_limit = 0.75 } #87.59
+		}
+		if = { limit = { has_idea = EU_member }
+			multiply_temp_variable = { upper_limit = 0.75 } #65.6925
+		}
+		if = { limit = { threat > 0.50 }
+			multiply_temp_variable = { upper_limit = 1.25 } #82.115
+		}
+		else = {
+			multiply_temp_variable = { upper_limit = 0.85 } #82.115
+		}
+
+		if = { limit = { is_in_faction = yes }
+			multiply_temp_variable = { upper_limit = 0.90 } #73.9
+		}
+		if = { limit = { is_in_faction_with = CHI NOT = { tag = SOV } }
+			multiply_temp_variable = { upper_limit = 0.80 } #59.12
+		}
+		if = { limit = { is_in_faction_with = SOV NOT = { tag = CHI } }
+			multiply_temp_variable = { upper_limit = 0.80 } #59.12
+		}
+		round_temp_variable = upper_limit #59
+		check_variable = { num_divisions > upper_limit }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = build_army id = garrison value = -500 }
+	ai_strategy = { type = build_army id = Militia value = -500 }
+	ai_strategy = { type = build_army id = L_Inf value = -500 }
+	ai_strategy = { type = build_army id = infantry value = -500 }
+	ai_strategy = { type = build_army id = mechanized value = -500 }
+	ai_strategy = { type = build_army id = armor value = -500 }
+	ai_strategy = { type = build_army id = marines value = -500 }
+	ai_strategy = { type = build_army id = Air_assault value = -500 }
+	ai_strategy = { type = build_army id = Air_Inf value = -500 }
+	ai_strategy = { type = build_army id = Special_Forces value = -500 }
+}
+
+division_limiter_potato_edition = {
+	allowed = {
+		has_game_rule = { rule = allow_division_limiter option = potato_edition }
+	}
+	enable = {
+		set_temp_variable = { upper_limit = num_of_factories } #100
+		divide_temp_variable = { upper_limit = 2 } #50
+		multiply_temp_variable = { upper_limit = 1.30 } #65
+		if = { limit = { has_war = yes }
+			multiply_temp_variable = { upper_limit = 1.25 } #81.25
+		}
+		else = {
+			multiply_temp_variable = { upper_limit = 0.75 }
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = ai_yes_unit_build
+					has_country_flag = AI_is_threatened
+				}
+			}
+			multiply_temp_variable = { upper_limit = 1.25 } #101.563
+		}
+		if = { limit = { is_major = yes }
+			multiply_temp_variable = { upper_limit = 1.15 } #116.8
+		}
+		if = { limit = { has_idea = NATO_member }
+			multiply_temp_variable = { upper_limit = 0.65 } #87.59
+		}
+		if = { limit = { has_idea = EU_member }
+			multiply_temp_variable = { upper_limit = 0.65 } #65.6925
+		}
+		if = { limit = { threat > 0.50 }
+			multiply_temp_variable = { upper_limit = 1.25 } #82.115
+		}
+		else = {
+			multiply_temp_variable = { upper_limit = 0.85 } #82.115
+		}
+
+		if = { limit = { is_in_faction = yes }
+			multiply_temp_variable = { upper_limit = 0.90 } #73.9
+		}
+		if = { limit = { is_in_faction_with = CHI NOT = { tag = SOV } }
+			multiply_temp_variable = { upper_limit = 0.80 } #59.12
+		}
+		if = { limit = { is_in_faction_with = SOV NOT = { tag = CHI } }
+			multiply_temp_variable = { upper_limit = 0.80 } #59.12
+		}
+		round_temp_variable = upper_limit #59
+		check_variable = { num_divisions > upper_limit }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = build_army id = garrison value = -500 }
+	ai_strategy = { type = build_army id = Militia value = -500 }
+	ai_strategy = { type = build_army id = L_Inf value = -500 }
+	ai_strategy = { type = build_army id = infantry value = -500 }
+	ai_strategy = { type = build_army id = mechanized value = -500 }
+	ai_strategy = { type = build_army id = armor value = -500 }
+	ai_strategy = { type = build_army id = marines value = -500 }
+	ai_strategy = { type = build_army id = Air_assault value = -500 }
+	ai_strategy = { type = build_army id = Air_Inf value = -500 }
+	ai_strategy = { type = build_army id = Special_Forces value = -500 }
+}
+
 ##Super powers###
 # American_alliance = {
 
@@ -237,109 +382,3 @@
 	# }
 
 # }
-
-##NATO Relations
-NATO_members_relations = {
-	allowed = {
-		has_game_rule = { #Can't disable NATO to get this
-			rule = rule_disable_nato
-			option = no
-		}
-	}
-	enable = { has_idea = NATO_member }
-	abort_when_not_enabled = yes
-	ai_strategy = { type = antagonize id = "SOV" value = 25 }
-}
-
-###UNIT LIMITER###
-division_limiter = {
-	allowed = {
-		has_game_rule = {
-			rule = allow_division_limiter
-			option = yes
-		}
-	}
-	enable = {
-		set_temp_variable = {
-			upper_limit = num_of_factories
-		}
-		multiply_temp_variable = {
-			upper_limit = 1.30
-		}
-		if = {
-			limit = {
-				has_war = yes
-			}
-			multiply_temp_variable = {
-				upper_limit = 1.5
-			}
-		}
-		if = {
-			limit = {
-				OR = {
-					has_country_flag = ai_yes_unit_build
-					has_country_flag = AI_is_threatened
-				}
-			}
-			multiply_temp_variable = {
-				upper_limit = 1.25
-			}
-		}
-		if = {
-			limit = {
-				is_major = yes
-			}
-			multiply_temp_variable = {
-				upper_limit = 1.15
-			}
-		}
-		if = {
-			limit = {
-				has_idea = NATO_member
-			}
-			multiply_temp_variable = {
-				upper_limit = 0.90
-			}
-		}
-		if = {
-			limit = {
-				has_idea = EU_member
-			}
-			multiply_temp_variable = {
-				upper_limit = 0.90
-			}
-		}
-		if = {
-			limit = {
-				threat > 0.50
-			}
-			multiply_temp_variable = {
-				upper_limit = 1.05
-			}
-		}
-		if = {
-			limit = {
-				is_in_faction = yes
-			}
-			multiply_temp_variable = {
-				upper_limit = 0.90
-			}
-		}
-		round_temp_variable = upper_limit
-		check_variable = {
-			num_divisions > upper_limit
-		}
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = build_army id = garrison value = -500 }
-	ai_strategy = { type = build_army id = Militia value = -500 }
-	ai_strategy = { type = build_army id = L_Inf value = -500 }
-	ai_strategy = { type = build_army id = infantry value = -500 }
-	ai_strategy = { type = build_army id = mechanized value = -500 }
-	ai_strategy = { type = build_army id = armor value = -500 }
-	ai_strategy = { type = build_army id = marines value = -500 }
-	ai_strategy = { type = build_army id = Air_assault value = -500 }
-	ai_strategy = { type = build_army id = Air_Inf value = -500 }
-	ai_strategy = { type = build_army id = Special_Forces value = -500 }
-}
