@@ -1286,6 +1286,8 @@ mafia_ITA = {
 		custom_cost_trigger = {
 			command_power > 50
 		}
+		
+		fixed_random_seed = no
 
 		custom_cost_text = command_power_more_than_50
 
@@ -1411,6 +1413,8 @@ mafia_ITA = {
 		custom_cost_trigger = {
 			command_power > 50
 		}
+		
+		fixed_random_seed = no
 
 		custom_cost_text = command_power_more_than_50
 
@@ -1536,6 +1540,8 @@ mafia_ITA = {
 		custom_cost_trigger = {
 			command_power > 50
 		}
+		
+		fixed_random_seed = no
 
 		custom_cost_text = command_power_more_than_50
 
@@ -1661,6 +1667,8 @@ mafia_ITA = {
 		custom_cost_trigger = {
 			command_power > 50
 		}
+		
+		fixed_random_seed = no
 
 		custom_cost_text = command_power_more_than_50
 
@@ -1783,7 +1791,8 @@ mafia_ITA = {
 				factor = 2
 				check_variable = { cosa_nostra_strength > 0.5 }
 			}
-		}
+		}		
+		fixed_random_seed = no
 		custom_cost_trigger = {
 			command_power > 50
 		}
@@ -2000,6 +2009,7 @@ mafia_ITA = {
 				check_variable = { camorra_strength > 0.5 }
 			}
 		}
+		fixed_random_seed = no
 		custom_cost_trigger = {
 			command_power > 50
 		}
@@ -2216,6 +2226,7 @@ mafia_ITA = {
 				check_variable = { ndrangheta_strength > 0.5 }
 			}
 		}
+		fixed_random_seed = no
 		custom_cost_trigger = {
 			command_power > 50
 		}
@@ -2432,6 +2443,7 @@ mafia_ITA = {
 				check_variable = { sacra_corona_unita_strength > 0.5 }
 			}
 		}
+		fixed_random_seed = no
 		custom_cost_trigger = {
 			command_power > 50
 		}
@@ -2695,7 +2707,10 @@ generic_ITA = {
         }
 		
 		custom_cost_trigger = {
-			check_variable = { treasury > 10 }
+			if = {
+				limit = { is_ai = no }
+					check_variable = { treasury > 10 }
+			}
 		}
 		custom_cost_text = cost_10_0
 		
@@ -2704,7 +2719,8 @@ generic_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision bonus_to_stimulate_consumption executed"
 			subtract_from_variable = { treasury = 10.0 }
 			custom_effect_tooltip = 10_billion_expense_tt
-			add_stability = 0.025
+			add_to_variable = { stability_weekly_stuck_var = 0.025 }
+			custom_effect_tooltip = 2_5_cumulated_stability_TT
 		}
 		ai_will_do = {
 			factor = 1
@@ -2986,7 +3002,7 @@ ITA_italian_space_decision_category = {
 
 	ITA_run_support_campaigns_short = {
 		allowed = { original_tag = ITA }
-		cost = 75
+		cost = 50
 		icon = political_actions
 
 		days_remove = 45
@@ -3013,7 +3029,7 @@ ITA_italian_space_decision_category = {
 		cost = 75
 		icon = political_actions
 
-		days_remove = 90
+		days_remove = 150
 		days_re_enable = 14
 		fire_only_once = no
 
@@ -3034,7 +3050,7 @@ ITA_italian_space_decision_category = {
 	}
 	ITA_rebalance_the_ASI_budget = {
 		allowed = { original_tag = ITA }
-		cost = 100
+		cost = 50
 		icon = generic_decision
 
 		days_remove = 45
@@ -3046,6 +3062,9 @@ ITA_italian_space_decision_category = {
 				tooltip = ITA_has_enough_space_support_tt
 				NOT = { check_variable = { ITA_peoples_support < 35 } }
 			}
+		}
+		visible = {
+			has_country_flag = ITA_recently_expanded_space_program
 		}
 
 		complete_effect = {
@@ -3074,9 +3093,6 @@ ITA_italian_space_decision_category = {
 		days_re_enable = 180
 
 		available = {
-			NOT = {
-				has_idea = ITA_idea_space_agency_4
-			}
 			custom_trigger_tooltip = {
 				tooltip = ITA_has_enough_space_support_tt
 				NOT = { check_variable = { ITA_peoples_support < 35 } }
@@ -3085,34 +3101,51 @@ ITA_italian_space_decision_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ITA_expand_space_program"
-			subtract_from_variable = { treasury = 10.0 }
-			custom_effect_tooltip = 10_billion_expense_tt
+			subtract_from_variable = { treasury = 20.0 }
+			custom_effect_tooltip = 20_billion_expense_tt
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_expand_space_program"
 			add_ideas = ITA_idea_ASI_failing
-			set_country_flag = ITA_recently_expanded_space_program
-			if = {
-				limit = { has_idea = ITA_idea_space_agency_1 }
-				swap_ideas = {
-					remove_idea = ITA_idea_space_agency_1
-					add_idea = ITA_idea_space_agency_2
-				}
-			}
-			else_if = {
-				limit = { has_idea = ITA_idea_space_agency_2 }
-				swap_ideas = {
-					remove_idea = ITA_idea_space_agency_2
-					add_idea = ITA_idea_space_agency_3
-				}
-			}
-			else_if = {
-				limit = { has_idea = ITA_idea_space_agency_3 }
-				swap_ideas = {
-					remove_idea = ITA_idea_space_agency_3
-					add_idea = ITA_idea_space_agency_4
-				}
-			}
+			set_country_flag = ITA_recently_expanded_space_program			
+			subtract_from_variable = { ITA_peoples_support = 10.0 }
+			custom_effect_tooltip = ITA_lower_people_support_10_TT
+			add_to_variable = { asi_tax_cost_var = 0.01 }
+			add_to_variable = { asi_pp_var = 0.1 }
+			add_to_variable = { asi_research_var = 0.05 }
+			add_to_variable = { ITA_space_expenses_var = 5 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	ITA_shrink_space_program = {
+		allowed = { original_tag = ITA }
+		cost = 100
+		icon = generic_decision
+
+		days_remove = 120
+		days_re_enable = 180
+
+		available = {
+			check_variable = { asi_tax_cost_var > 0 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ITA_expand_space_program"
+			subtract_from_variable = { treasury = 1.0 }
+			custom_effect_tooltip = 1_billion_expense_tt
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_expand_space_program"
+			add_to_variable = { ITA_peoples_support = 10.0 }
+			custom_effect_tooltip = ITA_increase_people_support_10_TT
+			subtract_from_variable = { asi_tax_cost_var = 0.01 }
+			subtract_from_variable = { asi_pp_var = 0.1 }
+			subtract_from_variable = { asi_research_var = 0.05 }
+			subtract_from_variable = { ITA_space_expenses_var = 5 }
+			custom_effect_tooltip = ITA_decrease_space_expenses_5_TT
 		}
 
 		ai_will_do = {
@@ -3121,11 +3154,10 @@ ITA_italian_space_decision_category = {
 	}
 	ITA_launch_commercial_satellite = {
 		allowed = { original_tag = ITA }
-		cost = 150
 		icon = generic_decision
 
-		days_remove = 120
-		days_re_enable = 25
+		days_remove = 60
+		days_re_enable = 30
 
 		available = {
 			has_completed_focus = ITA_increase_ASI_funding
@@ -3135,21 +3167,280 @@ ITA_italian_space_decision_category = {
 			}
 		}
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ITA_launch_commercial_satellite"
+			subtract_from_variable = { treasury = 4.0 }
+			custom_effect_tooltip = 4_billion_expense_tt
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_launch_commercial_satellite"
-			subtract_from_variable = { treasury = 3.0 }
 			add_to_variable = { ITA_space_income_var = 1.0 }
-			subtract_from_variable = { ITA_peoples_support = 5.0 }
-			custom_effect_tooltip = ITA_launch_commercial_satellite_TT
+			custom_effect_tooltip = ITA_increase_space_income_1_TT
 		}
 
 		ai_will_do = {
 			factor = 1
 		}
 	}
+	ITA_setup_lunar_base = {
+		allowed = { original_tag = ITA }
+		icon = generic_decision
+
+		fire_only_once = yes
+		days_remove = 360
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ITA_lunar_base_TT
+				check_variable = { asi_tax_cost_var > 0.04 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ITA_has_enough_space_support_tt
+				NOT = { check_variable = { ITA_peoples_support < 35 } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ITA_setup_lunar_base"
+			subtract_from_variable = { treasury = 50.0 }
+			custom_effect_tooltip = 50_billion_expense_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_setup_lunar_base"
+			add_to_variable = { ITA_space_expenses_var = 5.0 }
+			custom_effect_tooltip = ITA_increase_space_expenses_5_TT
+			set_country_flag = ITA_lunar_base
+			add_ideas = ITA_moon_base
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	ITA_increase_asteroid_mining_steel = {
+		allowed = { original_tag = ITA }
+		icon = generic_decision
+
+		days_re_enable = 90
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ITA_has_enough_space_support_tt
+				NOT = { check_variable = { ITA_peoples_support < 35 } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ITA_has_lunar_base_TT
+				has_country_flag = ITA_lunar_base
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ITA_increase_asteroid_mining_steel"
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_increase_asteroid_mining_steel"
+			add_to_variable = { ITA_space_expenses_var = 3.0 }
+			custom_effect_tooltip = ITA_increase_space_expenses_3_TT
+			capital_scope = {
+				add_resource = {
+					type = steel
+					amount = 1
+				}
+			}
+			add_to_variable = { ITA_asteroid_steel = 1 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	ITA_increase_asteroid_mining_aluminium = {
+		allowed = { original_tag = ITA }
+		icon = generic_decision
+
+		days_re_enable = 90
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ITA_has_enough_space_support_tt
+				NOT = { check_variable = { ITA_peoples_support < 35 } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ITA_has_lunar_base_TT
+				has_country_flag = ITA_lunar_base
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ITA_increase_asteroid_mining_aluminium"
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_increase_asteroid_mining_aluminium"
+			add_to_variable = { ITA_space_expenses_var = 3.0 }
+			custom_effect_tooltip = ITA_increase_space_expenses_3_TT
+			capital_scope = {
+				add_resource = {
+					type = aluminium
+					amount = 1
+				}
+			}
+			add_to_variable = { ITA_asteroid_aluminium = 1 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	ITA_increase_asteroid_mining_tungsten = {
+		allowed = { original_tag = ITA }
+		icon = generic_decision
+
+		days_re_enable = 90
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ITA_has_enough_space_support_tt
+				NOT = { check_variable = { ITA_peoples_support < 35 } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ITA_has_lunar_base_TT
+				has_country_flag = ITA_lunar_base
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ITA_increase_asteroid_mining_tungsten"
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_increase_asteroid_mining_tungsten"
+			add_to_variable = { ITA_space_expenses_var = 3.0 }
+			custom_effect_tooltip = ITA_increase_space_expenses_3_TT
+			capital_scope = {
+				add_resource = {
+					type = tungsten
+					amount = 1
+				}
+			}
+			add_to_variable = { ITA_asteroid_tungsten = 1 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	ITA_reduce_asteroid_mining_steel = {
+		allowed = { original_tag = ITA }
+		icon = generic_decision
+
+		days_re_enable = 7
+
+		available = {
+			check_variable = { ITA_asteroid_steel > 0 }
+		}
+		visible = {
+			check_variable = { ITA_asteroid_steel > 0 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ITA_reduce_asteroid_mining_steel"
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_reduce_asteroid_mining_steel"
+			add_to_variable = { ITA_space_expenses_var = -3.0 }
+			custom_effect_tooltip = ITA_decrease_space_expenses_3_TT
+			capital_scope = {
+				add_resource = {
+					type = steel
+					amount = -1
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	ITA_reduce_asteroid_mining_aluminium = {
+		allowed = { original_tag = ITA }
+		icon = generic_decision
+
+		days_re_enable = 7
+
+		available = {
+			check_variable = { ITA_asteroid_aluminium > 0 }
+		}
+		visible = {
+			check_variable = { ITA_asteroid_aluminium > 0 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ITA_reduce_asteroid_mining_aluminium"
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_reduce_asteroid_mining_aluminium"
+			add_to_variable = { ITA_space_expenses_var = -3.0 }
+			custom_effect_tooltip = ITA_decrease_space_expenses_3_TT
+			capital_scope = {
+				add_resource = {
+					type = aluminium
+					amount = -1
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	ITA_reduce_asteroid_mining_tungsten = {
+		allowed = { original_tag = ITA }
+		icon = generic_decision
+
+		days_re_enable = 7
+
+		available = {
+			check_variable = { ITA_asteroid_tungsten > 0 }
+		}
+		visible = {
+			check_variable = { ITA_asteroid_tungsten > 0 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ITA_reduce_asteroid_mining_tungsten"
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ITA_reduce_asteroid_mining_tungsten"
+			add_to_variable = { ITA_space_expenses_var = -3.0 }
+			custom_effect_tooltip = ITA_decrease_space_expenses_3_TT
+			capital_scope = {
+				add_resource = {
+					type = tungsten
+					amount = -1
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	
 	ITA_prep_international_space_station = {
 		allowed = { original_tag = ITA }
-		cost = 100
 		icon = generic_decision
 
 		days_remove = 30
@@ -3162,6 +3453,7 @@ ITA_italian_space_decision_category = {
 				tooltip = ITA_has_enough_space_support_tt
 				NOT = { check_variable = { ITA_peoples_support < 35 } }
 			}
+			has_war = no
 		}
 
 		complete_effect = {
@@ -3170,7 +3462,7 @@ ITA_italian_space_decision_category = {
 				idea = ITA_idea_prep_the_launch
 				days = 120
 			}
-			subtract_from_variable = { ITA_peoples_support = 5.0 }
+			subtract_from_variable = { ITA_peoples_support = 2.0 }
 		}
 
 		ai_will_do = {
@@ -3179,7 +3471,6 @@ ITA_italian_space_decision_category = {
 	}
 	ITA_italian_iss_launch = {
 		allowed = { original_tag = ITA }
-		cost = 100
 		icon = generic_decision
 
 		days_remove = 30
@@ -3193,6 +3484,7 @@ ITA_italian_space_decision_category = {
 				tooltip = ITA_has_enough_space_support_tt
 				NOT = { check_variable = { ITA_peoples_support < 35 } }
 			}
+			has_war = no
 		}
 
 		complete_effect = {
