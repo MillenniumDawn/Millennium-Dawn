@@ -179,29 +179,29 @@ on_actions = {
 				set_EU_expenditure = yes
 				distribute_EU_budget = yes
 			}
-			EUU = {
-				log = "[GetDateText]: [ROOT.GetName]: on_start EU budget"
-				every_country = {
-					limit = {
-						has_idea = EU_member
-						NOT = { has_idea = EUU_subsidies_suspended }
-					}
-					news_event = {
-						id = EU_news.55
-						days = 31
-					}
-				}
-				every_country = {
-					limit = {
-						has_idea = EU_member
-						has_idea = EUU_subsidies_suspended
-					}
-					news_event = {
-						id = EU_news.56
-						days = 31
-					}
-				}
-			}
+			#EUU = {
+			#	log = "[GetDateText]: [ROOT.GetName]: on_start EU budget"
+			#	every_country = {
+			#		limit = {
+			#			has_idea = EU_member
+			#			NOT = { has_idea = EUU_subsidies_suspended }
+			#		}
+			#		news_event = {
+			#			id = EU_news.55
+			#			days = 31
+			#		}
+			#	}
+			#	every_country = {
+			#		limit = {
+			#			has_idea = EU_member
+			#			has_idea = EUU_subsidies_suspended
+			#		}
+			#		news_event = {
+			#			id = EU_news.56
+			#			days = 31
+			#		}
+			#	}
+			#}
 		}
 	}
 	on_weekly = {
@@ -218,47 +218,49 @@ on_actions = {
 		effect = {	
 			if = {
 				limit = {
-					THIS = { has_idea = EUU_monitor }
+					has_idea = EUU_monitor
+					any_country = {
+						has_active_mission = EU_POTEF_election_campaign
+					}					
 				}			
-				EUU = {
-					log = "[GetDateText]: [ROOT.GetName]: on_weekly POTEF_election"
-					if = {
-						limit = {
-							any_country = {
-								has_active_mission = EU_POTEF_election_campaign
-							}	
-						}
-						POTEF_election = yes
-					}
-				}
+				log = "[GetDateText]: [ROOT.GetName]: on_weekly POTEF_election"
+				POTEF_election = yes
 			}
 		}					
 	}			
-	on_yearly = {
+	on_monthly = {
 		effect = {
-			EUU = {
-				log = "[GetDateText]: [ROOT.GetName]: on_start EU budget"
-				every_country = {
-					limit = {
-						has_idea = EU_member
-						NOT = { has_idea = EUU_subsidies_suspended }
+			meta_effect = {
+				text = {
+					if = {
+						limit = {
+							date < [year].02.02
+							date > [year].01.31
+							has_idea = EU_member
+							NOT = { has_idea = EUU_subsidies_suspended }
+						}					
+						log = "[GetDateText]: [ROOT.GetName]: on_monthly EU budget"
+						news_event = {
+							id = EU_news.55
+							#days = 1
+						}
 					}
-					news_event = {
-						id = EU_news.55
-						days = 31
+					else_if = {
+						limit = {
+							date < [year].02.02
+							date > [year].01.31
+							has_idea = EU_member
+							has_idea = EUU_subsidies_suspended
+						}
+						log = "[GetDateText]: [ROOT.GetName]: on_monthly EU budget"
+						news_event = {
+							id = EU_news.56
+							#days = 1
+						}
 					}
 				}
-				every_country = {
-					limit = {
-						has_idea = EU_member
-						has_idea = EUU_subsidies_suspended
-					}
-					news_event = {
-						id = EU_news.56
-						days = 31
-					}
-				}
-			}
+				year = "[GetYear]"
+			}	
 		}
 	}
 
