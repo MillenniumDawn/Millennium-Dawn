@@ -1,7 +1,7 @@
 scripted_gui = {
 
 	scripted_influence_option_buttons = {
-		context_type = selected_country_context
+		context_type = selected_country_context #ROOT is you, default is that country
 		parent_window_token = selected_country_view_diplomacy
 
 		window_name = "influence_option_buttons"
@@ -91,7 +91,7 @@ scripted_gui = {
 				#Num of Civ Greater
 				check_variable = { size_modifier < ROOT.size_modifier }
 				#Recently Sent Aid
-				#NOT = { has_country_flag = recently_sent_aid@FROM }
+				ROOT = { PREV = { ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } } } }
 			}
 
 			opt_aid_military_button_click_enabled = {
@@ -99,7 +99,7 @@ scripted_gui = {
 				is_influencer = yes
 				#ROOT has_war
 				OR = {
-					ROOT = { has_war = yes }
+					has_war = yes
 					threat > 0.50
 					has_country_flag = ai_yes_unit_build
 					has_country_flag = AI_is_threatened
@@ -109,6 +109,8 @@ scripted_gui = {
 					ROOT = { has_idea = defense_industry }
 					ROOT = { num_of_military_factories > 10 }
 				}
+				#ROOT Has NOT Sent military aid in the past month
+				ROOT = { PREV = { ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } } } }
 			}
 
 			opt_manipulate_politics_button_click_enabled = {
@@ -136,7 +138,7 @@ scripted_gui = {
 					is_same_government = yes
 					NOT = { is_subject_of = ROOT }
 					is_subject = no
-					NOT = { has_war = yes }
+					has_war = no
 				}
 			}
 
@@ -424,6 +426,7 @@ scripted_gui = {
 				ROOT = {
 					PREV = {
 						country_event = { id = influence.0 }
+						ROOT = { set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 } }
 					}
 				}
 			}
@@ -433,6 +436,7 @@ scripted_gui = {
 				ROOT = { #Uses the same as Economic AID to ensure the root is correct
 					PREV = {
 						country_event = { id = influence.50 }
+						ROOT = { set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 30 } }
 					}
 				}
 			}

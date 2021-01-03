@@ -95,10 +95,11 @@
 	NDefines.NProduction.EQUIPMENT_MODULE_CONVERT_XP_COST = 3.0				-- XP cost for converting one equipment module to a related module when creating an equipment variant.
 
 	NDefines.NTechnology.MAX_SUBTECHS = 5
-	NDefines.NTechnology.BASE_YEAR_AHEAD_PENALTY_FACTOR = 0.5
+	NDefines.NTechnology.BASE_YEAR_AHEAD_PENALTY_FACTOR = 1.0
 	NDefines.NTechnology.BASE_TECH_COST = 250 -- 85 is vanilla --300 was the old MD cost
 	NDefines.NTechnology.DEFAULT_XP_RESEARCH_COST = 150 -- 100 is vanilla
 	NDefines.NTechnology.MIN_RESEARCH_SPEED = 0.01 -- 0.10 in vanilla
+	NDefines.NTechnology.MAX_TECH_SHARING_BONUS = 0.25 -- Nerfed to 0.25 from Tech Sharing
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
 	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 100
