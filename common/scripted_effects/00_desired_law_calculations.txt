@@ -593,6 +593,8 @@ clear_law_desire_flags = {
 	clr_country_flag = wants_social_04
 	clr_country_flag = wants_social_05
 	clr_country_flag = wants_social_06
+
+
 }
 
 # Bureaucracy desire is chiefly determined by the size/strength of the nation. More powerful the nation, more it wants a higher level of bureaucracy.
@@ -3361,6 +3363,147 @@ recalculate_social_desire = {
 		}
 		set_country_flag = wants_social_06
 	}
+}
+
+##Military Laws
+recalculate_defence_spending_desire = {
+	set_variable = { defence_spending_desire = 0 }
+	#Base Calc is based on Power
+	if = {
+		limit = { has_idea = non_power }
+		add_to_variable = { defence_spending_desire = 1 } #Non_powers WANT 00 - 04 due to budget
+	}
+	else_if = {
+		limit = { has_idea = minor_power }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+	else_if = {
+		limit = { has_idea = regional_power }
+		add_to_variable = { defence_spending_desire = 4 }
+	}
+	else_if = {
+		limit = { has_idea = large_power }
+		add_to_variable = { defence_spending_desire = 6 }
+	}
+	else_if = {
+		limit = { has_idea = great_power }
+		add_to_variable = { defence_spending_desire = 8 }
+	}
+	else_if = {
+		limit = { has_idea = superpower }
+		add_to_variable = { defence_spending_desire = 12 }
+	}
+
+	#Focuses that increase military spending
+	if = {
+		limit = { has_completed_focus = CHI_Strategic_Industries }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+	if = {
+		limit = { has_completed_focus = JAP_mobilize_the_population }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+	if = {
+		limit = { has_completed_focus = POL_defense }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+	if = {
+		limit = { has_completed_focus = POL_monarch_army }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+	if = {
+		limit = { has_completed_focus = SOV_2008_military_reforms }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+	if = {
+		limit = { has_completed_focus = SOV_increase_military_spending }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+	if = {
+		limit = { has_completed_focus = SOV_reformed_russian_armed_forces }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+	if = {
+		limit = { has_completed_focus = SOV_army_of_the_republic }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+	if = {
+		limit = { has_completed_focus = SOV_military_reform }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+	if = {
+		limit = { has_completed_focus = USA_encourage_the_volunteers }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+	if = {
+		limit = { has_completed_focus = USA_expand_the_national_guard }
+		add_to_variable = { defence_spending_desire = 2 }
+	}
+
+	##Economic Factors
+	if = {
+		limit = { num_of_military_factories > 5 }
+		add_to_variable = { defence_spending_desire = 1 }
+	}
+	if = {
+		limit = { num_of_military_factories > 10 }
+		add_to_variable = { defence_spending_desire = 1 }
+	}
+	if = {
+		limit = { num_of_military_factories > 15 }
+		add_to_variable = { defence_spending_desire = 1 }
+	}
+	if = {
+		limit = { num_of_military_factories > 25 }
+		add_to_variable = { defence_spending_desire = 1 }
+	}
+	if = {
+		limit = { num_of_military_factories > 40 }
+		add_to_variable = { defence_spending_desire = 1 }
+	}
+	if = {
+		limit = { num_of_military_factories > 60 }
+		add_to_variable = { defence_spending_desire = 1 }
+	}
+	if = {
+		limit = { num_of_military_factories > 80 }
+		add_to_variable = { defence_spending_desire = 1 }
+	}
+	if = {
+		limit = { num_of_military_factories > 100 }
+		add_to_variable = { defence_spending_desire = 1 }
+	}
+
+	if = {
+		limit = {
+			ai_has_acceptable_deficit_factories = no #When deficit becomes unbearable start to reduce!
+		}
+		subtract_from_variable = { #Reduce spending when possible!
+			defence_spending_desire = 7.0
+		}
+	}
+	else_if = {
+		limit = {
+			ai_has_acceptable_deficit = no #When deficit becomes unbearable start to reduce!
+		}
+		subtract_from_variable = { #Reduce spending when possible!
+			defence_spending_desire = 7.0
+		}
+	}
+
+	if = {
+		limit = { ruling_party_in_favor_of_higher_military_spending = yes }
+		add_to_variable = { defence_spending_desire = 5 }
+	}
+	else = {
+		subtract_from_variable = { defence_spending_desire = 5 }
+	}
+
+	if = {
+		limit = { check_variable = { defence_spending_desire > 15 } }
+		set_country_flag = wants_defence_00
+	}
+
 }
 
 

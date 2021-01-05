@@ -123,21 +123,26 @@ EU_voting_category = {
 	EU_test_effect_1 = {
 		#allowed = { is_debug = yes }
 		available = {			
-			any_of_scopes = {
-				array = global.EU_member
-				has_idea = EU_commission_president
-			}		
+			#any_of_scopes = {
+			#	array = global.EU_member
+			#	has_idea = EU_commission_president
+			#}		
 			#FRA = {
 			#	is_USoE_member = yes
 			#}
 		}
 		
 		visible = { 
-			has_country_flag = EU_potential #unvisible #  #unvisible #  
+			has_country_flag = unvisible #EU_potential #  #unvisible #  
 		} 
 		
 		complete_effect = {
-			country_event = EUevent.3
+			every_country = {
+				limit = {
+					has_country_flag = EU_potential
+				}
+				set_variable = { THIS.eurosceptic = 0 }
+			}
 		}
 	}
 
@@ -151,11 +156,26 @@ EU_voting_category = {
 		}
 		
 		visible = { 
-			has_country_flag = EU_potential #unvisible #  #unvisible #  
+			has_country_flag = unvisible #EU_potential #  #unvisible #  
 		} 
 		
 		complete_effect = {
-			leaving_EU = yes
+			remove_ideas = POTEF_empire_of_freedom
+			remove_ideas = POTEF_empire_of_freedom_2
+			#ROOT = {
+			#	consumer_goods_factor = -0.03
+			#}
+			#ROOT = {
+			#	add_opinion_modifier = { target = SOV modifier = CSCE_peace_talks }
+			#	reverse_add_opinion_modifier = { target = SOV modifier = CSCE_peace_talks }
+			#}
+
+			#for_each_loop = {
+			#	array = global.EU_member
+			#	add_opinion_modifier = { target = USA modifier = historic_friends }
+			#	reverse_add_opinion_modifier = { target = USA modifier = historic_friends }
+			#}
+			#leaving_EU = yes
 			#focus_USoE502_effect = yes
 			#focus_USoE503_effect = yes
 			#focus_USoE504_effect = yes
@@ -177,10 +197,12 @@ EU_voting_category = {
 		}
 		
 		visible = { 
-			has_country_flag = EU_potential #unvisible #  #unvisible #  
+			has_country_flag = unvisible #EU_potential #  #unvisible #  
 		} 
 		
 		complete_effect = {
+			add_ideas = POTEF_empire_of_freedom_2
+			add_ideas = POTEF_empire_of_freedom
 			#set_country_flag = USoE_country_leader
 			#set_country_flag = USoE_imperial_crown
 			#set_country_flag = USoE_house_of_savoy
@@ -228,7 +250,7 @@ EU_voting_category = {
 		}
 		
 		visible = { 
-			has_country_flag = EU_potential #unvisible #  #unvisible #  
+			has_country_flag = unvisible #EU_potential #  #unvisible #  
 		} 
 		
 		complete_effect = {
@@ -2010,6 +2032,7 @@ EU_office_category = {
 	}
 ### President of the European Federation ###
 	claim_office_EU_president = {
+		allowed = { }
 		available = {
 			#has_idea = EU_member
 			#has_global_flag = european_federation
@@ -2045,8 +2068,9 @@ EU_office_category = {
 			}
 		}
 		visible = {
-			has_idea = EU_member
-			has_global_flag = european_federation
+			has_country_flag = unvisible
+			#has_idea = EU_member
+			#has_global_flag = european_federation
 		}
 		complete_effect = {
 			add_timed_idea = {
@@ -3090,7 +3114,7 @@ EU_defense_category = {
 			}					
 		}				
 	}
-	
+
 	EU_military_exercise = {
 		allowed = {
 			is_EU_potential = yes
@@ -3100,15 +3124,15 @@ EU_defense_category = {
 			has_idea = EU_member
 		}
 		icon = GFX_decision_infiltrate_state
-		
+
 		days_remove = 90
 
 		custom_cost_trigger = {
 			command_power > 40
 		}
-		
+
 		custom_cost_text = command_power_more_than_40
-		
+
 		target_trigger = {
 			FROM = {
 				NOT = {
@@ -3118,11 +3142,11 @@ EU_defense_category = {
 					limit = {
 						ROOT = {
 							has_idea = NATO_member
-						}					
+						}
 					}
 					NOT = {
 						has_idea = NATO_member
-					}					
+					}
 				}
 				any_neighbor_country = {
 					has_EU_external_border = yes
@@ -3134,9 +3158,9 @@ EU_defense_category = {
 
 			}
 		}
-		
+
 		available = {
-			all_of_scopes = { 
+			all_of_scopes = {
 			array = global.EU_member
 				NOT = {
 					has_country_flag = EU_military_exercise_prep
@@ -3147,16 +3171,16 @@ EU_defense_category = {
 			}
 			has_idea = European_Security_Council
 			#has_idea = EU_foreign_minister
-			has_idea = EU_member			
+			has_idea = EU_member
 		}
-		
-		visible = { 
+
+		visible = {
 			#has_idea = European_Security_Council
 			#has_idea = EU_member
 		}
-		
+
 		fixed_random_seed = no
-		
+
 		complete_effect = {
 			add_command_power = -40
 			FROM = {
@@ -3172,7 +3196,7 @@ EU_defense_category = {
 			factor = 0
 		}
 	}
-	
+
 	EU_ask_to_host_military_exercise = {
 		allowed = {
 			is_EU_potential = yes
@@ -3180,33 +3204,33 @@ EU_defense_category = {
 		target_root_trigger = {
 			has_idea = European_Security_Council
 			has_idea = EU_member
-		}	
+		}
 		days_remove = 365
-		
+
 		target_trigger = {
-			FROM = {				
+			FROM = {
 				has_EU_external_border = yes
 				THIS = {
 					any_neighbor_country = {
 						has_country_flag = EU_military_exercise_at_border_from@ROOT
 					}
 				}
-			}			
+			}
 		}
-		
+
 		available = {
-			all_of_scopes = { 
+			all_of_scopes = {
 				array = global.EU_member
 				NOT = {
 					has_country_flag = EU_host_military_exercise@ROOT
-				}	
+				}
 			}
 			has_country_flag = EU_military_exercise_prep
 			#has_idea = European_Security_Council
 			#has_idea = EU_foreign_minister
-			has_idea = EU_member			
+			has_idea = EU_member
 		}
-		
+
 		visible = {
 			FROM = {
 				any_neighbor_country = {
@@ -3215,13 +3239,13 @@ EU_defense_category = {
 			}
 			#has_idea = European_Security_Council
 			#has_idea = EU_member
-		} 
-		
+		}
+
 		complete_effect = {
 			FROM = {
 				country_event = {
 					id = EUevent.18
-				}				
+				}
 			}
 			###moved to event
 			#FROM = {
@@ -3235,69 +3259,87 @@ EU_defense_category = {
 			#		set_variable = {
 			#			var = ROOT.var_EU_military_exercise_host_state
 			#			value = THIS
-			#		}					
+			#		}
 			#	}
 			#}
 			#activate_mission = EU_military_exercise_mission
 			#set_variable = {
 			#	var = ROOT.var_EU_military_exercise_host_tag
 			#	value = FROM
-			#}			
+			#}
 		}
 		ai_will_do = {
 			factor = 0
 		}
-	}	
-	
-	EU_military_exercise_mission = {	
-		
+	}
+
+	EU_military_exercise_mission = {
+
 		allowed = { always = no }
-		
+
 		available = {
-			divisions_in_state = {				
+			divisions_in_state = {
 				size > 0
 				state = ROOT.var_EU_military_exercise_host_state
 			}
 		}
-		
+
 		activation = {
 			always = no
 		}
-		
-		visible = { 
+
+		visible = {
 			has_idea = EU_member
-		} 
-		
+		}
+
 		is_good = yes
-		
+
 		days_mission_timeout = 30
-				
+
 		days_remove = 40
-		
+
 		selectable_mission = yes
-		
+
 		ai_will_do = {
 			factor = 1
 		}
-		
+
 		fire_only_once = yes
-		
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"
 			add_command_power = -40
+			#bugfix
+			every_country = {
+				limit = {
+					has_country_flag = EU_military_exercise_at_border_from@ROOT
+				}
+				clr_country_flag = EU_military_exercise_at_border_from@ROOT
+			}
+			every_country = {
+				limit = {
+					has_country_flag = EU_host_military_exercise@ROOT
+				}
+				clr_country_flag = EU_host_military_exercise@ROOT
+			}
+			clr_country_flag = EU_military_exercise_prep
+			clear_variable = ROOT.var_EU_military_exercise_target
+			clear_variable = ROOT.var_EU_military_exercise_host_state
+			clear_variable = ROOT.var_EU_military_exercise_host_tag
+			#end of bugfix
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"	
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_military_exercise_mission"
 			### mission reward
 			if = {
 				limit = {
-					divisions_in_state = {				
+					divisions_in_state = {
 						size > 10
 						state = ROOT.var_EU_military_exercise_host_state
-					}				
+					}
 				}
-				add_named_threat = { 
-					threat = 2 
+				add_named_threat = {
+					threat = 2
 					name = EU_military_exercise_threat
 				}
 				army_experience = 100
@@ -3305,37 +3347,37 @@ EU_defense_category = {
 			}
 			else_if = {
 				limit = {
-					divisions_in_state = {				
+					divisions_in_state = {
 						size > 5
 						state = ROOT.var_EU_military_exercise_host_state
-					}				
+					}
 				}
-				add_named_threat = { 
-					threat = 1 
+				add_named_threat = {
+					threat = 1
 					name = EU_military_exercise_threat
 				}
 				army_experience = 50
 				add_command_power = 50
 			}
 			else = {
-				add_named_threat = { 
-					threat = 0.5 
+				add_named_threat = {
+					threat = 0.5
 					name = EU_military_exercise_threat
 				}
 				army_experience = 10
 				add_command_power = 10
-			}						
+			}
 			### diplo
 			every_country = {
 				limit = {
 					original_tag = ROOT.var_EU_military_exercise_host_tag
-				}			
+				}
 				ROOT = {
 					add_opinion_modifier = {
 						target = PREV
 						modifier = hosted_military_exercise
 					}
-				}	
+				}
 			}
 			every_country = {
 				limit = {
@@ -3374,13 +3416,13 @@ EU_defense_category = {
 					set_variable = {
 						var = PREV.var_counter_military_exercise_state
 						value = THIS
-					}					
+					}
 				}
 				news_event = {
 					id = EU_news.50 ### Military Exercise at border
 				}
 				activate_mission = counter_military_exercise_mission
-			}		
+			}
 		}
 		remove_effect = {
 			every_country = {
@@ -3401,45 +3443,43 @@ EU_defense_category = {
 			clear_variable = ROOT.var_EU_military_exercise_host_tag
         }
 	}
-
-	
 }
- 
+
 GEN_political_decisions = { ### temp category
 
-	counter_military_exercise_mission = {	
-		
+	counter_military_exercise_mission = {
+
 		allowed = { always = no }
-		
+
 		available = {
-			divisions_in_state = {				
+			divisions_in_state = {
 				size > 0
 				state = ROOT.var_counter_military_exercise_state
 			}
 		}
-		
+
 		activation = {
 			always = no
 		}
-		
-		visible = { 
-			
-		} 
-		
+
+		visible = {
+
+		}
+
 		is_good = yes
-		
+
 		days_mission_timeout = 30
-				
+
 		days_remove = 30
-		
+
 		selectable_mission = yes
-		
+
 		ai_will_do = {
 			factor = 1
 		}
-		
+
 		fire_only_once = yes
-		
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: mission timeout_effect counter_military_exercise_mission"
 			add_command_power = -40
@@ -3449,13 +3489,13 @@ GEN_political_decisions = { ### temp category
 			### mission reward
 			if = {
 				limit = {
-					divisions_in_state = {				
+					divisions_in_state = {
 						size > 10
 						state = ROOT.var_EU_military_exercise_host_state
-					}				
+					}
 				}
-				add_named_threat = { 
-					threat = 2 
+				add_named_threat = {
+					threat = 2
 					name = EU_military_exercise_threat
 				}
 				army_experience = 100
@@ -3463,27 +3503,27 @@ GEN_political_decisions = { ### temp category
 			}
 			else_if = {
 				limit = {
-					divisions_in_state = {				
+					divisions_in_state = {
 						size > 5
 						state = ROOT.var_EU_military_exercise_host_state
-					}				
+					}
 				}
-				add_named_threat = { 
-					threat = 1 
+				add_named_threat = {
+					threat = 1
 					name = EU_military_exercise_threat
 				}
 				army_experience = 50
 				add_command_power = 50
 			}
 			else = {
-				add_named_threat = { 
-					threat = 0.5 
+				add_named_threat = {
+					threat = 0.5
 					name = EU_military_exercise_threat
 				}
 				army_experience = 10
 				add_command_power = 10
 			}
-			
+
 			### diplo
 			every_country = {
 				limit = {
@@ -3494,12 +3534,12 @@ GEN_political_decisions = { ### temp category
 						target = PREV
 						modifier = countered_military_exercise
 					}
-				}			
+				}
 			}
 			every_country = {
 				limit = {
 					has_country_flag = EU_military_exercise_prep
-				}			
+				}
 				every_country = {
 					limit = {
 						original_tag = PREV.var_EU_military_exercise_host_tag
@@ -3509,7 +3549,7 @@ GEN_political_decisions = { ### temp category
 							target = PREV
 							modifier = military_exercise_on_border
 						}
-					}	
+					}
 				}
 			}
 			every_country = {
@@ -3519,14 +3559,14 @@ GEN_political_decisions = { ### temp category
 				news_event = {
 					id = EU_news.51 ### Military Exercise countered
 				}
-			}						
+			}
 		}
 		remove_effect = {
 			clear_variable = ROOT.var_counter_military_exercise_state
         }
 
 	}
- 
+
 }
 
 ##################################
