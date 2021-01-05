@@ -30,7 +30,9 @@
 #Your new debt_rate is $4B. So you need to "reset the treasury" you give the treasury_rate back the $2B
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 ####
-
+effect_set_kuwaits_debt_to_max = {
+	KUW = { set_variable = { debt = 250 } }
+}
 add_tax_laws = {
 	meta_effect = {
 		text = {
@@ -351,6 +353,11 @@ calculate_tax_gain = {
 		limit = { has_idea = NIG_efficent_government_spending_idea }
 		multiply_variable = { var = tax_gain value = 1.10 }
 	}
+
+	if = { #Italy #instead of repeting this if for every idea, i grouped everything under this variable that i change through effects - traiano
+		limit = { tag = ITA }
+		multiply_variable = { var = tax_gain value = ITA_tax_multiplier_var }
+	}
 	#######################################################
 	##Corruption reduces tax income
 	if = {
@@ -499,6 +506,10 @@ calculate_interest_rate_ai = {
 		limit = { has_country_flag = SOV_overcoming_the_1998_financial_crisis }
 		subtract_from_variable = { var = interest_rate value = 2 }
 	}
+	if = {
+		limit = { has_idea = ITA_debt_market_trust }
+		add_to_variable = { var = interest_rate value = bond_markets_trust }
+	}
 
 	clamp_variable = {
 		var = interest_rate
@@ -586,6 +597,10 @@ calculate_interest_rate_player = {
 			limit = { has_country_flag = SOV_overcoming_the_1998_financial_crisis }
 			subtract_from_temp_variable = { var = temp_interest_rate^i value = 2 }
 		}
+		if = {
+			limit = { has_idea = ITA_debt_market_trust }
+			add_to_temp_variable = { var = temp_interest_rate^i value = bond_markets_trust }
+		}
 		clamp_temp_variable = {
 			var = temp_interest_rate^i
 			min = 0.8
@@ -662,15 +677,18 @@ calculate_debt_rate = {
 		#checks for imminent bankrupcy
 		set_temp_variable = { bankrupcy_check = size_modifier }
 		divide_temp_variable = { bankrupcy_check = 3.6 }
+		log = "[GetDateText]: [This.GetName]: bankrupcy_check value: [?bankrupcy_check] ; debt_rate value: [?debt_rate]"
 		if = {
 			limit = {
 				check_variable = { bankrupcy_check < debt_rate }
 				NOT = { has_country_flag = bailout_happened }
 			}
+			log = "[GetDateText]: [This.GetName]: bankrupcy_check value: [?bankrupcy_check] ; debt_rate value: [?debt_rate]"
 			country_event = { id = bankrupcy.0 }
-
 		}
 	}
+	set_variable = { looming_bankruptcy_rate = bankrupcy_check }
+	clear_variable = bankrupcy_check #Additional Debug here to ensure the values don't carry
 
 	if = {
 		limit = {
@@ -678,15 +696,16 @@ calculate_debt_rate = {
 		}
 		#check for bankrupcy
 		set_temp_variable = { bankrupcy_check = size_modifier }
-		divide_temp_variable = { bankrupcy_check = 2.4 }
+		divide_temp_variable = { bankrupcy_check = 2.2 }
 		if = {
 			limit = {
 				check_variable = { bankrupcy_check < debt_rate }
 			}
+			log = "[GetDateText]: [This.GetName]: bankrupcy_check value: [?bankrupcy_check] ; debt_rate value: [?debt_rate]"
 			ROOT = { news_event = { id = News_bankrupcy.6 } } #actually bankrupt
-
 		}
 	}
+	set_variable = { previous_bankruptcy_rate = bankrupcy_check }
 }
 
 #Update military spending
@@ -1318,8 +1337,6 @@ update_bureaucracy_rate_ai = {
 		multiply_variable = { var = bureaucracy_gain value = 0.01 }
 		round_variable = bureaucracy_gain
 		divide_variable = { bureaucracy_gain = 100 }
-		add_to_variable = { var = expense_gain value = bureaucracy_gain }
-		subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
 	}
 	else_if = {
 		limit = { has_idea = bureau_02 }
@@ -1330,8 +1347,6 @@ update_bureaucracy_rate_ai = {
 		multiply_variable = { var = bureaucracy_gain value = 0.02 }
 		round_variable = bureaucracy_gain
 		divide_variable = { bureaucracy_gain = 100 }
-		add_to_variable = { var = expense_gain value = bureaucracy_gain }
-		subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
 
 	}
 	else_if = {
@@ -1343,8 +1358,6 @@ update_bureaucracy_rate_ai = {
 		multiply_variable = { var = bureaucracy_gain value = 0.03 }
 		round_variable = bureaucracy_gain
 		divide_variable = { bureaucracy_gain = 100 }
-		add_to_variable = { var = expense_gain value = bureaucracy_gain }
-		subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
 
 	}
 	else_if = {
@@ -1356,8 +1369,6 @@ update_bureaucracy_rate_ai = {
 		multiply_variable = { var = bureaucracy_gain value = 0.04 }
 		round_variable = bureaucracy_gain
 		divide_variable = { bureaucracy_gain = 100 }
-		add_to_variable = { var = expense_gain value = bureaucracy_gain }
-		subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
 
 	}
 	else_if = {
@@ -1369,9 +1380,25 @@ update_bureaucracy_rate_ai = {
 		multiply_variable = { var = bureaucracy_gain value = 0.05 }
 		round_variable = bureaucracy_gain
 		divide_variable = { bureaucracy_gain = 100 }
-		add_to_variable = { var = expense_gain value = bureaucracy_gain }
-		subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
 	}
+	if = {
+		limit = { has_idea = ITA_inefficient_administration_4 } ##50% increase in cost for bureaucracy
+		multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.5 }
+	}
+	else_if = {
+		limit = { has_idea = ITA_inefficient_administration_3 } ##37,5% increase in cost for bureaucracy
+		multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.375 }
+	}
+	else_if = {
+		limit = { has_idea = ITA_inefficient_administration_2 } ##25% increase in cost for bureaucracy
+		multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.25 }
+	}
+	else_if = {
+		limit = { has_idea = ITA_inefficient_administration_1 } ##12,5% increase in cost for bureaucracy
+		multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.125 }
+	}
+	add_to_variable = { var = expense_gain value = bureaucracy_gain }
+	subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
 
 }
 update_bureaucracy_rate_player = {
@@ -1440,8 +1467,26 @@ update_bureaucracy_rate_player = {
 		}
 	}
 
-	set_variable = { var = bureaucracy_gain value = array_bureaucracy_spend^bureau_index }
 
+	#Modifiers
+	if = {
+		limit = { has_idea = ITA_inefficient_administration_4 } ##50% increase in cost for bureaucracy
+		multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.5 }
+	}
+	else_if = {
+		limit = { has_idea = ITA_inefficient_administration_3 } ##37,5% increase in cost for bureaucracy
+		multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.375 }
+	}
+	else_if = {
+		limit = { has_idea = ITA_inefficient_administration_2 } ##25% increase in cost for bureaucracy
+		multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.25 }
+	}
+	else_if = {
+		limit = { has_idea = ITA_inefficient_administration_1 } ##12,5% increase in cost for bureaucracy
+		multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.125 }
+	}
+
+	set_variable = { var = bureaucracy_gain value = array_bureaucracy_spend^bureau_index }
 	add_to_variable = { var = expense_gain value = bureaucracy_gain }
 	subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
 }
@@ -1466,8 +1511,6 @@ update_police_rate_ai = {
 		multiply_variable = { var = security_gain value = 0.005 }
 		round_variable = security_gain
 		divide_variable = { security_gain = 100 }
-		add_to_variable = { var = expense_gain value = security_gain }
-		subtract_from_variable = { var = treasury_rate value = security_gain }
 	}
 	else_if = {
 		limit = { has_idea = police_02 }
@@ -1478,8 +1521,6 @@ update_police_rate_ai = {
 		multiply_variable = { var = security_gain value = 0.01 }
 		round_variable = security_gain
 		divide_variable = { security_gain = 100 }
-		add_to_variable = { var = expense_gain value = security_gain }
-		subtract_from_variable = { var = treasury_rate value = security_gain }
 
 	}
 	else_if = {
@@ -1491,8 +1532,6 @@ update_police_rate_ai = {
 		multiply_variable = { var = security_gain value = 0.02 }
 		round_variable = security_gain
 		divide_variable = { security_gain = 100 }
-		add_to_variable = { var = expense_gain value = security_gain }
-		subtract_from_variable = { var = treasury_rate value = security_gain }
 
 	}
 	else_if = {
@@ -1504,8 +1543,6 @@ update_police_rate_ai = {
 		multiply_variable = { var = security_gain value = 0.03 }
 		round_variable = security_gain
 		divide_variable = { security_gain = 100 }
-		add_to_variable = { var = expense_gain value = security_gain }
-		subtract_from_variable = { var = treasury_rate value = security_gain }
 
 	}
 	else_if = {
@@ -1517,9 +1554,21 @@ update_police_rate_ai = {
 		multiply_variable = { var = security_gain value = 0.04 }
 		round_variable = security_gain
 		divide_variable = { security_gain = 100 }
-		add_to_variable = { var = expense_gain value = security_gain }
-		subtract_from_variable = { var = treasury_rate value = security_gain }
 	}
+	if = {
+		limit = { has_tech = DNA_fingerprinting } ##5% reduction in cost for security
+		multiply_variable = { var = security_gain value = 0.95 }
+	}
+	if = {
+		limit = { has_idea = ITA_legalized_light_drugs } ##10% reduction in cost for security
+		multiply_variable = { var = security_gain value = 0.90 }
+	}
+	if = {
+		limit = { has_idea = ITA_legalized_all_drugs } ##15% reduction in cost for security
+		multiply_variable = { var = security_gain value = 0.85 }
+	}
+	add_to_variable = { var = expense_gain value = security_gain }
+	subtract_from_variable = { var = treasury_rate value = security_gain }
 }
 update_police_rate_player = {
 
@@ -1591,7 +1640,11 @@ update_police_rate_player = {
 	#Modifiers
 	if = {
 		limit = { has_tech = DNA_fingerprinting } ##5% reduction in cost for security
-		multiply_variable = { var = array_security_spend^security_index value = 0.95 }
+		multiply_variable = { var = array_security_spend^security_index value = 0.95}
+	}
+	if = {
+		limit = { has_idea = ITA_legalized_light_drugs } ##10% reduction in cost for security
+		multiply_variable = { var = array_security_spend^security_index value = 0.90 }
 	}
 
 	set_variable = { var = security_gain value = array_security_spend^security_index }
@@ -1636,6 +1689,46 @@ update_education_rate_ai = {
 			limit = { has_idea = gdp_5 }
 			multiply_variable = { var = education_gain value = 1.25 }
 		}
+
+		###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
+		if = {
+			limit = {
+				has_tech = internet1
+			}
+			multiply_variable = { var = education_gain value = 0.97 } #3% education cost
+		}
+		if = {
+			limit = {
+				has_tech = internet2
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
+		if = {
+			limit = {
+				has_tech = internet3
+			}
+			multiply_variable = { var = education_gain value = 0.97}
+		}
+		if = {
+			limit = {
+				has_tech = internet4
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
+
+		if = {
+			limit = {
+				has_tech = internet5
+			}
+			multiply_variable = { var = education_gain value = 0.97 }
+		}
+		if = {
+			limit = {
+				has_tech = internet6
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
+
 		round_variable = education_gain
 		divide_variable = { education_gain = 100 }
 		add_to_variable = { var = expense_gain value = education_gain }
@@ -1666,6 +1759,44 @@ update_education_rate_ai = {
 		else_if = {
 			limit = { has_idea = gdp_5 }
 			multiply_variable = { var = education_gain value = 1.25 }
+		}
+		###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
+		if = {
+			limit = {
+				has_tech = internet1
+			}
+			multiply_variable = { var = education_gain value = 0.97 } #3% education cost
+		}
+		if = {
+			limit = {
+				has_tech = internet2
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
+		if = {
+			limit = {
+				has_tech = internet3
+			}
+			multiply_variable = { var = education_gain value = 0.97}
+		}
+		if = {
+			limit = {
+				has_tech = internet4
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
+
+		if = {
+			limit = {
+				has_tech = internet5
+			}
+			multiply_variable = { var = education_gain value = 0.97}
+		}
+		if = {
+			limit = {
+				has_tech = internet6
+			}
+			multiply_variable = { var = education_gain value = 0.95}
 		}
 		round_variable = education_gain
 		divide_variable = { education_gain = 100 }
@@ -1699,6 +1830,44 @@ update_education_rate_ai = {
 			limit = { has_idea = gdp_5 }
 			multiply_variable = { var = education_gain value = 1.25 }
 		}
+		###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
+		if = {
+			limit = {
+				has_tech = internet1
+			}
+			multiply_variable = { var = education_gain value = 0.97 } #3% education cost
+		}
+		if = {
+			limit = {
+				has_tech = internet2
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
+		if = {
+			limit = {
+				has_tech = internet3
+			}
+			multiply_variable = { var = education_gain value = 0.97}
+		}
+		if = {
+			limit = {
+				has_tech = internet4
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
+
+		if = {
+			limit = {
+				has_tech = internet5
+			}
+			multiply_variable = { var = education_gain value = 0.97}
+		}
+		if = {
+			limit = {
+				has_tech = internet6
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
 		round_variable = education_gain
 		divide_variable = { education_gain = 100 }
 		add_to_variable = { var = expense_gain value = education_gain }
@@ -1731,6 +1900,44 @@ update_education_rate_ai = {
 			limit = { has_idea = gdp_5 }
 			multiply_variable = { var = education_gain value = 1.25 }
 		}
+		###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
+		if = {
+			limit = {
+				has_tech = internet1
+			}
+			multiply_variable = { var = education_gain value = 0.97 } #3% education cost
+		}
+		if = {
+			limit = {
+				has_tech = internet2
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
+		if = {
+			limit = {
+				has_tech = internet3
+			}
+			multiply_variable = { var = education_gain value = 0.97}
+		}
+		if = {
+			limit = {
+				has_tech = internet4
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
+
+		if = {
+			limit = {
+				has_tech = internet5
+			}
+			multiply_variable = { var = education_gain value = 0.97}
+		}
+		if = {
+			limit = {
+				has_tech = internet6
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
 		round_variable = education_gain
 		divide_variable = { education_gain = 100 }
 		add_to_variable = { var = expense_gain value = education_gain }
@@ -1762,6 +1969,44 @@ update_education_rate_ai = {
 		else_if = {
 			limit = { has_idea = gdp_5 }
 			multiply_variable = { var = education_gain value = 1.25 }
+		}
+		###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
+		if = {
+			limit = {
+				has_tech = internet1
+			}
+			multiply_variable = { var = education_gain value = 0.97 } #3% education cost
+		}
+		if = {
+			limit = {
+				has_tech = internet2
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
+		if = {
+			limit = {
+				has_tech = internet3
+			}
+			multiply_variable = { var = education_gain value = 0.97}
+		}
+		if = {
+			limit = {
+				has_tech = internet4
+			}
+			multiply_variable = { var = education_gain value = 0.95}
+		}
+
+		if = {
+			limit = {
+				has_tech = internet5
+			}
+			multiply_variable = { var = education_gain value = 0.97}
+		}
+		if = {
+			limit = {
+				has_tech = internet6
+			}
+			multiply_variable = { var = education_gain value = 0.95}
 		}
 		round_variable = education_gain
 		divide_variable = { education_gain = 100 }
@@ -1923,8 +2168,6 @@ update_health_rate_ai = {
 		multiply_variable = { var = health_gain value = 0.01 }
 		round_variable = health_gain
 		divide_variable = { health_gain = 100 }
-		add_to_variable = { var = expense_gain value = health_gain }
-		subtract_from_variable = { var = treasury_rate value = health_gain }
 	}
 	else_if = {
 		limit = { has_idea = health_02 }
@@ -1935,8 +2178,6 @@ update_health_rate_ai = {
 		multiply_variable = { var = health_gain value = 0.02 }
 		round_variable = health_gain
 		divide_variable = { health_gain = 100 }
-		add_to_variable = { var = expense_gain value = health_gain }
-		subtract_from_variable = { var = treasury_rate value = health_gain }
 
 	}
 	else_if = {
@@ -1948,8 +2189,6 @@ update_health_rate_ai = {
 		multiply_variable = { var = health_gain value = 0.04 }
 		round_variable = health_gain
 		divide_variable = { health_gain = 100 }
-		add_to_variable = { var = expense_gain value = health_gain }
-		subtract_from_variable = { var = treasury_rate value = health_gain }
 
 	}
 	else_if = {
@@ -1961,8 +2200,6 @@ update_health_rate_ai = {
 		multiply_variable = { var = health_gain value = 0.06 }
 		round_variable = health_gain
 		divide_variable = { health_gain = 100 }
-		add_to_variable = { var = expense_gain value = health_gain }
-		subtract_from_variable = { var = treasury_rate value = health_gain }
 
 	}
 	else_if = {
@@ -1974,8 +2211,6 @@ update_health_rate_ai = {
 		multiply_variable = { var = health_gain value = 0.08 }
 		round_variable = health_gain
 		divide_variable = { health_gain = 100 }
-		add_to_variable = { var = expense_gain value = health_gain }
-		subtract_from_variable = { var = treasury_rate value = health_gain }
 	}
 	else_if = {
 		limit = { has_idea = health_06 }
@@ -1986,9 +2221,21 @@ update_health_rate_ai = {
 		multiply_variable = { var = health_gain value = 0.1 }
 		round_variable = health_gain
 		divide_variable = { health_gain = 100 }
-		add_to_variable = { var = expense_gain value = health_gain }
-		subtract_from_variable = { var = treasury_rate value = health_gain }
 	}
+	if = {
+		limit = {
+			has_tech = nanocellulose_in_medicine
+		}
+		multiply_variable = { var = health_gain value = 0.90 }
+	}
+	if = {
+		limit = {
+			has_tech = medical_nanorobots
+		}
+		multiply_variable = { var = health_gain value = 0.95 }
+	}
+	add_to_variable = { var = expense_gain value = health_gain }
+	subtract_from_variable = { var = treasury_rate value = health_gain }
 
 }
 update_health_rate_player = {
@@ -2068,6 +2315,12 @@ update_health_rate_player = {
 			has_tech = nanocellulose_in_medicine
 		}
 		multiply_variable = { var = array_health_spend^health_index value = 0.90 }
+	}
+	if = {
+		limit = {
+			has_tech = medical_nanorobots
+		}
+		multiply_variable = { var = array_health_spend^health_index value = 0.95 }
 	}
 	set_variable = { var = health_gain value = array_health_spend^health_index }
 
