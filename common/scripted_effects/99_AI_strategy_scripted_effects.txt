@@ -7,7 +7,15 @@ ai_update_build_units = { #default is not to build units
 			}
 			OR = {
 				has_war = yes
-				threat > 0.30
+				if = {
+					limit = { has_government = democratic }
+					threat > 0.25
+				}
+				else_if = {
+					limit = { has_government = neutrality }
+					threat > 0.40
+				}
+				has_government = nationalist
 				is_bad_salafist = yes
 				any_other_country = {
 					OR = {
@@ -19,7 +27,7 @@ ai_update_build_units = { #default is not to build units
 		}
 		set_country_flag = ai_yes_unit_build
 		add_to_variable = { var = ai_wants_divisions value = 500 }
-		log = "AI Update Triggered"
+		log = "[GetDateText]: [Root.GetName]: AI Update - AI Build Unit Flag Set"
 	}
 	if = {
 		limit = {
@@ -28,7 +36,15 @@ ai_update_build_units = { #default is not to build units
 				has_country_flag = AI_is_threatened
 			}
 			has_war = no
-			threat < 0.31
+			if = {
+				limit = { has_government = democratic }
+				threat < 0.26
+			}
+			else_if = {
+				limit = { has_government = neutrality }
+				threat < 0.41
+			}
+			NOT = { has_government = nationalist }
 			is_bad_salafist = no
 			any_other_country = {
 				NOT = {
@@ -42,23 +58,8 @@ ai_update_build_units = { #default is not to build units
 			limit = { has_country_flag = AI_is_threatened }
 			clr_country_flag = AI_is_threatened
 		}
+		log = "[GetDateText]: [Root.GetName]: AI Update - AI Build Unit Flag clear"
 		add_to_variable = { var = ai_wants_divisions value = -500 } #maybe causing a crash? You can edit vanilla vars? idk who did this
-	}
-
-	if = {
-		limit = {
-			has_country_flag = AI_is_threatened
-			has_war = no
-			threat < 0.31
-			is_bad_salafist = no
-			any_other_country = {
-				NOT = {
-					is_justifying_wargoal_against = this
-					has_wargoal_against = this
-				}
-			}
-		}
-		clr_country_flag = AI_is_threatened
 	}
 }
 
