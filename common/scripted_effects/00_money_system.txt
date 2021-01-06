@@ -30,7 +30,9 @@
 #Your new debt_rate is $4B. So you need to "reset the treasury" you give the treasury_rate back the $2B
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 ####
-
+effect_set_kuwaits_debt_to_max = {
+	KUW = { set_variable = { debt = 250 } }
+}
 add_tax_laws = {
 	meta_effect = {
 		text = {
@@ -675,6 +677,7 @@ calculate_debt_rate = {
 		#checks for imminent bankrupcy
 		set_temp_variable = { bankrupcy_check = size_modifier }
 		divide_temp_variable = { bankrupcy_check = 3.6 }
+		log = "[GetDateText]: [This.GetName]: bankrupcy_check value: [?bankrupcy_check] ; debt_rate value: [?debt_rate]"
 		if = {
 			limit = {
 				check_variable = { bankrupcy_check < debt_rate }
@@ -682,9 +685,10 @@ calculate_debt_rate = {
 			}
 			log = "[GetDateText]: [This.GetName]: bankrupcy_check value: [?bankrupcy_check] ; debt_rate value: [?debt_rate]"
 			country_event = { id = bankrupcy.0 }
-
 		}
 	}
+	set_variable = { looming_bankruptcy_rate = bankrupcy_check }
+	clear_variable = bankrupcy_check #Additional Debug here to ensure the values don't carry
 
 	if = {
 		limit = {
@@ -699,9 +703,9 @@ calculate_debt_rate = {
 			}
 			log = "[GetDateText]: [This.GetName]: bankrupcy_check value: [?bankrupcy_check] ; debt_rate value: [?debt_rate]"
 			ROOT = { news_event = { id = News_bankrupcy.6 } } #actually bankrupt
-
 		}
 	}
+	set_variable = { previous_bankruptcy_rate = bankrupcy_check }
 }
 
 #Update military spending
@@ -1462,7 +1466,7 @@ update_bureaucracy_rate_player = {
 			value = v
 		}
 	}
-	
+
 
 	#Modifiers
 	if = {
@@ -1553,12 +1557,12 @@ update_police_rate_ai = {
 	}
 	if = {
 		limit = { has_tech = DNA_fingerprinting } ##5% reduction in cost for security
-		multiply_variable = { var = security_gain value = 0.95}
+		multiply_variable = { var = security_gain value = 0.95 }
 	}
 	if = {
 		limit = { has_idea = ITA_legalized_light_drugs } ##10% reduction in cost for security
 		multiply_variable = { var = security_gain value = 0.90 }
-	}	
+	}
 	if = {
 		limit = { has_idea = ITA_legalized_all_drugs } ##15% reduction in cost for security
 		multiply_variable = { var = security_gain value = 0.85 }
@@ -1685,7 +1689,7 @@ update_education_rate_ai = {
 			limit = { has_idea = gdp_5 }
 			multiply_variable = { var = education_gain value = 1.25 }
 		}
-		
+
 		###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
 		if = {
 			limit = {
@@ -1716,7 +1720,7 @@ update_education_rate_ai = {
 			limit = {
 				has_tech = internet5
 			}
-			multiply_variable = { var = education_gain value = 0.97}
+			multiply_variable = { var = education_gain value = 0.97 }
 		}
 		if = {
 			limit = {
@@ -1724,7 +1728,7 @@ update_education_rate_ai = {
 			}
 			multiply_variable = { var = education_gain value = 0.95}
 		}
-		
+
 		round_variable = education_gain
 		divide_variable = { education_gain = 100 }
 		add_to_variable = { var = expense_gain value = education_gain }
@@ -2224,6 +2228,12 @@ update_health_rate_ai = {
 		}
 		multiply_variable = { var = health_gain value = 0.90 }
 	}
+	if = {
+		limit = {
+			has_tech = medical_nanorobots
+		}
+		multiply_variable = { var = health_gain value = 0.95 }
+	}
 	add_to_variable = { var = expense_gain value = health_gain }
 	subtract_from_variable = { var = treasury_rate value = health_gain }
 
@@ -2305,6 +2315,12 @@ update_health_rate_player = {
 			has_tech = nanocellulose_in_medicine
 		}
 		multiply_variable = { var = array_health_spend^health_index value = 0.90 }
+	}
+	if = {
+		limit = {
+			has_tech = medical_nanorobots
+		}
+		multiply_variable = { var = array_health_spend^health_index value = 0.95 }
 	}
 	set_variable = { var = health_gain value = array_health_spend^health_index }
 
