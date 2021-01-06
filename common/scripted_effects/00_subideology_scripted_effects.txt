@@ -29,7 +29,7 @@ add_relative_party_popularity = {
 			array = party_pop_array
 			value = v
 			index = i
-			
+
 			if = {
 				limit = {
 					NOT = { check_variable = { i = party_index } }
@@ -69,7 +69,7 @@ add_relative_party_popularity = {
 			array = party_pop_array
 			value = v
 			index = i
-			
+
 			if = {
 				limit = {
 					NOT = { check_variable = { i = party_index } }
@@ -107,7 +107,7 @@ add_relative_party_popularity = {
 			array = party_pop_array
 			value = v
 			index = i
-			
+
 			if = {
 				limit = {
 					NOT = { check_variable = { i = party_index } }
@@ -147,7 +147,7 @@ add_relative_party_popularity = {
 			array = party_pop_array
 			value = v
 			index = i
-			
+
 			if = {
 				limit = {
 					NOT = { check_variable = { i = party_index } }
@@ -189,7 +189,7 @@ add_relative_party_popularity = {
 			array = party_pop_array
 			value = v
 			index = i
-			
+
 			if = {
 				limit = {
 					NOT = { check_variable = { i = party_index } }
@@ -527,8 +527,7 @@ set_temp_variable_to_ruling_party = {
 #### New Coalition stuff ####
 
 startup_politics = {
-	log = "[GetDateText]: [This.GetName]: "
-	log = "startup_politics"
+	log = "[GetDateText]: [This.GetName]: Start up begun"
 	set_failsafe_values = yes #adds needed values if missing
 	add_up_party_totals = yes
 	set_party_positions = yes
@@ -548,7 +547,7 @@ start_politics_input = {
 	clear_array = pos_array
 	clear_array = ruling_party
 	clear_array = gov_coalition_array
-	
+
 	resize_array = { array = party_pop_array size = 24 }
 	resize_array = { array = party_pop_elect_array size = 24 value = -1 }
 	resize_array = { array = pos_array size = 24 }
@@ -556,7 +555,7 @@ start_politics_input = {
 
 recalculate_party = {
 	#log = "[GetDateText]: [This.GetName]: recalculate_party started"
-	hidden_effect = { 
+	hidden_effect = {
 		add_up_party_totals = yes
 		set_party_positions = yes
 		update_government_coalition_strength = yes
@@ -594,13 +593,13 @@ add_up_party_totals = {
 	set_variable = { pop_total_fascism = 0 }
 	set_variable = { pop_total_neutrality = 0 }
 	set_variable = { pop_total_nationalist = 0 }
-	
+
 	#sum of ideologies
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = current_id
 		meta_effect = {
-			text = { 
+			text = {
 				add_to_variable = { pop_total_[PART_OF_IDEOLOGY1] = party_pop_array^current_id }
 			}
 			PART_OF_IDEOLOGY1 = "[?this.offcial_name_party_ideology]"
@@ -625,14 +624,14 @@ add_up_party_totals = {
 }
 
 set_party_positions = {
-	resize_temp_array = { 
-		array = party_pop_array_temp 
+	resize_temp_array = {
+		array = party_pop_array_temp
 		size = 24
 	}
 	for_loop_effect = {
 		end = pos_array^num
 		find_highest_in_array = {
-			array = party_pop_array 
+			array = party_pop_array
 			value = max
 			index = max_index
 		}
@@ -672,7 +671,7 @@ update_party_name = {
 		}
 		meta_effect = {
 			text = {
-				set_party_name = { 
+				set_party_name = {
 					ideology = [OUTLOOK]
 					name = [SUBIDEOLOGY_NAME]
 					long_name = [SUBIDEOLOGY_NAME]
@@ -726,13 +725,13 @@ set_coalition_drift = {
 	set_variable = { coalition_neutrality = 0 }
 	set_variable = { coalition_democratic = 0 }
 	clear_coalition_count_ideas = yes
-	
+
 	for_loop_effect = {
-		end = gov_coalition_array^num 
+		end = gov_coalition_array^num
 		value = v
 		set_temp_variable = { sum = party_pop_elect_array^gov_coalition_array^v } #pop of current element
 		set_temp_variable = { current_id = gov_coalition_array^v } #ID of current element
-		
+
 		meta_effect = {
 			text = {
 				add_to_variable = { coalition_[PART_OF_IDEOLOGY] = sum }
@@ -759,12 +758,12 @@ update_government_coalition_strength = {
 	hidden_effect = { gov_pop_idea_remove = yes }
 	set_temp_variable = { sum = 0 }
 	for_each_loop = {
-		array = gov_coalition_array 
+		array = gov_coalition_array
 		value = v
 		add_to_temp_variable = { sum = party_pop_array^v }
 	}
 	set_variable = { government_coalition_strength = sum }
-	
+
 	#strength of ruling_party is separate
 	set_temp_variable = { sum = 0 }
 	for_each_loop = {
@@ -773,16 +772,16 @@ update_government_coalition_strength = {
 		add_to_temp_variable = { sum = party_pop_array^v }
 	}
 	add_to_variable = { government_coalition_strength = sum }
-	
+
 	### Now setup the election strength ###
 	set_temp_variable = { sum = 0 }
 	for_each_loop = {
-		array = gov_coalition_array 
+		array = gov_coalition_array
 		value = v
 		add_to_temp_variable = { sum = party_pop_elect_array^v }
 	}
 	set_variable = { government_coalition_strength_elect = sum }
-	
+
 	#strength of ruling_party is separate
 	set_temp_variable = { sum = 0 }
 	for_each_loop = {
@@ -791,7 +790,7 @@ update_government_coalition_strength = {
 		add_to_temp_variable = { sum = party_pop_elect_array^v }
 	}
 	add_to_variable = { government_coalition_strength_elect = sum }
-	
+
 	#find the differentials
 	set_variable = { government_coalition_differential = government_coalition_strength }
 	subtract_from_variable = { government_coalition_differential = government_coalition_strength_elect }
@@ -802,7 +801,7 @@ update_government_coalition_strength = {
 refund_government_coalition = {
 	set_temp_variable = { sum_factor = 0 }
 	for_loop_effect = {
-		end = party_pop_array^num 
+		end = party_pop_array^num
 		value = v
 		set_temp_variable = { sum = party_pop_elect_array^gov_coalition_array^v } #pop of current element
 		set_temp_variable = { current_id = gov_coalition_array^v } #ID of current element
@@ -1103,17 +1102,17 @@ AI_setup_government = {
 	#hold_elections = yes #add values to election array etc
 	clear_array = ruling_party
 	clear_array = gov_coalition_array
-	
+
 	set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
 	subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^max_index_1 }
 
 	set_temp_variable = { majority_threshold_2 = majority_threshold } #need one that does not include second biggest party
 	subtract_from_temp_variable = { majority_threshold_2 = party_pop_elect_array^max_index_2 }
-	
+
 	make_affinity_arrays = yes
 	reduce_affinity_array_party_1 = yes
 	reduce_affinity_array_party_2 = yes
-	
+
 	if = {
 		limit = {
 			#coalition 1 is prefered - lowest
@@ -1151,7 +1150,7 @@ AI_setup_government = {
 			}
 		}
 	}
-	
+
 	update_government_coalition_strength = yes
 	set_coalition_drift = yes
 
@@ -1163,7 +1162,7 @@ AI_setup_government = {
 		calculate_abandon_coalition_threshold = yes
 		remove_gov_crisis_ai_flags	= yes
 	}
-	
+
 	if = {
 		limit = {
 			#leader has subideology_trait = ruling party
@@ -1284,11 +1283,11 @@ AI_setup_government = {
 
 make_affinity_arrays = {
 	resize_temp_array = {
-		array = party_1_affinity_array 
+		array = party_1_affinity_array
 		size = party_pop_array^num
 	}
 	resize_temp_array = {
-		array = party_2_affinity_array 
+		array = party_2_affinity_array
 		size = party_pop_array^num
 	}
 	for_loop_effect = {
@@ -1296,7 +1295,7 @@ make_affinity_arrays = {
 		value = v
 		if = {
 			limit = {
-				NOT = { 
+				NOT = {
 					OR = {
 						check_variable = { max_index_1 = v }
 						check_variable = { max_index_2 = v }
@@ -1328,13 +1327,13 @@ make_affinity_arrays = {
 
 
 reduce_affinity_array_party_1 = {
-	
+
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = a1
 		break = break_1
 		set_temp_variable = { sum_coalition_1 = 0 }
-		
+
 		#current temp coalition1 strength
 		for_each_loop = {
 			array = party_pop_elect_array
@@ -1352,12 +1351,12 @@ reduce_affinity_array_party_1 = {
 				check_variable = { sum_coalition_1 > majority_threshold_1 }
 			}
 			find_highest_in_array = {
-				array = party_1_affinity_array 
+				array = party_1_affinity_array
 				value = max1
 				index = max1_index
 			}
 			subtract_from_temp_variable = { sum_coalition_1 = party_pop_elect_array^max1_index }
-			set_temp_variable = { party_1_affinity_array^max1_index = 0 }	
+			set_temp_variable = { party_1_affinity_array^max1_index = 0 }
 			if = {
 				limit = {
 					check_variable = { sum_coalition_1 < majority_threshold_1 }
@@ -1386,13 +1385,13 @@ reduce_affinity_array_party_1 = {
 }
 
 reduce_affinity_array_party_2 = {
-	
+
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = a2
 		break = break_2
 		set_temp_variable = { sum_coalition_2 = 0 }
-		
+
 		#current temp coalition2 strength
 		for_each_loop = {
 			array = party_pop_elect_array
@@ -1410,12 +1409,12 @@ reduce_affinity_array_party_2 = {
 				check_variable = { sum_coalition_2 > majority_threshold_2 }
 			}
 			find_highest_in_array = {
-				array = party_2_affinity_array 
+				array = party_2_affinity_array
 				value = max2
 				index = max2_index
 			}
 			subtract_from_temp_variable = { sum_coalition_2 = party_pop_elect_array^max2_index }
-			set_temp_variable = { party_2_affinity_array^max2_index = 0 }	
+			set_temp_variable = { party_2_affinity_array^max2_index = 0 }
 			if = {
 				limit = {
 					check_variable = { sum_coalition_2 < majority_threshold_2 }
@@ -1738,7 +1737,7 @@ party_1_pol_distance_3 = {
 	}
 }
 
-##Communist-State 
+##Communist-State
 party_1_pol_distance_4 = {
 	if = { limit = { check_variable = { max_index_1 = 0 } } #Western_Autocracy
 			set_variable = { pol_distance_current = 1 }
@@ -3494,7 +3493,7 @@ party_2_pol_distance_3 = {
 	}
 }
 
-##Communist-State 
+##Communist-State
 party_2_pol_distance_4 = {
 	if = { limit = { check_variable = { max_index_2 = 0 } } #Western_Autocracy
 			set_variable = { pol_distance_current = 1 }
@@ -5248,7 +5247,7 @@ pol_distance_matrix_3 = {
 	}
 }
 
-##Communist-State 
+##Communist-State
 pol_distance_matrix_4 = {
 	if = { limit = { is_in_array = { ruling_party = 0 } } #Western_Autocracy
 			set_variable = { pol_distance_current = 1 }
