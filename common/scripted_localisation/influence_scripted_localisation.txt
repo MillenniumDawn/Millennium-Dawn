@@ -174,8 +174,10 @@ defined_text = {
    name = select_aid_button
 
 	text = {
-	   trigger = { is_influencer = yes }
-	   localization_key = "GFX_aid_button"
+		trigger = {
+			is_influencer = yes
+		}
+		localization_key = "GFX_aid_button"
 	}
 	text = {
 	   #trigger = { always = yes }
@@ -184,58 +186,93 @@ defined_text = {
 }
 
 defined_text = {
-   name = aid_button_req
-
+	name = aid_button_req
 	text = {
 		trigger = {
 			is_influencer = yes
 			check_variable = { gdp_capita < ROOT.gdp_capita }
-	   }
-	   localization_key = aid_button_req_enable_TT
+
+		}
+		localization_key = aid_button_req_enable_TT
 	}
 	text = {
 		trigger = {
 			is_influencer = yes
 			NOT = { check_variable = { gdp_capita < ROOT.gdp_capita } }
-	   }
-	   localization_key = aid_button_req_disable1_TT
+
+		}
+		localization_key = aid_button_req_disable1_TT
 	}
 	text = {
 		trigger = {
 			NOT = {
 				is_influencer = yes
-			 }
-			check_variable = { gdp_capita < ROOT.gdp_capita }
-	   }
+			}
 
-	   localization_key = aid_button_req_disable2_TT
+			check_variable = { gdp_capita < ROOT.gdp_capita }
+		}
+
+		localization_key = aid_button_req_disable2_TT
 	}
 	text = {
-	   #trigger = { always = yes }
-	   localization_key = aid_button_req_disable3_TT
+		#trigger = { always = yes }
+		localization_key = aid_button_req_disable3_TT
 	}
 }
 defined_text = {
-   name = aid_button_sizemod_check
+	name = aid_button_sizemod_check
 
 	text = {
 		trigger = {
 			is_influencer = yes
 			check_variable = { size_modifier < ROOT.size_modifier }
 		}
-	   localization_key = aid_button_sizemod_check_true
+		localization_key = aid_button_sizemod_check_true
 	}
 	text = {
-	   #trigger = { always = yes }
-	   localization_key = aid_button_sizemod_check_false
+		#trigger = { always = yes }
+		localization_key = aid_button_sizemod_check_false
 	}
 }
+
 defined_text = {
-   name = select_aid_military_button
+	name = sent_aid_recently_check
+	text = {
+		trigger = {
+			ROOT = { PREV = { ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } } } }
+		}
+		localization_key = aid_button_recently_sent_true
+	}
+	text = {
+		localization_key = aid_button_recently_sent_false
+	}
+}
+
+defined_text = {
+	name = sent_recently_sent_military_aid_check
+	text = {
+		trigger = {
+			ROOT = { PREV = { ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } } } }
+		}
+		localization_key = aid_button_recently_sent_military_aid_true
+	}
+	text = {
+		localization_key = aid_button_recently_sent_military_aid_false
+	}
+}
+
+defined_text = {
+	name = select_aid_military_button
 
 	text = {
 		trigger = {
 			is_influencer = yes
+			OR = {
+				has_war = yes
+				threat > 0.50
+				has_country_flag = ai_yes_unit_build
+				has_country_flag = AI_is_threatened
+			}
 			OR = {
 				ROOT = { has_idea = defense_industry }
 				ROOT = { num_of_military_factories > 10 }
@@ -247,6 +284,10 @@ defined_text = {
 		trigger = {
 			NOT = {
 				is_influencer = yes
+				has_war = yes
+				threat > 0.50
+				has_country_flag = ai_yes_unit_build
+				has_country_flag = AI_is_threatened
 				ROOT = { has_idea = defense_industry }
 				ROOT = { num_of_military_factories > 10 }
 			}
@@ -274,10 +315,10 @@ defined_text = {
 	text = {
 		trigger = {
 			OR = {
-				ROOT = { has_war = yes }
+				has_war = yes
 				threat > 0.50
-				has_country_flag = ai_yes_unit_build
-				has_country_flag = AI_is_threatened
+				THIS = { has_country_flag = ai_yes_unit_build }
+				THIS = { has_country_flag = AI_is_threatened }
 			}
 		}
 		localization_key = has_purpose_for_equipment_true_TT
@@ -308,6 +349,7 @@ defined_text = {
 		localization_key = military_aid_military_capable_false_TT
 	}
 }
+#Target Other
 defined_text = {
    name = select_target_other_button
 
@@ -736,18 +778,20 @@ defined_text = {
 	}
 }
 
+
 defined_text = {
    name = select_make_puppet_button
 
 	text = {
-	   trigger = {
+		trigger = {
 			check_variable = { influence_array^0 = ROOT }
 			check_variable = { influence_array_calc^0 > 0.8 } #80%
 			is_same_government = yes
 			NOT = { is_puppet_of = ROOT }
 			NOT = { has_war = yes }
-	   }
-	   localization_key = "GFX_make_puppet_button"
+			is_subject = no
+		}
+		localization_key = "GFX_make_puppet_button"
 	}
 	text = {
 	   #trigger = { always = yes }
@@ -791,9 +835,9 @@ defined_text = {
 
 	text = {
 		trigger = {
-			NOT = { has_war = yes }
+			FROM = { has_war = no }
 		}
-	   localization_key = trigger3_make_puppet_button_true
+	  	localization_key = trigger3_make_puppet_button_true
 	}
 	text = {
 	   #trigger = { always = yes }
@@ -806,7 +850,7 @@ defined_text = {
 
 	text = {
 		trigger = {
-			NOT = { is_subject_of = ROOT }
+			ROOT = { PREV = { NOT = { is_subject_of = ROOT } } }
 		}
 	   localization_key = trigger4_make_puppet_button_true
 	}
@@ -820,13 +864,12 @@ defined_text = {
 	name = trigger5_select_make_puppet_button
 	text = {
 		trigger = {
-			is_subject = yes
+			ROOT = { PREV = { is_subject = no } }
 		}
-	   localization_key = trigger5_make_puppet_button_true
+		localization_key = trigger5_make_puppet_button_true
 	}
 	text = {
-	   #trigger = { always = yes }
-	   localization_key = trigger5_make_puppet_button_false
+		localization_key = trigger5_make_puppet_button_false
 	}
 
 }
