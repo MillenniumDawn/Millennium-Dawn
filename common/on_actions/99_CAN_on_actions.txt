@@ -73,8 +73,24 @@ on_actions = {
 	on_weekly_CAN = {
 		effect = {
 			if = {
-				limit = { check_variable = { CAN_subsidy_total > 0 } }
-				subtract_from_variable = { treasury = CAN_subsidy_total }
+				limit = { NOT = { has_country_flag = on_weekly_done } }
+				add_to_variable = { CAN.weekly = 1 }
+				set_temp_variable = { week_count = CAN.weekly }
+				set_temp_variable = { modular_calculator = 2 }
+				set_variable = { CAN.biweekly = week_count }
+				divide_variable = { CAN.biweekly = 2 }
+				modulo_temp_variable = { week_count = modular_calculator }
+				set_variable = { CAN.biweekly_modular = week_count }
+				log = "CAN - [?CAN.biweekly_modular]"
+				if = {
+					limit = {
+						check_variable = { CAN.biweekly_modular = 0 }
+					}
+					if = {
+						limit = { check_variable = { CAN_subsidy_total > 0 } }
+						subtract_from_variable = { treasury = CAN_subsidy_total }
+					}
+				}
 			}
 		}
 	}
