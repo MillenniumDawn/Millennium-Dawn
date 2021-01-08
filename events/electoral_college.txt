@@ -2703,9 +2703,13 @@ country_event = {
 	}
 }
 
+# Giving the President his 2 weeks notice
 country_event = {
 	id = electoral_college.52
-	immediate = { log = "[GetDateText]: [Root.GetName]: event electoral_college.52" }
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event electoral_college.52" 
+		country_event = { id = electoral_college.53 days = 14 } # So the player can't cheese the election date
+	}
 	title = electoral_college.52.t
 	desc = electoral_college.52.d
 	picture = GFX_election_day
@@ -2714,20 +2718,131 @@ country_event = {
 
 	trigger = {
 		tag = USA
+		has_country_flag = generic_election_killswitch
 	}
 
 	option = {
 		name = electoral_college.52.a
 		log = "[GetDateText]: [This.GetName]: electoral_college.52.a executed"
-		country_event = { id = electoral_college.52 days = 14 }
 	}
 }
 
+# Election concludes. Determine winner
 country_event = {
 	id = electoral_college.53
-	immediate = { log = "[GetDateText]: [Root.GetName]: event electoral_college.53" }
-	title = electoral_college.53.t
-	desc = electoral_college.53.d
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event electoral_college.53"
+		# So players can't just delay the results
+		determine_swing_states = yes 
+		random_electoral_college_drift = yes
+		us_party_faction_drift = yes
+		update_us_subideologies = yes
+		update_electral_college_alignments = yes
+		if = {
+			limit = { check_variable = { democrat_electoral_votes > republic_electoral_votes } }
+			set_variable = { admin_elect = 0 }
+			# Determines winning faction
+			if = {
+				limit = { 
+					check_variable = { progressive_democrat > establishment_democrat }
+					check_variable = { progressive_democrat > socialist_democrat } 
+				}
+				set_variable = { faction_elect = 2 }
+			}
+			else_if = {
+				limit = { 
+					check_variable = { socialist_democrat > establishment_democrat }
+					check_variable = { socialist_democrat > progressive_democrat } 
+				}
+				set_variable = { faction_elect = 3 }
+			}
+			else = { set_variable = { faction_elect = 1 } }
+
+			if = {
+				# President won re-election, see y'all in 4 years
+				limit = { 
+					check_variable = { admin_elect = current_admin }
+					check_variable = { terms = 1 }
+				}
+				add_to_variable = { terms = 1 }
+				country_event = { id = electoral_college.54 days = 1 }
+			}
+			else_if = {
+				# President lost re-election pepehands
+				limit = { 
+					NOT = { check_variable = { admin_elect = current_admin } }
+					check_variable = { terms = 1 }
+				}
+				set_variable = { current_admin = 0 }
+				country_event = { id = electoral_college.55 days = 1 }
+			}
+			else = { country_event = { id = electoral_college.56 days = 1 } }
+
+		}
+		else_if = {
+			limit = { check_variable = { democrat_electoral_votes < republic_electoral_votes } }
+			set_variable = { admin_elect = 1 }
+			# Determines winning faction
+			if = {
+				limit = { 
+					check_variable = { constitutionalist_republican > establishment_democrat }
+					check_variable = { constitutionalist_republican > socialist_democrat } 
+				}
+				set_variable = { faction_elect = 2 }
+			}
+			else_if = {
+				limit = { 
+					check_variable = { socialist_democrat > establishment_democrat }
+					check_variable = { socialist_democrat > constitutionalist_republican } 
+				}
+				set_variable = { faction_elect = 3 }
+			}
+			else = { set_variable = { faction_elect = 1 } }
+
+			if = {
+				# President won re-election, see y'all in 4 years
+				limit = { 
+					check_variable = { admin_elect = current_admin }
+					check_variable = { terms = 1 }
+				}
+				add_to_variable = { terms = 1 }
+				country_event = { id = electoral_college.54 days = 1 }
+			}
+			else_if = {
+				# President lost re-election pepehands
+				limit = { 
+					NOT = { check_variable = { admin_elect = current_admin } }
+					check_variable = { terms = 1 }
+				}
+				set_variable = { current_admin = 1 }
+				country_event = { id = electoral_college.55 days = 1 }
+			}
+			else = { country_event = { id = electoral_college.57 days = 1 } }
+		}
+		# Lets just hope there isn't a tie cause I don't want to deal with that shit lmao. TODO ADD TIE CASE
+	}
+
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		tag = USA
+	}
+
+	option = {
+		name = electoral_college.53.a
+		log = "[GetDateText]: [This.GetName]: electoral_college.53.a executed"
+	}
+}
+
+# President Wins Re-Election
+country_event = {
+	id = electoral_college.54
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event electoral_college.54" 
+	}
+	title = electoral_college.54.t
+	desc = electoral_college.54.d
 	picture = GFX_election_day
 
 	is_triggered_only = yes
@@ -2737,7 +2852,242 @@ country_event = {
 	}
 
 	option = {
-		name = electoral_college.53.a
+		name = electoral_college.54.a
 		log = "[GetDateText]: [This.GetName]: electoral_college.52.a executed"
+	}
+}
+
+# President Lost the Re-Election Pepehands
+country_event = {
+	id = electoral_college.55
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event electoral_college.55" 
+		country_event = { id = electoral_college.58 days = 63 }
+	}
+	title = electoral_college.55.t
+	desc = electoral_college.55.d
+	picture = GFX_election_day
+
+	is_triggered_only = yes
+
+	trigger = {
+		tag = USA
+	}
+
+	option = {
+		name = electoral_college.55.a
+		log = "[GetDateText]: [This.GetName]: electoral_college.55.a executed"
+	}
+}
+
+# Democrats Win yay?
+country_event = {
+	id = electoral_college.56
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event electoral_college.56" 
+		country_event = { id = electoral_college.58 days = 63 }
+	}
+	title = electoral_college.56.t
+	desc = electoral_college.56.d
+	picture = GFX_election_day
+
+	is_triggered_only = yes
+
+	trigger = {
+		tag = USA
+	}
+
+	option = {
+		name = electoral_college.56.a
+		log = "[GetDateText]: [This.GetName]: electoral_college.56.a executed"
+	}
+}
+
+# Republicans Win yay?
+country_event = {
+	id = electoral_college.57
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event electoral_college.57" 
+		country_event = { id = electoral_college.58 days = 63 }
+	}
+	title = electoral_college.57.t
+	desc = electoral_college.57.d
+	picture = GFX_election_day
+
+	is_triggered_only = yes
+
+	trigger = {
+		tag = USA
+	}
+
+	option = {
+		name = electoral_college.57.a
+		log = "[GetDateText]: [This.GetName]: electoral_college.57.a executed"
+	}
+}
+
+#Inauguration Day
+country_event = {
+	id = electoral_college.58
+	immediate = { 
+		log = "[GetDateText]: [Root.GetName]: event electoral_college.58" 
+		recalculate_party = yes
+		clear_array = ruling_party
+		clear_array = gov_coalition_array
+		if = {
+			limit = { check_variable = { current_admin = 0 } }
+			if = {
+				limit = { check_variable = { faction_elect = 1 } } 
+				add_to_array = { ruling_party = 2 }
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = { check_variable = { faction_elect = 2 } } 
+				add_to_array = { ruling_party = 3 }
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+			}
+			else = {
+				add_to_array = { ruling_party = 18 }
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+			}
+		}
+		else = {
+			if = {
+				limit = { check_variable = { faction_elect = 1 } } 
+				add_to_array = { ruling_party = 1 }
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+			}
+			else_if = {
+				limit = { check_variable = { faction_elect = 2 } } 
+				add_to_array = { ruling_party = 14 }
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+			}
+			else = {
+				add_to_array = { ruling_party = 20 }
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = yes
+				}
+			}
+		}
+		update_government_coalition_strength = yes
+		update_party_name = yes
+		set_coalition_drift = yes
+		meta_effect = {
+			text = {
+				set_country_flag = [META_SET_RULING_PARTY]
+			}
+			META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+		}
+		set_leader = yes
+	}
+	title = electoral_college.58.t
+	desc = electoral_college.58.d
+	picture = GFX_election_day
+
+	is_triggered_only = yes
+
+	trigger = {
+		tag = USA
+	}
+
+	option = {
+		name = electoral_college.58.a
+		log = "[GetDateText]: [This.GetName]: electoral_college.58.a executed"
+		hidden_effect = { ROOT = { news_event = { days = 1 id = News_MD4_election.0 } } }
+		if = {
+			limit = {
+				is_North_America = yes
+				is_major = no
+			}
+			every_country = {
+				limit = { is_North_America = yes is_ai = no }
+				news_event = {  days = 1 id = News_MD4_election.0 }
+			}
+		}
+		if = {
+			limit = {
+				is_South_America = yes
+				is_major = no
+			}
+			every_country = {
+				limit = { is_South_America = yes is_ai = no }
+				news_event = {  days = 1 id = News_MD4_election.0 }
+			}
+		}
+		if = {
+			limit = {
+				is_middle_eastern_nation = yes
+				is_major = no
+			}
+			every_country = {
+				limit = { is_middle_eastern_nation = yes is_ai = no }
+				news_event = {  days = 1 id = News_MD4_election.0 }
+			}
+		}
+		if = {
+			limit = {
+				is_african_nation = yes
+				is_major = no
+			}
+			every_country = {
+				limit = { is_african_nation = yes is_ai = no }
+				news_event = {  days = 1 id = News_MD4_election.0 }
+			}
+		}
+		if = {
+			limit = {
+				 is_european_nation = yes
+				is_major = no
+			}
+			every_country = {
+				limit = { is_european_nation = yes is_ai = no }
+				news_event = {  days = 1 id = News_MD4_election.0 }
+			}
+		}
+		if = {
+			limit = {
+				is_asian_nation = yes
+				is_major = no
+			}
+			every_country = {
+				limit = { is_asian_nation = yes is_ai = no }
+				news_event = {  days = 1 id = News_MD4_election.0 }
+			}
+		}
+		if = {
+			limit = {
+				is_oceania_nation = yes
+				is_major = no
+			}
+			every_country = {
+				limit = { is_oceania_nation = yes is_ai = no }
+				news_event = {  days = 1 id = News_MD4_election.0 }
+			}
+		}
+		if = {
+			limit = {
+				is_major = yes
+			}
+			every_country = {
+				limit = { is_ai = no }
+				news_event = {  days = 1 id = News_MD4_election.0 }
+			}
+		}
 	}
 }
