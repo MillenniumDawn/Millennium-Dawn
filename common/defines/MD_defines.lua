@@ -30,11 +30,13 @@
 	NDefines.NDiplomacy.TENSION_ANNEX_NO_CLAIM = 3
 	NDefines.NDiplomacy.TENSION_ANNEX_CLAIM = 2
 	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.5
-	NDefines.NDiplomacy.TENSION_DECAY = 0.1
-	NDefines.NDiplomacy.TENSION_TIME_SCALE_START_DATE = "2000.1.1.12"
-	NDefines.NDiplomacy.TENSION_TIME_SCALE_MONTHLY_FACTOR = 0
+	NDefines.NDiplomacy.TENSION_DECAY = 0.1						-- Each months tension decays this much
+	NDefines.NDiplomacy.TENSION_TIME_SCALE_START_DATE = "2000.1.1.12" 	-- Starting at this date, the tension values will be scaled down (will be equal to 1 before that)
+	NDefines.NDiplomacy.TENSION_TIME_SCALE_MONTHLY_FACTOR = 0		-- Timed tension scale will be modified by this amount starting with TENSION_TIME_SCALE_START_DATE
+	NDefines.NDiplomacy.TENSION_TIME_SCALE_MIN = 0 					-- Timed tension scale won't decrease under this value
 	NDefines.NDiplomacy.TENSION_GUARANTEE = -10
 	NDefines.NDiplomacy.TENSION_PEACE_FACTOR = 0.15
+	NDefines.NDiplomacy.TENSION_CAPITULATE = 0
 	NDefines.NDiplomacy.GUARANTEE_COST = 50
 	NDefines.NDiplomacy.REVOKE_GUARANTEE_COST = 30
 	NDefines.NDiplomacy.OPINION_PER_VOLUNTEER = 15
