@@ -6,6 +6,7 @@ add_namespace = News_bankrupcy
 add_namespace = influence
 add_namespace = News_influence
 add_namespace = diplo_action_tools
+add_namespace = bankruptcy
 
 ### Contents ###
 # 1-5 Financial Crisis / Economic Collapse Chain
@@ -5806,30 +5807,83 @@ country_event = { #Looming events
 	title = bankruptcy.200.t
 	desc = bankruptcy.200.d
 	is_triggered_only = yes
+	picture = GFX_political_activist
+	immediate = {
+		set_variable = { reduce_debt_by_5 = debt }
+		multiply_variable = { reduce_debt_by_5 = 0.95 }
+	}
+	trigger = {
+		NOT = { has_country_flag = BANK_committed_reducing_debt }
+	}
 
 	option = { #Iterate the Spending Necessity
 		name = bankruptcy.200.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.200.a executed"
+		add_stability = -0.02
+		decrease_popularity_3 = yes
+		add_political_power = 50
+		custom_effect_tooltip = jailed_the_speaker_tt
+		hidden_effect = {
+			clear_variable = reduce_debt_by_5
+		}
+		ai_chance = {
+			factor = 0
+		}
 	}
 
 	option = { #Commit to removing debt
 		name = bankruptcy.200.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.200.b executed"
+		set_country_flag = BANK_committed_reducing_debt
+		set_variable = { reduce_debt_by_5 = debt }
+		multiply_variable = { reduce_debt_by_5 = 0.95 }
+		set_temp_variable = { temp_reduce_debt_by_5 = reduce_debt_by_5 }
+
+		custom_effect_tooltip = commit_to_debt_reduction_tt
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = { #Just a lousy speaker
+		name = bankruptcy.200.c
+		log = "[GetDateText]: [This.GetName]: bankruptcy.200.c executed"
+		random_list = {
+			25 = {
+				add_political_power = -150
+			}
+			25 = {
+				slightly_decrease_economic_growth = yes
+			}
+			50 = {
+				#Nothing
+			}
+		}
+		hidden_effect = {
+			clear_variable = reduce_debt_by_5
+		}
+		ai_chance = {
+			factor = 0
+		}
 	}
 }
 
-country_event = {
-	id = bankrupcy.201
+country_event = { #Failed to Reduce Debt
+	id = bankruptcy.201
 	title = bankruptcy.201.t
 	desc = bankruptcy.201.d
 	is_triggered_only = yes
-
+	picture = GFX_political_activist
 	option = {
-		name = bankrupcy.201.a
-	}
-
-	option = {
-		name = bankrupcy.201.b
+		name = bankruptcy.201.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.201.a executed"
+		decrease_international_bankers_opinion = yes
+		decrease_popularity_5 = yes
+		if = {
+			limit = { has_country_flag = BANK_committed_reducing_debt }
+			clr_country_flag = BANK_committed_reducing_debt
+		}
 	}
 }
 
