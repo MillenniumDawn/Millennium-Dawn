@@ -6,6 +6,7 @@ add_namespace = News_bankrupcy
 add_namespace = influence
 add_namespace = News_influence
 add_namespace = diplo_action_tools
+add_namespace = bankruptcy
 
 ### Contents ###
 # 1-5 Financial Crisis / Economic Collapse Chain
@@ -5803,4 +5804,346 @@ country_event = {
 	}
 	hidden = yes
 	is_triggered_only = yes
+}
+
+
+##Bird's Bankruptcy Events
+#Notation on Bird's Rhyme or Reason - 200-210 is the bad events
+country_event = { #Looming events
+	id = bankruptcy.200
+	title = bankruptcy.200.t
+	desc = bankruptcy.200.d
+	is_triggered_only = yes
+	picture = GFX_political_activist
+	immediate = {
+		set_variable = { reduce_debt_by_5 = debt }
+		multiply_variable = { reduce_debt_by_5 = 0.95 }
+	}
+	trigger = {
+		NOT = { has_country_flag = BANK_committed_reducing_debt }
+	}
+
+	option = { #Iterate the Spending Necessity
+		name = bankruptcy.200.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.200.a executed"
+		add_stability = -0.02
+		decrease_popularity_3 = yes
+		add_political_power = 50
+		custom_effect_tooltip = jailed_the_speaker_tt
+		hidden_effect = {
+			clear_variable = reduce_debt_by_5
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = { #Commit to removing debt
+		name = bankruptcy.200.b
+		log = "[GetDateText]: [This.GetName]: bankruptcy.200.b executed"
+		set_country_flag = BANK_committed_reducing_debt
+		set_variable = { reduce_debt_by_5 = debt }
+		multiply_variable = { reduce_debt_by_5 = 0.95 }
+		set_temp_variable = { temp_reduce_debt_by_5 = reduce_debt_by_5 }
+
+		custom_effect_tooltip = commit_to_debt_reduction_tt
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = { #Just a lousy speaker
+		name = bankruptcy.200.c
+		log = "[GetDateText]: [This.GetName]: bankruptcy.200.c executed"
+		random_list = {
+			25 = {
+				add_political_power = -150
+			}
+			25 = {
+				slightly_decrease_economic_growth = yes
+			}
+			50 = {
+				#Nothing
+			}
+		}
+		hidden_effect = {
+			clear_variable = reduce_debt_by_5
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+country_event = { #Failed to Reduce Debt
+	id = bankruptcy.201
+	title = bankruptcy.201.t
+	desc = bankruptcy.201.d
+	is_triggered_only = yes
+	picture = GFX_political_activist
+	option = {
+		name = bankruptcy.201.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.201.a executed"
+		decrease_international_bankers_opinion = yes
+		decrease_popularity_5 = yes
+		if = {
+			limit = { has_country_flag = BANK_committed_reducing_debt }
+			clr_country_flag = BANK_committed_reducing_debt
+		}
+	}
+}
+
+country_event = { #Government agency has over request
+	id = bankruptcy.202
+	title = bankruptcy.202.t
+	desc = bankruptcy.202.d
+	is_triggered_only = yes
+	picture = GFX_banking_crisis
+	trigger = {
+		NOT = {
+			has_country_flag = recently_forced_law_change_social
+			has_country_flag = recently_forced_law_change_education
+			has_country_flag = recently_forced_law_change_police
+		}
+	}
+
+	option = { #Slash funding to Welfare
+		name = bankrupcy.202.a
+		trigger = {
+			NOT = {
+				has_country_flag = recently_forced_law_change_social
+				has_idea = social_01
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: bankruptcy.201.a executed"
+
+		custom_effect_tooltip = choice_stuck_for_60_days_tt
+		decrease_social_spending = yes
+		set_country_flag = { flag = recently_forced_law_change_social value = 1 days = 90 }
+		set_country_flag = { flag = government_agency_bankruptcy value = 1 days = 90 }
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = { #Slash funding to Education
+		name = bankrupcy.202.b
+		trigger = {
+			NOT = {
+				has_country_flag = recently_forced_law_change_education
+				has_idea = edu_01
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: bankruptcy.201.b executed"
+
+		custom_effect_tooltip = choice_stuck_for_60_days_tt
+		decrease_education_budget = yes
+		set_country_flag = { flag = recently_forced_law_change_education value = 1 days = 90 }
+		set_country_flag = { flag = government_agency_bankruptcy value = 1 days = 90 }
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = { #Slash funding to Policing
+		name = bankrupcy.202.c
+		trigger = {
+			NOT = {
+				has_country_flag = recently_forced_law_change_police
+				has_idea = police_01
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: bankruptcy.201.c executed"
+
+		custom_effect_tooltip = choice_stuck_for_60_days_tt
+		decrease_policing_budget = yes
+		set_country_flag = { flag = recently_forced_law_change_police value = 1 days = 90 }
+		set_country_flag = { flag = government_agency_bankruptcy value = 1 days = 90 }
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+country_event = { #Military Funding Issues
+	id = bankruptcy.203
+	title = bankruptcy.203.t
+	desc = bankruptcy.203.d
+	is_triggered_only = yes
+	picture = GFX_weapons_arms1
+	trigger = {
+		NOT = { has_idea = no_military }
+	}
+
+	option = {
+		name = bankrupcy.203.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.203.a executed"
+		increase_military_spending = yes
+		increase_the_military_opinion = yes
+
+		# random_list = {
+		# 	10 = { country_event = { id = bankruptcy.204 days = 1 random_days = 15 } }
+		# 	90 = { }
+		# }
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = bankrupcy.203.b
+		log = "[GetDateText]: [This.GetName]: bankruptcy.203.b executed"
+
+		if = {
+			limit = { num_of_factories < 15 }
+			subtract_from_variable = { treasury = 3 }
+			custom_effect_tooltip = 3_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 14 num_of_factories < 35 }
+			subtract_from_variable = { treasury = 6 }
+			custom_effect_tooltip = 6_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 34 num_of_factories < 60 }
+			subtract_from_variable = { treasury = 10 }
+			custom_effect_tooltip = 10_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 59 num_of_factories < 85 }
+			subtract_from_variable = { treasury = 20 }
+			custom_effect_tooltip = 20_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 84 num_of_factories < 110 }
+			subtract_from_variable = { treasury = 30 }
+			custom_effect_tooltip = 30_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 109 num_of_factories < 130 }
+			subtract_from_variable = { treasury = 40 }
+			custom_effect_tooltip = 40_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 129 }
+			subtract_from_variable = { treasury = 50 }
+			custom_effect_tooltip = 50_billion_expense_tt
+		}
+
+		# random_list = {
+		# 	40 = { country_event = { id = bankruptcy.204 days = 1 random_days = 15 } }
+		# 	60 = { }
+		# }
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = bankrupcy.203.c
+		log = "[GetDateText]: [This.GetName]: bankruptcy.203.c executed"
+		decrease_the_military_opinion = yes
+		add_war_support = -0.05
+		add_political_power = 150
+
+		# random_list = {
+		# 	60 = { country_event = { id = bankruptcy.204 days = 1 random_days = 15 } }
+		# 	40 = { }
+		# }
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+country_event = { #Military Riots
+	id = bankruptcy.204
+	title = bankruptcy.204.t
+	desc = bankruptcy.204.d
+	is_triggered_only = yes
+	picture = GFX_political_demands
+
+	option = {
+		name = bankrupcy.204.a
+	}
+
+	option = {
+		name = bankrupcy.204.b
+	}
+}
+
+country_event = {
+	id = bankruptcy.205
+	title = bankruptcy.205.t
+	desc = bankruptcy.205.d
+	is_triggered_only = yes
+
+	option = {
+		name = bankrupcy.205.a
+	}
+
+	option = {
+		name = bankrupcy.205.b
+	}
+}
+
+country_event = {
+	id = bankrupcy.206
+	title = bankruptcy.206.t
+	desc = bankruptcy.206.d
+	is_triggered_only = yes
+
+	option = {
+		name = bankrupcy.206.a
+	}
+
+	option = {
+		name = bankrupcy.206.b
+	}
+}
+
+country_event = {
+	id = bankrupcy.207
+	title = bankruptcy.207.t
+	desc = bankruptcy.207.d
+	is_triggered_only = yes
+
+	option = {
+		name = bankrupcy.207.a
+	}
+
+	option = {
+		name = bankrupcy.207.b
+	}
+}
+
+country_event = {
+	id = bankrupcy.208
+	title = bankruptcy.208.t
+	desc = bankruptcy.208.d
+	is_triggered_only = yes
+
+	option = {
+		name = bankrupcy.208.a
+	}
+
+	option = {
+		name = bankrupcy.208.b
+	}
+}
+
+country_event = {
+	id = bankrupcy.209
+	title = bankruptcy.209.t
+	desc = bankruptcy.209.d
+	is_triggered_only = yes
+
+	option = {
+		name = bankrupcy.209.a
+	}
+
+	option = {
+		name = bankrupcy.209.b
+	}
 }
