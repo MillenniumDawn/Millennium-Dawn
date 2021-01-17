@@ -199,27 +199,26 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_assault_jordan"
 		custom_effect_tooltip = TT_SYR_ASSAULT_JORDAN
 		set_temp_variable = { success_chance = JOR.party_popularity@nationalist }
-		multiply_temp_variable = { success_chance = 20 }
+		multiply_temp_variable = { success_chance = 200 }
 		clamp_temp_variable = {
 			var = success_chance
 			min = 0
-			max = 10
+			max = 100
 		}
-		set_temp_variable = { remaining_chance = 10 }
+		set_temp_variable = { remaining_chance = 100 }
 		subtract_from_temp_variable = { remaining_chance = success_chance }
 		set_temp_variable = { civil_war_chance = remaining_chance }
-		multiply_temp_variable = { civil_war_chance = success_chance }
-		multiply_temp_variable = { civil_war_chance = 0.10 }
+		multiply_temp_variable = { civil_war_chance = 0.5 }
 		clamp_temp_variable = {
 			var = civil_war_chance
 			min = 0
-			max = 10
+			max = 100
 		}
 		subtract_from_temp_variable = { remaining_chance = civil_war_chance }
 		clamp_temp_variable = {
 			var = remaining_chance
 			min = 0
-			max = 10
+			max = 100
 		}
 		random_list = {
 			1 = {
@@ -1626,8 +1625,49 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_conscription_army"
-		add_ideas = draft_army
-		add_ideas = drafted_women
+		if = {
+			limit = { has_idea = no_military }
+			swap_ideas = {
+				remove_idea = no_military
+				add_idea = draft_army
+			}
+		}
+		else_if = {
+			limit = { has_idea = volunteer_army }
+			swap_ideas = {
+				remove_idea = volunteer_army
+				add_idea = draft_army
+			}
+		}
+		else_if = {
+			limit = { has_idea = partial_draft_army }
+			swap_ideas = {
+				remove_idea = partial_draft_army
+				add_idea = draft_army
+			}
+		}
+		else_if = {
+			limit = { has_idea = draft_army }
+			army_experience = 15 
+		}
+		if = {
+			limit = { has_idea = no_women_in_military }
+			swap_ideas = {
+				remove_idea = no_women_in_military
+				add_idea = drafted_women
+			}
+		}
+		else_if = {
+			limit = { has_idea = volunteer_women }
+			swap_ideas = {
+				remove_idea = volunteer_women
+				add_idea = drafted_women
+			}
+		}
+		else_if = {
+			limit = { has_idea = drafted_women }
+			army_experience = 5 
+		}
 	}
 
 }
@@ -1666,8 +1706,49 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_volunteer_army"
-		add_ideas = volunteer_army
-		add_ideas = volunteer_women
+		if = {
+			limit = { has_idea = no_military }
+			swap_ideas = {
+				remove_idea = no_military
+				add_idea = volunteer_army
+			}
+		}
+		else_if = {
+			limit = { has_idea = volunteer_army }
+			army_experience = 15 
+		}
+		else_if = {
+			limit = { has_idea = partial_draft_army }
+			swap_ideas = {
+				remove_idea = partial_draft_army
+				add_idea = volunteer_army
+			}
+		}
+		else_if = {
+			limit = { has_idea = draft_army }
+			swap_ideas = {
+				remove_idea = draft_army
+				add_idea = volunteer_army
+			}
+		}
+		if = {
+			limit = { has_idea = no_women_in_military }
+			swap_ideas = {
+				remove_idea = no_women_in_military
+				add_idea = volunteer_women
+			}
+		}
+		else_if = {
+			limit = { has_idea = volunteer_women }
+			army_experience = 5 
+		}
+		else_if = {
+			limit = { has_idea = drafted_women }
+			swap_ideas = {
+				remove_idea = drafted_women
+				add_idea = volunteer_women
+			}
+		}
 	}
 
 }
