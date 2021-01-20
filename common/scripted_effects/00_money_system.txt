@@ -30,7 +30,12 @@
 #Your new debt_rate is $4B. So you need to "reset the treasury" you give the treasury_rate back the $2B
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 ####
-
+effect_set_kuwaits_debt_to_max = {
+	KUW = { set_variable = { debt = 250 } }
+}
+effect_fire_event = {
+	country_event = { id = bankruptcy.200 }
+}
 add_tax_laws = {
 	meta_effect = {
 		text = {
@@ -659,29 +664,26 @@ calculate_interest_rate_player = {
 #Update the debt rate called mostly when debt is taken
 ##The debt rate determines when a country actually goes bankrupt versues when it maintains its current economic standpoint.
 calculate_debt_rate = {
-
 	#See Treasury reset comment at top of page
-	add_to_variable = { var = treasury_rate value = debt_rate } #idk why this is here
+	#add_to_variable = { var = treasury_rate value = debt_rate } #idk why this is here - Commenting out as its replaced by literally the next line
 	set_variable = { var = debt_rate value = debt }
 	multiply_variable = { var = debt_rate value = interest_rate }
 	divide_variable = { var = debt_rate value = 36500 }
 	subtract_from_variable = { var = treasury_rate value = debt_rate }
-	update_display_expense = yes
 
 	if = {
 		limit = {
 			NOT = { has_country_flag = bailout_happened }
 		}
 		#checks for imminent bankrupcy
-		set_temp_variable = { bankrupcy_check = size_modifier }
-		divide_temp_variable = { bankrupcy_check = 3.6 }
+		set_variable = { looming_bankruptcy_rate = size_modifier } #22
+		divide_variable = { looming_bankruptcy_rate = 3.6 } #6.11 - So if size is 22. then you need to be paying 6.22 to get looming bankruptcy
 		if = {
 			limit = {
-				check_variable = { bankrupcy_check < debt_rate }
+				check_variable = { debt_rate > looming_bankruptcy_rate }
 				NOT = { has_country_flag = bailout_happened }
 			}
 			country_event = { id = bankrupcy.0 }
-
 		}
 	}
 
@@ -690,16 +692,23 @@ calculate_debt_rate = {
 			NOT = { has_idea = bankrupcy }
 		}
 		#check for bankrupcy
-		set_temp_variable = { bankrupcy_check = size_modifier }
-		divide_temp_variable = { bankrupcy_check = 2.4 }
-		if = {
-			limit = {
-				check_variable = { bankrupcy_check < debt_rate }
-			}
-			ROOT = { news_event = { id = News_bankrupcy.6 } } #actually bankrupt
-
-		}
+		set_variable = { previous_bankruptcy_rate = size_modifier }
+		divide_variable = { previous_bankruptcy_rate = 2.5 }
+		# if = {
+		# 	limit = {
+		# 		check_variable = { debt_rate > previous_bankruptcy_rate }
+		# 	}
+		# 	ROOT = { news_event = { id = News_bankrupcy.6 } } #actually bankrupt
+		# }
 	}
+
+	set_variable = { half_way_bankrupt = previous_bankruptcy_rate }
+	divide_variable = { half_way_bankrupt = 4.85 } #This is a check to start getting events pertaining to high debt rates - Not Visible to the Player
+	#Based off 22 Size Modifier
+	#You will need to be paying more than 4.5 in interest to start getting bad events
+
+	log = "[GetDateText]: [This.GetName]: Looming Bankruptcy value: [?looming_bankruptcy_rate]; Bankruptcy value: [?previous_bankruptcy_rate]; Debt Rate value: [?debt_rate]"
+	update_display_expense = yes
 }
 
 #Update military spending
@@ -1460,7 +1469,7 @@ update_bureaucracy_rate_player = {
 			value = v
 		}
 	}
-	
+
 
 	#Modifiers
 	if = {
@@ -1551,12 +1560,12 @@ update_police_rate_ai = {
 	}
 	if = {
 		limit = { has_tech = DNA_fingerprinting } ##5% reduction in cost for security
-		multiply_variable = { var = security_gain value = 0.95}
+		multiply_variable = { var = security_gain value = 0.95 }
 	}
 	if = {
 		limit = { has_idea = ITA_legalized_light_drugs } ##10% reduction in cost for security
 		multiply_variable = { var = security_gain value = 0.90 }
-	}	
+	}
 	if = {
 		limit = { has_idea = ITA_legalized_all_drugs } ##15% reduction in cost for security
 		multiply_variable = { var = security_gain value = 0.85 }
@@ -1683,7 +1692,7 @@ update_education_rate_ai = {
 			limit = { has_idea = gdp_5 }
 			multiply_variable = { var = education_gain value = 1.25 }
 		}
-		
+
 		###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
 		if = {
 			limit = {
@@ -1714,7 +1723,7 @@ update_education_rate_ai = {
 			limit = {
 				has_tech = internet5
 			}
-			multiply_variable = { var = education_gain value = 0.97}
+			multiply_variable = { var = education_gain value = 0.97 }
 		}
 		if = {
 			limit = {
@@ -1722,7 +1731,7 @@ update_education_rate_ai = {
 			}
 			multiply_variable = { var = education_gain value = 0.95}
 		}
-		
+
 		round_variable = education_gain
 		divide_variable = { education_gain = 100 }
 		add_to_variable = { var = expense_gain value = education_gain }
@@ -2222,6 +2231,12 @@ update_health_rate_ai = {
 		}
 		multiply_variable = { var = health_gain value = 0.90 }
 	}
+	if = {
+		limit = {
+			has_tech = medical_nanorobots
+		}
+		multiply_variable = { var = health_gain value = 0.95 }
+	}
 	add_to_variable = { var = expense_gain value = health_gain }
 	subtract_from_variable = { var = treasury_rate value = health_gain }
 
@@ -2303,6 +2318,12 @@ update_health_rate_player = {
 			has_tech = nanocellulose_in_medicine
 		}
 		multiply_variable = { var = array_health_spend^health_index value = 0.90 }
+	}
+	if = {
+		limit = {
+			has_tech = medical_nanorobots
+		}
+		multiply_variable = { var = array_health_spend^health_index value = 0.95 }
 	}
 	set_variable = { var = health_gain value = array_health_spend^health_index }
 

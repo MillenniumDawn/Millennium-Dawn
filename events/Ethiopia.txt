@@ -1,4 +1,5 @@
 ﻿add_namespace = ethiopia
+add_namespace = ethiopia_news
 
 #ethiopia requests Investments from China
 country_event = {
@@ -675,5 +676,87 @@ country_event = { #Famine!
 			remove_idea = ETH_looming_famine
 			add_idea = ETH_idea_famine_strikes
 		}
+	}
+}
+
+country_event = {		#Peace between Ethiopia and Eritrea
+	id = ethiopia.21
+	immediate = { log = "[GetDateText]: [Root.GetName]: event ethiopia.21" }
+	title = ethiopia.21.t
+	desc = ethiopia.21.d
+	picture = GFX_ETH_ELF
+	fire_only_once = yes
+	trigger = {
+		OR = {
+			AND = {
+				original_tag = ERI
+				OR = {
+					NOT = {	228 = { is_fully_controlled_by = ERI } }
+					NOT = {	229 = { is_fully_controlled_by = ERI } }
+				}
+			}
+			AND = {
+				original_tag = ETH
+				NOT = { 231 = { is_fully_controlled_by = ETH } }
+			}
+		}
+		date > 2000.5.1
+	}
+
+	option = { #Ask peace
+		name = ethiopia.21.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.21.a executed"
+		ai_chance = { factor = 90 }
+		if = {
+			limit = { original_tag = ERI }
+			ETH = { country_event = { id = ethiopia.22 days = 2 } }
+		}
+		if = {
+			limit = { original_tag = ETH }
+			ERI = { country_event = { id = ethiopia.22 days = 2 } }
+		}
+		add_stability = -0.05
+		add_war_support = -0.05
+		remove_10_popularity_sub = yes
+	}
+	option = { #Fight on
+		name = ethiopia.21.b
+		log = "[GetDateText]: [This.GetName]: ethiopia.21.b executed"
+		ai_chance = { factor = 10 }
+		add_stability = -0.10
+		add_war_support = -0.10	
+	}
+}
+
+country_event = {		#Peace between Ethiopia and Eritrea
+	id = ethiopia.22
+	immediate = { log = "[GetDateText]: [Root.GetName]: event ethiopia.22" }
+	title = ethiopia.22.t
+	desc = ethiopia.22.d
+	picture = GFX_ETH_ELF
+	
+	is_triggered_only = yes
+
+	option = { #Agree to ceasefire
+		name = ethiopia.22.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.22.a executed"
+		ai_chance = { factor = 90 }
+		add_stability = 0.05
+		add_war_support = 0.05
+		add_10_popularity_sub = yes
+		white_peace = FROM
+		diplomatic_relation = {
+			country = FROM
+			relation = non_aggression_pact
+			active = yes
+		}
+		hidden_effect = { news_event = { id = ethiopia_news.7 hours = 6 } }
+	}
+	option = { #Fight on
+		name = ethiopia.22.b
+		log = "[GetDateText]: [This.GetName]: ethiopia.22.b executed"
+		ai_chance = { factor = 10 }
+		add_stability = -0.10
+		add_war_support = -0.10
 	}
 }

@@ -1,6 +1,323 @@
 #Written by Hiddengearz
 ##Adding Military division limiter and other AI strategies in the AB system
 
+##NATO Relations
+NATO_members_relations = {
+	allowed = {
+		has_game_rule = { #Can't disable NATO to get this
+			rule = rule_disable_nato
+			option = no
+		}
+	}
+	enable = { has_idea = NATO_member }
+	abort_when_not_enabled = yes
+	ai_strategy = { type = antagonize id = "SOV" value = 25 }
+}
+
+###UNIT LIMITER###
+division_limiter = {
+	allowed = {
+		has_game_rule = { rule = allow_division_limiter option = yes }
+	}
+	enable = {
+		set_temp_variable = { upper_limit = num_of_factories } #100 - Base factory total
+		multiply_temp_variable = { upper_limit = 1.20 } #120
+		if = { limit = { has_war = yes }
+			multiply_temp_variable = { upper_limit = 1.15 }
+		}
+		else = {
+			multiply_temp_variable = { upper_limit = 0.65 }
+		}
+		#If not has war 60 Divisions, if has war 138
+
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = ai_yes_unit_build
+					has_country_flag = AI_is_threatened
+				}
+			}
+			multiply_temp_variable = { upper_limit = 1.25 } #If the AI didn't have divisions it is now 75
+		}
+		if = { limit = { is_major = yes }
+			multiply_temp_variable = { upper_limit = 1.15 } #If the major is 86.25
+		}
+		if = { limit = { has_idea = NATO_member }
+			multiply_temp_variable = { upper_limit = 0.50 } #if the nation is in the EU 51.75
+		}
+		if = { limit = { has_idea = EU_member }
+			multiply_temp_variable = { upper_limit = 0.50 } #If the nation is also in NATO 31.05
+		}
+		if = { limit = { threat > 0.50 }
+			multiply_temp_variable = { upper_limit = 1.25 } #38 if true
+		}
+		else = {
+			multiply_temp_variable = { upper_limit = 0.85 } #26.39
+		}
+
+		if = { limit = { num_of_military_factories > 0 }
+			multiply_temp_variable = { upper_limit = 1.05 }
+		}
+		if = { limit = { num_of_military_factories > 15 }
+			multiply_temp_variable = { upper_limit = 1.05 }
+		}
+		if = { limit = { num_of_military_factories > 25 }
+			multiply_temp_variable = { upper_limit = 1.05 }
+		}
+		if = { limit = { num_of_military_factories > 35 }
+			multiply_temp_variable = { upper_limit = 1.05 }
+		}
+
+		if = { limit = { is_in_faction = yes }
+			multiply_temp_variable = { upper_limit = 0.90 } #73.9
+		}
+		if = { limit = { is_in_faction_with = CHI NOT = { tag = SOV } }
+			multiply_temp_variable = { upper_limit = 0.80 } #59.12
+		}
+		if = { limit = { is_in_faction_with = SOV NOT = { tag = CHI } }
+			multiply_temp_variable = { upper_limit = 0.80 } #59.12
+		}
+		round_temp_variable = upper_limit #27
+		check_variable = { num_divisions > upper_limit }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = build_army id = garrison value = -500 }
+	ai_strategy = { type = build_army id = Militia value = -500 }
+	ai_strategy = { type = build_army id = L_Inf value = -500 }
+	ai_strategy = { type = build_army id = infantry value = -500 }
+	ai_strategy = { type = build_army id = mechanized value = -500 }
+	ai_strategy = { type = build_army id = armor value = -500 }
+	ai_strategy = { type = build_army id = marines value = -500 }
+	ai_strategy = { type = build_army id = Air_assault value = -500 }
+	ai_strategy = { type = build_army id = Air_Inf value = -500 }
+	ai_strategy = { type = build_army id = Special_Forces value = -500 }
+}
+
+division_limiter_potato_edition = {
+	allowed = {
+		has_game_rule = { rule = allow_division_limiter option = potato_edition }
+	}
+	enable = {
+		set_temp_variable = { upper_limit = num_of_factories } #100
+		divide_temp_variable = { upper_limit = 2 } #50
+		multiply_temp_variable = { upper_limit = 1.30 } #65
+		if = { limit = { has_war = yes }
+			multiply_temp_variable = { upper_limit = 1.25 } #81.25
+		}
+		else = {
+			multiply_temp_variable = { upper_limit = 0.65 }
+		}
+
+		if = { limit = { num_of_military_factories > 0 }
+			multiply_temp_variable = { upper_limit = 1.05 }
+		}
+		if = { limit = { num_of_military_factories > 15 }
+			multiply_temp_variable = { upper_limit = 1.05 }
+		}
+		if = { limit = { num_of_military_factories > 25 }
+			multiply_temp_variable = { upper_limit = 1.05 }
+		}
+		if = { limit = { num_of_military_factories > 35 }
+			multiply_temp_variable = { upper_limit = 1.05 }
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = ai_yes_unit_build
+					has_country_flag = AI_is_threatened
+				}
+			}
+			multiply_temp_variable = { upper_limit = 1.25 } #101.563
+		}
+		if = { limit = { is_major = yes }
+			multiply_temp_variable = { upper_limit = 1.15 } #116.8
+		}
+		if = { limit = { has_idea = NATO_member }
+			multiply_temp_variable = { upper_limit = 0.65 } #87.59
+		}
+		if = { limit = { has_idea = EU_member }
+			multiply_temp_variable = { upper_limit = 0.65 } #65.6925
+		}
+		if = { limit = { threat > 0.50 }
+			multiply_temp_variable = { upper_limit = 1.25 } #82.115
+		}
+		else = {
+			multiply_temp_variable = { upper_limit = 0.85 } #82.115
+		}
+
+		if = { limit = { is_in_faction = yes }
+			multiply_temp_variable = { upper_limit = 0.90 } #73.9
+		}
+		if = { limit = { is_in_faction_with = CHI NOT = { tag = SOV } }
+			multiply_temp_variable = { upper_limit = 0.80 } #59.12
+		}
+		if = { limit = { is_in_faction_with = SOV NOT = { tag = CHI } }
+			multiply_temp_variable = { upper_limit = 0.80 } #59.12
+		}
+		round_temp_variable = upper_limit #59
+		check_variable = { num_divisions > upper_limit }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = build_army id = garrison value = -500 }
+	ai_strategy = { type = build_army id = Militia value = -500 }
+	ai_strategy = { type = build_army id = L_Inf value = -500 }
+	ai_strategy = { type = build_army id = infantry value = -500 }
+	ai_strategy = { type = build_army id = mechanized value = -500 }
+	ai_strategy = { type = build_army id = armor value = -500 }
+	ai_strategy = { type = build_army id = marines value = -500 }
+	ai_strategy = { type = build_army id = Air_assault value = -500 }
+	ai_strategy = { type = build_army id = Air_Inf value = -500 }
+	ai_strategy = { type = build_army id = Special_Forces value = -500 }
+}
+
+##Fuck Terroists
+hate_terrorists = {
+	allowed = {
+		NOT = {
+			original_tag = AQY
+			original_tag = TAL
+			original_tag = TTP
+			original_tag = NUS
+		}
+	}
+	enable = {
+		has_opinion_modifier = AlQaida_Are_Terrorists
+		NOT = {
+			original_tag = AQY
+			original_tag = TAL
+			original_tag = TTP
+			original_tag = NUS
+		}
+	}
+	abort = {
+		NOT = { has_opinion_modifier = AlQaida_Are_Terrorists }
+	}
+	ai_strategy = { type = antagonize id = "AQY" value = 100 }
+	ai_strategy = { type = antagonize id = "TAL" value = 100 }
+	ai_strategy = { type = antagonize id = "TTP" value = 100 }
+	ai_strategy = { type = antagonize id = "NUS" value = 100 }
+	ai_strategy = { type = antagonize id = "SHB" value = 100 }
+	ai_strategy = { type = contain id = "AQY" value = 100 }
+	ai_strategy = { type = contain id = "TAL" value = 100 }
+	ai_strategy = { type = contain id = "TTP" value = 100 }
+	ai_strategy = { type = contain id = "NUS" value = 100 }
+	ai_strategy = { type = contain id = "SHB" value = 100 }
+	ai_strategy = { type = alliance id = "AQY" value = -100 }
+	ai_strategy = { type = alliance id = "TAL" value = -100 }
+	ai_strategy = { type = alliance id = "TTP" value = -100 }
+	ai_strategy = { type = alliance id = "NUS" value = -100 }
+	ai_strategy = { type = alliance id = "SHB" value = -100 }
+}
+
+#AMISOM
+AMISOM_mission_to_somalia = {
+	allowed = {
+		has_start_date > 2016.1.1
+		OR = {
+			original_tag = UGA
+			original_tag = BUR
+			original_tag = KEN
+			original_tag = DJI
+			original_tag = SIE
+			original_tag = NIG
+			original_tag = GAH
+		}
+	}
+	enable = {
+		OR = {
+			has_government = democratic
+			has_government = communism
+			has_government = neutrality
+		}
+		SOM = {
+			OR = {
+				has_war_with = SHB
+				has_civil_war = yes
+			}
+			OR = {
+				has_government = democratic
+				has_government = communism
+				has_government = neutrality
+			}
+		}
+	}
+	abort = {
+		OR = {
+			NOT = { has_government = democratic }
+			NOT = { has_government = communism }
+			NOT = { has_government = neutrality }
+			SOM = {
+				NOT = { has_war_with = SHB }
+				has_civil_war = no
+			}
+			SOM = {
+				NOT = { has_government = democratic }
+				NOT = { has_government = communism }
+				NOT = { has_government = neutrality }
+			}
+		}
+	}
+	ai_strategy = { type = befriend id = "SOM" value = 100 }
+	ai_strategy = { type = support id = "SOM" value = 100 }
+	ai_strategy = { type = send_volunteers_desire id = "SOM" value = 100 }
+	ai_strategy = { type = protect id = "SOM" value = 50 }
+	ai_strategy = { type = influence id = "SOM" value = 50 }
+}
+
+#UANMISL
+UNAMSIL_support_sie = {
+	allowed = {
+		has_start_date < 2001.1.1
+		OR = {
+			original_tag = NIG
+			original_tag = JOR
+			original_tag = GAH
+			original_tag = GUI
+			original_tag = BAN
+			original_tag = KEN
+		}
+	}
+	enable = {
+		SIE = { has_war_with = AFR }
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = befriend id = "SIE" value = 50 }
+	ai_strategy = { type = support id = "SIE" value = 150 }
+	ai_strategy = { type = send_volunteers_desire id = "SIE" value = 100 }
+}
+
+UNAMSIL_equipment = {
+	allowed = {
+		has_start_date < 2001.1.1
+		OR = {
+			original_tag = SOV
+			original_tag = UKR
+			original_tag = RAJ
+		}
+	}
+	enable = {
+		SIE = { has_war_with = AFR }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "SIE" value = 25 }
+	ai_strategy = { type = support id = "SIE" value = 100 }
+}
+
+everyone_hates_isis = {
+	enable = {
+		has_opinion_modifier = ISIS_Are_Terrorists
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "ISI" value = 100 }
+	ai_strategy = { type = contain id = "ISI" value = 100 }
+	ai_strategy = { type = alliance id = "ISI" value = -100 }
+}
+
 ##Super powers###
 # American_alliance = {
 
@@ -237,120 +554,3 @@
 	# }
 
 # }
-
-
-###UNIT LIMITER###
-division_limiter = {
-	allowed = {
-		has_game_rule = {
-			rule = allow_division_limiter
-			option = yes
-		}
-	}
-	enable = {
-		has_game_rule = {
-			rule = allow_division_limiter
-			option = yes
-		}
-		set_temp_variable = {
-			upper_limit = num_of_factories
-		}
-		multiply_temp_variable = {
-			upper_limit = 1.15
-		}
-		if = {
-			limit = {
-				has_war = yes
-			}
-			multiply_temp_variable = {
-				upper_limit = 1.2
-			}
-		}
-		if = {
-			limit = {
-				is_major = yes
-			}
-			multiply_temp_variable = {
-				upper_limit = 1.15
-			}
-		}
-		if = {
-			limit = {
-				threat > 0.71
-			}
-			multiply_temp_variable = {
-				upper_limit = 1.05
-			}
-		}
-		check_variable = {
-			num_divisions > upper_limit
-		}
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = {
-		type = build_army
-		id = garrison
-		value = -300
-	}
-
-	ai_strategy = {
-		type = build_army
-		id = Militia
-		value = -300
-	}
-
-	ai_strategy = {
-		type = build_army
-		id = L_Inf
-		value = -300
-	}
-
-	ai_strategy = {
-		type = build_army
-		id = infantry
-		value = -300
-	}
-
-	ai_strategy = {
-		type = build_army
-		id = garrison
-		value = -300
-	}
-
-	ai_strategy = {
-		type = build_army
-		id = mechanized
-		value = -300
-	}
-
-	ai_strategy = {
-		type = build_army
-		id = armor
-		value = -300
-	}
-
-	ai_strategy = {
-		type = build_army
-		id = marines
-		value = -300
-	}
-
-	ai_strategy = {
-		type = build_army
-		id = Air_assault
-		value = -300
-	}
-
-	ai_strategy = {
-		type = build_army
-		id = Air_Inf
-		value = -300
-	}
-
-	ai_strategy = {
-		type = build_army
-		id = Special_Forces
-		value = -300
-	}
-}
