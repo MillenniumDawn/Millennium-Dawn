@@ -2,13 +2,633 @@
  
 #mafia
   #police effectivness in each region is based on the italian baseline that is affected by focuses and laws
-  #mafia_strength is used to calculate industrial focus costs and police effectivness
+  #mafia_strength is used to calculate industrial focus costs and police effectivness and mafia dynamic modifier maluses
 update_mafia_strength = {
 	set_variable = { mafia_strength = cosa_nostra_strength }
 	add_to_variable = { mafia_strength = camorra_strength }
 	add_to_variable = { mafia_strength = ndrangheta_strength }
 	add_to_variable = { mafia_strength = sacra_corona_unita_strength }
 	divide_variable = { mafia_strength = 4 }
+	set_variable = { mafia_strength_stab_var = mafia_strength }
+	multiply_variable = { mafia_strength_stab_var = -0.005 }
+	set_variable = { mafia_strength_construction_var = mafia_strength }
+	multiply_variable = { mafia_strength_construction_var = -0.5 }
+	set_variable = { mafia_strength_pp_var = mafia_strength }
+	multiply_variable = { mafia_strength_pp_var = -0.5 }
+}
+update_police_effectivness = {
+	update_mafia_strength = yes
+	set_variable = { police_effectivness = police_effectivness_base }
+	if = {
+		limit = { has_idea = police_01 }
+		add_to_variable = { police_effectivness = -0.25 }
+	}
+	else_if = {
+		limit = { has_idea = police_02 }
+		add_to_variable = { police_effectivness = -0.05 }
+	}
+	else_if = {
+		limit = { has_idea = police_03 }
+		add_to_variable = { police_effectivness = 0.05 }
+	}
+	else_if = {
+		limit = { has_idea = police_04 }
+		add_to_variable = { police_effectivness = 0.15 }
+	}
+	else_if = {
+		limit = { has_idea = police_05 }
+		add_to_variable = { police_effectivness = 0.3 }
+	}
+	if = {
+		limit = { has_idea = negligible_corruption }
+		add_to_variable = { police_effectivness = -0.025 }
+	}
+	else_if = {
+		limit = { has_idea = slight_corruption }
+		add_to_variable = { police_effectivness = -0.05 }
+	}
+	else_if = {
+		limit = { has_idea = modest_corruption }
+		add_to_variable = { police_effectivness = -0.075 }
+	}
+	else_if = {
+		limit = { has_idea = medium_corruption }
+		add_to_variable = { police_effectivness = -0.1 }
+	}
+	else_if = {
+		limit = { has_idea = widespread_corruption }
+		add_to_variable = { police_effectivness = -0.125 }
+	}
+	else_if = {
+		limit = { has_idea = systematic_corruption }
+		add_to_variable = { police_effectivness = -0.15 }
+	}
+	else_if = {
+		limit = { has_idea = unrestrained_corruption }
+		add_to_variable = { police_effectivness = -0.175 }
+	}
+	else_if = {
+		limit = { has_idea = rampant_corruption }
+		add_to_variable = { police_effectivness = -0.2 }
+	}
+	else_if = {
+		limit = { has_idea = crippling_corruption }
+		add_to_variable = { police_effectivness = -0.225 }
+	}
+	else_if = {
+		limit = { has_idea = paralyzing_corruption }
+		add_to_variable = { police_effectivness = -0.25 }
+	}
+	
+	set_variable = { police_effectivness_sicily = police_effectivness }
+	set_temp_variable = { police_effectivness_sicily_multiplier = 1 }
+	set_temp_variable = { cosa_nostra_strength_reduced = cosa_nostra_strength }
+	multiply_temp_variable = { cosa_nostra_strength_reduced = 0.5 }
+	subtract_from_temp_variable = { police_effectivness_sicily_multiplier = cosa_nostra_strength_reduced }
+	multiply_variable = { police_effectivness_sicily = police_effectivness_sicily_multiplier }
+
+	set_variable = { police_effectivness_campania = police_effectivness }
+	set_temp_variable = { police_effectivness_campania_multiplier = 1 }
+	set_temp_variable = { camorra_strength_reduced = camorra_strength }
+	multiply_temp_variable = { camorra_strength_reduced = 0.5 }
+	subtract_from_temp_variable = { police_effectivness_campania_multiplier = camorra_strength_reduced }
+	multiply_variable = { police_effectivness_campania = police_effectivness_campania_multiplier }
+
+	set_variable = { police_effectivness_calabria = police_effectivness }
+	set_temp_variable = { police_effectivness_calabria_multiplier = 1 }
+	set_temp_variable = { ndrangheta_strength_reduced = ndrangheta_strength }
+	multiply_temp_variable = { ndrangheta_strength_reduced = 0.5 }
+	subtract_from_temp_variable = { police_effectivness_calabria_multiplier = ndrangheta_strength_reduced }
+	multiply_variable = { police_effectivness_calabria = police_effectivness_calabria_multiplier }
+
+	set_variable = { police_effectivness_puglia = police_effectivness }
+	set_temp_variable = { police_effectivness_puglia_multiplier = 1 }
+	set_temp_variable = { sacra_corona_unita_strength_reduced = sacra_corona_unita_strength }
+	multiply_temp_variable = { sacra_corona_unita_strength_reduced = 0.5 }
+	subtract_from_temp_variable = { police_effectivness_puglia_multiplier = sacra_corona_unita_strength_reduced }
+	multiply_variable = { police_effectivness_puglia = police_effectivness_puglia_multiplier }
+
+	#each undercover agent increases police effectivness by 5%
+	set_temp_variable = { pol_eff_agents_multiplier_sicily = undercover_agents_sicily }
+	multiply_temp_variable = { pol_eff_agents_multiplier_sicily = 0.025 }
+	add_to_temp_variable = { pol_eff_agents_multiplier_sicily = 1 }
+	multiply_variable = { police_effectivness_sicily = pol_eff_agents_multiplier_sicily }
+
+	set_temp_variable = { pol_eff_agents_multiplier_campania = undercover_agents_campania }
+	multiply_temp_variable = { pol_eff_agents_multiplier_campania = 0.025 }
+	add_to_temp_variable = { pol_eff_agents_multiplier_campania = 1 }
+	multiply_variable = { police_effectivness_campania = pol_eff_agents_multiplier_campania }
+
+	set_temp_variable = { pol_eff_agents_multiplier_calabria = undercover_agents_calabria }
+	multiply_temp_variable = { pol_eff_agents_multiplier_calabria = 0.025 }
+	add_to_temp_variable = { pol_eff_agents_multiplier_calabria = 1 }
+	multiply_variable = { police_effectivness_calabria = pol_eff_agents_multiplier_calabria }
+
+	set_temp_variable = { pol_eff_agents_multiplier_puglia = undercover_agents_puglia }
+	multiply_temp_variable = { pol_eff_agents_multiplier_puglia = 0.025 }
+	add_to_temp_variable = { pol_eff_agents_multiplier_puglia = 1 }
+	multiply_variable = { police_effectivness_puglia = pol_eff_agents_multiplier_puglia }
+}
+mafia_monthly_drift = {
+	#monthly drifts in mafia strength, base value plus focus effects
+	#sicily
+	if = {
+		limit = {
+			check_variable = { cosa_nostra_strength < 0.100 }
+		}							
+			add_to_variable = { cosa_nostra_strength = 0.012 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { cosa_nostra_strength > 0.099 }
+			check_variable = { cosa_nostra_strength < 0.400 }
+		}
+			add_to_variable = { cosa_nostra_strength = 0.003 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { cosa_nostra_strength > 0.399 }
+			check_variable = { cosa_nostra_strength < 0.666 }
+		}
+			add_to_variable = { cosa_nostra_strength = -0.003 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { cosa_nostra_strength > 0.665 }
+		}
+			add_to_variable = { cosa_nostra_strength = -0.012 }
+	}
+	#campania
+	if = {
+		limit = {
+			check_variable = { camorra_strength < 0.100 }
+		}							
+			add_to_variable = { camorra_strength = 0.012 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { camorra_strength > 0.099 }
+			check_variable = { camorra_strength < 0.400 }
+		}
+			add_to_variable = { camorra_strength = 0.003 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { camorra_strength > 0.399 }
+			check_variable = { camorra_strength < 0.666 }
+		}
+			add_to_variable = { camorra_strength = -0.003 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { camorra_strength > 0.665 }
+		}
+			add_to_variable = { camorra_strength = -0.012 }
+	}
+	#calabria
+	if = {
+		limit = {
+			check_variable = { ndrangheta_strength < 0.100 }
+		}							
+			add_to_variable = { ndrangheta_strength = 0.012 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { ndrangheta_strength > 0.099 }
+			check_variable = { ndrangheta_strength < 0.400 }
+		}
+			add_to_variable = { ndrangheta_strength = 0.003 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { ndrangheta_strength > 0.399 }
+			check_variable = { ndrangheta_strength < 0.666 }
+		}
+			add_to_variable = { ndrangheta_strength = -0.003 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { ndrangheta_strength > 0.665 }
+		}
+			add_to_variable = { ndrangheta_strength = -0.012 }
+	}
+	#puglia
+	if = {
+		limit = {
+			check_variable = { sacra_corona_unita_strength < 0.100 }
+		}							
+			add_to_variable = { sacra_corona_unita_strength = 0.012 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { sacra_corona_unita_strength > 0.099 }
+			check_variable = { sacra_corona_unita_strength < 0.400 }
+		}
+			add_to_variable = { sacra_corona_unita_strength = 0.003 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { sacra_corona_unita_strength > 0.399 }
+			check_variable = { sacra_corona_unita_strength < 0.666 }
+		}
+			add_to_variable = { sacra_corona_unita_strength = -0.003 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { sacra_corona_unita_strength > 0.665 }
+		}
+			add_to_variable = { sacra_corona_unita_strength = -0.012 }
+	}
+	if = {
+		limit = { has_idea = ITA_legalized_light_drugs }
+			add_to_variable = { cosa_nostra_strength = -0.004 }
+			add_to_variable = { camorra_strength = -0.004 }
+			add_to_variable = { ndrangheta_strength = -0.004 }
+			add_to_variable = { sacra_corona_unita_strength = -0.004 }
+	}
+	if = {
+		limit = { has_idea = ITA_legalized_all_drugs }
+			add_to_variable = { cosa_nostra_strength = -0.006 }
+			add_to_variable = { camorra_strength = -0.006 }
+			add_to_variable = { ndrangheta_strength = -0.006 }
+			add_to_variable = { sacra_corona_unita_strength = -0.006 }
+	}
+	if = {
+		limit = { has_completed_focus = ITA_anti_mafia_education }
+			add_to_variable = { cosa_nostra_strength = -0.003 }
+			add_to_variable = { camorra_strength = -0.003 }
+			add_to_variable = { ndrangheta_strength = -0.003 }
+			add_to_variable = { sacra_corona_unita_strength = -0.003 }
+	}
+	if = {
+		limit = { has_completed_focus = ITA_seek_support_of_the_church }
+			add_to_variable = { cosa_nostra_strength = -0.004 }
+			add_to_variable = { camorra_strength = -0.004 }
+			add_to_variable = { ndrangheta_strength = -0.004 }
+			add_to_variable = { sacra_corona_unita_strength = -0.004 }
+	}
+	if = {
+		limit = { has_completed_focus = ITA_turn_the_population_against_them }
+			add_to_variable = { cosa_nostra_strength = -0.005 }
+			add_to_variable = { camorra_strength = -0.005 }
+			add_to_variable = { ndrangheta_strength = -0.005 }
+			add_to_variable = { sacra_corona_unita_strength = -0.005 }
+	}
+	if = {
+		limit = { has_completed_focus = ITA_safeguard_european_development_funds }
+			add_to_variable = { cosa_nostra_strength = -0.001 }
+			add_to_variable = { camorra_strength = -0.001 }
+			add_to_variable = { ndrangheta_strength = -0.001 }
+			add_to_variable = { sacra_corona_unita_strength = -0.001 }
+	}
+	if = {
+		limit = { has_completed_focus = ITA_protect_foreign_investment }
+			add_to_variable = { cosa_nostra_strength = -0.001 }
+			add_to_variable = { camorra_strength = -0.001 }
+			add_to_variable = { ndrangheta_strength = -0.001 }
+			add_to_variable = { sacra_corona_unita_strength = -0.001 }
+	}
+}
+mafia_event_counters = {
+	#recurring mafia events
+	#sicily
+	random_list = {
+		50 = {
+			add_to_variable = { event_counter_1_sicily = 1 }
+		}
+		50 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { event_counter_1_sicily > 11 } }
+			country_event = mafia.6
+			set_variable = { event_counter_1_sicily = 0 }
+	}
+	random_list = {
+		50 = {
+			add_to_variable = { event_counter_2_sicily = 1 }
+		}
+		50 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { event_counter_2_sicily > 11 } }
+			country_event = mafia.9
+			set_variable = { event_counter_2_sicily = 0 }
+	}
+	#campania
+	random_list = {
+		50 = {
+			add_to_variable = { event_counter_1_campania = 1 }
+		}
+		50 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { event_counter_1_campania > 11 } }
+			country_event = mafia.6
+			set_variable = { event_counter_2_campania = 0 }
+	}
+	random_list = {
+		50 = {
+			add_to_variable = { event_counter_2_campania = 1 }
+		}
+		50 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { event_counter_2_campania > 11 } }
+			country_event = mafia.10
+			set_variable = { event_counter_2_campania = 0 }
+	}
+	#calabria
+	random_list = {
+		50 = {
+			add_to_variable = { event_counter_1_calabria = 1 }
+		}
+		50 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { event_counter_1_calabria > 11 } }
+			country_event = mafia.7
+			set_variable = { event_counter_1_calabria = 0 }
+	}
+	random_list = {
+		50 = {
+			add_to_variable = { event_counter_2_calabria = 1 }
+		}
+		50 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { event_counter_2_calabria > 11 } }
+			country_event = mafia.11
+			set_variable = { event_counter_2_calabria = 0 }
+	}
+	#puglia
+	random_list = {
+		50 = {
+			add_to_variable = { event_counter_1_puglia = 1 }
+		}
+		50 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { event_counter_1_puglia > 11 } }
+			country_event = mafia.8
+			set_variable = { event_counter_1_puglia = 0 }
+	}
+	random_list = {
+		50 = {
+			add_to_variable = { event_counter_2_puglia = 1 }
+		}
+		50 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { event_counter_2_puglia > 11 } }
+			country_event = mafia.12
+			set_variable = { event_counter_2_puglia = 0 }
+	}
+}
+
+#used to calculate money cost and mafia strength gain of industrial focuses
+mafia_industrial_focus_north_5 = {
+	if = {
+		limit = {
+			NOT = { has_idea = ITA_mafia }
+		}
+			subtract_from_variable = { treasury = 5.0 }
+			custom_effect_tooltip = 5_billion_expense_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength < 0.100 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 6.0 }
+			custom_effect_tooltip = 6_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.005 }
+			add_to_variable = { camorra_strength = 0.005 }
+			add_to_variable = { ndrangheta_strength = 0.005 }
+			add_to_variable = { sacra_corona_unita_strength = 0.005 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.099 }
+			check_variable = { mafia_strength < 0.400 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 7.0 }
+			custom_effect_tooltip = 7_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.01 }
+			add_to_variable = { camorra_strength = 0.01 }
+			add_to_variable = { ndrangheta_strength = 0.01 }
+			add_to_variable = { sacra_corona_unita_strength = 0.01 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.399 }
+			check_variable = { mafia_strength < 0.666 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 8.0 }
+			custom_effect_tooltip = 8_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.015 }
+			add_to_variable = { camorra_strength = 0.015 }
+			add_to_variable = { ndrangheta_strength = 0.015 }
+			add_to_variable = { sacra_corona_unita_strength = 0.015 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.665 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.03 }
+			add_to_variable = { camorra_strength = 0.03 }
+			add_to_variable = { ndrangheta_strength = 0.03 }
+			add_to_variable = { sacra_corona_unita_strength = 0.03 }
+	}
+}
+mafia_industrial_focus_north_8 = {
+	if = {
+		limit = {
+			NOT = { has_idea = ITA_mafia }
+		}
+			subtract_from_variable = { treasury = 8.0 }
+			custom_effect_tooltip = 8_billion_expense_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength < 0.100 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.01 }
+			add_to_variable = { camorra_strength = 0.01 }
+			add_to_variable = { ndrangheta_strength = 0.01 }
+			add_to_variable = { sacra_corona_unita_strength = 0.01 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.099 }
+			check_variable = { mafia_strength < 0.400 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 12.5 }
+			custom_effect_tooltip = 12_5_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.02 }
+			add_to_variable = { camorra_strength = 0.02 }
+			add_to_variable = { ndrangheta_strength = 0.02 }
+			add_to_variable = { sacra_corona_unita_strength = 0.02 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.399 }
+			check_variable = { mafia_strength < 0.666 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 15.0 }
+			custom_effect_tooltip = 15_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.03 }
+			add_to_variable = { camorra_strength = 0.03 }
+			add_to_variable = { ndrangheta_strength = 0.03 }
+			add_to_variable = { sacra_corona_unita_strength = 0.03 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.665 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 17.5 }
+			custom_effect_tooltip = 17_50_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.04 }
+			add_to_variable = { camorra_strength = 0.04 }
+			add_to_variable = { ndrangheta_strength = 0.04 }
+			add_to_variable = { sacra_corona_unita_strength = 0.04 }
+	}
+}
+mafia_industrial_focus_north_10 = {
+	if = {
+		limit = {
+			NOT = { has_idea = ITA_mafia }
+		}
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength < 0.100 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 11.0 }
+			custom_effect_tooltip = 11_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.005 }
+			add_to_variable = { camorra_strength = 0.005 }
+			add_to_variable = { ndrangheta_strength = 0.005 }
+			add_to_variable = { sacra_corona_unita_strength = 0.005 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.099 }
+			check_variable = { mafia_strength < 0.400 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 12.5 }
+			custom_effect_tooltip = 12_5_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.01 }
+			add_to_variable = { camorra_strength = 0.01 }
+			add_to_variable = { ndrangheta_strength = 0.01 }
+			add_to_variable = { sacra_corona_unita_strength = 0.01 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.399 }
+			check_variable = { mafia_strength < 0.666 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 14.0 }
+			custom_effect_tooltip = 14_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.015 }
+			add_to_variable = { camorra_strength = 0.015 }
+			add_to_variable = { ndrangheta_strength = 0.015 }
+			add_to_variable = { sacra_corona_unita_strength = 0.015 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.665 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 15.0 }
+			custom_effect_tooltip = 15_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.02 }
+			add_to_variable = { camorra_strength = 0.02 }
+			add_to_variable = { ndrangheta_strength = 0.02 }
+			add_to_variable = { sacra_corona_unita_strength = 0.02 }
+	}
+}
+mafia_industrial_focus_north_20 = {
+	if = {
+		limit = {
+			NOT = { has_idea = ITA_mafia }
+		}
+			subtract_from_variable = { treasury = 20.0 }
+			custom_effect_tooltip = 20_billion_expense_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength < 0.100 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 22.5 }
+			custom_effect_tooltip = 22_5_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.01 }
+			add_to_variable = { camorra_strength = 0.01 }
+			add_to_variable = { ndrangheta_strength = 0.01 }
+			add_to_variable = { sacra_corona_unita_strength = 0.01 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.099 }
+			check_variable = { mafia_strength < 0.400 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 25.0 }
+			custom_effect_tooltip = 25_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.02 }
+			add_to_variable = { camorra_strength = 0.02 }
+			add_to_variable = { ndrangheta_strength = 0.02 }
+			add_to_variable = { sacra_corona_unita_strength = 0.02 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.399 }
+			check_variable = { mafia_strength < 0.666 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 27.5 }
+			custom_effect_tooltip = 27_5_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.03 }
+			add_to_variable = { camorra_strength = 0.03 }
+			add_to_variable = { ndrangheta_strength = 0.03 }
+			add_to_variable = { sacra_corona_unita_strength = 0.03 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.665 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 30.0 }
+			custom_effect_tooltip = 30_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.04 }
+			add_to_variable = { camorra_strength = 0.04 }
+			add_to_variable = { ndrangheta_strength = 0.04 }
+			add_to_variable = { sacra_corona_unita_strength = 0.04 }
+	}
 }
 mafia_industrial_focus_north_30 = {
 	if = {
@@ -126,6 +746,124 @@ mafia_industrial_focus_north_40 = {
 			add_to_variable = { camorra_strength = 0.08 }
 			add_to_variable = { ndrangheta_strength = 0.08 }
 			add_to_variable = { sacra_corona_unita_strength = 0.08 }
+	}
+}
+mafia_industrial_focus_south_8 = {
+	if = {
+		limit = {
+			NOT = { has_idea = ITA_mafia }
+		}
+			subtract_from_variable = { treasury = 8.0 }
+			custom_effect_tooltip = 8_billion_expense_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength < 0.100 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.01 }
+			add_to_variable = { camorra_strength = 0.01 }
+			add_to_variable = { ndrangheta_strength = 0.01 }
+			add_to_variable = { sacra_corona_unita_strength = 0.01 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.099 }
+			check_variable = { mafia_strength < 0.400 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 15.0 }
+			custom_effect_tooltip = 15_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.03 }
+			add_to_variable = { camorra_strength = 0.03 }
+			add_to_variable = { ndrangheta_strength = 0.03 }
+			add_to_variable = { sacra_corona_unita_strength = 0.03 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.399 }
+			check_variable = { mafia_strength < 0.666 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 20.0 }
+			custom_effect_tooltip = 20_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.05 }
+			add_to_variable = { camorra_strength = 0.05 }
+			add_to_variable = { ndrangheta_strength = 0.05 }
+			add_to_variable = { sacra_corona_unita_strength = 0.05 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.665 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 25.0 }
+			custom_effect_tooltip = 25_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.07 }
+			add_to_variable = { camorra_strength = 0.07 }
+			add_to_variable = { ndrangheta_strength = 0.07 }
+			add_to_variable = { sacra_corona_unita_strength = 0.07 }
+	}
+}
+mafia_industrial_focus_south_10 = {
+	if = {
+		limit = {
+			NOT = { has_idea = ITA_mafia }
+		}
+			subtract_from_variable = { treasury = 10.0 }
+			custom_effect_tooltip = 10_billion_expense_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength < 0.100 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 12.5 }
+			custom_effect_tooltip = 12_5_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.01 }
+			add_to_variable = { camorra_strength = 0.01 }
+			add_to_variable = { ndrangheta_strength = 0.01 }
+			add_to_variable = { sacra_corona_unita_strength = 0.01 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.099 }
+			check_variable = { mafia_strength < 0.400 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 15.0 }
+			custom_effect_tooltip = 15_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.02 }
+			add_to_variable = { camorra_strength = 0.02 }
+			add_to_variable = { ndrangheta_strength = 0.2 }
+			add_to_variable = { sacra_corona_unita_strength = 0.02 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.399 }
+			check_variable = { mafia_strength < 0.666 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 17.5 }
+			custom_effect_tooltip = 17_50_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.03 }
+			add_to_variable = { camorra_strength = 0.03 }
+			add_to_variable = { ndrangheta_strength = 0.03 }
+			add_to_variable = { sacra_corona_unita_strength = 0.03 }
+	}
+	else_if = {
+		limit = { 
+			check_variable = { mafia_strength > 0.665 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			subtract_from_variable = { treasury = 20.0 }
+			custom_effect_tooltip = 20_billion_expense_tt
+			add_to_variable = { cosa_nostra_strength = 0.04 }
+			add_to_variable = { camorra_strength = 0.04 }
+			add_to_variable = { ndrangheta_strength = 0.04 }
+			add_to_variable = { sacra_corona_unita_strength = 0.04 }
 	}
 }
 mafia_industrial_focus_south_20 = {
@@ -246,595 +984,230 @@ mafia_industrial_focus_south_30 = {
 			add_to_variable = { sacra_corona_unita_strength = 0.11 }
 	}	
 }
-update_police_effectivness = {
-	update_mafia_strength = yes
-	set_variable = { police_effectivness = police_effectivness_base }
-	if = {
-		limit = { has_idea = police_01 }
-		add_to_variable = { police_effectivness = -0.25 }
-	}
-	else_if = {
-		limit = { has_idea = police_02 }
-		add_to_variable = { police_effectivness = -0.05 }
-	}
-	else_if = {
-		limit = { has_idea = police_03 }
-		add_to_variable = { police_effectivness = 0.05 }
-	}
-	else_if = {
-		limit = { has_idea = police_04 }
-		add_to_variable = { police_effectivness = 0.15 }
-	}
-	else_if = {
-		limit = { has_idea = police_05 }
-		add_to_variable = { police_effectivness = 0.3 }
-	}
-	if = {
-		limit = { has_idea = negligible_corruption }
-		add_to_variable = { police_effectivness = -0.025 }
-	}
-	else_if = {
-		limit = { has_idea = slight_corruption }
-		add_to_variable = { police_effectivness = -0.05 }
-	}
-	else_if = {
-		limit = { has_idea = modest_corruption }
-		add_to_variable = { police_effectivness = -0.075 }
-	}
-	else_if = {
-		limit = { has_idea = medium_corruption }
-		add_to_variable = { police_effectivness = -0.1 }
-	}
-	else_if = {
-		limit = { has_idea = widespread_corruption }
-		add_to_variable = { police_effectivness = -0.125 }
-	}
-	else_if = {
-		limit = { has_idea = systematic_corruption }
-		add_to_variable = { police_effectivness = -0.15 }
-	}
-	else_if = {
-		limit = { has_idea = unrestrained_corruption }
-		add_to_variable = { police_effectivness = -0.175 }
-	}
-	else_if = {
-		limit = { has_idea = rampant_corruption }
-		add_to_variable = { police_effectivness = -0.2 }
-	}
-	else_if = {
-		limit = { has_idea = crippling_corruption }
-		add_to_variable = { police_effectivness = -0.225 }
-	}
-	else_if = {
-		limit = { has_idea = paralyzing_corruption }
-		add_to_variable = { police_effectivness = -0.25 }
-	}
-	set_temp_variable = { police_effectivness_multiplier = 1 }
-	set_temp_variable = { mafia_strength_reduced = mafia_strength }
-	multiply_temp_variable = { mafia_strength_reduced = 0.5 }
-	subtract_from_temp_variable = { police_effectivness_multiplier = mafia_strength_reduced }
-	multiply_variable = { police_effectivness = police_effectivness_multiplier }
-	set_variable = { police_effectivness_sicily = police_effectivness }
-	set_variable = { police_effectivness_campania = police_effectivness }
-	set_variable = { police_effectivness_calabria = police_effectivness }
-	set_variable = { police_effectivness_puglia = police_effectivness }
-	#each undercover agent increases police effectivness by 5%
-	set_temp_variable = { police_effectivness_multiplier_sicily = undercover_agents_sicily }
-	multiply_temp_variable = { police_effectivness_multiplier_sicily = 0.025 }
-	add_to_temp_variable = { police_effectivness_multiplier_sicily = 1 }
-	multiply_variable = { police_effectivness_sicily = police_effectivness_multiplier_sicily }
-	set_temp_variable = { police_effectivness_multiplier_campania = undercover_agents_campania }
-	multiply_temp_variable = { police_effectivness_multiplier_campania = 0.025 }
-	add_to_temp_variable = { police_effectivness_multiplier_campania = 1 }
-	multiply_variable = { police_effectivness_campania = police_effectivness_multiplier_campania }
-	set_temp_variable = { police_effectivness_multiplier_calabria = undercover_agents_calabria }
-	multiply_temp_variable = { police_effectivness_multiplier_calabria = 0.025 }
-	add_to_temp_variable = { police_effectivness_multiplier_calabria = 1 }
-	multiply_variable = { police_effectivness_calabria = police_effectivness_multiplier_calabria }
-	set_temp_variable = { police_effectivness_multiplier_puglia = undercover_agents_puglia }
-	multiply_temp_variable = { police_effectivness_multiplier_puglia = 0.025 }
-	add_to_temp_variable = { police_effectivness_multiplier_puglia = 1 }
-	multiply_variable = { police_effectivness_puglia = police_effectivness_multiplier_puglia }
-}
 
 #reform expectance
 remove_0_5_ruling_party_drift = {
 	custom_effect_tooltip = remove_0_5_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = -0.001 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = -0.005 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = -0.005 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = -0.005 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = -0.005 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = -0.005 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = -0.001 }
+	add_to_variable = { drift_switch_var_base = -0.005 }
+	reforme_expectance_government_change_update = yes
 }
 remove_1_ruling_party_drift = {
 	custom_effect_tooltip = remove_1_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = -0.002 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = -0.01 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = -0.01 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = -0.01 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = -0.01 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = -0.01 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = -0.002 }
+	add_to_variable = { drift_switch_var_base = -0.01 }
+	reforme_expectance_government_change_update = yes
 }
-
 remove_2_ruling_party_drift = {
 	custom_effect_tooltip = remove_2_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = -0.004 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = -0.02 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = -0.02 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = -0.02 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = -0.02 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = -0.02 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = -0.004 }
+	add_to_variable = { drift_switch_var_base = -0.02 }
+	reforme_expectance_government_change_update = yes
 }
-
 remove_3_ruling_party_drift = {
 	custom_effect_tooltip = remove_3_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = -0.006 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = -0.03 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = -0.03 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = -0.03 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = -0.03 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = -0.03 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = -0.006 }
+	add_to_variable = { drift_switch_var_base = -0.03 }
+	reforme_expectance_government_change_update = yes
 }
-
 remove_4_ruling_party_drift = {
 	custom_effect_tooltip = remove_4_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = -0.008 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = -0.04 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = -0.04 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = -0.04 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = -0.04 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = -0.04 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = -0.008 }
+	add_to_variable = { drift_switch_var_base = -0.04 }
+	reforme_expectance_government_change_update = yes
 }
-
 remove_5_ruling_party_drift = {
 	custom_effect_tooltip = remove_5_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = -0.01 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = -0.05 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = -0.05 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = -0.05 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = -0.05 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = -0.05 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = -0.01 }
+	add_to_variable = { drift_switch_var_base = -0.05 }
+	reforme_expectance_government_change_update = yes
 }
-
 remove_6_ruling_party_drift = {
 	custom_effect_tooltip = remove_6_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = -0.012 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = -0.06 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = -0.06 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = -0.06 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = -0.06 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = -0.06 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = -0.012 }
+	add_to_variable = { drift_switch_var_base = -0.06 }
+	reforme_expectance_government_change_update = yes
 }
-
 remove_7_ruling_party_drift = {
 	custom_effect_tooltip = remove_7_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = -0.014 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = -0.07 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = -0.07 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = -0.07 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = -0.07 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = -0.07 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = -0.014 }
+	add_to_variable = { drift_switch_var_base = -0.07 }
+	reforme_expectance_government_change_update = yes
 }
-
 remove_8_ruling_party_drift = {
 	custom_effect_tooltip = remove_8_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = -0.016 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = -0.08 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = -0.08 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = -0.08 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = -0.08 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = -0.08 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = -0.016 }
+	add_to_variable = { drift_switch_var_base = -0.08 }
+	reforme_expectance_government_change_update = yes
 }
-
 remove_9_ruling_party_drift = {
 	custom_effect_tooltip = remove_9_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = -0.018 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = -0.09 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = -0.09 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = -0.09 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = -0.09 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = -0.09 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = -0.018 }
+	add_to_variable = { drift_switch_var_base = -0.09 }
+	reforme_expectance_government_change_update = yes
 }
-
 remove_10_ruling_party_drift = {
 	custom_effect_tooltip = remove_10_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = -0.02 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = -0.1 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = -0.1 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = -0.1 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = -0.1 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = -0.1 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = -0.02 }
+	add_to_variable = { drift_switch_var_base = -0.1 }
+	reforme_expectance_government_change_update = yes
 }
-
 add_0_5_ruling_party_drift = {
 	custom_effect_tooltip = add_0_5_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = 0.001 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = 0.005 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = 0.005 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = 0.005 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = 0.005 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = 0.005 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = 0.001 }
+	add_to_variable = { drift_switch_var_base = 0.005 }
+	reforme_expectance_government_change_update = yes
 }
-
 add_1_ruling_party_drift = {
 	custom_effect_tooltip = add_1_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = 0.002 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = 0.01 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = 0.01 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = 0.01 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = 0.01 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = 0.01 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = 0.002 }
+	add_to_variable = { drift_switch_var_base = 0.01 }
+	reforme_expectance_government_change_update = yes
 }
-
 add_2_ruling_party_drift = {
 	custom_effect_tooltip = add_2_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = 0.004 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = 0.02 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = 0.02 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = 0.02 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = 0.02 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = 0.02 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = 0.004 }
+	add_to_variable = { drift_switch_var_base = 0.02 }
+	reforme_expectance_government_change_update = yes
 }
-
 add_3_ruling_party_drift = {
 	custom_effect_tooltip = add_3_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = 0.006 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = 0.03 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = 0.03 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = 0.03 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = 0.03 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = 0.03 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = 0.006 }
+	add_to_variable = { drift_switch_var_base = 0.03 }
+	reforme_expectance_government_change_update = yes
 }
-
 add_4_ruling_party_drift = {
 	custom_effect_tooltip = add_4_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = 0.008 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = 0.04 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = 0.04 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = 0.04 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = 0.04 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = 0.04 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = 0.008 }
+	add_to_variable = { drift_switch_var_base = 0.04 }
+	reforme_expectance_government_change_update = yes
 }
-
 add_5_ruling_party_drift = {
 	custom_effect_tooltip = add_5_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = 0.01 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = 0.05 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = 0.05 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = 0.05 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = 0.05 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = 0.05 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = 0.01 }
+	add_to_variable = { drift_switch_var_base = 0.05 }
+	reforme_expectance_government_change_update = yes
 }
-
 add_6_ruling_party_drift = {
 	custom_effect_tooltip = add_6_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = 0.012 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = 0.06 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = 0.06 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = 0.06 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = 0.06 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = 0.06 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = 0.012 }
+	add_to_variable = { drift_switch_var_base = 0.06 }
+	reforme_expectance_government_change_update = yes
 }
-
 add_7_ruling_party_drift = {
 	custom_effect_tooltip = add_7_ruling_party_drift_TT
-	add_to_variable = { ruling_subparty_drift_var = 0.014 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = 0.07 }
-	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = 0.07 }
-	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = 0.07 }
-	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = 0.07 }
-	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = 0.07 }
-	}
+	add_to_variable = { ruling_subparty_drift_var = 0.014 }
+	add_to_variable = { drift_switch_var_base = 0.07 }
+	reforme_expectance_government_change_update = yes
 }
-
 add_8_ruling_party_drift = {
 	custom_effect_tooltip = add_8_ruling_party_drift_TT
 	add_to_variable = { ruling_subparty_drift_var = 0.016 } 
-	if = { 
-		limit = { has_government = fascism }
-			add_to_variable = { fascism_drift_var = 0.08 }
+	add_to_variable = { drift_switch_var_base = 0.08 }
+	reforme_expectance_government_change_update = yes
+}
+add_10_ruling_party_drift = {
+	custom_effect_tooltip = add_10_ruling_party_drift_TT
+	add_to_variable = { ruling_subparty_drift_var = 0.02 }
+	add_to_variable = { drift_switch_var_base = 0.1 }
+	reforme_expectance_government_change_update = yes
+}
+
+prevent_parties_disappearing = {
+	if = {
+		limit = {
+			check_variable = { party_pop_array^1 < 0.005 } 
+		}
+		add_popularity = { ideology = democratic popularity = 0.002 }
+		add_to_variable = { party_pop_array^1 = 0.004 }
 	}
-	else_if ={
-		limit = { has_government = communism }
-			add_to_variable = { communism_drift_var = 0.08 }
+	if = {
+		limit = {
+			check_variable = { party_pop_array^2 < 0.005 } 
+		}
+		add_popularity = { ideology = democratic popularity = 0.002 }
+		add_to_variable = { party_pop_array^2 = 0.004 }
 	}
-	else_if = { 
-		limit = { has_government = democratic } 
-			add_to_variable = { democratic_drift_var = 0.08 }
+	if = {
+		limit = {
+			check_variable = { party_pop_array^3 < 0.005 } 
+		}
+		add_popularity = { ideology = democratic popularity = 0.002 }
+		add_to_variable = { party_pop_array^3 = 0.004 }
 	}
-	else_if = { 
-		limit = { has_government = neutrality }
-			add_to_variable = { neutrality_drift_var = 0.08 }
+	if = {
+		limit = {
+			check_variable = { party_pop_array^4 < 0.005 } 
+		}
+		add_popularity = { ideology = communism popularity = 0.002 }
+		add_to_variable = { party_pop_array^4 = 0.004 }
 	}
-	else_if = { 
-		limit = { has_government = nationalist } 
-			add_to_variable = { nationalist_drift_var = 0.08 }
+	if = {
+		limit = {
+			check_variable = { party_pop_array^5 < 0.005 } 
+			has_country_flag = ITA_five_star_movement_founded
+		}
+		add_popularity = { ideology = communism popularity = 0.002 }
+		add_to_variable = { party_pop_array^5 = 0.004 }
 	}
+	if = {
+		limit = {
+			check_variable = { party_pop_array^6 < 0.005 }
+			has_country_flag = ITA_salvini_took_over_lega
+		}
+		add_popularity = { ideology = communism popularity = 0.002 }
+		add_to_variable = { party_pop_array^6 = 0.004 }
+	}
+	if = {
+		limit = {
+			check_variable = { party_pop_array^14 < 0.005 } 
+		}
+		add_popularity = { ideology = neutrality popularity = 0.002 }
+		add_to_variable = { party_pop_array^14 = 0.004 }
+	}
+	if = {
+		limit = {
+			check_variable = { party_pop_array^16 < 0.005 } 
+		}
+		add_popularity = { ideology = neutrality popularity = 0.002 }
+		add_to_variable = { party_pop_array^16 = 0.004 }
+	}
+	if = {
+		limit = {
+			check_variable = { party_pop_array^17 < 0.005 } 
+		}
+		add_popularity = { ideology = neutrality popularity = 0.002 }
+		add_to_variable = { party_pop_array^17 = 0.004 }
+	}
+	if = {
+		limit = {
+			check_variable = { party_pop_array^18 < 0.005 } 
+		}
+		add_popularity = { ideology = neutrality popularity = 0.002 }
+		add_to_variable = { party_pop_array^18 = 0.004 }
+	}
+	if = {
+		limit = {
+			check_variable = { party_pop_array^19 < 0.005 } 
+		}
+		add_popularity = { ideology = neutrality popularity = 0.002 }
+		add_to_variable = { party_pop_array^19 = 0.004 }
+	}
+	if = {
+		limit = {
+			check_variable = { party_pop_array^20 < 0.005 } 
+		}
+		add_popularity = { ideology = nationalist popularity = 0.002 }
+		add_to_variable = { party_pop_array^20 = 0.004 }
+	}
+	if = {
+		limit = {
+			check_variable = { party_pop_array^21 < 0.005 } 
+		}
+		add_popularity = { ideology = nationalist popularity = 0.002 }
+		add_to_variable = { party_pop_array^21 = 0.004 }
+	}
+	recalculate_party = yes
 }
 
 ruling_subparty_drift_effect = {
@@ -1136,20 +1509,16 @@ ruling_subparty_drift_effect = {
 	}
 	recalculate_party = yes
 }
+
 reforme_expectance_government_change_update = {
-				set_variable = { drift_switch_var = fascism_drift_var }
-				add_to_variable = { drift_switch_var = communism_drift_var }
-				add_to_variable = { drift_switch_var = democratic_drift_var }
-				add_to_variable = { drift_switch_var = neutrality_drift_var }
-				add_to_variable = { drift_switch_var = nationalist_drift_var }
 				set_variable = { fascism_drift_var = 0 }
 				set_variable = { communism_drift_var = 0 }
 				set_variable = { democratic_drift_var = 0 }
 				set_variable = { neutrality_drift_var = 0 }
 				set_variable = { nationalist_drift_var = 0 }
 				set_variable = { number_of_coalition_parties = gov_coalition_array^num }
-				set_variable = { ruling_drift_switch_var = drift_switch_var }
-				set_variable = { coalition_drift_switch_var = drift_switch_var }
+				set_variable = { ruling_drift_switch_var = drift_switch_var_base }
+				set_variable = { coalition_drift_switch_var = drift_switch_var_base }
 				multiply_variable = { number_of_coalition_parties = 0.25 }
 				set_variable = { coalition_switch_var = 1 }
 				subtract_from_variable = { coalition_switch_var = number_of_coalition_parties }
@@ -1159,145 +1528,145 @@ reforme_expectance_government_change_update = {
 					limit = {
 						is_in_array = { gov_coalition_array = 0  }
 					}
-					add_to_variable { democratic_drift_var = coalition_drift_switch_var }
+					add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 1  }
 					}
-					add_to_variable { democratic_drift_var = coalition_drift_switch_var }
+					add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 2  }
 					}
-					add_to_variable { democratic_drift_var = coalition_drift_switch_var }
+					add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 3  }
 					}
-					add_to_variable { democratic_drift_var = coalition_drift_switch_var }
+					add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 4  }
 					}
-					add_to_variable { communism_drift_var = coalition_drift_switch_var }
+					add_to_variable = { communism_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 5  }
 					}
-					add_to_variable { communism_drift_var = coalition_drift_switch_var }
+					add_to_variable = { communism_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 6  }
 					}
-					add_to_variable { communism_drift_var = coalition_drift_switch_var }
+					add_to_variable = { communism_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 7  }
 					}
-					add_to_variable { communism_drift_var = coalition_drift_switch_var }
+					add_to_variable = { communism_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 8  }
 					}
-					add_to_variable { fascism_drift_var = coalition_drift_switch_var }
+					add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 9  }
 					}
-					add_to_variable { fascism_drift_var = coalition_drift_switch_var }
+					add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 10  }
 					}
-					add_to_variable { fascism_drift_var = coalition_drift_switch_var }
+					add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 11  }
 					}
-					add_to_variable { fascism_drift_var = coalition_drift_switch_var }
+					add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 12  }
 					}
-					add_to_variable { neutrality_drift_var = coalition_drift_switch_var }
+					add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 13  }
 					}
-					add_to_variable { neutrality_drift_var = coalition_drift_switch_var }
+					add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 14  }
 					}
-					add_to_variable { neutrality_drift_var = coalition_drift_switch_var }
+					add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 15  }
 					}
-					add_to_variable { neutrality_drift_var = coalition_drift_switch_var }
+					add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 16  }
 					}
-					add_to_variable { neutrality_drift_var = coalition_drift_switch_var }
+					add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 17  }
 					}
-					add_to_variable { neutrality_drift_var = coalition_drift_switch_var }
+					add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 18  }
 					}
-					add_to_variable { neutrality_drift_var = coalition_drift_switch_var }
+					add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 19  }
 					}
-					add_to_variable { neutrality_drift_var = coalition_drift_switch_var }
+					add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 20  }
 					}
-					add_to_variable { nationalist_drift_var = coalition_drift_switch_var }
+					add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 21  }
 					}
-					add_to_variable { nationalist_drift_var = coalition_drift_switch_var }
+					add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 22  }
 					}
-					add_to_variable { nationalist_drift_var = coalition_drift_switch_var }
+					add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = {
 						is_in_array = { gov_coalition_array = 23  }
 					}
-					add_to_variable { nationalist_drift_var = coalition_drift_switch_var }
+					add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
 				}
 				if = {
 					limit = { has_government = fascism }
@@ -1320,11 +1689,13 @@ reforme_expectance_government_change_update = {
 						add_to_variable = { nationalist_drift_var = ruling_drift_switch_var }
 				}
 }
+
 remove_gov_crisis_ai_flags = {
 	clr_country_flag = delayed_government_crisis_1
 	clr_country_flag = delayed_government_crisis_2
 }
-calculate_abandon_coalition_threshold = {	
+
+calculate_abandon_coalition_threshold = {
 	set_temp_variable = { temp_value_threshold = 0 }
 	for_each_loop = {
 		array = abandon_coalition_threshold
@@ -1340,6 +1711,7 @@ calculate_abandon_coalition_threshold = {
 		}
 	}
 }
+
 small_parties_leave_coalition = {
 	for_each_loop = {
 		array = abandon_coalition_threshold 
@@ -1356,12 +1728,16 @@ small_parties_leave_coalition = {
 	reforme_expectance_government_change_update = yes
 	update_government_coalition_strength = yes
 }
+
 government_crisis_check = {
 	set_temp_variable = { government_failure_threshold = majority_threshold }
 	multiply_temp_variable = { government_failure_threshold = 0.5 }
 	if = {
 		limit = {
 			check_variable = { government_coalition_strength < government_failure_threshold }
+			NOT = {
+				has_country_flag = coalition_forming
+			}
 		}
 		country_event = italy_md.38
 	}
@@ -1414,6 +1790,7 @@ allow_elections = {
 		}
 	}
 }
+
 stop_elections = {
 	if = {
 		limit = {
@@ -1461,6 +1838,7 @@ stop_elections = {
 		}
 	}
 }
+
 weekly_stability_dynamic_modifier_update = {	
 	set_variable = { base_stability = stability }
 	subtract_from_variable = { base_stability = modifier@stability_factor }
@@ -1501,6 +1879,400 @@ weekly_stability_dynamic_modifier_update = {
 	}
 }
 
+add_4_popularity_sub_ITA = {
+	custom_effect_tooltip = ruling_party_popularity_change_focus_TT
+	if = {
+		limit = { is_in_array = { ruling_party = 0 } }
+		custom_effect_tooltip = 4_increase_0_TT
+		hidden_effect = {
+			add_popularity = { ideology = democratic popularity = 0.02 }
+			add_to_variable = { party_pop_array^0 = 0.04 } #western autocracy
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 1 } }
+		custom_effect_tooltip = 4_increase_1_TT
+		hidden_effect = {
+			add_popularity = { ideology = democratic popularity = 0.02 }
+			add_to_variable = { party_pop_array^1 = 0.04 } #conservatism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 2 } }
+		custom_effect_tooltip = 4_increase_2_TT
+		hidden_effect = {
+			add_popularity = { ideology = democratic popularity = 0.02 }
+			add_to_variable = { party_pop_array^2 = 0.04 } #liberalism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 3 } }
+		custom_effect_tooltip = 4_increase_3_TT
+		hidden_effect = {
+			add_popularity = { ideology = democratic popularity = 0.02 }
+			add_to_variable = { party_pop_array^3 = 0.04 } #socialism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 4 } }
+		custom_effect_tooltip = 4_increase_4_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.02 }
+			add_to_variable = { party_pop_array^4 = 0.04 } #Comunist-state
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 5 } }
+		custom_effect_tooltip = 4_increase_5_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.02 }
+			add_to_variable = { party_pop_array^5 = 0.04 } #anarchist_communism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 6 } }
+		custom_effect_tooltip = 4_increase_6_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.02 }
+			add_to_variable = { party_pop_array^6 = 0.04 } #Conservative
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 7 } }
+		custom_effect_tooltip = 4_increase_7_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.02 }
+			add_to_variable = { party_pop_array^7 = 0.04 } #Autocracy
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 8 } }
+		custom_effect_tooltip = 4_increase_8_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.02 }
+			add_to_variable = { party_pop_array^8 = 0.04 } #Mod_Vilayat_e_Faqih
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 9 } }
+		custom_effect_tooltip = 4_increase_9_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.02 }
+			add_to_variable = { party_pop_array^9 = 0.04 } #Vilayat_e_Faqih
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 10 } }
+		custom_effect_tooltip = 4_increase_10_TT
+		hidden_effect = {
+			add_popularity = { ideology = fascism popularity = 0.02 }
+			add_to_variable = { party_pop_array^10 = 0.04 } #Kingdom
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 11 } }
+		custom_effect_tooltip = 4_increase_11_TT
+		hidden_effect = {
+			add_popularity = { ideology = fascism popularity = 0.02 }
+			add_to_variable = { party_pop_array^11 = 0.04 } #Caliphate
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 12 } }
+		custom_effect_tooltip = 4_increase_12_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			add_to_variable = { party_pop_array^12 = 0.04 } #Neutral_Muslim_Brotherhood
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 13 } }
+		custom_effect_tooltip = 4_increase_13_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			add_to_variable = { party_pop_array^13 = 0.04 } #Neutral_Autocracy
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 14 } }
+		custom_effect_tooltip = 4_increase_14_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			add_to_variable = { party_pop_array^14 = 0.04 } #Neutral_conservatism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 15 } }
+		custom_effect_tooltip = 4_increase_15_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			add_to_variable = { party_pop_array^15 = 0.04 } #oligarchism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 16 } }
+		custom_effect_tooltip = 4_increase_16_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			add_to_variable = { party_pop_array^16 = 0.04 } #Neutral_Libertarian
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 17 } }
+		custom_effect_tooltip = 4_increase_17_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			add_to_variable = { party_pop_array^17 = 0.04 } #Neutral_green
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 18 } }
+		custom_effect_tooltip = 4_increase_18_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			add_to_variable = { party_pop_array^18 = 0.04 } #neutral_Social
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 19 } }
+		custom_effect_tooltip = 4_increase_19_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+			add_to_variable = { party_pop_array^19 = 0.04 } #Neutral_Communism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 20 } }
+		custom_effect_tooltip = 4_increase_20_TT
+		hidden_effect = {
+			add_popularity = { ideology = nationalist popularity = 0.02 }
+			add_to_variable = { party_pop_array^20 = 0.04 } #Nat_Populism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 21 } }
+		custom_effect_tooltip = 4_increase_21_TT
+		hidden_effect = {
+			add_popularity = { ideology = nationalist popularity = 0.02 }
+			add_to_variable = { party_pop_array^21 = 0.04 } #Nat_Fascism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 22 } }
+		custom_effect_tooltip = 4_increase_22_TT
+		hidden_effect = {
+			add_popularity = { ideology = nationalist popularity = 0.02 }
+			add_to_variable = { party_pop_array^22 = 0.04 } #Nat_Autocracy
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 23 } }
+		custom_effect_tooltip = 4_increase_23_TT
+		hidden_effect = {
+			add_popularity = { ideology = nationalist popularity = 0.02 }
+			add_to_variable = { party_pop_array^23 = 0.04 } #Monarchist
+		}
+	}
+	recalculate_party = yes
+}
+
+add_10_popularity_sub_ITA = {
+	custom_effect_tooltip = ruling_party_popularity_change_focus_TT
+	if = {
+		limit = { is_in_array = { ruling_party = 0 } }
+		custom_effect_tooltip = 10_increase_0_TT
+		hidden_effect = {
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			add_to_variable = { party_pop_array^0 = 0.1 } #western autocracy
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 1 } }
+		custom_effect_tooltip = 10_increase_1_TT
+		hidden_effect = {
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			add_to_variable = { party_pop_array^1 = 0.1 } #conservatism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 2 } }
+		custom_effect_tooltip = 10_increase_2_TT
+		hidden_effect = {
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			add_to_variable = { party_pop_array^2 = 0.1 } #liberalism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 3 } }
+		custom_effect_tooltip = 10_increase_3_TT
+		hidden_effect = {
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			add_to_variable = { party_pop_array^3 = 0.1 } #socialism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 4 } }
+		custom_effect_tooltip = 10_increase_4_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.05 }
+			add_to_variable = { party_pop_array^4 = 0.1 } #Comunist-state
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 5 } }
+		custom_effect_tooltip = 10_increase_5_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.05 }
+			add_to_variable = { party_pop_array^5 = 0.1 } #anarchist_communism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 6 } }
+		custom_effect_tooltip = 10_increase_6_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.05 }
+			add_to_variable = { party_pop_array^6 = 0.1 } #Conservative
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 7 } }
+		custom_effect_tooltip = 10_increase_7_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.05 }
+			add_to_variable = { party_pop_array^7 = 0.1 } #Autocracy
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 8 } }
+		custom_effect_tooltip = 10_increase_8_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.05 }
+			add_to_variable = { party_pop_array^8 = 0.1 } #Mod_Vilayat_e_Faqih
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 9 } }
+		custom_effect_tooltip = 10_increase_9_TT
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.05 }
+			add_to_variable = { party_pop_array^9 = 0.1 } #Vilayat_e_Faqih
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 10 } }
+		custom_effect_tooltip = 10_increase_10_TT
+		hidden_effect = {
+			add_popularity = { ideology = fascism popularity = 0.05 }
+			add_to_variable = { party_pop_array^10 = 0.1 } #Kingdom
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 11 } }
+		custom_effect_tooltip = 10_increase_11_TT
+		hidden_effect = {
+			add_popularity = { ideology = fascism popularity = 0.05 }
+			add_to_variable = { party_pop_array^11 = 0.1 } #Caliphate
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 12 } }
+		custom_effect_tooltip = 10_increase_12_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			add_to_variable = { party_pop_array^12 = 0.1 } #Neutral_Muslim_Brotherhood
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 13 } }
+		custom_effect_tooltip = 10_increase_13_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			add_to_variable = { party_pop_array^13 = 0.1 } #Neutral_Autocracy
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 14 } }
+		custom_effect_tooltip = 10_increase_14_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			add_to_variable = { party_pop_array^14 = 0.1 } #Neutral_conservatism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 15 } }
+		custom_effect_tooltip = 10_increase_15_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			add_to_variable = { party_pop_array^15 = 0.1 } #oligarchism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 16 } }
+		custom_effect_tooltip = 10_increase_16_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			add_to_variable = { party_pop_array^16 = 0.1 } #Neutral_Libertarian
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 17 } }
+		custom_effect_tooltip = 10_increase_17_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			add_to_variable = { party_pop_array^17 = 0.1 } #Neutral_green
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 18 } }
+		custom_effect_tooltip = 10_increase_18_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			add_to_variable = { party_pop_array^18 = 0.1 } #neutral_Social
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 19 } }
+		custom_effect_tooltip = 10_increase_19_TT
+		hidden_effect = {
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			add_to_variable = { party_pop_array^19 = 0.1 } #Neutral_Communism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 20 } }
+		custom_effect_tooltip = 10_increase_20_TT
+		hidden_effect = {
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			add_to_variable = { party_pop_array^20 = 0.1 } #Nat_Populism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 21 } }
+		custom_effect_tooltip = 10_increase_21_TT
+		hidden_effect = {
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			add_to_variable = { party_pop_array^21 = 0.1 } #Nat_Fascism
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 22 } }
+		custom_effect_tooltip = 10_increase_22_TT
+		hidden_effect = {
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			add_to_variable = { party_pop_array^22 = 0.1 } #Nat_Autocracy
+		}
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 23 } }
+		custom_effect_tooltip = 10_increase_23_TT
+		hidden_effect = {
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			add_to_variable = { party_pop_array^23 = 0.1 } #Monarchist
+		}
+	}
+	recalculate_party = yes
+}
+
 add_40_western_autocracy = {
 	add_to_variable =  {
 		var = party_pop_array^0
@@ -1509,6 +2281,7 @@ add_40_western_autocracy = {
 	custom_effect_tooltip = 40_increase_0_TT
 	recalculate_party = yes
 }
+
 add_40_emerging_autocrats = {
 	add_to_variable =  {
 		var = party_pop_array^7

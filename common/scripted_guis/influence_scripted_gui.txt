@@ -1,7 +1,7 @@
 scripted_gui = {
 
 	scripted_influence_option_buttons = {
-		context_type = selected_country_context
+		context_type = selected_country_context #ROOT is you, default is that country
 		parent_window_token = selected_country_view_diplomacy
 
 		window_name = "influence_option_buttons"
@@ -91,17 +91,27 @@ scripted_gui = {
 				#Num of Civ Greater
 				check_variable = { size_modifier < ROOT.size_modifier }
 				#Recently Sent Aid
-				#NOT = { has_country_flag = recently_sent_aid@FROM }
+				ROOT = { PREV = { ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } } } }
 			}
 
 			opt_aid_military_button_click_enabled = {
 				#Our Country is a top 7 influencer
 				is_influencer = yes
+				#ROOT has_war
+				OR = {
+					has_civil_war = yes
+					has_war = yes
+					threat > 0.50
+					has_country_flag = ai_yes_unit_build
+					has_country_flag = AI_is_threatened
+				}
 				#ROOT has_idea = defense_industry
 				OR = {
 					ROOT = { has_idea = defense_industry }
 					ROOT = { num_of_military_factories > 10 }
 				}
+				#ROOT Has NOT Sent military aid in the past month
+				ROOT = { PREV = { ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } } } }
 			}
 
 			opt_manipulate_politics_button_click_enabled = {
@@ -123,15 +133,14 @@ scripted_gui = {
 			}
 
 			opt_make_puppet_button_click_enabled = {
-
 				AND = {
 					check_variable = { influence_array^0 = ROOT }
 					check_variable = { influence_array_calc^0 > 0.8 }
 					is_same_government = yes
 					NOT = { is_subject_of = ROOT }
-					NOT = { has_war = yes }
+					is_subject = no
+					has_war = no
 				}
-
 			}
 
 			opt_coup_button_click_enabled = {
@@ -379,8 +388,38 @@ scripted_gui = {
 				}
 				else = { ROOT = { add_political_power = -50 } }
 
-				generic_grant_2_percent_influence_of_ROOT = yes
-				delete_influencer_check = yes
+				ROOT = {
+					PREV = {
+						set_temp_variable = { influence_gain = influence_total }
+						multiply_temp_variable = { influence_gain = 1.02 }
+						multiply_temp_variable = { influence_gain = 0.02 }
+						multiply_temp_variable = { influence_gain = ROOT.influence_multiplier } #from global rank idea
+						round_temp_variable = influence_gain
+						if = {
+							limit = { check_variable = { var = influence_gain value = 1 compare = less_than_or_equals } }
+							add_to_temp_variable = { influence_gain = 10 } #10 Debugging value to prevent additions by 0
+						}
+						for_loop_effect = {
+							end = influence_array^num
+							value = v
+							if = {
+								limit = {
+									check_variable = { influence_array^v = ROOT }
+								}
+								add_to_variable = { influence_array_val^v = influence_gain }
+								set_country_flag = found
+							}
+						}
+						if = {
+							limit = { NOT = { has_country_flag = found } }
+							add_to_array = { influence_array = ROOT.id }
+							add_to_array = { influence_array_val = influence_gain }
+						}
+						clr_country_flag = found
+						recalculate_influence = yes
+						custom_effect_tooltip = improve_ROOT_influence_2_percent_TT
+					}
+				}
 			}
 
 			# give gift of money
@@ -388,6 +427,7 @@ scripted_gui = {
 				ROOT = {
 					PREV = {
 						country_event = { id = influence.0 }
+						ROOT = { set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 } }
 					}
 				}
 			}
@@ -397,6 +437,7 @@ scripted_gui = {
 				ROOT = { #Uses the same as Economic AID to ensure the root is correct
 					PREV = {
 						country_event = { id = influence.50 }
+						ROOT = { set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 30 } }
 					}
 				}
 			}
@@ -833,18 +874,20 @@ scripted_gui = {
 				#remove 10% influence
 				set_temp_variable = { influence_reduce = influence_total } #from global rank idea
 				multiply_temp_variable = { influence_reduce = 0.1 } #10%
+				round_temp_variable = influence_reduce
 				for_loop_effect = {
 					end = influence_array^num
 					value = v
 					if = {
 						limit = {
-							check_variable = { influence_array^v = ROOT }
+							check_variable = { influence_array^v = ROOT } #Influencer
 						}
 						subtract_from_variable = { influence_array_val^v = influence_reduce }
+						set_country_flag = found
 					}
 				}
+				clr_country_flag = found
 				recalculate_influence = yes
-
 				#reduce relations if different gov
 				if = {
 					limit = {
@@ -885,8 +928,8 @@ scripted_gui = {
 				ROOT = {
 					set_autonomy = {
 						target = PREV
-						autonomy_state = autonomy_satellite_state
-						freedom_level = 0.5
+						autonomy_state = autonomy_associated_state
+						freedom_level = 0.875
 					}
 					add_named_threat = {
 						threat = 3
@@ -916,6 +959,7 @@ scripted_gui = {
 				#remove 10% influence
 				set_temp_variable = { influence_reduce = influence_total } #from global rank idea
 				multiply_temp_variable = { influence_reduce = 0.1 } #10%
+				round_temp_variable = influence_reduce
 				for_loop_effect = {
 					end = influence_array^num
 					value = v

@@ -6,6 +6,7 @@ add_namespace = News_bankrupcy
 add_namespace = influence
 add_namespace = News_influence
 add_namespace = diplo_action_tools
+add_namespace = bankruptcy
 
 ### Contents ###
 # 1-5 Financial Crisis / Economic Collapse Chain
@@ -91,7 +92,6 @@ country_event = {
 		}
 		custom_effect_tooltip = influence_0_TT
 		subtract_from_variable = { treasury = FROM.gift_sum }
-		#set_country_flag = { flag = recently_sent_aid@FROM value = 1 days = 21 }
 		FROM = {
 			effect_tooltip = {
 				custom_effect_tooltip = "If accepted you will receive the following in [THIS.GetName]:"
@@ -107,7 +107,7 @@ country_event = {
 	option = {
 		name = influence.1.b
 		log = "[GetDateText]: [This.GetName]: influence.1.b executed"
-
+		FROM = { ROOT = { clr_country_flag = recently_sent_aid@PREV } }
 		#AI Here
 		ai_chance = {
 			factor = 10
@@ -131,9 +131,14 @@ news_event = {
 		custom_effect_tooltip = influence_from_0_TT
 		add_to_variable = { treasury = gift_sum }
 		generic_grant_2_percent_influence_of_FROM = yes
-		reverse_add_opinion_modifier = { target = FROM modifier = given_gift }
+		add_opinion_modifier = { target = FROM modifier = given_gift }
+		FROM = { country_event = { id = diplomatic_response.1 } }
 		ai_chance = {
 			factor = 1
+			modifier = {
+				factor = 0.25
+				check_variable = { domestic_influence_amount_calc > 0.50 }
+			}
 			modifier = {
 				check_variable = { domestic_influence_amount_calc > 0.80 }
 				factor = 0.25
@@ -144,6 +149,45 @@ news_event = {
 					has_idea = great_power
 				}
 				factor = 0.10
+			}
+			modifier = {
+				factor = 0
+				ai_has_high_treasury = yes
+			}
+			modifier = {
+				factor = 0.50
+				OR = {
+					ai_has_acceptable_deficit_factories = yes
+					ai_has_acceptable_surplus_factories = yes
+				}
+			}
+			modifier = {
+				factor = 0.90
+				has_opinion = { target = FROM value < 10 }
+			}
+			modifier = {
+				factor = 0.80
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				factor = 0.65
+				has_opinion = { target = FROM value < -30 }
+			}
+			modifier = {
+				factor = 0.40
+				has_opinion = { target = FROM value < -60 }
+			}
+			modifier = {
+				factor = 0.30
+				has_opinion = { target = FROM value < -80 }
+			}
+			modifier = {
+				factor = 0.10
+				has_opinion = { target = FROM value < -90 }
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = FROM value < -100 }
 			}
 		}
 	}
@@ -159,16 +203,16 @@ news_event = {
 		}
 		add_popularity = { ideology = nationalist popularity = 0.02 }
 		recalculate_party = yes
-		ROOT = {
+		FROM = {
 			custom_effect_tooltip = influence_from_0_TT
 			add_to_variable = { treasury = gift_sum }
+			country_event = { id = diplomatic_response.2 }
 		}
-
 		ai_chance = {
 			factor = 1
 			modifier = {
-				check_variable = { domestic_influence_amount_calc < 0.80 }
-				factor = 0.01
+				check_variable = { domestic_influence_amount_calc > 0.50 }
+				factor = 0.25
 			}
 			modifier = {
 				OR = {
@@ -191,6 +235,45 @@ news_event = {
 				has_totalitarian_government_or_in_coalition = yes
 				factor = 10
 			}
+			modifier = {
+				factor = 0
+				ai_has_low_treasury = yes
+			}
+			modifier = {
+				factor = 0.50
+				OR = {
+					ai_has_acceptable_deficit_factories = yes
+					ai_has_acceptable_surplus_factories = yes
+				}
+			}
+			modifier = {
+				factor = 1.10
+				has_opinion = { target = FROM value < 10 }
+			}
+			modifier = {
+				factor = 1.25
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				factor = 1.35
+				has_opinion = { target = FROM value < -30 }
+			}
+			modifier = {
+				factor = 1.50
+				has_opinion = { target = FROM value < -60 }
+			}
+			modifier = {
+				factor = 1.60
+				has_opinion = { target = FROM value < -80 }
+			}
+			modifier = {
+				factor = 2.0
+				has_opinion = { target = FROM value < -90 }
+			}
+			modifier = { #Never Accept the issue
+				factor = 100
+				has_opinion = { target = FROM value < -100 }
+			}
 		}
 	}
 }
@@ -199,10 +282,6 @@ news_event = {
 country_event = {
 	id = influence.2
 	immediate = { log = "[GetDateText]: [Root.GetName]: event influence.2" }
-	title = influence.2.t
-	desc = influence.2.d
-	#picture = GFX_united_states_dollar
-
 	is_triggered_only = yes
 	hidden = yes
 
@@ -219,10 +298,6 @@ country_event = {
 country_event = {
 	id = influence.22
 	immediate = { log = "[GetDateText]: [Root.GetName]: event influence.22" }
-	title = influence.22.t
-	desc = influence.22.d
-	#picture = GFX_united_states_dollar
-
 	is_triggered_only = yes
 	hidden = yes
 
@@ -236,19 +311,14 @@ country_event = {
 	}
 }
 
-
+#Target Influences
 country_event = {
 	id = influence.3
 	immediate = { log = "[GetDateText]: [Root.GetName]: event influence.3" }
 	title = influence.3.t
 	desc = influence.3.d
 	picture = GFX_politics_surveillence
-
 	is_triggered_only = yes
-
-	immediate = {
-	}
-
 	#Target domestic influence
 	option = {
 		name = influence.3.a
@@ -257,26 +327,23 @@ country_event = {
 			factor = 11
 		}
 
-		FROM = {
-				news_event = { id = News_influence.2 }
-		}
 		custom_effect_tooltip = influence_3_a_TT
 		FROM = {
-
+			news_event = { id = News_influence.2 }
 			# remove 2% of target influence
 			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 1.02 } #2%
 			multiply_temp_variable = { influence_reduce = 0.02 } #2%
+			round_variable = influence_reduce
 			subtract_from_variable = { domestic_influence_amount = influence_reduce }
-			subtract_from_variable = { domestic_influence_amount = 20 } #+20 fixed reduction
-			clamp_variable = {
-				var = domestic_influence_amount
-				min = 0
-				max = influence_total
-			}
+			#subtract_from_variable = { domestic_influence_amount = 20 } #+20 fixed reduction
+			clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
 
 			#ROOT remove 1% influence
 			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 1.02 } #2%
 			multiply_temp_variable = { influence_reduce = 0.02 } #2%
+			round_variable = influence_reduce
 			for_loop_effect = {
 				end = influence_array^num
 				value = v
@@ -285,74 +352,53 @@ country_event = {
 						check_variable = { influence_array^v = ROOT }
 					}
 					subtract_from_variable = { influence_array_val^v = influence_reduce }
-					#SAFEGUARD: remove if negative
-					if = {
-						limit = {
-							check_variable = { influence_array_val^v < 0 }
-						}
-						remove_from_array = {
-							array = influence_array
-							index = v
-						}
-						remove_from_array = {
-							array = influence_array_val
-							index = v
-						}
-						remove_from_array = {
-							array = influence_array_calc
-							index = v
-						}
-					}
 				}
 			}
 			recalculate_influence = yes
 		}
 		if = {
-				limit = { FROM = { has_idea = negligible_corruption } }
-				add_political_power = -140
-			}
-			else_if = {
-				limit = { FROM = { has_idea = slight_corruption } }
-				add_political_power = -130
-			}
-			else_if = {
-				limit = { FROM = { has_idea = modest_corruption } }
-				add_political_power = -120
-			}
-			else_if = {
-				limit = { FROM = { has_idea = medium_corruption } }
-				add_political_power = -110
-			}
-			else_if = {
-				limit = { FROM = { has_idea = widespread_corruption } }
-				add_political_power = -100
-			}
-			else_if = {
-				limit = { FROM = { has_idea = systematic_corruption } }
-				add_political_power = -90
-			}
-			else_if = {
-				limit = { FROM = { has_idea = unrestrained_corruption } }
-				add_political_power = -80
-			}
-			else_if = {
-				limit = { FROM = { has_idea = rampant_corruption } }
-				add_political_power = -70
-			}
-			else_if = {
-				limit = { FROM = { has_idea = crippling_corruption } }
-				add_political_power = -60
-			}
-			else = { add_political_power = -50 }
+			limit = { FROM = { has_idea = negligible_corruption } }
+			add_political_power = -140
+		}
+		else_if = {
+			limit = { FROM = { has_idea = slight_corruption } }
+			add_political_power = -130
+		}
+		else_if = {
+			limit = { FROM = { has_idea = modest_corruption } }
+			add_political_power = -120
+		}
+		else_if = {
+			limit = { FROM = { has_idea = medium_corruption } }
+			add_political_power = -110
+		}
+		else_if = {
+			limit = { FROM = { has_idea = widespread_corruption } }
+			add_political_power = -100
+		}
+		else_if = {
+			limit = { FROM = { has_idea = systematic_corruption } }
+			add_political_power = -90
+		}
+		else_if = {
+			limit = { FROM = { has_idea = unrestrained_corruption } }
+			add_political_power = -80
+		}
+		else_if = {
+			limit = { FROM = { has_idea = rampant_corruption } }
+			add_political_power = -70
+		}
+		else_if = {
+			limit = { FROM = { has_idea = crippling_corruption } }
+			add_political_power = -60
+		}
+		else = { add_political_power = -50 }
 	}
 
 	#Target biggest influencer
 	option = {
 		name = influence.3.b
 		log = "[GetDateText]: [This.GetName]: influence.3.b executed"
-		ai_chance = {
-			factor = 10
-		}
 		trigger = {
 			FROM = {
 				has_variable = influence_array^0
@@ -361,40 +407,28 @@ country_event = {
 				}
 			}
 		}
+		ai_chance = {
+			factor = 10
+		}
 
 		var:FROM.influence_array^0 = {
-				news_event = { id = News_influence.1 }
+			news_event = { id = News_influence.1 }
 		}
 		custom_effect_tooltip = influence_3_b_TT
 		FROM = {
-
 			#ROOT remove 2% of target influencer
 			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
-			multiply_temp_variable = { influence_reduce = 0.02 } #1%
+			multiply_temp_variable = { influence_reduce = 1.02 } #2%
+			multiply_temp_variable = { influence_reduce = 0.02 }
+			round_variable = influence_reduce
 			subtract_from_variable = { influence_array_val^0 = influence_reduce }
-			subtract_from_variable = { influence_array_val^0 = 20 } #+10 fixed reduction
-			#SAFEGUARD: remove if negative
-			if = {
-				limit = {
-					check_variable = { influence_array_val^0 < 0 }
-				}
-				remove_from_array = {
-					array = influence_array
-					index = 0
-				}
-				remove_from_array = {
-					array = influence_array_val
-					index = 0
-				}
-				remove_from_array = {
-					array = influence_array_calc
-					index = 0
-				}
-			}
+			#subtract_from_variable = { influence_array_val^0 = 20 } #+10 fixed reduction
 
 			#ROOT remove 2% influence
 			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 1.02 } #2%
 			multiply_temp_variable = { influence_reduce = 0.02 } #2%
+			round_variable = influence_reduce
 			for_loop_effect = {
 				end = influence_array^num
 				value = v
@@ -403,65 +437,47 @@ country_event = {
 						check_variable = { influence_array^v = ROOT }
 					}
 					subtract_from_variable = { influence_array_val^v = influence_reduce }
-					#SAFEGUARD: remove if negative
-					if = {
-						limit = {
-							check_variable = { influence_array_val^v < 0 }
-						}
-						remove_from_array = {
-							array = influence_array
-							index = v
-						}
-						remove_from_array = {
-							array = influence_array_val
-							index = v
-						}
-						remove_from_array = {
-							array = influence_array_calc
-							index = v
-						}
-					}
 				}
 			}
 			recalculate_influence = yes
 		}
 		if = {
-				limit = { FROM = { has_idea = negligible_corruption } }
-				add_political_power = -140
-			}
-			else_if = {
-				limit = { FROM = { has_idea = slight_corruption } }
-				add_political_power = -130
-			}
-			else_if = {
-				limit = { FROM = { has_idea = modest_corruption } }
-				add_political_power = -120
-			}
-			else_if = {
-				limit = { FROM = { has_idea = medium_corruption } }
-				add_political_power = -110
-			}
-			else_if = {
-				limit = { FROM = { has_idea = widespread_corruption } }
-				add_political_power = -100
-			}
-			else_if = {
-				limit = { FROM = { has_idea = systematic_corruption } }
-				add_political_power = -90
-			}
-			else_if = {
-				limit = { FROM = { has_idea = unrestrained_corruption } }
-				add_political_power = -80
-			}
-			else_if = {
-				limit = { FROM = { has_idea = rampant_corruption } }
-				add_political_power = -70
-			}
-			else_if = {
-				limit = { FROM = { has_idea = crippling_corruption } }
-				add_political_power = -60
-			}
-			else = { add_political_power = -50 }
+			limit = { FROM = { has_idea = negligible_corruption } }
+			add_political_power = -140
+		}
+		else_if = {
+			limit = { FROM = { has_idea = slight_corruption } }
+			add_political_power = -130
+		}
+		else_if = {
+			limit = { FROM = { has_idea = modest_corruption } }
+			add_political_power = -120
+		}
+		else_if = {
+			limit = { FROM = { has_idea = medium_corruption } }
+			add_political_power = -110
+		}
+		else_if = {
+			limit = { FROM = { has_idea = widespread_corruption } }
+			add_political_power = -100
+		}
+		else_if = {
+			limit = { FROM = { has_idea = systematic_corruption } }
+			add_political_power = -90
+		}
+		else_if = {
+			limit = { FROM = { has_idea = unrestrained_corruption } }
+			add_political_power = -80
+		}
+		else_if = {
+			limit = { FROM = { has_idea = rampant_corruption } }
+			add_political_power = -70
+		}
+		else_if = {
+			limit = { FROM = { has_idea = crippling_corruption } }
+			add_political_power = -60
+		}
+		else = { add_political_power = -50 }
 	}
 	#Target 2nd biggest influencer
 	option = {
@@ -487,31 +503,17 @@ country_event = {
 
 			#ROOT remove 2% of target influencer
 			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
-			multiply_temp_variable = { influence_reduce = 0.02 } #1%
+			multiply_temp_variable = { influence_reduce = 1.02 } #2%
+			multiply_temp_variable = { influence_reduce = 0.02 } #2%
+			round_variable = influence_reduce
 			subtract_from_variable = { influence_array_val^1 = influence_reduce }
-			subtract_from_variable = { influence_array_val^1 = 20 } #+20 fixed reduction
-			#SAFEGUARD: remove if negative
-			if = {
-				limit = {
-					check_variable = { influence_array_val^1 < 0 }
-				}
-				remove_from_array = {
-					array = influence_array
-					index = 1
-				}
-				remove_from_array = {
-					array = influence_array_val
-					index = 1
-				}
-				remove_from_array = {
-					array = influence_array_calc
-					index = 0
-				}
-			}
+			#subtract_from_variable = { influence_array_val^1 = 20 } #+20 fixed reduction
 
 			#ROOT remove 2% influence
 			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
+			multiply_temp_variable = { influence_reduce = 1.02 } #2%
 			multiply_temp_variable = { influence_reduce = 0.02 } #2%
+			round_variable = influence_reduce
 			for_loop_effect = {
 				end = influence_array^num
 				value = v
@@ -520,24 +522,6 @@ country_event = {
 						check_variable = { influence_array^v = ROOT }
 					}
 					subtract_from_variable = { influence_array_val^v = influence_reduce }
-					#SAFEGUARD: remove if negative
-					if = {
-						limit = {
-							check_variable = { influence_array_val^v < 0 }
-						}
-						remove_from_array = {
-							array = influence_array
-							index = v
-						}
-						remove_from_array = {
-							array = influence_array_val
-							index = v
-						}
-						remove_from_array = {
-							array = influence_array_calc
-							index = v
-						}
-					}
 				}
 			}
 			recalculate_influence = yes
@@ -581,6 +565,7 @@ country_event = {
 			else = { add_political_power = -50 }
 	}
 
+	#Target 3rd Biggest Influencer
 	option = {
 		name = influence.3.e
 		log = "[GetDateText]: [This.GetName]: influence.3.e executed"
@@ -604,31 +589,15 @@ country_event = {
 
 			#ROOT remove 2% of target influencer
 			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
-			multiply_temp_variable = { influence_reduce = 0.02 } #1%
+			multiply_temp_variable = { influence_reduce = 0.02 } #2%
+			round_variable = influence_reduce
 			subtract_from_variable = { influence_array_val^2 = influence_reduce }
-			subtract_from_variable = { influence_array_val^2 = 20 } #+10 fixed reduction
-			#SAFEGUARD: remove if negative
-			if = {
-				limit = {
-					check_variable = { influence_array_val^2 < 0 }
-				}
-				remove_from_array = {
-					array = influence_array
-					index = 2
-				}
-				remove_from_array = {
-					array = influence_array_val
-					index = 2
-				}
-				remove_from_array = {
-					array = influence_array_calc
-					index = 2
-				}
-			}
+			#subtract_from_variable = { influence_array_val^2 = 20 } #+10 fixed reduction
 
 			#ROOT remove 2% influence
 			set_temp_variable = { influence_reduce = influence_total } #from global rank idea
 			multiply_temp_variable = { influence_reduce = 0.02 } #2%
+			round_variable = influence_reduce
 			for_loop_effect = {
 				end = influence_array^num
 				value = v
@@ -637,24 +606,6 @@ country_event = {
 						check_variable = { influence_array^v = ROOT }
 					}
 					subtract_from_variable = { influence_array_val^v = influence_reduce }
-					#SAFEGUARD: remove if negative
-					if = {
-						limit = {
-							check_variable = { influence_array_val^v < 0 }
-						}
-						remove_from_array = {
-							array = influence_array
-							index = v
-						}
-						remove_from_array = {
-							array = influence_array_val
-							index = v
-						}
-						remove_from_array = {
-							array = influence_array_calc
-							index = v
-						}
-					}
 				}
 			}
 			recalculate_influence = yes
@@ -712,20 +663,14 @@ news_event = {
 	title = News_influence.1.t
 	desc = News_influence.1.d
 	picture = GFX_crime_fighting
-
 	is_triggered_only = yes
 
-	immediate = {
-	}
 
 	#yeah...
 	option = {
 		name = News_influence.1.a
 		log = "[GetDateText]: [This.GetName]: News_influence.1.a executed"
-		add_opinion_modifier = {
-				target = FROM
-				modifier = attacked_our_influence
-		}
+		add_opinion_modifier = { target = FROM modifier = attacked_our_influence }
 	}
 }
 
@@ -736,25 +681,17 @@ news_event = {
 	title = News_influence.2.t
 	desc = News_influence.2.d
 	picture = GFX_crime_fighting
-
 	is_triggered_only = yes
-
-	immediate = {
-	}
 
 	#yeah...
 	option = {
 		name = News_influence.2.a
 		log = "[GetDateText]: [This.GetName]: News_influence.2.a executed"
-		add_opinion_modifier = {
-				target = FROM
-				modifier = attacked_our_influence
-		}
+		add_opinion_modifier = { target = FROM modifier = attacked_our_influence }
 	}
 }
 
-### Coup! ###
-
+### Coup the Enemy! ###
 #target
 country_event = {
 	id = influence.4
@@ -1613,27 +1550,17 @@ country_event = {
 	title = influence.5.t
 	desc = influence.5.d
 	picture = GFX_politics_surveillence
-
 	is_triggered_only = yes
-
-	immediate = {
-
-
-
-	}
 
 	#target outlook - biggest party
 	option = {
 		name = influence.5.a
 		log = "[GetDateText]: [This.GetName]: influence.5.a executed"
-
-
 		add_political_power = -200
 
 		add_threat = 2
 
 		random_list = {
-
 			#success
 			33.3 = {
 				modifier = {
@@ -1795,7 +1722,7 @@ country_event = {
 							add_to_variable = { influence_array_val^v = influence_add }
 						}
 						#reduce all else by 30%
-						else_if = {
+						else = {
 							multiply_variable = { influence_array_val^v = 0.7 }
 						}
 					}
@@ -2461,6 +2388,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.1.b executed"
 
 		custom_effect_tooltip = "On second thought. I need them guns!"
+		FROM = { ROOT = { clr_country_flag = recently_sent_military_aid@PREV } }
 		ai_chance = {
 			factor = 0
 		}
@@ -2644,6 +2572,7 @@ country_event = {
 	option = {
 		name = influence.52.c
 		log = "[GetDateText]: [This.GetName]: influence.52.c executed"
+		FROM.FROM = { ROOT = { clr_country_flag = recently_sent_military_aid@PREV } }
 	}
 }
 
@@ -2656,7 +2585,7 @@ country_event = {
 	picture = GFX_handgun
 	is_triggered_only = yes
 
-	option = {
+	option = { #Accept if shipping guns
 		name = influence.53.a
 		trigger = {
 			FROM = { has_country_flag = shipment_of_Inf_equipment }
@@ -2710,6 +2639,7 @@ country_event = {
 		}
 		generic_grant_4_percent_influence_of_FROM = yes
 
+		FROM = { country_event = { id = diplomatic_response.1 } }
 		ai_chance = {
 			factor = 1
 			modifier = { #Sacrifice Influence for free guns
@@ -2725,6 +2655,16 @@ country_event = {
 				has_government = nationalist
 			}
 			modifier = {
+				any_enemy_country = {
+					num_of_factories > num_of_factories@ROOT
+				}
+				factor = 10
+			}
+			modifier = {
+				factor = 10
+				num_of_military_factories < 10
+			}
+			modifier = {
 				has_war = yes
 				factor = 1.5
 			}
@@ -2738,6 +2678,34 @@ country_event = {
 				factor = 0.01
 				has_government = fascism
 				ROOT = { NOT = { has_government = fascism }}
+			}
+			modifier = {
+				factor = 0.90
+				has_opinion = { target = FROM value < 10 }
+			}
+			modifier = {
+				factor = 0.80
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				factor = 0.65
+				has_opinion = { target = FROM value < -30 }
+			}
+			modifier = {
+				factor = 0.40
+				has_opinion = { target = FROM value < -60 }
+			}
+			modifier = {
+				factor = 0.30
+				has_opinion = { target = FROM value < -80 }
+			}
+			modifier = {
+				factor = 0.10
+				has_opinion = { target = FROM value < -90 }
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = FROM value < -100 }
 			}
 		}
 	}
@@ -2796,6 +2764,7 @@ country_event = {
 		}
 		generic_grant_4_percent_influence_of_FROM = yes
 
+		FROM = { country_event = { id = diplomatic_response.1 } }
 		ai_chance = {
 			factor = 1
 			modifier = { #Sacrifice Influence for free guns
@@ -2806,6 +2775,7 @@ country_event = {
 				}
 				factor = 100
 			}
+
 			modifier = {
 				factor = 0.01
 				has_government = nationalist
@@ -2819,6 +2789,34 @@ country_event = {
 					is_justifying_wargoal_against = THIS
 				}
 				factor = 2.0
+			}
+			modifier = {
+				factor = 1.10
+				has_opinion = { target = FROM value < 10 }
+			}
+			modifier = {
+				factor = 1.25
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				factor = 1.35
+				has_opinion = { target = FROM value < -30 }
+			}
+			modifier = {
+				factor = 1.50
+				has_opinion = { target = FROM value < -60 }
+			}
+			modifier = {
+				factor = 1.60
+				has_opinion = { target = FROM value < -80 }
+			}
+			modifier = {
+				factor = 2.0
+				has_opinion = { target = FROM value < -90 }
+			}
+			modifier = { #Never Accept the issue
+				factor = 100
+				has_opinion = { target = FROM value < -100 }
 			}
 		}
 	}
@@ -2837,6 +2835,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.53.c executed"
 		boost_domestic_influence_2_percent = yes
 
+		FROM = { country_event = { id = diplomatic_response.2 } }
 		ai_chance = { #Should be more likely to reject if they don't need it
 			factor = 5
 			modifier = {
@@ -2857,7 +2856,6 @@ country_event = {
 ### Bailout needed ###
 country_event = {
 	id = bankrupcy.0
-	immediate = { log = "[GetDateText]: [Root.GetName]: event bankrupcy.0" }
 	title = bankrupcy.0.t
 	desc = bankrupcy.0.d
 	picture = GFX_stock_market
@@ -2865,13 +2863,27 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event bankrupcy.0"
 		set_country_flag = bailout_happened #prevent to trigger again even if not given - yet.
 	}
 
 	#Ask for help
+	#Largest Influencer
 	option = {
 		name = bankrupcy.0.1
 		log = "[GetDateText]: [This.GetName]: bankrupcy.0.1 executed"
+		trigger = {
+			has_variable = influence_array^0
+			var:influence_array^0 = {
+				ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
+			}
+			var:influence_array^0 = {
+				has_opinion = { target = PREV value > -11 }
+			}
+		}
+
+		var:influence_array^0 = { country_event = { id = bankrupcy.1 days = 1 } }
+
 		ai_chance = {
 			factor = 10
 			modifier = {
@@ -2881,10 +2893,7 @@ country_event = {
 			modifier = {
 				factor = 0.1
 				var:influence_array^0 = {
-					has_opinion = {
-						target = ROOT
-						value < 1
-					}
+					has_opinion = { target = ROOT value < 1 }
 				}
 			}
 			modifier = {
@@ -2894,13 +2903,17 @@ country_event = {
 				}
 			}
 		}
-
+	}
+	#Second Largest Influencer
+	option = {
+		name = bankrupcy.0.2
+		log = "[GetDateText]: [This.GetName]: bankrupcy.0.2 executed"
 		trigger = {
-			has_variable = influence_array^0
-			var:influence_array^0 = {
+			has_variable = influence_array^1
+			var:influence_array^1 = {
 				ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
 			}
-			var:influence_array^0 = {
+			var:influence_array^1 = {
 				has_opinion = {
 					target = PREV
 					value > -11
@@ -2908,14 +2921,8 @@ country_event = {
 			}
 		}
 
-		var:influence_array^0 = {
-				country_event = { id = bankrupcy.1 days = 1 }
-		}
+		var:influence_array^1 = { country_event = { id = bankrupcy.1 days = 1 } }
 
-	}
-	option = {
-		name = bankrupcy.0.2
-		log = "[GetDateText]: [This.GetName]: bankrupcy.0.2 executed"
 		ai_chance = {
 			factor = 7
 			modifier = {
@@ -2938,25 +2945,8 @@ country_event = {
 				}
 			}
 		}
-
-		trigger = {
-			has_variable = influence_array^1
-			var:influence_array^1 = {
-				ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
-			}
-			var:influence_array^1 = {
-				has_opinion = {
-					target = PREV
-					value > -11
-				}
-			}
-		}
-
-		var:influence_array^1 = {
-				country_event = { id = bankrupcy.1 days = 1 }
-		}
-
 	}
+	#Third Largest Influencer
 	option = {
 		name = bankrupcy.0.3
 		log = "[GetDateText]: [This.GetName]: bankrupcy.0.3 executed"
@@ -3001,7 +2991,7 @@ country_event = {
 		}
 
 	}
-
+	#Fourth Largest Influencer
 	option = {
 		name = bankrupcy.0.4
 		log = "[GetDateText]: [This.GetName]: bankrupcy.0.4 executed"
@@ -3088,7 +3078,7 @@ country_event = {
 		}
 
 	}
-
+	#Fifth
 	option = {
 		name = bankrupcy.0.5
 		log = "[GetDateText]: [This.GetName]: bankrupcy.0.5 executed"
@@ -3187,7 +3177,7 @@ country_event = {
 		}
 
 	}
-
+	#Sixth
 	option = {
 		name = bankrupcy.0.6
 		log = "[GetDateText]: [This.GetName]: bankrupcy.0.6 executed"
@@ -3298,7 +3288,7 @@ country_event = {
 		}
 
 	}
-
+	#Seventh
 	option = {
 		name = bankrupcy.0.7
 		log = "[GetDateText]: [This.GetName]: bankrupcy.0.7 executed"
@@ -3523,89 +3513,87 @@ country_event = {
 		ai_chance = { factor = 0 }
 		trigger = {
 			NOT = {
-				OR = {
-					AND = {
-						has_variable = influence_array^0
-						var:influence_array^0 = {
-							ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
-						}
-						var:influence_array^0 = {
-							has_opinion = {
-								target = PREV
-								value > -11
-							}
+				AND = {
+					has_variable = influence_array^0
+					var:influence_array^0 = {
+						ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
+					}
+					var:influence_array^0 = {
+						has_opinion = {
+							target = PREV
+							value > -11
 						}
 					}
-					AND = {
-						has_variable = influence_array^1
-						var:influence_array^1 = {
-							ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
-						}
-						var:influence_array^1 = {
-							has_opinion = {
-								target = PREV
-								value > -11
-							}
+				}
+				AND = {
+					has_variable = influence_array^1
+					var:influence_array^1 = {
+						ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
+					}
+					var:influence_array^1 = {
+						has_opinion = {
+							target = PREV
+							value > -11
 						}
 					}
-					AND = {
-						has_variable = influence_array^2
-						var:influence_array^2 = {
-							ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
-						}
-						var:influence_array^2 = {
-							has_opinion = {
-								target = PREV
-								value > -11
-							}
+				}
+				AND = {
+					has_variable = influence_array^2
+					var:influence_array^2 = {
+						ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
+					}
+					var:influence_array^2 = {
+						has_opinion = {
+							target = PREV
+							value > -11
 						}
 					}
-					AND = {
-						has_variable = influence_array^3
-						var:influence_array^3 = {
-							ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
-						}
-						var:influence_array^3 = {
-							has_opinion = {
-								target = PREV
-								value > -11
-							}
+				}
+				AND = {
+					has_variable = influence_array^3
+					var:influence_array^3 = {
+						ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
+					}
+					var:influence_array^3 = {
+						has_opinion = {
+							target = PREV
+							value > -11
 						}
 					}
-					AND = {
-						has_variable = influence_array^4
-						var:influence_array^4 = {
-							ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
-						}
-						var:influence_array^4 = {
-							has_opinion = {
-								target = PREV
-								value > -11
-							}
+				}
+				AND = {
+					has_variable = influence_array^4
+					var:influence_array^4 = {
+						ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
+					}
+					var:influence_array^4 = {
+						has_opinion = {
+							target = PREV
+							value > -11
 						}
 					}
-					AND = {
-						has_variable = influence_array^5
-						var:influence_array^5 = {
-							ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
-						}
-						var:influence_array^5 = {
-							has_opinion = {
-								target = PREV
-								value > -11
-							}
+				}
+				AND = {
+					has_variable = influence_array^5
+					var:influence_array^5 = {
+						ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
+					}
+					var:influence_array^5 = {
+						has_opinion = {
+							target = PREV
+							value > -11
 						}
 					}
-					AND = {
-						has_variable = influence_array^6
-						var:influence_array^6 = {
-							ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
-						}
-						var:influence_array^6 = {
-							has_opinion = {
-								target = PREV
-								value > -11
-							}
+				}
+				AND = {
+					has_variable = influence_array^6
+					var:influence_array^6 = {
+						ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
+					}
+					var:influence_array^6 = {
+						has_opinion = {
+							target = PREV
+							value > -11
 						}
 					}
 				}
@@ -3617,14 +3605,12 @@ country_event = {
 ### Bailout Requested ###
 country_event = {
 	id = bankrupcy.1
-	immediate = { log = "[GetDateText]: [Root.GetName]: event bankrupcy.1" }
 	title = bankrupcy.1.t
 	desc = bankrupcy.1.d
 	picture = GFX_stock_market
-
 	is_triggered_only = yes
-
 	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event bankrupcy.1"
 		#10% of debt
 		set_variable = { bailout_sum = FROM.debt }
 		multiply_variable = { bailout_sum = 0.1 }
@@ -3634,9 +3620,6 @@ country_event = {
 	option = {
 		name = bankrupcy.1.a
 		log = "[GetDateText]: [This.GetName]: bankrupcy.1.1 executed"
-		ai_chance = {
-			factor = 10
-		}
 		custom_effect_tooltip = bankrupcy_bailout_sum_TT
 		subtract_from_variable = { treasury = bailout_sum }
 		custom_effect_tooltip = bankrupcy_bailout_influence_TT
@@ -3647,11 +3630,20 @@ country_event = {
 			calculate_interest_rate = yes
 			calculate_debt_rate = yes
 		}
+
+		ai_chance = {
+			factor = 10
+		}
 	}
 	#We have no help to offer
 	option = {
 		name = bankrupcy.1.b
 		log = "[GetDateText]: [This.GetName]: bankrupcy.0.b executed"
+
+		FROM = {
+			set_country_flag = reject_bailout@PREV
+			country_event = { id = diplomatic_response.2 }
+		}
 		ai_chance = { factor = 0 }
 	}
 }
@@ -3659,7 +3651,6 @@ country_event = {
 ### we got the bailout
 news_event = {
 	id = News_bankrupcy.2
-	immediate = { log = "[GetDateText]: [Root.GetName]: event News_bankrupcy.2" }
 	title = News_bankrupcy.2.t
 	desc = News_bankrupcy.2.d
 	picture = GFX_stock_market
@@ -3667,6 +3658,7 @@ news_event = {
 	is_triggered_only = yes
 
 	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event News_bankrupcy.2"
 		set_country_flag = bailout_given
 		startup_extra_setup = yes #safety reboot
 	}
@@ -3676,7 +3668,6 @@ news_event = {
 		name = News_bankrupcy.2.a
 		log = "[GetDateText]: [This.GetName]: News_bankrupcy.2.a executed"
 		custom_effect_tooltip = interest_rate_reduced_10_TT
-		#give_military_access = FROM ####Causes crashes on game saves?
 		multiply_variable = { domestic_influence_amount = 0.33 }
 		if = { limit = { check_variable = { influence_array^0 = FROM } }
 			multiply_variable = { influence_array_val^0 = 3 }
@@ -3703,6 +3694,7 @@ news_event = {
 	}
 }
 
+
 ### OOOPS BANKRUPT!! ###
 news_event = {
 	id = News_bankrupcy.6
@@ -3714,29 +3706,36 @@ news_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		add_timed_idea = { idea = bankrupcy days = 1825 } #5-years
+		set_temp_variable = { bankrupcy_check = size_modifier }
+		divide_temp_variable = { bankrupcy_check = 2.2 }
+		if = {
+			limit = {
+				check_variable = { bankrupcy_check < debt_rate }
+			}
+			add_timed_idea = { idea = bankrupcy days = 1825 } #5-years
 
-		custom_effect_tooltip = econvent.list.depression_tt
-		set_country_flag = disable_cycle_costs
-		hidden_effect = { add_ideas = depression }
-		calculate_tax_gain = yes
-		clr_country_flag = disable_cycle_costs
+			custom_effect_tooltip = econvent.list.depression_tt
+			set_country_flag = disable_cycle_costs
+			hidden_effect = { add_ideas = depression }
+			calculate_tax_gain = yes
+			clr_country_flag = disable_cycle_costs
 
-		#sells reserves
-		subtract_from_variable = { debt = int_investments }
-		set_variable = { int_investments = 0 }
-		multiply_variable = { debt = 0.2 } #reduces debt
+			#sells reserves
+			subtract_from_variable = { debt = int_investments }
+			set_variable = { int_investments = 0 }
+			multiply_variable = { debt = 0.2 } #reduces debt
 
-		set_variable = { reduction_factor = 0.25 }
-		remove_civilian_industry_effect = yes
+			set_variable = { reduction_factor = 0.25 }
+			remove_civilian_industry_effect = yes
 
-		clear_variable = reduction_factor
+			clear_variable = reduction_factor
 
-		startup_extra_setup = yes #safety reboot
+			startup_extra_setup = yes #safety reboot
 
-		#init_influence = yes
-		set_variable = { domestic_influence_amount = 0 }
-		recalculate_influence = yes
+			#init_influence = yes
+			set_variable = { domestic_influence_amount = 0 }
+			recalculate_influence = yes
+		}
 	}
 
 	#Give it
@@ -5582,7 +5581,7 @@ country_event = {
 		}
 	}
 	option = {
-		name = econvent.10.a
+		name = econvent.10.c
 		log = "[GetDateText]: [Root.GetName]: event econvent.10.c"
 		add_political_power = -50
 		custom_effect_tooltip = econvent.10.c_tt
@@ -5805,4 +5804,346 @@ country_event = {
 	}
 	hidden = yes
 	is_triggered_only = yes
+}
+
+
+##Bird's Bankruptcy Events
+#Notation on Bird's Rhyme or Reason - 200-210 is the bad events
+country_event = { #Looming events
+	id = bankruptcy.200
+	title = bankruptcy.200.t
+	desc = bankruptcy.200.d
+	is_triggered_only = yes
+	picture = GFX_political_activist
+	immediate = {
+		set_variable = { reduce_debt_by_5 = debt }
+		multiply_variable = { reduce_debt_by_5 = 0.95 }
+	}
+	trigger = {
+		NOT = { has_country_flag = BANK_committed_reducing_debt }
+	}
+
+	option = { #Iterate the Spending Necessity
+		name = bankruptcy.200.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.200.a executed"
+		add_stability = -0.02
+		decrease_popularity_3 = yes
+		add_political_power = 50
+		custom_effect_tooltip = jailed_the_speaker_tt
+		hidden_effect = {
+			clear_variable = reduce_debt_by_5
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = { #Commit to removing debt
+		name = bankruptcy.200.b
+		log = "[GetDateText]: [This.GetName]: bankruptcy.200.b executed"
+		set_country_flag = BANK_committed_reducing_debt
+		set_variable = { reduce_debt_by_5 = debt }
+		multiply_variable = { reduce_debt_by_5 = 0.95 }
+		set_temp_variable = { temp_reduce_debt_by_5 = reduce_debt_by_5 }
+
+		custom_effect_tooltip = commit_to_debt_reduction_tt
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = { #Just a lousy speaker
+		name = bankruptcy.200.c
+		log = "[GetDateText]: [This.GetName]: bankruptcy.200.c executed"
+		random_list = {
+			25 = {
+				add_political_power = -150
+			}
+			25 = {
+				slightly_decrease_economic_growth = yes
+			}
+			50 = {
+				#Nothing
+			}
+		}
+		hidden_effect = {
+			clear_variable = reduce_debt_by_5
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+country_event = { #Failed to Reduce Debt
+	id = bankruptcy.201
+	title = bankruptcy.201.t
+	desc = bankruptcy.201.d
+	is_triggered_only = yes
+	picture = GFX_political_activist
+	option = {
+		name = bankruptcy.201.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.201.a executed"
+		decrease_international_bankers_opinion = yes
+		decrease_popularity_5 = yes
+		if = {
+			limit = { has_country_flag = BANK_committed_reducing_debt }
+			clr_country_flag = BANK_committed_reducing_debt
+		}
+	}
+}
+
+country_event = { #Government agency has over request
+	id = bankruptcy.202
+	title = bankruptcy.202.t
+	desc = bankruptcy.202.d
+	is_triggered_only = yes
+	picture = GFX_banking_crisis
+	trigger = {
+		NOT = {
+			has_country_flag = recently_forced_law_change_social
+			has_country_flag = recently_forced_law_change_education
+			has_country_flag = recently_forced_law_change_police
+		}
+	}
+
+	option = { #Slash funding to Welfare
+		name = bankrupcy.202.a
+		trigger = {
+			NOT = {
+				has_country_flag = recently_forced_law_change_social
+				has_idea = social_01
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: bankruptcy.201.a executed"
+
+		custom_effect_tooltip = choice_stuck_for_60_days_tt
+		decrease_social_spending = yes
+		set_country_flag = { flag = recently_forced_law_change_social value = 1 days = 90 }
+		set_country_flag = { flag = government_agency_bankruptcy value = 1 days = 90 }
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = { #Slash funding to Education
+		name = bankrupcy.202.b
+		trigger = {
+			NOT = {
+				has_country_flag = recently_forced_law_change_education
+				has_idea = edu_01
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: bankruptcy.201.b executed"
+
+		custom_effect_tooltip = choice_stuck_for_60_days_tt
+		decrease_education_budget = yes
+		set_country_flag = { flag = recently_forced_law_change_education value = 1 days = 90 }
+		set_country_flag = { flag = government_agency_bankruptcy value = 1 days = 90 }
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = { #Slash funding to Policing
+		name = bankrupcy.202.c
+		trigger = {
+			NOT = {
+				has_country_flag = recently_forced_law_change_police
+				has_idea = police_01
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: bankruptcy.201.c executed"
+
+		custom_effect_tooltip = choice_stuck_for_60_days_tt
+		decrease_policing_budget = yes
+		set_country_flag = { flag = recently_forced_law_change_police value = 1 days = 90 }
+		set_country_flag = { flag = government_agency_bankruptcy value = 1 days = 90 }
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+country_event = { #Military Funding Issues
+	id = bankruptcy.203
+	title = bankruptcy.203.t
+	desc = bankruptcy.203.d
+	is_triggered_only = yes
+	picture = GFX_weapons_arms1
+	trigger = {
+		NOT = { has_idea = no_military }
+	}
+
+	option = {
+		name = bankrupcy.203.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.203.a executed"
+		increase_military_spending = yes
+		increase_the_military_opinion = yes
+
+		# random_list = {
+		# 	10 = { country_event = { id = bankruptcy.204 days = 1 random_days = 15 } }
+		# 	90 = { }
+		# }
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = bankrupcy.203.b
+		log = "[GetDateText]: [This.GetName]: bankruptcy.203.b executed"
+
+		if = {
+			limit = { num_of_factories < 15 }
+			subtract_from_variable = { treasury = 3 }
+			custom_effect_tooltip = 3_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 14 num_of_factories < 35 }
+			subtract_from_variable = { treasury = 6 }
+			custom_effect_tooltip = 6_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 34 num_of_factories < 60 }
+			subtract_from_variable = { treasury = 10 }
+			custom_effect_tooltip = 10_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 59 num_of_factories < 85 }
+			subtract_from_variable = { treasury = 20 }
+			custom_effect_tooltip = 20_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 84 num_of_factories < 110 }
+			subtract_from_variable = { treasury = 30 }
+			custom_effect_tooltip = 30_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 109 num_of_factories < 130 }
+			subtract_from_variable = { treasury = 40 }
+			custom_effect_tooltip = 40_billion_expense_tt
+		}
+		else_if = {
+			limit = { num_of_factories > 129 }
+			subtract_from_variable = { treasury = 50 }
+			custom_effect_tooltip = 50_billion_expense_tt
+		}
+
+		# random_list = {
+		# 	40 = { country_event = { id = bankruptcy.204 days = 1 random_days = 15 } }
+		# 	60 = { }
+		# }
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = bankrupcy.203.c
+		log = "[GetDateText]: [This.GetName]: bankruptcy.203.c executed"
+		decrease_the_military_opinion = yes
+		add_war_support = -0.05
+		add_political_power = 150
+
+		# random_list = {
+		# 	60 = { country_event = { id = bankruptcy.204 days = 1 random_days = 15 } }
+		# 	40 = { }
+		# }
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+country_event = { #Military Riots
+	id = bankruptcy.204
+	title = bankruptcy.204.t
+	desc = bankruptcy.204.d
+	is_triggered_only = yes
+	picture = GFX_political_demands
+
+	option = {
+		name = bankrupcy.204.a
+	}
+
+	option = {
+		name = bankrupcy.204.b
+	}
+}
+
+country_event = { #reduced investor confidence
+	id = bankruptcy.205
+	title = bankruptcy.205.t
+	desc = bankruptcy.205.d
+	is_triggered_only = yes
+
+	option = {
+		name = bankrupcy.205.a #boost the economy
+	}
+
+	option = {
+		name = bankrupcy.205.b #wait it out
+	}
+}
+
+country_event = { #scathing IMF report
+	id = bankrupcy.206
+	title = bankruptcy.206.t
+	desc = bankruptcy.206.d
+	is_triggered_only = yes
+
+	option = {
+		name = bankrupcy.206.a #promise improvements
+	}
+
+	option = {
+		name = bankrupcy.206.b #deny accusations
+	}
+}
+
+country_event = { #revelations about underreported debt
+	id = bankrupcy.207
+	title = bankruptcy.207.t
+	desc = bankruptcy.207.d
+	is_triggered_only = yes
+
+	option = {
+		name = bankrupcy.207.a #admit to falsifying data
+	}
+
+	option = {
+		name = bankrupcy.207.b #deny accusations
+	}
+}
+
+country_event = { #major creditors demand repayment
+	id = bankrupcy.208
+	title = bankruptcy.208.t
+	desc = bankruptcy.208.d
+	is_triggered_only = yes
+
+	option = {
+		name = bankrupcy.208.a #repay what we owe
+	}
+
+	option = {
+		name = bankrupcy.208.b #refuse repayment
+	}
+}
+
+country_event = {
+	id = bankrupcy.209 #IMF refuses to grant further loans
+	title = bankruptcy.209.t
+	desc = bankruptcy.209.d
+	is_triggered_only = yes
+
+	option = {
+		name = bankrupcy.209.a #agree to reforms
+	}
+
+	option = {
+		name = bankrupcy.209.b #refuse to make changes
+	}
 }
