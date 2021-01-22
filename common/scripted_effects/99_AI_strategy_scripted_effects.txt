@@ -1,81 +1,50 @@
-ai_default_build_units = { # Used in ai_update_build_units, will set the AI to their default status of not building units
-	set_country_flag = ai_no_unit_build
-	add_ai_strategy = { type = role_ratio id = L_Inf value = -500 }
-	add_ai_strategy = { type = role_ratio id = infantry value = -500 }
-	add_ai_strategy = { type = role_ratio id = garrison value = -500 }
-	add_ai_strategy = { type = role_ratio id = mechanized value = -500 }
-	add_ai_strategy = { type = role_ratio id = armor value = -500 }
-	add_ai_strategy = { type = role_ratio id = marines value = -500 }
-	add_ai_strategy = { type = role_ratio id = Air_assault value = -500 }
-	add_ai_strategy = { type = role_ratio id = Air_Inf value = -500 }
-	add_ai_strategy = { type = role_ratio id = Special_Forces value = -500 }
-	add_to_variable = { var = ai_wants_divisions value = -500 } #maybe causing a crash? You can edit vanilla vars? idk who did this		
-}
-
-ai_stop_building_units = { #Will tell the AI to stop building units. You need to set the flag ai_no_unit_build before using this
-	if = {
-		limit = { not = { has_country_flag = ai_no_unit_build } }
-		clr_country_flag = ai_yes_unit_build
-		add_ai_strategy = { type = role_ratio id = L_Inf value = -500 }
-		add_ai_strategy = { type = role_ratio id = infantry value = -500 }
-		add_ai_strategy = { type = role_ratio id = garrison value = -500 }
-		add_ai_strategy = { type = role_ratio id = mechanized value = -500 }
-		add_ai_strategy = { type = role_ratio id = armor value = -500 }
-		add_ai_strategy = { type = role_ratio id = marines value = -500 }
-		add_ai_strategy = { type = role_ratio id = Air_assault value = -500 }
-		add_ai_strategy = { type = role_ratio id = Air_Inf value = -500 }
-		add_ai_strategy = { type = role_ratio id = Special_Forces value = -500 }
-		add_to_variable = { var = ai_wants_divisions value = -500 } #maybe causing a crash? You can edit vanilla vars? idk who did this
-	}
-		
-}
-
-ai_build_units = { #Will tell the AI to build units. You need to set the flag ai_yes_unit_build before using this
-	if = {
-		limit = { has_country_flag = ai_yes_unit_build }
-		clr_country_flag = ai_no_unit_build
-		
-		add_ai_strategy = { type = role_ratio id = L_Inf value = 500 }
-		add_ai_strategy = { type = role_ratio id = infantry value = 500 }
-		add_ai_strategy = { type = role_ratio id = garrison value = 500 }
-		add_ai_strategy = { type = role_ratio id = mechanized value = 500 }
-		add_ai_strategy = { type = role_ratio id = armor value = 500 }
-		add_ai_strategy = { type = role_ratio id = marines value = 500 }
-		add_ai_strategy = { type = role_ratio id = Air_assault value = 500 }
-		add_ai_strategy = { type = role_ratio id = Air_Inf value = 500 }
-		add_ai_strategy = { type = role_ratio id = Special_Forces value = 500 }
-		add_to_variable = { var = ai_wants_divisions value = 500 } #maybe causing a crash? You can edit vanilla vars? idk who did this
-	}
-		
-}
-
 ai_update_build_units = { #default is not to build units
-	
-	
-	if = { #If current status is not to build units, check if you should be building units (e.g because your at war or etc)
+	if = { #Stop building units
 		limit = {
-			has_country_flag = ai_no_unit_build #check will end here if they don't have the flag thus avoiding the expensive triggers below
-			or = {
+			NOT = {
+				has_country_flag = ai_yes_unit_build
+				has_country_flag = AI_is_threatened
+			}
+			OR = {
 				has_war = yes
-				threat > 0.30
+				if = {
+					limit = { has_government = democratic }
+					threat > 0.25
+				}
+				else_if = {
+					limit = { has_government = neutrality }
+					threat > 0.40
+				}
+				has_government = nationalist
 				is_bad_salafist = yes
 				any_other_country = {
 					OR = {
-						is_justifying_wargoal_against = this
-						has_wargoal_against = this
+						is_justifying_wargoal_against = THIS
+						has_wargoal_against = THIS
 					}
 				}
 			}
 		}
 		set_country_flag = ai_yes_unit_build
-		ai_build_units = yes #build units
+		add_to_variable = { var = ai_wants_divisions value = 500 }
+		log = "[GetDateText]: [Root.GetName]: AI Update - AI Build Unit Flag Set"
 	}
-	
-	if = { #If current status is to build units, check if you shouldn't be building units (e.g peace or no WT)
+	if = {
 		limit = {
-			has_country_flag = ai_yes_unit_build #check will end here if they don't have the flag thus avoiding the expensive triggers below
+			OR = {
+				has_country_flag = ai_yes_unit_build #check will end here if they don't have the flag thus avoiding the expensive triggers below
+				has_country_flag = AI_is_threatened
+			}
 			has_war = no
-			threat < 0.31
+			if = {
+				limit = { has_government = democratic }
+				threat < 0.26
+			}
+			else_if = {
+				limit = { has_government = neutrality }
+				threat < 0.41
+			}
+			NOT = { has_government = nationalist }
 			is_bad_salafist = no
 			any_other_country = {
 				NOT = {
@@ -84,20 +53,20 @@ ai_update_build_units = { #default is not to build units
 				}
 			}
 		}
-		set_country_flag = ai_no_unit_build
-		ai_stop_building_units = yes #don't build units
-	}
-	
-	if = { #If you don't have a unit build order, by default you should build nothing, this should only trigger on init or creation of a new country
-		limit = {
-			not = {
-				or = {
-					has_country_flag = ai_no_unit_build
-					has_country_flag = ai_yes_unit_build
-				}
-			}
+		clr_country_flag = ai_yes_unit_build
+		if = {
+			limit = { has_country_flag = AI_is_threatened }
+			clr_country_flag = AI_is_threatened
 		}
-		ai_default_build_units = yes #Default is to not build units for performance
+		log = "[GetDateText]: [Root.GetName]: AI Update - AI Build Unit Flag clear"
+		add_to_variable = { var = ai_wants_divisions value = -500 } #maybe causing a crash? You can edit vanilla vars? idk who did this
 	}
 }
 
+#Sample AI Test
+effect_ai_test = {
+	ai_update_build_units = yes
+}
+effect_AMERICA_CHINA = {
+	declare_war_on = { target = CHI }
+}
