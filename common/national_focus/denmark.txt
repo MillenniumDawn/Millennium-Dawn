@@ -13,7 +13,7 @@ focus_tree = {
 		id = DEN_army
 		icon = danish_army
 
-		x = 1
+		x = 0
 		y = 0
 
 		cost = 10
@@ -155,7 +155,7 @@ focus_tree = {
 		x = 2
 		y = 3
 
-		cost = 10
+		cost = 5
 
 		prerequisite = { focus = DEN_infantry_equipment_models_1 }
 		available = {
@@ -171,6 +171,8 @@ focus_tree = {
 				technology = night_vision_2
 				technology = night_vision_3
 			}
+			subtract_from_variable = { treasury = 3 }
+			custom_effect_tooltip = 3_billion_expense_tt
 		}
 
 		ai_will_do = {
@@ -445,12 +447,114 @@ focus_tree = {
 		}
 	}
 
+	focus = {
+		id = DEN_maersk
+		icon = naval_dockyard
+
+		x = 2
+		y = 3
+		relative_position_id = DEN_royal_navy
+
+		cost = 13
+
+		prerequisite = { focus = DEN_establish_OPLOG_FRH }
+			available = {
+			NOT = { has_idea = no_military }
+			controls_state = 4
+			threat > 0.25
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: DEN_maersk"
+			add_stability = -0.05
+			4 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = dockyard
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = naval_base
+					level = 2
+					province = 6287
+					instant_build = yes
+				}
+			}
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_coastal_forts
+		icon = generic_entrenchment
+
+		x = 2
+		y = 5
+		relative_position_id = DEN_royal_navy
+
+		cost = 7
+
+		prerequisite = { focus = DEN_maersk }
+			available = {
+			NOT = { has_idea = no_military }
+			controls_state = 4
+			controls_state = 6
+			threat > 0.40
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_coastal_forts"
+			add_stability = -0.02
+			4 = {
+				add_building_construction = {
+					type = coastal_bunker
+					level = 2
+					province = 6287
+					instant_build = yes
+				}
+
+			}
+			5 = {
+				add_building_construction = {
+					type = coastal_bunker
+					level = 2
+					province = 3325
+					instant_build = yes
+				}
+			}
+			6 = {
+				add_building_construction = {
+					type = coastal_bunker
+					level = 2
+					province = 6364
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = coastal_bunker
+					level = 2
+					province = 394
+					instant_build = yes
+				}
+			}
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
 	#Air Force Tree
 	focus = {
 		id = DEN_air_force
 		icon = air_force
 
-		x = 7
+		x = 9
 		y = 0
 
 		cost = 10
@@ -461,9 +565,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_air_force"
-			air_experience = 30
+			air_experience = 20
+			add_tech_bonus {
+				Name = DEN_as_fighter1
+				Bonus = 0.20
+				Technology = AS_Fighter1
+			}
 		}
-
 		ai_will_do = {
 			factor = 1
 		}
@@ -494,6 +602,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_refurbish_air_force_officers_school"
 			air_experience = 35
+			add_tech_bonus {
+				Name = DEN_as_fighter1
+				Bonus = 0.20
+				Technology = AS_Fighter2
+			}
 		}
 
 		ai_will_do = {
@@ -598,7 +711,7 @@ focus_tree = {
 		id = DEN_establish_VFK
 		icon = gentleman_officers
 
-		x = 1
+		x = 0
 		y = 3
 		relative_position_id = DEN_royal_navy
 
@@ -622,10 +735,50 @@ focus_tree = {
 	}
 
 	focus = {
+		id = DEN_SOF
+		icon = gentleman_officers
+
+		x = 1
+		y = 2
+		relative_position_id = DEN_mobilize_SSR
+
+		cost = 12
+
+		prerequisite = { focus = DEN_mobilize_SSR }
+		prerequisite = { focus = DEN_establish_VFK }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_SOF"
+			army_experience = 30
+			navy_experience = 10
+			air_experience = 10
+				add_tech_bonus = {
+					name = DEN_body_armor
+					bonus = 0.25
+					technology = body_armor_1980
+					technology = body_armor_2000
+					uses = 2
+					}
+				add_tech_bonus = {
+					name = special_forces_bonus
+					bonus = 0.25
+					Category = Cat_SPECIAL_FORCES
+					uses = 2
+					}
+			subtract_from_variable = { treasury = 20 }
+			custom_effect_tooltip = 20_billion_expense_tt
+			}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
 		id = DEN_renew_foreign_contracts
 		icon = air_production
 
-		x = 0
+		x = 1
 		y = 3
 		relative_position_id = DEN_air_force
 
@@ -652,12 +805,65 @@ focus_tree = {
 		}
 	}
 
+	focus = {
+		id = DEN_karup_air_base
+		icon = air_production
+
+		x = 8
+		y = 4
+		relative_position_id = Den_renew_foreign_contracts
+
+		cost = 10
+
+		prerequisite = { focus = DEN_Skalstrup_air_base }
+		prerequisite = { focus = DEN_Skrydstrup_air_base }
+
+		available = {
+			NOT =  { has_idea = no_military }
+			controls_state = 6
+			threat > 0.10
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_karup_air_base"
+			if = {
+				limit = {
+					controls_state = 6
+					6 = {
+						free_building_slots = {
+							building = air_base
+							size > 0
+							include_locked = yes
+						}
+					}
+				}
+				6 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = air_base
+						level = 3
+						instant_build = yes}
+					add_building_construction =]
+						type = arms_factory
+						level = 1
+						instant build = yes
+					}
+				}
+				subtract_from_variable = { treasury = 25 }
+				custom_effect_tooltip = 25_billion_expense_tt
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
 	#Economic Tree
 	focus = {
 		id = DEN_abolish_amts
 		icon = anti_establishment2
 
-		x = 16
+		x = 18
 		y = 0
 
 		cost = 10
@@ -764,7 +970,7 @@ focus_tree = {
 		prerequisite = { focus = DEN_empower_municipalities }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_revitalize_the_outskirts"
-			random_owned_state = {
+			3 = {
 				limit = {
 					free_building_slots = {
 						building = arms_factory
@@ -772,6 +978,7 @@ focus_tree = {
 						include_locked = yes
 					}
 				}
+				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
 					type = arms_factory
 					level = 1
@@ -804,18 +1011,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_flere_i_arbejde_2003"
-			random_owned_state = {
+			add_stability = 0.02
+			4 = {
 				add_resource = {
 					type = tungsten
-					amount = 2
+					amount = 6
 				}
 				add_resource = {
 					type = aluminium
-					amount = 1
+					amount = 3
 				}
 			}
-			subtract_from_variable = { treasury = 4 }
-			custom_effect_tooltip = 4_billion_expense_tt
+			subtract_from_variable = { treasury = 15 }
+			custom_effect_tooltip = 15_billion_expense_tt
 		}
 
 		ai_will_do = {
@@ -840,14 +1048,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_support_iron_metal_industry"
-			random_owned_state = {
+			add_stability = 0.02
+			6 = {
 				add_resource = {
 					type = steel
-					amount = 3
+					amount = 6
 				}
-			}
-			subtract_from_variable = { treasury = 3 }
-			custom_effect_tooltip = 3_billion_expense_tt
+							}
+			subtract_from_variable = { treasury = 9 }
+			custom_effect_tooltip = 9_billion_expense_tt
 		}
 
 		ai_will_do = {
@@ -869,10 +1078,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_urban_improvement_fund"
-			add_timed_idea = {
-				idea = idea_focus_industrial_development_program
-				days = 730
+				add_ideas = { idea_focus_industrial_development_program
 			}
+			subtract_from_variable = { treasury = 10 }
+			custom_effect_tooltip = 10_billion_expense_tt
 		}
 
 		ai_will_do = {
@@ -1005,7 +1214,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_intensify_flexicurity_model"
-
+			add_stability = 0.05
+			add_political_power = 150
 		}
 
 		ai_will_do = {
@@ -1038,6 +1248,13 @@ focus_tree = {
 					province = 6287
 					instant_build = yes
 				}
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			subtract_from_variable = { treasury = 5 }
+			custom_effect_tooltip = 5_billion_expense_tt
 			}
 		}
 
@@ -1061,10 +1278,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_rescue_the_banks"
 			add_stability = 0.03
-			add_timed_idea = {
-				idea = idea_focus_generic_public_service_investment
-				days = 730
-			}
+			add_ideas =  DEN_public_service_investment
+
 		}
 
 		ai_will_do = {
@@ -1144,6 +1359,8 @@ focus_tree = {
 					level = 3
 					instant_build = yes
 				}
+			subtract_from_variable = { treasury = 8 }
+			custom_effect_tooltip = 9_billion_expense_tt
 			}
 		}
 
@@ -1173,15 +1390,15 @@ focus_tree = {
 
 		completion_reward = {
 			6 = { #Jylland
-				add_extra_state_shared_building_slots = 1
+				add_extra_state_shared_building_slots = 3
 				add_building_construction = {
 					type = dockyard
 					level = 1
 					instant_build = yes
 				}
 			}
-			subtract_from_variable = { treasury = 5 }
-			custom_effect_tooltip = 5_billion_expense_tt
+			subtract_from_variable = { treasury = 7 }
+			custom_effect_tooltip = 7_billion_expense_tt
 		}
 
 		ai_will_do = {
@@ -1222,6 +1439,8 @@ focus_tree = {
 					level = 1
 					instant_build = yes
 				}
+			subtract_from_variable = { treasury = 10 }
+			custom_effect_tooltip = 10_billion_expense_tt
 			}
 		}
 
@@ -1385,7 +1604,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = DEN_develop_funen
+		id = DEN_develop_fyn
 		icon = industry_military
 
 		x = 3
@@ -1403,7 +1622,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DEN_develop_funen"
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_develop_fyn"
 			5 = { #Jylland
 				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
@@ -1560,24 +1779,23 @@ focus_tree = {
 		prerequisite = { focus = DEN_education_reform }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_exporting_our_knowhow"
-			add_timed_idea = {
-				idea = scientific_advances
-				days = 180
+				add_ideas = {scientific_advances}
+
 			}
 		}
 
 		ai_will_do = {
 			factor = 1
 		}
-	}
+
 
 	#International Diplomacy Tree
 	focus = {
 		id = DEN_international_diplomacy
 		icon = global_community
 
-		x = 52
-		y = 0
+		x = 14
+		y = 9
 
 		cost = 10
 		available = {
@@ -1614,6 +1832,7 @@ focus_tree = {
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no
+		available = { has_idea = NATO_member}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_reaffirm_nato"
@@ -1646,9 +1865,13 @@ focus_tree = {
 		continue_if_invalid = no
 		available_if_capitulated = no
 
+		bypass = {
+			NOT = { has_idea = NATO_member }
+			}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_rethink_foreign_policy"
-
+			Remove_ideas = Nato_member
 		}
 
 		ai_will_do = {
@@ -1690,7 +1913,7 @@ focus_tree = {
 		icon = nordic_council2
 
 		relative_position_id = DEN_scandinavian_focus
-		x = -1
+		x = 0
 		y = 1
 
 		cost = 10
@@ -1733,7 +1956,7 @@ focus_tree = {
 		icon = align_to_iceland
 
 		relative_position_id = DEN_scandinavian_focus
-		x = -1
+		x = 0
 		y = 2
 
 		cost = 10
@@ -1773,7 +1996,7 @@ focus_tree = {
 		icon = align_to_baltic_states
 
 		relative_position_id = DEN_scandinavian_focus
-		x = -1
+		x = 0
 		y = 3
 
 		cost = 10
@@ -1834,7 +2057,7 @@ focus_tree = {
 		icon = align_to_denmark
 
 		relative_position_id = DEN_scandinavian_focus
-		x = 1
+		x = 2
 		y = 1
 
 		cost = 10
@@ -1843,33 +2066,95 @@ focus_tree = {
 		mutually_exclusive = { focus = DEN_embrace_nordic_cooperation }
 
 		available = {
-			OR = {
-				has_completed_focus = DEN_world_revolution
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 1 }
-					tooltip = has_conservatism_government_TT
-				}
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 14 }
-					tooltip = has_neutral_conservatism_government_TT
-				}
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 6 }
-					tooltip = has_conservative_government_TT
-				}
 				has_government = nationalist
-				if = {
-					limit = { fascism > 0.10 }
-					has_government = fascism #Just in case some tomfoolery happens
-				}
+				NOT= {has_idea = NATO_member}
 			}
-		}
 
 		bypass = {}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: DEN_terminate_nordic_cooperation"
 			add_political_power = 100
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_remember_history
+		icon = winter_warfare
+
+		relative_position_id = DEN_scandinavian_focus
+		x = 2
+		y = 2
+
+		cost = 10
+
+		prerequisite = { focus = DEN_terminate_nordic_cooperation }
+		mutually_exclusive = {}
+
+		available = {
+				has_government = nationalist
+				}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]:DEN_remember_history"
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = SWE
+			}
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = NOR
+			}
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = FIN
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_ancient_history
+		icon = attack_estonia
+
+		relative_position_id = DEN_scandinavian_focus
+		x = 2
+		y = 3
+
+		cost = 10
+
+		prerequisite = { focus = DEN_remember_history }
+		mutually_exclusive = {}
+
+		available = {
+				has_government = nationalist
+				}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: DEN_ancient_history"
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = EST
+			}
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = LIT
+			}
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = LAT
+			}
 		}
 
 		ai_will_do = {
@@ -2222,7 +2507,7 @@ focus_tree = {
 		id = DEN_the_greatest_challenge
 		icon = neutrality
 
-		x = 33
+		x = 35
 		y = 0
 
 		cost = 10
@@ -2277,22 +2562,23 @@ focus_tree = {
 		id = DEN_expand_welfare_state
 		icon = welfare
 
-		x = -3
+		x = -2
 		y = 1
 		relative_position_id = DEN_welfare_state
 
 		cost = 10
 
 		prerequisite = { focus = DEN_welfare_state }
-		mutually_exclusive = { focus = DEN_balanced_approach }
 		mutually_exclusive = { focus = DEN_shrink_welfare_state }
 		available = {
 			NOT = { has_completed_focus = DEN_broken_system }
 		}
 
 		completion_reward = {
-			add_political_power = -25
-			DEN = { country_event = denmark.2 }
+			add_political_power = -100
+			add_stability = 0.05
+			subtract_from_variable = { treasury = 8 }
+			custom_effect_tooltip = 8_billion_expense_tt
 		}
 
 		ai_will_do = {
@@ -2306,36 +2592,10 @@ focus_tree = {
 	}
 
 	focus = {
-		id = DEN_balanced_approach
-		icon = national_unity
-
-		x = 0
-		y = 1
-		relative_position_id = DEN_welfare_state
-
-		cost = 10
-
-		prerequisite = { focus = DEN_welfare_state }
-		mutually_exclusive = { focus = DEN_expand_welfare_state }
-		mutually_exclusive = { focus = DEN_shrink_welfare_state }
-		available = {
-			NOT = { has_completed_focus = DEN_broken_system }
-		}
-
-		completion_reward = {
-			add_political_power = 50
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
 		id = DEN_shrink_welfare_state
 		icon = industry_democratic
 
-		x = 3
+		x = 2
 		y = 1
 		relative_position_id = DEN_welfare_state
 
@@ -2343,13 +2603,15 @@ focus_tree = {
 
 		prerequisite = { focus = DEN_welfare_state }
 		mutually_exclusive = { focus = DEN_expand_welfare_state }
-		mutually_exclusive = { focus = DEN_balanced_approach }
 		available = {
 			NOT = { has_completed_focus = DEN_broken_system }
 		}
 
 		completion_reward = {
-			add_political_power = -25
+			add_political_power = 100
+			add_stability = -0.05
+			subtract_from_variable = { treasury = 3 }
+			custom_effect_tooltip = 3_billion_expense_tt
 		}
 
 		ai_will_do = {
@@ -2366,7 +2628,7 @@ focus_tree = {
 		id = DEN_appease_unions
 		icon = communism5
 
-		x = -3
+		x = -2
 		y = 2
 		relative_position_id = DEN_welfare_state
 
@@ -2385,78 +2647,13 @@ focus_tree = {
 		bypass = {}
 
 		completion_reward = {
-			add_stability = 0.05
-			add_ideas = idea_focus_strong_unions
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = DEN_new_ideas
-		icon = alliance_purple
-
-		x = -1
-		y = 2
-		relative_position_id = DEN_welfare_state
-
-		cost = 10
-
-		prerequisite = {
-			focus = DEN_balanced_approach
-		}
-
-		mutually_exclusive = {
-			focus = DEN_old_compromises
-		}
-
-		available = {
-
-		}
-
-		bypass = {}
-
-		completion_reward = {
-
-			add_political_power = -25
-			DEN = { country_event = denmark.3 }
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = DEN_old_compromises
-		icon = alliance_purple
-
-		x = 1
-		y = 2
-		relative_position_id = DEN_welfare_state
-
-		cost = 10
-
-		prerequisite = {
-			focus = DEN_balanced_approach
-		}
-
-		mutually_exclusive = {
-			focus = DEN_new_ideas
-		}
-
-		available = {
-
-		}
-
-		bypass = {}
-
-		completion_reward = {
-
-			add_political_power = -25
-			DEN = { country_event = denmark.4 }
+			add_ideas =  DEN_danish_unions
+			if = {
+				limit = { has_idea = labour_unions }
+				visually_display_opinion_rise_labour_unions = yes
+				set_country_flag = current_labour_unions
+				increase_internal_faction_opinion = yes
+			}
 		}
 
 		ai_will_do = {
@@ -2468,7 +2665,7 @@ focus_tree = {
 		id = DEN_strengthen_industry_ties
 		icon = intelligence_exchange
 
-		x = 3
+		x = 2
 		y = 2
 		relative_position_id = DEN_welfare_state
 
@@ -2487,8 +2684,8 @@ focus_tree = {
 		bypass = {}
 
 		completion_reward = {
-			add_stability = 0.05
-			add_ideas = idea_focus_economic_freedoms
+			add_ideas = DEN_economic_freedoms
+
 		}
 
 		ai_will_do = {
@@ -2500,15 +2697,14 @@ focus_tree = {
 		id = DEN_expand_public_transportation
 		icon = infrastructure
 
-		x = -2
+		x = 2
 		y = 3
 		relative_position_id = DEN_welfare_state
 
 		cost = 10
 
 		prerequisite = {
-			focus = DEN_appease_unions
-			focus = DEN_new_ideas
+			focus = DEN_strengthen_industry_ties
 		}
 
 		mutually_exclusive = {}
@@ -2520,7 +2716,7 @@ focus_tree = {
 		bypass = {}
 
 		completion_reward = {
-			random_owned_state = {
+			4 = {
 				add_building_construction = {
 					type = infrastructure
 					level = 2
@@ -2528,7 +2724,7 @@ focus_tree = {
 				}
 			}
 
-			random_owned_state = {
+			5 = {
 				add_building_construction = {
 					type = infrastructure
 					level = 2
@@ -2536,13 +2732,16 @@ focus_tree = {
 				}
 			}
 
-			random_owned_state = {
+			6 = {
 				add_building_construction = {
 					type = infrastructure
 					level = 2
 					instant_build = yes
 				}
+
 			}
+			subtract_from_variable = { treasury = 2 }
+			custom_effect_tooltip = 2_billion_expense_tt
 		}
 
 		ai_will_do = {
@@ -2554,15 +2753,14 @@ focus_tree = {
 		id = DEN_the_retirement_reform
 		icon = consumer_goods
 
-		x = 2
+		x = -2
 		y = 3
 		relative_position_id = DEN_welfare_state
 
 		cost = 10
 
 		prerequisite = {
-			focus = DEN_strengthen_industry_ties
-			focus = DEN_new_ideas
+			focus = DEN_appease_unions
 		}
 
 		mutually_exclusive = {}
@@ -2575,6 +2773,8 @@ focus_tree = {
 
 		completion_reward = {
 			add_ideas = DEN_the_retirement_reform_idea
+			subtract_from_variable = { treasury = 5 }
+			custom_effect_tooltip = 5_billion_expense_tt
 		}
 
 		ai_will_do = {
@@ -2593,8 +2793,8 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = {
-			focus = DEN_old_compromises
-			focus = DEN_new_ideas
+			focus = DEN_appease_unions
+			focus = DEN_strengthen_industry_ties
 		}
 
 		mutually_exclusive = {}
@@ -2624,7 +2824,7 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = {
-			focus = DEN_expand_public_transportation
+			focus = DEN_the_retirement_reform
 		}
 
 		mutually_exclusive = {}
@@ -2655,7 +2855,7 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = {
-			focus = DEN_the_retirement_reform
+			focus = DEN_expand_public_transportation
 		}
 
 		mutually_exclusive = {}
@@ -2705,7 +2905,7 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = {
-			focus = DEN_expand_public_transportation
+			focus = DEN_the_retirement_reform
 		}
 
 		mutually_exclusive = {}
@@ -2749,6 +2949,7 @@ focus_tree = {
 		bypass = {}
 
 		completion_reward = {
+			add_manpower = 30000
 			add_stability = -0.10
 			#if = {
 			#	limit = { has_idea = population_growth_stagnation }
@@ -2782,7 +2983,7 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = {
-			focus = DEN_the_retirement_reform
+			focus = DEN_expand_public_transportation
 		}
 
 		mutually_exclusive = {}
@@ -2919,9 +3120,12 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = DEN_the_greatest_challenge }
-		available = {
 
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
+			cancel_if_invalid = yes
 		}
+
 
 		bypass = {}
 
@@ -2959,6 +3163,8 @@ focus_tree = {
 		bypass = { }
 
 		completion_reward = {
+			add_popularity = { ideology = nationalist popularity = 0.03 }
+			recalculate_party = yes
 			#if = {
 			#	limit = { has_idea = population_growth_stagnation }
 			#	remove_ideas = population_growth_stagnation
@@ -2994,6 +3200,8 @@ focus_tree = {
 
 		completion_reward = {
 			add_political_power = 100
+			add_popularity = { ideology = nationalist popularity = 0.02 }
+			recalculate_party = yes
 		}
 
 		ai_will_do = {
@@ -3009,7 +3217,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = DEN_Danish_culture
 
-		cost = 10
+		cost = 3
 
 		prerequisite = {
 			focus = DEN_restrict_immigration
@@ -3060,6 +3268,8 @@ focus_tree = {
 
 		completion_reward = {
 			add_political_power = 25
+			add_popularity = { ideology = nationalist popularity = 0.01 }
+			recalculate_party = yes
 
 		}
 
@@ -3090,6 +3300,8 @@ focus_tree = {
 
 		completion_reward = {
 			add_stability = 0.05
+			add_popularity = { ideology = nationalist popularity = 0.02 }
+			recalculate_party = yes
 		}
 
 		ai_will_do = {
@@ -3179,13 +3391,13 @@ focus_tree = {
 		mutually_exclusive = {}
 
 		available = {
-			controls_state = 800
+			controls_state = 6
 		}
 
 		bypass = {}
 
 		completion_reward = {
-			800 = {
+			6 = {
 					add_building_construction = {
 						type = bunker
 						level = 4
@@ -3272,7 +3484,7 @@ focus_tree = {
 		mutually_exclusive = {}
 
 		available = {
-			owns_state = 101
+			owns_state = 1
 
 		}
 
@@ -3331,6 +3543,7 @@ focus_tree = {
 		cost = 15
 
 		prerequisite = { focus = DEN_the_greatest_challenge }
+
 		available = {
 			NOT = { has_idea = EU_member }
 		}
@@ -3478,17 +3691,11 @@ focus_tree = {
 
 		prerequisite = { focus = DEN_trigger_the_elections }
 		available = {
-			custom_trigger_tooltip = {
-				is_in_array = { ruling_party = 4 }
-				tooltip = has_communist_state_government_TT
+			emerging_communist_state_are_in_power = yes
+			cancel_if_invalid =yes
 			}
-		}
-		cancel = {
-			custom_trigger_tooltip = {
-				NOT = { is_in_array = { ruling_party = 4 } }
-				tooltip = not_has_communist_state_government_TT
-			}
-		}
+
+
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_abolish_monarchy"
@@ -3512,17 +3719,10 @@ focus_tree = {
 
 		prerequisite = { focus = DEN_trigger_the_elections }
 		available = {
-			custom_trigger_tooltip = {
-				is_in_array = { ruling_party = 4 }
-				tooltip = has_communist_state_government_TT
-			}
+			emerging_communist_state_are_in_power = yes
+			cancel_if_invalid =yes
 		}
-		cancel = {
-			custom_trigger_tooltip = {
-				NOT = { is_in_array = { ruling_party = 4 } }
-				tooltip = not_has_communist_state_government_TT
-			}
-		}
+
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_abolish_monarchy"
@@ -3823,6 +4023,413 @@ focus_tree = {
 		}
 	}
 
+	#Non-Aligned focus
+	focus = {
+		id = DEN_a_need_for_change
+		icon = electricity
+
+		x = 14
+		y = 1
+		relative_position_id = DEN_the_greatest_challenge
+
+		cost = 10
+
+		prerequisite = {
+			focus = DEN_the_greatest_challenge
+		}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_a_need_for_change"
+			add_popularity = { ideology = neutrality popularity = 0.10 }
+			add_10_neutrality_greens = yes
+			recalculate_party = yes
+			add_stability = 0.03
+			add_political_power = 100
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_green_rising
+		icon = electric_car
+
+		x = 0
+		y = 1
+		relative_position_id = DEN_a_need_for_change
+
+		cost = 10
+
+		prerequisite = {
+			focus = DEN_a_need_for_change
+		}
+		available = {
+			neutrality_neutral_green_are_in_power = yes
+			cancel_if_invalid = yes
+		}
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_green_rising"
+			add_ideas = DEN_idea_neutrality_drift
+			add_stability = 0.02
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = DEN_enforcing_neutrality
+		icon = nato3
+
+		x = 2
+		y = 1
+		relative_position_id = DEN_green_rising
+
+		cost = 10
+
+		prerequisite = {
+			focus = DEN_green_rising
+		}
+
+		bypass = {
+			NOT = { has_idea = NATO_member }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_enforcing_neutrality"
+			remove_ideas = NATO_member
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = DEN_demilitarise
+		icon = helmet_knife
+
+		x = 0
+		y = 1
+		relative_position_id = DEN_green_rising
+
+		cost = 15
+
+		prerequisite = {
+			focus = DEN_green_rising
+		}
+
+		bypass = {
+			has_idea = no_military
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_demilitarise"
+			decrease_military_spending = yes
+			add_political_power = 100
+			add_ideas = DEN_Demilitarization
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_civilian_boost
+		icon = bread_and_peace
+
+		x = -2
+		y = 1
+		relative_position_id = DEN_green_rising
+
+		cost = 15
+
+		prerequisite = {
+			focus = DEN_green_rising
+		}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_civilian_boost"
+			1 = {
+			add_extra_state_shared_building_slots = 4
+			}
+			2 = {
+			add_extra_state_shared_building_slots = 1
+			}
+			3 = {
+			add_extra_state_shared_building_slots = 1
+			}
+			subtract_from_variable = { treasury = 40 }
+			custom_effect_tooltip = 40_billion_expense_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_Work_for_minorities
+		icon = bread_and_peace
+
+		x = 0
+		y = 2
+		relative_position_id = DEN_green_rising
+
+		cost = 15
+
+		prerequisite = {
+			focus = DEN_civilian_boost
+			focus = DEN_demilitarise
+			focus = DEN_enforcing_neutrality
+		}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_Work_for_minorities"
+			1 = {
+			add_resource = {
+				type = oil
+				amount = 6
+			}
+			add_resource ={
+				type = steel
+				amount = 6
+			}
+		}
+			2 = {
+			add_resource = {
+				type = tungsten
+				amount = 3
+			}
+		}
+			3 = {
+			add_resource = {
+				type = aluminium
+				amount = 3
+			}
+		}
+		subtract_from_variable = { treasury = 10 }
+		custom_effect_tooltip = 10_billion_expense_tt
+	}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_sustainable_energy
+		icon = windmill
+
+		x = 0
+		y = 3
+		relative_position_id = DEN_green_rising
+
+		cost = 10
+
+		prerequisite = {
+			focus = DEN_Work_for_minorities
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_sustainable_energy"
+			every_owned_state = {
+				add_resource = {
+					type = oil
+					amount = 4
+				}
+			}
+			add_ideas = DEN_death_to_biofuel
+			add_political_power = 50
+			add_stability = 0.02
+			subtract_from_variable = { treasury = 15 }
+			custom_effect_tooltip = 15_billion_expense_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = DEN_industry_boost
+		icon = anarchist_economy
+
+		x = 1
+		y = 4
+		relative_position_id = DEN_green_rising
+
+		cost = 15
+
+		prerequisite = {
+			focus = DEN_sustainable_energy
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_industry_boost"
+			every_owned_state = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+					}
+				add_extra_state_shared_building_slots = 1
+			}
+			add_stability = 0.05
+			subtract_from_variable = { treasury = 20 }
+			custom_effect_tooltip = 20_billion_expense_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = DEN_danish_intellect
+		icon = literacy_rate_improvment2
+
+		x = -1
+		y = 4
+		relative_position_id = DEN_green_rising
+
+		cost = 15
+
+		prerequisite = {
+			focus = DEN_sustainable_energy
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_danish_intellect"
+			add_stability = 0.10
+			add_research_slot = 1
+			add_ideas = DEN_pacifist_science
+
+			subtract_from_variable = { treasury = 20 }
+			custom_effect_tooltip = 20_billion_expense_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = DEN_humans_never_change
+		icon = reactionary
+
+		x = 0
+		y = 5
+		relative_position_id = DEN_green_rising
+
+		cost = 30
+
+		prerequisite = {
+			focus = DEN_danish_intellect
+			focus = DEN_industry_boost
+		}
+		available = {
+			has_war = yes
+			threat > 0.99
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_humans_never_change"
+			custom_effect_tooltip = DEN_remove_add
+			hidden_effect = {
+				every_owned_state = {
+				if = {
+					limit = { industrial_complex > 2 }
+					remove_building = {
+						type = industrial_complex
+						level = 3
+					}
+					add_building_construction = {
+						type = arms_factory
+						level = 3
+						instant_build = yes
+					}
+				}
+				else_if = {
+					limit = { industrial_complex > 1 }
+					remove_building = {
+						type = industrial_complex
+						level = 2
+					}
+					add_building_construction = {
+						type = arms_factory
+						level = 2
+						instant_build = yes
+					}
+				}
+				else_if = {
+					limit = { industrial_complex > 0 }
+					remove_building = {
+						type = industrial_complex
+						level = 1
+					}
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+		}
+			add_ideas = DEN_for_faedre_landet
+			remove_ideas = DEN_pacifist_science
+			remove_ideas = DEN_Demilitarization
+			remove_ideas = DEN_idea_neutrality_drift
+
+			subtract_from_variable = { treasury = 50 }
+			custom_effect_tooltip = 50_billion_expense_tt
+
+
+		ai_will_do = {
+			factor = 1
+			}
+		}
+	}
+
+#Monarchist Focus
+	focus = {
+		id = DEN_return_to_old
+		icon = danish_monarchy
+
+		x = 20
+		y = 1
+		relative_position_id = DEN_the_greatest_challenge
+
+		cost = 10
+
+		prerequisite = {
+			focus = DEN_the_greatest_challenge
+		}
+		available = {
+			neutrality_neutral_green_are_in_power = yes
+			cancel_if_invalid = yes
+		}
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_return_to_old"
+			add_ideas = DEN_idea_neutrality_drift
+			add_stability = 0.02
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
 ##############################
 ###	Start of EU Focus Tree ###	x = 15 y = 12
 ##############################
@@ -3830,4 +4437,4 @@ shared_focus = EU001
 ############################
 ### End of EU Focus Tree ###
 ############################
-}
+
