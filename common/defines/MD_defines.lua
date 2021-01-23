@@ -247,7 +247,7 @@
 	NDefines.NNavy.NAVY_EXPENSIVE_IC = 7500 -- 5500
 	NDefines.NNavy.CONVOY_EFFICIENCY_MIN_VALUE = 0.1 -- 0.05
 	NDefines.NNavy.AMPHIBIOUS_LANDING_PENALTY = -0.5 -- -0.7
-	NDefines.NNavy.BASE_CARRIER_SORTIE_EFFICIENCY = 1 -- 0.5
+	NDefines.NNavy.BASE_CARRIER_SORTIE_EFFICIENCY = 0.5 -- 0.5
 	NDefines.NNavy.NAVAL_SPEED_MODIFIER = 0.06 -- 0.1
 	NDefines.NNavy.NAVAL_INVASION_PREPARE_HOURS = 96 -- 168
 	NDefines.NNavy.ANTI_AIR_TARGETING = 20.7 -- 0.9
@@ -282,6 +282,15 @@
 		0, -- RESERVE_FLEET
 		100, -- NAVAL INVASION SUPPORT
 	}
+	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 4 		-- optimum carrier count for carrier taskforces
+	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 12 		-- optimum capital count for capital taskforces
+	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 12			-- optimum screen count for screen taskforces
+	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 16				-- optimum sub count for sub taskforces
+
+	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 10			-- carrier fleets will at least have this amount of capitals
+	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 1.5				-- capital to carrier count in carrier taskfoces
+	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 6.0					-- screens to capital/carrier count in carrier & capital taskforces
+
 
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
 	NDefines.NTrade.BASE_LAND_TRADE_RANGE = 350 -- 1000
