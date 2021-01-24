@@ -214,9 +214,9 @@
 	NDefines.NAir.DETECT_CHANCE_FROM_AIRCRAFTS_EFFECTIVE_COUNT = 150 -- 3000
 	NDefines.NAir.DETECT_CHANCE_FROM_NIGHT = -0.05 -- -0.2
 	NDefines.NAir.CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 3 -- 4
-	NDefines.NAir.NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 1.50 -- 0.3
-	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_STR = 5 -- 3
-	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_ORG = 4 -- 3
+	NDefines.NAir.NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 0.60 -- 0.3
+	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_STR = 3.75 -- 3
+	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_ORG = 3.50 -- 3
 	NDefines.NAir.AIR_AGILITY_TO_NAVAL_STRIKE_AGILITY = 0.02 -- 0.01
 	NDefines.NAir.BASE_STRATEGIC_BOMBING_HIT_PLANE_DAMAGE_FACTOR = 50 -- 0.2
 	NDefines.NAir.AIR_COMBAT_FINAL_DAMAGE_SCALE = 0.03 -- 0.015
@@ -265,6 +265,16 @@
 		0.0, -- RESERVE_FLEET (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		1.0, -- NAVAL_INVASION_SUPPORT (does not cost fuel at base, only costs while doing bombardment and escorting units)
 	}
+	NDefines.NNavy.BASE_SPOTTING_FROM_AIR_SUPERIORITY = 10 -- Reduced by 50% -- Should help subs
+	NDefines.NNavy.SPOTTING_MULTIPLIER_FOR_SUB = 0.90 -- Reduced by 10% -- Should help subs
+	NDefines.NNavy.SPOTTING_MULTIPLIER_FOR_SURFACE = 1.1 -- buffed by 10%
+	NDefines.NNavy.ESCAPE_SPEED_HIDDEN_SUB = 0.35 --escape speed
+	NDefines.NNavy.ESCAPE_SPEED_SUB_BASE = 0.20 -- escape speed base
+	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE = 20 -- huge buff to subs detection
+	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_EFFECT = 0.3
+	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2
+	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_POW_EFFECT = 1.01
+
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.15
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.15
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.005		-- ai will try to build a silo per this ratio of civ factories
@@ -354,7 +364,7 @@
 	NDefines.NAI.COMMUNISTS_ANTAGONIZE_DEMOCRACIES = 50
 	NDefines.NAI.COMMUNISTS_ANTAGONIZE_COMMUNISTS = -50
 	NDefines.NAI.CALL_ALLY_WT_LIMIT = 0.6 -- 0.8
-	NDefines.NAI.AIR_WING_REINFORCEMENT_LIMIT = 24					-- 150
+	NDefines.NAI.AIR_WING_REINFORCEMENT_LIMIT = 50					-- 150
 	NDefines.NAI.UPGRADE_DIVISION_RELUCTANCE = 30					-- 7
 	NDefines.NAI.STRATEGIC_BOMBING_DEFENCE_IMPORTANCE = 500.0
 	NDefines.NAI.ENEMY_NAVY_STRENGTH_DONT_BOTHER = 1.2				-- 2.5
@@ -372,7 +382,8 @@
 	NDefines.NAI.REQUEST_LEND_LEASE_PRODUCTION_DAYS_AIR = 28			-- 10
 	NDefines.NAI.REQUEST_LEND_LEASE_STOCKPILE_RATIO_NAVAL = 0.3		-- 0.1
 	NDefines.NAI.INVASION_DISTANCE_RANDOMNESS = 200					-- 300
-	NDefines.NAI.NAVAL_TRANSFER_AIR_IMPORTANCE = 25.0				-- 0
+	NDefines.NAI.NAVAL_TRANSFER_AIR_IMPORTANCE = 1.0				-- 0
+	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_SHIP = 5 --20 reduced by 50% to reduce the AI spamming planes over naval battles
 	NDefines.NAI.FOCUS_TREE_CONTINUE_FACTOR = 1		-- Factor for score of how likely the AI is to keep going down a focus tree rather than starting a new path.
 	NDefines.NAI.HIGH_PRIO_NAVAL_MISSION_SCORES = {
 		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
@@ -424,7 +435,7 @@
 	--NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 10.0
 	NDefines.NAI.STR_BOMB_MIN_EXCORT_WINGS = 1
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
-	NDefines.NAI.NAVAL_MIN_EXCORT_WINGS = 1 --Updated AI Air prioties
+	NDefines.NAI.NAVAL_MIN_EXCORT_WINGS = 0.10 --Updated AI Air prioties
 
 	--Country Defines
 	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
