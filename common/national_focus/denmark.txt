@@ -491,7 +491,7 @@ focus_tree = {
 
 	focus = {
 		id = DEN_coastal_forts
-		icon = generic_entrenchment
+		icon = city_fort
 
 		x = 2
 		y = 5
@@ -765,8 +765,8 @@ focus_tree = {
 					Category = Cat_SPECIAL_FORCES
 					uses = 2
 					}
-			subtract_from_variable = { treasury = 20 }
-			custom_effect_tooltip = 20_billion_expense_tt
+			subtract_from_variable = { treasury = 10 }
+			custom_effect_tooltip = 10_billion_expense_tt
 			}
 
 		ai_will_do = {
@@ -845,11 +845,11 @@ focus_tree = {
 					add_building_construction =]
 						type = arms_factory
 						level = 1
-						instant build = yes
+						instant_build = yes
 					}
 				}
-				subtract_from_variable = { treasury = 25 }
-				custom_effect_tooltip = 25_billion_expense_tt
+				subtract_from_variable = { treasury = 15 }
+				custom_effect_tooltip = 15_billion_expense_tt
 			}
 		}
 
@@ -1279,7 +1279,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_rescue_the_banks"
 			add_stability = 0.03
 			add_ideas =  DEN_public_service_investment
-
+			increase_economic_growth = yes
 		}
 
 		ai_will_do = {
@@ -2115,12 +2115,49 @@ focus_tree = {
 				type = puppet_wargoal_focus
 				target = FIN
 			}
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = ICE
+			}
 		}
 
 		ai_will_do = {
 			factor = 1
 		}
 	}
+
+	focus = {
+		id = DEN_slesvig_holstein
+		icon = attack_germany
+
+		relative_position_id = DEN_scandinavian_focus
+		x = 4
+		y = 3
+
+		cost = 10
+
+		prerequisite = { focus = DEN_remember_history }
+		mutually_exclusive = {}
+
+		available = {
+				has_government = nationalist
+				}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]:DEN_slesvig_holstein"
+			create_wargoal = {
+				type = take_state_focus
+				target = GER
+				generator = {37}
+			}
+			37 = { add_core_of = DEN }
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
 
 	focus = {
 		id = DEN_ancient_history
@@ -2144,17 +2181,129 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: DEN_ancient_history"
 			create_wargoal = {
-				type = puppet_wargoal_focus
+				type = annex_everything
 				target = EST
 			}
 			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = LIT
-			}
-			create_wargoal = {
-				type = puppet_wargoal_focus
+				type = annex_everything
 				target = LAT
 			}
+			105 = { add_core_of = DEN }
+			106 = {add_core_of = DEN}
+			108 = { add_core_of = DEN }
+			107 = {add_core_of = DEN}
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_finlands_history
+		icon = war_against_russia2
+
+		relative_position_id = DEN_scandinavian_focus
+		x = 4
+		y = 4
+
+		cost = 10
+
+		prerequisite = { focus = DEN_ancient_history }
+		mutually_exclusive = {}
+
+		available = {
+				has_government = nationalist
+				}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: DEN_ancient_history"
+			create_wargoal = {
+				type = take_state_focus
+				target = SOV
+				generator = {643 644}
+			}
+			643 = { add_core_of = DEN }
+			644 = {add_core_of = DEN}
+
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_viking_age #Create event with offer to buy shetland/ Highlands (orkeyney isle)
+		icon = british_cooperation
+
+		relative_position_id = DEN_scandinavian_focus
+		x = 2
+		y = 4
+
+		cost = 10
+
+		prerequisite = { focus = DEN_ancient_history }
+		mutually_exclusive = {}
+
+		available = {
+				has_government = nationalist
+				}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: DEN_viking_age"
+			create_wargoal = {
+				type = take_state_focus
+				target = ENG
+				generator = {8 437}
+			}
+
+			8 = { add_core_of = DEN}
+			437 = {add_core_of = DEN}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_danelaw
+		icon = enemy_of_britain
+
+		relative_position_id = DEN_scandinavian_focus
+		x = 2
+		y = 5
+
+		cost = 10
+
+		prerequisite = { focus = DEN_viking_age }
+		mutually_exclusive = {}
+
+		available = {
+				has_government = nationalist
+				}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: DEN_danelaw"
+			create_wargoal = {
+				type = take_state_focus
+				target = ENG
+				generator = {9 10 11 14}
+			}
+
+			9 = { add_core_of = DEN }
+			10 = {add_core_of = DEN}
+			11 = { add_core_of = DEN }
+			14 = {add_core_of = DEN}
 		}
 
 		ai_will_do = {
@@ -2577,7 +2726,12 @@ focus_tree = {
 		completion_reward = {
 			add_political_power = -100
 			add_stability = 0.05
-			subtract_from_variable = { treasury = 8 }
+			increase_social_spending  = yes
+			if = {
+				limit = { has_idea = social_06 }
+				add_political_power = 150	#if country has desired level it earns political power instead.
+			}
+			increase_from_variable = { treasury = 8 }
 			custom_effect_tooltip = 8_billion_expense_tt
 		}
 
@@ -2610,8 +2764,13 @@ focus_tree = {
 		completion_reward = {
 			add_political_power = 100
 			add_stability = -0.05
-			subtract_from_variable = { treasury = 3 }
-			custom_effect_tooltip = 3_billion_expense_tt
+			decrease_social_spending  = yes
+			if = {
+				limit = { has_idea = social_01 }
+				add_political_power = 150	#if country has desired level it earns political power instead.
+			}
+				add_to_variable = { treasury = 5 }
+				custom_effect_tooltip = 5_billion_revenue_tt
 		}
 
 		ai_will_do = {
@@ -2685,7 +2844,11 @@ focus_tree = {
 
 		completion_reward = {
 			add_ideas = DEN_economic_freedoms
-
+			if = {
+				limit = { has_idea = labour_unions }
+				set_country_flag = current_labour_unions
+				decrease_labour_unions_opinion = yes
+			}
 		}
 
 		ai_will_do = {
@@ -2738,7 +2901,10 @@ focus_tree = {
 					level = 2
 					instant_build = yes
 				}
-
+			}
+			swap_ideas = {
+				remove_idea = labour_unions
+				add_idea = international_bankers
 			}
 			subtract_from_variable = { treasury = 2 }
 			custom_effect_tooltip = 2_billion_expense_tt
@@ -2799,7 +2965,10 @@ focus_tree = {
 
 		mutually_exclusive = {}
 
-		available = {}
+		available = {
+			nationalist_right_wing_populists_are_not_in_power = yes
+			cancel_if_invalid = yes
+		}
 
 		bypass = {}
 
@@ -2815,7 +2984,7 @@ focus_tree = {
 
 	focus = {
 		id = DEN_new_red_green_alliance
-		icon = communism2
+		icon = communism2 #Find better picture
 
 		x = -1
 		y = 5
@@ -2836,7 +3005,11 @@ focus_tree = {
 		bypass = {}
 
 		completion_reward = {
-			add_political_power = 100
+			increase_centralization  = yes
+			if = {
+				limit = { has_idea = bureau_05 }
+				add_political_power = 150	#if country has desired level it earns political power instead.
+			}
 		}
 
 		ai_will_do = {
@@ -2867,22 +3040,7 @@ focus_tree = {
 		bypass = {}
 
 		completion_reward = {
-			if = {
-				limit = { has_idea = bureau_05 }
-				swap_ideas = { remove_idea = bureau_05 add_idea = bureau_04 }
-			}
-			if = {
-				limit = { has_idea = bureau_04 }
-				swap_ideas = { remove_idea = bureau_04 add_idea = bureau_03 }
-			}
-			if = {
-				limit = { has_idea = bureau_03 }
-				swap_ideas = { remove_idea = bureau_03 add_idea = bureau_02 }
-			}
-			if = {
-				limit = { has_idea = bureau_02 }
-				swap_ideas = { remove_idea = bureau_02 add_idea = bureau_01 }
-			}
+			decrease_centralization  = yes
 			if = {
 				limit = { has_idea = bureau_01 }
 				add_political_power = 150	#if country has desired level it earns political power instead.
@@ -2943,7 +3101,8 @@ focus_tree = {
 		mutually_exclusive = {}
 
 		available = {
-
+			nationalist_right_wing_populists_are_not_in_power = yes
+			cancel_if_invalid = yes
 		}
 
 		bypass = {}
@@ -3061,9 +3220,9 @@ focus_tree = {
 
 		completion_reward = {
 			if = {
-				limit = { has_idea = labour_unions }
-				visually_display_opinion_rise_labour_unions = yes
-				set_country_flag = current_labour_unions
+				limit = { has_idea = international_bankers }
+				visually_display_opinion_rise_international_bankers = yes
+				set_country_flag = current_international_bankers
 				increase_internal_faction_opinion = yes
 			}
 		}
@@ -4095,6 +4254,10 @@ focus_tree = {
 		prerequisite = {
 			focus = DEN_green_rising
 		}
+		available = {
+			neutrality_neutral_green_are_in_power = yes
+			cancel_if_invalid = yes
+		}
 
 		bypass = {
 			NOT = { has_idea = NATO_member }
@@ -4122,6 +4285,11 @@ focus_tree = {
 
 		prerequisite = {
 			focus = DEN_green_rising
+		}
+
+		available = {
+			neutrality_neutral_green_are_in_power = yes
+			cancel_if_invalid = yes
 		}
 
 		bypass = {
@@ -4152,6 +4320,11 @@ focus_tree = {
 
 		prerequisite = {
 			focus = DEN_green_rising
+		}
+
+		available = {
+			neutrality_neutral_green_are_in_power = yes
+			cancel_if_invalid = yes
 		}
 
 		bypass = {}
@@ -4192,6 +4365,11 @@ focus_tree = {
 			focus = DEN_enforcing_neutrality
 		}
 
+		available = {
+			neutrality_neutral_green_are_in_power = yes
+			cancel_if_invalid = yes
+		}
+
 		bypass = {}
 
 		completion_reward = {
@@ -4228,7 +4406,7 @@ focus_tree = {
 
 	focus = {
 		id = DEN_sustainable_energy
-		icon = windmill
+		icon = generic_solar
 
 		x = 0
 		y = 3
@@ -4238,6 +4416,11 @@ focus_tree = {
 
 		prerequisite = {
 			focus = DEN_Work_for_minorities
+		}
+
+		available = {
+			neutrality_neutral_green_are_in_power = yes
+			cancel_if_invalid = yes
 		}
 
 		bypass = {}
@@ -4274,6 +4457,11 @@ focus_tree = {
 			focus = DEN_sustainable_energy
 		}
 
+		available = {
+			neutrality_neutral_green_are_in_power = yes
+			cancel_if_invalid = yes
+		}
+
 		bypass = {}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_industry_boost"
@@ -4306,6 +4494,11 @@ focus_tree = {
 
 		prerequisite = {
 			focus = DEN_sustainable_energy
+		}
+
+		available = {
+			neutrality_neutral_green_are_in_power = yes
+			cancel_if_invalid = yes
 		}
 
 		bypass = {}
@@ -4404,7 +4597,7 @@ focus_tree = {
 #Monarchist Focus
 	focus = {
 		id = DEN_return_to_old
-		icon = danish_monarchy
+		icon = forced_labour
 
 		x = 20
 		y = 1
@@ -4416,14 +4609,332 @@ focus_tree = {
 			focus = DEN_the_greatest_challenge
 		}
 		available = {
-			neutrality_neutral_green_are_in_power = yes
-			cancel_if_invalid = yes
 		}
+
 		bypass = {}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_return_to_old"
-			add_ideas = DEN_idea_neutrality_drift
-			add_stability = 0.02
+			add_ideas = DEN_idea_monarchy_drift
+			add_stability = -0.02
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_kingdom_rise
+		icon = danish_monarchy
+
+		x = 0
+		y = 1
+		relative_position_id = DEN_return_to_old
+
+		cost = 7
+
+		prerequisite = {
+			focus = DEN_return_to_old
+		}
+		available = {
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_return_to_old"
+			add_popularity = { ideology = nationalist popularity = 0.10 }
+			add_popularity = { ideology = communism popularity = -0.05 }
+			add_popularity = { ideology = democratic popularity = -0.05 }
+			add_popularity = { ideology = neutrality popularity = -0.05 }
+			add_15_nationalist_monarchists = yes
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = DEN_crown_prince
+		icon = danish_monarchy
+
+		x = 2
+		y = 2
+		relative_position_id = DEN_return_to_old
+
+		cost = 5
+
+		prerequisite = {
+			focus = DEN_kingdom_rise
+		}
+		available = {
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_crown_prince"
+			#Add event to make Crown Prince Frederik a Field Marshal
+			add_political_power = 100 #placeholder effect
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			add_5_nationalist_monarchists = yes
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_grundloven
+		icon = treaty3
+
+		x = 0
+		y = 2
+		relative_position_id = DEN_return_to_old
+
+		cost = 10
+
+		prerequisite = {
+			focus = DEN_kingdom_rise
+		}
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			cancel_if_invalid = yes
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_grundloven"
+			add_stability = -0.05
+			add_political_power = 200
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			add_5_nationalist_monarchists = yes
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_militarization
+		icon = soldier
+
+		x = 2
+		y = 3
+		relative_position_id = DEN_return_to_old
+
+		cost = 10
+
+		prerequisite = {
+			focus = DEN_grundloven
+		}
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			cancel_if_invalid = yes
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_militarization"
+			add_ideas = DEN_idea_militarization
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			add_5_nationalist_monarchists = yes
+			recalculate_party = yes
+			increase_military_spending = yes
+			subtract_from_variable = { treasury = 10 }
+			custom_effect_tooltip = 10_billion_expense_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_gender_roles
+		icon = military_women
+
+		x = 0
+		y = 3
+		relative_position_id = DEN_return_to_old
+
+		cost = 10
+
+		prerequisite = {
+			focus = DEN_grundloven
+		}
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			cancel_if_invalid = yes
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_gender_roles"
+			#Change women conscription law
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			add_5_nationalist_monarchists = yes
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = DEN_gentleman_officer
+		icon = general_staff
+
+		x = -2
+		y = 3
+		relative_position_id = DEN_return_to_old
+
+		cost = 10
+
+		prerequisite = {
+			focus = DEN_grundloven
+		}
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			cancel_if_invalid = yes
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_gentleman_officer"
+			increase_intervention_law_effect = yes
+			increase_officer_training_level = yes
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			add_5_nationalist_monarchists = yes
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = DEN_readying_the_industry
+		icon = industry_tanks
+
+		x = 0
+		y = 4
+		relative_position_id = DEN_return_to_old
+
+		cost = 15
+
+		prerequisite = {
+			focus = DEN_gentleman_officer
+			focus = DEN_gender_roles
+			focus = DEN_militarization
+		}
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			cancel_if_invalid = yes
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_readying_the_industry"
+			1 ={
+
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = arms_factory
+				level = 2
+				instant_build = yes
+			}
+		}
+		add_ideas = DEN_military_build_up
+		subtract_from_variable = { treasury = 10 }
+		custom_effect_tooltip = 10_billion_expense_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = DEN_improving_technology
+		icon = continuous_research
+
+		x = 0
+		y = 5
+		relative_position_id = DEN_return_to_old
+
+		cost = 12
+
+		prerequisite = {
+			focus = DEN_readying_the_industry
+		}
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			cancel_if_invalid = yes
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_improving_technology"
+			add_tech_bonus {
+				Name = AS_figther3
+				Bonus = 0.20
+				Technology = AS_Fighter3
+			}
+			add_tech_bonus {
+				Name = MBT_4
+				Bonus = 0.20
+				Technology = MBT_4
+			}
+			add_tech_bonus {
+				Name = IFV_5
+				Bonus = 0.20
+				Technology = IFV_5
+			}
+			add_tech_bonus {
+				Name = infantry_weapons4
+				Bonus = 0.20
+				Technology = infantry_weapons4
+			}
+			add_tech_bonus {
+				Name = command_control_equipment3
+				Bonus = 0.20
+				Technology = command_control_equipment3
+			}
+
+		subtract_from_variable = { treasury = 7 }
+		custom_effect_tooltip = 7_billion_expense_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = DEN_the_king
+		icon = monarchism
+
+		x = 0
+		y = 6
+		relative_position_id = DEN_return_to_old
+
+		cost = 10
+
+		prerequisite = {
+			focus = DEN_improving_technology
+		}
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			cancel_if_invalid = yes
+		}
+
+		bypass = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DEN_the_king"
+			add_political_power = 300 #placeholder until Crown Prince Frederik is added into the game
 		}
 
 		ai_will_do = {
