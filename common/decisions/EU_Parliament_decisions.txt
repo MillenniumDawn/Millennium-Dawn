@@ -4686,7 +4686,7 @@ EU_parliament_focus_EUXXX_approve = {
 			text = {
 				custom_trigger_tooltip = {
 					tooltip = tooltip_focus_[EUXXX]_Majority_trigger
-					check_variable {
+					check_variable = {
 						var = global.focus_[EUXXX]_MEP_support
 						value = global.MEP_Majority
 						compare = greater_than_or_equals
@@ -4732,6 +4732,7 @@ EU_parliament_focus_EUXXX_approve = {
 	fire_only_once = yes
 
 	complete_effect = {
+		log = "[GetDateText]: [Root.GetName]: mission complete_effect EU_parliament_focus_EUXXX_approve:"
 		meta_effect = {
 			text = {
 				custom_effect_tooltip = tooltip_EU_parliament_focus_[EUXXX]_approve
@@ -4777,7 +4778,7 @@ EU_parliament_focus_EUXXX_overrule = {
 			text = {
 				custom_trigger_tooltip = {
 					tooltip = tooltip_focus_[EUXXX]_Supermajority_trigger
-					check_variable {
+					check_variable = {
 						var = global.focus_[EUXXX]_MEP_support
 						value = global.MEP_Supermajority
 						compare = greater_than_or_equals
@@ -4944,7 +4945,7 @@ EU_parliament_focus_EUXXX_invite_PG_X = {
 		meta_trigger = {
 			text = {
 				has_global_flag = EU_parliament_[PG_X]
-				check_variable { THIS.focus_[EUXXX]_desire > [PG_desire] }	### THIS desire vs PG desire
+				check_variable = { THIS.focus_[EUXXX]_desire > [PG_desire] }	### THIS desire vs PG desire
 				has_country_flag = focus_[EUXXX]_EP_agenda
 				NOT = {
 					has_global_flag = [PG_X]_support
@@ -4967,6 +4968,7 @@ EU_parliament_focus_EUXXX_invite_PG_X = {
 		}
 	}
 	complete_effect = {
+		log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_invite_[PG_X] [Root.GetTag] EP_PP_log before effect: [?THIS.political_power|0] PP"
 		custom_effect_tooltip = tooltip_EU_parliament_focus_EUXXX_invite_PG_X
 		meta_effect = {
 			text = {
@@ -4974,14 +4976,19 @@ EU_parliament_focus_EUXXX_invite_PG_X = {
 				if = {
 					limit = {
 						OR = {
-							check_variable { temp1 < 0 }
-							check_variable { temp1 = 0 }
+							check_variable = { temp1 < 0 }
+							check_variable = { temp1 = 0 }
 						}
 					}
 					set_temp_variable = { temp1 = global.MEP_[PG_X] }
 				}
 				multiply_temp_variable = { temp1 = -1 }
-				add_political_power = temp1
+				if = {
+					limit = {
+						NOT = { is_ai = yes }
+					}
+					add_political_power = temp1
+				}
 				hidden_effect = {
 					log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_invite_[PG_X]"
 					set_global_flag = [PG_X]_support
@@ -4995,6 +5002,7 @@ EU_parliament_focus_EUXXX_invite_PG_X = {
 			EUXXX = "[EUXXX_EP_agenda]"
 			PG_X = "[PG_X_influence]"
 		}
+		log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_invite_[PG_X] [Root.GetTag] EP_PP_log after effect: [?THIS.political_power|0] PP"
 	}
 	ai_will_do = {
 		factor = 0
@@ -5002,7 +5010,7 @@ EU_parliament_focus_EUXXX_invite_PG_X = {
 				add = 1
 				meta_trigger = {
 					text = {
-						check_variable { global.focus_[EUXXX]_MEP_support < global.MEP_Majority }
+						check_variable = { global.focus_[EUXXX]_MEP_support < global.MEP_Majority }
 					}
 					EUXXX = "[EUXXX_EP_agenda]"
 				}
@@ -5012,7 +5020,7 @@ EU_parliament_focus_EUXXX_invite_PG_X = {
 				meta_trigger = {
 					text = {
 						focus_[EUXXX]_EP_overrule_option = yes
-						check_variable { global.focus_[EUXXX]_MEP_support < global.MEP_Supermajority }
+						check_variable = { global.focus_[EUXXX]_MEP_support < global.MEP_Supermajority }
 					}
 					EUXXX = "[EUXXX_EP_agenda]"
 				}
@@ -5047,7 +5055,7 @@ EU_parliament_focus_EUXXX_together_PG_X = {
 		meta_trigger = {
 			text = {
 				has_global_flag = EU_parliament_[PG_X]
-				check_variable { THIS.focus_[EUXXX]_desire = [PG_desire] }	### THIS desire vs PG desire
+				check_variable = { THIS.focus_[EUXXX]_desire = [PG_desire] }	### THIS desire vs PG desire
 				has_country_flag = focus_[EUXXX]_EP_agenda
 				NOT = {
 					has_global_flag = [PG_X]_support
@@ -5117,7 +5125,7 @@ EU_parliament_focus_EUXXX_support_PG_X = {
 		meta_trigger = {
 			text = {
 				has_global_flag = EU_parliament_[PG_X]
-				check_variable { THIS.focus_[EUXXX]_desire < [PG_desire] }	### THIS desire vs PG desire
+				check_variable = { THIS.focus_[EUXXX]_desire < [PG_desire] }	### THIS desire vs PG desire
 				has_country_flag = focus_[EUXXX]_EP_agenda
 				NOT = {
 					has_global_flag = [PG_X]_support
@@ -5140,10 +5148,16 @@ EU_parliament_focus_EUXXX_support_PG_X = {
 		}
 	}
 	complete_effect = {
+		log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_support_[PG_X] [Root.GetTag] EP_PP_log before effect: [?THIS.political_power|0] PP"
 		custom_effect_tooltip = tooltip_EU_parliament_focus_EUXXX_support_PG_X
 		meta_effect = {
 			text = {
-				add_political_power = global.MEP_[PG_X]
+				if = {
+					limit = {
+						NOT = { is_ai = yes }
+					}
+					add_political_power = global.MEP_[PG_X]
+				}
 				hidden_effect = {
 					log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_support_[PG_X]"
 					set_global_flag = [PG_X]_support
@@ -5158,6 +5172,7 @@ EU_parliament_focus_EUXXX_support_PG_X = {
 			EUXXX = "[EUXXX_EP_agenda]"
 			PG_X = "[PG_X_influence]"
 		}
+		log = "[GetDateText]: [Root.GetName]: Decision EU_parliament_focus_[EUXXX]_support_[PG_X] [Root.GetTag] EP_PP_log after effect: [?THIS.political_power|0] PP"
 	}
 	ai_will_do = {
 		factor = 1
@@ -5165,7 +5180,7 @@ EU_parliament_focus_EUXXX_support_PG_X = {
 }
 
 ####################
-### influence PG ###
+### influence PG ### bugfixing added EP AI modifier triggers
 ####################
 
 ### Western_Autocracy ###
@@ -5209,6 +5224,18 @@ EU_parliament_PG_Western_Autocracy_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Western_Autocracy > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5253,6 +5280,18 @@ EU_parliament_PG_conservatism_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_conservatism > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5297,6 +5336,18 @@ EU_parliament_PG_liberalism_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_liberalism > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5341,6 +5392,18 @@ EU_parliament_PG_socialism_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_socialism > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5385,6 +5448,18 @@ EU_parliament_PG_Communist-State_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Communist-State > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5429,6 +5504,18 @@ EU_parliament_PG_anarchist_communism_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_anarchist_communism > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5473,6 +5560,18 @@ EU_parliament_PG_Conservative_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Conservative > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5517,6 +5616,18 @@ EU_parliament_PG_Autocracy_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Autocracy > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5561,6 +5672,18 @@ EU_parliament_PG_Mod_Vilayat_e_Faqih_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Mod_Vilayat_e_Faqih > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5605,6 +5728,18 @@ EU_parliament_PG_Vilayat_e_Faqih_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Vilayat_e_Faqih > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5649,6 +5784,18 @@ EU_parliament_PG_Kingdom_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Kingdom > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5693,6 +5840,18 @@ EU_parliament_PG_Caliphate_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Caliphate > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5737,6 +5896,18 @@ EU_parliament_PG_Neutral_Muslim_Brotherhood_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Neutral_Muslim_Brotherhood > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5781,6 +5952,18 @@ EU_parliament_PG_Neutral_Autocracy_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Neutral_Autocracy > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5825,6 +6008,18 @@ EU_parliament_PG_Neutral_conservatism_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Neutral_conservatism > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5869,6 +6064,18 @@ EU_parliament_PG_oligarchism_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_oligarchism > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5913,6 +6120,18 @@ EU_parliament_PG_Neutral_Libertarian_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Neutral_Libertarian > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -5957,6 +6176,18 @@ EU_parliament_PG_Neutral_green_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Neutral_green > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -6001,6 +6232,18 @@ EU_parliament_PG_neutral_Social_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_neutral_Social > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -6045,6 +6288,18 @@ EU_parliament_PG_Neutral_Communism_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Neutral_Communism > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -6089,6 +6344,18 @@ EU_parliament_PG_Nat_Populism_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Nat_Populism > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -6133,6 +6400,18 @@ EU_parliament_PG_Nat_Fascism_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Nat_Fascism > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -6177,6 +6456,18 @@ EU_parliament_PG_Nat_Autocracy_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Nat_Autocracy > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 
@@ -6221,6 +6512,18 @@ EU_parliament_PG_Monarchist_influence = {
 	}
 	ai_will_do = {
 		factor = 1
+		modifier = {
+			factor = 0.5
+			check_variable = { global.PI_PG_Monarchist > 999 }
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_approve_check = yes
+		}
+		modifier = {
+			factor = 0
+			EU_parliament_focus_EUXXX_overrule_check = yes
+		}
 	}
 }
 

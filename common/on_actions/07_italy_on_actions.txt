@@ -8,24 +8,58 @@ on_actions = {
 					calculate_interest_rate = yes
 					calculate_debt_rate = yes
 			}
+			if = {
+				limit = {
+					has_dynamic_modifier = { modifier = ITA_party_propaganda_modifier }
+				}
+				set_variable = { party_propaganda_sub_var = fascism_propaganda_var }
+				add_to_variable = { party_propaganda_sub_var = communism_propaganda_var }
+				add_to_variable = { party_propaganda_sub_var = democratic_propaganda_var }
+				add_to_variable = { party_propaganda_sub_var = neutrality_propaganda_var }
+				add_to_variable = { party_propaganda_sub_var = nationalist_propaganda_var }
+				multiply_variable = { party_propaganda_sub_var = 0.01 }
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 0 }
+					}
+					add_to_variable = { party_pop_array^0 = party_propaganda_sub_var }
+				}
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 7 }
+					}
+					add_to_variable = { party_pop_array^7 = party_propaganda_sub_var }
+				}
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 13 }
+					}
+					add_to_variable = { party_pop_array^13 = party_propaganda_sub_var }
+				}
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 15 }
+					}
+					add_to_variable = { party_pop_array^15 = party_propaganda_sub_var }
+				}
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 21 }
+					}
+					add_to_variable = { party_pop_array^21 = party_propaganda_sub_var }
+				}
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 23 }
+					}
+					add_to_variable = { party_pop_array^23 = party_propaganda_sub_var }
+				}
+			}
 			add_to_variable = { rsde_counter = 1 } #i have to do this because i can't add extra decimals
 			if = {
 				limit = {
 					check_variable = { rsde_counter > 19 }
-					OR = {
-						AND = {
-							has_completed_focus = ITA_dismantle_parliament
-							OR = {
-								has_completed_focus = ITA_repeal_former_government_measures_6
-								has_completed_focus = ITA_repeal_former_government_measures_7
-								has_completed_focus = ITA_repeal_former_government_measures_8
-								has_completed_focus = ITA_repeal_former_government_measures_9
-							}
-						}
-						NOT = {
-							has_completed_focus = ITA_dismantle_parliament
-						}
-					}
+					has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
 				}
 					ruling_subparty_drift_effect = yes #related to reform expectance dynamic modifier
 					set_variable = { rsde_counter = 1 }
@@ -58,9 +92,11 @@ on_actions = {
 	}
 	on_weekly_ITA = {
 		effect = {
+			prevent_parties_disappearing = yes
 			if = { #infiltrations_var increase state construction time
 				limit = { has_idea = ITA_mafia }
 					update_police_effectivness = yes
+					mafia_event_counters = yes
 					83 = {
 						set_variable = { cosa_nostra_infiltrations_var = ROOT.cosa_nostra_strength }
 						multiply_variable = { cosa_nostra_infiltrations_var = 100 }
@@ -131,191 +167,15 @@ on_actions = {
 			if = { #space stuff
 				limit = { has_completed_focus = ITA_increase_ASI_funding }
 					multiply_variable = { ITA_space_income_var = 0.99 } #decay of space revenue
-					add_to_variable = { ITA_peoples_support = -1 } #space enthusiasm decay over time
+					add_to_variable = { ITA_peoples_support = -3 } #space enthusiasm decay over time
+					if = {
+						limit = { has_completed_focus = ITA_fight_scientific_illiteracy }
+							add_to_variable = { ITA_peoples_support = 2 }
+					}
 			}
-			if = { #monthly drifts in mafia strength, base value plus focus effects
+			if = {
 				limit = { has_idea = ITA_mafia }
-					if = {
-						limit = {
-							check_variable = { mafia_strength < 0.100 }
-						}							
-							add_to_variable = { cosa_nostra_strength = 0.012 }
-							add_to_variable = { camorra_strength = 0.012 }
-							add_to_variable = { ndrangheta_strength = 0.012 }
-							add_to_variable = { sacra_corona_unita_strength = 0.012 }
-					}
-					else_if = {
-						limit = { 
-							check_variable = { mafia_strength > 0.099 }
-							check_variable = { mafia_strength < 0.400 }
-						}
-							add_to_variable = { cosa_nostra_strength = 0.006 }
-							add_to_variable = { camorra_strength = 0.006 }
-							add_to_variable = { ndrangheta_strength = 0.006 }
-							add_to_variable = { sacra_corona_unita_strength = 0.006 }
-					}
-					else_if = {
-						limit = { 
-							check_variable = { mafia_strength > 0.399 }
-							check_variable = { mafia_strength < 0.666 }
-						}
-							add_to_variable = { cosa_nostra_strength = 0.004 }
-							add_to_variable = { camorra_strength = 0.004 }
-							add_to_variable = { ndrangheta_strength = 0.004 }
-							add_to_variable = { sacra_corona_unita_strength = 0.004 }
-					}
-					else_if = {
-						limit = { 
-							check_variable = { mafia_strength > 0.665 }
-						}
-							add_to_variable = { cosa_nostra_strength = 0.002 }
-							add_to_variable = { camorra_strength = 0.002 }
-							add_to_variable = { ndrangheta_strength = 0.002 }
-							add_to_variable = { sacra_corona_unita_strength = 0.002 }
-					}
-					if = {
-						limit = { has_idea = ITA_legalized_light_drugs }
-							add_to_variable = { cosa_nostra_strength = -0.004 }
-							add_to_variable = { camorra_strength = -0.4 }
-							add_to_variable = { ndrangheta_strength = -0.004 }
-							add_to_variable = { sacra_corona_unita_strength = -0.004 }
-					}
-					if = {
-						limit = { has_completed_focus = ITA_anti_mafia_education }
-							add_to_variable = { cosa_nostra_strength = -0.002 }
-							add_to_variable = { camorra_strength = -0.002 }
-							add_to_variable = { ndrangheta_strength = -0.002 }
-							add_to_variable = { sacra_corona_unita_strength = -0.002 }
-					}
-					if = {
-						limit = { has_completed_focus = ITA_seek_support_of_the_church }
-							add_to_variable = { cosa_nostra_strength = -0.003 }
-							add_to_variable = { camorra_strength = -0.003 }
-							add_to_variable = { ndrangheta_strength = -0.003 }
-							add_to_variable = { sacra_corona_unita_strength = -0.003 }
-					}
-					if = {
-						limit = { has_completed_focus = ITA_turn_the_population_against_them }
-							add_to_variable = { cosa_nostra_strength = -0.004 }
-							add_to_variable = { camorra_strength = -0.004 }
-							add_to_variable = { ndrangheta_strength = -0.004 }
-							add_to_variable = { sacra_corona_unita_strength = -0.004 }
-					}
-					if = {
-						limit = { has_completed_focus = ITA_safeguard_european_development_funds }
-							add_to_variable = { cosa_nostra_strength = -0.001 }
-							add_to_variable = { camorra_strength = -0.001 }
-							add_to_variable = { ndrangheta_strength = -0.001 }
-							add_to_variable = { sacra_corona_unita_strength = -0.001 }
-					}
-					if = {
-						limit = { has_completed_focus = ITA_protect_foreign_investment }
-							add_to_variable = { cosa_nostra_strength = -0.001 }
-							add_to_variable = { camorra_strength = -0.001 }
-							add_to_variable = { ndrangheta_strength = -0.001 }
-							add_to_variable = { sacra_corona_unita_strength = -0.001 }
-					}
-					#recurring mafia events
-					#sicily
-					random_list = {
-						50 = {
-							add_to_variable = { event_counter_1_sicily = 1 }
-						}
-						50 = {
-						}
-					}
-					if = {
-						limit = { check_variable = { event_counter_1_sicily > 2 } }
-							country_event = mafia.6
-							set_variable = { event_counter_1_sicily = 0 }
-					}
-					random_list = {
-						50 = {
-							add_to_variable = { event_counter_2_sicily = 1 }
-						}
-						50 = {
-						}
-					}
-					if = {
-						limit = { check_variable = { event_counter_2_sicily > 2 } }
-							country_event = mafia.9
-							set_variable = { event_counter_2_sicily = 0 }
-					}
-					#campania
-					random_list = {
-						50 = {
-							add_to_variable = { event_counter_1_campania = 1 }
-						}
-						50 = {
-						}
-					}
-					if = {
-						limit = { check_variable = { event_counter_1_campania > 2 } }
-							country_event = mafia.6
-							set_variable = { event_counter_2_campania = 0 }
-					}
-					random_list = {
-						50 = {
-							add_to_variable = { event_counter_2_campania = 1 }
-						}
-						50 = {
-						}
-					}
-					if = {
-						limit = { check_variable = { event_counter_2_campania > 2 } }
-							country_event = mafia.10
-							set_variable = { event_counter_2_campania = 0 }
-					}
-					#calabria
-					random_list = {
-						50 = {
-							add_to_variable = { event_counter_1_calabria = 1 }
-						}
-						50 = {
-						}
-					}
-					if = {
-						limit = { check_variable = { event_counter_1_calabria > 2 } }
-							country_event = mafia.7
-							set_variable = { event_counter_1_calabria = 0 }
-					}
-					random_list = {
-						50 = {
-							add_to_variable = { event_counter_2_calabria = 1 }
-						}
-						50 = {
-						}
-					}
-					if = {
-						limit = { check_variable = { event_counter_2_calabria > 2 } }
-							country_event = mafia.11
-							set_variable = { event_counter_2_calabria = 0 }
-					}
-					#puglia
-					random_list = {
-						50 = {
-							add_to_variable = { event_counter_1_puglia = 1 }
-						}
-						50 = {
-						}
-					}
-					if = {
-						limit = { check_variable = { event_counter_1_puglia > 2 } }
-							country_event = mafia.8
-							set_variable = { event_counter_1_puglia = 0 }
-					}
-					random_list = {
-						50 = {
-							add_to_variable = { event_counter_2_puglia = 1 }
-						}
-						50 = {
-						}
-					}
-					if = {
-						limit = { check_variable = { event_counter_2_puglia > 2 } }
-							country_event = mafia.12
-							set_variable = { event_counter_2_puglia = 0 }
-					}
+					mafia_monthly_drift = yes
 			}
 			if = {
 				limit = {
