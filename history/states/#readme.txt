@@ -3,11 +3,11 @@
 #if you create a new state, remember these key things:	
  # transfer resources, factories, population etc accordingly (ex. if you split a state in two)
  # set the correct state_category according to the population (see the list at the bottom)
- # victory points be put in the correct state
+ # victory points be put in the correct state file
  # make sure provinces don't overlap in two different states
  # buildings are corrected in nudge, that goes for unitstacks aswell if provinces are altered
  # if the game crashes on start up ask for help (its most likely air bases in wrong prov)
- # read the error log for any mentions of the former or new state
+ # read the error log for any mentions of the former or new state added
 #
 #if you mod in an existing state make sure that:
  # everything said above is correct
