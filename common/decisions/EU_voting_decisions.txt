@@ -274,6 +274,7 @@ EU_voting_category = {
 	EU_AI_influence_cheat = {
 	
 		available = {
+			NOT = { influence_on_all_other_EU_members_5_percent = yes }
 			OR = { ### add new focus flag here so that AI can activate the voting decision
 				AND = {
 					has_country_flag = focus_EU101
@@ -507,7 +508,7 @@ EU_voting_category = {
 					has_country_flag = focus_EU405
 					NOT = {
 						has_country_flag = focus_EU405_yes
-					}
+					}					
 				}
 				AND = {
 					has_country_flag = focus_EU405_QMV
@@ -733,30 +734,65 @@ EU_voting_category = {
 		
 		complete_effect = {
 			log = "[GetDateText]: [ROOT.GetName]: decision EU_AI_influence_cheat"
+			#every_country = {
+			#	limit = {
+			#		has_idea = EU_member
+			#		NOT = { original_tag = ROOT }
+			#	}
+			#	for_loop_effect = { 
+			#		end = influence_array^num value = v 
+			#			if = { 
+			#				limit = { 
+			#					check_variable = { influence_array^v = ROOT } 
+			#				} 
+			#				add_to_variable = { influence_array_val^v = 5 }
+			#				set_country_flag = found 
+			#			} 
+			#	} 
+			#	if = { 
+			#		limit = { 
+			#			NOT = { has_country_flag = found } 
+			#		} 
+			#		add_to_array = { influence_array = ROOT.id }
+			#		add_to_array = { influence_array_val = 5 } 
+			#	} 
+			#	clr_country_flag = found
+			#	recalculate_influence = yes				
+			#}
+			#### version of EU 1.0.5.20
+			#for_each_scope_loop = {
+			#	array = global.EU_member
+			#	set_temp_variable = { influence_gain = influence_total }
+			#	multiply_temp_variable = { influence_gain = 1.05 }
+			#	multiply_temp_variable = { influence_gain = 0.05 }
+			#	for_loop_effect = {
+			#		end = influence_array^num
+			#		value = v
+			#		if = {
+			#			limit = { 
+			#				check_variable = { influence_array^v = ROOT }
+			#				check_variable = { influence_array_calc^v < 0.06 }
+			#			}
+			#			add_to_variable = { influence_array_val^v = influence_gain }
+			#			set_country_flag = found
+			#		}
+			#	}
+			#	if = {
+			#		limit = { NOT = { has_country_flag = found tag = ROOT } }
+			#		add_to_array = { influence_array = ROOT.id }
+			#		add_to_array = { influence_array_val = influence_gain }
+			#	}
+			#	clr_country_flag = found
+			#	recalculate_influence = yes
+			#}
+			#### end of version of EU 1.0.5.20
 			every_country = {
 				limit = {
 					has_idea = EU_member
 					NOT = { original_tag = ROOT }
+					NOT = { ROOT_influence_on_THIS_5_percent = yes }
 				}
-				for_loop_effect = { 
-					end = influence_array^num value = v 
-						if = { 
-							limit = { 
-								check_variable = { influence_array^v = ROOT } 
-							} 
-							add_to_variable = { influence_array_val^v = 5 }
-							set_country_flag = found 
-						} 
-				} 
-				if = { 
-					limit = { 
-						NOT = { has_country_flag = found } 
-					} 
-					add_to_array = { influence_array = ROOT.id }
-					add_to_array = { influence_array_val = 5 } 
-				} 
-				clr_country_flag = found
-				recalculate_influence = yes				
+				generic_grant_1_percent_influence_of_PREV = yes
 			}
 		}
 		ai_will_do = {
