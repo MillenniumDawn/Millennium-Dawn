@@ -392,10 +392,30 @@ set_missile_model = {
 set_warhead = {
 	meta_effect = {
 		text = {
-			set_missile_[warhead] = yes
+			set_warhead_[warhead] = yes
 		}
 		warhead = "[?missile_warhead_array^i]"
 	}
+}
+
+### add new buildings here
+set_warhead_targets = {
+	add_to_array = { target_building_1_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_2_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_3_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_4_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_5_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_6_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_7_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_8_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_9_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_10_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_11_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_12_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_13_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_14_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_15_array = var_missile_trajectory_ID }
+	add_to_array = { target_building_16_array = var_missile_trajectory_ID }
 }
 
 set_missile_defense_tech = {
@@ -408,36 +428,43 @@ set_missile_defense_tech = {
 	set_variable = { var_ship_ABM_launcher_tech = 1 }
 }
 
-set_missile_damage = {
-	meta_effect = {
-		text = {
-			set_temp_variable = { temp1 = var_missile_target_hit }
-			while_loop_effect = {
-				limit = {
-					check_variable = { temp1 > 0 }
-				}
-				[target_point_ID] = {
+### old try didn't work
+set_missile_damage_old = {
+	set_temp_variable = { temp1 = var_missile_target_hit }
+	log = "log set_missile_damage a [?temp1]"
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp1 > 0 }
+		}
+		log = "log set_missile_damage b [?temp1] ID: [?missile_target_point_array^i.GetID]"
+		#meta_effect = {
+			log = "log set_missile_damage ca ID: [?ROOT.missile_target_point_array^i.GetID]"
+			#text = {
+				log = "log set_missile_damage cb ID: [target_point_ID]"
+				539 = { #[target_point_ID] = {
+					log = "log set_missile_damage cc [?temp1] [THIS.GetName]"
 					random_list = {
 						91 = {
 							damage_building = {
 								type = infrastructure
 								damage = var_warhead_damage
 							}
-							set_variable = { var_damage_infrastructure = var_warhead_damage }
+							set_variable = { PREV.var_damage_infrastructure = var_warhead_damage }
+							log = "log set_missile_damage d [?temp1]"
 						}
 						91 = {
 							damage_building = {
 								type = arms_factory
 								damage = var_warhead_damage
 							}
-							set_variable = { var_damage_arms_factory = var_warhead_damage }
+							set_variable = { PREV.var_damage_arms_factory = var_warhead_damage }
 						}
 						91 = {
 							damage_building = {
 								type = industrial_complex
 								damage = var_warhead_damage
 							}
-							set_variable = { var_damage_industrial_complex = var_warhead_damage }
+							set_variable = { PREV.var_damage_industrial_complex = var_warhead_damage }
 						}
 						1 = {
 							damage_building = {
@@ -532,13 +559,65 @@ set_missile_damage = {
 						}
 					}
 				}
-				subtract_from_temp_variable = { temp1 = 1 }
-			}
-			target_point_ID = "[?missile_target_point_array^i.GetID]"
-		}	
+			#}
+			#target_point_ID = "[?missile_target_point_array^i.GetID]" # "[?missile_target_point_array^i.GetID]"
+		#}
 	}
+	subtract_from_temp_variable = { temp1 = 1 }
+	log = "log set_missile_damage e [?temp1]"
+}
 
-
+set_missile_damage = {
+	set_temp_variable = { temp1 = var_missile_target_hit }
+	while_loop_effect = {
+		limit = {
+			check_variable = { temp1 > 0 }
+		}
+		subtract_from_temp_variable = { temp1 = 1 }
+		set_temp_variable = { temp2 = var_warhead_damage }
+		random_list = {
+			50 = {
+				while_loop_effect = {
+					limit = {
+						check_variable = { temp2 > 0 }
+					}
+					subtract_from_temp_variable = { temp2 = 1 }
+					meta_effect = {
+						text = {
+							[target_point_ID] = {
+								damage_building = {
+									type = infrastructure
+									damage = 1
+								}
+							}
+							add_to_variable = { var_damage_infrastructure = 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
+			}
+			50 = {
+				while_loop_effect = {
+					limit = {
+						check_variable = { temp2 > 0 }
+					}
+					subtract_from_temp_variable = { temp2 = 1 }
+					meta_effect = {
+						text = {
+							[target_point_ID] = {
+								damage_building = {
+									type = arms_factory
+									damage = 1
+								}
+							}
+							add_to_variable = { var_damage_arms_factory = 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
+			}
+		}
+	}
 }
 
 ################################################
@@ -574,6 +653,7 @@ missile_on_daily = {
 		### terminal phase vs defense ###
 		terminal_phase_defense = yes
 
+		log = "Target i: [?missile_target_point_array^i.GetName] ID = [?missile_target_point_array^i.GetID]"
 		set_missile_damage = yes
 	}
 }
