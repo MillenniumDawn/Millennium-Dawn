@@ -159,6 +159,7 @@ scripted_gui = {
 
         effects = {
             target_selection_button_click = {
+                set_warhead_targets = yes
                 if = {
                     limit = {
                         has_country_flag = open_MD_target_selection_view
@@ -312,8 +313,9 @@ scripted_gui = {
                 else = {
                     set_country_flag = open_MD_missile_stat_view
                 }
+                ### set stats for current ID ###
+                set_variable = { var_stat_trajectory_ID = var_missile_trajectory_ID }
             }
-
         }
 
         dynamic_lists = {
@@ -349,12 +351,13 @@ scripted_gui = {
                         if = {
                             limit = {
                                 NOT = { check_variable = { var_selected_air_priority_icon = 3 } }
+                                #check_variable = { target_building_[i]_array^var_missile_trajectory_ID = 1 }
                             }
-                            remove_from_array = { target_building_[i]_array = var_missile_trajectory_ID }
+                            ROOT = { remove_from_array = { array = target_building_[i]_array value = 1 index = var_missile_trajectory_ID } }
                             set_variable = { var_selected_air_priority_icon = 3 }
                         }
                         else = {
-                            add_to_array = { target_building_[i]_array = var_missile_trajectory_ID }
+                            ROOT = { add_to_array = { array = target_building_[i]_array value = 1 index = var_missile_trajectory_ID } }
                             set_variable = { var_selected_air_priority_icon = 1 }
                         }
                     }
@@ -380,6 +383,15 @@ scripted_gui = {
 
         visible = {
             has_country_flag = open_MD_missile_stat_view
+        }
+
+        effects = {
+            previous_stat_trajectory_button_click = {
+                subtract_from_variable = { var_stat_trajectory_ID = 1 }
+            }
+            next_stat_trajectory_button_click = {
+                add_to_variable = { var_stat_trajectory_ID = 1 }
+            }
         }
 
         dynamic_lists = {
