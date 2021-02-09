@@ -188,46 +188,46 @@
 	NDefines.NMilitary.UNIT_LEADER_ASSIGN_TRAIT_COST = 25.0 -- 15
 	NDefines.NMilitary.BORDER_WAR_WIN_DAYS_AGAINST_EMPTY_OPPONENTS = 21 -- 14
 	NDefines.NMilitary.XP_GAIN_FOR_SHATTERING = 10.0 -- 30.0
-	NDefines.NMilitary.ANTI_AIR_TARGETTING_TO_CHANCE = 0.0025 -- 0.07
+	NDefines.NMilitary.ANTI_AIR_TARGETTING_TO_CHANCE = 0.01 -- 0.07
 	NDefines.NMilitary.ANTI_AIR_ATTACK_TO_AMOUNT = 0.001 -- 0.005
 	NDefines.NMilitary.MAX_ARMY_EXPERIENCE = 1000 --500 --Increased AMax Experience cuz reasons
 	NDefines.NMilitary.MAX_AIR_EXPERIENCE = 1000 --500
 	NDefines.NMilitary.MAX_NAVY_EXPERIENCE = 1000 --500
 	NDefines.NMilitary.SHIP_MORALE_TO_ORG_REGAIN_BASE = 0.30 -- buffed from 0.2 -- Handles the Hourly Reorganization
 
-	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 200 -- 100
-	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 200 -- 100
-	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 400 -- 100
+	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 250 -- 100
+	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 500 -- 100
+	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 350 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_SPEED = 4000 -- 150
 	NDefines.NAir.AIR_WING_MAX_STATS_BOMBING = 500 -- 100
 	NDefines.NAir.AIR_WING_BOMB_DAMAGE_FACTOR = 55 -- 2
 	NDefines.NAir.COMBAT_STAT_IMPORTANCE_SPEED = 0.5 -- 1
 	NDefines.NAir.COMBAT_STAT_IMPORTANCE_AGILITY = 2 -- 1
-	NDefines.NAir.COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.75 -- 0.45
+	NDefines.NAir.COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.85 -- 0.45
 	NDefines.NAir.COMBAT_AMOUNT_DIFF_AFFECT_GANG_CHANCE = 0.4 -- 0.5
-	NDefines.NAir.COMBAT_ONE_ON_ONE_CHANCE = 0.5 -- 0.6
-	NDefines.NAir.COMBAT_SITUATION_WIN_CHANCE_FROM_STATS = 3.5 -- 0.3
+	NDefines.NAir.COMBAT_ONE_ON_ONE_CHANCE = 0.7 -- 0.6
+	NDefines.NAir.COMBAT_SITUATION_WIN_CHANCE_FROM_STATS = 1.5 -- 0.3
 	NDefines.NAir.COMBAT_SITUATION_WIN_CHANCE_FROM_GANG = 0.8 -- 0.3
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 7500 -- 10000 --Upped the count to ensure more airusages and coverage
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 5000 -- 10000
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 8500 -- 10000 --Upped the count to ensure more airusages and coverage
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 6000 -- 10000
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 2500 -- 10000
-	NDefines.NAir.DETECT_CHANCE_FROM_AIRCRAFTS_EFFECTIVE_COUNT = 150 -- 3000
+	NDefines.NAir.DETECT_CHANCE_FROM_AIRCRAFTS_EFFECTIVE_COUNT = 350 -- 3000
 	NDefines.NAir.DETECT_CHANCE_FROM_NIGHT = -0.05 -- -0.2
 	NDefines.NAir.CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 3 -- 4
 	NDefines.NAir.HOURS_DELAY_AFTER_EACH_COMBAT = 3 -- 4
-	NDefines.NAir.NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 0.60 -- 0.3
+	NDefines.NAir.NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 0.40 -- 0.3
 	NDefines.NAir.NAVAL_STRIKE_DETECTION_BALANCE_FACTOR = 0.7 -- 0.7
 	NDefines.NAir.NAVAL_RECON_DETECTION_BALANCE_FACTOR = 0.7 -- 0.7
-	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_STR = 3.75 -- 3
+	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_STR = 4 -- 3
 	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_ORG = 3.50 -- 3
 	NDefines.NAir.AIR_AGILITY_TO_NAVAL_STRIKE_AGILITY = 0.02 -- 0.01
 	NDefines.NAir.BASE_STRATEGIC_BOMBING_HIT_PLANE_DAMAGE_FACTOR = 50 -- 0.2
-	NDefines.NAir.AIR_COMBAT_FINAL_DAMAGE_SCALE = 0.03 -- 0.015
+	NDefines.NAir.AIR_COMBAT_FINAL_DAMAGE_SCALE = 0.025 -- 0.015
 	NDefines.NAir.ANTI_AIR_PLANE_DAMAGE_FACTOR = 0.02 -- 0.1
-	NDefines.NAir.ANTI_AIR_PLANE_DAMAGE_CHANCE = 0.05 -- 0.1
+	NDefines.NAir.ANTI_AIR_PLANE_DAMAGE_CHANCE = 0.04 -- 0.1
 	NDefines.NAir.AIR_DEPLOYMENT_DAYS = 1 -- 2
-	NDefines.NAir.ANTI_AIR_ATTACK_TO_DAMAGE_REDUCTION_FACTOR = 0.50 -- 1.0
-	NDefines.NAir.NAVAL_COMBAT_EXTERNAL_PLANES_JOIN_RATIO = 0.04
+	NDefines.NAir.ANTI_AIR_ATTACK_TO_DAMAGE_REDUCTION_FACTOR = 0.10 -- 1.0
+	NDefines.NAir.NAVAL_COMBAT_EXTERNAL_PLANES_JOIN_RATIO = 0.02
 	NDefines.NAir.NAVAL_COMBAT_EXTERNAL_PLANES_JOIN_RATIO_PER_DAY = 0.2
 	NDefines.NAir.NAVAL_COMBAT_EXTERNAL_PLANES_MIN_CAP = 4
 
@@ -238,24 +238,24 @@
 	NDefines.NNavy.COMBAT_LOW_ORG_HIT_CHANCE_PENALTY = -0.8 -- -0.5
 	NDefines.NNavy.COMBAT_TORPEDO_CRITICAL_CHANCE = 0.85 -- 0.2
 	NDefines.NNavy.COMBAT_TORPEDO_CRITICAL_DAMAGE_MULT = 5.0 -- 2.0
-	NDefines.NNavy.COMBAT_DAMAGE_TO_STR_FACTOR = 3.5 -- 1.6
-	NDefines.NNavy.COMBAT_DAMAGE_TO_ORG_FACTOR = 3.8 -- 1.9
-	NDefines.NNavy.COMBAT_DAMAGE_REDUCTION_ON_RETREAT = 0.5 -- 0.8
-	NDefines.NNavy.COMBAT_ESCAPING_SPEED_BALANCE = 0.6 -- 0.8
+	NDefines.NNavy.COMBAT_DAMAGE_TO_STR_FACTOR = 1.6 -- 1.6
+	NDefines.NNavy.COMBAT_DAMAGE_TO_ORG_FACTOR = 1.9 -- 1.9
+	NDefines.NNavy.COMBAT_DAMAGE_REDUCTION_ON_RETREAT = 0.4 -- 0.8
+	NDefines.NNavy.COMBAT_ESCAPING_SPEED_BALANCE = 0.9 -- 0.8
 	NDefines.NNavy.COMBAT_SHIP_SPEED_TO_FIELD_FACTOR = 0.3 -- 0.03
 	NDefines.NNavy.COMBAT_MAX_DISTANCE_TO_CENTER_LINE = 350 -- 50
 	NDefines.NNavy.COMBAT_MAX_DISTANCE_TO_ARRIVE = 600 -- 80
 	NDefines.NNavy.COMBAT_MIN_DURATION = 18 -- 8
-	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_HIGH = 0.7 -- 0.9
+	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_HIGH = 0.9 -- 0.9
 	NDefines.NNavy.NAVY_EXPENSIVE_IC = 9500 -- 5500
 	NDefines.NNavy.CONVOY_EFFICIENCY_MIN_VALUE = 0.1 -- 0.05
 	NDefines.NNavy.AMPHIBIOUS_LANDING_PENALTY = -0.5 -- -0.7
 	NDefines.NNavy.BASE_CARRIER_SORTIE_EFFICIENCY = 0.5 -- 0.5
-	NDefines.NNavy.NAVAL_SPEED_MODIFIER = 0.06 -- 0.1
+	NDefines.NNavy.NAVAL_SPEED_MODIFIER = 0.1 -- 0.1
 	NDefines.NNavy.NAVAL_INVASION_PREPARE_HOURS = 96 -- 168
-	NDefines.NNavy.ANTI_AIR_TARGETING = 20.7 -- 0.9
-	NDefines.NNavy.ANTI_AIR_TARGETTING_TO_CHANCE = 0.2 -- 0.2
-	NDefines.NNavy.ANTI_AIR_ATTACK_TO_AMOUNT = 0.001 -- 0.001
+	NDefines.NNavy.ANTI_AIR_TARGETING = 12.5 -- 0.9
+	NDefines.NNavy.ANTI_AIR_TARGETTING_TO_CHANCE = 0.0095 -- 0.07
+	NDefines.NNavy.ANTI_AIR_ATTACK_TO_AMOUNT = 0.001 -- 0.005
 	NDefines.NNavy.MISSION_FUEL_COSTS = {
 		0.0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		0.8, -- PATROL
@@ -268,11 +268,11 @@
 		0.0, -- RESERVE_FLEET (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		1.0, -- NAVAL_INVASION_SUPPORT (does not cost fuel at base, only costs while doing bombardment and escorting units)
 	}
-	NDefines.NNavy.BASE_SPOTTING_FROM_AIR_SUPERIORITY = 10 -- Reduced by 50% -- Should help subs
-	NDefines.NNavy.SPOTTING_MULTIPLIER_FOR_SUB = 0.90 -- Reduced by 10% -- Should help subs
-	NDefines.NNavy.SPOTTING_MULTIPLIER_FOR_SURFACE = 1.1 -- buffed by 10%
+	NDefines.NNavy.BASE_SPOTTING_FROM_AIR_SUPERIORITY = 15 -- Reduced by 50% -- Should help subs
+	NDefines.NNavy.SPOTTING_MULTIPLIER_FOR_SUB = 0.85 -- Reduced by 10% -- Should help subs
+	NDefines.NNavy.SPOTTING_MULTIPLIER_FOR_SURFACE = 1.2 -- buffed by 10%
 	NDefines.NNavy.ESCAPE_SPEED_HIDDEN_SUB = 0.35 --escape speed
-	NDefines.NNavy.ESCAPE_SPEED_SUB_BASE = 0.20 -- escape speed base
+	NDefines.NNavy.ESCAPE_SPEED_SUB_BASE = 0.40 -- escape speed base
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE = 20 -- huge buff to subs detection
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_EFFECT = 0.3
 	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2
@@ -296,13 +296,13 @@
 		100, -- NAVAL INVASION SUPPORT
 	}
 	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2 		-- optimum carrier count for carrier taskforces
-	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 12 		-- optimum capital count for capital taskforces
+	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 4 		-- optimum capital count for capital taskforces
 	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 12			-- optimum screen count for screen taskforces
-	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 8				-- optimum sub count for sub taskforces
+	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 4				-- optimum sub count for sub taskforces
 
-	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 6			-- carrier fleets will at least have this amount of capitals
-	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 6				-- capital to carrier count in carrier taskfoces
-	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 2					-- screens to capital/carrier count in carrier & capital taskforces
+	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2			-- carrier fleets will at least have this amount of capitals
+	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 2				-- capital to carrier count in carrier taskfoces
+	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 4					-- screens to capital/carrier count in carrier & capital taskforces
 
 
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
