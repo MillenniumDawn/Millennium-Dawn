@@ -50,6 +50,7 @@ scripted_gui = {
             }
             MD_missiles_target_button_click = {
                 ROOT = {
+                    set_country_flag = has_trajectory
                     clr_country_flag = search_target_point
                     add_to_array = {
                         array = missile_target_point_array
@@ -182,7 +183,7 @@ scripted_gui = {
 
         effects = {
             target_selection_button_click = {
-                set_warhead_targets = yes
+                set_country_flag = has_targets_selected
                 if = {
                     limit = {
                         has_country_flag = open_MD_target_selection_view
@@ -191,10 +192,12 @@ scripted_gui = {
                 }
                 else = {
                     set_country_flag = open_MD_target_selection_view
+                    set_warhead_targets = yes
                 }
             }
             ### temp for testing ###
             missile_model_button_click = {
+                set_country_flag = has_missile_model
                 add_to_variable = { var_gui_missile_type = 1 }
                 add_to_variable = { var_gui_missile_tech = 1 }
             }
@@ -203,6 +206,7 @@ scripted_gui = {
                 subtract_from_variable = { var_gui_missile_tech = 1 }
             }
             warhead_button_click = {
+                set_country_flag = has_warhead
                 add_to_variable = { var_gui_warhead = 1 }
             }
             warhead_button_right_click = {
@@ -304,7 +308,11 @@ scripted_gui = {
                 set_variable = { var_total_firing = var_gui_salvo }
                 multiply_variable = { var_total_firing = var_gui_duration }
             }
-            fire_button_click = {                
+            fire_button_click = {
+                clr_country_flag = has_trajectory
+                clr_country_flag = has_missile_model
+                clr_country_flag = has_warhead
+                clr_country_flag = has_targets_selected                
                 add_to_array = {
                     missile_type_array = var_gui_missile_type
                     index = var_missile_trajectory_ID
@@ -337,7 +345,21 @@ scripted_gui = {
                     set_country_flag = open_MD_missile_stat_view
                 }
                 ### set stats for current ID ###
-                set_variable = { var_stat_trajectory_ID = var_missile_trajectory_ID }
+                set_variable = { var_stat_trajectory_ID = 0 } # var_missile_trajectory_ID
+            }
+        }
+
+        triggers = {
+            fire_button_click_enabled = {
+                has_country_flag = has_trajectory
+                has_country_flag = has_missile_model
+                has_country_flag = has_warhead
+                has_country_flag = has_targets_selected
+            }
+            target_selection_button_click_enabled = {
+                has_country_flag = has_trajectory
+                has_country_flag = has_missile_model
+                has_country_flag = has_warhead
             }
         }
 
@@ -371,18 +393,18 @@ scripted_gui = {
             building_button_click = {
                 meta_effect = {
                     text = {
-                        if = {
-                            limit = {
-                                NOT = { check_variable = { var_selected_air_priority_icon = 3 } }
-                                #check_variable = { target_building_[i]_array^var_missile_trajectory_ID = 1 }
-                            }
-                            ROOT = { remove_from_array = { array = target_building_[i]_array value = 1 index = var_missile_trajectory_ID } }
+                        #if = {
+                        #    limit = {
+                        #        NOT = { check_variable = { var_selected_air_priority_icon = 3 } }
+                        #        #check_variable = { target_building_[i]_array^var_missile_trajectory_ID = 1 }
+                        #    }
+                            ROOT = { remove_from_array = { array = target_building_[i]_array value = 1 index = var_missile_trajectory_ID } } #remove_from_array = { array = ROOT.target_building_[i]_array value = 1 index = ROOT.var_missile_trajectory_ID } #
                             set_variable = { var_selected_air_priority_icon = 3 }
-                        }
-                        else = {
-                            ROOT = { add_to_array = { array = target_building_[i]_array value = 1 index = var_missile_trajectory_ID } }
-                            set_variable = { var_selected_air_priority_icon = 1 }
-                        }
+                        #}
+                        #else = {
+                        #    ROOT = { add_to_array = { array = target_building_[i]_array value = 1 index = var_missile_trajectory_ID } } #add_to_array = { array = ROOT.target_building_[i]_array value = 1 index = ROOT.var_missile_trajectory_ID } #
+                        #    set_variable = { var_selected_air_priority_icon = 1 }
+                        #}
                     }
                     i = "[?global.building_array^i]"
                 }
