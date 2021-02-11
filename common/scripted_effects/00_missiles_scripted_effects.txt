@@ -249,145 +249,6 @@ set_air_defense_array = {
 }	
 
 
-
-#### old defense check #####
-
-### boost phase vs defense ###
-boost_phase_defense_old = {
-	set_temp_variable = { temp1 = var_salvo }
-	while_loop_effect = {
-		limit = {
-			check_variable = { temp1 > 0 }
-		}
-		randomize_variable = {  
-			var = var_missile_trajectory
-			distribution = uniform
-			min = 0
-			max = 1
-		}
-		subtract_from_temp_variable = { temp1 = 1 }	
-		if = {
-			limit = {						
-				check_variable = { var_intercept_capacity_boost > 0 }
-			}	
-			subtract_from_variable = { var_intercept_capacity_boost = 1 }
-			if = {
-				limit = {	
-					check_variable = { var_missile_trajectory < var_intercept_chance_boost }
-				}					
-				add_to_variable = { var_missile_interception_boost = 1 }
-			}
-			else = {
-				add_to_variable = { var_missile_boost_completed = 1 }
-			}
-		}	
-		else = {
-			add_to_variable = { var_missile_boost_completed = 1 }
-		}
-	}	
-}
-
-### midcourse phase vs defense ###
-midcourse_phase_defense_old = {
-	set_temp_variable = { temp2 = var_missile_boost_completed }
-	while_loop_effect = {
-		limit = {
-			check_variable = { temp2 > 0 }
-		}
-		randomize_variable = {  
-			var = var_missile_trajectory
-			distribution = uniform
-			min = 0
-			max = 1
-		}
-		subtract_from_temp_variable = { temp2 = 1 }	
-		if = {
-			limit = {						
-				check_variable = { var_intercept_capacity_midcourse > 0 }
-			}	
-			subtract_from_variable = { var_intercept_capacity_midcourse = 1 }
-			if = {
-				limit = {	
-					check_variable = { var_missile_trajectory < var_intercept_chance_midcourse }
-				}					
-				add_to_variable = { var_missile_interception_midcourse = 1 }
-			}
-			else = {
-				add_to_variable = { var_missile_midcourse_completed = 1 }
-			}
-		}	
-		else = {
-			add_to_variable = { var_missile_midcourse_completed = 1 }
-		}
-	}	
-}
-
-### terminal phase vs defense ###
-terminal_phase_defense_old = {
-	set_temp_variable = { temp3 = var_missile_midcourse_completed }
-	multiply_temp_variable = { temp3 = var_MIRV }
-	set_temp_variable = { temp4 = var_missile_midcourse_completed }
-	multiply_temp_variable = { temp4 = var_decoy }
-	if = {
-		limit = {
-			check_variable = { temp4 > var_intercept_capacity_terminal }
-		}
-		set_variable = { var_intercept_capacity_terminal = 0 }
-	}
-	else = {
-		subtract_from_variable = { var_intercept_capacity_terminal = temp4 }
-	}
-	while_loop_effect = {
-		limit = {
-			check_variable = { temp3 > 0 }
-		}
-		randomize_variable = {
-			var = var_missile_trajectory
-			distribution = uniform
-			min = 0
-			max = 1
-		}
-		subtract_from_temp_variable = { temp3 = 1 }
-		if = {
-			limit = {
-				check_variable = { var_intercept_capacity_terminal > 0 }
-			}
-			subtract_from_variable = { var_intercept_capacity_terminal = 1 }
-			if = {
-				limit = {
-					check_variable = { var_missile_trajectory < var_intercept_chance_terminal }
-				}
-				add_to_variable = { var_missile_interception_terminal = 1 }
-			}
-			else = {
-				add_to_variable = { var_missile_trajectory = var_accuracy }
-				if = {
-					limit = { check_variable = { var_missile_trajectory > 1 } }
-					add_to_variable = { var_missile_target_hit = 1 }
-				}
-				else = {
-					add_to_variable = { var_missile_target_miss = 1 }
-				}
-			}
-		}
-		else = {
-			add_to_variable = { var_missile_trajectory = var_accuracy }
-			if = {
-				limit = { check_variable = { var_missile_trajectory > 1 } }
-				add_to_variable = { var_missile_target_hit = 1 }
-			}
-			else = {
-				add_to_variable = { var_missile_target_miss = 1 }
-			}
-		}
-	}
-}
-
-### end of old ###
-
-
-#### new defense check #####
-
 ### boost phase vs defense ###
 boost_phase_defense = {
 	set_temp_variable = { temp1 = var_salvo }
@@ -524,6 +385,16 @@ terminal_phase_defense = {
 	add_to_array = { array = missile_interception_terminal_stat_array value = var_missile_interception_terminal index = i }
 	add_to_array = { array = missile_target_miss_stat_array value = var_missile_target_miss index = i }
 	add_to_array = { array = missile_target_hit_stat_array value = var_missile_target_hit index = i }
+	#
+	clear_variable = var_missile_boost_completed
+	clear_variable = var_missile_interception_boost
+	#
+	clear_variable = var_missile_midcourse_completed
+	clear_variable = var_missile_interception_midcourse
+	#
+	clear_variable = var_missile_interception_terminal
+	clear_variable = var_missile_target_miss
+	clear_variable = var_missile_target_hit
 }
 
 
@@ -558,28 +429,28 @@ set_warhead = {
 ### add new buildings here
 set_warhead_targets = {
 	log = "log set_warhead_targets [?var_missile_trajectory_ID]"
-	if = {
-		limit = {
-			NOT = { has_country_flag = warhead_targets@var_missile_trajectory_ID }
-		}
-		set_country_flag = warhead_targets@var_missile_trajectory_ID
-		add_to_array = { target_building_1_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_2_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_3_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_4_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_5_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_6_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_7_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_8_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_9_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_10_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_11_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_12_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_13_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_14_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_15_array = 1 index = var_missile_trajectory_ID }
-		add_to_array = { target_building_16_array = 1 index = var_missile_trajectory_ID }
-	}
+	#if = {
+	#	limit = {
+	#		NOT = { has_country_flag = warhead_targets@var_missile_trajectory_ID }
+	#	}
+	#	set_country_flag = warhead_targets@var_missile_trajectory_ID
+		add_to_array = { array = target_building_1_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_2_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_3_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_4_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_5_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_6_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_7_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_8_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_9_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_10_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_11_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_12_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_13_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_14_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_15_array value = 1 index = var_missile_trajectory_ID }
+		add_to_array = { array = target_building_16_array value = 1 index = var_missile_trajectory_ID }
+	#}
 }
 
 ### add new buildings here
@@ -617,7 +488,7 @@ set_missile_defense_tech = {
 
 
 set_missile_damage = {
-	set_temp_variable = { temp1 = var_missile_target_hit }
+	set_temp_variable = { temp1 = missile_target_hit_stat_array^i } # var_missile_target_hit 
 	while_loop_effect = {
 		limit = {
 			check_variable = { temp1 > 0 }
