@@ -96,6 +96,9 @@
 	NDefines.NProduction.EQUIPMENT_MODULE_REPLACE_XP_COST = 6.0				-- XP cost for replacing one equipment module with an unrelated module when creating an equipment variant.
 	NDefines.NProduction.EQUIPMENT_MODULE_CONVERT_XP_COST = 3.0				-- XP cost for converting one equipment module to a related module when creating an equipment variant.
 	NDefines.NProduction.MIN_NAVAL_EQUIPMENT_CONVERSION_IC_COST_FACTOR = 0.1
+	NDefines.NProduction.DEFAULT_MAX_NAV_FACTORIES_PER_LINE = 5
+	NDefines.NProduction.CONVOY_MAX_NAV_FACTORIES_PER_LINE = 15
+	NDefines.NProduction.CAPITAL_SHIP_MAX_NAV_FACTORIES_PER_LINE = 5
 
 	NDefines.NTechnology.MAX_SUBTECHS = 5
 	NDefines.NTechnology.BASE_YEAR_AHEAD_PENALTY_FACTOR = 1.0
