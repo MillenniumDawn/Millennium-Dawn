@@ -312,7 +312,7 @@ scripted_gui = {
                 clr_country_flag = has_trajectory
                 clr_country_flag = has_missile_model
                 clr_country_flag = has_warhead
-                clr_country_flag = has_targets_selected                
+                clr_country_flag = has_targets_selected
                 add_to_array = {
                     missile_type_array = var_gui_missile_type
                     index = var_missile_trajectory_ID
@@ -393,30 +393,51 @@ scripted_gui = {
             building_button_click = {
                 meta_effect = {
                     text = {
-                        #if = {
-                        #    limit = {
-                        #        NOT = { check_variable = { var_selected_air_priority_icon = 3 } }
-                        #        #check_variable = { target_building_[i]_array^var_missile_trajectory_ID = 1 }
-                        #    }
+                        if = {
+                            limit = {
+                                NOT = { check_variable = { var_selected_air_priority_icon = 3 } } #NOT = { check_variable = { selected_air_priority_icon_array^i = 3 } } 
+                                #check_variable = { target_building_[i]_array^var_missile_trajectory_ID = 1 }
+                            }
                             ROOT = { remove_from_array = { array = target_building_[i]_array value = 1 index = var_missile_trajectory_ID } } #remove_from_array = { array = ROOT.target_building_[i]_array value = 1 index = ROOT.var_missile_trajectory_ID } #
                             set_variable = { var_selected_air_priority_icon = 3 }
-                        #}
-                        #else = {
-                        #    ROOT = { add_to_array = { array = target_building_[i]_array value = 1 index = var_missile_trajectory_ID } } #add_to_array = { array = ROOT.target_building_[i]_array value = 1 index = ROOT.var_missile_trajectory_ID } #
-                        #    set_variable = { var_selected_air_priority_icon = 1 }
-                        #}
+                            #add_to_array = { array = selected_air_priority_icon_array value = 3 index = var_missile_trajectory_ID }
+                        }
+                        else = {
+                            ROOT = { add_to_array = { array = target_building_[i]_array value = 1 index = var_missile_trajectory_ID } } #add_to_array = { array = ROOT.target_building_[i]_array value = 1 index = ROOT.var_missile_trajectory_ID } #
+                            set_variable = { var_selected_air_priority_icon = 1 }
+                            #add_to_array = { array = selected_air_priority_icon_array value = 1 index = var_missile_trajectory_ID }
+                        }
                     }
                     i = "[?global.building_array^i]"
                 }
             }
         }
-
+        triggers = {
+            # building_button_click_enabled = {
+            #     meta_trigger = {
+            #         text = {
+            #             if = {
+            #                 limit = {
+            #                     check_variable = { target_building_[i]_array^var_missile_trajectory_ID = 1 }
+            #                 }
+            #                 set_temp_variable  = { var_selected_air_priority_icon = 3 }
+            #             }
+            #             else = {
+            #                 set_temp_variable = { var_selected_air_priority_icon = 1 }
+            #             }
+            #         }
+            #         i = "[?global.building_array^i]"
+            #     }
+            # }
+        }
         properties = {
             building_button = {
                 frame = global.building_array^i # frame = global.building_array^i
             }
             selected_air_priority_icon = {
+                #frame = selected_air_priority_icon_frame
                 frame = var_selected_air_priority_icon
+                #frame = selected_air_priority_icon_array^i
             }
         }
     }
