@@ -307,10 +307,10 @@ set_missile_trajectory_test_vars = {
 
 
 set_landbased_missile_defense_cap = {
-	set_variable = { var_intercept_capacity_boost = 0 }
-	set_variable = { var_intercept_capacity_midcourse = 0 }
-	set_variable = { var_intercept_capacity_terminal = 0 }
-	var:ROOT.missile_target_controller_array^i = {
+	set_variable = { ROOT.var_intercept_capacity_boost = 0 }
+	set_variable = { ROOT.var_intercept_capacity_midcourse = 0 }
+	set_variable = { ROOT.var_intercept_capacity_terminal = 0 }
+	#var:ROOT.missile_target_controller_array^i = {
 		meta_effect = {
 			text = {
 				### boost phase defense ###
@@ -399,7 +399,7 @@ set_landbased_missile_defense_cap = {
 			SAM_range = "[?var_SAM_range]"
 			ABM_range = "[?var_ABM_range]"
 		}
-	}
+	#}
 }
 
 set_seabased_missile_defense_cap = {
@@ -498,38 +498,38 @@ set_seabased_missile_defense_cap = {
 }
 
 ### seabased to do ###
-check_landbased_missile_defense_cap_vs_deployed = {
-	var:ROOT.missile_target_controller_array^i = {
-		set_temp_variable = { temp_cap_SAM = ROOT.var_intercept_capacity_boost }
-		add_to_temp_variable = { temp_cap_SAM = ROOT.var_intercept_capacity_terminal }
-		### SAM ###
-		if = {
-			limit = {
-				check_variable = { temp_cap_SAM > var_deployed_SAM_total }
-			}
-			set_temp_variable = { temp_cap_half_SAM = var_deployed_SAM_total }
-			divide_temp_variable = { temp_cap_half_SAM = 2 }
-			set_variable = { ROOT.var_intercept_capacity_boost = temp_cap_half_SAM }
-			set_variable = { ROOT.var_intercept_capacity_terminal = temp_cap_half_SAM }
-		}
-		### ABM ###
-		if = {
-			limit = {
-				check_variable = { ROOT.var_intercept_capacity_midcourse > var_deployed_ABM_total }
-			}
-			set_variable = { ROOT.var_intercept_capacity_midcourse = var_deployed_ABM_total }
-		}
-		set_variable = { ROOT.SAM_consumption = 0 }
-		set_variable = { ROOT.ABM_consumption = 0 }
-	}
-}
+# check_landbased_missile_defense_cap_vs_deployed = {
+# 	var:ROOT.missile_target_controller_array^i = {
+# 		set_temp_variable = { temp_cap_SAM = ROOT.var_intercept_capacity_boost }
+# 		add_to_temp_variable = { temp_cap_SAM = ROOT.var_intercept_capacity_terminal }
+# 		### SAM ###
+# 		if = {
+# 			limit = {
+# 				check_variable = { temp_cap_SAM > var_deployed_SAM_total }
+# 			}
+# 			set_temp_variable = { temp_cap_half_SAM = var_deployed_SAM_total }
+# 			divide_temp_variable = { temp_cap_half_SAM = 2 }
+# 			set_variable = { ROOT.var_intercept_capacity_boost = temp_cap_half_SAM }
+# 			set_variable = { ROOT.var_intercept_capacity_terminal = temp_cap_half_SAM }
+# 		}
+# 		### ABM ###
+# 		if = {
+# 			limit = {
+# 				check_variable = { ROOT.var_intercept_capacity_midcourse > var_deployed_ABM_total }
+# 			}
+# 			set_variable = { ROOT.var_intercept_capacity_midcourse = var_deployed_ABM_total }
+# 		}
+# 		set_variable = { ROOT.SAM_consumption = 0 }
+# 		set_variable = { ROOT.ABM_consumption = 0 }
+# 	}
+# }
 
 ### seabased to do ###
-set_landbased_missile_defense_consumption = {
-	var:ROOT.missile_target_controller_array^i = {
-		subtract_from_variable = { var_deployed_SAM_total = ROOT.SAM_consumption }
-		subtract_from_variable = { var_deployed_ABM_total = ROOT.SAM_consumption }
-	}
+#set_landbased_missile_defense_consumption = {
+#	var:ROOT.missile_target_controller_array^i = {
+#		subtract_from_variable = { var_deployed_SAM_total = ROOT.SAM_consumption }
+#		subtract_from_variable = { var_deployed_ABM_total = ROOT.SAM_consumption }
+#	}
 	# ### SAM ###
 	# while_loop_effect = {
 	# 	limit = {
@@ -554,7 +554,7 @@ set_landbased_missile_defense_consumption = {
 	# 		add_to_variable = { ABM_consumption_array^i = 1 } ### localisation / gui to do
 	# 	}
 	# }
-}
+#}
 
 ### ??? ### idk why i did this
 set_air_defense_array = {
@@ -588,8 +588,10 @@ boost_phase_defense = {
 		if = {
 			limit = {						
 				check_variable = { var_intercept_capacity_boost > 0 }
+				check_variable = { PREV.var_deployed_SAM_total > 0 }
 			}	
 			subtract_from_variable = { var_intercept_capacity_boost = 1 }
+			subtract_from_variable = { PREV.var_deployed_SAM_total = 1 }
 			add_to_variable = { SAM_consumption = 1 }
 			if = {
 				limit = {	
@@ -626,8 +628,10 @@ midcourse_phase_defense = {
 		if = {
 			limit = {						
 				check_variable = { var_intercept_capacity_midcourse > 0 }
+				check_variable = { PREV.var_deployed_ABM_total > 0 }
 			}	
 			subtract_from_variable = { var_intercept_capacity_midcourse = 1 }
+			subtract_from_variable = { PREV.var_deployed_ABM_total = 1 }
 			add_to_variable = { ABM_consumption = 1 }
 			if = {
 				limit = {	
@@ -655,13 +659,18 @@ terminal_phase_defense = {
 	multiply_temp_variable = { temp4 = var_decoy }
 	if = {
 		limit = {
-			check_variable = { temp4 > var_intercept_capacity_terminal }
+			OR = {
+				check_variable = { temp4 > var_intercept_capacity_terminal }
+				check_variable = { temp4 > PREV.var_deployed_SAM_total }
+			}
 		}
-		set_variable = { var_intercept_capacity_terminal = 0 }
+		set_variable = { var_intercept_capacity_terminal = 0 } ### to do  OR
+		set_variable = { PREV.var_deployed_SAM_total = 0 } ### to do OR
 		add_to_variable = { SAM_consumption = var_intercept_capacity_terminal }
 	}
 	else = {
 		subtract_from_variable = { var_intercept_capacity_terminal = temp4 }
+		subtract_from_variable = { PREV.var_deployed_SAM_total = temp4 }
 		add_to_variable = { SAM_consumption = temp4 }
 	}
 	while_loop_effect = {
@@ -678,8 +687,10 @@ terminal_phase_defense = {
 		if = {
 			limit = {
 				check_variable = { var_intercept_capacity_terminal > 0 }
+				check_variable = { PREV.var_deployed_SAM_total > 0 }
 			}
 			subtract_from_variable = { var_intercept_capacity_terminal = 1 }
+			subtract_from_variable = { PREV.var_deployed_SAM_total = 1 }
 			add_to_variable = { SAM_consumption = 1 }
 			if = {
 				limit = {
@@ -1322,12 +1333,13 @@ missile_on_daily = {
 
 		#var:ROOT.missile_target_controller_array^i = {
 			#set_missile_defense_land_deployed_tech = yes
+		var:ROOT.missile_target_controller_array^i = {	
 			set_landbased_missile_defense_cap = yes
-
+		}
 			#set_missile_defense_sea_deployed_tech = yes
 			#set_seabased_missile_defense_cap = yes
 
-			check_landbased_missile_defense_cap_vs_deployed = yes
+			#check_landbased_missile_defense_cap_vs_deployed = yes
 			#check_seabased_missile_defense_cap = yes
 		#}
 
@@ -1343,14 +1355,19 @@ missile_on_daily = {
 		}
 		subtract_from_variable = { missile_duration_array^i = 1 }
 
-		### boost phase vs defense ###
-		boost_phase_defense = yes
-		### midcourse phase vs defense ###
-		midcourse_phase_defense = yes
-		### terminal phase vs defense ###
-		terminal_phase_defense = yes
+		### here is the bug !!!!!! ###
+		var:ROOT.missile_target_controller_array^i = {
+			ROOT = {
+				### boost phase vs defense ###
+				boost_phase_defense = yes
+				### midcourse phase vs defense ###
+				midcourse_phase_defense = yes
+				### terminal phase vs defense ###
+				terminal_phase_defense = yes
+			}
+		}
 
-		set_landbased_missile_defense_consumption = yes
+		#set_landbased_missile_defense_consumption = yes
 
 		set_missile_damage = yes
 	}
