@@ -664,9 +664,18 @@ terminal_phase_defense = {
 				check_variable = { temp4 > PREV.var_deployed_SAM_total }
 			}
 		}
-		set_variable = { var_intercept_capacity_terminal = 0 } ### to do  OR
-		set_variable = { PREV.var_deployed_SAM_total = 0 } ### to do OR
-		add_to_variable = { SAM_consumption = var_intercept_capacity_terminal }
+		if = {
+			limit = {
+				check_variable = { PREV.var_deployed_SAM_total > var_intercept_capacity_terminal }
+			}
+			subtract_from_variable = { PREV.var_deployed_SAM_total = var_intercept_capacity_terminal }
+			add_to_variable = { SAM_consumption = var_intercept_capacity_terminal }
+		}
+		else = {
+			add_to_variable = { SAM_consumption = PREV.var_deployed_SAM_total }
+			set_variable = { PREV.var_deployed_SAM_total = 0 }
+		}
+		set_variable = { var_intercept_capacity_terminal = 0 }
 	}
 	else = {
 		subtract_from_variable = { var_intercept_capacity_terminal = temp4 }
@@ -1335,7 +1344,13 @@ missile_on_daily = {
 			#set_missile_defense_land_deployed_tech = yes
 		var:ROOT.missile_target_controller_array^i = {	
 			set_landbased_missile_defense_cap = yes
+
+			### to modify intercept chance create a scripted effect
+			set_variable = { ROOT.var_intercept_chance_boost = var_SAM_intercept_chance }
+			set_variable = { ROOT.var_intercept_chance_midcourse = var_ABM_intercept_chance }
+			set_variable = { ROOT.var_intercept_chance_terminal = var_SAM_intercept_chance }
 		}
+
 			#set_missile_defense_sea_deployed_tech = yes
 			#set_seabased_missile_defense_cap = yes
 
@@ -1355,7 +1370,6 @@ missile_on_daily = {
 		}
 		subtract_from_variable = { missile_duration_array^i = 1 }
 
-		### here is the bug !!!!!! ###
 		var:ROOT.missile_target_controller_array^i = {
 			ROOT = {
 				### boost phase vs defense ###
