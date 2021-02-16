@@ -1,0 +1,191 @@
+on_actions = {
+	on_daily_ITA = { 
+		effect = {
+			if = { #to update the cost of bureaucracy from starting ideas
+				limit = { has_idea = ITA_inefficient_administration_4 }
+					ingame_calculate_size_modifier = yes
+					update_bureaucracy_rate = yes
+					calculate_interest_rate = yes
+					calculate_debt_rate = yes
+			}
+			if = {
+				limit = {
+					has_dynamic_modifier = { modifier = ITA_party_propaganda_modifier }
+				}
+				set_variable = { party_propaganda_sub_var = fascism_propaganda_var }
+				add_to_variable = { party_propaganda_sub_var = communism_propaganda_var }
+				add_to_variable = { party_propaganda_sub_var = democratic_propaganda_var }
+				add_to_variable = { party_propaganda_sub_var = neutrality_propaganda_var }
+				add_to_variable = { party_propaganda_sub_var = nationalist_propaganda_var }
+				multiply_variable = { party_propaganda_sub_var = 0.01 }
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 0 }
+					}
+					add_to_variable = { party_pop_array^0 = party_propaganda_sub_var }
+				}
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 7 }
+					}
+					add_to_variable = { party_pop_array^7 = party_propaganda_sub_var }
+				}
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 13 }
+					}
+					add_to_variable = { party_pop_array^13 = party_propaganda_sub_var }
+				}
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 15 }
+					}
+					add_to_variable = { party_pop_array^15 = party_propaganda_sub_var }
+				}
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 21 }
+					}
+					add_to_variable = { party_pop_array^21 = party_propaganda_sub_var }
+				}
+				if = {
+					limit = {
+						is_in_array = { ruling_party = 23 }
+					}
+					add_to_variable = { party_pop_array^23 = party_propaganda_sub_var }
+				}
+			}
+			add_to_variable = { rsde_counter = 1 } #i have to do this because i can't add extra decimals
+			if = {
+				limit = {
+					check_variable = { rsde_counter > 19 }
+					has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
+				}
+					ruling_subparty_drift_effect = yes #related to reform expectance dynamic modifier
+					set_variable = { rsde_counter = 0 }
+			}
+			if = {
+				limit = { has_idea = ITA_mafia }					
+					clamp_variable = {
+						var = cosa_nostra_strength
+						min = 0
+						max = 1
+					}
+					clamp_variable = {
+						var = camorra_strength
+						min = 0
+						max = 1
+					}
+					clamp_variable = {
+						var = ndrangheta_strength
+						min = 0
+						max = 1
+					}
+					clamp_variable = {
+						var = sacra_corona_unita_strength
+						min = 0
+						max = 1
+					}
+					update_mafia_strength = yes
+			}
+		}
+	}
+	on_weekly_ITA = {
+		effect = {
+			prevent_parties_disappearing = yes
+			if = { #infiltrations_var increase state construction time
+				limit = { has_idea = ITA_mafia }
+					update_police_effectivness = yes
+					mafia_event_counters = yes
+					83 = {
+						set_variable = { cosa_nostra_infiltrations_var = ROOT.cosa_nostra_strength }
+						multiply_variable = { cosa_nostra_infiltrations_var = 100 }
+						round_variable = cosa_nostra_infiltrations_var
+						divide_variable = { cosa_nostra_infiltrations_var = -100 }
+					}
+					82 = {
+						set_variable = { camorra_infiltrations_var = ROOT.camorra_strength }
+						multiply_variable = { camorra_infiltrations_var = 100 }
+						round_variable = camorra_infiltrations_var
+						divide_variable = { camorra_infiltrations_var = -100 }
+					}
+					956 = {
+						set_variable = { ndrangheta_infiltrations_var = ROOT.ndrangheta_strength }
+						multiply_variable = { ndrangheta_infiltrations_var = 100 }
+						round_variable = ndrangheta_infiltrations_var
+						divide_variable = { ndrangheta_infiltrations_var = -100 }
+					}
+					957 = {
+						set_variable = { sacra_corona_unita_infiltrations_var = ROOT.sacra_corona_unita_strength }
+						multiply_variable = { sacra_corona_unita_infiltrations_var = 100 }
+						round_variable = sacra_corona_unita_infiltrations_var
+						divide_variable = { sacra_corona_unita_infiltrations_var = -100 }
+					}
+					if = {
+						limit = { check_variable = { mafia_strength < 0.1 }}
+							add_to_variable = { mafia_defeat_counter = 1 }
+					}
+					else_if = {
+						limit = {
+							AND = {
+								check_variable = { mafia_strength > 0.099 }
+								check_variable = { mafia_defeat_counter > 0 }
+							}
+						}
+							add_to_variable = { mafia_defeat_counter = -1 }
+					}
+					if = {
+						limit = { check_variable = { mafia_defeat_counter > 99 }}
+							country_event = italy_md.32
+							set_variable = { mafia_defeat_counter = 0 }
+					}
+			}
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							has_completed_focus = ITA_dismantle_parliament
+							OR = {
+								has_completed_focus = ITA_repeal_former_government_measures_6
+								has_completed_focus = ITA_repeal_former_government_measures_7
+								has_completed_focus = ITA_repeal_former_government_measures_8
+								has_completed_focus = ITA_repeal_former_government_measures_9
+							}
+						}
+						NOT = {
+							has_completed_focus = ITA_dismantle_parliament
+						}
+					}
+				}
+					small_parties_leave_coalition = yes
+			}
+			weekly_stability_dynamic_modifier_update = yes
+		}
+	}
+	on_monthly_ITA = {
+		effect = {
+			if = { #space stuff
+				limit = { has_completed_focus = ITA_increase_ASI_funding }
+					multiply_variable = { ITA_space_income_var = 0.99 } #decay of space revenue
+					add_to_variable = { ITA_peoples_support = -3 } #space enthusiasm decay over time
+					if = {
+						limit = { has_completed_focus = ITA_fight_scientific_illiteracy }
+							add_to_variable = { ITA_peoples_support = 2 }
+					}
+			}
+			if = {
+				limit = { has_idea = ITA_mafia }
+					mafia_monthly_drift = yes
+			}
+			if = {
+				limit = {
+					has_elections = yes
+					NOT = {
+						has_country_flag = elections_in_progress
+					}
+				}
+					government_crisis_check = yes
+			}
+		}
+	}
+}
