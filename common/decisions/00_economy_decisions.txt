@@ -1,24 +1,24 @@
 economy_decisions = {
-    war_building_slot = {
-    	icon = generic_construction
-        allowed = { always = yes }
-        custom_cost_trigger = {
+	war_building_slot = {
+		icon = generic_construction
+		allowed = { always = yes }
+		custom_cost_trigger = {
 			always = yes
 		}
 		custom_cost_text = [propaganda_cost]
-        fire_only_once = no
+		fire_only_once = no
 		days_remove = 60
 
 		visible = {
 			has_war = yes
 		}
-        available = {
-            has_war = yes
-            any_owned_state = {
-            	NOT = { has_state_flag = war_building_slot_flag }
-            	is_fully_controlled_by = ROOT
-            }
-        }
+		available = {
+			has_war = yes
+			any_owned_state = {
+				NOT = { has_state_flag = war_building_slot_flag }
+				is_fully_controlled_by = ROOT
+			}
+		}
 
         complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision war_building_slot"
@@ -96,7 +96,7 @@ economy_decisions = {
 					set_state_flag = war_building_slot_flag
 				}
 			}
-			custom_effect_tooltip = treausry_loss_variable_TT
+			#custom_effect_tooltip = treausry_loss_variable_TT
 			propaganda_cost_scripted_effect = yes
 		}
 		ai_will_do = {
@@ -111,6 +111,14 @@ economy_decisions = {
 					free_building_slots = { building = industrial_complex size > 0 include_locked = no }
 				}
 				factor = 0
+			}
+			modifier = {
+				factor = 0.50
+				check_variable = { debt_rate > looming_bankruptcy_rate }
+			}
+			modifier = {
+				factor = 0
+				has_idea = bankrupcy
 			}
 		}
 	}
@@ -167,6 +175,14 @@ economy_decisions = {
 				modifier = {
 					factor = 10
 					any_owned_state = { free_building_slots = { building = industrial_complex size < 1 include_locked = no } }
+				}
+				modifier = {
+					factor = 0.50
+					check_variable = { debt_rate > looming_bankruptcy_rate }
+				}
+				modifier = {
+					factor = 0
+					has_idea = bankrupcy
 				}
 			}
 		}
@@ -230,7 +246,32 @@ economy_decisions = {
 				}
 				add = 2
 			}
-
+			modifier = {
+				factor = 0
+				has_idea = defence_00
+			}
+			modifier = {
+				factor = 0.05
+				has_idea = defence_01
+			}
+			modifier = {
+				factor = 0
+				OR = { #Microstates don't need armies
+					tag = MLT
+					tag = MNC
+					tag = ADO
+					tag = SMA
+					tag = HLS
+				}
+			}
+			modifier = {
+				factor = 0.50
+				check_variable = { debt_rate > looming_bankruptcy_rate }
+			}
+			modifier = {
+				factor = 0
+				has_idea = bankrupcy
+			}
 		}
 	}
 
@@ -278,9 +319,9 @@ economy_decisions = {
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			factor = 0.05
 			modifier = {
-				factor = 5
+				factor = 1
 				has_war = no
 			}
 			modifier = { ##Try and conserve funds for more important things like military units
@@ -288,8 +329,16 @@ economy_decisions = {
 				has_war = yes
 			}
 			modifier = { ##Countries with lack of industry will be more likely to use these to boost production
-				factor = 5
+				factor = 1
 				num_of_available_civilian_factories < 15
+			}
+			modifier = {
+				factor = 0.50
+				check_variable = { debt_rate > looming_bankruptcy_rate }
+			}
+			modifier = {
+				factor = 0
+				has_idea = bankrupcy
 			}
 		}
 	}
@@ -337,19 +386,17 @@ economy_decisions = {
 				factor = 2
 				has_war = no
 			}
-			modifier = {
-				factor = 2
-				any_owned_state = {
-					free_building_slots = {
-						building = infrastructure
-						size < 1
-						include_locked = no
-					}
-				}
-			}
 			modifier = { ##Try to conserve money in times of war
 				factor = 0.10
 				has_war = yes
+			}
+			modifier = {
+				factor = 0.50
+				check_variable = { debt_rate > looming_bankruptcy_rate }
+			}
+			modifier = {
+				factor = 0
+				has_idea = bankrupcy
 			}
 		}
 	}
@@ -385,6 +432,14 @@ economy_decisions = {
 			modifier = { ##Try to conserve money in times of war
 				factor = 0.10
 				has_war = yes
+			}
+			modifier = {
+				factor = 0.50
+				check_variable = { debt_rate > looming_bankruptcy_rate }
+			}
+			modifier = {
+				factor = 0
+				has_idea = bankrupcy
 			}
 		}
 	}
@@ -422,6 +477,32 @@ economy_decisions = {
 				factor = 2
 				has_war = yes
 			}
+			modifier = {
+				factor = 0
+				OR = { #Microstates don't need armies
+					tag = MLT
+					tag = MNC
+					tag = ADO
+					tag = SMA
+					tag = HLS
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = defence_00
+					has_idea = defence_01
+
+				}
+			}
+			modifier = {
+				factor = 0.50
+				check_variable = { debt_rate > looming_bankruptcy_rate }
+			}
+			modifier = {
+				factor = 0
+				has_idea = bankrupcy
+			}
 		}
 	}
 
@@ -438,7 +519,7 @@ economy_decisions = {
 
 		available = {
 			any_owned_state = {
-				is_coastal = no
+				is_coastal = yes
 			}
 			NOT = {
 				has_decision = infrastructure_projects
@@ -462,10 +543,30 @@ economy_decisions = {
 				has_war = yes
 			}
 			modifier = {
-				any_owned_state = {
-					is_coastal = no
-				}
 				factor = 0
+				OR = { #Microstates don't need armies
+					tag = MLT
+					tag = MNC
+					tag = ADO
+					tag = SMA
+					tag = HLS
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = defence_00
+					has_idea = defence_01
+
+				}
+			}
+			modifier = {
+				factor = 0.50
+				check_variable = { debt_rate > looming_bankruptcy_rate }
+			}
+			modifier = {
+				factor = 0
+				has_idea = bankrupcy
 			}
 		}
 	}
@@ -524,6 +625,10 @@ economy_decisions = {
 					has_idea = recession
 					has_idea = stagnation
 				}
+			}
+			modifier = {
+				factor = 5
+				ai_has_acceptable_surplus_factories = yes
 			}
 		}
 	}

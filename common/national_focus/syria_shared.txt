@@ -31,6 +31,7 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_greater_syria"
 		set_cosmetic_tag = SYR_AUTH_SS
+		clr_country_flag = dynamic_flag
 		hidden_effect = { news_event = { id = SyriaFocusNews.19 hours = 6 } }
 	}
 
@@ -198,27 +199,26 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_assault_jordan"
 		custom_effect_tooltip = TT_SYR_ASSAULT_JORDAN
 		set_temp_variable = { success_chance = JOR.party_popularity@nationalist }
-		multiply_temp_variable = { success_chance = 20 }
+		multiply_temp_variable = { success_chance = 200 }
 		clamp_temp_variable = {
 			var = success_chance
 			min = 0
-			max = 10
+			max = 100
 		}
-		set_temp_variable = { remaining_chance = 10 }
+		set_temp_variable = { remaining_chance = 100 }
 		subtract_from_temp_variable = { remaining_chance = success_chance }
 		set_temp_variable = { civil_war_chance = remaining_chance }
-		multiply_temp_variable = { civil_war_chance = success_chance }
-		multiply_temp_variable = { civil_war_chance = 0.10 }
+		multiply_temp_variable = { civil_war_chance = 0.5 }
 		clamp_temp_variable = {
 			var = civil_war_chance
 			min = 0
-			max = 10
+			max = 100
 		}
 		subtract_from_temp_variable = { remaining_chance = civil_war_chance }
 		clamp_temp_variable = {
 			var = remaining_chance
 			min = 0
-			max = 10
+			max = 100
 		}
 		random_list = {
 			1 = {
@@ -311,8 +311,8 @@ shared_focus = {
 		is_subject = no
 		OR = {
 			owns_state = 210
-			any_country = {
-				is_subject_of = ROOT
+			any_of_scopes = {
+				array = subjects
 				owns_state = 210
 			}
 		}
@@ -524,8 +524,8 @@ shared_focus = {
 		NOT = { has_war_with = EGY }
 		OR = {
 			is_neighbor_of = EGY
-			any_country = {
-				is_subject_of = ROOT
+			any_of_scopes = {
+				array = subjects
 				is_neighbor_of = EGY
 			}
 		}
@@ -779,8 +779,8 @@ shared_focus = {
 		NOT = { has_war_with = KUW }
 		OR = {
 			is_neighbor_of = KUW
-			any_country = {
-				is_subject_of = ROOT
+			any_of_scopes = {
+				array = subjects
 				is_neighbor_of = KUW
 			}
 		}
@@ -834,8 +834,8 @@ shared_focus = {
 		NOT = { has_war_with = SAU }
 		OR = {
 			is_neighbor_of = SAU
-			any_country = {
-				is_subject_of = ROOT
+			any_of_scopes = {
+				array = subjects
 				is_neighbor_of = SAU
 			}
 		}
@@ -982,8 +982,8 @@ shared_focus = {
 		country_exists = PER
 		OR = {
 			is_neighbor_of = PER
-			any_country = {
-				is_subject_of = ROOT
+			any_of_scopes = {
+				array = subjects
 				is_neighbor_of = PER
 			}
 		}
@@ -1107,6 +1107,13 @@ shared_focus = {
 				161 = { NOT = { is_claimed_by = ROOT } }
 			}
 			add_state_claim = 161
+		}
+		if = {
+			limit = {
+				992 = { NOT = { is_core_of = ROOT } }
+				992 = { NOT = { is_claimed_by = ROOT } }
+			}
+			add_state_claim = 992
 		}
 	}
 
@@ -1536,8 +1543,8 @@ shared_focus = {
 		NOT = { has_war_with = PER }
 		OR = {
 			is_neighbor_of = PER
-			any_country = {
-				is_subject_of = ROOT
+			any_of_scopes = {
+				array = subjects
 				is_neighbor_of = PER
 			}
 		}
@@ -1625,8 +1632,49 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_conscription_army"
-		add_ideas = draft_army
-		add_ideas = drafted_women
+		if = {
+			limit = { has_idea = no_military }
+			swap_ideas = {
+				remove_idea = no_military
+				add_idea = draft_army
+			}
+		}
+		else_if = {
+			limit = { has_idea = volunteer_army }
+			swap_ideas = {
+				remove_idea = volunteer_army
+				add_idea = draft_army
+			}
+		}
+		else_if = {
+			limit = { has_idea = partial_draft_army }
+			swap_ideas = {
+				remove_idea = partial_draft_army
+				add_idea = draft_army
+			}
+		}
+		else_if = {
+			limit = { has_idea = draft_army }
+			army_experience = 15 
+		}
+		if = {
+			limit = { has_idea = no_women_in_military }
+			swap_ideas = {
+				remove_idea = no_women_in_military
+				add_idea = drafted_women
+			}
+		}
+		else_if = {
+			limit = { has_idea = volunteer_women }
+			swap_ideas = {
+				remove_idea = volunteer_women
+				add_idea = drafted_women
+			}
+		}
+		else_if = {
+			limit = { has_idea = drafted_women }
+			army_experience = 5 
+		}
 	}
 
 }
@@ -1665,8 +1713,49 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_volunteer_army"
-		add_ideas = volunteer_army
-		add_ideas = volunteer_women
+		if = {
+			limit = { has_idea = no_military }
+			swap_ideas = {
+				remove_idea = no_military
+				add_idea = volunteer_army
+			}
+		}
+		else_if = {
+			limit = { has_idea = volunteer_army }
+			army_experience = 15 
+		}
+		else_if = {
+			limit = { has_idea = partial_draft_army }
+			swap_ideas = {
+				remove_idea = partial_draft_army
+				add_idea = volunteer_army
+			}
+		}
+		else_if = {
+			limit = { has_idea = draft_army }
+			swap_ideas = {
+				remove_idea = draft_army
+				add_idea = volunteer_army
+			}
+		}
+		if = {
+			limit = { has_idea = no_women_in_military }
+			swap_ideas = {
+				remove_idea = no_women_in_military
+				add_idea = volunteer_women
+			}
+		}
+		else_if = {
+			limit = { has_idea = volunteer_women }
+			army_experience = 5 
+		}
+		else_if = {
+			limit = { has_idea = drafted_women }
+			swap_ideas = {
+				remove_idea = drafted_women
+				add_idea = volunteer_women
+			}
+		}
 	}
 
 }
@@ -3029,20 +3118,8 @@ shared_focus = {
 			target = HAM
 			modifier = declaration_of_friendship
 		}
-		add_ai_strategy = {
-			type = befriend
-			id = "HAM"
-			value = 50
-		}
 		HAM = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = 50
-			}
-		}
-		HAM = {
-			add_20_influence = yes
+			generic_grant_2_percent_influence_of_ROOT = yes
 		}
 	}
 
@@ -3124,20 +3201,8 @@ shared_focus = {
 				target = PAL
 				modifier = declaration_of_friendship
 			}
-			add_ai_strategy = {
-				type = befriend
-				id = "PAL"
-				value = 50
-			}
 			PAL = {
-				add_ai_strategy = {
-					type = befriend
-					id = ROOT
-					value = 50
-				}
-			}
-			PAL = {
-				add_20_influence = yes
+				generic_grant_2_percent_influence_of_ROOT = yes
 			}
 		}
 		else = {
@@ -3181,11 +3246,6 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_diplomatic_pressure_on_israel"
 		give_guarantee = PAL
-		add_ai_strategy = {
-			type = protect
-			id = PAL
-			value = 50
-		}
 	}
 
 }
@@ -3225,28 +3285,6 @@ shared_focus = {
 			remove_opinion_modifier = {
 				target = ROOT
 				modifier = ISR_Arab_Conflict
-			}
-		}
-		add_ai_strategy = {
-			type = befriend
-			id = "ISR"
-			value = 25
-		}
-		add_ai_strategy = {
-			type = antagonize
-			id = "ISR"
-			value = -25
-		}
-		ISR = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = 25
-			}
-			add_ai_strategy = {
-				type = antagonize
-				id = ROOT
-				value = -25
 			}
 		}
 	}
@@ -3457,16 +3495,6 @@ shared_focus = {
 			}
 			PAL = { country_event = { id = SyriaFocus.78 hours = 6 } }
 			custom_effect_tooltip = TT_SYR_ALIGN_PALESTINE
-			add_ai_strategy = {
-				type = contain
-				id = "ISR"
-				value = 50
-			}
-			add_ai_strategy = {
-				type = antagonize
-				id = "ISR"
-				value = 50
-			}
 		}
 		if = {
 			limit = {
@@ -3475,26 +3503,6 @@ shared_focus = {
 			}
 			ISR = { country_event = { id = SyriaFocus.78 hours = 6 } }
 			custom_effect_tooltip = TT_SYR_ALIGN_ISRAEL
-			add_ai_strategy = {
-				type = contain
-				id = "PAL"
-				value = 50
-			}
-			add_ai_strategy = {
-				type = antagonize
-				id = "PAL"
-				value = 50
-			}
-			add_ai_strategy = {
-				type = contain
-				id = "HAM"
-				value = 50
-			}
-			add_ai_strategy = {
-				type = antagonize
-				id = "HAM"
-				value = 50
-			}
 		}
 	}
 
@@ -3602,11 +3610,6 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_meeting_with_kings"
-		add_ai_strategy = {
-			type = befriend
-			id = SAU
-			value = 15
-		}
 		add_opinion_modifier = {
 			modifier = political_outreach
 			target = SAU
@@ -3652,35 +3655,9 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INFLUENCE }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_open_saudi_mosques"
-		SAU = { custom_effect_tooltip = TT_SYR_COUNTRY_GAINS_10_INFLUENCE }
 		add_ideas = saudi_aid
-		hidden_effect = {
-			set_temp_variable = { influence_gain = 10 }
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
-				if = {
-					limit = {
-						check_variable = { influence_array^v = SAU }
-					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-					set_country_flag = found
-				}
-			}
-			if = {
-				limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = SAU.id }
-					add_to_array = { influence_array_val = influence_gain }
-			}
-			clr_country_flag = found
-			recalculate_influence = yes
-		}
-		if = {
-			limit = { has_idea = wahabi_ulema }
-			set_country_flag = current_wahabi_ulema
-			increase_internal_faction_opinion = yes
-			visually_display_opinion_rise_wahabi_ulema = yes
-		}
+		generic_grant_1_percent_influence_of_SAU = yes
+		increase_wahabi_ulema_opinion = yes
 	}
 
 }
@@ -3960,16 +3937,6 @@ shared_focus = {
 			add_to_variable = { var = party_pop_array^7 value = 10 }
 			recalculate_party = yes
 		}
-		add_ai_strategy = {
-			type = befriend
-			id = "IRQ"
-			value = 50
-		}
-		add_ai_strategy = {
-			type = support
-			id = "IRQ"
-			value = 50
-		}
 	}
 
 }
@@ -4105,7 +4072,7 @@ shared_focus = {
 			add_to_variable = { var = party_pop_array^7 value = 5 }
 			recalculate_party = yes
 			add_to_variable = { ROOT.treasury = -1 }
-			add_10_influence = yes
+			generic_grant_1_percent_influence_of_ROOT = yes
 		}
 	}
 
@@ -4158,7 +4125,9 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_ANNEXATION }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_the_arab_union"
-		set_cosmetic_tag = UNITED_ARAB_REPUBLIC
+		set_cosmetic_tag = UAR_2
+		clr_country_flag = dynamic_flag
+		set_country_flag = is_UAR
 		EGY = {
 			set_country_flag = always_say_yes
 			country_event = { id = md4.14 days = 2 }
@@ -4292,26 +4261,6 @@ shared_focus = {
 			target = IRQ
 			modifier = hostile_status
 		}
-		add_ai_strategy = {
-			type = befriend
-			id = "IRQ"
-			value = -50
-		}
-		add_ai_strategy = {
-			type = contain
-			id = "IRQ"
-			value = 50
-		}
-		add_ai_strategy = {
-			type = antagonize
-			id = "IRQ"
-			value = 50
-		}
-		add_ai_strategy = {
-			type = support
-			id = "IRQ"
-			value = -50
-		}
 	}
 
 }
@@ -4392,7 +4341,7 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_fund_hezbollah"
 		SE_remove_2_treasury = yes
 		HEZ = {
-			add_20_influence = yes
+			generic_grant_2_percent_influence_of_ROOT = yes
 			add_to_variable = { treasury = 2 }
 		}
 	}
@@ -4565,16 +4514,6 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_reaffirm_claims_on_hatay"
 		add_state_core = 158
-		add_ai_strategy = {
-			type = befriend
-			id = "TUR"
-			value = -50
-		}
-		add_ai_strategy = {
-			type = antagonize
-			id = "TUR"
-			value = 50
-		}
 	}
 
 }
@@ -4613,23 +4552,6 @@ shared_focus = {
 		custom_effect_tooltip = TT_SYR_INTELLIGENCE_TO_PKK
 		TUR = {
 			add_to_variable = { pkk_presence = 10 }
-		}
-		TUR = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = -50
-			}
-			add_ai_strategy = {
-				type = antagonize
-				id = ROOT
-				value = 50
-			}
-			add_ai_strategy = {
-				type = contain
-				id = ROOT
-				value = 50
-			}
 		}
 	}
 
@@ -4672,23 +4594,6 @@ shared_focus = {
 			modifier = hostile_status
 			target = TUR
 		}
-		TUR = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = -50
-			}
-			add_ai_strategy = {
-				type = antagonize
-				id = ROOT
-				value = 50
-			}
-			add_ai_strategy = {
-				type = contain
-				id = ROOT
-				value = 50
-			}
-		}
 	}
 
 }
@@ -4726,24 +4631,7 @@ shared_focus = {
 			amount = 1000
 			target = PKK
 		}
-		PKK = { add_10_influence = yes }
-		TUR = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = -50
-			}
-			add_ai_strategy = {
-				type = antagonize
-				id = ROOT
-				value = 50
-			}
-			add_ai_strategy = {
-				type = contain
-				id = ROOT
-				value = 50
-			}
-		}
+		PKK = { generic_grant_1_percent_influence_of_ROOT = yes }
 	}
 
 }
@@ -4783,23 +4671,6 @@ shared_focus = {
 		reverse_add_opinion_modifier = {
 			modifier = supports_us
 			target = ARM
-		}
-		add_ai_strategy = {
-			type = befriend
-			id = "ARM"
-			value = 50
-		}
-		add_ai_strategy = {
-			type = protect
-			id = "ARM"
-			value = 50
-		}
-		ARM = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = 50
-			}
 		}
 	}
 
@@ -4845,18 +4716,6 @@ shared_focus = {
 			modifier = supports_us
 			target = GRE
 		}
-		add_ai_strategy = {
-			type = befriend
-			id = "GRE"
-			value = 50
-		}
-		GRE = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = 50
-			}
-		}
 	}
 
 }
@@ -4898,24 +4757,7 @@ shared_focus = {
 			modifier = supports_us
 			target = CYP
 		}
-		add_ai_strategy = {
-			type = befriend
-			id = "CYP"
-			value = 50
-		}
-		add_ai_strategy = {
-			type = protect
-			id = "CYP"
-			value = 50
-		}
-		CYP = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = 50
-			}
-		}
-		CYP = { add_10_influence = yes }
+		CYP = { generic_grant_1_percent_influence_of_ROOT = yes }
 	}
 
 }
@@ -4957,16 +4799,6 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_renounce_claims_on_hatay"
 		remove_state_claim = 158
 		remove_state_core = 158
-		add_ai_strategy = {
-			type = befriend
-			id = "TUR"
-			value = 50
-		}
-		add_ai_strategy = {
-			type = antagonize
-			id = "TUR"
-			value = -50
-		}
 	}
 
 }
@@ -5010,13 +4842,6 @@ shared_focus = {
 			modifier = supports_us
 			target = TUR
 		}
-		TUR = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = 50
-			}
-		}
 	}
 
 }
@@ -5056,18 +4881,6 @@ shared_focus = {
 		reverse_add_opinion_modifier = {
 			modifier = supports_us
 			target = AZE
-		}
-		add_ai_strategy = {
-			type = befriend
-			id = "AZE"
-			value = 50
-		}
-		AZE = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = 50
-			}
 		}
 	}
 
@@ -5114,23 +4927,6 @@ shared_focus = {
 			modifier = free_trade_agreement
 			target = TUR
 		}
-		add_ai_strategy = {
-			type = befriend
-			id = "TUR"
-			value = 50
-		}
-		TUR = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = 50
-			}
-			add_ai_strategy = {
-				type = protect
-				id = ROOT
-				value = 50
-			}
-		}
 	}
 
 }
@@ -5172,24 +4968,7 @@ shared_focus = {
 			modifier = supports_us
 			target = NCY
 		}
-		add_ai_strategy = {
-			type = befriend
-			id = "NCY"
-			value = 50
-		}
-		add_ai_strategy = {
-			type = protect
-			id = "NCY"
-			value = 50
-		}
-		NCY = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = 50
-			}
-		}
-		NCY = { add_10_influence = yes }
+		NCY = { generic_grant_1_percent_influence_of_ROOT = yes }
 	}
 
 }
@@ -5230,18 +5009,6 @@ shared_focus = {
 		reverse_add_opinion_modifier = {
 			modifier = supports_us
 			target = SOV
-		}
-		add_ai_strategy = {
-			type = befriend
-			id = "SOV"
-			value = 50
-		}
-		SOV = {
-			add_ai_strategy = {
-				type = befriend
-				id = ROOT
-				value = 50
-			}
 		}
 	}
 
@@ -5372,28 +5139,7 @@ shared_focus = {
 				active = yes
 			}
 		}
-		SOV = { custom_effect_tooltip = TT_SYR_COUNTRY_GAINS_20_INFLUENCE }
-		hidden_effect = {
-			set_temp_variable = { influence_gain = 20 }
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
-				if = {
-					limit = {
-						check_variable = { influence_array^v = SOV }
-					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-					set_country_flag = found
-				}
-			}
-			if = {
-				limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = SOV.id }
-					add_to_array = { influence_array_val = influence_gain }
-			}
-			clr_country_flag = found
-			recalculate_influence = yes
-		}
+		generic_grant_2_percent_influence_of_SOV = yes
 	}
 
 }
@@ -5577,11 +5323,6 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_closer_ties_to_france"
-		add_ai_strategy = {
-			type = befriend
-			id = "FRA"
-			value = 15
-		}
 		add_opinion_modifier = {
 			target = FRA
 			modifier = diplomatic_support
@@ -5589,13 +5330,6 @@ shared_focus = {
 		reverse_add_opinion_modifier = {
 			target = FRA
 			modifier = diplomatic_support
-		}
-		FRA = {
-			add_ai_strategy = {
-				type = befriend
-				id = "FRA"
-				value = 15
-			}
 		}
 	}
 
@@ -5633,36 +5367,6 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_condemn_taliban"
-		add_ai_strategy = {
-			type = befriend
-			id = "AFG"
-			value = 25
-		}
-		add_ai_strategy = {
-			type = support
-			id = "AFG"
-			value = 25
-		}
-		add_ai_strategy = {
-			type = befriend
-			id = "TAL"
-			value = -50
-		}
-		add_ai_strategy = {
-			type = antagonize
-			id = "TAL"
-			value = -50
-		}
-		add_ai_strategy = {
-			type = befriend
-			id = "TTP"
-			value = -50
-		}
-		add_ai_strategy = {
-			type = antagonize
-			id = "TTP"
-			value = -50
-		}
 		if = {
 			limit = { country_exists = TAL }
 			add_opinion_modifier = {
@@ -5777,32 +5481,11 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INFLUENCE }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_french_investments"
-		FRA = { custom_effect_tooltip = TT_SYR_COUNTRY_GAINS_20_INFLUENCE }
 		FRA = {
 			add_to_variable = { treasury = -10 }
 			add_to_variable = { int_investments = 10 }
 		}
-		hidden_effect = {
-			set_temp_variable = { influence_gain = 20 }
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
-				if = {
-					limit = {
-						check_variable = { influence_array^v = FRA }
-					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-					set_country_flag = found
-				}
-			}
-			if = {
-				limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = FRA.id }
-					add_to_array = { influence_array_val = influence_gain }
-			}
-			clr_country_flag = found
-			recalculate_influence = yes
-		}
+		generic_grant_2_percent_influence_of_FRA = yes
 		if = {
 			limit = {
 				any_owned_state = {
@@ -5873,32 +5556,11 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_RESOURCE }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_us_investments"
-		USA = { custom_effect_tooltip = TT_SYR_COUNTRY_GAINS_20_INFLUENCE }
 		USA = {
 			add_to_variable = { treasury = -10 }
 			add_to_variable = { int_investments = 10 }
 		}
-		hidden_effect = {
-			set_temp_variable = { influence_gain = 20 }
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
-				if = {
-					limit = {
-						check_variable = { influence_array^v = USA }
-					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-					set_country_flag = found
-				}
-			}
-			if = {
-				limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = USA.id }
-					add_to_array = { influence_array_val = influence_gain }
-			}
-			clr_country_flag = found
-			recalculate_influence = yes
-		}
+		generic_grant_2_percent_influence_of_USA = yes
 		random_owned_state = {
 			add_resource = {
 				type = oil
@@ -5942,32 +5604,11 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_british_investments"
-		ENG = { custom_effect_tooltip = TT_SYR_COUNTRY_GAINS_20_INFLUENCE }
 		ENG = {
 			add_to_variable = { treasury = -10 }
 			add_to_variable = { int_investments = 10 }
 		}
-		hidden_effect = {
-			set_temp_variable = { influence_gain = 20 }
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
-				if = {
-					limit = {
-						check_variable = { influence_array^v = ENG }
-					}
-					add_to_variable = { influence_array_val^v = influence_gain }
-					set_country_flag = found
-				}
-			}
-			if = {
-				limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = ENG.id }
-					add_to_array = { influence_array_val = influence_gain }
-			}
-			clr_country_flag = found
-			recalculate_influence = yes
-		}
+		generic_grant_2_percent_influence_of_ENG = yes
 		if = {
 			limit = {
 				any_owned_state = {
@@ -6028,9 +5669,8 @@ shared_focus = {
 
 	available = {
 		NOT = {
-			any_country = {
+			any_enemy_country = {
 				has_idea = NATO_member
-				has_war_with = ROOT
 			}
 		}
 		has_government = democratic
@@ -6214,13 +5854,8 @@ shared_focus = {
 			amount = 1000
 			target = HAM
 		}
-		add_ai_strategy = {
-			type = support
-			id = "HAM"
-			value = 50
-		}
 		HAM = {
-			add_10_influence = yes
+			generic_grant_2_percent_influence_of_ROOT = yes
 		}
 	}
 
@@ -6261,13 +5896,8 @@ shared_focus = {
 			amount = 1000
 			target = TAL
 		}
-		add_ai_strategy = {
-			type = support
-			id = "TAL"
-			value = 50
-		}
 		TAL = {
-			add_10_influence = yes
+			generic_grant_1_percent_influence_of_ROOT = yes
 		}
 	}
 
@@ -6308,13 +5938,8 @@ shared_focus = {
 			amount = 1000
 			target = SHB
 		}
-		add_ai_strategy = {
-			type = support
-			id = "SHB"
-			value = 50
-		}
 		SHB = {
-			add_10_influence = yes
+			generic_grant_1_percent_influence_of_ROOT = yes
 		}
 	}
 
@@ -6399,66 +6024,6 @@ shared_focus = {
 				NOT = { has_idea = al_qaeda_network }
 			}
 			add_ideas = al_qaeda_network
-		}
-		add_ai_strategy = {
-			type = befriend
-			id = "TAL"
-			value = 100
-		}
-		add_ai_strategy = {
-			type = support
-			id = "TAL"
-			value = 100
-		}
-		add_ai_strategy = {
-			type = alliance
-			id = "TAL"
-			value = 100
-		}
-		add_ai_strategy = {
-			type = befriend
-			id = "TTP"
-			value = 100
-		}
-		add_ai_strategy = {
-			type = support
-			id = "TTP"
-			value = 100
-		}
-		add_ai_strategy = {
-			type = alliance
-			id = "TTP"
-			value = 100
-		}
-		add_ai_strategy = {
-			type = befriend
-			id = "AQY"
-			value = 100
-		}
-		add_ai_strategy = {
-			type = support
-			id = "AQY"
-			value = 100
-		}
-		add_ai_strategy = {
-			type = alliance
-			id = "AQY"
-			value = 100
-		}
-		add_ai_strategy = {
-			type = befriend
-			id = "SHB"
-			value = 100
-		}
-		add_ai_strategy = {
-			type = support
-			id = "SHB"
-			value = 100
-		}
-		add_ai_strategy = {
-			type = alliance
-			id = "SHB"
-			value = 100
 		}
 	}
 
