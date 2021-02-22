@@ -261,10 +261,31 @@
 		}
 	}	
 
-	missile_test_missile_defense = {
+	missile_test_sea_defense = {
     	icon = GFX_decision_generic_ignite_civil_war
  		available = {
-			
+			meta_trigger = {
+				text = {
+					THIS = {
+						OR = {
+							#Bay of Biscay
+							ships_in_area = {
+								area = 42
+								size > [ship_number_AA]
+								type = anti_air
+							}
+							#Channel
+							ships_in_area = {
+								area = 18
+								size > [ship_number_AA]
+								type = anti_air
+							}
+							# 
+						}
+					}
+				}
+				ship_number_AA = "[?THIS.var_ship_number_AA]"
+			}
 		}
 		visible = {
 			#has_country_flag = invisible
@@ -273,23 +294,68 @@
 
         complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision missile_test_missile_defense"
-			set_tech_tree_effects = yes
-			set_variable = { deployed_SAM_array^0 = 100 }
-			set_variable = { deployed_ABM_array^0 = 100 }
-			set_variable = { deployed_SAM_array^1 = 10 }
-			set_variable = { deployed_ABM_array^1 = 10 }
-			set_variable = { deployed_SAM_array^2 = 20 }
-			set_variable = { deployed_ABM_array^2 = 20 }
-			set_variable = { deployed_SAM_array^3 = 30 }
-			set_variable = { deployed_ABM_array^3 = 30 }
-			set_variable = { deployed_SAM_array^4 = 40 }
-			set_variable = { deployed_ABM_array^4 = 40 }
+			FRA = {
+				add_political_power = 1
+			}
 		}
 		ai_will_do = {
 			factor = 0
 
 		}
 	}
+
+	missile_test_sea_defense_2 = {
+    	icon = GFX_decision_generic_ignite_civil_war
+ 		available = {
+			any_of = {
+				array = global.ship_number_AA_array
+				set_variable = { var_ship_number_AA = global.ship_number_AA_array^i }
+				sea_launch_point_defense_64 = yes
+			}
+		}
+		visible = {
+			#has_country_flag = invisible
+		}
+
+
+        complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision missile_test_missile_defense"
+			GER = {
+				add_political_power = var_ship_number_AA
+			}
+		}
+		ai_will_do = {
+			factor = 0
+
+		}
+	}
+
+	missile_test_sea_defense_set_ship_number = {
+    	icon = GFX_decision_generic_ignite_civil_war
+ 		available = {
+
+		}
+		visible = {
+			#has_country_flag = invisible
+		}
+
+
+        complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision missile_test_missile_defense"
+			#set_variable = { var_ship_number_AA = 1 }
+			set_temp_variable = { temp1 = 10 }
+			while_loop_effect = {
+				limit = { temp1 > 0 }
+				add_to_array = { global.ship_number_AA_array = temp1 }
+				subtract_from_temp_variable = { temp1 = 1 }
+			}
+		}
+		ai_will_do = {
+			factor = 0
+
+		}
+	}
+
 
 	missile_test_phases = {
     	icon = GFX_decision_generic_ignite_civil_war
@@ -363,7 +429,7 @@ missile_test_missile_on_daily = {
 		
 	}
 	visible = {
-		###has_country_flag = invisible
+		##has_country_flag = invisible
 	}
 
 
@@ -393,19 +459,19 @@ missile_defense_deployed_test = {
 		#SOV = {	
 		#	add_political_power = 100
 		#}
-		var:ROOT.missile_target_controller_array^0 = {
+		#var:ROOT.missile_target_controller_array^0 = {
 			### SAM4 & ABM4 ###
 			set_variable = { var_SAM_launcher_tech = 8 }
 			set_variable = { var_ABM_launcher_tech = 1 }
-			set_variable = { var_ship_SAM_launcher_tech = 8 }
-			set_variable = { var_ship_ABM_launcher_tech = 4 }			
+			set_variable = { var_ship_SAM_launcher_tech = 4 }
+			set_variable = { var_ship_ABM_launcher_tech = 2 }			
 			set_variable = { var_SAM_range = 200 }
-			set_variable = { var_ABM_range = 4000 }
+			set_variable = { var_ABM_range = 200 }
 			set_variable = { var_SAM_intercept_chance = 0.75 }
 			set_variable = { var_ABM_intercept_chance = 0.75 }
 			set_variable = { var_deployed_SAM_total = 200 }
 			set_variable = { var_deployed_ABM_total = 200 }
-		}
+		#}
 
 		#set_missile_defense_land_deployed_tech = yes
 
@@ -523,8 +589,67 @@ missile_test_def_cap = {
 	# 		}
 	# 	}
 	# }
-
+	}
 }
+
+
+missile_sea_sam_test = {
+	icon = GFX_decision_generic_ignite_civil_war
+	available = {
+		#
+	}
+	visible = {
+		#has_country_flag = invisible
+	}
+
+
+	complete_effect = {
+		log = "[GetDateText]: [Root.GetName]: Decision missile_sea_sam_test"
+		meta_effect = {
+			text = {
+				var:ROOT.missile_target_controller_array^0 = {
+					every_controlled_state = {
+						limit = {
+							[target_point_ID] = {
+								distance_to = {
+									value < [SAM_range]
+									target = PREV
+								}
+							}	
+						}
+						ROOT = {
+							add_to_temp_array = {
+								array = sea_SAM_launch_point_defense_array
+								value = PREV.id
+							}
+						}
+					}
+					for_each_loop = {
+						array = sea_SAM_launch_point_defense_array
+						break = {
+									sea_launch_point_defense_[sea_defense_TPID] = yes
+						}
+						set_temp_variable = { temp1 = 0 }	
+						add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas 
+						multiply_temp_variable = { temp1 = var_ship_SAM_launcher_tech }
+						add_to_variable = { ROOT.var_intercept_capacity_boost = temp1 }
+					}
+				}
+			}
+			launch_point_ID = "[?missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
+			target_point_ID = "[?missile_target_point_array^i.GetID]" # "[?var_target_point_ID.GetID]"
+			SAM_range = "[?var_SAM_range]"
+			ABM_range = "[?var_ABM_range]"
+			sea_defense_LPID = "[?sea_SAM_launch_point_defense_array^i.GetID]"
+			sea_defense_TPID = "[?sea_SAM_target_point_defense_array^i.GetID]"
+		}
+	}
+	ai_will_do = {
+		factor = 0
+
+	}
+}
+
 
 
 
