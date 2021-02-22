@@ -17,30 +17,30 @@
 
 
 ### test effects ###
-set_missile_trajectory_test_vars = {
-	###
-	set_variable = { var_accuracy = 0.7 }
-	set_variable = { var_salvo = 40 }
-	set_variable = { var_MIRV = 10 }
-	set_variable = { var_decoy = 5 }
-	set_variable = { var_intercept_chance_boost = 0.1 }
-	set_variable = { var_intercept_capacity_boost = 20 }
-	set_variable = { var_intercept_chance_midcourse = 0.1 }
-	set_variable = { var_intercept_capacity_midcourse = 30 }
-	set_variable = { var_intercept_chance_terminal = 0.1 }
-	set_variable = { var_intercept_capacity_terminal = 60 }
-	###
-	set_variable = { var_missile_trajectory = 1 }
-	set_variable = { var_missile_target_hit = 0 }
-	set_variable = { var_missile_target_miss = 0 }
-	set_variable = { var_missile_interception_boost = 0 }
-	set_variable = { var_missile_interception_midcourse = 0 }
-	set_variable = { var_missile_interception_terminal = 0 }
-	set_variable = { var_missile_boost_completed = 0 }
-	set_variable = { var_missile_midcourse_completed = 0 }
-	set_variable = { var_missile_target_hit = 0 }
-	set_variable = { var_missile_target_miss = 0 }		
-}
+# set_missile_trajectory_test_vars = {
+# 	###
+# 	set_variable = { var_accuracy = 0.7 }
+# 	set_variable = { var_salvo = 40 }
+# 	set_variable = { var_MIRV = 10 }
+# 	set_variable = { var_decoy = 5 }
+# 	set_variable = { var_intercept_chance_boost = 0.1 }
+# 	set_variable = { var_intercept_capacity_boost = 20 }
+# 	set_variable = { var_intercept_chance_midcourse = 0.1 }
+# 	set_variable = { var_intercept_capacity_midcourse = 30 }
+# 	set_variable = { var_intercept_chance_terminal = 0.1 }
+# 	set_variable = { var_intercept_capacity_terminal = 60 }
+# 	###
+# 	set_variable = { var_missile_trajectory = 1 }
+# 	set_variable = { var_missile_target_hit = 0 }
+# 	set_variable = { var_missile_target_miss = 0 }
+# 	set_variable = { var_missile_interception_boost = 0 }
+# 	set_variable = { var_missile_interception_midcourse = 0 }
+# 	set_variable = { var_missile_interception_terminal = 0 }
+# 	set_variable = { var_missile_boost_completed = 0 }
+# 	set_variable = { var_missile_midcourse_completed = 0 }
+# 	set_variable = { var_missile_target_hit = 0 }
+# 	set_variable = { var_missile_target_miss = 0 }		
+# }
 
 ### old ###
 # set_missile_defense_land_deployed_tech = {
@@ -406,100 +406,232 @@ set_landbased_missile_defense_cap = {
 
 set_seabased_missile_defense_cap = {
 	meta_effect = {
-		text = {	
-			### move to on daily effect
-			#set_variable = { var_intercept_capacity_boost = 0 }
-			#set_variable = { var_intercept_capacity_midcourse = 0 }
-			#set_variable = { var_intercept_capacity_terminal = 0 }
-
-			### boost phase defense ###
-			every_controlled_state = {
-				limit = {
-					sea_launch_point_defense_[sea_defense_ID] = yes
-					[launch_point_ID] = {
-						distance_to = {
-							value < [SAM_range]
-							target = PREV
-						}
-					}	
+		text = {
+			if = {
+			 	limit = {
+			 		[launch_point_ID] = {
+						has_state_flag = sea_launch_point
+			 		}
 				}
-				#ROOT = {
-					set_temp_variable = { temp1 = 0 }	
-					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas 
-					multiply_temp_variable = { temp1 = PREV.var_ship_SAM_launcher_tech }
-					add_to_variable = { ROOT.var_intercept_capacity_boost = temp1 }
-				#}													
-			}
-			### midcourse phase defense ###
-			every_controlled_state = {
-				limit = {
-					sea_launch_point_defense_[sea_defense_ID] = yes
-					[launch_point_ID] = {
-						distance_to = {
-							value < [ABM_range]
-							target = PREV
-						}
-					}	
-				}
-				#ROOT = {
-					set_temp_variable = { temp1 = 0 }	
-					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas
-					multiply_temp_variable = { temp1 = PREV.var_ship_ABM_launcher_tech }
-					add_to_variable = { ROOT.var_intercept_capacity_midcourse = temp1 }
-					#PREV = {
-						set_state_flag = defend_sea_launch_point
-					#}
-				#}				
-			}
-			every_controlled_state = {
-				limit = {
-					sea_launch_point_defense_[sea_defense_ID] = yes
-					NOT = {
-						has_state_flag = defend_sea_launch_point
+				if = {
+					limit = {
+						THIS = { sea_launch_point_defense_[launch_point_ID] = yes }
 					}
-					[target_point_ID] = {
-						distance_to = {
-							value < [ABM_range]
-							target = PREV
-						}
-					}	
+					set_temp_variable = { temp1 = 0 }
+					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas 
+					multiply_temp_variable = { temp1 = var_ship_SAM_launcher_tech }
+					add_to_variable = { PREV.var_intercept_capacity_boost = temp1 }
+					log = "set_seabased_missile_defense_cap launch_point [launch_point_ID]"
 				}
-				#ROOT = {
-					set_temp_variable = { temp1 = 0 }	
-					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas
-					multiply_temp_variable = { temp1 = PREV.var_ship_ABM_launcher_tech }
-					add_to_variable = { ROOT.var_intercept_capacity_midcourse = temp1 }
-				#}	
+				else = {
+					add_to_variable = { PREV.var_intercept_capacity_boost = 0 }
+					log = "set_seabased_missile_defense_cap launch_point no ships"
+				}
 			}
-			every_controlled_state = {
-				clr_state_flag = defend_sea_launch_point
-			}					
-			### terminal phase defense ###
-			every_controlled_state = {				
+			else = {
+				add_to_variable = { PREV.var_intercept_capacity_boost = 0 }
+				log = "set_seabased_missile_defense_cap launch_point no sea_launch_point"
+			}
+			if = {
 				limit = {
-					sea_launch_point_defense_[sea_defense_ID] = yes
 					[target_point_ID] = {
-						distance_to = {
-							value < [SAM_range]
-							target = PREV
-						}
-					}	
+						has_state_flag = sea_launch_point
+					}
 				}
-				#ROOT = {
-					set_temp_variable = { temp1 = 0 }	
-					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas
-					multiply_temp_variable = { temp1 = PREV.var_ship_SAM_launcher_tech }
-					add_to_variable = { ROOT.var_intercept_capacity_terminal = temp1 }
-				#}	
+				if = {
+					limit = {
+						THIS = { sea_launch_point_defense_[target_point_ID] = yes }
+					}
+					set_temp_variable = { temp1 = 0 }
+					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas 
+					multiply_temp_variable = { temp1 = var_ship_SAM_launcher_tech }
+					add_to_variable = { PREV.var_intercept_capacity_terminal = temp1 }
+					log = "set_seabased_missile_defense_cap target_point"
+				}
+				else = {
+					add_to_variable = { PREV.var_intercept_capacity_terminal = 0 }
+					log = "set_seabased_missile_defense_cap target_point no ships"
+				}
+			}
+			else = {
+				add_to_variable = { PREV.var_intercept_capacity_terminal = 0 }
+				log = "set_seabased_missile_defense_cap target_point no sea_launch_point"
 			}
 		}
-		launch_point_ID = "[?missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
-		target_point_ID = "[?missile_target_point_array^i.GetID]" # "[?var_target_point_ID.GetID]"
-		SAM_range = "[?var_SAM_range]"
-		ABM_range = "[?var_ABM_range]"
-		sea_defense_ID = "[THIS.GetID]"
+		launch_point_ID = "[?PREV.missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
+		target_point_ID = "[?PREV.missile_target_point_array^i.GetID]" # "[?var_target_point_ID.GetID]"
 	}
 }
+
+
+
+
+
+
+### did not worked limiting to range
+# set_seabased_missile_defense_cap_old = {
+# 	meta_effect = {
+# 		text = {
+# 			### boost phase defense ###
+# 			every_state = {
+# 				limit = {
+# 					[launch_point_ID] = {
+# 						distance_to = {
+# 							value < [SAM_range]
+# 							target = PREV
+# 						}
+# 					}
+# 				}
+# 				PREV.ROOT = {
+# 					add_to_array = {
+# 						array = sea_SAM_launch_point_defense_array
+# 						value = PREV.id
+# 					}
+# 				}
+# 			}
+# 			for_each_scope_loop = {
+# 			 	array = PREV.sea_SAM_launch_point_defense_array
+# 			 	#break = {
+# 				#	 sea_launch_point_defense_[sea_SAM_defense_LPID] = yes
+# 			 	#}
+# 				if = {
+# 					limit = {
+# 						any_of = {
+# 						#any_of_scopes = {
+# 							array = PREV.ROOT.sea_SAM_launch_point_defense_array
+# 							sea_launch_point_defense_[sea_SAM_defense_LPID] = yes
+# 						}
+# 					}
+# 					set_temp_variable = { temp1 = 0 }
+# 					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas 
+# 					multiply_temp_variable = { temp1 = PREV.var_ship_SAM_launcher_tech }
+# 					add_to_variable = { PREV.ROOT.var_intercept_capacity_boost = temp1 }
+# 					log = "[GetDateText]: [?PREV.ROOT.sea_SAM_launch_point_defense_array^i.GetName]: boost phase defense [?PREV.ROOT.var_intercept_capacity_boost]"
+# 					clear_array = PREV.ROOT..sea_SAM_launch_point_defense_array
+# 				}
+# 			}
+# 			### midcourse phase defense ###
+# 			every_state = {
+# 				limit = {
+# 					[launch_point_ID] = {
+# 						distance_to = {
+# 							value < [ABM_range]
+# 							target = PREV
+# 						}
+# 					}
+# 				}
+# 				PREV.ROOT = {
+# 					add_to_array = {
+# 						array = sea_ABM_launch_point_defense_array
+# 						value = PREV.id
+# 					}
+# 				}
+# 			}
+# 			for_each_scope_loop = {
+# 				array = PREV.sea_ABM_launch_point_defense_array
+# 			 	#break = {
+# 			 	#	sea_launch_point_defense_[sea_ABM_defense_LPID] = yes
+# 			 	#}
+# 				if = {
+# 					limit = {
+# 						any_of = {
+# 							array = PREV.sea_ABM_launch_point_defense_array
+# 							sea_launch_point_defense_[sea_ABM_defense_LPID] = yes
+# 						}
+# 					}
+# 					set_temp_variable = { temp1 = 0 }
+# 					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas
+# 					multiply_temp_variable = { temp1 = var_ship_ABM_launcher_tech }
+# 					add_to_variable = { PREV.var_intercept_capacity_midcourse = temp1 }
+# 					log = "[GetDateText]: [PREV.ROOT.GetName]: midcourse phase defense LP [?PREV.ROOT.var_intercept_capacity_midcourse]"
+# 					clear_array = PREV.sea_ABM_launch_point_defense_array
+# 				}
+# 			}
+# 			every_state = {
+# 				limit = {
+# 					[target_point_ID] = {
+# 						distance_to = {
+# 							value < [ABM_range]
+# 							target = PREV
+# 						}
+# 					}
+# 				}
+# 				PREV.ROOT = {
+# 					add_to_array = {
+# 						array = sea_ABM_target_point_defense_array
+# 						value = PREV.id
+# 					}
+# 				}
+# 			}
+# 			for_each_scope_loop = {
+# 				array = PREV.sea_ABM_target_point_defense_array
+# 			 	#break = {
+# 			 	#	sea_launch_point_defense_[sea_ABM_defense_LPID] = yes
+# 			 	#}
+# 				if = {
+# 					limit = {
+# 						any_of = {
+# 							array = PREV.sea_ABM_target_point_defense_array
+# 							sea_launch_point_defense_[sea_ABM_defense_TPID] = yes
+# 						}
+# 					}
+# 					set_temp_variable = { temp1 = 0 }
+# 					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas
+# 					multiply_temp_variable = { temp1 = var_ship_ABM_launcher_tech }
+# 					add_to_variable = { PREV.var_intercept_capacity_midcourse = temp1 }
+# 					log = "[GetDateText]: [PREV.ROOT.GetName]: midcourse phase defense TP [?var_intercept_capacity_midcourse]"
+# 					clear_array = PREV.sea_ABM_target_point_defense_array
+# 				}
+# 			}
+# 			### terminal phase defense ###
+# 			every_state = {
+# 				limit = {
+# 					[target_point_ID] = {
+# 						distance_to = {
+# 							value < [SAM_range]
+# 							target = PREV
+# 						}
+# 					}
+# 				}
+# 				PREV.ROOT = {
+# 					add_to_array = {
+# 						array = sea_SAM_target_point_defense_array
+# 						value = PREV.id
+# 					}
+# 				}
+# 			}
+# 			for_each_scope_loop = {
+# 			 	array = PREV.sea_SAM_target_point_defense_array
+# 			 	#break = {
+# 			 	#	sea_launch_point_defense_[sea_SAM_defense_TPID] = yes
+# 			 	#}
+# 				if = {
+# 					limit = {
+# 						any_of = {
+# 						#any_of_scopes = {	
+# 							array = PREV.sea_SAM_target_point_defense_array
+# 							sea_launch_point_defense_[sea_SAM_defense_TPID] = yes
+# 						}
+# 					}
+# 					set_temp_variable = { temp1 = 0 }
+# 					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas
+# 					multiply_temp_variable = { temp1 = var_ship_SAM_launcher_tech }
+# 					add_to_variable = { PREV.var_intercept_capacity_terminal = temp1 }
+# 					log = "[GetDateText]: [?PREV.ROOT.sea_SAM_target_point_defense_array^i.GetName]: terminal phase defense [?PREV.ROOT.var_intercept_capacity_terminal]"
+# 					clear_array = PREV.sea_SAM_target_point_defense_array
+# 				}
+# 			}
+# 		}
+# 		launch_point_ID = "[?missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
+# 		target_point_ID = "[?missile_target_point_array^i.GetID]" # "[?var_target_point_ID.GetID]"
+# 		SAM_range = "[?var_SAM_range]"
+# 		ABM_range = "[?var_ABM_range]"
+# 		sea_SAM_defense_LPID = "[?sea_SAM_launch_point_defense_array^i.GetID]"
+# 		sea_SAM_defense_TPID = "[?sea_SAM_target_point_defense_array^i.GetID]"
+# 		sea_ABM_defense_LPID = "[?sea_ABM_launch_point_defense_array^i.GetID]"
+# 		sea_ABM_defense_TPID = "[?sea_ABM_target_point_defense_array^i.GetID]"
+# 	}
+# }
 
 ### seabased to do ###
 # check_landbased_missile_defense_cap_vs_deployed = {
@@ -561,18 +693,18 @@ set_seabased_missile_defense_cap = {
 #}
 
 ### ??? ### idk why i did this
-set_air_defense_array = {
-	every_controlled_state = {
-		limit = {
-			anti_air_building > 0
-		}
-		add_to_array = {
-			array = air_defense_array
-			value = v
-			index = i
-		}
-	}			
-}	
+# set_air_defense_array = {
+# 	every_controlled_state = {
+# 		limit = {
+# 			anti_air_building > 0
+# 		}
+# 		add_to_array = {
+# 			array = air_defense_array
+# 			value = v
+# 			index = i
+# 		}
+# 	}			
+# }	
 
 
 ### boost phase vs defense ###
