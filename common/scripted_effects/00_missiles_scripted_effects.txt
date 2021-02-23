@@ -413,19 +413,30 @@ set_seabased_missile_defense_cap = {
 						has_state_flag = sea_launch_point
 			 		}
 				}
-				if = {
+				set_variable = { var_ship_number_AA = 9 }
+				while_loop_effect = {
+					break = temp2
 					limit = {
-						THIS = { sea_launch_point_defense_[launch_point_ID] = yes }
+						check_variable = { var_ship_number_AA > 1 }
 					}
-					set_temp_variable = { temp1 = 0 }
-					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas 
-					multiply_temp_variable = { temp1 = var_ship_SAM_launcher_tech }
-					add_to_variable = { PREV.var_intercept_capacity_boost = temp1 }
-					log = "set_seabased_missile_defense_cap launch_point [launch_point_ID]"
-				}
-				else = {
-					add_to_variable = { PREV.var_intercept_capacity_boost = 0 }
-					log = "set_seabased_missile_defense_cap launch_point no ships"
+					if = {
+						limit = {
+							THIS = { sea_launch_point_defense_[launch_point_ID] = yes }
+						}
+						set_temp_variable = { temp1 = 0 }
+						add_to_temp_variable = { temp1 = var_ship_number_AA } # num of ships
+						add_to_temp_variable = { temp1 = 1 }
+						multiply_temp_variable = { temp1 = var_ship_SAM_launcher_tech }
+						add_to_variable = { PREV.var_intercept_capacity_boost = temp1 }
+						set_temp_variable = { temp2 = 1 }
+						log = "set_seabased_missile_defense_cap launch_point [launch_point_ID]"
+					}
+					else = {
+						add_to_variable = { PREV.var_intercept_capacity_boost = 0 }
+						log = "set_seabased_missile_defense_cap launch_point no ships"
+					}
+					subtract_from_variable = { var_ship_number_AA = 1 }
+					log = "set_seabased_missile_defense_cap launch_point var_ship_number_AA [?var_ship_number_AA]"
 				}
 			}
 			else = {
@@ -438,25 +449,37 @@ set_seabased_missile_defense_cap = {
 						has_state_flag = sea_launch_point
 					}
 				}
-				if = {
+				set_variable = { var_ship_number_AA = 9 }
+				while_loop_effect = {
+					break = temp2
 					limit = {
-						THIS = { sea_launch_point_defense_[target_point_ID] = yes }
+						check_variable = { var_ship_number_AA > 1 }
 					}
-					set_temp_variable = { temp1 = 0 }
-					add_to_temp_variable = { temp1 = 1 } # scripted effect necessary to check ships in sea_launch_point areas 
-					multiply_temp_variable = { temp1 = var_ship_SAM_launcher_tech }
-					add_to_variable = { PREV.var_intercept_capacity_terminal = temp1 }
-					log = "set_seabased_missile_defense_cap target_point"
-				}
-				else = {
-					add_to_variable = { PREV.var_intercept_capacity_terminal = 0 }
-					log = "set_seabased_missile_defense_cap target_point no ships"
+					if = {
+						limit = {
+							THIS = { sea_launch_point_defense_[target_point_ID] = yes }
+						}
+						set_temp_variable = { temp1 = 0 }
+						add_to_temp_variable = { temp1 = var_ship_number_AA } # num of ships
+						add_to_temp_variable = { temp1 = 1 }
+						multiply_temp_variable = { temp1 = var_ship_SAM_launcher_tech }
+						add_to_variable = { PREV.var_intercept_capacity_terminal = temp1 }
+						set_temp_variable = { temp2 = 1 }
+						log = "set_seabased_missile_defense_cap target_point"
+					}
+					else = {
+						add_to_variable = { PREV.var_intercept_capacity_terminal = 0 }
+						log = "set_seabased_missile_defense_cap target_point no ships"
+					}
+					subtract_from_variable = { var_ship_number_AA = 1 }
+					log = "set_seabased_missile_defense_cap target_point var_ship_number_AA [?var_ship_number_AA]"
 				}
 			}
 			else = {
 				add_to_variable = { PREV.var_intercept_capacity_terminal = 0 }
 				log = "set_seabased_missile_defense_cap target_point no sea_launch_point"
 			}
+			clear_variable = var_ship_number_AA
 		}
 		launch_point_ID = "[?PREV.missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
 		target_point_ID = "[?PREV.missile_target_point_array^i.GetID]" # "[?var_target_point_ID.GetID]"
