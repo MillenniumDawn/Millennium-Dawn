@@ -95,6 +95,10 @@
 	NDefines.NProduction.EQUIPMENT_MODULE_ADD_XP_COST = 5.0					-- XP cost for adding a new equipment module in an empty slot when creating an equipment variant.
 	NDefines.NProduction.EQUIPMENT_MODULE_REPLACE_XP_COST = 6.0				-- XP cost for replacing one equipment module with an unrelated module when creating an equipment variant.
 	NDefines.NProduction.EQUIPMENT_MODULE_CONVERT_XP_COST = 3.0				-- XP cost for converting one equipment module to a related module when creating an equipment variant.
+	NDefines.NProduction.MIN_NAVAL_EQUIPMENT_CONVERSION_IC_COST_FACTOR = 0.1
+	NDefines.NProduction.DEFAULT_MAX_NAV_FACTORIES_PER_LINE = 5
+	NDefines.NProduction.CONVOY_MAX_NAV_FACTORIES_PER_LINE = 15
+	NDefines.NProduction.CAPITAL_SHIP_MAX_NAV_FACTORIES_PER_LINE = 5
 
 	NDefines.NTechnology.MAX_SUBTECHS = 5
 	NDefines.NTechnology.BASE_YEAR_AHEAD_PENALTY_FACTOR = 1.0
@@ -213,13 +217,14 @@
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 2500 -- 10000
 	NDefines.NAir.DETECT_CHANCE_FROM_AIRCRAFTS_EFFECTIVE_COUNT = 350 -- 3000
 	NDefines.NAir.DETECT_CHANCE_FROM_NIGHT = -0.05 -- -0.2
-	NDefines.NAir.CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 3 -- 4
+	NDefines.NAir.CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 1 -- 4
 	NDefines.NAir.HOURS_DELAY_AFTER_EACH_COMBAT = 3 -- 4
 	NDefines.NAir.NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 0.40 -- 0.3
 	NDefines.NAir.NAVAL_STRIKE_DETECTION_BALANCE_FACTOR = 0.7 -- 0.7
 	NDefines.NAir.NAVAL_RECON_DETECTION_BALANCE_FACTOR = 0.7 -- 0.7
 	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_STR = 4 -- 3
 	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_ORG = 3.50 -- 3
+	NDefines.NAir.NAVAL_STRIKE_CARRIER_MULTIPLIER = 20.0
 	NDefines.NAir.AIR_AGILITY_TO_NAVAL_STRIKE_AGILITY = 0.02 -- 0.01
 	NDefines.NAir.BASE_STRATEGIC_BOMBING_HIT_PLANE_DAMAGE_FACTOR = 50 -- 0.2
 	NDefines.NAir.AIR_COMBAT_FINAL_DAMAGE_SCALE = 0.025 -- 0.015
@@ -254,7 +259,7 @@
 	NDefines.NNavy.NAVAL_SPEED_MODIFIER = 0.1 -- 0.1
 	NDefines.NNavy.NAVAL_INVASION_PREPARE_HOURS = 96 -- 168
 	NDefines.NNavy.ANTI_AIR_TARGETING = 12.5 -- 0.9
-	NDefines.NNavy.ANTI_AIR_TARGETTING_TO_CHANCE = 0.0095 -- 0.07
+	NDefines.NNavy.ANTI_AIR_TARGETTING_TO_CHANCE = 0.005 -- 0.07
 	NDefines.NNavy.ANTI_AIR_ATTACK_TO_AMOUNT = 0.001 -- 0.005
 	NDefines.NNavy.MISSION_FUEL_COSTS = {
 		0.0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
@@ -277,6 +282,7 @@
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_EFFECT = 0.3
 	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_POW_EFFECT = 1.01
+	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 1
 
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.15
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.15
@@ -439,6 +445,7 @@
 	NDefines.NAI.STR_BOMB_MIN_EXCORT_WINGS = 1
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
 	NDefines.NAI.NAVAL_MIN_EXCORT_WINGS = 0.10 --Updated AI Air prioties
+	NDefines.NAI.TRADEABLE_FACTORIES_FRACTION = 0.65 -- Updated from 0.80
 
 	--Country Defines
 	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
