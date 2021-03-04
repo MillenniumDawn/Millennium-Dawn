@@ -74,7 +74,7 @@ scripted_gui = {
 			}
 			MD_missiles_ground_launch_button_click_enabled = {
 				ROOT = {
-					set_temp_variable = { temp1 = PREV.building_level@missile_silo } 
+					set_temp_variable = { temp1 = PREV.building_level@missile_silo }
 					set_temp_variable = { temp2 = PREV.building_level@internet_station } ### replace with TEL base } 
 					multiply_temp_variable = { temp1 = var_silo_launcher }
 					multiply_temp_variable = { temp2 = var_TEL_launcher }
@@ -109,7 +109,7 @@ scripted_gui = {
 							OR = {
 								check_variable = { temp1 > var_gui_salvo }
 								check_variable = { temp2 > var_gui_salvo }
-							}							
+							}
 						}
 					}
 				}
@@ -134,7 +134,7 @@ scripted_gui = {
 						AND = {
 							check_variable = { var_gui_missile_type > 70 }
 							check_variable = { var_gui_missile_type < 80 }
-						}										
+						}
 					}
 				}
 				ROOT = { NOT = { has_country_flag = search_target_point } }
@@ -146,12 +146,18 @@ scripted_gui = {
 							OR = {
 								### SLBM ###
 								AND = {
+									[sea_launch_point] = {
+										has_state_flag = sea_launch_point
+									}
 									check_variable = { var_gui_missile_type > 30 }
 									check_variable = { var_gui_missile_type < 40 }
 									sea_launch_point_sub_[sea_launch_point] = yes
 								}
 								### SLCM ###
 								AND = {
+									[sea_launch_point] = {
+										has_state_flag = sea_launch_point
+									}
 									check_variable = { var_gui_missile_type > 60 }
 									check_variable = { var_gui_missile_type < 70 }
 									OR = {
@@ -161,12 +167,15 @@ scripted_gui = {
 								}
 								### HSCM ### trigger for SLCM mod to add
 								AND = {
+									[sea_launch_point] = {
+										has_state_flag = sea_launch_point
+									}
 									check_variable = { var_gui_missile_type > 70 }
 									check_variable = { var_gui_missile_type < 80 }
 									OR = {
 										sea_launch_point_[sea_launch_point] = yes
 										sea_launch_point_sub_[sea_launch_point] = yes
-									}									
+									}
 								}
 							}
 						}
@@ -177,7 +186,7 @@ scripted_gui = {
 			}
 			MD_missiles_air_launch_button_click_enabled = {
 				meta_trigger = {
-					text = {				
+					text = {
 						ROOT = {
 							OR = {
 								### ALCM ###
@@ -186,35 +195,45 @@ scripted_gui = {
 									check_variable = { var_gui_missile_type < 50 }
 									OR = {
 										AND = {
-											PREV = { air_base > 0 }
-											OR = {
-												has_deployed_air_force_size = {
-													size > [bomber_number_ALCM]
-													type = strategic_bomber
-												}
-												has_deployed_air_force_size = {
-													size > [STK_number_ALCM]
-													type = fighter
-													type = cas 
-													type = tactical_bomber
-													type = scout_plane
-												}
-												has_deployed_air_force_size = {
-													size > [MR_number_ALCM]
-													type = fighter
-													type = interceptor 
-													type = cas 
-													type = tactical_bomber
+											PREV = {
+												air_base > 0
+												is_controlled_by = ROOT
+											}
+											#check_variable = { PREV.building_level@air_base > 0 }
+											ROOT = {
+												OR = {
+													has_deployed_air_force_size = {
+														size > [bomber_number_ALCM]
+														type = strategic_bomber
+													}
+													has_deployed_air_force_size = {
+														size > [STK_number_ALCM]
+														type = fighter
+														type = cas
+														type = tactical_bomber
+														type = scout_plane
+													}
+													has_deployed_air_force_size = {
+														size > [MR_number_ALCM]
+														type = fighter
+														type = interceptor
+														type = cas
+														type = tactical_bomber
+														type = scout_plane
+													}
 												}
 											}
 										}
 										AND = {
-											sea_launch_point_CV_[sea_launch_point] = yes
+											[sea_launch_point] = {
+												has_state_flag = sea_launch_point
+											}
+											ROOT = { sea_launch_point_CV_[sea_launch_point] = yes }
 											has_deployed_air_force_size = {
 												size > [MR_CV_number_ALCM]
 												type = fighter
-												type = interceptor 
-												type = cas 
+												type = interceptor
+												type = cas
 												type = tactical_bomber
 												type = naval_bomber
 											}
@@ -227,7 +246,10 @@ scripted_gui = {
 									check_variable = { var_gui_missile_type < 80 }
 									OR = {
 										AND = {
-											PREV = { air_base > 0 }
+											PREV = {
+												air_base > 0
+												is_controlled_by = ROOT
+											}
 											OR = {
 												has_deployed_air_force_size = {
 													size > [bomber_number_ALCM]
@@ -236,41 +258,45 @@ scripted_gui = {
 												has_deployed_air_force_size = {
 													size > [STK_number_ALCM]
 													type = fighter
-													type = cas 
+													type = cas
 													type = tactical_bomber
 													type = scout_plane
 												}
 												has_deployed_air_force_size = {
 													size > [MR_number_ALCM]
 													type = fighter
-													type = interceptor 
-													type = cas 
+													type = interceptor
+													type = cas
 													type = tactical_bomber
+													type = scout_plane
 												}
 											}
 										}
 										AND = {
-											sea_launch_point_CV_[sea_launch_point] = yes
+											[sea_launch_point] = {
+												has_state_flag = sea_launch_point
+											}
+											ROOT = { sea_launch_point_CV_[sea_launch_point] = yes }
 											has_deployed_air_force_size = {
 												size > [MR_CV_number_ALCM]
 												type = fighter
-												type = interceptor 
-												type = cas 
+												type = interceptor
+												type = cas
 												type = tactical_bomber
 												type = naval_bomber
 											}
 										}
-									}									
+									}
 								}
 							}
 						}
 						ROOT = { NOT = { has_country_flag = search_target_point } }
 					}
 					sea_launch_point = "[PREV.GetID]"
-					bomber_number_ALCM = "[?var_bomber_number_ALCM]"
-					STK_number_ALCM = "[?var_STK_number_ALCM]"
-					MR_number_ALCM = "[?var_MR_number_ALCM]"
-					MR_CV_number_ALCM = "[?var_MR_CV_number_ALCM]"
+					bomber_number_ALCM = "[?ROOT.var_bomber_number_ALCM]"
+					STK_number_ALCM = "[?ROOT.var_STK_number_ALCM]"
+					MR_number_ALCM = "[?ROOT.var_MR_number_ALCM]"
+					MR_CV_number_ALCM = "[?ROOT.var_MR_CV_number_ALCM]"
 				}
 			}
 		}
