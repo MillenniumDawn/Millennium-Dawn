@@ -950,6 +950,15 @@ set_missile_model = {
 	}
 }
 
+set_warhead_gui = {
+	meta_effect = {
+		text = {
+			set_warhead_tech_[warhead] = yes
+		}
+		warhead = "[?warhead_tech_array^i]"
+	}
+}
+
 set_warhead = {
 	meta_effect = {
 		text = {
@@ -1677,6 +1686,31 @@ set_missile_damage = {
 	clear_variable = var_damage_building_16
 }
 
+set_missile_warhead_effects = {
+	meta_effect = {
+		text = {
+			set_temp_variable = { temp1 = missile_target_hit_stat_array^i } # var_missile_target_hit 
+			while_loop_effect = {
+				limit = {
+					check_variable = { temp1 > 0 }
+				}
+				subtract_from_temp_variable = { temp1 = 1 }
+				if = {
+					limit = {
+						check_variable = { missile_warhead_array^i = 2 }
+					}
+				}
+				launch_nuke = {
+					state = [target_point_ID]
+					controller = [target_TAG]
+				}
+			}
+		}
+		target_point_ID = "[?missile_target_point_array^i.GetID]"
+		target_TAG = "[?missile_target_controller_array.GetID]"
+	}
+}
+
 ################################################
 ### for on daily
 ################################################
@@ -1684,61 +1718,67 @@ set_missile_damage = {
 missile_on_daily = {
 	for_each_loop = {
 		array = missile_target_point_array
-
-		log = "[GetDateText]: [Root.GetName]: missile_on_daily: Missile Target: [?missile_target_point_array^i.GetName] ID = [?missile_target_point_array^i.GetID]"
-		set_variable = { var_salvo = missile_salvo_array^i }
-
-		#var:ROOT.missile_target_controller_array^i = {
-			#set_missile_defense_land_deployed_tech = yes
-		var:ROOT.missile_target_controller_array^i = {
-
-			set_variable = { ROOT.var_intercept_capacity_boost = 0 }
-			set_variable = { ROOT.var_intercept_capacity_midcourse = 0 }
-			set_variable = { ROOT.var_intercept_capacity_terminal = 0 }
-
-			set_landbased_missile_defense_cap = yes
-			set_seabased_missile_defense_cap = yes
-
-			### to modify intercept chance create a scripted effect
-			set_variable = { ROOT.var_intercept_chance_boost = var_SAM_intercept_chance }
-			set_variable = { ROOT.var_intercept_chance_midcourse = var_ABM_intercept_chance }
-			set_variable = { ROOT.var_intercept_chance_terminal = var_SAM_intercept_chance }
-		}
-
-			#set_missile_defense_sea_deployed_tech = yes
-			#set_seabased_missile_defense_cap = yes
-
-			#check_landbased_missile_defense_cap_vs_deployed = yes
-			#check_seabased_missile_defense_cap = yes
-		#}
-
-		set_missile_model = yes
-		set_warhead = yes
-
-		meta_effect = {
-			text = {
-				subtract_from_variable = { var_inventory_[missile_type]_[missile_tech] = var_salvo }
+		if = {
+			limit = {
+				check_variable = { missile_duration_array^i > 0 }
 			}
-			missile_type = "[?missile_type_array^i]"
-			missile_tech = "[?missile_tech_array^i]"
-		}
-		subtract_from_variable = { missile_duration_array^i = 1 }
 
-		var:ROOT.missile_target_controller_array^i = {
-			ROOT = {
-				### boost phase vs defense ###
-				boost_phase_defense = yes
-				### midcourse phase vs defense ###
-				midcourse_phase_defense = yes
-				### terminal phase vs defense ###
-				terminal_phase_defense = yes
+			log = "[GetDateText]: [Root.GetName]: missile_on_daily: Missile Target: [?missile_target_point_array^i.GetName] ID = [?missile_target_point_array^i.GetID]"
+			set_variable = { var_salvo = missile_salvo_array^i }
+
+			#var:ROOT.missile_target_controller_array^i = {
+				#set_missile_defense_land_deployed_tech = yes
+			var:ROOT.missile_target_controller_array^i = {
+
+				set_variable = { ROOT.var_intercept_capacity_boost = 0 }
+				set_variable = { ROOT.var_intercept_capacity_midcourse = 0 }
+				set_variable = { ROOT.var_intercept_capacity_terminal = 0 }
+
+				set_landbased_missile_defense_cap = yes
+				set_seabased_missile_defense_cap = yes
+
+				### to modify intercept chance create a scripted effect
+				set_variable = { ROOT.var_intercept_chance_boost = var_SAM_intercept_chance }
+				set_variable = { ROOT.var_intercept_chance_midcourse = var_ABM_intercept_chance }
+				set_variable = { ROOT.var_intercept_chance_terminal = var_SAM_intercept_chance }
 			}
+
+				#set_missile_defense_sea_deployed_tech = yes
+				#set_seabased_missile_defense_cap = yes
+
+				#check_landbased_missile_defense_cap_vs_deployed = yes
+				#check_seabased_missile_defense_cap = yes
+			#}
+
+			set_missile_model = yes
+			set_warhead = yes
+
+			meta_effect = {
+				text = {
+					subtract_from_variable = { var_inventory_[missile_type]_[missile_tech] = var_salvo }
+				}
+				missile_type = "[?missile_type_array^i]"
+				missile_tech = "[?missile_tech_array^i]"
+			}
+			subtract_from_variable = { missile_duration_array^i = 1 }
+
+			var:ROOT.missile_target_controller_array^i = {
+				ROOT = {
+					### boost phase vs defense ###
+					boost_phase_defense = yes
+					### midcourse phase vs defense ###
+					midcourse_phase_defense = yes
+					### terminal phase vs defense ###
+					terminal_phase_defense = yes
+				}
+			}
+			add_to_array = { array = SAM_consumption_array value = SAM_consumption index = i }
+			add_to_array = { array = ABM_consumption_array value = ABM_consumption index = i }
+
+			#set_landbased_missile_defense_consumption = yes
+
+			set_missile_damage = yes
+			set_missile_warhead_effects = yes
 		}
-		add_to_array = { array = SAM_consumption_array value = SAM_consumption index = i }
-		add_to_array = { array = ABM_consumption_array value = ABM_consumption index = i }
-
-		#set_landbased_missile_defense_consumption = yes
-
-		set_missile_damage = yes
 	}
 }
