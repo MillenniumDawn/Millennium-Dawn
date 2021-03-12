@@ -723,6 +723,543 @@ defined_text = {
 	}
 }
 
+defined_text = {
+	name = HSCM_ground_launch_trigger_loc
+	text = {
+		trigger = {
+			ROOT = {
+				set_temp_variable = { temp1 = PREV.building_level@missile_silo }
+				set_temp_variable = { temp2 = PREV.building_level@internet_station } ### replace with TEL base } 
+				multiply_temp_variable = { temp1 = var_silo_launcher }
+				multiply_temp_variable = { temp2 = var_TEL_launcher }
+				add_to_temp_variable = { temp1 = 1 }
+				add_to_temp_variable = { temp2 = 1 }
+				OR = {
+					check_variable = { temp1 > var_gui_salvo }
+					check_variable = { temp2 > var_gui_salvo }
+				}				
+				has_selected_HSCM = yes
+			}
+		}
+		localization_key = HSCM_ground_launch_trigger_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = HSCM_ground_launch_trigger_loc_no
+	}
+}
+
+### sea_launched ###
+
+defined_text = {
+	name = sea_launched_missile_trigger_loc
+	text = {
+		trigger = {
+			meta_trigger = {
+				text = {
+					ROOT = {
+						OR = {
+							### SLBM ###
+							AND = {
+								[sea_launch_point] = {
+									has_state_flag = sea_launch_point
+								}
+								has_selected_SLBM = yes
+								sea_launch_point_sub_[sea_launch_point] = yes
+							}
+							### SLCM ###
+							AND = {
+								[sea_launch_point] = {
+									has_state_flag = sea_launch_point
+								}
+								has_selected_SLCM = yes
+								OR = {
+									sea_launch_point_[sea_launch_point] = yes
+									sea_launch_point_sub_[sea_launch_point] = yes
+								}
+							}
+							### HSCM ### trigger for SLCM mod to add
+							AND = {
+								[sea_launch_point] = {
+									has_state_flag = sea_launch_point
+								}
+								has_selected_HSCM = yes
+								OR = {
+									sea_launch_point_[sea_launch_point] = yes
+									sea_launch_point_sub_[sea_launch_point] = yes
+								}
+							}
+						}
+					}
+					#ROOT = { NOT = { has_country_flag = search_target_point } }
+				}
+				sea_launch_point = "[PREV.GetID]"
+			}
+		}
+		localization_key = sea_launched_missile_trigger_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = sea_launched_missile_trigger_loc_no
+	}
+}
+
+defined_text = {
+	name = SLBM_launch_trigger_loc
+	text = {
+		trigger = {
+			meta_trigger = {
+				text = {
+					ROOT = {
+						### SLBM ###
+						AND = {
+							[sea_launch_point] = {
+								has_state_flag = sea_launch_point
+							}
+							has_selected_SLBM = yes
+							sea_launch_point_sub_[sea_launch_point] = yes
+						}
+					}
+				}
+				sea_launch_point = "[PREV.GetID]"
+			}
+		}
+		localization_key = SLBM_launch_trigger_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = SLBM_launch_trigger_loc_no
+	}
+}
+
+defined_text = {
+	name = SLCM_launch_trigger_loc
+	text = {
+		trigger = {
+			meta_trigger = {
+				text = {
+					ROOT = {
+						### SLCM ###
+						AND = {
+							[sea_launch_point] = {
+								has_state_flag = sea_launch_point
+							}
+							has_selected_SLCM = yes
+							OR = {
+								sea_launch_point_[sea_launch_point] = yes
+								sea_launch_point_sub_[sea_launch_point] = yes
+							}
+						}
+					}
+				}
+				sea_launch_point = "[PREV.GetID]"
+			}
+		}
+		localization_key = SLCM_launch_trigger_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = SLCM_launch_trigger_loc_no
+	}
+}
+
+defined_text = {
+	name = HSCM_sub_launch_trigger_loc
+	text = {
+		trigger = {
+			meta_trigger = {
+				text = {
+					ROOT = {
+						### HSCM ### trigger for SLCM mod to add
+						AND = {
+							[sea_launch_point] = {
+								has_state_flag = sea_launch_point
+							}
+							has_selected_HSCM = yes
+							sea_launch_point_sub_[sea_launch_point] = yes
+						}
+					}
+				}
+				sea_launch_point = "[PREV.GetID]"
+			}
+		}
+		localization_key = HSCM_sub_launch_trigger_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = HSCM_sub_launch_trigger_loc_no
+	}
+}
+
+defined_text = {
+	name = HSCM_ship_launch_trigger_loc
+	text = {
+		trigger = {
+			meta_trigger = {
+				text = {
+					ROOT = {
+						### HSCM ### trigger for SLCM mod to add
+						AND = {
+							[sea_launch_point] = {
+								has_state_flag = sea_launch_point
+							}
+							has_selected_HSCM = yes
+							sea_launch_point_[sea_launch_point] = yes
+						}
+					}
+				}
+				sea_launch_point = "[PREV.GetID]"
+			}
+		}
+		localization_key = HSCM_ship_launch_trigger_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = HSCM_ship_launch_trigger_loc_no
+	}
+}
+
+### air_launched ###
+
+defined_text = {
+	name = air_launched_missile_trigger_loc
+	text = {
+		trigger = {
+			meta_trigger = {
+				text = {
+					ROOT = {
+						OR = {
+							### ALCM ###
+							AND = {
+								has_selected_ALCM = yes
+								OR = {
+									AND = {
+										PREV = {
+											air_base > 0
+											is_controlled_by = ROOT
+										}
+										#check_variable = { PREV.building_level@air_base > 0 }
+										ROOT = {
+											OR = {
+												has_deployed_air_force_size = {
+													size > [bomber_number_ALCM]
+													type = strategic_bomber
+												}
+												has_deployed_air_force_size = {
+													size > [STK_number_ALCM]
+													type = fighter
+													type = cas
+													type = tactical_bomber
+													type = scout_plane
+												}
+												has_deployed_air_force_size = {
+													size > [MR_number_ALCM]
+													type = fighter
+													type = interceptor
+													type = cas
+													type = tactical_bomber
+													type = scout_plane
+												}
+											}
+										}
+									}
+									AND = {
+										[sea_launch_point] = {
+											has_state_flag = sea_launch_point
+										}
+										ROOT = { sea_launch_point_CV_[sea_launch_point] = yes }
+										has_deployed_air_force_size = {
+											size > [MR_CV_number_ALCM]
+											type = fighter
+											type = interceptor
+											type = cas
+											type = tactical_bomber
+											type = naval_bomber
+										}
+									}
+								}
+							}
+							### HSCM ### trigger for ALCM mod to add
+							AND = {
+								has_selected_HSCM = yes
+								OR = {
+									AND = {
+										PREV = {
+											air_base > 0
+											is_controlled_by = ROOT
+										}
+										OR = {
+											has_deployed_air_force_size = {
+												size > [bomber_number_ALCM]
+												type = strategic_bomber
+											}
+											has_deployed_air_force_size = {
+												size > [STK_number_ALCM]
+												type = fighter
+												type = cas
+												type = tactical_bomber
+												type = scout_plane
+											}
+											has_deployed_air_force_size = {
+												size > [MR_number_ALCM]
+												type = fighter
+												type = interceptor
+												type = cas
+												type = tactical_bomber
+												type = scout_plane
+											}
+										}
+									}
+									AND = {
+										[sea_launch_point] = {
+											has_state_flag = sea_launch_point
+										}
+										ROOT = { sea_launch_point_CV_[sea_launch_point] = yes }
+										has_deployed_air_force_size = {
+											size > [MR_CV_number_ALCM]
+											type = fighter
+											type = interceptor
+											type = cas
+											type = tactical_bomber
+											type = naval_bomber
+										}
+									}
+								}
+							}
+						}
+					}
+					#ROOT = { NOT = { has_country_flag = search_target_point } }
+				}
+				sea_launch_point = "[PREV.GetID]"
+				bomber_number_ALCM = "[?ROOT.var_bomber_number_ALCM]"
+				STK_number_ALCM = "[?ROOT.var_STK_number_ALCM]"
+				MR_number_ALCM = "[?ROOT.var_MR_number_ALCM]"
+				MR_CV_number_ALCM = "[?ROOT.var_MR_CV_number_ALCM]"
+			}
+		}
+		localization_key = air_launched_missile_trigger_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = air_launched_missile_trigger_loc_no
+	}
+}
+
+
+defined_text = {
+	name = ALCM_air_base_launch_trigger_loc
+	text = {
+		trigger = {
+			meta_trigger = {
+				text = {
+					ROOT = {
+						has_selected_ALCM = yes
+						OR = {
+							has_deployed_air_force_size = {
+								size > [bomber_number_ALCM]
+								type = strategic_bomber
+							}
+							has_deployed_air_force_size = {
+								size > [STK_number_ALCM]
+								type = fighter
+								type = cas
+								type = tactical_bomber
+								type = scout_plane
+							}
+							has_deployed_air_force_size = {
+								size > [MR_number_ALCM]
+								type = fighter
+								type = interceptor
+								type = cas
+								type = tactical_bomber
+								type = scout_plane
+							}
+						}
+					}
+				}
+				bomber_number_ALCM = "[?ROOT.var_bomber_number_ALCM]"
+				STK_number_ALCM = "[?ROOT.var_STK_number_ALCM]"
+				MR_number_ALCM = "[?ROOT.var_MR_number_ALCM]"
+			}
+		}
+		localization_key = ALCM_air_base_launch_trigger_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = ALCM_air_base_launch_trigger_loc_no
+	}
+}
+
+defined_text = {
+	name = ALCM_CV_launch_trigger_loc
+	text = {
+		trigger = {
+			meta_trigger = {
+				text = {
+					ROOT = {
+						has_selected_ALCM = yes
+						AND = {
+							[sea_launch_point] = {
+								has_state_flag = sea_launch_point
+							}
+							ROOT = { sea_launch_point_CV_[sea_launch_point] = yes }
+							has_deployed_air_force_size = {
+								size > [MR_CV_number_ALCM]
+								type = fighter
+								type = interceptor
+								type = cas
+								type = tactical_bomber
+								type = naval_bomber
+							}
+						}
+					}
+				}
+				sea_launch_point = "[PREV.GetID]"
+				MR_CV_number_ALCM = "[?ROOT.var_MR_CV_number_ALCM]"
+			}
+		}
+		localization_key = ALCM_CV_launch_trigger_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = ALCM_CV_launch_trigger_loc_no
+	}
+}
+
+defined_text = {
+	name = HSCM_air_base_launch_trigger_loc
+	text = {
+		trigger = {
+			meta_trigger = {
+				text = {
+					ROOT = {
+						has_selected_HSCM = yes
+						OR = {
+							has_deployed_air_force_size = {
+								size > [bomber_number_ALCM]
+								type = strategic_bomber
+							}
+							has_deployed_air_force_size = {
+								size > [STK_number_ALCM]
+								type = fighter
+								type = cas
+								type = tactical_bomber
+								type = scout_plane
+							}
+							has_deployed_air_force_size = {
+								size > [MR_number_ALCM]
+								type = fighter
+								type = interceptor
+								type = cas
+								type = tactical_bomber
+								type = scout_plane
+							}
+						}
+					}
+				}
+				bomber_number_ALCM = "[?ROOT.var_bomber_number_ALCM]"
+				STK_number_ALCM = "[?ROOT.var_STK_number_ALCM]"
+				MR_number_ALCM = "[?ROOT.var_MR_number_ALCM]"
+			}
+		}
+		localization_key = HSCM_air_base_launch_trigger_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = HSCM_air_base_launch_trigger_loc_no
+	}
+}
+
+defined_text = {
+	name = HSCM_CV_launch_trigger_loc
+	text = {
+		trigger = {
+			meta_trigger = {
+				text = {
+					ROOT = {
+						has_selected_HSCM = yes
+						AND = {
+							[sea_launch_point] = {
+								has_state_flag = sea_launch_point
+							}
+							ROOT = { sea_launch_point_CV_[sea_launch_point] = yes }
+							has_deployed_air_force_size = {
+								size > [MR_CV_number_ALCM]
+								type = fighter
+								type = interceptor
+								type = cas
+								type = tactical_bomber
+								type = naval_bomber
+							}
+						}
+					}
+				}
+				sea_launch_point = "[PREV.GetID]"
+				MR_CV_number_ALCM = "[?ROOT.var_MR_CV_number_ALCM]"
+			}
+		}
+		localization_key = HSCM_CV_launch_trigger_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = HSCM_CV_launch_trigger_loc_no
+	}
+}
+
+### air base ###
+
+defined_text = {
+	name = has_air_base_ALCM_loc
+	text = {
+		trigger = {
+			THIS = { air_base > 0 }
+		}
+		localization_key = has_air_base_ALCM_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = has_air_base_ALCM_loc_no
+	}
+}
+
+### CV ###
+
+defined_text = {
+	name = has_CV_ALCM_loc
+	text = {
+		trigger = {
+			meta_trigger = {
+				text = {
+					ROOT = {
+						[sea_launch_point] = {
+							has_state_flag = sea_launch_point
+						}
+					}
+					ROOT = { sea_launch_point_CV_[sea_launch_point] = yes }
+				}
+				sea_launch_point = "[PREV.GetID]"
+			}
+		}
+		localization_key = has_CV_ALCM_loc_yes
+	}
+	text = {
+		trigger = {
+		}
+		localization_key = has_CV_ALCM_loc_no
+	}
+}
 
 
 ### selected missile ###
