@@ -6,7 +6,6 @@ add_namespace = AC_event
 
 country_event = { #Offer of Investments
 	id = AC_event.1
-	immediate = { log = "[GetDateText]: [Root.GetName]: event AC_event.1" }
 	title = AC_event.1.t
 	desc = AC_event.1.d
 	picture = GFX_united_states_dollar
@@ -476,27 +475,63 @@ country_event = { #Offer of Investments
 				### reset selected build ammount
 				set_variable = { AC_build_amount = 1 }
 			}
-			set_temp_variable = { AC_influence_gain = FROM.AC_build_cost }
-			divide_temp_variable = { AC_influence_gain = 3.5 }
-			multiply_temp_variable = { AC_influence_gain = FROM.influence_multiplier }
-			for_loop_effect = {
-				end = influence_array^num
-				value = v
+			if = {
+				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
+				set_temp_variable = { AC_influence_gain = FROM.AC_build_cost }
 				if = {
 					limit = {
-						check_variable = { influence_array^v = FROM }
+						FROM = {
+							OR = {
+								check_variable = { AC_building_type_selected = 1 } #Infra
+								check_variable = { AC_building_type_selected = 2 } #Air Base
+								check_variable = { AC_building_type_selected = 3 } #AA
+								check_variable = { AC_building_type_selected = 4 } #Radar
+							}
+						}
 					}
-					add_to_variable = { influence_array_val^v = AC_influence_gain }
-					set_country_flag = found
+					divide_temp_variable = { AC_influence_gain = 1.5 }
+				}
+				else = {
+					divide_temp_variable = { AC_influence_gain = 2.5 }
+				}
+				multiply_temp_variable = { AC_influence_gain = FROM.influence_multiplier }
+				round_temp_variable = AC_influence_gain
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = FROM }
+						}
+						add_to_variable = { influence_array_val^v = AC_influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = FROM.id }
+					add_to_array = { influence_array_val = AC_influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+
+				#Cooldowns
+				if = {
+					limit = {
+						has_game_rule = { rule = rule_influence_cooldown_limits option = day_14_cooldown }
+					}
+					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 14 }
+				}
+				else_if = {
+					limit = {
+						has_game_rule = { rule = rule_influence_cooldown_limits option = day_30_cooldown }
+					}
+					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 30 }
+				}
+				else = {
+					#Nothing at all
 				}
 			}
-			if = {
-				limit = { NOT = { has_country_flag = found } }
-				add_to_array = { influence_array = FROM.id }
-				add_to_array = { influence_array_val = AC_influence_gain }
-			}
-			clr_country_flag = found
-			recalculate_influence = yes
 
 			#take 25% of the cost
 			custom_effect_tooltip = AC_event.1.o1_TT
@@ -918,7 +953,6 @@ country_event = { #Offer of Investments
 #Construction Refused
 country_event = {
 	id = AC_event.2
-	immediate = { log = "[GetDateText]: [Root.GetName]: event AC_event.2" }
 	title = AC_event.2.t
 	desc = AC_event.2.d
 	picture = GFX_united_states_dollar
@@ -938,7 +972,6 @@ country_event = {
 #Construction Cancelled
 country_event = {
 	id = AC_event.3
-	immediate = { log = "[GetDateText]: [Root.GetName]: event AC_event.3" }
 	title = AC_event.3.t
 	desc = AC_event.3.d
 	picture = GFX_united_states_dollar
