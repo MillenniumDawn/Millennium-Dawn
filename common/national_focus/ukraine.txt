@@ -1,46 +1,41 @@
 #Angriest Bird aka Birb
+#Rebalanced and improved on 03/13/2021
 focus_tree = {
-
 	id = ukraine
-
 	country = {
 		factor = 0
-		modifier = {
-			add = 15
-			tag = UKR
-		}
+		modifier = { add = 15 tag = UKR }
 	}
-
-continuous_focus_position = { x = 135 y = 950 }
-
-## Foreign Policy
+	continuous_focus_position = { x = 135 y = 950 }
 
 	### Foreign Policy Initiative
 	focus = {
 		id = UKR_foreign_policy_initiative
-		icon = improve_relations
+		icon = treaty4
 		x = 3
 		y = 2
 		cost = 10
 
-		ai_will_do = { factor = 1 }
-
 		available = {
+			is_puppet = no
 			OR = {
 				has_completed_focus = UKR_save_the_status_quo
 				has_completed_focus = UKR_pro_russian_government_in_power
 				has_completed_focus = UKR_pro_ukrainian_government_in_power
 				has_completed_focus = UKR_take_lead_at_national_revival
 			}
-			is_puppet = no
 		}
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_UKR_STABILITY }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_UKR_STABILITY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_foreign_policy_initiative"
 			add_political_power = 150
 			add_to_variable = { UKR_stability_of_ukraine_var = 2.0 }
 			custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_2_TT
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -54,6 +49,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		cost = 10
 
+		prerequisite = { focus = UKR_foreign_policy_initiative }
 		available = {
 			is_puppet = no
 			OR = {
@@ -64,18 +60,10 @@ continuous_focus_position = { x = 135 y = 950 }
 			}
 		}
 
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-
-		prerequisite = { focus = UKR_foreign_policy_initiative }
-
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_consolidation"
+			add_to_array = { global.baltic_black_sea_union_member = UKR }
 			POL = { country_event = { id = ukraine_md.10 days = 1 } }
 			LAT = { country_event = { id = ukraine_md.10 days = 1 } }
 			LIT = { country_event = { id = ukraine_md.10 days = 1 } }
@@ -85,6 +73,20 @@ continuous_focus_position = { x = 135 y = 950 }
 			ROM = { country_event = { id = ukraine_md.10 days = 1 } }
 		}
 
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				is_historical_focus_on = no
+			}
+			modifier = {
+				add = 1
+				OR = {
+					has_government = nationalist
+					has_government = neutrality
+				}
+			}
+		}
 	}
 
 	#### Baltic-Black Sea Dialogue
@@ -107,40 +109,37 @@ continuous_focus_position = { x = 135 y = 950 }
 			}
 		}
 
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_consolidation }
 
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_baltic_black_sea_dialogue"
 			hidden_effect = {
-				every_country = {
-					limit = { has_country_flag = did_not_support_the_balatic_black_sea_union }
-					clr_country_flag = did_not_support_the_balatic_black_sea_union
-				}
+				POL = { clr_country_flag = did_not_support_the_balatic_black_sea_union }
+				LAT = { clr_country_flag = did_not_support_the_balatic_black_sea_union }
+				LIT = { clr_country_flag = did_not_support_the_balatic_black_sea_union }
+				EST = { clr_country_flag = did_not_support_the_balatic_black_sea_union }
+				BLR = { clr_country_flag = did_not_support_the_balatic_black_sea_union }
+				MLV = { clr_country_flag = did_not_support_the_balatic_black_sea_union }
+				ROM = { clr_country_flag = did_not_support_the_balatic_black_sea_union }
 			}
-			every_country = {
-				limit = {
-					has_country_flag = supported_the_baltic_black_sea_union
-					NOT = { tag = UKR }
-					NOT = { has_war_with = UKR }
-				}
-				give_guarantee = UKR
-				UKR = {
-					give_guarantee = PREV
-				}
-			}
-			if = {
-				limit = {
-					any_country = {
-						NOT = { has_country_flag = supported_the_baltic_black_sea_union }
-						NOT = { has_country_flag = did_not_support_the_balatic_black_sea_union }
+			for_each_scope_loop = {
+				array = global.baltic_black_sea_union_member
+				if = {
+					limit = { NOT = { tag = UKR }}
+					give_guarantee = UKR
+					UKR = {
+						give_guarantee = PREV
 					}
 				}
-				custom_effect_tooltip = UKR_baltic_black_sea_dialogue_focus_TT
 			}
+			custom_effect_tooltip = UKR_baltic_black_sea_dialogue_focus_TT
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	#### Baltic-Black Sea Union
@@ -164,27 +163,32 @@ continuous_focus_position = { x = 135 y = 950 }
 			}
 		}
 
-		ai_will_do = { factor = 1 }
-
 		prerequisite = { focus = UKR_baltic_black_sea_dialogue }
 
-		mutually_exclusive = { focus = UKR_nato_membership_action_plan focus = UKR_aplly_to_join_csto }
+		mutually_exclusive = {
+			focus = UKR_nato_membership_action_plan
+			focus = UKR_aplly_to_join_csto
+		}
 
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_baltic_black_sea_union"
 			create_faction = UKR_baltic_black_sea_union_faction
-			every_country = {
-				limit = { has_country_flag = supported_the_baltic_black_sea_union }
+			for_each_scope_loop = {
+				array = global.baltic_black_sea_union_member
 				country_event = { id = ukraine_md.11 days = 1 }
 			}
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### Euroscepticism
 	focus = {
 		id = UKR_euroscepticism
-		icon = GFX_euroscepticism
+		icon = generic_euroscepticism
 		x = 0
 		y = 1
 		relative_position_id = UKR_foreign_policy_initiative
@@ -201,7 +205,6 @@ continuous_focus_position = { x = 135 y = 950 }
 			}
 		}
 
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_foreign_policy_initiative }
 
@@ -215,6 +218,9 @@ continuous_focus_position = { x = 135 y = 950 }
 			add_war_support = 0.05
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### GUAM Reogranization
@@ -237,8 +243,6 @@ continuous_focus_position = { x = 135 y = 950 }
 			}
 		}
 
-		ai_will_do = { factor = 1 }
-
 		prerequisite = { focus = UKR_euroscepticism }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
@@ -253,6 +257,9 @@ continuous_focus_position = { x = 135 y = 950 }
 			add_political_power = 50
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### Own Union Theory
@@ -263,8 +270,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 3
 		relative_position_id = UKR_foreign_policy_initiative
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_guam_reogranization }
 
@@ -289,6 +294,9 @@ continuous_focus_position = { x = 135 y = 950 }
 			}
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### Western Doctrine/Alignment Branch
@@ -299,8 +307,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 2
 
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -333,18 +339,20 @@ continuous_focus_position = { x = 135 y = 950 }
 			}
 			add_political_power = 100
 		}
+
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### Closer ties with EU
 	focus = {
 		id = UKR_closer_ties_with_eu
-		icon = GFX_closer_ties_with_eu
+		icon = EU_policies
 		x = 0
 		y = 1
 		relative_position_id = UKR_western_doctrine
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_western_doctrine }
 
@@ -367,23 +375,25 @@ continuous_focus_position = { x = 135 y = 950 }
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_closer_ties_with_eu"
 			EU_potential_eurosceptic_decline_5_percent = yes
 			ROOT_eurosceptic_decline_10_percent = yes
-			every_country = {
-				limit = { has_idea = EU_member }
+			for_each_scope_loop = {
+				array = global.EU_member
 				country_event = { id = ukraine_md.9 days = 1 }
 			}
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
 	### Association Agreement with the EU
 	focus = {
 		id = UKR_association_agreement
-		icon = GFX_association_agreement
+		icon = EU_reform
 		x = 0
 		y = 2
 		relative_position_id = UKR_western_doctrine
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_closer_ties_with_eu }
 
@@ -415,18 +425,19 @@ continuous_focus_position = { x = 135 y = 950 }
 			ITA = { country_event = ukraine_md.8 }
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### European Union Integration
 	focus = {
 		id = UKR_european_union_integration
-		icon = GFX_european_union_integration
+		icon = USoE620
 		x = 0
 		y = 3
 		relative_position_id = UKR_western_doctrine
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_association_agreement }
 
@@ -498,6 +509,10 @@ continuous_focus_position = { x = 135 y = 950 }
 				}
 			}
 		}
+
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### Closer ties with Western bloc
@@ -508,8 +523,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 1
 		relative_position_id = UKR_western_doctrine
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_western_doctrine }
 
@@ -539,7 +552,12 @@ continuous_focus_position = { x = 135 y = 950 }
 				add_opinion_modifier = { target = UKR modifier = supports_us }
 			}
 		}
+
+		ai_will_do = {
+			factor = 1
+		}
 	}
+
 	### NATO Standards
 	focus = {
 		id = UKR_nato_standarts
@@ -549,11 +567,10 @@ continuous_focus_position = { x = 135 y = 950 }
 		relative_position_id = UKR_western_doctrine
 		cost = 10
 
-		ai_will_do = { factor = 1 }
-
 		prerequisite = { focus = UKR_closer_ties_with_western_bloc }
 
 		available = {
+			is_puppet = no
 			custom_trigger_tooltip = {
 				tooltip = UKR_nato_major_influence_greater_than_10_percent_TT
 				UKR_nato_major_influence_greater_than_10_percent = yes
@@ -562,15 +579,16 @@ continuous_focus_position = { x = 135 y = 950 }
 				has_completed_focus = UKR_pro_ukrainian_government_in_power
 				has_completed_focus = UKR_save_the_status_quo
 			}
-			is_puppet = no
-
 		}
 
-		search_filters = { FOCUS_FILTER_UKR_EAST_WEST }
+		search_filters = { FOCUS_FILTER_UKR_EAST_WEST FOCUS_FILTER_FOREIGN_POLICY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_nato_standarts"
 			UKR_wve_rivlary_alignment_to_the_west = yes
+		}
 
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -583,7 +601,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		relative_position_id = UKR_western_doctrine
 		cost = 10
 
-		ai_will_do = { factor = 1 }
 		prerequisite = { focus = UKR_nato_standarts }
 		available = {
 			custom_trigger_tooltip = {
@@ -606,6 +623,10 @@ continuous_focus_position = { x = 135 y = 950 }
 			UKR_wve_rivlary_alignment_to_the_west = yes
 			USA = { country_event = { id = NATO.14 days = 1 } }
 		}
+
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### Confirm Non-block Status
@@ -615,8 +636,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		x = 11
 		y = 3
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		available = {
 			OR = {
@@ -640,6 +659,9 @@ continuous_focus_position = { x = 135 y = 950 }
 			add_political_power = 150
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### Proclaim Neutral Foreign Policy
@@ -651,7 +673,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		relative_position_id = UKR_confirm_non_block_status
 		cost = 10
 
-		ai_will_do = { factor = 1 }
 		available = {
 			is_puppet = no
 		}
@@ -663,6 +684,10 @@ continuous_focus_position = { x = 135 y = 950 }
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_proclaim_neutrality"
 			add_ideas = UKR_idea_neutrality
 		}
+
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### US non-NATO ally
@@ -673,8 +698,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 1
 		relative_position_id = UKR_confirm_non_block_status
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -698,18 +721,19 @@ continuous_focus_position = { x = 135 y = 950 }
 			UKR_wve_rivlary_alignment_to_the_west = yes
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### Special Defensive Agreement
 	focus = {
 		id = UKR_special_defensive_agreement
-		icon = GFX_special_defensive_agreement
+		icon = russia2
 		x = 2
 		y = 1
 		relative_position_id = UKR_confirm_non_block_status
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_confirm_non_block_status focus = UKR_closer_ties_with_eastern_bloc }
 
@@ -735,6 +759,9 @@ continuous_focus_position = { x = 135 y = 950 }
 			UKR_wve_rivlary_alignment_to_the_east = yes
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	##Russia Alignment
@@ -745,14 +772,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		x = 21
 		y = 1
 		cost = 10
-
-		ai_will_do = {
-			factor = 1
-			modifier {
-				factor = 5
-				has_country_flag = UKR_supported_russian_parties_flag
-			}
-		}
 
 		available = {
 			NOT = { has_country_flag = UKR_supported_patriotic_parties_flag }
@@ -788,6 +807,14 @@ continuous_focus_position = { x = 135 y = 950 }
 			subtract_from_variable = { UKR_chance_of_collapse_var = 2.0 }
 			custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_2_TT
 		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				has_country_flag = UKR_supported_russian_parties_flag
+			}
+		}
 	}
 
 	### Eastern Doctrine/Joining the CSTO branch
@@ -807,7 +834,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -842,15 +869,10 @@ continuous_focus_position = { x = 135 y = 950 }
 			}
 			every_country = {
 				limit = {
-					AND = {
-						NOT = { tag = SOV }
-						is_in_faction_with = SOV
-					}
+					NOT = { tag = SOV }
+					is_in_faction_with = SOV
 				}
-				add_opinion_modifier = {
-					target = UKR
-					modifier = has_expressed_loyalty
-				}
+				add_opinion_modifier = { target = UKR modifier = has_expressed_loyalty }
 			}
 			add_political_power = 100
 			UKR_wve_rivlary_alignment_to_the_east = yes
@@ -865,14 +887,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 2
 		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
-
-		ai_will_do = {
-			factor = 1
-			modifier {
-				factor = 5
-				has_country_flag = UKR_supported_russian_parties_flag
-			}
-		}
 
 		prerequisite = { focus = UKR_eastern_doctrine }
 
@@ -891,6 +905,14 @@ continuous_focus_position = { x = 135 y = 950 }
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_closer_ties_with_eastern_bloc"
 			UKR_wve_rivlary_alignment_to_the_east = yes
 		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				has_country_flag = UKR_supported_russian_parties_flag
+			}
+		}
 	}
 
 	### Apply to join CSTO
@@ -904,7 +926,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -949,7 +971,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -986,7 +1008,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -1026,7 +1048,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -1058,7 +1080,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -1097,7 +1119,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -1130,7 +1152,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -1164,7 +1186,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -1220,7 +1242,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -1249,7 +1271,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -1278,7 +1300,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -1316,7 +1338,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		ai_will_do = {
 			factor = 1
-			modifier {
+			modifier = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
@@ -2171,7 +2193,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 	###Consitutional Reform
 	focus = {
-		id = UKR_parlamentary_reform
+		id = UKR_parliamentary_reform
 		icon = treaty
 		x = -2
 		y = 4
@@ -2188,7 +2210,7 @@ continuous_focus_position = { x = 135 y = 950 }
 
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus UKR_parlamentary_reform"
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_parliamentary_reform"
 			if = {
 				limit = { has_idea = bureau_01 }
 				swap_ideas = { remove_idea = bureau_01 add_idea = bureau_02 }
@@ -2222,7 +2244,7 @@ continuous_focus_position = { x = 135 y = 950 }
 		prerequisite = { focus = UKR_unite_the_opposition focus = UKR_snap_election }
 
 		mutually_exclusive = {
-			focus = UKR_parlamentary_reform
+			focus = UKR_parliamentary_reform
 		}
 
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
@@ -2923,8 +2945,7 @@ continuous_focus_position = { x = 135 y = 950 }
 				add_stability = 0.10
 				add_war_support = -0.05
 			}
-			else_if = {
-				limit = { SOV = { OR = { NOT = { has_country_flag = UKR_denied_to_return_crimea } NOT = { has_country_flag = UKR_returned_crimea_to_ukraine } } } }
+			else = {
 				custom_effect_tooltip = UKR_crimea_tooltip_TT
 			}
 		}
@@ -3535,7 +3556,6 @@ continuous_focus_position = { x = 135 y = 950 }
 						target = UKR
 						equipment = {
 							type = util_vehicle_3 #Su-24
-							creator = "USA"
 						}
 						cost_factor = 0
 					}
@@ -3545,7 +3565,6 @@ continuous_focus_position = { x = 135 y = 950 }
 						target = UKR
 						equipment = {
 							type = util_vehicle_1 #Su-24
-							creator = "JAP"
 						}
 						cost_factor = 0
 					}
@@ -3741,8 +3760,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
 
-		ai_will_do = { factor = 1 }
-
 		prerequisite = { focus = UKR_invest_in_ministry_of_infrastructure }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
@@ -3767,13 +3784,13 @@ continuous_focus_position = { x = 135 y = 950 }
 					}
 				}
 			}
-			else_if = {
-				limit = {
-					NOT = { has_idea = infrastructure_project }
-					NOT = { has_idea = infrastructure_project2 }
-				}
+			else = {
 				custom_effect_tooltip = UKR_infrastructure_project_TT
 			}
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -3785,8 +3802,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 2
 		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_samru }
 
@@ -3804,6 +3819,10 @@ continuous_focus_position = { x = 135 y = 950 }
 				}
 			}
 		}
+
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### Ukrainian Railways (UZ)
@@ -3814,8 +3833,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 1
 		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_invest_in_ministry_of_infrastructure }
 
@@ -3841,13 +3858,13 @@ continuous_focus_position = { x = 135 y = 950 }
 					}
 				}
 			}
-			else_if = {
-				limit = {
-					NOT = { has_idea = infrastructure_project }
-					NOT = { has_idea = infrastructure_project2 }
-				}
+			else = {
 				custom_effect_tooltip = UKR_infrastructure_project_TT
 			}
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -3859,8 +3876,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 2
 		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_ukrainian_railways }
 
@@ -3887,6 +3902,9 @@ continuous_focus_position = { x = 135 y = 950 }
 			}
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### Support UIA
@@ -3898,8 +3916,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
 
-		ai_will_do = { factor = 1 }
-
 		prerequisite = { focus = UKR_invest_in_ministry_of_infrastructure }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
@@ -3907,6 +3923,7 @@ continuous_focus_position = { x = 135 y = 950 }
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_support_uia"
 			subtract_from_variable = { treasury = 5.0 }
 			custom_effect_tooltip = 5_billion_expense_tt
+
 			if = {
 				limit = { has_idea = infrastructure_project }
 				swap_ideas = {
@@ -3924,13 +3941,13 @@ continuous_focus_position = { x = 135 y = 950 }
 					}
 				}
 			}
-			else_if = {
-				limit = {
-					NOT = { has_idea = infrastructure_project }
-					NOT = { has_idea = infrastructure_project2 }
-				}
+			else = {
 				custom_effect_tooltip = UKR_infrastructure_project_TT
 			}
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -3942,8 +3959,6 @@ continuous_focus_position = { x = 135 y = 950 }
 		y = 2
 		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
-
-		ai_will_do = { factor = 1 }
 
 		prerequisite = { focus = UKR_support_uia }
 
@@ -3967,6 +3982,10 @@ continuous_focus_position = { x = 135 y = 950 }
 				}
 			}
 		}
+
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	### Hyperloop Project
@@ -3978,12 +3997,8 @@ continuous_focus_position = { x = 135 y = 950 }
 		relative_position_id = UKR_invest_in_ministry_of_infrastructure
 		cost = 10
 
-		ai_will_do = { factor = 1 }
-
 		prerequisite = { focus = UKR_roads_extend_plan }
-
 		prerequisite = { focus = UKR_grants_for_high_speed_trains }
-
 		prerequisite = { focus = UKR_build_new_airports }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
@@ -4016,17 +4031,16 @@ continuous_focus_position = { x = 135 y = 950 }
 			}
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
-
-##############################
-###	Start of EU Focus Tree ###	x = 18 y = 12
-##############################
-
-shared_focus = EU001
-
-############################
-### End of EU Focus Tree ###
-############################
-
+	##############################
+	###	Start of EU Focus Tree ###	x = 18 y = 12
+	##############################
+	shared_focus = EU001
+	############################
+	### End of EU Focus Tree ###
+	############################
 }
