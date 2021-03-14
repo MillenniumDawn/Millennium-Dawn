@@ -1,0 +1,218 @@
+bankruptcy_decisions = {
+	bankruptcy_timer = {
+		icon = generic_break_treaty
+		activation = { #Should activate once you hit previous bankruptcy rate
+			check_variable = { debt_rate > previous_bankruptcy_rate }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = bankruptcy_no_longer_looming_TT
+				check_variable = { debt_rate < previous_bankruptcy_rate }
+			}
+		}
+
+		visible = {
+			check_variable = { debt_rate > previous_bankruptcy_rate }
+		}
+		days_mission_timeout = 180
+		is_good = no
+
+		cancel_if_not_visible = yes
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout bankruptcy_timer"
+			news_event = News_bankrupcy.6
+		}
+	}
+
+	committed_to_reducing_debt = {
+		icon = generic_break_treaty
+		activation = {
+			OR = {
+				has_country_flag = BANK_committed_reducing_debt
+				has_variable = reduce_debt_by_5
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = passed_desired_amount_tt
+				check_variable = { debt < reduce_debt_by_5 }
+			}
+		}
+
+		days_mission_timeout = 90
+		cancel_if_not_visible = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout bankruptcy_timer"
+			country_event = { id = bankruptcy.201 }
+			clr_country_flag = BANK_committed_reducing_debt
+		}
+	}
+
+	apply_investments_to_debt = {
+		icon = attract_foreign_investor
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = has_int_investments_tt
+				check_variable = { int_investments > 0 }
+			}
+		}
+		days_remove = 30
+		days_re_enable = 5
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision apply_investments_to_debt"
+			set_temp_variable = { investment_reducer = int_investments }
+			multiply_temp_variable = { investment_reducer = 0.05 }
+			subtract_from_variable = { debt = investment_reducer }
+			subtract_from_variable = { int_investments = investment_reducer }
+			custom_effect_tooltip = apply_int_investments_to_debt_5_tt
+			decrease_international_bankers_opinion = yes
+		}
+	}
+
+	money_printer_go_brrt = {
+		icon = attract_foreign_investor
+
+		visible = {
+			check_variable = { debt_rate > looming_bankruptcy_rate }
+		}
+
+		available = {
+			NOT = { has_idea = recently_printed_money }
+			if = {
+				limit = {
+					num_of_factories < 10
+				}
+				check_variable = { treasury < 2 }
+				custom_trigger_tooltip = {
+					tooltip = bankruptcy_treasury_tt
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_factories > 9
+					num_of_factories < 25
+				}
+				check_variable = { treasury < 5 }
+				custom_trigger_tooltip = {
+					tooltip = bankruptcy_treasury_tt
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_factories > 24
+					num_of_factories < 50
+				}
+				check_variable = { treasury < 10 }
+				custom_trigger_tooltip = {
+					tooltip = bankruptcy_treasury_tt
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_factories > 49
+					num_of_factories < 75
+				}
+				check_variable = { treasury < 15 }
+				custom_trigger_tooltip = {
+					tooltip = bankruptcy_treasury_tt
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_factories > 74
+					num_of_factories < 100
+				}
+				check_variable = { treasury < 20 }
+				custom_trigger_tooltip = {
+					tooltip = bankruptcy_treasury_tt
+				}
+			}
+			else = {
+				check_variable = { treasury < 25 }
+				custom_trigger_tooltip = {
+					tooltip = bankruptcy_treasury_tt
+				}
+			}
+		}
+		days_remove = 15
+		days_re_enable = 15
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision money_printer_go_brrt"
+			decrease_small_medium_business_owners_opinion = yes
+			decrease_the_bazaar_opinion = yes
+			decrease_the_donju_opinion = yes
+			decrease_chaebols_opinion = yes
+			decrease_industrial_conglomerates_opinion = yes
+			decrease_international_bankers_opinion = yes
+			add_timed_idea = {
+				idea = recently_printed_money
+				days = 60
+			}
+			if = {
+				limit = { num_of_factories < 10 }
+				add_to_variable = { treasury = 2 }
+				custom_effect_tooltip = 2_billion_revenue_tt
+			}
+			else_if = {
+				limit = {
+					num_of_factories > 9
+					num_of_factories < 25
+				}
+				add_to_variable = { treasury = 5 }
+				custom_effect_tooltip = 5_billion_revenue_tt
+			}
+			else_if = {
+				limit = {
+					num_of_factories > 24
+					num_of_factories < 50
+				}
+				add_to_variable = { treasury = 10 }
+				custom_effect_tooltip = 10_billion_revenue_tt
+			}
+			else_if = {
+				limit = {
+					num_of_factories > 49
+					num_of_factories < 75
+				}
+				add_to_variable = { treasury = 15 }
+				custom_effect_tooltip = 15_billion_revenue_tt
+			}
+			else_if = {
+				limit = {
+					num_of_factories > 74
+					num_of_factories < 100
+				}
+				add_to_variable = { treasury = 20 }
+				custom_effect_tooltip = 20_billion_revenue_tt
+			}
+			else = {
+				add_to_variable = { treasury = 25 }
+				custom_effect_tooltip = 25_billion_revenue_tt
+			}
+		}
+	}
+
+	seek_additional_bailouts = {
+		icon = attract_foreign_investor
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "Foreign influence is present"
+				check_variable = { influence_array^0 > 0 }
+			}
+		}
+		days_remove = 1
+		days_re_enable = 120
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision seek_additional_bailouts"
+			decrease_international_bankers_opinion = yes
+			country_event = { id = bankrupcy.0 }
+		}
+	}
+}

@@ -32,18 +32,34 @@
 on_actions = {
 	# country
 
-	#Timed pulses, four year and thri yearly pulses copied from EUIV, weekly and monthly from the top of my head, doesn't given an error at least?
 	on_daily = {
 	}
 
+	#Timed pulses, four year and thri yearly pulses copied from EUIV, weekly and monthly from the top of my head, doesn't given an error at least?
 	on_weekly = {
 		effect = {
 			##Influence Checks This is just to keep the influence arrays down and remove all non-existing nations
 			recalculate_influence = yes
-			delete_influencer_check = yes
 		}
 	}
-
+	on_monthly_SUD = {
+		effect = {
+			if = {
+				limit = {
+					NOT = {
+						country_exists = SSU
+						country_exists = AGF
+					}
+					NOT = {
+						324 = {
+							is_core_of = SSU
+						}
+					}
+				}
+				country_event = SouthSudan.1
+			}
+		}
+	}
 	on_monthly = {
 		effect = {
 			#Generic
@@ -608,15 +624,9 @@ on_actions = {
 
 		random_events = {
 			100 = MD4_election_campaign.0
-			# 100 = election.3
-			# 100 = election.4
-			# 100 = election.5
-			# 100 = election.6
-			# 100 = election.11
-			# 100 = election.12
-			# 100 = election.13
-			# 100 = election.14
-			# 100 = election.15
+
+			#County specials
+			1000 = election_SOV.1
 		}
 	}
 
@@ -665,6 +675,9 @@ on_actions = {
 	on_justifying_wargoal_pulse = {
 		random_events = {
 			1000 = NATO.1
+		}
+		effect = {
+			FROM = { ai_update_build_units = yes }
 		}
 	}
 
@@ -882,6 +895,10 @@ on_actions = {
 
 					#influence
 					set_variable = { domestic_influence_amount = FROM.domestic_influence_amount }
+					if = {
+						limit = {check_variable = { domestic_influence_amount = 0 } }
+						add_to_variable = { domestic_influence_amount = 100 }
+					}
 					#just copy all
 					for_loop_effect = {
 						end = FROM.influence_array^num
@@ -1176,10 +1193,8 @@ on_actions = {
 								has_idea = iranian_quds_force
 								ROOT = {
 									NOT = {
-										OR = {
-											has_government = democratic
-											has_government = fascism
-										}
+										has_government = democratic
+										has_government = fascism
 									}
 								}
 							}
@@ -2405,6 +2420,7 @@ on_actions = {
   					array = abandon_coalition_threshold
  					size = 24
 				}
+				calculate_abandon_coalition_threshold = yes
 			}
 
 			every_country = {
@@ -2421,7 +2437,6 @@ on_actions = {
 				country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
 				country_event = { id = brotherhood.2 }
 				set_country_flag = { flag = total_AB_wars value = 0 }
-				#news_event = { id = USA_Russia_Investigation.0 days = 35 }
 
 				if = {
 					limit = { is_ai = no } country_event = { id = init.0 } #has no effects except startup text
@@ -2431,6 +2446,7 @@ on_actions = {
 				}
 
 				set_variable = { AC_build_amount = 1 }
+				set_variable = { AC_build_cost = 0 }
 				if = { #Set NATO tech sharing
 					limit = { has_dlc = "Together for Victory" }
 					every_country = { limit = { has_idea = NATO_member } add_to_tech_sharing_group = NATO_Tech_Share }
@@ -2482,6 +2498,15 @@ on_actions = {
 			}
 			CAN = {
 				CAN_update_french_happiness = yes
+			}
+			CHI = {
+				if = {
+					limit = {
+						has_start_date < 2001.1.1
+						has_dlc = "Man the Guns"
+					}
+					news_event = { id = china.63 days = 430 }
+				}
 			}
 			AFG = {
 				if = {
