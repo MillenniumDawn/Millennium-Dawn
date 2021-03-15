@@ -1,5 +1,7 @@
-# Written by Killerrabbit
-# Optimized by Gearz
+# Original Written by Killerrabbit
+# Reworked by Gearz, and Angriest Bird
+
+# GDP Calculation
 # Calculating things for the money system
 #Interest rates are set in GDP/C - need modifier based on debt_ratio, to avoid rich countries getting infinite rich by taking huge loans and reinvesting abroad
 #Variable explanations
@@ -30,9 +32,8 @@
 #Your new debt_rate is $4B. So you need to "reset the treasury" you give the treasury_rate back the $2B
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 ####
-effect_set_kuwaits_debt_to_max = {
-	KUW = { set_variable = { debt = 250 } }
-}
+
+##Debug effects
 effect_fire_event = {
 	country_event = { id = bankruptcy.200 }
 }
@@ -61,6 +62,7 @@ initial_money_setup = {
 #only for released nations
 startup_extra_setup = {
 	firsttime_calculate_size_modifier = yes
+	calculate_tax_rate = yes
 	calculate_interest_rate = yes
 	calculate_debt_rate = yes
 	calculate_int_investments_rate = yes
@@ -315,21 +317,49 @@ ingame_calculate_size_modifier = {
 	update_display_expense = yes #will do this always for consistency
 }
 
+calculate_tax_rate = {
+	set_variable = { var = tax_rate value = population_tax_rate }
+	add_to_variable = { var = tax_rate value = corporate_tax_rate }
+	divide_variable = { var = tax_rate value = 2 }
+	round_variable = tax_rate
+	remove_tax_cost = yes
+	set_tax_cost = yes
+	clamp_variable = { var = tax_rate min = 0 max = 60 }
+}
 calculate_tax_gain = {
 	##See Treasury reset comment at top of page
 	subtract_from_variable = { var = treasury_rate value = tax_gain }
-	set_variable = { var = tax_gain value = tax_rate }
+	set_variable = { tax_gain = 0 }
+	#Calculating Tax Rate as a combination and then average of both Population and Corporate Tax
+	calculate_tax_rate = yes
+
+	set_variable = { var = corporate_tax value = 0 }
+	set_temp_variable = { var = civil_fac_tax value = num_of_civilian_factories }
+	multiply_temp_variable = { var = civil_fac_tax value = 3 }
+	set_temp_variable = { var = military_fac_tax value = num_of_military_factories }
+	multiply_temp_variable = { var = military_fac_tax value = 1.5 }
+	set_temp_variable = { var = dockyard_tax value = num_of_naval_factories }
+
+	add_to_variable = { corporate_tax = civil_fac_tax }
+	add_to_variable = { corporate_tax = military_fac_tax }
+	add_to_variable = { corporate_tax = dockyard_tax }
+
+	divide_variable = { var = corporate_tax value = 100 } #Gives TOTAL potential tax assuming 100%
+	multiply_variable = { var = corporate_tax value = corporate_tax_rate }
+
+	set_variable = { population_tax = max_manpower_k }
+	divide_variable = { population_tax = 30000 }  #Gives TOTAL potential tax assuming 100%
+	multiply_variable = { var = population_tax value = population_tax_rate }
+
+	add_to_variable = { tax_gain = corporate_tax }
+	add_to_variable = { tax_gain = population_tax }
 
 	if = {
 		limit = { ##Soft buff to AI tax gain for better balance
 			is_ai = yes
 		}
-		multiply_variable = { tax_gain = 12.5 }
+		multiply_variable = { tax_gain = 1.10 }
 	}
-	else = {
-		multiply_variable = { tax_gain = 10 }
-	}
-
 	multiply_variable = { var = tax_gain value = size_modifier }
 	if = {
 		limit = { has_idea = depression }
@@ -414,9 +444,7 @@ calculate_tax_gain = {
 		#-1%
 	}
 	#######################################################
-	round_variable = tax_gain
-	divide_variable = { tax_gain = 1000 } #why? - gearz
-
+	divide_variable = { tax_gain = 1000 }
 
 	add_to_variable = { var = treasury_rate value = tax_gain }
 	update_display_income = yes
