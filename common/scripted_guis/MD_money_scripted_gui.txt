@@ -1073,13 +1073,18 @@ scripted_gui = {
 		}
 	}
 
-	#Open Economy
+	#Open Economy Buttons
 	open_economy_construction_button = {
 		context_type = player_context
 		window_name = "construction_economy_open_button"
 		parent_window_token = construction_tab
 
 		visible = { always = yes }
+		triggers = {
+			open_economy_construction_button_visible = {
+				always = yes
+			}
+		}
 		effects = {
 			open_economy_construction_button_click = {
 				set_country_flag = open_economy_screen
@@ -1092,9 +1097,147 @@ scripted_gui = {
 		parent_window_token = trade_tab
 
 		visible = { always = yes }
+		triggers = {
+			open_economy_trade_button_visible = {
+				always = yes
+			}
+		}
 		effects = {
 			open_economy_trade_button_click = {
 				set_country_flag = open_economy_screen
+			}
+		}
+	}
+	open_economy_political_button = {
+		context_type = player_context
+		window_name = "politics_economy_open_button"
+		parent_window_token = politics_tab
+
+		visible = { always = yes }
+		triggers = {
+			open_economy_political_button_visible = {
+				always = yes
+			}
+		}
+		effects = {
+			open_economy_political_button_click = {
+				set_country_flag = open_economy_screen
+			}
+		}
+	}
+
+	#Economy/Budget Tab
+	budget_tab = {
+		context_type = player_context
+		window_name = "budget_tab"
+
+		visible = {
+			ROOT = { has_country_flag = open_economy_screen }
+		}
+
+		properties = {
+			MD_treasury_rate_container = {
+				image = "[treasury_rate_color]"
+			}
+		}
+
+		triggers = {
+			increase_population_tax_click_enabled = {
+				check_variable = { var = population_tax_rate value = 0 compare = greater_than_or_equals }
+				check_variable = { var = population_tax_rate value = 60 compare = less_than }
+				ROOT = { has_political_power > 50 }
+			}
+			decrease_population_tax_click_enabled = {
+				check_variable = { var = population_tax_rate value = 0 compare = greater_than }
+				check_variable = { var = population_tax_rate value = 60 compare = less_than_or_equals }
+				ROOT = { has_political_power > 50 }
+			}
+			increase_corporate_tax_click_enabled = {
+				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than_or_equals }
+				check_variable = { var = corporate_tax_rate value = 60 compare = less_than }
+				ROOT = { has_political_power > 50 }
+			}
+			decrease_corporate_tax_click_enabled = {
+				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than }
+				check_variable = { var = corporate_tax_rate value = 60 compare = less_than_or_equals }
+				ROOT = { has_political_power > 50 }
+			}
+		}
+
+		effects = {
+			close_economy_screen_click = {
+				clr_country_flag = open_economy_screen
+			}
+			###
+			##Population Tax Increase/Decrease
+			increase_population_tax_click = {
+				ROOT = { add_political_power = -50 }
+				add_to_variable = { population_tax_rate = 1 }
+				clamp_variable = {
+					var = population_tax_rate
+					min = 0
+					max = 60
+				}
+				calculate_tax_gain = yes
+				update_military_rate = yes
+				ingame_calculate_size_modifier = yes
+				calculate_resource_sale_rate = yes
+				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
+				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
+				law_attitude_change = yes
+				log = "[GetDateText]: [Root.GetName]: tax_rate decrease [?tax_rate]% (balance:[?treasury_rate])"
+			}
+			decrease_population_tax_click = {
+				ROOT = { add_political_power = -50 }
+				subtract_from_variable = { population_tax_rate = 1 }
+				clamp_variable = {
+					var = population_tax_rate
+					min = 0
+					max = 60
+				}
+				calculate_tax_gain = yes
+				update_military_rate = yes
+				ingame_calculate_size_modifier = yes
+				calculate_resource_sale_rate = yes
+				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
+				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
+				law_attitude_change = yes
+				log = "[GetDateText]: [Root.GetName]: tax_rate decrease [?tax_rate]% (balance:[?treasury_rate])"
+			}
+			##Corporate Tax Increase/Decrease
+			increase_corporate_tax_click = {
+				ROOT = { add_political_power = -50 }
+				add_to_variable = { corporate_tax_rate = 1 }
+				clamp_variable = {
+					var = corporate_tax_rate
+					min = 0
+					max = 60
+				}
+				calculate_tax_gain = yes
+				update_military_rate = yes
+				ingame_calculate_size_modifier = yes
+				calculate_resource_sale_rate = yes
+				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
+				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
+				law_attitude_change = yes
+				log = "[GetDateText]: [Root.GetName]: tax_rate decrease [?tax_rate]% (balance:[?treasury_rate])"
+			}
+			decrease_corporate_tax_click = {
+				ROOT = { add_political_power = -50 }
+				subtract_from_variable = { corporate_tax_rate = 1 }
+				clamp_variable = {
+					var = corporate_tax_rate
+					min = 0
+					max = 60
+				}
+				calculate_tax_gain = yes
+				update_military_rate = yes
+				ingame_calculate_size_modifier = yes
+				calculate_resource_sale_rate = yes
+				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
+				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
+				law_attitude_change = yes
+				log = "[GetDateText]: [Root.GetName]: tax_rate decrease [?tax_rate]% (balance:[?treasury_rate])"
 			}
 		}
 	}
