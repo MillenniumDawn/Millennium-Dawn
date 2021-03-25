@@ -17,11 +17,15 @@
 #econ_cycle_upg_cost - cost to upgrade economic cycle
 #bureaucracy_gain cost for bureaucracy law
 #education_gain cost of education law
-#health_gain cost of health care lawu
+#health_gain cost of health care law
 #welfare_gain cost of welfare law
 #military_rate cost of military law
 #personnel_cost - how much you pay soldiers and maintenance on equipment
 
+#corporation_tax - Value of the Corporate taxes
+#population_tax - value of the population tax
+#corporation_tax_rate - Tax rate
+#population_tax_rate - pop tax rate
 
 ###Treasury reset###
 #In a couple places I've left a comment saying referring to treasury reset explanation. This is the explanation
@@ -43,7 +47,7 @@ add_tax_laws = {
 	}
 }
 
-#Startup for building the money system.
+#Startup for building the money system. This is to be used whenever setting up a nation for the the first time.
 startup_extra_setup = {
 	firsttime_calculate_size_modifier = yes
 	calculate_interest_rate = yes
@@ -58,6 +62,7 @@ startup_extra_setup = {
 }
 
 #Calculates the "Size" of industry. It uses the resource exports and civilian factories to judge the size of the countries economy. - Bird
+#Updating this to include more than just Civilian industries as now dockyards, military industries and offices give tax revenues
 firsttime_calculate_size_modifier = {
 	set_variable = { resource_exports = resource_exported@steel }
 	add_to_variable = { resource_exports = resource_exported@oil }
@@ -69,31 +74,11 @@ firsttime_calculate_size_modifier = {
 	round_variable = resource_exports
 
 	set_variable = { size_modifier = num_of_civilian_factories }
+	add_to_variable = { size_modifier = ROOT.office_park_total }
+	add_to_variable = { size_modifier = num_of_naval_factories }
+	add_to_variable = { size_modifier = num_of_military_factories }
 
-	set_temp_variable = { temp_resource_import = resource_imported@oil }
-	divide_temp_variable = { var = temp_resource_import value = 8 }
-	add_to_variable = { size_modifier = temp_resource_import }
-
-	set_temp_variable = { temp_resource_import = resource_imported@aluminium }
-	divide_temp_variable = { var = temp_resource_import value = 8 }
-	add_to_variable = { size_modifier = temp_resource_import }
-
-	set_temp_variable = { temp_resource_import = resource_imported@tungsten }
-	divide_temp_variable = { var = temp_resource_import value = 8 }
-	add_to_variable = { size_modifier = temp_resource_import }
-
-	set_temp_variable = { temp_resource_import = resource_imported@steel }
-	divide_temp_variable = { var = temp_resource_import value = 8 }
-	add_to_variable = { size_modifier = temp_resource_import }
-
-	set_temp_variable = { temp_resource_import = resource_imported@rubber }
-	divide_temp_variable = { var = temp_resource_import value = 8 }
-	add_to_variable = { size_modifier = temp_resource_import }
-
-	set_temp_variable = { temp_resource_import = resource_imported@chromium }
-	divide_temp_variable = { var = temp_resource_import value = 8 }
-	add_to_variable = { size_modifier = temp_resource_import }
-
+	#Note from Bird: Removed import calculations. No nation in MD starts with imports therefore its useless calculations
 	if = {
 		limit = { check_variable = { size_modifier = 0 } }
 		add_to_variable = { var = size_modifier value = 0.03 }
@@ -132,6 +117,7 @@ ingame_calculate_size_modifier = {
 	set_temp_variable = { size_mod_check = num_of_civilian_factories }
 
 	##Used to prevent instant bankruptcy
+	#Further this is used to readd the civvies you lose due to export.
 	set_temp_variable = { temp_resource_import = resource_imported@oil }
 	divide_temp_variable = { var = temp_resource_import value = 8 }
 	add_to_temp_variable = { size_mod_check = temp_resource_import }
@@ -333,13 +319,15 @@ calculate_tax_rate = {
 	set_tax_cost = yes
 	clamp_variable = { var = tax_rate min = 0 max = 60 }
 }
+
 calculate_tax_gain = {
-	##See Treasury reset comment at top of page
+	#See treasury reset command at the top of the page
 	subtract_from_variable = { var = treasury_rate value = tax_gain }
 	set_variable = { tax_gain = 0 }
-	#Calculating Tax Rate as a combination and then average of both Population and Corporate Tax
+	#Update starting tax rate
 	calculate_tax_rate = yes
 
+	#Corporate Tax Expansion
 	set_variable = { var = corporate_tax value = 0 }
 	set_temp_variable = { var = civil_fac_tax value = num_of_civilian_factories }
 	multiply_temp_variable = { var = civil_fac_tax value = 3 }
@@ -349,14 +337,16 @@ calculate_tax_gain = {
 	set_temp_variable = { var = office_tax value = ROOT.office_park_total }
 	multiply_temp_variable = { var = office_tax value = 4 }
 
+	#Add the above calculations to give you total corporate taxes
 	add_to_variable = { corporate_tax = civil_fac_tax }
 	add_to_variable = { corporate_tax = military_fac_tax }
 	add_to_variable = { corporate_tax = dockyard_tax }
 	add_to_variable = { corporate_tax = office_tax }
-
+	#Calculate actual work
 	divide_variable = { var = corporate_tax value = 100 } #Gives TOTAL potential tax assuming 100%
 	multiply_variable = { var = corporate_tax value = corporate_tax_rate }
 
+	##POP
 	set_variable = { population_tax = max_manpower_k }
 	divide_variable = { population_tax = 30000 }  #Gives TOTAL potential tax assuming 100%
 	multiply_variable = { var = population_tax value = population_tax_rate }
@@ -364,139 +354,90 @@ calculate_tax_gain = {
 	add_to_variable = { tax_gain = corporate_tax }
 	add_to_variable = { tax_gain = population_tax }
 
-	if = {
-		limit = { ##Soft buff to AI tax gain for better balance
-			is_ai = yes
-		}
-		multiply_variable = { var = tax_gain value = 1.10 }
-		multiply_variable = { var = corporate_tax value = 1.10 }
-		multiply_variable = { var = population_tax value = 1.10 }
-	}
 	multiply_variable = { var = tax_gain value = size_modifier }
 	multiply_variable = { var = corporate_tax value = size_modifier }
 	multiply_variable = { var = population_tax value = size_modifier }
 
-	if = {
-		limit = { has_idea = depression }
-		multiply_variable = { var = tax_gain value = 0.6 }
-		multiply_variable = { var = corporate_tax value = 0.6 }
-		multiply_variable = { var = population_tax value = 0.6 }
+	#DO NOT FUCKING TOUCH -- BIRD
+	if = { limit = { has_idea = depression }
+		set_temp_variable = { tax_gain_multiplier = 0.60 }
 	}
-	else_if = {
-		limit = { has_idea = recession }
-		multiply_variable = { var = tax_gain value = 0.8 }
-		multiply_variable = { var = corporate_tax value = 0.8 }
-		multiply_variable = { var = population_tax value = 0.8 }
+	else_if = { limit = { has_idea = recession }
+		set_temp_variable = { tax_gain_multiplier = 0.80 }
 	}
-	else_if = {
-		limit = { has_idea = stagnation }
-		multiply_variable = { var = tax_gain value = 0.9 }
-		multiply_variable = { var = corporate_tax value = 0.9 }
-		multiply_variable = { var = population_tax value = 0.9 }
+	else_if = { limit = { has_idea = stagnation }
+		set_temp_variable = { tax_gain_multiplier = 0.90 }
 	}
-	else_if = {
-		limit = { has_idea = fast_growth }
-		multiply_variable = { var = tax_gain value = 1.05 }
-		multiply_variable = { var = corporate_tax value = 1.05 }
-		multiply_variable = { var = population_tax value = 1.05 }
+	else_if = { limit = { has_idea = fast_growth }
+		set_temp_variable = { tax_gain_multiplier = 1.05 }
 	}
-	else_if = {
-		limit = { has_idea = economic_boom }
-		multiply_variable = { var = tax_gain value = 1.1 }
-		multiply_variable = { var = corporate_tax value = 1.1 }
-		multiply_variable = { var = population_tax value = 1.1 }
+	else_if = { limit = { has_idea = economic_boom }
+		set_temp_variable = { tax_gain_multiplier = 1.10 }
 	}
 
-	if = { #Nigeria
-		limit = { has_idea = NIG_efficent_government_spending_idea }
-		multiply_variable = { var = tax_gain value = 1.10 }
-		multiply_variable = { var = corporate_tax value = 1.10 }
-		multiply_variable = { var = population_tax value = 1.10 }
+	#DO NOT FUCKING TOUCH -- BIRD
+	#Corruption tax modifiers
+	if = { limit = { has_idea = paralyzing_corruption }
+		multiply_temp_variable = { tax_gain_multiplier = 0.65 }
+	}
+	else_if = { limit = { has_idea = crippling_corruption }
+		multiply_temp_variable = { tax_gain_multiplier = 0.70 }
+	}
+	else_if = { limit = { has_idea = rampant_corruption }
+		multiply_temp_variable = { tax_gain_multiplier = 0.75 }
+	}
+	else_if = { limit = { has_idea = unrestrained_corruption }
+		multiply_temp_variable = { tax_gain_multiplier = 0.80 }
+	}
+	else_if = { limit = { has_idea = systematic_corruption }
+		multiply_temp_variable = { tax_gain_multiplier = 0.85 }
+	}
+	else_if = { limit = { has_idea = widespread_corruption }
+		multiply_temp_variable = { tax_gain_multiplier = 0.90 }
+	}
+	else_if = { limit = { has_idea = medium_corruption }
+		multiply_temp_variable = { tax_gain_multiplier = 0.95 }
+	}
+	else_if = { limit = { has_idea = modest_corruption }
+		multiply_temp_variable = { tax_gain_multiplier = 0.97 }
+	}
+	else_if = { limit = { has_idea = slight_corruption }
+		multiply_temp_variable = { tax_gain_multiplier = 0.98 }
+	}
+	else_if = { limit = { has_idea = negligible_corruption }
+		multiply_temp_variable = { tax_gain_multiplier = 0.99 }
 	}
 
-	if = { #Italy #instead of repeting this if for every idea, i grouped everything under this variable that i change through effects - traiano
-		limit = { tag = ITA }
-		multiply_variable = { var = tax_gain value = ITA_tax_multiplier_var }
-		multiply_variable = { var = corporate_tax value = ITA_tax_multiplier_var }
-		multiply_variable = { var = population_tax value = ITA_tax_multiplier_var }
-	}
-	#######################################################
-	##Corruption reduces tax income
+	##Country Specific
+	#How to add your own tax modifier:
+	#all you need to do is create a specific if statement that goes "tag = BLA"
+	#Then the conditions you are looking for.
+	#Then modify the temp variable tax_gain_multiplier by whatever. So if you want 25% then you do multiply_temp_variable = { tax_gain_multiplier = 1.25 }
 	if = {
-		limit = { has_idea = paralyzing_corruption }
-		multiply_variable = { var = tax_gain value = 0.65 }
-		multiply_variable = { var = corporate_tax value = 0.65 }
-		multiply_variable = { var = population_tax value = 0.65 }
-		#-35% Tax loss
+		limit = {
+			tag = NIG
+			has_idea = NIG_efficent_government_spending_idea
+		}
+		multiply_temp_variable = { tax_gain_multiplier = 1.10 }
 	}
-	else_if = {
-		limit = { has_idea = crippling_corruption }
-		multiply_variable = { var = tax_gain value = 0.70 }
-		multiply_variable = { var = corporate_tax value = 0.70 }
-		multiply_variable = { var = population_tax value = 0.70 }
-		#-30%
+	if = { limit = { tag = ITA }
+		multiply_temp_variable = { tax_gain_multiplier = ITA_tax_multiplier_var }
 	}
-	else_if = {
-		limit = { has_idea = rampant_corruption }
-		multiply_variable = { var = tax_gain value = 0.75 }
-		multiply_variable = { var = corporate_tax value = 0.75 }
-		multiply_variable = { var = population_tax value = 0.75 }
-		#-25%
-	}
-	else_if = {
-		limit = { has_idea = unrestrained_corruption }
-		multiply_variable = { var = tax_gain value = 0.80 }
-		multiply_variable = { var = corporate_tax value = 0.80 }
-		multiply_variable = { var = population_tax value = 0.80 }
-		#-20%
-	}
-	else_if = {
-		limit = { has_idea = systematic_corruption }
-		multiply_variable = { var = tax_gain value = 0.85 }
-		multiply_variable = { var = corporate_tax value = 0.85 }
-		multiply_variable = { var = population_tax value = 0.85 }
-		#-15%
-	}
-	else_if = {
-		limit = { has_idea = widespread_corruption }
-		multiply_variable = { var = tax_gain value = 0.90 }
-		multiply_variable = { var = corporate_tax value = 0.90 }
-		multiply_variable = { var = population_tax value = 0.90 }
-		#-10%
-	}
-	else_if = {
-		limit = { has_idea = medium_corruption }
-		multiply_variable = { var = tax_gain value = 0.95 }
-		multiply_variable = { var = corporate_tax value = 0.95 }
-		multiply_variable = { var = population_tax value = 0.95 }
-		#-5%
-	}
-	else_if = {
-		limit = { has_idea = modest_corruption }
-		multiply_variable = { var = tax_gain value = 0.97 }
-		multiply_variable = { var = corporate_tax value = 0.97 }
-		multiply_variable = { var = population_tax value = 0.97 }
-		#-3%
-	}
-	else_if = {
-		limit = { has_idea = slight_corruption }
-		multiply_variable = { var = tax_gain value = 0.98 }
-		multiply_variable = { var = corporate_tax value = 0.98 }
-		multiply_variable = { var = population_tax value = 0.98 }
-		#-2%
-	}
-	else_if = {
-		limit = { has_idea = negligible_corruption }
-		multiply_variable = { var = tax_gain value = 0.99 }
-		multiply_variable = { var = corporate_tax value = 0.99 }
-		multiply_variable = { var = population_tax value = 0.99 }
-		#-1%
-	}
-	#######################################################
+	#Modify Taxgain by multiplier
+	multiply_variable = { tax_gain = tax_gain_multiplier }
+	multiply_variable = { corporate_tax = tax_gain_multiplier }
+	multiply_variable = { population_tax = tax_gain_multiplier }
+	#Cleanup rounding errors
 	divide_variable = { tax_gain = 1000 }
 	divide_variable = { corporate_tax = 1000 }
 	divide_variable = { population_tax = 1000 }
 
+	#Expands the variables to show monthly - ignoring the 31s and Feb. Every month is 30days for ease.
+	multiply_variable = { tax_gain = 30 }
+	multiply_variable = { corporate_tax = 30 }
+	multiply_variable = { population_tax = 30 }
+
+	#Adds tax gain to treasury rate.
 	add_to_variable = { var = treasury_rate value = tax_gain }
 	update_display_income = yes
 }
@@ -649,6 +590,7 @@ calculate_debt_rate = {
 	set_variable = { var = debt_rate value = debt }
 	multiply_variable = { var = debt_rate value = interest_rate }
 	divide_variable = { var = debt_rate value = 36500 }
+	multiply_variable = { var = debt_rate value = 30 }
 	subtract_from_variable = { var = treasury_rate value = debt_rate }
 
 	if = {
@@ -850,13 +792,13 @@ update_military_rate = {
 		add_to_temp_variable = { minor_count = num_ships_with_type@attack_submarine_mtg }
 	}
 
-	multiply_temp_variable = { carrier_count = 30 }
+	multiply_temp_variable = { carrier_count = 100 }
 	set_temp_variable = { navy_count = carrier_count }
-	multiply_temp_variable = { capital_count = 20 }
+	multiply_temp_variable = { capital_count = 50 }
 	add_to_temp_variable = { navy_count = capital_count }
-	multiply_temp_variable = { destroyer_count = 10 }
+	multiply_temp_variable = { destroyer_count = 20 }
 	add_to_temp_variable = { navy_count = destroyer_count }
-	multiply_temp_variable = { minor_count = 3 } #Increase the Cost of Ships
+	multiply_temp_variable = { minor_count = 10 }
 	add_to_temp_variable = { navy_count = minor_count }
 
 	### Airforce ###
@@ -1013,7 +955,6 @@ update_military_rate = {
 		multiply_temp_variable = { personnel_cost = 0.05 }
 	}
 
-
 	set_variable = { var = tooltip_personnel_cost value = personnel_cost }
 
 	#add personal cost to each item in the array
@@ -1027,6 +968,13 @@ update_military_rate = {
 		}
 		add_to_variable = { var = array_defence_spend^i value = personnel_cost }
 	}
+	for_each_loop = {
+		array = array_defence_spend
+		index = i
+		value = v
+		multiply_variable = { array_defence_spend^i = 30 } #Multiply each index by 30 days
+	}
+
 
 	add_to_variable = { var = treasury_rate value = defence_gain }
 	subtract_from_variable = { var = expense_gain value = defence_gain }
@@ -1099,6 +1047,12 @@ update_bureaucracy_rate = {
 			array = array_bureaucracy_spend
 			value = v
 		}
+	}
+	for_each_loop = {
+		array = array_bureaucracy_spend
+		index = i
+		value = v
+		multiply_variable = { array_bureaucracy_spend^i = 30 } #Multiply each index by 30 days
 	}
 
 
@@ -1192,6 +1146,12 @@ update_police_rate = {
 			array = array_security_spend
 			value = v
 		}
+	}
+	for_each_loop = {
+		array = array_security_spend
+		index = i
+		value = v
+		multiply_variable = { array_security_spend^i = 30 } #Multiply each index by 30 days
 	}
 
 	#Modifiers
@@ -1296,6 +1256,12 @@ update_education_rate = {
 			array = array_education_spend
 			value = v
 		}
+	}
+	for_each_loop = {
+		array = array_education_spend
+		index = i
+		value = v
+		multiply_variable = { array_education_spend^i = 30 } #Multiply each index by 30 days
 	}
 
 	###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
@@ -1414,6 +1380,12 @@ update_health_rate = {
 			value = v
 		}
 	}
+	for_each_loop = {
+		array = array_health_spend
+		index = i
+		value = v
+		multiply_variable = { array_health_spend^i = 30 } #Multiply each index by 30 days
+	}
 
 	##Modifiers to Healthcare Costs
 	if = {
@@ -1506,12 +1478,17 @@ update_social_rate = {
 			value = v
 		}
 	}
+	for_each_loop = {
+		array = array_social_spend
+		index = i
+		value = v
+		multiply_variable = { array_social_spend^i = 30 } #Multiply each index by 30 days
+	}
 
 	add_to_variable = { var = treasury_rate value = welfare_gain }
 	subtract_from_variable = { var = expense_gain value = welfare_gain } #Resets the treasury rate
 
 	set_variable = { var = welfare_gain value = array_social_spend^social_index }
-
 	add_to_variable = { var = expense_gain value = welfare_gain }
 	subtract_from_variable = { var = treasury_rate value = welfare_gain }
 	update_display_expense = yes
@@ -1524,6 +1501,7 @@ calculate_int_investments_rate = {
 	subtract_from_variable = { var = treasury_rate value = int_investments_rate } #Add
 	set_variable = { var = int_investments_rate value = int_investments }
 	divide_variable = { var = int_investments_rate value = 6080 } #6%
+	multiply_variable = { int_investments_rate = 30 } #30 days worth of income
 	add_to_variable = { var = treasury_rate value = int_investments_rate }
 	update_display_income = yes
 }
@@ -1536,15 +1514,18 @@ calculate_resource_sale_rate = { #Calculates income from resources
 	add_to_variable = { resource_exports = resource_exported@oil }
 	add_to_variable = { resource_exports = resource_exported@aluminium }
 	add_to_variable = { resource_exports = resource_exported@tungsten }
+	add_to_variable = { resource_exports = resource_exported@chromium }
+	add_to_variable = { resource_exports = resource_exported@rubber }
+
 	if = {
 		limit = {
 			has_idea = rentier_state
 		}
 		##Boosts income by around 25%
-		multiply_variable = { resource_exports = 0.208 } ##Roughly worth 25% more than the 1/6. So a factory should count for 125% more
+		multiply_variable = { resource_exports = 0.156 } ##Roughly worth 25% more than the 1/8. So a factory should count for 125% more
 	}
 	else = {
-		multiply_variable = { resource_exports = 0.166 } ##This is equivalent to 1/6 1 factory = 6 resources
+		multiply_variable = { resource_exports = 0.125 } ##This is equivalent to 1/6 1 factory = 6 resources
 	}
 	round_variable = resource_exports
 	set_variable = { var = resource_sale_rate value = resource_exports }
@@ -1558,6 +1539,8 @@ calculate_resource_sale_rate = { #Calculates income from resources
 				check_variable = { resource_exported@oil > 99 }
 				check_variable = { resource_exported@aluminium > 99 }
 				check_variable = { resource_exported@tungsten > 99 }
+				check_variable = { resource_exported@chromium > 99 }
+				check_variable = { resource_exported@rubber > 99 }
 			}
 		}
 		if = {
@@ -1616,6 +1599,7 @@ calculate_resource_sale_rate = { #Calculates income from resources
 		divide_variable = { resource_sale_rate = 100 }
 	}
 
+	multiply_variable = { resource_sale_rate = 30 }
 	add_to_variable = { var = treasury_rate value = resource_sale_rate }
 	update_display_income = yes
 }
@@ -1698,4 +1682,106 @@ init_expenses = {
 	update_social_rate = yes
 
 	update_display_expense = yes
+}
+
+automated_debt_taker = {
+	if = {
+		limit = { check_variable = { treasury < 0 } }
+		if = {
+			limit = { num_of_civilian_factories < 5 }
+			add_to_variable = { treasury = 0.2 }
+			add_to_variable = { debt = 0.2 }
+			if = {
+				limit = { check_variable = { treasury < -0.5 } }
+				set_temp_variable = { treasury_temp = treasury } #-5
+				multiply_temp_variable = { treasury_temp = -1 }
+				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
+				add_to_variable = { treasury = treasury_temp }
+				add_to_variable = { debt = treasury_temp }
+			}
+		}
+		#intentionally cycles through all to add appropriate total amount
+		if = {
+			limit = { num_of_civilian_factories > 4 }
+			add_to_variable = { treasury = 1 }
+			add_to_variable = { debt = 1 }
+			if = {
+				limit = { check_variable = { treasury < -5 } }
+				set_temp_variable = { treasury_temp = treasury } #-5
+				multiply_temp_variable = { treasury_temp = -1 }
+				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
+				add_to_variable = { treasury = treasury_temp }
+				add_to_variable = { debt = treasury_temp }
+			}
+		}
+		if = {
+			limit = { num_of_civilian_factories > 20 }
+			add_to_variable = { treasury = 4 }
+			add_to_variable = { debt = 4 }
+			if = {
+				limit = { check_variable = { treasury < -8 } }
+				set_temp_variable = { treasury_temp = treasury } #-5
+				multiply_temp_variable = { treasury_temp = -1 }
+				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
+				add_to_variable = { treasury = treasury_temp }
+				add_to_variable = { debt = treasury_temp }
+			}
+		}
+		if = {
+			limit = { num_of_civilian_factories > 40 }
+			add_to_variable = { treasury = 10 }
+			add_to_variable = { debt = 10 }
+			if = {
+				limit = { check_variable = { treasury < -15 } }
+				set_temp_variable = { treasury_temp = treasury } #-5
+				multiply_temp_variable = { treasury_temp = -1 }
+				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
+				add_to_variable = { treasury = treasury_temp }
+				add_to_variable = { debt = treasury_temp }
+			}
+		}
+		if = {
+			limit = { num_of_civilian_factories > 60 }
+			add_to_variable = { treasury = 15 }
+			add_to_variable = { debt = 15 }
+			if = {
+				limit = { check_variable = { treasury < -25 } }
+				set_temp_variable = { treasury_temp = treasury } #-5
+				multiply_temp_variable = { treasury_temp = -1 }
+				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
+				add_to_variable = { treasury = treasury_temp }
+				add_to_variable = { debt = treasury_temp }
+			}
+		}
+		if = {
+			limit = { num_of_civilian_factories > 90 }
+			add_to_variable = { treasury = 25 }
+			add_to_variable = { debt = 25 }
+			if = {
+				limit = { check_variable = { treasury < -50 } }
+				set_temp_variable = { treasury_temp = treasury } #-5
+				multiply_temp_variable = { treasury_temp = -1 }
+				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
+				add_to_variable = { treasury = treasury_temp }
+				add_to_variable = { debt = treasury_temp }
+			}
+		}
+		if = {
+			limit = { num_of_civilian_factories > 180 }
+			add_to_variable = { treasury = 70 }
+			add_to_variable = { debt = 70 }
+			if = {
+				limit = { check_variable = { treasury < -90 } }
+				set_temp_variable = { treasury_temp = treasury } #-5
+				multiply_temp_variable = { treasury_temp = -1 }
+				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
+				add_to_variable = { treasury = treasury_temp }
+				add_to_variable = { debt = treasury_temp }
+			}
+		}
+		ingame_calculate_size_modifier = yes
+		update_military_rate = yes
+		calculate_interest_rate = yes
+		calculate_debt_rate = yes
+	}
 }
