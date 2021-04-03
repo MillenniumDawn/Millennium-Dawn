@@ -17,13 +17,19 @@ on_actions = {
 
 	on_weekly = {
 		effect = {
+			ingame_calculate_size_modifier = yes #updates economics if new factories has been added
+			set_variable = { var = population_k }
 			every_controlled_state = {
 				add_to_variable = { ROOT.office_park_total = building_level@offices }
+
 			}
+			#Monthly income tick
+			add_to_variable = { treasury = treasury_rate }
+			#Automated taking debt
 			automated_debt_taker = yes
 		}
 	}
-	# this is executed on the 1st of every month FOR ONE RANDOM COUNTRY - use every_country inside
+
 	on_monthly = {
 		effect = {
 			random_country = {
@@ -43,10 +49,222 @@ on_actions = {
 					}
 				}
 			}
+			if = {
+				limit = {
+					OR = {
+						check_variable = { global.month = 1 } #January
+						check_variable = { global.month = 4 } #April
+						check_variable = { global.month = 7 } #July
+						check_variable = { global.month = 9 } #September
+					}
+					NOT = { has_country_flag = recently_had_economic_event }
+				}
+				#Random Economic Events. Reconfiguring from MTTH for better optimization
+				#Fires on January/April/July/September
+				random_list = {
+					50 = {
+						modifier = {
+							factor = 1.25
+							has_idea = stagnation
+						}
+						modifier = {
+							factor = 0.80
+							has_war = yes
+						}
+						modifier = {
+							factor = 0.60
+							is_subject = yes
+						}
+						#nothing
+					}
+					#Warns of Possible Housing Bubble
+					10 = {
+						modifier = {
+							factor = 0.6
+							has_idea = economic_boom
+						}
+						modifier = {
+							factor = 0.8
+							has_idea = fast_growth
+						}
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = depression
+								has_idea = recession
+								has_idea = stagnation
+								has_country_flag = possible_housing_bubble
+								has_country_flag = housing_crash
+							}
+						}
+						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
+						country_event = { id = econvent.1 days = 15 random_days = 15 }
+					}
+					#Collapsing Housing Prices
+					10 = {
+						modifier = {
+							factor = 0.6
+							has_idea = economic_boom
+						}
+						modifier = {
+							factor = 0.8
+							has_idea = fast_growth
+						}
+						modifier = {
+							factor = 0.5
+							has_country_flag = consumption_slowdown
+						}
+						modifier = {
+							factor = 2.0
+							has_country_flag = possible_housing_bubble
+						}
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = depression
+								has_idea = recession
+								has_idea = stagnation
+							}
+						}
+						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
+						country_event = { id = econvent.2 days = 15 random_days = 15 }
+					}
+					#Stock Market Crash
+					10 = {
+						modifier = {
+							factor = 0.4
+							has_idea = economic_boom
+						}
+						modifier = {
+							factor = 0.8
+							has_idea = fast_growth
+						}
+						modifier = {
+							factor = 0.7
+							OR = {
+								has_country_flag = consumption_slowdown
+								has_country_flag = stock_market_boom
+								has_country_flag = voodoo_economics
+							}
+						}
+						modifier = {
+							factor = 0.5
+							has_country_flag = stock_market_boom_accelerate
+						}
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = recession
+								has_idea = depression
+							}
+						}
+						modifier = {
+							factor = 0
+							NOT = {
+								has_country_flag = housing_crash
+								has_country_flag = stock_market_boom_accelerate
+								has_country_flag = stock_market_boom
+							}
+						}
+						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
+						country_event = { id = econvent.3 days = 15 random_days = 15 }
+					}
+					#Bank Crisis
+					10 = {
+						modifier = {
+							factor = 0.3
+							has_idea = economic_boom
+						}
+						modifier = {
+							factor = 0.6
+							has_idea = fast_growth
+						}
+						modifier = {
+							factor = 0.5
+							has_country_flag = voodoo_economics
+						}
+						modifier = {
+							factor = 0.5
+							has_country_flag = consumption_slowdown
+						}
+						modifier = {
+							factor = 0
+							OR = {
+								NOT = {
+									has_country_flag = hosing_crash
+									has_country_flag = stock_market_crash
+								}
+								has_idea = recession
+								has_idea = depression
+							}
+						}
+					}
+					#Slowdown Consumption
+					10 = {
+						modifier = {
+							factor = 0.3
+							has_idea = economic_boom
+						}
+						modifier = {
+							factor = 0.6
+							has_idea = fast_growth
+						}
+						modifier = {
+							factor = 1.3
+							has_idea = recession
+						}
+						modifier = {
+							factor = 0.5
+							has_country_flag = voodoo_economics
+						}
+						modifier = {
+							factor = 0.5
+							has_country_flag = stock_market_crash
+						}
+						modifier = {
+							factor = 0.5
+							has_country_flag = housing_crash
+						}
+						modifier = {
+							factor = 0
+							has_war = yes
+						}
+						modifier = {
+							factor = 0
+							has_idea = depression
+						}
+						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
+						country_event = { id = econvent.5 days = 15 random_days = 15 }
+					}
+
+					#Lower Demand for our Goods in International Markets
+					10 = {
+						modifier = {
+							factor = 0.6
+							has_idea = economic_boom
+						}
+						modifier = {
+							factor = 0.8
+							has_idea = fast_growth
+						}
+						modifier = {
+							factor = 2.5
+							has_idea = recession
+						}
+						modifier = {
+							factor = 0
+							has_idea = depression
+						}
+						modifier = {
+							factor = 0
+							has_war = yes
+						}
+					}
+				}
+			}
 			set_power_ranking_ideas_for_every_country = yes
 			country_event = { id = low_stability.1 }
 
-			ingame_calculate_size_modifier = yes #updates economics if new factories has been added
 			recalculate_party = yes
 			recalculate_law_desires = yes
 			if = {
@@ -68,10 +286,6 @@ on_actions = {
 				2017_state_init_setup = yes		#updates all player states if population has grown enough
 				set_global_flag = do_not_do_on_day_one
 			}
-
-			add_to_variable = { treasury = treasury_rate }
-			#Automated taking debt
-			automated_debt_taker = yes
 		}
 	}
 }
