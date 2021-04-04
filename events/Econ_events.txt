@@ -1,4 +1,6 @@
-# Economic events
+#Economic/Influence Events --
+#Note - Bird: Designed a new custom on_action pulse for the economic events.
+#It is important you do not use the MTTH(mean_time_to_happen).
 add_namespace = econvent
 add_namespace = econvent_remove_flag
 add_namespace = bankrupcy
@@ -25,12 +27,10 @@ add_namespace = bankruptcy
 ##Economic Aid MASTER Event - Triggered Via the Scripted GUI
 country_event = {
 	id = influence.0
-	title = influence.0.t
-	desc = influence.0.d
 	is_triggered_only = yes
 	hidden = yes
-
 	immediate = { #Determines "SIZE" of the influx of cash
+		log = "[GetDateText]: [This.GetName]: influence.0.a executed"
 		set_variable = { gift_sum = size_modifier }
 		multiply_variable = { gift_sum = 10 }
 		clamp_variable = {
@@ -40,20 +40,14 @@ country_event = {
 		}
 		FROM = { country_event = { id = influence.1 } }
 	}
-
-	#Tempo Choice -- Automatically occurs due to hidden = yes
-	option = {
-		name = influence.0.a
-		log = "[GetDateText]: [This.GetName]: influence.0.a executed"
-	}
 }
 ##AI Economic Aid Master Event - Triggered via the on_action
 country_event = {
 	id = influence.11
 	is_triggered_only = yes
 	hidden = yes
-
 	immediate = {
+		log = "[GetDateText]: [This.GetName]: influence.0.a executed"
 		set_variable = { gift_sum = size_modifier }
 		multiply_variable = { gift_sum = 10 }
 		clamp_variable = {
@@ -63,18 +57,11 @@ country_event = {
 		}
 		event_target:influence_sender = { country_event = { id = influence.1 } }
 	}
-
-	option = {
-		name = influence.0.a
-		log = "[GetDateText]: [This.GetName]: influence.0.a executed"
-	}
 }
 
 #Economic Aid - Event
 country_event = {
 	id = influence.1
-	immediate = {
-	}
 	title = influence.1.t
 	desc = influence.1.d
 	picture = GFX_united_states_dollar
@@ -4781,148 +4768,104 @@ country_event = {
 	id = econvent.7
 	title = econvent.7.t
 	desc = econvent.7.d
-
+	is_triggered_only = yes
 	trigger = {
 		is_arid_nation = yes
-		OR = {
-			has_idea = gdp_1
-			has_idea = gdp_2
-			has_idea = gdp_3
-		}
-		NOT = { has_idea = depression }
-	}
-
-	mean_time_to_happen = {
-		days = 4500
-		modifier = {
-			factor = 0.6
-			is_african_nation = yes #Africa has worst irrigation
-		}
-		modifier = {
-			factor = 0.8
-			has_idea = gdp_1
-		}
-		modifier = {
-			factor = 0.9
-			has_idea = gdp_2
-		}
-		modifier = {
-			factor = 1.2
-			has_idea = gdp_3
-		}
-	}
-
-	immediate = {
-		set_country_flag = { flag = drought value = 1 }
+		NOT = { has_country_flag = drought }
 	}
 
 	#Not much to do about this
 	option = {
 		name = econvent.7.a
 		log = "[GetDateText]: [This.GetName]: econvent.7.a executed"
-		trigger = { has_idea = economic_boom }
-		hidden_effect = { country_event = { id = econvent_remove_flag.6 days = 120 } } #clears drought flag
-		custom_effect_tooltip = econvent.from_booming_tt
-		random_list = {
-			20 = {
-				custom_effect_tooltip = econvent.list.no_effect_tt
-			}
-			70 = {
-				custom_effect_tooltip = econvent.list.fast_growth_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = fast_growth }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
-			}
-			10 = {
-				custom_effect_tooltip = econvent.list.stable_growth_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = stable_growth }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
-			}
-		}
-	}
-	option = {
-		name = econvent.7.a
-		log = "[GetDateText]: [This.GetName]: econvent.7.a executed"
-		trigger = { has_idea = fast_growth }
-		hidden_effect = { country_event = { id = econvent_remove_flag.6 days = 120 } } #clears drought flag
-		custom_effect_tooltip = econvent.from_fast_growth_tt
-		random_list = {
-			20 = {
-				custom_effect_tooltip = econvent.list.no_effect_tt
-			}
-			75 = {
-				custom_effect_tooltip = econvent.list.stable_growth_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = stable_growth }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
-			}
-			5 = {
-				custom_effect_tooltip = econvent.list.stagnation_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = stagnation }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
+		set_country_flag = { flag = drought value = 1 days = 120 }
+		if = { limit = { has_idea = economic_boom }
+			custom_effect_tooltip = econvent.from_booming_tt
+			random_list = {
+				20 = {
+					custom_effect_tooltip = econvent.list.no_effect_tt
+				}
+				70 = {
+					custom_effect_tooltip = econvent.list.fast_growth_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = fast_growth }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
+				10 = {
+					custom_effect_tooltip = econvent.list.stable_growth_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = stable_growth }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
 			}
 		}
-	}
-	option = {
-		name = econvent.7.a
-		log = "[GetDateText]: [This.GetName]: econvent.7.a executed"
-		trigger = { has_idea = stable_growth }
-		hidden_effect = { country_event = { id = econvent_remove_flag.6 days = 120 } } #clears drought flag
-		custom_effect_tooltip = econvent.from_stable_growth_tt
-		random_list = {
-			20 = {
-				custom_effect_tooltip = econvent.list.no_effect_tt
-			}
-			80 = {
-				custom_effect_tooltip = econvent.list.stagnation_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = stagnation }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
-			}
-		}
-	}
-	option = {
-		name = econvent.7.a
-		log = "[GetDateText]: [This.GetName]: econvent.7.a executed"
-		trigger = { has_idea = stagnation }
-		hidden_effect = { country_event = { id = econvent_remove_flag.6 days = 120 } } #clears drought flag
-		custom_effect_tooltip = econvent.from_stagnation_tt
-		random_list = {
-			25 = {
-				custom_effect_tooltip = econvent.list.no_effect_tt
-			}
-			75 = {
-				custom_effect_tooltip = econvent.list.recession_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = recession }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
+		else_if = { limit = { has_idea = fast_growth }
+			custom_effect_tooltip = econvent.from_fast_growth_tt
+			random_list = {
+				20 = {
+					custom_effect_tooltip = econvent.list.no_effect_tt
+				}
+				75 = {
+					custom_effect_tooltip = econvent.list.stable_growth_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = stable_growth }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
+				5 = {
+					custom_effect_tooltip = econvent.list.stagnation_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = stagnation }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
 			}
 		}
-	}
-	option = {
-		name = econvent.7.a
-		log = "[GetDateText]: [This.GetName]: econvent.7.a executed"
-		trigger = { has_idea = recession }
-		hidden_effect = { country_event = { id = econvent_remove_flag.6 days = 120 } } #clears drought flag
-		custom_effect_tooltip = econvent.from_recession_tt
-		random_list = {
-			50 = {
-				custom_effect_tooltip = econvent.list.no_effect_tt
+		else_if = { limit = { has_idea = stable_growth }
+			custom_effect_tooltip = econvent.from_stable_growth_tt
+			random_list = {
+				20 = {
+					custom_effect_tooltip = econvent.list.no_effect_tt
+				}
+				80 = {
+					custom_effect_tooltip = econvent.list.stagnation_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = stagnation }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
 			}
-			50 = {
-				custom_effect_tooltip = econvent.list.depression_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = depression }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
+		}
+		else_if = { limit = { has_idea = stagnation }
+			custom_effect_tooltip = econvent.from_stagnation_tt
+			random_list = {
+				25 = {
+					custom_effect_tooltip = econvent.list.no_effect_tt
+				}
+				75 = {
+					custom_effect_tooltip = econvent.list.recession_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = recession }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
+			}
+		}
+		else_if = { limit = { has_idea = recession }
+			custom_effect_tooltip = econvent.from_recession_tt
+			random_list = {
+				50 = {
+					custom_effect_tooltip = econvent.list.no_effect_tt
+				}
+				50 = {
+					custom_effect_tooltip = econvent.list.depression_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = depression }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
 			}
 		}
 	}
@@ -4933,142 +4876,104 @@ country_event = {
 	id = econvent.8
 	title = econvent.8.t
 	desc = econvent.8.d
-
+	is_triggered_only = yes
 	trigger = {
 		has_country_flag = drought
 		NOT = { has_idea = depression }
-	}
-
-	mean_time_to_happen = {
-		days = 3200
-		modifier = {
-			factor = 0.7
-			has_idea = gdp_1
-		}
-		modifier = {
-			factor = 0.9
-			has_idea = gdp_2
-		}
-		modifier = {
-			factor = 1.2
-			has_idea = gdp_3
-		}
-	}
-
-	immediate = {
-		set_country_flag = {
-			flag = famine
-			value = 1
-		}
 	}
 
 	#Not much to do about this
 	option = {
 		name = econvent.8.a
 		log = "[GetDateText]: [This.GetName]: econvent.8.a executed"
-		trigger = { has_idea = economic_boom }
-		hidden_effect = { country_event = { id = econvent_remove_flag.7 days = 200 } } #clears famine flag
-		custom_effect_tooltip = econvent.from_booming_tt
-		random_list = {
-			20 = {
-				custom_effect_tooltip = econvent.list.no_effect_tt
-			}
-			70 = {
-				custom_effect_tooltip = econvent.list.fast_growth_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = fast_growth }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
-			}
-			10 = {
-				custom_effect_tooltip = econvent.list.stable_growth_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = stable_growth }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
-			}
-		}
-	}
-	option = {
-		name = econvent.8.a
-		log = "[GetDateText]: [This.GetName]: econvent.8.a executed"
-		trigger = { has_idea = fast_growth }
-		hidden_effect = { country_event = { id = econvent_remove_flag.7 days = 200 } } #clears famine flag
-		custom_effect_tooltip = econvent.from_fast_growth_tt
-		random_list = {
-			20 = {
-				custom_effect_tooltip = econvent.list.no_effect_tt
-			}
-			75 = {
-				custom_effect_tooltip = econvent.list.stable_growth_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = stable_growth }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
-			}
-			5 = {
-				custom_effect_tooltip = econvent.list.stagnation_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = stagnation }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
+		set_country_flag = { flag = famine value = 1 days = 200 }
+		if = { limit = { has_idea = economic_boom }
+			custom_effect_tooltip = econvent.from_booming_tt
+			random_list = {
+				20 = {
+					custom_effect_tooltip = econvent.list.no_effect_tt
+				}
+				70 = {
+					custom_effect_tooltip = econvent.list.fast_growth_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = fast_growth }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
+				10 = {
+					custom_effect_tooltip = econvent.list.stable_growth_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = stable_growth }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
 			}
 		}
-	}
-	option = {
-		name = econvent.8.a
-		log = "[GetDateText]: [This.GetName]: econvent.8.a executed"
-		trigger = { has_idea = stable_growth }
-		hidden_effect = { country_event = { id = econvent_remove_flag.7 days = 200 } } #clears famine flag
-		custom_effect_tooltip = econvent.from_stable_growth_tt
-		random_list = {
-			20 = {
-				custom_effect_tooltip = econvent.list.no_effect_tt
-			}
-			80 = {
-				custom_effect_tooltip = econvent.list.stagnation_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = stagnation }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
-			}
-		}
-	}
-	option = {
-		name = econvent.8.a
-		log = "[GetDateText]: [This.GetName]: econvent.8.a executed"
-		trigger = { has_idea = stagnation }
-		hidden_effect = { country_event = { id = econvent_remove_flag.7 days = 200 } } #clears famine flag
-		custom_effect_tooltip = econvent.from_stagnation_tt
-		random_list = {
-			25 = {
-				custom_effect_tooltip = econvent.list.no_effect_tt
-			}
-			75 = {
-				custom_effect_tooltip = econvent.list.recession_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = recession }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
+		else_if = { limit = { has_idea = fast_growth }
+			custom_effect_tooltip = econvent.from_fast_growth_tt
+			random_list = {
+				20 = {
+					custom_effect_tooltip = econvent.list.no_effect_tt
+				}
+				75 = {
+					custom_effect_tooltip = econvent.list.stable_growth_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = stable_growth }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
+				5 = {
+					custom_effect_tooltip = econvent.list.stagnation_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = stagnation }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
 			}
 		}
-	}
-	option = {
-		name = econvent.8.a
-		log = "[GetDateText]: [This.GetName]: econvent.8.a executed"
-		trigger = { has_idea = recession }
-		hidden_effect = { country_event = { id = econvent_remove_flag.7 days = 200 } } #clears famine flag
-		custom_effect_tooltip = econvent.from_recession_tt
-		random_list = {
-			50 = {
-				custom_effect_tooltip = econvent.list.no_effect_tt
+		else_if = { limit = { has_idea = stable_growth }
+			custom_effect_tooltip = econvent.from_stable_growth_tt
+			random_list = {
+				20 = {
+					custom_effect_tooltip = econvent.list.no_effect_tt
+				}
+				80 = {
+					custom_effect_tooltip = econvent.list.stagnation_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = stagnation }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
 			}
-			50 = {
-				custom_effect_tooltip = econvent.list.depression_tt
-				set_country_flag = disable_cycle_costs
-				hidden_effect = { add_ideas = depression }
-				clr_country_flag = disable_cycle_costs
-				calculate_tax_gain = yes
+		}
+		else_if = { limit = { has_idea = stagnation }
+			custom_effect_tooltip = econvent.from_stagnation_tt
+			random_list = {
+				25 = {
+					custom_effect_tooltip = econvent.list.no_effect_tt
+				}
+				75 = {
+					custom_effect_tooltip = econvent.list.recession_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = recession }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
+			}
+		}
+		else_if = { limit = { has_idea = recession }
+			custom_effect_tooltip = econvent.from_recession_tt
+			random_list = {
+				50 = {
+					custom_effect_tooltip = econvent.list.no_effect_tt
+				}
+				50 = {
+					custom_effect_tooltip = econvent.list.depression_tt
+					set_country_flag = disable_cycle_costs
+					hidden_effect = { add_ideas = depression }
+					clr_country_flag = disable_cycle_costs
+					update_economic_income = yes
+				}
 			}
 		}
 	}
@@ -5078,11 +4983,9 @@ country_event = {
 #Increase Consumer Confidence
 country_event = {
 	id = econvent.9
-	immediate = {
-		set_country_flag = increased_consumer_confidence
-	}
 	title = econvent.9.t
 	desc = econvent.9.d
+	is_triggered_only = yes
 
 	trigger = {
 		NOT = {
@@ -5091,39 +4994,11 @@ country_event = {
 			has_idea = bankrupcy
 		}
 	}
-
-	mean_time_to_happen = {
-		days = 1000
-		modifier = {
-			factor = 1.5
-			has_idea = fast_growth
-		}
-		modifier = {
-			factor = 1.25
-			has_idea = stable_growth
-		}
-		modifier = {
-			factor = 0.90
-			has_idea = stagnation
-		}
-		modifier = {
-			factor = 0.50
-			has_idea = recession
-		}
-		modifier = {
-			factor = 0.20
-			has_idea = depression
-		}
-	}
-
 	option = {
 		name = econvent.9.a
 		log = "[GetDateText]: [Root.GetName]: event econvent.9.a"
 		increase_economic_growth = yes
-		calculate_tax_gain = yes
-		hidden_Effect = {
-			country_event = { id = econvent_remove_flag.8 days = 200 }
-		}
+		update_economic_income = yes
 	}
 }
 
@@ -5132,7 +5007,7 @@ country_event = {
 	id = econvent.10
 	title = econvent.10.t
 	desc = econvent.10.d
-
+	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_idea = economic_boom
@@ -5140,30 +5015,6 @@ country_event = {
 			has_country_flag = stock_market_boom_accelerate
 			has_country_flag = stock_market_boom_slowed
 			has_country_flag = stock_market_boom
-		}
-	}
-
-	mean_time_to_happen = {
-		days = 2000
-		modifier = {
-			factor = 2.5
-			has_idea = fast_growth
-		}
-		modifier = {
-			factor = 1.5
-			has_idea = stable_growth
-		}
-		modifier = {
-			factor = 1.0
-			has_idea = stagnation
-		}
-		modifier = {
-			factor = 0.75
-			has_idea = recession
-		}
-		modifier = {
-			factor = 0.5
-			has_idea = depression
 		}
 	}
 
@@ -5175,10 +5026,7 @@ country_event = {
 		custom_effect_tooltip = econvent.10.a_tt
 		subtract_from_variable = { treasury = 5 }
 		custom_effect_tooltip = 5_billion_expense_tt
-		hidden_effect = {
-			set_country_flag = stock_market_boom_accelerate
-			country_event = { id = econvent_remove_flag.9 days = 200 }
-		}
+		set_country_flag = { flag = stock_market_boom_accelerate value = 1 days = 200 }
 	}
 	option = {
 		name = econvent.10.b
@@ -5186,20 +5034,14 @@ country_event = {
 		increase_economic_growth = yes
 		calculate_tax_gain = yes
 		custom_effect_tooltip = econvent.10.b_tt
-		hidden_effect = {
-			set_country_flag = stock_market_boom
-			country_event = { id = econvent_remove_flag.10 days = 200 }
-		}
+		set_country_flag = { flag = stock_market_boom value = 1 days = 200 }
 	}
 	option = {
 		name = econvent.10.c
 		log = "[GetDateText]: [Root.GetName]: event econvent.10.c"
 		add_political_power = -50
 		custom_effect_tooltip = econvent.10.c_tt
-		hidden_effect = {
-			set_country_flag = stock_market_boom_slowed
-			country_event = { id = econvent_remove_flag.11 days = 200 }
-		}
+		set_country_flag = { flag = stock_market_boom_slowed value = 1 days = 200 }
 	}
 }
 
@@ -5378,7 +5220,7 @@ country_event = { #Failed to Reduce Debt
 	}
 }
 
-country_event = { #Government agency has over request
+country_event = { #Government agency has over spent!
 	id = bankruptcy.202
 	title = bankruptcy.202.t
 	desc = bankruptcy.202.d
@@ -5396,15 +5238,27 @@ country_event = { #Government agency has over request
 		name = bankrupcy.202.a
 		trigger = {
 			NOT = {
-				has_country_flag = recently_forced_law_change_social
+				has_country_flag = social_decrease_blocked
 				has_idea = social_01
 			}
 		}
 		log = "[GetDateText]: [This.GetName]: bankruptcy.201.a executed"
 
-		custom_effect_tooltip = choice_stuck_for_60_days_tt
 		decrease_social_spending = yes
-		set_country_flag = { flag = recently_forced_law_change_social value = 1 days = 90 }
+		custom_effect_tooltip = BLOCK_SOCIAL_INCREASE_TT
+		clr_country_flag = social_increase_blocked
+		set_country_flag = {
+			flag = social_increase_blocked
+			days = 100
+			value = 1
+		}
+		custom_effect_tooltip = BLOCK_SOCIAL_DECREASE_TT
+		clr_country_flag = social_decrease_blocked
+		set_country_flag = {
+			flag = social_decrease_blocked
+			days = 100
+			value = 1
+		}
 		set_country_flag = { flag = government_agency_bankruptcy value = 1 days = 90 }
 		ai_chance = {
 			factor = 0
@@ -5421,9 +5275,14 @@ country_event = { #Government agency has over request
 		}
 		log = "[GetDateText]: [This.GetName]: bankruptcy.201.b executed"
 
-		custom_effect_tooltip = choice_stuck_for_60_days_tt
 		decrease_education_budget = yes
-		set_country_flag = { flag = recently_forced_law_change_education value = 1 days = 90 }
+		custom_effect_tooltip = BLOCK_EDU_INCREASE_TT
+	clr_country_flag = edu_increase_blocked
+	set_country_flag = {
+		flag = edu_increase_blocked
+		days = 365
+		value = 1
+	}
 		set_country_flag = { flag = government_agency_bankruptcy value = 1 days = 90 }
 		ai_chance = {
 			factor = 0

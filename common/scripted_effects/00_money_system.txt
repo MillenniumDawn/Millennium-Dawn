@@ -170,10 +170,6 @@ ingame_calculate_size_modifier = {
 	if = {
 		limit = { check_variable = { var = size_modifier value = size_mod_check compare = not_equals } }
 
-		#Divides/removes previous to avoid distortion
-		add_to_variable = { var = treasury_rate value = expense_gain }
-		subtract_from_variable = { var = treasury_rate value = tax_gain }
-
 		### Temp multiply to avoid rounding errors ###
 		multiply_variable = { bureaucracy_gain = 1000 }
 		multiply_variable = { security_gain = 1000 }
@@ -292,12 +288,9 @@ ingame_calculate_size_modifier = {
 		divide_variable = { expense_gain = 1000 }
 		divide_variable = { tax_gain = 1000 }
 		divide_variable = { econ_cycle_upg_cost = 1000 }
-
-		subtract_from_variable = { var = treasury_rate value = expense_gain }
-		add_to_variable = { var = treasury_rate value = tax_gain }
 	}
 
-	update_display_expense = yes #will do this always for consistency
+	update_display = yes #will do this always for consistency
 }
 
 #Tax rate shit
@@ -368,8 +361,6 @@ decrease_tax_cost = {
 }
 
 calculate_tax_gain = {
-	#See treasury reset command at the top of the page
-	subtract_from_variable = { var = treasury_rate value = tax_gain }
 	set_variable = { tax_gain = 0 }
 	#Update starting tax rate
 	calculate_tax_rate = yes
@@ -391,18 +382,14 @@ calculate_tax_gain = {
 	add_to_variable = { corporate_tax = dockyard_tax }
 	add_to_variable = { corporate_tax = office_tax }
 	#Calculate actual work
-	divide_variable = { var = corporate_tax value = 75 } #Gives TOTAL potential tax assuming 100%
+	divide_variable = { var = corporate_tax value = 97 } #Gives TOTAL potential tax assuming 100%
 	multiply_variable = { var = corporate_tax value = corporate_tax_rate }
 
 	##POP
-	set_variable = { population_tax = max_manpower_k }
-	divide_variable = { population_tax = 30000 }  #Gives TOTAL potential tax assuming 100%
+	set_variable = { var = population_tax value = population_total }
+	divide_variable = { population_tax = 280 } #Gives TOTAL potential tax assuming 100%
 	multiply_variable = { var = population_tax value = population_tax_rate }
 
-	add_to_variable = { tax_gain = corporate_tax }
-	add_to_variable = { tax_gain = population_tax }
-
-	multiply_variable = { var = tax_gain value = size_modifier }
 	multiply_variable = { var = corporate_tax value = size_modifier }
 	multiply_variable = { var = population_tax value = size_modifier }
 
@@ -475,22 +462,19 @@ calculate_tax_gain = {
 		multiply_temp_variable = { tax_gain_multiplier = ITA_tax_multiplier_var }
 	}
 	#Modify Taxgain by multiplier
-	multiply_variable = { tax_gain = tax_gain_multiplier }
 	multiply_variable = { corporate_tax = tax_gain_multiplier }
 	multiply_variable = { population_tax = tax_gain_multiplier }
 	#Cleanup rounding errors
-	divide_variable = { tax_gain = 1000 }
 	divide_variable = { corporate_tax = 1000 }
 	divide_variable = { population_tax = 1000 }
 
 	#Expands the variables to show monthly - ignoring the 31s and Feb. Every month is 30days for ease.
-	multiply_variable = { tax_gain = 7 }
 	multiply_variable = { corporate_tax = 7 }
 	multiply_variable = { population_tax = 7 }
 
-	#Adds tax gain to treasury rate.
-	add_to_variable = { var = treasury_rate value = tax_gain }
-	update_display_income = yes
+	set_variable = { var = tax_gain value = corporate_tax }
+	add_to_variable = { var = tax_gain value = population_tax }
+	update_display = yes
 }
 
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
@@ -625,13 +609,11 @@ calculate_interest_rate = {
 #Update the debt rate called mostly when debt is taken
 ##The debt rate determines when a country actually goes bankrupt versues when it maintains its current economic standpoint.
 calculate_debt_rate = {
-	#See Treasury reset comment at top of page
-	add_to_variable = { var = treasury_rate value = debt_rate } #Resets the Debt Rate
+
 	set_variable = { var = debt_rate value = debt }
 	multiply_variable = { var = debt_rate value = interest_rate }
 	divide_variable = { var = debt_rate value = 36500 }
 	multiply_variable = { var = debt_rate value = 7 }
-	subtract_from_variable = { var = treasury_rate value = debt_rate }
 
 	if = {
 		limit = {
@@ -665,7 +647,7 @@ calculate_debt_rate = {
 	#Based off 22 Size Modifier
 	#You will need to be paying more than 4.5 in interest to start getting bad events
 
-	update_display_expense = yes
+	update_display = yes
 }
 
 #Update military spending
@@ -989,22 +971,11 @@ update_military_rate = {
 		index = i
 		value = v
 		add_to_variable = { var = array_defence_spend^i value = personnel_cost }
-	}
-	for_each_loop = {
-		array = array_defence_spend
-		index = i
-		value = v
 		multiply_variable = { var = array_defence_spend^i value = 7 } #Multiply each index by 30 days
 	}
 
-	add_to_variable = { var = treasury_rate value = defence_gain }
-	subtract_from_variable = { var = expense_gain value = defence_gain }
-
 	set_variable = { var = defence_gain value = array_defence_spend^def_index }
-
-	add_to_variable = { var = expense_gain value = defence_gain }
-	subtract_from_variable = { var = treasury_rate value = defence_gain }
-	update_display_expense = yes
+	update_display = yes
 }
 
 #Update bureaucracy spending - Fuck this category
@@ -1053,41 +1024,34 @@ update_bureaucracy_rate = {
 		set_temp_variable = { bureau_index = 4 }
 	}
 
+	#Modifiers
 	for_each_loop = {
 		array = array_bureaucracy_spend
 		index = i
 		value = v
+		if = { limit = { tag = ITA }
+			if = {
+				limit = { has_idea = ITA_inefficient_administration_4 } ##50% increase in cost for bureaucracy
+				multiply_variable = { var = array_bureaucracy_spend^i value = 1.5 }
+			}
+			else_if = {
+				limit = { has_idea = ITA_inefficient_administration_3 } ##37,5% increase in cost for bureaucracy
+				multiply_variable = { var = array_bureaucracy_spend^i value = 1.375 }
+			}
+			else_if = {
+				limit = { has_idea = ITA_inefficient_administration_2 } ##25% increase in cost for bureaucracy
+				multiply_variable = { var = array_bureaucracy_spend^i value = 1.25 }
+			}
+			else_if = {
+				limit = { has_idea = ITA_inefficient_administration_1 } ##12,5% increase in cost for bureaucracy
+				multiply_variable = { var = array_bureaucracy_spend^i value = 1.125 }
+			}
+		}
 		multiply_variable = { array_bureaucracy_spend^i = 7 } #Multiply each index by 30 days
 	}
 
-	#Modifiers
-	if = { limit = { tag = ITA }
-		if = {
-			limit = { has_idea = ITA_inefficient_administration_4 } ##50% increase in cost for bureaucracy
-			multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.5 }
-		}
-		else_if = {
-			limit = { has_idea = ITA_inefficient_administration_3 } ##37,5% increase in cost for bureaucracy
-			multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.375 }
-		}
-		else_if = {
-			limit = { has_idea = ITA_inefficient_administration_2 } ##25% increase in cost for bureaucracy
-			multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.25 }
-		}
-		else_if = {
-			limit = { has_idea = ITA_inefficient_administration_1 } ##12,5% increase in cost for bureaucracy
-			multiply_variable = { var = array_bureaucracy_spend^bureau_index value = 1.125 }
-		}
-	}
-
-	add_to_variable = { var = treasury_rate value = bureaucracy_gain }
-	subtract_from_variable = { var = expense_gain value = bureaucracy_gain } #Resets the treasury rate
-
 	set_variable = { var = bureaucracy_gain value = array_bureaucracy_spend^bureau_index }
-	add_to_variable = { var = expense_gain value = bureaucracy_gain }
-	subtract_from_variable = { var = treasury_rate value = bureaucracy_gain }
-
-	update_display_expense = yes
+	update_display = yes
 }
 
 #Update police spending
@@ -1102,11 +1066,11 @@ update_police_rate = {
 
 		add_to_array = { array = array_security_spend value = size_modifier }
 	}
-	multiply_variable = { var = array_security_spend^0 value = 0.005 }
-	multiply_variable = { var = array_security_spend^1 value = 0.01 }
-	multiply_variable = { var = array_security_spend^2 value = 0.02 }
-	multiply_variable = { var = array_security_spend^3 value = 0.03 }
-	multiply_variable = { var = array_security_spend^4 value = 0.04 }
+	multiply_variable = { var = array_security_spend^0 value = 0.05 }
+	multiply_variable = { var = array_security_spend^1 value = 0.08 }
+	multiply_variable = { var = array_security_spend^2 value = 0.10 }
+	multiply_variable = { var = array_security_spend^3 value = 0.12 }
+	multiply_variable = { var = array_security_spend^4 value = 0.15 }
 
 	#add the naval factoreis and mil factories to each item index in the array
 	for_each_loop = {
@@ -1139,25 +1103,18 @@ update_police_rate = {
 		array = array_security_spend
 		index = i
 		value = v
+		#Modifiers
+		if = { limit = { has_tech = DNA_fingerprinting } ##5% reduction in cost for security
+			multiply_variable = { var = array_security_spend^security_index value = 0.95 }
+		}
+		if = { limit = { tag = ITA has_idea = ITA_legalized_light_drugs } ##10% reduction in cost for security
+			multiply_variable = { var = array_security_spend^security_index value = 0.90 }
+		}
 		multiply_variable = { array_security_spend^i = 7 } #Multiply each index by 30 days
 	}
 
-	#Modifiers
-	if = { limit = { has_tech = DNA_fingerprinting } ##5% reduction in cost for security
-		multiply_variable = { var = array_security_spend^security_index value = 0.95}
-	}
-	if = { limit = { tag = ITA has_idea = ITA_legalized_light_drugs } ##10% reduction in cost for security
-		multiply_variable = { var = array_security_spend^security_index value = 0.90 }
-	}
-
-	add_to_variable = { var = treasury_rate value = security_gain }
-	subtract_from_variable = { var = expense_gain value = security_gain } #Resets the treasury rate
-
 	set_variable = { var = security_gain value = array_security_spend^security_index }
-
-	add_to_variable = { var = expense_gain value = security_gain }
-	subtract_from_variable = { var = treasury_rate value = security_gain }
-	update_display_expense = yes
+	update_display = yes
 }
 
 #Update education spending
@@ -1230,37 +1187,30 @@ update_education_rate = {
 		array = array_education_spend
 		index = i
 		value = v
+		###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
+		if = { limit = { has_tech = internet1 }
+			multiply_variable = { var = array_education_spend^i value = 0.97 } #3% education cost
+		}
+		if = { limit = { has_tech = internet2 }
+			multiply_variable = { var = array_education_spend^i value = 0.95 }
+		}
+		if = { limit = { has_tech = internet3 }
+			multiply_variable = { var = array_education_spend^i value = 0.97 }
+		}
+		if = { limit = { has_tech = internet4 }
+			multiply_variable = { var = array_education_spend^i value = 0.95 }
+		}
+		if = { limit = { has_tech = internet5 }
+			multiply_variable = { var = array_education_spend^i value = 0.97 }
+		}
+		if = { limit = { has_tech = internet6 }
+			multiply_variable = { var = array_education_spend^i value = 0.95 }
+		}
 		multiply_variable = { array_education_spend^i = 7 } #Multiply each index by 30 days
 	}
 
-	###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
-	if = { limit = { has_tech = internet1 }
-		multiply_variable = { var = array_education_spend^education_index value = 0.97 } #3% education cost
-	}
-	if = { limit = { has_tech = internet2 }
-		multiply_variable = { var = array_education_spend^education_index value = 0.95 }
-	}
-	if = { limit = { has_tech = internet3 }
-		multiply_variable = { var = array_education_spend^education_index value = 0.97 }
-	}
-	if = { limit = { has_tech = internet4 }
-		multiply_variable = { var = array_education_spend^education_index value = 0.95 }
-	}
-	if = { limit = { has_tech = internet5 }
-		multiply_variable = { var = array_education_spend^education_index value = 0.97 }
-	}
-	if = { limit = { has_tech = internet6 }
-		multiply_variable = { var = array_education_spend^education_index value = 0.95 }
-	}
-
-	add_to_variable = { var = treasury_rate value = education_gain }
-	subtract_from_variable = { var = expense_gain value = education_gain } #Resets the treasury rate
-
 	set_variable = { var = education_gain value = array_education_spend^education_index }
-
-	add_to_variable = { var = expense_gain value = education_gain }
-	subtract_from_variable = { var = treasury_rate value = education_gain }
-	update_display_expense = yes
+	update_display = yes
 }
 
 #Update health spending
@@ -1317,25 +1267,18 @@ update_health_rate = {
 		array = array_health_spend
 		index = i
 		value = v
+		##Modifiers to Healthcare Costs
+		if = { limit = { has_tech = nanocellulose_in_medicine } #10% Reduction in Healthcare Spending
+			multiply_variable = { var = array_health_spend^i value = 0.90 }
+		}
+		if = { limit = { has_tech = medical_nanorobots } #5% Reduction in Healthcare Spending
+			multiply_variable = { var = array_health_spend^i value = 0.95 }
+		}
 		multiply_variable = { array_health_spend^i = 7 } #Multiply each index by 30 days
 	}
 
-	##Modifiers to Healthcare Costs
-	if = { limit = { has_tech = nanocellulose_in_medicine } #10% Reduction in Healthcare Spending
-		multiply_variable = { var = array_health_spend^health_index value = 0.90 }
-	}
-	if = { limit = { has_tech = medical_nanorobots } #5% Reduction in Healthcare Spending
-		multiply_variable = { var = array_health_spend^health_index value = 0.95 }
-	}
-
-	add_to_variable = { var = treasury_rate value = health_gain }
-	subtract_from_variable = { var = expense_gain value = health_gain } #Resets the treasury rate
-
 	set_variable = { var = health_gain value = array_health_spend^health_index }
-
-	add_to_variable = { var = expense_gain value = health_gain }
-	subtract_from_variable = { var = treasury_rate value = health_gain }
-	update_display_expense = yes
+	update_display = yes
 }
 
 #Update social spending
@@ -1393,31 +1336,21 @@ update_social_rate = {
 		multiply_variable = { array_social_spend^i = 7 } #Multiply each index by 7 days
 	}
 
-	add_to_variable = { var = treasury_rate value = welfare_gain }
-	subtract_from_variable = { var = expense_gain value = welfare_gain } #Resets the treasury rate
-
 	set_variable = { var = welfare_gain value = array_social_spend^social_index }
-	add_to_variable = { var = expense_gain value = welfare_gain }
-	subtract_from_variable = { var = treasury_rate value = welfare_gain }
-	update_display_expense = yes
+	update_display = yes
 }
 
 #Income Related Stuff --- International Investments and Calculated Resource Sale Rate
 #Update money gained from international investments
 calculate_int_investments_rate = {
 	#See Treasury reset comment at top of page
-	subtract_from_variable = { var = treasury_rate value = int_investments_rate } #Add
 	set_variable = { var = int_investments_rate value = int_investments }
 	divide_variable = { var = int_investments_rate value = 6080 } #6%
 	multiply_variable = { int_investments_rate = 7 } #30 days worth of income
-	add_to_variable = { var = treasury_rate value = int_investments_rate }
-	update_display_income = yes
+	update_display = yes
 }
 
 calculate_resource_sale_rate = { #Calculates income from resources
-	#See Treasury reset comment at top of page
-	subtract_from_variable = { var = treasury_rate value = resource_sale_rate }
-
 	set_variable = { resource_exports = resource_exported@steel } #Uses the value to judge
 	add_to_variable = { resource_exports = resource_exported@oil }
 	add_to_variable = { resource_exports = resource_exported@aluminium }
@@ -1508,19 +1441,24 @@ calculate_resource_sale_rate = { #Calculates income from resources
 	}
 
 	multiply_variable = { resource_sale_rate = 7 }
-	add_to_variable = { var = treasury_rate value = resource_sale_rate }
-	update_display_income = yes
+	update_display = yes
 }
 
-update_display_expense = {
-	set_variable = { var = display_expense value = expense_gain }
+update_display = {
+	set_variable = { var = display_expense value = bureaucracy_gain }
+	add_to_variable = { var = display_expense value = defence_gain }
+	add_to_variable = { var = display_expense value = security_gain }
+	add_to_variable = { var = display_expense value = education_gain }
+	add_to_variable = { var = display_expense value = health_gain }
+	add_to_variable = { var = display_expense value = welfare_gain }
 	add_to_variable = { var = display_expense value = debt_rate }
-}
 
-update_display_income = {
 	set_variable = { var = display_income value = tax_gain }
 	add_to_variable = { var = display_income value = resource_sale_rate }
 	add_to_variable = { var = display_income value = int_investments_rate }
+
+	set_variable = { var = treasury_rate value = display_income }
+	subtract_from_variable = { var = treasury_rate value = display_expense }
 }
 
 init_expenses = {
@@ -1537,7 +1475,7 @@ init_expenses = {
 	#Social Spending
 	update_social_rate = yes
 
-	update_display_expense = yes
+	update_display = yes
 }
 
 #Monthly tick actions
@@ -1644,8 +1582,18 @@ automated_debt_taker = {
 }
 
 update_economic_income = {
+	ingame_calculate_size_modifier = yes
 	calculate_tax_gain = yes
 	update_military_rate = yes
-	ingame_calculate_size_modifier = yes
 	calculate_resource_sale_rate = yes
+}
+
+update_state_variables = {
+	set_variable = { var = population_total value = 0 }
+	every_controlled_state = {
+		add_to_variable = { PREV.office_park_total = building_level@offices }
+		set_temp_variable = { var = temp_pop value = state_population_k }
+		divide_temp_variable = { var = temp_pop value = 100 }
+		add_to_variable = { PREV.population_total = temp_pop }
+	}
 }
