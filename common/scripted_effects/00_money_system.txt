@@ -27,7 +27,7 @@
 #corporation_tax_rate - Tax rate
 #population_tax_rate - pop tax rate
 
-###Treasury reset###
+###Treasury reset### -- Legacy commands. Moved this functionality to a update_display command
 #In a couple places I've left a comment saying referring to treasury reset explanation. This is the explanation
 #It took me a while to figure out why you add debt_rate to treasury_rate so ill try to explain (Gearz)
 #When your debt_rate changes you need to "reset the treasury_rate" so you return
@@ -40,6 +40,22 @@
 #Startup for building the money system. This is to be used whenever setting up a nation for the the first time.
 startup_extra_setup = {
 	firsttime_calculate_size_modifier = yes
+	update_state_variables = yes
+	calculate_interest_rate = yes
+	calculate_debt_rate = yes
+	calculate_int_investments_rate = yes
+	calculate_resource_sale_rate = yes
+	calculate_tax_gain = yes
+	init_expenses = yes
+	set_variable = { econ_cycle_upg_cost = 6 }
+	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
+	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
+}
+
+ingame_update_setup = {
+	ingame_calculate_size_modifier = yes
+	update_state_variables = yes
+	update_military_rate = yes
 	calculate_interest_rate = yes
 	calculate_debt_rate = yes
 	calculate_int_investments_rate = yes
@@ -104,7 +120,11 @@ firsttime_calculate_size_modifier = {
 
 #Rewrote Size Modifier
 ingame_calculate_size_modifier = {
+	#Both use the entire economy now
 	set_temp_variable = { size_mod_check = num_of_civilian_factories }
+	add_to_temp_variable = { size_mod_check = ROOT.office_park_total }
+	add_to_temp_variable = { size_mod_check = num_of_naval_factories }
+	add_to_temp_variable = { size_mod_check = num_of_military_factories }
 
 	##Used to prevent instant bankruptcy
 	#Further this is used to readd the civvies you lose due to export.
@@ -164,7 +184,6 @@ ingame_calculate_size_modifier = {
 			}
 		}
 	}
-
 
 	### Does it if new civilian factories has been added
 	if = {
@@ -609,7 +628,6 @@ calculate_interest_rate = {
 #Update the debt rate called mostly when debt is taken
 ##The debt rate determines when a country actually goes bankrupt versues when it maintains its current economic standpoint.
 calculate_debt_rate = {
-
 	set_variable = { var = debt_rate value = debt }
 	multiply_variable = { var = debt_rate value = interest_rate }
 	divide_variable = { var = debt_rate value = 36500 }
@@ -1586,6 +1604,7 @@ update_economic_income = {
 	calculate_tax_gain = yes
 	update_military_rate = yes
 	calculate_resource_sale_rate = yes
+	init_expenses = yes
 }
 
 update_state_variables = {
@@ -1596,4 +1615,52 @@ update_state_variables = {
 		divide_temp_variable = { var = temp_pop value = 100 }
 		add_to_variable = { PREV.population_total = temp_pop }
 	}
+	calculate_gdp = yes
+}
+
+#Calculate GDP/C
+calculate_gdp = {
+	set_variable = { var = gdp_total value = 0 }
+	set_temp_variable = { var = civil_fac value = num_of_civilian_factories }
+	set_temp_variable = { var = military_fac value = num_of_military_factories }
+	set_temp_variable = { var = dockyard_fac value = num_of_naval_factories }
+	set_temp_variable = { var = office_fac value = ROOT.office_park_total }
+
+	set_temp_variable = { temp_resource_import = resource_imported@oil }
+	divide_temp_variable = { var = temp_resource_import value = 8 }
+	add_to_temp_variable = { civil_fac_lost = temp_resource_import }
+
+	set_temp_variable = { temp_resource_import = resource_imported@aluminium }
+	divide_temp_variable = { var = temp_resource_import value = 8 }
+	add_to_temp_variable = { civil_fac_lost = temp_resource_import }
+
+	set_temp_variable = { temp_resource_import = resource_imported@tungsten }
+	divide_temp_variable = { var = temp_resource_import value = 8 }
+	add_to_temp_variable = { civil_fac_lost = temp_resource_import }
+
+	set_temp_variable = { temp_resource_import = resource_imported@steel }
+	divide_temp_variable = { var = temp_resource_import value = 8 }
+	add_to_temp_variable = { civil_fac_lost = temp_resource_import }
+
+	set_temp_variable = { temp_resource_import = resource_imported@rubber }
+	divide_temp_variable = { var = temp_resource_import value = 8 }
+	add_to_temp_variable = { civil_fac_lost = temp_resource_import }
+
+	set_temp_variable = { temp_resource_import = resource_imported@chromium }
+	divide_temp_variable = { var = temp_resource_import value = 8 }
+	add_to_temp_variable = { civil_fac_lost = temp_resource_import }
+	add_to_variable = { civil_fac = civil_fac_lost }
+
+	multiply_temp_variable = { civil_fac = 500 }
+	multiply_temp_variable = { military_fac = 250 }
+	multiply_temp_variable = { dockyard_fac = 125 }
+	multiply_temp_variable = { office_fac = 650 }
+
+	add_to_variable = { gdp_total = civil_fac }
+	add_to_variable = { gdp_total = military_fac }
+	add_to_variable = { gdp_total = dockyard_fac }
+	add_to_variable = { gdp_total = office_fac }
+
+	set_variable = { gdp_per_capita = gdp_total }
+	divide_variable = { gdp_per_capita = population_total }
 }
