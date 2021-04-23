@@ -13,7 +13,13 @@
  # everything said above is correct
  # be more hesitant if your changes gives the country controlling the state more longterm advantages, as balance can be rubbed in favour to one country for something like adding an extra naval factory.
 #
-
+#if you creat or mod coastal states you need to add/mod the respective missile launch point triggers for the coastal state and all adjacent seazones
+ # there are four files that have to be adapted in \common\scripted_triggers
+ # MD_missile_sea_launch_points.txt
+ # MD_missile_sea_launch_points_CV.txt
+ # MD_missile_sea_launch_points_defense.txt
+ # MD_missile_sea_launch_points_sub.txt
+ # there is a example at the top of each file
 #
 #ledger for aprox. what state_category per number of pop a state should have
  # state_00 for <300,000 inhabitants
