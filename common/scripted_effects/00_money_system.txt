@@ -722,7 +722,7 @@ update_military_rate = {
 		set_temp_variable = { def_index = 9 }
 	}
 
-	#Some math that is applied to each law (see the update_military_rate_ai for more details)
+	#Set the base cost for each spending level based on size of military industry ( [num_of_mil_factories + num_of_naval_factories]/modifier ) 
 	divide_variable = { array_defence_spend^0 = 3000 }
 	divide_variable = { array_defence_spend^1 = 300 }
 	divide_variable = { array_defence_spend^2 = 150 }
@@ -735,10 +735,12 @@ update_military_rate = {
 	divide_variable = { array_defence_spend^9 = 8 }
 
 	### Land ###
-	#Below sets up the "personnel cost for mil spending
-	#Each units has a cost which is modified by gdp, conscription laws and training laws
+	#Below sets up the personnel cost for mil spending based on how many battalions a country has (divided into special, elite, regular and irregular units)
+	
+	#Count number of special units
 	set_temp_variable = { special_btn = num_of_battalions_with_type@Special_Forces }
 
+	#Count number of elite units - Kal's note; set normal support battalions to be regular
 	set_temp_variable = { elite_btn = num_of_battalions_with_type@L_Air_assault_Bat }
 	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Arm_Air_assault_Bat }
 	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@L_Air_Inf_Bat }
@@ -749,15 +751,8 @@ update_military_rate = {
 	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Mot_Marine_Bat }
 	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Mech_Marine_Bat }
 	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Arm_Marine_Bat }
-	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@SP_AA_Bat }
-	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@L_Engi_Bat }
-	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@H_Engi_Bat }
-	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@L_Recce_Bat }
-	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Mot_Recce_Bat }
-	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Mech_Recce_Bat }
-	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@Arm_Recce_Bat }
-	add_to_temp_variable = { elite_btn = num_of_battalions_with_type@armor_Recce_Bat }
 
+	#Count number of regular units
 	set_temp_variable = { regular_btn = num_of_battalions_with_type@L_Inf_Bat }
 	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Mot_Inf_Bat }
 	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Mech_Inf_Bat }
@@ -765,27 +760,40 @@ update_military_rate = {
 	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@armor_Bat }
 	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Arty_Bat }
 	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@SP_Arty_Bat }
-
+	#These were previously elite - Kal
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@SP_AA_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@L_Engi_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@H_Engi_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@L_Recce_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Mot_Recce_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Mech_Recce_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Arm_Recce_Bat }
+	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@armor_Recce_Bat }
+	
+	#Count number of irregular units
 	set_temp_variable = { irregular_btn = num_of_battalions_with_type@Militia_Bat }
 	add_to_temp_variable = { irregular_btn = num_of_battalions_with_type@Mot_Militia_Bat }
 
+	#Multiply each category with a weight value, and then add up categories together (eg. one special forces battalion is worth 1 militia battalion etc). Use these if you want to control costs of different land units to each other
 	multiply_temp_variable = { special_btn = 5 }
-	set_temp_variable = { land_count = special_btn }
 	multiply_temp_variable = { elite_btn = 3 }
-	add_to_temp_variable = { land_count = elite_btn }
 	multiply_temp_variable = { regular_btn = 2 }
+	multiply_temp_variable = { irregular_btn = 1 }
+	set_temp_variable = { land_count = 0 }
+	add_to_temp_variable = { land_count = special_btn }
+	add_to_temp_variable = { land_count = elite_btn }
 	add_to_temp_variable = { land_count = regular_btn }
 	add_to_temp_variable = { land_count = irregular_btn }
 
-	divide_temp_variable = { land_count = 4 } #control factor
-
 	### Navy ###
+	#Below sets the cost for ships based on the number of ships (divided into carriers, capitals, destroyers and minors - children are cheap)
 	if = {
 		limit = { NOT = { has_dlc = "Man the Guns" } }
-		#Carriers
+		#Count number of carriers
 		set_temp_variable = { carrier_count = num_ships_with_type@Nuclear_carrier }
 		add_to_temp_variable = { carrier_count = num_ships_with_type@carrier }
-
+	
+		#Count number of capital/large ships
 		set_temp_variable = { capital_count = num_ships_with_type@nuclear_cruiser }
 		add_to_temp_variable = { capital_count = num_ships_with_type@cruiser }
 		add_to_temp_variable = { capital_count = num_ships_with_type@LHA }
@@ -793,195 +801,219 @@ update_military_rate = {
 		add_to_temp_variable = { capital_count = num_ships_with_type@attack_submarine }
 		add_to_temp_variable = { capital_count = num_ships_with_type@missile_submarine }
 
+		#Count number of destroyers
 		set_temp_variable = { destroyer_count = num_ships_with_type@destroyer }
 
+		#Count number of screens/small ships
 		set_temp_variable = { minor_count = num_ships_with_type@frigate }
 		add_to_temp_variable = { minor_count = num_ships_with_type@corvette }
 		add_to_temp_variable = { minor_count = num_ships_with_type@diesel_attack_submarine }
 	}
 	else_if = {
 		limit = { has_dlc = "Man the Guns" }
-		#Carriers
+		#Count number of carriers
 		set_temp_variable = { carrier_count = num_ships_with_type@carrier_mtg }
 
+		#Count number of capital/large ships
 		set_temp_variable = { capital_count = num_ships_with_type@battleship_mtg }
 		add_to_temp_variable = { capital_count = num_ships_with_type@cruiser_mtg }
 		add_to_temp_variable = { capital_count = num_ships_with_type@battleship_mtg }
 		add_to_temp_variable = { capital_count = num_ships_with_type@battle_cruiser_mtg }
 		add_to_temp_variable = { capital_count = num_ships_with_type@missile_submarine_mtg }
 
+		#Count number of destroyers
 		set_temp_variable = { destroyer_count = num_ships_with_type@destroyer_mtg }
 		set_temp_variable = { destroyer_count = num_ships_with_type@stealth_destroyer_mtg }
 
+		#Count number of screens/small ships
 		set_temp_variable = { minor_count = num_ships_with_type@frigate_mtg }
 		add_to_temp_variable = { minor_count = num_ships_with_type@corvette_mtg }
 		add_to_temp_variable = { minor_count = num_ships_with_type@attack_submarine_mtg }
 	}
 
-	multiply_temp_variable = { carrier_count = 100 }
+	#Multiply each category with a weight value, and then add up categories together (eg. one carrier is worth 10 small ships etc). Use these if you want to control costs of different ships to each other - Kal's note: changed math to match land stuff 
+	multiply_temp_variable = { carrier_count = 10 }
+	multiply_temp_variable = { capital_count = 5 }
+	multiply_temp_variable = { destroyer_count = 2 }
+	multiply_temp_variable = { minor_count = 1 }
+	set_temp_variable = { navy_count = 0 }
 	set_temp_variable = { navy_count = carrier_count }
-	multiply_temp_variable = { capital_count = 50 }
 	add_to_temp_variable = { navy_count = capital_count }
-	multiply_temp_variable = { destroyer_count = 20 }
 	add_to_temp_variable = { navy_count = destroyer_count }
-	multiply_temp_variable = { minor_count = 10 }
 	add_to_temp_variable = { navy_count = minor_count }
 
 	### Airforce ###
-	set_temp_variable = { cheap_airforce = num_equipment@attack_helicopter_equipment }
-	add_to_temp_variable = { cheap_airforce = num_equipment@L_Strike_fighter_equipment }
-	add_to_temp_variable = { cheap_airforce = num_equipment@CV_L_Strike_fighter_equipment }
-	set_temp_variable = { airforce_count = cheap_airforce }
-
+	#Below sets the cost for ships based on the number of ships (divided into cheap, regular, expensinve and strategic airforce) Use these if you want to control costs of different aircraft to each other - Kal's note: changed math to match land/navy stuff. TODO REPLACE NUM_EQUIPMENT CALL WITH SOEMTHING BETTER
+	
+	#Count number of strategic airforce
+	set_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
+	
+	#Count number of expensive planes
+	set_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
+	add_to_temp_variable = { expensive_airforce = num_equipment@nav_plane_equipment }
+	
+	#Count number or regular airforce
 	set_temp_variable = { regular_airforce = num_equipment@MR_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@CV_MR_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@AS_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@Strike_fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@Air_UAV_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@CAS_equipment }
-
-
-	multiply_temp_variable = { regular_airforce = 3 }
-	add_to_temp_variable = { airforce_count = regular_airforce }
-
-	set_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
-	add_to_temp_variable = { expensive_airforce = num_equipment@nav_plane_equipment }
-	multiply_temp_variable = { expensive_airforce = 5 }
-	add_to_temp_variable = { airforce_count = expensive_airforce }
-
-	set_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
+	
+	#Count number of cheap airforce
+	set_temp_variable = { cheap_airforce = num_equipment@attack_helicopter_equipment }
+	add_to_temp_variable = { cheap_airforce = num_equipment@L_Strike_fighter_equipment }
+	add_to_temp_variable = { cheap_airforce = num_equipment@CV_L_Strike_fighter_equipment }
+	
+	#Multiply each category with a weight value, and then add up categories together (eg. one strategic bomber is worth 14 helicopters etc) - Kal's note: changed math to match land/navy stuff
 	multiply_temp_variable = { strategic_airforce = 14 }
+	multiply_temp_variable = { expensive_airforce = 5 }
+	multiply_temp_variable = { regular_airforce = 3 }
+	multiply_temp_variable = { cheap_airforce = 1 }
+	set_temp_variable = { airforce_count = 0 }
 	add_to_temp_variable = { airforce_count = strategic_airforce }
+	add_to_temp_variable = { airforce_count = expensive_airforce }
+	add_to_temp_variable = { airforce_count = regular_airforce }
+	add_to_temp_variable = { airforce_count = cheap_airforce }
+	
+	### Total ###
+	#Control factors to scale different branches with each other in cost. Use these control how expensive different branches are against each other
+	divide_temp_variable = { land_count = 4 } 		#Cost values are; special 1.25, elite 0.75, regular 0.5, irregular 0.25 (cost weight for one battalion)
+	multiply_temp_variable = { navy_count = 10 } 	#Cost values are; carrier 100, capital 50, destroyer 20, small ship 10 (cost weight for one ship)
+	divide_temp_variable = { airforce_count = 14 } 	#Cost values are; strategic 1, expensive 0.35, regular 0.21, cheap 0.07 (cost weight for one plane)
 
-	divide_temp_variable = { airforce_count = 14 } #control factor
-
-	### Prevent exploit
-	set_temp_variable = { army_extra = num_equipment@command_control_equipment } #to prevent disband exploit
-	divide_temp_variable = { army_extra = 7 } #control factor
+	### Prevent exploit - Kal's note: Disabled this for now since it's kind of dumb, just here to prevent the player from disbanding their army and avoid from paying the cost
+	#set_temp_variable = { army_extra = num_equipment@command_control_equipment } #to prevent disband exploit
+	#divide_temp_variable = { army_extra = 7 } #control factor
 
 	### Add up armed forces
 	set_temp_variable = { personnel_cost = land_count }
-	add_to_temp_variable = { personnel_cost = army_extra }
+	#add_to_temp_variable = { personnel_cost = army_extra }
 	add_to_temp_variable = { personnel_cost = navy_count }
 	add_to_temp_variable = { personnel_cost = airforce_count }
 
-	if = { limit = { has_idea = partial_draft_army }
-		divide_temp_variable = { personnel_cost = 1.4 }
+	#Additive personnel cost multiplier
+	set_temp_variable = { personnel_cost_multiplier = 1 }	
+	#Wages for a volunteer army is higher, this math was dumb before
+	if = {
+		limit = { has_idea = draft_army }
+		add_to_temp_variable = { personnel_cost_multiplier = 0 }
+	}
+	else_if ={ 
+		limit = { has_idea = partial_draft_army }
+		add_to_temp_variable = { personnel_cost_multiplier = 0.4 }
 	}
 	else_if = {
 		limit = { has_idea = draft_army }
-		divide_temp_variable = { personnel_cost = 1.8 }
+		add_to_temp_variable = { personnel_cost_multiplier = 0.8 }
 	}
 	else_if = {
 		limit = { has_idea = no_military }
-		divide_temp_variable = { personnel_cost = 1.8 }
-	}
-
+		add_to_temp_variable = { personnel_cost_multiplier = 1 }		#TODO MISSING FROM TOOLTIP
+	}	
+	#Having higher officer spending increases personnel cost
 	if = {
 		limit = { has_idea = officer_baptism_by_fire }
-		#do nothing
+		add_to_temp_variable = { personnel_cost_multiplier = 0 }
 	}
 	else_if = {
 		limit = { has_idea = officer_basic_training }
-		multiply_temp_variable = { personnel_cost = 1.05 }
+		add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
 	}
 	else_if = {
 		limit = { has_idea = officer_advanced_training }
-		multiply_temp_variable = { personnel_cost = 1.1 }
+		add_to_temp_variable = { personnel_cost_multiplier = 0.1 }
 	}
 	else_if = {
 		limit = { has_idea = officer_military_school }
-		multiply_temp_variable = { personnel_cost = 1.15 }
+		add_to_temp_variable = { personnel_cost_multiplier = 0.15 }
 	}
 	else_if = {
 		limit = { has_idea = officer_military_academy }
-		multiply_temp_variable = { personnel_cost = 1.2 }
+		add_to_temp_variable = { personnel_cost_multiplier = 0.2 }
 	}
 	else_if = {
 		limit = { has_idea = officer_international_education }
-		multiply_temp_variable = { personnel_cost = 1.25 }
+		add_to_temp_variable = { personnel_cost_multiplier = 0.25 }
 	}
+	#Modify personnel cost with total wage modifier
+	multiply_temp_variable = { personnel_cost = personnel_cost_multiplier }
+	
+	divide_temp_variable = { personnel_cost = 500 } #control factor for cost of personnel in relation to military industry
+	
+	#Multiply personnel costs basde on GDP/c, higher GDP makes things more expensive (linear approximation 0.003 * gdp/c + 0.129)
+	set_temp_variable = { gdp_defence_modifier = gdp_per_capita }
+	multiply_temp_variable = { gdp_defence_modifier = 0.003 }
+	add_to_temp_variable = { gdp_defence_modifier = 0.129 }
+	multiply_temp_variable = { personnel_cost = gdp_defence_modifier }
 
-	divide_temp_variable = { personnel_cost = 500 } #control factor
+	set_variable = { var = tooltip_personnel_cost value = personnel_cost }
 
-	#Update each item in the array based on your gdp/c
+	#Below is old, gives difference of 6 billion for USA? Personnel cost modifier is 20% higher and this impacts the entire defence spending by 20%, not just personnel cost?
+	# if = {
+		# limit = { has_idea = gdp_12 }
+		# multiply_temp_variable = { personnel_cost = 0.7 }
+	# }
+	# else_if = { limit = { has_idea = gdp_11 }
+		# multiply_temp_variable = { personnel_cost = 0.565 }
+	# }
+	# else_if = { limit = { has_idea = gdp_10 }
+		# multiply_temp_variable = { personnel_cost = 0.43 }
+	# }
+	# else_if = { limit = { has_idea = gdp_9 }
+		# multiply_temp_variable = { personnel_cost = 0.35 }
+	# }
+	# else_if = { limit = { has_idea = gdp_8 }
+		# multiply_temp_variable = { personnel_cost = 0.3 }
+	# }
+	# else_if = { limit = { has_idea = gdp_7 }
+		# multiply_temp_variable = { personnel_cost = 0.245 }
+	# }
+	# else_if = { limit = { has_idea = gdp_6 }
+		# multiply_temp_variable = { personnel_cost = 0.205 }
+	# }
+	# else_if = { limit = { has_idea = gdp_5 }
+		# multiply_temp_variable = { personnel_cost = 0.165 }
+	# }
+	# else_if = { limit = { has_idea = gdp_4 }
+		# multiply_temp_variable = { personnel_cost = 0.125 }
+	# }
+	# else_if = { limit = { has_idea = gdp_3 }
+		# multiply_temp_variable = { personnel_cost = 0.098 }
+	# }
+	# else_if = { limit = { has_idea = gdp_2 }
+		# multiply_temp_variable = { personnel_cost = 0.071 }
+	# }
+	# else_if = { limit = { has_idea = gdp_1 }
+		# multiply_temp_variable = { personnel_cost = 0.05 }
+	# }
+
+	# set_variable = { var = tooltip_personnel_cost value = personnel_cost }
+
+	#Update each item in the defemce spending array based on your gdp/c, having a higher GDP makes defence more expensive
+	set_temp_variable = { gdp_defence_modifier = gdp_per_capita } 	#Yes, same as in personnel
+	if = {		#Linear approximation -0.007 * gdp/c + 2.333
+		limit = { check_variable = { gdp_defence_modifier > 50 } }
+		multiply_temp_variable = { gdp_defence_modifier = -0.007 }
+		add_to_temp_variable = { gdp_defence_modifier = 2.333 }
+	}
+	else_if = {	#Linear approximation -0.046 * gdp/c + 4.286
+		limit = { check_variable = { gdp_defence_modifier > 15 } }
+		multiply_temp_variable = { gdp_defence_modifier = -0.046 }
+		add_to_temp_variable = { gdp_defence_modifier = 4.286 }
+	}
+	else_if = {	#Linear approximation -0.3 * gdp/c + 8.1
+		limit = { check_variable = { gdp_defence_modifier > 0 } }
+		multiply_temp_variable = { gdp_defence_modifier = -0.3 }
+		add_to_temp_variable = { gdp_defence_modifier = 8.1 }
+	}
+	clamp_variable = { var = gdp_defence_modifier min = 1 }
+	#Defence spending loop
 	for_each_loop = {
 		array = array_defence_spend
 		index = i
-		if = { limit = { has_idea = gdp_11 }
-			divide_variable = { array_defence_spend^i = 1.6 }
-		}
-		else_if = { limit = { has_idea = gdp_10 }
-			divide_variable = { array_defence_spend^i = 1.6 }
-		}
-		else_if = { limit = { has_idea = gdp_9 }
-			divide_variable = { array_defence_spend^i = 2 }
-		}
-		else_if = { limit = { has_idea = gdp_8 }
-			divide_variable = { array_defence_spend^i = 2.5 }
-		}
-		else_if = { limit = { has_idea = gdp_7 }
-			divide_variable = { array_defence_spend^i = 3 }
-		}
-		else_if = { limit = { has_idea = gdp_6 }
-			divide_variable = { array_defence_spend^i = 3.6 }
-		}
-		else_if = { limit = { has_idea = gdp_5 }
-			divide_variable = { array_defence_spend^i = 4.2 }
-		}
-		else_if = { limit = { has_idea = gdp_4 }
-			divide_variable = { array_defence_spend^i = 4.9 }
-		}
-		else_if = { limit = { has_idea = gdp_3 }
-			divide_variable = { array_defence_spend^i = 5.7 }
-		}
-		else_if = { limit = { has_idea = gdp_2 }
-			divide_variable = { array_defence_spend^i = 6.7 }
-		}
-		else_if = { limit = { has_idea = gdp_1 }
-			divide_variable = { array_defence_spend^i = 7.8 }
-		}
+		divide_variable = { array_defence_spend^i = gdp_defence_modifier }
 	}
-
-	if = {
-		limit = { has_idea = gdp_12 }
-		multiply_temp_variable = { personnel_cost = 0.7 }
-	}
-	else_if = { limit = { has_idea = gdp_11 }
-		multiply_temp_variable = { personnel_cost = 0.565 }
-	}
-	else_if = { limit = { has_idea = gdp_10 }
-		multiply_temp_variable = { personnel_cost = 0.43 }
-	}
-	else_if = { limit = { has_idea = gdp_9 }
-		multiply_temp_variable = { personnel_cost = 0.35 }
-	}
-	else_if = { limit = { has_idea = gdp_8 }
-		multiply_temp_variable = { personnel_cost = 0.3 }
-	}
-	else_if = { limit = { has_idea = gdp_7 }
-		multiply_temp_variable = { personnel_cost = 0.245 }
-	}
-	else_if = { limit = { has_idea = gdp_6 }
-		multiply_temp_variable = { personnel_cost = 0.205 }
-	}
-	else_if = { limit = { has_idea = gdp_5 }
-		multiply_temp_variable = { personnel_cost = 0.165 }
-	}
-	else_if = { limit = { has_idea = gdp_4 }
-		multiply_temp_variable = { personnel_cost = 0.125 }
-	}
-	else_if = { limit = { has_idea = gdp_3 }
-		multiply_temp_variable = { personnel_cost = 0.098 }
-	}
-	else_if = { limit = { has_idea = gdp_2 }
-		multiply_temp_variable = { personnel_cost = 0.071 }
-	}
-	else_if = { limit = { has_idea = gdp_1 }
-		multiply_temp_variable = { personnel_cost = 0.05 }
-	}
-
-	set_variable = { var = tooltip_personnel_cost value = personnel_cost }
 
 	#add personal cost to each item in the array
 	for_each_loop = {
@@ -993,6 +1025,82 @@ update_military_rate = {
 	}
 
 	set_variable = { var = defence_gain value = array_defence_spend^def_index }
+	update_display = yes
+}
+
+#Update bureaucracy spending - Fuck this category
+update_bureaucracy_rate = {
+	#clear the array that stores the law cost
+	clear_array = array_bureaucracy_spend
+
+	#recreate the array
+	for_loop_effect = {
+		start = 0
+		end = 5 # < 10
+
+		add_to_array = { array = array_bureaucracy_spend value = size_modifier }
+	}
+
+	multiply_variable = { var = array_bureaucracy_spend^0 value = 0.05 }
+	multiply_variable = { var = array_bureaucracy_spend^1 value = 0.08 }
+	multiply_variable = { var = array_bureaucracy_spend^2 value = 0.10 }
+	multiply_variable = { var = array_bureaucracy_spend^3 value = 0.12 }
+	multiply_variable = { var = array_bureaucracy_spend^4 value = 0.15 }
+
+	#add the naval factories and mil factories to each item index in the array
+	for_each_loop = {
+		array = array_bureaucracy_spend
+		value = v
+		index = i
+		multiply_variable = { array_bureaucracy_spend^i = 100 }
+
+		round_variable = array_bureaucracy_spend^i
+		divide_variable = { array_bureaucracy_spend^i = 100 }
+	}
+
+	if = { limit = { has_idea = bureau_01 }
+		set_temp_variable = { bureau_index = 0 }
+	}
+	else_if = { limit = { has_idea = bureau_02 }
+		set_temp_variable = { bureau_index = 1 }
+	}
+	else_if = { limit = { has_idea = bureau_03 }
+		set_temp_variable = { bureau_index = 2 }
+	}
+	else_if = { limit = { has_idea = bureau_04 }
+		set_temp_variable = { bureau_index = 3 }
+	}
+	else_if = { limit = { has_idea = bureau_05 }
+		set_temp_variable = { bureau_index = 4 }
+	}
+
+	#Modifiers
+	for_each_loop = {
+		array = array_bureaucracy_spend
+		index = i
+		value = v
+		if = { limit = { tag = ITA }
+			if = {
+				limit = { has_idea = ITA_inefficient_administration_4 } ##50% increase in cost for bureaucracy
+				multiply_variable = { var = array_bureaucracy_spend^i value = 1.5 }
+			}
+			else_if = {
+				limit = { has_idea = ITA_inefficient_administration_3 } ##37,5% increase in cost for bureaucracy
+				multiply_variable = { var = array_bureaucracy_spend^i value = 1.375 }
+			}
+			else_if = {
+				limit = { has_idea = ITA_inefficient_administration_2 } ##25% increase in cost for bureaucracy
+				multiply_variable = { var = array_bureaucracy_spend^i value = 1.25 }
+			}
+			else_if = {
+				limit = { has_idea = ITA_inefficient_administration_1 } ##12,5% increase in cost for bureaucracy
+				multiply_variable = { var = array_bureaucracy_spend^i value = 1.125 }
+			}
+		}
+		multiply_variable = { array_bureaucracy_spend^i = 7 } #Multiply each index by 30 days
+	}
+
+	set_variable = { var = bureaucracy_gain value = array_bureaucracy_spend^bureau_index }
 	update_display = yes
 }
 
