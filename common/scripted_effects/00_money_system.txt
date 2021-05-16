@@ -722,7 +722,7 @@ update_military_rate = {
 		set_temp_variable = { def_index = 9 }
 	}
 
-	#Set the base cost for each spending level based on size of military industry ( [num_of_mil_factories + num_of_naval_factories]/modifier ) 
+	#Set the base cost for each spending level based on size of military industry ( [num_of_mil_factories + num_of_naval_factories]/modifier )
 	divide_variable = { array_defence_spend^0 = 3000 }
 	divide_variable = { array_defence_spend^1 = 300 }
 	divide_variable = { array_defence_spend^2 = 150 }
@@ -736,7 +736,7 @@ update_military_rate = {
 
 	### Land ###
 	#Below sets up the personnel cost for mil spending based on how many battalions a country has (divided into special, elite, regular and irregular units)
-	
+
 	#Count number of special units
 	set_temp_variable = { special_btn = num_of_battalions_with_type@Special_Forces }
 
@@ -769,7 +769,7 @@ update_military_rate = {
 	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Mech_Recce_Bat }
 	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@Arm_Recce_Bat }
 	add_to_temp_variable = { regular_btn = num_of_battalions_with_type@armor_Recce_Bat }
-	
+
 	#Count number of irregular units
 	set_temp_variable = { irregular_btn = num_of_battalions_with_type@Militia_Bat }
 	add_to_temp_variable = { irregular_btn = num_of_battalions_with_type@Mot_Militia_Bat }
@@ -792,7 +792,7 @@ update_military_rate = {
 		#Count number of carriers
 		set_temp_variable = { carrier_count = num_ships_with_type@Nuclear_carrier }
 		add_to_temp_variable = { carrier_count = num_ships_with_type@carrier }
-	
+
 		#Count number of capital/large ships
 		set_temp_variable = { capital_count = num_ships_with_type@nuclear_cruiser }
 		add_to_temp_variable = { capital_count = num_ships_with_type@cruiser }
@@ -831,7 +831,7 @@ update_military_rate = {
 		add_to_temp_variable = { minor_count = num_ships_with_type@attack_submarine_mtg }
 	}
 
-	#Multiply each category with a weight value, and then add up categories together (eg. one carrier is worth 10 small ships etc). Use these if you want to control costs of different ships to each other - Kal's note: changed math to match land stuff 
+	#Multiply each category with a weight value, and then add up categories together (eg. one carrier is worth 10 small ships etc). Use these if you want to control costs of different ships to each other - Kal's note: changed math to match land stuff
 	multiply_temp_variable = { carrier_count = 10 }
 	multiply_temp_variable = { capital_count = 5 }
 	multiply_temp_variable = { destroyer_count = 2 }
@@ -844,14 +844,14 @@ update_military_rate = {
 
 	### Airforce ###
 	#Below sets the cost for ships based on the number of ships (divided into cheap, regular, expensinve and strategic airforce) Use these if you want to control costs of different aircraft to each other - Kal's note: changed math to match land/navy stuff. TODO REPLACE NUM_EQUIPMENT CALL WITH SOEMTHING BETTER
-	
+
 	#Count number of strategic airforce
 	set_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
-	
+
 	#Count number of expensive planes
 	set_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
 	add_to_temp_variable = { expensive_airforce = num_equipment@nav_plane_equipment }
-	
+
 	#Count number or regular airforce
 	set_temp_variable = { regular_airforce = num_equipment@MR_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@CV_MR_Fighter_equipment }
@@ -859,12 +859,12 @@ update_military_rate = {
 	add_to_temp_variable = { regular_airforce = num_equipment@Strike_fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@Air_UAV_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@CAS_equipment }
-	
+
 	#Count number of cheap airforce
 	set_temp_variable = { cheap_airforce = num_equipment@attack_helicopter_equipment }
 	add_to_temp_variable = { cheap_airforce = num_equipment@L_Strike_fighter_equipment }
 	add_to_temp_variable = { cheap_airforce = num_equipment@CV_L_Strike_fighter_equipment }
-	
+
 	#Multiply each category with a weight value, and then add up categories together (eg. one strategic bomber is worth 14 helicopters etc) - Kal's note: changed math to match land/navy stuff
 	multiply_temp_variable = { strategic_airforce = 14 }
 	multiply_temp_variable = { expensive_airforce = 5 }
@@ -875,7 +875,7 @@ update_military_rate = {
 	add_to_temp_variable = { airforce_count = expensive_airforce }
 	add_to_temp_variable = { airforce_count = regular_airforce }
 	add_to_temp_variable = { airforce_count = cheap_airforce }
-	
+
 	### Total ###
 	#Control factors to scale different branches with each other in cost. Use these control how expensive different branches are against each other
 	divide_temp_variable = { land_count = 4 } 		#Cost values are; special 1.25, elite 0.75, regular 0.5, irregular 0.25 (cost weight for one battalion)
@@ -893,13 +893,13 @@ update_military_rate = {
 	add_to_temp_variable = { personnel_cost = airforce_count }
 
 	#Additive personnel cost multiplier
-	set_temp_variable = { personnel_cost_multiplier = 1 }	
+	set_temp_variable = { personnel_cost_multiplier = 1 }
 	#Wages for a volunteer army is higher, this math was dumb before
 	if = {
 		limit = { has_idea = draft_army }
 		add_to_temp_variable = { personnel_cost_multiplier = 0 }
 	}
-	else_if ={ 
+	else_if ={
 		limit = { has_idea = partial_draft_army }
 		add_to_temp_variable = { personnel_cost_multiplier = 0.4 }
 	}
@@ -910,7 +910,7 @@ update_military_rate = {
 	else_if = {
 		limit = { has_idea = no_military }
 		add_to_temp_variable = { personnel_cost_multiplier = 1 }		#TODO MISSING FROM TOOLTIP
-	}	
+	}
 	#Having higher officer spending increases personnel cost
 	if = {
 		limit = { has_idea = officer_baptism_by_fire }
@@ -938,9 +938,9 @@ update_military_rate = {
 	}
 	#Modify personnel cost with total wage modifier
 	multiply_temp_variable = { personnel_cost = personnel_cost_multiplier }
-	
+
 	divide_temp_variable = { personnel_cost = 500 } #control factor for cost of personnel in relation to military industry
-	
+
 	#Multiply personnel costs basde on GDP/c, higher GDP makes things more expensive (linear approximation 0.003 * gdp/c + 0.129)
 	set_temp_variable = { gdp_defence_modifier = gdp_per_capita }
 	multiply_temp_variable = { gdp_defence_modifier = 0.003 }
