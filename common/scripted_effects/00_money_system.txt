@@ -679,7 +679,7 @@ update_military_rate = {
 		start = 0
 		end = 10 # < 10
 
-		add_to_array = { array = array_defence_spend value = 0 }
+		add_to_array = { array_defence_spend = 0 }
 	}
 
 	#A variable that stores the current military law the player has
@@ -720,8 +720,8 @@ update_military_rate = {
 		array = array_defence_spend
 		value = v
 		index = i
-		add_to_variable = { var = array_defence_spend^i value = num_of_naval_factories }
-		add_to_variable = { var = array_defence_spend^i value = num_of_military_factories }
+		add_to_variable = { array_defence_spend^i = num_of_naval_factories }
+		add_to_variable = { array_defence_spend^i = num_of_military_factories }
 	}
 	
 	#Set the base cost for each spending level based on size of military industry ( [num_of_mil_factories + num_of_naval_factories]/modifier )
@@ -753,7 +753,7 @@ update_military_rate = {
 		multiply_temp_variable = { gdp_defence_modifier_industry = -0.3 }
 		add_to_temp_variable = { gdp_defence_modifier_industry = 8.1 }
 	}
-	clamp_variable = { var = gdp_defence_modifier_industry min = 1 }
+	clamp_temp_variable = { var = gdp_defence_modifier_industry min = 1 }
 	#Defence spending loop
 	for_each_loop = {
 		array = array_defence_spend
@@ -1001,11 +1001,11 @@ update_military_rate = {
 		array = array_defence_spend
 		index = i
 		value = v
-		add_to_variable = { var = array_defence_spend^i value = personnel_cost }
-		multiply_variable = { var = array_defence_spend^i value = 7 } #Multiply each index by 7 days
+		add_to_variable = { array_defence_spend^i = personnel_cost }
+		multiply_variable = { array_defence_spend^i = 7 } #Multiply each index by 7 days
 	}
 
-	set_variable = { var = defence_gain value = array_defence_spend^def_index }
+	set_variable = { defence_gain = array_defence_spend^def_index }
 	update_display = yes
 }
 
@@ -1014,15 +1014,15 @@ update_bureaucracy_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_bureaucracy_spend
 	
-	#Set the base cost of bureaucracy ($ per 10 000 000 people)
-	set_temp_variable = { bureaucracy_base_cost = 0.015 }	
+	#Set the base cost of bureaucracy (billion $ per 10 000 000 people)
+	set_temp_variable = { bureaucracy_base_cost = 0.010 }	
 
 	#recreate the array
 	for_loop_effect = {
 		start = 0
 		end = 5 # < 10
 
-		add_to_array = { array = array_bureaucracy_spend value = 0 }
+		add_to_array = { array_bureaucracy_spend = 0 }
 	}
 	
 	#Calculate the base cost of bureaucracy levels
@@ -1062,22 +1062,23 @@ update_bureaucracy_rate = {
 	#Additional additive modifiers
 	set_temp_variable = { bureaucracy_cost_multiplier = 1 }
 	##Italy
-	if = { limit = { original_tag = ITA }
+	if = { 
+		limit = { original_tag = ITA }
 		if = {
 			limit = { has_idea = ITA_inefficient_administration_4 } ##50% increase in cost for bureaucracy
-			add_to_variable = { bureaucracy_cost_multiplier = 0.5 }
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.5 }
 		}
 		else_if = {
 			limit = { has_idea = ITA_inefficient_administration_3 } ##37,5% increase in cost for bureaucracy
-			add_to_variable = { bureaucracy_cost_multiplier = 0.375 }
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.375 }
 		}
 		else_if = {
 			limit = { has_idea = ITA_inefficient_administration_2 } ##25% increase in cost for bureaucracy
-			add_to_variable = { bureaucracy_cost_multiplier = 0.25 }
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.25 }
 		}
 		else_if = {
 			limit = { has_idea = ITA_inefficient_administration_1 } ##12,5% increase in cost for bureaucracy
-			add_to_variable = { bureaucracy_cost_multiplier = 0.125 }
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.125 }
 		}
 	}	
 
@@ -1085,15 +1086,18 @@ update_bureaucracy_rate = {
 		array = array_bureaucracy_spend
 		index = i
 		value = v
-		multiply_variable = { var = array_bureaucracy_spend^i value = bureaucracy_cost_multiplier }
+		multiply_variable = { array_bureaucracy_spend^i = bureaucracy_cost_multiplier }
 	}
+	
+	set_variable = { bureaucracy_cost_multiplier_display = bureaucracy_cost_multiplier }
+	subtract_from_variable = { bureaucracy_cost_multiplier_display = 1 }
 
 	#Set as weekly value
 	for_each_loop = {
 		array = array_bureaucracy_spend
 		index = i
 		value = v
-		multiply_variable = { array_bureaucracy_spend^i = 7 } #Multiply each index by 30 days
+		multiply_variable = { array_bureaucracy_spend^i = 7 } #Multiply each index by 7 days
 	}
 	
 	set_variable = { var = bureaucracy_gain value = array_bureaucracy_spend^bureau_index }
@@ -1105,31 +1109,36 @@ update_bureaucracy_rate = {
 update_police_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_security_spend
+	
+	#Set the base cost of policing (billion $ per 10 000 000 people)
+	set_temp_variable = { police_base_cost = 0.006 }
 
 	#recreate the array
 	for_loop_effect = {
 		start = 0
 		end = 5 # < 10
 
-		add_to_array = { array = array_security_spend value = size_modifier }
+		add_to_array = { array_security_spend = 0 }
 	}
-	multiply_variable = { var = array_security_spend^0 value = 0.05 }
-	multiply_variable = { var = array_security_spend^1 value = 0.08 }
-	multiply_variable = { var = array_security_spend^2 value = 0.10 }
-	multiply_variable = { var = array_security_spend^3 value = 0.12 }
-	multiply_variable = { var = array_security_spend^4 value = 0.15 }
-
-	#add the naval factoreis and mil factories to each item index in the array
+	
+	#Calculate the base cost of police levels
 	for_each_loop = {
 		array = array_security_spend
-		value = v
 		index = i
-		multiply_variable = { array_security_spend^i = 100 }
-
-		round_variable = array_security_spend^i
-		divide_variable = { array_security_spend^i = 100 }
+		value = v
+		add_to_variable = { array_security_spend^i = population_total }	#Unit 100 000
+		divide_variable = { array_security_spend^i = 100 }	#Unit 10 000 000
+		multiply_variable = { array_security_spend^i = police_base_cost }
 	}
+	
+	#Modify based on spending level
+	multiply_variable = { array_security_spend^0 = 1 }
+	multiply_variable = { array_security_spend^1 = 1.6 }
+	multiply_variable = { array_security_spend^2 = 2 }
+	multiply_variable = { array_security_spend^3 = 2.4 }
+	multiply_variable = { array_security_spend^4 = 3 }
 
+	#Set which spending level the country is at
 	if = { limit = { has_idea = police_01 }
 		set_temp_variable = { security_index = 0 }
 	}
@@ -1145,22 +1154,42 @@ update_police_rate = {
 	else_if = { limit = { has_idea = police_05 }
 		set_temp_variable = { security_index = 4 }
 	}
+	
+	#Additional additive modifiers
+	set_temp_variable = { police_cost_multiplier = 1 }
+	##Generic
+	if = { 
+		limit = { has_tech = DNA_fingerprinting }
+		subtract_from_temp_variable = { police_cost_multiplier = 0.05 }
+	}
+	##Italy
+	if = { 
+		limit = { original_tag = ITA }
+		if = {
+			limit = { has_idea = ITA_legalized_light_drugs }
+			subtract_from_temp_variable = { police_cost_multiplier = 0.10 }
+		}
+	}
 
 	for_each_loop = {
 		array = array_security_spend
 		index = i
 		value = v
-		#Modifiers
-		if = { limit = { has_tech = DNA_fingerprinting } ##5% reduction in cost for security
-			multiply_variable = { var = array_security_spend^security_index value = 0.95 }
-		}
-		if = { limit = { tag = ITA has_idea = ITA_legalized_light_drugs } ##10% reduction in cost for security
-			multiply_variable = { var = array_security_spend^security_index value = 0.90 }
-		}
-		multiply_variable = { array_security_spend^i = 7 } #Multiply each index by 30 days
+		multiply_variable = { array_security_spend^i = police_cost_multiplier }
+	}
+	
+	set_variable = { police_cost_multiplier_display = police_cost_multiplier }
+	subtract_from_variable = { police_cost_multiplier_display = 1 }
+
+	#Set as weekly value
+	for_each_loop = {
+		array = array_security_spend
+		index = i
+		value = v
+		multiply_variable = { array_security_spend^i = 7 } #Multiply each index by 7 days
 	}
 
-	set_variable = { var = security_gain value = array_security_spend^security_index }
+	set_variable = { security_gain = array_security_spend^security_index }
 	update_display = yes
 }
 
@@ -1168,52 +1197,36 @@ update_police_rate = {
 update_education_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_education_spend
+	
+	#Set the base cost of education (billion $ per 10 000 000 people)
+	set_temp_variable = { education_base_cost = 0.144 }	
 
 	#recreate the array
 	for_loop_effect = {
 		start = 0
 		end = 5
 
-		add_to_array = { array = array_education_spend value = size_modifier }
+		add_to_array = { array_education_spend = 0 }
 	}
-
-	multiply_variable = { array_education_spend^0 = 0.02 }
-	multiply_variable = { array_education_spend^1 = 0.04 }
-	multiply_variable = { array_education_spend^2 = 0.06 }
-	multiply_variable = { array_education_spend^3 = 0.08 }
-	multiply_variable = { array_education_spend^4 = 0.10 }
-
-
+	
+	#Calculate the base cost of bureaucracy levels
 	for_each_loop = {
 		array = array_education_spend
 		index = i
-		if = { limit = { has_idea = gdp_1 }
-			multiply_variable = { array_education_spend^i = 2.25 }
-		}
-		else_if = { limit = { has_idea = gdp_2 }
-			multiply_variable = { array_education_spend^i = 2 }
-		}
-		else_if = { limit = { has_idea = gdp_3 }
-			multiply_variable = { array_education_spend^i = 1.75 }
-		}
-		else_if = { limit = { has_idea = gdp_4 }
-			multiply_variable = { array_education_spend^i = 1.5 }
-		}
-		else_if = { limit = { has_idea = gdp_5 }
-			multiply_variable = { array_education_spend^i = 1.25 }
-		}
-	}
-
-	for_each_loop = {
-		array = array_education_spend
 		value = v
-		index = i
-		multiply_variable = { array_education_spend^i = 100 }
-
-		round_variable = array_education_spend^i
-		divide_variable = { array_education_spend^i = 100 }
+		add_to_variable = { array_education_spend^i = population_total }	#Unit 100 000
+		divide_variable = { array_education_spend^i = 100 }	#Unit 10 000 000
+		multiply_variable = { array_education_spend^i = education_base_cost }
 	}
 
+	#Modify based on spending level
+	multiply_variable = { array_education_spend^0 = 1 }
+	multiply_variable = { array_education_spend^1 = 2 }
+	multiply_variable = { array_education_spend^2 = 3 }
+	multiply_variable = { array_education_spend^3 = 4 }
+	multiply_variable = { array_education_spend^4 = 5 }
+
+	#Set which spending level the country is at
 	if = { limit = { has_idea = edu_01 }
 		set_temp_variable = { education_index = 0 }
 	}
@@ -1229,34 +1242,61 @@ update_education_rate = {
 	else_if = { limit = { has_idea = edu_05 }
 		set_temp_variable = { education_index = 4 }
 	}
+	
+	#Education spending is more expensive for poor countries - linear approximation with -0.086 * GDP/C + 2.182
+	set_temp_variable = { gdp_education_cost_modifier = gdp_per_capita }
+	multiply_temp_variable = { gdp_education_cost_modifier = -0.086 }
+	add_to_temp_variable = { gdp_education_cost_modifier = 2.182 }
+	clamp_temp_variable = { var = gdp_education_cost_modifier min = 1 }
+	
+	for_each_loop = {
+		array = array_education_spend
+		index = i
+		multiply_variable = { array_education_spend^i = gdp_education_cost_modifier }
+	}
+	
+	set_variable = { education_cost_gdp_multiplier_display = gdp_education_cost_modifier }
+	subtract_from_variable = { education_cost_gdp_multiplier_display = 1 }
+
+	#Additional additive modifiers
+	set_temp_variable = { education_cost_multiplier = 1 }
+	##Generic
+	if = {
+		limit = { has_tech = internet1 }
+		subtract_from_temp_variable = { education_cost_multiplier = 0.03 }
+	}
+	if = {
+		limit = { has_tech = internet2 }
+		subtract_from_temp_variable = { education_cost_multiplier = 0.05 }
+	}
+	if = {
+		limit = { has_tech = internet3 }
+		subtract_from_temp_variable = { education_cost_multiplier = 0.03 }
+	}
+	if = {
+		limit = { has_tech = internet4 }
+		subtract_from_temp_variable = { education_cost_multiplier = 0.05 }
+	}
+	if = {
+		limit = { has_tech = internet5 }
+		subtract_from_temp_variable = { education_cost_multiplier = 0.03 }
+	}
+	if = {
+		limit = { has_tech = internet6 }
+		subtract_from_temp_variable = { education_cost_multiplier = 0.05 }
+	}	
 
 	for_each_loop = {
 		array = array_education_spend
 		index = i
 		value = v
-		###Education Cost Reductions: == Better internet cheaper schooling cuz greater access to educational resources
-		if = { limit = { has_tech = internet1 }
-			multiply_variable = { var = array_education_spend^i value = 0.97 } #3% education cost
-		}
-		if = { limit = { has_tech = internet2 }
-			multiply_variable = { var = array_education_spend^i value = 0.95 }
-		}
-		if = { limit = { has_tech = internet3 }
-			multiply_variable = { var = array_education_spend^i value = 0.97 }
-		}
-		if = { limit = { has_tech = internet4 }
-			multiply_variable = { var = array_education_spend^i value = 0.95 }
-		}
-		if = { limit = { has_tech = internet5 }
-			multiply_variable = { var = array_education_spend^i value = 0.97 }
-		}
-		if = { limit = { has_tech = internet6 }
-			multiply_variable = { var = array_education_spend^i value = 0.95 }
-		}
-		multiply_variable = { array_education_spend^i = 7 } #Multiply each index by 30 days
+		multiply_variable = { array_education_spend^i = education_cost_multiplier }
 	}
+	
+	set_variable = { education_cost_multiplier_display = education_cost_multiplier }
+	subtract_from_variable = { education_cost_multiplier_display = 1 }
 
-	set_variable = { var = education_gain value = array_education_spend^education_index }
+	set_variable = { education_gain = array_education_spend^education_index }
 	update_display = yes
 }
 
@@ -1264,33 +1304,36 @@ update_education_rate = {
 update_health_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_health_spend
+	
+	#Set the base cost of health (billion $ per 10 000 000 people)
+	set_temp_variable = { health_base_cost = 0.010 }	
+	
 	#Create the array for manipulation purposes
 	for_loop_effect = {
 		start = 0
 		end = 6
-		add_to_array = {
-			array = array_health_spend
-			value = size_modifier
-		}
+		add_to_array = { array_health_spend = 0 }
 	}
-
-	multiply_variable = { array_health_spend^0 = 0.01 }
-	multiply_variable = { array_health_spend^1 = 0.02 }
-	multiply_variable = { array_health_spend^2 = 0.04 }
-	multiply_variable = { array_health_spend^3 = 0.06 }
-	multiply_variable = { array_health_spend^4 = 0.08 }
-	multiply_variable = { array_health_spend^5 = 0.1 }
-
+	
+	#Calculate the base cost of health levels
 	for_each_loop = {
 		array = array_health_spend
-		value = v
 		index = i
-
-		multiply_variable = { array_health_spend^i = 100 }
-		round_variable = array_health_spend^i
-		divide_variable = { array_health_spend^i = 100 }
+		value = v
+		add_to_variable = { var = array_health_spend^i value = population_total }	#Unit 100 000
+		divide_variable = { var = array_health_spend^i value = 100 }	#Unit 10 000 000
+		multiply_variable = { var = array_health_spend^i value = health_base_cost }
 	}
 
+	#Modify based on spending level
+	multiply_variable = { array_health_spend^0 = 1 }
+	multiply_variable = { array_health_spend^1 = 2 }
+	multiply_variable = { array_health_spend^2 = 4 }
+	multiply_variable = { array_health_spend^3 = 6 }
+	multiply_variable = { array_health_spend^4 = 8 }
+	multiply_variable = { array_health_spend^5 = 10 }
+
+	#Set which spending level the country is at
 	if = { limit = { has_idea = health_01 }
 		set_temp_variable = { health_index = 0 }
 	}
@@ -1309,22 +1352,38 @@ update_health_rate = {
 	else_if = { limit = { has_idea = health_06 }
 		set_temp_variable = { health_index = 5 }
 	}
+	
+	#Additional additive modifiers
+	set_temp_variable = { health_cost_multiplier = 1 }
+	##Generic
+	if = {
+		limit = { has_tech = nanocellulose_in_medicine }
+		subtract_from_temp_variable = { health_cost_multiplier = 0.10 }
+	}
+	if = {
+		limit = { has_tech = medical_nanorobots }
+		subtract_from_temp_variable = { health_cost_multiplier = 0.05 }
+	}
 
 	for_each_loop = {
 		array = array_health_spend
 		index = i
 		value = v
-		##Modifiers to Healthcare Costs
-		if = { limit = { has_tech = nanocellulose_in_medicine } #10% Reduction in Healthcare Spending
-			multiply_variable = { var = array_health_spend^i value = 0.90 }
-		}
-		if = { limit = { has_tech = medical_nanorobots } #5% Reduction in Healthcare Spending
-			multiply_variable = { var = array_health_spend^i value = 0.95 }
-		}
-		multiply_variable = { array_health_spend^i = 7 } #Multiply each index by 30 days
+		multiply_variable = { var = array_health_spend^i value = health_cost_multiplier }
+	}
+	
+	set_variable = { health_cost_multiplier_display = health_cost_multiplier }
+	subtract_from_variable = { health_cost_multiplier_display = 1 }
+
+	#Set as weekly value
+	for_each_loop = {
+		array = array_health_spend
+		index = i
+		value = v
+		multiply_variable = { array_health_spend^i = 7 } #Multiply each index by 7 days
 	}
 
-	set_variable = { var = health_gain value = array_health_spend^health_index }
+	set_variable = { health_gain = array_health_spend^health_index }
 	update_display = yes
 }
 
@@ -1332,31 +1391,37 @@ update_health_rate = {
 update_social_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_social_spend
+	
+	#Set the base cost of welfare (billion $ per 10 000 000 people)
+	set_temp_variable = { social_base_cost = 0.020 }	
 
+	#recreate the array
 	for_loop_effect = {
 		start = 0
 		end = 6
 
-		add_to_array = { array = array_social_spend value = size_modifier }
+		add_to_array = { array_social_spend = 0 }
 	}
-
-	multiply_variable = { array_social_spend^0 = 0.020 }
-	multiply_variable = { array_social_spend^1 = 0.045 }
-	multiply_variable = { array_social_spend^2 = 0.070 }
-	multiply_variable = { array_social_spend^3 = 0.095 }
-	multiply_variable = { array_social_spend^4 = 0.130 }
-	multiply_variable = { array_social_spend^5 = 0.165 }
-
+	
+	#Calculate the base cost of social levels
 	for_each_loop = {
 		array = array_social_spend
-		value = v
 		index = i
-
-		multiply_variable = { array_social_spend^i = 100 }
-		round_variable = array_social_spend^i
-		divide_variable = { array_social_spend^i = 100 }
+		value = v
+		add_to_variable = { var = array_social_spend^i value = population_total }	#Unit 100 000
+		divide_variable = { var = array_social_spend^i value = 100 }	#Unit 10 000 000
+		multiply_variable = { var = array_social_spend^i value = social_base_cost }
 	}
 
+	#Modify based on spending level
+	multiply_variable = { array_social_spend^0 = 1 }
+	multiply_variable = { array_social_spend^1 = 2.25 }
+	multiply_variable = { array_social_spend^2 = 3.5 }
+	multiply_variable = { array_social_spend^3 = 4.75 }
+	multiply_variable = { array_social_spend^4 = 6.5 }
+	multiply_variable = { array_social_spend^5 = 8.25 }
+
+	#Set which spending level the country is at
 	if = { limit = { has_idea = social_01 }
 		set_temp_variable = { social_index = 0 }
 	}
@@ -1375,7 +1440,21 @@ update_social_rate = {
 	else_if = { limit = { has_idea = social_06 }
 		set_temp_variable = { social_index = 5 }
 	}
+	
+	#Additional additive modifiers
+	set_temp_variable = { social_cost_multiplier = 1 }	
 
+	for_each_loop = {
+		array = array_social_spend
+		index = i
+		value = v
+		multiply_variable = { var = array_social_spend^i value = social_cost_multiplier }
+	}
+	
+	set_variable = { social_cost_multiplier_display = social_cost_multiplier }
+	subtract_from_variable = { social_cost_multiplier_display = 1 }
+
+	#Set as weekly value
 	for_each_loop = {
 		array = array_social_spend
 		index = i
@@ -1383,7 +1462,7 @@ update_social_rate = {
 		multiply_variable = { array_social_spend^i = 7 } #Multiply each index by 7 days
 	}
 
-	set_variable = { var = welfare_gain value = array_social_spend^social_index }
+	set_variable = { welfare_gain = array_social_spend^social_index }
 	update_display = yes
 }
 
