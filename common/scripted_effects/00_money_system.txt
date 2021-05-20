@@ -59,13 +59,13 @@ ingame_update_setup = {
 	update_education_rate = yes
 	update_health_rate = yes
 	update_social_rate = yes
-	
-	ingame_calculate_size_modifier = yes
-	update_state_variables = yes
-	calculate_interest_rate = yes
-	calculate_debt_rate = yes
 	calculate_int_investments_rate = yes
 	calculate_resource_sale_rate = yes
+	update_state_variables = yes
+	
+	ingame_calculate_size_modifier = yes
+	calculate_interest_rate = yes
+	calculate_debt_rate = yes
 	calculate_tax_gain = yes
 	init_expenses = yes
 	set_variable = { econ_cycle_upg_cost = 6 }
@@ -1486,97 +1486,98 @@ calculate_int_investments_rate = {
 	update_display = yes
 }
 
-calculate_resource_sale_rate = { #Calculates income from resources
-	set_variable = { resource_exports = resource_exported@steel } #Uses the value to judge
-	add_to_variable = { resource_exports = resource_exported@oil }
-	add_to_variable = { resource_exports = resource_exported@aluminium }
-	add_to_variable = { resource_exports = resource_exported@tungsten }
-	add_to_variable = { resource_exports = resource_exported@chromium }
-	add_to_variable = { resource_exports = resource_exported@rubber }
-
+#Calculates income from resources
+calculate_resource_sale_rate = {  
+	#Set the base price for single unit of resource, this is the relative price between resources
+	set_temp_variable = { oil_price = 5 }	#Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
+	set_temp_variable = { steel_price = 0.01 }	#Based on steel price
+	set_temp_variable = { aluminium_price = 0.12 }	#Based on aluminium price
+	set_temp_variable = { tungsten_price = 0.2 }	#Based on copper price
+	set_temp_variable = { chromium_price = 1 }	#Based on gold price
+	set_temp_variable = { rubber_price = 0.05 }	#Based on rubber price
+	
+	#resource_exported = total amount of resources put to market
+	set_variable = { oil_exports = resource_exported@oil }
+	set_variable = { steel_exports = resource_exported@steel }
+	set_variable = { aluminium_exports = resource_exported@aluminium }
+	set_variable = { tungsten_exports = resource_exported@tungsten }
+	set_variable = { chromium_exports = resource_exported@chromium }
+	set_variable = { rubber_exports = resource_exported@rubber }
+	
+	#Add up total
+	set_temp_variable = { resource_exports = oil_exports } 
+	add_to_temp_variable = { resource_exports = steel_exports }
+	add_to_temp_variable = { resource_exports = aluminium_exports }
+	add_to_temp_variable = { resource_exports = tungsten_exports }
+	add_to_temp_variable = { resource_exports = chromium_exports }
+	add_to_temp_variable = { resource_exports = rubber_exports }	
+	
+	#Don't give money for resources that are bought, as they already give CIC
+	set_temp_variable = { CIC_from_trade = num_of_civilian_factories }
+	subtract_from_temp_variable = { CIC_from_trade = industrial_complex_total }
+	multiply_temp_variable = { CIC_from_trade = 6 }
+	divide_temp_variable = { CIC_from_trade = resource_exports }
+	subtract_from_temp_variable = { CIC_from_trade = 1 }
+	multiply_temp_variable = { CIC_from_trade = -1 }
+	clamp_temp_variable = { var = CIC_from_trade max = 1 min = 0 }
+	
+	#Scale down everything based on above
+	multiply_variable = { oil_exports = CIC_from_trade }
+	multiply_variable = { steel_exports = CIC_from_trade }
+	multiply_variable = { aluminium_exports = CIC_from_trade }
+	multiply_variable = { tungsten_exports = CIC_from_trade }
+	multiply_variable = { chromium_exports = CIC_from_trade }
+	multiply_variable = { rubber_exports = CIC_from_trade }
+	
+	#Multiply with cost to get money generated
+	multiply_variable = { oil_exports = oil_price }
+	multiply_variable = { steel_exports = steel_price }
+	multiply_variable = { aluminium_exports = aluminium_price }
+	multiply_variable = { tungsten_exports = tungsten_price }
+	multiply_variable = { chromium_exports = chromium_price }
+	multiply_variable = { rubber_exports = rubber_price }
+	
+	#Additional additive modifiers
+	set_temp_variable = { resource_export_multiplier = 1 }
 	if = {
-		limit = {
-			has_idea = rentier_state
-		}
-		##Boosts income by around 25%
-		multiply_variable = { resource_exports = 0.156 } ##Roughly worth 25% more than the 1/8. So a factory should count for 125% more
+		limit = { has_idea = rentier_state }	#TODO TOOLTIP IN IDEA
+		add_to_temp_variable = { resource_export_multiplier = 0.25 }
 	}
-	else = {
-		multiply_variable = { resource_exports = 0.125 } ##This is equivalent to 1/6 1 factory = 6 resources
-	}
-	round_variable = resource_exports
-	set_variable = { var = resource_sale_rate value = resource_exports }
-	if = {
-		limit = { ##If you have a single resource over 100 units. You should have significant gain from resources
-			OR = {
-				has_idea = rentier_state
-				has_idea = export_economy ##Export economies should utilize this as well
-				has_idea = globalized_trade_economy
-				check_variable = { resource_exported@steel > 99 }
-				check_variable = { resource_exported@oil > 99 }
-				check_variable = { resource_exported@aluminium > 99 }
-				check_variable = { resource_exported@tungsten > 99 }
-				check_variable = { resource_exported@chromium > 99 }
-				check_variable = { resource_exported@rubber > 99 }
-			}
-		}
-		if = {
-			limit = {
-				num_of_factories < 25
-			}
-			divide_variable = { resource_sale_rate = 50 }
-		}
-		else_if = {
-			limit = {
-				num_of_factories > 24
-				num_of_factories < 50
-			}
-			divide_variable = { resource_sale_rate = 60 }
-		}
-		else_if = {
-			limit = {
-				num_of_factories > 49
-				num_of_factories < 80
-			}
-			divide_variable = { resource_sale_rate = 70 }
-		}
-		else_if = {
-			limit = {
-				num_of_factories > 79
-				num_of_factories < 125
-			}
-			divide_variable = { resource_sale_rate = 80 }
-		}
-		else_if = {
-			limit = {
-				num_of_factories > 124
-				num_of_factories < 160
-			}
-			divide_variable = { resource_sale_rate = 90 }
-		}
-		else_if = {
-			limit = {
-				num_of_factories > 159
-				num_of_factories < 200
-			}
-			divide_variable = { resource_sale_rate = 100 }
-		}
-		else_if = {
-			limit = {
-				num_of_factories > 199
-			}
-			divide_variable = { resource_sale_rate = 115 }
-		}
-		else = { ##This is just a failsafe. If not just use the standard rat
-			divide_variable = { resource_sale_rate = 100 }
-		}
+	
+	multiply_variable = { oil_exports = resource_export_multiplier }
+	multiply_variable = { steel_exports = resource_export_multiplier }
+	multiply_variable = { aluminium_exports = resource_export_multiplier }
+	multiply_variable = { tungsten_exports = resource_export_multiplier }
+	multiply_variable = { chromium_exports = resource_export_multiplier }
+	multiply_variable = { rubber_exports = resource_export_multiplier }
+	
+	set_variable = { resource_export_multiplier_display = resource_export_multiplier }
+	subtract_from_variable = { resource_export_multiplier_display = 1 }
+	
+	#Scale factors
+	divide_variable = { oil_exports = 1900 } 
+	divide_variable = { steel_exports = 1900 } 
+	divide_variable = { aluminium_exports = 1900 } 
+	divide_variable = { tungsten_exports = 1900 } 
+	divide_variable = { chromium_exports = 1900 } 
+	divide_variable = { rubber_exports = 1900 } 
+	
+	#Income for 7 days
+	multiply_variable = { oil_exports = 7 } 
+	multiply_variable = { steel_exports = 7 } 
+	multiply_variable = { aluminium_exports = 7 } 
+	multiply_variable = { tungsten_exports = 7 } 
+	multiply_variable = { chromium_exports = 7 } 
+	multiply_variable = { rubber_exports = 7 } 
 
-	}
-	else = { ##Flat resource gain for now
-		divide_variable = { resource_sale_rate = 100 }
-	}
-
-	multiply_variable = { resource_sale_rate = 7 }
+	#Add total cost
+	set_variable = { resource_sale_rate = oil_exports }
+	add_to_variable = { resource_sale_rate = steel_exports }
+	add_to_variable = { resource_sale_rate = aluminium_exports }
+	add_to_variable = { resource_sale_rate = tungsten_exports }
+	add_to_variable = { resource_sale_rate = chromium_exports }
+	add_to_variable = { resource_sale_rate = rubber_exports }
+	
 	update_display = yes
 }
 
@@ -1728,9 +1729,11 @@ update_economic_income = {
 update_state_variables = {
 	set_variable = { var = population_total value = 0 }
 	set_variable = { var = ROOT.office_park_total value = 0 }
+	set_variable = { var = ROOT.industrial_complex_total value = 0 }
 	set_variable = { var = ROOT.biofuel_refineries value = 0 }
 	every_controlled_state = {
 		add_to_variable = { PREV.office_park_total = building_level@offices }
+		add_to_variable = { PREV.industrial_complex_total = building_level@industrial_complex }
 		add_to_variable = { PREV.biofuel_refineries = building_level@synthetic_refinery }
 		set_temp_variable = { var = temp_pop value = state_population_k }
 		divide_temp_variable = { var = temp_pop value = 100 }
