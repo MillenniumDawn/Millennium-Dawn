@@ -37,29 +37,19 @@
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 ###
 
-#Startup for building the money system. This is to be used whenever setting up a nation for the the first time.
-startup_extra_setup = {
-	firsttime_calculate_size_modifier = yes
-	update_state_variables = yes
-	calculate_interest_rate = yes
-	calculate_debt_rate = yes
-	calculate_int_investments_rate = yes
-	calculate_resource_sale_rate = yes
-	calculate_tax_gain = yes
-	init_expenses = yes
-	set_variable = { econ_cycle_upg_cost = 6 }
-	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
-	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
-}
-
 #Use this update all economic values in-game
 ingame_update_setup = {
+	#TODO These need to be removed once they are no longer referenced
+	firsttime_calculate_size_modifier = yes
+	ingame_calculate_size_modifier = yes
+	
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
 	
 	#Income
 	calculate_int_investments_rate = yes
 	calculate_resource_sale_rate = yes
+	calculate_tax_gain = yes	#TODO CHECK THIS
 	
 	#Expenses
 	update_military_rate = yes
@@ -68,17 +58,13 @@ ingame_update_setup = {
 	update_education_rate = yes
 	update_health_rate = yes
 	update_social_rate = yes
+	calculate_interest_rate = yes
 	
 	#Various
 	update_economic_cycle_cost = yes
 	
 	#Visuals
 	update_display = yes
-	
-	calculate_interest_rate = yes
-	calculate_debt_rate = yes
-	calculate_tax_gain = yes
-	init_expenses = yes
 }
 
 #Calculates the "Size" of industry. It uses the resource exports and civilian factories to judge the size of the countries economy. - Bird
@@ -512,174 +498,99 @@ calculate_tax_gain = {
 
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
 calculate_interest_rate = {
-	#This array stores the interest rate for each level of gdp/c
-	#clears the array
-	clear_array = array_interest_rate
+	#create the variable
+	set_variable = { interest_rate = 0 }
+	
+	#Base value comes from debt/gdp ratio
+	add_to_variable = { interest_rate = debt }
+	divide_variable = { interest_rate = gdp_total }
+	multiply_variable = { interest_rate = 114 }
 
-	#creates the array
-	for_loop_effect = {
-		start = 1
-		end = 10 # < 10
-
-		add_to_array = {
-			array = array_interest_rate
-			value = 0
-		}
+	#Debt rate is modified by your GDP/C - linear approximation -0.218 * GDP/C + 5.067
+	set_temp_variable = { interest_rate_gdp_modifier = gdp_per_capita }
+	multiply_temp_variable = { interest_rate_gdp_modifier = -0.218 }
+	add_to_temp_variable = { interest_rate_gdp_modifier = 5.067 }
+	clamp_temp_variable = { var = interest_rate_gdp_modifier min = 1 }
+	
+	multiply_variable = { interest_rate = interest_rate_gdp_modifier }
+	
+	set_variable = { interest_rate_gdp_modifier_display = interest_rate_gdp_modifier }
+	subtract_from_variable = { interest_rate_gdp_modifier_display = 1 }
+	
+	#Additional additive modifiers
+	set_variable = { interest_rate_multiplier = 0 }
+	##Generic
+	if = {
+		limit = { has_idea = international_bankers }
+		subtract_from_variable = { interest_rate_multiplier = 1 }
 	}
-
-	#adds debt to each item in the array
-	for_each_loop = {
-		array = array_interest_rate
-		value = v
-		index = i
-		add_to_variable = { var = array_interest_rate^i value = debt } #debt = 100
+	if = {
+		limit = { has_idea = the_euro }
+		subtract_from_variable = { interest_rate_multiplier = 1 }
 	}
-
-	#Base interest  rate is determined by your GDP/C
-	multiply_variable = { var = array_interest_rate^0 value = 27 } #GDP 1 Gets 2700
-	multiply_variable = { var = array_interest_rate^1 value = 23 } #GDP 2 Gets 2300
-	multiply_variable = { var = array_interest_rate^2 value = 19 } #GDP 3 Gets 1900
-	multiply_variable = { var = array_interest_rate^3 value = 16.5 } #GDP 4 Gets 1650
-	multiply_variable = { var = array_interest_rate^4 value = 13.5 } #GDP 5 gets 1250
-	multiply_variable = { var = array_interest_rate^5 value = 10.6 } #GDP 6 Gets 1060
-	multiply_variable = { var = array_interest_rate^6 value = 8.2 } #GDP 7 gets 820
-	multiply_variable = { var = array_interest_rate^7 value = 6.1 } #GDP 8 Gets 610
-	multiply_variable = { var = array_interest_rate^8 value = 5 } #The remainder Get 500
-
-	#Update each item in the array
-	for_each_loop = {
-		array = array_interest_rate
-		value = v
-		index = i
-		#interest  rate is modifier by the size_modifier variable ("Size of the country")
-		divide_variable = { var = array_interest_rate^i value = size_modifier } #Divide by local size_modifier
-		#You divide by 365 as you don't pay say 10% interest  every day but yearly
-		divide_variable = { var = array_interest_rate^i value = 365 } #downplay by a daily rate
-		#interest  rate is modified based on some ideas
+	if = {
+		limit = { has_country_flag = bailout_given }
+		subtract_from_variable = { interest_rate_multiplier = 10 }
+	}
+	##USA
+	if = {
+		limit = { original_tag = USA }
 		if = {
 			limit = { has_idea = petro_dollar }
-			subtract_from_variable = { var = array_interest_rate^i value = 2 }
+			subtract_from_variable = { interest_rate_multiplier = 2 }
 		}
 		if = {
-			limit = { has_idea = the_euro }
-			subtract_from_variable = { var = array_interest_rate^i value = 1 }
+			limit = { has_idea = wall_street }
+			subtract_from_variable = { interest_rate_multiplier = 1 }
 		}
+	}
+	##Japan
+	if = {
+		limit = { original_tag = JAP }
 		if = {
 			limit = { has_idea = JAP_deflation }
-			subtract_from_variable = { var = array_interest_rate^i value = 9 }
+			subtract_from_variable = { interest_rate_multiplier = 9 }
 		}
-		if = {
-			limit = {
-				OR = {
-					has_idea = wall_street
-					has_idea = international_bankers
-				}
-			}
-			subtract_from_variable = { var = array_interest_rate^i value = 1 }
-		}
-		if = {
-			limit = { has_country_flag = bailout_given }
-			subtract_from_variable = { var = array_interest_rate^i value = 10 }
-		}
-		if = {
-			limit = { tag = NIG has_idea = NIG_efficent_government_spending_reform_idea }
-			subtract_from_variable = { var = array_interest_rate^i value = 3 }
-		}
-		if = {
-			limit = { tag = SOV has_country_flag = SOV_overcoming_the_1998_financial_crisis }
-			subtract_from_variable = { var = array_interest_rate^i value = 2 }
-		}
-		if = {
-			limit = { tag = ITA has_idea = ITA_debt_market_trust }
-			add_to_variable = { var = array_interest_rate^i value = bond_markets_trust }
-		}
-		clamp_variable = {
-			var = array_interest_rate^i
-			min = 0.8
-			max = 50
-		} #Min is 0.8% on debt max is 50%
 	}
-
-	#update the displayed interest on the topbar (interest_rate) with the actual interest rate
+	##Nigeria
 	if = {
-		limit = { has_idea = gdp_1 }
-		set_variable = { var = interest_rate value = array_interest_rate^0 }
+		limit = { original_tag = NIG }
+		if = {
+			limit = { has_idea = NIG_efficent_government_spending_reform_idea }
+			subtract_from_variable = { interest_rate_multiplier = 3 }
+		}
 	}
-	else_if = {
-		limit = { has_idea = gdp_2 }
-		set_variable = { var = interest_rate value = array_interest_rate^1 }
+	##Russia
+	if = {
+		limit = { original_tag = SOV }
+		if = {
+			limit = { has_country_flag = SOV_overcoming_the_1998_financial_crisis }
+			subtract_from_variable = { interest_rate_multiplier = 2 }
+		}
 	}
-	else_if = {
-		limit = { has_idea = gdp_3 }
-		set_variable = { var = interest_rate value = array_interest_rate^2 }
+	##Italy
+	if = {
+		limit = { original_tag = ITA }
+		if = {
+			limit = { has_idea = ITA_debt_market_trust }
+			add_to_variable = { interest_rate_multiplier = bond_markets_trust }
+		}
 	}
-	else_if = {
-		limit = { has_idea = gdp_4 }
-		set_variable = { var = interest_rate value = array_interest_rate^3 }
-	}
-	else_if = {
-		limit = { has_idea = gdp_5 }
-		set_variable = { var = interest_rate value = array_interest_rate^4 }
-	}
-	else_if = {
-		limit = { has_idea = gdp_6 }
-		set_variable = { var = interest_rate value = array_interest_rate^5 }
-	}
-	else_if = {
-		limit = { has_idea = gdp_7 }
-		set_variable = { var = interest_rate value = array_interest_rate^6 }
-	}
-	else_if = {
-		limit = { has_idea = gdp_8 }
-		set_variable = { var = interest_rate value = array_interest_rate^7 }
-	}
-	else = { set_variable = { var = interest_rate value = array_interest_rate^8 } }
-}
-
-
-### safeproofing - reached here #killerrabbit
-
-#Update the debt rate called mostly when debt is taken
-##The debt rate determines when a country actually goes bankrupt versues when it maintains its current economic standpoint.
-calculate_debt_rate = {
+	
+	add_to_variable = { interest_rate = interest_rate_multiplier }
+	
+	clamp_variable = {
+		var = interest_rate
+		min = 0.8
+		max = 50
+	} #Min is 0.8% on debt max is 50%
+	
+	#Calculate debt rate based on interest
 	set_variable = { var = debt_rate value = debt }
-	multiply_variable = { var = debt_rate value = interest_rate }
-	divide_variable = { var = debt_rate value = 36500 }
-	multiply_variable = { var = debt_rate value = 7 }
-
-	if = {
-		limit = {
-			NOT = { has_country_flag = bailout_happened }
-		}
-		#checks for imminent bankrupcy
-		set_variable = { looming_bankruptcy_rate = size_modifier } #22
-		divide_variable = { looming_bankruptcy_rate = 3.6 } #6.11 - So if size is 22. then you need to be paying 6.22 to get looming bankruptcy
-		if = {
-			limit = {
-				check_variable = { debt_rate > looming_bankruptcy_rate }
-				NOT = { has_country_flag = bailout_happened }
-			}
-			country_event = { id = bankrupcy.0 }
-			log = "[GetDateText]: [This.GetName]: Looming Bankruptcy value: [?looming_bankruptcy_rate]; Bankruptcy value: [?previous_bankruptcy_rate]; Debt Rate value: [?debt_rate]"
-		}
-	}
-
-	if = {
-		limit = {
-			NOT = { has_idea = bankrupcy }
-		}
-		#check for bankrupcy
-		set_variable = { previous_bankruptcy_rate = size_modifier }
-		divide_variable = { previous_bankruptcy_rate = 2.5 }
-		log = "[GetDateText]: [This.GetName]: Looming Bankruptcy value: [?looming_bankruptcy_rate]; Bankruptcy value: [?previous_bankruptcy_rate]; Debt Rate value: [?debt_rate]"
-	}
-
-	set_variable = { half_way_bankrupt = previous_bankruptcy_rate }
-	divide_variable = { half_way_bankrupt = 4.85 } #This is a check to start getting events pertaining to high debt rates - Not Visible to the Player
-	#Based off 22 Size Modifier
-	#You will need to be paying more than 4.5 in interest to start getting bad events
-
-	update_display = yes
+	multiply_variable = { debt_rate = interest_rate }	#Yearly interest rate
+	divide_variable = { debt_rate = 100 }
+	divide_variable = { debt_rate = 52 }	#Weekly interest rate, 52 weeks in a year
+	
 }
 
 #Update military spending
@@ -1608,23 +1519,6 @@ update_economic_cycle_cost = {
 	multiply_variable = { econ_cycle_upg_cost = econ_cycle_upg_cost_multiplier }
 }
 
-init_expenses = {
-	#Defence spending
-	update_military_rate = yes
-	#Bureaucracy
-	update_bureaucracy_rate = yes
-	#Security
-	update_police_rate = yes
-	#Education
-	update_education_rate = yes
-	#Healthcare
-	update_health_rate = yes
-	#Social Spending
-	update_social_rate = yes
-
-	update_display = yes
-}
-
 #Monthly tick actions
 automated_debt_taker = {
 	if = {
@@ -1721,19 +1615,8 @@ automated_debt_taker = {
 				add_to_variable = { debt = treasury_temp }
 			}
 		}
-		ingame_calculate_size_modifier = yes
-		update_military_rate = yes
 		calculate_interest_rate = yes
-		calculate_debt_rate = yes
 	}
-}
-
-update_economic_income = {
-	ingame_calculate_size_modifier = yes
-	calculate_tax_gain = yes
-	update_military_rate = yes
-	calculate_resource_sale_rate = yes
-	init_expenses = yes
 }
 
 update_state_variables = {
