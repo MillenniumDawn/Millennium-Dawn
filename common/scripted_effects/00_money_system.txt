@@ -52,25 +52,34 @@ startup_extra_setup = {
 	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
 }
 
+#Use this update all economic values in-game
 ingame_update_setup = {
+	#National values (GDP, pop etc.) MUST BE FIRST
+	update_state_variables = yes
+	
+	#Income
+	calculate_int_investments_rate = yes
+	calculate_resource_sale_rate = yes
+	
+	#Expenses
 	update_military_rate = yes
 	update_bureaucracy_rate = yes
 	update_police_rate = yes
 	update_education_rate = yes
 	update_health_rate = yes
 	update_social_rate = yes
-	calculate_int_investments_rate = yes
-	calculate_resource_sale_rate = yes
-	update_state_variables = yes
+	
+	#Various
+	update_economic_cycle_cost = yes
+	
+	#Visuals
+	update_display = yes
 	
 	ingame_calculate_size_modifier = yes
 	calculate_interest_rate = yes
 	calculate_debt_rate = yes
 	calculate_tax_gain = yes
 	init_expenses = yes
-	set_variable = { econ_cycle_upg_cost = 6 }
-	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
-	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
 }
 
 #Calculates the "Size" of industry. It uses the resource exports and civilian factories to judge the size of the countries economy. - Bird
@@ -982,7 +991,7 @@ update_military_rate = {
 	add_to_temp_variable = { personnel_cost = navy_count }
 	add_to_temp_variable = { personnel_cost = airforce_count }
 	
-	#Values for breakdown tooltips - must be before the adding up!
+	#Values for breakdown tooltips 
 	set_variable = { defence_breakdown_industry = array_defence_spend^def_index }
 	multiply_variable = { defence_breakdown_industry = 7 }
 	set_variable = { defence_breakdown_land = land_count }
@@ -1011,7 +1020,6 @@ update_military_rate = {
 	}
 
 	set_variable = { defence_gain = array_defence_spend^def_index }
-	update_display = yes
 }
 
 #Update bureaucracy spending
@@ -1106,7 +1114,6 @@ update_bureaucracy_rate = {
 	}
 	
 	set_variable = { var = bureaucracy_gain value = array_bureaucracy_spend^bureau_index }
-	update_display = yes
 
 }
 
@@ -1195,7 +1202,6 @@ update_police_rate = {
 	}
 
 	set_variable = { security_gain = array_security_spend^security_index }
-	update_display = yes
 }
 
 #Update education spending
@@ -1302,7 +1308,6 @@ update_education_rate = {
 	subtract_from_variable = { education_cost_multiplier_display = 1 }
 
 	set_variable = { education_gain = array_education_spend^education_index }
-	update_display = yes
 }
 
 #Update health spending
@@ -1389,7 +1394,6 @@ update_health_rate = {
 	}
 
 	set_variable = { health_gain = array_health_spend^health_index }
-	update_display = yes
 }
 
 #Update social spending
@@ -1468,7 +1472,6 @@ update_social_rate = {
 	}
 
 	set_variable = { welfare_gain = array_social_spend^social_index }
-	update_display = yes
 }
 
 #Income Related Stuff --- International Investments and Calculated Resource Sale Rate
@@ -1483,7 +1486,6 @@ calculate_int_investments_rate = {
 	
 	divide_variable = { int_investments_rate = 365 }	#Per day
 	multiply_variable = { int_investments_rate = 7 } #7 days worth of income
-	update_display = yes
 }
 
 #Calculates income from resources
@@ -1539,10 +1541,6 @@ calculate_resource_sale_rate = {
 	
 	#Additional additive modifiers
 	set_temp_variable = { resource_export_multiplier = 1 }
-	if = {
-		limit = { has_idea = rentier_state }	#TODO TOOLTIP IN IDEA
-		add_to_temp_variable = { resource_export_multiplier = 0.25 }
-	}
 	
 	multiply_variable = { oil_exports = resource_export_multiplier }
 	multiply_variable = { steel_exports = resource_export_multiplier }
@@ -1577,8 +1575,6 @@ calculate_resource_sale_rate = {
 	add_to_variable = { resource_sale_rate = tungsten_exports }
 	add_to_variable = { resource_sale_rate = chromium_exports }
 	add_to_variable = { resource_sale_rate = rubber_exports }
-	
-	update_display = yes
 }
 
 update_display = {
@@ -1596,6 +1592,12 @@ update_display = {
 
 	set_variable = { var = treasury_rate value = display_income }
 	subtract_from_variable = { var = treasury_rate value = display_expense }
+}
+
+update_economic_cycle_cost = {
+	set_variable = { econ_cycle_upg_cost = 6 }
+	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
+	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
 }
 
 init_expenses = {
