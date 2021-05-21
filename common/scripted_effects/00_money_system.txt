@@ -75,7 +75,6 @@ ingame_update_setup = {
 	#Visuals
 	update_display = yes
 	
-	ingame_calculate_size_modifier = yes
 	calculate_interest_rate = yes
 	calculate_debt_rate = yes
 	calculate_tax_gain = yes
@@ -1595,9 +1594,18 @@ update_display = {
 }
 
 update_economic_cycle_cost = {
-	set_variable = { econ_cycle_upg_cost = 6 }
-	multiply_variable = { var = econ_cycle_upg_cost value = size_modifier }
-	if = { limit = { has_idea = the_euro }	multiply_variable = { econ_cycle_upg_cost = 1.5 } }
+	#Base on size of economy
+	set_variable = { econ_cycle_upg_cost = gdp_total }
+	divide_variable = { econ_cycle_upg_cost = 660 }
+	
+	#Additional additive modifiers
+	set_temp_variable = { econ_cycle_upg_cost_multiplier = 1 }
+	if = { 
+		limit = { has_idea = the_euro }
+		add_to_temp_variable = { econ_cycle_upg_cost_multiplier = 0.5 }
+	}
+	
+	multiply_variable = { econ_cycle_upg_cost = econ_cycle_upg_cost_multiplier }
 }
 
 init_expenses = {
