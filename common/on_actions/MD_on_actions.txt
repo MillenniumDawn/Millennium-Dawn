@@ -435,7 +435,8 @@ on_actions = {
 			#Bankruptcy Events
 			if = {
 				limit = {
-					check_variable = { debt_rate > half_way_bankrupt }
+					check_variable = { interest_rate > 12 }
+					NOT = { has_country_flag = bankrupt }
 					OR = {
 						check_variable = { global.month = 3 } #March
 						check_variable = { global.month = 6 } #June
@@ -465,12 +466,57 @@ on_actions = {
 						}
 						country_event = { id = bankruptcy.203 days = 1 }
 					}
-					70 = {
+					10 = { #Request Bailout -- Sets the looming bankruptcy flag
+						modifier = {
+							factor = 0.10
+							check_variable = { interest_rate < 15 }
+						}
+						modifier = {
+							factor = 0.50
+							check_variable = { interest_rate > 14 }
+							check_variable = { interest_rate < 18 }
+						}
+						modifier = {
+							factor = 1.25
+							check_variable = { interest_rate > 17 }
+							check_variable = { interest_rate < 21 }
+						}
+						modifier = {
+							factor = 2.5
+							check_variable = { interest_rate > 25 }
+						}
+						modifier = {
+							factor = 2.0
+							has_idea = depression
+						}
+						modifier = {
+							factor = 1.25
+							has_idea = recession
+						}
+						country_event = { id = bankruptcy.0 days = 1 }
+
+					}
+					60 = {
 						#Nothing Happens
 					}
 				}
 			}
+			#Nation is Bankrupt! Events
+			if = {
+				limit = {
+					has_country_flag = bankrupt
+					has_idea = bankrupcy
+					OR = {
+						check_variable = { global.month = 3 } #March
+						check_variable = { global.month = 6 } #June
+						check_variable = { global.month = 9 } #Sept
+						check_variable = { global.month = 12 } #Dec
+					}
+				}
+				random_list = {
 
+				}
+			}
 			#Burmese Insurgency Events
 			if = {
 				limit = {

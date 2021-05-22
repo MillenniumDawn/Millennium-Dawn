@@ -42,15 +42,15 @@ ingame_update_setup = {
 	#TODO These need to be removed once they are no longer referenced
 	firsttime_calculate_size_modifier = yes
 	ingame_calculate_size_modifier = yes
-	
+
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
-	
+
 	#Income
 	calculate_int_investments_rate = yes
 	calculate_resource_sale_rate = yes
 	calculate_tax_gain = yes	#TODO CHECK THIS
-	
+
 	#Expenses
 	update_military_rate = yes
 	update_bureaucracy_rate = yes
@@ -59,10 +59,10 @@ ingame_update_setup = {
 	update_health_rate = yes
 	update_social_rate = yes
 	calculate_interest_rate = yes
-	
+
 	#Various
 	update_economic_cycle_cost = yes
-	
+
 	#Visuals
 	update_display = yes
 }
@@ -435,50 +435,51 @@ calculate_tax_gain = {
 	#DO NOT FUCKING TOUCH -- BIRD
 	#Corruption tax modifiers
 	if = { limit = { has_idea = paralyzing_corruption }
-		multiply_temp_variable = { tax_gain_multiplier = 0.65 }
+		subtract_from_temp_variable = { tax_gain_multiplier = 0.35 }
 	}
 	else_if = { limit = { has_idea = crippling_corruption }
-		multiply_temp_variable = { tax_gain_multiplier = 0.70 }
+		subtract_from_temp_variable = { tax_gain_multiplier = 0.30 }
 	}
 	else_if = { limit = { has_idea = rampant_corruption }
-		multiply_temp_variable = { tax_gain_multiplier = 0.75 }
+		subtract_from_temp_variable = { tax_gain_multiplier = 0.25 }
 	}
 	else_if = { limit = { has_idea = unrestrained_corruption }
-		multiply_temp_variable = { tax_gain_multiplier = 0.80 }
+		subtract_from_temp_variable = { tax_gain_multiplier = 0.20 }
 	}
 	else_if = { limit = { has_idea = systematic_corruption }
-		multiply_temp_variable = { tax_gain_multiplier = 0.85 }
+		subtract_from_temp_variable = { tax_gain_multiplier = 0.15 }
 	}
 	else_if = { limit = { has_idea = widespread_corruption }
-		multiply_temp_variable = { tax_gain_multiplier = 0.90 }
+		subtract_from_temp_variable = { tax_gain_multiplier = 0.10 }
 	}
 	else_if = { limit = { has_idea = medium_corruption }
-		multiply_temp_variable = { tax_gain_multiplier = 0.95 }
+		subtract_from_temp_variable = { tax_gain_multiplier = 0.05 }
 	}
 	else_if = { limit = { has_idea = modest_corruption }
-		multiply_temp_variable = { tax_gain_multiplier = 0.97 }
+		subtract_from_temp_variable = { tax_gain_multiplier = 0.03 }
 	}
 	else_if = { limit = { has_idea = slight_corruption }
-		multiply_temp_variable = { tax_gain_multiplier = 0.98 }
+		subtract_from_temp_variable = { tax_gain_multiplier = 0.02 }
 	}
 	else_if = { limit = { has_idea = negligible_corruption }
-		multiply_temp_variable = { tax_gain_multiplier = 0.99 }
+		subtract_from_temp_variable = { tax_gain_multiplier = 0.01 }
 	}
 
 	##Country Specific
 	#How to add your own tax modifier:
 	#all you need to do is create a specific if statement that goes "tag = BLA"
 	#Then the conditions you are looking for.
-	#Then modify the temp variable tax_gain_multiplier by whatever. So if you want 25% then you do multiply_temp_variable = { tax_gain_multiplier = 1.25 }
+	#Then modify the temp variable tax_gain_multiplier by whatever. So if you want 25% then you do add_to_temp_variable = { tax_gain_multiplier = 0.25 }
 	if = {
 		limit = {
 			tag = NIG
 			has_idea = NIG_efficent_government_spending_idea
 		}
-		multiply_temp_variable = { tax_gain_multiplier = 1.10 }
+		add_to_temp_variable = { tax_gain_multiplier = 0.10 }
 	}
+	#Need to figure out how to do this
 	if = { limit = { tag = ITA }
-		multiply_temp_variable = { tax_gain_multiplier = ITA_tax_multiplier_var }
+		add_to_temp_variable = { tax_gain_multiplier = ITA_tax_multiplier_var }
 	}
 	#Modify Taxgain by multiplier
 	multiply_variable = { corporate_tax = tax_gain_multiplier }
@@ -500,7 +501,7 @@ calculate_tax_gain = {
 calculate_interest_rate = {
 	#create the variable
 	set_variable = { interest_rate = 0 }
-	
+
 	#Base value comes from debt/gdp ratio
 	add_to_variable = { interest_rate = debt }
 	divide_variable = { interest_rate = gdp_total }
@@ -511,12 +512,12 @@ calculate_interest_rate = {
 	multiply_temp_variable = { interest_rate_gdp_modifier = -0.218 }
 	add_to_temp_variable = { interest_rate_gdp_modifier = 5.067 }
 	clamp_temp_variable = { var = interest_rate_gdp_modifier min = 1 }
-	
+
 	multiply_variable = { interest_rate = interest_rate_gdp_modifier }
-	
+
 	set_variable = { interest_rate_gdp_modifier_display = interest_rate_gdp_modifier }
 	subtract_from_variable = { interest_rate_gdp_modifier_display = 1 }
-	
+
 	#Additional additive modifiers
 	set_variable = { interest_rate_multiplier = 0 }
 	##Generic
@@ -576,21 +577,21 @@ calculate_interest_rate = {
 			add_to_variable = { interest_rate_multiplier = bond_markets_trust }
 		}
 	}
-	
+
 	add_to_variable = { interest_rate = interest_rate_multiplier }
-	
+
 	clamp_variable = {
 		var = interest_rate
 		min = 0.8
 		max = 50
 	} #Min is 0.8% on debt max is 50%
-	
+
 	#Calculate debt rate based on interest
 	set_variable = { var = debt_rate value = debt }
 	multiply_variable = { debt_rate = interest_rate }	#Yearly interest rate
 	divide_variable = { debt_rate = 100 }
 	divide_variable = { debt_rate = 52 }	#Weekly interest rate, 52 weeks in a year
-	
+
 }
 
 #Update military spending
@@ -637,7 +638,7 @@ update_military_rate = {
 	else_if = { limit = { has_idea = defence_09 }
 		set_temp_variable = { def_index = 9 }
 	}
-	
+
 	## Calculate cost for defence industry (military factories and dockyards) ##
 	#add the naval factoreis and mil factories to each item index in the array
 	for_each_loop = {
@@ -647,7 +648,7 @@ update_military_rate = {
 		add_to_variable = { array_defence_spend^i = num_of_naval_factories }
 		add_to_variable = { array_defence_spend^i = num_of_military_factories }
 	}
-	
+
 	#Set the base cost for each spending level based on size of military industry ( [num_of_mil_factories + num_of_naval_factories]/modifier )
 	divide_variable = { array_defence_spend^0 = 3000 }
 	divide_variable = { array_defence_spend^1 = 300 }
@@ -659,9 +660,9 @@ update_military_rate = {
 	divide_variable = { array_defence_spend^7 = 15 }
 	divide_variable = { array_defence_spend^8 = 10 }
 	divide_variable = { array_defence_spend^9 = 8 }
-	
+
 	#Update each item in the defence spending array based on your gdp/c, having a higher GDP makes defence more expensive
-	set_temp_variable = { gdp_defence_modifier_industry = gdp_per_capita } 
+	set_temp_variable = { gdp_defence_modifier_industry = gdp_per_capita }
 	if = {		#Linear approximation -0.007 * gdp/c + 2.333
 		limit = { check_variable = { gdp_defence_modifier_industry > 50 } }
 		multiply_temp_variable = { gdp_defence_modifier_industry = -0.007 }
@@ -684,7 +685,7 @@ update_military_rate = {
 		index = i
 		divide_variable = { array_defence_spend^i = gdp_defence_modifier_industry }
 	}
-	
+
 	## Calculate the cost of fielded military ##
 	### Land ###
 	#Below sets up the personnel cost for mil spending based on how many battalions a country has (divided into special, elite, regular and irregular units)
@@ -833,7 +834,7 @@ update_military_rate = {
 	divide_temp_variable = { land_count = 4 } 		#Cost values are; special 1.25, elite 0.75, regular 0.5, irregular 0.25 (cost weight for one battalion)
 	multiply_temp_variable = { navy_count = 10 } 	#Cost values are; carrier 100, capital 50, destroyer 20, small ship 10 (cost weight for one ship)
 	divide_temp_variable = { airforce_count = 14 } 	#Cost values are; strategic 1, expensive 0.35, regular 0.21, cheap 0.07 (cost weight for one plane)
-	
+
 	#Additive personnel cost multiplier
 	set_temp_variable = { personnel_cost_multiplier = 1 }
 	#Wages for a volunteer army is higher, this math was dumb before
@@ -882,7 +883,7 @@ update_military_rate = {
 	multiply_temp_variable = { land_count = personnel_cost_multiplier }
 	multiply_temp_variable = { navy_count = personnel_cost_multiplier }
 	multiply_temp_variable = { airforce_count = personnel_cost_multiplier }
-	
+
 	#Multiply personnel costs basde on GDP/c, higher GDP makes things more expensive (linear approximation 0.003 * gdp/c + 0.129)
 	set_temp_variable = { gdp_defence_modifier_personnel = gdp_per_capita }
 	multiply_temp_variable = { gdp_defence_modifier_personnel = 0.003 }
@@ -895,13 +896,13 @@ update_military_rate = {
 	divide_temp_variable = { land_count = 1000 }
 	divide_temp_variable = { navy_count = 1000 }
 	divide_temp_variable = { airforce_count = 1000 }
-	
+
 	#Add up armed forces
 	set_temp_variable = { personnel_cost = land_count }
 	add_to_temp_variable = { personnel_cost = navy_count }
 	add_to_temp_variable = { personnel_cost = airforce_count }
-	
-	#Values for breakdown tooltips 
+
+	#Values for breakdown tooltips
 	set_variable = { defence_breakdown_industry = array_defence_spend^def_index }
 	multiply_variable = { defence_breakdown_industry = 7 }
 	set_variable = { defence_breakdown_land = land_count }
@@ -910,7 +911,7 @@ update_military_rate = {
 	multiply_variable = { defence_breakdown_navy = 7 }
 	set_variable = { defence_breakdown_airforce = airforce_count }
 	multiply_variable = { defence_breakdown_airforce = 7 }
-	
+
 	set_variable = { defence_breakdown_industry_gdp_modifier = 8.1 }	#Maximum modifier
 	divide_variable = {defence_breakdown_industry_gdp_modifier = gdp_defence_modifier_industry }
 	subtract_from_variable = { defence_breakdown_industry_gdp_modifier = 1 }	#Working with percentages
@@ -919,7 +920,7 @@ update_military_rate = {
 	subtract_from_variable = { defence_breakdown_personnel_gdp_modifier = 1 }	#Working with percentages
 	set_variable = { defence_breakdown_personnel_modifier = personnel_cost_multiplier }
 	subtract_from_variable = { defence_breakdown_personnel_modifier = 1 }
-	
+
 	#Add military industry and personnel costs together for the total
 	for_each_loop = {
 		array = array_defence_spend
@@ -936,9 +937,9 @@ update_military_rate = {
 update_bureaucracy_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_bureaucracy_spend
-	
+
 	#Set the base cost of bureaucracy (billion $ per 10 000 000 people)
-	set_temp_variable = { bureaucracy_base_cost = 0.010 }	
+	set_temp_variable = { bureaucracy_base_cost = 0.010 }
 
 	#recreate the array
 	for_loop_effect = {
@@ -947,7 +948,7 @@ update_bureaucracy_rate = {
 
 		add_to_array = { array_bureaucracy_spend = 0 }
 	}
-	
+
 	#Calculate the base cost of bureaucracy levels
 	for_each_loop = {
 		array = array_bureaucracy_spend
@@ -981,11 +982,11 @@ update_bureaucracy_rate = {
 	else_if = { limit = { has_idea = bureau_05 }
 		set_temp_variable = { bureau_index = 4 }
 	}
-	
+
 	#Additional additive modifiers
 	set_temp_variable = { bureaucracy_cost_multiplier = 1 }
 	##Italy
-	if = { 
+	if = {
 		limit = { original_tag = ITA }
 		if = {
 			limit = { has_idea = ITA_inefficient_administration_4 } ##50% increase in cost for bureaucracy
@@ -1003,7 +1004,7 @@ update_bureaucracy_rate = {
 			limit = { has_idea = ITA_inefficient_administration_1 } ##12,5% increase in cost for bureaucracy
 			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.125 }
 		}
-	}	
+	}
 
 	for_each_loop = {
 		array = array_bureaucracy_spend
@@ -1011,7 +1012,7 @@ update_bureaucracy_rate = {
 		value = v
 		multiply_variable = { array_bureaucracy_spend^i = bureaucracy_cost_multiplier }
 	}
-	
+
 	set_variable = { bureaucracy_cost_multiplier_display = bureaucracy_cost_multiplier }
 	subtract_from_variable = { bureaucracy_cost_multiplier_display = 1 }
 
@@ -1022,7 +1023,7 @@ update_bureaucracy_rate = {
 		value = v
 		multiply_variable = { array_bureaucracy_spend^i = 7 } #Multiply each index by 7 days
 	}
-	
+
 	set_variable = { var = bureaucracy_gain value = array_bureaucracy_spend^bureau_index }
 
 }
@@ -1031,7 +1032,7 @@ update_bureaucracy_rate = {
 update_police_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_security_spend
-	
+
 	#Set the base cost of policing (billion $ per 10 000 000 people)
 	set_temp_variable = { police_base_cost = 0.006 }
 
@@ -1042,7 +1043,7 @@ update_police_rate = {
 
 		add_to_array = { array_security_spend = 0 }
 	}
-	
+
 	#Calculate the base cost of police levels
 	for_each_loop = {
 		array = array_security_spend
@@ -1052,7 +1053,7 @@ update_police_rate = {
 		divide_variable = { array_security_spend^i = 100 }	#Unit 10 000 000
 		multiply_variable = { array_security_spend^i = police_base_cost }
 	}
-	
+
 	#Modify based on spending level
 	multiply_variable = { array_security_spend^0 = 1 }
 	multiply_variable = { array_security_spend^1 = 1.6 }
@@ -1076,16 +1077,16 @@ update_police_rate = {
 	else_if = { limit = { has_idea = police_05 }
 		set_temp_variable = { security_index = 4 }
 	}
-	
+
 	#Additional additive modifiers
 	set_temp_variable = { police_cost_multiplier = 1 }
 	##Generic
-	if = { 
+	if = {
 		limit = { has_tech = DNA_fingerprinting }
 		subtract_from_temp_variable = { police_cost_multiplier = 0.05 }
 	}
 	##Italy
-	if = { 
+	if = {
 		limit = { original_tag = ITA }
 		if = {
 			limit = { has_idea = ITA_legalized_light_drugs }
@@ -1099,7 +1100,7 @@ update_police_rate = {
 		value = v
 		multiply_variable = { array_security_spend^i = police_cost_multiplier }
 	}
-	
+
 	set_variable = { police_cost_multiplier_display = police_cost_multiplier }
 	subtract_from_variable = { police_cost_multiplier_display = 1 }
 
@@ -1118,9 +1119,9 @@ update_police_rate = {
 update_education_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_education_spend
-	
+
 	#Set the base cost of education (billion $ per 10 000 000 people)
-	set_temp_variable = { education_base_cost = 0.144 }	
+	set_temp_variable = { education_base_cost = 0.144 }
 
 	#recreate the array
 	for_loop_effect = {
@@ -1129,7 +1130,7 @@ update_education_rate = {
 
 		add_to_array = { array_education_spend = 0 }
 	}
-	
+
 	#Calculate the base cost of bureaucracy levels
 	for_each_loop = {
 		array = array_education_spend
@@ -1163,19 +1164,19 @@ update_education_rate = {
 	else_if = { limit = { has_idea = edu_05 }
 		set_temp_variable = { education_index = 4 }
 	}
-	
+
 	#Education spending is more expensive for poor countries - linear approximation with -0.086 * GDP/C + 2.182
 	set_temp_variable = { gdp_education_cost_modifier = gdp_per_capita }
 	multiply_temp_variable = { gdp_education_cost_modifier = -0.086 }
 	add_to_temp_variable = { gdp_education_cost_modifier = 2.182 }
 	clamp_temp_variable = { var = gdp_education_cost_modifier min = 1 }
-	
+
 	for_each_loop = {
 		array = array_education_spend
 		index = i
 		multiply_variable = { array_education_spend^i = gdp_education_cost_modifier }
 	}
-	
+
 	set_variable = { education_cost_gdp_multiplier_display = gdp_education_cost_modifier }
 	subtract_from_variable = { education_cost_gdp_multiplier_display = 1 }
 
@@ -1205,7 +1206,7 @@ update_education_rate = {
 	if = {
 		limit = { has_tech = internet6 }
 		subtract_from_temp_variable = { education_cost_multiplier = 0.05 }
-	}	
+	}
 
 	for_each_loop = {
 		array = array_education_spend
@@ -1213,7 +1214,7 @@ update_education_rate = {
 		value = v
 		multiply_variable = { array_education_spend^i = education_cost_multiplier }
 	}
-	
+
 	set_variable = { education_cost_multiplier_display = education_cost_multiplier }
 	subtract_from_variable = { education_cost_multiplier_display = 1 }
 
@@ -1224,17 +1225,17 @@ update_education_rate = {
 update_health_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_health_spend
-	
+
 	#Set the base cost of health (billion $ per 10 000 000 people)
-	set_temp_variable = { health_base_cost = 0.010 }	
-	
+	set_temp_variable = { health_base_cost = 0.010 }
+
 	#Create the array for manipulation purposes
 	for_loop_effect = {
 		start = 0
 		end = 6
 		add_to_array = { array_health_spend = 0 }
 	}
-	
+
 	#Calculate the base cost of health levels
 	for_each_loop = {
 		array = array_health_spend
@@ -1272,7 +1273,7 @@ update_health_rate = {
 	else_if = { limit = { has_idea = health_06 }
 		set_temp_variable = { health_index = 5 }
 	}
-	
+
 	#Additional additive modifiers
 	set_temp_variable = { health_cost_multiplier = 1 }
 	##Generic
@@ -1291,7 +1292,7 @@ update_health_rate = {
 		value = v
 		multiply_variable = { var = array_health_spend^i value = health_cost_multiplier }
 	}
-	
+
 	set_variable = { health_cost_multiplier_display = health_cost_multiplier }
 	subtract_from_variable = { health_cost_multiplier_display = 1 }
 
@@ -1310,9 +1311,9 @@ update_health_rate = {
 update_social_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_social_spend
-	
+
 	#Set the base cost of welfare (billion $ per 10 000 000 people)
-	set_temp_variable = { social_base_cost = 0.020 }	
+	set_temp_variable = { social_base_cost = 0.020 }
 
 	#recreate the array
 	for_loop_effect = {
@@ -1321,7 +1322,7 @@ update_social_rate = {
 
 		add_to_array = { array_social_spend = 0 }
 	}
-	
+
 	#Calculate the base cost of social levels
 	for_each_loop = {
 		array = array_social_spend
@@ -1359,9 +1360,9 @@ update_social_rate = {
 	else_if = { limit = { has_idea = social_06 }
 		set_temp_variable = { social_index = 5 }
 	}
-	
+
 	#Additional additive modifiers
-	set_temp_variable = { social_cost_multiplier = 1 }	
+	set_temp_variable = { social_cost_multiplier = 1 }
 
 	for_each_loop = {
 		array = array_social_spend
@@ -1369,7 +1370,7 @@ update_social_rate = {
 		value = v
 		multiply_variable = { var = array_social_spend^i value = social_cost_multiplier }
 	}
-	
+
 	set_variable = { social_cost_multiplier_display = social_cost_multiplier }
 	subtract_from_variable = { social_cost_multiplier_display = 1 }
 
@@ -1389,17 +1390,17 @@ update_social_rate = {
 calculate_int_investments_rate = {
 	#Set base ROI rate
 	set_variable = { roi_rate = 0.06 }	#6%
-	
+
 	#This is how much money we get back in a year
 	set_variable = { int_investments_rate = int_investments }
 	multiply_variable = { int_investments_rate = roi_rate }
-	
+
 	divide_variable = { int_investments_rate = 365 }	#Per day
 	multiply_variable = { int_investments_rate = 7 } #7 days worth of income
 }
 
 #Calculates income from resources
-calculate_resource_sale_rate = {  
+calculate_resource_sale_rate = {
 	#Set the base price for single unit of resource, this is the relative price between resources
 	set_temp_variable = { oil_price = 5 }	#Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
 	set_temp_variable = { steel_price = 0.01 }	#Based on steel price
@@ -1407,7 +1408,7 @@ calculate_resource_sale_rate = {
 	set_temp_variable = { tungsten_price = 0.2 }	#Based on copper price
 	set_temp_variable = { chromium_price = 1 }	#Based on gold price
 	set_temp_variable = { rubber_price = 0.05 }	#Based on rubber price
-	
+
 	#resource_exported = total amount of resources put to market
 	set_variable = { oil_exports = resource_exported@oil }
 	set_variable = { steel_exports = resource_exported@steel }
@@ -1415,15 +1416,15 @@ calculate_resource_sale_rate = {
 	set_variable = { tungsten_exports = resource_exported@tungsten }
 	set_variable = { chromium_exports = resource_exported@chromium }
 	set_variable = { rubber_exports = resource_exported@rubber }
-	
+
 	#Add up total
-	set_temp_variable = { resource_exports = oil_exports } 
+	set_temp_variable = { resource_exports = oil_exports }
 	add_to_temp_variable = { resource_exports = steel_exports }
 	add_to_temp_variable = { resource_exports = aluminium_exports }
 	add_to_temp_variable = { resource_exports = tungsten_exports }
 	add_to_temp_variable = { resource_exports = chromium_exports }
-	add_to_temp_variable = { resource_exports = rubber_exports }	
-	
+	add_to_temp_variable = { resource_exports = rubber_exports }
+
 	#Don't give money for resources that are bought, as they already give CIC
 	set_temp_variable = { CIC_from_trade = num_of_civilian_factories }
 	subtract_from_temp_variable = { CIC_from_trade = industrial_complex_total }
@@ -1432,7 +1433,7 @@ calculate_resource_sale_rate = {
 	subtract_from_temp_variable = { CIC_from_trade = 1 }
 	multiply_temp_variable = { CIC_from_trade = -1 }
 	clamp_temp_variable = { var = CIC_from_trade max = 1 min = 0 }
-	
+
 	#Scale down everything based on above
 	multiply_variable = { oil_exports = CIC_from_trade }
 	multiply_variable = { steel_exports = CIC_from_trade }
@@ -1440,7 +1441,7 @@ calculate_resource_sale_rate = {
 	multiply_variable = { tungsten_exports = CIC_from_trade }
 	multiply_variable = { chromium_exports = CIC_from_trade }
 	multiply_variable = { rubber_exports = CIC_from_trade }
-	
+
 	#Multiply with cost to get money generated
 	multiply_variable = { oil_exports = oil_price }
 	multiply_variable = { steel_exports = steel_price }
@@ -1448,35 +1449,35 @@ calculate_resource_sale_rate = {
 	multiply_variable = { tungsten_exports = tungsten_price }
 	multiply_variable = { chromium_exports = chromium_price }
 	multiply_variable = { rubber_exports = rubber_price }
-	
+
 	#Additional additive modifiers
 	set_temp_variable = { resource_export_multiplier = 1 }
-	
+
 	multiply_variable = { oil_exports = resource_export_multiplier }
 	multiply_variable = { steel_exports = resource_export_multiplier }
 	multiply_variable = { aluminium_exports = resource_export_multiplier }
 	multiply_variable = { tungsten_exports = resource_export_multiplier }
 	multiply_variable = { chromium_exports = resource_export_multiplier }
 	multiply_variable = { rubber_exports = resource_export_multiplier }
-	
+
 	set_variable = { resource_export_multiplier_display = resource_export_multiplier }
 	subtract_from_variable = { resource_export_multiplier_display = 1 }
-	
+
 	#Scale factors
-	divide_variable = { oil_exports = 1900 } 
-	divide_variable = { steel_exports = 1900 } 
-	divide_variable = { aluminium_exports = 1900 } 
-	divide_variable = { tungsten_exports = 1900 } 
-	divide_variable = { chromium_exports = 1900 } 
-	divide_variable = { rubber_exports = 1900 } 
-	
+	divide_variable = { oil_exports = 1900 }
+	divide_variable = { steel_exports = 1900 }
+	divide_variable = { aluminium_exports = 1900 }
+	divide_variable = { tungsten_exports = 1900 }
+	divide_variable = { chromium_exports = 1900 }
+	divide_variable = { rubber_exports = 1900 }
+
 	#Income for 7 days
-	multiply_variable = { oil_exports = 7 } 
-	multiply_variable = { steel_exports = 7 } 
-	multiply_variable = { aluminium_exports = 7 } 
-	multiply_variable = { tungsten_exports = 7 } 
-	multiply_variable = { chromium_exports = 7 } 
-	multiply_variable = { rubber_exports = 7 } 
+	multiply_variable = { oil_exports = 7 }
+	multiply_variable = { steel_exports = 7 }
+	multiply_variable = { aluminium_exports = 7 }
+	multiply_variable = { tungsten_exports = 7 }
+	multiply_variable = { chromium_exports = 7 }
+	multiply_variable = { rubber_exports = 7 }
 
 	#Add total cost
 	set_variable = { resource_sale_rate = oil_exports }
@@ -1508,14 +1509,14 @@ update_economic_cycle_cost = {
 	#Base on size of economy
 	set_variable = { econ_cycle_upg_cost = gdp_total }
 	divide_variable = { econ_cycle_upg_cost = 660 }
-	
+
 	#Additional additive modifiers
 	set_temp_variable = { econ_cycle_upg_cost_multiplier = 1 }
-	if = { 
+	if = {
 		limit = { has_idea = the_euro }
 		add_to_temp_variable = { econ_cycle_upg_cost_multiplier = 0.5 }
 	}
-	
+
 	multiply_variable = { econ_cycle_upg_cost = econ_cycle_upg_cost_multiplier }
 }
 
