@@ -4255,8 +4255,12 @@ country_event = {
 	desc = bankruptcy.0.d
 	picture = GFX_stock_market
 	is_triggered_only = yes
+	#Looming Bankruptcy added
 	immediate = {
-		set_country_flag = bailout_happened #prevent to trigger again even if not given - yet.
+		if = {
+			limit = { NOT = { has_country_flag = looming_bankruptcy } }
+			set_country_flag = looming_bankruptcy
+		}
 	}
 
 	#Request Bailouts
@@ -4302,15 +4306,10 @@ country_event = {
 			has_variable = influence_array^1
 			var:influence_array^1 = {
 				ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
-			}
-			var:influence_array^1 = {
-				has_opinion = {
-					target = PREV
-					value > -11
-				}
+				has_opinion = { target = PREV value > -11 }
 			}
 		}
-
+		#Sends second influencer the event
 		var:influence_array^1 = { country_event = { id = bankruptcy.1 days = 1 } }
 
 		ai_chance = {
@@ -4322,10 +4321,7 @@ country_event = {
 			modifier = {
 				factor = 0.1
 				var:influence_array^1 = {
-					has_opinion = {
-						target = ROOT
-						value < 1
-					}
+					has_opinion = { target = ROOT value < 1 }
 				}
 			}
 			modifier = {
@@ -4340,6 +4336,16 @@ country_event = {
 	option = {
 		name = bankruptcy.0.3
 		log = "[GetDateText]: [This.GetName]: bankruptcy.0.3 executed"
+		trigger = {
+			has_variable = influence_array^2
+			var:influence_array^2 = {
+				ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
+				has_opinion = { target = PREV value > -11 }
+			}
+		}
+		#Sends the request to the third largest influencer
+		var:influence_array^2 = { country_event = { id = bankruptcy.1 days = 1 } }
+
 		ai_chance = {
 			factor = 5
 			modifier = {
@@ -4349,10 +4355,7 @@ country_event = {
 			modifier = {
 				factor = 0.1
 				var:influence_array^2 = {
-					has_opinion = {
-						target = ROOT
-						value < 1
-					}
+					has_opinion = { target = ROOT value < 1 }
 				}
 			}
 			modifier = {
@@ -4362,24 +4365,6 @@ country_event = {
 				}
 			}
 		}
-
-		trigger = {
-			has_variable = influence_array^2
-			var:influence_array^2 = {
-				ic_ratio = { tag = PREV ratio > 2.0 } #has capacity
-			}
-			var:influence_array^2 = {
-				has_opinion = {
-					target = PREV
-					value > -11
-				}
-			}
-		}
-
-		var:influence_array^2 = {
-				country_event = { id = bankruptcy.1 days = 1 }
-		}
-
 	}
 	#Fourth Largest Influencer
 	option = {
@@ -5090,36 +5075,28 @@ news_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		set_temp_variable = { bankrupcy_check = size_modifier }
-		divide_temp_variable = { bankrupcy_check = 2.2 }
-		if = {
-			limit = {
-				check_variable = { bankrupcy_check < debt_rate }
-			}
-			add_timed_idea = { idea = bankrupcy days = 1825 } #5-years
+		add_timed_idea = { idea = bankrupcy days = 1825 } #5-years
 
-			custom_effect_tooltip = econvent.list.depression_tt
-			set_country_flag = disable_cycle_costs
-			hidden_effect = { add_ideas = depression }
-			calculate_tax_gain = yes
-			clr_country_flag = disable_cycle_costs
+		custom_effect_tooltip = econvent.list.depression_tt
+		set_country_flag = disable_cycle_costs
+		hidden_effect = { add_ideas = depression }
+		calculate_tax_gain = yes
+		clr_country_flag = disable_cycle_costs
 
-			#sells reserves
-			subtract_from_variable = { debt = int_investments }
-			set_variable = { int_investments = 0 }
-			multiply_variable = { debt = 0.2 } #reduces debt
+		#sells reserves
+		subtract_from_variable = { debt = int_investments }
+		set_variable = { int_investments = 0 }
+		multiply_variable = { debt = 0.2 } #reduces debt
 
-			set_variable = { reduction_factor = 0.25 }
-			remove_civilian_industry_effect = yes
+		set_variable = { reduction_factor = 0.25 }
+		remove_civilian_industry_effect = yes
 
-			clear_variable = reduction_factor
+		clear_variable = reduction_factor
 
-			ingame_update_setup = yes #safety reboot
+		ingame_update_setup = yes #safety reboot
 
-			#init_influence = yes
-			set_variable = { domestic_influence_amount = 0 }
-			recalculate_influence = yes
-		}
+		set_variable = { domestic_influence_amount = 0 }
+		recalculate_influence = yes
 	}
 
 	#Give it
