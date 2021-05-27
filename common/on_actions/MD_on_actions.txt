@@ -435,24 +435,17 @@ on_actions = {
 			#Bankruptcy Events
 			if = {
 				limit = {
-					check_variable = { interest_rate > 12 }
+					check_variable = { interest_rate > 11 }
 					NOT = { has_country_flag = bankrupt }
 					OR = {
-						check_variable = { global.month = 3 } #March
+						check_variable = { global.month = 2 } #February
+						check_variable = { global.month = 4 } #April
 						check_variable = { global.month = 6 } #June
-						check_variable = { global.month = 9 } #Sept
-						check_variable = { global.month = 12 } #Dec
+						check_variable = { global.month = 8 } #August
+						check_variable = { global.month = 10 } #October
+						check_variable = { global.month = 12 } #December
 					}
 				}
-				if = { 
-					limit = {
-						check_variable = { interest_rate < 13 }
-						has_country_flag = looming_bankruptcy
-					}
-					set_temp_variable = { event_temp = 1 }
-					country_event = { }
-				}
-
 				random_list = {
 					10 = { #Commit to Reducing Debt
 						modifier = { #Killswitch
@@ -475,20 +468,25 @@ on_actions = {
 						}
 						country_event = { id = bankruptcy.203 days = 1 }
 					}
-					10 = { #Request Bailout -- Sets the looming bankruptcy flag
+					15 = { #Request Bailout -- Sets the looming bankruptcy flag
 						modifier = {
 							factor = 0.10
+							check_variable = { interest_rate < 12 }
+						}
+						modifier = {
+							factor = 1.25
+							check_variable = { interest_rate > 11 }
 							check_variable = { interest_rate < 15 }
 						}
 						modifier = {
-							factor = 0.50
+							factor = 1.50
 							check_variable = { interest_rate > 14 }
 							check_variable = { interest_rate < 18 }
 						}
 						modifier = {
-							factor = 1.25
+							factor = 1.75
 							check_variable = { interest_rate > 17 }
-							check_variable = { interest_rate < 21 }
+							check_variable = { interest_rate < 26 }
 						}
 						modifier = {
 							factor = 2.5
@@ -506,15 +504,69 @@ on_actions = {
 							factor = 1.10
 							has_idea = stagnation
 						}
+						modifier = {
+							factor = 0
+							has_country_flag = looming_bankruptcy
+						}
 						country_event = { id = bankruptcy.0 days = 1 }
 					}
-					10 = {
-
+					15 = {
+						modifier = {
+							factor = 0
+							NOT = { has_country_flag = looming_bankruptcy }
+						}
+						modifier = {
+							factor = 1.25
+							check_variable = { interest_rate > 11 }
+							check_variable = { interest_rate < 15 }
+						}
+						modifier = {
+							factor = 1.50
+							check_variable = { interest_rate > 14 }
+							check_variable = { interest_rate < 18 }
+						}
+						modifier = {
+							factor = 1.75
+							check_variable = { interest_rate > 17 }
+							check_variable = { interest_rate < 26 }
+						}
+						modifier = {
+							factor = 2.5
+							check_variable = { interest_rate > 25 }
+						}
+						modifier = {
+							factor = 2.0
+							has_idea = depression
+						}
+						modifier = {
+							factor = 1.25
+							has_idea = recession
+						}
+						modifier = {
+							factor = 1.10
+							has_idea = stagnation
+						}
+						country_event = { id = News_bankruptcy.6 }
 					}
-					60 = {
+					55 = {
+						modifier = {
+							factor = 1.25
+							OR = {
+								has_country_flag = BANK_committed_reducing_debt
+								has_country_flag = government_agency_bankruptcy
+							}
+						}
 						#Nothing Happens
 					}
 				}
+			}
+			#Looming Bankruptcy is no longer a threat
+			if = {
+				limit = {
+					check_variable = { interest_rate < 12 }
+					has_country_flag = looming_bankruptcy
+				}
+				country_event = { id = bankruptcy.3 }
 			}
 			#Nation is Bankrupt! Events
 			if = {
@@ -528,6 +580,7 @@ on_actions = {
 						check_variable = { global.month = 12 } #Dec
 					}
 				}
+				#TODO: Need more evnets to fill in here
 			}
 			#Burmese Insurgency Events
 			if = {
@@ -544,7 +597,7 @@ on_actions = {
 				country_event = { id = Insurgency.8 days = 15 random_days = 40 }
 			}
 
-			#Child Soliders Events
+			#Child Soldiers Events
 			if = {
 				limit = {
 					has_idea = child_soldiers

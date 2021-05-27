@@ -4247,15 +4247,16 @@ country_event = {
 }
 
 
-##Bird's Bankruptcy Events
-### Bailout needed ###
+# Bird's Bankruptcy Events and Content
+# Bailout Needed/Looming Bankruptcy
 country_event = {
 	id = bankruptcy.0
 	title = bankruptcy.0.t
 	desc = bankruptcy.0.d
 	picture = GFX_stock_market
 	is_triggered_only = yes
-	#Looming Bankruptcy added
+
+	#Looming Bankruptcy Flag added
 	immediate = {
 		if = {
 			limit = { NOT = { has_country_flag = looming_bankruptcy } }
@@ -4370,29 +4371,6 @@ country_event = {
 	option = {
 		name = bankruptcy.0.4
 		log = "[GetDateText]: [This.GetName]: bankruptcy.0.4 executed"
-		ai_chance = {
-			factor = 3
-			modifier = {
-				factor = 3
-				is_in_faction_with = var:influence_array^3
-			}
-			modifier = {
-				factor = 0.1
-				var:influence_array^3 = {
-					has_opinion = {
-						target = ROOT
-						value < 1
-					}
-				}
-			}
-			modifier = {
-				factor = 2
-				var:influence_array^3 = {
-					ic_ratio = { tag = PREV ratio > 10.0 } #has lotsa capacity
-				}
-			}
-		}
-
 		trigger = {
 			has_variable = influence_array^3
 			var:influence_array^3 = {
@@ -4448,24 +4426,17 @@ country_event = {
 			}
 		}
 
-		var:influence_array^3 = {
-				country_event = { id = bankruptcy.1 days = 1 }
-		}
+		var:influence_array^3 = { country_event = { id = bankruptcy.1 days = 1 } }
 
-	}
-	#Fifth
-	option = {
-		name = bankruptcy.0.5
-		log = "[GetDateText]: [This.GetName]: bankruptcy.0.5 executed"
 		ai_chance = {
-			factor = 2
+			factor = 3
 			modifier = {
 				factor = 3
-				is_in_faction_with = var:influence_array^4
+				is_in_faction_with = var:influence_array^3
 			}
 			modifier = {
 				factor = 0.1
-				var:influence_array^4 = {
+				var:influence_array^3 = {
 					has_opinion = {
 						target = ROOT
 						value < 1
@@ -4474,12 +4445,16 @@ country_event = {
 			}
 			modifier = {
 				factor = 2
-				var:influence_array^4 = {
+				var:influence_array^3 = {
 					ic_ratio = { tag = PREV ratio > 10.0 } #has lotsa capacity
 				}
 			}
 		}
-
+	}
+	#Fifth
+	option = {
+		name = bankruptcy.0.5
+		log = "[GetDateText]: [This.GetName]: bankruptcy.0.5 executed"
 		trigger = {
 			has_variable = influence_array^4
 			var:influence_array^4 = {
@@ -4547,10 +4522,30 @@ country_event = {
 			}
 		}
 
-		var:influence_array^4 = {
-				country_event = { id = bankruptcy.1 days = 1 }
-		}
+		var:influence_array^4 = { country_event = { id = bankruptcy.1 days = 1 } }
 
+		ai_chance = {
+			factor = 2
+			modifier = {
+				factor = 3
+				is_in_faction_with = var:influence_array^4
+			}
+			modifier = {
+				factor = 0.1
+				var:influence_array^4 = {
+					has_opinion = {
+						target = ROOT
+						value < 1
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				var:influence_array^4 = {
+					ic_ratio = { tag = PREV ratio > 10.0 } #has lotsa capacity
+				}
+			}
+		}
 	}
 	#Sixth
 	option = {
@@ -4781,9 +4776,7 @@ country_event = {
 			}
 		}
 
-		var:influence_array^6 = {
-				country_event = { id = bankruptcy.1 days = 1 }
-		}
+		var:influence_array^6 = { country_event = { id = bankruptcy.1 days = 1 } }
 
 	}
 
@@ -5011,11 +5004,10 @@ country_event = {
 		name = bankruptcy.1.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.0.b executed"
 
-		FROM = {
-			set_country_flag = reject_bailout@PREV
-			country_event = { id = diplomatic_response.2 }
+		FROM = { country_event = { id = bankruptcy.4 } }
+		ai_chance = {
+			factor = 0
 		}
-		ai_chance = { factor = 0 }
 	}
 }
 
@@ -5103,6 +5095,55 @@ news_event = {
 	option = {
 		name = News_bankruptcy.6.a
 		log = "[GetDateText]: [This.GetName]: News_bankruptcy.6.a executed"
+		for_each_loop = {
+			array = influence_array
+			country_event = { id = bankruptcy.5 }
+		}
+	}
+}
+
+##Looming Bankruptcy is no longer a threat
+country_event = {
+	id = bankruptcy.3
+	title = bankruptcy.3.t
+	desc = bankruptcy.3.d
+	is_triggered_only = yes
+	picture = bank_crisis
+
+	#Clrs Looming Bankruptcy
+	option = {
+		name = bankruptcy.3.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.3.a executed"
+		clr_country_flag = looming_bankruptcy
+	}
+}
+
+#We were denied the bailout
+country_event = {
+	id = bankruptcy.4
+	title = bankruptcy.4.t
+	desc = bankruptcy.4.d
+	is_triggered_only = yes
+	picture = bank_crisis
+
+	#We were denied our bailout
+	option = {
+		name = bankruptcy.4.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.4.a executed"
+		add_opinion_modifier = { modifier = did_not_support_us target = FROM }
+	}
+}
+
+#[FROM.GetName] has declared Bankruptcy
+country_event = {
+	id = bankruptcy.5
+	title = bankruptcy.5.t
+	desc = bankruptcy.5.d
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.5.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.5.a executed"
 	}
 }
 
@@ -5291,21 +5332,19 @@ country_event = { #Military Funding Issues
 		NOT = { has_idea = no_military }
 	}
 
+	#Raise Military Spending
 	option = {
 		name = bankruptcy.203.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.203.a executed"
 		increase_military_spending = yes
 		increase_the_military_opinion = yes
 
-		# random_list = {
-		# 	10 = { country_event = { id = bankruptcy.204 days = 1 random_days = 15 } }
-		# 	90 = { }
-		# }
 		ai_chance = {
 			factor = 0
 		}
 	}
 
+	#Temporary Influx
 	option = {
 		name = bankruptcy.203.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.203.b executed"
@@ -5355,6 +5394,7 @@ country_event = { #Military Funding Issues
 		}
 	}
 
+	#Fuck you
 	option = {
 		name = bankruptcy.203.c
 		log = "[GetDateText]: [This.GetName]: bankruptcy.203.c executed"
@@ -5362,10 +5402,6 @@ country_event = { #Military Funding Issues
 		add_war_support = -0.05
 		add_political_power = 150
 
-		# random_list = {
-		# 	60 = { country_event = { id = bankruptcy.204 days = 1 random_days = 15 } }
-		# 	40 = { }
-		# }
 		ai_chance = {
 			factor = 0
 		}
