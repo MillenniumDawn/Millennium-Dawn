@@ -46,6 +46,7 @@ ingame_update_setup = {
 	calculate_int_investments_rate = yes
 	calculate_resource_sale_rate = yes
 	calculate_tax_gain = yes
+	calculate_additional_income_rate = yes
 
 	#Expenses
 	update_military_rate = yes
@@ -55,6 +56,7 @@ ingame_update_setup = {
 	update_health_rate = yes
 	update_social_rate = yes
 	calculate_interest_rate = yes
+	calculate_additional_expense_rate = yes
 
 	#Various
 	update_economic_cycle_cost = yes
@@ -266,6 +268,23 @@ calculate_tax_gain = {
 	set_variable = { var = tax_gain value = corporate_tax }
 	add_to_variable = { var = tax_gain value = population_tax }
 
+}
+
+calculate_additional_income_rate = {
+	set_variable = { additional_income_rate = 0 }
+	
+	#Additional incomes, set income amount as a variable (weekly gain)
+	if = {
+		limit = { has_idea = full_control_of_suez }
+		set_variable = { additional_income_suez = 0.1 }
+		add_to_variable = { additional_income_rate = additional_income_suez }
+	}
+	if = {
+		limit = { has_idea = partial_control_of_suez }
+		set_variable = { additional_income_suez_partial = 0.05 }
+		add_to_variable = { additional_income_rate = additional_income_suez_partial }
+	}
+	
 }
 
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
@@ -1160,6 +1179,11 @@ update_social_rate = {
 	set_variable = { welfare_gain = array_social_spend^social_index }
 }
 
+calculate_additional_expense_rate = {
+	set_variable = { additional_expenses_rate = 0 }
+	
+}
+
 #Income Related Stuff --- International Investments and Calculated Resource Sale Rate
 #Update money gained from international investments
 calculate_int_investments_rate = {
@@ -1264,20 +1288,22 @@ calculate_resource_sale_rate = {
 }
 
 update_display = {
-	set_variable = { var = display_expense value = bureaucracy_gain }
-	add_to_variable = { var = display_expense value = defence_gain }
-	add_to_variable = { var = display_expense value = security_gain }
-	add_to_variable = { var = display_expense value = education_gain }
-	add_to_variable = { var = display_expense value = health_gain }
-	add_to_variable = { var = display_expense value = welfare_gain }
-	add_to_variable = { var = display_expense value = debt_rate }
+	set_variable = { display_expense = bureaucracy_gain }
+	add_to_variable = { display_expense = defence_gain }
+	add_to_variable = { display_expense = security_gain }
+	add_to_variable = { display_expense = education_gain }
+	add_to_variable = { display_expense = health_gain }
+	add_to_variable = { display_expense = welfare_gain }
+	add_to_variable = { display_expense = debt_rate }
+	add_to_variable = { display_expense = additional_expenses_rate }
 
-	set_variable = { var = display_income value = tax_gain }
-	add_to_variable = { var = display_income value = resource_sale_rate }
-	add_to_variable = { var = display_income value = int_investments_rate }
+	set_variable = { display_income = tax_gain }
+	add_to_variable = { display_income = resource_sale_rate }
+	add_to_variable = { display_income = int_investments_rate }
+	add_to_variable = { display_income = additional_income_rate }
 
-	set_variable = { var = treasury_rate value = display_income }
-	subtract_from_variable = { var = treasury_rate value = display_expense }
+	set_variable = { treasury_rate = display_income }
+	subtract_from_variable = { treasury_rate = display_expense }
 }
 
 update_economic_cycle_cost = {
@@ -1469,7 +1495,8 @@ calculate_gdp = {
 	set_variable = { gdp_total_display = gdp_total }
 	divide_variable = { gdp_total_display = 10 }	#In billion $
 
-	clamp_variable = { var = gdp_total min = 155 }
+	#Min GDP is 0.5*MIC to avoid 0 GDP
+	clamp_variable = { var = gdp_total min = 80 }
 
 	set_variable = { gdp_per_capita = gdp_total }
 	divide_variable = { gdp_per_capita = population_total }
