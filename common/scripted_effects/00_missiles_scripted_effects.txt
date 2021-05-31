@@ -413,68 +413,117 @@ set_warhead = {
 	}
 }
 
+set_launch_button_number_vars = {
+	if = {
+		limit = {
+			OR = {
+				has_selected_SLCM = yes
+				has_selected_HSCM = yes
+			}
+		}
+		set_ship_number_LAM = yes
+	}
+	if = {
+		limit = {
+			OR = {
+				has_selected_SLBM = yes
+				has_selected_SLCM = yes
+				has_selected_HSCM = yes
+			}
+		}
+		set_sub_number_LAM = yes
+	}
+	if = {
+		limit = {
+			OR = {
+				has_selected_ALCM = yes
+				has_selected_HSCM = yes
+			}
+		}
+		set_bomber_number_ALCM = yes
+		set_STK_number_ALCM = yes
+		set_MR_number_ALCM = yes
+		set_MR_CV_number_ALCM = yes
+		set_variable = { var_CV_number_LAM = 0 }
+	}
+}
+
+
+
 set_ship_number_LAM = {
+	###
+	#log = "set_ship_number_LAM start var_ship_number_LAM = [?var_ship_number_LAM] var_gui_salvo = [?var_gui_salvo]"
+	###
 	if = {
 		limit = {
 	 		check_variable = { var_ship_VLS_launcher > var_ship_launcher }
 		}
 		set_variable = { var_ship_number_LAM = 0 }
 		set_variable = { var_ship_number_LAM_loc = 0 }
-		set_temp_variable = { temp1 = 0 }
+		set_temp_variable = { temp1_ship_number_LAM = 0 }
 		while_loop_effect = {
 			limit = {
-				check_variable = { var_gui_salvo > temp1 }
+				check_variable = { var_gui_salvo > temp1_ship_number_LAM }
 			}
 			add_to_variable = { var_ship_number_LAM = 1 }
 			add_to_variable = { var_ship_number_LAM_loc = 1 }
-			set_temp_variable = { temp1 = var_ship_number_LAM }
-			multiply_temp_variable = { temp1 = var_ship_VLS_launcher }
+			set_temp_variable = { temp1_ship_number_LAM = var_ship_number_LAM }
+			multiply_temp_variable = { temp1_ship_number_LAM = var_ship_VLS_launcher }
 		}
 		subtract_from_variable = { var_ship_number_LAM = 1 }
 	}
 	else = {
 		set_variable = { var_ship_number_LAM = 0 }
 		set_variable = { var_ship_number_LAM_loc = 0 }
-		set_temp_variable = { temp1 = 0 }
+		set_temp_variable = { temp1_ship_number_LAM = 0 }
 		while_loop_effect = {
 			limit = {
-				check_variable = { var_gui_salvo > temp1 }
+				check_variable = { var_gui_salvo > temp1_ship_number_LAM }
 			}
 			add_to_variable = { var_ship_number_LAM = 1 }
 			add_to_variable = { var_ship_number_LAM_loc = 1 }
-			set_temp_variable = { temp1 = var_ship_number_LAM }
-			multiply_temp_variable = { temp1 = var_ship_launcher }
+			set_temp_variable = { temp1_ship_number_LAM = var_ship_number_LAM }
+			multiply_temp_variable = { temp1_ship_number_LAM = var_ship_launcher }
 		}
 		subtract_from_variable = { var_ship_number_LAM = 1 }
 	}
+	###
+	#log = "set_ship_number_LAM stop var_ship_number_LAM = [?var_ship_number_LAM] var_gui_salvo = [?var_gui_salvo]"
+	###
 }
 
 set_sub_number_LAM = {
+	###
+	log = "var_sub_number_LAM start var_sub_number_LAM = [?var_sub_number_LAM] var_gui_salvo = [?var_gui_salvo]"
+	###
 	set_variable = { var_sub_number_LAM = 0 }
 	set_variable = { var_sub_number_LAM_loc = 0 }
-	set_temp_variable = { temp1 = 0 }
+	set_temp_variable = { temp1_sub_number_LAM = 0 }
 	while_loop_effect = {
 		limit = {
-			check_variable = { var_gui_salvo > temp1 }
+			check_variable = { var_gui_salvo > temp1_sub_number_LAM }
 		}
 		add_to_variable = { var_sub_number_LAM = 1 }
 		add_to_variable = { var_sub_number_LAM_loc = 1 }
-		set_temp_variable = { temp1 = var_sub_number_LAM }
-		multiply_temp_variable = { temp1 = var_sub_launcher }
+		set_temp_variable = { temp1_sub_number_LAM = var_sub_number_LAM }
+		multiply_temp_variable = { temp1_sub_number_LAM = var_sub_launcher }
 	}
 	subtract_from_variable = { var_sub_number_LAM = 1 }
+	###
+	log = "var_sub_number_LAM stop var_sub_number_LAM = [?var_sub_number_LAM] var_gui_salvo = [?var_gui_salvo] var_sub_launcher = [?var_sub_launcher]"
+	###
 }
 
 set_bomber_number_ALCM = {
 	set_variable = { var_bomber_number_ALCM = 0 }
-	set_temp_variable = { temp1 = 0 }
+	set_temp_variable = { temp1_bomber_number_ALCM = 0 }
 	while_loop_effect = {
 		limit = {
-			check_variable = { var_gui_salvo > temp1 }
+			check_variable = { var_gui_salvo > temp1_bomber_number_ALCM }
 		}
 		add_to_variable = { var_bomber_number_ALCM = 1 }
-		set_temp_variable = { temp1 = var_bomber_number_ALCM }
-		multiply_temp_variable = { temp1 = var_bomber_launcher }
+		set_temp_variable = { temp1_bomber_number_ALCM = var_bomber_number_ALCM }
+		multiply_temp_variable = { temp1_bomber_number_ALCM = var_bomber_launcher }
 	}
 	set_variable = { var_bomber_number_ALCM_loc = var_bomber_number_ALCM }
 	if = {
@@ -487,14 +536,14 @@ set_bomber_number_ALCM = {
 
 set_STK_number_ALCM = {
 	set_variable = { var_STK_number_ALCM = 0 }
-	set_temp_variable = { temp1 = 0 }
+	set_temp_variable = { temp1_STK_number_ALCM = 0 }
 	while_loop_effect = {
 		limit = {
-			check_variable = { var_gui_salvo > temp1 }
+			check_variable = { var_gui_salvo > temp1_STK_number_ALCM }
 		}
 		add_to_variable = { var_STK_number_ALCM = 1 }
-		set_temp_variable = { temp1 = var_STK_number_ALCM }
-		multiply_temp_variable = { temp1 = var_STK_launcher }
+		set_temp_variable = { temp1_STK_number_ALCM = var_STK_number_ALCM }
+		multiply_temp_variable = { temp1_STK_number_ALCM = var_STK_launcher }
 	}
 	set_variable = { var_STK_number_ALCM_loc = var_STK_number_ALCM }
 	if = {
@@ -507,14 +556,14 @@ set_STK_number_ALCM = {
 
 set_MR_number_ALCM = {
 	set_variable = { var_MR_number_ALCM = 0 }
-	set_temp_variable = { temp1 = 0 }
+	set_temp_variable = { temp1_MR_number_ALCM = 0 }
 	while_loop_effect = {
 		limit = {
-			check_variable = { var_gui_salvo > temp1 }
+			check_variable = { var_gui_salvo > temp1_MR_number_ALCM }
 		}
 		add_to_variable = { var_MR_number_ALCM = 1 }
-		set_temp_variable = { temp1 = var_MR_number_ALCM }
-		multiply_temp_variable = { temp1 = var_MR_launcher }
+		set_temp_variable = { temp1_MR_number_ALCM = var_MR_number_ALCM }
+		multiply_temp_variable = { temp1_MR_number_ALCM = var_MR_launcher }
 	}
 	set_variable = { var_MR_number_ALCM_loc = var_MR_number_ALCM }
 	if = {
@@ -527,14 +576,14 @@ set_MR_number_ALCM = {
 
 set_MR_CV_number_ALCM = {
 	set_variable = { var_MR_CV_number_ALCM = 0 }
-	set_temp_variable = { temp1 = 0 }
+	set_temp_variable = { temp1_MR_CV_number_ALCM = 0 }
 	while_loop_effect = {
 		limit = {
-			check_variable = { var_gui_salvo > temp1 }
+			check_variable = { var_gui_salvo > temp1_MR_CV_number_ALCM }
 		}
 		add_to_variable = { var_MR_CV_number_ALCM = 1 }
-		set_temp_variable = { temp1 = var_MR_CV_number_ALCM }
-		multiply_temp_variable = { temp1 = var_MR_CV_launcher }
+		set_temp_variable = { temp1_MR_CV_number_ALCM = var_MR_CV_number_ALCM }
+		multiply_temp_variable = { temp1_MR_CV_number_ALCM = var_MR_CV_launcher }
 	}
 	set_variable = { var_MR_CV_number_ALCM_loc = var_MR_CV_number_ALCM }
 	if = {
@@ -553,6 +602,28 @@ clear_launch_button_loc_vars = {
 		clear_variable = var_STK_number_ALCM_loc
 		clear_variable = var_MR_number_ALCM_loc
 		clear_variable = var_MR_CV_number_ALCM_loc
+	}
+}
+
+clear_launch_button_number_vars = {
+	ROOT = {
+		clear_variable = var_ship_number_LAM
+		clear_variable = var_sub_number_LAM
+		clear_variable = var_bomber_number_ALCM
+		clear_variable = var_STK_number_ALCM
+		clear_variable = var_MR_number_ALCM
+		clear_variable = var_MR_CV_number_ALCM
+		clear_variable = var_CV_number_LAM
+		#launcher
+		clear_variable = var_silo_launcher
+		clear_variable = var_TEL_launcher
+		clear_variable = var_sub_launcher
+		clear_variable = var_bomber_launcher
+		clear_variable = var_MR_launcher
+		clear_variable = var_MR_CV_launcher
+		clear_variable = var_STK_launcher
+		clear_variable = var_ship_launcher
+		clear_variable = var_ship_VLS_launcher
 	}
 }
 
