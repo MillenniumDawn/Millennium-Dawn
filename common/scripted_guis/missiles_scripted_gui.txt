@@ -174,7 +174,150 @@ scripted_gui = {
 			check_variable = { var_open_MD_missiles_gui_ledger_1 = 2 }
 			has_country_flag = open_MD_countrymissilesview
 		}
+		effects = {
+			missile_model_button_1_click = {
+				ROOT = {
+					set_country_flag = open_MD_missile_production_type_window
+					set_variable = { var_gui_prod_price_unit = 0.001 }
+					set_variable = { var_gui_prod_CIC_unit = 1 }
+					set_variable = { var_gui_prod_duration_unit = 30 }
+				}
+			}
+			### production amount button effects ###
+			increase_amount_click = {
+				ROOT = {
+					add_to_variable = { var_gui_prod_amount = 1 }
+					set_variable = { var_gui_prod_price_total = var_gui_prod_price_unit }
+					multiply_variable = { var_gui_prod_price_total = var_gui_prod_amount }
+					set_variable = { var_gui_prod_CIC_total = var_gui_prod_CIC_unit }
+					multiply_variable = { var_gui_prod_CIC_total = var_gui_prod_amount }
+					# add_to_variable = { var_gui_prod_amount^i = 1 }
+					# set_variable = { var_gui_prod_price_total^i = var_gui_prod_price_unit^i }
+					# multiply_variable = { var_gui_prod_price_total^i = var_gui_prod_amount^i }
+					# set_variable = { var_gui_prod_CIC_total^i = var_gui_prod_CIC_unit^i }
+					# multiply_variable = { var_gui_prod_CIC_total^i = var_gui_prod_amount^i }
+				}
+			}
+			decrease_amount_click = {
+				ROOT = {
+					subtract_from_variable = { var_gui_prod_amount = 1 }
+					if = {
+						limit = {
+							check_variable = { var_gui_prod_amount < 0 }
+						}
+						set_variable = { var_gui_prod_amount = 0 }
+					}
+					set_variable = { var_gui_prod_price_total = var_gui_prod_price_unit }
+					multiply_variable = { var_gui_prod_price_total = var_gui_prod_amount }
+					set_variable = { var_gui_prod_CIC_total = var_gui_prod_CIC_unit }
+					multiply_variable = { var_gui_prod_CIC_total = var_gui_prod_amount }
+				}
+			}
+			increase_amount_control_click = {
+				ROOT = {
+					add_to_variable = { var_gui_prod_amount = 10 }
+					set_variable = { var_gui_prod_price_total = var_gui_prod_price_unit }
+					multiply_variable = { var_gui_prod_price_total = var_gui_prod_amount }
+					set_variable = { var_gui_prod_CIC_total = var_gui_prod_CIC_unit }
+					multiply_variable = { var_gui_prod_CIC_total = var_gui_prod_amount }
+				}
+			}
+			decrease_amount_control_click = {
+				ROOT = {
+					subtract_from_variable = { var_gui_prod_amount = 10 }
+					if = {
+						limit = {
+							check_variable = { var_gui_prod_amount < 0 }
+						}
+						set_variable = { var_gui_prod_amount = 0 }
+					}
+					set_variable = { var_gui_prod_price_total = var_gui_prod_price_unit }
+					multiply_variable = { var_gui_prod_price_total = var_gui_prod_amount }
+					set_variable = { var_gui_prod_CIC_total = var_gui_prod_CIC_unit }
+					multiply_variable = { var_gui_prod_CIC_total = var_gui_prod_amount }
+				}
+			}
+			increase_amount_shift_click = {
+				ROOT = {
+					add_to_variable = { var_gui_prod_amount = 100 }
+					set_variable = { var_gui_prod_price_total = var_gui_prod_price_unit }
+					multiply_variable = { var_gui_prod_price_total = var_gui_prod_amount }
+					set_variable = { var_gui_prod_CIC_total = var_gui_prod_CIC_unit }
+					multiply_variable = { var_gui_prod_CIC_total = var_gui_prod_amount }
+				}
+			}
+			decrease_amount_shift_click = {
+				ROOT = {
+					subtract_from_variable = { var_gui_prod_amount = 100 }
+					if = {
+						limit = {
+							check_variable = { var_gui_prod_amount < 0 }
+						}
+						set_variable = { var_gui_prod_amount = 0 }
+					}
+					set_variable = { var_gui_prod_price_total = var_gui_prod_price_unit }
+					multiply_variable = { var_gui_prod_price_total = var_gui_prod_amount }
+					set_variable = { var_gui_prod_CIC_total = var_gui_prod_CIC_unit }
+					multiply_variable = { var_gui_prod_CIC_total = var_gui_prod_amount }
+				}
+			}
+		}
+
+		
+		dynamic_lists = {
+			# production_gridbox = {
+			# 	array = missile_type_prod_array # one element per type, value = tech lvl
+			# 	entry_container = production_entry
+			# 	#change_scope = yes
+			# }
+		}
+
 	}
+
+	MD_missile_production_type_window_gui = {
+		window_name = MD_missile_production_type_window
+		context_type = player_context
+		parent_window_name = MD_countrymissilesview_production
+
+		visible = {
+			has_country_flag = open_MD_missile_production_type_window
+		}
+
+		effects = {
+			missile_type_button_click = {
+				# add_to_array = {
+				# 	array = missile_type_prod_array
+				# 	value = missile_type_tech_array^i
+				# }
+				set_variable = { var_gui_prod_price_unit = 0.001 }
+				set_variable = { var_gui_prod_CIC_unit = 1 }
+				set_variable = { var_gui_prod_duration_unit = 30 }
+				clr_country_flag = open_MD_missile_production_type_window
+			}
+			close_button_click = {
+				if = {
+					limit = {
+						has_country_flag = open_MD_missile_production_type_window
+					}
+					clr_country_flag = open_MD_missile_production_type_window
+				}
+			}
+		}
+		properties = {
+			missile_type_icon = {
+				image = "[MD_missile_type_tech_icon_texture]"
+			}
+		}		
+		dynamic_lists = {
+			production_types_1_gridbox = {
+				array = missile_type_tech_array # one element per type, value = tech lvl
+				entry_container = missile_type_tech_entry
+				#change_scope = yes
+			}
+		}
+
+	}
+
 
 	MD_countrymissilesview_launch_gui = {
 		window_name = MD_countrymissilesview_launch
