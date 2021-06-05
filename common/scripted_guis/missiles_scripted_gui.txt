@@ -180,7 +180,7 @@ scripted_gui = {
 					set_country_flag = open_MD_missile_production_type_window
 					set_variable = { var_gui_prod_price_unit = 0.001 }
 					set_variable = { var_gui_prod_CIC_unit = 1 }
-					set_variable = { var_gui_prod_duration_unit = 30 }
+					set_variable = { var_gui_prod_days_unit = 30 }
 				}
 			}
 			### production amount button effects ###
@@ -189,8 +189,44 @@ scripted_gui = {
 					add_to_variable = { var_gui_prod_amount = 1 }
 					set_variable = { var_gui_prod_price_total = var_gui_prod_price_unit }
 					multiply_variable = { var_gui_prod_price_total = var_gui_prod_amount }
+
+					#set_variable = { var_gui_prod_CIC_total = var_gui_prod_CIC_unit }
+					#multiply_variable = { var_gui_prod_CIC_total = var_gui_prod_amount }
+					#set_variable = { var_gui_prod_CIC_days = var_gui_prod_CIC_total }
+					#multiply_variable = { var_gui_prod_CIC_days = var_gui_prod_days_unit }
+					if = {
+						limit = {
+							set_temp_variable = { temp1 = var_gui_prod_CIC_unit }
+							multiply_temp_variable = { temp1 = var_gui_prod_amount }
+							multiply_temp_variable = { temp1 = var_gui_prod_days_unit }
+							check_variable = { temp1 > 899 }
+						}
+						set_variable = { var_gui_prod_CIC_use = 10 }
+					}
+					else_if = {
+						limit = {
+							set_temp_variable = { temp1 = var_gui_prod_CIC_unit }
+							multiply_temp_variable = { temp1 = var_gui_prod_amount }
+							multiply_temp_variable = { temp1 = var_gui_prod_days_unit }
+							check_variable = { temp1 > 89 }
+							check_variable = { temp1 < 900 }
+						}
+						set_variable = { var_gui_prod_CIC_use = 5 }
+					}
+					else = {
+						set_variable = { var_gui_prod_CIC_use = 1 }
+					}
 					set_variable = { var_gui_prod_CIC_total = var_gui_prod_CIC_unit }
 					multiply_variable = { var_gui_prod_CIC_total = var_gui_prod_amount }
+					
+					set_variable = { var_gui_prod_CIC_days = var_gui_prod_CIC_total }
+					multiply_variable = { var_gui_prod_CIC_days = var_gui_prod_days_unit }
+					divide_variable = { var_gui_prod_CIC_days = var_gui_prod_CIC_use }
+					round_variable = var_gui_prod_CIC_days
+
+					#set_variable = { var_gui_prod_CIC_days = var_gui_prod_CIC_total }
+					#multiply_variable = { var_gui_prod_CIC_days = var_gui_prod_days_unit }
+
 					# add_to_variable = { var_gui_prod_amount^i = 1 }
 					# set_variable = { var_gui_prod_price_total^i = var_gui_prod_price_unit^i }
 					# multiply_variable = { var_gui_prod_price_total^i = var_gui_prod_amount^i }
@@ -261,9 +297,37 @@ scripted_gui = {
 					multiply_variable = { var_gui_prod_CIC_total = var_gui_prod_amount }
 				}
 			}
+			start_button_click = {
+				ROOT = {
+					if = {
+						limit = {
+							check_variable = { var_gui_prod_CIC_use > 9 }
+						}
+						activate_mission = missile_construction_1x10
+					}
+					else_if = {
+						limit = {
+							check_variable = { var_gui_prod_CIC_use > 4 }
+							check_variable = { var_gui_prod_CIC_use < 10 }
+						}
+						activate_mission = missile_construction_1x5
+					}
+					else = {
+						activate_mission = missile_construction_1x1
+					}
+				}
+			}
+			# delete_button_click = {
+
+			# }
 		}
 
-		
+		triggers = {
+			start_button_click_enabled = {		
+				num_of_civilian_factories_available_for_projects > var_gui_prod_CIC_use
+			}
+		}
+
 		dynamic_lists = {
 			# production_gridbox = {
 			# 	array = missile_type_prod_array # one element per type, value = tech lvl
