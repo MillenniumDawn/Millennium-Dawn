@@ -150,10 +150,10 @@ calculate_tax_gain = {
 	set_variable = { office_tax = ROOT.office_park_total }
 	multiply_variable = { office_tax = 5 }
 	#Control factors
-	divide_variable = { civil_fac_tax = 9 }
-	divide_variable = { military_fac_tax = 9 }
-	divide_variable = { dockyard_tax = 9 }
-	divide_variable = { office_tax = 9 }
+	divide_variable = { civil_fac_tax = 5.7 }
+	divide_variable = { military_fac_tax = 5.7 }
+	divide_variable = { dockyard_tax = 5.7 }
+	divide_variable = { office_tax = 5.7 }
 
 	#Tax gained
 	multiply_variable = { civil_fac_tax = corporate_tax_rate }
@@ -163,7 +163,7 @@ calculate_tax_gain = {
 
 	##POP
 	set_variable = { var = population_tax value = population_total }
-	divide_variable = { population_tax = 25 } #Gives TOTAL potential tax assuming 100%
+	divide_variable = { population_tax = 16 } #Gives TOTAL potential tax assuming 100%
 	multiply_variable = { var = population_tax value = population_tax_rate }
 
 	#Additional additive modifiers
@@ -448,16 +448,16 @@ update_military_rate = {
 	}
 
 	#Set the base cost for each spending level based on size of military industry ( [num_of_mil_factories + num_of_naval_factories]/modifier )
-	divide_variable = { array_defence_spend^0 = 3000 }
-	divide_variable = { array_defence_spend^1 = 300 }
-	divide_variable = { array_defence_spend^2 = 150 }
-	divide_variable = { array_defence_spend^3 = 100 }
-	divide_variable = { array_defence_spend^4 = 75 }
-	divide_variable = { array_defence_spend^5 = 50 }
-	divide_variable = { array_defence_spend^6 = 37 }
-	divide_variable = { array_defence_spend^7 = 15 }
-	divide_variable = { array_defence_spend^8 = 10 }
-	divide_variable = { array_defence_spend^9 = 8 }
+	divide_variable = { array_defence_spend^0 = 4350 }
+	divide_variable = { array_defence_spend^1 = 430 }
+	divide_variable = { array_defence_spend^2 = 220 }
+	divide_variable = { array_defence_spend^3 = 140 }
+	divide_variable = { array_defence_spend^4 = 110 }
+	divide_variable = { array_defence_spend^5 = 70 }
+	divide_variable = { array_defence_spend^6 = 54 }
+	divide_variable = { array_defence_spend^7 = 22 }
+	divide_variable = { array_defence_spend^8 = 14 }
+	divide_variable = { array_defence_spend^9 = 12 }
 
 	#Update each item in the defence spending array based on your gdp/c, having a higher GDP makes defence more expensive
 	set_temp_variable = { gdp_defence_modifier_industry = gdp_per_capita }
@@ -596,15 +596,31 @@ update_military_rate = {
 	### Airforce ###
 	#Below sets the cost for ships based on the number of ships (divided into cheap, regular, expensinve and strategic airforce) Use these if you want to control costs of different aircraft to each other - Kal's note: changed math to match land/navy stuff.
 
+	#Calculate deployed and stockpiled planes, stockpiled planes cost a quarter of deployed planes
 	#Count number of strategic airforce
-	set_temp_variable = { strategic_airforce = num_deployed_planes_with_type@strategic_bomber_equipment }
+	set_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
+	divide_temp_variable = { strategic_airforce = 4 }
+	
+	add_to_temp_variable = { strategic_airforce = num_deployed_planes_with_type@strategic_bomber_equipment }
 
 	#Count number of expensive planes
-	set_temp_variable = { expensive_airforce = num_deployed_planes_with_type@transport_plane_equipment }
+	set_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
+	add_to_temp_variable = { expensive_airforce = num_equipment@nav_plane_equipment }
+	divide_temp_variable = { expensive_airforce = 4 }
+	
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@transport_plane_equipment }
 	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@nav_plane_equipment }
 
 	#Count number or regular airforce
-	set_temp_variable = { regular_airforce = num_deployed_planes_with_type@MR_Fighter_equipment }
+	set_temp_variable = { regular_airforce = num_equipment@MR_Fighter_equipment }
+	add_to_temp_variable = { regular_airforce = num_equipment@CV_MR_Fighter_equipment }
+	add_to_temp_variable = { regular_airforce = num_equipment@AS_Fighter_equipment }
+	add_to_temp_variable = { regular_airforce = num_equipment@Strike_fighter_equipment }
+	add_to_temp_variable = { regular_airforce = num_equipment@Air_UAV_equipment }
+	add_to_temp_variable = { regular_airforce = num_equipment@CAS_equipment }
+	divide_temp_variable = { regular_airforce = 4 }
+	
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@MR_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@CV_MR_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@AS_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@Strike_fighter_equipment }
@@ -612,7 +628,12 @@ update_military_rate = {
 	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@CAS_equipment }
 
 	#Count number of cheap airforce
-	set_temp_variable = { cheap_airforce = num_deployed_planes_with_type@attack_helicopter_equipment }
+	set_temp_variable = { cheap_airforce = num_equipment@attack_helicopter_equipment }
+	add_to_temp_variable = { cheap_airforce = num_equipment@L_Strike_fighter_equipment }
+	add_to_temp_variable = { cheap_airforce = num_equipment@CV_L_Strike_fighter_equipment }
+	divide_temp_variable = { cheap_airforce = 4 }
+	
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@attack_helicopter_equipment }
 	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@L_Strike_fighter_equipment }
 	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@CV_L_Strike_fighter_equipment }
 
@@ -691,9 +712,9 @@ update_military_rate = {
 	multiply_temp_variable = { airforce_count = gdp_defence_modifier_personnel }
 
 	#Divide by control factors (same for all!) - Use this if you want to scale cost of military personnel in relation to defence industry
-	divide_temp_variable = { land_count = 1000 }
-	divide_temp_variable = { navy_count = 1000 }
-	divide_temp_variable = { airforce_count = 1000 }
+	divide_temp_variable = { land_count = 1450 }
+	divide_temp_variable = { navy_count = 1450 }
+	divide_temp_variable = { airforce_count = 1450 }
 
 	#Add up armed forces
 	set_temp_variable = { personnel_cost = land_count }
@@ -737,7 +758,7 @@ update_bureaucracy_rate = {
 	clear_array = array_bureaucracy_spend
 
 	#Set the base cost of bureaucracy (billion $ per 10 000 000 people)
-	set_temp_variable = { bureaucracy_base_cost = 0.010 }
+	set_temp_variable = { bureaucracy_base_cost = 0.004 }
 
 	#recreate the array
 	for_loop_effect = {
@@ -832,7 +853,7 @@ update_police_rate = {
 	clear_array = array_security_spend
 
 	#Set the base cost of policing (billion $ per 10 000 000 people)
-	set_temp_variable = { police_base_cost = 0.006 }
+	set_temp_variable = { police_base_cost = 0.005 }
 
 	#recreate the array
 	for_loop_effect = {
@@ -919,7 +940,7 @@ update_education_rate = {
 	clear_array = array_education_spend
 
 	#Set the base cost of education (billion $ per 10 000 000 people)
-	set_temp_variable = { education_base_cost = 0.144 }
+	set_temp_variable = { education_base_cost = 0.033 }
 
 	#recreate the array
 	for_loop_effect = {
@@ -1025,7 +1046,7 @@ update_health_rate = {
 	clear_array = array_health_spend
 
 	#Set the base cost of health (billion $ per 10 000 000 people)
-	set_temp_variable = { health_base_cost = 0.010 }
+	set_temp_variable = { health_base_cost = 0.014 }
 
 	#Create the array for manipulation purposes
 	for_loop_effect = {
@@ -1111,7 +1132,7 @@ update_social_rate = {
 	clear_array = array_social_spend
 
 	#Set the base cost of welfare (billion $ per 10 000 000 people)
-	set_temp_variable = { social_base_cost = 0.020 }
+	set_temp_variable = { social_base_cost = 0.035 }
 
 	#recreate the array
 	for_loop_effect = {
@@ -1498,13 +1519,63 @@ calculate_gdp = {
 	#America Cheats - this is to scale the US to real values
 	if = { limit = { original_tag = USA } multiply_variable = { gdp_total = 2 } }
 
+	#Min GDP is 0.5*MIC to avoid 0 GDP
+	clamp_variable = { var = gdp_total min = 80 }
+
 	#Total GDP is off by a factor of 10 due to math done with population.
 	set_variable = { gdp_total_display = gdp_total }
 	divide_variable = { gdp_total_display = 10 }	#In billion $
 
-	#Min GDP is 0.5*MIC to avoid 0 GDP
-	clamp_variable = { var = gdp_total min = 80 }
-
 	set_variable = { gdp_per_capita = gdp_total }
 	divide_variable = { gdp_per_capita = population_total }
+	
+	calculate_gdp_modifiers = yes
+}
+
+#Calculate modifiers associated with GDP/C
+calculate_gdp_modifiers = {
+	#Add the modifier if not existing
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = gdp_per_capita_country_modifiers } } }
+		add_dynamic_modifier = { modifier = gdp_per_capita_country_modifiers }
+	}
+	
+	#Construction speed factor
+	#-0.012 * GDP/C + 0.572	- GDP/C c [0,30]
+	#-0.001 * GDP/C + 0.230 - GDP/C c [30, 200]
+	#Cap at 0
+	set_variable = { production_speed_buildings_factor_gdp_modifier = gdp_per_capita }
+	if = { 
+		limit = { check_variable = { production_speed_buildings_factor_gdp_modifier < 30 } }
+		multiply_variable = { production_speed_buildings_factor_gdp_modifier = -0.012 }
+		add_to_variable = { production_speed_buildings_factor_gdp_modifier = 0.572 }
+	}
+	else = { 
+		multiply_variable = { production_speed_buildings_factor_gdp_modifier = -0.001 }
+		add_to_variable = { production_speed_buildings_factor_gdp_modifier = 0.230 }
+	}
+	clamp_variable = { var = production_speed_buildings_factor_gdp_modifier min = 0 }
+	
+	#Population growth rate
+	#-0.389 * GDP/C + 2.989
+	#Cap at -1.15
+	set_variable = { monthly_population_gdp_modifier = gdp_per_capita }
+	multiply_variable = { monthly_population_gdp_modifier = -0.389 }
+	add_to_variable = { monthly_population_gdp_modifier = 2.989 }
+	clamp_variable = { var = monthly_population_gdp_modifier min = -1.15 }
+	
+	#Research speed factor
+	#0.003 * GDP/C - 0.153
+	#Cap at 0
+	set_variable = { research_speed_factor_gdp_modifier = gdp_per_capita }
+	multiply_variable = { research_speed_factor_gdp_modifier = 0.003 }
+	add_to_variable = { research_speed_factor_gdp_modifier = -0.153 }
+	clamp_variable = { var = research_speed_factor_gdp_modifier min = 0 }
+	
+	#Stability factor
+	#0.001 * GDP/C - 0.100 
+	set_variable = { stability_factor_gdp_modifier = gdp_per_capita }
+	multiply_variable = { stability_factor_gdp_modifier = 0.001 }
+	add_to_variable = { stability_factor_gdp_modifier = -0.1 }
+	
 }
