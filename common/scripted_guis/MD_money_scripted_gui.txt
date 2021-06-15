@@ -738,7 +738,7 @@ scripted_gui = {
 		}
 	}
 
-	#Economy/Budget Tab
+	# Economy/Budget Screen
 	budget_tab = {
 		context_type = player_context
 		window_name = "budget_tab"
@@ -746,46 +746,57 @@ scripted_gui = {
 		visible = { ROOT = { has_country_flag = open_economy_screen } }
 
 		triggers = {
+			# Population taxes
 			increase_population_tax_click_enabled = {
 				check_variable = { var = population_tax_rate value = 0 compare = greater_than_or_equals }
 				check_variable = { var = population_tax_rate value = 60 compare = less_than }
+				NOT = { has_country_flag = no_personal_tax_rate_change }
 				ROOT = { has_political_power > 50 }
 			}
 			increase_population_tax_shift_click_enabled = { #56-60 NO
 				check_variable = { var = population_tax_rate value = 0 compare = greater_than_or_equals }
 				check_variable = { var = population_tax_rate value = 55 compare = less_than_or_equals }
+				NOT = { has_country_flag = no_personal_tax_rate_change }
 				ROOT = { has_political_power > 250 }
 			}
 			decrease_population_tax_click_enabled = {
 				check_variable = { var = population_tax_rate value = 0 compare = greater_than }
 				check_variable = { var = population_tax_rate value = 60 compare = less_than_or_equals }
+				NOT = { has_country_flag = no_personal_tax_rate_change }
 				ROOT = { has_political_power > 50 }
 			}
 			decrease_population_tax_shift_click_enabled = { #0-5 NO
 				check_variable = { var = population_tax_rate value = 5 compare = greater_than_or_equals }
 				check_variable = { var = population_tax_rate value = 60 compare = less_than_or_equals }
+				NOT = { has_country_flag = no_personal_tax_rate_change }
 				ROOT = { has_political_power > 250 }
 			}
+			# Corporate Taxes
 			increase_corporate_tax_click_enabled = {
 				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than_or_equals }
 				check_variable = { var = corporate_tax_rate value = 60 compare = less_than }
+				NOT = { has_country_flag = no_corporate_tax_rate_change }
 				ROOT = { has_political_power > 50 }
 			}
 			increase_corporate_tax_shift_click_enabled = {
 				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than_or_equals }
 				check_variable = { var = corporate_tax_rate value = 55 compare = less_than_or_equals }
+				NOT = { has_country_flag = no_corporate_tax_rate_change }
 				ROOT = { has_political_power > 250 }
 			}
 			decrease_corporate_tax_click_enabled = {
 				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than }
 				check_variable = { var = corporate_tax_rate value = 60 compare = less_than_or_equals }
+				NOT = { has_country_flag = no_corporate_tax_rate_change }
 				ROOT = { has_political_power > 50 }
 			}
 			decrease_corporate_tax_click_enabled = {
 				check_variable = { var = corporate_tax_rate value = 5 compare = greater_than_or_equals }
 				check_variable = { var = corporate_tax_rate value = 60 compare = less_than_or_equals }
+				NOT = { has_country_flag = no_corporate_tax_rate_change }
 				ROOT = { has_political_power > 250 }
 			}
+			# Extra Features
 			print_money_button_click_enabled = {
 				NOT = { has_country_flag = printed_money_recently }
 				has_political_power > 99
@@ -796,8 +807,7 @@ scripted_gui = {
 			close_economy_screen_click = {
 				clr_country_flag = open_economy_screen
 			}
-			###
-			##Population Tax Increase/Decrease
+			# Population Tax Increase/Decrease
 			increase_population_tax_click = {
 				ROOT = { add_political_power = -50 }
 				add_to_variable = { population_tax_rate = 1 }
@@ -925,6 +935,72 @@ scripted_gui = {
 				add_to_variable =  { var = debt value = printing }
 				add_political_power = -100
 				set_country_flag = { flag = printed_money_recently value = 1 days = 45 }
+			}
+		}
+
+		# AI Section
+		# Note: 5 days - 120 Hrs
+		# Functional Notes:
+		# ai_enabled - triggers that engage the AI for this GUI
+		# ai_test_interval - timeframe between AI checks
+		# ai_check - trigger the AI looks for to determine if it needs to look at a button
+		# ai_weights - modifiers to determine AI habits
+
+		ai_enabled = { always = yes }
+		ai_test_interval = 120
+
+		ai_check = {
+			has_political_power > 50
+		}
+
+		ai_weights = {
+			# Population Tax Rate Clicks
+			increase_population_tax_click = {
+				ai_will_do = {
+					factor = 1
+				}
+			}
+			increase_population_tax_shift_click = {
+				ai_will_do = {
+					factor = 1
+				}
+			}
+			decrease_population_tax_click = {
+				ai_will_do = {
+					factor = 1
+				}
+			}
+			decrease_population_tax_shift_click = {
+				ai_will_do = {
+					factor = 1
+				}
+			}
+			# Corporate Tax Rate Clicks
+			increase_corporate_tax_click = {
+				ai_will_do = {
+					factor = 1
+				}
+			}
+			increase_corporate_tax_shift_click = {
+				ai_will_do = {
+					factor = 1
+				}
+			}
+			decrease_corporate_tax_click = {
+				ai_will_do = {
+					factor = 1
+				}
+			}
+			decrease_corporate_tax_shift_click = {
+				ai_will_do = {
+					factor = 1
+				}
+			}
+			# Extra Features
+			print_money_button_click = {
+				ai_will_do = {
+					factor = 1
+				}
 			}
 		}
 	}
