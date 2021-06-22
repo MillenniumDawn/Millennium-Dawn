@@ -4042,14 +4042,7 @@ focus_tree = {
 		completion_reward = {
 			subtract_from_variable = { treasury = 2 }
 			custom_effect_tooltip = 2_billion_expense_tt
-			if = {
-				limit = { has_idea = small_medium_business_owners }
-				increase_small_medium_business_owners_opinion = yes
-			}
-			if = {
-				limit = { has_idea = chaebols }
-				increase_chaebols_opinion = yes
-			}
+			increase_small_medium_business_owners_opinion = yes
 			add_ideas = KOR_entrepreneurs_supported
 			log = "[GetDateText]: [This.GetName]: focus KOR_support_entrepreneurs executed"
 		}
@@ -4357,6 +4350,7 @@ focus_tree = {
 			}
 			add_political_power = -100
 			increase_chaebols_opinion = yes
+			decrease_labour_unions_opinion = yes
 			conservative_policy_effect = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_restrict_union_activity executed"
 		}
@@ -5671,6 +5665,7 @@ focus_tree = {
 
 		completion_reward = {
 			increase_chaebols_opinion = yes
+			decrease_labour_unions_opinion = yes
 			add_opinion_modifier = {
 				target = SOV
 				modifier = large_commercial_relations
@@ -5984,6 +5979,7 @@ focus_tree = {
 
 		completion_reward = {
 			increase_chaebols_opinion = yes
+			decrease_labour_unions_opinion = yes
 			add_opinion_modifier = {
 				target = ISR
 				modifier = mutual_trade_opinion
@@ -6161,6 +6157,7 @@ focus_tree = {
 
 		completion_reward = {
 			increase_chaebols_opinion = yes
+			decrease_labour_unions_opinion = yes
 			add_opinion_modifier = {
 				target = PER
 				modifier = mutual_trade_opinion
@@ -6469,6 +6466,7 @@ focus_tree = {
 
 		completion_reward = {
 			increase_chaebols_opinion = yes
+			decrease_labour_unions_opinion = yes
 			every_other_country = {
 				limit = { has_idea = idea_gcc_member_state }
 				reverse_add_opinion_modifier = {
@@ -6638,6 +6636,7 @@ focus_tree = {
 
 		completion_reward = {
 			increase_chaebols_opinion = yes
+			decrease_labour_unions_opinion = yes
 			add_opinion_modifier = {
 				target = CHI
 				modifier = mutual_trade_opinion
@@ -7051,11 +7050,13 @@ focus_tree = {
 				idea = KOR_JAP_trade_war
 				days = 180
 			}
+			generic_lower_2_percent_influence_of_JAP = yes
 			JAP = {
 				remove_opinion_modifier = {
 					target = KOR
 					modifier = large_commercial_relations
 				}
+				generic_lower_2_percent_influence_of_KOR = yes
 			}
 			log = "[GetDateText]: [This.GetName]: focus KOR_economic_showdown executed"
 		}
@@ -7097,10 +7098,16 @@ focus_tree = {
 					value > 49
 				}
 			}
+			USA = { has_guaranteed = KOR }
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			USA = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus KOR_eternal_allies executed"
 		}
 
@@ -7127,10 +7134,23 @@ focus_tree = {
 		prerequisite = { focus = KOR_peace_in_east_asia }
 
 		available = {
+			KOR_has_conservative_government = yesc
+			NOT = { has_war_with = JAP }
+			JAP = {
+				has_opinion = {
+					target = KOR
+					value > -1
+				}
+			}
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			JAP = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus KOR_draw_closer_to_japan executed"
 		}
 
@@ -7152,15 +7172,44 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		search_filters = {}
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION}
 
 		prerequisite = { focus = KOR_peace_in_east_asia }
 
 		available = {
+			KOR_has_conservative_government = yesc
+			NOT = { has_war_with = JAP }
+			JAP = {
+				has_opinion = {
+					target = KOR
+					value > 14
+				}
+			}
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			increase_chaebols_opinion = yes
+			decrease_labour_unions_opinion = yes
+			add_opinion_modifier = {
+				target = JAP
+				modifier = mutual_trade_opinion
+			}
+			add_opinion_modifier = {
+				target = JAP
+				modifier = mutual_trade_agreement
+			}
+			generic_grant_1_percent_influence_of_JAP = yes
+			JAP = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = mutual_trade_opinion
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = mutual_trade_agreement
+				}
+				generic_grant_1_percent_influence_of_KOR = yes
+			}
 			log = "[GetDateText]: [This.GetName]: focus KOR_improve_economic_relations executed"
 		}
 
@@ -7182,15 +7231,65 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		search_filters = {}
+		search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
 
 		prerequisite = { focus = KOR_eternal_allies }
 
 		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_peoples_party_governing_tt
+					is_in_array = { ruling_party = 2  } #liberalism
+				}
+			}
+			NOT = { has_war_with = USA }
+			USA = {
+				has_opinion = {
+					target = KOR
+					value > 59
+				}
+			}
+			USA = { has_guaranteed = KOR }
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			generic_grant_2_percent_influence_of_USA = yes
+			add_opinion_modifier = {
+				target = USA
+				modifier = military_cooperation
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = military_cooperation
+				}
+			}
+			NKO = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = imminent_danger_to_national_security
+				}
+			}
+			support_for_reunification_2_less = yes
+			conservative_policy_effect = yes
+			if = {
+				limit = { has_idea = KOR_joint_us_exercises }
+				swap_ideas = {
+					remove_idea = KOR_joint_us_exercises
+					add_idea = KOR_joint_us_exercises1
+				}
+			}
+			else_if = {
+				limit = { has_idea = KOR_joint_us_exercises2 }
+				swap_ideas = {
+					remove_idea = KOR_joint_us_exercises2
+					add_idea = KOR_joint_us_exercises
+				}
+			}
+			else_if = {
+				add_ideas = KOR_joint_us_exercises2
+			}
 			log = "[GetDateText]: [This.GetName]: focus KOR_step_up_military_exercises executed"
 		}
 
@@ -7212,15 +7311,24 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		search_filters = {}
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION}
 
 		prerequisite = { focus = KOR_improve_economic_relations }
 
 		available = {
+			KOR_has_conservative_government = yesc
+			NOT = { has_war_with = JAP }
+			JAP = {
+				has_opinion = {
+					target = KOR
+					value > 24
+				}
+			}
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			increase_intelligence_community_opinion = yes
+			decrease_popularity_5 = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_intelligence_cooperation executed"
 		}
 
