@@ -7134,7 +7134,7 @@ focus_tree = {
 		prerequisite = { focus = KOR_peace_in_east_asia }
 
 		available = {
-			KOR_has_conservative_government = yesc
+			KOR_has_conservative_government = yes
 			NOT = { has_war_with = JAP }
 			JAP = {
 				has_opinion = {
@@ -7177,7 +7177,7 @@ focus_tree = {
 		prerequisite = { focus = KOR_peace_in_east_asia }
 
 		available = {
-			KOR_has_conservative_government = yesc
+			KOR_has_conservative_government = yes
 			NOT = { has_war_with = JAP }
 			JAP = {
 				has_opinion = {
@@ -7316,7 +7316,7 @@ focus_tree = {
 		prerequisite = { focus = KOR_improve_economic_relations }
 
 		available = {
-			KOR_has_conservative_government = yesc
+			KOR_has_conservative_government = yes
 			NOT = { has_war_with = JAP }
 			JAP = {
 				has_opinion = {
@@ -7328,6 +7328,16 @@ focus_tree = {
 
 		completion_reward = {
 			increase_intelligence_community_opinion = yes
+			add_intel = {
+				target = NKO
+				army_intel = 25
+			}
+			JAP = {
+				add_intel = {
+					target = NKO
+					army_intel = 25
+				}
+			}
 			decrease_popularity_5 = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_intelligence_cooperation executed"
 		}
@@ -7356,10 +7366,71 @@ focus_tree = {
 		prerequisite = { focus = KOR_step_up_military_exercises }
 
 		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_peoples_party_governing_tt
+					is_in_array = { ruling_party = 2  } #liberalism
+				}
+			}
+			NOT = { has_war_with = USA }
+			NOT = { has_war_with = JAP }
+			USA = {
+				has_opinion = {
+					target = KOR
+					value > 74
+				}
+			}
+			JAP = {
+				has_opinion = {
+					target = KOR
+					value > 49
+				}
+			}
+			USA = { has_guaranteed = KOR }
+			USA = { has_guaranteed = JAP }
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			generic_grant_5_percent_influence_of_USA = yes
+			add_opinion_modifier = {
+				target = USA
+				modifier = military_cooperation
+			}
+			add_opinion_modifier = {
+				target = JAP
+				modifier = military_cooperation
+			}
+			every_country = {
+				limit = {
+					OR = {
+						original_tag = JAP
+						original_tag = USA
+					}
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = military_cooperation
+				}
+			}
+			NKO = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = imminent_danger_to_national_security
+				}
+			}
+			support_for_reunification_2_less = yes
+			conservative_policy_effect = yes
+			every_country = {
+				limit = {
+					OR = {
+						original_tag = JAP
+						original_tag = USA
+						original_tag = KOR
+					}
+				}
+				add_ideas = KOR_anti_dprk_coalition
+			}
 			log = "[GetDateText]: [This.GetName]: focus KOR_strengthen_anti_northern_coalition executed"
 		}
 
@@ -7384,12 +7455,26 @@ focus_tree = {
 		search_filters = {}
 
 		prerequisite = { focus = KOR_intelligence_cooperation }
+		prerequisite = { focus = KOR_strengthen_anti_northern_coalition }
 
 		available = {
+			KOR_has_conservative_government = yes
+			NOT = { has_war_with = JAP }
+			JAP = {
+				has_opinion = {
+					target = KOR
+					value > 59
+				}
+			}
+			JAP = {
+				has_government = democratic
+			}
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			give_guarantee = JAP
+			JAP = { give_guarantee = KOR }
+			decrease_popularity_10 = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_support_the_self_defense_forces executed"
 		}
 
@@ -7411,16 +7496,39 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		search_filters = {}
+		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		prerequisite = { focus = KOR_intelligence_cooperation }
 		prerequisite = { focus = KOR_strengthen_anti_northern_coalition }
 
 		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_peoples_party_governing_tt
+					is_in_array = { ruling_party = 2  } #liberalism
+				}
+			}
+			NOT = { has_war_with = USA }
+			NOT = { has_war_with = JAP }
+			USA = { has_guaranteed = KOR }
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			generic_grant_5_percent_influence_of_USA = yes
+			CHI = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = supports_rival
+				}
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = diplomatic_proximity
+				}
+			}
+			add_10_popularity = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_distance_from_china executed"
 		}
 
