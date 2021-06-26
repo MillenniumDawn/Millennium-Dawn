@@ -269,91 +269,117 @@ lease_military_factories_cost = {
 	}
 }
 
+# Leased Civilian Industries "Band" Calculator
 lease_civilian_complex_cost = {
+	# Determines what "band" you are in and sets to a flat cost.
 	if = { limit = { check_variable = { num_of_factories < 8 } }
-		subtract_from_variable = { treasury = 1.00 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 3.00 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 8 }
 			check_variable = { num_of_factories < 15 }
 		}
-		subtract_from_variable = { treasury = 2.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 8.0 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 15 }
 			check_variable = { num_of_factories < 26 }
 		}
-		subtract_from_variable = { treasury = 5.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 15.0 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 25 }
 			check_variable = { num_of_factories < 40 }
 		}
-		subtract_from_variable = { treasury = 7.5 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 22.50 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 39 }
 			check_variable = { num_of_factories < 50 }
 		}
-		subtract_from_variable = { treasury =  10.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 27.0 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 49 }
 			check_variable = { num_of_factories < 75 }
 		}
-		subtract_from_variable = { treasury = 12.5 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 32 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 74 }
 			check_variable = { num_of_factories < 100 }
 		}
-		subtract_from_variable = { treasury = 15.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 38.0 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 99 }
 			check_variable = { num_of_factories < 125 }
 		}
-		subtract_from_variable = { treasury = 17.5 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 50 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 124 }
 			check_variable = { num_of_factories < 150 }
 		}
-		subtract_from_variable = { treasury = 20.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 90.0 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 149 }
 			check_variable = { num_of_factories < 200 }
 		}
-		subtract_from_variable = { treasury = 22.50 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 120 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 199 }
 			check_variable = { num_of_factories < 250 }
 		}
-		subtract_from_variable = { treasury = 25.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 150 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 249 }
 			check_variable = { num_of_factories < 300 }
 		}
-		subtract_from_variable = { treasury = 27.5 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 200 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 299 }
 		}
-		subtract_from_variable = { treasury = 30.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 250 }
 	}
+
+	# Modifiers to adjust the cost of the lease
+	set_temp_variable = { lease_civs_cost_multiplier = 1 }
+	if = { limit = { has_country_flag = reduce_cost_of_leased_civs_25 }
+		subtract_from_temp_variable = { lease_civs_cost_multiplier = 0.25 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_leased_civs_15 }
+		subtract_from_temp_variable = { lease_civs_cost_multiplier = 0.15 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_leased_civs_10 }
+		subtract_from_temp_variable = { lease_civs_cost_multiplier = 0.10 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_leased_civs_5 }
+		subtract_from_temp_variable = { lease_civs_cost_multiplier = 0.05 }
+	}
+
+	# Modifies based off if the nation meets one of the above conditionals
+	multiply_temp_variable = { leased_civilian_economy_cost_temp = lease_civs_cost_multiplier }
+
+	# Calculate Weekly Expense
+	divide_temp_variable = { leased_civilian_economy_cost_temp = 7 }
+
+	set_variable = { leased_civilian_economy_cost = leased_civilian_economy_cost_temp }
+	custom_effect_tooltip = treasury_loss_lease_civs_TT
 }
