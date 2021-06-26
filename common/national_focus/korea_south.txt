@@ -4855,6 +4855,7 @@ focus_tree = {
 			}
 			country_exists = NKO
 			has_war_support > 0.6
+			NOT = { has_idea = KOR_wartime_control }
 		}
 
 		completion_reward = {
@@ -7231,7 +7232,7 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
+		search_filters = {FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_POLITICAL}
 
 		prerequisite = { focus = KOR_eternal_allies }
 
@@ -7290,6 +7291,7 @@ focus_tree = {
 			else_if = {
 				add_ideas = KOR_joint_us_exercises2
 			}
+			conservative_policy_effect = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_step_up_military_exercises executed"
 		}
 
@@ -7360,7 +7362,7 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		search_filters = {}
+		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		prerequisite = { focus = KOR_improve_economic_relations }
 		prerequisite = { focus = KOR_step_up_military_exercises }
@@ -7516,10 +7518,18 @@ focus_tree = {
 
 		completion_reward = {
 			generic_grant_5_percent_influence_of_USA = yes
+			remove_opinion_modifier = {
+				target = CHI
+				modifier = large_commercial_relations
+			}
 			CHI = {
 				add_opinion_modifier = {
 					target = KOR
 					modifier = supports_rival
+				}
+				remove_opinion_modifier = {
+					target = KOR
+					modifier = large_commercial_relations
 				}
 			}
 			USA = {
@@ -7550,15 +7560,32 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		search_filters = {}
+		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		prerequisite = { focus = KOR_peace_in_east_asia }
 
 		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					is_in_array = { ruling_party = 3  }
+				}
+			}
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			remove_opinion_modifier = {
+				target = USA
+				modifier = diplomatic_proximity
+			}
+			USA = {
+				remove_opinion_modifier = {
+					target = KOR
+					modifier = diplomatic_proximity
+				}
+			}
+			liberal_policy_effect = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_revisit_the_alliance executed"
 		}
 
@@ -7572,7 +7599,7 @@ focus_tree = {
 		icon = rok_mobilization
 
 		x = 5
-		y = 3
+		y = 4
 		relative_position_id = KOR_middle_power_diplomacy
 
 		cost = 10
@@ -7580,15 +7607,25 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		search_filters = {}
+		search_filters = {FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL}
 
-		prerequisite = { focus = KOR_revisit_the_alliance }
+		prerequisite = { focus = KOR_wind_down_the_us_presence }
 
 		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					is_in_array = { ruling_party = 3  }
+				}
+			}
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			generic_lower_3_percent_influence_of_USA = yes
+			remove_ideas = KOR_wartime_control
+			custom_effect_tooltip = US_ROK_tt
+			liberal_policy_effect = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_secure_wartime_control executed"
 		}
 
@@ -7602,7 +7639,7 @@ focus_tree = {
 		icon = american_air_supremacy
 
 		x = 5
-		y = 4
+		y = 3
 		relative_position_id = KOR_middle_power_diplomacy
 
 		cost = 10
@@ -7610,15 +7647,36 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		search_filters = {}
+		search_filters = {FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL}
 
-		prerequisite = { focus = KOR_secure_wartime_control }
+		prerequisite = { focus = KOR_revisit_the_alliance }
 
 		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					is_in_array = { ruling_party = 3  }
+				}
+			}
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			generic_lower_2_percent_influence_of_USA = yes
+			if = {
+				limit = { has_idea = KOR_joint_us_exercises }
+				swap_ideas = {
+					remove_idea = KOR_joint_us_exercises
+					add_idea = KOR_joint_us_exercises2
+				}
+			}
+			else_if = {
+				swap_ideas = {
+					remove_idea = KOR_joint_us_exercises1
+					add_idea = KOR_joint_us_exercises2
+				}
+			}
+			liberal_policy_effect = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_wind_down_the_us_presence executed"
 		}
 
@@ -7640,15 +7698,60 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		search_filters = {}
+		search_filters = {FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL}
 
-		prerequisite = { focus = KOR_wind_down_the_us_presence }
+		prerequisite = { focus = KOR_secure_wartime_control }
 
 		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					is_in_array = { ruling_party = 3  }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = 11_BRM_USA_influence_lower_10_tt
+				set_temp_variable = { temp_idx = -1 }
+				any_of = {
+					array = influence_array
+					check_variable = { v = USA }
+				}
+				set_temp_variable = { temp_idx = i }
+				check_variable = { temp_idx > -1 }
+				check_variable = { influence_array_calc^temp_idx < 0.10 }
+			}
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			generic_lower_5_percent_influence_of_USA = yes
+			remove_ideas = KOR_joint_us_exercises2
+			remove_ideas = Major_Non_Nato_Ally
+			every_other_country = {
+				limit = {
+					has_guaranteed = KOR
+				}
+				diplomatic_relation = {
+					country = KOR
+					relation = guarantee
+					active = no
+				}
+				add_opinion_modifier = {
+					target = KOR
+					modifier = diplomatic_distance
+				}
+			}
+			every_other_country = {
+				limit = {
+					has_military_access_to = KOR
+				}
+				diplomatic_relation = {
+					country = KOR
+					relation = military_access
+					active = no
+				}
+			}
+			progressive_policy_effect = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_korean_security_in_korean_hands executed"
 		}
 
