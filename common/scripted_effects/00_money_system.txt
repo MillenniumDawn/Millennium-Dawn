@@ -142,18 +142,18 @@ calculate_tax_gain = {
 
 	#Base tax from various buildings
 	set_variable = { civil_fac_tax = num_of_civilian_factories }
-	multiply_variable = { civil_fac_tax = 4 }
+	multiply_variable = { civil_fac_tax = 3 }
 	set_variable = { military_fac_tax = num_of_military_factories }
 	multiply_variable = { military_fac_tax = 2 }
 	set_variable = { dockyard_tax = num_of_naval_factories }
 	multiply_variable = { dockyard_tax = 1.5 }
 	set_variable = { office_tax = ROOT.office_park_total }
-	multiply_variable = { office_tax = 5 }
+	multiply_variable = { office_tax = 6 }
 	#Control factors
-	divide_variable = { civil_fac_tax = 5.7 }
-	divide_variable = { military_fac_tax = 5.7 }
-	divide_variable = { dockyard_tax = 5.7 }
-	divide_variable = { office_tax = 5.7 }
+	divide_variable = { civil_fac_tax = 4.2 }
+	divide_variable = { military_fac_tax = 4.2 }
+	divide_variable = { dockyard_tax = 4.2 }
+	divide_variable = { office_tax = 4.2 }
 
 	#Tax gained
 	multiply_variable = { civil_fac_tax = corporate_tax_rate }
@@ -163,7 +163,7 @@ calculate_tax_gain = {
 
 	##POP
 	set_variable = { var = population_tax value = population_total }
-	divide_variable = { population_tax = 16 } #Gives TOTAL potential tax assuming 100%
+	divide_variable = { population_tax = 32 } #Gives TOTAL potential tax assuming 100%
 	multiply_variable = { var = population_tax value = population_tax_rate }
 
 	#Additional additive modifiers
@@ -348,7 +348,7 @@ calculate_interest_rate = {
 		limit = { original_tag = JAP }
 		if = {
 			limit = { has_idea = JAP_deflation }
-			subtract_from_variable = { interest_rate_multiplier = 9 }
+			subtract_from_variable = { interest_rate_multiplier = 15 }
 		}
 	}
 	##Nigeria
@@ -454,16 +454,16 @@ update_military_rate = {
 	}
 
 	#Set the base cost for each spending level based on size of military industry ( [num_of_mil_factories + num_of_naval_factories]/modifier )
-	divide_variable = { array_defence_spend^0 = 4350 }
-	divide_variable = { array_defence_spend^1 = 430 }
-	divide_variable = { array_defence_spend^2 = 220 }
-	divide_variable = { array_defence_spend^3 = 140 }
-	divide_variable = { array_defence_spend^4 = 110 }
-	divide_variable = { array_defence_spend^5 = 70 }
-	divide_variable = { array_defence_spend^6 = 54 }
-	divide_variable = { array_defence_spend^7 = 22 }
-	divide_variable = { array_defence_spend^8 = 14 }
-	divide_variable = { array_defence_spend^9 = 12 }
+	divide_variable = { array_defence_spend^0 = 2175 }
+	divide_variable = { array_defence_spend^1 = 215 }
+	divide_variable = { array_defence_spend^2 = 110 }
+	divide_variable = { array_defence_spend^3 = 70 }
+	divide_variable = { array_defence_spend^4 = 55 }
+	divide_variable = { array_defence_spend^5 = 35 }
+	divide_variable = { array_defence_spend^6 = 27 }
+	divide_variable = { array_defence_spend^7 = 11 }
+	divide_variable = { array_defence_spend^8 = 7 }
+	divide_variable = { array_defence_spend^9 = 6 }
 
 	#Update each item in the defence spending array based on your gdp/c, having a higher GDP makes defence more expensive
 	set_temp_variable = { gdp_defence_modifier_industry = gdp_per_capita }
@@ -718,9 +718,9 @@ update_military_rate = {
 	multiply_temp_variable = { airforce_count = gdp_defence_modifier_personnel }
 
 	#Divide by control factors (same for all!) - Use this if you want to scale cost of military personnel in relation to defence industry
-	divide_temp_variable = { land_count = 1450 }
-	divide_temp_variable = { navy_count = 1450 }
-	divide_temp_variable = { airforce_count = 1450 }
+	divide_temp_variable = { land_count = 725 }
+	divide_temp_variable = { navy_count = 725 }
+	divide_temp_variable = { airforce_count = 725 }
 
 	#Add up armed forces
 	set_temp_variable = { personnel_cost = land_count }
@@ -764,7 +764,7 @@ update_bureaucracy_rate = {
 	clear_array = array_bureaucracy_spend
 
 	#Set the base cost of bureaucracy (billion $ per 10 000 000 people)
-	set_temp_variable = { bureaucracy_base_cost = 0.004 }
+	set_temp_variable = { bureaucracy_base_cost = 0.008 }
 
 	#recreate the array
 	for_loop_effect = {
@@ -859,7 +859,7 @@ update_police_rate = {
 	clear_array = array_security_spend
 
 	#Set the base cost of policing (billion $ per 10 000 000 people)
-	set_temp_variable = { police_base_cost = 0.005 }
+	set_temp_variable = { police_base_cost = 0.010 }
 
 	#recreate the array
 	for_loop_effect = {
@@ -1052,7 +1052,7 @@ update_health_rate = {
 	clear_array = array_health_spend
 
 	#Set the base cost of health (billion $ per 10 000 000 people)
-	set_temp_variable = { health_base_cost = 0.014 }
+	set_temp_variable = { health_base_cost = 0.007 }
 
 	#Create the array for manipulation purposes
 	for_loop_effect = {
@@ -1110,6 +1110,14 @@ update_health_rate = {
 		limit = { has_tech = medical_nanorobots }
 		subtract_from_temp_variable = { health_cost_multiplier = 0.05 }
 	}
+	##USA
+	if = {
+		limit = { original_tag = USA }
+		if = {
+			limit = { has_idea = USA_privatised_healthcare }
+			add_to_temp_variable = { health_cost_multiplier = 1 }
+		}
+	}
 
 	for_each_loop = {
 		array = array_health_spend
@@ -1138,7 +1146,7 @@ update_social_rate = {
 	clear_array = array_social_spend
 
 	#Set the base cost of welfare (billion $ per 10 000 000 people)
-	set_temp_variable = { social_base_cost = 0.035 }
+	set_temp_variable = { social_base_cost = 0.018 }
 
 	#recreate the array
 	for_loop_effect = {
