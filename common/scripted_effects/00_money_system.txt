@@ -1121,6 +1121,14 @@ update_health_rate = {
 			add_to_temp_variable = { health_cost_multiplier = 1 }
 		}
 	}
+	##Syria
+	if = {
+		limit = { original_tag = SYR }
+		if = {
+			limit = { has_idea = syrian_health_care_reform }
+			subtract_from_temp_variable = { health_cost_multiplier = 0.15 }
+		}
+	}
 
 	for_each_loop = {
 		array = array_health_spend
@@ -1223,16 +1231,43 @@ update_social_rate = {
 
 calculate_additional_expense_rate = {
 	set_variable = { additional_expenses_rate = 0 }
-
+	
 	# Generic Economic Decisions
 	if = { limit = { has_decision = lease_civilian_factories }
 		add_to_variable = { additional_expenses_rate = leased_civilian_economy_cost }
 	}
-
 	# Country Specific
 	if = {
 		limit = { tag = CAN }
 		add_to_variable = { additional_expenses_rate = CAN_subsidy_total }
+	}
+	#Additional incomes, set income amount as a variable (weekly gain)
+	if = {
+		limit = { original_tag = SYR }
+		if = {
+			limit = {
+				OR = {
+					has_idea = syria_agricultural_subsidies
+					has_idea = syria_increased_agricultural_subsidies
+					has_idea = syria_decreased_agricultural_subsidies
+				}
+			}
+			set_variable = { additional_expense_syria_agricultural_subsidies = gdp_total }
+			if = {
+				limit = { has_idea = syria_agricultural_subsidies }
+				multiply_variable = { additional_expense_syria_agricultural_subsidies = 0.004 }
+			}
+			if = {
+				limit = { has_idea = syria_increased_agricultural_subsidies }
+				multiply_variable = { additional_expense_syria_agricultural_subsidies = 0.006 }
+			}
+			if = {
+				limit = { has_idea = syria_decreased_agricultural_subsidies }
+				multiply_variable = { additional_expense_syria_agricultural_subsidies = 0.002 }
+			}
+			multiply_variable = { additional_expense_syria_agricultural_subsidies = 0.02 }
+			add_to_variable = { additional_expenses_rate = additional_expense_syria_agricultural_subsidies }
+		}
 	}
 }
 
@@ -1478,13 +1513,15 @@ update_state_variables = {
 	set_variable = { var = ROOT.office_park_total value = 0 }
 	set_variable = { var = ROOT.industrial_complex_total value = 0 }
 	set_variable = { var = ROOT.biofuel_refineries value = 0 }
-	every_controlled_state = {
-		add_to_variable = { PREV.office_park_total = building_level@offices }
-		add_to_variable = { PREV.industrial_complex_total = building_level@industrial_complex }
-		add_to_variable = { PREV.biofuel_refineries = building_level@synthetic_refinery }
-		set_temp_variable = { var = temp_pop value = state_population_k }
-		divide_temp_variable = { var = temp_pop value = 100 }
-		add_to_variable = { PREV.population_total = temp_pop }
+	hidden_effect = {
+		every_controlled_state = {
+			add_to_variable = { PREV.office_park_total = building_level@offices }
+			add_to_variable = { PREV.industrial_complex_total = building_level@industrial_complex }
+			add_to_variable = { PREV.biofuel_refineries = building_level@synthetic_refinery }
+			set_temp_variable = { var = temp_pop value = state_population_k }
+			divide_temp_variable = { var = temp_pop value = 100 }
+			add_to_variable = { PREV.population_total = temp_pop }
+		}
 	}
 	calculate_gdp = yes
 }
