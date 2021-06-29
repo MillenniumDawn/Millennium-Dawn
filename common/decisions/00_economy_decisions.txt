@@ -1,198 +1,7 @@
 economy_decisions = {
-	war_building_slot = {
-		icon = generic_construction
-		allowed = { always = yes }
-		custom_cost_trigger = {
-			always = yes
-		}
-		custom_cost_text = [propaganda_cost]
-		fire_only_once = no
-		days_remove = 60
-
-		visible = {
-			has_war = yes
-		}
-		available = {
-			has_war = yes
-			any_owned_state = {
-				NOT = { has_state_flag = war_building_slot_flag }
-				is_fully_controlled_by = ROOT
-			}
-		}
-
-        complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision war_building_slot"
-        	add_war_support = -0.025
-			add_stability = -0.025
-			if = {
-				limit = {
-					any_owned_state = {
-						is_fully_controlled_by = ROOT
-            			free_building_slots = {
-							building = industrial_complex
-							size > 1
-							include_locked = yes
-						}
-						NOT = { has_state_flag = war_building_slot_flag }
-						infrastructure > 8
-					}
-				}
-				random_owned_state = {
-					limit = {
-						is_fully_controlled_by = ROOT
-            			free_building_slots = {
-							building = industrial_complex
-							size > 1
-							include_locked = yes
-						}
-						NOT = { has_state_flag = war_building_slot_flag }
-						infrastructure > 8
-					}
-					add_extra_state_shared_building_slots = 1
-					set_state_flag = war_building_slot_flag
-				}
-			}
-			else_if = {
-				limit = {
-					any_owned_state = {
-						is_fully_controlled_by = ROOT
-            			free_building_slots = {
-							building = industrial_complex
-							size > 1
-							include_locked = yes
-						}
-						NOT = { has_state_flag = war_building_slot_flag }
-						infrastructure > 5
-					}
-				}
-				random_owned_state = {
-					limit = {
-						is_fully_controlled_by = ROOT
-            			free_building_slots = {
-							building = industrial_complex
-							size > 1
-							include_locked = yes
-						}
-						NOT = { has_state_flag = war_building_slot_flag }
-						infrastructure > 5
-					}
-					add_extra_state_shared_building_slots = 1
-					set_state_flag = war_building_slot_flag
-				}
-			}
-			else = {
-				random_owned_state = {
-					limit = {
-						is_fully_controlled_by = ROOT
-            			free_building_slots = {
-							building = industrial_complex
-							size > 1
-							include_locked = yes
-						}
-						NOT = { has_state_flag = war_building_slot_flag }
-						infrastructure > 8
-					}
-					add_extra_state_shared_building_slots = 1
-					set_state_flag = war_building_slot_flag
-				}
-			}
-			#custom_effect_tooltip = treausry_loss_variable_TT
-			propaganda_cost_scripted_effect = yes
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 10
-				all_owned_state = { free_building_slots = { building = industrial_complex size < 1 include_locked = no } }
-			}
-			modifier = {
-				any_owned_state = {
-					infrastructure > 5
-					free_building_slots = { building = industrial_complex size > 0 include_locked = no }
-				}
-				factor = 0
-			}
-			modifier = {
-				factor = 0.50
-				check_variable = { debt_rate > looming_bankruptcy_rate }
-			}
-			modifier = {
-				factor = 0
-				has_idea = bankrupcy
-			}
-		}
-	}
-
-	infrastructure_building_slot = {
-			icon = generic_construction
-			allowed = { always = yes }
-			custom_cost_trigger = {
-				always = yes
-			}
-			custom_cost_text = [propaganda_cost]
-			fire_only_once = no
-			days_remove = 60
-
-			available = {
-				any_owned_state = {
-					NOT = { has_state_flag = infrastructure_building_slot_flag }
-					is_fully_controlled_by = ROOT
-					free_building_slots = {
-						building = infrastructure
-						size < 1
-					}
-				}
-			}
-
-			complete_effect = {
-				log = "[GetDateText]: [Root.GetName]: Decision infrastructure_building_slot"
-				random_owned_state = {
-					limit = {
-						is_owned_and_controlled_by = ROOT
-						free_building_slots = {
-							building = industrial_complex
-							size > 1
-							include_locked = yes
-						}
-						free_building_slots = {
-							building = infrastructure
-							size < 1
-						}
-						NOT = { has_state_flag = infrastructure_building_slot_flag }
-					}
-					add_extra_state_shared_building_slots = 1
-					set_state_flag = infrastructure_building_slot_flag
-				}
-				increase_industrial_conglomerates_opinion = yes
-				increase_small_medium_business_owners_opinion = yes
-				increase_the_donju_opinion = yes
-				increase_the_bazaar_opinion = yes
-				custom_effect_tooltip = treasury_loss_project_TT
-				propaganda_cost_scripted_effect = yes
-			}
-			ai_will_do = {
-				factor = 1
-				modifier = {
-					factor = 10
-					any_owned_state = { free_building_slots = { building = industrial_complex size < 1 include_locked = no } }
-				}
-				modifier = {
-					factor = 0.50
-					check_variable = { debt_rate > looming_bankruptcy_rate }
-				}
-				modifier = {
-					factor = 0
-					has_idea = bankrupcy
-				}
-			}
-		}
 	lease_military_factories = {
 		icon = ger_mefo_bills
 		allowed = { always = yes }
-		custom_cost_trigger = {
-			always = yes
-		}
-		custom_cost_text = [lease_military_factory_cost]
 		fire_only_once = no
 		days_remove = 90
 		days_re_enable = 50
@@ -203,25 +12,23 @@ economy_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision lease_military_factories"
-			custom_effect_tooltip = treasury_loss_lease_mils_TT
-			add_offsite_building = { level = 2 type = arms_factory }
-			lease_military_factories_cost = yes
+			add_offsite_building = { level = 3 type = arms_factory }
 			if = {
 				limit = {
+					has_idea = defense_industry
 					NOT = { has_country_flag = recently_leased_military_factories }
 				}
-				set_country_flag = { flag = recently_leased_military_factories days = 185 }
+				set_country_flag = { flag = recently_leased_military_factories days = 185 value = 1 }
 				decrease_defense_industry_opinion = yes
 			}
+			custom_effect_tooltip = treasury_loss_lease_mils_TT
+			ingame_update_setup = yes
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove lease_military_factories"
-			add_offsite_building = {
-				level = -2
-				type = arms_factory
-			}
+			add_offsite_building = { level = -3 type = arms_factory }
 		}
+
 		ai_will_do = {
 			factor = 1
 			modifier = {
@@ -290,6 +97,13 @@ economy_decisions = {
 			add_offsite_building = { level = 3 type = industrial_complex }
 			if = {
 				limit = {
+					OR = {
+						has_idea = industrial_conglomerates
+						has_idea = the_donju
+						has_idea = the_bazaar
+						has_idea = chaebols
+						has_idea = small_medium_business_owners
+					}
 					NOT = { has_country_flag = recently_supported_small_business }
 				}
 				set_country_flag = { flag = recently_supported_small_business days = 180 value = 1 }
@@ -300,7 +114,8 @@ economy_decisions = {
 				increase_chaebols_opinion = yes
 				custom_effect_tooltip = internal_faction_every_six_months_tt
 			}
-			lease_civilian_complex_cost = yes
+			custom_effect_tooltip = treasury_loss_lease_civs_TT
+			ingame_update_setup = yes
 		}
 
 		remove_effect = {
@@ -339,13 +154,9 @@ economy_decisions = {
 	industrial_projects = {
 		icon = generic_construction
 		allowed = { always = yes }
-		custom_cost_trigger = {
-			always = yes
-		}
-		custom_cost_text = [propaganda_cost]
 		fire_only_once = no
 		days_remove = 120
-		days_re_enable = 45
+		days_re_enable = 30
 
 		available = {
 			NOT = {
@@ -358,6 +169,13 @@ economy_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision industrial_projects"
 			if = {
 				limit = {
+					OR = {
+						has_idea = industrial_conglomerates
+						has_idea = the_donju
+						has_idea = the_bazaar
+						has_idea = chaebols
+						has_idea = small_medium_business_owners
+					}
 					NOT = { has_country_flag = recently_supported_small_business }
 				}
 				set_country_flag = { flag = recently_supported_small_business days = 180 value = 1 }
@@ -368,8 +186,8 @@ economy_decisions = {
 				increase_chaebols_opinion = yes
 				custom_effect_tooltip = internal_faction_every_six_months_tt
 			}
-			custom_effect_tooltip = treasury_loss_project_TT
-			propaganda_cost_scripted_effect = yes
+			custom_effect_tooltip = treasury_loss_projects_TT
+			ingame_update_setup = yes
 		}
 		modifier = {
 			production_speed_industrial_complex_factor = 0.25
@@ -398,13 +216,9 @@ economy_decisions = {
 	infrastructure_projects = {
 		icon = generic_construction
 		allowed = { always = yes }
-		custom_cost_trigger = {
-			always = yes
-		}
-		custom_cost_text = [propaganda_cost]
 		fire_only_once = no
 		days_remove = 120
-		days_re_enable = 45
+		days_re_enable = 30
 
 		available = {
 			NOT = {
@@ -415,8 +229,8 @@ economy_decisions = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision infrastructure_projects"
-			custom_effect_tooltip = treasury_loss_project_TT
-			propaganda_cost_scripted_effect = yes
+			custom_effect_tooltip = treasury_loss_projects_TT
+			ingame_update_setup = yes
 		}
 		modifier = {
 			production_speed_infrastructure_factor = 0.25
@@ -441,13 +255,9 @@ economy_decisions = {
 	arms_factory_projects = {
 		icon = generic_construction
 		allowed = { always = yes }
-		custom_cost_trigger = {
-			always = yes
-		}
-		custom_cost_text = [propaganda_cost]
 		fire_only_once = no
 		days_remove = 120
-		days_re_enable = 45
+		days_re_enable = 30
 
 		available = {
 			NOT = {
@@ -458,15 +268,17 @@ economy_decisions = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision arms_factory_projects"
-			custom_effect_tooltip = treasury_loss_project_TT
 			if = {
-				limit = { NOT = { has_country_flag = recently_did_arms_factory_project } }
+				limit = {
+					has_idea = defense_industry
+					NOT = { has_country_flag = recently_did_arms_factory_project }
+				}
 				set_country_flag = { flag = recently_did_arms_factory_project days = 365 value = 1 }
 				increase_defense_industry_opinion = yes
 				custom_effect_tooltip = internal_faction_every_year_tt
 			}
-
-			propaganda_cost_scripted_effect = yes
+			custom_effect_tooltip = treasury_loss_projects_TT
+			ingame_update_setup = yes
 		}
 		modifier = {
 			production_speed_arms_factory_factor = 0.25
@@ -509,10 +321,6 @@ economy_decisions = {
 	dockyard_projects = {
 		icon = generic_construction
 		allowed = { always = yes }
-		custom_cost_trigger = {
-			always = yes
-		}
-		custom_cost_text = [propaganda_cost]
 		fire_only_once = no
 		days_remove = 120
 		days_re_enable = 45
@@ -529,9 +337,17 @@ economy_decisions = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision dockyard_projects"
-			increase_maritime_industry_opinion = yes
-			custom_effect_tooltip = treasury_loss_project_TT
-			propaganda_cost_scripted_effect = yes
+			if = {
+				limit = {
+					has_idea = maritime_industry
+					NOT = { has_country_flag = recently_did_dockyard_project }
+				}
+				set_country_flag = { flag = recently_did_dockyard_project days = 365 value = 1 }
+				increase_maritime_industry_opinion = yes
+				custom_effect_tooltip = internal_faction_every_year_tt
+			}
+			custom_effect_tooltip = treasury_loss_projects_TT
+			ingame_update_setup = yes
 		}
 		modifier = {
 			production_speed_dockyard_factor = 0.25

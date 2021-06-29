@@ -56,15 +56,18 @@ ingame_update_setup = {
 	update_health_rate = yes
 	update_social_rate = yes
 	calculate_interest_rate = yes
+	lease_civilian_complex_cost = yes
+	lease_military_factories_cost = yes
+	projects_scripted_effect = yes
+	propaganda_cost_scripted_effect = yes
 	calculate_additional_expense_rate = yes
 
 	#Various
 	update_economic_cycle_cost = yes
-	decision_bands_calculator_scripted_effect = yes
 
 	#Visuals
 	update_display = yes
-} 
+}
 
 #Tax rate shit
 calculate_tax_rate = {
@@ -1231,11 +1234,42 @@ update_social_rate = {
 
 calculate_additional_expense_rate = {
 	set_variable = { additional_expenses_rate = 0 }
-	
+
+	# Generic Propaganda Campaign Decisions
+	if = { limit = { has_decision = promote_outlook_decision_support_pro_western_parties }
+		add_to_variable = { additional_expenses_rate = propaganda_costs }
+	}
+	if = { limit = { has_decision = promote_outlook_decision_support_emerging_parties }
+		add_to_variable = { additional_expenses_rate = propaganda_costs }
+	}
+	if = { limit = { has_decision = promote_outlook_decision_support_the_non_aligned_parties }
+		add_to_variable = { additional_expenses_rate = propaganda_costs }
+	}
+	if = { limit = { has_decision = promote_outlook_decision_support_the_nationalists }
+		add_to_variable = { additional_expenses_rate = propaganda_costs }
+	}
+	if = { limit = { has_decision = promote_outlook_decision_support_the_salafists }
+		add_to_variable = { additional_expenses_rate = propaganda_costs }
+	}
 	# Generic Economic Decisions
 	if = { limit = { has_decision = lease_civilian_factories }
 		add_to_variable = { additional_expenses_rate = leased_civilian_economy_cost }
 	}
+	if = { limit = { has_decision = lease_military_factories }
+		add_to_variable = { additional_expenses_rate = leased_military_economy_cost }
+	}
+	if = {
+		limit = {
+			OR = {
+				has_decision = infrastructure_projects
+				has_decision = industrial_projects
+				has_decision = arms_factory_projects
+				has_decision = dockyard_projects
+			}
+		}
+		add_to_variable = { additional_expenses_rate = projects_costs }
+	}
+
 	# Country Specific
 	if = {
 		limit = { tag = CAN }
