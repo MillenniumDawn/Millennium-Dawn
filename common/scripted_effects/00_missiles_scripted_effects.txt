@@ -1807,13 +1807,15 @@ calculate_NSAM_AD_gui_vars = {
 	}
 	set_variable = { var_NSAM_AD_deploy_ratio = 0 }
 	### add all aa ships
-	set_variable = { var_NSAM_AD_launchers = 0 }
-	add_to_variable = { var_NSAM_AD_launchers = num_ships_with_type@cruiser_mtg }
-	add_to_variable = { var_NSAM_AD_launchers = num_ships_with_type@stealth_destroyer_mtg }
-	add_to_variable = { var_NSAM_AD_launchers = num_ships_with_type@frigate_mtg }
-	multiply_variable = { var_NSAM_AD_launchers = 4 } #var_ship_SAM_launcher_tech }
-	#set_temp_variable = { temp1 = var_NSAM_AD_deployed }
-	#divide_temp_variable = { temp1 = var_NSAM_AD_deploy_ratio }
+	set_variable = { var_AD_ships = 0 }
+	add_to_variable = { var_AD_ships = num_ships_with_type@cruiser_mtg }
+	add_to_variable = { var_AD_ships = num_ships_with_type@stealth_destroyer_mtg }
+	add_to_variable = { var_AD_ships = num_ships_with_type@frigate_mtg }
+	##
+	set_variable = { var_ship_SAM_launcher_tech = 4 }
+	##
+	set_variable = { var_NSAM_AD_launchers = var_ship_SAM_launcher_tech }
+	multiply_variable = { var_NSAM_AD_launchers = var_AD_ships }
 	set_variable = { var_NSAM_AD_deploy_ratio = var_NSAM_AD_deployed }
 	divide_variable = { var_NSAM_AD_deploy_ratio = var_NSAM_AD_launchers }
 	set_variable = { var_fleet_air_defense_system = -0.5 }
@@ -1829,6 +1831,31 @@ calculate_SAM_AD_gui_vars = {
 		}
 		set_variable = { var_SAM_AD_deployed = 0 }
 	}
+	set_variable = { var_SAM_AD_deploy_ratio = 0 }
+	set_variable = { var_AD_batteries = 0 }
+	every_controlled_state = {
+		limit = {
+			anti_air_building > 0
+		}
+		add_to_variable = { ROOT.var_AD_batteries = building_level@anti_air_building }
+	}
+	##
+	set_variable = { var_SAM_launcher_tech = 4 }
+	##
+	set_variable = { var_SAM_launcher_total = var_SAM_launcher_tech }
+	multiply_variable = { var_SAM_launcher_total = var_AD_batteries }
+	set_variable = { var_SAM_AD_deploy_ratio = var_SAM_AD_deployed }
+	divide_variable = { var_SAM_AD_deploy_ratio = var_SAM_launcher_total }
+	if = {
+		limit = {
+			check_variable = { var_SAM_AD_deploy_ratio < 0 }
+		}
+		set_variable = { var_SAM_AD_deploy_ratio = 0 }
+	}
+	set_variable = { var_SAM_AD_damage = 2 }
+	multiply_variable = { var_SAM_AD_damage = var_SAM_AD_deploy_ratio }
+	set_variable = { var_SAM_intercept_chance_total = 0.9 }
+	multiply_variable = { var_SAM_intercept_chance_total = var_SAM_AD_deploy_ratio }
 }
 
 calculate_SAM_MD_sea_gui_vars = {
