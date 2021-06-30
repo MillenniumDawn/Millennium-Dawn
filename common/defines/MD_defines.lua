@@ -116,7 +116,7 @@
 	NDefines.NBuildings.MAX_SHARED_SLOTS = 56
 	NDefines.NBuildings.OWNER_CHANGE_EXTRA_SHARED_SLOTS_FACTOR = 0.5
 	NDefines.NBuildings.INFRASTRUCTURE_RESOURCE_BONUS = 0.02
-	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 4.0 --Fucked with this to see
+	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 1.0 -- was 4.0 --Fucked with this to see
 
 	NDefines.NMilitary.HOURLY_ORG_MOVEMENT_IMPACT = -0.1 -- -0.2
 	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.2 -- -0.8
