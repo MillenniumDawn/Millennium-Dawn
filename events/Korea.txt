@@ -933,6 +933,215 @@ country_event = {
 	}
 }
 
+#National Assembly Elections Loom as Parties Begin Campaigning
+country_event = {
+	id = korea.18
+
+	title = korea.18.t
+	desc = korea.18.d
+	picture = GFX_politics_speak
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.18.a #Let's hope for a majority!
+		hidden_effect = {
+			country_event = {
+				days = 27
+				id = korea.20 #check result
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: korea.18.a executed"
+	}
+}
+
+#hidden event checking for elections
+country_event = {
+	id = korea.19
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.19.a
+		if = {
+			limit = {
+				has_elections = yes
+			}
+			country_event = {
+				days = 1
+				id = korea.18 #The elections are coming!
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: korea.19.a executed"
+	}
+}
+
+#hidden event checking result
+country_event = {
+	id = korea.20
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.20.a
+		random_list = {
+			33 = {
+				set_country_flag = KOR_lib_victory
+				modifier = {
+					factor = 2
+					check_variable = { party_pop_array^3 > party_pop_array^1 }
+				}
+				modifier = {
+					factor = 0.5
+					check_variable = { party_pop_array^3 < party_pop_array^1 }
+				}
+				modifier = {
+					factor = 2
+					check_variable = { party_pop_array^3 > 0.5 }
+				}
+				modifier = {
+					factor = 1.5
+					check_variable = { party_pop_array^3 > 0.75 }
+				}
+			}
+			33 = {
+				set_country_flag = KOR_con_victory
+				modifier = {
+					factor = 2
+					check_variable = { party_pop_array^3 < party_pop_array^1 }
+				}
+				modifier = {
+					factor = 0.5
+					check_variable = { party_pop_array^3 > party_pop_array^1 }
+				}
+				modifier = {
+					factor = 2
+					check_variable = { 0.5 < party_pop_array^1 }
+				}
+				modifier = {
+					factor = 1.5
+					check_variable = { 0.75 < party_pop_array^1 }
+				}
+			}
+			33 = {
+				set_country_flag = KOR_no_victory
+				modifier = {
+					factor = 2
+					check_variable = { party_pop_array^3 = party_pop_array^1 }
+				}
+				modifier = {
+					factor = 2
+					has_idea = KOR_multi_party_system
+				}
+				modifier = {
+					factor = 0.5
+					has_idea = KOR_two_party_system
+				}
+			}
+		}
+		country_event = {
+			id = korea.21
+			days = 1
+		}
+		log = "[GetDateText]: [This.GetName]: korea.20.a executed"
+	}
+}
+
+#The results are in!
+country_event = {
+	id = korea.21
+
+	title = korea.21.t
+
+	desc = {
+		text = korea.21.d_no
+		trigger = {
+			has_country_flag = KOR_no_victory
+		}
+	}
+
+	desc = {
+		text = korea.21.d_con_loss
+		trigger = {
+			has_country_flag = KOR_lib_victory
+			KOR_has_conservative_government = yes
+		}
+	}
+
+	desc = {
+		text = korea.21.d_lib_loss
+		trigger = {
+			has_country_flag = KOR_con_victory
+			KOR_has_liberal_government = yes
+		}
+	}
+
+	desc = {
+		text = korea.21.d_con_win
+		trigger = {
+			has_country_flag = KOR_con_victory
+			KOR_has_conservative_government = yes
+		}
+	}
+
+	desc = {
+		text = korea.21.d_lib_win
+		trigger = {
+			has_country_flag = KOR_lib_victory
+			KOR_has_liberal_government = yes
+		}
+	}
+
+	picture = GFX_politics_speak
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.21.a #As always, it was a hard-fought election.
+		if = {
+			limit = {
+				has_country_flag = KOR_no_victory
+			}
+			add_timed_idea = {
+				idea = KOR_national_assembly_deadlocked
+				days = 1460
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_flag = KOR_con_victory
+			}
+			add_timed_idea = {
+				idea = KOR_national_assembly_conservative
+				days = 1460
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_flag = KOR_lib_victory
+			}
+			add_timed_idea = {
+				idea = KOR_national_assembly_liberal
+				days = 1460
+			}
+		}
+		hidden_effect = {
+			clr_country_flag = KOR_no_victory
+			clr_country_flag = KOR_lib_victory
+			clr_country_flag = KOR_con_victory
+			country_event = {
+				days = 1430
+				id = korea.19 #check if elections are allowed for next election
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: korea.18.a executed"
+	}
+}
+
 	###North Korea###
 country_event = {
 	id = korea_north.1
