@@ -1,13 +1,9 @@
 #########################################
 ### Effect of clearing broken votings ###
 #########################################
-
-
 EU_clear_voting = {
-	every_country = {
-		limit = {
-			has_country_flag = EU_potential
-		}
+	for_each_scope_loop = {
+		array = global.EU_potential
 
 		clear_variable = global.var_EUvoteYes
 		clear_variable = global.var_EUvoteNo
@@ -371,10 +367,8 @@ EU_clear_voting = {
 		clr_global_flag = focus_EU611_result
 		clr_global_flag = focus_EU611_QMV_result
 		clr_global_flag = focus_EU611_maj_result
-
 	}
 }
-
 
 ##############################################
 ##############################################
@@ -385,117 +379,69 @@ EU_clear_voting = {
 EU_update_vars = {
 	custom_effect_tooltip = "Update Ratio of Total EU, Euroscepticism, Europeanism"
 	hidden_effect = {
-		###log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_update_vars"
-		### EU population vars update
-		set_variable = {
-			var = global.var_EUpopTotal
-			value = 0
+		# log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_update_vars"
+
+		# EU population vars update
+		# Sets Global EU Population and Country Population
+		set_variable = { var = global.var_EUpopTotal value = 0 }
+		for_each_scope_loop = {
+			array = global.EU_member
+			set_temp_variable = { converted_manpower = max_manpower_k }
+			divide_temp_variable = { converted_manpower = 100 }
+			set_variable = { EU_member_state_population = converted_manpower }
+			divide_variable = { EU_member_state_population = 10 } #Converts to millions for use in display
+			add_to_variable = { global.var_EUpopTotal = converted_manpower }
 		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-			add_to_variable = {
-				var = global.var_EUpopTotal
-				value = THIS.max_manpower_k
-			}
+		set_variable = { var = global.var_EUpopTotalDisplay value = global.var_EUpopTotal }
+		divide_variable = { global.var_EUpopTotalDisplay = 10 }
+
+		# Sets the total number of EU Member States
+		set_variable = { var = global.var_EUmemberstatesTotal value = 0 }
+		for_each_scope_loop = {
+			array = global.EU_member
+			add_to_variable = { global.var_EUmemberstatesTotal = 1 }
 		}
 
-		set_variable = {
-			var = global.var_EUmemberstatesTotal
-			value = 0
+		# Calculates Pop Ratio
+		for_each_scope_loop = {
+			array = global.EU_member
+			set_variable = { THIS.var_EUpopRatio = 0 }
+			add_to_variable = { THIS.var_EUpopRatio = THIS.max_manpower_k }
+			divide_variable = { THIS.var_EUpopRatio = 100 } # Converts to 100,000 to match the GDP
+			divide_variable = { THIS.var_EUpopRatio = global.var_EUpopTotal }
 		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-			add_to_variable = {
-				var = global.var_EUmemberstatesTotal
-				value = 1
-			}
-		}
+		# End of EU Population Calculations
 
-		every_country = {
-			limit = {
-				has_idea = EU_member
+		# Euroscepticism update
+		for_each_scope_loop = {
+			array = global.EU_potential
+			if = { limit = { check_variable = { THIS.eurosceptic > 1 } }
+				set_variable = { var = THIS.eurosceptic value = 1 }
 			}
-			set_variable = {
-				var = THIS.var_EUpopRatio
-				value = 0
-			}
-			add_to_variable = {
-				var = THIS.var_EUpopRatio
-				value = THIS.max_manpower_k
-			}
-			divide_variable = {
-				var = THIS.var_EUpopRatio
-				value = global.var_EUpopTotal
-			}
-		}
-		###End of EU population vars update
-
-		###Euroscepticism update
-		every_country = {
-			limit = {
-				has_country_flag = EU_potential
-			}
-			if = {
-				limit = {
-					check_variable = { THIS.eurosceptic > 1 }
-				}
-				set_variable = {
-					var = THIS.eurosceptic
-					value = 1
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = { THIS.eurosceptic < 0 }
-				}
-				set_variable = {
-					var = THIS.eurosceptic
-					value = 0
-				}
+			else_if = { limit = { check_variable = { THIS.eurosceptic < 0 } }
+				set_variable = { var = THIS.eurosceptic value = 0 }
 			}
 		}
 		###End of Euroscepticism update
 
 		###Europeanism update
-		set_variable = {
-			var = global.var_europeanism
-			value = 0
+		set_variable = { var = global.var_europeanism value = 0 }
+
+		for_each_scope_loop = {
+			array = global.EU_member
+			set_variable = { THIS.var_proeuropean = 1 }
+
+			subtract_from_variable = { THIS.var_proeuropean = THIS.eurosceptic }
+			set_temp_variable = { converted_manpower = max_manpower_k }
+			divide_temp_variable = { converted_manpower = 100 }
+			multiply_variable = { THIS.var_proeuropean = converted_manpower }
 		}
 
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-			set_variable = {
-				var = THIS.var_proeuropean
-				value = 1
-			}
-			subtract_from_variable = {
-				var = THIS.var_proeuropean
-				value = THIS.eurosceptic
-			}
-			multiply_variable = {
-				var = THIS.var_proeuropean
-				value = max_manpower_k
-			}
+		for_each_scope_loop = {
+			array = global.EU_member
+			add_to_variable = { global.var_europeanism = THIS.var_proeuropean }
 		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-			add_to_variable = {
-				var = global.var_europeanism
-				value = THIS.var_proeuropean
-			}
-		}
-		divide_variable = {
-			var = global.var_europeanism
-			value = global.var_EUpopTotal
-		}
+		divide_variable = { global.var_europeanism = global.var_EUpopTotal }
 		###End of Europeanism update
 	}
 }

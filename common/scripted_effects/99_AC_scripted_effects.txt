@@ -499,6 +499,12 @@ complete_project = {
 
 end_project = {
 	if = { limit = { check_variable = { project_array^project < 0 } }
+		# Refund funds cost if not finished buildings
+		if = { limit = { check_variable = { project_monetary_cost^project > 0 } }
+			subtract_from_variable = { treasury = project_monetary_cost^project }
+			subtract_from_variable = { int_investments = project_monetary_cost^project }
+		}
+
 		var:project_array^project = {
 			clear_variable = project_target_state_@PREV
 			remove_from_array = { array = projects_in_state value = PREV.id }
@@ -523,12 +529,6 @@ end_project = {
 		clear_variable = project_construction_speed_display^project
 		clear_variable = project_total_construction_duration_display^project
 		clear_variable = project_target_country^project
-
-		# Refund funds cost if not finished buildings
-		if = { limit = { check_variable = { project_monetary_cost^project > 0 } }
-
-			add_to_variable = { treasury = project_monetary_cost^project }
-		}
 		clear_variable = project_monetary_cost^project
 	}
 
