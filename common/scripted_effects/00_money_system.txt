@@ -234,7 +234,7 @@ calculate_tax_gain = {
 		add_to_temp_variable = { tax_gain_multiplier = 0.10 }
 	}
 	#Italy
-	if = { 
+	if = {
 		limit = { tag = ITA }
 		add_to_temp_variable = { tax_gain_multiplier = ITA_tax_multiplier_var }
 	}
@@ -316,6 +316,24 @@ calculate_additional_income_rate = {
 		multiply_variable = { additional_income_iranian_aid = 0.10 }	#10% of GDP yearly
 		multiply_variable = { additional_income_iranian_aid = 0.02 }	#weekly
 		add_to_variable = { additional_income_rate = additional_income_iranian_aid }
+	}
+
+	# EU
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { global.EU_member = THIS }
+				has_idea = EU_member
+			}
+			NOT = { has_idea = EUU_subsidies_suspended }
+		}
+		set_variable = { EU_subsidies = THIS.EU_natural_subsidies }
+		add_to_variable = { EU_subsidies = THIS.EU_growth_subsidies }
+		add_to_variable = { EU_subsidies = THIS.EU_admin_subsidies }
+		add_to_variable = { EU_subsidies = THIS.EU_global_exp_subsidies }
+		divide_variable = { EU_subsidies = 52 }
+
+		add_to_variable = { additional_income_rate = EU_subsidies }
 	}
 	# Country Specific Income
 	##Wa State
@@ -761,7 +779,7 @@ update_military_rate = {
 			add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
 		}
 	}
-	
+
 	#Modify personnel cost with total wage modifier
 	multiply_temp_variable = { land_count = personnel_cost_multiplier }
 	multiply_temp_variable = { navy_count = personnel_cost_multiplier }
@@ -903,7 +921,7 @@ update_bureaucracy_rate = {
 			limit = { has_idea = CAN_overburdened_economy2 }
 			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.05 }
 		}
-	}	
+	}
 
 	for_each_loop = {
 		array = array_bureaucracy_spend
@@ -1277,7 +1295,7 @@ update_health_rate = {
 			add_to_temp_variable = { health_cost_multiplier = 0.05 }
 		}
 	}
-	
+
 	for_each_loop = {
 		array = array_health_spend
 		index = i
@@ -1401,7 +1419,7 @@ update_social_rate = {
 
 calculate_additional_expense_rate = {
 	set_variable = { additional_expenses_rate = 0 }
-	
+
 	#Additional expenses, set expense amount as a variable (weekly gain)
 	# Generic Propaganda Campaign Decisions
 	if = { limit = { has_decision = promote_outlook_decision_support_pro_western_parties }
@@ -1436,6 +1454,13 @@ calculate_additional_expense_rate = {
 			}
 		}
 		add_to_variable = { additional_expenses_rate = projects_costs }
+	}
+	# European Union Contribution Expenses
+	if = {
+		limit = {
+			has_idea = EU_member
+		}
+		add_to_variable = { additional_expenses_rate = EU_budget_contribution_weekly }
 	}
 	# Country Specific
 	if = {
@@ -1567,7 +1592,7 @@ calculate_resource_sale_rate = {
 			add_to_temp_variable = { resource_export_multiplier = -0.75 }
 		}
 	}
-	
+
 	multiply_variable = { oil_exports = resource_export_multiplier }
 	multiply_variable = { steel_exports = resource_export_multiplier }
 	multiply_variable = { aluminium_exports = resource_export_multiplier }
