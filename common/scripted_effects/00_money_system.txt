@@ -225,22 +225,42 @@ calculate_tax_gain = {
 		add_to_temp_variable = { tax_gain_multiplier = -0.01 }
 	}
 	##Country specific
+	#Nigeria
 	if = {
 		limit = { original_tag = NIG }
 		if = {
 			limit = { has_idea = NIG_efficent_government_spending_idea }
+			add_to_temp_variable = { tax_gain_multiplier = 0.10 }
 		}
-		add_to_temp_variable = { tax_gain_multiplier = 0.10 }
+	}
+	#Italy
+	if = { 
+		limit = { tag = ITA }
+		if = {
+			limit = { has_idea = ITA_tax_evasion }
+			subtract_from_temp_variable = { tax_gain_multiplier = 0.1 }
+		}
+		if = {
+			limit = { has_idea = ITA_building_abuse_1 }
+			subtract_from_temp_variable = { tax_gain_multiplier = 0.05 }
+		}
+		if = {
+			limit = { has_idea = ITA_decentralized_nation }
+			subtract_from_temp_variable = { tax_gain_multiplier = 0.05 }
+		}
+	}
+	#Canada
+	if = {
+		limit = { original_tag = CAN }
+		if = {
+			limit = { has_idea = CAN_tax_english }
+			add_to_temp_variable = { tax_gain_multiplier = 0.05 }
+		}
 	}
 
 	##For display
 	set_variable = { tax_gain_multiplier_display = tax_gain_multiplier }
 	subtract_from_variable = { tax_gain_multiplier_display = 1 }
-
-	#TODO MOVE THIS THE FUCK OUT
-	if = { limit = { tag = ITA }
-		add_to_temp_variable = { tax_gain_multiplier = ITA_tax_multiplier_var }
-	}
 
 	#Modify Taxgain by multiplier
 	multiply_variable = { civil_fac_tax = tax_gain_multiplier }
@@ -309,6 +329,12 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = additional_income_iranian_aid }
 	}
 	# Country Specific Income
+	##Wa State
+	if = {
+		limit = { has_idea = WAA_Narcotics_Producer }
+		set_variable = { additional_income_WAA_Narcotics_Producer = 0.08 }
+		add_to_variable = { additional_income_rate = additional_income_WAA_Narcotics_Producer }
+	}
 }
 
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
@@ -724,6 +750,29 @@ update_military_rate = {
 		limit = { has_idea = officer_international_education }
 		add_to_temp_variable = { personnel_cost_multiplier = 0.25 }
 	}
+	#Other modifiers
+	##Generic
+	if = {
+		limit = { has_idea = child_soldiers }
+		subtract_from_temp_variable = { personnel_cost_multiplier = 0.25 }
+	}
+	##Canada
+	if = {
+		limit = { original_tag = CAN }
+		if = {
+			limit = { has_idea = CAN_overburdened_economy }
+			add_to_temp_variable = { personnel_cost_multiplier = 0.15 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy1 }
+			add_to_temp_variable = { personnel_cost_multiplier = 0.10 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy2 }
+			add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
+		}
+	}
+	
 	#Modify personnel cost with total wage modifier
 	multiply_temp_variable = { land_count = personnel_cost_multiplier }
 	multiply_temp_variable = { navy_count = personnel_cost_multiplier }
@@ -834,22 +883,42 @@ update_bureaucracy_rate = {
 	if = {
 		limit = { original_tag = ITA }
 		if = {
-			limit = { has_idea = ITA_inefficient_administration_4 } ##50% increase in cost for bureaucracy
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.5 }
+			limit = { has_idea = ITA_inefficient_administration_4 }
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.20 }
 		}
-		else_if = {
-			limit = { has_idea = ITA_inefficient_administration_3 } ##37,5% increase in cost for bureaucracy
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.375 }
+		if = {
+			limit = { has_idea = ITA_inefficient_administration_3 } 
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.15 }
 		}
-		else_if = {
-			limit = { has_idea = ITA_inefficient_administration_2 } ##25% increase in cost for bureaucracy
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.25 }
+		if = {
+			limit = { has_idea = ITA_inefficient_administration_2 }
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.10 }
 		}
-		else_if = {
-			limit = { has_idea = ITA_inefficient_administration_1 } ##12,5% increase in cost for bureaucracy
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.125 }
+		if = {
+			limit = { has_idea = ITA_inefficient_administration_1 }
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.05 }
+		}
+		if = {
+			limit = { has_idea = ITA_bloated_local_administrations }
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.025 }
 		}
 	}
+	##Canada
+	if = {
+		limit = { original_tag = CAN }
+		if = {
+			limit = { has_idea = CAN_overburdened_economy }
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.15 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy1 }
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.10 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy2 }
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.05 }
+		}
+	}	
 
 	for_each_loop = {
 		array = array_bureaucracy_spend
@@ -937,12 +1006,32 @@ update_police_rate = {
 			limit = { has_idea = ITA_legalized_light_drugs }
 			subtract_from_temp_variable = { police_cost_multiplier = 0.10 }
 		}
+		if = {
+			limit = { has_idea = ITA_war_with_Mafia }
+			add_to_temp_variable = { police_cost_multiplier = 0.10 }
+		}
 	}
 	##UK
 	if = {
 		limit = { original_tag = ENG }
 		if = {
 			limit = { has_idea = ENG_CCTV_systems }
+			add_to_temp_variable = { police_cost_multiplier = 0.05 }
+		}
+	}
+	##Canada
+	if = {
+		limit = { original_tag = CAN }
+		if = {
+			limit = { has_idea = CAN_overburdened_economy }
+			add_to_temp_variable = { police_cost_multiplier = 0.15 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy1 }
+			add_to_temp_variable = { police_cost_multiplier = 0.10 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy2 }
 			add_to_temp_variable = { police_cost_multiplier = 0.05 }
 		}
 	}
@@ -1060,6 +1149,51 @@ update_education_rate = {
 		limit = { has_tech = internet6 }
 		subtract_from_temp_variable = { education_cost_multiplier = 0.05 }
 	}
+	if = {
+		limit = { has_idea = african_brain_drain }
+		add_to_temp_variable = { education_cost_multiplier = 0.05 }
+	}
+	if = {
+		limit = { has_idea = child_soldiers }
+		add_to_temp_variable = { education_cost_multiplier = 0.15 }
+	}
+	#Country specific
+	##Canada
+	if = {
+		limit = { original_tag = CAN }
+		if = {
+			limit = { has_idea = CAN_overburdened_economy }
+			add_to_temp_variable = { education_cost_multiplier = 0.15 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy1 }
+			add_to_temp_variable = { education_cost_multiplier = 0.10 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy2 }
+			add_to_temp_variable = { education_cost_multiplier = 0.05 }
+		}
+	}
+	##Italy
+	if = {
+		limit = { original_tag = ITA }
+		if = {
+			limit = { has_idea = ITA_outdated_education_1 }
+			subtract_from_temp_variable = { education_cost_multiplier = 0.025 }
+		}
+		if = {
+			limit = { has_idea = ITA_outdated_education_2 }
+			subtract_from_temp_variable = { education_cost_multiplier = 0.05 }
+		}
+		if = {
+			limit = { has_idea = ITA_modern_education_1 }
+			add_to_temp_variable = { education_cost_multiplier = 0.025 }
+		}
+		if = {
+			limit = { has_idea = ITA_modern_education_2 }
+			add_to_temp_variable = { education_cost_multiplier = 0.05 }
+		}
+	}
 
 	for_each_loop = {
 		array = array_education_spend
@@ -1158,12 +1292,28 @@ update_health_rate = {
 	if = {
 		limit = { original_tag = ENG }
 		if = {
-			limit = { has_idea = ENG_expanded_NHS }
+			limit = { has_idea = ENG_idea_expanded_nhs  }
 			add_to_temp_variable = { health_cost_multiplier = 0.05 }
 		}
 		if = {
 			limit = { has_idea = ENG_idea_privatized_nhs }
-			subtract_from_temp_variable = { health_cost_multiplier = -0.10 }
+			add_to_temp_variable = { health_cost_multiplier = -0.10 }
+		}
+	}
+	##Canada
+	if = {
+		limit = { original_tag = CAN }
+		if = {
+			limit = { has_idea = CAN_overburdened_economy }
+			add_to_temp_variable = { health_cost_multiplier = 0.15 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy1 }
+			add_to_temp_variable = { health_cost_multiplier = 0.10 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy2 }
+			add_to_temp_variable = { health_cost_multiplier = 0.05 }
 		}
 	}
 	
@@ -1244,6 +1394,52 @@ update_social_rate = {
 
 	#Additional additive modifiers
 	set_temp_variable = { social_cost_multiplier = 1 }
+	#Generic
+	if = {
+		limit = { has_idea = child_soldiers }
+		add_to_temp_variable = { social_cost_multiplier = 0.15 }
+	}
+	#Country specific
+	##Canada
+	if = {
+		limit = { original_tag = CAN }
+		if = {
+			limit = { has_idea = CAN_overburdened_economy }
+			add_to_temp_variable = { social_cost_multiplier = 0.15 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy1 }
+			add_to_temp_variable = { social_cost_multiplier = 0.10 }
+		}
+		if = {
+			limit = { has_idea = CAN_overburdened_economy2 }
+			add_to_temp_variable = { social_cost_multiplier = 0.05 }
+		}
+	}
+	##Italy
+	if = {
+		limit = { original_tag = ITA }
+		if = {
+			limit = { has_idea = ITA_unsustainable_pension_system_1 }
+			add_to_temp_variable = { social_cost_multiplier = 0.025 }
+		}	
+		if = {
+			limit = { has_idea = ITA_unsustainable_pension_system_2 }
+			add_to_temp_variable = { social_cost_multiplier = 0.05 }
+		}	
+		if = {
+			limit = { has_idea = ITA_unsustainable_pension_system_3 }
+			add_to_temp_variable = { social_cost_multiplier = 0.075 }
+		}	
+		if = {
+			limit = { has_idea = ITA_unsustainable_pension_system_4 }
+			add_to_temp_variable = { social_cost_multiplier = 0.1 }
+		}
+		if = {
+			limit = { has_idea = ITA_citizenship_income_spirit }
+			add_to_temp_variable = { social_cost_multiplier = 0.05 }
+		}		
+	}
 
 	for_each_loop = {
 		array = array_social_spend
@@ -1304,7 +1500,6 @@ calculate_additional_expense_rate = {
 		}
 		add_to_variable = { additional_expenses_rate = projects_costs }
 	}
-
 	# Country Specific
 	if = {
 		limit = { tag = CAN }
@@ -1419,7 +1614,23 @@ calculate_resource_sale_rate = {
 
 	#Additional additive modifiers
 	set_temp_variable = { resource_export_multiplier = 1 }
-
+	#Burma
+	if = {
+		limit = { original_tag = BRM }
+		if = {
+			limit = { has_idea = Western_Sanctions }
+			add_to_temp_variable = { resource_export_multiplier = -0.50 }
+		}
+		if = {
+			limit = { has_idea = Reduced_Western_Sanctions }
+			add_to_temp_variable = { resource_export_multiplier = -0.20 }
+		}
+		if = {
+			limit = { has_idea = Massive_International_Sanctions }
+			add_to_temp_variable = { resource_export_multiplier = -0.75 }
+		}
+	}
+	
 	multiply_variable = { oil_exports = resource_export_multiplier }
 	multiply_variable = { steel_exports = resource_export_multiplier }
 	multiply_variable = { aluminium_exports = resource_export_multiplier }
