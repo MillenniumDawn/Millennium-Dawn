@@ -227,7 +227,7 @@
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 2500 -- 10000
 	NDefines.NAir.DETECT_CHANCE_FROM_AIRCRAFTS_EFFECTIVE_COUNT = 350 -- 3000
 	NDefines.NAir.DETECT_CHANCE_FROM_NIGHT = -0.05 -- -0.2
-	NDefines.NAir.CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 1 -- 4
+	NDefines.NAir.CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 2 -- 4
 	NDefines.NAir.HOURS_DELAY_AFTER_EACH_COMBAT = 3 -- 4
 	NDefines.NAir.NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 0.40 -- 0.3
 	NDefines.NAir.NAVAL_STRIKE_DETECTION_BALANCE_FACTOR = 0.7 -- 0.7
@@ -293,6 +293,9 @@
 	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_POW_EFFECT = 1.01
 	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 1
+	NDefines.NNavy.SHIP_TO_FLEET_ANTI_AIR_RATIO = 0.4
+	NDefines.NNavy.CARRIER_STACK_PENALTY = 2
+	NDefines.NNavy.CARRIER_STACK_PENALTY_EFFECT = 0.2
 
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.15
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.15
@@ -313,12 +316,16 @@
 	}
 	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2 		-- optimum carrier count for carrier taskforces
 	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 4 		-- optimum capital count for capital taskforces
-	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 12			-- optimum screen count for screen taskforces
+	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 8			-- optimum screen count for screen taskforces
 	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 4				-- optimum sub count for sub taskforces
+	NDefines.NAI.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 8
+	NDefines.NAI.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 4
+	NDefines.NAI.BEST_CAPITALS_TO_CARRIER_RATIO = 2
+	NDefines.NAI.BEST_CAPITALS_TO_SCREENS_RATIO = 0.5
 
 	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2			-- carrier fleets will at least have this amount of capitals
 	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 2				-- capital to carrier count in carrier taskfoces
-	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 4					-- screens to capital/carrier count in carrier & capital taskforces
+	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 2					-- screens to capital/carrier count in carrier & capital taskforces
 
 
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
