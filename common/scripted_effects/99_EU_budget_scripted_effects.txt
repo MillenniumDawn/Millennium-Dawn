@@ -1,8 +1,6 @@
 ##################################
 ### EU Budget scripted effects ###
 ##################################
-
-
 update_EU_average_gdp_lvl = {
 	set_variable = { global.EU_average_gdp_lvl = 0 }
 	for_each_scope_loop = {
@@ -47,21 +45,14 @@ update_EU_average_eco_lvl = {
 set_EU_gdp = {
 	# EU Total GDP
 	set_variable = { global.EU_gdp = 0 }
+	set_temp_variable = { temp_calc = 0 }
 	for_each_scope_loop = {
 		array = global.EU_member
-		add_to_variable = { global.EU_gdp = THIS.gdp_total_display }
+		add_to_variable = { global.EU_gdp = THIS.gdp_total_display } #This value is for display purposes
+		add_to_temp_variable = { temp_calc = gdp_total } #This is for the GDP/C
 	}
-	set_variable = { global.EU_gdp_capita = global.EU_gdp }
+	set_variable = { global.EU_gdp_capita = temp_calc }
 	divide_variable = { global.EU_gdp_capita = global.var_EUpopTotal }
-
-	# set_variable = { global.EU_gdp = global.EU_size_modifier }
-	# multiply_variable = { global.EU_gdp = 365 }
-	### EU GDP per capita
-	#set_variable = { global.EU_gdp_capita = 1000000 }
-
-	### GDP per billion, Pop per k
-	# multiply_variable = { global.EU_gdp_capita = 1000000 } -- Already in units of billion
-	#set_variable = { global.EU_mff_total = global.EU_size_modifier }
 }
 
 set_EU_total_budget = {
@@ -78,6 +69,8 @@ set_EU_total_budget = {
 		set_variable = { THIS.EU_budget_contribution = THIS.gdp_total_display }
 		multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
 		divide_variable = { THIS.EU_budget_contribution = 100 }
+		set_variable = { THIS.EU_budget_contribution_weekly = THIS.EU_budget_contribution }
+		divide_variable = { THIS.EU_budget_contribution_weekly = 52 }# weeks in a year
 		set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
 		divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }
 	}
@@ -98,6 +91,8 @@ update_EU_total_budget = {
 		multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
 		divide_variable = { THIS.EU_budget_contribution = 100 }
 		set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
+		set_variable = { THIS.EU_budget_contribution_weekly = THIS.EU_budget_contribution }
+		divide_variable = { THIS.EU_budget_contribution_weekly = 52 } #Weeks in a year
 		divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }
 	}
 	### budget of next year
@@ -157,64 +152,41 @@ distribute_EU_budget = {
 
 distribute_EU_growth_exp = {
 	set_variable = { global.EU_growth_subsidies_total = 0 }
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			has_idea = economic_boom
+	for_each_scope_loop = {
+		array = global.EU_member
+		if = { limit = { has_idea = economic_boom }
+			set_variable = { THIS.EU_growth_subsidies = 1 }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
 		}
-		set_variable = { THIS.EU_growth_subsidies = 1 }
-		multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
+		else_if = { limit = { has_idea = fast_growth }
+			set_variable = { THIS.EU_growth_subsidies = 2 }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
+		}
+		else_if = { limit = { has_idea = stable_growth }
+			set_variable = { THIS.EU_growth_subsidies = 3 }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
+		}
+		else_if = { limit = { has_idea = stagnation }
+			set_variable = { THIS.EU_growth_subsidies = 4 }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
+		}
+		else_if = { limit = { has_idea = recession }
+			set_variable = { THIS.EU_growth_subsidies = 5 }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
+		}
+		else_if = { limit = { has_idea = depression }
+			set_variable = { THIS.EU_growth_subsidies = 6 }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
+		}
 	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			has_idea = fast_growth
-		}
-		set_variable = { THIS.EU_growth_subsidies = 2 }
-		multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			has_idea = stable_growth
-		}
-		set_variable = { THIS.EU_growth_subsidies = 3 }
-		multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			has_idea = stagnation
-		}
-		set_variable = { THIS.EU_growth_subsidies = 4 }
-		multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			has_idea = recession
-		}
-		set_variable = { THIS.EU_growth_subsidies = 5 }
-		multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			has_idea = depression
-		}
-		set_variable = { THIS.EU_growth_subsidies = 6 }
-		multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-		}
+	for_each_scope_loop = {
+		array = global.EU_member
 		divide_variable = { THIS.EU_growth_subsidies = global.EU_growth_subsidies_total }
 		multiply_variable = { THIS.EU_growth_subsidies = global.EU_growth_exp_total }
 	}
@@ -222,128 +194,114 @@ distribute_EU_growth_exp = {
 
 distribute_EU_natural_exp = {
 	set_variable = { global.EU_natural_subsidies_total = 0 }
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita > 199.999 }
+	for_each_scope_loop = {
+		array = global.EU_member
+		if = { limit = { check_variable = { gdp_per_capita > 199.999 } }
+			set_variable = { THIS.EU_natural_subsidies = 1 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
-		set_variable = { THIS.EU_natural_subsidies = 1 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		else_if = {
+			limit = {
+				check_variable = { gdp_per_capita < 200.000 }
+				check_variable = { gdp_per_capita > 139.999 }
+			}
+			set_variable = { THIS.EU_natural_subsidies = 2 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		}
+		else_if = {
+			limit = {
+				check_variable = { gdp_per_capita < 140.000 }
+				check_variable = { gdp_per_capita > 89.999 }
+			}
+			set_variable = { THIS.EU_natural_subsidies = 3 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		}
+		else_if = {
+			limit = {
+				check_variable = { gdp_per_capita < 90.000 }
+				check_variable = { gdp_per_capita > 49.999 }
+			}
+			set_variable = { THIS.EU_natural_subsidies = 4 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		}
+		else_if = {
+			limit = {
+				check_variable = { gdp_per_capita < 50.000 }
+				check_variable = { gdp_per_capita > 29.999 }
+			}
+			set_variable = { THIS.EU_natural_subsidies = 5 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		}
+		else_if = {
+			limit = {
+				check_variable = { gdp_per_capita < 30.000 }
+				check_variable = { gdp_per_capita > 19.999 }
+			}
+			set_variable = { THIS.EU_natural_subsidies = 6 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		}
+		else_if = {
+			limit = {
+				check_variable = { gdp_per_capita < 20.000 }
+				check_variable = { gdp_per_capita > 14.999 }
+			}
+			set_variable = { THIS.EU_natural_subsidies = 7 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		}
+		else_if = {
+			limit = {
+				check_variable = { gdp_per_capita < 15.000 }
+				check_variable = { gdp_per_capita > 9.999 }
+			}
+			set_variable = { THIS.EU_natural_subsidies = 8 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		}
+		else_if = {
+			limit = {
+				check_variable = { gdp_per_capita < 10.000 }
+				check_variable = { gdp_per_capita > 6.999 }
+			}
+			set_variable = { THIS.EU_natural_subsidies = 9 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		}
+		else_if = {
+			limit = {
+				check_variable = { gdp_per_capita < 7.000 }
+				check_variable = { gdp_per_capita > 3.999 }
+			}
+			set_variable = { THIS.EU_natural_subsidies = 10 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		}
+		else_if = {
+			limit = {
+				check_variable = { gdp_per_capita < 4.000 }
+				check_variable = { gdp_per_capita > 1.999 }
+			}
+			set_variable = { THIS.EU_natural_subsidies = 11 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		}
+		else_if = {
+			limit = {
+				check_variable = { gdp_per_capita < 2.00 }
+			}
+			set_variable = { THIS.EU_natural_subsidies = 12 }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
+		}
 	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita < 200.000 }
-			check_variable = { gdp_per_capita > 139.999 }
-		}
-		set_variable = { THIS.EU_natural_subsidies = 2 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita < 140.000 }
-			check_variable = { gdp_per_capita > 89.999 }
-		}
-		set_variable = { THIS.EU_natural_subsidies = 3 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita < 90.000 }
-			check_variable = { gdp_per_capita > 49.999 }
-		}
-		set_variable = { THIS.EU_natural_subsidies = 4 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita < 50.000 }
-			check_variable = { gdp_per_capita > 29.999 }
-		}
-		set_variable = { THIS.EU_natural_subsidies = 5 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita < 30.000 }
-			check_variable = { gdp_per_capita > 19.999 }
-		}
-		set_variable = { THIS.EU_natural_subsidies = 6 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita < 20.000 }
-			check_variable = { gdp_per_capita > 14.999 }
-		}
-		set_variable = { THIS.EU_natural_subsidies = 7 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita < 15.000 }
-			check_variable = { gdp_per_capita > 9.999 }
-		}
-		set_variable = { THIS.EU_natural_subsidies = 8 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita < 10.000 }
-			check_variable = { gdp_per_capita > 6.999 }
-		}
-		set_variable = { THIS.EU_natural_subsidies = 9 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita < 7.000 }
-			check_variable = { gdp_per_capita > 3.999 }
-		}
-		set_variable = { THIS.EU_natural_subsidies = 10 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita < 4.000 }
-			check_variable = { gdp_per_capita > 1.999 }
-		}
-		set_variable = { THIS.EU_natural_subsidies = 11 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-			check_variable = { gdp_per_capita > 2.00 }
-		}
-		set_variable = { THIS.EU_natural_subsidies = 12 }
-		multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
-		add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
-	}
-	every_country = {
-		limit = {
-			has_idea = EU_member
-		}
+	for_each_scope_loop = {
+		array = global.EU_member
 		divide_variable = { THIS.EU_natural_subsidies = global.EU_natural_subsidies_total }
 		multiply_variable = { THIS.EU_natural_subsidies = global.EU_natural_exp_total }
 	}

@@ -38,7 +38,7 @@
 ###
 
 #Use this update all economic values in-game
-ingame_update_setup = {	
+ingame_update_setup = {
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
 
@@ -234,7 +234,7 @@ calculate_tax_gain = {
 		}
 	}
 	#Italy
-	if = { 
+	if = {
 		limit = { tag = ITA }
 		if = {
 			limit = { has_idea = ITA_tax_evasion }
@@ -327,6 +327,24 @@ calculate_additional_income_rate = {
 		multiply_variable = { additional_income_iranian_aid = 0.10 }	#10% of GDP yearly
 		multiply_variable = { additional_income_iranian_aid = 0.02 }	#weekly
 		add_to_variable = { additional_income_rate = additional_income_iranian_aid }
+	}
+
+	# EU
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { global.EU_member = THIS }
+				has_idea = EU_member
+			}
+			NOT = { has_idea = EUU_subsidies_suspended }
+		}
+		set_variable = { EU_subsidies = THIS.EU_natural_subsidies }
+		add_to_variable = { EU_subsidies = THIS.EU_growth_subsidies }
+		add_to_variable = { EU_subsidies = THIS.EU_admin_subsidies }
+		add_to_variable = { EU_subsidies = THIS.EU_global_exp_subsidies }
+		divide_variable = { EU_subsidies = 52 }
+
+		add_to_variable = { additional_income_rate = EU_subsidies }
 	}
 	if = {
 		limit = { has_idea = blood_diamond_trade }
@@ -793,7 +811,7 @@ update_military_rate = {
 			add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
 		}
 	}
-	
+
 	#Modify personnel cost with total wage modifier
 	multiply_temp_variable = { land_count = personnel_cost_multiplier }
 	multiply_temp_variable = { navy_count = personnel_cost_multiplier }
@@ -908,7 +926,7 @@ update_bureaucracy_rate = {
 			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.20 }
 		}
 		if = {
-			limit = { has_idea = ITA_inefficient_administration_3 } 
+			limit = { has_idea = ITA_inefficient_administration_3 }
 			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.15 }
 		}
 		if = {
@@ -939,7 +957,7 @@ update_bureaucracy_rate = {
 			limit = { has_idea = CAN_overburdened_economy2 }
 			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.05 }
 		}
-	}	
+	}
 
 	for_each_loop = {
 		array = array_bureaucracy_spend
@@ -1345,7 +1363,7 @@ update_health_rate = {
 			add_to_temp_variable = { health_cost_multiplier = 0.05 }
 		}
 	}
-	
+
 	for_each_loop = {
 		array = array_health_spend
 		index = i
@@ -1451,15 +1469,15 @@ update_social_rate = {
 		if = {
 			limit = { has_idea = ITA_unsustainable_pension_system_1 }
 			add_to_temp_variable = { social_cost_multiplier = 0.025 }
-		}	
+		}
 		if = {
 			limit = { has_idea = ITA_unsustainable_pension_system_2 }
 			add_to_temp_variable = { social_cost_multiplier = 0.05 }
-		}	
+		}
 		if = {
 			limit = { has_idea = ITA_unsustainable_pension_system_3 }
 			add_to_temp_variable = { social_cost_multiplier = 0.075 }
-		}	
+		}
 		if = {
 			limit = { has_idea = ITA_unsustainable_pension_system_4 }
 			add_to_temp_variable = { social_cost_multiplier = 0.1 }
@@ -1467,7 +1485,7 @@ update_social_rate = {
 		if = {
 			limit = { has_idea = ITA_citizenship_income_spirit }
 			add_to_temp_variable = { social_cost_multiplier = 0.05 }
-		}		
+		}
 	}
 
 	for_each_loop = {
@@ -1493,7 +1511,7 @@ update_social_rate = {
 
 calculate_additional_expense_rate = {
 	set_variable = { additional_expenses_rate = 0 }
-	
+
 	#Additional expenses, set expense amount as a variable (weekly gain)
 	# Generic Propaganda Campaign Decisions
 	if = { limit = { has_decision = promote_outlook_decision_support_pro_western_parties }
@@ -1528,6 +1546,13 @@ calculate_additional_expense_rate = {
 			}
 		}
 		add_to_variable = { additional_expenses_rate = projects_costs }
+	}
+	# European Union Contribution Expenses
+	if = {
+		limit = {
+			has_idea = EU_member
+		}
+		add_to_variable = { additional_expenses_rate = EU_budget_contribution_weekly }
 	}
 	# Country Specific
 	if = {
@@ -1659,7 +1684,7 @@ calculate_resource_sale_rate = {
 			add_to_temp_variable = { resource_export_multiplier = -0.75 }
 		}
 	}
-	
+
 	multiply_variable = { oil_exports = resource_export_multiplier }
 	multiply_variable = { steel_exports = resource_export_multiplier }
 	multiply_variable = { aluminium_exports = resource_export_multiplier }
