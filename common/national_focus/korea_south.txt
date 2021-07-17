@@ -2565,7 +2565,12 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			add_political_power = 50
+			NKO = {
+				annex_country = {
+					target = KOR
+					transfer_troops = yes
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: focus KOR_juche_in_the_south executed"
 		}
 
@@ -3144,6 +3149,8 @@ focus_tree = {
 					tooltip = KOR_democratic_party_governing_tt
 					is_in_array = { ruling_party = 3  }
 				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
 			}
 			country_exists = NKO
 			NOT = {
@@ -3214,6 +3221,8 @@ focus_tree = {
 					tooltip = KOR_democratic_party_governing_tt
 					is_in_array = { ruling_party = 3  }
 				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
 			}
 			country_exists = NKO
 			NOT = {
@@ -3289,6 +3298,8 @@ focus_tree = {
 					tooltip = KOR_democratic_party_governing_tt
 					is_in_array = { ruling_party = 3  }
 				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
 			}
 			country_exists = NKO
 			NOT = {
@@ -3318,7 +3329,7 @@ focus_tree = {
 
 	focus = {
 		id = KOR_offer_talks
-		icon = union_negotiations
+		icon = peace
 
 		x = -7
 		y = 5
@@ -3341,8 +3352,14 @@ focus_tree = {
 					tooltip = KOR_democratic_party_governing_tt
 					is_in_array = { ruling_party = 3  }
 				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
 			}
 			has_war_support < 0.6
+			custom_trigger_tooltip = {
+				tooltip = support_for_reunification_more_50_tt
+				check_variable = { KOR.SFR > 50 }
+			}
 			country_exists = NKO
 			NOT = {
 				has_war_with = NKO
@@ -3361,8 +3378,124 @@ focus_tree = {
 					id = korea.6
 				}
 			}
+			NKO = {
+				country_event = {
+					id = korea.23
+					days = 30
+				}
+			}
 			liberal_policy_effect = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_offer_talks executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_propose_south_led_unification
+		icon = democracy2
+
+		x = -8
+		y = 6
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = KOR_offer_talks }
+		mutually_exclusive = { focus = KOR_propose_unity_government }
+
+		search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					is_in_array = { ruling_party = 3  }
+				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
+			}
+			has_war_support < 0.55
+			custom_trigger_tooltip = {
+				tooltip = support_for_reunification_more_50_tt
+				check_variable = { KOR.SFR > 50 }
+			}
+			country_exists = NKO
+			NOT = {
+				has_war_with = NKO
+			}
+			NKO = {
+				has_opinion = {
+					target = KOR
+					value > -26
+				}
+			}
+		}
+
+		completion_reward = {
+
+			log = "[GetDateText]: [This.GetName]: focus KOR_propose_south_led_unification executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_propose_unity_government
+		icon = neutrality
+
+		x = -6
+		y = 6
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = KOR_offer_talks }
+		mutually_exclusive = { focus = KOR_propose_south_led_unification }
+
+		search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					is_in_array = { ruling_party = 3  }
+				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
+			}
+			has_war_support < 0.55
+			custom_trigger_tooltip = {
+				tooltip = support_for_reunification_more_50_tt
+				check_variable = { KOR.SFR > 50 }
+			}
+			country_exists = NKO
+			NOT = {
+				has_war_with = NKO
+			}
+			NKO = {
+				has_opinion = {
+					target = KOR
+					value > -26
+				}
+			}
+		}
+
+		completion_reward = {
+
+			log = "[GetDateText]: [This.GetName]: focus KOR_propose_unity_government executed"
 		}
 
 		ai_will_do = {
@@ -3375,7 +3508,7 @@ focus_tree = {
 		icon = korean_peninsula
 
 		x = -7
-		y = 6
+		y = 7
 		relative_position_id = KOR_state_of_the_republic
 
 		cost = 10
@@ -3383,11 +3516,20 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		prerequisite = { focus = KOR_offer_talks }
+		prerequisite = { focus = KOR_propose_unity_government focus = KOR_propose_south_led_unification }
 
-		search_filters = {FOCUS_FILTER_ANNEXATION}
+		search_filters = {FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_ANNEXATION}
 
 		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					is_in_array = { ruling_party = 3  }
+				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
+			}
 			has_war_support < 0.5
 			custom_trigger_tooltip = {
 				tooltip = support_for_reunification_more_50_tt
@@ -3423,6 +3565,10 @@ focus_tree = {
 				transfer_troops = yes
 			}
 			add_ideas = KOR_reunification_shocks
+			add_ideas = KOR_divided_military
+			add_ideas = KOR_mass_migration
+			add_ideas = KOR_fragmented_governance
+			add_ideas = KOR_uneven_economy
 			decrease_economic_growth = yes
 			log = "[GetDateText]: [This.GetName]: focus KOR_pave_the_way_for_reunification executed"
 		}
@@ -3456,6 +3602,8 @@ focus_tree = {
 					tooltip = KOR_democratic_party_governing_tt
 					is_in_array = { ruling_party = 3  }
 				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
 			}
 			country_exists = NKO
 			NOT = {
@@ -3507,6 +3655,8 @@ focus_tree = {
 					tooltip = KOR_democratic_party_governing_tt
 					is_in_array = { ruling_party = 3  }
 				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
 			}
 			country_exists = NKO
 			NOT = {
@@ -4729,6 +4879,7 @@ focus_tree = {
 			}
 			country_exists = NKO
 			has_elections = yes
+			NKO = { has_elections = no }
 		}
 
 		completion_reward = {
