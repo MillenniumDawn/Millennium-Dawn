@@ -21,8 +21,9 @@ country_event = {
 	immediate = { end_project = yes refresh_gui = yes }
 }
 
-
-country_event = { #Offer of Investments
+# AC Event Master Event
+# Offers Investments to THIS from the Investor Nation FROM
+country_event = {
 	id = AC_event.10
 	title = AC_event.1.t
 	desc = AC_event.1.d
@@ -31,18 +32,90 @@ country_event = { #Offer of Investments
 
 	option = { name = AC_event.1.o1
 		log = "[GetDateText]: [This.GetName]: AC_event.1.o1 executed"
+
+		hidden_effect = {
+			# Activates the Investment Project
+			# FROM is the investor nation
+			FROM = {
+				start_project = yes
+			}
+			# Influence Section
+			if = {
+				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
+				set_temp_variable = { AC_influence_gain = FROM.project_monetary_cost^-1 }
+				if = {
+					limit = {
+						FROM = {
+							OR = {
+								check_variable = { project_building_type^project_type = 4 } #Infra
+								check_variable = { project_building_type^project_type = 6 } #Air Base
+								check_variable = { project_building_type^project_type = 8 } #AA
+								check_variable = { project_building_type^project_type = 7 } #Radar
+								check_variable = { project_building_type^project_type = 9 } #Radar
+								check_variable = { project_building_type^project_type = 10 } #Radar
+							}
+						}
+					}
+					divide_temp_variable = { AC_influence_gain = 1.5 }
+				}
+				else = {
+					divide_temp_variable = { AC_influence_gain = 2.5 }
+				}
+				multiply_temp_variable = { AC_influence_gain = FROM.influence_multiplier }
+				round_temp_variable = AC_influence_gain
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = FROM }
+						}
+						add_to_variable = { influence_array_val^v = AC_influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = FROM.id }
+					add_to_array = { influence_array_val = AC_influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+
+				# Cool Down for the Influence Gain
+				if = {
+					limit = {
+						has_game_rule = { rule = rule_influence_cooldown_limits option = day_14_cooldown }
+					}
+					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 14 }
+				}
+				else_if = {
+					limit = {
+						has_game_rule = { rule = rule_influence_cooldown_limits option = day_30_cooldown }
+					}
+					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 30 }
+				}
+			}
+
+			# THIS Nation
+			# take 10% of the cost of the project
+			custom_effect_tooltip = AC_event.1.o1_TT
+			if = { limit = { NOT = { has_country_flag = influence_gained_@FROM } }
+				custom_effect_tooltip = AC_event_influence_gain
+			}
+			set_temp_variable = { temp_investment = FROM.project_monetary_cost_effect }
+			multiply_temp_variable = { temp_investment = 0.10 }
+			add_to_variable = { treasury = temp_investment }
+		}
+
+		# AI Chance of taking the Investment Project
 		ai_chance = {
-			base = 100000
+			base = 10
 			modifier = {
 				add = 1
-				FROM = { has_idea = NATO_member }
-				has_idea = NATO_member
+				ai_has_same_organization = yes
 			}
-			modifier = {
-				add = 1
-				FROM = { has_idea = EU_member }
-				has_idea = EU_member
-			}
+
 			modifier = {
 				add = 1
 				has_opinion = { target = FROM value > 10 }
@@ -93,19 +166,6 @@ country_event = { #Offer of Investments
 				}
 			}
 			modifier = {
-				add = 1
-				any_owned_state = {
-					OR = {
-						free_building_slots = {
-							building = industrial_complex
-							size > 0
-							include_locked = no
-						}
-						infrastructure < 10
-					}
-				}
-			}
-			modifier = {
 				factor = 2
 				check_variable = { gdp_per_capita < 20 }
 			}
@@ -122,75 +182,6 @@ country_event = { #Offer of Investments
 				}
 			}
 		}
-
-		hidden_effect = {
-			FROM = {
-				# should activate the project if accepted
-				start_project = yes
-			}
-			if = {
-				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
-				set_temp_variable = { AC_influence_gain = FROM.project_monetary_cost^-1 }
-				if = {
-					limit = {
-						FROM = {
-							OR = {
-								check_variable = { project_building_type^project_type = 4 } #Infra
-								check_variable = { project_building_type^project_type = 6 } #Air Base
-								check_variable = { project_building_type^project_type = 8 } #AA
-								check_variable = { project_building_type^project_type = 7 } #Radar
-								check_variable = { project_building_type^project_type = 9 } #Radar
-								check_variable = { project_building_type^project_type = 10 } #Radar
-							}
-						}
-					}
-					divide_temp_variable = { AC_influence_gain = 1.5 }
-				}
-				else = {
-					divide_temp_variable = { AC_influence_gain = 2.5 }
-				}
-				multiply_temp_variable = { AC_influence_gain = FROM.influence_multiplier }
-				round_temp_variable = AC_influence_gain
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = FROM }
-						}
-						add_to_variable = { influence_array_val^v = AC_influence_gain }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = FROM.id }
-					add_to_array = { influence_array_val = AC_influence_gain }
-				}
-				clr_country_flag = found
-				recalculate_influence = yes
-
-				#Cooldowns
-				if = {
-					limit = {
-						has_game_rule = { rule = rule_influence_cooldown_limits option = day_14_cooldown }
-					}
-					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 14 }
-				}
-				else_if = {
-					limit = {
-						has_game_rule = { rule = rule_influence_cooldown_limits option = day_30_cooldown }
-					}
-					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 30 }
-				}
-			}
-
-			#take 10% of the cost
-			custom_effect_tooltip = AC_event.1.o1_TT
-			set_temp_variable = { temp_investment = FROM.project_monetary_cost_effect }
-			multiply_temp_variable = { temp_investment = 0.10 }
-			subtract_from_variable = { treasury = temp_investment }
-		}
 	}
 
 	option = { name = AC_event.1.o2 # refuse
@@ -200,7 +191,10 @@ country_event = { #Offer of Investments
 				country_event = AC_event.11
 			}
 		}
-		FROM = { set_country_flag = this_investment_offer_pending@PREV }
+		FROM = {
+			set_country_flag = this_investment_offer_pending@PREV
+			country_event = AC_event.11
+		}
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -272,6 +266,7 @@ country_event = { #Offer of Investments
 					NOT = { check_variable = { influence_array^2 = FROM } }
 				}
 			}
+			# Tag Specific Rejections
 			modifier = {
 				add = 15
 				tag = NKO
@@ -311,6 +306,8 @@ country_event = {
 	option = { name = AC_event.3.o1 log = "[GetDateText]: [This.GetName]: AC_event.3.o1 executed" }
 }
 
+# AC Project Maintenance Events
+# These reset the project arrays to clean up in case it needs it
 # Cancelled Projects need to reset
 country_event = { #Clears project array index 0
 	id = AC_event.30
@@ -321,7 +318,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^0 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.31
@@ -332,7 +329,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^1 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.32
@@ -343,7 +340,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^2 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.33
@@ -354,7 +351,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^3 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.34
@@ -365,7 +362,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^4 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.35
@@ -376,7 +373,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^5 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.36
@@ -387,7 +384,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^6 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.37
@@ -398,7 +395,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^7 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.38
@@ -409,7 +406,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^8 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.39
@@ -420,7 +417,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^9 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.310
@@ -431,7 +428,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^10 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.311
@@ -442,7 +439,7 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^11 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
+
 }
 country_event = { #Clears project array index 0
 	id = AC_event.312
@@ -453,7 +450,6 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^12 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
 }
 country_event = { #Clears project array index 0
 	id = AC_event.313
@@ -464,7 +460,6 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^13 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
 }
 country_event = { #Clears project array index 0
 	id = AC_event.314
@@ -475,5 +470,4 @@ country_event = { #Clears project array index 0
 		set_variable = { project_array^14 = 0 }
 		refresh_gui = yes
 	}
-	option = {}
 }
