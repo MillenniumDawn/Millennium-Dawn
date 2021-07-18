@@ -23,32 +23,16 @@ add_namespace = bankruptcy
 # Flavor events for high debt situations
 # Add in pics and better texts
 
-### Influence Action events ###
-##Economic Aid MASTER Event - Triggered Via the Scripted GUI
+### Influence Action Events ###
+# Economic Aid Master event
+# Determines SIZE of gift
+# 07/18/2021 - Deleted the original influence.0 version to get ride of the dual economic aid event system
 country_event = {
 	id = influence.0
 	is_triggered_only = yes
 	hidden = yes
-	immediate = { #Determines "SIZE" of the influx of cash
-		log = "[GetDateText]: [This.GetName]: influence.0.a executed"
-		set_variable = { gift_sum = gdp_total }
-		divide_variable = { gift_sum = 1000 }
-		multiply_variable = { gift_sum = 2 } # Balance unit
-		clamp_variable = {
-			var = gift_sum
-			min = 1
-			max = 5000 # Max Gift Amount Period
-		}
-		FROM = { country_event = { id = influence.1 } }
-	}
-}
-##AI Economic Aid Master Event - Triggered via the on_action
-country_event = {
-	id = influence.11
-	is_triggered_only = yes
-	hidden = yes
 	immediate = {
-		log = "[GetDateText]: [This.GetName]: influence.0.a executed"
+		log = "[GetDateText]: [This.GetName]: influence.11.a executed"
 		set_variable = { gift_sum = gdp_total }
 		divide_variable = { gift_sum = 1000 }
 		multiply_variable = { gift_sum = 2 } # Balance unit
@@ -57,11 +41,13 @@ country_event = {
 			min = 1
 			max = 5000 # Max Gift Amount Period
 		}
+		# event_target is set in the targeting scope
 		event_target:influence_sender = { country_event = { id = influence.1 } }
 	}
 }
 
-#Economic Aid - Event
+# Economic Aid - Event
+# Do we send it to the nation?
 country_event = {
 	id = influence.1
 	title = influence.1.t
@@ -110,6 +96,8 @@ country_event = {
 	}
 }
 
+# Target Nation
+# Do we accept FROM economic Aid?
 news_event = {
 	id = News_influence.0
 	title = News_influence.0.t
@@ -117,42 +105,80 @@ news_event = {
 	picture = GFX_update_gdpc
 	is_triggered_only = yes
 
-	#yeah...
+	# Accept the Aid
 	option = {
 		name = News_influence.0.a
 		log = "[GetDateText]: [This.GetName]: News_influence.0.a executed"
 		custom_effect_tooltip = influence_from_0_TT
-		add_to_variable = { treasury = gift_sum }
-		generic_grant_2_percent_influence_of_FROM = yes
+		add_to_variable = { treasury = gift_sum } # Adds Gift Sum
+		generic_grant_2_percent_influence_of_FROM = yes # Adds 2 percent influence of FROM
 		add_opinion_modifier = { target = FROM modifier = given_gift }
+		# Generic Response
 		FROM = { country_event = { id = diplomatic_response.1 } }
+		# AI Section
 		ai_chance = {
-			factor = 1
+			factor = 5 # Weighted to prefer it
+			# Higher Likelihood if in the same organization
 			modifier = {
-				factor = 0.25
-				check_variable = { domestic_influence_amount_calc > 0.50 }
+				factor = 1.25
+				ai_has_same_organization = yes
+			}
+			# Lower GDP nations accept
+			modifier = {
+				factor = 1.25
+				check_variable = { gdp_per_capita < 15.000 }
+			}
+			# If they have lower domestic influence trigger fight or flight
+			modifier = {
+				factor = 0.90
+				check_variable = { domestic_influence_amount_calc < 0.80 }
 			}
 			modifier = {
-				check_variable = { domestic_influence_amount_calc > 0.80 }
-				factor = 0.25
+				factor = 0.75
+				check_variable = { domestic_influence_amount_calc < 0.60 }
 			}
 			modifier = {
+				factor = 0.60
+				check_variable = { domestic_influence_amount_calc < 0.45 }
+			}
+			modifier = {
+				factor = 0.15
+				check_variable = { domestic_influence_amount_calc < 0.20 }
+			}
+			# Massive Nations such as USA/China should be less likely to take on Economic Aid
+			modifier = {
+				factor = 0.50
 				OR = {
 					has_idea = superpower
 					has_idea = great_power
 				}
-				factor = 0.10
 			}
+			# AI has acceptable_budget
+			# AI will be 10% less likely to accept
 			modifier = {
-				factor = 0
-				ai_has_high_treasury = yes
-			}
-			modifier = {
-				factor = 0.50
+				factor = 0.90
 				OR = {
 					ai_has_acceptable_deficit_factories = yes
 					ai_has_acceptable_surplus_factories = yes
 				}
+			}
+			# Reduce Based on Opinion
+			# Keep going if each continues to be true
+			modifier = {
+				factor = 1.50
+				has_opinion = { target = FROM value > 99 }
+			}
+			modifier = {
+				factor = 1.35
+				has_opinion = { target = FROM value > 49 }
+			}
+			modifier = {
+				factor = 1.25
+				has_opinion = { target = FROM value > 24 }
+			}
+			modifier = {
+				factor = 1.10
+				has_opinion = { target = FROM value > 9 }
 			}
 			modifier = {
 				factor = 0.90
@@ -178,66 +204,103 @@ news_event = {
 				factor = 0.10
 				has_opinion = { target = FROM value < -90 }
 			}
+			# Killswitch
+			# Do not accept under any of these conditions
 			modifier = {
 				factor = 0
-				has_opinion = { target = FROM value < -100 }
+				OR = {
+					has_opinion = { target = FROM value < -100 }
+					ai_has_high_treasury = yes
+				}
 			}
 		}
 	}
 
-	#REJECT THE FUCKERS YEAAAAAAAH
+	# Reject Influencer Nation
 	option = {
 		name = "Reject the Aid"
 		log = "[GetDateText]: [This.GetName]: News_influence.0.b executed"
+		# Bonus of PP for the first rejection after this you need to wait 90 days
 		if = {
 			limit = { NOT = { has_country_flag = recently_refused_aid } }
 			add_political_power = 100
-			set_country_flag = { flag = recently_refused_aid value = 1 days = 60 }
+			set_country_flag = { flag = recently_refused_aid value = 1 days = 90 }
 		}
-		add_popularity = { ideology = nationalist popularity = 0.02 }
-		recalculate_party = yes
+		add_2_popularity = yes # Outlook gets slightly popular
+
+		# Returns Funds to the Influencer Nation
 		FROM = {
 			custom_effect_tooltip = influence_from_0_TT
-			add_to_variable = { treasury = gift_sum }
+			add_to_variable = { treasury = PREV.gift_sum }
 			country_event = { id = diplomatic_response.2 }
 		}
 		ai_chance = {
 			factor = 1
+			# If they have lower domestic influence trigger fight or flight
 			modifier = {
-				check_variable = { domestic_influence_amount_calc > 0.50 }
-				factor = 0.25
+				factor = 0.90
+				check_variable = { domestic_influence_amount_calc < 0.80 }
 			}
 			modifier = {
+				factor = 1.15
+				check_variable = { domestic_influence_amount_calc < 0.60 }
+			}
+			modifier = {
+				factor = 1.20
+				check_variable = { domestic_influence_amount_calc < 0.45 }
+			}
+			modifier = {
+				factor = 1.35
+				check_variable = { domestic_influence_amount_calc < 0.20 }
+			}
+			# If Superpower or Major Power
+			# Reject if needed
+			modifier = {
+				factor = 3
 				OR = {
 					has_idea = superpower
 					has_idea = great_power
 				}
-				factor = 100
 			}
+			# Nationalists should try and reject whenever they get it
 			modifier = {
-				OR = {
-					has_government = nationalist
-				}
 				factor = 25
+				has_government = nationalist
 			}
+			# Autocrats and Totalitarians will try and avoid it
 			modifier = {
 				has_autocratic_governemnt_or_in_coalition = yes
-				factor = 5
+				factor = 2.50
 			}
 			modifier = {
 				has_totalitarian_government_or_in_coalition = yes
-				factor = 10
+				factor = 5
 			}
-			modifier = {
-				factor = 0
-				ai_has_low_treasury = yes
-			}
+			# AI will be half as likely to reject if they don't have acceptable deficit or surplus
 			modifier = {
 				factor = 0.50
 				OR = {
-					ai_has_acceptable_deficit_factories = yes
-					ai_has_acceptable_surplus_factories = yes
+					ai_has_acceptable_deficit_factories = no
+					ai_has_acceptable_surplus_factories = no
 				}
+			}
+			# Opinion Section
+			# If the AI has a low opinion be more likely to reject
+			modifier = {
+				factor = 0.25
+				has_opinion = { target = FROM value > 99 }
+			}
+			modifier = {
+				factor = 0.50
+				has_opinion = { target = FROM value > 49 }
+			}
+			modifier = {
+				factor = 0.75
+				has_opinion = { target = FROM value > 24 }
+			}
+			modifier = {
+				factor = 0.90
+				has_opinion = { target = FROM value > 9 }
 			}
 			modifier = {
 				factor = 1.10
@@ -263,9 +326,19 @@ news_event = {
 				factor = 2.0
 				has_opinion = { target = FROM value < -90 }
 			}
-			modifier = { #Never Accept the issue
+			modifier = { #Never Accept the issue if they hate each other
 				factor = 100
 				has_opinion = { target = FROM value < -100 }
+			}
+			# Rejection Killswitch
+			modifier = {
+				factor = 0
+				OR = {
+					ai_has_low_treasury = yes
+					has_idea = bankrupcy
+					has_country_flag = AI_economic_downspiral
+					check_variable = { interest_rate > 9.000 }
+				}
 			}
 		}
 	}
