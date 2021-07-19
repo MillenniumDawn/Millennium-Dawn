@@ -146,10 +146,22 @@ calculate_tax_gain = {
 
 	#Base tax from various buildings
 	set_variable = { civil_fac_tax = num_of_civilian_factories }
+	if = {
+		limit = { has_decision = lease_civilian_factories }
+		subtract_from_variable = { civil_fac_tax = 3 }
+	}
 	multiply_variable = { civil_fac_tax = 3 }
 	set_variable = { military_fac_tax = num_of_military_factories }
+	if = {
+		limit = { has_decision = lease_military_factories }
+		subtract_from_variable = { military_fac_tax = 3 }
+	}
 	multiply_variable = { military_fac_tax = 2 }
 	set_variable = { dockyard_tax = num_of_naval_factories }
+	if = {
+		limit = { has_decision = lease_naval_factories }
+		subtract_from_variable = { dockyard_tax = 3 }
+	}
 	multiply_variable = { dockyard_tax = 1.5 }
 	set_variable = { office_tax = office_park_total }
 	multiply_variable = { office_tax = 6 }
@@ -1514,27 +1526,57 @@ calculate_additional_expense_rate = {
 
 	#Additional expenses, set expense amount as a variable (weekly gain)
 	# Generic Propaganda Campaign Decisions
-	if = { limit = { has_decision = promote_outlook_decision_support_pro_western_parties }
-		add_to_variable = { additional_expenses_rate = propaganda_costs }
+	if = { 
+		limit = { has_decision = promote_outlook_decision_support_pro_western_parties }
+		set_variable = { promote_outlook_western_costs = gdp_total_display }
+		multiply_variable = { promote_outlook_western_costs = 0.001 }
+		add_to_variable = { additional_expenses_rate = promote_outlook_western_costs }
 	}
-	if = { limit = { has_decision = promote_outlook_decision_support_emerging_parties }
-		add_to_variable = { additional_expenses_rate = propaganda_costs }
+	if = { 
+		limit = { has_decision = promote_outlook_decision_support_emerging_parties }
+		set_variable = { promote_outlook_emerging_costs = gdp_total_display }
+		multiply_variable = { promote_outlook_emerging_costs = 0.001 }
+		add_to_variable = { additional_expenses_rate = promote_outlook_emerging_costs }
 	}
-	if = { limit = { has_decision = promote_outlook_decision_support_the_non_aligned_parties }
-		add_to_variable = { additional_expenses_rate = propaganda_costs }
+	if = { 
+		limit = { has_decision = promote_outlook_decision_support_the_non_aligned_parties }
+		set_variable = { promote_outlook_nonaligned_costs = gdp_total_display }
+		multiply_variable = { promote_outlook_nonaligned_costs = 0.001 }
+		add_to_variable = { additional_expenses_rate = promote_outlook_nonaligned_costs }
 	}
-	if = { limit = { has_decision = promote_outlook_decision_support_the_nationalists }
-		add_to_variable = { additional_expenses_rate = propaganda_costs }
+	if = { 
+		limit = { has_decision = promote_outlook_decision_support_the_nationalists }
+		set_variable = { promote_outlook_nationalist_costs = gdp_total_display }
+		multiply_variable = { promote_outlook_nationalist_costs = 0.001 }
+		add_to_variable = { additional_expenses_rate = promote_outlook_nationalist_costs }
 	}
-	if = { limit = { has_decision = promote_outlook_decision_support_the_salafists }
-		add_to_variable = { additional_expenses_rate = propaganda_costs }
+	if = { 
+		limit = { has_decision = promote_outlook_decision_support_the_salafists }
+		set_variable = { promote_outlook_salafist_costs = gdp_total_display }
+		multiply_variable = { promote_outlook_salafist_costs = 0.001 }
+		add_to_variable = { additional_expenses_rate = promote_outlook_salafist_costs }
+	}
+	if = { 
+		limit = { has_decision = propaganda_campaign_decision }
+		set_variable = { propaganda_campaign_influence_decision_costs = gdp_total_display }
+		multiply_variable = { propaganda_campaign_influence_decision_costs = 0.001 }
+		add_to_variable = { additional_expenses_rate = propaganda_campaign_influence_decision_costs }
 	}
 	# Generic Economic Decisions
-	if = { limit = { has_decision = lease_civilian_factories }
-		add_to_variable = { additional_expenses_rate = leased_civilian_economy_cost }
+	if = { 
+		limit = { has_decision = lease_civilian_factories }
+		set_variable = { lease_civilian_factories_cost = 0.3 }
+		add_to_variable = { additional_expenses_rate = lease_civilian_factories_cost }
 	}
-	if = { limit = { has_decision = lease_military_factories }
-		add_to_variable = { additional_expenses_rate = leased_military_economy_cost }
+	if = { 
+		limit = { has_decision = lease_military_factories }
+		set_variable = { lease_military_factories_cost = 0.3 }
+		add_to_variable = { additional_expenses_rate = lease_military_factories_cost }
+	}
+	if = { 
+		limit = { has_decision = lease_naval_factories }
+		set_variable = { lease_naval_factories_cost = 0.3 }
+		add_to_variable = { additional_expenses_rate = lease_naval_factories_cost }
 	}
 	if = {
 		limit = {
@@ -1545,7 +1587,10 @@ calculate_additional_expense_rate = {
 				has_decision = dockyard_projects
 			}
 		}
-		add_to_variable = { additional_expenses_rate = projects_costs }
+		set_variable = { project_decisions_cost = gdp_total_display }
+		multiply_variable = { project_decisions_cost = 0.001 }
+		divide_variable = { project_decisions_cost = 0.5 }
+		add_to_variable = { additional_expenses_rate = project_decisions_cost }
 	}
 	# European Union Contribution Expenses
 	if = {
@@ -1876,8 +1921,23 @@ update_state_variables = {
 calculate_gdp = {
 	set_variable = { var = gdp_total value = 0 }
 	set_variable = { var = civil_fac value = num_of_civilian_factories }
+	#Remove leased factories
+	if = {
+		limit = { has_decision = lease_civilian_factories }
+		subtract_from_variable = { civil_fac = 3 }
+	}
 	set_variable = { var = military_fac value = num_of_military_factories }
+	#Remove leased factories
+	if = {
+		limit = { has_decision = lease_military_factories }
+		subtract_from_variable = { military_fac = 3 }
+	}
 	set_variable = { var = dockyard_fac value = num_of_naval_factories }
+	#Remove leased factories
+	if = {
+		limit = { has_decision = lease_naval_factories }
+		subtract_from_variable = { dockyard_fac = 3 }
+	}
 	set_variable = { var = office_fac value = office_park_total }
 
 	set_temp_variable = { temp_resource_import = resource_imported@oil }
