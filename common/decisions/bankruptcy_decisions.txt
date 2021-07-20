@@ -1,11 +1,12 @@
+# Decisions that Relate to Debt Management
+# Written by Bird
 bankruptcy_decisions = {
-	#Commit To Reducing Debt
+	# Commit To Reducing Debt
 	committed_to_reducing_debt = {
 		icon = generic_break_treaty
+		# This mission should only trigger
 		activation = {
 			OR = {
-				check_variable = { interest_rate > 15 }
-				check_variable = { debt_ratio > 0.75 }
 				has_country_flag = BANK_committed_reducing_debt
 				has_variable = reduce_debt_by_5
 			}
@@ -28,7 +29,7 @@ bankruptcy_decisions = {
 		}
 	}
 
-	# Scour Investments
+	# Use Investments to Pay Down Debt
 	apply_investments_to_debt = {
 		icon = attract_foreign_investor
 		available = {
@@ -37,7 +38,7 @@ bankruptcy_decisions = {
 				check_variable = { int_investments > 0 }
 			}
 		}
-		days_remove = 30
+		days_remove = 25
 		days_re_enable = 5
 
 		remove_effect = {
@@ -52,7 +53,7 @@ bankruptcy_decisions = {
 					has_idea = international_bankers
 					NOT = { has_country_flag = recently_scoured_investments }
 				}
-				set_country_flag = { flag = recently_scoured_investments value = 1 days = 90}
+				set_country_flag = { flag = recently_scoured_investments value = 1 days = 90 }
 				decrease_international_bankers_opinion = yes
 				custom_effect_tooltip = internal_faction_decrease_every_three_months_tt
 			}
@@ -70,7 +71,7 @@ bankruptcy_decisions = {
 				check_variable = { influence_array^0 > 0 }
 			}
 		}
-		days_remove = 1
+		days_remove = 0
 		days_re_enable = 120
 
 		remove_effect = {
@@ -78,7 +79,7 @@ bankruptcy_decisions = {
 			if = { limit = { NOT = { has_country_flag = hostile_international_bankers } }
 				decrease_international_bankers_opinion = yes
 			}
-			country_event = { id = bankruptcy.0 }
+			country_event = { id = bankruptcy.0 } # Seek Foreign Bailouts
 		}
 	}
 
@@ -98,13 +99,10 @@ bankruptcy_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision reduce_interest_rate"
-			set_country_flag = reduce_interest_by_1
+			set_country_flag = { flag = reduce_interest_by_1 value = 1 days = 75 }
 			custom_effect_tooltip = reduce_interest_by_1_tt
 			add_1_popularity = yes
 			ingame_update_setup = yes
-		}
-		remove_effect = {
-			clr_country_flag = reduce_interest_by_1
 		}
 	}
 }
