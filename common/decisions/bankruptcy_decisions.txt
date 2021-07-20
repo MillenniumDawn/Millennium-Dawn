@@ -1,108 +1,96 @@
-# Decisions that Relate to Debt Management
-# Written by Bird
 bankruptcy_decisions = {
-	# Commit To Reducing Debt
-	committed_to_reducing_debt = {
-		icon = generic_break_treaty
-		# This mission should only trigger
-		activation = {
-			OR = {
-				has_country_flag = BANK_committed_reducing_debt
-				has_variable = reduce_debt_by_5
-			}
-		}
 
+	bankruptcy_cheap_loans_from_imf = {
+	
 		available = {
+			is_full_state = yes
+			has_added_tension_amount < 5
+			NOT = {
+				has_idea = paralyzing_corruption
+				has_idea = crippling_corruption
+				has_idea = rampant_corruption
+			}
 			custom_trigger_tooltip = {
-				tooltip = passed_desired_amount_tt
-				check_variable = { debt < reduce_debt_by_5 }
+				tooltip = has_higher_gdp_per_capita_than_5
+				check_variable = { gdp_per_capita > 5 }
 			}
-		}
-
-		days_mission_timeout = 180
-		cancel_if_not_visible = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout bankruptcy_timer"
-			country_event = { id = bankruptcy.201 }
-			clr_country_flag = BANK_committed_reducing_debt
-		}
-	}
-
-	# Use Investments to Pay Down Debt
-	apply_investments_to_debt = {
-		icon = attract_foreign_investor
-		available = {
 			custom_trigger_tooltip = {
-				tooltip = has_int_investments_tt
-				check_variable = { int_investments > 0 }
+				tooltip = interest_rate_lower_than_15
+				check_variable = { interest_rate < 15 }
 			}
 		}
-		days_remove = 25
-		days_re_enable = 5
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision apply_investments_to_debt"
-			set_temp_variable = { investment_reducer = int_investments }
-			multiply_temp_variable = { investment_reducer = 0.05 }
-			subtract_from_variable = { debt = investment_reducer }
-			subtract_from_variable = { int_investments = investment_reducer }
-			custom_effect_tooltip = apply_int_investments_to_debt_5_tt
-			if = {
-				limit = {
-					has_idea = international_bankers
-					NOT = { has_country_flag = recently_scoured_investments }
-				}
-				set_country_flag = { flag = recently_scoured_investments value = 1 days = 90 }
-				decrease_international_bankers_opinion = yes
-				custom_effect_tooltip = internal_faction_decrease_every_three_months_tt
-			}
+		
+		cost = 100
+		
+		days_remove = 360
+		
+		days_re_enable = 180
+		
+		complete_effect = {
+			set_temp_variable = { debt_addition = debt }
+			multiply_temp_variable = { debt_addition = 0.05 }
+			round_temp_variable = debt_addition
+			add_to_variable = { debt = debt_addition }
+			custom_effect_tooltip = cheap_loans_from_imf_tt
 			ingame_update_setup = yes
 		}
+	
 	}
-
-	# Seek Foreign Bailouts
-	seek_additional_bailouts = {
-		icon = attract_foreign_investor
-
+	
+	bankruptcy_seek_bailout_from_biggest_influencer = {
+	
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = "has_foreign_influence"
 				check_variable = { influence_array^0 > 0 }
 			}
-		}
-		days_remove = 0
-		days_re_enable = 120
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision seek_additional_bailouts"
-			if = { limit = { NOT = { has_country_flag = hostile_international_bankers } }
-				decrease_international_bankers_opinion = yes
+			custom_trigger_tooltip = {
+				tooltip = interest_rate_higher_than_10
+				check_variable = { interest_rate > 10 }
 			}
-			country_event = { id = bankruptcy.0 } # Seek Foreign Bailouts
 		}
+		
+		days_re_enable = 360
+		
+		cost = 100
+		
+		complete_effect = {
+			set_temp_variable = { debt_bailout_temp = debt }
+			multiply_temp_variable = { debt_bailout_temp = 0.20 }
+			set_variable = { debt_bailout = debt_bailout_temp }
+			round_variable = debt_bailout
+			custom_effect_tooltip = bankruptcy_seek_bailout_from_biggest_influencer_tt
+			var:FROM.influence_array^0 = { country_event = bankruptcy.1 days = 2 }
+		}	
+	
 	}
-
-	# Temporary Interest Rate Reduction
-	reduce_interest_rate = {
-		icon = generic_break_treaty
-
+	
+	bankruptcy_seek_bailout_from_second_biggest_influencer = {
+	
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = interest_rate_greater_than_13_tt
-				check_variable = { interest_rate > 12.999 }
+				tooltip = "has_foreign_influence"
+				check_variable = { influence_array^1 > 0 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = interest_rate_higher_than_10
+				check_variable = { interest_rate > 10 }
 			}
 		}
-
-		days_remove = 75
-		days_re_enable = 15
-
+		
+		days_re_enable = 360
+		
+		cost = 100
+		
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision reduce_interest_rate"
-			set_country_flag = { flag = reduce_interest_by_1 value = 1 days = 75 }
-			custom_effect_tooltip = reduce_interest_by_1_tt
-			add_1_popularity = yes
-			ingame_update_setup = yes
-		}
+			set_temp_variable = { debt_bailout_temp = debt }
+			multiply_temp_variable = { debt_bailout_temp = 0.15 }
+			set_variable = { debt_bailout = debt_bailout_temp }
+			round_variable = debt_bailout
+			custom_effect_tooltip = bankruptcy_seek_bailout_from_second_biggest_influencer_tt
+			var:FROM.influence_array^1 = { country_event = bankruptcy.2 days = 2 }
+		}	
+	
 	}
+
 }
