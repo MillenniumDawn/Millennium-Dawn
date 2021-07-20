@@ -5030,37 +5030,57 @@ country_event = {
 	desc = bankruptcy.1.d
 	picture = GFX_stock_market
 	is_triggered_only = yes
-	immediate = {
-		#10% of debt
-		set_variable = { bailout_sum = FROM.debt }
-		multiply_variable = { bailout_sum = 0.1 }
-	}
 
 	#Give it
 	option = {
 		name = bankruptcy.1.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.1.1 executed"
+		ai_chance = { factor = 10 }
+		set_temp_variable = { our_cost = FROM.debt_bailout }
+		multiply_temp_variable = { our_cost = 0.75 }
+		round_variable = our_cost
+		subtract_from_variable = { treasury = our_cost }
 		custom_effect_tooltip = bankruptcy_bailout_sum_TT
-		subtract_from_variable = { treasury = bailout_sum }
 		custom_effect_tooltip = bankruptcy_bailout_influence_TT
-		FROM = {
-			news_event = { id = News_bankruptcy.2 days = 1 }
-			ingame_update_setup = yes
-		}
-
-		ai_chance = {
-			factor = 10
-		}
+		FROM = { news_event = { id = News_bankruptcy.2 days = 2 } }
 	}
 	#We have no help to offer
 	option = {
 		name = bankruptcy.1.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.0.b executed"
+		ai_chance = { factor = 0 }
+		FROM = { country_event = { id = bankruptcy.4 days = 2 } }
+	}
+}
 
-		FROM = { country_event = { id = bankruptcy.4 } }
-		ai_chance = {
-			factor = 0
-		}
+##Bailout Requested from 2nd biggest influencer###
+country_event = {
+	id = bankruptcy.2
+	title = bankruptcy.2.t
+	desc = bankruptcy.2.d
+	is_triggered_only = yes
+	picture = GFX_stock_market
+
+	#Give it
+	option = {
+		name = bankruptcy.2.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.2.1 executed"
+		ai_chance = { factor = 10 }
+		set_temp_variable = { our_cost = FROM.debt_bailout }
+		divide_temp_variable = { our_cost = 3 }
+		multiply_temp_variable = { our_cost = 2 }
+		round_variable = our_cost
+		subtract_from_variable = { treasury = our_cost }
+		custom_effect_tooltip = bankruptcy_bailout_sum_TT
+		custom_effect_tooltip = bankruptcy_bailout_influence_second_biggest_TT
+		FROM = { news_event = { id = News_bankruptcy.2 days = 2 } }
+	}
+	#We have no help to offer
+	option = {
+		name = bankruptcy.2.b
+		log = "[GetDateText]: [This.GetName]: bankruptcy.3.b executed"
+		ai_chance = { factor = 0 }
+		FROM = { country_event = { id = bankruptcy.4 days = 2 } }
 	}
 }
 
@@ -5073,39 +5093,16 @@ news_event = {
 
 	is_triggered_only = yes
 
-	immediate = {
-		set_country_flag = bailout_given
-		ingame_update_setup = yes #safety reboot
-	}
-
 	#yeah...
 	option = {
 		name = News_bankruptcy.2.a
 		log = "[GetDateText]: [This.GetName]: News_bankruptcy.2.a executed"
-		custom_effect_tooltip = interest_rate_reduced_10_TT
-		multiply_variable = { domestic_influence_amount = 0.33 }
-		if = { limit = { check_variable = { influence_array^0 = FROM } }
-			multiply_variable = { influence_array_val^0 = 3 }
-		}
-		else_if = { limit = { check_variable = { influence_array^1 = FROM } }
-			multiply_variable = { influence_array_val^1 = 3 }
-		}
-		else_if = { limit = { check_variable = { influence_array^2 = FROM } }
-			multiply_variable = { influence_array_val^2 = 3 }
-		}
-		else_if = { limit = { check_variable = { influence_array^3 = FROM } }
-			multiply_variable = { influence_array_val^3 = 3 }
-		}
-		else_if = { limit = { check_variable = { influence_array^4 = FROM } }
-			multiply_variable = { influence_array_val^4 = 3 }
-		}
-		else_if = { limit = { check_variable = { influence_array^5 = FROM } }
-			multiply_variable = { influence_array_val^5 = 3 }
-		}
-		else_if = { limit = { check_variable = { influence_array^6 = FROM } }
-			multiply_variable = { influence_array_val^6 = 3 }
-		}
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		generic_grant_20_percent_influence_of_FROM = yes
 		recalculate_influence = yes
+		ingame_update_setup = yes
 	}
 }
 
@@ -5155,13 +5152,13 @@ news_event = {
 	}
 }
 
-##Looming Bankruptcy is no longer a threat
+##Bailout Requested ###
 country_event = {
 	id = bankruptcy.3
 	title = bankruptcy.3.t
 	desc = bankruptcy.3.d
 	is_triggered_only = yes
-	picture = bank_crisis
+	picture = GFX_stock_market
 
 	#Clrs Looming Bankruptcy
 	option = {
@@ -5184,6 +5181,7 @@ country_event = {
 		name = bankruptcy.4.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.4.a executed"
 		add_opinion_modifier = { modifier = did_not_support_us target = FROM }
+		clear_variable = debt_bailout
 	}
 }
 
