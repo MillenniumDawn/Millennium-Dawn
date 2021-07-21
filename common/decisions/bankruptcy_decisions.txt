@@ -11,7 +11,7 @@ bankruptcy_decisions = {
 				has_idea = rampant_corruption
 			}
 			custom_trigger_tooltip = {
-				tooltip = has_higher_gdp_per_capita_than_5
+				tooltip = 5_per_capita_or_more_tt
 				check_variable = { gdp_per_capita > 5 }
 			}
 			custom_trigger_tooltip = {
@@ -48,6 +48,7 @@ bankruptcy_decisions = {
 				tooltip = interest_rate_higher_than_10
 				check_variable = { interest_rate > 10 }
 			}
+			NOT = { has_war_with = var:FROM.influence_array^0 }
 		}
 		
 		days_re_enable = 360
@@ -60,7 +61,7 @@ bankruptcy_decisions = {
 			set_variable = { debt_bailout = debt_bailout_temp }
 			round_variable = debt_bailout
 			custom_effect_tooltip = bankruptcy_seek_bailout_from_biggest_influencer_tt
-			var:FROM.influence_array^0 = { country_event = bankruptcy.1 days = 2 }
+			var:FROM.influence_array^0 = { country_event = { id = bankruptcy.1 hours = 3 } }
 		}	
 	
 	}
@@ -76,6 +77,7 @@ bankruptcy_decisions = {
 				tooltip = interest_rate_higher_than_10
 				check_variable = { interest_rate > 10 }
 			}
+			NOT = { has_war_with = var:FROM.influence_array^1 }
 		}
 		
 		days_re_enable = 360
@@ -88,8 +90,453 @@ bankruptcy_decisions = {
 			set_variable = { debt_bailout = debt_bailout_temp }
 			round_variable = debt_bailout
 			custom_effect_tooltip = bankruptcy_seek_bailout_from_second_biggest_influencer_tt
-			var:FROM.influence_array^1 = { country_event = bankruptcy.2 days = 2 }
+			var:FROM.influence_array^1 = { country_event = { id = bankruptcy.2 hours = 3  } }
 		}	
+	
+	}
+	
+	bankruptcy_seek_bailout_from_neighbour = {
+	
+		target_trigger = {
+			FROM = {
+				is_neighbor_of = ROOT
+				#We don't want duplicates
+				NOT = { original_tag = var:ROOT.influence_array^0 }
+				NOT = { original_tag = var:ROOT.influence_array^1 }
+				check_variable = { FROM.gdp_total > ROOT.gdp_total }
+			}
+		}
+		
+		available = {
+			FROM = { NOT = { has_war_with = ROOT } }
+			FROM = { has_opinion = { target = ROOT value > 0 } }
+		}
+			
+		
+		days_re_enable = 360
+		
+		cost = 100
+		
+		complete_effect = {
+			set_temp_variable = { debt_bailout_temp = debt }
+			multiply_temp_variable = { debt_bailout_temp = 0.10 }
+			set_variable = { debt_bailout = debt_bailout_temp }
+			round_variable = debt_bailout
+			custom_effect_tooltip = bankruptcy_seek_bailout_from_neighbour_tt
+			FROM = { country_event = { id = bankruptcy.3 hours = 3  } }
+		}
+	
+	}
+	
+	bankruptcy_seek_bailout_from_imf = {
+	
+		available = {
+			is_full_state = yes
+			has_added_tension_amount < 5
+			NOT = { has_idea = IMF_debt_relief_received }
+			NOT = { has_idea = IMF_debt_relief_rejected }
+		}
+		
+		fixed_random_seed = no
+		
+		cost = 50
+		
+		days_re_enable = 180
+		
+		complete_effect = {
+			set_temp_variable = { debt_bailout_temp = debt }
+			multiply_temp_variable = { debt_bailout_temp = 0.10 }
+			set_variable = { debt_bailout = debt_bailout_temp }
+			round_variable = debt_bailout
+			custom_effect_tooltip = bankruptcy_seek_bailout_from_imf_tt
+			if = {
+				limit = {
+					check_variable = { gdp_per_capita < 5 }
+				}
+				custom_effect_tooltip = bankruptcy_seek_bailout_from_imf_low_gdp_per_capita_tt
+			}
+			hidden_effect = {
+				random_list = {
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = bureau_01
+								AND = {	
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = bureau_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.3
+							has_idea = bureau_03
+						}
+						modifier = {
+							factor = 1.6
+							has_idea = bureau_04
+						}
+						modifier = {
+							factor = 2
+							has_idea = bureau_05
+						}
+						country_event = bankruptcy.100
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = defence_01
+								AND = {	
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = defence_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.14
+							has_idea = defence_03
+						}
+						modifier = {
+							factor = 1.28
+							has_idea = defence_04
+						}
+						modifier = {
+							factor = 1.42
+							has_idea = defence_05
+						}
+						modifier = {
+							factor = 1.56
+							has_idea = defence_06
+						}
+						modifier = {
+							factor = 1.70
+							has_idea = defence_07
+						}
+						modifier = {
+							factor = 1.84
+							has_idea = defence_08
+						}
+						modifier = {
+							factor = 2
+							has_idea = defence_09
+						}
+						country_event = bankruptcy.101
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = police_01
+								AND = {	
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = police_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.3
+							has_idea = police_03
+						}
+						modifier = {
+							factor = 1.6
+							has_idea = police_04
+						}
+						modifier = {
+							factor = 2
+							has_idea = police_05
+						}
+						country_event = bankruptcy.102
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = edu_01
+								AND = {	
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = edu_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.3
+							has_idea = edu_03
+						}
+						modifier = {
+							factor = 1.6
+							has_idea = edu_04
+						}
+						modifier = {
+							factor = 2
+							has_idea = edu_05
+						}
+						country_event = bankruptcy.103
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = health_01
+								AND = {	
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = health_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.25
+							has_idea = health_03
+						}
+						modifier = {
+							factor = 1.5
+							has_idea = health_04
+						}
+						modifier = {
+							factor = 1.75
+							has_idea = health_05
+						}
+						modifier = {
+							factor = 2
+							has_idea = health_06
+						}
+						country_event = bankruptcy.104
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = social_01
+								AND = {	
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = social_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.25
+							has_idea = social_03
+						}
+						modifier = {
+							factor = 1.5
+							has_idea = social_04
+						}
+						modifier = {
+							factor = 1.75
+							has_idea = social_05
+						}
+						modifier = {
+							factor = 2
+							has_idea = social_06
+						}
+						country_event = bankruptcy.105
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = globalized_trade_economy
+								AND = {
+									oil < 1
+									aluminium < 1
+									rubber < 1
+									tungsten < 1
+									steel < 1
+									chromium < 1
+								}
+							}
+						}
+						modifier = {
+							factor = 1.25
+							has_idea = mixed_economy
+						}
+						modifier = {
+							factor = 1.5
+							has_idea = semi_consumption_economy
+						}
+						modifier = {
+							factor = 1.75
+							has_idea = consumption_economy
+						}
+						modifier = {
+							factor = 2
+							has_idea = md_closed_economy
+						}
+						country_event = bankruptcy.106
+					}
+					1 = {
+						modifier = {
+							factor = 2
+							has_idea = slight_corruption
+						}
+						modifier = {
+							factor = 3
+							has_idea = modest_corruption
+						}
+						modifier = {
+							factor = 4
+							has_idea = medium_corruption
+						}
+						modifier = {
+							factor = 5
+							has_idea = widespread_corruption
+						}
+						modifier = {
+							factor = 6
+							has_idea = systematic_corruption
+						}
+						modifier = {
+							factor = 7
+							has_idea = unrestrained_corruption
+						}
+						modifier = {
+							factor = 8
+							has_idea = rampant_corruption
+						}
+						modifier = {
+							factor = 9
+							has_idea = crippling_corruption
+						}
+						modifier = {
+							factor = 10
+							has_idea = paralyzing_corruption
+						}
+						country_event = bankruptcy.107
+					}
+					10 = {
+						modifier = {
+							factor = 1.5
+							OR = {
+								has_idea = landowners
+								has_idea = farmers
+							}
+						}
+						modifier = {
+							factor = 2
+							has_idea = landowners
+							has_idea = farmers
+						}
+						country_event = bankruptcy.108
+					}
+					10 = {
+						modifier = {
+							factor = 2
+							has_idea = international_bankers
+						}
+						country_event = bankruptcy.109
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								has_idea = The_Clergy
+								has_idea = the_priesthood
+								has_idea = The_Ulema
+								has_idea = wahabi_ulema
+							}
+						}
+						country_event = bankruptcy.110
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								num_of_military_factories < 1
+								AND = {	
+									check_variable = { gdp_per_capita < 5 }
+									all_owned_state = {
+										arms_factory < 2
+									}
+								}
+							}
+						}
+						modifier = {
+							factor = 1.5
+							check_variable = { military_fac_percent > 0.15 }
+						}
+						modifier = {
+							factor = 1.3
+							check_variable = { military_fac_percent > 0.25 }
+						}
+						country_event = bankruptcy.111
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								num_of_naval_factories < 1
+								AND = {	
+									check_variable = { gdp_per_capita < 5 }
+									all_owned_state = {
+										dockyard < 2
+									}
+								}
+							}
+						}
+						modifier = {
+							factor = 1.5
+							check_variable = { dockyard_fac_percent > 0.15 }
+						}
+						modifier = {
+							factor = 1.3
+							check_variable = { dockyard_fac_percent > 0.25 }
+						}
+						country_event = bankruptcy.112
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								AND = {
+									check_variable = { population_tax_rate > 55 }
+									check_variable = { corporate_tax_rate > 55 }
+								}
+								AND = {	
+									check_variable = { gdp_per_capita < 5 }
+									check_variable = { population_tax_rate > 50 }
+									check_variable = { corporate_tax_rate > 50 }
+								}
+							}
+						}
+						modifier = {
+							factor = 1.5
+							check_variable = { tax_rate < 20 }
+						}
+						modifier = {
+							factor = 1.3
+							check_variable = { tax_rate < 10 }
+						}
+						country_event = bankruptcy.113
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							check_variable = { int_investments < 1 }
+						}
+						modifier = {
+							factor = 2
+							check_variable = { int_investments > debt }
+						}
+						country_event = bankruptcy.114
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								num_of_civilian_factories < 1
+								AND = {	
+									check_variable = { gdp_per_capita < 5 }
+									all_owned_state = {
+										industrial_complex < 2
+									}
+								}
+							}
+						}
+						country_event = bankruptcy.115
+					}
+				}
+			}
+		}
 	
 	}
 
