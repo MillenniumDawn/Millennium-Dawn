@@ -1367,7 +1367,6 @@ news_event = {
 			add_war_support = -0.05
 			support_for_reunification_2 = yes
 			liberal_policy_effect = yes
-			clr_country_flag = KOR_peace_talks_failed
 		}
 		log = "[GetDateText]: [This.GetName]: korea.24.a executed"
 	}
@@ -1385,7 +1384,210 @@ news_event = {
 
 	option = {
 		name = korea.25.a #Peace remains elusive...
+		if = {
+			limit = { original_tag = KOR }
+			unlock_decision_tooltip = KOR_restart_peace_talks
+		}
 		log = "[GetDateText]: [This.GetName]: korea.25.a executed"
+	}
+}
+
+#South Korea proposes reunification
+country_event = {
+	id = korea.26
+	title = korea.26.t
+	desc = {
+		text = korea.26.d
+		trigger = {
+			KOR = { has_country_flag = KOR_proposed_south_reunification }
+		}
+	}
+	desc = {
+		text = korea.26.d1
+		trigger = {
+			KOR = { has_country_flag = KOR_proposed_unity_reunification }
+		}
+	}
+
+	picture = GFX_KOR_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.26.a #Our country will be whole again!
+		log = "[GetDateText]: [This.GetName]: korea.26.a executed"
+		add_opinion_modifier = {
+			target = KOR
+			modifier = imminent_reunification
+		}
+		add_war_support = -0.05
+		if = {
+			limit = { KOR = { has_country_flag = KOR_proposed_south_reunification }}
+			set_country_flag = NKO_agreed_KOR_led_reunification
+		}
+		else_if = {
+			limit = { KOR = { has_country_flag = KOR_proposed_unity_reunification }}
+			set_country_flag = NKO_agreed_neutral_reunification
+		}
+		KOR = {
+			country_event = {
+				days = 1
+				id = korea.27
+			}
+		}
+		decrease_the_military_opinion = yes
+		decrease_communist_cadres_opinion = yes
+		ai_chance = {
+			factor = 0
+			modifier = {
+				factor = 0
+				has_war_with = KOR
+			}
+			modifier = {
+				factor = 0
+				KOR = {
+					check_variable = { reunification_chance < 6 }
+				}
+			}
+			modifier = {
+				add = 1
+				KOR = {
+					check_variable = { reunification_chance > 5 }
+				}
+			}
+			modifier = {
+				add = 1
+				KOR = {
+					check_variable = { reunification_chance > 6 }
+				}
+			}
+			modifier = {
+				add = 1
+				KOR = {
+					check_variable = { reunification_chance > 7 }
+				}
+			}
+			modifier = {
+				add = 1
+				KOR = {
+					check_variable = { reunification_chance > 8 }
+				}
+			}
+			modifier = {
+				add = 1
+				KOR = {
+					check_variable = { reunification_chance > 9 }
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = KOR
+					value > -1
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = KOR
+					value > 9
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = KOR
+					value > 24
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = KOR
+					value > 49
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = KOR
+					value > 74
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = KOR
+					value > 99
+				}
+			}
+			modifier = {
+				factor = 2
+				NOT = {
+					has_government = communism
+					has_government = nationalist
+				}
+			}
+		}
+	}
+
+	option = {
+		name = korea.26.b #Reunification can never take place on these terms...
+		log = "[GetDateText]: [This.GetName]: korea.26.b executed"
+		KOR = {
+			country_event = {
+				days = 1
+				id = korea.28
+			}
+		}
+		KOR = {
+			set_country_flag = KOR_reunification_talks_failed
+			clr_country_flag = KOR_proposed_south_reunification
+			clr_country_flag = KOR_proposed_unity_reunification
+		}
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 2
+				KOR = { has_country_flag = KOR_proposed_south_reunification }
+			}
+		}
+	}
+}
+
+#The North has agreed on our terms for reunification!
+country_event = {
+	id = korea.27
+	title = korea.27.t
+	desc = korea.27.d
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.27.a #Fantastic news!
+		log = "[GetDateText]: [This.GetName]: korea.27.a executed"
+		add_war_support = -0.05
+		support_for_reunification_2 = yes
+		add_opinion_modifier = {
+			target = NKO
+			modifier = imminent_reunification
+		}
+	}
+}
+
+#The North has refused our terms for reunification!
+country_event = {
+	id = korea.28
+	title = korea.28.t
+	desc = korea.28.d
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.28.a #A sad day for the Korean people...
+		log = "[GetDateText]: [This.GetName]: korea.28.a executed"
 	}
 }
 
