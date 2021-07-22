@@ -5034,7 +5034,7 @@ country_event = {
 	#Give it
 	option = {
 		name = bankruptcy.1.a
-		log = "[GetDateText]: [This.GetName]: bankruptcy.1.1 executed"
+		log = "[GetDateText]: [This.GetName]: bankruptcy.1.a executed"
 		ai_chance = { factor = 10 }
 		set_temp_variable = { our_cost = FROM.debt_bailout }
 		multiply_temp_variable = { our_cost = 0.75 }
@@ -5042,14 +5042,14 @@ country_event = {
 		subtract_from_variable = { treasury = our_cost }
 		custom_effect_tooltip = bankruptcy_bailout_sum_TT
 		custom_effect_tooltip = bankruptcy_bailout_influence_TT
-		FROM = { news_event = { id = News_bankruptcy.2 days = 2 } }
+		FROM = { news_event = { id = News_bankruptcy.1 hours = 3  } }
 	}
 	#We have no help to offer
 	option = {
 		name = bankruptcy.1.b
-		log = "[GetDateText]: [This.GetName]: bankruptcy.0.b executed"
+		log = "[GetDateText]: [This.GetName]: bankruptcy.1.b executed"
 		ai_chance = { factor = 0 }
-		FROM = { country_event = { id = bankruptcy.4 days = 2 } }
+		FROM = { country_event = { id = bankruptcy.4 hours = 3  } }
 	}
 }
 
@@ -5064,7 +5064,7 @@ country_event = {
 	#Give it
 	option = {
 		name = bankruptcy.2.a
-		log = "[GetDateText]: [This.GetName]: bankruptcy.2.1 executed"
+		log = "[GetDateText]: [This.GetName]: bankruptcy.2.a executed"
 		ai_chance = { factor = 10 }
 		set_temp_variable = { our_cost = FROM.debt_bailout }
 		divide_temp_variable = { our_cost = 3 }
@@ -5073,18 +5073,783 @@ country_event = {
 		subtract_from_variable = { treasury = our_cost }
 		custom_effect_tooltip = bankruptcy_bailout_sum_TT
 		custom_effect_tooltip = bankruptcy_bailout_influence_second_biggest_TT
-		FROM = { news_event = { id = News_bankruptcy.2 days = 2 } }
+		FROM = { news_event = { id = News_bankruptcy.2 hours = 3  } }
 	}
 	#We have no help to offer
 	option = {
 		name = bankruptcy.2.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.3.b executed"
 		ai_chance = { factor = 0 }
-		FROM = { country_event = { id = bankruptcy.4 days = 2 } }
+		FROM = { country_event = { id = bankruptcy.4 hours = 3  } }
 	}
 }
 
-### we got the bailout
+##Bailout Requested from neigbhour###
+country_event = {
+	id = bankruptcy.3
+	title = bankruptcy.3.t
+	desc = bankruptcy.3.d
+	is_triggered_only = yes
+	picture = GFX_stock_market
+
+	#Give it
+	option = {
+		name = bankruptcy.3.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.3.a executed"
+		ai_chance = { factor = 10 }
+		set_temp_variable = { our_cost = FROM.debt_bailout }
+		multiply_temp_variable = { our_cost = 0.5 }
+		round_variable = our_cost
+		subtract_from_variable = { treasury = our_cost }
+		custom_effect_tooltip = bankruptcy_bailout_sum_TT
+		custom_effect_tooltip = bankruptcy_bailout_influence_neighbour_TT
+		FROM = { news_event = { id = News_bankruptcy.3 hours = 3  } }
+	}
+	#We have no help to offer
+	option = {
+		name = bankruptcy.3.b
+		log = "[GetDateText]: [This.GetName]: bankruptcy.3.b executed"
+		ai_chance = { factor = 0 }
+		FROM = { country_event = { id = bankruptcy.4 hours = 3  } }
+	}
+}
+
+#We were denied the bailout
+country_event = {
+	id = bankruptcy.4
+	title = bankruptcy.4.t
+	desc = bankruptcy.4.d
+	is_triggered_only = yes
+	picture = bank_crisis
+
+	#We were denied our bailout
+	option = {
+		name = bankruptcy.4.a
+		log = "[GetDateText]: [This.GetName]: bankruptcy.4.a executed"
+		add_opinion_modifier = { modifier = did_not_support_us target = FROM }
+		clear_variable = debt_bailout
+	}
+}
+
+#### IMF EVENTS ####
+#lower bureaucracy
+country_event = {
+	id = bankruptcy.100
+	title = bankruptcy.100.t
+	desc = bankruptcy.100.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.100.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.100.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			decrease_centralization_2 = yes
+		}
+		else = {
+			decrease_centralization = yes
+		}
+		block_bureau_increase = yes
+		increase_industrial_conglomerates_opinion = yes
+		increase_small_medium_business_owners_opinion = yes
+		increase_international_bankers_opinion = yes
+		increase_oligarchs_opinion = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.100.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.100.b executed"
+		clear_variable = debt_bailout
+		decrease_industrial_conglomerates_opinion = yes
+		decrease_small_medium_business_owners_opinion = yes
+		decrease_international_bankers_opinion = yes
+		decrease_oligarchs_opinion = yes
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#downsize military
+country_event = {
+	id = bankruptcy.101
+	title = bankruptcy.101.t
+	desc = bankruptcy.101.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.101.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.101.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			decrease_military_spending_2 = yes
+		}
+		else = {
+			decrease_military_spending = yes
+		}
+		block_defence_increase = yes
+		decrease_the_military_opinion = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.101.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.101.b executed"
+		clear_variable = debt_bailout
+		increase_the_military_opinion = yes
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#downsize police
+country_event = {
+	id = bankruptcy.102
+	title = bankruptcy.102.t
+	desc = bankruptcy.102.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.102.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.102.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			decrease_policing_budget_2 = yes
+		}
+		else = {
+			decrease_policing_budget = yes
+		}
+		block_police_increase = yes
+		decrease_intelligence_community_opinion = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.102.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.102.b executed"
+		clear_variable = debt_bailout
+		increase_intelligence_community_opinion = yes
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#cut education spending
+country_event = {
+	id = bankruptcy.103
+	title = bankruptcy.103.t
+	desc = bankruptcy.103.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.103.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.103.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			decrease_education_budget_2 = yes
+		}
+		else = {
+			decrease_education_budget = yes
+		}
+		block_edu_increase = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.103.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.103.b executed"
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#cut health spending
+country_event = {
+	id = bankruptcy.104
+	title = bankruptcy.104.t
+	desc = bankruptcy.104.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.104.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.104.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			decrease_healthcare_budget_2 = yes
+		}
+		else = {
+			decrease_healthcare_budget = yes
+		}
+		block_health_increase = yes
+		decrease_labour_unions_opinion = yes
+		decrease_communist_cadres_opinion = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.104.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.104.b executed"
+		clear_variable = debt_bailout
+		increase_labour_unions_opinion = yes
+		increase_communist_cadres_opinion = yes
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#cut social spending
+country_event = {
+	id = bankruptcy.105
+	title = bankruptcy.105.t
+	desc = bankruptcy.105.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.105.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.105.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			decrease_social_spending_2 = yes
+		}
+		else = {
+			decrease_social_spending = yes
+		}
+		block_social_increase = yes
+		decrease_labour_unions_opinion = yes
+		decrease_communist_cadres_opinion = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.105.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.105.b executed"
+		clear_variable = debt_bailout
+		increase_labour_unions_opinion = yes
+		increase_communist_cadres_opinion = yes
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#increase resource exports
+country_event = {
+	id = bankruptcy.106
+	title = bankruptcy.106.t
+	desc = bankruptcy.106.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.106.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.106.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			set_exports_to_max = yes
+		}
+		else = {
+			increase_exports = yes
+		}
+		block_trade_decrease = yes
+		increase_fossil_fuel_industry_opinion = yes
+		decrease_oligarchs_opinion = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.106.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.106.b executed"
+		clear_variable = debt_bailout
+		decrease_fossil_fuel_industry_opinion = yes
+		increase_oligarchs_opinion = yes
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#corrupt way
+country_event = {
+	id = bankruptcy.107
+	title = bankruptcy.107.t
+	desc = bankruptcy.107.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.107.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.107.a executed"
+		lose_pp_for_month = yes
+		increase_corruption = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.107.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.107.b executed"
+		clear_variable = debt_bailout
+	}
+}
+#land reform
+country_event = {
+	id = bankruptcy.108
+	title = bankruptcy.108.t
+	desc = bankruptcy.108.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.108.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.108.a executed"
+		if = {
+			limit = {
+				any_owned_state = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 2
+					}
+				}
+			}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 2
+					}
+				}
+				add_extra_state_shared_building_slots = -3
+			}
+			if = {
+				limit = {
+					check_variable = { gdp_per_capita < 5 }
+				}
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 1
+				}
+			}
+			else = {
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 2
+				}
+			}
+		}
+		else = {
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+					}
+				}
+				add_extra_state_shared_building_slots = -1
+			}
+		}		
+		increase_landowners_opinion = yes
+		decrease_farmers_opinion = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.108.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.108.b executed"
+		decrease_landowners_opinion = yes
+		increase_farmers_opinion = yes
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+		clear_variable = debt_bailout
+	}
+}
+#bankers in government
+country_event = {
+	id = bankruptcy.109
+	title = bankruptcy.109.t
+	desc = bankruptcy.109.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.109.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.109.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			decrease_domestic_influence_10_percent = yes
+		}
+		else = {
+			decrease_domestic_influence_5_percent = yes
+		}
+		increase_international_bankers_opinion = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.109.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.109.b executed"
+		clear_variable = debt_bailout
+		decrease_international_bankers_opinion = yes
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#confiscate church funds
+country_event = {
+	id = bankruptcy.110
+	title = bankruptcy.110.t
+	desc = bankruptcy.110.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.110.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.110.a executed"
+		decrease_The_Clergy_opinion = yes
+		decrease_the_priesthood_opinion = yes
+		decrease_The_Ulema_opinion = yes
+		decrease_wahabi_ulema_opinion = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.110.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.110.b executed"
+		clear_variable = debt_bailout
+		increase_The_Clergy_opinion = yes
+		increase_the_priesthood_opinion = yes
+		increase_The_Ulema_opinion = yes
+		increase_wahabi_ulema_opinion = yes
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#dismantle military factories
+country_event = {
+	id = bankruptcy.111
+	title = bankruptcy.111.t
+	desc = bankruptcy.111.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.111.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.111.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			random_owned_state = {
+				limit = {
+					arms_factory > 1
+				}
+				remove_building = {
+					type = arms_factory
+					level = 2
+				}
+			}
+		}
+		else = {
+			random_owned_state = {
+				limit = {
+					arms_factory > 0
+				}
+				remove_building = {
+					type = arms_factory
+					level = 1
+				}
+			}
+		}
+		decrease_the_military_opinion = yes
+		decrease_defense_industry_opinion = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.111.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.111.b executed"
+		clear_variable = debt_bailout
+		increase_the_military_opinion = yes
+		increase_defense_industry_opinion = yes
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#dismantle naval dockyards
+country_event = {
+	id = bankruptcy.112
+	title = bankruptcy.112.t
+	desc = bankruptcy.112.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.112.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.112.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			random_owned_state = {
+				limit = {
+					dockyard > 1
+				}
+				remove_building = {
+					type = dockyard
+					level = 2
+				}
+			}
+		}
+		else = {
+			random_owned_state = {
+				limit = {
+					dockyard > 0
+				}
+				remove_building = {
+					type = dockyard
+					level = 1
+				}
+			}
+		}
+		decrease_maritime_industry_opinion = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.112.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.112.b executed"
+		clear_variable = debt_bailout
+		increase_maritime_industry_opinion = yes
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#raise taxes
+country_event = {
+	id = bankruptcy.113
+	title = bankruptcy.113.t
+	desc = bankruptcy.113.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.113.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.113.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			custom_effect_tooltip = bankruptcy.113_low_gdp_tt
+			add_to_variable = { population_tax_rate = 10 }
+			add_to_variable = { corporate_tax_rate = 10 }
+			remove_10_popularity_sub = yes
+		}
+		else = {
+			custom_effect_tooltip = bankruptcy.113_tt
+			add_to_variable = { population_tax_rate = 5 }
+			add_to_variable = { corporate_tax_rate = 5 }
+			remove_5_popularity_sub = yes
+		}
+		clr_country_flag = no_personal_tax_rate_change
+		set_country_flag = {
+			flag = no_personal_tax_rate_change
+			days = 365
+			value = 1
+		}
+		clr_country_flag = no_corporate_tax_rate_change
+		set_country_flag = {
+			flag = no_corporate_tax_rate_change
+			days = 365
+			value = 1
+		}
+		calculate_tax_rate = yes
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.113.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.113.b executed"
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#sell international investments
+country_event = {
+	id = bankruptcy.114
+	title = bankruptcy.114.t
+	desc = bankruptcy.114.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.114.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.114.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			custom_effect_tooltip = bankruptcy.114_low_gdp_tt
+			set_temp_variable = { int_investment_addition = int_investments }
+			multiply_temp_variable = { int_investment_addition = 0.70 }
+		}
+		else = {
+			custom_effect_tooltip = bankruptcy.114_tt
+			set_temp_variable = { int_investment_addition = int_investments }
+			multiply_temp_variable = { int_investment_addition = 0.80 }
+		}
+		set_variable = { int_investments = 0 }
+		add_to_variable = { debt_bailout = int_investment_addition }
+		custom_effect_tooltip = bailout_given_tt
+		if = {
+			limit = {
+				check_variable = { debt_bailout > debt }
+			}
+			subtract_from_variable = { debt_bailout = debt }
+			set_variable = { debt = 0 }
+			add_to_variable = { treasury = debt_bailout }
+		}
+		else = {
+			subtract_from_variable = { debt = debt_bailout }
+		}
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.114.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.114.b executed"
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+#dismantle military factories
+country_event = {
+	id = bankruptcy.115
+	title = bankruptcy.115.t
+	desc = bankruptcy.115.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.115.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.115.a executed"
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita < 5 }
+			}
+			random_owned_state = {
+				limit = {
+					industrial_complex > 1
+				}
+				remove_building = {
+					type = industrial_complex
+					level = 2
+				}
+			}
+		}
+		else = {
+			random_owned_state = {
+				limit = {
+					industrial_complex > 0
+				}
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+			}
+		}
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
+		ingame_update_setup = yes
+	}
+	option = {
+		name = bankruptcy.115.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.115.b executed"
+		clear_variable = debt_bailout
+		add_timed_idea = { idea = IMF_debt_relief_rejected days = 360 }
+		ingame_update_setup = yes
+	}
+}
+
+### we got the bailout - biggest influencer
+news_event = {
+	id = News_bankruptcy.1
+	title = News_bankruptcy.1.t
+	desc = News_bankruptcy.1.d
+	picture = GFX_stock_market
+
+	is_triggered_only = yes
+
+	#yeah...
+	option = {
+		name = News_bankruptcy.1.a
+		log = "[GetDateText]: [This.GetName]: News_bankruptcy.1.a executed"
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		generic_grant_20_percent_influence_of_FROM = yes
+		recalculate_influence = yes
+		ingame_update_setup = yes
+	}
+}
+
+### we got the bailout - 2nd biggest influencer
 news_event = {
 	id = News_bankruptcy.2
 	title = News_bankruptcy.2.t
@@ -5100,7 +5865,28 @@ news_event = {
 		custom_effect_tooltip = bailout_given_tt
 		subtract_from_variable = { debt = debt_bailout }
 		clear_variable = debt_bailout
-		generic_grant_20_percent_influence_of_FROM = yes
+		generic_grant_15_percent_influence_of_FROM = yes
+		recalculate_influence = yes
+		ingame_update_setup = yes
+	}
+}
+### we got the bailout - neighbour
+news_event = {
+	id = News_bankruptcy.3
+	title = News_bankruptcy.3.t
+	desc = News_bankruptcy.3.d
+	picture = GFX_stock_market
+
+	is_triggered_only = yes
+
+	#yeah...
+	option = {
+		name = News_bankruptcy.3.a
+		log = "[GetDateText]: [This.GetName]: News_bankruptcy.3.a executed"
+		custom_effect_tooltip = bailout_given_tt
+		subtract_from_variable = { debt = debt_bailout }
+		clear_variable = debt_bailout
+		generic_grant_10_percent_influence_of_FROM = yes
 		recalculate_influence = yes
 		ingame_update_setup = yes
 	}
@@ -5149,52 +5935,6 @@ news_event = {
 			array = influence_array
 			country_event = { id = bankruptcy.5 }
 		}
-	}
-}
-
-##Bailout Requested ###
-country_event = {
-	id = bankruptcy.3
-	title = bankruptcy.3.t
-	desc = bankruptcy.3.d
-	is_triggered_only = yes
-	picture = GFX_stock_market
-
-	#Clrs Looming Bankruptcy
-	option = {
-		name = bankruptcy.3.a
-		log = "[GetDateText]: [This.GetName]: bankruptcy.3.a executed"
-		clr_country_flag = looming_bankruptcy
-	}
-}
-
-#We were denied the bailout
-country_event = {
-	id = bankruptcy.4
-	title = bankruptcy.4.t
-	desc = bankruptcy.4.d
-	is_triggered_only = yes
-	picture = bank_crisis
-
-	#We were denied our bailout
-	option = {
-		name = bankruptcy.4.a
-		log = "[GetDateText]: [This.GetName]: bankruptcy.4.a executed"
-		add_opinion_modifier = { modifier = did_not_support_us target = FROM }
-		clear_variable = debt_bailout
-	}
-}
-
-#[FROM.GetName] has declared Bankruptcy
-country_event = {
-	id = bankruptcy.5
-	title = bankruptcy.5.t
-	desc = bankruptcy.5.d
-	is_triggered_only = yes
-
-	option = {
-		name = bankruptcy.5.a
-		log = "[GetDateText]: [This.GetName]: bankruptcy.5.a executed"
 	}
 }
 
