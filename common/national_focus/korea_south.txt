@@ -4752,7 +4752,7 @@ focus_tree = {
 		id = KOR_the_threat_from_the_north
 		icon = kim_il_sung
 
-		x = 8
+		x = 9
 		y = 2
 		relative_position_id = KOR_state_of_the_republic
 
@@ -4790,7 +4790,7 @@ focus_tree = {
 		id = KOR_ban_pro_northern_groups
 		icon = juche3
 
-		x = 7
+		x = 8
 		y = 3
 		relative_position_id = KOR_state_of_the_republic
 
@@ -4836,7 +4836,7 @@ focus_tree = {
 		id = KOR_arrest_sympathizers
 		icon = political_arrests
 
-		x = 7
+		x = 8
 		y = 4
 		relative_position_id = KOR_state_of_the_republic
 
@@ -4882,7 +4882,7 @@ focus_tree = {
 		id = KOR_praise_the_south
 		icon = propaganda
 
-		x = 9
+		x = 10
 		y = 3
 		relative_position_id = KOR_state_of_the_republic
 
@@ -4926,7 +4926,7 @@ focus_tree = {
 		id = KOR_champion_human_rights
 		icon = democracy5
 
-		x = 9
+		x = 10
 		y = 4
 		relative_position_id = KOR_state_of_the_republic
 
@@ -4975,7 +4975,7 @@ focus_tree = {
 		id = KOR_promote_patriotism
 		icon = political_pressure_blue
 
-		x = 11
+		x = 14
 		y = 2
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5017,7 +5017,7 @@ focus_tree = {
 		id = KOR_venerate_park_chung_hee
 		icon = military_mission
 
-		x = 11
+		x = 14
 		y = 3
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5054,7 +5054,7 @@ focus_tree = {
 		id = KOR_commemorate_dictatorship
 		icon = anti_democracy
 
-		x = 11
+		x = 14
 		y = 4
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5107,6 +5107,7 @@ focus_tree = {
 		prerequisite = { focus = KOR_arrest_sympathizers }
 		prerequisite = { focus = KOR_champion_human_rights focus = KOR_commemorate_dictatorship }
 		mutually_exclusive = { focus = KOR_defensive_approach }
+		mutually_exclusive = { focus = KOR_subversive_approach }
 
 		search_filters = {FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_WAR_SUPPORT}
 
@@ -5240,6 +5241,7 @@ focus_tree = {
 		prerequisite = { focus = KOR_arrest_sympathizers }
 		prerequisite = { focus = KOR_champion_human_rights focus = KOR_commemorate_dictatorship }
 		mutually_exclusive = { focus = KOR_offensive_approach }
+		mutually_exclusive = { focus = KOR_subversive_approach }
 
 		search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
 
@@ -5390,10 +5392,166 @@ focus_tree = {
 	}
 
 	focus = {
+		id = KOR_subversive_approach
+		icon = secret_police
+
+		x = 11
+		y = 5
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = KOR_arrest_sympathizers }
+		prerequisite = { focus = KOR_champion_human_rights focus = KOR_commemorate_dictatorship }
+		mutually_exclusive = { focus = KOR_offensive_approach }
+		mutually_exclusive = { focus = KOR_defensive_approach }
+
+		search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_peoples_party_governing_tt
+					is_in_array = { ruling_party = 2  } #liberalism
+				}
+			}
+			country_exists = NKO
+			NKO = {
+				OR = {
+					has_government = communism
+					has_government = nationalist
+				}
+			}
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					NOT = {
+						has_dlc = "La Resistance"
+					}
+				}
+				add_ideas = KOR_subversive_approach
+			}
+			else_if = {
+				add_ideas = KOR_subversive_approach_lar
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_subversive_approach executed"
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	focus = {
+		id = KOR_intensify_propaganda
+		icon = torchbearers_of_tomorrow
+
+		x = 11
+		y = 6
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = KOR_subversive_approach }
+
+		search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_peoples_party_governing_tt
+					is_in_array = { ruling_party = 2  } #liberalism
+				}
+			}
+			country_exists = NKO
+			NKO = {
+				OR = {
+					has_government = communism
+					has_government = nationalist
+				}
+			}
+		}
+
+		completion_reward = {
+			subtract_from_variable = { treasury = 10 }
+			custom_effect_tooltip = 10_billion_expense_tt
+			NKO = {
+				add_timed_idea = {
+					idea = KOR_intensified_propaganda
+					days = 140
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus KOR_intensify_propaganda executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = KOR_spark_insurrection
+		icon = break_free2
+
+		x = 11
+		y = 7
+		relative_position_id = KOR_state_of_the_republic
+
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = KOR_intensify_propaganda }
+
+		search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
+
+		available = {
+			OR = {
+				KOR_has_conservative_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_peoples_party_governing_tt
+					is_in_array = { ruling_party = 2  } #liberalism
+				}
+			}
+			country_exists = NKO
+			NKO = {
+				OR = {
+					has_government = communism
+					has_government = nationalist
+				}
+			}
+		}
+
+		completion_reward = {
+
+			log = "[GetDateText]: [This.GetName]: focus KOR_spark_insurrection executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
 		id = KOR_raise_tensions
 		icon = irredentism
 
-		x = 11
+		x = 13
 		y = 5
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5436,7 +5594,7 @@ focus_tree = {
 		id = KOR_clamp_down_on_political_activism
 		icon = attack_democracy2
 
-		x = 13
+		x = 15
 		y = 5
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5469,7 +5627,7 @@ focus_tree = {
 		id = KOR_impose_martial_law
 		icon = rok_mobilization
 
-		x = 11
+		x = 13
 		y = 6
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5573,7 +5731,7 @@ focus_tree = {
 		id = KOR_muzzle_the_media
 		icon = generic_controlled_press
 
-		x = 13
+		x = 15
 		y = 6
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5606,7 +5764,7 @@ focus_tree = {
 		id = KOR_favor_armed_forces
 		icon = rok_armed_forces
 
-		x = 11
+		x = 13
 		y = 7
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5648,7 +5806,7 @@ focus_tree = {
 		id = KOR_favor_the_nis
 		icon = nis
 
-		x = 13
+		x = 15
 		y = 7
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5690,7 +5848,7 @@ focus_tree = {
 		id = KOR_install_the_yusin_dictatorship
 		icon = anti_democracy3
 
-		x = 12
+		x = 14
 		y = 8
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5735,7 +5893,7 @@ focus_tree = {
 		id = KOR_ban_demonstrations
 		icon = colonial_crackdown
 
-		x = 10
+		x = 12
 		y = 9
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5780,7 +5938,7 @@ focus_tree = {
 		id = KOR_increase_surveillance
 		icon = cctv
 
-		x = 14
+		x = 16
 		y = 9
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5820,7 +5978,7 @@ focus_tree = {
 		id = KOR_imprison_leftists
 		icon = political_arrests2
 
-		x = 12
+		x = 14
 		y = 9
 		relative_position_id = KOR_state_of_the_republic
 
@@ -5854,7 +6012,7 @@ focus_tree = {
 		id = KOR_middle_power_diplomacy
 		icon = global_community
 
-		x = 59
+		x = 61
 		y = 0
 
 		cost = 10
@@ -5868,7 +6026,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			add_political_power = 25
+			add_ideas = KOR_global_korea
 			log = "[GetDateText]: [This.GetName]: focus KOR_middle_power_diplomacy executed"
 		}
 
