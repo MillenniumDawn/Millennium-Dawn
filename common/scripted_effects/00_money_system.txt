@@ -470,6 +470,72 @@ calculate_interest_rate = {
 	multiply_variable = { debt_rate = interest_rate }	#Yearly interest rate
 	divide_variable = { debt_rate = 100 }
 	divide_variable = { debt_rate = 52 }	#Weekly interest rate, 52 weeks in a year
+	
+	#If interest rate is really high, add additional modifier
+	if = {
+		limit = {
+			check_variable = { interest_rate > 14.999 }	
+		}
+		if = {
+			limit = {
+				NOT = { has_dynamic_modifier = { modifier = very_high_interest_country_modifiers } }
+			}
+			add_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
+		}
+		#Construction speed
+		set_variable = { production_speed_buildings_factor_very_high_interest_modifier = interest_rate }
+		subtract_from_variable = { production_speed_buildings_factor_very_high_interest_modifier = 15 }
+		multiply_variable = { production_speed_buildings_factor_very_high_interest_modifier = -0.05 }
+		#Stability
+		set_variable = { stability_factor_very_high_interest_modifier = interest_rate }
+		subtract_from_variable = { stability_factor_very_high_interest_modifier = 15 }
+		multiply_variable = { stability_factor_very_high_interest_modifier = -0.02 }
+		#Popularity
+		##Set all to 0 in case an Outlook change between weeklys
+		clear_variable = western_drift_very_high_interest_modifier
+		clear_variable = emerging_drift_very_high_interest_modifier
+		clear_variable = nonaligned_drift_very_high_interest_modifier
+		clear_variable = salafist_drift_very_high_interest_modifier
+		clear_variable = nationalist_drift_very_high_interest_modifier
+		set_temp_variable = { outlook_drift = interest_rate }
+		subtract_from_temp_variable = { outlook_drift = 15 }
+		multiply_temp_variable = { outlook_drift = -0.01 }
+		if = {
+			limit = { has_government = democratic }
+			add_to_variable = { western_drift_very_high_interest_modifier = outlook_drift }
+		}
+		if = {
+			limit = { has_government = communism }
+			add_to_variable = { emerging_drift_very_high_interest_modifier = outlook_drift }
+		}
+		if = {
+			limit = { has_government = neutrality }
+			add_to_variable = { nonaligned_drift_very_high_interest_modifier = outlook_drift }
+		}
+		if = {
+			limit = { has_government = fascism }
+			add_to_variable = { salafist_drift_very_high_interest_modifier = outlook_drift }
+		}
+		if = {
+			limit = { has_government = nationalist }
+			add_to_variable = { nationalist_drift_very_high_interest_modifier = outlook_drift }
+		}		
+		force_update_dynamic_modifier = yes
+	}
+	if = {
+		limit = {
+			check_variable = { interest_rate < 15 }
+			has_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
+		}
+		remove_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
+		clear_variable = production_speed_buildings_factor_very_high_interest_modifier
+		clear_variable = stability_factor_very_high_interest_modifier
+		clear_variable = western_drift_very_high_interest_modifier
+		clear_variable = emerging_drift_very_high_interest_modifier
+		clear_variable = nonaligned_drift_very_high_interest_modifier
+		clear_variable = salafist_drift_very_high_interest_modifier
+		clear_variable = nationalist_drift_very_high_interest_modifier
+	}
 
 	# Debt to GDP Ratio
 	# Math Explanation:
