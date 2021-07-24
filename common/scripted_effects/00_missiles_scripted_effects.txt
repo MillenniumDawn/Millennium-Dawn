@@ -2043,6 +2043,17 @@ set_SPY_civ_systems = {
 	add_to_array = { SPY_civ_systems_array = 7 }
 }
 
+set_COM_sat_receiver_tech_array = {
+	add_to_array = { COM_sat_receiver_tech_array = 10 }
+	add_to_array = { COM_sat_receiver_tech_array = 20 }
+	add_to_array = { COM_sat_receiver_tech_array = 30 }
+	add_to_array = { COM_sat_receiver_tech_array = 40 }
+	add_to_array = { COM_sat_receiver_tech_array = 50 }
+	add_to_array = { COM_sat_receiver_tech_array = 60 }
+	add_to_array = { COM_sat_receiver_tech_array = 70 }
+	add_to_array = { COM_sat_receiver_tech_array = 80 }
+}
+
 update_sat_systems_stats = {
 	update_GNSS_system_stats = yes
 	update_COM_system_stats = yes
@@ -2057,6 +2068,16 @@ update_GNSS_system_stats = {
 			if = {
 				limit = {
 					check_variable = {
+						GNSS_satellite_array^[GNSS_mil_system_ID] = GNSS_satellite_array^[GNSS_civ_system_ID]
+					}
+				}
+				multiply_variable = { var_GNSS_mil_sat_system_num = 0.5 }
+				subtract_from_variable = { var_GNSS_mil_sat_system_num = 0.5 }
+				round_variable = var_GNSS_mil_sat_system_num
+			}
+			if = {
+				limit = {
+					check_variable = {
 						var_GNSS_mil_sat_system_num > var_GNSS_mil_sat_system_max
 					}
 				}
@@ -2068,26 +2089,22 @@ update_GNSS_system_stats = {
 			else = {
 				set_variable = { var_GNSS_mil_coverage = var_GNSS_mil_sat_system_num }
 				divide_variable = { var_GNSS_mil_coverage = var_GNSS_mil_sat_system_max }
-				set_variable = { var_GNSS_mil_SBAS_num = var_GNSS_sat_total }
-				subtract_from_variable = { var_GNSS_mil_SBAS_num = var_GNSS_mil_sat_system_num }
-				set_variable = { var_GNSS_mil_SBAS_bonus = var_GNSS_sat_total }
-				divide_variable = { var_GNSS_mil_SBAS_bonus = 100 }
-				set_temp_variable = { temp1 = var_GNSS_mil_coverage }
-				set_temp_variable = { temp2 = 1 }
-				subtract_from_temp_variable = { temp2 = temp1 }
-				if = {
-					limit = {
-						check_variable = {
-							temp2 < var_GNSS_mil_SBAS_bonus
-						}
-					}
-					set_variable = { var_GNSS_mil_SBAS_bonus = temp2 }
-				}
+				update_GNSS_SBAS = yes
 			}
 			set_variable = { var_GNSS_mil_sat_system_bonus = var_GNSS_mil_coverage }
 			add_to_variable = { var_GNSS_mil_sat_system_bonus = var_GNSS_mil_SBAS_bonus }
 			### GNSS civ system
 			set_variable = { var_GNSS_civ_sat_system_num = GNSS_satellite_array^[GNSS_civ_system_ID] }
+			if = {
+				limit = {
+					check_variable = {
+						GNSS_satellite_array^[GNSS_mil_system_ID] = GNSS_satellite_array^[GNSS_civ_system_ID]
+					}
+				}
+				multiply_variable = { var_GNSS_civ_sat_system_num = 0.5 }
+				subtract_from_variable = { var_GNSS_civ_sat_system_num = 0.5 }
+				round_variable = var_GNSS_civ_sat_system_num
+			}
 			if = {
 				limit = {
 					check_variable = {
@@ -2102,10 +2119,7 @@ update_GNSS_system_stats = {
 			else = {
 				set_variable = { var_GNSS_civ_coverage = var_GNSS_civ_sat_system_num }
 				divide_variable = { var_GNSS_civ_coverage = var_GNSS_civ_sat_system_max }
-				set_variable = { var_GNSS_civ_SBAS_num = var_GNSS_sat_total }
-				subtract_from_variable = { var_GNSS_civ_SBAS_num = var_GNSS_civ_sat_system_num }
-				set_variable = { var_GNSS_civ_SBAS_bonus = var_GNSS_sat_total }
-				divide_variable = { var_GNSS_civ_SBAS_bonus = 100 }
+				update_GNSS_SBAS = yes
 			}
 			set_variable = { var_GNSS_civ_sat_system_bonus = var_GNSS_civ_coverage }
 			add_to_variable = { var_GNSS_civ_sat_system_bonus = var_GNSS_civ_SBAS_bonus }
@@ -2115,8 +2129,270 @@ update_GNSS_system_stats = {
 	}
 }
 
-update_COM_system_stats = {
+update_GNSS_SBAS = {
+	### GNSS mil 
+	set_variable = { var_GNSS_mil_SBAS_num = var_GNSS_sat_total }
+	subtract_from_variable = { var_GNSS_mil_SBAS_num = var_GNSS_mil_sat_system_num }
+	subtract_from_variable = { var_GNSS_mil_SBAS_num = var_GNSS_civ_sat_system_num }
+	set_variable = { var_GNSS_mil_SBAS_bonus = var_GNSS_mil_SBAS_num }
+	divide_variable = { var_GNSS_mil_SBAS_bonus = 100 }
+	set_temp_variable = { temp1 = var_GNSS_mil_coverage }
+	set_temp_variable = { temp2 = 1 }
+	subtract_from_temp_variable = { temp2 = temp1 }
+	if = {
+		limit = {
+			check_variable = {
+				temp2 < var_GNSS_mil_SBAS_bonus
+			}
+		}
+		set_variable = { var_GNSS_mil_SBAS_bonus = temp2 }
+	}
+	###GNSS civ
+	set_variable = { var_GNSS_civ_SBAS_num = var_GNSS_sat_total }
+	subtract_from_variable = { var_GNSS_civ_SBAS_num = var_GNSS_civ_sat_system_num }
+	subtract_from_variable = { var_GNSS_civ_SBAS_num = var_GNSS_mil_sat_system_num }
+	set_variable = { var_GNSS_civ_SBAS_bonus = var_GNSS_civ_SBAS_num }
+	divide_variable = { var_GNSS_civ_SBAS_bonus = 100 }
+	set_temp_variable = { temp1 = var_GNSS_civ_coverage }
+	set_temp_variable = { temp2 = 1 }
+	subtract_from_temp_variable = { temp2 = temp1 }
+	if = {
+		limit = {
+			check_variable = {
+				temp2 < var_GNSS_civ_SBAS_bonus
+			}
+		}
+		set_variable = { var_GNSS_civ_SBAS_bonus = temp2 }
+	}
+}
 
+update_COM_system_stats = {
+	meta_effect = {
+		text = {
+			
+			#set_variable = { var_COM_mil_sat_system_num = COM_satellite_array^[COM_mil_system_ID] }
+			set_variable = { var_COM_mil_sat_system_num = 0 }
+			set_variable = { var_COM_mil_receiver_cap = 0 }
+			set_variable = { var_COM_civ_sat_system_num = 0 }
+			set_variable = { var_COM_civ_receiver_cap = 0 }
+			for_each_loop = {
+				array = COM_satellite_array
+				### COM mil system
+				if = {
+					limit = {
+						OR = {
+							check_variable = { i = [COM_mil_system_ID] }
+							check_variable = { i > [COM_mil_system_ID] }
+						}
+					}
+					if = {
+						limit = {
+							OR = {
+								check_variable = { i = [COM_civ_system_ID] }
+								check_variable = { i > [COM_civ_system_ID] }
+							}
+						}
+						set_temp_variable = { temp1 = COM_satellite_array^i }
+						multiply_temp_variable = { temp1 = 0.5 }
+						subtract_from_temp_variable = { temp1 = 0.5 }
+						round_temp_variable = temp1
+						add_to_variable = { var_COM_mil_sat_system_num = temp1 }
+						#
+						multiply_temp_variable = { temp1 = COM_sat_receiver_tech_array^i }
+						add_to_variable = { var_COM_mil_receiver_cap = temp1 }
+					}
+					else = {
+						add_to_variable = { var_COM_mil_sat_system_num = COM_satellite_array^i }
+						set_temp_variable = { temp1 = COM_satellite_array^i }
+						multiply_temp_variable = { temp1 = COM_sat_receiver_tech_array^i }
+						add_to_variable = { var_COM_mil_receiver_cap = temp1 }
+					}
+				}
+				### COM civ system
+				if = {
+					limit = {
+						OR = {
+							check_variable = { i = [COM_civ_system_ID] }
+							check_variable = { i > [COM_civ_system_ID] }
+						}
+					}
+					if = {
+						limit = {
+							OR = {
+								check_variable = { i = [COM_mil_system_ID] }
+								check_variable = { i > [COM_mil_system_ID] }
+							}
+						}
+						set_temp_variable = { temp2 = COM_satellite_array^i }
+						multiply_temp_variable = { temp2 = 0.5 }
+						subtract_from_temp_variable = { temp2 = 0.5 }
+						round_temp_variable = temp2
+						add_to_variable = { var_COM_civ_sat_system_num = temp1 }
+						#
+						multiply_temp_variable = { temp2 = COM_sat_receiver_tech_array^i }
+						add_to_variable = { var_COM_civ_receiver_cap = temp2 }
+					}
+					else = {
+						add_to_variable = { var_COM_civ_sat_system_num = COM_satellite_array^i }
+						set_temp_variable = { temp2 = COM_satellite_array^i }
+						multiply_temp_variable = { temp2 = COM_sat_receiver_tech_array^i }
+						add_to_variable = { var_COM_civ_receiver_cap = temp2 }
+					}
+				}
+			}
+
+			# if = {
+			# 	limit = {
+			# 		check_variable = {
+			# 			COM_satellite_array^[COM_mil_system_ID] = COM_satellite_array^[COM_civ_system_ID]
+			# 		}
+			# 	}
+			# 	multiply_variable = { var_COM_mil_sat_system_num = 0.5 }
+			# 	subtract_from_variable = { var_COM_mil_sat_system_num = 0.5 }
+			# 	round_variable = var_COM_mil_sat_system_num
+			# }
+			if = {
+				limit = {
+					check_variable = {
+						var_COM_mil_sat_system_num > var_COM_mil_sat_system_max
+					}
+				}
+				set_variable = { var_COM_mil_sat_system_num = var_COM_mil_sat_system_max }
+				set_variable = { var_COM_mil_coverage = 1.0 }
+			}
+			else = {
+				set_variable = { var_COM_mil_coverage = var_COM_mil_sat_system_num }
+				divide_variable = { var_COM_mil_coverage = var_COM_mil_sat_system_max }
+			}
+			set_variable = { var_COM_mil_receiver_num = num_battalions }
+			add_to_variable = { var_COM_mil_receiver_num = num_ships }
+			add_to_variable = { var_COM_mil_receiver_num = num_deployed_planes }
+			#set_variable = { var_COM_mil_receiver_cap = 0 }
+			# for_each_loop = {
+			# 	array = COM_satellite_array
+			# 	set_temp_variable = { temp3 = COM_satellite_array^i }
+			# 	multiply_temp_variable = { temp3 = COM_sat_receiver_tech_array^i }
+			# 	add_to_variable = { var_COM_mil_receiver_cap = temp3 }
+			# }
+			set_variable = { var_sat_network_traffic_mil = var_COM_mil_receiver_num }
+			divide_variable = { var_sat_network_traffic_mil = var_COM_mil_receiver_cap }
+			set_variable = { var_COM_mil_sat_system_bonus = var_COM_mil_coverage }
+			if = {
+				limit = {
+					check_variable = {
+						var_sat_network_traffic_mil > 1
+					}
+				}
+				set_temp_variable = { temp3 = var_sat_network_traffic_mil }
+				subtract_from_temp_variable = { temp3 = 1 }
+				subtract_from_variable = { var_COM_mil_sat_system_bonus = temp3 }
+				if = {
+					limit = {
+						check_variable = {
+							var_COM_mil_sat_system_bonus < 0
+						}
+					}
+					set_variable = { var_COM_mil_sat_system_bonus = 0 }
+				}
+			}
+			### COM civ system
+			#set_variable = { var_COM_civ_sat_system_num = COM_satellite_array^[COM_civ_system_ID] }
+			#set_variable = { var_COM_civ_sat_system_num = 0 }
+			#set_variable = { var_COM_civ_receiver_cap = 0 }
+								# for_each_loop = {
+								# 	array = COM_satellite_array
+								# 	if = {
+								# 		limit = {
+								# 			check_variable = {
+								# 				OR = {
+								# 					i = [COM_civ_system_ID]
+								# 					i > [COM_civ_system_ID]
+								# 				}
+								# 			}
+								# 		}
+								# 		if = {
+								# 			limit = {
+								# 				check_variable = {
+								# 					OR = {
+								# 						i = [COM_mil_system_ID]
+								# 						i > [COM_mil_system_ID]
+								# 					}
+								# 				}
+								# 			}
+								# 			set_temp_variable = { temp2 = COM_satellite_array^i }
+								# 			multiply_temp_variable = { temp2 = 0.5 }
+								# 			subtract_from_temp_variable = { temp2 = 0.5 }
+								# 			round_temp_variable = temp2
+								# 			add_to_variable = { var_COM_civ_sat_system_num = temp1 }
+								# 			#
+								# 			multiply_temp_variable = { temp2 = COM_sat_receiver_tech_array^i }
+								# 			add_to_variable = { var_COM_civ_receiver_cap = temp2 }
+								# 		}
+								# 		else = {
+								# 			add_to_variable = { var_COM_civ_sat_system_num = COM_satellite_array^i }
+								# 			set_temp_variable = { temp2 = COM_satellite_array^i }
+								# 			multiply_temp_variable = { temp2 = COM_sat_receiver_tech_array^i }
+								# 			add_to_variable = { var_COM_civ_receiver_cap = temp2 }
+								# 		}
+								# 	}
+								# }
+			# if = {
+			# 	limit = {
+			# 		check_variable = {
+			# 			COM_satellite_array^[COM_mil_system_ID] = COM_satellite_array^[COM_civ_system_ID]
+			# 		}
+			# 	}
+			# 	multiply_variable = { var_COM_civ_sat_system_num = 0.5 }
+			# 	subtract_from_variable = { var_COM_civ_sat_system_num = 0.5 }
+			# 	round_variable = var_COM_civ_sat_system_num
+			# }
+			if = {
+				limit = {
+					check_variable = {
+						var_COM_civ_sat_system_num > var_COM_civ_sat_system_max
+					}
+				}
+				set_variable = { var_COM_civ_sat_system_num = var_COM_civ_sat_system_max }
+				set_variable = { var_COM_civ_coverage = 1.0 }
+			}
+			else = {
+				set_variable = { var_COM_civ_coverage = var_COM_civ_sat_system_num }
+				divide_variable = { var_COM_civ_coverage = var_COM_civ_sat_system_max }
+			}
+			set_variable = { var_COM_civ_receiver_num = num_controlled_states }
+			multiply_variable = { var_COM_civ_receiver_num = 100 }
+			# set_variable = { var_COM_civ_receiver_cap = 0 }
+			# for_each_loop = {
+			# 	array = COM_satellite_array
+			# 	set_temp_variable = { temp5 = COM_satellite_array^i }
+			# 	multiply_temp_variable = { temp5 = COM_sat_receiver_tech_array^i }
+			# 	add_to_variable = { var_COM_civ_receiver_cap = temp5 }
+			# }
+			set_variable = { var_sat_network_traffic_civ = var_COM_civ_receiver_num }
+			divide_variable = { var_sat_network_traffic_civ = var_COM_civ_receiver_cap }
+			set_variable = { var_COM_civ_sat_system_bonus = var_COM_civ_coverage }
+			if = {
+				limit = {
+					check_variable = {
+						var_sat_network_traffic_civ > 1
+					}
+				}
+				set_temp_variable = { temp4 = var_sat_network_traffic_civ }
+				subtract_from_temp_variable = { temp4 = 1 }
+				subtract_from_variable = { var_COM_civ_sat_system_bonus = temp4 }
+				if = {
+					limit = {
+						check_variable = {
+							var_COM_civ_sat_system_bonus < 0
+						}
+					}
+					set_variable = { var_COM_civ_sat_system_bonus = 0 }
+				}
+			}
+		}
+		COM_mil_system_ID = "[?var_COM_mil_system_idx]"
+		COM_civ_system_ID = "[?var_COM_civ_system_idx]"
+	}
 }
 
 update_SPY_system_stats = {
@@ -2124,6 +2400,16 @@ update_SPY_system_stats = {
 		text = {
 			### SPY mil system
 			set_variable = { var_SPY_mil_sat_system_num = SPY_satellite_array^[SPY_mil_system_ID] }
+			if = {
+				limit = {
+					check_variable = {
+						SPY_satellite_array^[SPY_mil_system_ID] = SPY_satellite_array^[SPY_civ_system_ID]
+					}
+				}
+				multiply_variable = { var_SPY_mil_sat_system_num = 0.5 }
+				subtract_from_variable = { var_SPY_mil_sat_system_num = 0.5 }
+				round_variable = var_SPY_mil_sat_system_num
+			}
 			if = {
 				limit = {
 					check_variable = {
@@ -2136,13 +2422,21 @@ update_SPY_system_stats = {
 			else = {
 				set_variable = { var_SPY_mil_coverage = var_SPY_mil_sat_system_num }
 				divide_variable = { var_SPY_mil_coverage = var_SPY_mil_sat_system_max }
-				set_variable = { var_SPY_mission_num = var_SPY_sat_total }
-				subtract_from_variable = { var_SPY_mission_num = var_SPY_mil_sat_system_num }
-				subtract_from_variable = { var_SPY_mission_num = var_SPY_civ_sat_system_num }
 			}
 			set_variable = { var_SPY_mil_sat_system_bonus = var_SPY_mil_coverage }
+			update_SPY_mission_num = yes
 			### SPY civ system
 			set_variable = { var_SPY_civ_sat_system_num = SPY_satellite_array^[SPY_civ_system_ID] }
+			if = {
+				limit = {
+					check_variable = {
+						SPY_satellite_array^[SPY_mil_system_ID] = SPY_satellite_array^[SPY_civ_system_ID]
+					}
+				}
+				multiply_variable = { var_SPY_civ_sat_system_num = 0.5 }
+				subtract_from_variable = { var_SPY_civ_sat_system_num = 0.5 }
+				round_variable = var_SPY_civ_sat_system_num
+			}
 			if = {
 				limit = {
 					check_variable = {
@@ -2155,16 +2449,28 @@ update_SPY_system_stats = {
 			else = {
 				set_variable = { var_SPY_civ_coverage = var_SPY_civ_sat_system_num }
 				divide_variable = { var_SPY_civ_coverage = var_SPY_civ_sat_system_max }
-				set_variable = { var_SPY_mission_num = var_SPY_sat_total }
-				subtract_from_variable = { var_SPY_mission_num = var_SPY_mil_sat_system_num }
-				subtract_from_variable = { var_SPY_mission_num = var_SPY_civ_sat_system_num }
 			}
 			set_variable = { var_SPY_civ_sat_system_bonus = var_SPY_civ_coverage }
+			update_SPY_mission_num = yes
 		}
 		SPY_mil_system_ID = "[?var_SPY_mil_system_idx]"
 		SPY_civ_system_ID = "[?var_SPY_civ_system_idx]"
 	}
 }
+
+update_SPY_mission_num = {
+	set_variable = { var_SPY_mission_num = var_SPY_sat_total }
+	subtract_from_variable = { var_SPY_mission_num = var_SPY_mil_sat_system_num }
+	subtract_from_variable = { var_SPY_mission_num = var_SPY_civ_sat_system_num }
+}
+
+
+calculate_GNSS_mil_gui_vars = { }
+calculate_GNSS_civ_gui_vars = { }
+calculate_COM_mil_gui_vars = { }
+calculate_COM_civ_gui_vars = { }
+calculate_SPY_mil_gui_vars = { }
+calculate_SPY_civ_gui_vars = { }
 
 ###########################
 ### for on daily effect ###
