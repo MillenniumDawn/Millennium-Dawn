@@ -4422,7 +4422,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: bankruptcy.10.a executed"
 		hold_election = ROOT
 		hidden_effect = {
-			set_country_flag = no_leader_change
+			set_country_flag = do_not_retire
 			meta_effect = {
 				text = {
 					set_politics = {
@@ -4437,7 +4437,7 @@ country_event = {
 				MONTH = global.month
 				DATE = global.date
 			}
-			clr_country_flag = no_leader_change
+			clr_country_flag = do_not_retire
 		}
 		#WIP NEEDS NEWS EVENT
 	}
@@ -4462,15 +4462,41 @@ country_event = {
 	option = {
 		name = bankruptcy.11.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.11.a executed"
-		custom_effect_tooltip = bankruptcy.11_side_with_coup_tt
-		start_civil_war_as_the_strongest_opposition = yes
+		set_temp_variable = { party_index = 0 }
+		set_temp_variable_to_ruling_party = yes
+		set_temp_variable = { civil_war_chance = party_pop_array^party_index }
+		set_temp_variable = { no_civil_war_chance = 1 }
+		subtract_from_temp_variable = { no_civil_war_chance = civil_war_chance }
+		random_list = {
+			no_civil_war_chance = {
+				custom_effect_tooltip = bankruptcy.11.a_tt
+				hidden_effect = { put_the_largest_opposition_party_in_power = yes }
+				#WIP NEEDS NEWS EVENT
+			}
+			civil_war_chance = {
+				start_civil_war_as_the_strongest_opposition = yes
+				#WIP NEEDS NEWS EVENT
+			}
+		}
 	}
 	#Against the coup
 	option = {
 		name = bankruptcy.11.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.11.b executed"
-		custom_effect_tooltip = bankruptcy.11_oppose_coup_tt
-		start_civil_war_against_the_strongest_opposition = yes
+		set_temp_variable = { party_index = 0 }
+		set_temp_variable_to_ruling_party = yes
+		set_temp_variable = { no_civil_war_chance = party_pop_array^party_index }
+		set_temp_variable = { civil_war_chance = 1 }
+		subtract_from_temp_variable = { civil_war_chance = no_civil_war_chance }
+		random_list = {
+			no_civil_war_chance = {
+				custom_effect_tooltip = bankruptcy.11.b_tt			
+			}
+			civil_war_chance = {
+				start_civil_war_against_the_strongest_opposition = yes
+				#WIP NEEDS NEWS EVENT
+			}
+		}		
 	}
 	
 }
