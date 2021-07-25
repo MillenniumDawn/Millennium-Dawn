@@ -1,358 +1,23 @@
-# monthly on_action by Yard1
 on_actions = {
 
 	on_monthly = {
 		random_events = {
+			7500 = 0		#Weight for getting no event, the higher this is, the less likely it is to get an event
+			
+			#Economic events
+			100 = econvent.1	#Central Bank warns of housing bubble & possible crisis
+			100 = econvent.2	#Collapsing housing prices
+			100 = econvent.3	#Stock Market Crash
+			50 = econvent.4 	#Bank Crisis
+			50 = econvent.5 	#Slowdown Consumption
+			50 = econvent.6 	#Lower Demand for our Goods in International Markets
+			50 = econvent.7		#Drought
+			50 = econvent.8		#Drought
+			200 = econvent.9	#Increase Consumer Confidence
+			100 = econvent.10	#Stock Market Boom
+			
 		}
-		effect = {
-			# Generic Economic Events
-			if = {
-				limit = {
-					NOT = { has_country_flag = recently_had_economic_event }
-					OR = {
-						check_variable = { global.month = 1 } #January
-						check_variable = { global.month = 4 } #April
-						check_variable = { global.month = 7 } #July
-						check_variable = { global.month = 9 } #September
-					}
-				}
-				#Random Economic Events. Reconfiguring from MTTH for better optimization
-				#Fires on January/April/July/September
-				random_list = {
-					#Empty Pulse - Should be more likely
-					10 = {
-						modifier = {
-							factor = 10
-							has_idea = depression
-						}
-						modifier = {
-							factor = 1.5
-							has_idea = recession
-						}
-						modifier = {
-							factor = 1.25
-							has_idea = stagnation
-						}
-						modifier = {
-							factor = 0.80
-							has_war = yes
-						}
-						modifier = {
-							factor = 0.60
-							is_subject = yes
-						}
-						#nothing
-					}
-					#Warns of Possible Housing Bubble
-					10 = {
-						modifier = {
-							factor = 0.6
-							has_idea = economic_boom
-						}
-						modifier = {
-							factor = 0.8
-							has_idea = fast_growth
-						}
-						modifier = {
-							factor = 0
-							OR = {
-								has_idea = depression
-								has_idea = recession
-								has_idea = stagnation
-								has_country_flag = possible_housing_bubble
-								has_country_flag = housing_crash
-							}
-						}
-						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
-						country_event = { id = econvent.1 days = 5 random_days = 5 }
-					}
-					#Collapsing Housing Prices
-					10 = {
-						modifier = {
-							factor = 0.6
-							has_idea = economic_boom
-						}
-						modifier = {
-							factor = 0.8
-							has_idea = fast_growth
-						}
-						modifier = {
-							factor = 0.5
-							has_country_flag = consumption_slowdown
-						}
-						modifier = {
-							factor = 2.0
-							has_country_flag = possible_housing_bubble
-						}
-						modifier = {
-							factor = 0
-							OR = {
-								has_idea = depression
-								has_idea = recession
-								has_idea = stagnation
-							}
-						}
-						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
-						country_event = { id = econvent.2 days = 5 random_days = 5 }
-					}
-					#Stock Market Crash
-					10 = {
-						modifier = {
-							factor = 0.4
-							has_idea = economic_boom
-						}
-						modifier = {
-							factor = 0.8
-							has_idea = fast_growth
-						}
-						modifier = {
-							factor = 0.7
-							OR = {
-								has_country_flag = consumption_slowdown
-								has_country_flag = stock_market_boom
-								has_country_flag = voodoo_economics
-							}
-						}
-						modifier = {
-							factor = 0.5
-							has_country_flag = stock_market_boom_accelerate
-						}
-						modifier = {
-							factor = 0
-							OR = {
-								has_idea = recession
-								has_idea = depression
-							}
-						}
-						modifier = {
-							factor = 0
-							NOT = {
-								has_country_flag = housing_crash
-								has_country_flag = stock_market_boom_accelerate
-								has_country_flag = stock_market_boom
-							}
-						}
-						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
-						country_event = { id = econvent.3 days = 5 random_days = 5 }
-					}
-					#Bank Crisis
-					5 = {
-						modifier = {
-							factor = 0.3
-							has_idea = economic_boom
-						}
-						modifier = {
-							factor = 0.6
-							has_idea = fast_growth
-						}
-						modifier = {
-							factor = 0.5
-							has_country_flag = voodoo_economics
-						}
-						modifier = {
-							factor = 0.5
-							has_country_flag = consumption_slowdown
-						}
-						modifier = {
-							factor = 0
-							OR = {
-								NOT = {
-									has_country_flag = hosing_crash
-									has_country_flag = stock_market_crash
-								}
-								has_idea = recession
-								has_idea = depression
-							}
-						}
-					}
-					#Slowdown Consumption
-					5 = {
-						modifier = {
-							factor = 0.3
-							has_idea = economic_boom
-						}
-						modifier = {
-							factor = 0.6
-							has_idea = fast_growth
-						}
-						modifier = {
-							factor = 1.3
-							has_idea = recession
-						}
-						modifier = {
-							factor = 0.5
-							has_country_flag = voodoo_economics
-						}
-						modifier = {
-							factor = 0.5
-							has_country_flag = stock_market_crash
-						}
-						modifier = {
-							factor = 0.5
-							has_country_flag = housing_crash
-						}
-						modifier = {
-							factor = 0
-							has_war = yes
-						}
-						modifier = {
-							factor = 0
-							has_idea = depression
-						}
-						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
-						country_event = { id = econvent.5 days = 5 random_days = 5 }
-					}
-					#Lower Demand for our Goods in International Markets
-					10 = {
-						modifier = {
-							factor = 0.6
-							has_idea = economic_boom
-						}
-						modifier = {
-							factor = 0.8
-							has_idea = fast_growth
-						}
-						modifier = {
-							factor = 2.5
-							has_idea = recession
-						}
-						modifier = {
-							factor = 0
-							has_idea = depression
-						}
-						modifier = {
-							factor = 0
-							has_war = yes
-						}
-						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
-						country_event = { id = econvent.6 days = 5 random_days = 5 }
-					}
-					#Unique Arid Nation Content
-					#Drought
-					5 = {
-						modifier = {
-							factor = 1.4
-							is_african_nation = yes
-						}
-						modifier = {
-							factor = 1.2
-							check_variable = { gdp_per_capita < 2.00 }
-						}
-						modifier = {
-							factor = 1.10
-							check_variable = { gdp_per_capita > 1.999 }
-							check_variable = { gdp_per_capita < 4.000 }
-						}
-						modifier = {
-							factor = 0.8
-							check_variable = { gdp_per_capita > 3.999 }
-						}
-						modifier = {
-							factor = 0
-							OR = {
-								has_country_flag = drought
-								has_idea = depression
-								NOT = { is_arid_nation = yes }
-								check_variable = { gdp_per_capita > 1.999 }
-							}
-						}
-						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
-						country_event = { id = econvent.7 days = 5 random_days = 5 }
-					}
-					#Famine!
-					5 = {
-						modifier = {
-							factor = 1.3
-							check_variable = { gdp_per_capita < 2.00 }
-						}
-						modifier = {
-							factor = 1.10
-							check_variable = { gdp_per_capita > 1.999 }
-							check_variable = { gdp_per_capita < 4.000 }
-						}
-						modifier = {
-							factor = 0.8
-							check_variable = { gdp_per_capita > 3.999 }
-						}
-						modifier = {
-							factor = 0
-							OR = {
-								NOT = { has_country_flag = drought }
-								has_idea = depression
-							}
-						}
-						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
-						country_event = { id = econvent.8 days = 5 random_days = 5 }
-					}
-					##Positive Events
-					20 = {
-						modifier = {
-							factor = 0.5
-							has_idea = fast_growth
-						}
-						modifier = {
-							factor = 0.75
-							has_idea = stable_growth
-						}
-						modifier = {
-							factor = 1.10
-							has_idea = stagnation
-						}
-						modifier = {
-							factor = 1.5
-							has_idea = recession
-						}
-						modifier = {
-							factor = 2
-							has_idea = depression
-						}
-						modifier = {
-							factor = 0
-							OR = {
-								has_country_flag = increased_consumer_confidence
-								has_idea = economic_boom
-								has_idea = bankrupcy
-							}
-						}
-						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
-						country_event = { id = econvent.9 days = 5 random_days = 5 }
-					}
-					10 = {
-						modifier = {
-							factor = 2
-							has_idea = depression
-						}
-						modifier = {
-							factor = 1.25
-							has_idea = recession
-						}
-						modifier = {
-							factor = 1.10
-							has_idea = stagnation
-						}
-						modifier = {
-							factor = 0.75
-							has_idea = stable_growth
-						}
-						modifier = {
-							factor = 0.5
-							has_idea = fast_growth
-						}
-						modifier = {
-							factor = 0
-							OR = {
-								has_idea = economic_boom
-								has_idea = bankrupcy
-								has_country_flag = stock_market_boom_accelerate
-								has_country_flag = stock_market_boom_slowed
-								has_country_flag = stock_market_boom
-							}
-						}
-						set_country_flag = { flag = recently_had_economic_event days = 125 value = 1 }
-						country_event = { id = econvent.10 days = 5 random_days = 5 }
-					}
-				}
-			}
+		
 			# Bankruptcy Events
 			# if = {
 				# limit = {
@@ -560,20 +225,6 @@ on_actions = {
 				# }
 				# TODO: Need more evnets to fill in here
 			# }
-			#Burmese Insurgency Events
-			# if = {
-				# limit = {
-					# has_idea = Ethnic_Insurgencies
-					# has_country_flag = ceasefire
-					# OR = {
-						# check_variable = { global.month = 3 } #March
-						# check_variable = { global.month = 6 } #June
-						# check_variable = { global.month = 9 } #Sept
-						# check_variable = { global.month = 12 } #Dec
-					# }
-				# }
-				# country_event = { id = Insurgency.8 days = 15 random_days = 40 }
-			# }
 
 			# Child Soldiers Events
 			# if = {
@@ -595,6 +246,195 @@ on_actions = {
 					# country_event = { id = child_soldiers.2 random_days = 40 }
 				# }
 			# }
+		# }
+	}
+	
+	##Custom Event Pulses -- Place these below here for ANY custom event chains
+	on_weekly_ENG = {
+		effect = {
+			if = {
+				limit = {
+					NOT = {
+						has_cosmetic_tag = ENG_england
+						has_country_flag = refused_to_be_england
+					}
+				}
+				country_event = { id = britain_md.1 }
+			}
+		}
+	}
+	on_yearly_ENG = {
+		effect = {
+			if = { limit = { check_variable = { global.year = 2021 } } #Queen Elizabeth II Dies
+				if = { limit = { NOT = { has_country_flag = ENG_elizabeth_dead_dead } }
+					random_list = {
+						90 = { }
+						10 = { country_event = { id = britain_md.25 days = 1 random_days = 200 } }
+					}
+				}
+			}
+			else_if = { limit = { check_variable = { global.year = 2022 } }
+				if = { limit = { NOT = { has_country_flag = ENG_elizabeth_dead_dead } }
+					random_list = {
+						80 = { }
+						20 = { country_event = { id = britain_md.25 days = 1 random_days = 200 } }
+					}
+				}
+			}
+			else_if = { limit = { check_variable = {  global.year = 2023 } }
+				if = { limit = { NOT = { has_country_flag = ENG_elizabeth_dead_dead } }
+					random_list = {
+						75 = { }
+						25 = { country_event = { id = britain_md.25 days = 1 random_days = 200 } }
+					}
+				}
+			}
+			else_if = { limit = { check_variable = {  global.year = 2024 } }
+				if = { limit = { NOT = { has_country_flag = ENG_elizabeth_dead_dead } }
+					random_list = {
+						70 = { }
+						30 = { country_event = { id = britain_md.25 days = 1 random_days = 200 } }
+					}
+				}
+			}
+			else_if = { limit = { check_variable = {  global.year = 2025 } }
+				if = { limit = { NOT = { has_country_flag = ENG_elizabeth_dead_dead } }
+					random_list = {
+						60 = { }
+						40 = { country_event = { id = britain_md.25 days = 1 random_days = 200 } }
+					}
+				}
+			}
+			else_if = { limit = { check_variable = {  global.year = 2026 } }
+				if = { limit = { NOT = { has_country_flag = ENG_elizabeth_dead_dead } }
+					random_list = {
+						55 = { }
+						45 = { country_event = { id = britain_md.25 days = 1 random_days = 200 } }
+					}
+				}
+			}
+			else_if = { limit = { check_variable = {  global.year = 2027 } }
+				if = { limit = { NOT = { has_country_flag = ENG_elizabeth_dead_dead } }
+					random_list = {
+						50 = { }
+						50 = { country_event = { id = britain_md.25 days = 1 random_days = 200 } }
+					}
+				}
+			}
+			else_if = { limit = { check_variable = { global.year = 2035 } }
+				if = { limit = { NOT = { has_country_flag = ENG_elizabeth_dead_dead } }
+					random_list = {
+						80 = { }
+						20 = { country_event = { id = britain_md.26 days = 1 random_days = 200 } }
+					}
+				}
+			}
+		}
+	}
+
+	on_monthly_ETH = {
+		effect = {
+			if = { limit = { NOT = { has_country_flag = ETH_2000s_famine has_start_date < 2016.1.1 } }
+				random_list = {
+					70 = { }
+					30 = {
+						modifier = {
+							has_war_with = ERI
+							factor = 0.5
+						}
+						modifier = {
+							NOT = { has_war_with = ERI }
+							factor = 1.30
+						}
+						country_event = { id = ethiopia.20 }
+					}
+				}
+			}
+		}
+	}
+
+	on_yearly_JAP = {
+		effect = {
+			if = { limit = { check_variable = { global.year = 2019 } }
+				if = { limit = { has_idea = idea_JAP_emperor_akihito NOT = { has_idea = idea_JAP_emperor_naruhito } }
+					random_list = {
+						80 = { }
+						20 = { country_event = { id = Japan.3 days = 1 random_days = 200 }}
+					}
+				}
+			}
+			if = { limit = { check_variable = { global.year = 2020 } }
+				if = { limit = { has_idea = idea_JAP_emperor_akihito NOT = { has_idea = idea_JAP_emperor_naruhito } }
+					random_list = {
+						70 = { }
+						30 = { country_event = { id = Japan.3 days = 1 random_days = 200 }}
+					}
+				}
+			}
+			if = { limit = { check_variable = { global.year = 2021 } }
+				if = { limit = { has_idea = idea_JAP_emperor_akihito NOT = { has_idea = idea_JAP_emperor_naruhito } }
+					random_list = {
+						60 = { }
+						40 = { country_event = { id = Japan.3 days = 1 random_days = 200 }}
+					}
+				}
+			}
+			if = { limit = { check_variable = { global.year = 2022 } }
+				if = { limit = { has_idea = idea_JAP_emperor_akihito NOT = { has_idea = idea_JAP_emperor_naruhito } }
+					random_list = {
+						40 = { }
+						60 = { country_event = { id = Japan.3 days = 1 random_days = 200 }}
+					}
+				}
+			}
+			if = { limit = { check_variable = { global.year = 2023 } }
+				if = { limit = { has_idea = idea_JAP_emperor_akihito NOT = { has_idea = idea_JAP_emperor_naruhito } }
+					random_list = {
+						30 = { }
+						70 = { country_event = { id = Japan.3 days = 1 random_days = 200 }}
+					}
+				}
+			}
+		}
+	}
+	on_yearly_USA = {
+		effect = {
+			if = { limit = { check_variable = { global.year = 2001 } } #2001
+				country_event = { id = usa.10 days = 1 random_days = 300 } #End of Peanuts
+				country_event = { id = usa.37 days = 74 random_days = 15 } #Mac OS X
+				country_event = { id = usa.39 days = 14 random_days = 4 } #Launch of Wikipedia
+				country_event = { id = usa.60 days = 30 random_days = 180 } #Death of Gus Hall
+			}
+		}
+	}
+	on_yearly_KUW = {
+		effect = {
+			if = { limit = { has_start_date < 2001.1.1 }
+				if = { limit = { check_variable = { global.yyear = 2006 } }
+					news_event = { id = kuwait_royal.1 days = 16 } #Death of Sheikh Jaber
+				}
+			}
+		}
+	}
+	on_yearly_SAU = {
+		effect = {
+			if = { limit = { has_start_date < 2001.1.1 }
+				if = { limit = { check_variable = { global.yyear = 5 } }
+					news_event = { id = saudi_royal.1 days = 214 } #Death of King Fahd
+				}
+			}
+		}
+	}
+	on_yearly_BRA = {
+		effect = {
+			if = { limit = { has_start_date < 2001.1.1 }
+
+			}
+			else_if = { limit = { has_start_date > 2001.1.1 }
+				if = { limit = { check_variable = { global.yyear = 1 } }
+					country_event = { id = brazil.28 days = 120 random_days = 20 }
+				}
+			}
 		}
 	}
 }
