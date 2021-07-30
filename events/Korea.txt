@@ -1212,19 +1212,12 @@ country_event = {
 	option = {
 		name = korea.23.a #We will agree to a treaty
 		log = "[GetDateText]: [This.GetName]: korea.23.a executed"
-		remove_opinion_modifier = {
-			target = KOR
-			modifier = NKO_KOR_Koren_War_Ceasefire
-		}
-		add_war_support = -0.05
 		every_country = {
 			news_event = {
 				days = 1
 				id = korea.24
 			}
 		}
-		decrease_the_military_opinion = yes
-		decrease_communist_cadres_opinion = yes
 		ai_chance = {
 			factor = 0
 			modifier = {
@@ -1386,6 +1379,18 @@ news_event = {
 			support_for_reunification_2 = yes
 			liberal_policy_effect = yes
 		}
+		if = {
+			limit = {
+				original_tag = NKO
+			}
+			remove_opinion_modifier = {
+				target = KOR
+				modifier = NKO_KOR_Koren_War_Ceasefire
+			}
+			add_war_support = -0.05
+			decrease_the_military_opinion = yes
+			decrease_communist_cadres_opinion = yes
+		}
 		log = "[GetDateText]: [This.GetName]: korea.24.a executed"
 	}
 }
@@ -1403,7 +1408,10 @@ news_event = {
 	option = {
 		name = korea.25.a #Peace remains elusive...
 		if = {
-			limit = { original_tag = KOR }
+			limit = {
+				original_tag = KOR
+				has_completed_focus = KOR_offer_talks
+			}
 			unlock_decision_tooltip = KOR_restart_peace_talks
 		}
 		log = "[GetDateText]: [This.GetName]: korea.25.a executed"
@@ -1704,6 +1712,113 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: korea.32.a executed"
 	}
 }
+
+#Our Response to the North's Overture
+country_event = {
+	id = korea.33
+	title = korea.33.t
+	desc = korea.33.d
+
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.23.a #We will agree to a treaty
+		log = "[GetDateText]: [This.GetName]: korea.33.a executed"
+		every_country = {
+			news_event = {
+				days = 1
+				id = korea.24
+			}
+		}
+		ai_chance = {
+			factor = 0
+			modifier = {
+				factor = 0
+				has_war_with = NKO
+			}
+			modifier = {
+				factor = 0
+				KOR = {
+					check_variable = { SFR < 50 }
+				}
+			}
+			modifier = {
+				add = 1
+				KOR = {
+					check_variable = { SFR > 50 }
+				}
+			}
+			modifier = {
+				add = 1
+				KOR = {
+					check_variable = { SFR > 60 }
+				}
+			}
+			modifier = {
+				add = 1
+				KOR = {
+					check_variable = { SFR > 70 }
+				}
+			}
+			modifier = {
+				add = 1
+				KOR = {
+					check_variable = { SFR > 80 }
+				}
+			}
+			modifier = {
+				add = 1
+				KOR = {
+					check_variable = { SFR > 90 }
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = NKO
+					value > -51
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = NKO
+					value > -26
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = NKO
+					value > -1
+				}
+			}
+			modifier = {
+				factor = 10
+				has_government = communism
+				NKO = { has_government = communism }
+			}
+		}
+	}
+
+	option = {
+		name = korea.23.b #There will never be peace between us!
+		log = "[GetDateText]: [This.GetName]: korea.23.b executed"
+		every_country = {
+			news_event = {
+				days = 1
+				id = korea.25
+			}
+		}
+		NKO = { set_country_flag = NKO_peace_talks_failed }
+		ai_chance = {
+			factor = 2
+		}
+	}
+}
+
 	###North Korea###
 country_event = {
 	id = korea_north.1
