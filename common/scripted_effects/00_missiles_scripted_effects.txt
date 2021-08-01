@@ -2389,6 +2389,7 @@ update_COM_system_stats = {
 			set_variable = { var_COM_mil_receiver_num = num_battalions }
 			add_to_variable = { var_COM_mil_receiver_num = num_ships }
 			add_to_variable = { var_COM_mil_receiver_num = num_deployed_planes }
+			add_treaty_COM_mil_receiver_num = yes
 			set_variable = { var_sat_network_traffic_mil = var_COM_mil_receiver_num }
 			divide_variable = { var_sat_network_traffic_mil = var_COM_mil_receiver_cap }
 			set_variable = { var_COM_mil_sat_system_bonus = var_COM_mil_coverage }
@@ -2425,6 +2426,7 @@ update_COM_system_stats = {
 			}
 			set_variable = { var_COM_civ_receiver_num = num_controlled_states }
 			multiply_variable = { var_COM_civ_receiver_num = 100 }
+			add_treaty_COM_civ_receiver_num = yes
 			set_variable = { var_sat_network_traffic_civ = var_COM_civ_receiver_num }
 			divide_variable = { var_sat_network_traffic_civ = var_COM_civ_receiver_cap }
 			set_variable = { var_COM_civ_sat_system_bonus = var_COM_civ_coverage }
@@ -2451,6 +2453,28 @@ update_COM_system_stats = {
 		COM_civ_system_ID = "[?var_COM_civ_system_idx]"
 	}
 }
+
+### receiver from treaties (access granted)
+add_treaty_COM_mil_receiver_num = {
+	set_variable = { var_treaty_COM_mil_receiver_num = 0 }
+	for_each_scope_loop = {
+		array = GNSS_mil_treaty_array
+		add_to_variable = { var_treaty_COM_mil_receiver_num = num_battalions }
+		add_to_variable = { var_treaty_COM_mil_receiver_num = num_ships }
+		add_to_variable = { var_treaty_COM_mil_receiver_num = num_deployed_planes }
+	}
+	add_to_variable = { var_COM_mil_receiver_num = var_treaty_COM_mil_receiver_num }
+}
+add_treaty_COM_civ_receiver_num = {
+	set_variable = { var_treaty_COM_civ_receiver_num = 0 }
+	for_each_scope_loop = {
+		array = GNSS_civ_treaty_array
+		set_variable = { var_treaty_COM_civ_receiver_num = num_controlled_states }
+		multiply_variable = { var_treaty_COM_civ_receiver_num = 100 }
+	}
+	add_to_variable = { var_COM_civ_receiver_num = var_treaty_COM_civ_receiver_num }
+}
+###
 
 update_SPY_system_stats = {
 	meta_effect = {
@@ -3017,8 +3041,10 @@ add_access_GNSS_mil_vars = {
 		array = GNSS_mil_access_array
 		if = {
 			limit = {
-				check_variable = {
-					NOT = { ROOT.var_GNSS_mil_system_idx > THIS.var_GNSS_mil_system_idx }
+				NOT = {
+					check_variable = {
+						ROOT.var_GNSS_mil_system_idx > THIS.var_GNSS_mil_system_idx
+					}
 				}
 			}
 			add_to_variable = { ROOT.var_GNSS_mil_army_speed_factor = THIS.var_GNSS_mil_army_speed_factor }
@@ -3103,8 +3129,10 @@ add_access_GNSS_civ_vars = {
 		array = GNSS_civ_access_array
 		if = {
 			limit = {
-				check_variable = {
-					NOT = { ROOT.var_GNSS_civ_system_idx > THIS.var_GNSS_civ_system_idx }
+				NOT = {
+					check_variable = {
+						ROOT.var_GNSS_civ_system_idx > THIS.var_GNSS_civ_system_idx
+					}
 				}
 			}
 			add_to_variable = { ROOT.var_GNSS_civ_production_speed_buildings_factor = THIS.var_GNSS_civ_production_speed_buildings_factor }
@@ -3158,8 +3186,10 @@ add_access_COM_mil_vars = {
 		array = COM_mil_access_array
 		if = {
 			limit = {
-				check_variable = {
-					NOT = { ROOT.var_COM_mil_system_idx > THIS.var_COM_mil_system_idx }
+				NOT = {
+					check_variable = {
+						ROOT.var_COM_mil_system_idx > THIS.var_COM_mil_system_idx
+					}
 				}
 			}
 			add_to_variable = { ROOT.var_COM_mil_max_command_power = THIS.var_COM_mil_max_command_power }
@@ -3242,8 +3272,10 @@ add_access_COM_civ_vars = {
 		array = COM_civ_access_array
 		if = {
 			limit = {
-				check_variable = {
-					NOT = { ROOT.var_COM_civ_system_idx > THIS.var_COM_civ_system_idx }
+				NOT = {
+					check_variable = {
+						ROOT.var_COM_civ_system_idx > THIS.var_COM_civ_system_idx
+					}
 				}
 			}
 			add_to_variable = { ROOT.var_COM_civ_political_power_factor = THIS.var_COM_civ_political_power_factor }
@@ -3316,8 +3348,10 @@ add_access_SPY_mil_vars = {
 		array = SPY_mil_access_array
 		if = {
 			limit = {
-				check_variable = {
-					NOT = { ROOT.var_SPY_mil_system_idx > THIS.var_SPY_mil_system_idx }
+				NOT = {
+					check_variable = {
+						ROOT.var_SPY_mil_system_idx > THIS.var_SPY_mil_system_idx
+					}
 				}
 			}
 			add_to_variable = { ROOT.var_SPY_mil_max_planning_factor = THIS.var_SPY_mil_max_planning_factor }
@@ -3400,8 +3434,10 @@ add_access_SPY_civ_vars = {
 		array = SPY_civ_access_array
 		if = {
 			limit = {
-				check_variable = {
-					NOT = { ROOT.var_SPY_civ_system_idx > THIS.var_SPY_civ_system_idx }
+				NOT = {
+					check_variable = {
+						ROOT.var_SPY_civ_system_idx > THIS.var_SPY_civ_system_idx
+					}
 				}
 			}
 			add_to_variable = { ROOT.var_SPY_civ_research_speed_factor = THIS.var_SPY_civ_research_speed_factor }
