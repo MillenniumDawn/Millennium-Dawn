@@ -135,21 +135,15 @@ scripted_gui = {
 		# ai_enabled enables the AI for this GUI
 		ai_enabled = { always = yes }
 		# ai_test_interval is the time in hours that is used to test the ai_check
-		# 07/17/21 -- Changed from 4 days to 5 days for performance
+		# 07/17/21 -- Changed from 4 days to 5 days for performance and that the economic thing is weekly
 		ai_test_interval = 120
 		ai_check = {
+			# Generic Conditions for debt
 			OR = {
-				# Generic Conditions
 				has_available_treasury = yes
 				ai_need_debt = yes
-
-				# Debt Conditions
-				# Rough Monetary Sections
-				needs_to_take_1_debt = yes
-				needs_to_take_10_debt = yes
-				needs_to_take_100_debt = yes
 			}
-			# Avoid Amassing Massive Debt During Depression/Recessions
+			# Avoid Amassing Massive Debt During Depression/Recession/Bankruptcy/General Told Debt needs to stop
 			NOT = {
 				has_idea = depression
 				has_idea = recession
@@ -245,7 +239,6 @@ scripted_gui = {
 						factor = 1.75
 						num_of_factories > 25
 					}
-
 					# Regional Powers and Major Powers Should Take on 10 if needed
 					modifier = {
 						factor = 1.10
@@ -276,7 +269,7 @@ scripted_gui = {
 						factor = 1.20
 						has_war = yes
 					}
-					# Heavily increase likelihood if massive in deb t
+					# Heavily increase likelihood if massive in debt
 					# Check MD_AI_Economic_Triggers.txt for full breakdown of Treasury Values
 					modifier = {
 						factor = 25
@@ -301,16 +294,12 @@ scripted_gui = {
 					}
 				}
 			}
-
+			# ------- #
 			# Repaying Debt AI
+			# This section primarily deals with the AI decreasing debt
 			debt_bg_right_click = { # Repay Debt -- 1 Billion
 				ai_will_do = {
 					factor = 1
-					# Don't buy debt if it is not appropriate
-					modifier = {
-						factor = 0
-						check_variable = { treasury_rate < 0 }
-					}
 
 					modifier = {
 						factor = 2.0
@@ -333,11 +322,11 @@ scripted_gui = {
 						ai_has_minor_economic_problems = yes
 					}
 					modifier = {
-						factor = 0.10
+						factor = 2.25
 						ai_has_acceptable_surplus = yes
 					}
 					modifier = {
-						factor = 0.50
+						factor = 1.25
 						ai_has_acceptable_deficit = yes
 					}
 					modifier = {
@@ -349,7 +338,7 @@ scripted_gui = {
 						ai_has_low_treasury = yes
 					}
 					modifier = {
-						factor = 10
+						factor = 150
 						ai_has_high_treasury = yes
 					}
 					modifier = { #Try to focus on paying down debts if you have looming crisis
@@ -360,13 +349,13 @@ scripted_gui = {
 						factor = 0.80
 						has_war = yes
 					}
-					modifier = { #Puppets should be less caring about buying all debt
-						factor = 0.75
-						is_subject = yes
-					}
+					# Killswitches
 					modifier = {
 						factor = 0
-						check_variable = { treasury < 1 }
+						OR = {
+							check_variable = { treasury < 0 }
+							check_variable = { treasury_rate < 0 }
+						}
 					}
 				}
 			}
@@ -938,42 +927,66 @@ scripted_gui = {
 			increase_population_tax_click = {
 				ai_will_do = {
 					factor = 1
-				}
-			}
-			increase_population_tax_shift_click = {
-				ai_will_do = {
-					factor = 1
+					modifier = {
+						factor = 1.25
+						ai_has_deficit = yes
+					}
+					modifier = {
+						factor = 2.0
+						ai_has_high_deficit = yes
+					}
+					modifier = {
+						factor = 1.50
+						ai_has_high_population_taxes = yes
+					}
+					modifier = {
+						factor = 1.25
+						has_political_power > 49
+					}
+					# Killswitch
+					modifier = {
+						factor = 0
+						OR = {
+							has_country_flag = no_personal_tax_rate_change
+						}
+					}
 				}
 			}
 			decrease_population_tax_click = {
 				ai_will_do = {
 					factor = 1
-				}
-			}
-			decrease_population_tax_shift_click = {
-				ai_will_do = {
-					factor = 1
+					# Killswitch
+					modifier = {
+						factor = 0
+						OR = {
+							has_country_flag = no_personal_tax_rate_change
+						}
+					}
 				}
 			}
 			# Corporate Tax Rate Clicks
 			increase_corporate_tax_click = {
 				ai_will_do = {
 					factor = 1
-				}
-			}
-			increase_corporate_tax_shift_click = {
-				ai_will_do = {
-					factor = 1
+					# Killswitch
+					modifier = {
+						factor = 0
+						OR = {
+							has_country_flag = no_corporate_tax_rate_change
+						}
+					}
 				}
 			}
 			decrease_corporate_tax_click = {
 				ai_will_do = {
 					factor = 1
-				}
-			}
-			decrease_corporate_tax_shift_click = {
-				ai_will_do = {
-					factor = 1
+					# Killswitch
+					modifier = {
+						factor = 0
+						OR = {
+							has_country_flag = no_corporate_tax_rate_change
+						}
+					}
 				}
 			}
 		}
