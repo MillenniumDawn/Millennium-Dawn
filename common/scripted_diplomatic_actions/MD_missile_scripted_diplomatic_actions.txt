@@ -507,4 +507,384 @@ scripted_diplomatic_actions = {
 		}
 	}
 
+	offer_mil_gnss_access = {
+		icon = 16
+
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = GNSS_mil_treaty_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = OFFER_MIL_GNSS_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						ROOT.var_GNSS_mil_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						ROOT.var_GNSS_mil_system_idx = PREV.var_GNSS_mil_system_idx
+					}
+					check_variable = {
+						ROOT.var_GNSS_mil_system_idx > PREV.var_GNSS_mil_system_idx
+					}
+				}
+			}
+		}
+		can_be_accepted = {
+
+		}
+		can_be_sent = {
+
+		}
+
+		cost = 0
+		#command_power = 15
+
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+
+		#### ACTION LOCALISATION ###
+
+		send_description = OFFER_MIL_GNSS_ACCESS_LOC
+		receive_description = OFFER_MIL_GNSS_ACCESS_RECIEVER_LOC
+		accept_title = OFFER_MIL_GNSS_ACCESS_ACCEPTED_TITLE
+		accept_description = OFFER_MIL_GNSS_ACCESS_ACCEPTED_DESC
+		reject_title = OFFER_MIL_GNSS_ACCESS_REJECTED_TITLE
+		reject_description = OFFER_MIL_GNSS_ACCESS_REJECTED_DESC
+
+		#### EFFECTS ###
+
+		on_sent_effect = {
+
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_mil_gnss_access"
+			ROOT = { add_to_array = { array = ROOT.GNSS_mil_treaty_array value = PREV.id } }
+			ROOT = { add_to_array = { array = PREV.GNSS_mil_access_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = PREV.GNSS_mil_access_system_idx_array value = ROOT.var_GNSS_mil_system_idx } }
+			add_offer_access_GNSS_mil_vars = yes
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_mil_gnss_access"
+		}
+
+		#### AI SECTION ###
+
+		ai_desire = {
+			base = 0
+			modifier = {
+				add = 10
+				NOT = {
+					check_variable = {
+						THIS.var_GNSS_mil_system_idx > ROOT.var_GNSS_mil_system_idx 
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				set_temp_variable = { temp1 = THIS.var_GNSS_mil_system_idx }
+				add_to_temp_variable = { temp1 = 1 }
+				check_variable = {
+					ROOT.var_GNSS_mil_system_idx > temp1
+				}
+			}
+			modifier = {
+				add = 10
+				ROOT = { has_opinion = { target = THIS value > 49 } }
+				ROOT = { has_opinion = { target = THIS value < 100 } }
+			}
+			modifier = {
+				add = 20
+				ROOT = { has_opinion = { target = THIS value > 99 } }
+				ROOT = { has_opinion = { target = THIS value < 150 } }
+			}
+			modifier = {
+				add = 30
+				ROOT = { has_opinion = { target = THIS value > 149 } }
+			}
+			modifier = {
+				add = -50
+				ROOT = { has_opinion = { target = THIS value < -49 } }
+				ROOT = { has_opinion = { target = THIS value > -100 } }
+			}
+			modifier = {
+				add = -60
+				ROOT = { has_opinion = { target = THIS value < -99 } }
+				ROOT = { has_opinion = { target = THIS value > -150 } }
+			}
+			modifier = {
+				add = -70
+				ROOT = { has_opinion = { target = THIS value < -150 } }
+			}
+			modifier = {
+				ROOT = { has_military_access_to = PREV }
+				add = 10
+			}
+			modifier = {
+				ROOT = { gives_military_access_to = PREV }
+				add = 10
+			}
+			modifier = {
+				THIS = { has_volunteers_amount_from = { tag = ROOT count > 0 } }
+				add = 20
+			}
+			modifier = {
+				ROOT = { has_volunteers_amount_from = { tag = THIS count > 0 } }
+				add = 20
+			}
+			modifier = {
+				ROOT = { has_idea = NATO_member }
+				THIS = { has_idea = NATO_member }
+				add = 50
+			}
+			modifier = {
+				ROOT = { has_idea = EU_member }
+				THIS = { has_idea = EU_member }
+				add = 30
+			}
+			modifier = {
+				ROOT = { has_idea = European_Security_Council }
+				THIS = { has_idea = European_Security_Council }
+				add = 20
+			}
+			modifier = {
+				ROOT = { has_idea = withdrawal_treaty }
+				THIS = { has_idea = EU_member }
+				add = 10
+			}
+			modifier = {
+				ROOT = { has_idea = EU_member }
+				THIS = { has_idea = withdrawal_treaty }
+				add = 10
+			}
+			modifier = {
+				ROOT = { has_idea = no_deal_exit }
+				THIS = { has_idea = EU_member }
+				add = -20
+			}
+			modifier = {
+				ROOT = { is_in_faction_with = PREV }
+				add = 50
+			}
+			modifier = {
+				THIS = { has_war = yes }
+				add = -30
+			}
+			modifier = {
+				THIS = { has_war_together_with = ROOT }
+				add = 100
+			}
+			modifier = {
+				THIS = { has_war_with = ROOT }
+				add = -100
+			}
+			modifier = {
+				THIS = { is_justifying_wargoal_against = ROOT }
+				add = -100
+			}
+			modifier = {
+				THIS = { has_wargoal_against = ROOT }
+				add = -100
+			}
+			### TAG specific
+			#SOV
+			modifier = {
+				ROOT = { original_tag = SOV }
+				THIS = { has_idea = EU_member }
+				add = -30
+			}
+			modifier = {
+				ROOT = { original_tag = SOV }
+				THIS = { has_idea = NATO_member }
+				add = -50
+			}
+			modifier = {
+				ROOT = { original_tag = SOV }
+				THIS = { has_idea = Major_Non_NATO_Ally }
+				add = -50
+			}
+			#CHI
+			modifier = {
+				ROOT = { original_tag = CHI }
+				THIS = { has_idea = EU_member }
+				add = -30
+			}
+			modifier = {
+				ROOT = { original_tag = CHI }
+				THIS = { has_idea = NATO_member }
+				add = -50
+			}
+			modifier = {
+				ROOT = { original_tag = CHI }
+				THIS = { has_idea = Major_Non_NATO_Ally }
+				add = -50
+			}
+			#USA
+			modifier = {
+				ROOT = { original_tag = USA }
+				THIS = { has_idea = Major_Non_NATO_Ally }
+				add = 50
+			}
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 0
+			}
+			opinion_condition = {
+				base = 0
+				modifier = {
+					add = -10
+					THIS = { has_opinion = { target = ROOT value < 0 } }
+					THIS = { has_opinion = { target = ROOT value > -25 } }
+				}
+				modifier = {
+					add = -25
+					THIS = { has_opinion = { target = ROOT value < -24 } }
+					THIS = { has_opinion = { target = ROOT value > -50 } }
+				}
+				modifier = {
+					add = -50
+					THIS = { has_opinion = { target = ROOT value < -49 } }
+					THIS = { has_opinion = { target = ROOT value > -100 } }
+				}
+				modifier = {
+					add = -75
+					THIS = { has_opinion = { target = ROOT value < -99 } }
+					THIS = { has_opinion = { target = ROOT value > -150 } }
+				}
+				modifier = {
+					add = -100
+					THIS = { has_opinion = { target = ROOT value < -150 } }
+				}
+				modifier = {
+					add = 5
+					THIS = { has_opinion = { target = ROOT value > 0 } }
+					THIS = { has_opinion = { target = ROOT value < 25 } }
+				}
+				modifier = {
+					add = 10
+					THIS = { has_opinion = { target = ROOT value > 24 } }
+					THIS = { has_opinion = { target = ROOT value < 50 } }
+				}
+				modifier = {
+					add = 15
+					THIS = { has_opinion = { target = ROOT value > 49 } }
+					THIS = { has_opinion = { target = ROOT value < 100 } }
+				}
+				modifier = {
+					add = 25
+					THIS = { has_opinion = { target = ROOT value > 99 } }
+					THIS = { has_opinion = { target = ROOT value < 150 } }
+				}
+				modifier = {
+					add = 50
+					THIS = { has_opinion = { target = ROOT value > 149 } }
+				}
+			}
+			military_cooperation_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_military_access_to = PREV }
+					add = 25
+				}
+				modifier = {
+					ROOT = { gives_military_access_to = PREV }
+					add = 25
+				}
+				modifier = {
+					THIS = { has_volunteers_amount_from = { tag = ROOT count > 0 } }
+					add = 75
+				}
+				modifier = {
+					ROOT = { has_volunteers_amount_from = { tag = THIS count > 0 } }
+					add = 75
+				}
+				modifier = {
+					ROOT = { has_idea = Major_Non_NATO_Ally }
+					THIS = { original_tag = USA }
+					add = 100
+				}
+			}
+			NATO_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_idea = NATO_member }
+					THIS = { has_idea = NATO_member }
+					add = 100
+				}
+			}
+			EU_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_idea = EU_member }
+					THIS = { has_idea = EU_member }
+					add = 50
+				}
+				modifier = {
+					ROOT = { has_idea = European_Security_Council }
+					THIS = { has_idea = European_Security_Council }
+					add = 50
+				}
+				modifier = {
+					ROOT = { has_idea = withdrawal_treaty }
+					THIS = { has_idea = EU_member }
+					add = 25
+				}
+				modifier = {
+					ROOT = { has_idea = EU_member }
+					THIS = { has_idea = withdrawal_treaty }
+					add = 25
+				}
+				modifier = {
+					ROOT = { has_idea = no_deal_exit }
+					THIS = { has_idea = EU_member }
+					add = -25
+				}
+			}
+			faction_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_in_faction_with = PREV }
+					add = 150
+				}
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war = yes }
+					add = -50
+				}
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
 }
