@@ -7,13 +7,13 @@ add_namespace = EUcheat
 add_namespace = EUupdate
 add_namespace = EUelection
 
+# EU Cheat EVents
+# Mainly Utility
+# EUcheat.1 == Voting Cheat Section
 country_event = {
 	id = EUcheat.1
 	title = EUcheat.1.t
 	desc = EUcheat.1.d
-
-	#picture = GFX_eu
-
 	is_triggered_only = yes
 
 	option = { #a
@@ -34,24 +34,21 @@ country_event = {
 	}
 }
 
+# EUcheat.2 == Adds all Potential EU nations to the Union
 country_event = {
 	id = EUcheat.2
 	title = EUcheat.2.t
 	desc = EUcheat.2.d
-
-	#picture = GFX_eu
-
 	is_triggered_only = yes
 
 	option = { #a
 		name = EUcheat.2.a
 		log = "[GetDateText]: [Root.GetName]: event EUcheat.1.a"
-		every_country = {
-			limit = {
-				has_country_flag = EU_potential
-			}
-			add_ideas = {
-				EU_member
+		for_each_scope_loop = {
+			array = global.EU_potential
+			if = {
+				limit = { NOT = { has_idea = EU_member } }
+				add_ideas = EU_member
 			}
 		}
 	}
@@ -59,13 +56,11 @@ country_event = {
 
 ### EUupdate
 
+# Triggers the Update to the EUU_monitor nation and preps the
 country_event = {
 	id = EUupdate.1
 	title = EUupdate.1.t
 	desc = EUupdate.1.d
-
-	#picture = GFX_eu
-
 	is_triggered_only = yes
 	hidden = yes
 
@@ -73,27 +68,27 @@ country_event = {
 		name = EUupdate.1.a
 		log = "[GetDateText]: [ROOT.GetName]: event EUupdate.1.a"
 		random_country = {
+			limit = {
+				has_country_flag = EU_potential
+				is_ai = yes
+			}
+			add_ideas = EUU_monitor
+			activate_mission = EU_update_vars_mission
+			activate_mission = EU_clear_voting_mission
+			if = {
 				limit = {
-					has_country_flag = EU_potential
-					is_ai = yes
+					has_start_date < 2000.01.02
 				}
-				add_ideas = EUU_monitor
-				activate_mission = EU_update_vars_mission
-				activate_mission = EU_clear_voting_mission
-				if = {
-					limit = {
-						has_start_date < 2000.01.02
-					}
-					country_event = {
-						id = EUelection.2
-					}
+				country_event = {
+					id = EUelection.2
 				}
-				else = {
-					country_event = {
-						id = EUelection.3
-					}
+			}
+			else = {
+				country_event = {
+					id = EUelection.3
 				}
-				activate_mission = EU_election_5_years
+			}
+			activate_mission = EU_election_5_years
 		}
 	}
 }
@@ -142,96 +137,9 @@ country_event = {
 	option = {
 		name = EUevent.1.a
 		log = "[GetDateText]: [Root.GetName]: event EUevent.1.a"
-		set_variable = {
-			var = global.var_EUpopTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUpopTotal
-					value = THIS.max_manpower_k
-				}
-		}
 
-		set_variable = {
-			var = global.var_EUmemberstatesTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUmemberstatesTotal
-					value = 1
-				}
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_EUpopRatio
-					value = 0
-				}
-				add_to_variable = {
-					var = THIS.var_EUpopRatio
-					value = THIS.max_manpower_k
-				}
-				divide_variable = {
-					var = THIS.var_EUpopRatio
-					value = global.var_EUpopTotal
-				}
-			}
-		}
-
-		###Europeanism Update
-		set_variable = {
-			var = global.var_europeanism
-			value = 0
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_proeuropean
-					value = 1
-				}
-				subtract_from_variable = {
-					var = THIS.var_proeuropean
-					value = THIS.eurosceptic
-				}
-				multiply_variable = {
-					var = THIS.var_proeuropean
-					value = max_manpower_k
-				}
-			}
-		}
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				add_to_variable = {
-					var = global.var_europeanism
-					value = THIS.var_proeuropean
-				}
-			}
-		}
-
-		divide_variable = {
-			var = global.var_europeanism
-			value = global.var_EUpopTotal
-		}
-		###Europeanism Update End
+		# Updated Vars
+		EU_update_vars = yes
 	}
 }
 
@@ -251,25 +159,12 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: event EUevent.2.a"
 		###
 		TUR = {
-			add_to_variable = {
-				var = THIS.treasury
-				value = 3.0
-			}
-			ingame_calculate_size_modifier = yes
-			update_military_rate = yes
-			calculate_interest_rate = yes
-			calculate_debt_rate = yes
+			add_to_variable = { var = THIS.treasury value = 3.0 }
+			ingame_update_setup = yes
 		}
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				country_event = {
-					id = EUevent.17
-				}
-			}
-
+		for_each_scope_loop = {
+			array = global.EU_member
+			country_event = { id = EUevent.17 }
 		}
 	}
 }
@@ -1383,10 +1278,7 @@ country_event = {
 			set_temp_variable = { temp1 = THIS.var_EUpopRatio }
 			multiply_temp_variable = { temp1 = 3.0 }
 			subtract_from_temp_variable = { temp1 = THIS.treasury }
-			ingame_calculate_size_modifier = yes
-			update_military_rate = yes
-			calculate_interest_rate = yes
-			calculate_debt_rate = yes
+			ingame_update_setup = yes
 		}
 	}
 }
@@ -1478,10 +1370,8 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: event EUelection.1.a"
 		clear_EU_Parliament = yes
 		election_EU_Parliament = yes
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		for_each_scope_loop = {
+			array = global.EU_member
 			news_event = { ### Result of EU Parliament elections
 				id = EU_news.52
 			}
