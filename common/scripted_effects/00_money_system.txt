@@ -71,13 +71,20 @@ ingame_update_setup = {
 #Tax rate shit
 calculate_tax_rate = {
 	remove_tax_cost = yes
-	set_variable = { var = tax_rate value = population_tax_rate }
-	add_to_variable = { var = tax_rate value = corporate_tax_rate }
-	divide_variable = { var = tax_rate value = 2 }
-	round_variable = tax_rate
+	set_variable = { tax_rate = corporate_tax_rate }
+	multiply_variable = { tax_rate = 2 }
+	clamp_variable = { var = tax_rate min = 0 max = 100 }
 	set_tax_cost = yes
-	clamp_variable = { var = tax_rate min = 0 max = 60 }
+	
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = population_tax_stability_hit } } }
+		add_dynamic_modifier = { modifier = population_tax_stability_hit }
+	}
+	set_variable = { stability_factor_from_population_tax = population_tax_rate }
+	divide_variable = { stability_factor_from_population_tax = -100 }
+	
 }
+
 add_tax_laws = {
 	meta_effect = {
 		text = {
