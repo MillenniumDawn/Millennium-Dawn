@@ -187,6 +187,53 @@ focus_tree = {
 	}
 
 	focus = {
+		id = BOT_institute_partial_draft
+		icon = GFX_unknown
+		prerequisite = { 
+			focus = BOT_chinese_military_cooperation
+			focus = BOT_develop_anti_poaching_tactics
+			focus = BOT_indian_military_cooperation
+			focus = BOT_american_military_cooperation
+		}
+		
+		mutually_exclusive = {
+			focus = BOT_enlist_women
+		}
+
+		relative_position_id = BOT_military_reevaluation
+		x = -1
+		y = 2
+
+		cost = 10
+
+		available = {
+			
+		}
+
+		bypass = { 
+			OR = {
+				has_idea = partial_draft_army
+				has_idea = draft_army
+			}
+		}
+
+		search_filters = {  }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BOT_institute_partial_draft"
+			swap_ideas = {
+				add_idea = partial_draft_army
+				remove_idea = volunteer_army
+			}
+			BOT_boost_BDP_A = yes
+			BOT_boost_digkosi = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
 		id = BOT_enlist_women
 		icon = GFX_unknown
 		prerequisite = { 
@@ -195,9 +242,13 @@ focus_tree = {
 			focus = BOT_indian_military_cooperation
 			focus = BOT_american_military_cooperation
 		}
+		
+		mutually_exclusive = {
+			focus = BOT_institute_partial_draft
+		}
 
 		relative_position_id = BOT_military_reevaluation
-		x = 0
+		x = 1
 		y = 2
 
 		cost = 10
@@ -220,6 +271,8 @@ focus_tree = {
 				add_idea = volunteer_women
 				remove_idea = no_women_in_military
 			}
+			BOT_boost_BDP_B = yes
+			BOT_boost_BNF = yes
 		}
 
 		ai_will_do = {
@@ -230,7 +283,10 @@ focus_tree = {
 	focus = {
 		id = BOT_anti_poaching_army
 		icon = GFX_unknown
-		prerequisite = { focus = BOT_enlist_women }
+		prerequisite = { 
+			focus = BOT_enlist_women 
+			focus = BOT_institute_partial_draft 
+		}
 		mutually_exclusive = { focus = BOT_peacekeeping_army }
 		mutually_exclusive = { focus = BOT_shift_to_traditional_military }
 
@@ -262,7 +318,10 @@ focus_tree = {
 	focus = {
 		id = BOT_peacekeeping_army
 		icon = GFX_unknown
-		prerequisite = { focus = BOT_enlist_women }
+		prerequisite = { 
+			focus = BOT_enlist_women 
+			focus = BOT_institute_partial_draft 
+		}
 		mutually_exclusive = { focus = BOT_anti_poaching_army }
 		mutually_exclusive = { focus = BOT_shift_to_traditional_military }
 
@@ -294,7 +353,10 @@ focus_tree = {
 	focus = {
 		id = BOT_shift_to_traditional_military
 		icon = GFX_unknown
-		prerequisite = { focus = BOT_enlist_women }
+		prerequisite = { 
+			focus = BOT_enlist_women 
+			focus = BOT_institute_partial_draft 
+		}
 		mutually_exclusive = { focus = BOT_anti_poaching_army }
 		mutually_exclusive = { focus = BOT_peacekeeping_army }
 
@@ -1101,53 +1163,61 @@ focus_tree = {
 		search_filters = {  }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_the_kgosikgolo"
-			custom_effect_tooltip = BOT_the_kgosikgolo_tt
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 23 }
-			set_politics = {
-				ruling_party = nationalist
-				elections_allowed = no
-			}
-			hidden_effect = {
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
-				set_coalition_drift = yes
-				update_government_coalition_strength = yes	
-				update_party_name = yes
-			}
 			if = {
-				limit = {
-					OR = {
-						has_idea = BOT_house_of_chiefs
-						has_idea = BOT_house_of_chiefs_empowered
-					}
+				limit = { 
+					is_in_array = { ruling_party = 23 }
 				}
-				random_list = {
-					60 = {
-						start_civil_war_against_the_strongest_opposition = yes
-					}
-					40 = {
-					}
-				}
+				add_political_power = 200
 			}
-			if = {
-				limit = {
-					OR = {
-						has_idea = BOT_house_of_chiefs_empowered_and_militarised
-						has_idea = BOT_house_of_chiefs_militarised
+			else = {
+				custom_effect_tooltip = BOT_the_kgosikgolo_tt
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 23 }
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+				hidden_effect = {
+					meta_effect = {
+						text = {
+							set_country_flag = [META_SET_RULING_PARTY]
+						}
+						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+					}
+					set_leader = yes
+					set_coalition_drift = yes
+					update_government_coalition_strength = yes	
+					update_party_name = yes
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = BOT_house_of_chiefs
+							has_idea = BOT_house_of_chiefs_empowered
+						}
+					}
+					random_list = {
+						60 = {
+							start_civil_war_against_the_strongest_opposition = yes
+						}
+						40 = {
+						}
 					}
 				}
-				random_list = {
-					20 = {
-						start_civil_war_against_the_strongest_opposition = yes
+				if = {
+					limit = {
+						OR = {
+							has_idea = BOT_house_of_chiefs_empowered_and_militarised
+							has_idea = BOT_house_of_chiefs_militarised
+						}
 					}
-					80 = {
+					random_list = {
+						20 = {
+							start_civil_war_against_the_strongest_opposition = yes
+						}
+						80 = {
+						}
 					}
 				}
 			}
@@ -1344,8 +1414,36 @@ focus_tree = {
 		search_filters = {  }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_found_NBB"
-			custom_effect_tooltip = 6_billion_expense_tt
-			subtract_from_variable = { treasury = 6 }
+			if = {
+				limit = {
+					count_triggers = {
+						amount = 2
+						any_owned_state = {
+							free_building_slots = {
+								building = internet_station
+								size > 0
+							}
+						}
+					}
+				}
+				custom_effect_tooltip = 6_billion_expense_tt
+				subtract_from_variable = { treasury = 6 }
+			}
+			if = {
+				limit = {
+					count_triggers = {
+						amount = 1
+						any_owned_state = {
+							free_building_slots = {
+								building = internet_station
+								size > 0
+							}
+						}
+					}
+				}
+				custom_effect_tooltip = 3_billion_expense_tt
+				subtract_from_variable = { treasury = 3 }
+			}
 			every_owned_state = {
 				limit = {
 					free_building_slots = {
@@ -2327,6 +2425,8 @@ focus_tree = {
 		search_filters = {  }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_found_UBSOM"
+			custom_effect_tooltip = 5_billion_expense_tt
+			subtract_from_variable = { treasury = 5 }
 			add_research_slot = 1
 		}
 
@@ -2354,7 +2454,10 @@ focus_tree = {
 		search_filters = {  }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_found_BIUST"
+			custom_effect_tooltip = 10_billion_expense_tt
+			subtract_from_variable = { treasury = 10 }
 			add_research_slot = 1
+			decrease_HIV_prevalence = yes
 		}
 
 		ai_will_do = {
