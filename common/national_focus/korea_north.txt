@@ -4555,6 +4555,40 @@ focus_tree = {
         relative_position_id = NKO_The_Road_to_Peace
         cost = 10
 
+		available = {
+            NOT = { has_war_with = KOR }
+			country_exists = KOR
+			KOR = {
+				has_opinion = {
+					target = NKO
+					value > -1
+				}
+			}
+			OR = {
+				KOR = { KOR_has_progressive_government = yes }
+				KOR = {
+					custom_trigger_tooltip = {
+						tooltip = KOR_democratic_party_governing_tt
+						is_in_array = { ruling_party = 3  }
+					}
+				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
+			}
+			KOR = {
+				OR = {
+					custom_trigger_tooltip = {
+						tooltip = KOR_agreed_NKO_led_reunification_tt
+						has_country_flag = KOR_agreed_NKO_led_reunification
+					}
+					custom_trigger_tooltip = {
+						tooltip = NKO_agreed_neutral_reunification_tt
+						has_country_flag = KOR_agreed_neutral_reunification
+					}
+				}
+			}
+        }
+
         cancel_if_invalid = yes
         available_if_capitulated = no
 
@@ -4562,7 +4596,17 @@ focus_tree = {
         prerequisite = { focus = NKO_propose_unity_government focus = NKO_propose_north_led_unification }
 
         completion_reward = {
-          log = "[GetDateText]: [This.GetName]: focus NKO_pave_the_way_for_reunification executed"
+			annex_country = {
+				target = KOR
+				transfer_troops = yes
+			}
+			add_ideas = KOR_reunification_shocks
+			add_ideas = KOR_divided_military
+			add_ideas = KOR_mass_migration
+			add_ideas = KOR_fragmented_governance
+			add_ideas = KOR_uneven_economy
+			decrease_economic_growth = yes
+			log = "[GetDateText]: [This.GetName]: focus NKO_pave_the_way_for_reunification executed"
         }
 
         ai_will_do = {
@@ -4615,10 +4659,34 @@ focus_tree = {
         cancel_if_invalid = yes
         available_if_capitulated = no
 
-        search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_KOR_Koren_War_Ceasefire_tt1
+				has_opinion_modifier = NKO_KOR_Koren_War_Ceasefire
+			}
+        }
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = KOR }
+				has_war_with = KOR
+			}
+		}
+
+        search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_POLITICAL}
         prerequisite = { focus = NKO_The_Road_to_War }
 
         completion_reward = {
+			add_political_power = 150
+			increase_communist_cadres_opinion = yes
+			KOR = {
+				add_opinion_modifier = {
+					target = NKO
+					modifier = declaration_of_hostility
+				}
+				add_war_support = 0.02
+				support_for_reunification_2_less = yes
+			}
           log = "[GetDateText]: [This.GetName]: focus NKO_threaten_the_south executed"
         }
 
@@ -4639,10 +4707,34 @@ focus_tree = {
         cancel_if_invalid = yes
         available_if_capitulated = no
 
-        search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
+        search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_WAR_SUPPORT}
         prerequisite = { focus = NKO_threaten_the_south }
 
+        available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_KOR_Koren_War_Ceasefire_tt1
+				has_opinion_modifier = NKO_KOR_Koren_War_Ceasefire
+			}
+        }
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = KOR }
+				has_war_with = KOR
+			}
+		}
+
         completion_reward = {
+			add_war_support = 0.05
+			increase_the_military_opinion = yes
+			KOR = {
+				add_opinion_modifier = {
+					target = NKO
+					modifier = recent_actions_negative
+				}
+				add_war_support = 0.02
+				support_for_reunification_2_less = yes
+			}
           log = "[GetDateText]: [This.GetName]: focus NKO_shut_down_communications executed"
         }
 
@@ -4666,8 +4758,13 @@ focus_tree = {
         search_filters = {FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_KOREAN_NUCLEAR_ISSUE}
         prerequisite = { focus = NKO_The_Road_to_War }
 
+		available = {
+			has_completed_focus = NKO_Our_Pride_and_Joy
+		}
+
         completion_reward = {
-          log = "[GetDateText]: [This.GetName]: focus NKO_accelerate_testing executed"
+			custom_effect_tooltip = NKO_WIP_SORRY_tt
+			log = "[GetDateText]: [This.GetName]: focus NKO_accelerate_testing executed"
         }
 
         ai_will_do = {
@@ -4691,7 +4788,22 @@ focus_tree = {
         prerequisite = { focus = NKO_accelerate_testing }
 
         completion_reward = {
-          log = "[GetDateText]: [This.GetName]: focus NKO_end_six-party_negotiations executed"
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = KOR
+						tag = JAP
+						tag = USA
+						tag = CHI
+						tag = SOV
+					}
+				}
+				add_opinion_modifier = {
+					target = NKO
+					modifier = ended_six_party_talks
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus NKO_end_six-party_negotiations executed"
         }
 
         ai_will_do = {
@@ -4742,8 +4854,10 @@ focus_tree = {
 		mutually_exclusive = { focus = NKO_offer_negotiations }
 
         completion_reward = {
-            add_war_support = 0.02
-            add_stability = -0.02
+			create_wargoal = {
+				type = annex_everything
+				target = KOR
+			}
           log = "[GetDateText]: [This.GetName]: NKO_all_out_war executed"
         }
 
@@ -4768,7 +4882,11 @@ focus_tree = {
         prerequisite = { focus = NKO_all_out_war }
 
         completion_reward = {
-          log = "[GetDateText]: [This.GetName]: NKO_revenge_on_japan executed"
+        	create_wargoal = {
+				type = puppet_wargoal_focus
+				target = JAP
+			}
+			log = "[GetDateText]: [This.GetName]: NKO_revenge_on_japan executed"
         }
 
         ai_will_do = {
@@ -4792,7 +4910,11 @@ focus_tree = {
         prerequisite = { focus = NKO_revenge_on_japan }
 
         completion_reward = {
-          log = "[GetDateText]: [This.GetName]: NKO_strike_washington executed"
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = USA
+			}
+			log = "[GetDateText]: [This.GetName]: NKO_strike_washington executed"
         }
 
         ai_will_do = {
