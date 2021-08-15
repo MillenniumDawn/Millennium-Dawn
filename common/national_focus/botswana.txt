@@ -559,17 +559,28 @@ focus_tree = {
 		cost = 10
 
 		available = {
-			has_idea = BOT_zimbabwean_refugees
+			OR = {
+				has_idea = BOT_zimbabwean_refugees
+				has_idea = BOT_zimbabwean_refugees_encouraged
+			}
 		}
 
 		bypass = { 
 			NOT = { has_idea = BOT_zimbabwean_refugees }
+			NOT = { has_idea = BOT_zimbabwean_refugees_encouraged }
 		}
 
 		search_filters = {  }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_zimbabwe_border_fence"
-			remove_ideas = BOT_zimbabwean_refugees
+			if = {
+				limit = { has_idea = BOT_zimbabwean_refugees_encouraged }
+				remove_ideas = BOT_zimbabwean_refugees_encouraged
+			}
+			if = {
+				limit = { has_idea = BOT_zimbabwean_refugees }
+				remove_ideas = BOT_zimbabwean_refugees
+			}
 			ZIM = {
 				add_opinion_modifier = {
 					target = ROOT
@@ -628,7 +639,10 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			has_idea = BOT_zimbabwean_refugees
+			OR = {
+				has_idea = BOT_zimbabwean_refugees
+				has_idea = BOT_zimbabwean_refugees_encouraged
+			}
 			custom_trigger_tooltip = {
 				tooltip = BOT_deploy_peacekeepers_tt
 				OR = {
@@ -697,7 +711,10 @@ focus_tree = {
 		cost = 3
 
 		available = {
-			has_idea = BOT_zimbabwean_refugees
+			OR = {
+				has_idea = BOT_zimbabwean_refugees
+				has_idea = BOT_zimbabwean_refugees_encouraged
+			}
 		}
 
 		bypass = { 
@@ -1416,35 +1433,40 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_found_NBB"
 			if = {
 				limit = {
-					count_triggers = {
-						amount = 2
-						any_owned_state = {
-							free_building_slots = {
-								building = internet_station
-								size > 0
-							}
+					287 = {
+						free_building_slots = {
+							building = internet_station
+							size > 0
+						}
+					}
+					288 = {
+						free_building_slots = {
+							building = internet_station
+							size > 0
 						}
 					}
 				}
 				custom_effect_tooltip = 6_billion_expense_tt
 				subtract_from_variable = { treasury = 6 }
 			}
-			if = {
-				limit = {
-					count_triggers = {
-						amount = 1
-						any_owned_state = {
-							free_building_slots = {
-								building = internet_station
-								size > 0
-							}
-						}
-					}
-				}
+			else = {
 				custom_effect_tooltip = 3_billion_expense_tt
 				subtract_from_variable = { treasury = 3 }
 			}
-			every_owned_state = {
+			287 = {
+				limit = {
+					free_building_slots = {
+						building = internet_station
+						size > 0
+					}
+				}
+				add_building_construction = {
+					type = internet_station
+					level = 1
+					instant_build = yes
+				}
+			}
+			288 = {
 				limit = {
 					free_building_slots = {
 						building = internet_station
@@ -1652,13 +1674,41 @@ focus_tree = {
 		cost = 10
 
 		available = {
+			OR = {
+				287 = {
+					infrastructure < 10
+				}
+				288 = {
+					infrastructure < 10
+				}
+			}				
 		}
 
 		search_filters = {  }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_grid_expansion"
-			custom_effect_tooltip = 7_billion_expense_tt
-			subtract_from_variable = { treasury = 7 }
+			if = {
+				limit = {
+					287 = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+						}
+					}
+					288 = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+						}
+					}
+				}
+				custom_effect_tooltip = 7_billion_expense_tt
+				subtract_from_variable = { treasury = 7 }
+			}
+			else = {
+				custom_effect_tooltip = 3_5_billion_expense_tt
+				subtract_from_variable = { treasury = 3.5 }
+			}
 			287 = {
 				if = {
 					limit = {
@@ -2425,9 +2475,10 @@ focus_tree = {
 		search_filters = {  }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_found_UBSOM"
-			custom_effect_tooltip = 5_billion_expense_tt
-			subtract_from_variable = { treasury = 5 }
+			custom_effect_tooltip = 10_billion_expense_tt
+			subtract_from_variable = { treasury = 10 }
 			add_research_slot = 1
+			decrease_HIV_prevalence = yes
 		}
 
 		ai_will_do = {
@@ -2454,10 +2505,9 @@ focus_tree = {
 		search_filters = {  }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_found_BIUST"
-			custom_effect_tooltip = 10_billion_expense_tt
-			subtract_from_variable = { treasury = 10 }
+			custom_effect_tooltip = 5_billion_expense_tt
+			subtract_from_variable = { treasury = 5 }
 			add_research_slot = 1
-			decrease_HIV_prevalence = yes
 		}
 
 		ai_will_do = {
