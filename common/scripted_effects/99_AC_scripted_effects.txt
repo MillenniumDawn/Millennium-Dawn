@@ -275,49 +275,53 @@ get_available_project = {
 }
 
 add_finished_buildings = {
+	set_temp_variable = { var_cost = ROOT.project_monetary_cost^ROOT.project }
+	multiply_temp_variable = { var_cost = -1 }
+	divide_temp_variable = { var_cost = ROOT.project_build_amount^ROOT.project }
+
 	if = { limit = { ROOT = { check_variable = { project_building_type^project = 1 } } }
 		add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
-		subtract_from_variable = { ROOT.project_monetary_cost^ROOT.project = global.BUILD_COST_CIVILIAN_FACTORY }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 2 } } }
 		add_building_construction = { type = arms_factory level = 1 instant_build = yes }
-		subtract_from_variable = { ROOT.project_monetary_cost^ROOT.project = global.BUILD_COST_MILITARY_FACTORY }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 3 } } }
 		add_building_construction = { type = dockyard level = 1 instant_build = yes }
-		subtract_from_variable = { ROOT.project_monetary_cost^ROOT.project = global.BUILD_COST_DOCKYARD }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 4 } } }
 		add_building_construction = { type = infrastructure level = 1 instant_build = yes }
-		subtract_from_variable = { ROOT.project_monetary_cost^ROOT.project = global.BUILD_COST_INFRASTRUCTURE }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 5 } } }
 		add_building_construction = { type = offices level = 1 instant_build = yes }
-		subtract_from_variable = { ROOT.project_monetary_cost^ROOT.project = global.BUILD_COST_OFFICES }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 6 } } }
 		add_building_construction = { type = anti_air_building level = 1 instant_build = yes }
-		subtract_from_variable = { ROOT.project_monetary_cost^ROOT.project = global.BUILD_COST_ANTIAIR }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 7 } } }
 		add_building_construction = { type = radar_station level = 1 instant_build = yes }
-		subtract_from_variable = { ROOT.project_monetary_cost^ROOT.project = global.BUILD_COST_RADAR }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 8 } } }
 		add_building_construction = { type = air_base level = 1 instant_build = yes }
-		subtract_from_variable = { ROOT.project_monetary_cost^ROOT.project = global.BUILD_COST_AIRBASE }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 9 } } }
 		add_building_construction = { type = fuel_silo level = 1 instant_build = yes }
-		subtract_from_variable = { ROOT.project_monetary_cost^ROOT.project = global.BUILD_COST_FUEL_SILO }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 10 } } }
 		add_building_construction = { type = internet_station level = 1 instant_build = yes }
-		subtract_from_variable = { ROOT.project_monetary_cost^ROOT.project = global.BUILD_COST_INTERNET_STATION }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 11 } } }
 		add_building_construction = { type = synthetic_refinery level = 1 instant_build = yes }
-		subtract_from_variable = { ROOT.project_monetary_cost^ROOT.project = global.BUILD_COST_REFINERY }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 }
 
@@ -447,9 +451,7 @@ complete_project = {
 
 		var:project_array^project = {
 			if = {
-				limit = {
-					investment_building_slot_available = yes
-				}
+				limit = { investment_building_slot_available = yes }
 
 				add_finished_buildings = yes
 
@@ -498,11 +500,6 @@ complete_project = {
 
 end_project = {
 	if = { limit = { check_variable = { project_array^project < 0 } }
-		# Refund funds cost if not finished buildings
-		if = { limit = { check_variable = { project_monetary_cost^project > 0 } }
-			add_to_variable = { treasury = project_monetary_cost^project }
-			subtract_from_variable = { int_investments = project_monetary_cost^project }
-		}
 
 		var:project_array^project = {
 			clear_variable = project_target_state_@PREV
@@ -528,6 +525,12 @@ end_project = {
 		clear_variable = project_construction_speed_display^project
 		clear_variable = project_total_construction_duration_display^project
 		clear_variable = project_target_country^project
+
+		# Refund Remaining Cash if the project is unfinished
+		if = { limit = { check_variable = { project_monetary_cost^project > 0 } }
+			add_to_variable = { treasury = project_monetary_cost^project }
+			subtract_from_variable = { int_investments = project_monetary_cost^project }
+		}
 		clear_variable = project_monetary_cost^project
 	}
 
