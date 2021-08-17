@@ -91,7 +91,8 @@ init_investment_system = {
 	set_variable = { global.BUILD_COST_REFINERY = 4.25 }
 
 	every_country = {
-		set_variable = { project_build_amount^-1 = 0 }
+		set_variable = { project_build_amount^-1 = 1 }
+		set_variable = { project_building_type^-1 = 1 }
 		set_variable = { constructable_buildings = 1 }
 
 		resize_array = { array = project_array value = 0 size = 15 } # Index starts at 0
@@ -111,7 +112,7 @@ update_gui = {
 
 	set_variable = { project_type = -1 }
 	set_variable = { project = -1 }
-	ROOT = { init_project_2 = yes }
+	PREV = { init_project = yes }
 	set_variable = { ROOT.gui_updated = PREV.id }
 	clear_variable = project_type
 	clear_variable = project
@@ -332,11 +333,13 @@ init_project = {
 
 		get_building_construction_values = yes
 
-		# Infrastructure
-		set_temp_variable = { target_state_infra_speed = event_target:AC_state_event_target.infrastructure_level }
-		multiply_temp_variable = { target_state_infra_speed = 0.1 }
-		add_to_temp_variable = { target_state_infra_speed = 1 }
-		multiply_temp_variable = { construction_speed = target_state_infra_speed }
+		if = { limit = { NOT = { check_variable = { project_building_type^project_type = 4 } } }
+			# Infrastructure
+			set_temp_variable = { target_state_infra_speed = PREV.infrastructure_level }
+			multiply_temp_variable = { target_state_infra_speed = 0.075 }
+			add_to_temp_variable = { target_state_infra_speed = 1 }
+			multiply_temp_variable = { construction_speed = target_state_infra_speed }
+		}
 
 		# Reduce Construction speed by 25%
 		multiply_temp_variable = { construction_speed = 0.75 }
@@ -368,10 +371,12 @@ init_project_2 = {
 	get_building_construction_values = yes
 
 	# Infrastructure
-	set_temp_variable = { target_state_infra_speed = event_target:AC_state_event_target.infrastructure_level }
-	multiply_temp_variable = { target_state_infra_speed = 0.075 }
-	add_to_temp_variable = { target_state_infra_speed = 1 }
-	multiply_temp_variable = { construction_speed = target_state_infra_speed }
+	if = { limit = { NOT = { check_variable = { project_building_type^project_type = 4 } } }
+		set_temp_variable = { target_state_infra_speed = event_target:AC_state_event_target.infrastructure_level }
+		multiply_temp_variable = { target_state_infra_speed = 0.075 }
+		add_to_temp_variable = { target_state_infra_speed = 1 }
+		multiply_temp_variable = { construction_speed = target_state_infra_speed }
+	}
 
 	# Reduce Construction speed by 25%
 	multiply_temp_variable = { construction_speed = 0.75 }
