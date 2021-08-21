@@ -5035,6 +5035,75 @@ country_event = {
 
 }
 
+#Country fails to pay their defaulted debt
+country_event = {
+	id = bankruptcy.13
+	title = bankruptcy.13.t
+	desc = bankruptcy.13.d
+	picture = GFX_election_rally
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.13.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.13.a executed"
+		create_wargoal = { type = puppet_wargoal_focus target = FROM }
+		ai_chance = { 
+			factor = 70 
+			modifier = {
+				factor = 0
+				OR = {
+					#Don't attack Western if Western
+					AND = {
+						has_government = democratic
+						FROM = { has_government = democratic }
+					}
+					#Don't attack Emerging if Emerging
+					AND = {
+						has_government = communism
+						FROM = { has_government = communism }
+					}
+					#Don't get new enemies
+					has_war = yes
+					#Don't attack if they are land locked non-neighbour
+					AND = {
+						NOT = { is_neighbor_of = FROM }
+						FROM = { NOT = { any_owned_state = { is_coastal = yes } } }
+					}
+					#Ignore if they are small and not a neighbour
+					AND = {
+						check_variable = { FROM.gdp_total_display < 10 }
+						NOT = { is_neighbor_of = FROM }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.35
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0.4
+				has_government = neutrality
+			}
+		}
+	}
+	option = {
+		name = bankruptcy.13.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.13.b executed"
+		ai_chance = { 
+			factor = 30 
+			modifier = {
+				factor = 0.15
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 2.3
+				has_government = neutrality
+			}
+		}
+	}
+}
+
+
 #### IMF EVENTS ####
 #lower bureaucracy
 country_event = {
