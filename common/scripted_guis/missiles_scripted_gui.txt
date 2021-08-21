@@ -152,6 +152,7 @@ scripted_gui = {
 				clear_variable = var_open_MD_missiles_gui_ledger_3
 				clear_variable = var_open_MD_missiles_gui_ledger_5
 				clear_variable = var_open_MD_missiles_gui_ledger_6
+				set_variable = { orbit_selected_TAG = ROOT.id }
 			}
 			missiles_gui_ledger_btn_5_click = {
 				set_variable = { var_open_MD_missiles_gui_ledger_5 = 2 }
@@ -4331,6 +4332,21 @@ scripted_gui = {
 					}
 				}
 			}
+			#
+			spy_mission_button_click = {
+
+			}
+			country_view_flag_button_click = {
+				set_country_flag = open_MD_satellite_orbit_country_selection
+				every_country = {
+					ROOT = { add_to_array = { temp_countries = PREV.id } }
+				}
+				# add_to_array = { ROOT.spy_mission_array = THIS.id }
+				# add_to_array = { ROOT.spy_mission_sat_num_array = 199 }
+			}
+			country_view_flag_button_right_click = {
+				set_variable = { orbit_selected_TAG = ROOT.id }
+			}
 		}
 		triggers = {
 			### sat
@@ -4470,6 +4486,10 @@ scripted_gui = {
 				array = THIS.sat_target_array
 				entry_container = sat_target_entry
 			}
+			spy_mission_gridbox = {
+				array = THIS.spy_mission_array
+				entry_container = spy_mission_entry
+			}
 		}
 
 		properties = {
@@ -4492,7 +4512,7 @@ scripted_gui = {
 				image = "[sat_6_type_icon]"
 			}
 			country_view_flag_button = {
-				image = "[?THIS.GetFlag]"
+				image = "[?orbit_selected_TAG.GetFlag]"
 			}
 			### sat treaties
 			GNSS_mil_treaty_flags_button = {
@@ -4537,12 +4557,47 @@ scripted_gui = {
 
 	}
 
+	MD_satellite_orbit_country_selection_gui = {
+		window_name = MD_satellite_orbit_country_selection
+		context_type = player_context
+		#context_type = selected_country_context
+		parent_window_name = MD_satellite_orbit_view_gui
 
-	# 	effects = {
+		visible = {
+			ROOT = {
+				check_variable = { var_open_MD_missiles_gui_ledger_4 = 2 }
+				has_country_flag = open_MD_satellite_orbit_country_selection
+			}
+		}
+		effects = {
+			country_list_flag_button_click = {
+				set_variable = { orbit_selected_TAG = ROOT.temp_countries^i }
+			}
+			close_button_click = {
+				if = {
+					limit = {
+						has_country_flag = open_MD_satellite_orbit_country_selection
+					}
+					clr_country_flag = open_MD_satellite_orbit_country_selection
+				}
+				clear_array = ROOT.temp_countries
+			}
 
-	# 	}
+		}
 
-	
+		dynamic_lists = {
+			country_list_gridbox = {
+				array = temp_countries
+				entry_container = country_list_entry
+			}
+		}
+		properties = {
+			country_list_flag_button = {
+				image = "[?ROOT.temp_countries^i.GetFlag]"
+			}
+		}
+
+	}
 
 
 }
