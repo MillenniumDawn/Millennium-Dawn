@@ -2305,7 +2305,7 @@ focus_tree = {
 
 	focus = {
         id = NKO_Democracy_in_the_North
-        icon = democratic_communism
+        icon = democracy4
 
         x = 3
         y = 5
@@ -2332,6 +2332,13 @@ focus_tree = {
 					target = NKO
 					transfer_troops = yes
 				}
+				add_ideas = KOR_reunification_shocks
+				add_ideas = KOR_divided_military
+				add_ideas = KOR_mass_migration
+				add_ideas = KOR_fragmented_governance
+				add_ideas = KOR_uneven_economy
+				decrease_economic_growth = yes
+                set_country_flag = korea_peninsula_reunited
 			}
           log = "[GetDateText]: [This.GetName]: focus NKO_Democracy_in_the_North executed"
         }
@@ -4682,6 +4689,7 @@ focus_tree = {
 			add_ideas = KOR_fragmented_governance
 			add_ideas = KOR_uneven_economy
 			decrease_economic_growth = yes
+            set_country_flag = korea_peninsula_reunited
 			log = "[GetDateText]: [This.GetName]: focus NKO_pave_the_way_for_reunification executed"
         }
 
@@ -4957,6 +4965,14 @@ focus_tree = {
         cancel_if_invalid = yes
         available_if_capitulated = no
 
+        available = {
+            OR = {
+                has_government = communism
+                has_government = nationalist
+            }
+            country_exists = KOR
+        }
+
         search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
         prerequisite = { focus = NKO_remilitarize_the_DMZ }
         mutually_exclusive = { focus = NKO_foment_insurrection }
@@ -4965,6 +4981,9 @@ focus_tree = {
 		bypass = { has_war_with = KOR }
 
         completion_reward = {
+            USA = {
+                country_event = korea_north.1
+            }
 			KOR = {
 				add_opinion_modifier = {
 					target = NKO
@@ -5059,6 +5078,22 @@ focus_tree = {
         cancel_if_invalid = yes
         available_if_capitulated = no
 
+        available = {
+            has_government = communism
+            country_exists = KOR
+            KOR = {
+				OR = {
+					has_government = democratic
+					has_government = nationalist
+					has_government = neutrality
+				}
+				OR = {
+					has_stability < 0.5
+					communism > 0.5
+				}
+            }
+        }
+
         search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
         prerequisite = { focus = NKO_remilitarize_the_DMZ }
         mutually_exclusive = { focus = NKO_all_out_war }
@@ -5066,6 +5101,53 @@ focus_tree = {
 
 
         completion_reward = {
+            USA = {
+                country_event = korea_north.1
+            }
+			KOR = {
+				if = {
+					limit = {
+						has_stability < 0.25
+						democratic > 0.75
+					}
+					start_civil_war = {
+						ideology = communism
+						size = 0.8
+					}
+				}
+				else_if = {
+					limit = {
+						has_stability < 0.4
+						democratic > 0.6
+					}
+					start_civil_war = {
+						ideology = communism
+						size = 0.7
+					}
+				}
+				else_if = {
+					limit = {
+						has_stability < 0.5
+						democratic > 0.5
+					}
+					start_civil_war = {
+						ideology = communism
+						size = 0.6
+					}
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_stability < 0.5
+							democratic > 0.5
+						}
+					}
+					start_civil_war = {
+						ideology = communism
+						size = 0.5
+					}
+				}
+			}
           log = "[GetDateText]: [This.GetName]: NKO_foment_insurrection executed"
         }
 
@@ -5082,6 +5164,12 @@ focus_tree = {
         y = 5
         relative_position_id = NKO_The_Road_to_War
         cost = 10
+
+		available = {
+            KOR = {
+			    has_civil_war = yes
+            }
+		}
 
         cancel_if_invalid = yes
         available_if_capitulated = no
@@ -5110,10 +5198,31 @@ focus_tree = {
         cancel_if_invalid = yes
         available_if_capitulated = no
 
+		available = {
+            KOR = {
+			    has_civil_war = yes
+            }
+		}
+
         search_filters = {FOCUS_FILTER_KOREAN_PENINSULA}
         prerequisite = { focus = NKO_send_support }
 
         completion_reward = {
+			random_country = {
+				limit = {
+					has_war_with = KOR
+				}
+				NKO = {
+					annex_country = {
+						target = PREV
+						transfer_troops = yes
+					}
+					declare_war_on = {
+						target = KOR
+						type = annex_everything
+					}
+				}
+			}
           log = "[GetDateText]: [This.GetName]: NKO_assert_control executed"
         }
 
