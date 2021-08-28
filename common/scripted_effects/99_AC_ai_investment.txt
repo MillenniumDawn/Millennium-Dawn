@@ -189,19 +189,25 @@ AI_initiate_project = {
 			}
 			# Get Naval Dockyard Score if you have maritime industry
 			# - Building Type - 3
-			if = { limit = { ROOT = { has_idea = maritime_industry } }
-
+			if = { limit = { ROOT = { has_idea = maritime_industry } THIS = { is_coastal = yes } }
+				AI_get_dockyard_score = yes
 			}
 			# Infrastructure - Building Type - 4
 			AI_get_infrastructure_score = yes
 			# Offices - Building Type - 5
 
 			# SAM - Building Type - 6
+			if = { limit = { ROOT = { has_idea = defense_industry } }
 
+			}
 			# Radar - Building Type - 7
+			if = { limit = { ROOT = { has_idea = defense_industry } }
 
+			}
 			# Air Bases - Building Type - 8
+			if = { limit = { ROOT = { has_idea = defense_industry } }
 
+			}
 			# Fuel Silo - Building Type - 9
 
 			# Internet Station - Building Type - 10
@@ -253,6 +259,78 @@ AI_get_civilian_industry_score = {
 	}
 }
 
+# Building Type 2: Military Industry
+AI_get_military_industry_score = {
+	set_temp_variable = { AI_score = 0 }
+
+	set_temp_variable = { v1 = 140 }
+	set_temp_variable = { v2 = 20 } # Basis
+	if = { limit = { CONTROLLER = { has_war = yes } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { num_of_military_factories < 15 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_military_factories < 10 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_military_factories < 5 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	multiply_temp_variable = { v2 = 2 }
+	subtract_from_temp_variable = { v1 = v2 }
+
+	add_to_temp_variable = { AI_score = v1 }
+
+	if = { limit = { check_variable = { AI_score > AI_best_score } }
+		set_temp_variable = { AI_best_score = AI_score }
+		set_temp_variable = { AI_best_target = THIS.id }
+		set_temp_variable = { AI_best_type = 2 }
+	}
+}
+
+# Building Type: 3 Dockyards
+AI_get_dockyard_score = {
+	set_temp_variable = { AI_score = 0 }
+
+	set_temp_variable = { v1 = 125 }
+	set_temp_variable = { v2 = 20 } # Basis
+	if = { limit = { CONTROLLER = { has_war = yes } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { num_of_naval_factories < 15 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_naval_factories < 10 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_naval_factories < 5 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	multiply_temp_variable = { v2 = 2 }
+	subtract_from_temp_variable = { v1 = v2 }
+
+	add_to_temp_variable = { AI_score = v1 }
+
+	if = { limit = { check_variable = { AI_score > AI_best_score } }
+		set_temp_variable = { AI_best_score = AI_score }
+		set_temp_variable = { AI_best_target = THIS.id }
+		set_temp_variable = { AI_best_type = 3 }
+	}
+}
+
 AI_get_infrastructure_score = {
 	if = { limit = { infrastructure < 10 }
 		# Score Modeling
@@ -271,20 +349,4 @@ AI_get_infrastructure_score = {
 		}
 	}
 	# Ignore if you have 10 infrastructure or if it breaks and you somehow got more
-}
-
-AI_get_military_industry_score = {
-	set_temp_variable = { AI_score = 0 }
-
-	set_temp_variable = { v1 = 125 }
-	set_temp_variable = { v2 = 20 } # Basis
-	if = { limit = { CONTROLLER = { has_war = yes } }
-		add_to_temp_variable = { v2 = 15 }
-	}
-	if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
-		add_to_temp_variable = { v2 = 15 }
-	}
-	if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
-		add_to_temp_variable = { v2 = 15 }
-	}
 }
