@@ -3827,12 +3827,25 @@ scripted_gui = {
 		}
 
 		effects = {
+			OLV_model_button_click = {
+				ROOT = {
+					set_OLV_display_array = yes
+					set_country_flag = open_MD_space_selection_window
+					set_country_flag = OLV_model
+				}
+			}
 			### testing
 			ASAT_button_click = {
 				set_variable = { ROOT.var_anti_sat_accuracy = 0.9 }
 				set_variable = { ROOT.var_anti_satellite_weapon_num = 100 }
 				anti_satellite_weapon_use = yes
 				add_political_power = 100
+			}
+		}
+		properties = {
+			### OLV
+			OLV_model_icon = {
+				image = "[OLV_selected_icon_texture]"
 			}
 		}
 		dynamic_lists = {
@@ -3842,6 +3855,62 @@ scripted_gui = {
 				#change_scope = yes
 			}
 		}
+	}
+
+	MD_space_selection_window_gui = {
+		window_name = MD_space_selection_window
+		context_type = player_context
+		parent_window_name = MD_countrymissilesview_space
+
+		visible = {
+			has_country_flag = open_MD_space_selection_window
+		}
+
+		effects = {
+			OLV_type_button_click = {
+				set_variable = { var_OLV_type = OLV_display_array^i }
+				set_variable = { var_OLV_reliability = OLV_reliability_array^i }
+				set_variable = { var_OLV_payload_mass = OLV_payload_mass_array^i }
+				clear_array = OLV_display_array
+				clr_country_flag = OLV_model
+				clr_country_flag = open_MD_space_selection_window
+			}
+			close_button_click = {
+				clear_array = OLV_display_array
+				clr_country_flag = OLV_model
+				if = {
+					limit = {
+						has_country_flag = open_MD_space_selection_window
+					}
+					clr_country_flag = open_MD_space_selection_window
+				}
+			}
+		}
+		triggers = {
+			### OLV
+			OLV_type_button_visible = {
+				has_country_flag = OLV_model
+			}
+			OLV_type_icon_visible = {
+				has_country_flag = OLV_model
+			}
+			OLV_type_model_name_visible = {
+				has_country_flag = OLV_model
+			}
+		}
+		properties = {
+			OLV_type_icon = {
+				image = "[OLV_type_icon_texture]"
+			}
+		}
+		dynamic_lists = {
+			OLV_types_gridbox = {
+				array = OLV_display_array # one element per type, value = tech lvl
+				entry_container = OLV_type_entry
+				#change_scope = yes
+			}
+		}
+
 	}
 
 
@@ -4198,7 +4267,6 @@ scripted_gui = {
 	MD_satellite_orbit_view_gui = {
 		window_name = MD_satellite_orbit_view
 		context_type = player_context
-		#context_type = selected_country_context
 		parent_window_name = MD_countrymissilesview_space_gui
 
 		visible = {
@@ -4219,7 +4287,6 @@ scripted_gui = {
 					set_country_flag = globe_back_view
 				}
 			}
-			# ???? how to connect orbit_array to sat_X_array ??? control
 			sat_1_button_click = {
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_selected_sat = sat_1_array^i }
@@ -4416,6 +4483,32 @@ scripted_gui = {
 			}
 			country_view_flag_button_right_click = {
 				set_variable = { orbit_selected_TAG = ROOT.id }
+				set_sat_access_arrays_selected_TAG = yes
+			}
+			### sat access buttons
+			GNSS_mil_access_flags_button_click = {
+				set_variable = { orbit_selected_TAG = selected_TAG_GNSS_mil_access_array^i.id }
+				set_sat_access_arrays_selected_TAG = yes
+			}
+			GNSS_civ_access_flags_button_click = {
+				set_variable = { orbit_selected_TAG = selected_TAG_GNSS_civ_access_array^i.id }
+				set_sat_access_arrays_selected_TAG = yes
+			}
+			COM_mil_access_flags_button_click = {
+				set_variable = { orbit_selected_TAG = selected_TAG_COM_mil_access_array^i.id }
+				set_sat_access_arrays_selected_TAG = yes
+			}
+			COM_civ_access_flags_button_click = {
+				set_variable = { orbit_selected_TAG = selected_TAG_COM_civ_access_array^i.id }
+				set_sat_access_arrays_selected_TAG = yes
+			}
+			SPY_mil_access_flags_button_click = {
+				set_variable = { orbit_selected_TAG = selected_TAG_SPY_mil_access_array^i.id }
+				set_sat_access_arrays_selected_TAG = yes
+			}
+			SPY_civ_access_flags_button_click = {
+				set_variable = { orbit_selected_TAG = selected_TAG_SPY_civ_access_array^i.id }
+				set_sat_access_arrays_selected_TAG = yes
 			}
 		}
 		triggers = {
@@ -4516,55 +4609,55 @@ scripted_gui = {
 			}
 			### sat treaties
 			## GNSS
-			GNSS_mil_treaty_gridbox = {
-				array = ROOT.GNSS_mil_treaty_array
-				entry_container = GNSS_mil_treaty_entry
-			}
+			# GNSS_mil_treaty_gridbox = {
+			# 	array = GNSS_mil_treaty_array
+			# 	entry_container = GNSS_mil_treaty_entry
+			# }
 			GNSS_mil_access_gridbox = {
-				array = ROOT.GNSS_mil_access_array
-				entry_container = GNSS_mil_access_entry
+					array = selected_TAG_GNSS_mil_access_array
+					entry_container = selected_TAG_GNSS_mil_access_entry
 			}
-			GNSS_civ_treaty_gridbox = {
-				array = ROOT.GNSS_civ_treaty_array
-				entry_container = GNSS_civ_treaty_entry
-			}
+			# GNSS_civ_treaty_gridbox = {
+			# 	array = orbit_selected_TAG.GNSS_civ_treaty_array
+			# 	entry_container = GNSS_civ_treaty_entry
+			# }
 			GNSS_civ_access_gridbox = {
-				array = ROOT.GNSS_civ_access_array
-				entry_container = GNSS_civ_access_entry
+				array = selected_TAG_GNSS_civ_access_array
+				entry_container = selected_TAG_GNSS_civ_access_entry
 			}
 			## COM
-			COM_mil_treaty_gridbox = {
-				array = ROOT.COM_mil_treaty_array
-				entry_container = COM_mil_treaty_entry
-			}
+			# COM_mil_treaty_gridbox = {
+			# 	array = orbit_selected_TAG.COM_mil_treaty_array
+			# 	entry_container = COM_mil_treaty_entry
+			# }
 			COM_mil_access_gridbox = {
-				array = ROOT.COM_mil_access_array
-				entry_container = COM_mil_access_entry
+				array = selected_TAG_COM_mil_access_array
+				entry_container = selected_TAG_COM_mil_access_entry
 			}
-			COM_civ_treaty_gridbox = {
-				array = ROOT.COM_civ_treaty_array
-				entry_container = COM_civ_treaty_entry
-			}
+			# COM_civ_treaty_gridbox = {
+			# 	array = orbit_selected_TAG.COM_civ_treaty_array
+			# 	entry_container = COM_civ_treaty_entry
+			# }
 			COM_civ_access_gridbox = {
-				array = ROOT.COM_civ_access_array
-				entry_container = COM_civ_access_entry
+				array = selected_TAG_COM_civ_access_array
+				entry_container = selected_TAG_COM_civ_access_entry
 			}
 			## SPY
-			SPY_mil_treaty_gridbox = {
-				array = ROOT.SPY_mil_treaty_array
-				entry_container = SPY_mil_treaty_entry
-			}
+			# SPY_mil_treaty_gridbox = {
+			# 	array = orbit_selected_TAG.SPY_mil_treaty_array
+			# 	entry_container = SPY_mil_treaty_entry
+			# }
 			SPY_mil_access_gridbox = {
-				array = ROOT.SPY_mil_access_array
-				entry_container = SPY_mil_access_entry
+				array = selected_TAG_SPY_mil_access_array
+				entry_container = selected_TAG_SPY_mil_access_entry
 			}
-			SPY_civ_treaty_gridbox = {
-				array = ROOT.SPY_civ_treaty_array
-				entry_container = SPY_civ_treaty_entry
-			}
+			# SPY_civ_treaty_gridbox = {
+			# 	array = orbit_selected_TAG.SPY_civ_treaty_array
+			# 	entry_container = SPY_civ_treaty_entry
+			# }
 			SPY_civ_access_gridbox = {
-				array = ROOT.SPY_civ_access_array
-				entry_container = SPY_civ_access_entry
+				array = selected_TAG_SPY_civ_access_array
+				entry_container = selected_TAG_SPY_civ_access_entry
 			}
 			sat_target_gridbox = {
 				array = THIS.sat_target_array
@@ -4599,41 +4692,41 @@ scripted_gui = {
 				image = "[?orbit_selected_TAG.GetFlag]"
 			}
 			### sat treaties
-			GNSS_mil_treaty_flags_button = {
-				image = "[?ROOT.GNSS_mil_treaty_array^i.GetFlag]"
-			}
+			# GNSS_mil_treaty_flags_button = {
+			# 	image = "[?orbit_selected_TAG.GNSS_mil_treaty_array^i.GetFlag]"
+			# }
 			GNSS_mil_access_flags_button = {
-				image = "[?ROOT.GNSS_mil_access_array^i.GetFlag]"
+				image = "[?selected_TAG_GNSS_mil_access_array^i.GetFlag]"
 			}
-			GNSS_civ_treaty_flags_button = {
-				image = "[?ROOT.GNSS_civ_treaty_array^i.GetFlag]"
-			}
+			# GNSS_civ_treaty_flags_button = {
+			# 	image = "[?orbit_selected_TAG.GNSS_civ_treaty_array^i.GetFlag]"
+			# }
 			GNSS_civ_access_flags_button = {
-				image = "[?ROOT.GNSS_civ_access_array^i.GetFlag]"
+				image = "[?selected_TAG_GNSS_civ_access_array^i.GetFlag]"
 			}
-			COM_mil_treaty_flags_button = {
-				image = "[?ROOT.COM_mil_treaty_array^i.GetFlag]"
-			}
+			# COM_mil_treaty_flags_button = {
+			# 	image = "[?orbit_selected_TAG.COM_mil_treaty_array^i.GetFlag]"
+			# }
 			COM_mil_access_flags_button = {
-				image = "[?ROOT.COM_mil_access_array^i.GetFlag]"
+				image = "[?selected_TAG_COM_mil_access_array^i.GetFlag]"
 			}
-			COM_civ_treaty_flags_button = {
-				image = "[?ROOT.COM_civ_treaty_array^i.GetFlag]"
-			}
+			# COM_civ_treaty_flags_button = {
+			# 	image = "[?orbit_selected_TAG.COM_civ_treaty_array^i.GetFlag]"
+			# }
 			COM_civ_access_flags_button = {
-				image = "[?ROOT.COM_civ_access_array^i.GetFlag]"
+				image = "[?selected_TAG_COM_civ_access_array^i.GetFlag]"
 			}
-			SPY_mil_treaty_flags_button = {
-				image = "[?ROOT.SPY_mil_treaty_array^i.GetFlag]"
-			}
+			# SPY_mil_treaty_flags_button = {
+			# 	image = "[?orbit_selected_TAG.SPY_mil_treaty_array^i.GetFlag]"
+			# }
 			SPY_mil_access_flags_button = {
-				image = "[?ROOT.SPY_mil_access_array^i.GetFlag]"
+				image = "[?selected_TAG_SPY_mil_access_array^i.GetFlag]"
 			}
-			SPY_civ_treaty_flags_button = {
-				image = "[?ROOT.SPY_civ_treaty_array^i.GetFlag]"
-			}
+			# SPY_civ_treaty_flags_button = {
+			# 	image = "[?orbit_selected_TAG.SPY_civ_treaty_array^i.GetFlag]"
+			# }
 			SPY_civ_access_flags_button = {
-				image = "[?ROOT.SPY_civ_access_array^i.GetFlag]"
+				image = "[?selected_TAG_SPY_civ_access_array^i.GetFlag]"
 			}
 
 		}
@@ -4650,12 +4743,15 @@ scripted_gui = {
 		visible = {
 			ROOT = {
 				check_variable = { var_open_MD_missiles_gui_ledger_4 = 2 }
+				has_country_flag = open_MD_countrymissilesview
 				has_country_flag = open_MD_satellite_orbit_country_selection
 			}
 		}
 		effects = {
 			country_list_flag_button_click = {
 				set_variable = { orbit_selected_TAG = ROOT.temp_countries^i }
+				set_sat_access_arrays_selected_TAG = yes
+				clr_country_flag = open_MD_satellite_orbit_country_selection
 			}
 			close_button_click = {
 				if = {
