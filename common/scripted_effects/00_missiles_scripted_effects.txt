@@ -4167,6 +4167,71 @@ set_spp_payload_display_array = {
 	add_to_array = { spp_payload_display_array = 1002 }
 }
 
+##################
+### OLV launch ###
+##################
+
+launch_OLV = {
+	while_loop_effect = {
+		limit = {
+			check_variable = { var_OLV_flights > 0 }
+			check_variable = { var_OLV_inventory > 0 }
+		}
+		subtract_from_variable = { ROOT.var_OLV_flights = 1 }
+		subtract_from_variable = { ROOT.var_OLV_inventory = 1 }
+		for_each_loop = {
+			array = payload_types_array
+			if = {
+				limit = {
+					check_variable = { payload_types_array^i > 999 }
+				}
+				if = {
+					limit = {
+						check_variable = { spp_inventory_array^i > 0 }
+					}
+					subtract_from_variable = { spp_inventory_array^i = 1 }
+				}
+				else = {
+					set_temp_variable = { break = 1 } ### add payload back to inventory?
+				}
+			}
+			else = {
+				if = {
+					limit = {
+						set_temp_variable = { temp1 = payload_types_array^i }
+						check_variable = { missile_inventory_array^temp1 > 0 }
+					}
+					subtract_from_variable = { missile_inventory_array^temp1 = 1 }
+					add_to_array = { payload_array = temp1 }
+				}
+				else = {
+					set_temp_variable = { break = 1 } ### add payload back to inventory?
+				}
+			}
+		}
+		add_to_variable = { var_orbital_launch_total = 1 }
+		randomize_variable = {
+			var = var_OLV_trajectory
+			distribution = uniform
+			min = 0
+			max = 1
+		}
+		if = {
+			limit = {
+				OR = {
+					check_variable = { ROOT.var_OLV_reliability > ROOT.var_OLV_trajectory }
+					check_variable = { ROOT.var_OLV_reliability = ROOT.var_OLV_trajectory }
+				}
+			}
+			add_to_variable = { ROOT.var_orbital_launch_success = 1 }
+			add_satellite_from_payload = yes
+		}
+		else = {
+			add_to_variable = { ROOT.var_orbital_launch_fail = 1 }
+		}
+	}
+}
+
 
 ########################
 ### satellite launch ###
