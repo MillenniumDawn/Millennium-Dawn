@@ -4167,11 +4167,66 @@ set_spp_payload_display_array = {
 	add_to_array = { spp_payload_display_array = 1002 }
 }
 
+set_ASAT_display_array = {
+	### ABM0
+	add_to_array = { ASAT_display_array = 90 }
+	### ABM1
+	add_to_array = { ASAT_display_array = 91 }
+	### ABM2
+	add_to_array = { ASAT_display_array = 92 }
+	### ABM3
+	add_to_array = { ASAT_display_array = 93 }
+	### ABM4
+	add_to_array = { ASAT_display_array = 94 }
+	### ABM5
+	add_to_array = { ASAT_display_array = 95 }
+	### ABM6
+	add_to_array = { ASAT_display_array = 96 }
+	### ABM7
+	add_to_array = { ASAT_display_array = 97 }
+}
+
+set_KILLSAT_display_array = {
+	### KILLSAT1
+	add_to_array = { KILLSAT_display_array = 141 }
+	### KILLSAT2
+	add_to_array = { KILLSAT_display_array = 142 }
+	### KILLSAT3
+	add_to_array = { KILLSAT_display_array = 143 }
+	### KILLSAT4
+	add_to_array = { KILLSAT_display_array = 144 }
+	### KILLSAT5
+	add_to_array = { KILLSAT_display_array = 145 }
+	### KILLSAT6
+	add_to_array = { KILLSAT_display_array = 146 }
+}
+
+set_RODS_display_array = {
+	### RODS1
+	add_to_array = { RODS_display_array = 151 }
+	### RODS2
+	add_to_array = { RODS_display_array = 152 }
+	### RODS3
+	add_to_array = { RODS_display_array = 153 }
+}
+
+clear_payload_types = {
+	ROOT = {
+		clear_variable = var_launch_mass
+		clear_array = payload_types_array
+		add_to_array = { payload_types_array = 1 }
+		add_to_array = { payload_types_array = 1 }
+		add_to_array = { payload_types_array = 1 }
+		add_to_array = { payload_types_array = 1 }
+	}
+}
+
 ##################
 ### OLV launch ###
 ##################
 
 launch_OLV = {
+	clear_array = payload_array
 	while_loop_effect = {
 		limit = {
 			check_variable = { var_OLV_flights > 0 }
@@ -4179,36 +4234,6 @@ launch_OLV = {
 		}
 		subtract_from_variable = { ROOT.var_OLV_flights = 1 }
 		subtract_from_variable = { ROOT.var_OLV_inventory = 1 }
-		for_each_loop = {
-			array = payload_types_array
-			if = {
-				limit = {
-					check_variable = { payload_types_array^i > 999 }
-				}
-				if = {
-					limit = {
-						check_variable = { spp_inventory_array^i > 0 }
-					}
-					subtract_from_variable = { spp_inventory_array^i = 1 }
-				}
-				else = {
-					set_temp_variable = { break = 1 } ### add payload back to inventory?
-				}
-			}
-			else = {
-				if = {
-					limit = {
-						set_temp_variable = { temp1 = payload_types_array^i }
-						check_variable = { missile_inventory_array^temp1 > 0 }
-					}
-					subtract_from_variable = { missile_inventory_array^temp1 = 1 }
-					add_to_array = { payload_array = temp1 }
-				}
-				else = {
-					set_temp_variable = { break = 1 } ### add payload back to inventory?
-				}
-			}
-		}
 		add_to_variable = { var_orbital_launch_total = 1 }
 		randomize_variable = {
 			var = var_OLV_trajectory
@@ -4224,12 +4249,72 @@ launch_OLV = {
 				}
 			}
 			add_to_variable = { ROOT.var_orbital_launch_success = 1 }
-			add_satellite_from_payload = yes
+			for_each_loop = {
+				array = payload_types_array
+				if = {
+					limit = {
+						check_variable = { payload_types_array^i > 999 }
+					}
+					if = {
+						limit = {
+							check_variable = { spp_inventory_array^i > 0 }
+						}
+						subtract_from_variable = { spp_inventory_array^i = 1 }
+						add_to_variable = { ROOT.var_spp_payload_delivered = 1 }
+						add_to_variable = { ROOT.spp_orbit_array^i = 1 }
+					}
+				}
+				else_if = {
+					limit = {
+						NOT = { check_variable = { payload_types_array^i = 1 } }
+					}
+					if = {
+						limit = {
+							set_temp_variable = { temp1 = payload_types_array^i }
+							check_variable = { missile_inventory_array^temp1 > 0 }
+						}
+						subtract_from_variable = { missile_inventory_array^temp1 = 1 }
+						add_to_array = { payload_array = temp1 }
+						add_to_variable = { ROOT.var_sat_payload_delivered = 1 }
+					}
+				}
+			}
 		}
 		else = {
 			add_to_variable = { ROOT.var_orbital_launch_fail = 1 }
+			for_each_loop = {
+				array = payload_types_array
+				if = {
+					limit = {
+						check_variable = { payload_types_array^i > 999 }
+					}
+					if = {
+						limit = {
+							check_variable = { spp_inventory_array^i > 0 }
+						}
+						subtract_from_variable = { spp_inventory_array^i = 1 }
+						add_to_variable = { ROOT.var_spp_payload_lost = 1 }
+					}
+				}
+				else_if = {
+					limit = {
+						NOT = { check_variable = { payload_types_array^i = 1 } }
+					}
+					if = {
+						limit = {
+							set_temp_variable = { temp1 = payload_types_array^i }
+							check_variable = { missile_inventory_array^temp1 > 0 }
+						}
+						subtract_from_variable = { missile_inventory_array^temp1 = 1 }
+						add_to_variable = { ROOT.var_sat_payload_lost = 1 }
+					}
+				}
+			}
 		}
 	}
+	resize_array = { payload_array = ROOT.var_sat_payload_delivered }
+	add_satellite_from_payload = yes
+	clear_payload_types = yes
 }
 
 
