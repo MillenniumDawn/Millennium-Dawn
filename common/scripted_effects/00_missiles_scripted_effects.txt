@@ -1942,6 +1942,8 @@ set_satellites_gui = {
 	set_GNSS_satellites = yes
 	set_COM_satellites = yes
 	set_SPY_satellites = yes
+	set_KILL_satellites = yes
+	set_RODS_satellites = yes
 }
 
 set_GNSS_satellites = {
@@ -1978,6 +1980,23 @@ set_SPY_satellites = {
 	add_to_variable = { var_SPY_sat_total = SPY_satellite_array^5 }
 	add_to_variable = { var_SPY_sat_total = SPY_satellite_array^6 }
 	add_to_variable = { var_SPY_sat_total = SPY_satellite_array^7 }
+}
+
+set_KILL_satellites = {
+	set_variable = { var_KILL_sat_total = 0 }
+	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^0 }
+	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^1 }
+	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^2 }
+	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^3 }
+	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^4 }
+	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^5 }
+}
+
+set_RODS_satellites = {
+	set_variable = { var_RODS_sat_total = 0 }
+	add_to_variable = { var_RODS_sat_total = RODS_satellite_array^0 }
+	add_to_variable = { var_RODS_sat_total = RODS_satellite_array^1 }
+	add_to_variable = { var_RODS_sat_total = RODS_satellite_array^2 }
 }
 
 ### satellite systems
@@ -4991,6 +5010,74 @@ add_new_satellite_to_orbit_6 = {
 	}
 }
 
+########################
+### retire satellite ###
+########################
+
+### not used in gui atm
+retire_selected_sat = {
+	for_each_loop = {
+		array = sat_1_array
+		if = {
+			limit = {
+				check_variable = { sat_1_array^i = var_selected_sat }
+			}
+			set_variable = { orbit_array^var_selected_sat = 0 }
+			set_variable = { sat_1_array^i = -1 }
+		}
+	}
+	for_each_loop = {
+		array = sat_2_array
+		if = {
+			limit = {
+				check_variable = { sat_2_array^i = var_selected_sat }
+			}
+			set_variable = { orbit_array^var_selected_sat = 0 }
+			set_variable = { sat_2_array^i = -1 }
+		}
+	}
+	for_each_loop = {
+		array = sat_3_array
+		if = {
+			limit = {
+				check_variable = { sat_3_array^i = var_selected_sat }
+			}
+			set_variable = { orbit_array^var_selected_sat = 0 }
+			set_variable = { sat_3_array^i = -1 }
+		}
+	}
+	for_each_loop = {
+		array = sat_4_array
+		if = {
+			limit = {
+				check_variable = { sat_4_array^i = var_selected_sat }
+			}
+			set_variable = { orbit_array^var_selected_sat = 0 }
+			set_variable = { sat_4_array^i = -1 }
+		}
+	}
+	for_each_loop = {
+		array = sat_5_array
+		if = {
+			limit = {
+				check_variable = { sat_5_array^i = var_selected_sat }
+			}
+			set_variable = { orbit_array^var_selected_sat = 0 }
+			set_variable = { sat_5_array^i = -1 }
+		}
+	}
+	for_each_loop = {
+		array = sat_6_array
+		if = {
+			limit = {
+				check_variable = { sat_6_array^i = var_selected_sat }
+			}
+			set_variable = { orbit_array^var_selected_sat = 0 }
+			set_variable = { sat_6_array^i = -1 }
+		}
+	}
+}
+
 ##############################
 ### anti satellite weapons ###
 ##############################
@@ -5318,6 +5405,33 @@ anti_satellite_weapon_use = {
 		add_to_variable = { ROOT.var_sat_miss = ROOT.var_anti_satellite_weapon_num }
 		set_variable = { ROOT.var_anti_satellite_weapon_num = 0 }
 	}
+}
+
+#remove used killer satellites
+remove_killsat_used = {
+	while_loop_effect = {
+		limit = {
+			check_variable = { ROOT.var_KILLSAT_salvo > 0 }
+		}
+		for_each_loop = {
+			array = orbit_array
+			if = {
+				limit = {
+					check_variable = { ROOT.orbit_array^i = ROOT.var_KILLSAT_type }
+				}
+				set_variable = { ROOT.var_killsat_fired = i }
+			}
+		}
+		set_variable = { tempTAG = ROOT.id }
+		ROOT = {
+			set_variable = { var_sat_ID = ROOT.var_killsat_fired }
+			remove_satellite_from_system = yes
+			remove_satellite_from_orbit = yes
+		}
+		subtract_from_variable = { ROOT.var_KILLSAT_salvo = 1 }
+	}
+	set_satellites_gui = yes
+	set_variable = { var_KILLSAT_orbit = KILL_satellite_array^var_KILLSAT_type }
 }
 
 ### right container # sat access arrays

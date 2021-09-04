@@ -152,6 +152,7 @@ scripted_gui = {
 				clear_variable = var_open_MD_missiles_gui_ledger_3
 				clear_variable = var_open_MD_missiles_gui_ledger_5
 				clear_variable = var_open_MD_missiles_gui_ledger_6
+				set_satellites_gui = yes
 			}
 			missiles_gui_ledger_btn_5_click = {
 				set_variable = { var_open_MD_missiles_gui_ledger_5 = 2 }
@@ -3915,6 +3916,14 @@ scripted_gui = {
 					subtract_from_variable = { var_ASAT_salvo = 100 }
 				}
 			}
+			ASAT_button_click = {
+				set_variable = { ROOT.var_anti_sat_accuracy = ROOT.var_ASAT_accuracy }
+				set_variable = { ROOT.var_anti_satellite_weapon_num = ROOT.var_ASAT_salvo }
+				anti_satellite_weapon_use = yes
+				subtract_from_variable = { ROOT.missile_inventory_array^var_ASAT_type = ROOT.var_ASAT_salvo }
+				set_variable = { ROOT.var_ASAT_inventory = ROOT.missile_inventory_array^var_ASAT_type }
+				set_variable = { ROOT.var_ASAT_salvo = 0 }
+			}
 			KILLSAT_model_button_click = {
 				ROOT = {
 					set_KILLSAT_display_array = yes
@@ -3951,20 +3960,19 @@ scripted_gui = {
 				ROOT = {
 					subtract_from_variable = { var_KILLSAT_salvo = 100 }
 				}
-			}			
+			}
+			activate_killsat_button_click = {
+				set_variable = { ROOT.var_anti_sat_accuracy = ROOT.var_KILLSAT_accuracy }
+				set_variable = { ROOT.var_anti_satellite_weapon_num = ROOT.var_KILLSAT_salvo }
+				anti_satellite_weapon_use = yes
+				remove_killsat_used = yes
+			}
 			RODS_model_button_click = {
 				ROOT = {
 					set_RODS_display_array = yes
 					set_country_flag = open_MD_space_selection_window
 					set_country_flag = RODS_model
 				}
-			}
-			### testing
-			ASAT_button_click = {
-				set_variable = { ROOT.var_anti_sat_accuracy = 0.9 }
-				set_variable = { ROOT.var_anti_satellite_weapon_num = 100 }
-				anti_satellite_weapon_use = yes
-				add_political_power = 100
 			}
 		}
 		triggers = {
@@ -3976,6 +3984,18 @@ scripted_gui = {
 				OR = {
 					check_variable = { var_OLV_flights < var_OLV_inventory }
 					check_variable = { var_OLV_flights = var_OLV_inventory }
+				}
+			}
+			ASAT_button_click_enabled = {
+				OR = {
+					check_variable = { var_ASAT_salvo < var_ASAT_inventory }
+					check_variable = { var_ASAT_salvo = var_ASAT_inventory }
+				}
+			}
+			activate_killsat_button_click_enabled = {
+				OR = {
+					check_variable = { var_KILLSAT_salvo < var_KILLSAT_orbit }
+					check_variable = { var_KILLSAT_salvo = var_KILLSAT_orbit }
 				}
 			}
 		}
@@ -4124,7 +4144,7 @@ scripted_gui = {
 			KILLSAT_type_button_click = {
 				set_variable = { var_KILLSAT_type = KILLSAT_display_array^i }
 				set_variable = { var_KILLSAT_accuracy = KILLSAT_accuracy_array^i }
-				set_variable = { var_KILLSAT_inventory = missile_inventory_array^KILLSAT_display_array^i }
+				set_variable = { var_KILLSAT_orbit = KILL_satellite_array^i }
 				clear_array = KILLSAT_display_array
 				clr_country_flag = KILLSAT_model
 				clr_country_flag = open_MD_space_selection_window
@@ -4754,67 +4774,9 @@ scripted_gui = {
 					add_to_array = { ROOT.sat_target_array = var_selected_sat }
 					add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
 			}
-			retire_button_click = {
-				for_each_loop = {
-					array = sat_1_array
-					if = {
-						limit = {
-							check_variable = { sat_1_array^i = var_selected_sat }
-						}
-						set_variable = { orbit_array^var_selected_sat = 0 }
-						set_variable = { sat_1_array^i = -1 }
-					}
-				}
-				for_each_loop = {
-					array = sat_2_array
-					if = {
-						limit = {
-							check_variable = { sat_2_array^i = var_selected_sat }
-						}
-						set_variable = { orbit_array^var_selected_sat = 0 }
-						set_variable = { sat_2_array^i = -1 }
-					}
-				}
-				for_each_loop = {
-					array = sat_3_array
-					if = {
-						limit = {
-							check_variable = { sat_3_array^i = var_selected_sat }
-						}
-						set_variable = { orbit_array^var_selected_sat = 0 }
-						set_variable = { sat_3_array^i = -1 }
-					}
-				}
-				for_each_loop = {
-					array = sat_4_array
-					if = {
-						limit = {
-							check_variable = { sat_4_array^i = var_selected_sat }
-						}
-						set_variable = { orbit_array^var_selected_sat = 0 }
-						set_variable = { sat_4_array^i = -1 }
-					}
-				}
-				for_each_loop = {
-					array = sat_5_array
-					if = {
-						limit = {
-							check_variable = { sat_5_array^i = var_selected_sat }
-						}
-						set_variable = { orbit_array^var_selected_sat = 0 }
-						set_variable = { sat_5_array^i = -1 }
-					}
-				}
-				for_each_loop = {
-					array = sat_6_array
-					if = {
-						limit = {
-							check_variable = { sat_6_array^i = var_selected_sat }
-						}
-						set_variable = { orbit_array^var_selected_sat = 0 }
-						set_variable = { sat_6_array^i = -1 }
-					}
-				}
+			clear_target_array_button_click = {
+				clear_array = ROOT.sat_target_array
+				clear_array = ROOT.sat_target_TAG_array
 			}
 			#
 			spy_mission_start_button_click = {
@@ -4862,6 +4824,7 @@ scripted_gui = {
 			country_view_flag_button_right_click = {
 				set_variable = { orbit_selected_TAG = ROOT.id }
 				set_sat_access_arrays_selected_TAG = yes
+				set_satellites_gui = yes
 			}
 			### sat access buttons
 			GNSS_mil_access_flags_button_click = {
