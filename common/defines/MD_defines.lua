@@ -58,6 +58,8 @@
 	NDefines.NCountry.CONVOY_RANGE_FACTOR = 1.5
 	NDefines.NCountry.LOCAL_MANPOWER_ACCESSIBLE_FACTOR = 0.01
 	NDefines.NCountry.LOCAL_MANPOWER_ACCESSIBLE_NON_CORE_FACTOR = 0.01
+	NDefines.NCountry.DEFAULT_STABILITY = 0.65 		-- Default stability if not scripted otherwise.
+	NDefines.NCountry.DEFAULT_WAR_SUPPORT = 0.5 		-- Default war support if not scripted otherwise.
 	NDefines.NCountry.BASE_STABILITY_WAR_FACTOR = -0.15
 	NDefines.NCountry.WAR_SUPPORT_OFFNSIVE_WAR = -0.1
 	NDefines.NCountry.WAR_SUPPORT_DEFENSIVE_WAR = 0.2 -- 1
