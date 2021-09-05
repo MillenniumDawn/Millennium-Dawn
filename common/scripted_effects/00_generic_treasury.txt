@@ -90,270 +90,458 @@ SE_remove_25_treasury = {
 	custom_effect_tooltip = 25_billion_expense_tt
 }
 
-##propaganda Cost Scripted Effect
+# Decisions Calculator Costs
+# Propaganda Cost Scripted Effect
 propaganda_cost_scripted_effect = {
-	if = { limit = { check_variable = { num_of_factories < 4 } }
-		subtract_from_variable = { treasury = 0.05 }
+	# Determines what "band" you are in and sets to a flat cost.
+	if = { limit = { check_variable = { num_of_factories < 9 } }
+		set_temp_variable = { propaganda_cost_temp = 0.15 }
 	}
 	if = {
 		limit = {
-			check_variable = { num_of_factories > 3 }
-			check_variable = { num_of_factories < 8 }
+			check_variable = { num_of_factories > 8 }
+			check_variable = { num_of_factories < 15 }
 		}
-		subtract_from_variable = { treasury = 0.1 }
+		set_temp_variable = { propaganda_cost_temp = 0.45 }
 	}
 	if = {
 		limit = {
-			check_variable = { num_of_factories > 7 }
-			check_variable = { num_of_factories < 16 }
-		}
-		subtract_from_variable = { treasury = 0.2 }
-	}
-	if = {
-		limit = {
-			check_variable = { num_of_factories > 15 }
+			check_variable = { num_of_factories > 14 }
 			check_variable = { num_of_factories < 26 }
 		}
-		subtract_from_variable = { treasury = 0.35 }
+		set_temp_variable = { propaganda_cost_temp = 0.85 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 25 }
-			check_variable = { num_of_factories < 39 }
+			check_variable = { num_of_factories < 40 }
 		}
-		subtract_from_variable = { treasury = 0.5 }
+		set_temp_variable = { propaganda_cost_temp = 1.15 }
 	}
 	if = {
 		limit = {
-			check_variable = { num_of_factories > 38 }
-			check_variable = { num_of_factories < 54 }
+			check_variable = { num_of_factories > 39 }
+			check_variable = { num_of_factories < 50 }
 		}
-		subtract_from_variable = { treasury = 0.75 }
+		set_temp_variable = { propaganda_cost_temp = 1.65 }
 	}
 	if = {
 		limit = {
-			check_variable = { num_of_factories > 53 }
-			check_variable = { num_of_factories < 82 }
+			check_variable = { num_of_factories > 49 }
+			check_variable = { num_of_factories < 75 }
 		}
-		subtract_from_variable = { treasury = 1.0 }
+		set_temp_variable = { propaganda_cost_temp = 1.90 }
 	}
 	if = {
 		limit = {
-			check_variable = { num_of_factories > 81 }
-			check_variable = { num_of_factories < 120 }
+			check_variable = { num_of_factories > 74 }
+			check_variable = { num_of_factories < 100 }
 		}
-		subtract_from_variable = { treasury = 1.5 }
+		set_temp_variable = { propaganda_cost_temp = 2.30 }
 	}
 	if = {
 		limit = {
-			check_variable = { num_of_factories > 119 }
-			check_variable = { num_of_factories < 164 }
+			check_variable = { num_of_factories > 99 }
+			check_variable = { num_of_factories < 125 }
 		}
-		subtract_from_variable = { treasury = 2.5 }
+		set_temp_variable = { propaganda_cost_temp = 2.65 }
 	}
 	if = {
 		limit = {
-			check_variable = { num_of_factories > 163 }
+			check_variable = { num_of_factories > 124 }
+			check_variable = { num_of_factories < 150 }
+		}
+		set_temp_variable = { propaganda_cost_temp = 2.90 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 149 }
+			check_variable = { num_of_factories < 200 }
+		}
+		set_temp_variable = { propaganda_cost_temp = 3.22 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 199 }
 			check_variable = { num_of_factories < 250 }
 		}
-		subtract_from_variable = { treasury = 4.0 }
+		set_temp_variable = { propaganda_cost_temp = 3.50 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 249 }
-			check_variable = { num_of_factories < 370 }
+			check_variable = { num_of_factories < 300 }
 		}
-		subtract_from_variable = { treasury = 5.5 }
+		set_temp_variable = { propaganda_cost_temp = 3.75 }
 	}
 	if = {
 		limit = {
-			check_variable = { num_of_factories > 369 }
-			check_variable = { num_of_factories < 500 }
+			check_variable = { num_of_factories > 299 }
 		}
-		subtract_from_variable = { treasury = 7.5 }
+		set_temp_variable = { propaganda_cost_temp = 4 }
 	}
-	if = {
-		limit = {
-			check_variable = { num_of_factories > 499 }
-		}
-		subtract_from_variable = { treasury = 10.0 }
+
+	# Modifiers to adjust the cost of the lease
+	set_temp_variable = { propaganda_cost_multiplier = 1 }
+	if = { limit = { has_country_flag = reduce_cost_of_propaganda_25 }
+		subtract_from_temp_variable = { propaganda_cost_multiplier = 0.25 }
 	}
+	if = { limit = { has_country_flag = reduce_cost_of_propaganda_15 }
+		subtract_from_temp_variable = { propaganda_cost_multiplier = 0.15 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_propaganda_10 }
+		subtract_from_temp_variable = { propaganda_cost_multiplier = 0.10 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_propaganda_5 }
+		subtract_from_temp_variable = { propaganda_cost_multiplier = 0.05 }
+	}
+
+	# Modifies based off if the nation meets one of the above conditionals
+	multiply_temp_variable = { propaganda_cost_temp = propaganda_cost_multiplier }
+
+	# Calculate Weekly Expense
+	multiply_temp_variable = { propaganda_cost_temp = 7 }
+
+	set_variable = { propaganda_costs = propaganda_cost_temp }
 }
 
+projects_scripted_effect = {
+	# Determines what "band" you are in and sets to a flat cost.
+	if = { limit = { check_variable = { num_of_factories < 9 } }
+		set_temp_variable = { project_cost_temp = 0.20 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 8 }
+			check_variable = { num_of_factories < 15 }
+		}
+		set_temp_variable = { project_cost_temp = 0.65 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 14 }
+			check_variable = { num_of_factories < 26 }
+		}
+		set_temp_variable = { project_cost_temp = 1.10 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 25 }
+			check_variable = { num_of_factories < 40 }
+		}
+		set_temp_variable = { project_cost_temp = 1.35 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 39 }
+			check_variable = { num_of_factories < 50 }
+		}
+		set_temp_variable = { project_cost_temp = 1.95 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 49 }
+			check_variable = { num_of_factories < 75 }
+		}
+		set_temp_variable = { project_cost_temp = 2.45 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 74 }
+			check_variable = { num_of_factories < 100 }
+		}
+		set_temp_variable = { project_cost_temp = 2.70 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 99 }
+			check_variable = { num_of_factories < 125 }
+		}
+		set_temp_variable = { project_cost_temp = 3.05 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 124 }
+			check_variable = { num_of_factories < 150 }
+		}
+		set_temp_variable = { project_cost_temp = 3.40 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 149 }
+			check_variable = { num_of_factories < 200 }
+		}
+		set_temp_variable = { project_cost_temp = 3.95 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 199 }
+			check_variable = { num_of_factories < 250 }
+		}
+		set_temp_variable = { project_cost_temp = 4.05 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 249 }
+			check_variable = { num_of_factories < 300 }
+		}
+		set_temp_variable = { project_cost_temp = 4.50 }
+	}
+	if = {
+		limit = {
+			check_variable = { num_of_factories > 299 }
+		}
+		set_temp_variable = { project_cost_temp = 5 }
+	}
+
+	# Modifiers to adjust the cost of the lease
+	set_temp_variable = { project_cost_multiplier = 1 }
+	if = { limit = { has_country_flag = reduce_cost_of_projects_25 }
+		subtract_from_temp_variable = { project_cost_multiplier = 0.25 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_projects_15 }
+		subtract_from_temp_variable = { project_cost_multiplier = 0.15 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_projects_10 }
+		subtract_from_temp_variable = { project_cost_multiplier = 0.10 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_projects_5 }
+		subtract_from_temp_variable = { project_cost_multiplier = 0.05 }
+	}
+
+	# Modifies based off if the nation meets one of the above conditionals
+	multiply_temp_variable = { project_cost_temp = project_cost_multiplier }
+
+	# Calculate Weekly Expense
+	multiply_temp_variable = { project_cost_temp = 7 }
+
+	set_variable = { projects_costs = project_cost_temp }
+}
+
+# Leasing Military Factories Cost
 lease_military_factories_cost = {
-	if = { limit = { check_variable = { num_of_factories < 8 } }
-		subtract_from_variable = { treasury = 1.50 }
+	# Determines what "band" you are in and sets to a flat cost.
+	if = { limit = { check_variable = { num_of_factories < 9 } }
+		set_temp_variable = { leased_military_economy_cost_temp = 0.50 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 8 }
 			check_variable = { num_of_factories < 15 }
 		}
-		subtract_from_variable = { treasury = 3.50 }
+		set_temp_variable = { leased_military_economy_cost_temp = 0.90 }
 	}
 	if = {
 		limit = {
-			check_variable = { num_of_factories > 15 }
+			check_variable = { num_of_factories > 14 }
 			check_variable = { num_of_factories < 26 }
 		}
-		subtract_from_variable = { treasury = 7.0 }
+		set_temp_variable = { leased_military_economy_cost_temp = 1.25 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 25 }
 			check_variable = { num_of_factories < 40 }
 		}
-		subtract_from_variable = { treasury = 9.0 }
+		set_temp_variable = { leased_military_economy_cost_temp = 1.70 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 39 }
 			check_variable = { num_of_factories < 50 }
 		}
-		subtract_from_variable = { treasury =  12.0 }
+		set_temp_variable = { leased_military_economy_cost_temp = 2.05 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 49 }
 			check_variable = { num_of_factories < 75 }
 		}
-		subtract_from_variable = { treasury = 15.0 }
+		set_temp_variable = { leased_military_economy_cost_temp = 2.55 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 74 }
 			check_variable = { num_of_factories < 100 }
 		}
-		subtract_from_variable = { treasury = 18.0 }
+		set_temp_variable = { leased_military_economy_cost_temp = 2.90 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 99 }
 			check_variable = { num_of_factories < 125 }
 		}
-		subtract_from_variable = { treasury = 22.5 }
+		set_temp_variable = { leased_military_economy_cost_temp = 3.10 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 124 }
 			check_variable = { num_of_factories < 150 }
 		}
-		subtract_from_variable = { treasury = 27.50 }
+		set_temp_variable = { leased_military_economy_cost_temp = 3.45 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 149 }
 			check_variable = { num_of_factories < 200 }
 		}
-		subtract_from_variable = { treasury = 30.0 }
+		set_temp_variable = { leased_military_economy_cost_temp = 4.25 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 199 }
 			check_variable = { num_of_factories < 250 }
 		}
-		subtract_from_variable = { treasury = 35.0 }
+		set_temp_variable = { leased_military_economy_cost_temp = 4.90 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 249 }
 			check_variable = { num_of_factories < 300 }
 		}
-		subtract_from_variable = { treasury = 40.0 }
+		set_temp_variable = { leased_military_economy_cost_temp = 5.45 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 299 }
 		}
-		subtract_from_variable = { treasury = 50.0 }
+		set_temp_variable = { leased_military_economy_cost_temp = 6.0 }
 	}
+
+	# Modifiers to adjust the cost of the lease
+	set_temp_variable = { lease_mils_cost_multiplier = 1 }
+	if = { limit = { has_country_flag = reduce_cost_of_leased_mils_25 }
+		subtract_from_temp_variable = { lease_mils_cost_multiplier = 0.25 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_leased_mils_15 }
+		subtract_from_temp_variable = { lease_mils_cost_multiplier = 0.15 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_leased_mils_10 }
+		subtract_from_temp_variable = { lease_mils_cost_multiplier = 0.10 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_leased_mils_5 }
+		subtract_from_temp_variable = { lease_mils_cost_multiplier = 0.05 }
+	}
+
+	# Modifies based off if the nation meets one of the above conditionals
+	multiply_temp_variable = { leased_military_economy_cost_temp = lease_mils_cost_multiplier }
+
+	# Calculate Weekly Expense
+	multiply_temp_variable = { leased_military_economy_cost_temp = 7 }
+
+	set_variable = { leased_military_economy_cost = leased_military_economy_cost_temp }
 }
 
+# Leased Civilian Industries "Band" Calculator
 lease_civilian_complex_cost = {
-	if = { limit = { check_variable = { num_of_factories < 8 } }
-		subtract_from_variable = { treasury = 1.00 }
+	# Determines what "band" you are in and sets to a flat cost.
+	if = { limit = { check_variable = { num_of_factories < 9 } }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 0.40 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 8 }
 			check_variable = { num_of_factories < 15 }
 		}
-		subtract_from_variable = { treasury = 2.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 0.75 }
 	}
 	if = {
 		limit = {
-			check_variable = { num_of_factories > 15 }
+			check_variable = { num_of_factories > 14 }
 			check_variable = { num_of_factories < 26 }
 		}
-		subtract_from_variable = { treasury = 5.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 1.15 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 25 }
 			check_variable = { num_of_factories < 40 }
 		}
-		subtract_from_variable = { treasury = 7.5 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 1.60 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 39 }
 			check_variable = { num_of_factories < 50 }
 		}
-		subtract_from_variable = { treasury =  10.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 1.95 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 49 }
 			check_variable = { num_of_factories < 75 }
 		}
-		subtract_from_variable = { treasury = 12.5 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 2.35 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 74 }
 			check_variable = { num_of_factories < 100 }
 		}
-		subtract_from_variable = { treasury = 15.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 2.65 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 99 }
 			check_variable = { num_of_factories < 125 }
 		}
-		subtract_from_variable = { treasury = 17.5 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 2.95 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 124 }
 			check_variable = { num_of_factories < 150 }
 		}
-		subtract_from_variable = { treasury = 20.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 3.20 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 149 }
 			check_variable = { num_of_factories < 200 }
 		}
-		subtract_from_variable = { treasury = 22.50 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 3.70 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 199 }
 			check_variable = { num_of_factories < 250 }
 		}
-		subtract_from_variable = { treasury = 25.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 4.0 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 249 }
 			check_variable = { num_of_factories < 300 }
 		}
-		subtract_from_variable = { treasury = 27.5 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 4.25 }
 	}
 	if = {
 		limit = {
 			check_variable = { num_of_factories > 299 }
 		}
-		subtract_from_variable = { treasury = 30.0 }
+		set_temp_variable = { leased_civilian_economy_cost_temp = 4.50 }
 	}
+
+	# Modifiers to adjust the cost of the lease
+	set_temp_variable = { lease_civs_cost_multiplier = 1 }
+	if = { limit = { has_country_flag = reduce_cost_of_leased_civs_25 }
+		subtract_from_temp_variable = { lease_civs_cost_multiplier = 0.25 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_leased_civs_15 }
+		subtract_from_temp_variable = { lease_civs_cost_multiplier = 0.15 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_leased_civs_10 }
+		subtract_from_temp_variable = { lease_civs_cost_multiplier = 0.10 }
+	}
+	if = { limit = { has_country_flag = reduce_cost_of_leased_civs_5 }
+		subtract_from_temp_variable = { lease_civs_cost_multiplier = 0.05 }
+	}
+
+	# Modifies based off if the nation meets one of the above conditionals
+	multiply_temp_variable = { leased_civilian_economy_cost_temp = lease_civs_cost_multiplier }
+
+	# Calculate Weekly Expense
+	multiply_temp_variable = { leased_civilian_economy_cost_temp = 7 }
+
+	set_variable = { leased_civilian_economy_cost = leased_civilian_economy_cost_temp }
 }
