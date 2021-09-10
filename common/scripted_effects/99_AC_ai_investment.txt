@@ -350,3 +350,44 @@ AI_get_infrastructure_score = {
 	}
 	# Ignore if you have 10 infrastructure or if it breaks and you somehow got more
 }
+
+AI_get_offices_score = {
+	if = {
+		limit = {
+			free_building_slots = {
+				type = industrial_complex
+				size > 0
+				include_locked = no
+			}
+		}
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 130 }
+		set_temp_variable = { v2 = 10 }
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 1 } }
+			add_to_temp_variable = { v2 = 15 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 5 } }
+			add_to_temp_variable = { v2 = 12 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+			add_to_temp_variable = { v2 = 8 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 15 } }
+			add_to_temp_variable = { v2 = 5 }
+		}
+
+		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 9.999 } } }
+			add_to_temp_variable = { v2 = 5 }
+		}
+		multiply_temp_variable = { v2 = 10 }
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 4 }
+		}
+	}
+}
