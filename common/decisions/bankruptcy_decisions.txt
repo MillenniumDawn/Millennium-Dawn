@@ -1,5 +1,10 @@
 bankruptcy_decisions = {
 
+	#AI Logic for bailouts:
+	#Always use cheap loans from IMF first, only ask for bailout if interest > 15%
+	#First ask bailout from IMF, then neighbours, then 2nd influencer, then 1st influencer to do the least damage
+	#Default if interest > 25% and not at war
+
 	bankruptcy_cheap_loans_from_imf = {
 
 		available = {
@@ -33,6 +38,10 @@ bankruptcy_decisions = {
 			add_to_variable = { debt = debt_addition }
 			custom_effect_tooltip = cheap_loans_from_imf_tt
 			ingame_update_setup = yes
+		}
+		
+		ai_will_do = {
+			factor = 1000
 		}
 
 	}
@@ -76,6 +85,14 @@ bankruptcy_decisions = {
 			custom_effect_tooltip = bankruptcy_seek_bailout_from_biggest_influencer_tt
 			var:FROM.influence_array^0 = { country_event = { id = bankruptcy.1 hours = 3 } }
 		}
+		
+		ai_will_do = {
+			factor = 600
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 15 }
+			}
+		}
 
 	}
 
@@ -117,6 +134,14 @@ bankruptcy_decisions = {
 			round_variable = debt_bailout
 			custom_effect_tooltip = bankruptcy_seek_bailout_from_second_biggest_influencer_tt
 			var:FROM.influence_array^1 = { country_event = { id = bankruptcy.2 hours = 3  } }
+		}
+		
+		ai_will_do = {
+			factor = 700
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 15 }
+			}
 		}
 
 	}
@@ -165,6 +190,14 @@ bankruptcy_decisions = {
 			round_variable = debt_bailout
 			custom_effect_tooltip = bankruptcy_seek_bailout_from_neighbour_tt
 			FROM = { country_event = { id = bankruptcy.3 hours = 3  } }
+		}
+		
+		ai_will_do = {
+			factor = 800
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 15 }
+			}
 		}
 
 	}
@@ -591,6 +624,14 @@ bankruptcy_decisions = {
 				}
 			}
 		}
+		
+		ai_will_do = {
+			factor = 900
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 15 }
+			}
+		}
 
 	}
 
@@ -657,12 +698,31 @@ bankruptcy_decisions = {
 			depression = yes
 			custom_effect_tooltip = bankruptcy_default_on_debts_tt
 			activate_mission = debt_default_main_mission
+			set_variable = { old_gdp = gdp_total }
+		}
+		
+		ai_will_do = {
+			factor = 1000
+			modifier = {
+				factor = 0
+				OR = {
+					check_variable = { interest_rate < 25 }
+					has_war = yes
+				}
+			}
 		}
 	}
 
 }
 
 debt_default_decisions = {
+
+	#AI Logic for default:
+	#1. Pay from treasury as much as you can
+	#2. Political concessions to IMF
+	#3. Sell factories unless GDP is < 80% of pre-default GDP (sell order NIC -> MIC -> Offices -> CIC)
+	#4. Political concessions to 2nd and 1st influencer
+	#Default if interest > 25% and not at war
 
 	debt_default_main_mission = {
 
@@ -678,9 +738,9 @@ debt_default_decisions = {
 		}
 
 		is_good = no
-		selectable_mission = yes
+		selectable_mission = no
 
-		days_mission_timeout = 120
+		days_mission_timeout = 360
 
 		timeout_effect = {
 			if = {
@@ -712,9 +772,18 @@ debt_default_decisions = {
 								has_idea = intervention_neo_imperialism
 							}
 							NOT = { has_country_flag = political_concessions_from@ROOT }
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
 						}
 					}
-					var:FROM.influence_array^0 = { create_wargoal = { type = puppet_wargoal_focus target = ROOT } }
+					var:FROM.influence_array^0 = { country_event = { id = bankruptcy.13 hours = 6 } }
 				}
 			}
 			if = {
@@ -746,9 +815,18 @@ debt_default_decisions = {
 								has_idea = intervention_neo_imperialism
 							}
 							NOT = { has_country_flag = political_concessions_from@ROOT }
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
 						}
 					}
-					var:FROM.influence_array^1 = { create_wargoal = { type = puppet_wargoal_focus target = ROOT } }
+					var:FROM.influence_array^1 = { country_event = { id = bankruptcy.13 hours = 6 } }
 				}
 			}
 			if = {
@@ -779,9 +857,18 @@ debt_default_decisions = {
 								has_idea = intervention_global_interventionism
 								has_idea = intervention_neo_imperialism
 							}
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
 						}
 					}
-					var:FROM.influence_array^2 = { create_wargoal = { type = puppet_wargoal_focus target = ROOT } }
+					var:FROM.influence_array^2 = { country_event = { id = bankruptcy.13 hours = 6 } }
 				}
 			}
 			if = {
@@ -812,9 +899,18 @@ debt_default_decisions = {
 								has_idea = intervention_global_interventionism
 								has_idea = intervention_neo_imperialism
 							}
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
 						}
 					}
-					var:FROM.influence_array^3 = { create_wargoal = { type = puppet_wargoal_focus target = ROOT } }
+					var:FROM.influence_array^3 = { country_event = { id = bankruptcy.13 hours = 6 } }
 				}
 			}
 			if = {
@@ -845,9 +941,18 @@ debt_default_decisions = {
 								has_idea = intervention_global_interventionism
 								has_idea = intervention_neo_imperialism
 							}
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
 						}
 					}
-					var:FROM.influence_array^4 = { create_wargoal = { type = puppet_wargoal_focus target = ROOT } }
+					var:FROM.influence_array^4 = { country_event = { id = bankruptcy.13 hours = 6 } }
 				}
 			}
 			if = {
@@ -878,9 +983,18 @@ debt_default_decisions = {
 								has_idea = intervention_global_interventionism
 								has_idea = intervention_neo_imperialism
 							}
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
 						}
 					}
-					var:FROM.influence_array^5 = { create_wargoal = { type = puppet_wargoal_focus target = ROOT } }
+					var:FROM.influence_array^5 = { country_event = { id = bankruptcy.13 hours = 6 } }
 				}
 			}
 			if = {
@@ -911,19 +1025,37 @@ debt_default_decisions = {
 								has_idea = intervention_global_interventionism
 								has_idea = intervention_neo_imperialism
 							}
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
 						}
 					}
-					var:FROM.influence_array^6 = { create_wargoal = { type = puppet_wargoal_focus target = ROOT } }
+					var:FROM.influence_array^6 = { country_event = { id = bankruptcy.13 hours = 6 } }
 				}
 			}
 			clear_variable = debt_default_left
 			clear_variable = debt_default_total
+			custom_effect_tooltip = debt_default_cancel_int_investments
+			set_variable = { int_investments = 0 }
+			set_variable = { treasury = 0 }
+			clear_variable = old_gdp
 		}
 
 		complete_effect = {
 			clear_variable = debt_default_left
 			clear_variable = debt_default_total
 			add_timed_idea = { idea = debt_default_ecomomic_boom days = 360 }
+			clear_variable = old_gdp
+		}
+		
+		ai_will_do = {
+			factor = 10000
 		}
 
 	}
@@ -951,6 +1083,10 @@ debt_default_decisions = {
 				min = 0
 			}
 		}
+		
+		ai_will_do = {
+			factor = 1000
+		}
 
 	}
 
@@ -977,6 +1113,10 @@ debt_default_decisions = {
 				min = 0
 			}
 		}
+		
+		ai_will_do = {
+			factor = 1000
+		}
 
 	}
 
@@ -991,12 +1131,12 @@ debt_default_decisions = {
 
 		days_re_enable = 180
 
-		cost = 100
+		cost = 75
 
 		complete_effect = {
 			decrease_domestic_influence_10_percent = yes
 			set_temp_variable = { debt_default_reduction = debt_default_total}
-			multiply_temp_variable = { debt_default_reduction = 0.2 }
+			multiply_temp_variable = { debt_default_reduction = 0.25 }
 			round_temp_variable = debt_default_reduction
 			custom_effect_tooltip = debt_default_concessions_to_the_imf_tt
 			subtract_from_variable = { debt_default_left = debt_default_reduction }
@@ -1066,6 +1206,10 @@ debt_default_decisions = {
 				decrease_social_spending_2 = yes
 			}
 		}
+		
+		ai_will_do = {
+			factor = 900
+		}
 
 	}
 
@@ -1083,27 +1227,45 @@ debt_default_decisions = {
 			NOT = { has_war_with = var:FROM.influence_array^0 }
 		}
 
-		days_re_enable = 180
+		days_re_enable = 400
 
-		cost = 100
+		cost = 75
 
 		complete_effect = {
 			var:FROM.influence_array^0 = {
 				generic_grant_20_percent_influence_of_CURRENT_SCOPE = yes
 				set_country_flag = {
 					flag = political_concessions_from@ROOT
-					days = 180
+					days = 400
 					value = 1
 				}
 			}
 			set_temp_variable = { debt_default_reduction = debt_default_total}
-			multiply_temp_variable = { debt_default_reduction = 0.3 }
+			multiply_temp_variable = { debt_default_reduction = 0.4 }
 			round_temp_variable = debt_default_reduction
 			custom_effect_tooltip = debt_default_political_concessions_to_biggest_influencer_tt
 			subtract_from_variable = { debt_default_left = debt_default_reduction }
 			clamp_variable = {
 				var = debt_default_left
 				min = 0
+			}
+		}
+		
+		ai_will_do = {
+			factor = 600
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total > gdp_comparison }
+				OR = {
+					num_of_civilian_factories > 0 
+					num_of_military_factories > 0 
+					num_of_naval_factories > 0 
+					any_owned_state = {
+						offices > 0
+					}
+				}
 			}
 		}
 
@@ -1123,27 +1285,45 @@ debt_default_decisions = {
 			NOT = { has_war_with = var:FROM.influence_array^1 }
 		}
 
-		days_re_enable = 180
+		days_re_enable = 400
 
-		cost = 100
+		cost = 75
 
 		complete_effect = {
 			var:FROM.influence_array^1 = {
 				generic_grant_20_percent_influence_of_CURRENT_SCOPE = yes
 				set_country_flag = {
 					flag = political_concessions_from@ROOT
-					days = 180
+					days = 400
 					value = 1
 				}
 			}
 			set_temp_variable = { debt_default_reduction = debt_default_total}
-			multiply_temp_variable = { debt_default_reduction = 0.3 }
+			multiply_temp_variable = { debt_default_reduction = 0.4 }
 			round_temp_variable = debt_default_reduction
 			custom_effect_tooltip = debt_default_political_concessions_to_biggest_influencer_tt
 			subtract_from_variable = { debt_default_left = debt_default_reduction }
 			clamp_variable = {
 				var = debt_default_left
 				min = 0
+			}
+		}
+		
+		ai_will_do = {
+			factor = 700
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total > gdp_comparison }
+				OR = {
+					num_of_civilian_factories > 0 
+					num_of_military_factories > 0 
+					num_of_naval_factories > 0 
+					any_owned_state = {
+						offices > 0
+					}
+				}
 			}
 		}
 
@@ -1159,9 +1339,12 @@ debt_default_decisions = {
 			any_owned_state = {
 				industrial_complex > 0
 			}
+			NOT = { has_decision = debt_default_dismantle_military_factories }
+			NOT = { has_decision = debt_default_scrap_dockyard }
+			NOT = { has_decision = debt_default_cut_down_government_services }
 		}
 
-		days_remove = 7
+		days_remove = 5
 
 		cost = 25
 
@@ -1179,6 +1362,16 @@ debt_default_decisions = {
 			}
 			ingame_update_setup = yes
 		}
+		
+		ai_will_do = {
+			factor = 800
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total < gdp_comparison }
+			}
+		}
 
 	}
 
@@ -1192,9 +1385,12 @@ debt_default_decisions = {
 			any_owned_state = {
 				arms_factory > 0
 			}
+			NOT = { has_decision = debt_default_sell_civilian_factories }
+			NOT = { has_decision = debt_default_scrap_dockyard }
+			NOT = { has_decision = debt_default_cut_down_government_services }
 		}
 
-		days_remove = 7
+		days_remove = 5
 
 		cost = 25
 
@@ -1212,6 +1408,16 @@ debt_default_decisions = {
 			}
 			ingame_update_setup = yes
 		}
+		
+		ai_will_do = {
+			factor = 840
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total < gdp_comparison }
+			}
+		}
 
 	}
 
@@ -1225,9 +1431,12 @@ debt_default_decisions = {
 			any_owned_state = {
 				dockyard > 0
 			}
+			NOT = { has_decision = debt_default_sell_civilian_factories }
+			NOT = { has_decision = debt_default_dismantle_military_factories }
+			NOT = { has_decision = debt_default_cut_down_government_services }
 		}
 
-		days_remove = 7
+		days_remove = 5
 
 		cost = 25
 
@@ -1245,6 +1454,16 @@ debt_default_decisions = {
 			}
 			ingame_update_setup = yes
 		}
+		
+		ai_will_do = {
+			factor = 850
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total < gdp_comparison }
+			}
+		}
 
 	}
 
@@ -1258,9 +1477,12 @@ debt_default_decisions = {
 			any_owned_state = {
 				offices > 0
 			}
+			NOT = { has_decision = debt_default_sell_civilian_factories }
+			NOT = { has_decision = debt_default_dismantle_military_factories }
+			NOT = { has_decision = debt_default_scrap_dockyard }
 		}
 
-		days_remove = 7
+		days_remove = 5
 
 		cost = 25
 
@@ -1277,6 +1499,16 @@ debt_default_decisions = {
 				}
 			}
 			ingame_update_setup = yes
+		}
+		
+		ai_will_do = {
+			factor = 810
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total < gdp_comparison }
+			}
 		}
 
 	}
