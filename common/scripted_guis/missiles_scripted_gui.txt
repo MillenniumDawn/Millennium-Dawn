@@ -4748,6 +4748,30 @@ scripted_gui = {
 		}
 
 		effects = {
+			nuke_gui_selected_TAG_flag_button_click = {
+				set_country_flag = open_MD_nukes_country_selection
+				every_country = {
+					ROOT = { add_to_array = { temp_countries = PREV.id } }
+				}
+
+			}
+			nuke_gui_selected_TAG_flag_button_right_click = {
+				set_variable = { nukes_selected_TAG = ROOT.id }
+				set_nuke_arrays_selected_TAG = yes
+
+			}
+			nuke_gui_selected_TAG_flag_button_2_click = {
+				set_country_flag = open_MD_nukes_country_selection
+				every_country = {
+					ROOT = { add_to_array = { temp_countries = PREV.id } }
+				}
+
+			}
+			nuke_gui_selected_TAG_flag_button_2_right_click = {
+				set_variable = { nukes_selected_TAG = ROOT.id }
+				set_nuke_arrays_selected_TAG = yes
+
+			}
 			nuclear_status_entry_button_click = {
 				set_country_flag = open_MD_nuclear_doctrine_window
 				add_to_array = { nuclear_status_display_array = 0 }
@@ -4820,29 +4844,43 @@ scripted_gui = {
 
 		triggers = {
 			no_nuclear_status_button_visible = {
-				check_variable = { nuclear_status_array^num = 0 }
+				var:nukes_selected_TAG = {
+					check_variable = { nuclear_status_array^num = 0 }
+				}
 			}
 			no_nuclear_status_visible = {
-				check_variable = { nuclear_status_array^num = 0 }
+				var:nukes_selected_TAG = {
+					check_variable = { nuclear_status_array^num = 0 }
+				}
 			}
 			no_nuclear_doctrine_button_visible = {
-				check_variable = { nuclear_doctrine_array^num = 0 }
+				var:nukes_selected_TAG = {
+					check_variable = { nuclear_doctrine_array^num = 0 }
+				}
 			}
 			no_nuclear_doctrine_visible = {
-				check_variable = { nuclear_doctrine_array^num = 0 }
+				var:nukes_selected_TAG = {
+					check_variable = { nuclear_doctrine_array^num = 0 }
+				}
 			}
 		}
 		dynamic_lists = {
 			nuclear_status_gridbox = {
-				array = nuclear_status_array
+				array = selected_TAG_nuclear_status_array #array = nuclear_status_array
 				entry_container = nuclear_status_entry
 			}
 			nuclear_doctrine_gridbox = {
-				array = nuclear_doctrine_array
+				array = selected_TAG_nuclear_doctrine_array #array = nuclear_doctrine_array
 				entry_container = nuclear_doctrine_entry
 			}
 		}
 		properties = {
+			nuke_gui_selected_TAG_flag_button = {
+				image = "[?nukes_selected_TAG.GetFlag]"
+			}
+			nuke_gui_selected_TAG_flag_button_2 = {
+				image = "[?nukes_selected_TAG.GetFlag]"
+			}
 			checkbox_icon_1 = {
 				image = "GFX_MD_nuke_checkbox_button"
 				frame = checkbox_icon_1_frame^i
@@ -4875,11 +4913,13 @@ scripted_gui = {
 				add_to_array = { nuclear_status_array = nuclear_status_display_array^i }
 				clr_country_flag = open_MD_nuclear_doctrine_window
 				clear_array = nuclear_status_display_array
+				set_nuke_arrays_selected_TAG = yes
 			}
 			nuclear_doctrine_entry_button_click = {
 				add_to_array = { nuclear_doctrine_array = nuclear_doctrine_display_array^i }
 				clr_country_flag = open_MD_nuclear_doctrine_window
 				clear_array = nuclear_doctrine_display_array
+				set_nuke_arrays_selected_TAG = yes
 			}
 			close_button_click = {
 				clr_country_flag = open_MD_nuclear_doctrine_window
@@ -4887,7 +4927,114 @@ scripted_gui = {
 				clear_array = nuclear_doctrine_display_array
 			}
 		}
-
+		triggers = {
+			nuclear_status_entry_button_click_enabled = {
+				#PNW
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 0 }
+					}
+					NOT_has_NPOWER_OR_SPOWER = yes
+				}
+				#NTB
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 1 }
+					}
+					has_NPOWER_OR_SPOWER = yes
+					NOT_has_NTEST = yes
+				}
+				#NSHARE
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 2 }
+					}
+					OR = {
+						has_NPOWER = yes
+						has_NSHARE_condition = yes
+					}
+				}
+				#NPOWER
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 3 }
+					}
+					has_NPROG_completed = yes
+					NOT_has_SPOWER_OR_SPROG = yes
+				}
+				#NENERGY
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 4 }
+					}
+					NOT_has_NOUT = yes
+					nuclear_reactor > 0
+				}
+				#NOUT
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 5 }
+					}
+					NOT_has_NENERGY = yes
+				}
+				#SPOWER
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 6 }
+					}
+					has_NPROG_completed = yes
+					NOT_has_NPOWER_OR_SPROG = yes
+				}
+				#SPROG
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 7 }
+					}
+					NOT_has_NPOWER_OR_SPOWER = yes
+					nuclear_reactor > 0
+				}
+				#NTEST
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 8 }
+					}
+					has_NPOWER_OR_SPOWER = yes
+					NOT_has_NTB = yes
+				}
+				#N3
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 9 }
+					}
+					has_NPOWER_OR_SPOWER = yes
+					NOT_has_NBOMB_NICBM_SSBM = yes
+				}
+				#NBOMB
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 10 }
+					}
+					has_NPOWER_OR_SPOWER = yes
+					NOT_has_N3 = yes
+				}
+				#NICBM
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 11 }
+					}
+					has_NPOWER_OR_SPOWER = yes
+					NOT_has_N3 = yes
+				}
+				#SSBN
+				if = {
+					limit = {
+						check_variable = { nuclear_status_display_array^i = 12 }
+					}
+					has_NPOWER_OR_SPOWER = yes
+					NOT_has_N3 = yes
+				}
+			}
+		}
 		dynamic_lists = {
 			nuclear_status_window_gridbox = {
 				array = nuclear_status_display_array
@@ -4898,7 +5045,7 @@ scripted_gui = {
 				entry_container = nuclear_doctrine_window_entry
 			}
 		}
-		properties = {
+		properties = {			
 			checkbox_icon_1 = {
 				image = "GFX_MD_nuke_checkbox_button"
 				frame = checkbox_icon_1_frame^i
@@ -4917,6 +5064,52 @@ scripted_gui = {
 			}
 		}
 	}
+
+	MD_nukes_country_selection_gui = {
+		window_name = MD_nukes_country_selection
+		context_type = player_context
+		#context_type = selected_country_context
+		parent_window_name = MD_countrymissilesview_nukes_gui
+
+		visible = {
+			ROOT = {
+				check_variable = { var_open_MD_missiles_gui_ledger_6 = 2 }
+				has_country_flag = open_MD_countrymissilesview
+				has_country_flag = open_MD_nukes_country_selection
+			}
+		}
+		effects = {
+			nukes_country_list_flag_button_click = {
+				set_variable = { nukes_selected_TAG = ROOT.temp_countries^i }
+				clr_country_flag = open_MD_nukes_country_selection
+			}
+			close_button_click = {
+				if = {
+					limit = {
+						has_country_flag = open_MD_nukes_country_selection
+					}
+					clr_country_flag = open_MD_nukes_country_selection
+				}
+				clear_array = ROOT.temp_countries
+			}
+
+		}
+
+		dynamic_lists = {
+			nukes_country_list_gridbox = {
+				array = temp_countries
+				entry_container = nukes_country_list_entry
+			}
+		}
+		properties = {
+			nukes_country_list_flag_button = {
+				image = "[?ROOT.temp_countries^i.GetFlag]"
+			}
+		}
+
+	}
+
+
 
 	MD_satellite_orbit_view_gui = {
 		window_name = MD_satellite_orbit_view
