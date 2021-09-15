@@ -1,7 +1,7 @@
 ############################################################################################################
 #	AC mod - decisions
 ############################################################################################################
-#Written by hiddengearz
+# Written by hiddengearz, Rewritten by Bird
 #Inspired by the original Allied Construction Project https://steamcommunity.com/sharedfiles/filedetails/?id=1368202826
 #This reworked system allows you to have 5 of each project active per country.
 #So you can have 5 CIC projects, 5 INF projects, 5 MIC projects etc in every country in the game
@@ -9,4945 +9,744 @@
 #Now if the AI also does the same that's 210 * 8400 = 1,764,000 possibile investments possibile
 
 AC_DECISIONS = {
-	## UNUSUED
-	# AC_assist_repair_decision = {
-	# 	allowed = { always = no }
-	# 	icon = generic_construction
-	# 	activation = { always = no }
+	AC_project_0_decision = {
+		icon = GFX_decision_category_generic_industry
 
-	# 	highlight_states = {
-	# 		CONTROLLER = {
-	# 			has_country_flag = AC_assist_repair_target_by_@ROOT
-	# 		}
-	# 	}
+		priority = 5
 
-	# 	visible = {
-	# 		has_decision = AC_assist_repair_decision
-	# 	}
+		highlight_states = { check_variable = { ROOT.project_array^0 = THIS.id } }
 
-	# 	# cancel_trigger = {
-	# 	# 	hidden_trigger = {
-	# 	# 		NOT = {
-	# 	# 			any_country = {
-	# 	# 				has_country_flag = AC_assist_repair_target_by_@ROOT
-	# 	# 			}
-	# 	# 		}
-	# 	# 	}
-	# 	# }
+		visible = { always = no }
 
-	# 	modifier = {
-	# 		political_power_gain = -1
-	# 	}
+		days_remove = project_construction_duration^0
 
-	# 	days_remove = 180
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^0 < 0 } } } }
 
-	# 	remove_effect = {
-	# 		log = "[GetDateText]: [Root.GetName]: Decision remove AC_assist_repair_decision"
-	# 		every_country = {
-	# 			limit = { has_country_flag = AC_assist_repair_target_by_@ROOT }
-
-	# 			remove_ideas = AC_assist_repair_target_idea
-
-	# 			clr_country_flag = AC_assist_repair_target_by_@ROOT
-	# 		}
-	# 	}
-	# }
-
-	# AC_assist_repair_CANCEL_decision = {
-	# 	icon = GFX_decision_category_crisis
-
-	# 	visible = {
-	# 		has_decision = AC_assist_repair_decision
-	# 	}
-
-	# 	complete_effect = {
-	# 		log = "[GetDateText]: [Root.GetName]: Decision AC_assist_repair_CANCEL_decision"
-	# 		every_country = {
-	# 			limit = { has_country_flag = AC_assist_repair_target_by_@ROOT }
-
-	# 			remove_ideas = AC_assist_repair_target_idea
-
-	# 			clr_country_flag = AC_assist_repair_target_by_@ROOT
-	# 		}
-	# 	}
-	# }
-
-	###################################################
-	AC_construction_INF_decision1 = { #Infrastructure
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_INF_target_state1_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_INF_target_state1_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_INF_target_state1_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_INF_decision1"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_INF_target_state1_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_INF_target_state1_@ROOT }
-						AC_add_INF_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_INF_target_state1_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_INF_decision1 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_INF_decision1 } }
-				}
-
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_0_decision"
+			hidden_effect = {
+				set_variable = { project = 0 }
+				country_event = AC_event.0
 			}
 		}
 	}
-	AC_construction_INF_decision2 = { #Infrastructure
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_1_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_INF_target_state2_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_INF_target_state2_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
+		priority = 5
 
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_INF_target_state2_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
+		highlight_states = { check_variable = { ROOT.project_array^1 = THIS.id } }
 
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
+		visible = { always = no }
 
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_INF_decision2"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_INF_target_state2_@ROOT  } }
+		days_remove = project_construction_duration^1
 
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_INF_target_state2_@ROOT }
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^1 < 0 } } } }
 
-						AC_add_INF_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_INF_target_state2_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_INF_decision2 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_INF_decision2 } }
-				}
-
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_1_decision"
+			hidden_effect = {
+				set_variable = { project = 1 }
+				country_event = AC_event.0
 			}
 		}
 	}
-	AC_construction_INF_decision3 = { #Infrastructure
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_2_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_INF_target_state3_@ROOT
-		}
-		available = {
-		hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_INF_target_state3_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
+		priority = 5
 
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_INF_target_state3_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
+		highlight_states = { check_variable = { ROOT.project_array^2 = THIS.id } }
 
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
+		visible = { always = no }
 
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_INF_decision3"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_INF_target_state3_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_INF_target_state3_@ROOT }
+		days_remove = project_construction_duration^2
 
-						AC_add_INF_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_INF_target_state3_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_INF_decision3 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_INF_decision3 } }
-				}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^2 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_2_decision"
+			hidden_effect = {
+				set_variable = { project = 2 }
+				country_event = AC_event.0
 			}
 		}
 	}
-	AC_construction_INF_decision4 = { #Infrastructure
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_3_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_INF_target_state4_@ROOT
-		}
-		available = {
-		hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_INF_target_state4_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
+		priority = 5
 
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_INF_target_state4_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
+		highlight_states = { check_variable = { ROOT.project_array^3 = THIS.id } }
 
-		days_mission_timeout = AC_construction_duration
-		days_remove = 4
-		cancel_if_not_visible = yes
-		fire_only_once = yes
+		visible = { always = no }
 
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_INF_decision4"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_INF_target_state4_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_INF_target_state4_@ROOT }
+		days_remove = project_construction_duration^3
 
-						AC_add_INF_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_INF_target_state4_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_INF_decision4 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_INF_decision4 } }
-				}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^3 < 0 } } } }
 
-			}
-		}
-
-
-	}
-	AC_construction_INF_decision5 = { #Infrastructure
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_INF_target_state5_@ROOT
-		}
-		available = {
-		hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_INF_target_state5_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_INF_target_state5_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 5
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_INF_decision5"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_INF_target_state5_@ROOT  } }
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_INF_target_state5_@ROOT }
-
-						AC_add_INF_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_INF_target_state5_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_INF_decision5 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_INF_decision5 } }
-				}
-
-			}
-		}
-
-
-	}
-
-	AC_construction_AB_decision1 = { #Air Base
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_AB_target_state1_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_AB_target_state1_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_AB_target_state1_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_AB_decision1"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_AB_target_state1_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_AB_target_state1_@ROOT }
-
-						AC_add_AB_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_AB_target_state1_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_AB_decision1 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_AB_decision1 } }
-				}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_3_decision"
+			hidden_effect = {
+				set_variable = { project = 3 }
+				country_event = AC_event.0
 			}
 		}
 	}
-	AC_construction_AB_decision2 = { #Air Base
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_4_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_AB_target_state2_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_AB_target_state2_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
+		priority = 5
+
+		highlight_states = { check_variable = { ROOT.project_array^4 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^4
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^4 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_4_decision"
+			hidden_effect = {
+				set_variable = { project = 4 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_AB_target_state2_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_AB_decision2"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_AB_target_state2_@ROOT  } }
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_AB_target_state2_@ROOT }
-
-						AC_add_AB_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_AB_target_state2_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_AB_decision2 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_AB_decision2 } }
-				}
-
-			}
-		}
-
-
 	}
-	AC_construction_AB_decision3 = { #Air Base
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_5_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_AB_target_state3_@ROOT
-		}
-		available = {
-		hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_AB_target_state3_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
+		priority = 5
+
+		highlight_states = { check_variable = { ROOT.project_array^5 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^5
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^5 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_5_decision"
+			hidden_effect = {
+				set_variable = { project = 5 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_AB_target_state3_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_AB_decision3"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_AB_target_state3_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_AB_target_state3_@ROOT }
-
-						AC_add_AB_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_AB_target_state3_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_AB_decision3 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_AB_decision3 } }
-				}
-
-			}
-		}
-
-
 	}
-	AC_construction_AB_decision4 = { #Air Base
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_6_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_AB_target_state4_@ROOT
-		}
-		available = {
-		hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_AB_target_state4_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
+		priority = 5
+
+		highlight_states = { check_variable = { ROOT.project_array^6 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^6
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^6 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_6_decision"
+			hidden_effect = {
+				set_variable = { project = 6 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_AB_target_state4_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 4
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_AB_decision4"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_AB_target_state4_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_AB_target_state4_@ROOT }
-
-						AC_add_AB_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_AB_target_state4_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_AB_decision4 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_AB_decision4 } }
-				}
-
-			}
-		}
-
-
 	}
-	AC_construction_AB_decision5 = { #Air Base
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_7_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_AB_target_state5_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_AB_target_state5_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
+		priority = 5
+
+		highlight_states = { check_variable = { ROOT.project_array^7 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^7
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^7 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_7_decision"
+			hidden_effect = {
+				set_variable = { project = 7 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_AB_target_state5_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 5
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_AB_decision5"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_AB_target_state5_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_AB_target_state5_@ROOT }
-
-						AC_add_AB_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_AB_target_state5_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_AB_decision5 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_AB_decision5 } }
-				}
-
-			}
-		}
-
-
 	}
+	AC_project_8_decision = {
+		icon = GFX_decision_category_generic_industry
 
-	AC_construction_AA_decision1 = { #Anti Air
-		icon = generic_construction
-		activation = { always = no }
+		priority = 5
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_AA_target_state1_@ROOT
-		}
-		available = {
-		hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_AA_target_state1_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
+		highlight_states = { check_variable = { ROOT.project_array^8 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^8
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^8 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_8_decision"
+			hidden_effect = {
+				set_variable = { project = 8 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_AA_target_state1_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_AA_decision1"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_AA_target_state1_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_AA_target_state1_@ROOT }
-
-						AC_add_AA_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_AA_target_state1_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_AA_decision1 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_AA_decision1 } }
-				}
-
-			}
-		}
-
-
 	}
-	AC_construction_AA_decision2 = { #Anti Air
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_9_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_AA_target_state2_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_AA_target_state2_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
+		priority = 5
+
+		highlight_states = { check_variable = { ROOT.project_array^9 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^9
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^9 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_9_decision"
+			hidden_effect = {
+				set_variable = { project = 9 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_AA_target_state2_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_AA_decision2"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_AA_target_state2_@ROOT  } }
-
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_AA_target_state2_@ROOT }
-
-						AC_add_AA_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_AA_target_state2_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_AA_decision2 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_AA_decision2 } }
-				}
-
-			}
-		}
-
-
 	}
-	AC_construction_AA_decision3 = { #Anti Air
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_10_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_AA_target_state3_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_AA_target_state3_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
+		priority = 5
+
+		highlight_states = { check_variable = { ROOT.project_array^10 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^10
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^10 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_10_decision"
+			hidden_effect = {
+				set_variable = { project = 10 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_AA_target_state3_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_AA_decision3"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_AA_target_state3_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_AA_target_state3_@ROOT }
-
-						AC_add_AA_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_AA_target_state3_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_AA_decision3 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_AA_decision3 } }
-				}
-
-			}
-		}
-
-
 	}
-	AC_construction_AA_decision4 = { #Anti Air
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_11_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_AA_target_state4_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_AA_target_state4_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
+		priority = 5
+
+		highlight_states = { check_variable = { ROOT.project_array^11 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^11
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^11 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_11_decision"
+			hidden_effect = {
+				set_variable = { project = 11 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_AA_target_state4_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 4
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_AA_decision4"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_AA_target_state4_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_AA_target_state4_@ROOT }
-
-						AC_add_AA_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_AA_target_state4_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_AA_decision4 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_AA_decision4 } }
-				}
-
-			}
-		}
-
-
 	}
-	AC_construction_AA_decision5 = { #Anti Air
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_12_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_AA_target_state5_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_AA_target_state5_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
+		priority = 5
+
+		highlight_states = { check_variable = { ROOT.project_array^12 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^12
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^12 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_12_decision"
+			hidden_effect = {
+				set_variable = { project = 12 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_AA_target_state5_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 5
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_AA_decision5"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_AA_target_state5_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_AA_target_state5_@ROOT }
-
-						AC_add_AA_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_AA_target_state5_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_AA_decision5 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_AA_decision5 } }
-				}
-
-			}
-		}
-
-
 	}
+	AC_project_13_decision = {
+		icon = GFX_decision_category_generic_industry
 
-	AC_construction_RAD_decision1 = { #Radar
-		icon = generic_construction
-		activation = { always = no }
+		priority = 5
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_RAD_target_state1_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state1_@ROOT } } }
-				FROM = { NOT = { tag = ROOT } }
+		highlight_states = { check_variable = { ROOT.project_array^13 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^13
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^13 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_13_decision"
+			hidden_effect = {
+				set_variable = { project = 13 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state1_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_RAD_decision1"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state1_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_RAD_target_state1_@ROOT }
-
-						AC_add_RAD_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_RAD_target_state1_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_RAD_decision1 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_RAD_decision1 } }
-				}
-
-			}
-		}
-
-
 	}
-	AC_construction_RAD_decision2 = { #Radar
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_14_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_RAD_target_state2_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state2_@ROOT } } }
-				FROM = { NOT = { tag = ROOT } }
+		priority = 5
+
+		highlight_states = { check_variable = { ROOT.project_array^14 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^14
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^14 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_14_decision"
+			hidden_effect = {
+				set_variable = { project = 14 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state2_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_RAD_decision2"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state2_@ROOT  } }
-
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_RAD_target_state2_@ROOT }
-
-						AC_add_RAD_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_RAD_target_state2_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_RAD_decision2 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_RAD_decision2 } }
-				}
-
-			}
-		}
-
-
 	}
-	AC_construction_RAD_decision3 = { #Radar
-		icon = generic_construction
-		activation = { always = no }
+	AC_project_15_decision = {
+		icon = GFX_decision_category_generic_industry
 
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_RAD_target_state3_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state3_@ROOT } } }
-				FROM = { NOT = { tag = ROOT } }
+		priority = 5
+
+		highlight_states = { check_variable = { ROOT.project_array^15 = THIS.id } }
+
+		visible = { always = no }
+
+		days_remove = project_construction_duration^15
+
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { ROOT.project_array^15 < 0 } } } }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_15_decision"
+			hidden_effect = {
+				set_variable = { project = 15 }
+				country_event = AC_event.0
 			}
 		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state3_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_RAD_decision3"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state3_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_RAD_target_state3_@ROOT }
-
-						AC_add_RAD_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_RAD_target_state3_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_RAD_decision3 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_RAD_decision3 } }
-				}
-
-			}
-		}
-
-
 	}
-	AC_construction_RAD_decision4 = { #Radar
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_RAD_target_state4_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state4_@ROOT } } }
-				FROM = { NOT = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state4_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 4
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_RAD_decision4"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state4_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_RAD_target_state4_@ROOT }
-
-						AC_add_RAD_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_RAD_target_state4_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_RAD_decision4 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_RAD_decision4 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_RAD_decision5 = { #Radar
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_RAD_target_state5_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state5_@ROOT } } }
-				FROM = { NOT = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state5_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 5
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_RAD_decision5"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_RAD_target_state5_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_RAD_target_state5_@ROOT }
-
-						AC_add_RAD_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_RAD_target_state5_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_RAD_decision5 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_RAD_decision5 } }
-				}
-
-			}
-		}
-
-
-	}
-
-
-	AC_construction_MIC_decision1 = { #Military factories
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_MIC_target_state1_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state1_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state1_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_MIC_decision1"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state1_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_MIC_target_state1_@ROOT }
-
-						AC_add_MIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_MIC_target_state1_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_MIC_decision1 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_MIC_decision1 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_MIC_decision2 = { #Military factories
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_MIC_target_state2_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state2_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state2_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_MIC_decision2"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state2_@ROOT  } }
-
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_MIC_target_state2_@ROOT }
-
-						AC_add_MIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_MIC_target_state2_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_MIC_decision2 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_MIC_decision2 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_MIC_decision3 = { #Military factories
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_MIC_target_state3_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state3_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state3_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_MIC_decision3"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state3_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_MIC_target_state3_@ROOT }
-
-						AC_add_MIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_MIC_target_state3_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_MIC_decision3 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_MIC_decision3 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_MIC_decision4 = { #Military factories
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_MIC_target_state4_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state4_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state4_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 4
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_MIC_decision4"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state4_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_MIC_target_state4_@ROOT }
-
-						AC_add_MIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_MIC_target_state4_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_MIC_decision4 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_MIC_decision4 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_MIC_decision5 = { #Military factories
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_MIC_target_state5_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state5_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state5_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 5
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_MIC_decision5"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_MIC_target_state5_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_MIC_target_state5_@ROOT }
-
-						AC_add_MIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_MIC_target_state5_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_MIC_decision5 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_MIC_decision5 } }
-				}
-
-			}
-		}
-
-
-	}
-
-	AC_construction_CIC_decision1 = { #Civilian factories
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_CIC_target_state1_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state1_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state1_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		modifier = {
-			#civilian_factory_use = 1
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_CIC_decision1"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state1_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_CIC_target_state1_@ROOT }
-
-						AC_add_CIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_CIC_target_state1_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_CIC_decision1 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_CIC_decision1 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_CIC_decision2 = { #Civilian factories
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_CIC_target_state2_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state2_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state2_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_CIC_decision2"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state2_@ROOT  } }
-
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_CIC_target_state2_@ROOT }
-
-						AC_add_CIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_CIC_target_state2_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_CIC_decision2 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_CIC_decision2 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_CIC_decision3 = { #Civilian factories
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_CIC_target_state3_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state3_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state3_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_CIC_decision3"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state3_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_CIC_target_state3_@ROOT }
-
-						AC_add_CIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_CIC_target_state3_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_CIC_decision3 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_CIC_decision3 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_CIC_decision4 = { #Civilian factories
-		icon = generic_construction
-		activation = { always = no }
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_CIC_target_state4_@ROOT
-		}
-		available = {
-			hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state4_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state4_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 4
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_CIC_decision4"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state4_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_CIC_target_state4_@ROOT }
-
-						AC_add_CIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_CIC_target_state4_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_CIC_decision4 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_CIC_decision4 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_CIC_decision5 = { #Civilian factories
-		icon = generic_construction
-		activation = { always = no }
-
-
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_CIC_target_state5_@ROOT
-		}
-		available = {
-		hidden_trigger = {
-				FROM = { not = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state5_@ROOT } } }
-				FROM = { not = { tag = ROOT } }
-			}
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state5_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 5
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_CIC_decision5"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_CIC_target_state5_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_CIC_target_state5_@ROOT }
-
-						AC_add_CIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_CIC_target_state5_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_CIC_decision5 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_CIC_decision5 } }
-				}
-
-			}
-		}
-
-
-	}
-
-	AC_construction_NIC_decision1 = { #Naval factories
-		icon = generic_construction
-		activation = { always = no }
-
-
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_NIC_target_state1_@ROOT
-		}
-		available = {
-			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state1_@ROOT } } }
-			hidden_trigger = { FROM = { not = { tag = ROOT } } }
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state1_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		modifier = {
-			#civilian_factory_use = 1
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_NIC_decision1"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state1_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_NIC_target_state1_@ROOT }
-
-						AC_add_NIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_NIC_target_state1_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_NIC_decision1 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_NIC_decision1 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_NIC_decision2 = { #Naval factories
-		icon = generic_construction
-		activation = { always = no }
-
-
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_NIC_target_state2_@ROOT
-		}
-		available = {
-			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state2_@ROOT } } }
-			hidden_trigger = { FROM = { not = { tag = ROOT } } }
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state2_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_NIC_decision2"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state2_@ROOT  } }
-
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_NIC_target_state2_@ROOT }
-
-						AC_add_NIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_NIC_target_state2_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_NIC_decision2 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_NIC_decision2 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_NIC_decision3 = { #Naval factories
-		icon = generic_construction
-		activation = { always = no }
-
-
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_NIC_target_state3_@ROOT
-		}
-		available = {
-			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state3_@ROOT } } }
-			hidden_trigger = { FROM = { not = { tag = ROOT } } }
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state3_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_NIC_decision3"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state3_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_NIC_target_state3_@ROOT }
-
-						AC_add_NIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_NIC_target_state3_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_NIC_decision3 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_NIC_decision3 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_NIC_decision4 = { #Naval factories
-		icon = generic_construction
-		activation = { always = no }
-
-
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_NIC_target_state4_@ROOT
-		}
-		available = {
-			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state4_@ROOT } } }
-			hidden_trigger = { FROM = { not = { tag = ROOT } } }
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state4_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 4
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_NIC_decision4"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state4_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_NIC_target_state4_@ROOT }
-
-						AC_add_NIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_NIC_target_state4_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_NIC_decision4 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_NIC_decision4 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_NIC_decision5 = { #Naval factories
-		icon = generic_construction
-		activation = { always = no }
-
-
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_NIC_target_state5_@ROOT
-		}
-		available = {
-			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state5_@ROOT } } }
-			hidden_trigger = { FROM = { not = { tag = ROOT } } }
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state5_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 5
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_NIC_decision5"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_NIC_target_state5_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_NIC_target_state5_@ROOT }
-
-						AC_add_NIC_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_NIC_target_state5_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_NIC_decision5 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_NIC_decision5 } }
-				}
-
-			}
-		}
-
-
-	}
-
-
-	AC_construction_REF_decision1 = { #Refineries
-		icon = generic_construction
-		activation = { always = no }
-
-
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_REF_target_state1_@ROOT
-		}
-		available = {
-			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_REF_target_state1_@ROOT } } }
-			hidden_trigger = { FROM = { not = { tag = ROOT } } }
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_REF_target_state1_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-		modifier = {
-			#civilian_factory_use = 1
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_REF_decision1"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_REF_target_state1_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_REF_target_state1_@ROOT }
-
-						AC_add_REF_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_REF_target_state1_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_REF_decision1 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_REF_decision1 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_REF_decision2 = { #Refineries
-		icon = generic_construction
-		activation = { always = no }
-
-
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_REF_target_state2_@ROOT
-		}
-		available = {
-			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_REF_target_state2_@ROOT } } }
-			hidden_trigger = { FROM = { not = { tag = ROOT } } }
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_REF_target_state2_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_REF_decision2"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_REF_target_state2_@ROOT  } }
-
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_REF_target_state2_@ROOT }
-
-						AC_add_REF_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_REF_target_state2_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_REF_decision2 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_REF_decision2 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_REF_decision3 = { #Refineries
-		icon = generic_construction
-		activation = { always = no }
-
-
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_REF_target_state3_@ROOT
-		}
-		available = {
-			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_REF_target_state3_@ROOT } } }
-			hidden_trigger = { FROM = { not = { tag = ROOT } } }
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_REF_target_state3_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 3
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_REF_decision3"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_REF_target_state3_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_REF_target_state3_@ROOT }
-
-						AC_add_REF_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_REF_target_state3_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_REF_decision3 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_REF_decision3 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_REF_decision4 = { #Refineries
-		icon = generic_construction
-		activation = { always = no }
-
-
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_REF_target_state4_@ROOT
-		}
-		available = {
-			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_REF_target_state4_@ROOT } } }
-			hidden_trigger = { FROM = { not = { tag = ROOT } } }
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_REF_target_state4_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 4
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_REF_decision4"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_REF_target_state4_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_REF_target_state4_@ROOT }
-
-						AC_add_REF_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_REF_target_state4_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_REF_decision4 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_REF_decision4 } }
-				}
-
-			}
-		}
-
-
-	}
-	AC_construction_REF_decision5 = { #Refineries
-		icon = generic_construction
-		activation = { always = no }
-
-
-
-		highlight_states = {
-			is_owned_by = FROM
-			has_state_flag = AC_construction_REF_target_state5_@ROOT
-		}
-		available = {
-			FROM = { not = { any_owned_state = { has_state_flag = AC_construction_REF_target_state5_@ROOT } } }
-			hidden_trigger = { FROM = { not = { tag = ROOT } } }
-		}
-
-		visible = {
-			FROM = { any_owned_state = { has_state_flag = AC_construction_REF_target_state5_@ROOT } }
-			FROM = { not = { tag = ROOT } }
-		}
-
-
-
-		Is_good = yes
-		days_mission_timeout = AC_construction_duration
-		days_remove = 5
-		cancel_if_not_visible = yes
-		fire_only_once = yes
-
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_REF_decision5"
-			if = { # check state eligibility
-				limit = {
-					FROM = { any_owned_state = { has_state_flag = AC_construction_REF_target_state5_@ROOT  } }
-					#AC_building_slot_available = yes
-				}
-				FROM = {
-					random_owned_state = {
-						limit = { has_state_flag = AC_construction_REF_target_state5_@ROOT }
-
-						AC_add_REF_building = yes
-						save_event_target_as = AC_state_event_target
-						clr_state_flag = AC_construction_REF_target_state5_@ROOT
-						set_variable = { AC_build_amount = 1 }
-					}
-				}
-				hidden_effect = {
-					remove_targeted_decision = { target = FROM decision = AC_construction_REF_decision5 }
-					FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_target_REF_decision5 } }
-				}
-
-			}
-		}
-
-
-	}
-
-
 }
 
 AC_target_country_DECISIONS = {
 
-	AC_construction_target_INF_decision1 = {
+	AC_project_0_target_decision = {
+		highlight_states = { has_variable = project_target_state_@FROM check_variable = { project_target_state_@FROM = 0 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_INF_target_state1_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_INF_target_state1_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_INF_decision1"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_INF_decision1"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^0 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_INF_decision1"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_INF_target_state1_@FROM }
-				hidden_effect = { AC_Return_money_INF2 = yes }
-				effect_tooltip = { AC_add_INF_building2 = yes }
-				clr_state_flag = AC_construction_INF_target_state1_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_0_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_INF_decision1 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_INF_decision1 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 0 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_INF_decision2 = {
+	AC_project_1_target_decision = {
+		highlight_states = { check_variable = { project_target_state_@FROM = 1 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_INF_target_state2_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_INF_target_state2_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_INF_decision2"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_INF_decision2"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^1 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_INF_decision2"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_INF_target_state2_@FROM }
-				hidden_effect = { AC_Return_money_INF2 = yes }
-				effect_tooltip = { AC_add_INF_building2 = yes }
-				clr_state_flag = AC_construction_INF_target_state2_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_1_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_INF_decision2 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_INF_decision2 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 1 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_INF_decision3 = {
+	AC_project_2_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 2 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_INF_target_state3_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_INF_target_state3_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_INF_decision3"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_INF_decision3"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^2 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_INF_decision3"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_INF_target_state3_@FROM }
-				hidden_effect = { AC_Return_money_INF2 = yes }
-				effect_tooltip = { AC_add_INF_building2 = yes }
-				clr_state_flag = AC_construction_INF_target_state3_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_2_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_INF_decision3 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_INF_decision3 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 2 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_INF_decision4 = {
+	AC_project_3_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 3 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_INF_target_state4_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_INF_target_state4_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_INF_decision4"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_INF_decision4"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^3 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_INF_decision4"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_INF_target_state4_@FROM }
-				hidden_effect = { AC_Return_money_INF2 = yes }
-				effect_tooltip = { AC_add_INF_building2 = yes }
-				clr_state_flag = AC_construction_INF_target_state3_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_3_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_INF_decision4 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_INF_decision4 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 3 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_INF_decision5 = {
+	AC_project_4_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 4 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_INF_target_state5_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_INF_target_state5_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_INF_decision5"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_INF_decision5"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^4 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_INF_decision5"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_INF_target_state5_@FROM }
-				hidden_effect = { AC_Return_money_INF2 = yes }
-				effect_tooltip = { AC_add_INF_building2 = yes }
-				clr_state_flag = AC_construction_INF_target_state3_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_4_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_INF_decision5 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_INF_decision5 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 4 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-
-	AC_construction_target_AB_decision1 = {
+	AC_project_5_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 5 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_AB_target_state1_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_AB_target_state1_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_AB_decision1"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_AB_decision1"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^5 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_AB_decision1"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_AB_target_state1_@FROM }
-				hidden_effect = { AC_Return_money_AB2 = yes }
-				effect_tooltip = { AC_add_AB_building2 = yes }
-				clr_state_flag = AC_construction_AB_target_state1_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_5_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_AB_decision1 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_AB_decision1 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 5 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_AB_decision2 = {
+	AC_project_6_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 6 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_AB_target_state2_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_AB_target_state2_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_AB_decision2"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_AB_decision2"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^6 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_AB_decision2"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_AB_target_state2_@FROM }
-				hidden_effect = { AC_Return_money_AB2 = yes }
-				effect_tooltip = { AC_add_AB_building2 = yes }
-				clr_state_flag = AC_construction_AB_target_state2_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_6_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_AB_decision2 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_AB_decision2 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 6 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_AB_decision3 = {
+	AC_project_7_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 7 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_AB_target_state3_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_AB_target_state3_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_AB_decision3"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_AB_decision3"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^7 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_AB_decision3"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_AB_target_state3_@FROM }
-				hidden_effect = { AC_Return_money_AB2 = yes }
-				effect_tooltip = { AC_add_AB_building2 = yes }
-				clr_state_flag = AC_construction_AB_target_state3_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_7_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_AB_decision3 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_AB_decision3 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 7 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_AB_decision4 = {
+	AC_project_8_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 8 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_AB_target_state4_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_AB_target_state4_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_AB_decision4"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_AB_decision4"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^8 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_AB_decision4"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_AB_target_state4_@FROM }
-				hidden_effect = { AC_Return_money_AB2 = yes }
-				effect_tooltip = { AC_add_AB_building2 = yes }
-				clr_state_flag = AC_construction_AB_target_state3_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_8_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_AB_decision4 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_AB_decision4 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 8 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_AB_decision5 = {
+	AC_project_9_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 9 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_AB_target_state5_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_AB_target_state5_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_AB_decision5"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_AB_decision5"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^9 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_AB_decision5"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_AB_target_state5_@FROM }
-				hidden_effect = { AC_Return_money_AB2 = yes }
-				effect_tooltip = { AC_add_AB_building2 = yes }
-				clr_state_flag = AC_construction_AB_target_state3_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_9_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_AB_decision5 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_AB_decision5 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 9 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-
-	AC_construction_target_AA_decision1 = {
+	AC_project_10_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 10 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_AA_target_state1_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_AA_target_state1_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_AA_decision1"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_AA_decision1"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^10 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_AA_decision1"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_AA_target_state1_@FROM }
-				hidden_effect = { AC_Return_money_AA2 = yes }
-				effect_tooltip = { AC_add_AA_building2 = yes }
-				clr_state_flag = AC_construction_AA_target_state1_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_10_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_AA_decision1 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_AA_decision1 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 10 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_AA_decision2 = {
+	AC_project_11_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 11 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_AA_target_state2_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_AA_target_state2_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_AA_decision2"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_AA_decision2"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^11 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_AA_decision2"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_AA_target_state2_@FROM }
-				hidden_effect = { AC_Return_money_AA2 = yes }
-				effect_tooltip = { AC_add_AA_building2 = yes }
-				clr_state_flag = AC_construction_AA_target_state2_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_11_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_AA_decision2 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_AA_decision2 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 11 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_AA_decision3 = {
+	AC_project_12_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 12 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_AA_target_state3_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_AA_target_state3_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_AA_decision3"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_AA_decision3"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^12 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_AA_decision3"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_AA_target_state3_@FROM }
-				hidden_effect = { AC_Return_money_AA2 = yes }
-				effect_tooltip = { AC_add_AA_building2 = yes }
-				clr_state_flag = AC_construction_AA_target_state3_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_12_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_AA_decision3 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_AA_decision3 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 12 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_AA_decision4 = {
+	AC_project_13_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 13 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_AA_target_state4_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_AA_target_state4_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_AA_decision4"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_AA_decision4"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^13 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_AA_decision4"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_AA_target_state4_@FROM }
-				hidden_effect = { AC_Return_money_AA2 = yes }
-				effect_tooltip = { AC_add_AA_building2 = yes }
-				clr_state_flag = AC_construction_AA_target_state3_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_0_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_AA_decision4 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_AA_decision4 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 13 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-	AC_construction_target_AA_decision5 = {
+	AC_project_14_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 14 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_AA_target_state5_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_AA_target_state5_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_AA_decision5"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_AA_decision5"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^14 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_AA_decision5"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_AA_target_state5_@FROM }
-				hidden_effect = { AC_Return_money_AA2 = yes }
-				effect_tooltip = { AC_add_AA_building2 = yes }
-				clr_state_flag = AC_construction_AA_target_state3_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_14_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_AA_decision5 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_AA_decision5 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 14 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
 	}
-
-	AC_construction_target_RAD_decision1 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-						has_state_flag = AC_construction_RAD_target_state1_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_RAD_target_state1_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_RAD_decision1"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_RAD_decision1"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_RAD_decision1"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_RAD_target_state1_@FROM }
-				hidden_effect = { AC_Return_money_RAD2 = yes }
-				effect_tooltip = { AC_add_RAD_building2 = yes }
-				clr_state_flag = AC_construction_RAD_target_state1_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_RAD_decision1 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_RAD_decision1 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_RAD_decision2 = {
+	AC_project_15_target_decision = {
+		highlight_states = {  check_variable = { project_target_state_@FROM = 15 } }
 
 		allowed = { always = no }
-		activation = { always = no }
 
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_RAD_target_state2_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_RAD_target_state2_@FROM
-		}
+		days_mission_timeout = project_target_construction_duration
 
 		is_good = yes
-		fire_only_once = yes
+
 		selectable_mission = yes
 
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
+		cost = 10
 
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_RAD_decision2"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_RAD_decision2"
-
-		}
+		cancel_trigger = { hidden_trigger = { NOT = { check_variable = { FROM.project_array^15 < 0 } } } }
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_RAD_decision2"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_RAD_target_state2_@FROM }
-				hidden_effect = { AC_Return_money_RAD2 = yes }
-				effect_tooltip = { AC_add_RAD_building2 = yes }
-				clr_state_flag = AC_construction_RAD_target_state2_@FROM
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AC_project_15_target_decision"
 			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_RAD_decision2 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_RAD_decision2 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
+				FROM = {
+					set_variable = { project = 15 }
+					country_event = AC_event.1
 				}
 			}
 		}
-
-
-	}
-	AC_construction_target_RAD_decision3 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_RAD_target_state3_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_RAD_target_state3_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_RAD_decision3"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_RAD_decision3"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_RAD_decision3"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_RAD_target_state3_@FROM }
-				hidden_effect = { AC_Return_money_RAD2 = yes }
-				effect_tooltip = { AC_add_RAD_building2 = yes }
-				clr_state_flag = AC_construction_RAD_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_RAD_decision3 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_RAD_decision3 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_RAD_decision4 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_RAD_target_state4_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_RAD_target_state4_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_RAD_decision4"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_RAD_decision4"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_RAD_decision4"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_RAD_target_state4_@FROM }
-				hidden_effect = { AC_Return_money_RAD2 = yes }
-				effect_tooltip = { AC_add_RAD_building2 = yes }
-				clr_state_flag = AC_construction_RAD_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_RAD_decision4 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_RAD_decision4 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_RAD_decision5 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_RAD_target_state5_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_RAD_target_state5_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_RAD_decision5"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_RAD_decision5"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_RAD_decision5"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_RAD_target_state5_@FROM }
-				hidden_effect = { AC_Return_money_RAD2 = yes }
-				effect_tooltip = { AC_add_RAD_building2 = yes }
-				clr_state_flag = AC_construction_RAD_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_RAD_decision5 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_RAD_decision5 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-
-	AC_construction_target_MIC_decision1 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_MIC_target_state1_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_MIC_target_state1_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_MIC_decision1"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_MIC_decision1"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_MIC_decision1"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_MIC_target_state1_@FROM }
-				hidden_effect = { AC_Return_money_MIC2 = yes }
-				effect_tooltip = { AC_add_MIC_building2 = yes }
-				clr_state_flag = AC_construction_MIC_target_state1_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_MIC_decision1 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_MIC_decision1 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_MIC_decision2 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_MIC_target_state2_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_MIC_target_state2_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_MIC_decision2"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_MIC_decision2"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_MIC_decision2"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_MIC_target_state2_@FROM }
-				hidden_effect = { AC_Return_money_MIC2 = yes }
-				effect_tooltip = { AC_add_MIC_building2 = yes }
-				clr_state_flag = AC_construction_MIC_target_state2_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_MIC_decision2 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_MIC_decision2 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_MIC_decision3 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_MIC_target_state3_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_MIC_target_state3_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_MIC_decision3"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_MIC_decision3"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_MIC_decision3"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_MIC_target_state3_@FROM }
-				hidden_effect = { AC_Return_money_MIC2 = yes }
-				effect_tooltip = { AC_add_MIC_building2 = yes }
-				clr_state_flag = AC_construction_MIC_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_MIC_decision3 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_MIC_decision3 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_MIC_decision4 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_MIC_target_state4_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_MIC_target_state4_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_MIC_decision4"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_MIC_decision4"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_MIC_decision4"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_MIC_target_state4_@FROM }
-				hidden_effect = { AC_Return_money_MIC2 = yes }
-				effect_tooltip = { AC_add_MIC_building2 = yes }
-				clr_state_flag = AC_construction_MIC_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_MIC_decision4 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_MIC_decision4 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_MIC_decision5 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_MIC_target_state5_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_MIC_target_state5_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_MIC_decision5"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_MIC_decision5"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_MIC_decision5"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_MIC_target_state5_@FROM }
-				hidden_effect = { AC_Return_money_MIC2 = yes }
-				effect_tooltip = { AC_add_MIC_building2 = yes }
-				clr_state_flag = AC_construction_MIC_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_MIC_decision5 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_MIC_decision5 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-
-	AC_construction_target_CIC_decision1 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_CIC_target_state1_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_CIC_target_state1_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_CIC_decision1"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_CIC_decision1"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_CIC_decision1"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_CIC_target_state1_@FROM }
-				hidden_effect = { AC_Return_money_CIC2 = yes }
-				effect_tooltip = { AC_add_CIC_building2 = yes }
-				clr_state_flag = AC_construction_CIC_target_state1_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_CIC_decision1 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_CIC_decision1 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_CIC_decision2 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_CIC_target_state2_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_CIC_target_state2_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_CIC_decision2"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_CIC_decision2"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_CIC_decision2"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_CIC_target_state2_@FROM }
-				hidden_effect = { AC_Return_money_CIC2 = yes }
-				effect_tooltip = { AC_add_CIC_building2 = yes }
-				clr_state_flag = AC_construction_CIC_target_state2_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_CIC_decision2 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_CIC_decision2 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_CIC_decision3 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_CIC_target_state3_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_CIC_target_state3_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_CIC_decision3"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_CIC_decision3"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_CIC_decision3"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_CIC_target_state3_@FROM }
-				hidden_effect = { AC_Return_money_CIC2 = yes }
-				effect_tooltip = { AC_add_CIC_building2 = yes }
-				clr_state_flag = AC_construction_CIC_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_CIC_decision3 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_CIC_decision3 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_CIC_decision4 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_CIC_target_state4_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_CIC_target_state4_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_CIC_decision4"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_CIC_decision4"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_CIC_decision4"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_CIC_target_state4_@FROM }
-				hidden_effect = { AC_Return_money_CIC2 = yes }
-				effect_tooltip = { AC_add_CIC_building2 = yes }
-				clr_state_flag = AC_construction_CIC_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_CIC_decision4 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_CIC_decision4 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_CIC_decision5 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_CIC_target_state5_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_CIC_target_state5_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_CIC_decision5"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_CIC_decision5"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_CIC_decision5"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_CIC_target_state5_@FROM }
-				hidden_effect = { AC_Return_money_CIC2 = yes }
-				effect_tooltip = { AC_add_CIC_building2 = yes }
-				clr_state_flag = AC_construction_CIC_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_CIC_decision5 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_CIC_decision5 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-
-	AC_construction_target_NIC_decision1 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_NIC_target_state1_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_NIC_target_state1_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_NIC_decision1"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_NIC_decision1"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_NIC_decision1"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_NIC_target_state1_@FROM }
-				hidden_effect = { AC_Return_money_NIC2 = yes }
-				effect_tooltip = { AC_add_NIC_building2 = yes }
-				clr_state_flag = AC_construction_NIC_target_state1_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_NIC_decision1 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_NIC_decision1 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_NIC_decision2 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_NIC_target_state2_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_NIC_target_state2_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_NIC_decision2"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_NIC_decision2"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_NIC_decision2"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_NIC_target_state2_@FROM }
-				hidden_effect = { AC_Return_money_NIC2 = yes }
-				effect_tooltip = { AC_add_NIC_building2 = yes }
-				clr_state_flag = AC_construction_NIC_target_state2_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_NIC_decision2 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_NIC_decision2 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_NIC_decision3 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_NIC_target_state3_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_NIC_target_state3_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_NIC_decision3"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_NIC_decision3"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_NIC_decision3"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_NIC_target_state3_@FROM }
-				hidden_effect = { AC_Return_money_NIC2 = yes }
-				effect_tooltip = { AC_add_NIC_building2 = yes }
-				clr_state_flag = AC_construction_NIC_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_NIC_decision3 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_NIC_decision3 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_NIC_decision4 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_NIC_target_state4_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_NIC_target_state4_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_NIC_decision4"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_NIC_decision4"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_NIC_decision4"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_NIC_target_state4_@FROM }
-				hidden_effect = { AC_Return_money_NIC2 = yes }
-				effect_tooltip = { AC_add_NIC_building2 = yes }
-				clr_state_flag = AC_construction_NIC_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_NIC_decision4 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_NIC_decision4 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_NIC_decision5 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_NIC_target_state5_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_NIC_target_state5_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_NIC_decision5"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_NIC_decision5"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_NIC_decision5"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_NIC_target_state5_@FROM }
-				hidden_effect = { AC_Return_money_NIC2 = yes }
-				effect_tooltip = { AC_add_NIC_building2 = yes }
-				clr_state_flag = AC_construction_NIC_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_NIC_decision5 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_NIC_decision5 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-
-	AC_construction_target_REF_decision1 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_REF_target_state1_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_REF_target_state1_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_REF_decision1"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_REF_decision1"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_REF_decision1"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_REF_target_state1_@FROM }
-				hidden_effect = { AC_Return_money_REF2 = yes }
-				effect_tooltip = { AC_add_REF_building2 = yes }
-				clr_state_flag = AC_construction_REF_target_state1_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_REF_decision1 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_REF_decision1 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_REF_decision2 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_REF_target_state2_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_REF_target_state2_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_REF_decision2"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_REF_decision2"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_REF_decision2"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_REF_target_state2_@FROM }
-				hidden_effect = { AC_Return_money_REF2 = yes }
-				effect_tooltip = { AC_add_REF_building2 = yes }
-				clr_state_flag = AC_construction_REF_target_state2_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_REF_decision2 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_REF_decision2 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_REF_decision3 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_REF_target_state3_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_REF_target_state3_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_REF_decision3"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_REF_decision3"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_REF_decision3"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_REF_target_state3_@FROM }
-				hidden_effect = { AC_Return_money_REF2 = yes }
-				effect_tooltip = { AC_add_REF_building2 = yes }
-				clr_state_flag = AC_construction_REF_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_REF_decision3 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_REF_decision3 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_REF_decision4 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_REF_target_state4_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_REF_target_state4_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_REF_decision4"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_REF_decision4"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_REF_decision4"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_REF_target_state4_@FROM }
-				hidden_effect = { AC_Return_money_REF2 = yes }
-				effect_tooltip = { AC_add_REF_building2 = yes }
-				clr_state_flag = AC_construction_REF_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_REF_decision4 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_REF_decision4 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
-	}
-	AC_construction_target_REF_decision5 = {
-
-		allowed = { always = no }
-		activation = { always = no }
-
-		available = {
-
-		}
-
-		cancel_trigger = {
-			hidden_trigger = {
-				NOT = {
-					any_owned_state = {
-						is_controlled_by = ROOT
-
-						has_state_flag = AC_construction_REF_target_state5_@FROM
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = ROOT
-			has_state_flag = AC_construction_REF_target_state5_@FROM
-		}
-
-		is_good = yes
-		fire_only_once = yes
-		selectable_mission = yes
-
-		days_mission_timeout = AC_target_construction_duration
-		days_remove = 3
-
-		cost = 0
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AC_construction_target_REF_decision5"
-
-		}
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout AC_construction_target_REF_decision5"
-
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision AC_construction_target_REF_decision5"
-			custom_effect_tooltip = AC_cancel_investment_tt
-			random_owned_state = {
-				limit = { has_state_flag = AC_construction_REF_target_state5_@FROM }
-				hidden_effect = { AC_Return_money_REF2 = yes }
-				effect_tooltip = { AC_add_REF_building2 = yes }
-				clr_state_flag = AC_construction_REF_target_state3_@FROM
-			}
-			hidden_effect = {
-				remove_targeted_decision = { target = FROM decision = AC_construction_target_REF_decision5 }
-				FROM = { remove_targeted_decision = { target = ROOT decision = AC_construction_REF_decision5 } }
-			}
-			FROM = {
-				hidden_effect = {
-					country_event = AC_event.3
-					set_variable = { AC_build_amount = 1 }
-				}
-			}
-		}
-
-
 	}
 }
