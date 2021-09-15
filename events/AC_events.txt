@@ -1,11 +1,30 @@
 ﻿############################################################################################################
 #	AC mod - events
 ############################################################################################################
-
 add_namespace = AC_event
 
-country_event = { #Offer of Investments
+# Notes: Maintenance Events
+# Starts project
+country_event = {
+	id = AC_event.0
+	hidden = yes
+	is_triggered_only = yes
+	immediate = { complete_project = yes refresh_gui = yes }
+	option = { }
+}
+
+# Ends project
+country_event = {
 	id = AC_event.1
+	hidden = yes
+	is_triggered_only = yes
+	immediate = { end_project = yes refresh_gui = yes }
+}
+
+# AC Event Master Event
+# Offers Investments to THIS from the Investor Nation FROM
+country_event = {
+	id = AC_event.10
 	title = AC_event.1.t
 	desc = AC_event.1.d
 	picture = GFX_united_states_dollar
@@ -13,18 +32,92 @@ country_event = { #Offer of Investments
 
 	option = { name = AC_event.1.o1
 		log = "[GetDateText]: [This.GetName]: AC_event.1.o1 executed"
+		hidden_effect = {
+			# Activates the Investment Project
+			# FROM is the investor nation
+			# ROOT is the target country or if you just don't scope it
+
+			# Investor Nation Begins Project
+			FROM = {
+				start_project = yes
+			}
+			# Influence Section
+			if = {
+				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
+				set_temp_variable = { AC_influence_gain = FROM.project_monetary_cost^-1 }
+				if = {
+					limit = {
+						FROM = {
+							OR = {
+								check_variable = { project_building_type^project_type = 4 } #Infra
+								check_variable = { project_building_type^project_type = 6 } #Air Base
+								check_variable = { project_building_type^project_type = 8 } #AA
+								check_variable = { project_building_type^project_type = 7 } #Radar
+								check_variable = { project_building_type^project_type = 9 } #Radar
+								check_variable = { project_building_type^project_type = 10 } #Radar
+							}
+						}
+					}
+					divide_temp_variable = { AC_influence_gain = 1.5 }
+				}
+				else = {
+					divide_temp_variable = { AC_influence_gain = 2.5 }
+				}
+				multiply_temp_variable = { AC_influence_gain = FROM.influence_multiplier }
+				round_temp_variable = AC_influence_gain
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+					if = {
+						limit = {
+							check_variable = { influence_array^v = FROM }
+						}
+						add_to_variable = { influence_array_val^v = AC_influence_gain }
+						set_country_flag = found
+					}
+				}
+				if = {
+					limit = { NOT = { has_country_flag = found } }
+					add_to_array = { influence_array = FROM.id }
+					add_to_array = { influence_array_val = AC_influence_gain }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+
+				# Cool Down for the Influence Gain
+				if = {
+					limit = {
+						has_global_flag = GAME_RULE_influence_cooldown_limits_14
+					}
+					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 14 }
+				}
+				else_if = {
+					limit = {
+						has_global_flag = GAME_RULE_influence_cooldown_limits_30
+					}
+					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 30 }
+				}
+			}
+
+			# THIS Nation
+			# take 10% of the cost of the project
+			custom_effect_tooltip = AC_event.1.o1_TT
+			if = { limit = { NOT = { has_country_flag = influence_gained_@FROM } }
+				custom_effect_tooltip = AC_event_influence_gain
+			}
+			set_temp_variable = { temp_investment = FROM.project_monetary_cost_effect }
+			multiply_temp_variable = { temp_investment = 0.10 }
+			add_to_variable = { treasury = temp_investment }
+		}
+
+		# AI Chance of taking the Investment Project
 		ai_chance = {
-			base = 1
+			base = 10
 			modifier = {
 				add = 1
-				FROM = { has_idea = NATO_member }
-				has_idea = NATO_member
+				ai_has_same_organization = yes
 			}
-			modifier = {
-				add = 1
-				FROM = { has_idea = EU_member }
-				has_idea = EU_member
-			}
+
 			modifier = {
 				add = 1
 				has_opinion = { target = FROM value > 10 }
@@ -75,29 +168,8 @@ country_event = { #Offer of Investments
 				}
 			}
 			modifier = {
-				add = 1
-				any_owned_state = {
-					OR = {
-						free_building_slots = {
-							building = industrial_complex
-							size > 0
-							include_locked = no
-						}
-						infrastructure < 10
-					}
-				}
-			}
-			modifier = {
 				factor = 2
-				OR = {
-					has_idea = gdp_1
-					has_idea = gdp_2
-					has_idea = gdp_3
-					has_idea = gdp_4
-					has_idea = gdp_5
-					has_idea = gdp_6
-					has_idea = gdp_7
-				}
+				check_variable = { gdp_per_capita < 20 }
 			}
 			modifier = {
 				add = 5
@@ -112,765 +184,19 @@ country_event = { #Offer of Investments
 				}
 			}
 		}
-
-		hidden_effect = {
-			FROM = {
-				### activate project
-				if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 1 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_INF_target_state1_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_INF_decision1 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_INF_decision1 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_INF_target_state2_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_INF_decision2 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_INF_decision2 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_INF_target_state3_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_INF_decision3 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_INF_decision3 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_INF_target_state4_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_INF_decision4 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_INF_decision4 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_INF_target_state5_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_INF_decision5 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_INF_decision5 } }
-					}
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 2 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AB_target_state1_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_AB_decision1 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_AB_decision1 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AB_target_state2_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_AB_decision2 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_AB_decision2 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AB_target_state3_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_AB_decision3 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_AB_decision3 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AB_target_state4_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_AB_decision4 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_AB_decision4 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AB_target_state5_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_AB_decision5 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_AB_decision5 } }
-
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 3 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AA_target_state1_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_AA_decision1 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_AA_decision1 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AA_target_state2_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_AA_decision2 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_AA_decision2 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AA_target_state3_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_AA_decision3 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_AA_decision3 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AA_target_state4_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_AA_decision4 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_AA_decision4 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AA_target_state5_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_AA_decision5 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_AA_decision5 } }
-
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 4 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_RAD_target_state1_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_RAD_decision1 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_RAD_decision1 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_RAD_target_state2_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_RAD_decision2 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_RAD_decision2 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_RAD_target_state3_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_RAD_decision3 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_RAD_decision3 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_RAD_target_state4_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_RAD_decision4 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_RAD_decision4 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_RAD_target_state5_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_RAD_decision5 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_RAD_decision5 } }
-
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 5 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_MIC_target_state1_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_MIC_decision1 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_MIC_decision1 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_MIC_target_state2_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_MIC_decision2 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_MIC_decision2 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_MIC_target_state3_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_MIC_decision3 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_MIC_decision3 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_MIC_target_state4_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_MIC_decision4 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_MIC_decision4 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_MIC_target_state5_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_MIC_decision5 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_MIC_decision5 } }
-
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 6 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state1_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_CIC_decision1 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_CIC_decision1 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state2_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_CIC_decision2 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_CIC_decision2 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state3_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_CIC_decision3 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_CIC_decision3 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state4_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_CIC_decision4 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_CIC_decision4 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state5_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_CIC_decision5 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_CIC_decision5 } }
-
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 7 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_NIC_target_state1_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_NIC_decision1 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_NIC_decision1 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_NIC_target_state2_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_NIC_decision2 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_NIC_decision2 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_NIC_target_state3_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_NIC_decision3 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_NIC_decision3 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_NIC_target_state4_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_NIC_decision4 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_NIC_decision4 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_NIC_target_state5_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_NIC_decision5 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_NIC_decision5 } }
-
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 8 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_REF_target_state1_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_REF_decision1 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_REF_decision1 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_REF_target_state2_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_REF_decision2 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_REF_decision2 } }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_REF_target_state3_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_REF_decision3 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_REF_decision3 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_REF_target_state4_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_REF_decision4 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_REF_decision4 } }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_REF_target_state5_@FROM }
-						}
-						activate_targeted_decision = { target = PREV decision = AC_construction_REF_decision5 }
-						PREV = { activate_targeted_decision = { target = FROM decision = AC_construction_target_REF_decision5 } }
-					}
-				}
-
-				event_target:AC_state_event_target = { clr_state_flag = Investment_pause_@FROM }
-				### reset selected build ammount
-				set_variable = { AC_build_amount = 1 }
-			}
-			if = {
-				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
-				set_temp_variable = { AC_influence_gain = FROM.AC_build_cost }
-				if = {
-					limit = {
-						FROM = {
-							OR = {
-								check_variable = { AC_building_type_selected = 1 } #Infra
-								check_variable = { AC_building_type_selected = 2 } #Air Base
-								check_variable = { AC_building_type_selected = 3 } #AA
-								check_variable = { AC_building_type_selected = 4 } #Radar
-							}
-						}
-					}
-					divide_temp_variable = { AC_influence_gain = 1.5 }
-				}
-				else = {
-					divide_temp_variable = { AC_influence_gain = 2.5 }
-				}
-				multiply_temp_variable = { AC_influence_gain = FROM.influence_multiplier }
-				round_temp_variable = AC_influence_gain
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = FROM }
-						}
-						add_to_variable = { influence_array_val^v = AC_influence_gain }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = FROM.id }
-					add_to_array = { influence_array_val = AC_influence_gain }
-				}
-				clr_country_flag = found
-				recalculate_influence = yes
-
-				#Cooldowns
-				if = {
-					limit = {
-						has_game_rule = { rule = rule_influence_cooldown_limits option = day_14_cooldown }
-					}
-					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 14 }
-				}
-				else_if = {
-					limit = {
-						has_game_rule = { rule = rule_influence_cooldown_limits option = day_30_cooldown }
-					}
-					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 30 }
-				}
-				else = {
-					#Nothing at all
-				}
-			}
-
-			#take 25% of the cost
-			custom_effect_tooltip = AC_event.1.o1_TT
-			set_temp_variable = { temp_investment = FROM.AC_build_cost }
-			divide_temp_variable = { temp_investment = 4 }
-			subtract_from_variable = { treasury = temp_investment }
-		}
 	}
 
 	option = { name = AC_event.1.o2 # refuse
 		log = "[GetDateText]: [This.GetName]: AC_event.1.o2 executed"
 		hidden_effect = {
 			FROM = {
-				### activate project
-				if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 1 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_INF_target_state1_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_INF_target_state1_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_INF_target_state2_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_INF_target_state2_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_INF_target_state3_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_INF_target_state3_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_INF_target_state4_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_INF_target_state4_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_INF_target_state5_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_INF_target_state5_@FROM }
-
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 2 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AB_target_state1_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_AB_target_state1_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AB_target_state2_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_AB_target_state2_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AB_target_state3_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_AB_target_state3_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AB_target_state4_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_AB_target_state4_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AB_target_state5_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_AB_target_state5_@FROM }
-
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 3 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AA_target_state1_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_AA_target_state1_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AA_target_state2_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_AA_target_state2_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AA_target_state3_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_AA_target_state3_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AA_target_state4_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_AA_target_state4_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_AA_target_state5_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_AA_target_state5_@FROM }
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 4 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_RAD_target_state1_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_RAD_target_state1_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_RAD_target_state2_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_RAD_target_state2_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_RAD_target_state3_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_RAD_target_state3_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_RAD_target_state4_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_RAD_target_state4_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_RAD_target_state5_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_RAD_target_state5_@FROM }
-
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 5 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_MIC_target_state1_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_MIC_target_state1_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_MIC_target_state2_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_MIC_target_state2_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_MIC_target_state3_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_MIC_target_state3_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_MIC_target_state4_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_MIC_target_state4_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_MIC_target_state5_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_MIC_target_state5_@FROM }
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 6 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state1_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_CIC_target_state1_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state2_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_CIC_target_state2_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state3_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_CIC_target_state3_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state4_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_CIC_target_state4_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_CIC_target_state5_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_CIC_target_state5_@FROM }
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 7 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_NIC_target_state1_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_NIC_target_state1_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_NIC_target_state2_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_NIC_target_state2_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_NIC_target_state3_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_NIC_target_state3_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_NIC_target_state4_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_NIC_target_state4_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_NIC_target_state5_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_NIC_target_state5_@FROM }
-					}
-
-
-				}
-				else_if = {
-					limit = {
-						check_variable = { AC_building_type_selected = 8 }
-					}
-					if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_REF_target_state1_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_REF_target_state1_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_REF_target_state2_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_REF_target_state2_@FROM }
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_REF_target_state3_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_REF_target_state3_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_REF_target_state4_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_REF_target_state4_@FROM }
-
-					}
-					else_if = {
-						limit = {
-							event_target:AC_state_event_target = { has_state_flag = AC_construction_REF_target_state5_@FROM }
-						}
-						event_target:AC_state_event_target = { clr_state_flag = AC_construction_REF_target_state5_@FROM }
-					}
-
-
-				}
-
-				event_target:AC_state_event_target = { clr_state_flag = Investment_pause_@FROM }
-				### reset selected build ammount
-				set_variable = { AC_build_amount = 1 }
-			}
-
-			#event_target:AC_state_event_target = { AC_clear_state_flag = yes clr_state_flag = Investment_pause_@FROM }
-			FROM = {
-				set_variable = { AC_build_amount = 1 }
-				#clear_variable = AC_build_amount
-				country_event = AC_event.2
+				country_event = AC_event.11
 			}
 		}
-		FROM = { set_country_flag = this_investment_offer_pending@PREV }
+		FROM = {
+			set_country_flag = this_investment_offer_pending@PREV
+			country_event = AC_event.11
+		}
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -942,6 +268,7 @@ country_event = { #Offer of Investments
 					NOT = { check_variable = { influence_array^2 = FROM } }
 				}
 			}
+			# Tag Specific Rejections
 			modifier = {
 				add = 15
 				tag = NKO
@@ -952,7 +279,7 @@ country_event = { #Offer of Investments
 
 #Construction Refused
 country_event = {
-	id = AC_event.2
+	id = AC_event.11
 	title = AC_event.2.t
 	desc = AC_event.2.d
 	picture = GFX_united_states_dollar
@@ -971,7 +298,7 @@ country_event = {
 
 #Construction Cancelled
 country_event = {
-	id = AC_event.3
+	id = AC_event.12
 	title = AC_event.3.t
 	desc = AC_event.3.d
 	picture = GFX_united_states_dollar
@@ -981,3 +308,168 @@ country_event = {
 	option = { name = AC_event.3.o1 log = "[GetDateText]: [This.GetName]: AC_event.3.o1 executed" }
 }
 
+# AC Project Maintenance Events
+# These reset the project arrays to clean up in case it needs it
+# Cancelled Projects need to reset
+country_event = { #Clears project array index 0
+	id = AC_event.30
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^0 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.31
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^1 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.32
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^2 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.33
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^3 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.34
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^4 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.35
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^5 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.36
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^6 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.37
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^7 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.38
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^8 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.39
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^9 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.310
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^10 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.311
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^11 = 0 }
+		refresh_gui = yes
+	}
+
+}
+country_event = { #Clears project array index 0
+	id = AC_event.312
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^12 = 0 }
+		refresh_gui = yes
+	}
+}
+country_event = { #Clears project array index 0
+	id = AC_event.313
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^13 = 0 }
+		refresh_gui = yes
+	}
+}
+country_event = { #Clears project array index 0
+	id = AC_event.314
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^14 = 0 }
+		refresh_gui = yes
+	}
+}

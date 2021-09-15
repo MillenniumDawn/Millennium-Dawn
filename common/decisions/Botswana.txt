@@ -1,0 +1,291 @@
+BOT_anti_poaching_decisions = {
+
+	BOT_bi_yearly_poaching_report = {
+	
+		icon = GFX_decision_shoot_bird
+		
+		available = {
+			always = no
+		}
+		
+		activation = {
+			OR = {
+				has_idea = BOT_kalahari_expansion_1
+				has_idea = BOT_kalahari_expansion_2
+				has_idea = BOT_kalahari_expansion_3
+				has_idea = BOT_kalahari_expansion_4
+				has_idea = BOT_kalahari_expansion_5
+				has_idea = BOT_kalahari_expansion_6
+				has_idea = BOT_kalahari_expansion_7
+				has_idea = BOT_kalahari_expansion_8
+				has_idea = BOT_kalahari_expansion_9
+				has_idea = BOT_kalahari_expansion_10
+			}
+		}
+		
+		days_mission_timeout = 360
+		
+		days_re_enable = 1
+		
+		timeout_effect = {
+			if = {
+				limit = { check_variable = { no_of_poachers < 50 } }
+				BOT_decrease_desertification_rate = yes
+			}
+			if = {
+				limit = { check_variable = { no_of_poachers > 49 } check_variable = { no_of_poachers < 150 } }
+			}
+			if = {
+				limit = {check_variable = { no_of_poachers > 149 } }
+				BOT_increase_desertification_rate = yes
+			}
+		}
+		
+		complete_effect = {
+		}
+	
+	}
+	
+	BOT_anti_poaching_raid = {
+	
+		icon = generic_arrest
+		
+		available = {
+			always = yes
+		}
+		
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+		
+		days_remove = 15
+		
+		fixed_random_seed = no
+		
+		complete_effect = {
+			hidden_effect = { add_command_power = -20 }
+		}
+		
+		remove_effect = {
+			random_list = {
+				15 = {
+					modifier = {
+						add = 15
+						has_idea = police_02
+					}
+					modifier = {
+						add = 30
+						has_idea = police_03
+					}
+					modifier = {
+						add = 45
+						has_idea = police_04
+					}
+					modifier = {
+						add = 60
+						has_idea = police_05
+					}
+					modifier = {
+						add = 10
+						has_decision = BOT_anti_poaching_extra_security
+					}
+					set_temp_variable = { poachers_killed = 10 }
+					if = {
+						limit = { has_idea = BOT_army_against_poaching }
+						add_to_temp_variable = { poachers_killed = 5 }
+					}
+					if = {
+						limit = { has_decision = BOT_anti_poaching_heavy_weapons }
+						add_to_temp_variable = { poachers_killed = 5 }
+					}
+					custom_effect_tooltip = BOT_anti_poaching_raid_succesful
+					subtract_from_variable = { no_of_poachers = poachers_killed }
+				}
+				65 = {
+					modifier = {
+						add = -10
+						has_idea = police_02
+					}
+					modifier = {
+						add = -20
+						has_idea = police_03
+					}
+					modifier = {
+						add = -35
+						has_idea = police_04
+					}
+					modifier = {
+						add = -45
+						has_idea = police_05
+					}
+					modifier = {
+						add = -10
+						has_decision = BOT_anti_poaching_extra_security
+					}
+					set_temp_variable = { poachers_killed = 2 }
+					if = {
+						limit = { has_idea = BOT_army_against_poaching }
+						add_to_temp_variable = { poachers_killed = 2 }
+					}
+					if = {
+						limit = { has_decision = BOT_anti_poaching_heavy_weapons }
+						add_to_temp_variable = { poachers_killed = 2 }
+					}
+					custom_effect_tooltip = BOT_anti_poaching_raid_normal
+					subtract_from_variable = { no_of_poachers = poachers_killed }
+				}
+				20 = {
+					modifier = {
+						add = -5
+						has_idea = police_02
+					}
+					modifier = {
+						add = -10
+						has_idea = police_03
+					}
+					modifier = {
+						add = -10
+						has_idea = police_04
+					}
+					modifier = {
+						add = -15
+						has_idea = police_05
+					}
+					set_temp_variable = { poachers_killed = -10 }
+					if = {
+						limit = { has_idea = BOT_army_against_poaching }
+						add_to_temp_variable = { poachers_killed = 5 }
+					}
+					custom_effect_tooltip = BOT_anti_poaching_raid_failure
+					add_manpower = poachers_killed
+					decrease_popularity_2 = yes
+				}
+			}
+			clamp_variable = { var = no_of_poachers min = 0 }
+		}
+		
+		#Only do when at least medium threat
+		ai_will_do = {
+			factor = 100
+			modifier = {
+				factor = 0
+				check_variable = { no_of_poachers < 50 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { no_of_poachers > 150 }
+			}
+		}
+	
+	}
+	
+	BOT_anti_poaching_extra_security = {
+	
+		icon = generic_police_action
+		
+		available = {
+			always = yes
+		}
+		
+		cost = 25
+		
+		days_remove = 90
+		
+		modifier = {
+			custom_modifier_tooltip = BOT_anti_poaching_extra_security_tt
+		}
+		
+		#Only do when at least medium threat
+		ai_will_do = {
+			factor = 100
+			modifier = {
+				factor = 0
+				check_variable = { no_of_poachers < 50 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { no_of_poachers > 150 }
+			}
+		}
+	
+	}
+	
+	BOT_anti_poaching_heavy_weapons = {
+	
+		icon = generic_assassination
+		
+		available = {
+			always = yes
+		}
+		
+		cost = 25
+		
+		days_remove = 90
+		
+		modifier = {
+			custom_modifier_tooltip = BOT_anti_poaching_heavy_weapons_tt
+		}
+		
+		#Only do when at least medium threat
+		ai_will_do = {
+			factor = 100
+			modifier = {
+				factor = 0
+				check_variable = { no_of_poachers < 50 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { no_of_poachers > 150 }
+			}
+		}
+	
+	}
+	
+	BOT_anti_poaching_dehorn_rhinos = {
+	
+		available = {
+			always = yes
+		}
+		
+		cost = 100
+		
+		days_remove = 30
+		
+		days_re_enable = 360
+		
+		fixed_random_seed = no
+		
+		complete_effect = {
+			BOT_increase_desertification_rate = yes
+		}
+
+		remove_effect = {
+			random_list = {
+				50 = {
+					country_event = { id = Botswana_events.5 }
+					custom_effect_tooltip = BOT_anti_poaching_dehorn_rhinos_tt
+				}
+				50 = {
+					country_event = { id = Botswana_events.6 }
+				}
+			}
+		}
+		
+		#Only do when at least medium threat
+		ai_will_do = {
+			factor = 100
+			modifier = {
+				factor = 0
+				check_variable = { no_of_poachers < 50 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { no_of_poachers > 150 }
+			}
+		}
+	
+	}
+
+}

@@ -1,218 +1,1516 @@
 bankruptcy_decisions = {
-	bankruptcy_timer = {
-		icon = generic_break_treaty
-		activation = { #Should activate once you hit previous bankruptcy rate
-			check_variable = { debt_rate > previous_bankruptcy_rate }
-		}
+
+	#AI Logic for bailouts:
+	#Always use cheap loans from IMF first, only ask for bailout if interest > 15%
+	#First ask bailout from IMF, then neighbours, then 2nd influencer, then 1st influencer to do the least damage
+	#Default if interest > 25% and not at war
+
+	bankruptcy_cheap_loans_from_imf = {
 
 		available = {
+			is_full_state = yes
+			has_added_tension_amount < 5
+			NOT = {
+				has_idea = paralyzing_corruption
+				has_idea = crippling_corruption
+				has_idea = rampant_corruption
+			}
 			custom_trigger_tooltip = {
-				tooltip = bankruptcy_no_longer_looming_TT
-				check_variable = { debt_rate < previous_bankruptcy_rate }
+				tooltip = 5_per_capita_or_more_tt
+				check_variable = { gdp_per_capita > 5 }
 			}
-		}
-
-		visible = {
-			check_variable = { debt_rate > previous_bankruptcy_rate }
-		}
-		days_mission_timeout = 180
-		is_good = no
-
-		cancel_if_not_visible = yes
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout bankruptcy_timer"
-			news_event = News_bankrupcy.6
-		}
-	}
-
-	committed_to_reducing_debt = {
-		icon = generic_break_treaty
-		activation = {
-			OR = {
-				has_country_flag = BANK_committed_reducing_debt
-				has_variable = reduce_debt_by_5
-			}
-		}
-
-		available = {
 			custom_trigger_tooltip = {
-				tooltip = passed_desired_amount_tt
-				check_variable = { debt < reduce_debt_by_5 }
+				tooltip = interest_rate_lower_than_15
+				check_variable = { interest_rate < 15 }
 			}
 		}
 
-		days_mission_timeout = 90
-		cancel_if_not_visible = yes
+		cost = 100
 
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout bankruptcy_timer"
-			country_event = { id = bankruptcy.201 }
-			clr_country_flag = BANK_committed_reducing_debt
+		days_remove = 360
+
+		days_re_enable = 180
+
+		complete_effect = {
+			set_temp_variable = { debt_addition = debt }
+			multiply_temp_variable = { debt_addition = 0.05 }
+			round_temp_variable = debt_addition
+			add_to_variable = { debt = debt_addition }
+			custom_effect_tooltip = cheap_loans_from_imf_tt
+			ingame_update_setup = yes
 		}
+		
+		ai_will_do = {
+			factor = 1000
+		}
+
 	}
 
-	apply_investments_to_debt = {
-		icon = attract_foreign_investor
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = has_int_investments_tt
-				check_variable = { int_investments > 0 }
-			}
-		}
-		days_remove = 30
-		days_re_enable = 5
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision apply_investments_to_debt"
-			set_temp_variable = { investment_reducer = int_investments }
-			multiply_temp_variable = { investment_reducer = 0.05 }
-			subtract_from_variable = { debt = investment_reducer }
-			subtract_from_variable = { int_investments = investment_reducer }
-			custom_effect_tooltip = apply_int_investments_to_debt_5_tt
-			decrease_international_bankers_opinion = yes
-		}
-	}
-
-	money_printer_go_brrt = {
-		icon = attract_foreign_investor
-
-		visible = {
-			check_variable = { debt_rate > looming_bankruptcy_rate }
-		}
-
-		available = {
-			NOT = { has_idea = recently_printed_money }
-			if = {
-				limit = {
-					num_of_factories < 10
-				}
-				check_variable = { treasury < 2 }
-				custom_trigger_tooltip = {
-					tooltip = bankruptcy_treasury_tt
-				}
-			}
-			else_if = {
-				limit = {
-					num_of_factories > 9
-					num_of_factories < 25
-				}
-				check_variable = { treasury < 5 }
-				custom_trigger_tooltip = {
-					tooltip = bankruptcy_treasury_tt
-				}
-			}
-			else_if = {
-				limit = {
-					num_of_factories > 24
-					num_of_factories < 50
-				}
-				check_variable = { treasury < 10 }
-				custom_trigger_tooltip = {
-					tooltip = bankruptcy_treasury_tt
-				}
-			}
-			else_if = {
-				limit = {
-					num_of_factories > 49
-					num_of_factories < 75
-				}
-				check_variable = { treasury < 15 }
-				custom_trigger_tooltip = {
-					tooltip = bankruptcy_treasury_tt
-				}
-			}
-			else_if = {
-				limit = {
-					num_of_factories > 74
-					num_of_factories < 100
-				}
-				check_variable = { treasury < 20 }
-				custom_trigger_tooltip = {
-					tooltip = bankruptcy_treasury_tt
-				}
-			}
-			else = {
-				check_variable = { treasury < 25 }
-				custom_trigger_tooltip = {
-					tooltip = bankruptcy_treasury_tt
-				}
-			}
-		}
-		days_remove = 15
-		days_re_enable = 15
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision money_printer_go_brrt"
-			decrease_small_medium_business_owners_opinion = yes
-			decrease_the_bazaar_opinion = yes
-			decrease_the_donju_opinion = yes
-			decrease_chaebols_opinion = yes
-			decrease_industrial_conglomerates_opinion = yes
-			decrease_international_bankers_opinion = yes
-			add_timed_idea = {
-				idea = recently_printed_money
-				days = 60
-			}
-			if = {
-				limit = { num_of_factories < 10 }
-				add_to_variable = { treasury = 2 }
-				custom_effect_tooltip = 2_billion_revenue_tt
-			}
-			else_if = {
-				limit = {
-					num_of_factories > 9
-					num_of_factories < 25
-				}
-				add_to_variable = { treasury = 5 }
-				custom_effect_tooltip = 5_billion_revenue_tt
-			}
-			else_if = {
-				limit = {
-					num_of_factories > 24
-					num_of_factories < 50
-				}
-				add_to_variable = { treasury = 10 }
-				custom_effect_tooltip = 10_billion_revenue_tt
-			}
-			else_if = {
-				limit = {
-					num_of_factories > 49
-					num_of_factories < 75
-				}
-				add_to_variable = { treasury = 15 }
-				custom_effect_tooltip = 15_billion_revenue_tt
-			}
-			else_if = {
-				limit = {
-					num_of_factories > 74
-					num_of_factories < 100
-				}
-				add_to_variable = { treasury = 20 }
-				custom_effect_tooltip = 20_billion_revenue_tt
-			}
-			else = {
-				add_to_variable = { treasury = 25 }
-				custom_effect_tooltip = 25_billion_revenue_tt
-			}
-		}
-	}
-
-	seek_additional_bailouts = {
-		icon = attract_foreign_investor
+	bankruptcy_seek_bailout_from_biggest_influencer = {
 
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = "has_foreign_influence"
 				check_variable = { influence_array^0 > 0 }
 			}
+			custom_trigger_tooltip = {
+				tooltip = interest_rate_higher_than_10
+				check_variable = { interest_rate > 10 }
+			}
+			NOT = { has_war_with = var:FROM.influence_array^0 }
+			if = {
+				limit = { is_ai = no }
+				custom_trigger_tooltip = {
+					tooltip = treasury_less_than_5
+					check_variable = { treasury < 5 }
+				}
+			}
+			NOT = { has_decision = bankruptcy_seek_bailout_from_second_biggest_influencer }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_imf }
 		}
-		days_remove = 1
-		days_re_enable = 120
 
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision seek_additional_bailouts"
-			decrease_international_bankers_opinion = yes
-			country_event = { id = bankrupcy.0 }
+		days_re_enable = 360
+		
+		days_remove = 7
+
+		cost = 100
+
+		complete_effect = {
+			set_temp_variable = { debt_bailout_temp = debt }
+			multiply_temp_variable = { debt_bailout_temp = 0.20 }
+			set_variable = { debt_bailout = debt_bailout_temp }
+			clamp_variable = { var = debt_bailout min = 1 }
+			round_variable = debt_bailout
+			custom_effect_tooltip = bankruptcy_seek_bailout_from_biggest_influencer_tt
+			var:FROM.influence_array^0 = { country_event = { id = bankruptcy.1 hours = 3 } }
+		}
+		
+		ai_will_do = {
+			factor = 600
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 15 }
+			}
+		}
+
+	}
+
+	bankruptcy_seek_bailout_from_second_biggest_influencer = {
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "has_foreign_influence"
+				check_variable = { influence_array^1 > 0 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = interest_rate_higher_than_10
+				check_variable = { interest_rate > 10 }
+			}
+			NOT = { has_war_with = var:FROM.influence_array^1 }
+			if = {
+				limit = { is_ai = no }
+				custom_trigger_tooltip = {
+					tooltip = treasury_less_than_5
+					check_variable = { treasury < 5 }
+				}
+			}
+			NOT = { has_decision = bankruptcy_seek_bailout_from_biggest_influencer }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_imf }
+		}
+
+		days_re_enable = 360
+		
+		days_remove = 7
+
+		cost = 100
+
+		complete_effect = {
+			set_temp_variable = { debt_bailout_temp = debt }
+			multiply_temp_variable = { debt_bailout_temp = 0.15 }
+			set_variable = { debt_bailout = debt_bailout_temp }
+			clamp_variable = { var = debt_bailout min = 1 }
+			round_variable = debt_bailout
+			custom_effect_tooltip = bankruptcy_seek_bailout_from_second_biggest_influencer_tt
+			var:FROM.influence_array^1 = { country_event = { id = bankruptcy.2 hours = 3  } }
+		}
+		
+		ai_will_do = {
+			factor = 700
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 15 }
+			}
+		}
+
+	}
+
+	bankruptcy_seek_bailout_from_neighbour = {
+
+		target_trigger = {
+			FROM = {
+				is_neighbor_of = ROOT
+				#We don't want duplicates
+				NOT = { original_tag = var:ROOT.influence_array^0 }
+				NOT = { original_tag = var:ROOT.influence_array^1 }
+				check_variable = { FROM.gdp_total > ROOT.gdp_total }
+				FROM = { is_full_state = yes }
+			}
+		}
+
+		available = {
+			FROM = { NOT = { has_war_with = ROOT } }
+			FROM = { has_opinion = { target = ROOT value > 0 } }
+			if = {
+				limit = { is_ai = no }
+				custom_trigger_tooltip = {
+					tooltip = treasury_less_than_5
+					check_variable = { treasury < 5 }
+				}
+			}
+			NOT = { has_decision = bankruptcy_seek_bailout_from_biggest_influencer }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_second_biggest_influencer }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_imf }
+		}
+
+
+		days_re_enable = 360
+		
+		days_remove = 7
+
+		cost = 100
+
+		complete_effect = {
+			set_temp_variable = { debt_bailout_temp = debt }
+			multiply_temp_variable = { debt_bailout_temp = 0.10 }
+			set_variable = { debt_bailout = debt_bailout_temp }
+			clamp_variable = { var = debt_bailout min = 1 }
+			round_variable = debt_bailout
+			custom_effect_tooltip = bankruptcy_seek_bailout_from_neighbour_tt
+			FROM = { country_event = { id = bankruptcy.3 hours = 3  } }
+		}
+		
+		ai_will_do = {
+			factor = 800
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 15 }
+			}
+		}
+
+	}
+
+	bankruptcy_seek_bailout_from_imf = {
+
+		available = {
+			is_full_state = yes
+			has_added_tension_amount < 5
+			NOT = { has_idea = IMF_debt_relief_received }
+			NOT = { has_idea = IMF_debt_relief_rejected }
+			if = {
+				limit = { is_ai = no }
+				custom_trigger_tooltip = {
+					tooltip = treasury_less_than_5
+					check_variable = { treasury < 5 }
+				}
+			}
+			NOT = { has_decision = bankruptcy_seek_bailout_from_biggest_influencer }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_second_biggest_influencer }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
+		}
+
+		fixed_random_seed = no
+
+		cost = 50
+
+		days_re_enable = 180
+		
+		days_remove = 7
+
+		complete_effect = {
+			set_temp_variable = { debt_bailout_temp = debt }
+			multiply_temp_variable = { debt_bailout_temp = 0.10 }
+			set_variable = { debt_bailout = debt_bailout_temp }
+			clamp_variable = { var = debt_bailout min = 1 }
+			round_variable = debt_bailout
+			custom_effect_tooltip = bankruptcy_seek_bailout_from_imf_tt
+			if = {
+				limit = {
+					check_variable = { gdp_per_capita < 5 }
+				}
+				custom_effect_tooltip = bankruptcy_seek_bailout_from_imf_low_gdp_per_capita_tt
+			}
+			hidden_effect = {
+				random_list = {
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = bureau_01
+								AND = {
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = bureau_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.3
+							has_idea = bureau_03
+						}
+						modifier = {
+							factor = 1.6
+							has_idea = bureau_04
+						}
+						modifier = {
+							factor = 2
+							has_idea = bureau_05
+						}
+						country_event = bankruptcy.100
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = defence_01
+								AND = {
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = defence_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.14
+							has_idea = defence_03
+						}
+						modifier = {
+							factor = 1.28
+							has_idea = defence_04
+						}
+						modifier = {
+							factor = 1.42
+							has_idea = defence_05
+						}
+						modifier = {
+							factor = 1.56
+							has_idea = defence_06
+						}
+						modifier = {
+							factor = 1.70
+							has_idea = defence_07
+						}
+						modifier = {
+							factor = 1.84
+							has_idea = defence_08
+						}
+						modifier = {
+							factor = 2
+							has_idea = defence_09
+						}
+						country_event = bankruptcy.101
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = police_01
+								AND = {
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = police_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.3
+							has_idea = police_03
+						}
+						modifier = {
+							factor = 1.6
+							has_idea = police_04
+						}
+						modifier = {
+							factor = 2
+							has_idea = police_05
+						}
+						country_event = bankruptcy.102
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = edu_01
+								AND = {
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = edu_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.3
+							has_idea = edu_03
+						}
+						modifier = {
+							factor = 1.6
+							has_idea = edu_04
+						}
+						modifier = {
+							factor = 2
+							has_idea = edu_05
+						}
+						country_event = bankruptcy.103
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = health_01
+								AND = {
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = health_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.25
+							has_idea = health_03
+						}
+						modifier = {
+							factor = 1.5
+							has_idea = health_04
+						}
+						modifier = {
+							factor = 1.75
+							has_idea = health_05
+						}
+						modifier = {
+							factor = 2
+							has_idea = health_06
+						}
+						country_event = bankruptcy.104
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = social_01
+								AND = {
+									check_variable = { gdp_per_capita < 5 }
+									has_idea = social_02
+								}
+							}
+						}
+						modifier = {
+							factor = 1.25
+							has_idea = social_03
+						}
+						modifier = {
+							factor = 1.5
+							has_idea = social_04
+						}
+						modifier = {
+							factor = 1.75
+							has_idea = social_05
+						}
+						modifier = {
+							factor = 2
+							has_idea = social_06
+						}
+						country_event = bankruptcy.105
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								has_idea = globalized_trade_economy
+								AND = {
+									oil < 1
+									aluminium < 1
+									rubber < 1
+									tungsten < 1
+									steel < 1
+									chromium < 1
+								}
+							}
+						}
+						modifier = {
+							factor = 1.25
+							has_idea = mixed_economy
+						}
+						modifier = {
+							factor = 1.5
+							has_idea = semi_consumption_economy
+						}
+						modifier = {
+							factor = 1.75
+							has_idea = consumption_economy
+						}
+						modifier = {
+							factor = 2
+							has_idea = md_closed_economy
+						}
+						country_event = bankruptcy.106
+					}
+					1 = {
+						modifier = {
+							factor = 2
+							has_idea = slight_corruption
+						}
+						modifier = {
+							factor = 3
+							has_idea = modest_corruption
+						}
+						modifier = {
+							factor = 4
+							has_idea = medium_corruption
+						}
+						modifier = {
+							factor = 5
+							has_idea = widespread_corruption
+						}
+						modifier = {
+							factor = 6
+							has_idea = systematic_corruption
+						}
+						modifier = {
+							factor = 7
+							has_idea = unrestrained_corruption
+						}
+						modifier = {
+							factor = 8
+							has_idea = rampant_corruption
+						}
+						modifier = {
+							factor = 9
+							has_idea = crippling_corruption
+						}
+						modifier = {
+							factor = 10
+							has_idea = paralyzing_corruption
+						}
+						country_event = bankruptcy.107
+					}
+					10 = {
+						modifier = {
+							factor = 1.5
+							OR = {
+								has_idea = landowners
+								has_idea = farmers
+							}
+						}
+						modifier = {
+							factor = 2
+							has_idea = landowners
+							has_idea = farmers
+						}
+						country_event = bankruptcy.108
+					}
+					10 = {
+						modifier = {
+							factor = 2
+							has_idea = international_bankers
+						}
+						country_event = bankruptcy.109
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								has_idea = The_Clergy
+								has_idea = the_priesthood
+								has_idea = The_Ulema
+								has_idea = wahabi_ulema
+							}
+						}
+						country_event = bankruptcy.110
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								num_of_military_factories < 1
+								AND = {
+									check_variable = { gdp_per_capita < 5 }
+									all_owned_state = {
+										arms_factory < 2
+									}
+								}
+							}
+						}
+						modifier = {
+							factor = 1.5
+							check_variable = { military_fac_percent > 0.15 }
+						}
+						modifier = {
+							factor = 1.3
+							check_variable = { military_fac_percent > 0.25 }
+						}
+						country_event = bankruptcy.111
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								num_of_naval_factories < 1
+								AND = {
+									check_variable = { gdp_per_capita < 5 }
+									all_owned_state = {
+										dockyard < 2
+									}
+								}
+							}
+						}
+						modifier = {
+							factor = 1.5
+							check_variable = { dockyard_fac_percent > 0.15 }
+						}
+						modifier = {
+							factor = 1.3
+							check_variable = { dockyard_fac_percent > 0.25 }
+						}
+						country_event = bankruptcy.112
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								AND = {
+									check_variable = { population_tax_rate > 55 }
+									check_variable = { corporate_tax_rate > 55 }
+								}
+								AND = {
+									check_variable = { gdp_per_capita < 5 }
+									check_variable = { population_tax_rate > 50 }
+									check_variable = { corporate_tax_rate > 50 }
+								}
+							}
+						}
+						modifier = {
+							factor = 1.5
+							check_variable = { tax_rate < 20 }
+						}
+						modifier = {
+							factor = 1.3
+							check_variable = { tax_rate < 10 }
+						}
+						country_event = bankruptcy.113
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							check_variable = { int_investments < 1 }
+						}
+						modifier = {
+							factor = 2
+							check_variable = { int_investments > debt }
+						}
+						country_event = bankruptcy.114
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							OR = {
+								num_of_civilian_factories < 1
+								AND = {
+									check_variable = { gdp_per_capita < 5 }
+									all_owned_state = {
+										industrial_complex < 2
+									}
+								}
+							}
+						}
+						country_event = bankruptcy.115
+					}
+				}
+			}
+		}
+		
+		ai_will_do = {
+			factor = 900
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 15 }
+			}
+		}
+
+	}
+
+	bankruptcy_incoming_collapse = {
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = bankruptcy_incoming_collapse_complete_trigger
+				check_variable = { debt_rate < display_income }
+			}
+		}
+
+		activation = {
+			check_variable = { debt_rate > display_income }
+			has_war = no
+		}
+
+		is_good = no
+
+		days_mission_timeout = 360
+
+		timeout_effect = {
+			remove_10_popularity_sub = yes
+			if = {
+				limit = { has_elections = yes }
+				country_event = bankruptcy.10
+			}
+			if = {
+				limit = { has_elections = no }
+				country_event = bankruptcy.12
+			}
+		}
+
+		complete_effect = {
+			add_political_power = 100
+		}
+
+	}
+
+	bankruptcy_default_on_debts = {
+		visible = {
+			check_variable = { interest_rate > 14.999 }
+		}
+
+		available = {
+			is_subject = no
+			check_variable = { interest_rate > 14.999 }
+			if = {
+				limit = { is_ai = no }
+				custom_trigger_tooltip = {
+					tooltip = treasury_less_than_5
+					check_variable = { treasury < 5 }
+				}
+			}
+		}
+
+		complete_effect = {
+			set_variable = { debt_default_left = debt }
+			multiply_variable = { debt_default_left = 0.5 }
+			round_variable = debt_default_left
+			set_variable = { debt_default_total = debt_default_left }
+			multiply_variable = { debt = 0.25 }
+			add_stability = -0.10
+			depression = yes
+			custom_effect_tooltip = bankruptcy_default_on_debts_tt
+			activate_mission = debt_default_main_mission
+			set_variable = { old_gdp = gdp_total }
+		}
+		
+		ai_will_do = {
+			factor = 1000
+			modifier = {
+				factor = 0
+				OR = {
+					check_variable = { interest_rate < 25 }
+					has_war = yes
+				}
+			}
 		}
 	}
+
+}
+
+debt_default_decisions = {
+
+	#AI Logic for default:
+	#1. Pay from treasury as much as you can
+	#2. Political concessions to IMF
+	#3. Sell factories unless GDP is < 80% of pre-default GDP (sell order NIC -> MIC -> Offices -> CIC)
+	#4. Political concessions to 2nd and 1st influencer
+	#Default if interest > 25% and not at war
+
+	debt_default_main_mission = {
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = debt_default_main_mission_complete_trigger
+				check_variable = { debt_default_left < 1 }
+			}
+		}
+
+		activation = {
+			always = no
+		}
+
+		is_good = no
+		selectable_mission = no
+
+		days_mission_timeout = 360
+
+		timeout_effect = {
+			if = {
+				limit = {
+					check_variable = { influence_array^0 > 0 }
+				}
+				if = {
+					limit = {
+						var:FROM.influence_array^0 = {
+							OR = {
+								AND = {
+									is_neighbor_of = ROOT
+									OR = {
+										has_idea = intervention_limited_interventionism
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								AND = {
+									ROOT_and_THIS_are_in_the_same_group = yes
+									OR = {
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								has_idea = intervention_global_interventionism
+								has_idea = intervention_neo_imperialism
+							}
+							NOT = { has_country_flag = political_concessions_from@ROOT }
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
+						}
+					}
+					var:FROM.influence_array^0 = { country_event = { id = bankruptcy.13 hours = 6 } }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { influence_array^1 > 0 }
+				}
+				if = {
+					limit = {
+						var:FROM.influence_array^1 = {
+							OR = {
+								AND = {
+									is_neighbor_of = ROOT
+									OR = {
+										has_idea = intervention_limited_interventionism
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								AND = {
+									ROOT_and_THIS_are_in_the_same_group = yes
+									OR = {
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								has_idea = intervention_global_interventionism
+								has_idea = intervention_neo_imperialism
+							}
+							NOT = { has_country_flag = political_concessions_from@ROOT }
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
+						}
+					}
+					var:FROM.influence_array^1 = { country_event = { id = bankruptcy.13 hours = 6 } }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { influence_array^2 > 0 }
+				}
+				if = {
+					limit = {
+						var:FROM.influence_array^2 = {
+							OR = {
+								AND = {
+									is_neighbor_of = ROOT
+									OR = {
+										has_idea = intervention_limited_interventionism
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								AND = {
+									ROOT_and_THIS_are_in_the_same_group = yes
+									OR = {
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								has_idea = intervention_global_interventionism
+								has_idea = intervention_neo_imperialism
+							}
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
+						}
+					}
+					var:FROM.influence_array^2 = { country_event = { id = bankruptcy.13 hours = 6 } }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { influence_array^3 > 0 }
+				}
+				if = {
+					limit = {
+						var:FROM.influence_array^3 = {
+							OR = {
+								AND = {
+									is_neighbor_of = ROOT
+									OR = {
+										has_idea = intervention_limited_interventionism
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								AND = {
+									ROOT_and_THIS_are_in_the_same_group = yes
+									OR = {
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								has_idea = intervention_global_interventionism
+								has_idea = intervention_neo_imperialism
+							}
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
+						}
+					}
+					var:FROM.influence_array^3 = { country_event = { id = bankruptcy.13 hours = 6 } }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { influence_array^4 > 0 }
+				}
+				if = {
+					limit = {
+						var:FROM.influence_array^4 = {
+							OR = {
+								AND = {
+									is_neighbor_of = ROOT
+									OR = {
+										has_idea = intervention_limited_interventionism
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								AND = {
+									ROOT_and_THIS_are_in_the_same_group = yes
+									OR = {
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								has_idea = intervention_global_interventionism
+								has_idea = intervention_neo_imperialism
+							}
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
+						}
+					}
+					var:FROM.influence_array^4 = { country_event = { id = bankruptcy.13 hours = 6 } }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { influence_array^5 > 0 }
+				}
+				if = {
+					limit = {
+						var:FROM.influence_array^5 = {
+							OR = {
+								AND = {
+									is_neighbor_of = ROOT
+									OR = {
+										has_idea = intervention_limited_interventionism
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								AND = {
+									ROOT_and_THIS_are_in_the_same_group = yes
+									OR = {
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								has_idea = intervention_global_interventionism
+								has_idea = intervention_neo_imperialism
+							}
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
+						}
+					}
+					var:FROM.influence_array^5 = { country_event = { id = bankruptcy.13 hours = 6 } }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { influence_array^6 > 0 }
+				}
+				if = {
+					limit = {
+						var:FROM.influence_array^6 = {
+							OR = {
+								AND = {
+									is_neighbor_of = ROOT
+									OR = {
+										has_idea = intervention_limited_interventionism
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								AND = {
+									ROOT_and_THIS_are_in_the_same_group = yes
+									OR = {
+										has_idea = intervention_regional_interventionism
+										has_idea = intervention_global_interventionism
+										has_idea = intervention_neo_imperialism
+									}
+								}
+								has_idea = intervention_global_interventionism
+								has_idea = intervention_neo_imperialism
+							}
+							NOT = { is_in_faction_with = ROOT }
+							NOT = {
+								has_idea = EU_member
+								ROOT = { has_idea = EU_member }
+							}
+							NOT = {
+								has_idea = NATO_member
+								ROOT = { has_idea = NATO_member }
+							}
+						}
+					}
+					var:FROM.influence_array^6 = { country_event = { id = bankruptcy.13 hours = 6 } }
+				}
+			}
+			clear_variable = debt_default_left
+			clear_variable = debt_default_total
+			custom_effect_tooltip = debt_default_cancel_int_investments
+			set_variable = { int_investments = 0 }
+			set_variable = { treasury = 0 }
+			clear_variable = old_gdp
+		}
+
+		complete_effect = {
+			clear_variable = debt_default_left
+			clear_variable = debt_default_total
+			add_timed_idea = { idea = debt_default_ecomomic_boom days = 360 }
+			clear_variable = old_gdp
+		}
+		
+		ai_will_do = {
+			factor = 10000
+		}
+
+	}
+
+	debt_default_pay_10_from_treasury = {
+
+		visible = {
+			has_active_mission = debt_default_main_mission
+			check_variable = { gdp_total_display < 100 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = debt_default_pay_from_treasury_trigger_tooltip
+				check_variable = { interest_rate < 5 }
+			}
+		}
+
+		complete_effect = {
+			custom_effect_tooltip = debt_default_pay_10_from_treasury_tt
+			subtract_from_variable = { treasury = 10 }
+			subtract_from_variable = { debt_default_left = 10 }
+			clamp_variable = {
+				var = debt_default_left
+				min = 0
+			}
+		}
+		
+		ai_will_do = {
+			factor = 1000
+		}
+
+	}
+
+	debt_default_pay_50_from_treasury = {
+
+		visible = {
+			has_active_mission = debt_default_main_mission
+			check_variable = { gdp_total_display > 100 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = debt_default_pay_from_treasury_trigger_tooltip
+				check_variable = { interest_rate < 5 }
+			}
+		}
+
+		complete_effect = {
+			custom_effect_tooltip = debt_default_pay_50_from_treasury_tt
+			subtract_from_variable = { treasury = 50 }
+			subtract_from_variable = { debt_default_left = 50 }
+			clamp_variable = {
+				var = debt_default_left
+				min = 0
+			}
+		}
+		
+		ai_will_do = {
+			factor = 1000
+		}
+
+	}
+
+	debt_default_concessions_to_the_imf = {
+
+		visible = {
+			has_active_mission = debt_default_main_mission
+		}
+
+		available = {
+		}
+
+		days_re_enable = 180
+
+		cost = 75
+
+		complete_effect = {
+			decrease_domestic_influence_10_percent = yes
+			set_temp_variable = { debt_default_reduction = debt_default_total}
+			multiply_temp_variable = { debt_default_reduction = 0.25 }
+			round_temp_variable = debt_default_reduction
+			custom_effect_tooltip = debt_default_concessions_to_the_imf_tt
+			subtract_from_variable = { debt_default_left = debt_default_reduction }
+			clamp_variable = {
+				var = debt_default_left
+				min = 0
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_idea = bureau_01
+						has_idea = bureau_02
+					}
+				}
+				block_bureau_increase = yes
+				decrease_centralization_2 = yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_idea = defence_00
+						has_idea = defence_01
+						has_idea = defence_02
+					}
+				}
+				block_defence_increase = yes
+				decrease_military_spending_2 = yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_idea = police_01
+						has_idea = police_02
+					}
+				}
+				block_police_increase = yes
+				decrease_policing_budget_2 = yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_idea = edu_01
+						has_idea = edu_02
+					}
+				}
+				block_edu_increase = yes
+				decrease_education_budget_2 = yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_idea = health_01
+						has_idea = health_02
+					}
+				}
+				block_health_increase = yes
+				decrease_healthcare_budget_2  = yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_idea = social_01
+						has_idea = social_02
+					}
+				}
+				block_social_increase = yes
+				decrease_social_spending_2 = yes
+			}
+		}
+		
+		ai_will_do = {
+			factor = 900
+		}
+
+	}
+
+	debt_default_political_concessions_to_biggest_influencer = {
+
+		visible = {
+			has_active_mission = debt_default_main_mission
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "has_foreign_influence"
+				check_variable = { influence_array^0 > 0 }
+			}
+			NOT = { has_war_with = var:FROM.influence_array^0 }
+		}
+
+		days_re_enable = 400
+
+		cost = 75
+
+		complete_effect = {
+			var:FROM.influence_array^0 = {
+				generic_grant_20_percent_influence_of_CURRENT_SCOPE = yes
+				set_country_flag = {
+					flag = political_concessions_from@ROOT
+					days = 400
+					value = 1
+				}
+			}
+			set_temp_variable = { debt_default_reduction = debt_default_total}
+			multiply_temp_variable = { debt_default_reduction = 0.4 }
+			round_temp_variable = debt_default_reduction
+			custom_effect_tooltip = debt_default_political_concessions_to_biggest_influencer_tt
+			subtract_from_variable = { debt_default_left = debt_default_reduction }
+			clamp_variable = {
+				var = debt_default_left
+				min = 0
+			}
+		}
+		
+		ai_will_do = {
+			factor = 600
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total > gdp_comparison }
+				OR = {
+					num_of_civilian_factories > 0 
+					num_of_military_factories > 0 
+					num_of_naval_factories > 0 
+					any_owned_state = {
+						offices > 0
+					}
+				}
+			}
+		}
+
+	}
+
+	debt_default_political_concessions_to_second_biggest_influencer = {
+
+		visible = {
+			has_active_mission = debt_default_main_mission
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "has_foreign_influence"
+				check_variable = { influence_array^1 > 0 }
+			}
+			NOT = { has_war_with = var:FROM.influence_array^1 }
+		}
+
+		days_re_enable = 400
+
+		cost = 75
+
+		complete_effect = {
+			var:FROM.influence_array^1 = {
+				generic_grant_20_percent_influence_of_CURRENT_SCOPE = yes
+				set_country_flag = {
+					flag = political_concessions_from@ROOT
+					days = 400
+					value = 1
+				}
+			}
+			set_temp_variable = { debt_default_reduction = debt_default_total}
+			multiply_temp_variable = { debt_default_reduction = 0.4 }
+			round_temp_variable = debt_default_reduction
+			custom_effect_tooltip = debt_default_political_concessions_to_biggest_influencer_tt
+			subtract_from_variable = { debt_default_left = debt_default_reduction }
+			clamp_variable = {
+				var = debt_default_left
+				min = 0
+			}
+		}
+		
+		ai_will_do = {
+			factor = 700
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total > gdp_comparison }
+				OR = {
+					num_of_civilian_factories > 0 
+					num_of_military_factories > 0 
+					num_of_naval_factories > 0 
+					any_owned_state = {
+						offices > 0
+					}
+				}
+			}
+		}
+
+	}
+
+	debt_default_sell_civilian_factories = {
+
+		visible = {
+			has_active_mission = debt_default_main_mission
+		}
+
+		available = {
+			any_owned_state = {
+				industrial_complex > 0
+			}
+			NOT = { has_decision = debt_default_dismantle_military_factories }
+			NOT = { has_decision = debt_default_scrap_dockyard }
+			NOT = { has_decision = debt_default_cut_down_government_services }
+		}
+
+		days_remove = 5
+
+		cost = 25
+
+		remove_effect = {
+			custom_effect_tooltip = sell_10_billion_factory
+			subtract_from_variable = { debt_default_left = 10 }
+			random_owned_state = {
+				limit = {
+					industrial_complex > 0
+				}
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+			}
+			ingame_update_setup = yes
+		}
+		
+		ai_will_do = {
+			factor = 800
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total < gdp_comparison }
+			}
+		}
+
+	}
+
+	debt_default_dismantle_military_factories = {
+
+		visible = {
+			has_active_mission = debt_default_main_mission
+		}
+
+		available = {
+			any_owned_state = {
+				arms_factory > 0
+			}
+			NOT = { has_decision = debt_default_sell_civilian_factories }
+			NOT = { has_decision = debt_default_scrap_dockyard }
+			NOT = { has_decision = debt_default_cut_down_government_services }
+		}
+
+		days_remove = 5
+
+		cost = 25
+
+		remove_effect = {
+			custom_effect_tooltip = sell_10_billion_factory
+			subtract_from_variable = { debt_default_left = 10 }
+			random_owned_state = {
+				limit = {
+					arms_factory > 0
+				}
+				remove_building = {
+					type = arms_factory
+					level = 1
+				}
+			}
+			ingame_update_setup = yes
+		}
+		
+		ai_will_do = {
+			factor = 840
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total < gdp_comparison }
+			}
+		}
+
+	}
+
+	debt_default_scrap_dockyard = {
+
+		visible = {
+			has_active_mission = debt_default_main_mission
+		}
+
+		available = {
+			any_owned_state = {
+				dockyard > 0
+			}
+			NOT = { has_decision = debt_default_sell_civilian_factories }
+			NOT = { has_decision = debt_default_dismantle_military_factories }
+			NOT = { has_decision = debt_default_cut_down_government_services }
+		}
+
+		days_remove = 5
+
+		cost = 25
+
+		remove_effect = {
+			custom_effect_tooltip = sell_10_billion_factory
+			subtract_from_variable = { debt_default_left = 10 }
+			random_owned_state = {
+				limit = {
+					dockyard > 0
+				}
+				remove_building = {
+					type = dockyard
+					level = 1
+				}
+			}
+			ingame_update_setup = yes
+		}
+		
+		ai_will_do = {
+			factor = 850
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total < gdp_comparison }
+			}
+		}
+
+	}
+
+	debt_default_cut_down_government_services = {
+
+		visible = {
+			has_active_mission = debt_default_main_mission
+		}
+
+		available = {
+			any_owned_state = {
+				offices > 0
+			}
+			NOT = { has_decision = debt_default_sell_civilian_factories }
+			NOT = { has_decision = debt_default_dismantle_military_factories }
+			NOT = { has_decision = debt_default_scrap_dockyard }
+		}
+
+		days_remove = 5
+
+		cost = 25
+
+		remove_effect = {
+			custom_effect_tooltip = sell_15_billion_factory
+			subtract_from_variable = { debt_default_left = 10 }
+			random_owned_state = {
+				limit = {
+					offices > 0
+				}
+				remove_building = {
+					type = offices
+					level = 1
+				}
+			}
+			ingame_update_setup = yes
+		}
+		
+		ai_will_do = {
+			factor = 810
+			modifier = {
+				factor = 0 
+				set_temp_variable = { gdp_comparison = old_gdp }
+				multiply_temp_variable = { gdp_comparison = 0.8 }
+				check_variable = { gdp_total < gdp_comparison }
+			}
+		}
+
+	}
+
 }
