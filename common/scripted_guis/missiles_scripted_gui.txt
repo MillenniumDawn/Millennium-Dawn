@@ -4853,7 +4853,8 @@ scripted_gui = {
 				}
 			}
 			LEU_button_click = {
-				set_enrichment_efficiency_LEU = yes
+				clear_variable = var_selected_TAG_LEU_selected
+				clear_variable = var_selected_TAG_HEU_selected
 				if = {
 					limit = {
 						check_variable = { var_LEU_selected = 2 }
@@ -4864,9 +4865,15 @@ scripted_gui = {
 					set_variable = { var_LEU_selected = 2 }
 					set_variable = { var_HEU_selected = 1 }
 				}
+				set_enrichment_efficiency_LEU = yes
+				update_nuclear_production = yes
+				var:nukes_selected_TAG = {
+					set_variable = { var_selected_TAG_LEU_selected = ROOT.var_LEU_selected }
+				}
 			}
 			HEU_button_click = {
-				set_enrichment_efficiency_HEU = yes
+				clear_variable = var_selected_TAG_LEU_selected
+				clear_variable = var_selected_TAG_HEU_selected
 				if = {
 					limit = {
 						check_variable = { var_HEU_selected = 2 }
@@ -4877,34 +4884,64 @@ scripted_gui = {
 					set_variable = { var_LEU_selected = 1 }
 					set_variable = { var_HEU_selected = 2 }
 				}
+				set_enrichment_efficiency_HEU = yes
+				update_nuclear_production = yes
+				var:nukes_selected_TAG = {
+					set_variable = { var_selected_TAG_HEU_selected = ROOT.var_HEU_selected }
+				}
 			}
 			enrichment_small_plus_button_bg_click = {
+				add_to_variable = { var_CIC_use_enrichment = 1 }
 				add_to_variable = { var_CIC_use_nuclear = 1 }
-				if = {
-					limit = {
-						check_variable = { var_LEU_selected = 2 }
-					}
-					update_enrichment_efficiency_LEU = yes
-				}
+				update_enrichment_efficiency = yes
+				update_nuclear_production = yes
 			}
 			enrichment_small_minus_button_bg_click = {
+				subtract_from_variable = { var_CIC_use_enrichment = 1 }
 				subtract_from_variable = { var_CIC_use_nuclear = 1 }
-				if = {
-					limit = {
-						check_variable = { var_LEU_selected = 2 }
-					}
-					update_enrichment_efficiency_LEU = yes
-				}
+				update_enrichment_efficiency = yes
+				update_nuclear_production = yes
 			}
 			nuclear_energy_button_click = {
 				add_to_variable = { var_nuke_energy_ratio = 0.01 }
 				subtract_from_variable = { var_nuke_nuclear_material_ratio = 0.01 }
+				update_nuclear_production = yes
 			}
 			nuclear_material_button_click = {
 				add_to_variable = { var_nuke_nuclear_material_ratio = 0.01 }
 				subtract_from_variable = { var_nuke_energy_ratio = 0.01 }
+				update_nuclear_production = yes
 			}
-
+			warhead_production_button_click = {
+				set_country_flag = open_MD_nuclear_doctrine_window
+				add_to_array = { nuclear_warhead_prod_display_array = 0 }
+				add_to_array = { nuclear_warhead_prod_display_array = 1 }
+				add_to_array = { nuclear_warhead_prod_display_array = 2 }
+				add_to_array = { nuclear_warhead_prod_display_array = 3 }
+				add_to_array = { nuclear_warhead_prod_display_array = 4 }
+				add_to_array = { nuclear_warhead_prod_display_array = 5 }
+				add_to_array = { nuclear_warhead_prod_display_array = 6 }
+				add_to_array = { nuclear_warhead_prod_display_array = 7 }
+				add_to_array = { nuclear_warhead_prod_display_array = 8 }
+				add_to_array = { nuclear_warhead_prod_display_array = 9 }
+				add_to_array = { nuclear_warhead_prod_display_array = 10 }
+				add_to_array = { nuclear_warhead_prod_display_array = 11 }
+				add_to_array = { nuclear_warhead_prod_display_array = 12 }
+			}
+			warhead_small_plus_button_bg_click = {
+				add_to_variable = { var_nuclear_warhead_prod = 1 }
+			}
+			warhead_small_minus_button_bg_click = {
+				subtract_from_variable = { var_nuclear_warhead_prod = 1 }
+			}
+			nuclear_warhead_prod_start_button_click = {
+				set_country_flag = nuclear_warhead_prod
+				activate_mission = nuclear_warhead_prod
+			}
+			nuclear_warhead_prod_delete_button_click = {
+				clr_country_flag = nuclear_warhead_prod
+				remove_mission = nuclear_warhead_prod
+			}
 		}
 
 		triggers = {
@@ -4928,21 +4965,70 @@ scripted_gui = {
 					check_variable = { selected_TAG_nuclear_doctrine_array^num = 0 }
 				}
 			}
+			LEU_button_click_enabled = {
+				tag = var:nukes_selected_TAG
+			}
+			HEU_button_click_enabled = {
+				tag = var:nukes_selected_TAG
+			}
 			enrichment_small_plus_button_bg_click_enabled = {
-				check_variable = { num_of_available_civilian_factories > 0 }
+				tag = var:nukes_selected_TAG
 				check_variable = { var_enrichment_efficiency < 1 }
 			}
 			enrichment_small_minus_button_bg_click_enabled = {
-				check_variable = { var_CIC_use_nuclear > 0 }
+				tag = var:nukes_selected_TAG
 				check_variable = { var_enrichment_efficiency > 0 }
 			}
 			nuclear_energy_button_click_enabled = {
+				tag = var:nukes_selected_TAG
 				check_variable = { var_nuke_energy_ratio < 1 }
 				check_variable = { var_nuke_nuclear_material_ratio > 0 }
 			}
 			nuclear_material_button_click_enabled = {
+				tag = var:nukes_selected_TAG
 				check_variable = { var_nuke_nuclear_material_ratio < 1 }
 				check_variable = { var_nuke_energy_ratio > 0 }
+			}
+			warhead_production_button_click_enabled = {
+				tag = var:nukes_selected_TAG
+			}
+			warhead_small_plus_button_bg_click_enabled = {
+				tag = var:nukes_selected_TAG
+			}
+			warhead_small_minus_button_bg_click_enabled = {
+				tag = var:nukes_selected_TAG
+				check_variable = { var_nuclear_warhead_prod > 0 }
+			}
+			nuclear_warhead_prod_start_button_visible = {
+				var:nukes_selected_TAG = {
+					NOT = { has_country_flag = nuclear_warhead_prod }
+				}
+			}
+			nuclear_warhead_prod_delete_button_click_enabled = {
+				tag = var:nukes_selected_TAG
+			}
+			nuclear_warhead_prod_start_button_click_enabled = {
+				tag = var:nukes_selected_TAG
+			}
+			nuclear_warhead_prod_delete_button_visible = {
+				var:nukes_selected_TAG = {
+					has_country_flag = nuclear_warhead_prod
+				}
+			}
+			nuclear_warhead_prod_icon_1_visible = {
+				var:nukes_selected_TAG = {
+					has_country_flag = nuclear_warhead_prod
+				}
+			}
+			nuclear_warhead_prod_icon_2_visible = {
+				var:nukes_selected_TAG = {
+					NOT = { has_country_flag = nuclear_warhead_prod }
+				}
+			}
+			warhead_production_days_visible = {
+				var:nukes_selected_TAG = {
+					has_country_flag = nuclear_warhead_prod
+				}
 			}
 		}
 		dynamic_lists = {
@@ -4983,11 +5069,14 @@ scripted_gui = {
 			}
 			LEU_button = {
 				image = "GFX_sort_button_83x29"
-				frame = var_LEU_selected
+				frame = var_selected_TAG_LEU_selected
 			}
 			HEU_button = {
 				image = "GFX_sort_button_83x29"
-				frame = var_HEU_selected
+				frame = var_selected_TAG_HEU_selected
+			}
+			warhead_production_icon = {
+				image =  "GFX_MD_warhead_icon_2" ### change to nukes
 			}
 		}
 	}
@@ -5013,10 +5102,17 @@ scripted_gui = {
 				clear_array = nuclear_doctrine_display_array
 				set_nuke_arrays_selected_TAG = yes
 			}
+			nuclear_warhead_prod_button_click = {
+				add_to_array = { nuclear_warhead_prod_array = nuclear_warhead_prod_display_array^i }
+				set_variable = { var_nuclear_warhead_critical_mass = nuclear_warhead_critical_mass_array^i }
+				clr_country_flag = open_MD_nuclear_doctrine_window
+				clear_array = nuclear_warhead_prod_display_array
+			}
 			close_button_click = {
 				clr_country_flag = open_MD_nuclear_doctrine_window
 				clear_array = nuclear_status_display_array
 				clear_array = nuclear_doctrine_display_array
+				clear_array = nuclear_warhead_prod_display_array
 			}
 		}
 		triggers = {
@@ -5136,6 +5232,10 @@ scripted_gui = {
 				array = nuclear_doctrine_display_array
 				entry_container = nuclear_doctrine_window_entry
 			}
+			nuclear_warhead_prod_window_gridbox = {
+				array = nuclear_warhead_prod_display_array
+				entry_container = nuclear_warhead_prod_window_entry
+			}
 		}
 		properties = {			
 			checkbox_icon_1 = {
@@ -5153,6 +5253,9 @@ scripted_gui = {
 			checkbox_icon_4 = {
 				image = "GFX_MD_nuke_checkbox_button"
 				frame = checkbox_icon_4_frame^i
+			}
+			warhead_icon = {
+				image =  "GFX_MD_warhead_icon_2" # "[MD_warhead_selected_texture]"
 			}
 		}
 	}
