@@ -5490,7 +5490,41 @@ set_nuke_arrays_selected_TAG = {
 	}
 }
 
+set_enrichment_efficiency_LEU = {
+	set_variable = { var_num_nuclear_reactor = 0 }
+	every_controlled_state = {
+		add_to_variable = { ROOT.var_num_nuclear_reactor = building_level@nuclear_reactor }
+	}
+	#enrichment grade factor
+	# LEU = 1
+	if = {
+		limit = {
+			OR = {
+				check_variable = { num_of_available_civilian_factories > var_num_nuclear_reactor }
+				check_variable = { num_of_available_civilian_factories = var_num_nuclear_reactor }
+			}
+		}
+		set_variable = { var_enrichment_efficiency = 1 }
+		add_to_variable = { var_CIC_use_nuclear = var_num_nuclear_reactor }
+		force_update_dynamic_modifier = yes
+	}
+	else = {
+		set_variable = { var_enrichment_efficiency = num_of_available_civilian_factories }
+		divide_variable = { var_enrichment_efficiency = var_num_nuclear_reactor }
+		add_to_variable = { var_CIC_use_nuclear = num_of_available_civilian_factories }
+		force_update_dynamic_modifier = yes
+	}
+}
 
+update_enrichment_efficiency_LEU = {
+	set_variable = { var_enrichment_efficiency = var_CIC_use_nuclear }
+	divide_variable = { var_enrichment_efficiency = var_num_nuclear_reactor }
+	force_update_dynamic_modifier = yes
+}
+
+set_enrichment_efficiency_HEU = {
+
+}
 
 ###########################
 ### for on daily effect ###
