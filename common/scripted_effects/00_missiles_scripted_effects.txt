@@ -5488,42 +5488,77 @@ set_nuke_arrays_selected_TAG = {
 			add_to_array = { ROOT.selected_TAG_nuclear_doctrine_array = v }
 		}
 	}
+	set_selected_TAG_LEU_HEU = yes
+}
+
+set_selected_TAG_LEU_HEU = {
+	var:nukes_selected_TAG = {
+		set_variable = { ROOT.var_selected_TAG_LEU_selected = var_LEU_selected }
+	}
+	var:nukes_selected_TAG = {
+		set_variable = { ROOT.var_selected_TAG_HEU_selected = var_HEU_selected }
+	}
 }
 
 set_enrichment_efficiency_LEU = {
 	set_variable = { var_num_nuclear_reactor = 0 }
+	set_variable = { var_enrichment_grade_factor = 1 }
+	set_variable = { var_enrichment_nuclear_energy_prod_factor = 1 }
+	set_variable = { var_enrichment_nuclear_material_prod_factor = 0.1 }
 	every_controlled_state = {
 		add_to_variable = { ROOT.var_num_nuclear_reactor = building_level@nuclear_reactor }
 	}
-	#enrichment grade factor
-	# LEU = 1
-	if = {
-		limit = {
-			OR = {
-				check_variable = { num_of_available_civilian_factories > var_num_nuclear_reactor }
-				check_variable = { num_of_available_civilian_factories = var_num_nuclear_reactor }
-			}
-		}
-		set_variable = { var_enrichment_efficiency = 1 }
-		add_to_variable = { var_CIC_use_nuclear = var_num_nuclear_reactor }
-		force_update_dynamic_modifier = yes
-	}
-	else = {
-		set_variable = { var_enrichment_efficiency = num_of_available_civilian_factories }
-		divide_variable = { var_enrichment_efficiency = var_num_nuclear_reactor }
-		add_to_variable = { var_CIC_use_nuclear = num_of_available_civilian_factories }
-		force_update_dynamic_modifier = yes
-	}
+	update_enrichment_efficiency = yes
 }
 
-update_enrichment_efficiency_LEU = {
-	set_variable = { var_enrichment_efficiency = var_CIC_use_nuclear }
-	divide_variable = { var_enrichment_efficiency = var_num_nuclear_reactor }
+update_enrichment_efficiency = {
+	if = {
+		limit = {
+			check_variable = { var_LEU_selected = 2 }
+			check_variable = { var_num_nuclear_reactor < var_CIC_use_enrichment }
+		}
+		set_variable = { var_CIC_use_enrichment = var_num_nuclear_reactor }
+	}
+	set_variable = { var_enrichment_efficiency = var_CIC_use_enrichment }
+	set_temp_variable = { temp1 = var_enrichment_grade_factor }
+	multiply_temp_variable = { temp1 = var_num_nuclear_reactor }
+	divide_variable = { var_enrichment_efficiency = temp1 }
 	force_update_dynamic_modifier = yes
 }
 
 set_enrichment_efficiency_HEU = {
+	set_variable = { var_num_nuclear_reactor = 0 }
+	set_variable = { var_enrichment_grade_factor = 2 }
+	set_variable = { var_enrichment_nuclear_energy_prod_factor = 2 }
+	set_variable = { var_enrichment_nuclear_material_prod_factor = 4 }
+	every_controlled_state = {
+		add_to_variable = { ROOT.var_num_nuclear_reactor = building_level@nuclear_reactor }
+	}
+	update_enrichment_efficiency = yes
+}
 
+update_nuclear_production = {
+	set_temp_variable = { temp1 = var_enrichment_nuclear_energy_prod_factor }
+	multiply_temp_variable = { temp1 = var_enrichment_efficiency }
+	multiply_temp_variable = { temp1 = var_nuke_energy_ratio }
+	set_temp_variable = { temp_num_nuclear_reactor = 0 }
+	every_controlled_state = {
+		add_to_temp_variable = { temp_num_nuclear_reactor = building_level@nuclear_reactor }
+	}
+	multiply_temp_variable = { temp1 = temp_num_nuclear_reactor }
+	multiply_temp_variable = { temp1 = 6 } #### fuel production nuke reactor
+	set_variable = { var_nuke_energy_prod_hour = temp1 } ### per hour
+	set_variable = { var_nuke_energy_prod_day = temp1 }
+	multiply_variable = { var_nuke_energy_prod_day = 24 } ### per day
+
+
+	set_temp_variable = { temp2 = var_enrichment_nuclear_material_prod_factor }
+	multiply_temp_variable = { temp2 = var_enrichment_efficiency }
+	multiply_temp_variable = { temp2 = var_nuke_nuclear_material_ratio }
+	multiply_temp_variable = { temp2 = temp_num_nuclear_reactor }
+	set_variable = { var_nuke_nuclear_material_prod = temp2 }
+
+	force_update_dynamic_modifier = yes
 }
 
 ###########################
