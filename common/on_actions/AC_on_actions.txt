@@ -4,26 +4,36 @@
 
 on_actions = {
 
-	#ROOT = nation being puppeted, FROM = overlord
-	on_puppet = {
+	on_weekly = {
 		effect = {
-			if = {
-				limit = {
-					any_country = {
-						ROOT = { has_country_flag = AC_assist_repair_target_by_@PREV }
+
+			### cancel invalid projects
+
+			if = { limit = { check_variable = { active_projects > 0 } }
+
+				for_each_loop = {
+					array = project_array
+
+					if = { limit = { check_variable = { v < 0 } }
+
+						set_variable = { project_type = i }
+
+						if = {
+							limit = {
+								OR = {
+									CONTROLLER = { has_war_with = ROOT } # target state controller at war with project owner
+									var:v = { NOT = { investment_building_slot_available = yes } } # building slot unavailable in target state
+								}
+							}
+
+							set_variable = { project = i }
+							log = "AC - [GetDate] [This.GetTag] - on_daily - deleted invalid project [?project] in [?project_array^project] [?project_array^project.GetName]"
+							end_project = yes
+						}
 					}
 				}
 
-				every_country = {
-					limit = {
-						ROOT = { has_country_flag = AC_assist_repair_target_by_@PREV }
-					}
-
-					ROOT = {
-						clr_country_flag = AC_assist_repair_target_by_@PREV
-						remove_ideas = AC_assist_repair_target_idea
-					}
-				}
+				clear_variable = project_type
 			}
 		}
 	}
@@ -31,22 +41,65 @@ on_actions = {
 	#ROOT is new controller #FROM is old controller #FROM.FROM is state ID
 	on_state_control_changed = {
 		effect = {
-			if = { #cancel project on controller change
-				limit = {
-					any_country = {
-						FROM.FROM = { AC_Control_change_has_flag = yes }
-						ROOT = { NOT = { tag = PREV } }
+			FROM.FROM = {
+
+				if = { limit = { check_variable = { projects_in_state^num > 0 } }
+
+					for_each_scope_loop = {
+						array = projects_in_state
+
+						if = {
+							limit = {
+								NOT = {
+									ROOT = { is_justifying_wargoal_against = PREV }
+									tag = ROOT
+									ROOT = { has_war_with = PREV }
+								}
+							}
+							add_to_array = { PREV.remove_projects = THIS.id }
+						}
+						else = {
+							### update project target country
+
+							meta_effect = { # remove target decision from old controller
+								text = { var:project_target_country^PREV.project_target_state_@THIS = { remove_targeted_decision = { target = PREV decision = project_[x]_target_decision } } }
+								x = "[?PREV.project_target_state_@THIS]"
+							}
+
+							set_variable = { project_target_country^PREV.project_target_state_@THIS = ROOT.id }
+						}
 					}
+
+					for_each_scope_loop = {
+						array = remove_projects
+
+						set_variable = { project = PREV.project_target_state_@THIS }
+						log = "AC - [GetDate] [This.GetTag] - on_state_control_changed - deleted invalid project [?AC_project] in [?AC_project_array^AC_project] [?AC_project_array^AC_project.GetName]"
+						end_project = yes
+					}
+
+					clear_array = remove_projects
 				}
+			}
+		}
+	}
 
-				every_country = {
-					limit = {
-						FROM.FROM = { is_owned_by = this AC_Control_change_has_flag = yes }
+	on_annex = { #ROOT is winner #FROM gets annexed - For civil wars on_civil_war_end is also fired
+		effect = {
+			FROM = {
+				# projects
+				# remove all projects by the annexed country
+				if = { limit = { check_variable = { active_projects > 0 } }
+
+					for_each_loop = {
+						array = project_array
+
+						if = { limit = { check_variable = { v < 0 } }
+
+							set_variable = { project = i }
+							end_project = yes
+						}
 					}
-
-					FROM.FROM = { AC_clear_state_flag = yes }
-					### refund $$$
-
 				}
 			}
 		}

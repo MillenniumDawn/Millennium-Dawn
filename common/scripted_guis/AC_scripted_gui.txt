@@ -9,28 +9,34 @@
 #Now if the AI also does the same that's 210 * 8400 = 1,764,000 possible investments possible
 
 
-#Root is investor
-#prev is state
-#Prev = { controller = { is country being invested in
+# ROOT is investor
+# PREV is state
+# PREV = { CONTROLLER = { is country being invested in
 
-#AC_build_amount determines how many buildings to build
-#AC_building_type_selected = 1 = Infrastructure
-#AC_building_type_selected = 2 = Airbase
-#AC_building_type_selected = 3 = Anti Air
-#AC_building_type_selected = 4 = Radar
-#AC_building_type_selected = 5 = Military Industry
-#AC_building_type_selected = 6 = Civilian Industry
-#AC_building_type_selected = 7 = Naval Industry
-#AC_building_type_selected = 8 = Refinery
-
-@BUILD_COST_INFRASTRUCTURE = 10
-@BUILD_COST_AIRBASE = 10
-@BUILD_COST_ANTIAIR = 10
-@BUILD_COST_RADAR = 10
-@BUILD_COST_MILITARY_FACTORY = 10
-@BUILD_COST_CIVILIAN_FACTORY = 10
-@BUILD_COST_DOCKYARD = 10
-@BUILD_COST_REFINERY = 10
+# AC_build_amount determines how many buildings to build
+# Indexes for WHAT type of building
+# AC_building_type_selected = 1 = Civilian Industry
+# AC_building_type_selected = 2 = Military Industry
+# AC_building_type_selected = 3 = Naval Dockyards
+# AC_building_type_selected = 4 = Infrastructure
+# AC_building_type_selected = 5 = Offices
+# AC_building_type_selected = 6 = Surface to Air Missiles
+# AC_building_type_selected = 7 = Radar
+# AC_building_type_selected = 8 = Air Bases
+# AC_building_type_selected = 9 = Fuel Silo
+# AC_building_type_selected = 10 = Internet Station
+# AC_building_type_selected = 11 = Biofuel Refineries
+@BUILD_COST_CIVILIAN_FACTORY = 7.50
+@BUILD_COST_MILITARY_FACTORY = 8.00
+@BUILD_COST_DOCKYARD = 7.50
+@BUILD_COST_INFRASTRUCTURE = 3.5
+@BUILD_COST_OFFICES = 12.0
+@BUILD_COST_ANTIAIR = 3.25
+@BUILD_COST_RADAR = 1.75
+@BUILD_COST_AIRBASE = 2.25
+@BUILD_COST_FUEL_SILO = 3
+@BUILD_COST_INTERNET_STATION = 3.0
+@BUILD_COST_REFINERY = 4.25
 
 scripted_gui = {
 	AC_show_Investment_window = {
@@ -50,25 +56,36 @@ scripted_gui = {
 		}
 	}
 
+	# Foreign Investment Menu
 	AC_allied_construction_window = {
-
 		context_type = selected_state_context
-
 		window_name = "AC_allied_construction_window"
-
 		parent_window_token = selected_state_view
 
 		visible = {
-			NOT = { is_owned_by = ROOT }
+			OR = {
+				NOT = { is_owned_by = ROOT }
+				NOT = { is_controlled_by = ROOT }
+			}
 			ROOT = { NOT = { has_country_flag = AC_hide_investment_window } }
 		}
 
+		# Graphics for the Buildings
 		properties = {
+			AC_building_cic_button = {
+				image = "[AC_GetCicButtonTexture]"
+			}
+			AC_building_mic_button = {
+				image = "[AC_GetMicButtonTexture]"
+			}
+			AC_building_nic_button = {
+				image = "[AC_GetNicButtonTexture]"
+			}
 			AC_building_infra_button = {
 				image = "[AC_GetInfraButtonTexture]"
 			}
-			AC_building_airbase_button = {
-				image = "[AC_GetAirbaseButtonTexture]"
+			AC_building_offices_button = {
+				image = "[AC_GetOfficesButtonTexture]"
 			}
 			AC_building_antiair_button = {
 				image = "[AC_GetAntiairButtonTexture]"
@@ -76,14 +93,14 @@ scripted_gui = {
 			AC_building_radar_button = {
 				image = "[AC_GetRadarButtonTexture]"
 			}
-			AC_building_mic_button = {
-				image = "[AC_GetMicButtonTexture]"
+			AC_building_airbase_button = {
+				image = "[AC_GetAirbaseButtonTexture]"
 			}
-			AC_building_cic_button = {
-				image = "[AC_GetCicButtonTexture]"
+			AC_building_fuel_silos_button = {
+				image = "[AC_GetFuelSiloButtonTexture]"
 			}
-			AC_building_nic_button = {
-				image = "[AC_GetNicButtonTexture]"
+			AC_building_internet_station_button = {
+				image = "[AC_InternetStationButtonTexture]"
 			}
 			AC_building_ref_button = {
 				image = "[AC_GetRefButtonTexture]"
@@ -91,293 +108,399 @@ scripted_gui = {
 		}
 
 		effects = {
-			AC_down_arrow_click = { #hides investment window
+			# Hides Investment Window
+			AC_down_arrow_click = {
+				# ROOT is the investor nation
 				ROOT = { set_country_flag = AC_hide_investment_window }
 			}
-			AC_build_button_click = { #starts investment if building slots available
+			# Begins project or it cancels the project if you have one active in given state
+			AC_build_button_click = {
 				if = {
-					#Checks to see if there is an active project
-					limit = {  ROOT = { AC_project_type_not_active = yes } }
-					AC_start_project = yes
+					limit = {
+						NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } }
+					}
+					# PREV is the state target
+					PREV = {
+						save_event_target_as = AC_state_event_target
+						# CONTROLLER is pretty obvious
+						CONTROLLER = { country_event = { id = AC_event.10 } }
+					}
 				}
 				else = {
-					#If you do have a project active then the button will say cancel instead of build
-					#If you press it you cancel the project - scripted localization
-					ROOT = { AC_end_project = yes }
+					ROOT = {
+						set_variable = { project = PREV.project_target_state_@ROOT }
+						end_project = yes
+					}
 				}
+
+				refresh_gui = yes
 			}
-			###
-			###
-			###
+
+			# Increase/Decrease the number of buildings
 			AC_building_amount_increase_button_click = { #increases AC_build_amount & update build time/cost
-				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
-					### Max amount depends on the selected building
-					if = { limit = { check_variable = { AC_building_type_selected = 3 } }
-						#Can't have more than level 5 Anti Air
-						if = { limit = { check_variable = { AC_build_amount < 5 } }
-							add_to_variable = { AC_build_amount = 1 }
-
-							else = {
-								set_variable = { AC_build_amount = 1 }
-							}
-						}
+					# Max amount of depends on the select building
+					# Antiair Building
+					if = { limit = { check_variable = { project_building_type^-1 = 6 } }
+						add_to_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
 					}
-					else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
-						#can't have more than level 6 Radar
-						if = { limit = { check_variable = { AC_build_amount < 6 } }
-							add_to_variable = { AC_build_amount = 1 }
-
-							else = {
-								set_variable = { AC_build_amount = 1 }
-							}
-						}
+					# Radar Station
+					else_if = { limit = { check_variable = { project_building_type^-1 = 7 } }
+						add_to_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 6 }
 					}
-					else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
-						#can't have more than level 4 Refinery
-						if = { limit = { check_variable = { AC_build_amount < 3 } }
-							add_to_variable = { AC_build_amount = 1 }
-
-							else = {
-								set_variable = { AC_build_amount = 1 }
-							}
-						}
+					# Synthetic Refineries
+					else_if = { limit = { check_variable = { project_building_type^-1 = 11 } }
+						add_to_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 2 }
+					}
+					# Fuel Silos
+					else_if = { limit = { check_variable = { project_building_type^-1 = 9 } }
+						add_to_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
+					}
+					# Internet Station
+					else_if = { limit = { check_variable = { project_building_type^-1 = 10 } }
+						add_to_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 6 }
 					}
 					else = {
-						#everything else max level 10
-						if = { limit = { check_variable = { AC_build_amount < 10 } }
-							add_to_variable = { AC_build_amount = 1 }
-
-							else = {
-								set_variable = { AC_build_amount = 1 }
-							}
-						}
+						add_to_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 10 }
 					}
-					AC_update_build_cost = yes
-					AC_update_build_time = yes
+					update_gui = yes
 				}
+				refresh_gui = yes
 			}
 			AC_building_amount_decrease_button_click = { ##decreases AC_build_amount & update build time/cost
-				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
-					### max amount depends on the selected building
-					if = { limit = { check_variable = { AC_building_type_selected = 3 } }
-						if = { limit = { check_variable = { AC_build_amount > 1 } }
-							add_to_variable = { AC_build_amount = -1 }
-							else = {
-								set_variable = { AC_build_amount = 5 }
-							}
-						}
+					# Max amount of depends on the select building
+					# Antiair Building
+					if = { limit = { check_variable = { project_building_type^-1 = 6 } }
+						subtract_from_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
 					}
-					else_if = { limit = { check_variable = { AC_building_type_selected = 4 } }
-						if = { limit = { check_variable = { AC_build_amount > 1 } }
-							add_to_variable = { AC_build_amount = -1 }
-							else = {
-								set_variable = { AC_build_amount = 5 }
-							}
-						}
+					# Radar Station
+					else_if = { limit = { check_variable = { project_building_type^-1 = 7 } }
+						subtract_from_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 6 }
 					}
-					else_if = { limit = { check_variable = { AC_building_type_selected = 8 } }
-						if = { limit = { check_variable = { AC_build_amount > 1 } }
-							add_to_variable = { AC_build_amount = -1 }
-							else = {
-								set_variable = { AC_build_amount = 3 }
-							}
-						}
+					# Synthetic Refineries
+					else_if = { limit = { check_variable = { project_building_type^-1 = 11 } }
+						subtract_from_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 2 }
+					}
+					# Fuel Silos
+					else_if = { limit = { check_variable = { project_building_type^-1 = 9 } }
+						subtract_from_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
+					}
+					# Internet Station
+					else_if = { limit = { check_variable = { project_building_type^-1 = 10 } }
+						subtract_from_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 6 }
 					}
 					else = {
-						if = { limit = { check_variable = { AC_build_amount > 1 } }
-							add_to_variable = { AC_build_amount = -1 }
-							else = {
-								set_variable = { AC_build_amount = 10 }
-							}
-						}
+						subtract_from_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 10 }
 					}
-					AC_update_build_cost = yes
-					AC_update_build_time = yes
+					update_gui = yes
 				}
+				refresh_gui = yes
 			}
-			######### STATE BUILDINGS
-			#AC_buiding_xxxx_button_click sets variables for specific building and updated build time/cost
-			AC_building_infra_button_click = {
-				ROOT = { log = "[GetDateText]: [This.GetName]: infra investment on [FROM.Owner.GetName]. Treasury:[?treasury] int investments:[?int_investments]  debt:[?debt]" }
-				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
+
+			# Button Indexes and Positions
+			# Page 1
+			# line One - CIC - 1, MIC - 2, NIC - 3
+			# Line Two - Infrastructure - 4, Offices - 5, SAM - 6, Radar - 7
+			# Page 2
+			# Line One - Air Bases - 8, Fuel Silo - 9, Internet Station - 10
+			# Line Two - Biofuel Refineries - 11
+			# Positions of Line One: { 8, 45, 82, 119 }, 45
+			# Positions of Line Two: { 8, 45, 82, 119 }, 76
+			# AC_buiding_xxxx_button_click sets variables for specific building and updated build time/cost
+
+			# Shows the Current Set Page of Buildings
+			AC_increase_page_click = {
 				ROOT = {
-					set_variable = { AC_building_type_selected = 1 }
-					AC_update_build_cost = yes
-					AC_update_build_time = yes
-				}
-				if = { #cheat for ai
-					limit = {  ROOT = { is_ai = yes AC_project_type_not_active = yes } }
-					AC_start_project = yes
-				}
-			}
-
-			AC_building_airbase_button_click = {
-				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
-				ROOT = {
-					set_variable = { AC_building_type_selected = 2 }
-					AC_update_build_cost = yes
-					AC_update_build_time = yes
+					# 1 is page one
+					if = { limit = { NOT = { has_variable = constructable_buildings } }
+						set_variable = { constructable_buildings = 1 }
+					}
+					if = { limit = { check_variable = { constructable_buildings = 1 } }
+						add_to_variable = { constructable_buildings = 1 }
+					}
+					else_if = { limit = { check_variable = { constructable_buildings = 2 } }
+						set_variable = { constructable_buildings = 1 }
+					}
 				}
 			}
 
-			AC_building_antiair_button_click = {
-				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
-				ROOT = {
-					set_variable = { AC_building_type_selected = 3 }
-					AC_update_build_cost = yes
-					AC_update_build_time = yes
-				}
-			}
-
-			AC_building_radar_button_click = {
-				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
-				ROOT = {
-					set_variable = { AC_building_type_selected = 4 }
-					AC_update_build_cost = yes
-					AC_update_build_time = yes
-				}
-			}
-
-			######### SHARED BUILDINGS
-
-			AC_building_mic_button_click = {
-				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
-				ROOT = {
-					set_variable = { AC_building_type_selected = 5 }
-					AC_update_build_cost = yes
-					AC_update_build_time = yes
-				}
-			}
-
+			# Investable Buildings
+			# Index 1: CIC
 			AC_building_cic_button_click = {
-				ROOT = { log = "[GetDateText]: [This.GetName]: cic investment on [FROM.Owner.GetName]. Treasury:[?treasury] int investments:[?int_investments]  debt:[?debt]" }
-				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
-					set_variable = { AC_building_type_selected = 6 }
-					AC_update_build_cost = yes
-					AC_update_build_time = yes
+					set_variable = { project_building_type^-1 = 1 }
+					update_gui = yes
 				}
-				if = {
-					limit = {  ROOT = { is_ai = yes AC_project_type_not_active = yes } }
-					AC_start_project = yes
-				}
-			}
 
+				refresh_gui = yes
+			}
+			# Index 2: MIC
+			AC_building_mic_button_click = {
+				ROOT = {
+					set_variable = { project_building_type^-1 = 2 }
+					update_gui = yes
+				}
+
+				refresh_gui = yes
+			}
+			# Index 3: NIC
 			AC_building_nic_button_click = {
-				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
 				ROOT = {
-					set_variable = { AC_building_type_selected = 7 }
-					AC_update_build_cost = yes
-					AC_update_build_time = yes
+					set_variable = { project_building_type^-1 = 3 }
+					update_gui = yes
 				}
-			}
 
-			AC_building_ref_button_click = {
-				ROOT = { set_variable = { AC_Selected_state = PREV.id } }
+				refresh_gui = yes
+			}
+			# Index 4: Infrastructure
+			AC_building_infra_button_click = {
 				ROOT = {
-					set_variable = { AC_building_type_selected = 8 }
-					AC_update_build_cost = yes
-					AC_update_build_time = yes
+					set_variable = { project_building_type^-1 = 4 }
+					update_gui = yes
 				}
+
+				refresh_gui = yes
+			}
+			# Index 5: Offices
+			AC_building_offices_button_click = {
+				ROOT = {
+					set_variable = { project_building_type^-1 = 5 }
+					update_gui = yes
+				}
+
+				refresh_gui = yes
+			}
+			# Index 6: SAM
+			AC_building_antiair_button_click = {
+				ROOT = {
+					set_variable = { project_building_type^-1 = 6 }
+					update_gui = yes
+				}
+
+				refresh_gui = yes
+			}
+			# Index 7: Radar
+			AC_building_radar_button_click = {
+				ROOT = {
+					set_variable = { project_building_type^-1 = 7 }
+					update_gui = yes
+				}
+
+				refresh_gui = yes
+			}
+			# Index 8: Air Bases
+			AC_building_airbase_button_click = {
+				ROOT = {
+					set_variable = { project_building_type^-1 = 8 }
+					update_gui = yes
+				}
+
+				refresh_gui = yes
+			}
+			#Index 9: Fuel Silos
+			AC_building_fuel_silos_button_click = {
+				ROOT = {
+					set_variable = { project_building_type^-1 = 9 }
+					update_gui = yes
+				}
+
+				refresh_gui = yes
+			}
+			#Index 10: Internet Station
+			AC_building_internet_station_button_click = {
+				ROOT = {
+					set_variable = { project_building_type^-1 = 10 }
+					update_gui = yes
+				}
+
+				refresh_gui = yes
+			}
+			#Index 11: Biofuel Refineries
+			AC_building_ref_button_click = {
+				ROOT = {
+					set_variable = { project_building_type^-1 = 11 }
+					update_gui = yes
+				}
+
+				refresh_gui = yes
 			}
 		}
 
 		triggers = {
-			###I feel below is self explanatory
+			# Build Button Click Enabled
 			AC_build_button_click_enabled = {
-				ROOT = { check_variable = { AC_Selected_state = PREV.id } }
-				#Must have a building selected
-				ROOT = { check_variable = { AC_building_type_selected > 0 } }
-				ROOT = { NOT = { has_war_with = OWNER } }
-				AC_Building_available = yes
-				NOT = { has_state_flag = Investment_pause_@ROOT }
+				PREV = { CONTROLLER = { NOT = { tag = ROOT } } }
+				PREV = { CONTROLLER = { NOT = { has_war_with = ROOT } } }
+				ROOT = { NOT = { is_justifying_wargoal_against = PREV.CONTROLLER } }
 				if = {
-					limit = { AC_project_type_not_active2 = yes }
-					CONTROLLER = {
-						NOT = { AC_has_max_investments = yes }
+					limit = {
+						OR = {
+							check_variable = { project_building_type^-1 = 2 } #MIC
+							check_variable = { project_building_type^-1 = 6 } #Anti-Air
+						}
 					}
-					ROOT = { check_variable = { treasury > AC_build_cost } }
+					ROOT = { has_idea = defense_industry }
 				}
-			}
-
-			AC_building_amount_increase_button_click_enabled = {
-				ROOT = {
-					check_variable = { AC_build_amount < 11 }
-					AC_project_type_not_active = yes
-				}
-				AC_can_increase_build_ammount = yes
-			}
-
-			AC_building_amount_decrease_button_click_enabled = {
-				ROOT = {
-					check_variable = { AC_build_amount > 1 }
-					AC_project_type_not_active = yes
-				}
-			}
-
-			######### STATE BUILDINGS
-
-			AC_building_infra_button_click_enabled = {
-				AC_building_infra_available = yes
 				if = {
-					limit = { ROOT = { is_ai = yes } }
-					NOT = { has_state_flag = Investment_pause_@ROOT }
-					if = {
-						limit = { AC_project_type_not_active2 = yes }
-						CONTROLLER = { NOT = { AC_has_max_investments = yes } }
-						ROOT = { check_variable = { treasury > AC_build_cost } }
+					limit = {
+						check_variable = { project_building_type^-1 = 3 }
+					}
+					ROOT = { has_idea = maritime_industry }
+				}
+				# #Cannot be at war
+				# NOT = { OWNER = { has_war_with = ROOT } }
+				# NOT = { ROOT = { controls_state = PREV.id } }
+				# #Cannot be being justified upon investment country
+				# ROOT = { not = { is_justifying_wargoal_against = PREV } }
+				if = { limit = { NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } } }
+					ROOT = {
+						check_variable = { active_projects < 15 }
+						check_variable = { project_building_type^-1 > 0 }
+						check_variable = { project_build_amount^-1 > 0 }
+						NOT = { is_justifying_wargoal_against = PREV.CONTROLLER }
+
+						# General things
+						NOT = { check_variable = { treasury < project_monetary_cost^-1 } }
+
+						if = { limit = { check_variable = { project_building_type^-1 = 1 } }
+							PREV = { AC_building_cic_available = yes }
+						}
+						else_if = { limit = { check_variable = { project_building_type^-1 = 2 } }
+							PREV = { AC_building_mic_available = yes }
+						}
+						else_if = { limit = { check_variable = { project_building_type^-1 = 3 } }
+							PREV = { AC_building_nic_available = yes }
+						}
+						else_if = { limit = { check_variable = { project_building_type^-1 = 4 } }
+							PREV = { AC_building_infra_available = yes }
+						}
+						else_if = { limit = { check_variable = { project_building_type^-1 = 5 } }
+							PREV = { AC_building_offices_available = yes }
+						}
+						else_if = { limit = { check_variable = { project_building_type^-1 = 6 } }
+							PREV = { AC_building_antiair_available = yes }
+						}
+						else_if = { limit = { check_variable = { project_building_type^-1 = 7 } }
+							PREV = { AC_building_radar_available = yes }
+						}
+						else_if = { limit = { check_variable = { project_building_type^-1 = 8 } }
+							PREV = { AC_building_airbase_available = yes }
+						}
+						else_if = { limit = { check_variable = { project_building_type^-1 = 9 } }
+							PREV = { building_fuel_silos_available = yes }
+						}
+						else_if = { limit = { check_variable = { project_building_type^-1 = 10 } }
+							PREV = { building_internet_station_available = yes }
+						}
+						else_if = { limit = { check_variable = { project_building_type^-1 = 11 } }
+							PREV = { AC_building_ref_available = yes }
+						}
 					}
 				}
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
 			}
 
-			AC_building_airbase_button_click_enabled = {
-				AC_building_airbase_available = yes
+			# Investable Buildings
+			# Page 1 - Index One: Civilian Industry
+			AC_building_cic_button_click_enabled = {
+				AC_building_cic_available = yes
 				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
 			}
-
-			AC_building_antiair_button_click_enabled = {
-				AC_building_antiair_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+			AC_building_cic_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 1 } }
 			}
-
-			AC_building_radar_button_click_enabled = {
-				AC_building_radar_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
-			}
-
-			######### SHARED BUILDINGS
-
+			# Index Two: Military Industry
 			AC_building_mic_button_click_enabled = {
 				AC_building_mic_available = yes
 				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
 			}
-
-			AC_building_cic_button_click_enabled = {
-				AC_building_cic_available = yes
-				if = {
-					limit = { ROOT = { is_ai = yes } }
-
-					NOT = { has_state_flag = Investment_pause_@ROOT }
-					if = {
-						limit = { AC_project_type_not_active2 = yes }
-						CONTROLLER = { NOT = { AC_has_max_investments = yes } }
-						ROOT = { check_variable = { treasury > AC_build_cost } }
-					}
-				}
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+			AC_building_mic_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 1 } }
 			}
-
+			# Index Three: Naval Dockyard
 			AC_building_nic_button_click_enabled = {
 				AC_building_nic_available = yes
 				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
 			}
-
+			AC_building_nic_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 1 } }
+			}
+			# Index Four: Infrastructure
+			AC_building_infra_button_click_enabled = {
+				AC_building_infra_available = yes
+				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+			}
+			AC_building_infra_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 1 } }
+			}
+			# Index Five: Offices
+			AC_building_offices_button_click_enabled = {
+				AC_building_offices_available = yes
+				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+			}
+			AC_building_offices_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 1 } }
+			}
+			# Index Six: SAM
+			AC_building_antiair_button_click_enabled = {
+				AC_building_antiair_available = yes
+				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+			}
+			AC_building_antiair_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 1 } }
+			}
+			# Index Seven: Radar
+			AC_building_radar_button_click_enabled = {
+				AC_building_radar_available = yes
+				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+			}
+			AC_building_radar_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 1 } }
+			}
+			# Page Two
+			# Index Eight: Air Bases
+			AC_building_airbase_button_click_enabled = {
+				AC_building_airbase_available = yes
+				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+			}
+			AC_building_airbase_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 2 } }
+			}
+			# Index Nine: Fuel Silo
+			AC_building_fuel_silos_button_click_enabled = {
+				building_fuel_silos_available = yes
+				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+			}
+			AC_building_fuel_silos_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 2 } }
+			}
+			# Index Ten: Internet Station
+			AC_building_internet_station_button_click_enabled = {
+				building_internet_station_available = yes
+				ROOT = { NOT = { has_country_flag = this_investment_offer_pending@PREV } }
+			}
+			AC_building_internet_station_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 2 } }
+			}
+			# Index Eleven: Refineries
 			AC_building_ref_button_click_enabled = {
 				AC_building_ref_available = yes
 				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+			}
+			AC_building_ref_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 2 } }
 			}
 		}
 	}

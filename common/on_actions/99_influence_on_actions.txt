@@ -1,8 +1,77 @@
 on_actions = {
-	# TODO: Influencer AI
+	# TODO: Influencer/Investment AI
 	# POL, SWE, TUR, SAU, ISR, IND, PAK, EGY
 	# MEX, , SPR, UAE, EGY, MOR, ALG, PHI
 
+	# Investment Notes:
+	##These would work like this: China (AI only) has 1 desicion. Pressing it, it will use random_list to select a state to invest in
+	##the more frequent a country should be selected, the more states it would have there
+	##Big important countries with plenty money to invest like China and Japan should have own desicions
+	##then gradually they are more generic
+	##key is selecting big states where it's likely there is room for investment... one can use else command to shift to one with room
+	##The countries invested in should correspond with countries they can influence
+	##some work done on that here:
+	## num_of_available_civilian_factories
+
+	# invest_cic = yes
+	# invest_infra = yes
+	# See state_names_l_english.yml or ingame for states to prioritize (optional)
+
+	#China Influencer/Investment AI
+	on_weekly_CHI = {
+		effect = {
+			CHI = {
+				if = {
+					limit = {
+						is_ai = yes
+						check_variable = { active_projects < 15 }
+						check_variable = { debt_ratio < 2.50 }
+					}
+					if = {
+						limit = {
+							check_variable = { investment_targets > 0 }
+						}
+						random_scope_in_array = {
+							array = CHI.investment_targets
+							limit = {
+								country_exists = THIS
+								NOT = { has_war_with = CHI }
+								NOT = {
+									CHI = { is_justifying_wargoal_against = THIS }
+									THIS = { is_justifying_wargoal_against = CHI }
+								}
+								has_opinion = { target = CHI value > -20 }
+								if = { limit = { NOT = { CHI = { has_government = democratic } THIS = { tag = USA } } }
+									NOT = { is_in_faction_with = USA }
+								}
+								is_subject = no
+							}
+
+							AI_initiate_project = yes
+						}
+					}
+					else = {
+						random_country = {
+							limit = {
+								NOT = { has_war_with = CHI }
+								NOT = {
+									CHI = { is_justifying_wargoal_against = THIS }
+									THIS = { is_justifying_wargoal_against = CHI }
+								}
+								has_opinion = { target = CHI value > -20 }
+								if = { limit = { NOT = { CHI = { has_government = democratic } THIS = { tag = USA } } }
+									NOT = { is_in_faction_with = USA }
+								}
+								is_subject = no
+							}
+
+							AI_initiate_project = yes
+						}
+					}
+				}
+			}
+		}
+	}
 	on_monthly_CHI = {
 		effect = {
 			CHI = {
@@ -22,12 +91,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { gdp_per_capita < 1.000 }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											TAI = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -56,7 +125,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -66,7 +135,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -100,7 +169,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -118,12 +187,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											TAI = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -145,7 +214,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -190,7 +259,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -219,12 +288,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											SIA = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -232,7 +301,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -242,7 +311,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -260,12 +329,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											MAY = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -273,7 +342,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -283,7 +352,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -304,7 +373,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -325,7 +394,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -348,7 +417,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -367,12 +436,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											VEN = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -380,7 +449,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -390,7 +459,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -412,7 +481,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -433,7 +502,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -455,7 +524,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -476,7 +545,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -497,7 +566,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -518,7 +587,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -539,7 +608,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -560,7 +629,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -581,7 +650,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -602,7 +671,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -624,7 +693,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -645,7 +714,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -664,12 +733,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.8 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											ETH = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -678,7 +747,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -696,12 +765,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											DRC = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -709,7 +778,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -719,7 +788,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -737,12 +806,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											AGL = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -750,7 +819,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -760,7 +829,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -778,12 +847,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											GAB = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -791,7 +860,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -801,7 +870,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -819,12 +888,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											NIG = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -832,7 +901,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -842,7 +911,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -860,12 +929,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											GAH = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -873,7 +942,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -883,7 +952,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -903,7 +972,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -913,7 +982,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -934,7 +1003,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -955,7 +1024,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -976,7 +1045,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -997,7 +1066,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -1018,7 +1087,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 											}
 										make_puppet_action = yes
@@ -1064,6 +1133,64 @@ on_actions = {
 			}
 		}
 	}
+
+	#USA Influencer/Investment AI
+	on_weekly_USA = {
+		effect = {
+			USA = {
+				if = { limit = { is_ai = yes check_variable = { active_projects < 15 } }
+					if = {
+						limit = {
+							is_ai = yes
+							check_variable = { active_projects < 15 }
+							check_variable = { debt_ratio < 2.50 }
+						}
+						if = {
+							limit = {
+								check_variable = { investment_targets > 0 }
+							}
+							random_scope_in_array = {
+								array = USA.investment_targets
+								limit = {
+									country_exists = THIS
+									NOT = { has_war_with = USA }
+									NOT = {
+										USA = { is_justifying_wargoal_against = THIS }
+										THIS = { is_justifying_wargoal_against = USA }
+									}
+									has_opinion = { target = USA value > -20 }
+									if = { limit = { NOT = { CHI = { has_government = democratic } THIS = { tag = CHI } } }
+										NOT = { is_in_faction_with = CHI }
+									}
+									is_subject = no
+								}
+
+								AI_initiate_project = yes
+							}
+						}
+						else = {
+							random_country = {
+								limit = {
+									NOT = { has_war_with = USA }
+									NOT = {
+										USA = { is_justifying_wargoal_against = THIS }
+										THIS = { is_justifying_wargoal_against = USA }
+									}
+									has_opinion = { target = USA value > -20 }
+									if = { limit = { NOT = { CHI = { has_government = democratic } THIS = { tag = CHI } } }
+										NOT = { is_in_faction_with = CHI }
+									}
+									is_subject = no
+								}
+
+								AI_initiate_project = yes
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 	on_monthly_USA = {
 		effect = {
 			USA = {
@@ -1086,7 +1213,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.45 }
 											NOT = { is_same_government = yes }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										PREV = {
@@ -1121,7 +1248,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1139,12 +1266,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											ISR = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -1231,7 +1358,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1252,7 +1379,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1273,7 +1400,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1291,12 +1418,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											SIA = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -1304,7 +1431,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -1314,7 +1441,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1332,12 +1459,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											MAY = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -1345,7 +1472,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -1355,7 +1482,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1419,12 +1546,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											CAN = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -1441,12 +1568,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											MEX = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -1463,12 +1590,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											BRA = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -1488,7 +1615,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.45 }
 											NOT = { is_same_government = yes }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										PREV = {
@@ -1510,7 +1637,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1565,7 +1692,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.45 }
 											NOT = { is_same_government = yes }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										PREV = {
@@ -1587,7 +1714,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1616,12 +1743,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											GAH = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -1629,7 +1756,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -1639,7 +1766,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1817,6 +1944,54 @@ on_actions = {
 			}
 		}
 	}
+
+	#French Influencer/Investment AI
+	on_weekly_FRA = {
+		effect = {
+			if = {
+				limit = {
+					is_ai = yes
+					check_variable = { active_projects < 15 }
+					check_variable = { debt_ratio < 2.50 }
+				}
+				if = {
+					limit = {
+						check_variable = { investment_targets > 0 }
+					}
+					random_scope_in_array = {
+						array = FRA.investment_targets
+						limit = {
+							country_exists = THIS
+							NOT = { has_war_with = FRA }
+							NOT = {
+								FRA = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = FRA }
+							}
+							has_opinion = { target = FRA value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+				else = {
+					random_country = {
+						limit = {
+							NOT = { has_war_with = FRA }
+							NOT = {
+								FRA = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = FRA }
+							}
+							has_opinion = { target = FRA value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+			}
+		}
+	}
 	on_monthly_FRA = {
 		effect = {
 			FRA = {
@@ -1835,12 +2010,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											ALG = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -1869,7 +2044,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -1879,7 +2054,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1900,7 +2075,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1921,7 +2096,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1942,7 +2117,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -1971,12 +2146,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											MAD = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -1984,7 +2159,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -1994,7 +2169,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2012,12 +2187,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.8 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											CAM = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -2026,7 +2201,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2044,12 +2219,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											GAB = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -2057,7 +2232,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2067,7 +2242,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2085,12 +2260,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											CNG = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -2098,7 +2273,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2108,7 +2283,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2126,12 +2301,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											CHA = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -2139,7 +2314,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2149,7 +2324,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2167,12 +2342,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											SEY = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -2180,7 +2355,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2190,7 +2365,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2210,7 +2385,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2220,7 +2395,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2240,7 +2415,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2250,7 +2425,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2327,7 +2502,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2348,7 +2523,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2389,12 +2564,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											VIE = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -2402,7 +2577,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2412,7 +2587,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2430,12 +2605,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											LAO = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -2443,7 +2618,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2453,7 +2628,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2471,12 +2646,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											CBD = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -2484,7 +2659,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2494,7 +2669,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2512,12 +2687,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											SIN = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -2525,7 +2700,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2535,7 +2710,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2553,12 +2728,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 1.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											MAL = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -2566,7 +2741,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2576,7 +2751,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2596,7 +2771,7 @@ on_actions = {
 										limit = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.5 }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_country_flag = country_exploited }
 										}
 										economic_exploitation_action = yes
@@ -2606,7 +2781,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2655,6 +2830,8 @@ on_actions = {
 			}
 		}
 	}
+
+	#Iranian Influencer/Investment AI
 	on_monthly_PER = {
 		effect = {
 			PER = {
@@ -2674,11 +2851,11 @@ on_actions = {
 									if = {
 										limit = {
 											OR = {
-												is_puppet_of = PREV
+												is_subject_of = PREV
 												has_government = communism
 											}
 										}
-										country_event = { id = influence.11 }
+										country_event = { id = influence.0 }
 									}
 									if = {
 										limit = {
@@ -2702,7 +2879,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.45 }
 											NOT = { is_same_government = yes }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										country_event = { id = influence.44 }
@@ -2712,7 +2889,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2750,7 +2927,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.55 }
 											NOT = { is_same_government = yes }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										country_event = { id = influence.44 }
@@ -2760,7 +2937,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2778,11 +2955,11 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											is_puppet_of = PREV
+											is_subject_of = PREV
 										}
 										PREV = {
 											UAE = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -2808,7 +2985,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.45 }
 											NOT = { is_same_government = yes }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										country_event = { id = influence.44 }
@@ -2818,7 +2995,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2836,11 +3013,11 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.4 }
+											check_variable = { ROOT.gdp_total > gdp_total }
 											has_government = communism
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 										}
-										country_event = { id = influence.11 }
+										country_event = { id = influence.0 }
 									}
 									if = {
 										limit = {
@@ -2864,7 +3041,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2882,11 +3059,11 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.4 }
+											check_variable = { ROOT.gdp_total > gdp_total }
 											has_government = communism
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 										}
-										country_event = { id = influence.11 }
+										country_event = { id = influence.0 }
 									}
 									if = {
 										limit = {
@@ -2902,7 +3079,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2920,10 +3097,10 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.1 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
-										country_event = { id = influence.11 }
+										country_event = { id = influence.0 }
 									}
 									if = {
 										limit = {
@@ -2939,7 +3116,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2957,10 +3134,10 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.1 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
-										country_event = { id = influence.11 }
+										country_event = { id = influence.0 }
 									}
 									if = {
 										limit = {
@@ -2976,7 +3153,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -2994,10 +3171,10 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.4 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
-										country_event = { id = influence.11 }
+										country_event = { id = influence.0 }
 									}
 									if = {
 										limit = {
@@ -3013,7 +3190,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3031,10 +3208,10 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.6 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
-										country_event = { id = influence.11 }
+										country_event = { id = influence.0 }
 									}
 									if = {
 										limit = {
@@ -3050,7 +3227,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3068,10 +3245,10 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
-										country_event = { id = influence.11 }
+										country_event = { id = influence.0 }
 									}
 									if = {
 										limit = {
@@ -3087,7 +3264,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3106,10 +3283,10 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.1 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
-										country_event = { id = influence.11 }
+										country_event = { id = influence.0 }
 									}
 									if = {
 										limit = {
@@ -3125,7 +3302,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3179,6 +3356,104 @@ on_actions = {
 								factor = 1000
 								has_war = yes
 							}
+						}
+					}
+					if = {
+						limit = {
+							check_variable = { active_projects < 15 }
+							check_variable = { debt_ratio < 2.50 }
+						}
+						if = {
+							limit = {
+								check_variable = { investment_targets > 0 }
+							}
+							random_scope_in_array = {
+								array = PER.investment_targets
+								limit = {
+									country_exists = THIS
+									NOT = { has_war_with = PER }
+									NOT = {
+										PER = { is_justifying_wargoal_against = THIS }
+										THIS = { is_justifying_wargoal_against = PER }
+									}
+									has_opinion = { target = PER value > -20 }
+									is_subject = no
+								}
+
+								AI_initiate_project = yes
+							}
+						}
+						else = {
+							random_country = {
+								limit = {
+									NOT = { has_war_with = PER }
+									NOT = {
+										PER = { is_justifying_wargoal_against = THIS }
+										THIS = { is_justifying_wargoal_against = PER }
+									}
+									has_opinion = { target = PER value > -20 }
+									is_subject = no
+								}
+
+								AI_initiate_project = yes
+							}
+						}
+					}
+				}
+
+			}
+		}
+	}
+
+	#Russian Influencer/Investment AI
+	on_weekly_SOV = {
+		effect = {
+			SOV = {
+				if = {
+					limit = {
+						is_ai = yes
+						check_variable = { active_projects < 15 }
+						check_variable = { debt_ratio < 2.50 }
+					}
+					if = {
+						limit = {
+							check_variable = { investment_targets > 0 }
+						}
+						random_scope_in_array = {
+							array = SOV.investment_targets
+							limit = {
+								country_exists = THIS
+								NOT = { has_war_with = SOV }
+								NOT = {
+									SOV = { is_justifying_wargoal_against = THIS }
+									THIS = { is_justifying_wargoal_against = SOV }
+								}
+								has_opinion = { target = SOV value > -20 }
+								if = { limit = { NOT = { SOV = { has_government = democratic } THIS = { tag = USA } } }
+									NOT = { is_in_faction_with = USA }
+								}
+								is_subject = no
+							}
+
+							AI_initiate_project = yes
+						}
+					}
+					else = {
+						random_country = {
+							limit = {
+								NOT = { has_war_with = SOV }
+								NOT = {
+									SOV = { is_justifying_wargoal_against = THIS }
+									THIS = { is_justifying_wargoal_against = SOV }
+								}
+								has_opinion = { target = SOV value > -20 }
+								if = { limit = { NOT = { SOV = { has_government = democratic } THIS = { tag = USA } } }
+									NOT = { is_in_faction_with = USA }
+								}
+								is_subject = no
+							}
+
+							AI_initiate_project = yes
 						}
 					}
 				}
@@ -3244,7 +3519,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.45 }
 											NOT = { is_same_government = yes }
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										PREV = {
@@ -3279,7 +3554,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3392,12 +3667,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											BLR = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -3427,7 +3702,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3465,12 +3740,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											SOO = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -3500,7 +3775,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3518,12 +3793,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = {
 											ABK = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -3553,7 +3828,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3595,7 +3870,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3752,6 +4027,56 @@ on_actions = {
 			}
 		}
 	}
+
+	#German Influencer/Investment AI
+	on_weekly_GER = {
+		effect = {
+			GER = {
+				if = {
+					limit = {
+						is_ai = yes
+						check_variable = { active_projects < 15 }
+						check_variable = { debt_ratio < 2.50 }
+					}
+					if = {
+						limit = {
+							check_variable = { investment_targets > 0 }
+						}
+						random_scope_in_array = {
+							array = GER.investment_targets
+							limit = {
+								country_exists = THIS
+								NOT = { has_war_with = GER }
+								NOT = {
+									GER = { is_justifying_wargoal_against = THIS }
+									THIS = { is_justifying_wargoal_against = GER }
+								}
+								has_opinion = { target = GER value > -20 }
+								is_subject = no
+							}
+
+							AI_initiate_project = yes
+						}
+					}
+					else = {
+						random_country = {
+							limit = {
+								NOT = { has_war_with = GER }
+								NOT = {
+									GER = { is_justifying_wargoal_against = THIS }
+									THIS = { is_justifying_wargoal_against = GER }
+								}
+								has_opinion = { target = GER value > -20 }
+								is_subject = no
+							}
+
+							AI_initiate_project = yes
+						}
+					}
+				}
+			}
+		}
+	}
 	on_monthly_GER = {
 		effect = {
 			GER = {
@@ -3770,12 +4095,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											LUX = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -3797,7 +4122,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3815,12 +4140,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											HOL = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -3842,7 +4167,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3860,12 +4185,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											BEL = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -3887,7 +4212,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3905,12 +4230,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											CZE = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -3932,7 +4257,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3950,12 +4275,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 										DEN = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -3977,7 +4302,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -3995,12 +4320,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 										POL = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4022,7 +4347,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -4040,12 +4365,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 										SWE = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4067,7 +4392,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -4085,12 +4410,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											NOR = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4112,7 +4437,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -4130,12 +4455,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											FIN = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4157,7 +4482,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -4175,12 +4500,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											ICE = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4202,7 +4527,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -4220,12 +4545,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											ITA = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4247,7 +4572,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -4265,12 +4590,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											FRA = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4292,7 +4617,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -4310,12 +4635,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											EST = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4337,7 +4662,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -4355,12 +4680,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											LAT = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4382,7 +4707,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -4400,12 +4725,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											LIT = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4427,7 +4752,7 @@ on_actions = {
 											check_variable = { influence_array^0 = PREV }
 											check_variable = { influence_array_calc^0 > 0.8 }
 											is_same_government = yes
-											NOT = { is_puppet_of = PREV }
+											NOT = { is_subject_of = PREV }
 											NOT = { has_war = yes }
 										}
 										make_puppet_action = yes
@@ -4467,6 +4792,56 @@ on_actions = {
 								factor = 1000
 								has_war = yes
 							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	#English Influencer/Investment AI
+	on_weekly_ENG = {
+		effect = {
+			ENG = {
+				if = {
+					limit = {
+						is_ai = yes
+						check_variable = { active_projects < 15 }
+						check_variable = { debt_ratio < 2.50 }
+					}
+					if = {
+						limit = {
+							check_variable = { investment_targets > 0 }
+						}
+						random_scope_in_array = {
+							array = ENG.investment_targets
+							limit = {
+								country_exists = THIS
+								NOT = { has_war_with = ENG }
+								NOT = {
+									ENG = { is_justifying_wargoal_against = THIS }
+									THIS = { is_justifying_wargoal_against = ENG }
+								}
+								has_opinion = { target = ENG value > -20 }
+								is_subject = no
+							}
+
+							AI_initiate_project = yes
+						}
+					}
+					else = {
+						random_country = {
+							limit = {
+								NOT = { has_war_with = ENG }
+								NOT = {
+									ENG = { is_justifying_wargoal_against = THIS }
+									THIS = { is_justifying_wargoal_against = ENG }
+								}
+								has_opinion = { target = ENG value > -20 }
+								is_subject = no
+							}
+
+							AI_initiate_project = yes
 						}
 					}
 				}
@@ -4726,12 +5101,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											RAJ = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4768,12 +5143,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											PAK = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -4803,12 +5178,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											CAN = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5026,6 +5401,54 @@ on_actions = {
 			}
 		}
 	}
+
+	#Brazilian Influencer/Investment AI
+	on_weekly_BRA = {
+		effect = {
+			if = {
+				limit = {
+					is_ai = yes
+					check_variable = { active_projects < 15 }
+					check_variable = { debt_ratio < 2.50 }
+				}
+				if = {
+					limit = {
+						check_variable = { investment_targets > 0 }
+					}
+					random_scope_in_array = {
+						array = BRA.investment_targets
+						limit = {
+							country_exists = THIS
+							NOT = { has_war_with = BRA }
+							NOT = {
+								BRA = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = BRA }
+							}
+							has_opinion = { target = BRA value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+				else = {
+					random_country = {
+						limit = {
+							NOT = { has_war_with = BRA }
+							NOT = {
+								BRA = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = BRA }
+							}
+							has_opinion = { target = BRA value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+			}
+		}
+	}
 	on_monthly_BRA = {
 		effect = {
 			BRA = {
@@ -5043,12 +5466,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											ARG = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5078,12 +5501,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											URG = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5113,12 +5536,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											CHL = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5149,12 +5572,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											PAR = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5184,12 +5607,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											ECU = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5219,12 +5642,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											COL = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5255,12 +5678,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											SUR = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5290,12 +5713,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											GUY = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5326,12 +5749,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											VEN = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5361,12 +5784,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											BOL = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5396,12 +5819,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											PRU = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -5454,6 +5877,56 @@ on_actions = {
 								has_war = yes
 							}
 						}
+					}
+				}
+			}
+		}
+	}
+
+	#South Korea Influencer/Investment AI
+	on_weekly_KOR = {
+		effect = {
+			if = {
+				limit = {
+					is_ai = yes
+					check_variable = { active_projects < 15 }
+					check_variable = { debt_ratio < 2.50 }
+					NOT = { has_country_flag = bi_weekly_investment }
+				}
+				set_country_flag = { flag = bi_weekly_investment value = 1 days = 10 }
+				if = {
+					limit = {
+						check_variable = { investment_targets > 0 }
+					}
+					random_scope_in_array = {
+						array = KOR.investment_targets
+						limit = {
+							country_exists = THIS
+							NOT = { has_war_with = KOR }
+							NOT = {
+								KOR = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = KOR }
+							}
+							has_opinion = { target = KOR value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+				else = {
+					random_country = {
+						limit = {
+							NOT = { has_war_with = KOR }
+							NOT = {
+								KOR = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = KOR }
+							}
+							has_opinion = { target = KOR value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
 					}
 				}
 			}
@@ -5645,6 +6118,54 @@ on_actions = {
 								}
 							}
 						}
+					}
+				}
+			}
+		}
+	}
+
+	#Italy Influencer/Investment AI
+	on_weekly_ITA = {
+		effect = {
+			if = {
+				limit = {
+					is_ai = yes
+					check_variable = { active_projects < 15 }
+					check_variable = { debt_ratio < 2.50 }
+				}
+				if = {
+					limit = {
+						check_variable = { investment_targets > 0 }
+					}
+					random_scope_in_array = {
+						array = ITA.investment_targets
+						limit = {
+							country_exists = THIS
+							NOT = { has_war_with = ITA }
+							NOT = {
+								ITA = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = ITA }
+							}
+							has_opinion = { target = ITA value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+				else = {
+					random_country = {
+						limit = {
+							NOT = { has_war_with = ITA }
+							NOT = {
+								ITA = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = ITA }
+							}
+							has_opinion = { target = ITA value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
 					}
 				}
 			}
@@ -5954,6 +6475,54 @@ on_actions = {
 			}
 		}
 	}
+
+	#Japan Influencer/Investment AI
+	on_weekly_JAP = {
+		effect = {
+			if = {
+				limit = {
+					is_ai = yes
+					check_variable = { active_projects < 15 }
+					check_variable = { debt_ratio < 2.50 }
+				}
+				if = {
+					limit = {
+						check_variable = { investment_targets > 0 }
+					}
+					random_scope_in_array = {
+						array = JAP.investment_targets
+						limit = {
+							country_exists = THIS
+							NOT = { has_war_with = JAP }
+							NOT = {
+								JAP = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = JAP }
+							}
+							has_opinion = { target = JAP value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+				else = {
+					random_country = {
+						limit = {
+							NOT = { has_war_with = JAP }
+							NOT = {
+								JAP = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = JAP }
+							}
+							has_opinion = { target = JAP value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+			}
+		}
+	}
 	on_monthly_JAP = {
 		effect = {
 			JAP = {
@@ -5984,12 +6553,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											KOR = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6030,12 +6599,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											SIN = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6066,12 +6635,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											PHI = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6101,12 +6670,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											SIA = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6137,12 +6706,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											IND = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6172,12 +6741,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											MAY = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6208,12 +6777,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											CAN = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6255,12 +6824,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											AST = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6290,12 +6859,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											MEX = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6325,12 +6894,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											NZL = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6433,12 +7002,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											ITA = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6468,12 +7037,12 @@ on_actions = {
 									spread_influence = yes
 									if = {
 										limit = {
-											check_variable = { size_modifier < 0.2 }
-											NOT = { is_puppet_of = PREV }
+											check_variable = { ROOT.gdp_total > gdp_total }
+											NOT = { is_subject_of = PREV }
 										}
 										PREV = { #Economic Aid
 											HOL = {
-												country_event = { id = influence.11 }
+												country_event = { id = influence.0 }
 											}
 										}
 									}
@@ -6535,6 +7104,53 @@ on_actions = {
 		}
 	}
 
+	#India Influencer/Investment AI
+	on_weekly_RAJ = {
+		effect = {
+			if = {
+				limit = {
+					is_ai = yes
+					check_variable = { active_projects < 15 }
+					check_variable = { debt_ratio < 2.50 }
+				}
+				if = {
+					limit = {
+						check_variable = { investment_targets > 0 }
+					}
+					random_scope_in_array = {
+						array = RAJ.investment_targets
+						limit = {
+							country_exists = THIS
+							NOT = { has_war_with = RAJ }
+							NOT = {
+								RAJ = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = RAJ }
+							}
+							has_opinion = { target = RAJ value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+				else = {
+					random_country = {
+						limit = {
+							NOT = { has_war_with = RAJ }
+							NOT = {
+								RAJ = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = RAJ }
+							}
+							has_opinion = { target = RAJ value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+			}
+		}
+	}
 	on_monthly_RAJ = {
 		effect = {
 			RAJ = {
@@ -6926,7 +7542,8 @@ on_actions = {
 		}
 	}
 
-	on_monthly_SAF = { 
+	#South Africa Influencer/Investment AI
+	on_monthly_SAF = {
 		effect = {
 			SAF = {
 				if = { limit = { is_ai = yes }
@@ -7180,7 +7797,8 @@ on_actions = {
 		}
 	}
 
-	on_monthly_NIG = { 
+	#Nigerian Influencer/Investment AI
+	on_monthly_NIG = {
 		effect = {
 			NIG = {
 				if = { limit = { is_ai = yes }
@@ -7431,6 +8049,7 @@ on_actions = {
 		}
 	}
 
+	#Argentina Influencer/Investment AI
 	on_monthly_ARG = {
 		effect = {
 			ARG = {
@@ -7581,4 +8200,733 @@ on_actions = {
 		}
 	}
 
+	#Syrian Influencer/Investment AI
+	on_weekly_SYR = {
+		effect = {
+			if = {
+				limit = {
+					is_ai = yes
+					check_variable = { active_projects < 15 }
+					check_variable = { debt_ratio < 2.50 }
+				}
+				if = {
+					limit = {
+						check_variable = { investment_targets > 0 }
+					}
+					random_scope_in_array = {
+						array = SYR.investment_targets
+						limit = {
+							country_exists = THIS
+							NOT = { has_war_with = SYR }
+							NOT = {
+								SYR = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = SYR }
+							}
+							has_opinion = { target = SYR value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+				else = {
+					random_country = {
+						limit = {
+							NOT = { has_war_with = SYR }
+							NOT = {
+								SYR = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = SYR }
+							}
+							has_opinion = { target = SYR value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+			}
+		}
+	}
+	on_monthly_SYR = {
+		effect = {
+			SYR = {
+				if = { limit = { is_ai = yes }
+					save_event_target_as = influence_sender
+					log = "[GetDateText]: [Root.GetName]: On Actions -- Syrian AI Influence"
+					#Focus on Lebanon, Hezbollah and Jordan, if regional power, also on Iraq, Kuwait & Cyprus
+					random_list = {
+						10 = {
+							modifier = {
+								NOT = { country_exists = LEB }
+								factor = 0
+							}
+							LEB = {
+								if = { limit = { NOT = { has_opinion = { target = PREV value < -180 } is_subject = yes } }
+									spread_influence = yes
+									#Coup
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.45 }
+											NOT = { is_same_government = yes }
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										PREV = {
+											LEB = {
+												country_event = { id = influence.44 }
+											}
+										}
+									}
+									#Target other influence
+									if = {
+										limit = {
+											OR = {
+												check_variable = { influence_array^0 = PREV }
+												check_variable = { influence_array^1 = PREV }
+											}
+										}
+										PREV = {
+											LEB = {
+												country_event = { id = influence.22 }
+											}
+										}
+									}
+									#Manipulate politics
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.3 }
+											OR = {
+												AND = {
+													PREV = { has_government = democratic }
+													NOT = { check_variable = { party_popularity@democratic > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = communism }
+													NOT = { check_variable = { party_popularity@communism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = fascism }
+													NOT = { check_variable = { party_popularity@fascism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = neutrality }
+													NOT = { check_variable = { party_popularity@neutrality > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = nationalist }
+													NOT = { check_variable = { party_popularity@nationalist > 0.35 } }
+												}
+											}
+										}
+										manipulate_politics_action = yes
+									}
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.8 }
+											is_same_government = yes
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										make_puppet_action = yes
+									}
+								}
+							}
+						}
+						10 = {
+							modifier = {
+								NOT = { country_exists = HEZ }
+								factor = 0
+							}
+							HEZ = {
+								if = { limit = { NOT = { has_opinion = { target = PREV value < -180 } is_subject = yes } }
+									spread_influence = yes
+									#Coup
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.45 }
+											NOT = { is_same_government = yes }
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										PREV = {
+											HEZ = {
+												country_event = { id = influence.44 }
+											}
+										}
+									}
+									#Target other influence
+									if = {
+										limit = {
+											OR = {
+												check_variable = { influence_array^0 = PREV }
+												check_variable = { influence_array^1 = PREV }
+											}
+										}
+										PREV = {
+											HEZ = {
+												country_event = { id = influence.22 }
+											}
+										}
+									}
+									#Manipulate politics
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.3 }
+											OR = {
+												AND = {
+													PREV = { has_government = democratic }
+													NOT = { check_variable = { party_popularity@democratic > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = communism }
+													NOT = { check_variable = { party_popularity@communism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = fascism }
+													NOT = { check_variable = { party_popularity@fascism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = neutrality }
+													NOT = { check_variable = { party_popularity@neutrality > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = nationalist }
+													NOT = { check_variable = { party_popularity@nationalist > 0.35 } }
+												}
+											}
+										}
+										manipulate_politics_action = yes
+									}
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.8 }
+											is_same_government = yes
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										make_puppet_action = yes
+									}
+								}
+							}
+						}
+						10 = {
+							modifier = {
+								NOT = { country_exists = JOR }
+								factor = 0
+							}
+							JOR = {
+								if = { limit = { NOT = { has_opinion = { target = PREV value < -180 } is_subject = yes } }
+									spread_influence = yes
+									#Coup
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.45 }
+											NOT = { is_same_government = yes }
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										PREV = {
+											JOR = {
+												country_event = { id = influence.44 }
+											}
+										}
+									}
+									#Target other influence
+									if = {
+										limit = {
+											OR = {
+												check_variable = { influence_array^0 = PREV }
+												check_variable = { influence_array^1 = PREV }
+											}
+										}
+										PREV = {
+											JOR = {
+												country_event = { id = influence.22 }
+											}
+										}
+									}
+									#Manipulate politics
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.3 }
+											OR = {
+												AND = {
+													PREV = { has_government = democratic }
+													NOT = { check_variable = { party_popularity@democratic > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = communism }
+													NOT = { check_variable = { party_popularity@communism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = fascism }
+													NOT = { check_variable = { party_popularity@fascism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = neutrality }
+													NOT = { check_variable = { party_popularity@neutrality > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = nationalist }
+													NOT = { check_variable = { party_popularity@nationalist > 0.35 } }
+												}
+											}
+										}
+										manipulate_politics_action = yes
+									}
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.8 }
+											is_same_government = yes
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										make_puppet_action = yes
+									}
+								}
+							}
+						}
+						10 = {
+							modifier = {
+								NOT = { country_exists = IRQ }
+								factor = 0
+							}
+							modifier = {
+								OR = {
+									has_idea = non_power
+									has_idea = minor_power
+								}
+								factor = 0
+							}
+							IRQ = {
+								if = { limit = { NOT = { has_opinion = { target = PREV value < -180 } is_subject = yes } }
+									spread_influence = yes
+									#Coup
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.45 }
+											NOT = { is_same_government = yes }
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										PREV = {
+											IRQ = {
+												country_event = { id = influence.44 }
+											}
+										}
+									}
+									#Target other influence
+									if = {
+										limit = {
+											OR = {
+												check_variable = { influence_array^0 = PREV }
+												check_variable = { influence_array^1 = PREV }
+											}
+										}
+										PREV = {
+											IRQ = {
+												country_event = { id = influence.22 }
+											}
+										}
+									}
+									#Manipulate politics
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.3 }
+											OR = {
+												AND = {
+													PREV = { has_government = democratic }
+													NOT = { check_variable = { party_popularity@democratic > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = communism }
+													NOT = { check_variable = { party_popularity@communism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = fascism }
+													NOT = { check_variable = { party_popularity@fascism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = neutrality }
+													NOT = { check_variable = { party_popularity@neutrality > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = nationalist }
+													NOT = { check_variable = { party_popularity@nationalist > 0.35 } }
+												}
+											}
+										}
+										manipulate_politics_action = yes
+									}
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.8 }
+											is_same_government = yes
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										make_puppet_action = yes
+									}
+								}
+							}
+						}
+						10 = {
+							modifier = {
+								NOT = { country_exists = KUW }
+								factor = 0
+							}
+							modifier = {
+								OR = {
+									has_idea = non_power
+									has_idea = minor_power
+								}
+								factor = 0
+							}
+							KUW = {
+								if = { limit = { NOT = { has_opinion = { target = PREV value < -180 } is_subject = yes } }
+									spread_influence = yes
+									#Coup
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.45 }
+											NOT = { is_same_government = yes }
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										PREV = {
+											KUW = {
+												country_event = { id = influence.44 }
+											}
+										}
+									}
+									#Target other influence
+									if = {
+										limit = {
+											OR = {
+												check_variable = { influence_array^0 = PREV }
+												check_variable = { influence_array^1 = PREV }
+											}
+										}
+										PREV = {
+											KUW = {
+												country_event = { id = influence.22 }
+											}
+										}
+									}
+									#Manipulate politics
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.3 }
+											OR = {
+												AND = {
+													PREV = { has_government = democratic }
+													NOT = { check_variable = { party_popularity@democratic > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = communism }
+													NOT = { check_variable = { party_popularity@communism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = fascism }
+													NOT = { check_variable = { party_popularity@fascism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = neutrality }
+													NOT = { check_variable = { party_popularity@neutrality > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = nationalist }
+													NOT = { check_variable = { party_popularity@nationalist > 0.35 } }
+												}
+											}
+										}
+										manipulate_politics_action = yes
+									}
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.8 }
+											is_same_government = yes
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										make_puppet_action = yes
+									}
+								}
+							}
+						}
+						10 = {
+							modifier = {
+								NOT = { country_exists = CYP }
+								factor = 0
+							}
+							modifier = {
+								OR = {
+									has_idea = non_power
+									has_idea = minor_power
+								}
+								factor = 0
+							}
+							CYP = {
+								if = { limit = { NOT = { has_opinion = { target = PREV value < -180 } is_subject = yes } }
+									spread_influence = yes
+									#Coup
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.45 }
+											NOT = { is_same_government = yes }
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										PREV = {
+											CYP = {
+												country_event = { id = influence.44 }
+											}
+										}
+									}
+									#Target other influence
+									if = {
+										limit = {
+											OR = {
+												check_variable = { influence_array^0 = PREV }
+												check_variable = { influence_array^1 = PREV }
+											}
+										}
+										PREV = {
+											CYP = {
+												country_event = { id = influence.22 }
+											}
+										}
+									}
+									#Manipulate politics
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.3 }
+											OR = {
+												AND = {
+													PREV = { has_government = democratic }
+													NOT = { check_variable = { party_popularity@democratic > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = communism }
+													NOT = { check_variable = { party_popularity@communism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = fascism }
+													NOT = { check_variable = { party_popularity@fascism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = neutrality }
+													NOT = { check_variable = { party_popularity@neutrality > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = nationalist }
+													NOT = { check_variable = { party_popularity@nationalist > 0.35 } }
+												}
+											}
+										}
+										manipulate_politics_action = yes
+									}
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.8 }
+											is_same_government = yes
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										make_puppet_action = yes
+									}
+								}
+							}
+						}
+						10 = {
+							modifier = {
+								NOT = { country_exists = NCY }
+								factor = 0
+							}
+							modifier = {
+								OR = {
+									has_idea = non_power
+									has_idea = minor_power
+								}
+								factor = 0
+							}
+							NCY = {
+								if = { limit = { NOT = { has_opinion = { target = PREV value < -180 } is_subject = yes } }
+									spread_influence = yes
+									#Coup
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.45 }
+											NOT = { is_same_government = yes }
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										PREV = {
+											NCY = {
+												country_event = { id = influence.44 }
+											}
+										}
+									}
+									#Target other influence
+									if = {
+										limit = {
+											OR = {
+												check_variable = { influence_array^0 = PREV }
+												check_variable = { influence_array^1 = PREV }
+											}
+										}
+										PREV = {
+											NCY = {
+												country_event = { id = influence.22 }
+											}
+										}
+									}
+									#Manipulate politics
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.3 }
+											OR = {
+												AND = {
+													PREV = { has_government = democratic }
+													NOT = { check_variable = { party_popularity@democratic > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = communism }
+													NOT = { check_variable = { party_popularity@communism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = fascism }
+													NOT = { check_variable = { party_popularity@fascism > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = neutrality }
+													NOT = { check_variable = { party_popularity@neutrality > 0.35 } }
+												}
+												AND = {
+													PREV = { has_government = nationalist }
+													NOT = { check_variable = { party_popularity@nationalist > 0.35 } }
+												}
+											}
+										}
+										manipulate_politics_action = yes
+									}
+									if = {
+										limit = {
+											check_variable = { influence_array^0 = PREV }
+											check_variable = { influence_array_calc^0 > 0.8 }
+											is_same_government = yes
+											NOT = { is_subject_of = PREV }
+											NOT = { has_war = yes }
+										}
+										make_puppet_action = yes
+									}
+								}
+							}
+						}
+						#50%
+						50 = {
+							modifier = {
+								factor = 1.5
+								has_political_power < 80
+							}
+							#don't waste if no gain
+							modifier = {
+								factor = 10
+								political_power_daily < 2
+							}
+							modifier = {
+								factor = 0.5
+								political_power_daily > 4
+							}
+							modifier = {
+								factor = 0.5
+								political_power_daily > 6
+							}
+							modifier = {
+								factor = 0.5
+								political_power_daily > 8
+							}
+							modifier = {
+								factor = 0.5
+								political_power_daily > 8
+							}
+							#ignore influence at war
+							modifier = {
+								factor = 1000
+								has_war = yes
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	#Norwegian Influencer/Investment AI
+	on_weekly_NOR = {
+		effect = {
+			if = {
+				limit = {
+					is_ai = yes
+					check_variable = { active_projects < 15 }
+					check_variable = { debt_ratio < 2.50 }
+				}
+				if = {
+					limit = {
+						check_variable = { investment_targets > 0 }
+					}
+					random_scope_in_array = {
+						array = NOR.investment_targets
+						limit = {
+							country_exists = THIS
+							NOT = { has_war_with = NOR }
+							NOT = {
+								NOR = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = NOR }
+							}
+							has_opinion = { target = NOR value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+				else = {
+					random_country = {
+						limit = {
+							NOT = { has_war_with = NOR }
+							NOT = {
+								NOR = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = NOR }
+							}
+							has_opinion = { target = NOR value > -20 }
+							is_subject = no
+						}
+
+						AI_initiate_project = yes
+					}
+				}
+			}
+		}
+	}
 }
