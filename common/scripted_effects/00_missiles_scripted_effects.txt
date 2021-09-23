@@ -5565,6 +5565,51 @@ add_nuclear_material_stockpile = {
 	add_to_variable = { var_nuclear_material_stockpile = var_nuke_nuclear_material_prod }
 }
 
+update_nuclear_deterrence = {
+	set_variable = { var_nuclear_deterrence = 0 }
+	set_variable = { var_nuclear_status_nuclear_deterrence = 0 }
+	set_variable = { var_nuclear_doctrine_nuclear_deterrence = 0 }
+	set_variable = { var_nuclear_material_nuclear_deterrence = 0 }
+	set_variable = { var_nuclear_warhead_nuclear_deterrence = 0 }
+	for_each_loop = {
+		array = nuclear_status_nuclear_deterrence_array
+		if = {
+			limit = {
+				is_in_array = {
+					array = nuclear_status_array
+					value = i
+				}
+			}
+			add_to_variable = { var_nuclear_status_nuclear_deterrence = nuclear_status_nuclear_deterrence_array^i }
+		}
+	}
+	for_each_loop = {
+		array = nuclear_doctrine_nuclear_deterrence_array
+		if = {
+			limit = {
+				is_in_array = {
+					array = nuclear_doctrine_array
+					value = i
+				}
+			}
+			add_to_variable = { var_nuclear_doctrine_nuclear_deterrence = nuclear_doctrine_nuclear_deterrence_array^i }
+		}
+	}
+	set_variable = { var_nuclear_material_nuclear_deterrence = var_nuclear_material_nuclear_deterrence_factor }
+	multiply_variable = { var_nuclear_material_nuclear_deterrence = var_nuclear_material_stockpile }
+	for_each_loop = {
+		array = nuclear_warhead_nuclear_deterrence_array
+		set_temp_variable = { temp1 = nuclear_warhead_inventory_array^i }
+		multiply_temp_variable = { temp1 = nuclear_warhead_nuclear_deterrence_array^i }
+		add_to_variable = { var_nuclear_warhead_nuclear_deterrence = temp1 }
+	}
+	add_to_variable = { var_nuclear_deterrence = var_nuclear_status_nuclear_deterrence }
+	add_to_variable = { var_nuclear_deterrence = var_nuclear_doctrine_nuclear_deterrence }
+	add_to_variable = { var_nuclear_deterrence = var_nuclear_material_nuclear_deterrence }
+	add_to_variable = { var_nuclear_deterrence = var_nuclear_warhead_nuclear_deterrence }
+}
+
+
 ###########################
 ### for on daily effect ###
 ###########################
