@@ -5569,6 +5569,7 @@ update_nuclear_deterrence = {
 	set_variable = { var_nuclear_deterrence = 0 }
 	set_variable = { var_nuclear_status_nuclear_deterrence = 0 }
 	set_variable = { var_nuclear_doctrine_nuclear_deterrence = 0 }
+	set_variable = { var_nuclear_reactor_nuclear_deterrence = 0 }
 	set_variable = { var_nuclear_material_nuclear_deterrence = 0 }
 	set_variable = { var_nuclear_warhead_nuclear_deterrence = 0 }
 	for_each_loop = {
@@ -5595,6 +5596,10 @@ update_nuclear_deterrence = {
 			add_to_variable = { var_nuclear_doctrine_nuclear_deterrence = nuclear_doctrine_nuclear_deterrence_array^i }
 		}
 	}
+	every_controlled_state = {
+		add_to_variable = { PREV.var_nuclear_reactor_nuclear_deterrence = building_level@nuclear_reactor }
+	}
+	multiply_variable = { var_nuclear_reactor_nuclear_deterrence = 10 }
 	set_variable = { var_nuclear_material_nuclear_deterrence = var_nuclear_material_nuclear_deterrence_factor }
 	multiply_variable = { var_nuclear_material_nuclear_deterrence = var_nuclear_material_stockpile }
 	for_each_loop = {
@@ -5605,8 +5610,64 @@ update_nuclear_deterrence = {
 	}
 	add_to_variable = { var_nuclear_deterrence = var_nuclear_status_nuclear_deterrence }
 	add_to_variable = { var_nuclear_deterrence = var_nuclear_doctrine_nuclear_deterrence }
+	add_to_variable = { var_nuclear_deterrence = var_nuclear_reactor_nuclear_deterrence }
 	add_to_variable = { var_nuclear_deterrence = var_nuclear_material_nuclear_deterrence }
 	add_to_variable = { var_nuclear_deterrence = var_nuclear_warhead_nuclear_deterrence }
+	set_variable = { var_nuclear_deterrence_PP_factor = 0.01 }
+	multiply_variable = { var_nuclear_deterrence_PP_factor = var_nuclear_deterrence }
+	if = {
+		limit = {
+			is_in_array = {
+				array = nuclear_status_array
+				value = 6
+			}
+		}
+		add_to_variable = { var_nuclear_deterrence_PP_factor = 0.50 }
+	}
+	if = {
+		limit = {
+			is_in_array = {
+				array = nuclear_status_array
+				value = 7
+			}
+		}
+		add_to_variable = { var_nuclear_deterrence_PP_factor = 0.75 }
+	}
+	# no stability malus
+	#set_temp_variable = { temp1 = var_nuclear_deterrence }
+	#multiply_temp_variable = { temp1 = 0.005 }
+	#add_to_variable = { var_nuclear_stability_factor = temp1 }
+}
+
+update_nuclear_stability_factor = {
+	set_variable = { var_nuclear_stability_factor = 0 }
+	if = {
+		limit = {
+			is_in_array = {
+				array = nuclear_status_array
+				value = 0
+			}
+		}
+		add_to_variable = { var_nuclear_stability_factor = 0.15 }
+	}
+	if = {
+		limit = {
+			is_in_array = {
+				array = nuclear_status_array
+				value = 3
+			}
+		}
+		add_to_variable = { var_nuclear_stability_factor = -0.15 }
+	}
+	if = {
+		limit = {
+			is_in_array = {
+				array = nuclear_status_array
+				value = 5
+			}
+		}
+		add_to_variable = { var_nuclear_stability_factor = 0.20 }
+	}
 }
 
 
