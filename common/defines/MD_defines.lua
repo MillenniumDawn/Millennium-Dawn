@@ -208,7 +208,7 @@
 	NDefines.NMilitary.ATTACHED_WINGS_ORDER_UPDATE_DAYS = 1 -- 5
 	NDefines.NMilitary.BORDER_WAR_WIN_DAYS_AGAINST_EMPTY_OPPONENTS = 21 -- 14
 	NDefines.NMilitary.XP_GAIN_FOR_SHATTERING = 10.0 -- 30.0
-	NDefines.NMilitary.UNIT_UPKEEP_ATTRITION = 0.0 -- 0.0  
+	NDefines.NMilitary.UNIT_UPKEEP_ATTRITION = 0.015 -- 0.0 -- Test this one!
 	NDefines.NMilitary.ARMY_IDLE_FUEL_MULT = 0.05 -- 0.0
 	NDefines.NMilitary.OUT_OF_FUEL_SPEED_MULT = 0.7 -- 0.4
 	NDefines.NMilitary.ANTI_AIR_TARGETTING_TO_CHANCE = 0.01 -- 0.07
