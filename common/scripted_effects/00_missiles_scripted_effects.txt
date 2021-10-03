@@ -1794,6 +1794,191 @@ set_missile_warhead_effects = {
 	}
 }
 
+## controller
+# state scope
+launch_nuclear_warhead = {
+	meta_effect = {
+		text = {
+			var:ROOT.missile_target_controller_array^i = {
+				set_variable = { nuke_temp0 = [target_point_ID].building_level@industrial_complex }
+				set_variable = { nuke_temp1 = [target_point_ID].building_level@arms_factory }
+				set_variable = { nuke_temp2 = [target_point_ID].building_level@infrastructure }
+				set_variable = { nuke_temp3 = [target_point_ID].building_level@internet_station }
+				set_variable = { nuke_temp4 = [target_point_ID].building_level@dockyard }
+				set_variable = { nuke_temp5 = [target_point_ID].building_level@air_base }
+				set_variable = { nuke_temp6 = [target_point_ID].building_level@radar_station }
+				set_variable = { nuke_temp7 = [target_point_ID].building_level@anti_air_building }
+				set_variable = { nuke_temp8 = [target_point_ID].building_level@missile_defense_station }
+				set_variable = { nuke_temp9 = [target_point_ID].building_level@TEL_base }
+				set_variable = { nuke_temp10 = [target_point_ID].building_level@missile_silo }
+				set_variable = { nuke_temp11 = [target_point_ID].building_level@nuclear_reactor }
+				set_variable = { nuke_temp12 = [target_point_ID].building_level@synthetic_refinery }
+				set_variable = { nuke_temp13 = [target_point_ID].building_level@fuel_silo }
+				set_variable = { nuke_temp14 = [target_point_ID].building_level@offices }
+				# provincial buildings can't be targeted, all province buildings get reduced to 0 HP by vanilla nukes
+				#set_variable = { nuke_temp15 = [target_point_ID].building_level@naval_base }
+				#set_variable = { nuke_temp16 = [target_point_ID].building_level@bunker }
+				#set_variable = { nuke_temp17 = [target_point_ID].building_level@coastal_bunker }
+
+				set_variable = { nuke_temp0_d = [target_point_ID].damaged_building_level@industrial_complex }
+				set_variable = { nuke_temp1_d = [target_point_ID].damaged_building_level@arms_factory }
+				set_variable = { nuke_temp2_d = [target_point_ID].damaged_building_level@infrastructure }
+				set_variable = { nuke_temp3_d = [target_point_ID].damaged_building_level@internet_station }
+				set_variable = { nuke_temp4_d = [target_point_ID].damaged_building_level@dockyard }
+				set_variable = { nuke_temp5_d = [target_point_ID].damaged_building_level@air_base }
+				set_variable = { nuke_temp6_d = [target_point_ID].damaged_building_level@radar_station }
+				set_variable = { nuke_temp7_d = [target_point_ID].damaged_building_level@anti_air_building }
+				set_variable = { nuke_temp8_d = [target_point_ID].damaged_building_level@missile_defense_station }
+				set_variable = { nuke_temp9_d = [target_point_ID].damaged_building_level@TEL_base }
+				set_variable = { nuke_temp10_d = [target_point_ID].damaged_building_level@missile_silo }
+				set_variable = { nuke_temp11_d = [target_point_ID].damaged_building_level@nuclear_reactor }
+				set_variable = { nuke_temp12_d = [target_point_ID].damaged_building_level@synthetic_refinery }
+				set_variable = { nuke_temp13_d = [target_point_ID].damaged_building_level@fuel_silo }
+				set_variable = { nuke_temp14_d = [target_point_ID].damaged_building_level@offices }
+				# provincial buildings can't be targeted, all province buildings get reduced to 0 HP by vanilla nukes
+				#set_variable = { nuke_temp15_d = [target_point_ID].damaged_building_level@naval_base }
+				#set_variable = { nuke_temp16_d = [target_point_ID].damaged_building_level@bunker }
+				#set_variable = { nuke_temp17_d = [target_point_ID].damaged_building_level@coastal_bunker }
+			}
+			launch_nuke = {
+				state = [target_point_ID]
+				controller = [target_TAG]
+			}
+			var:ROOT.missile_target_point_array^i = {
+				set_variable = { var_nuke_radiation_factor = PREV.nuclear_warhead_radiation_factor_array^[warhead_ID] }
+				set_variable = { var_nuke_local_manpower = var_nuke_radiation_factor }
+				set_variable = { var_nuke_local_non_core_manpower = var_nuke_radiation_factor }
+				set_variable = { var_nuke_non_core_manpower = var_nuke_radiation_factor }
+				set_variable = { var_nuke_recruitable_population = var_nuke_radiation_factor }
+				set_variable = { var_nuke_recruitable_population_factor = var_nuke_radiation_factor }
+				add_dynamic_modifier = {
+					modifier =  radiation_modifier 
+				}
+				add_province_modifier = {
+					static_modifiers = { radiation_[warhead_ID] }
+					province = {
+						all_provinces = yes
+					}
+				}
+				add_province_modifier = {
+					static_modifiers = { radiation_[warhead_ID]_naval_base }
+					province = {
+						all_provinces = yes
+						limit_to_naval_base = yes
+					}
+				}
+			}
+		}
+		target_point_ID = "[?missile_target_point_array^i.GetID]"
+		target_TAG = "[?missile_target_controller_array.GetID]"
+		warhead_ID = "[?var_test_warhead]"
+	}
+}
+
+set_nuke_damage = {
+	log = "[GetDateText]: [THIS.GetName]: set_nuke_damage [PREV.GetName]"
+	PREV = {
+		add_to_variable = { nuke_temp0_d = 2 }
+		add_to_variable = { nuke_temp1_d = 2 }
+		add_to_variable = { nuke_temp2_d = 5 }
+		add_to_variable = { nuke_temp3_d = 3 }
+		add_to_variable = { nuke_temp4_d = 4 }
+		set_variable = { nuke_temp4_d = 5 }
+		set_variable = { nuke_temp5_d = 5 }
+		set_variable = { nuke_temp6_d = 5 }
+		set_variable = { nuke_temp7_d = 5 }
+		set_variable = { nuke_temp8_d = 5 }
+		set_variable = { nuke_temp9_d = 5 }
+		set_variable = { nuke_temp10_d = 5 }
+		set_variable = { nuke_temp11_d = 5 }
+		set_variable = { nuke_temp12_d = 5 }
+		set_variable = { nuke_temp13_d = 5 }
+		set_variable = { nuke_temp14_d = 5 }
+		# set_variable = { nuke_temp15_d = 5 }
+		# set_variable = { nuke_temp16_d = 5 }
+		# set_variable = { nuke_temp17_d = 5 }
+	}
+}
+
+# on_nuke_drop = {
+# 	effect = {
+# 		FROM = {
+# 			controller = {
+# 				FROM = {
+set_nuke_damage_XXX = {
+	set_variable = { var_nuke_damage = 160 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { var_nuke_damage > 0 }
+		}
+		random_list = {
+			1 = {
+				set_temp_variable = { t1 = nuke_temp1 }
+				subtract_from_temp_variable = { t1 = nuke_temp1_d }
+				if = {
+					limit = {
+						check_variable = { t1 > 0 }
+					}
+					if = {
+						limit = {
+							OR = {
+								check_variable = { var_nuke_damage > t1 }
+								check_variable = { var_nuke_damage = t1 }
+							}
+						}
+						subtract_from_variable = { var_nuke_damage = t1 }
+						add_to_variable = { nuke_temp1_d = t1 }
+					}
+					else = {
+						set_temp_variable = { t1 = var_nuke_damage }
+						set_variable = { var_nuke_damage = 0 }
+						add_to_variable = { nuke_temp1_d = t1 }
+					}
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						check_variable = { nuke_temp1_d > nuke_temp1 }
+						check_variable = { nuke_temp1_d = nuke_temp1 }
+					}
+				}
+			}
+			1 = {
+				set_temp_variable = { t2 = nuke_temp2 }
+				subtract_from_temp_variable = { t2 = nuke_temp2_d }
+				if = {
+					limit = {
+						check_variable = { t2 > 0 }
+					}
+					if = {
+						limit = {
+							OR = {
+								check_variable = { var_nuke_damage > t2 }
+								check_variable = { var_nuke_damage = t2 }
+							}
+						}
+						subtract_from_variable = { var_nuke_damage = t2 }
+						add_to_variable = { nuke_temp2_d = t2 }
+					}
+					else = {
+						set_temp_variable = { t2 = var_nuke_damage }
+						set_variable = { var_nuke_damage = 0 }
+						add_to_variable = { nuke_temp2_d = t2 }
+					}
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						check_variable = { nuke_temp2_d > nuke_temp2 }
+						check_variable = { nuke_temp2_d = nuke_temp2 }
+					}
+				}
+			}
+		}
+	}
+}
+
+
 ###########################
 ### missile defense gui ###
 ###########################
