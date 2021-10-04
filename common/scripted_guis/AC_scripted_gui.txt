@@ -9,23 +9,23 @@
 #Now if the AI also does the same that's 210 * 8400 = 1,764,000 possible investments possible
 
 
-#Root is investor
-#prev is state
-#Prev = { controller = { is country being invested in
+# ROOT is investor
+# PREV is state
+# PREV = { CONTROLLER = { is country being invested in
 
-#AC_build_amount determines how many buildings to build
+# AC_build_amount determines how many buildings to build
 # Indexes for WHAT type of building
-#AC_building_type_selected = 1 = Civilian Industry
-#AC_building_type_selected = 2 = Military Industry
-#AC_building_type_selected = 3 = Naval Dockyards
-#AC_building_type_selected = 4 = Infrastructure
-#AC_building_type_selected = 5 = Offices
-#AC_building_type_selected = 6 = Surface to Air Missiles
-#AC_building_type_selected = 7 = Radar
-#AC_building_type_selected = 8 = Air Bases
-#AC_building_type_selected = 9 = Fuel Silo
-#AC_building_type_selected = 10 = Internet Station
-#AC_building_type_selected = 11 = Biofuel Refineries
+# AC_building_type_selected = 1 = Civilian Industry
+# AC_building_type_selected = 2 = Military Industry
+# AC_building_type_selected = 3 = Naval Dockyards
+# AC_building_type_selected = 4 = Infrastructure
+# AC_building_type_selected = 5 = Offices
+# AC_building_type_selected = 6 = Surface to Air Missiles
+# AC_building_type_selected = 7 = Radar
+# AC_building_type_selected = 8 = Air Bases
+# AC_building_type_selected = 9 = Fuel Silo
+# AC_building_type_selected = 10 = Internet Station
+# AC_building_type_selected = 11 = Biofuel Refineries
 @BUILD_COST_CIVILIAN_FACTORY = 7.50
 @BUILD_COST_MILITARY_FACTORY = 8.00
 @BUILD_COST_DOCKYARD = 7.50
@@ -63,7 +63,10 @@ scripted_gui = {
 		parent_window_token = selected_state_view
 
 		visible = {
-			NOT = { is_owned_by = ROOT }
+			OR = {
+				NOT = { is_owned_by = ROOT }
+				NOT = { is_controlled_by = ROOT }
+			}
 			ROOT = { NOT = { has_country_flag = AC_hide_investment_window } }
 		}
 
@@ -107,18 +110,19 @@ scripted_gui = {
 		effects = {
 			# Hides Investment Window
 			AC_down_arrow_click = {
+				# ROOT is the investor nation
 				ROOT = { set_country_flag = AC_hide_investment_window }
 			}
 			# Begins project or it cancels the project if you have one active in given state
 			AC_build_button_click = {
 				if = {
 					limit = {
-						NOT = {
-							is_in_array = { array = THIS.projects_in_state value = ROOT.id }
-						}
+						NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } }
 					}
+					# PREV is the state target
 					PREV = {
 						save_event_target_as = AC_state_event_target
+						# CONTROLLER is pretty obvious
 						CONTROLLER = { country_event = { id = AC_event.10 } }
 					}
 				}
@@ -338,7 +342,9 @@ scripted_gui = {
 		triggers = {
 			# Build Button Click Enabled
 			AC_build_button_click_enabled = {
+				PREV = { CONTROLLER = { NOT = { tag = ROOT } } }
 				PREV = { CONTROLLER = { NOT = { has_war_with = ROOT } } }
+				ROOT = { NOT = { is_justifying_wargoal_against = PREV.CONTROLLER } }
 				if = {
 					limit = {
 						OR = {
@@ -361,15 +367,10 @@ scripted_gui = {
 				# ROOT = { not = { is_justifying_wargoal_against = PREV } }
 				if = { limit = { NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } } }
 					ROOT = {
-
-						# meta_trigger = {
-						# 	text = { check_variable = { ROOT.active_projects < [x] } }
-						# 	x = "[AC_GetMaxProjects]"
-						# }
-
-						check_variable = { ROOT.active_projects < 15 }
+						check_variable = { active_projects < 15 }
 						check_variable = { project_building_type^-1 > 0 }
 						check_variable = { project_build_amount^-1 > 0 }
+						NOT = { is_justifying_wargoal_against = PREV.CONTROLLER }
 
 						# General things
 						NOT = { check_variable = { treasury < project_monetary_cost^-1 } }
@@ -488,7 +489,7 @@ scripted_gui = {
 			# Index Ten: Internet Station
 			AC_building_internet_station_button_click_enabled = {
 				building_internet_station_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+				ROOT = { NOT = { has_country_flag = this_investment_offer_pending@PREV } }
 			}
 			AC_building_internet_station_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 2 } }
