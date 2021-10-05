@@ -593,8 +593,6 @@ clear_law_desire_flags = {
 	clr_country_flag = wants_social_04
 	clr_country_flag = wants_social_05
 	clr_country_flag = wants_social_06
-
-
 }
 
 # Bureaucracy desire is chiefly determined by the size/strength of the nation. More powerful the nation, more it wants a higher level of bureaucracy.
@@ -669,15 +667,12 @@ recalculate_bureaucracy_desire = {
 	}
 	if = {
 		limit = { has_completed_focus = UKR_federalisation }
-		subtract_from_variable = { bureaucracy_law_desire = 3.0}
+		subtract_from_variable = { bureaucracy_law_desire = 3.0 }
 	}
 	# Next, modify based upon GDP/c. Low GDP countries should want lower bureaucracy levels
 	if = {
 		limit = {
-			OR = {
-				has_idea = gdp_1
-				has_idea = gdp_2
-			}
+			check_variable = { gdp_per_capita < 2 }
 		}
 		subtract_from_variable = {
 			bureaucracy_law_desire = 6.0 # Extremely impoverished nations want 2 levels lower
@@ -685,9 +680,8 @@ recalculate_bureaucracy_desire = {
 	}
 	else_if = {
 		limit = {
-			has_idea = gdp_3
-			has_idea = gdp_4
-			has_idea = gdp_5
+			check_variable = { gdp_per_capita > 1.999 }
+			check_variable = { gdp_per_capita < 10.000 }
 		}
 		subtract_from_variable = {
 			bureaucracy_law_desire = 3.0 # Impoverished nations want 1 level lower
@@ -712,19 +706,18 @@ recalculate_bureaucracy_desire = {
 	# Check based on market conditions
 	if = {
 		limit = {
-			ai_has_acceptable_deficit_factories = no #When deficit becomes unbearable start to reduce!
+			ai_has_acceptable_deficit = no #When deficit becomes unbearable start to reduce!
 		}
 		subtract_from_variable = { #Reduce spending when possible!
 			bureaucracy_law_desire = 6.0
 		}
 	}
-	else_if = {
+	# Reduce if debt is high
+	if = {
 		limit = {
-			ai_has_acceptable_deficit = no #When deficit becomes unbearable start to reduce!
+			check_variable = { debt_ratio > 2.50 }
 		}
-		subtract_from_variable = { #Reduce when issues start becoming more relevant
-			bureaucracy_law_desire = 3.0
-		}
+		subtract_from_variable = { bureaucracy_law_desire = 3.0 }
 	}
 	# Next, modify based on corruption levels
 	if = {
@@ -1181,7 +1174,7 @@ recalculate_police_desire = {
 	# First, set desire based upon GDP. Poverty tends toward low values, all else toward middling.
 	if = {
 		limit = {
-			has_idea = gdp_1
+			check_variable = { gdp_per_capita < 2.000 }
 		}
 		add_to_variable = {
 			police_law_desire = 2.0 # police_01
@@ -1189,11 +1182,8 @@ recalculate_police_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_2
-				has_idea = gdp_3
-				has_idea = gdp_4
-			}
+			check_variable = { gdp_per_capita > 1.999 }
+			check_variable = { gdp_per_capita < 10.000 }
 		}
 		add_to_variable = {
 			police_law_desire = 5.0 # police_02
@@ -1201,16 +1191,7 @@ recalculate_police_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_5
-				has_idea = gdp_6
-				has_idea = gdp_7
-				has_idea = gdp_8
-				has_idea = gdp_9
-				has_idea = gdp_10
-				has_idea = gdp_11
-				has_idea = gdp_12
-			}
+			check_variable = { gdp_per_capita > 9.999 }
 		}
 		add_to_variable = {
 			police_law_desire = 8.0 # police_03
@@ -1289,6 +1270,13 @@ recalculate_police_desire = {
 		subtract_from_variable = { #Reduce when issues start becoming more relevant
 			police_law_desire = 3.0
 		}
+	}
+	# Reduce if debt is high
+	if = {
+		limit = {
+			check_variable = { debt_ratio > 2.50 }
+		}
+		subtract_from_variable = { police_law_desire = 3.0 }
 	}
 	# Next, modify based upon ruling ideology and coalition partners.
 	set_temp_variable = {
@@ -1679,7 +1667,7 @@ recalculate_edu_desire = {
 	# First, set base from GDP
 	if = {
 		limit = {
-			has_idea = gdp_1
+			check_variable = { gdp_per_capita < 2.000 }
 		}
 		add_to_variable = {
 			edu_law_desire = 2.0 # edu_01
@@ -1687,11 +1675,8 @@ recalculate_edu_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_2
-				has_idea = gdp_3
-				has_idea = gdp_4
-			}
+			check_variable = { gdp_per_capita > 1.999 }
+			check_variable = { gdp_per_capita < 10.000 }
 		}
 		add_to_variable = {
 			edu_law_desire = 5.0 # edu_02
@@ -1699,13 +1684,8 @@ recalculate_edu_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_5
-				has_idea = gdp_6
-				has_idea = gdp_7
-				has_idea = gdp_8
-				has_idea = gdp_9
-			}
+			check_variable = { gdp_per_capita > 9.999 }
+			check_variable = { gdp_per_capita < 90.000 }
 		}
 		add_to_variable = {
 			edu_law_desire = 8.0 # edu_03
@@ -1713,11 +1693,7 @@ recalculate_edu_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_10
-				has_idea = gdp_11
-				has_idea = gdp_12
-			}
+			check_variable = { gdp_per_capita > 89.999 }
 		}
 		add_to_variable = {
 			edu_law_desire = 11.0 # edu_04
@@ -1903,6 +1879,13 @@ recalculate_edu_desire = {
 		subtract_from_variable = { #Reduce when issues start becoming more relevant
 			edu_law_desire = 3.0
 		}
+	}
+	# Reduce if debt is high
+	if = {
+		limit = {
+			check_variable = { debt_ratio > 2.50 }
+		}
+		subtract_from_variable = { edu_law_desire = 3.0 }
 	}
 	# Next, modify based upon ruling ideology and coalition partners.
 	set_temp_variable = {
@@ -2292,7 +2275,7 @@ recalculate_health_desire = {
 	# First, set base from GDP
 	if = {
 		limit = {
-			has_idea = gdp_1
+			check_variable = { gdp_per_capita < 2.000 }
 		}
 		add_to_variable = {
 			health_law_desire = 2.0 # health_01
@@ -2300,9 +2283,8 @@ recalculate_health_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_2
-			}
+			check_variable = { gdp_per_capita > 1.999 }
+			check_variable = { gdp_per_capita < 4.000 }
 		}
 		add_to_variable = {
 			health_law_desire = 5.0 # health_02
@@ -2310,11 +2292,8 @@ recalculate_health_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_3
-				has_idea = gdp_4
-				has_idea = gdp_5
-			}
+			check_variable = { gdp_per_capita > 3.999 }
+			check_variable = { gdp_per_capita < 15.000 }
 		}
 		add_to_variable = {
 			health_law_desire = 8.0 # health_03
@@ -2322,10 +2301,8 @@ recalculate_health_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_6
-				has_idea = gdp_7
-			}
+			check_variable = { gdp_per_capita > 14.999 }
+			check_variable = { gdp_per_capita < 30.000 }
 		}
 		add_to_variable = {
 			health_law_desire = 11.0 # health_04
@@ -2333,10 +2310,8 @@ recalculate_health_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_8
-				has_idea = gdp_9
-			}
+			check_variable = { gdp_per_capita > 29.999 }
+			check_variable = { gdp_per_capita < 90.000 }
 		}
 		add_to_variable = {
 			health_law_desire = 14.0 # health_05
@@ -2344,11 +2319,7 @@ recalculate_health_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_10
-				has_idea = gdp_11
-				has_idea = gdp_12
-			}
+			check_variable = { gdp_per_capita > 89.999 }
 		}
 		add_to_variable = {
 			health_law_desire = 17.0 # health_06
@@ -2428,6 +2399,13 @@ recalculate_health_desire = {
 		subtract_from_variable = { #Reduce when issues start becoming more relevant
 			health_law_desire = 3.0
 		}
+	}
+	# Reduce if debt is high
+	if = {
+		limit = {
+			check_variable = { debt_ratio > 2.50 }
+		}
+		subtract_from_variable = { health_law_desire = 3.0 }
 	}
 
 	# Next, modify based upon ruling ideology and coalition partners.
@@ -2826,8 +2804,7 @@ recalculate_social_desire = {
 	# First, set base from GDP
 	if = {
 		limit = {
-			has_idea = gdp_1
-			has_idea = gdp_2
+			check_variable = { gdp_per_capita < 4.000 }
 		}
 		add_to_variable = {
 			social_law_desire = 2.0 # social_01
@@ -2835,10 +2812,8 @@ recalculate_social_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_3
-				has_idea = gdp_4
-			}
+			check_variable = { gdp_per_capita > 3.999 }
+			check_variable = { gdp_per_capita < 10.000 }
 		}
 		add_to_variable = {
 			social_law_desire = 5.0 # social_02
@@ -2846,10 +2821,8 @@ recalculate_social_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_5
-				has_idea = gdp_6
-			}
+			check_variable = { gdp_per_capita > 9.999 }
+			check_variable = { gdp_per_capita < 20.000 }
 		}
 		add_to_variable = {
 			social_law_desire = 8.0 # social_03
@@ -2857,12 +2830,8 @@ recalculate_social_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_7
-				has_idea = gdp_8
-				has_idea = gdp_9
-				has_idea = gdp_10
-			}
+			check_variable = { gdp_per_capita > 19.999 }
+			check_variable = { gdp_per_capita < 90.000 }
 		}
 		add_to_variable = {
 			social_law_desire = 11.0 # social_04
@@ -2870,10 +2839,7 @@ recalculate_social_desire = {
 	}
 	else_if = {
 		limit = {
-			OR = {
-				has_idea = gdp_11
-				has_idea = gdp_12
-			}
+			check_variable = { gdp_per_capita > 89.999 }
 		}
 		add_to_variable = {
 			social_law_desire = 14.0 # social_05
@@ -2977,6 +2943,14 @@ recalculate_social_desire = {
 			social_law_desire = 3.0
 		}
 	}
+	# Reduce if debt is high
+	if = {
+		limit = {
+			check_variable = { debt_ratio > 2.50 }
+		}
+		subtract_from_variable = { social_law_desire = 3.0 }
+	}
+
 	# Next, modify based upon ruling ideology and coalition partners.
 	set_temp_variable = {
 		coalition_law_modifier = 0
@@ -3043,9 +3017,7 @@ recalculate_social_desire = {
 			min = -5
 			max = 5
 		}
-		add_to_variable = {
-			social_law_desire = coalition_law_modifier
-		}
+		add_to_variable = { social_law_desire = coalition_law_modifier }
 	}
 	else_if = {
 		limit = {
@@ -3476,18 +3448,19 @@ recalculate_defence_spending_desire = {
 
 	if = {
 		limit = {
-			ai_has_acceptable_deficit_factories = no #When deficit becomes unbearable start to reduce!
+			ai_has_acceptable_deficit = no #When deficit becomes unbearable start to reduce!
 		}
 		subtract_from_variable = { #Reduce spending when possible!
 			defence_spending_desire = 7.0
 		}
 	}
-	else_if = {
+	# Reduce if Debt is high
+	if = {
 		limit = {
-			ai_has_acceptable_deficit = no #When deficit becomes unbearable start to reduce!
+			check_variable = { debt_ratio > 2.50 }
 		}
 		subtract_from_variable = { #Reduce spending when possible!
-			defence_spending_desire = 7.0
+			defence_spending_desire = 3.0
 		}
 	}
 
@@ -3510,6 +3483,7 @@ recalculate_defence_spending_desire = {
 # Wrapper function to do everything in one place.
 recalculate_law_desires = {
 	clear_law_desire_flags = yes # First, clear law desire flags.
+	focus_on_laws_due_to_economic_despair = yes # This should trigger economic despair
 	get_coalition_partner_numbers = yes # Next, get coalition partner modifiers.
 	recalculate_bureaucracy_desire = yes
 	recalculate_police_desire = yes
@@ -3523,8 +3497,7 @@ focus_on_laws_due_to_economic_despair = {
 		limit = {
 			NOT = { has_country_flag = AI_economic_downspiral }
 			OR = {
-				check_variable = { treasury_rate < -2.4 }
-				check_variable = { bankrupcy_check < debt_rate }
+				ai_has_acceptable_deficit = no
 				has_idea = depression
 				has_idea = recession
 				ai_has_major_economic_problems = yes
@@ -3538,8 +3511,7 @@ focus_on_laws_due_to_economic_despair = {
 		limit = {
 			has_country_flag = AI_economic_downspiral
 			OR = {
-				check_variable = { treasury_rate > -2.6 }
-				check_variable = { bankrupcy_check > debt_rate }
+				ai_has_acceptable_deficit = yes
 				NOT = {
 					has_idea = depression
 					has_idea = recession
