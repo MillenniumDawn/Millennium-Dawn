@@ -1,0 +1,1275 @@
+﻿add_namespace = Botswana_pulse
+add_namespace = Botswana_events
+add_namespace = Botswana_news_events
+
+#Desertification increases
+country_event = {
+	id = Botswana_pulse.1
+	title = Botswana_pulse.1.t
+	desc = Botswana_pulse.1.d
+
+	picture = country_event_amazon_rainforest_devastation
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.1.a executed"
+		name = Botswana_pulse.1.a
+		BOT_increase_desertification = yes
+	}
+}
+#Desertification stays the same
+country_event = {
+	id = Botswana_pulse.2
+	title = Botswana_pulse.2.t
+	desc = Botswana_pulse.2.d
+
+	picture = country_event_amazon_rainforest_devastation
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.2.a executed"
+		name = Botswana_pulse.2.a
+	}
+}
+#Desertification decreases
+country_event = {
+	id = Botswana_pulse.3
+	title = Botswana_pulse.3.t
+	desc = Botswana_pulse.3.d
+
+	picture = country_event_amazon_rainforest_devastation
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.3.a executed"
+		name = Botswana_pulse.3.a
+		BOT_decrease_desertification = yes
+	}
+}
+
+#General election
+country_event = {
+	id = Botswana_pulse.4
+	title = Botswana_pulse.4.t
+	desc = Botswana_pulse.4.desc
+
+	picture = GFX_election_hyperthink
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.4.a executed"
+		name = Botswana_pulse.4.a
+		#But BDP-B in power if not
+		if = {
+			limit = {
+				is_in_array = { ruling_party = 14 }
+				check_variable = { party_pop_array^16 > party_pop_array^14 }
+			}
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 16 }
+			add_to_array = { gov_coalition_array = 14 }
+			hidden_effect = {	
+				update_party_name = yes
+				set_coalition_drift = yes
+				update_government_coalition_strength = yes	
+			}
+			meta_effect = {
+				text = {
+					set_country_flag = [META_SET_RULING_PARTY]
+				}
+				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+			}
+			set_leader = yes
+			set_variable = { current_term = 1 } 
+			custom_effect_tooltip = BOT_BDP_B_dominant
+		}
+		#But BDP-A in power if not
+		else_if = {
+			limit = {
+				is_in_array = { ruling_party = 16 }
+				check_variable = { party_pop_array^14 > party_pop_array^16 }
+			}
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 14 }
+			add_to_array = { gov_coalition_array = 16 }
+			hidden_effect = {	
+				update_party_name = yes
+				set_coalition_drift = yes
+				update_government_coalition_strength = yes	
+			}
+			meta_effect = {
+				text = {
+					set_country_flag = [META_SET_RULING_PARTY]
+				}
+				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+			}
+			set_leader = yes
+			set_variable = { current_term = 1 } 
+			custom_effect_tooltip = BOT_BDP_A_dominant
+		}
+		#Check that leader isn't at their last term
+		if = {
+			limit = {
+				NOT = { check_variable = { current_term < term_limit } }
+			}
+			meta_effect = {
+				text = {
+					set_country_flag = [META_SET_RULING_PARTY]
+				}
+				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+			}
+			set_leader = yes
+			custom_effect_tooltip = BOT_leader_steps_down
+		}
+		else = {
+			add_to_variable = { current_term = 1 }
+			custom_effect_tooltip = BOT_leader_continues
+		}
+	}
+}
+
+#BDP splits
+country_event = {
+	id = Botswana_pulse.5
+	title = Botswana_pulse.5.t
+	desc = Botswana_pulse.5.desc
+
+	picture = GFX_african_demonstration
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.5.a executed"
+		name = Botswana_pulse.5.a
+		clear_array = gov_coalition_array
+		if = {
+			limit = {
+				is_in_array = { ruling_party = 16 }
+			}
+			clear_array = ruling_party
+			add_to_array = { ruling_party = 14 }
+			hidden_effect = {	
+				update_party_name = yes
+				set_coalition_drift = yes
+				update_government_coalition_strength = yes	
+			}
+		}
+		custom_effect_tooltip = BDP_split_tt
+		set_country_flag = BDP_split
+	}
+}
+
+#UDC forms
+country_event = {
+	id = Botswana_pulse.6
+	title = Botswana_pulse.6.t
+	desc = Botswana_pulse.6.desc
+
+	picture = GFX_african_demonstration
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.6.a executed"
+		name = Botswana_pulse.6.a
+		set_country_flag = UDC_formed
+		custom_effect_tooltip = BOT_UDC_formed
+		set_variable = { western_change = 0 }
+		set_variable = { emerging_change = 0 }
+		set_variable = { nationalist_change = 0 }
+		if = {
+			limit = {
+				has_country_flag = BNF_joined_UDC
+			}
+			custom_effect_tooltip = BOT_BNF_joins_UDC
+			set_variable = { BNF_old_popularity = party_pop_array^3 }
+			subtract_from_variable = { western_change = party_pop_array^3 }
+			add_to_variable = { party_pop_array^18 = party_pop_array^3 }
+			set_variable = { party_pop_array^3 = 0 }
+		}
+		if = {
+			limit = {
+				has_country_flag = MELS_joined_UDC
+			}
+			custom_effect_tooltip = BOT_MELS_joins_UDC
+			set_variable = { MELS_old_popularity = party_pop_array^4 }
+			subtract_from_variable = { emerging_change = party_pop_array^4 }
+			add_to_variable = { party_pop_array^18 = party_pop_array^4 }
+			set_variable = { party_pop_array^4 = 0 }
+		}
+		if = {
+			limit = {
+				has_country_flag = BPP_joined_UDC
+			}
+			custom_effect_tooltip = BOT_BPP_joins_UDC
+			set_variable = { BPP_old_popularity = party_pop_array^5 }
+			subtract_from_variable = { emerging_change = party_pop_array^5 }
+			add_to_variable = { party_pop_array^18 = party_pop_array^5 }
+			set_variable = { party_pop_array^5 = 0 }
+		}
+		if = {
+			limit = {
+				has_country_flag = BMD_joined_UDC
+			}
+			custom_effect_tooltip = BOT_BMD_joins_UDC
+			set_variable = { BMD_old_popularity = party_pop_array^16 }
+			add_to_variable = { party_pop_array^18 = party_pop_array^16 }
+			set_variable = { party_pop_array^16 = 0 }
+		}
+		if = {
+			limit = {
+				has_country_flag = ISBO_joined_UDC
+			}
+			custom_effect_tooltip = BOT_ISBO_joins_UDC
+			set_variable = { ISBO_old_popularity = party_pop_array^19 }
+			add_to_variable = { party_pop_array^18 = party_pop_array^19 }
+			set_variable = { party_pop_array^19 = 0 }
+		}
+		if = {
+			limit = {
+				has_country_flag = BWF_joined_UDC
+			}
+			custom_effect_tooltip = BOT_BWF_joins_UDC
+			set_variable = { BWF_old_popularity = party_pop_array^20 }
+			subtract_from_variable = { nationalist_change = party_pop_array^20 }
+			add_to_variable = { party_pop_array^18 = party_pop_array^20 }
+			set_variable = { party_pop_array^20 = 0 }
+		}
+		set_variable = { UDC_forming_popularity = party_pop_array^18 }
+		add_popularity = { ideology = democratic popularity = western_change }
+		add_popularity = { ideology = communism popularity = emerging_change }
+		add_popularity = { ideology = nationalist popularity = nationalist_change }
+		recalculate_party = yes
+	}
+}
+
+#UDC splits
+country_event = {
+	id = Botswana_pulse.7
+	title = Botswana_pulse.7.t
+	desc = Botswana_pulse.7.desc
+
+	picture = GFX_african_demonstration
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.7.a executed"
+		name = Botswana_pulse.7.a
+		clr_country_flag = UDC_formed
+		set_variable = { western_change = 0 }
+		set_variable = { emerging_change = 0 }
+		set_variable = { neutrality_change = 0 }
+		set_variable = { nationalist_change = 0 }
+		if = {
+			limit = {
+				has_country_flag = BNF_joined_UDC 
+			}
+			clr_country_flag = BNF_joined_UDC
+			set_variable = { party_pop_array^3 = BNF_old_popularity }
+			divide_variable = { party_pop_array^3 = UDC_forming_popularity }
+			multiply_variable = { party_pop_array^3 = party_pop_array^18 }
+			add_to_variable = { western_change = party_pop_array^3 }
+			subtract_from_variable = { neutrality_change = party_pop_array^3 }
+		}
+		if = {
+			limit = {
+				has_country_flag = MELS_joined_UDC 
+			}
+			clr_country_flag = MELS_joined_UDC
+			set_variable = { party_pop_array^4 = MELS_old_popularity }
+			divide_variable = { party_pop_array^4 = UDC_forming_popularity }
+			multiply_variable = { party_pop_array^4 = party_pop_array^18 }
+			add_to_variable = { emerging_change = party_pop_array^4 }
+			subtract_from_variable = { neutrality_change = party_pop_array^4 }
+		}
+		if = {
+			limit = {
+				has_country_flag = BPP_joined_UDC 
+			}
+			clr_country_flag = BPP_joined_UDC
+			set_variable = { party_pop_array^5 = BPP_old_popularity }
+			divide_variable = { party_pop_array^5 = UDC_forming_popularity }
+			multiply_variable = { party_pop_array^5 = party_pop_array^18 }
+			add_to_variable = { emerging_change = party_pop_array^5 }
+			subtract_from_variable = { neutrality_change = party_pop_array^5 }
+		}
+		if = {
+			limit = {
+				has_country_flag = BMD_joined_UDC 
+			}
+			clr_country_flag = BMD_joined_UDC
+			set_variable = { party_pop_array^16 = BMD_old_popularity }
+			divide_variable = { party_pop_array^16 = UDC_forming_popularity }
+			multiply_variable = { party_pop_array^16 = party_pop_array^18 }
+		}
+		if = {
+			limit = {
+				has_country_flag = ISBO_joined_UDC 
+			}
+			clr_country_flag = ISBO_joined_UDC
+			set_variable = { party_pop_array^19 = ISBO_old_popularity }
+			divide_variable = { party_pop_array^19 = UDC_forming_popularity }
+			multiply_variable = { party_pop_array^19 = party_pop_array^18 }
+		}
+		if = {
+			limit = {
+				has_country_flag = BWF_joined_UDC 
+			}
+			clr_country_flag = BWF_joined_UDC
+			set_variable = { party_pop_array^20 = BWF_old_popularity }
+			divide_variable = { party_pop_array^20 = UDC_forming_popularity }
+			multiply_variable = { party_pop_array^20 = party_pop_array^18 }
+			add_to_variable = { nationalist_change = party_pop_array^20 }
+			subtract_from_variable = { neutrality_change = party_pop_array^20 }
+		}
+		add_popularity = { ideology = democratic popularity = western_change }
+		add_popularity = { ideology = communism popularity = emerging_change }
+		add_popularity = { ideology = neutrality popularity = neutrality_change }
+		add_popularity = { ideology = nationalist popularity = nationalist_change }
+		recalculate_party = yes
+	}
+}
+
+#Negro de Banyoles
+country_event = {
+	id = Botswana_pulse.8
+	title = Botswana_pulse.8.t
+	desc = Botswana_pulse.8.desc
+
+	picture = GFX_message_signing
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.8.a executed"
+		name = Botswana_pulse.8.a
+		BOT_boost_BWF = yes
+		ai_chance = {
+			factor = 80
+		}
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.8.b executed"
+		name = Botswana_pulse.8.b
+		BOT_boost_BDP_A = yes
+		add_political_power = -50
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 0
+				OR = {
+					has_country_flag = BOT_BDP_RULES_PATH
+					has_country_flag = BOT_KGOSIKGOLO_PATH
+					has_country_flag = BOT_POLITICAL_RAINBOW_PATH
+					is_in_array = { ruling_party = 20 }
+					is_in_array = { ruling_party = 23 }
+					is_historical_focus_on = yes
+				}
+			}
+		}
+	}
+}
+
+#Execution of Mariette Bosch
+country_event = {
+	id = Botswana_pulse.9
+	title = Botswana_pulse.9.t
+	desc = Botswana_pulse.9.desc
+
+	picture = GFX_message_signing
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+	
+	trigger = {
+		NOT = { has_completed_focus = BOT_remove_death_penalty }
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.9.a executed"
+		name = Botswana_pulse.9.a
+		SAF = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = insult 
+			}
+		}
+		decrease_popularity_2_5 = yes
+	}
+}
+
+#Bushmen take the government to court
+country_event = {
+	id = Botswana_pulse.10
+	title = Botswana_pulse.10.t
+	desc = Botswana_pulse.10.desc
+
+	picture = GFX_african_demonstration
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+	
+	trigger = {
+		OR = {
+			has_idea = BOT_ancestral_land_conflict
+			has_idea = BOT_ancestral_land_conflict_escalated
+		}
+		has_start_date < 2001.1.1
+	}
+	
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			has_idea = BOT_ancestral_land_conflict_escalated
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.10.a executed"
+		name = Botswana_pulse.10.a
+		add_political_power = -50
+		decrease_popularity_2_5 = yes
+	}
+}
+
+#Mosadi Seboko becomes the first female kosigkolo
+country_event = {
+	id = Botswana_pulse.11
+	title = Botswana_pulse.11.t
+	desc = Botswana_pulse.11.desc
+
+	picture = GFX_african_demonstration
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+	
+	trigger = {
+		OR = {
+			has_idea = BOT_house_of_chiefs
+			has_idea = BOT_house_of_chiefs_empowered
+			has_idea = BOT_house_of_chiefs_militarised
+			has_idea = BOT_house_of_chiefs_empowered_and_militarised
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.11.a executed"
+		name = Botswana_pulse.11.a
+		set_country_flag = mosadi_seboko_kgosi
+	}
+}
+
+#Strike at a mine
+country_event = {
+	id = Botswana_pulse.12
+	title = Botswana_pulse.12.t
+	desc = Botswana_pulse.12.desc
+
+	picture = GFX_african_demonstration
+
+	is_triggered_only = yes
+	
+	mean_time_to_happen = {
+		modifier = {
+			factor = 4
+			has_completed_focus = BOT_prioritise_industrial_courts 
+		}
+		modifier = {
+			factor = 0.25
+			has_completed_focus = BOT_secure_workers_rights
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.12.a executed"
+		name = Botswana_pulse.12.a
+		increase_industrial_conglomerates_opinion = yes
+		increase_fossil_fuel_industry_opinion = yes
+		increase_small_medium_business_owners_opinion = yes
+		decrease_farmers_opinion = yes
+		decrease_labour_unions_opinion = yes
+		BOT_boost_BDP_A = yes
+		ai_chance = {
+			factor = 80
+			modifier = {
+				factor = 0
+				has_country_flag = BOT_POLITICAL_RAINBOW_PATH
+			}
+			modifier = {
+				factor = 0.125
+				OR = {
+					has_government = communism
+					is_in_array = { ruling_party = 19 }
+				}
+			}
+		}
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.13.a executed"
+		name = Botswana_pulse.12.b
+		decrease_industrial_conglomerates_opinion = yes
+		decrease_fossil_fuel_industry_opinion = yes
+		decrease_small_medium_business_owners_opinion = yes
+		increase_farmers_opinion = yes
+		increase_labour_unions_opinion = yes
+		BOT_boost_ISBO = yes
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 0
+				OR = {
+					has_country_flag = BOT_BDP_RULES_PATH
+					is_historical_focus_on = yes
+				}					
+			}
+			modifier = {
+				factor = 4.5
+				OR = {
+					has_government = communism
+					is_in_array = { ruling_party = 19 }
+				}
+			}
+		}
+	}
+}
+
+#Modise Mokwadi Fly murders his son
+country_event = {
+	id = Botswana_pulse.13
+	title = Botswana_pulse.13.t
+	desc = Botswana_pulse.13.desc
+
+	picture = GFX_african_demonstration
+
+	is_triggered_only = yes
+	
+	trigger = {
+		has_start_date < 2001.1.1 
+	}
+	
+	fire_only_once = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.13.a executed"
+		name = Botswana_pulse.13.a
+		add_popularity = { ideology = neutrality popularity = -0.05 }
+		subtract_5_neutrality_neutral_social = yes
+	}
+	
+}
+
+#Top gear special
+country_event = {
+	id = Botswana_pulse.14
+	title = Botswana_pulse.14.t
+	desc = Botswana_pulse.14.desc
+
+	picture = GFX_BOT_top_gear_special
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.14.a executed"
+		name = Botswana_pulse.14.a
+		add_2_5_popularity_sub = yes
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.14.b executed"
+		name = Botswana_pulse.14.b
+		add_stability = 0.025
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.14.c executed"
+		name = Botswana_pulse.14.c
+		add_political_power = 25
+	}
+	
+}
+
+#Moremi Air Cessna 208 crash
+country_event = {
+	id = Botswana_pulse.15
+	title = Botswana_pulse.15.t
+	desc = Botswana_pulse.15.desc
+
+	picture = GFX_plane_crash
+
+	is_triggered_only = yes
+	
+	trigger = {
+		has_start_date < 2001.1.1
+	}
+	
+	fire_only_once = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.15.a executed"
+		name = Botswana_pulse.15.a
+		decrease_economic_growth = yes
+		ai_chance = {
+			factor = 90
+		}
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.15.b executed"
+		name = Botswana_pulse.15.b
+		decrease_popularity_2_5 = yes
+		set_country_flag = BOT_air_crash_ignored
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+	
+}
+
+#Generic plane crash
+country_event = {
+	id = Botswana_pulse.16
+	title = Botswana_pulse.16.t
+	desc = Botswana_pulse.16.desc
+
+	picture = GFX_plane_crash
+
+	is_triggered_only = yes
+	
+	trigger = {
+		has_country_flag = BOT_air_crash_ignored
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.16.a executed"
+		name = Botswana_pulse.16.a
+		decrease_economic_growth = yes
+		clr_country_flag = BOT_air_crash_ignored
+		ai_chance = {
+			factor = 90
+		}
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.16.b executed"
+		name = Botswana_pulse.16.b
+		decrease_popularity_2_5 = yes
+		ai_chance = {
+			factor = 10
+		}
+	}
+	
+}
+
+#Mmusi and Others v Ramantele and Another	
+country_event = {
+	id = Botswana_pulse.17
+	title = Botswana_pulse.17.t
+	desc = Botswana_pulse.17.desc
+
+	picture = GFX_court
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+	
+	trigger = {
+		has_start_date < 2001.1.1
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.17.a executed"
+		name = Botswana_pulse.17.a
+		BOT_boost_BDP_B = yes
+		BOT_boost_BNF = yes
+		ai_chance = {
+			factor = 80
+			modifier = {
+				factor = 0
+				has_country_flag = BOT_KGOSIKGOLO_PATH
+			}
+		}
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.17.b executed"
+		name = Botswana_pulse.17.b
+		BOT_boost_BDP_A = yes
+		BOT_boost_digkosi = yes
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 0
+				has_country_flag = BOT_POLITICAL_RAINBOW_PATH
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+	
+}
+
+#Death of Gomolemo Motswaledi	
+country_event = {
+	id = Botswana_pulse.18
+	title = Botswana_pulse.18.t
+	desc = {
+		text = Botswana_pulse.18.desc.1
+		trigger = {
+			NOT = { has_country_flag = BDP_split }
+		}
+	}
+	desc = {
+		text = Botswana_pulse.18.desc.2
+		trigger = {
+			has_country_flag = BDP_split
+		}
+	}
+
+	picture = GFX_car_crash
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+	
+	trigger = {
+		has_start_date < 2001.1.1
+		NOT = { check_variable = { Neutral_Libertarian_leader < 2 } }
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.18.a executed"
+		name = Botswana_pulse.18.a
+		subtract_2_neutrality_libertarians = yes
+	}
+	
+}
+
+#Lesedi La Rona found
+country_event = {
+	id = Botswana_pulse.19
+	title = Botswana_pulse.19.t
+	desc = Botswana_pulse.19.desc
+
+	picture = GFX_BOT_lesedi_la_rona
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+	
+	trigger = {
+		has_start_date < 2001.1.1 
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.19.a executed"
+		name = Botswana_pulse.19.a
+		add_political_power = 50
+		set_country_flag = BOT_lesedi_la_rona_found
+	}
+	
+}
+
+#Sewelo found
+country_event = {
+	id = Botswana_pulse.20
+	title = Botswana_pulse.20.t
+	desc = Botswana_pulse.20.desc
+
+	picture = GFX_BOT_sewelo
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+	
+	trigger = {
+		has_country_flag = BOT_lesedi_la_rona_found
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.20.a executed"
+		name = Botswana_pulse.20.a
+		add_political_power = 50
+	}
+	
+}
+
+#Electricity shortage
+country_event = {
+	id = Botswana_pulse.21
+	title = Botswana_pulse.21.t
+	desc = Botswana_pulse.21.desc
+
+	picture = GFX_generic_factory
+
+	is_triggered_only = yes
+	
+	trigger = {
+		NOT = {
+			has_idea = BOT_coal_focused_energy_self_sufficient
+			has_idea = BOT_coal_focused_energy_small_profit
+			has_idea = BOT_coal_focused_energy_rich
+			has_idea = BOT_renewable_focused_energy_self_sufficient
+			has_idea = BOT_renewable_focused_energy_small_profit
+			has_idea = BOT_renewable_focused_energy_rich
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.21.a executed"
+		name = Botswana_pulse.21.a
+		decrease_economic_growth = yes
+	}
+	
+}
+
+#Botswana Motor Company goes bankrupt
+country_event = {
+	id = Botswana_pulse.22
+	title = Botswana_pulse.22.t
+	desc = Botswana_pulse.22.desc
+
+	picture = GFX_generic_factory
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+	
+	trigger = {
+		has_start_date < 2001.1.1
+	}
+	
+	mean_time_to_happen = {
+		modifier = {
+			factor = 3
+			has_idea = depression
+		}
+		modifier = {
+			factor = 2
+			has_idea = recession
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = stagnation
+		}
+		modifier = {
+			factor = 0.5
+			has_idea = fast_growth
+		}
+		modifier = {
+			factor = 0.1
+			has_idea = economic_boom
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.22.a executed"
+		name = Botswana_pulse.22.a
+		custom_effect_tooltip = 1_billion_expense_tt
+		subtract_from_variable = { treasury = 1 }
+		BOT_boost_BDP_B = yes
+		BOT_boost_ISBO = yes
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 4.5
+				OR = {
+					has_government = communism
+					is_in_array = { ruling_party = 19 }
+				}
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.22.b executed"
+		name = Botswana_pulse.22.b
+		add_political_power = -50
+		BOT_boost_BDP_A = yes
+		ai_chance = {
+			factor = 80
+			modifier = {
+				factor = 0
+				has_country_flag = BOT_POLITICAL_RAINBOW_PATH
+			}
+			modifier = {
+				factor = 0.125
+				OR = {
+					has_government = communism
+					is_in_array = { ruling_party = 19 }
+				}
+			}
+		}
+	}
+	
+}
+
+#Kgosi accused of flogging
+country_event = {
+	id = Botswana_pulse.23
+	title = Botswana_pulse.23.t
+	desc = Botswana_pulse.23.desc
+
+	picture = GFX_african_demonstration
+
+	is_triggered_only = yes
+	
+	fire_only_once = yes
+	
+	trigger = {
+		NOT = { has_idea = BOT_house_of_chiefs_empowered }
+		NOT = { has_idea = BOT_house_of_chiefs_empowered_and_militarised }
+	}
+	
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			has_idea = BOT_house_of_chiefs_militarised
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.23.a executed"
+		name = Botswana_pulse.23.a
+		decrease_landowners_opinion = yes
+		BOT_boost_BDP_B = yes
+		BOT_boost_BPP = yes
+		ai_chance = {
+			factor = 80
+			modifier = {
+				factor = 0
+				OR = {
+					has_country_flag = BOT_KGOSIKGOLO_PATH
+					is_in_array = { ruling_party = 23 }
+				}
+			}
+		}
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_pulse.23.b executed"
+		name = Botswana_pulse.23.b
+		increase_landowners_opinion = yes
+		BOT_boost_digkosi = yes
+		ai_chance = {
+			factor = 20
+			modifier = {
+				factor = 0
+				has_country_flag = BOT_POLITICAL_RAINBOW_PATH
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+	
+}
+
+#Buy new fighters
+country_event = {
+	id = Botswana_events.1
+	title = Botswana_events.1.t
+	desc = Botswana_events.1.desc
+
+	picture = GFX_report_event_ace_promoted
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.1.a executed"
+		name = Botswana_events.1.a
+		trigger = {
+			country_exists = SWE
+			NOT = { has_war_with = SWE }
+			SWE = { has_tech = MR_Fighter3 }
+		}
+		custom_effect_tooltip = 15_billion_expense_tt
+		subtract_from_variable = { treasury = 15 }
+		SWE = { generic_grant_3_percent_influence_of_CURRENT_SCOPE = yes }
+		add_equipment_to_stockpile = {
+			type = MR_Fighter3
+			amount = 12
+			producer = SWE
+		}
+		ai_chance = {
+			factor = 25
+		}
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.1.b executed"
+		name = Botswana_events.1.b
+		trigger = {
+			country_exists = USA
+			NOT = { has_war_with = USA }
+			USA = { has_tech = MR_Fighter3 }
+		}
+		custom_effect_tooltip = 15_billion_expense_tt
+		subtract_from_variable = { treasury = 15 }
+		USA = { generic_grant_3_percent_influence_of_CURRENT_SCOPE = yes }
+		add_equipment_to_stockpile = {
+			type = MR_Fighter3
+			amount = 12
+			producer = USA
+		}
+		ai_chance = {
+			factor = 25
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.1.c executed"
+		name = Botswana_events.1.c
+		trigger = {
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+			CHI = { has_tech = MR_Fighter3 }
+		}
+		custom_effect_tooltip = 15_billion_expense_tt
+		subtract_from_variable = { treasury = 15 }
+		CHI = { generic_grant_3_percent_influence_of_CURRENT_SCOPE = yes }
+		add_equipment_to_stockpile = {
+			type = MR_Fighter3
+			amount = 12
+			producer = CHI
+		}
+		ai_chance = {
+			factor = 25
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.1.d executed"
+		name = Botswana_events.1.d
+		trigger = {
+			country_exists = ENG
+			NOT = { has_war_with = ENG }
+			ENG = { has_tech = MR_Fighter3 }
+		}
+		custom_effect_tooltip = 15_billion_expense_tt
+		subtract_from_variable = { treasury = 15 }
+		ENG = { generic_grant_3_percent_influence_of_CURRENT_SCOPE = yes }
+		add_equipment_to_stockpile = {
+			type = MR_Fighter3
+			amount = 12
+			producer = ENG
+		}
+		ai_chance = {
+			factor = 25
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+#Namibia-Botswana fiber cable
+country_event = {
+	id = Botswana_events.2
+	title = Botswana_events.2.t
+	desc = Botswana_events.2.desc
+
+	picture = GFX_message_signing
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.2.a executed"
+		name = Botswana_events.2.a
+		custom_effect_tooltip = 6_billion_expense_tt
+		subtract_from_variable = { treasury = 6 }
+		if = {
+			limit = { NOT = { has_tech = internet1 } }
+			set_technology = { internet1 = 1 }
+		}
+		282 = {
+			add_building_construction = {
+				type = internet_station
+				level = 1
+				instant_build = yes
+			}
+		}
+		283 = {
+			add_building_construction = {
+				type = internet_station
+				level = 1
+				instant_build = yes
+			}
+		}
+		generic_grant_2_percent_influence_of_FROM = yes 
+		FROM = { country_event = { id = Botswana_events.3 hours = 3 } }
+		ai_chance = {
+			factor = 100
+		}
+	}
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.2.b executed"
+		name = Botswana_events.2.b
+		FROM = { country_event = { id = Botswana_events.4 hours = 3 } }
+	}
+}
+country_event = {
+	id = Botswana_events.3
+	title = Botswana_events.3.t
+	desc = Botswana_events.3.desc
+
+	picture = GFX_message_signing
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.3.a executed"
+		name = Botswana_events.3.a
+		custom_effect_tooltip = 6_billion_expense_tt
+		subtract_from_variable = { treasury = 6 }
+		287 = {
+			add_building_construction = {
+				type = internet_station
+				level = 1
+				instant_build = yes
+			}
+		}
+		288 = {
+			add_building_construction = {
+				type = internet_station
+				level = 1
+				instant_build = yes
+			}
+		}
+		add_opinion_modifier = {
+			target = NAM
+			modifier = large_commercial_relations 
+		}
+		reverse_add_opinion_modifier = {
+			target = NAM
+			modifier = large_commercial_relations 
+		}
+		generic_grant_2_percent_influence_of_FROM = yes 
+	}
+}
+country_event = {
+	id = Botswana_events.4
+	title = Botswana_events.4.t
+	desc = Botswana_events.4.desc
+
+	picture = GFX_message_signing
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.4.a executed"
+		name = Botswana_events.4.a
+	}
+}
+
+#Dehorn rhinos
+country_event = {
+	id = Botswana_events.5
+	title = Botswana_events.5.t
+	desc = Botswana_events.5.desc
+
+	picture = GFX_BOT_dehorn_rhino
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.5.a executed"
+		name = Botswana_events.5.a
+		set_temp_variable = { poachers_killed = no_of_poachers }
+		multiply_temp_variable = { poachers_killed = 0.5 }
+		round_temp_variable = poachers_killed 
+		subtract_from_variable = { no_of_poachers = poachers_killed }
+		custom_effect_tooltip = BOT_eliminate_half_of_poachers
+	}
+}
+country_event = {
+	id = Botswana_events.6
+	title = Botswana_events.6.t
+	desc = Botswana_events.6.desc
+
+	picture = GFX_BOT_dehorn_rhino_dead
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.6.a executed"
+		name = Botswana_events.6.a
+	}
+}
+
+#Peacekeepers to Zimbabwe
+news_event = {
+	id = Botswana_news_events.1
+	title = Botswana_events.1.t
+	desc = Botswana_events.1.desc
+
+	picture = GFX_news_ZIM_robert_mugabe
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.1.a executed"
+		name = Botswana_events.1.a
+	}
+}
+
+#Kgosigkolo crowned
+news_event = {
+	id = Botswana_news_events.2
+	title = Botswana_events.2.t
+	desc = Botswana_events.2.desc
+
+	picture = GFX_news_BOT_kgosikgolo_crowned
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.2.a executed"
+		name = Botswana_events.2.a
+	}
+}
+
+#Unite Bushmen
+news_event = {
+	id = Botswana_news_events.3
+	title = Botswana_events.3.t
+	desc = Botswana_events.3.desc
+
+	picture = GFX_news_BOT_unite_bushmen
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Botswana_events.3.a executed"
+		name = Botswana_events.3.a
+	}
+}
