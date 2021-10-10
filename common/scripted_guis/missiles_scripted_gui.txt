@@ -161,16 +161,16 @@ scripted_gui = {
 		}
 		properties = {
 			remove_SAM_button = {
-				frame = 9
+				frame = 8
 			}
 			deploy_SAM_button = {
-				frame = 9
+				frame = 8
 			}
 			remove_TEL_button = {
-				frame = 12 #temp change to 17
+				frame = 10
 			}
 			deploy_TEL_button = {
-				frame = 12 #temp change to 17
+				frame = 10
 			}
 		}
 	}
@@ -2676,6 +2676,7 @@ scripted_gui = {
 				clear_launch_button_loc_vars = yes
 			}
 			warhead_button_click = {
+				### MD_warhead_window ###
 				set_country_flag = open_MD_warhead_window
 				set_variable = { var_open_warhead_selection_ledger_1 = 2 }
 				set_conventional_warhead_display_array = yes
@@ -2823,6 +2824,19 @@ scripted_gui = {
 				clear_variable = var_selected_air_priority_icon_14
 				clear_variable = var_selected_air_priority_icon_15
 				clear_variable = var_selected_air_priority_icon_16
+				### new costs
+				if = {
+					limit = {
+						check_variable = { var_gui_nuke = 2 } # 2 = nuke
+					}
+					multiply_variable = { var_gui_nuclear_warhead_cost = var_total_firing }
+					subtract_from_variable = { treasury = var_gui_nuclear_warhead_cost }
+				}
+				else = {
+					multiply_variable = { var_gui_conventional_warhead_cost = var_total_firing }
+					subtract_from_variable = { treasury = var_gui_conventional_warhead_cost }
+				}
+				###
 				add_to_array = {
 					missile_type_array = var_gui_missile_type
 					index = var_missile_trajectory_ID
@@ -3419,7 +3433,7 @@ scripted_gui = {
 			warhead_selection_ledger_btn_1_click = {
 				set_variable = { var_open_warhead_selection_ledger_1 = 2 }
 				clear_variable = var_open_warhead_selection_ledger_2
-				clear_array = conventional_warhead_display_array
+				clear_array = nuclear_warhead_display_array
 				set_conventional_warhead_display_array = yes
 				set_country_flag = conventional_warhead_model
 				clr_country_flag = nuclear_warhead_model
@@ -3427,7 +3441,7 @@ scripted_gui = {
 			warhead_selection_ledger_btn_2_click = {
 				set_variable = { var_open_warhead_selection_ledger_2 = 2 }
 				clear_variable = var_open_warhead_selection_ledger_1
-				clear_array = nuclear_warhead_display_array
+				clear_array = conventional_warhead_display_array
 				set_nuclear_warhead_display_array = yes
 				set_country_flag = nuclear_warhead_model
 				clr_country_flag = conventional_warhead_model
@@ -3464,11 +3478,45 @@ scripted_gui = {
 					}
 				}
 			}
-			warhead_button_click = {
+			# warhead_button_click = {
+			# 	set_country_flag = has_warhead
+			# 	set_variable = { var_gui_warhead = warhead_tech_array^i }
+			# 	set_warhead_gui = yes
+			# 	clr_country_flag = open_MD_warhead_window
+			# }
+			conventional_warhead_button_click = {
 				set_country_flag = has_warhead
-				set_variable = { var_gui_warhead = warhead_tech_array^i }
-				set_warhead_gui = yes
+				#set_variable = { var_gui_warhead = conventional_warhead_display_array^i }
+				set_variable = { var_conventional_warhead = conventional_warhead_display_array^i }
+				set_variable = { var_gui_MIRV = var_win_MIRV }
+				set_variable = { var_gui_decoy = var_win_decoy }
+				set_variable = { var_gui_nuke = 1 }
+				set_gui_conventional_warhead_cost = yes
+				#set_warhead_gui = yes
 				clr_country_flag = open_MD_warhead_window
+				clear_variable = var_open_warhead_selection_ledger_2
+				clear_array = nuclear_warhead_display_array
+				clr_country_flag = nuclear_warhead_model
+				clear_variable = var_open_warhead_selection_ledger_1
+				clear_array = conventional_warhead_display_array
+				clr_country_flag = conventional_warhead_model
+			}
+			nuclear_warhead_button_click = {
+				set_country_flag = has_warhead
+				#set_variable = { var_gui_warhead = nuclear_warhead_display_array^i }
+				set_variable = { var_nuclear_warhead = nuclear_warhead_display_array^i }
+				set_variable = { var_gui_MIRV = var_win_MIRV }
+				set_variable = { var_gui_decoy = var_win_decoy }
+				set_variable = { var_gui_nuke = 2 }
+				set_gui_nuclear_warhead_cost = yes
+				#set_warhead_gui = yes
+				clr_country_flag = open_MD_warhead_window
+				clear_variable = var_open_warhead_selection_ledger_2
+				clear_array = nuclear_warhead_display_array
+				clr_country_flag = nuclear_warhead_model
+				clear_variable = var_open_warhead_selection_ledger_1
+				clear_array = conventional_warhead_display_array
+				clr_country_flag = conventional_warhead_model
 			}
 			close_button_click = {
 				if = {
@@ -3477,11 +3525,53 @@ scripted_gui = {
 					}
 					clr_country_flag = open_MD_warhead_window
 				}
+				clear_variable = var_open_warhead_selection_ledger_2
+				clear_array = nuclear_warhead_display_array
+				clr_country_flag = nuclear_warhead_model
+				clear_variable = var_open_warhead_selection_ledger_1
+				clear_array = conventional_warhead_display_array
+				clr_country_flag = conventional_warhead_model
+			}
+		}
+		triggers = {
+			conventional_warhead_button_click_enabled = {
+				OR = {
+					AND = {
+						check_variable = { conventional_warhead_missile_type_array^i = 0 }
+						check_variable = { var_gui_missile_type > 10 }
+						check_variable = { var_gui_missile_type < 39 }
+					}
+					AND = {
+						check_variable = { conventional_warhead_missile_type_array^i = 1 }
+					}
+				}
+			}
+			MIRV_small_plus_button_bg_click_enabled = {
+				check_variable = { var_gui_missile_type > 10 }
+				check_variable = { var_gui_missile_type < 39 }
+			}
+			MIRV_small_minus_button_bg_click_enabled = {
+				check_variable = { var_gui_missile_type > 10 }
+				check_variable = { var_gui_missile_type < 39 }
+			}
+			Decoy_small_plus_button_bg_click_enabled = {
+				check_variable = { var_gui_missile_type > 10 }
+				check_variable = { var_gui_missile_type < 39 }
+			}
+			Decoy_small_minus_button_bg_click_enabled = {
+				check_variable = { var_gui_missile_type > 10 }
+				check_variable = { var_gui_missile_type < 39 }
 			}
 		}
 		properties = {
 			warhead_icon = {
 				image = "[MD_warhead_tech_icon_texture]"
+			}
+			warhead_selection_ledger_btn_1 = {
+				frame = var_open_warhead_selection_ledger_1
+			}
+			warhead_selection_ledger_btn_2 = {
+				frame = var_open_warhead_selection_ledger_2
 			}
 		}
 		dynamic_lists = {
