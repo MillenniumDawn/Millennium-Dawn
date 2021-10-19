@@ -13,65 +13,21 @@ focus_tree = {
 
 	continuous_focus_position = { x = 2300 y = 500 }
 
-	#Motion of Confidence Tree
+
+	### International Relations
 	focus = {
-		id = NOR_bondevik_motion_of_confidence
-		icon = giant_wakes
+		id = NOR_focus_international_relations
+		icon = internationalism
 
 		x = 1
 		y = 0
 
 		cost = 10
 
-		prerequisite = { }
-
-		mutually_exclusive = { }
-
-		available = {
-
-		}
-
-		bypass = { }
-
-		search_filters = { FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_NATO }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus NOR_bondevik_motion_of_confidence"
-			country_event = { id = Norway.2 days = 1 }
-			add_stability = 0.01
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = NOR_stoltenberg_cabinet
-		icon = race_relations2
-
-		x = -1
-		y = 1
-		relative_position_id = NOR_bondevik_motion_of_confidence
-
-		cost = 5
-
-		prerequisite = {
-			focus = NOR_bondevik_motion_of_confidence
-		}
-
-		mutually_exclusive = { }
-
-		available = {
-			has_country_leader = { name = "" }
-		}
-
-		bypass = { }
-
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus NOR_stoltenberg_cabinet"
+			log = "[GetDateText]: [Root.GetName]: Focus NOR_focus_international_relations"
 			add_political_power = 150
-			add_stability = 0.02
 		}
 
 		ai_will_do = {
@@ -79,18 +35,18 @@ focus_tree = {
 		}
 	}
 
-	#NATO/EU Tree
 	focus = {
 		id = NOR_stay_in_nato
 		icon = align_to_nato
 
-		x = 2
+		x = -1
 		y = 1
+		relative_position_id = NOR_focus_international_relations
 
 		cost = 10
 
 		prerequisite = {
-			focus = NOR_bondevik_motion_of_confidence
+			focus = NOR_focus_international_relations
 		}
 
 		mutually_exclusive = {
@@ -99,22 +55,27 @@ focus_tree = {
 
 		available = {
 			has_idea = NATO_member
-			has_government = democratic
+			OR = {
+				has_government = democratic
+				has_government = neutrality
+			}
 		}
-
-		bypass = { }
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_NATO }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_stay_in_nato"
 			add_stability = 0.02
-			every_country = {
-				limit = { has_idea = NATO_member }
+
+			for_each_scope_loop = {
+				array = global.nato_members
+		
 				add_opinion_modifier = {
 					target = NOR
 					modifier = reaffirmed_NATO
 				}
 			}
+
+			custom_effect_tooltip = NOR_stay_in_nato_tt
 		}
 
 		ai_will_do = {
@@ -133,14 +94,12 @@ focus_tree = {
 		cost = 15
 
 		prerequisite = {
-			focus = NOR_bondevik_motion_of_confidence
+			focus = NOR_focus_international_relations
 		}
 
 		mutually_exclusive = {
 			focus = NOR_stay_in_nato
 		}
-
-		available = { }
 
 		bypass = {
 			NOT = { has_idea = NATO_member }
@@ -149,13 +108,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_NATO }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_leave_nato"
-			every_other_country = {
-				limit = {
-					has_idea = NATO_member 
-				}
-				add_opinion_modifier = { target = NOR modifier = left_nato }
-			}
-			remove_ideas = NATO_member
+			
+			NATO_leave = yes
 		}
 
 		ai_will_do = {
@@ -168,22 +122,70 @@ focus_tree = {
 	}
 
 
+	### Political story tree
+	focus = {
+		id = NOR_bondevik_motion_of_confidence
+		icon = giant_wakes
 
-	###Haakon's Marriage Question
+		x = 8
+		y = 0
 
-	##Support
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus NOR_bondevik_motion_of_confidence"
+			country_event = { id = norway.2 days = 1 }
+			add_stability = 0.01
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
 
 	focus = {
-		id = NOR_support_haakons_marriage
-		icon = aristocratic_funding
+		id = NOR_stoltenberg_cabinet
+		icon = democracy5
 
-		x = 6
+		x = 0
 		y = 1
+		relative_position_id = NOR_bondevik_motion_of_confidence
 
 		cost = 10
 
 		prerequisite = {
 			focus = NOR_bondevik_motion_of_confidence
+		}
+
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus NOR_stoltenberg_cabinet"
+			add_political_power = 150
+			add_stability = 0.02
+
+			set_temp_variable = { NOR_temp_party_id = 3 }
+			set_temp_variable = { NOR_temp_pop = 0.05 }
+			NOR_scripted_effect_change_leader_western = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = NOR_support_haakons_marriage
+		icon = royal_wedding
+
+		x = -2
+		y = 1
+		relative_position_id = NOR_stoltenberg_cabinet
+
+		cost = 10
+
+		prerequisite = {
+			focus = NOR_stoltenberg_cabinet
 		}
 
 		mutually_exclusive = {
@@ -193,8 +195,6 @@ focus_tree = {
 		available = {
 			has_country_flag = haakons_marriage_announced
 		}
-
-		bypass = { }
 
 		search_filters = { FOCUS_FILTER_STABILITY }
 		completion_reward = {
@@ -207,9 +207,10 @@ focus_tree = {
 		}
 	}
 
+	# Status quo tree
 	focus = {
 		id = NOR_reinforce_the_constitutional_monarchy
-		icon = improve_relations_green
+		icon = monarchism4
 
 		x = 0
 		y = 1
@@ -225,14 +226,12 @@ focus_tree = {
 			focus = NOR_defund_the_monarchy
 		}
 
-		available = { }
-
-		bypass = { }
-
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_reinforce_the_constitutional_monarchy"
 			add_stability = 0.02
+			set_temp_variable = { arg_popularity = 0.05 }
+			add_ruling_outlook_popularity = yes
 			add_ideas = political_power_bonus2
 		}
 
@@ -243,7 +242,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_economic_growth_1
-		icon = money
+		icon = economic_prosperity2
 
 		x = 0
 		y = 2
@@ -295,7 +294,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_government_expansion_plans
-		icon = intelligence_exchange
+		icon = generic_government
 
 		x = -1
 		y = 3
@@ -326,7 +325,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_expand_the_industrial_base
-		icon = industry_civilian
+		icon = construction_engineering
 
 		x = 1
 		y = 3
@@ -366,10 +365,6 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = {
-			focus = NOR_government_expansion_plans
-			focus = NOR_expand_the_industrial_base
-		}
 		prerequisite = {
 			focus = NOR_economic_growth_1
 		}
@@ -445,7 +440,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_further_research_investments
-		icon = tech_sharing
+		icon = research3
 
 		x = -1
 		y = 6
@@ -474,22 +469,18 @@ focus_tree = {
 		}
 	}
 
-	##Oppose
-
 	focus = {
 		id = NOR_oppose_haakons_marriage
 		icon = anti_establishment
 
-		x = 3
+		x = 4
 		y = 0
 		relative_position_id = NOR_support_haakons_marriage
 
 		cost = 10
 
-		cancel_if_invalid = yes
-
 		prerequisite = {
-			focus = NOR_bondevik_motion_of_confidence
+			focus = NOR_stoltenberg_cabinet
 		}
 
 		mutually_exclusive = {
@@ -501,11 +492,11 @@ focus_tree = {
 			NOT = { has_country_flag = haakon_married }
 		}
 
-		bypass = { }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_oppose_haakons_marriage"
 			add_stability = -0.03
+
+			custom_effect_tooltip = NOR_oppose_haakons_marriage_tt
 		}
 
 		ai_will_do = {
@@ -517,11 +508,10 @@ focus_tree = {
 		}
 	}
 
-	#Radical Left Wing
-
+	# Republican tree
 	focus = {
 		id = NOR_defund_the_monarchy
-		icon = stolen_papers
+		icon = anti_monarchism3
 
 		x = -1
 		y = 1
@@ -579,10 +569,10 @@ focus_tree = {
 		mutually_exclusive = { }
 
 		available = {
-
-		NOT = { has_government = nationalist }
-		NOT = { has_government = fascism }
-
+			NOT = {
+				has_government = nationalist
+				has_government = fascism
+			}
 		}
 
 		bypass = { }
@@ -591,11 +581,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_encourage_republican_sentiment"
 			add_political_power = 150
-				add_popularity = { ideology = communism popularity = 0.05 }
-				add_popularity = { ideology = democratic popularity = 0.05 }
-				recalculate_party = yes
-			}
-
+			add_popularity = { ideology = communism popularity = 0.05 }
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			recalculate_party = yes
+		}
 
 		ai_will_do = {
 			factor = 1
@@ -667,9 +656,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_abolish_the_monarchy"
 			add_political_power = 150
-			add_popularity = { 
-				ideology = nationalist 
-				popularity = -0.05 
+			add_popularity = {
+				ideology = nationalist
+				popularity = -0.05
 			}
 			add_to_variable = { party_pop_array^23 = -0.05 }
 			recalculate_party = yes
@@ -684,7 +673,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_democratic_socialism
-		icon = democracy6
+		icon = democratic_communism
 
 		x = -1
 		y = 3
@@ -700,10 +689,6 @@ focus_tree = {
 			focus = NOR_radical_socialism
 		}
 
-		available = { }
-
-		bypass = { }
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_democratic_socialism"
@@ -711,6 +696,7 @@ focus_tree = {
 				ideology = democratic
 				popularity = 0.15
 			}
+			add_to_variable = { party_pop_array^3 = 0.15 }
 			recalculate_party = yes
 		}
 
@@ -750,37 +736,17 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_radical_socialism"
 			add_war_support = -0.25
-			add_popularity = {
-				ideology = communism
-				popularity = 0.25
-			}
-			add_to_variable = { party_pop_array^5 = 0.25 }
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 5 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
-			}			
+
+			set_temp_variable = { NOR_temp_party_id = 5 }
+			set_temp_variable = { NOR_temp_pop = 0.25 }
+			NOR_scripted_effect_change_leader_eastern = yes
+
 			set_politics = {
 				ruling_party = communism
 				elections_allowed = no
 			}
-			recalculate_party = yes
-			if = { 
-				limit = { has_idea = labour_unions }
-				visually_display_opinion_rise_labour_unions = yes
-				set_country_flag = current_labour_unions
-				increase_internal_faction_opinion = yes
-			}			
+
+			increase_labour_unions_opinion = yes
 		}
 
 		ai_will_do = {
@@ -793,11 +759,10 @@ focus_tree = {
 	}
 
 
-	#Monarchist
-
+	# Monarchist tree
 	focus = {
 		id = NOR_find_a_better_bride
-		icon = monarchism2
+		icon = monarchism3
 
 		x = 5
 		y = 1
@@ -825,7 +790,7 @@ focus_tree = {
 				popularity = 0.1
 			}
 			add_to_variable = { party_pop_array^23 = 0.10 }
-			add_to_variable = { party_pop_array^21 = -0.10 }			
+			add_to_variable = { party_pop_array^21 = -0.10 }
 			recalculate_party = yes
 		}
 
@@ -870,7 +835,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_british_princess"
 			ENG = {
-				news_event = { id = Norway.5 hours = 4 }
+				news_event = { id = norway.5 hours = 4 }
 				add_opinion_modifier = {
 					target = NOR
 					modifier = declaration_of_friendship
@@ -918,7 +883,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_belgian_princess"
 			BEL = {
-				news_event = { id = Norway.5 hours = 4 }
+				news_event = { id = norway.5 hours = 4 }
 				add_opinion_modifier = {
 					target = NOR
 					modifier = declaration_of_friendship
@@ -968,7 +933,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_swedish_princess"
 			SWE = {
-				news_event = { id = Norway.5 hours = 4 }
+				news_event = { id = norway.5 hours = 4 }
 				add_opinion_modifier = {
 					target = NOR
 					modifier = declaration_of_friendship
@@ -1016,7 +981,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_japanese_princess"
 			JAP = {
-				news_event = { id = Norway.5 hours = 4 }
+				news_event = { id = norway.5 hours = 4 }
 				add_opinion_modifier = {
 					target = NOR
 					modifier = declaration_of_friendship
@@ -1061,7 +1026,7 @@ focus_tree = {
 			}
 			recalculate_party = yes
 			add_to_variable = { party_pop_array^23 = 0.15 }
-			add_to_variable = { party_pop_array^21 = -0.15 }			
+			add_to_variable = { party_pop_array^21 = -0.15 }
 			recalculate_party = yes
 		}
 
@@ -1072,7 +1037,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_royal_government_decree
-		icon = monarchism
+		icon = monarchism2
 
 		x = 0
 		y = 3
@@ -1097,33 +1062,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_royal_government_decree"
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.25
-			}
-			add_to_variable = { party_pop_array^23 = 0.25 }
+
 			add_to_variable = { party_pop_array^21 = -0.25 }
-			recalculate_party = yes
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 23 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
-			}
+
+			set_temp_variable = { NOR_temp_party_id = 23 }
+			set_temp_variable = { NOR_temp_pop = 0.25 }
+			NOR_scripted_effect_change_leader_nationalist = yes
+
 			set_politics = {
 				ruling_party = nationalist
 				elections_allowed = no
 			}
-			recalculate_party = yes
 		}
 
 		ai_will_do = {
@@ -1159,14 +1108,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESOURCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_joint_oil_drills"
-			ENG = { country_event = { id = Norway.4 days = 1 } }
-			NOR = { country_event = { id = Norway.4 days = 1 } }
-			if = { 
-				limit = { has_idea = fossil_fuel_industry }
-				visually_display_opinion_rise_fossil_fuel_industry = yes
-				set_country_flag = current_fossil_fuel_industry
-				increase_internal_faction_opinion = yes
-			}
+			ENG = { country_event = { id = norway.4 days = 1 } }
+			NOR = { country_event = { id = norway.4 days = 1 } }
+
+			increase_fossil_fuel_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1176,7 +1121,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_additional_european_trade
-		icon = euro
+		icon = align_to_europe
 
 		x = -1
 		y = 4
@@ -1225,7 +1170,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_the_union_of_sweden_norway
-		icon = major_alliance
+		icon = align_to_sweden2
 
 		x = 1
 		y = 4
@@ -1279,7 +1224,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_expand_the_navy
-		icon = navy2
+		icon = navy3
 
 		x = 3
 		y = 4
@@ -1316,7 +1261,7 @@ focus_tree = {
 		}
 	}
 
-	#Import German Tanks Tree
+	# Military Tree
 	focus = {
 		id = NOR_import_german_tanks
 		icon = leopard_2a4
@@ -1471,7 +1416,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_artillery_models
-		icon = artillery
+		icon = artillery3
 
 		x = 2
 		y = 1
@@ -1509,7 +1454,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_infantry_weapons
-		icon = small_arms2
+		icon = industry_military
 
 		x = 1
 		y = 2
@@ -1545,7 +1490,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_production_efficiency_focus
-		icon = industry_military
+		icon = industry_tanks
 
 		x = 3
 		y = 2
@@ -1574,7 +1519,7 @@ focus_tree = {
 		}
 	}
 
-	#Expand Haakonsvern
+	# Navy Tree
 	focus = {
 		id = NOR_expand_haakonsvern
 		icon = amphibious_assault
@@ -1663,7 +1608,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_expand_the_naval_industrial_base
-		icon = navy3
+		icon = naval_industry
 
 		x = 0
 		y = 2
@@ -1701,13 +1646,9 @@ focus_tree = {
 					treasury = -8
 				}
 			}
-			custom_effect_tooltip = 8_billion_expense_tt		
-			if = { 
-				limit = { has_idea = maritime_industry }
-				visually_display_opinion_rise_maritime_industry = yes
-				set_country_flag = current_maritime_industry
-				increase_internal_faction_opinion = yes
-			}
+			custom_effect_tooltip = 8_billion_expense_tt
+
+			increase_maritime_industry_opinion = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -1715,10 +1656,10 @@ focus_tree = {
 
 }
 
-	#Northern Oil Investments Tree
+	### Economy Tree
 	focus = {
 		id = NOR_northern_oil_investments
-		icon = oil_production
+		icon = oil
 
 		x = 0
 		y = 3
@@ -1755,7 +1696,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_western_oil_investments
-		icon = oil_production
+		icon = oil_trade
 
 		x = 2
 		y = 0
@@ -1831,7 +1772,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_expand_e6_and_e39
-		icon = infrastructure
+		icon = infrastructure1
 
 		x = 0
 		y = 1
@@ -1843,10 +1784,12 @@ focus_tree = {
 
 		mutually_exclusive = { }
 
-		available = { has_full_control_of_state = 30
-								 has_full_control_of_state = 31
-								 has_full_control_of_state = 32
-								 has_full_control_of_state = 542 }
+		available = {
+			has_full_control_of_state = 30
+			has_full_control_of_state = 31
+			has_full_control_of_state = 32
+			has_full_control_of_state = 542
+		}
 
 		bypass = { }
 
@@ -1862,14 +1805,13 @@ focus_tree = {
 					}
 				}
 
-
 				31 = {
 					add_building_construction = {
 						type = infrastructure
 						level = 2
 						instant_build = yes
 					}
-			}
+				}
 
 				32 = {
 					add_building_construction = {
@@ -1885,6 +1827,7 @@ focus_tree = {
 						instant_build = yes
 					}
 				}
+
 				hidden_effect = {
 					add_to_variable = {
 						treasury = -4
@@ -1901,7 +1844,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_resource_production_program
-		icon = production
+		icon = oil_production2
 
 		x = 2
 		y = 1
@@ -1929,12 +1872,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus NOR_resource_production_program"
 			add_ideas = resource_production_bonus2
-			if = { 
-				limit = { has_idea = fossil_fuel_industry }
-				visually_display_opinion_rise_fossil_fuel_industry = yes
-				set_country_flag = current_fossil_fuel_industry
-				increase_internal_faction_opinion = yes
-			}
+
+			increase_fossil_fuel_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1944,7 +1883,7 @@ focus_tree = {
 
 	focus = {
 		id = NOR_invest_in_ostlandet
-		icon = industry_civilian
+		icon = construction_engineering
 
 		x = 1
 		y = 2
@@ -2045,9 +1984,9 @@ focus_tree = {
 ##############################
 
 shared_focus = EU001
-	
-############################	
-### End of EU Focus Tree ###	
+
+############################
+### End of EU Focus Tree ###
 ############################
 
-  }
+}
