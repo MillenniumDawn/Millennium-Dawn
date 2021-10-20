@@ -2901,6 +2901,8 @@ scripted_gui = {
 				clear_launch_button_number_vars = yes
 				clear_launch_button_loc_vars = yes
 				#
+				set_variable = { var_fire_sort_button = 2 }
+				set_variable = { var_alert_sort_button = 1 }
 				set_missile_launch_arrays_selected_TAG = yes
 			}
 			alert_button_click = {
@@ -2941,10 +2943,11 @@ scripted_gui = {
 					missile_type_array = var_gui_missile_type
 					index = var_missile_trajectory_ID
 				}
-				add_to_array = {
-					missile_tech_array = var_gui_missile_tech
-					index = var_missile_trajectory_ID
-				}
+				### OLD VERSION - change in missile daily effects ???
+				# add_to_array = {
+				# 	missile_tech_array = var_gui_missile_tech
+				# 	index = var_missile_trajectory_ID
+				# }
 				### OLD VERSION - change in missile daily effects ???
 				# add_to_array = {
 				# 	missile_warhead_array = var_gui_warhead
@@ -2987,6 +2990,8 @@ scripted_gui = {
 				clear_launch_button_number_vars = yes
 				clear_launch_button_loc_vars = yes
 				#
+				set_variable = { var_fire_sort_button = 1 }
+				set_variable = { var_alert_sort_button = 2 }
 				set_missile_launch_arrays_selected_TAG = yes
 			}
 			### to do, new stat buttons in dynamic list
@@ -3014,6 +3019,111 @@ scripted_gui = {
 				set_variable = { var_alert_sort_button = 2 }
 				set_missile_launch_arrays_selected_TAG = yes
 			}
+			trajectory_delete_button_click = {
+				set_temp_variable = { delete_idx = ROOT.trajectory_display_array^i }
+				subtract_from_variable = { var_missile_trajectory_ID = 1 }
+				#missile_launch_point_array
+				remove_from_array = {
+					array = missile_launch_point_array
+					index = delete_idx
+				}
+				# resize_array = {
+				# 	array = missile_launch_point_array
+				# 	size = var_missile_trajectory_ID
+				# }
+				#missile_target_point_array
+				remove_from_array = {
+					array = missile_target_point_array
+					index = delete_idx
+				}
+				# resize_array = {
+				# 	array = missile_target_point_array
+				# 	size = var_missile_trajectory_ID
+				# }
+				#missile_type_array
+				remove_from_array = {
+					array = missile_type_array
+					index = delete_idx
+				}
+				# resize_array = {
+				# 	array = missile_type_array
+				# 	size = var_missile_trajectory_ID
+				# }
+				#missile_conventional_warhead_array
+				remove_from_array = {
+					array = missile_conventional_warhead_array
+					index = delete_idx
+				}
+				# resize_array = {
+				# 	array = missile_conventional_warhead_array
+				# 	size = var_missile_trajectory_ID
+				# }
+				#missile_nuclear_warhead_array
+				remove_from_array = {
+					array = missile_nuclear_warhead_array
+					index = delete_idx
+				}
+				# resize_array = {
+				# 	array = missile_nuclear_warhead_array
+				# 	size = var_missile_trajectory_ID
+				# }
+				#missile_nuke_array
+				remove_from_array = {
+					array = missile_nuke_array
+					index = delete_idx
+				}
+				# resize_array = {
+				# 	array = missile_nuke_array
+				# 	size = var_missile_trajectory_ID
+				# }
+				#missile_MIRV_array
+				remove_from_array = {
+					array = missile_MIRV_array
+					index = delete_idx
+				}
+				# resize_array = {
+				# 	array = missile_MIRV_array
+				# 	size = var_missile_trajectory_ID
+				# }
+				#missile_decoy_array
+				remove_from_array = {
+					array = missile_decoy_array
+					index = delete_idx
+				}
+				# resize_array = {
+				# 	array = missile_decoy_array
+				# 	size = var_missile_trajectory_ID
+				# }
+				#missile_salvo_array
+				remove_from_array = {
+					array = missile_salvo_array
+					index = delete_idx
+				}
+				# resize_array = {
+				# 	array = missile_salvo_array
+				# 	size = var_missile_trajectory_ID
+				# }
+				#missile_duration_array
+				remove_from_array = {
+					array = missile_duration_array
+					index = delete_idx
+				}
+				# resize_array = {
+				# 	array = missile_duration_array
+				# 	size = var_missile_trajectory_ID
+				# }
+				#missile_alert_array
+				remove_from_array = {
+					array = missile_alert_array
+					index = delete_idx
+				}
+				# resize_array = {
+				# 	array = missile_alert_array
+				# 	size = var_missile_trajectory_ID
+				# }
+				#
+				set_missile_launch_arrays_selected_TAG = yes
+			}
 		}
 
 		triggers = {
@@ -3033,6 +3143,11 @@ scripted_gui = {
 				has_country_flag = has_trajectory
 				has_country_flag = has_missile_model
 				has_country_flag = has_warhead
+			}
+			trajectory_delete_button_click_enabled = {
+				ROOT = {
+					original_tag = var:missile_launch_selected_TAG
+				}
 			}
 		}
 		properties = {
@@ -3691,7 +3806,15 @@ scripted_gui = {
 				set_country_flag = has_warhead
 				#set_variable = { var_gui_warhead = conventional_warhead_display_array^i }
 				set_variable = { var_conventional_warhead = conventional_warhead_display_array^i }
-				set_variable = { var_gui_MIRV = var_win_MIRV }
+				if = {
+					limit = {
+						check_variable = { var_win_MIRV = 0 }
+					}
+					set_variable = { var_gui_MIRV = 1 }
+				}
+				else = {
+					set_variable = { var_gui_MIRV = var_win_MIRV }
+				}
 				set_variable = { var_gui_decoy = var_win_decoy }
 				set_variable = { var_gui_nuke = 1 }
 				set_gui_conventional_warhead_cost = yes
@@ -3708,7 +3831,15 @@ scripted_gui = {
 				set_country_flag = has_warhead
 				#set_variable = { var_gui_warhead = nuclear_warhead_display_array^i }
 				set_variable = { var_nuclear_warhead = nuclear_warhead_display_array^i }
-				set_variable = { var_gui_MIRV = var_win_MIRV }
+				if = {
+					limit = {
+						check_variable = { var_win_MIRV = 0 }
+					}
+					set_variable = { var_gui_MIRV = 1 }
+				}
+				else = {
+					set_variable = { var_gui_MIRV = var_win_MIRV }
+				}
 				set_variable = { var_gui_decoy = var_win_decoy }
 				set_variable = { var_gui_nuke = 2 }
 				set_gui_nuclear_warhead_cost = yes
