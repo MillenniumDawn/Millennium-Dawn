@@ -2500,21 +2500,6 @@ launch_nuclear_warhead = {
 	meta_effect = {
 		text = {
 			var:ROOT.missile_target_controller_array^i = {
-				set_variable = { var_damage_building_1 = 0 }
-				set_variable = { var_damage_building_2 = 0 }
-				set_variable = { var_damage_building_3 = 0 }
-				set_variable = { var_damage_building_4 = 0 }
-				set_variable = { var_damage_building_5 = 0 }
-				set_variable = { var_damage_building_6 = 0 }
-				set_variable = { var_damage_building_7 = 0 }
-				set_variable = { var_damage_building_8 = 0 }
-				set_variable = { var_damage_building_9 = 0 }
-				set_variable = { var_damage_building_10 = 0 }
-				set_variable = { var_damage_building_11 = 0 }
-				set_variable = { var_damage_building_12 = 0 }
-				set_variable = { var_damage_building_13 = 0 }
-				set_variable = { var_damage_building_14 = 0 }
-				set_variable = { var_damage_building_15 = 0 }
 				set_variable = { nuke_temp0 = [target_point_ID].building_level@industrial_complex }
 				set_variable = { nuke_temp1 = [target_point_ID].building_level@arms_factory }
 				set_variable = { nuke_temp2 = [target_point_ID].building_level@infrastructure }
@@ -2530,7 +2515,6 @@ launch_nuclear_warhead = {
 				set_variable = { nuke_temp12 = [target_point_ID].building_level@synthetic_refinery }
 				set_variable = { nuke_temp13 = [target_point_ID].building_level@fuel_silo }
 				set_variable = { nuke_temp14 = [target_point_ID].building_level@offices }
-				#log = "[GetDateText]: [Root.GetName]: nuke_temp14 [?nuke_temp14]"
 				# provincial buildings can't be targeted, all province buildings get reduced to 0 HP by vanilla nukes
 				#set_variable = { nuke_temp15 = [target_point_ID].building_level@naval_base }
 				#set_variable = { nuke_temp16 = [target_point_ID].building_level@bunker }
@@ -2551,12 +2535,12 @@ launch_nuclear_warhead = {
 				set_variable = { nuke_temp12_d = [target_point_ID].damaged_building_level@synthetic_refinery }
 				set_variable = { nuke_temp13_d = [target_point_ID].damaged_building_level@fuel_silo }
 				set_variable = { nuke_temp14_d = [target_point_ID].damaged_building_level@offices }
-				#log = "[GetDateText]: [Root.GetName]: nuke_temp14_d [?nuke_temp14_d]"
 				# provincial buildings can't be targeted, all province buildings get reduced to 0 HP by vanilla nukes
 				#set_variable = { nuke_temp15_d = [target_point_ID].damaged_building_level@naval_base }
 				#set_variable = { nuke_temp16_d = [target_point_ID].damaged_building_level@bunker }
 				#set_variable = { nuke_temp17_d = [target_point_ID].damaged_building_level@coastal_bunker }
 			}
+			set_temp_variable = { temp2 = temp1 }
 			while_loop_effect = {
 				limit = {
 					check_variable = { temp1 > 0 }
@@ -2567,17 +2551,27 @@ launch_nuclear_warhead = {
 					controller = [target_TAG]
 				}
 			}
+			set_variable = { global.nuke_drop_salvo_idx = 0 }
 			var:ROOT.missile_target_controller_array^i = {
+				add_to_variable = { global.nuke_drop_salvo_idx = 1 } ### for on_nuke_drop
+				set_temp_variable = { idx = i } ### for logging
 				set_nuke_damage = yes
 			}
-			#### to do, where to put? in the loop?
+			#### testing loop
 			var:ROOT.missile_target_point_array^i = {
 				set_variable = { var_nuke_radiation_factor = PREV.nuclear_warhead_radiation_factor_array^[warhead_ID] }
-				set_variable = { var_nuke_local_manpower = var_nuke_radiation_factor }
-				set_variable = { var_nuke_local_non_core_manpower = var_nuke_radiation_factor }
-				set_variable = { var_nuke_non_core_manpower = var_nuke_radiation_factor }
-				set_variable = { var_nuke_recruitable_population = var_nuke_radiation_factor }
-				set_variable = { var_nuke_recruitable_population_factor = var_nuke_radiation_factor }
+				while_loop_effect = {
+					limit = {
+						check_variable = { temp2 > 0 }
+					}
+					subtract_from_temp_variable = { temp2 = 1 }
+
+					add_to_variable = { var_nuke_local_manpower = var_nuke_radiation_factor }
+					add_to_variable = { var_nuke_local_non_core_manpower = var_nuke_radiation_factor }
+					add_to_variable = { var_nuke_non_core_manpower = var_nuke_radiation_factor }
+					add_to_variable = { var_nuke_recruitable_population = var_nuke_radiation_factor }
+					add_to_variable = { var_nuke_recruitable_population_factor = var_nuke_radiation_factor }
+				}
 				add_dynamic_modifier = {
 					modifier =  radiation_modifier
 				}
@@ -2595,616 +2589,484 @@ launch_nuclear_warhead = {
 					}
 				}
 			}
-			# var:ROOT.missile_target_controller_array^i = {
-			# 	country_event = {
-			# 		id = nukes.1 #file: missiles_events.txt
-			# 		hours = 1
-			# 	}
-			# }
+			var:ROOT.missile_target_controller_array^i = {
+				country_event = {
+					id = nukes.1 #file: missiles_events.txt
+					hours = 1
+				}
+			}
 		}
 		target_point_ID = "[?ROOT.missile_target_point_array^i.GetID]"
 		target_TAG = "[?ROOT.missile_target_controller_array^i.GetID]"
 		warhead_ID = "[?ROOT.var_nuke_warhead_ID]"
 	}
-	# log = "[GetDateText]: [Root.GetName]: nuke_temp14 [?CAN.nuke_temp14]"
-	# log = "[GetDateText]: [Root.GetName]: nuke_temp14_d [?CAN.nuke_temp14_d]"
-	# log = "[GetDateText]: [Root.GetName]: nuke_temp14 [?nuke_temp14]"
-	# log = "[GetDateText]: [Root.GetName]: nuke_temp14_d [?nuke_temp14_d]"
+
 }
 
-### For testing
-# set_nuke_damage = {
-# 	log = "[GetDateText]: [THIS.GetName]: set_nuke_damage [PREV.GetName]"
-# 	PREV = {
-# 		add_to_variable = { nuke_temp0_d = 2 }
-# 		add_to_variable = { nuke_temp1_d = 2 }
-# 		add_to_variable = { nuke_temp2_d = 5 }
-# 		add_to_variable = { nuke_temp3_d = 3 }
-# 		add_to_variable = { nuke_temp4_d = 4 }
-# 		set_variable = { nuke_temp4_d = 5 }
-# 		set_variable = { nuke_temp5_d = 5 }
-# 		set_variable = { nuke_temp6_d = 5 }
-# 		set_variable = { nuke_temp7_d = 5 }
-# 		set_variable = { nuke_temp8_d = 5 }
-# 		set_variable = { nuke_temp9_d = 5 }
-# 		set_variable = { nuke_temp10_d = 5 }
-# 		set_variable = { nuke_temp11_d = 5 }
-# 		set_variable = { nuke_temp12_d = 5 }
-# 		set_variable = { nuke_temp13_d = 5 }
-# 		set_variable = { nuke_temp14_d = 5 }
-# 		# set_variable = { nuke_temp15_d = 5 }
-# 		# set_variable = { nuke_temp16_d = 5 }
-# 		# set_variable = { nuke_temp17_d = 5 }
-# 	}
-# }
-
-# on_nuke_drop = {
-# 	effect = {
-# 		FROM = {
-# 			controller = {
-# 				FROM = {
 
 # controller = {
 set_nuke_damage = {
-	#set_variable = { var_nuke_damage = 160 } ### set in missile effect ???
+	### may be modify damage_unit if loop need more than 1000 iterations
+	set_temp_variable = { damage_unit = 1 }
+	set_temp_variable = { t0 = 0 }
+	set_temp_variable = { t1 = 0 }
+	set_temp_variable = { t2 = 0 }
+	set_temp_variable = { t3 = 0 }
+	set_temp_variable = { t4 = 0 }
+	set_temp_variable = { t5 = 0 }
+	set_temp_variable = { t6 = 0 }
+	set_temp_variable = { t7 = 0 }
+	set_temp_variable = { t8 = 0 }
+	set_temp_variable = { t9 = 0 }
+	set_temp_variable = { t10 = 0 }
+	set_temp_variable = { t11 = 0 }
+	set_temp_variable = { t12 = 0 }
+	set_temp_variable = { t13 = 0 }
+	set_temp_variable = { t14 = 0 }
 	while_loop_effect = {
 		limit = {
-			check_variable = { ROOT.var_nuke_damage > 0 }
-		}
-		random_list = {
-			1 = {
-				set_temp_variable = { t0 = nuke_temp0 }
-				subtract_from_temp_variable = { t0 = nuke_temp0_d }
-				if = {
-					limit = {
+			AND = {
+				check_variable = { ROOT.var_nuke_damage > 0 }
+				NOT = {
+					AND = {
 						check_variable = { t0 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t0 }
-								check_variable = { ROOT.var_nuke_damage = t0 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t0 }
-						add_to_variable = { nuke_temp0_d = t0 }
-					}
-					else = {
-						set_temp_variable = { t0 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp0_d = t0 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp0_d > nuke_temp0 }
-						check_variable = { nuke_temp0_d = nuke_temp0 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t1 = nuke_temp1 }
-				subtract_from_temp_variable = { t1 = nuke_temp1_d }
-				if = {
-					limit = {
 						check_variable = { t1 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t1 }
-								check_variable = { ROOT.var_nuke_damage = t1 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t1 }
-						add_to_variable = { nuke_temp1_d = t1 }
-					}
-					else = {
-						set_temp_variable = { t1 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp1_d = t1 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp1_d > nuke_temp1 }
-						check_variable = { nuke_temp1_d = nuke_temp1 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t2 = nuke_temp2 }
-				subtract_from_temp_variable = { t2 = nuke_temp2_d }
-				if = {
-					limit = {
 						check_variable = { t2 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t2 }
-								check_variable = { ROOT.var_nuke_damage = t2 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t2 }
-						add_to_variable = { nuke_temp2_d = t2 }
-					}
-					else = {
-						set_temp_variable = { t2 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp2_d = t2 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp2_d > nuke_temp2 }
-						check_variable = { nuke_temp2_d = nuke_temp2 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t3 = nuke_temp3 }
-				subtract_from_temp_variable = { t3 = nuke_temp3_d }
-				if = {
-					limit = {
 						check_variable = { t3 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t3 }
-								check_variable = { ROOT.var_nuke_damage = t3 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t3 }
-						add_to_variable = { nuke_temp3_d = t3 }
-					}
-					else = {
-						set_temp_variable = { t3 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp3_d = t3 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp3_d > nuke_temp3 }
-						check_variable = { nuke_temp3_d = nuke_temp3 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t4 = nuke_temp4 }
-				subtract_from_temp_variable = { t4 = nuke_temp4_d }
-				if = {
-					limit = {
 						check_variable = { t4 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t4 }
-								check_variable = { ROOT.var_nuke_damage = t4 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t4 }
-						add_to_variable = { nuke_temp4_d = t4 }
-					}
-					else = {
-						set_temp_variable = { t4 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp4_d = t4 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp4_d > nuke_temp4 }
-						check_variable = { nuke_temp4_d = nuke_temp4 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t5 = nuke_temp5 }
-				subtract_from_temp_variable = { t5 = nuke_temp5_d }
-				if = {
-					limit = {
 						check_variable = { t5 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t5 }
-								check_variable = { ROOT.var_nuke_damage = t5 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t5 }
-						add_to_variable = { nuke_temp5_d = t5 }
-					}
-					else = {
-						set_temp_variable = { t5 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp5_d = t5 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp5_d > nuke_temp5 }
-						check_variable = { nuke_temp5_d = nuke_temp5 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t6 = nuke_temp6 }
-				subtract_from_temp_variable = { t6 = nuke_temp6_d }
-				if = {
-					limit = {
 						check_variable = { t6 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t6 }
-								check_variable = { ROOT.var_nuke_damage = t6 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t6 }
-						add_to_variable = { nuke_temp6_d = t6 }
-					}
-					else = {
-						set_temp_variable = { t6 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp6_d = t6 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp6_d > nuke_temp6 }
-						check_variable = { nuke_temp6_d = nuke_temp6 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t7 = nuke_temp7 }
-				subtract_from_temp_variable = { t7 = nuke_temp7_d }
-				if = {
-					limit = {
 						check_variable = { t7 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t7 }
-								check_variable = { ROOT.var_nuke_damage = t7 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t7 }
-						add_to_variable = { nuke_temp7_d = t7 }
-					}
-					else = {
-						set_temp_variable = { t7 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp7_d = t7 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp7_d > nuke_temp7 }
-						check_variable = { nuke_temp7_d = nuke_temp7 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t8 = nuke_temp8 }
-				subtract_from_temp_variable = { t8 = nuke_temp8_d }
-				if = {
-					limit = {
 						check_variable = { t8 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t8 }
-								check_variable = { ROOT.var_nuke_damage = t8 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t8 }
-						add_to_variable = { nuke_temp8_d = t8 }
-					}
-					else = {
-						set_temp_variable = { t8 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp8_d = t8 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp8_d > nuke_temp8 }
-						check_variable = { nuke_temp8_d = nuke_temp8 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t9 = nuke_temp9 }
-				subtract_from_temp_variable = { t9 = nuke_temp9_d }
-				if = {
-					limit = {
 						check_variable = { t9 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t9 }
-								check_variable = { ROOT.var_nuke_damage = t9 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t9 }
-						add_to_variable = { nuke_temp9_d = t9 }
-					}
-					else = {
-						set_temp_variable = { t9 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp9_d = t9 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp9_d > nuke_temp9 }
-						check_variable = { nuke_temp9_d = nuke_temp9 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t10 = nuke_temp10 }
-				subtract_from_temp_variable = { t10 = nuke_temp10_d }
-				if = {
-					limit = {
 						check_variable = { t10 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t10 }
-								check_variable = { ROOT.var_nuke_damage = t10 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t10 }
-						add_to_variable = { nuke_temp10_d = t10 }
-					}
-					else = {
-						set_temp_variable = { t10 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp10_d = t10 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp10_d > nuke_temp10 }
-						check_variable = { nuke_temp10_d = nuke_temp10 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t11 = nuke_temp11 }
-				subtract_from_temp_variable = { t11 = nuke_temp11_d }
-				if = {
-					limit = {
 						check_variable = { t11 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t11 }
-								check_variable = { ROOT.var_nuke_damage = t11 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t11 }
-						add_to_variable = { nuke_temp11_d = t11 }
-					}
-					else = {
-						set_temp_variable = { t11 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp11_d = t11 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp11_d > nuke_temp11 }
-						check_variable = { nuke_temp11_d = nuke_temp11 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t12 = nuke_temp12 }
-				subtract_from_temp_variable = { t12 = nuke_temp12_d }
-				if = {
-					limit = {
 						check_variable = { t12 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t12 }
-								check_variable = { ROOT.var_nuke_damage = t12 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t12 }
-						add_to_variable = { nuke_temp12_d = t12 }
-					}
-					else = {
-						set_temp_variable = { t12 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp12_d = t12 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp12_d > nuke_temp12 }
-						check_variable = { nuke_temp12_d = nuke_temp12 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t13 = nuke_temp13 }
-				subtract_from_temp_variable = { t13 = nuke_temp13_d }
-				if = {
-					limit = {
 						check_variable = { t13 > 0 }
-					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t13 }
-								check_variable = { ROOT.var_nuke_damage = t13 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t13 }
-						add_to_variable = { nuke_temp13_d = t13 }
-					}
-					else = {
-						set_temp_variable = { t13 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp13_d = t13 }
-					}
-				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp13_d > nuke_temp13 }
-						check_variable = { nuke_temp13_d = nuke_temp13 }
-					}
-				}
-			}
-			1 = {
-				set_temp_variable = { t14 = nuke_temp14 }
-				subtract_from_temp_variable = { t14 = nuke_temp14_d }
-				if = {
-					limit = {
 						check_variable = { t14 > 0 }
 					}
-					if = {
-						limit = {
-							OR = {
-								check_variable = { ROOT.var_nuke_damage > t14 }
-								check_variable = { ROOT.var_nuke_damage = t14 }
-							}
-						}
-						subtract_from_variable = { ROOT.var_nuke_damage = t14 }
-						add_to_variable = { nuke_temp14_d = t14 }
-					}
-					else = {
-						set_temp_variable = { t14 = ROOT.var_nuke_damage }
-						set_variable = { ROOT.var_nuke_damage = 0 }
-						add_to_variable = { nuke_temp14_d = t14 }
-					}
 				}
-				modifier = {
-					factor = 0
-					OR = {
-						check_variable = { nuke_temp14_d > nuke_temp14 }
-						check_variable = { nuke_temp14_d = nuke_temp14 }
-					}
-				}
+				# AND = {
+				# 	check_variable = { t0 < 1 }
+				# 	check_variable = { t1 < 1 }
+				# 	check_variable = { t2 < 1 }
+				# 	check_variable = { t3 < 1 }
+				# 	check_variable = { t4 < 1 }
+				# 	check_variable = { t5 < 1 }
+				# 	check_variable = { t6 < 1 }
+				# 	check_variable = { t7 < 1 }
+				# 	check_variable = { t8 < 1 }
+				# 	check_variable = { t9 < 1 }
+				# 	check_variable = { t10 < 1 }
+				# 	check_variable = { t11 < 1 }
+				# 	check_variable = { t12 < 1 }
+				# 	check_variable = { t13 < 1 }
+				# 	check_variable = { t14 < 1 }
+				# }
 			}
 		}
+		###
+		add_to_variable = { global.temp_count = 1 }
+		log = "[GetDateText]: [ROOT.GetName]: global.temp_count [?global.temp_count]"
+		###
+		#0
+		if = {
+			limit = {
+				check_variable = { nuke_temp0 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp0 > nuke_temp0_d }
+				}
+				add_to_variable = { nuke_temp0_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t0 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t0 = 1 }
+		}
+		#1
+		if = {
+			limit = {
+				check_variable = { nuke_temp1 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp1 > nuke_temp1_d }
+				}
+				add_to_variable = { nuke_temp1_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t1 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t1 = 1 }
+		}
+		#2
+		if = {
+			limit = {
+				check_variable = { nuke_temp2 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp2 > nuke_temp2_d }
+				}
+				add_to_variable = { nuke_temp2_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t2 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t2 = 1 }
+		}
+		#3
+		if = {
+			limit = {
+				check_variable = { nuke_temp3 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp3 > nuke_temp3_d }
+				}
+				add_to_variable = { nuke_temp3_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t3 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t3 = 1 }
+		}
+		#4
+		if = {
+			limit = {
+				check_variable = { nuke_temp4 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp4 > nuke_temp4_d }
+				}
+				add_to_variable = { nuke_temp4_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t4 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t4 = 1 }
+		}
+		#5
+		if = {
+			limit = {
+				check_variable = { nuke_temp5 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp5 > nuke_temp5_d }
+				}
+				add_to_variable = { nuke_temp5_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t5 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t5 = 1 }
+		}
+		#6
+		if = {
+			limit = {
+				check_variable = { nuke_temp6 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp6 > nuke_temp6_d }
+				}
+				add_to_variable = { nuke_temp6_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t6 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t6 = 1 }
+		}
+		#7
+		if = {
+			limit = {
+				check_variable = { nuke_temp7 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp7 > nuke_temp7_d }
+				}
+				add_to_variable = { nuke_temp7_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t7 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t7 = 1 }
+		}
+		#8
+		if = {
+			limit = {
+				check_variable = { nuke_temp8 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp8 > nuke_temp8_d }
+				}
+				add_to_variable = { nuke_temp8_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t8 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t8 = 1 }
+		}
+		#9
+		if = {
+			limit = {
+				check_variable = { nuke_temp9 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp9 > nuke_temp9_d }
+				}
+				add_to_variable = { nuke_temp9_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t9 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t9 = 1 }
+		}
+		#10
+		if = {
+			limit = {
+				check_variable = { nuke_temp10 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp10 > nuke_temp10_d }
+				}
+				add_to_variable = { nuke_temp10_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t10 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t10 = 1 }
+		}
+		#11
+		if = {
+			limit = {
+				check_variable = { nuke_temp11 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp11 > nuke_temp11_d }
+				}
+				add_to_variable = { nuke_temp11_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t11 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t11 = 1 }
+		}
+		#12
+		if = {
+			limit = {
+				check_variable = { nuke_temp12 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp12 > nuke_temp12_d }
+				}
+				add_to_variable = { nuke_temp12_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t12 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t12 = 1 }
+		}
+		#13
+		if = {
+			limit = {
+				check_variable = { nuke_temp13 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp13 > nuke_temp13_d }
+				}
+				add_to_variable = { nuke_temp13_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t13 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t13 = 1 }
+		}
+		#14
+		if = {
+			limit = {
+				check_variable = { nuke_temp14 > 0 }
+			}
+			if = {
+				limit = {
+					check_variable = { nuke_temp14 > nuke_temp14_d }
+				}
+				add_to_variable = { nuke_temp14_d = damage_unit }
+				subtract_from_variable = { ROOT.var_nuke_damage = damage_unit }
+			}
+			else = {
+				set_temp_variable = { t14 = 1 }
+			}
+		}
+		else = {
+			set_temp_variable = { t14 = 1 }
+		}
 	}
-	add_to_variable = { var_damage_building_1 = nuke_temp0_d }
-	add_to_variable = { var_damage_building_2 = nuke_temp1_d }
-	add_to_variable = { var_damage_building_3 = nuke_temp2_d }
-	add_to_variable = { var_damage_building_4 = nuke_temp3_d }
-	add_to_variable = { var_damage_building_5 = nuke_temp4_d }
-	add_to_variable = { var_damage_building_6 = nuke_temp5_d }
-	add_to_variable = { var_damage_building_7 = nuke_temp6_d }
-	add_to_variable = { var_damage_building_8 = nuke_temp7_d }
-	add_to_variable = { var_damage_building_9 = nuke_temp8_d }
-	add_to_variable = { var_damage_building_10 = nuke_temp9_d }
-	add_to_variable = { var_damage_building_11 = nuke_temp10_d }
-	add_to_variable = { var_damage_building_12 = nuke_temp11_d }
-	add_to_variable = { var_damage_building_13 = nuke_temp12_d }
-	add_to_variable = { var_damage_building_14 = nuke_temp13_d }
-	add_to_variable = { var_damage_building_15 = nuke_temp14_d }
+	add_to_array = { global.damage_building_1_array = nuke_temp0_d }
+	add_to_array = { global.damage_building_2_array = nuke_temp1_d }
+	add_to_array = { global.damage_building_3_array = nuke_temp2_d }
+	add_to_array = { global.damage_building_4_array = nuke_temp3_d }
+	add_to_array = { global.damage_building_5_array = nuke_temp4_d }
+	add_to_array = { global.damage_building_6_array = nuke_temp5_d }
+	add_to_array = { global.damage_building_7_array = nuke_temp6_d }
+	add_to_array = { global.damage_building_8_array = nuke_temp7_d }
+	add_to_array = { global.damage_building_9_array = nuke_temp8_d }
+	add_to_array = { global.damage_building_10_array = nuke_temp9_d }
+	add_to_array = { global.damage_building_11_array = nuke_temp10_d }
+	add_to_array = { global.damage_building_12_array = nuke_temp11_d }
+	add_to_array = { global.damage_building_13_array = nuke_temp12_d }
+	add_to_array = { global.damage_building_14_array = nuke_temp13_d }
+	add_to_array = { global.damage_building_15_array = nuke_temp14_d }
 
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_1 [?CAN.var_damage_building_1] CAN.nuke_temp0_d [?CAN.nuke_temp0_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_2 [?CAN.var_damage_building_2] CAN.nuke_temp1_d [?CAN.nuke_temp1_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_3 [?CAN.var_damage_building_3] CAN.nuke_temp2_d [?CAN.nuke_temp2_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_4 [?CAN.var_damage_building_4] CAN.nuke_temp3_d [?CAN.nuke_temp3_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_5 [?CAN.var_damage_building_5] CAN.nuke_temp4_d [?CAN.nuke_temp4_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_6 [?CAN.var_damage_building_6] CAN.nuke_temp5_d [?CAN.nuke_temp5_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_7 [?CAN.var_damage_building_7] CAN.nuke_temp6_d [?CAN.nuke_temp6_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_8 [?CAN.var_damage_building_8] CAN.nuke_temp7_d [?CAN.nuke_temp7_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_9 [?CAN.var_damage_building_9] CAN.nuke_temp8_d [?CAN.nuke_temp8_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_10 [?CAN.var_damage_building_10] CAN.nuke_temp9_d [?CAN.nuke_temp9_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_11 [?CAN.var_damage_building_11] CAN.nuke_temp10_d [?CAN.nuke_temp10_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_12 [?CAN.var_damage_building_12] CAN.nuke_temp11_d [?CAN.nuke_temp11_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_13 [?CAN.var_damage_building_13] CAN.nuke_temp12_d [?CAN.nuke_temp12_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_14 [?CAN.var_damage_building_14] CAN.nuke_temp13_d [?CAN.nuke_temp13_d]"
-	# log = "[GetDateText]: [ROOT.GetName]: CAN.var_damage_building_15 [?CAN.var_damage_building_15] CAN.nuke_temp14_d [?CAN.nuke_temp14_d]"
-
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_1_array^idx [?global.damage_building_1_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_2_array^idx [?global.damage_building_2_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_3_array^idx [?global.damage_building_3_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_4_array^idx [?global.damage_building_4_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_5_array^idx [?global.damage_building_5_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_6_array^idx [?global.damage_building_6_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_7_array^idx [?global.damage_building_7_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_8_array^idx [?global.damage_building_8_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_9_array^idx [?global.damage_building_9_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_10_array^idx [?global.damage_building_10_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_11_array^idx [?global.damage_building_11_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_12_array^idx [?global.damage_building_12_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_13_array^idx [?global.damage_building_13_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_14_array^idx [?global.damage_building_14_array^idx] idx [?idx]"
+	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_15_array^idx [?global.damage_building_15_array^idx] idx [?idx]"
 }
 
-# clear_nuke_vars = {
-# 	THIS = {
-# 		clear_variable = nuke_temp0
-# 		clear_variable = nuke_temp1
-# 		clear_variable = nuke_temp2
-# 		clear_variable = nuke_temp3
-# 		clear_variable = nuke_temp4
-# 		clear_variable = nuke_temp5
-# 		clear_variable = nuke_temp6
-# 		clear_variable = nuke_temp7
-# 		clear_variable = nuke_temp8
-# 		clear_variable = nuke_temp9
-# 		clear_variable = nuke_temp10
-# 		clear_variable = nuke_temp11
-# 		clear_variable = nuke_temp12
-# 		clear_variable = nuke_temp13
-# 		clear_variable = nuke_temp14
-# 		clear_variable = nuke_temp0_d
-# 		clear_variable = nuke_temp1_d
-# 		clear_variable = nuke_temp2_d
-# 		clear_variable = nuke_temp3_d
-# 		clear_variable = nuke_temp4_d
-# 		clear_variable = nuke_temp5_d
-# 		clear_variable = nuke_temp6_d
-# 		clear_variable = nuke_temp7_d
-# 		clear_variable = nuke_temp8_d
-# 		clear_variable = nuke_temp9_d
-# 		clear_variable = nuke_temp10_d
-# 		clear_variable = nuke_temp11_d
-# 		clear_variable = nuke_temp12_d
-# 		clear_variable = nuke_temp13_d
-# 		clear_variable = nuke_temp14_d
-# 		clear_variable = var_damage_building_1
-# 		clear_variable = var_damage_building_2
-# 		clear_variable = var_damage_building_3
-# 		clear_variable = var_damage_building_4
-# 		clear_variable = var_damage_building_5
-# 		clear_variable = var_damage_building_6
-# 		clear_variable = var_damage_building_7
-# 		clear_variable = var_damage_building_8
-# 		clear_variable = var_damage_building_9
-# 		clear_variable = var_damage_building_10
-# 		clear_variable = var_damage_building_11
-# 		clear_variable = var_damage_building_12
-# 		clear_variable = var_damage_building_13
-# 		clear_variable = var_damage_building_14
-# 		clear_variable = var_damage_building_15
-# 	}
-# }
+
+clear_nuke_vars = {
+	clear_variable = global.nuke_drop_salvo_idx
+	THIS = {
+		clear_variable = nuke_temp0
+		clear_variable = nuke_temp1
+		clear_variable = nuke_temp2
+		clear_variable = nuke_temp3
+		clear_variable = nuke_temp4
+		clear_variable = nuke_temp5
+		clear_variable = nuke_temp6
+		clear_variable = nuke_temp7
+		clear_variable = nuke_temp8
+		clear_variable = nuke_temp9
+		clear_variable = nuke_temp10
+		clear_variable = nuke_temp11
+		clear_variable = nuke_temp12
+		clear_variable = nuke_temp13
+		clear_variable = nuke_temp14
+		clear_variable = nuke_temp0_d
+		clear_variable = nuke_temp1_d
+		clear_variable = nuke_temp2_d
+		clear_variable = nuke_temp3_d
+		clear_variable = nuke_temp4_d
+		clear_variable = nuke_temp5_d
+		clear_variable = nuke_temp6_d
+		clear_variable = nuke_temp7_d
+		clear_variable = nuke_temp8_d
+		clear_variable = nuke_temp9_d
+		clear_variable = nuke_temp10_d
+		clear_variable = nuke_temp11_d
+		clear_variable = nuke_temp12_d
+		clear_variable = nuke_temp13_d
+		clear_variable = nuke_temp14_d
+
+		clear_array = global.damage_building_1_array
+		clear_array = global.damage_building_2_array
+		clear_array = global.damage_building_3_array
+		clear_array = global.damage_building_4_array
+		clear_array = global.damage_building_5_array
+		clear_array = global.damage_building_6_array
+		clear_array = global.damage_building_7_array
+		clear_array = global.damage_building_8_array
+		clear_array = global.damage_building_9_array
+		clear_array = global.damage_building_10_array
+		clear_array = global.damage_building_11_array
+		clear_array = global.damage_building_12_array
+		clear_array = global.damage_building_13_array
+		clear_array = global.damage_building_14_array
+		clear_array = global.damage_building_15_array
+
+		# clear_variable = var_damage_building_1
+		# clear_variable = var_damage_building_2
+		# clear_variable = var_damage_building_3
+		# clear_variable = var_damage_building_4
+		# clear_variable = var_damage_building_5
+		# clear_variable = var_damage_building_6
+		# clear_variable = var_damage_building_7
+		# clear_variable = var_damage_building_8
+		# clear_variable = var_damage_building_9
+		# clear_variable = var_damage_building_10
+		# clear_variable = var_damage_building_11
+		# clear_variable = var_damage_building_12
+		# clear_variable = var_damage_building_13
+		# clear_variable = var_damage_building_14
+		# clear_variable = var_damage_building_15
+	}
+}
 
 
 ### conventional warhead effects
+
+####
+set_conventional_warhead_display_targets = { 
+	####################
+	### to do ###
+	####################
+}
+####
 
 # OLD NAME
 #set_missile_damage = {
