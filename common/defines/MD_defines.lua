@@ -410,16 +410,16 @@
 		0, -- RESERVE_FLEET
 		100, -- NAVAL INVASION SUPPORT
 	}
-	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2 		-- optimum carrier count for carrier taskforces
-	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 4 		-- optimum capital count for capital taskforces
-	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 8			-- optimum screen count for screen taskforces
-	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 4				-- optimum sub count for sub taskforces
-	NDefines.NAI.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 8
-	NDefines.NAI.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 4
+	NDefines.NNavy.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 1 		-- optimum carrier count for carrier taskforces
+	NDefines.NNavy.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 2 		-- optimum capital count for capital taskforces
+	NDefines.NNavy.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 4			-- optimum screen count for screen taskforces
+	NDefines.NNavy.SUB_TASKFORCE_MAX_SHIP_COUNT = 4				-- optimum sub count for sub taskforces
+	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 4
+	NDefines.NNavy.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 4
 
-	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2			-- carrier fleets will at least have this amount of capitals
-	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 2				-- capital to carrier count in carrier taskfoces
-	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 2					-- screens to capital/carrier count in carrier & capital taskforces
+	NDefines.NNavy.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2			-- carrier fleets will at least have this amount of capitals
+	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 2				-- capital to carrier count in carrier taskfoces
+	NDefines.NNavy.SCREENS_TO_CAPITAL_RATIO = 2					-- screens to capital/carrier count in carrier & capital taskforces
 
 
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
