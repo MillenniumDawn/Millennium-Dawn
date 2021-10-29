@@ -2820,6 +2820,28 @@ scripted_gui = {
 				set_variable = { var_total_firing = var_gui_salvo }
 				multiply_variable = { var_total_firing = var_gui_duration }
 			}
+			trajectory_gui_delete_button_click = {
+				remove_from_array = {
+					array = missile_launch_point_array
+					index = var_missile_trajectory_ID
+				}
+				if = {
+					limit = {
+						has_country_flag = has_trajectory
+					}
+					remove_from_array = {
+						array = missile_target_point_array
+						index = var_missile_trajectory_ID
+					}
+					remove_from_array = {
+						array = missile_target_controller_array
+						index = var_missile_trajectory_ID
+					}
+				}
+				subtract_from_variable = { var_missile_trajectory_ID = 1 }
+				clr_country_flag = search_target_point
+				clr_country_flag = has_trajectory
+			}
 			fire_button_click = {
 				clr_country_flag = has_trajectory
 				clr_country_flag = has_missile_model
@@ -2962,22 +2984,6 @@ scripted_gui = {
 				set_variable = { var_alert_sort_button = 2 }
 				set_missile_launch_arrays_selected_TAG = yes
 			}
-			### to do, new stat buttons in dynamic list
-			# missile_stat_button_click = {
-			# 	if = {
-			# 		limit = {
-			# 			has_country_flag = open_MD_missile_stat_view
-			# 		}
-			# 		clr_country_flag = open_MD_missile_stat_view
-			# 		clear_array = building_damage_stat_display_array
-			# 	}
-			# 	else = {
-			# 		set_country_flag = open_MD_missile_stat_view
-			# 		set_building_damage_stat_display_array = yes
-			# 	}
-			# 	### set stats for current ID ###
-			# 	set_variable = { var_stat_trajectory_ID = 0 } # var_missile_trajectory_ID
-			# }
 			stats_button_click = {
 				if = {
 					limit = {
@@ -3186,15 +3192,29 @@ scripted_gui = {
 		}
 
 		triggers = {
+			salvo_small_plus_button_bg_click_enabled = {
+				NOT = { has_country_flag = has_trajectory }
+			}
+			salvo_small_minus_button_bg_click_enabled = {
+				NOT = { has_country_flag = has_trajectory }
+			}
+			duration_small_plus_button_bg_click_enabled = {
+				NOT = { has_country_flag = has_trajectory }
+			}
+			duration_small_minus_button_bg_click_enabled = {
+				NOT = { has_country_flag = has_trajectory }
+			}
 			fire_button_click_enabled = {
 				has_country_flag = has_trajectory
 				has_country_flag = has_missile_model
 				has_country_flag = has_warhead
+				has_num_missiles = yes
 			}
 			alert_button_click_enabled = {
 				has_country_flag = has_trajectory
 				has_country_flag = has_missile_model
 				has_country_flag = has_warhead
+				has_num_missiles = yes
 			}
 			target_selection_button_click_enabled = {
 				check_variable = { var_gui_nuke = 1 }
@@ -3202,6 +3222,14 @@ scripted_gui = {
 				has_country_flag = has_missile_model
 				has_country_flag = has_warhead
 			}
+			# gui
+			trajectory_gui_delete_button_click_enabled = {
+				OR = {
+					has_country_flag = search_target_point
+					has_country_flag = has_trajectory
+				}
+			}
+			# dynamic list
 			trajectory_delete_button_click_enabled = {
 				ROOT = {
 					original_tag = var:missile_launch_selected_TAG
@@ -3437,6 +3465,18 @@ scripted_gui = {
 			cruise_missile_type_model_name_visible = {
 				has_country_flag = cruise_missile_model
 			}
+			cruise_missile_type_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = NOT_has_selected_BM_warhead_TT
+					NOT = {
+						check_variable = { var_conventional_warhead = 7 }
+						check_variable = { var_conventional_warhead = 8 }
+						check_variable = { var_conventional_warhead = 9 }
+						check_variable = { var_conventional_warhead = 10 }
+						check_variable = { var_conventional_warhead = 11 }
+					}
+				}
+			}
 		}
 		properties = {
 			# missile_type_icon = {
@@ -3591,13 +3631,92 @@ scripted_gui = {
 		triggers = {
 			conventional_warhead_button_click_enabled = {
 				OR = {
+					custom_trigger_tooltip = {
+						tooltip = has_selected_BM_TT
+						AND = {
+							check_variable = { conventional_warhead_missile_type_array^i = 0 }
+							check_variable = { var_gui_missile_type > 10 }
+							check_variable = { var_gui_missile_type < 39 }
+						}
+					}
+					custom_trigger_tooltip = {
+						tooltip = has_selected_CM_TT
+						AND = {
+							check_variable = { conventional_warhead_missile_type_array^i = 1 }
+						}
+					}
+				}
+			}
+			nuclear_warhead_button_click_enabled = {
+				NOT_has_PNW = yes
+				has_NPOWER_OR_SPOWER = yes
+				OR = {
+					has_N3 = yes
 					AND = {
-						check_variable = { conventional_warhead_missile_type_array^i = 0 }
-						check_variable = { var_gui_missile_type > 10 }
-						check_variable = { var_gui_missile_type < 39 }
+						has_NBOMB = yes
+						custom_trigger_tooltip = {
+							tooltip = has_NBOMB_TT1
+							NOT = {
+								AND = {
+									check_variable = { var_gui_missile_type > 10 }
+									check_variable = { var_gui_missile_type < 39 }
+								}
+							}
+							NOT = {
+								AND = {
+									check_variable = { var_gui_missile_type > 50 }
+									check_variable = { var_gui_missile_type < 69 }
+								}
+							}
+							NOT = {
+								AND = {
+									check_variable = { var_gui_missile_type > 10 }
+									check_variable = { var_gui_missile_type < 39 }
+								}
+							}
+						}
 					}
 					AND = {
-						check_variable = { conventional_warhead_missile_type_array^i = 1 }
+						has_NICBM = yes
+						custom_trigger_tooltip = {
+							tooltip = has_NICBM_TT1
+							NOT = {
+								AND = {
+									check_variable = { var_gui_missile_type > 30 }
+									check_variable = { var_gui_missile_type < 49 }
+								}
+							}
+							NOT = {
+								AND = {
+									check_variable = { var_gui_missile_type > 60 }
+									check_variable = { var_gui_missile_type < 73 }
+								}
+							}
+						}
+					}
+					AND = {
+						has_SSBN = yes
+						custom_trigger_tooltip = {
+							tooltip = has_SSBN_TT1
+							NOT = {
+								AND = {
+									check_variable = { var_gui_missile_type > 10 }
+									check_variable = { var_gui_missile_type < 29 }
+								}
+							}
+							NOT = {
+								AND = {
+									check_variable = { var_gui_missile_type > 40 }
+									check_variable = { var_gui_missile_type < 59 }
+								}
+							}
+							NOT = {
+								AND = {
+									check_variable = { var_gui_missile_type > 70 }
+									check_variable = { var_gui_missile_type < 73 }
+								}
+							}
+						}
 					}
 				}
 			}
