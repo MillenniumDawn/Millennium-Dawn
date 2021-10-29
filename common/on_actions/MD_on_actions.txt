@@ -35,19 +35,29 @@ on_actions = {
 		effect = {
 			# Fires only once, and not for every country
 			if = {
-				limit = { NOT = { has_global_flag = on_monthly_update } }
-				set_global_flag = { flag = on_monthly_update days = 2 }
-
+				# don't touch!
+				limit = {
+					NOT = {
+						has_global_flag = on_monthly_done
+					}
+				}
 				# Set global.month to the current month.
 				add_to_variable = { global.month = 1 }
+				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
 				if = {
 					limit = { check_variable = { global.month > 12 } }
 					set_variable = { global.month = 1 }
+
+					set_global_flag = { flag = on_monthly_done value = 1 days = 31 }
 				}
 
 				# Power ranking system
 				country_event = { id = low_stability.1 }
-				#set_power_ranking_ideas_for_every_country = yes
+				set_power_ranking_ideas_for_every_country = yes
+
+				every_country = {
+					recalculate_party = yes
+				}
 			}
 
 			if = {
@@ -63,8 +73,6 @@ on_actions = {
 				}
 				ROOT = { generic_grant_1_percent_influence_of_BRM = yes }
 			}
-
-			recalculate_party = yes
 		}
 	}
 }
