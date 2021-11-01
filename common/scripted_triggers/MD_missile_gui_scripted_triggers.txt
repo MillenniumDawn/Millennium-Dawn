@@ -839,30 +839,65 @@ has_enemy_first_use = {
 }
 
 use_condition_NFU = {
-	check_variable = { nuclear_doctrine_array^0 = 0 }
+	is_in_array = {
+		array = nuclear_doctrine_array
+		value = 0
+	}
+	#check_variable = { nuclear_doctrine_array^0 = 0 }
+	has_enemy_first_use = yes
 }
 
 use_condition_MAD = {
-	check_variable = { nuclear_doctrine_array^1 = 1 }
+	is_in_array = {
+		array = nuclear_doctrine_array
+		value = 1
+	}
+	#check_variable = { nuclear_doctrine_array^1 = 1 }
 	has_enemy_first_use = yes
 }
 
 use_condition_MASSR = {
-	check_variable = { nuclear_doctrine_array^2 = 2 }
+	is_in_array = {
+		array = nuclear_doctrine_array
+		value = 2
+	}
+	#check_variable = { nuclear_doctrine_array^2 = 2 }
 	has_defensive_war = yes
 }
 
 use_condition_FXRSP = {
-	check_variable = { nuclear_doctrine_array^3 = 3 }
+	is_in_array = {
+		array = nuclear_doctrine_array
+		value = 3
+	}
+	#check_variable = { nuclear_doctrine_array^3 = 3 }
 	surrender_progress > 0.25
 }
 
 use_condition_PRMTR = {
 	custom_trigger_tooltip = {
 		tooltip = use_condition_PRMTR_TT
-		check_variable = { nuclear_doctrine_array^4 = 4 }
+		is_in_array = {
+			array = nuclear_doctrine_array
+			value = 4
+		}
+		#check_variable = { nuclear_doctrine_array^4 = 4 }
 		var:ROOT.missile_target_controller_array^i = {
 			has_country_flag = has_dropped_nuke_on_capital@ROOT
+		}
+	}
+}
+
+use_condition_PRMTR_gui = {
+	custom_trigger_tooltip = {
+		tooltip = use_condition_PRMTR_TT
+		is_in_array = {
+			array = nuclear_doctrine_array
+			value = 4
+		}
+		#check_variable = { nuclear_doctrine_array^4 = 4 }
+		THIS = {
+			has_country_flag = has_dropped_nuke_on_capital_@ROOT
 		}
 	}
 }
@@ -870,14 +905,37 @@ use_condition_PRMTR = {
 use_condition_NDESC = {
 	custom_trigger_tooltip = {
 		tooltip = use_condition_NDESC_TT
-		check_variable = { nuclear_doctrine_array^5 = 5 }
+		is_in_array = {
+			array = nuclear_doctrine_array
+			value = 5
+		}
+		#check_variable = { nuclear_doctrine_array^5 = 5 }
 		set_temp_variable = { temp1 = 0 }
 		var:ROOT.missile_target_controller_array^i = {
 			ROOT = {
 				all_owned_state = {
-					limit = {
-						is_controlled_by = PREV.PREV
-					}
+					is_controlled_by = PREV.PREV
+					add_to_temp_variable = { temp1 = 1 }
+				}
+			}
+		}
+		check_variable = { temp1 = 3 }
+	}
+}
+
+use_condition_NDESC_gui = {
+	custom_trigger_tooltip = {
+		tooltip = use_condition_NDESC_TT
+		is_in_array = {
+			array = nuclear_doctrine_array
+			value = 5
+		}
+		#check_variable = { nuclear_doctrine_array^5 = 5 }
+		set_temp_variable = { temp1 = 0 }
+		THIS = {
+			ROOT = {
+				all_owned_state = {
+					is_controlled_by = PREV.PREV
 					add_to_temp_variable = { temp1 = 1 }
 				}
 			}
@@ -887,17 +945,29 @@ use_condition_NDESC = {
 }
 
 use_condition_FSTK = {
-	check_variable = { nuclear_doctrine_array^6 = 6 }
+	is_in_array = {
+		array = nuclear_doctrine_array
+		value = 6
+	}
+	#check_variable = { nuclear_doctrine_array^6 = 6 }
 	has_war = yes
 }
 
 use_condition_RSTK = {
-	check_variable = { nuclear_doctrine_array^7 = 7 }
+	is_in_array = {
+		array = nuclear_doctrine_array
+		value = 7
+	}
+	#check_variable = { nuclear_doctrine_array^7 = 7 }
 	has_enemy_first_use = yes
 }
 
 use_condition_NTERROR = {
-	check_variable = { nuclear_doctrine_array^8 = 8 }
+	is_in_array = {
+		array = nuclear_doctrine_array
+		value = 8
+	}
+	#check_variable = { nuclear_doctrine_array^8 = 8 }
 }
 
 ####################################
@@ -905,6 +975,8 @@ use_condition_NTERROR = {
 ### MD_countrymissilesview_nukes ###
 ####################################
 ####################################
+
+### nuclear status ###
 
 has_NPOWER = {
 	custom_trigger_tooltip = {
@@ -1099,6 +1171,112 @@ can_produce_nuclear_warheads = {
 	}
 }
 
+### nuclear status ###
+
+has_NFU = {
+	custom_trigger_tooltip = {
+		tooltip = has_NFU_TT
+		is_in_array = { nuclear_doctrine_array = 0 }
+	}
+}
+
+NOT_has_NFU = {
+	custom_trigger_tooltip = {
+		tooltip = NOT_has_NFU_TT
+		NOT = { is_in_array = { nuclear_doctrine_array = 0 } }
+	}
+}
+
+NOT_has_MASSR_FXRSP_NDESC_FSTK = {
+	custom_trigger_tooltip = {
+		tooltip = NOT_has_MASSR_FXRSP_NDESC_FSTK_TT
+		NOT = { is_in_array = { nuclear_doctrine_array = 2 } }
+		NOT = { is_in_array = { nuclear_doctrine_array = 3 } }
+		NOT = { is_in_array = { nuclear_doctrine_array = 5 } }
+		NOT = { is_in_array = { nuclear_doctrine_array = 6 } }
+	}
+}
+
+
+has_MAD = {
+	custom_trigger_tooltip = {
+		tooltip = has_MAD_TT
+		is_in_array = { nuclear_doctrine_array = 1 }
+	}
+}
+
+NOT_has_MASSR_FXRSP = {
+	custom_trigger_tooltip = {
+		tooltip = NOT_has_MASSR_FXRSP_TT
+		NOT = { is_in_array = { nuclear_doctrine_array = 2 } }
+		NOT = { is_in_array = { nuclear_doctrine_array = 3 } }
+	}
+}
+
+has_MASSR = {
+	custom_trigger_tooltip = {
+		tooltip = has_MASSR_TT
+		is_in_array = { nuclear_doctrine_array = 2 }
+	}
+}
+
+NOT_has_MAD_FXRSP = {
+	custom_trigger_tooltip = {
+		tooltip = NOT_has_MAD_FXRSP_TT
+		NOT = { is_in_array = { nuclear_doctrine_array = 1 } }
+		NOT = { is_in_array = { nuclear_doctrine_array = 3 } }
+	}
+}
+
+has_FXRSP = {
+	custom_trigger_tooltip = {
+		tooltip = has_FXRSP_TT
+		is_in_array = { nuclear_doctrine_array = 3 }
+	}
+}
+
+NOT_has_MAD_MASSR = {
+	custom_trigger_tooltip = {
+		tooltip = NOT_has_MAD_MASSR_TT
+		NOT = { is_in_array = { nuclear_doctrine_array = 1 } }
+		NOT = { is_in_array = { nuclear_doctrine_array = 2 } }
+	}
+}
+
+has_PRMTR = {
+	custom_trigger_tooltip = {
+		tooltip = has_PRMTR_TT
+		is_in_array = { nuclear_doctrine_array = 4 }
+	}
+}
+
+has_NDESC = {
+	custom_trigger_tooltip = {
+		tooltip = has_NDESC_TT
+		is_in_array = { nuclear_doctrine_array = 5 }
+	}
+}
+
+has_FSTK = {
+	custom_trigger_tooltip = {
+		tooltip = has_FSTK_TT
+		is_in_array = { nuclear_doctrine_array = 6 }
+	}
+}
+
+has_RSTK = {
+	custom_trigger_tooltip = {
+		tooltip = has_RSTK_TT
+		is_in_array = { nuclear_doctrine_array = 7 }
+	}
+}
+
+has_NTERROR = {
+	custom_trigger_tooltip = {
+		tooltip = has_NTERROR_TT
+		is_in_array = { nuclear_doctrine_array = 8 }
+	}
+}
 
 ### nuclear production ###
 nuclear_warhead_prod_start_button_trigger = {
