@@ -85,16 +85,101 @@ scripted_gui = {
 
 		triggers = {
 			MD_missiles_target_button_click_enabled = {
-				MD_missiles_target_button_trigger = yes
+				#OLD VERSION
+				#MD_missiles_target_button_trigger = yes
+				MD_missiles_target_button_distance_trigger = yes
+				custom_trigger_tooltip = {
+					tooltip = has_LP_target_button_trigger_TT
+					ROOT = { has_country_flag = search_target_point }
+				}
+				custom_trigger_tooltip = {
+					tooltip = NOT_has_TP_target_button_trigger_TT
+					ROOT = { NOT = { has_country_flag = has_trajectory } }
+				}
 			}
 			MD_missiles_ground_launch_button_click_enabled = {
-				MD_missiles_ground_launch_button_trigger = yes
+				MD_missiles_ground_launch_button_missile_selected_trigger = yes
+				MD_launch_button_warhead_selected_trigger = yes
+				if = {
+					limit = {
+						has_selected_ICBM = yes
+					}
+					MD_missiles_ground_launch_button_ICBM_trigger = yes
+				}
+				if = {
+					limit = {
+						has_selected_IRBM = yes
+					}
+					MD_missiles_ground_launch_button_IRBM_trigger = yes
+				}
+				if = {
+					limit = {
+						has_selected_GLCM = yes
+					}
+					MD_missiles_ground_launch_button_GLCM_trigger = yes
+				}
+				if = {
+					limit = {
+						has_selected_HSCM = yes
+					}
+					MD_missiles_ground_launch_button_HSCM_trigger = yes
+				}
+				hidden_trigger = {
+					ROOT = { NOT = { has_country_flag = search_target_point } }
+					ROOT = { NOT = { has_country_flag = has_trajectory } }
+				}
+				#OLD VERSION
+				#MD_missiles_ground_launch_button_trigger = yes
 			}
 			MD_missiles_sea_launch_button_click_enabled = {
-				MD_missiles_sea_launch_button_trigger = yes
+				MD_missiles_sea_launch_button_missile_selected_trigger = yes
+				MD_launch_button_warhead_selected_trigger = yes
+				if = {
+					limit = {
+						has_selected_SLBM = yes
+					}
+					MD_missiles_sea_launch_button_SLBM_trigger = yes
+				}
+				if = {
+					limit = {
+						has_selected_SLCM = yes
+					}
+					MD_missiles_sea_launch_button_SLCM_trigger = yes
+				}
+				if = {
+					limit = {
+						has_selected_HSCM = yes
+					}
+					MD_missiles_sea_launch_button_HSCM_trigger = yes
+				}
+				hidden_trigger = {
+					ROOT = { NOT = { has_country_flag = search_target_point } }
+					ROOT = { NOT = { has_country_flag = has_trajectory } }
+				}
+				#OLD VERSION
+				#MD_missiles_sea_launch_button_trigger = yes
 			}
 			MD_missiles_air_launch_button_click_enabled = {
-				MD_missiles_air_launch_button_trigger = yes
+				MD_missiles_air_launch_button_missile_selected_trigger = yes
+				MD_launch_button_warhead_selected_trigger = yes
+				if = {
+					limit = {
+						has_selected_ALCM = yes
+					}
+					MD_missiles_air_launch_button_ALCM_trigger = yes
+				}
+				if = {
+					limit = {
+						has_selected_HSCM = yes
+					}
+					MD_missiles_air_launch_button_HSCM_trigger = yes
+				}
+				hidden_trigger = {
+					ROOT = { NOT = { has_country_flag = search_target_point } }
+					ROOT = { NOT = { has_country_flag = has_trajectory } }
+				}
+				#OLD VERSION
+				#MD_missiles_air_launch_button_trigger = yes
 			}
 		}
 
@@ -3253,6 +3338,70 @@ scripted_gui = {
 				}
 			}
 			fire_button_click_enabled = {
+				if = {
+					limit = {
+						check_variable = { var_gui_nuke = 2 }
+					}
+					if = {
+						limit = {
+							check_variable = { nuclear_doctrine_array^1 = 1 }
+						}
+						use_condition_MAD = yes
+						set_temp_variable = { temp_strike_limit = 1000 }
+					}
+					if = {
+						limit = {
+							check_variable = { nuclear_doctrine_array^2 = 2 }
+						}
+						use_condition_MASSR = yes
+						set_temp_variable = { temp_strike_limit = 1000 }
+					}
+					if = {
+						limit = {
+							check_variable = { nuclear_doctrine_array^3 = 3 }
+						}
+						use_condition_FXRSP = yes
+						set_temp_variable = { temp_strike_limit = surrender_progress }
+						multiply_temp_variable  = { temp_strike_limit = 100 }
+					}
+					if = {
+						limit = {
+							check_variable = { nuclear_doctrine_array^4 = 4 }
+						}
+						use_condition_PRMTR = yes
+						set_temp_variable = { temp_strike_limit = 1000 }
+					}
+					if = {
+						limit = {
+							check_variable = { nuclear_doctrine_array^5 = 5 }
+						}
+						use_condition_NDESC = yes
+						set_temp_variable = { temp_strike_limit = 5 }
+					}
+					if = {
+						limit = {
+							check_variable = { nuclear_doctrine_array^6 = 6 }
+						}
+						use_condition_FSTK = yes
+						set_temp_variable = { temp_strike_limit = 1000 }
+					}
+					if = {
+						limit = {
+							check_variable = { nuclear_doctrine_array^7 = 7 }
+						}
+						use_condition_RSTK = yes
+						set_temp_variable = { temp_strike_limit = var_RSTK_strike_limit }
+					}
+					custom_trigger_tooltip = {
+						tooltip = strike_limit_TT
+						set_temp_variable = { temp2 = var_total_firing }
+						multiply_temp_variable  = { temp2 = var_gui_MIRV }
+						OR = {
+							check_variable = { temp_strike_limit > temp2 }
+							check_variable = { temp_strike_limit = temp2 }
+						}
+					}
+				}
 				custom_trigger_tooltip = {
 					tooltip = has_trajectory_TT
 					has_country_flag = has_trajectory
@@ -3486,6 +3635,7 @@ scripted_gui = {
 				set_country_flag = has_missile_model
 				set_variable = { var_gui_missile_type = ballistic_missile_display_array^i }
 				set_ballistic_missile_model_gui = yes
+				set_variable = { var_inventory = missile_inventory_array^var_gui_missile_type }
 				clr_country_flag = open_MD_missile_type_window
 			}
 			cruise_missile_type_button_click = {
@@ -3493,6 +3643,7 @@ scripted_gui = {
 				set_country_flag = has_missile_model
 				set_variable = { var_gui_missile_type = cruise_missile_display_array^i }
 				set_cruise_missile_model_gui = yes
+				set_variable = { var_inventory = missile_inventory_array^var_gui_missile_type }
 				clr_country_flag = open_MD_missile_type_window
 			}
 			close_button_click = {
