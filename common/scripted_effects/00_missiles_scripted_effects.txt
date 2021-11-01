@@ -1479,6 +1479,48 @@ set_launch_button_number_vars = {
 }
 
 
+#OLD VERSION
+# set_ship_number_LAM = {
+# 	###
+# 	#log = "set_ship_number_LAM start var_ship_number_LAM = [?var_ship_number_LAM] var_gui_salvo = [?var_gui_salvo]"
+# 	###
+# 	if = {
+# 		limit = {
+# 	 		check_variable = { var_ship_VLS_launcher > var_ship_launcher }
+# 		}
+# 		set_variable = { var_ship_number_LAM = 0 }
+# 		set_variable = { var_ship_number_LAM_loc = 0 }
+# 		set_temp_variable = { temp1_ship_number_LAM = 0 }
+# 		while_loop_effect = {
+# 			limit = {
+# 				check_variable = { var_gui_salvo > temp1_ship_number_LAM }
+# 			}
+# 			add_to_variable = { var_ship_number_LAM = 1 }
+# 			add_to_variable = { var_ship_number_LAM_loc = 1 }
+# 			set_temp_variable = { temp1_ship_number_LAM = var_ship_number_LAM }
+# 			multiply_temp_variable = { temp1_ship_number_LAM = var_ship_VLS_launcher }
+# 		}
+# 		subtract_from_variable = { var_ship_number_LAM = 1 }
+# 	}
+# 	else = {
+# 		set_variable = { var_ship_number_LAM = 0 }
+# 		set_variable = { var_ship_number_LAM_loc = 0 }
+# 		set_temp_variable = { temp1_ship_number_LAM = 0 }
+# 		while_loop_effect = {
+# 			limit = {
+# 				check_variable = { var_gui_salvo > temp1_ship_number_LAM }
+# 			}
+# 			add_to_variable = { var_ship_number_LAM = 1 }
+# 			add_to_variable = { var_ship_number_LAM_loc = 1 }
+# 			set_temp_variable = { temp1_ship_number_LAM = var_ship_number_LAM }
+# 			multiply_temp_variable = { temp1_ship_number_LAM = var_ship_launcher }
+# 		}
+# 		subtract_from_variable = { var_ship_number_LAM = 1 }
+# 	}
+# 	###
+# 	#log = "set_ship_number_LAM stop var_ship_number_LAM = [?var_ship_number_LAM] var_gui_salvo = [?var_gui_salvo]"
+# 	###
+# }
 
 set_ship_number_LAM = {
 	###
@@ -1490,22 +1532,34 @@ set_ship_number_LAM = {
 		}
 		set_variable = { var_ship_number_LAM = 0 }
 		set_variable = { var_ship_number_LAM_loc = 0 }
+		set_variable = { var_ship_number_LAM_VLS_loc = 0 }
 		set_temp_variable = { temp1_ship_number_LAM = 0 }
+		set_temp_variable = { temp2_ship_number_LAM = 0 }
 		while_loop_effect = {
 			limit = {
 				check_variable = { var_gui_salvo > temp1_ship_number_LAM }
 			}
 			add_to_variable = { var_ship_number_LAM = 1 }
-			add_to_variable = { var_ship_number_LAM_loc = 1 }
+			add_to_variable = { var_ship_number_LAM_VLS_loc = 1 }
 			set_temp_variable = { temp1_ship_number_LAM = var_ship_number_LAM }
 			multiply_temp_variable = { temp1_ship_number_LAM = var_ship_VLS_launcher }
+		}
+		while_loop_effect = {
+			limit = {
+				check_variable = { var_gui_salvo > temp2_ship_number_LAM }
+			}
+			add_to_variable = { var_ship_number_LAM_loc = 1 }
+			set_temp_variable = { temp2_ship_number_LAM = var_ship_number_LAM_loc }
+			multiply_temp_variable = { temp2_ship_number_LAM = var_ship_launcher }
 		}
 		subtract_from_variable = { var_ship_number_LAM = 1 }
 	}
 	else = {
 		set_variable = { var_ship_number_LAM = 0 }
 		set_variable = { var_ship_number_LAM_loc = 0 }
+		set_variable = { var_ship_number_LAM_VLS_loc = 0 }
 		set_temp_variable = { temp1_ship_number_LAM = 0 }
+		set_temp_variable = { temp2_ship_number_LAM = 0 }
 		while_loop_effect = {
 			limit = {
 				check_variable = { var_gui_salvo > temp1_ship_number_LAM }
@@ -1514,6 +1568,14 @@ set_ship_number_LAM = {
 			add_to_variable = { var_ship_number_LAM_loc = 1 }
 			set_temp_variable = { temp1_ship_number_LAM = var_ship_number_LAM }
 			multiply_temp_variable = { temp1_ship_number_LAM = var_ship_launcher }
+		}
+		while_loop_effect = {
+			limit = {
+				check_variable = { var_gui_salvo > temp2_ship_number_LAM }
+			}
+			add_to_variable = { var_ship_number_LAM_VLS_loc = 1 }
+			set_temp_variable = { temp2_ship_number_LAM = var_ship_number_LAM_VLS_loc }
+			multiply_temp_variable = { temp2_ship_number_LAM = var_ship_VLS_launcher }
 		}
 		subtract_from_variable = { var_ship_number_LAM = 1 }
 	}
@@ -1663,6 +1725,8 @@ clear_gui_salvo_duration_vars = {
 		clear_variable = var_gui_salvo
 		clear_variable = var_gui_duration
 		clear_variable = var_total_firing
+		clear_variable = var_inventory
+		clear_variable = var_gui_missile_type
 	}
 }
 
@@ -1978,6 +2042,26 @@ set_missile_warhead_effects = {
 		multiply_variable = { var_nuke_damage = temp1 }
 		log = "[GetDateText]: [Root.GetName]: multiply var_nuke_damage [?ROOT.var_nuke_damage]"
 		launch_nuclear_warhead = yes
+		var:ROOT.missile_target_controller_array^i = {
+			ROOT = {
+				set_country_flag = has_dropped_nuke@PREV
+			}
+		}
+		if = {
+			limit = {
+				var:ROOT.missile_target_point_array^i = {
+					is_capital = yes
+				}
+			}
+			var:ROOT.missile_target_controller_array^i = {
+				ROOT = {
+					set_country_flag = has_dropped_nuke_on_capital@PREV
+				}
+			}
+		}
+		var:ROOT.missile_target_controller_array^i = {
+			add_to_variable = { var_RSTK_strike_limit = ROOT.missile_target_hit_stat_array^i }
+		}
 	}
 	else = {
 		while_loop_effect = {
@@ -7015,7 +7099,10 @@ remove_nuclear_status_special_effect = {
 
 ### to do: change warhead arrays
 
-missile_on_daily = {
+# old name
+#missile_on_daily = {
+# new name
+missile_on_weekly = {
 	for_each_loop = {
 		array = missile_target_point_array
 		if = {
