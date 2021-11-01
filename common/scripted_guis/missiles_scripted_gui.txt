@@ -67,6 +67,61 @@ scripted_gui = {
 						value = THIS.id
 						index = ROOT.var_missile_trajectory_ID
 					}
+					if = {
+						limit = {
+							check_variable = { ROOT.var_gui_nuke = 2 }
+						}
+						if = {
+							limit = {
+								ROOT = { use_condition_NFU = yes }
+							}
+							add_to_variable = { ROOT.var_strike_limit = 1000 }
+						}
+						if = {
+							limit = {
+								ROOT = { use_condition_MAD = yes }
+							}
+							add_to_variable = { ROOT.var_strike_limit = 1000 }
+						}
+						if = {
+							limit = {
+								ROOT = { use_condition_MASSR = yes }
+							}
+							add_to_variable = { ROOT.var_strike_limit = 1000 }
+						}
+						if = {
+							limit = {
+								ROOT = { use_condition_FXRSP = yes }
+							}
+							set_temp_variable = { temp4 = surrender_progress }
+							multiply_temp_variable = { temp4 = 100 }
+							add_to_variable = { ROOT.var_strike_limit = temp4 }
+						}
+						if = {
+							limit = {
+								ROOT = { use_condition_PRMTR_gui = yes }
+							}
+							add_to_variable = { ROOT.var_strike_limit = 1000 }
+						}
+						if = {
+							limit = {
+								ROOT = { use_condition_NDESC_gui = yes }
+							}
+							add_to_variable = { ROOT.var_strike_limit = 5 }
+						}
+						if = {
+							limit = {
+								ROOT = { use_condition_FSTK = yes }
+							}
+							add_to_variable = { ROOT.var_strike_limit = 1000 }
+						}
+						if = {
+							limit = {
+								ROOT = { use_condition_RSTK = yes }
+							}
+							add_to_variable = { ROOT.var_strike_limit = ROOT.var_RSTK_strike_limit_@THIS }
+						}
+					}
 				}
 			}
 			### redeploy ###
@@ -3338,70 +3393,81 @@ scripted_gui = {
 				}
 			}
 			fire_button_click_enabled = {
-				if = {
-					limit = {
-						check_variable = { var_gui_nuke = 2 }
-					}
-					if = {
-						limit = {
-							check_variable = { nuclear_doctrine_array^1 = 1 }
-						}
-						use_condition_MAD = yes
-						set_temp_variable = { temp_strike_limit = 1000 }
-					}
-					if = {
-						limit = {
-							check_variable = { nuclear_doctrine_array^2 = 2 }
-						}
-						use_condition_MASSR = yes
-						set_temp_variable = { temp_strike_limit = 1000 }
-					}
-					if = {
-						limit = {
-							check_variable = { nuclear_doctrine_array^3 = 3 }
-						}
-						use_condition_FXRSP = yes
-						set_temp_variable = { temp_strike_limit = surrender_progress }
-						multiply_temp_variable  = { temp_strike_limit = 100 }
-					}
-					if = {
-						limit = {
-							check_variable = { nuclear_doctrine_array^4 = 4 }
-						}
-						use_condition_PRMTR = yes
-						set_temp_variable = { temp_strike_limit = 1000 }
-					}
-					if = {
-						limit = {
-							check_variable = { nuclear_doctrine_array^5 = 5 }
-						}
-						use_condition_NDESC = yes
-						set_temp_variable = { temp_strike_limit = 5 }
-					}
-					if = {
-						limit = {
-							check_variable = { nuclear_doctrine_array^6 = 6 }
-						}
-						use_condition_FSTK = yes
-						set_temp_variable = { temp_strike_limit = 1000 }
-					}
-					if = {
-						limit = {
-							check_variable = { nuclear_doctrine_array^7 = 7 }
-						}
-						use_condition_RSTK = yes
-						set_temp_variable = { temp_strike_limit = var_RSTK_strike_limit }
-					}
-					custom_trigger_tooltip = {
-						tooltip = strike_limit_TT
-						set_temp_variable = { temp2 = var_total_firing }
-						multiply_temp_variable  = { temp2 = var_gui_MIRV }
-						OR = {
-							check_variable = { temp_strike_limit > temp2 }
-							check_variable = { temp_strike_limit = temp2 }
-						}
+				custom_trigger_tooltip = {
+					tooltip = strike_limit_TT
+					set_temp_variable = { temp2 = ROOT.var_total_firing }
+					multiply_temp_variable  = { temp2 = ROOT.var_gui_MIRV }
+					set_temp_variable = { temp3 = ROOT.var_strike_limit }
+					OR = {
+						check_variable = { temp3 > temp2 }
+						check_variable = { temp3 = temp2 }
 					}
 				}
+				# if = {
+				# 	limit = {
+				# 		check_variable = { var_gui_nuke = 2 }
+				# 	}
+				# 	if = {
+				# 		limit = {
+				# 			check_variable = { nuclear_doctrine_array^1 = 1 }
+				# 		}
+				# 		use_condition_MAD = yes
+				# 		set_temp_variable = { temp_strike_limit = 1000 }
+				# 	}
+				# 	if = {
+				# 		limit = {
+				# 			check_variable = { nuclear_doctrine_array^2 = 2 }
+				# 		}
+				# 		use_condition_MASSR = yes
+				# 		set_temp_variable = { temp_strike_limit = 1000 }
+				# 	}
+				# 	if = {
+				# 		limit = {
+				# 			check_variable = { nuclear_doctrine_array^3 = 3 }
+				# 		}
+				# 		use_condition_FXRSP = yes
+				# 		set_temp_variable = { temp_strike_limit = surrender_progress }
+				# 		multiply_temp_variable  = { temp_strike_limit = 100 }
+				# 	}
+				# 	if = {
+				# 		limit = {
+				# 			check_variable = { nuclear_doctrine_array^4 = 4 }
+				# 		}
+				# 		use_condition_PRMTR = yes
+				# 		set_temp_variable = { temp_strike_limit = 1000 }
+				# 	}
+				# 	if = {
+				# 		limit = {
+				# 			check_variable = { nuclear_doctrine_array^5 = 5 }
+				# 		}
+				# 		use_condition_NDESC = yes
+				# 		set_temp_variable = { temp_strike_limit = 5 }
+				# 	}
+				# 	if = {
+				# 		limit = {
+				# 			check_variable = { nuclear_doctrine_array^6 = 6 }
+				# 		}
+				# 		use_condition_FSTK = yes
+				# 		set_temp_variable = { temp_strike_limit = 1000 }
+				# 	}
+				# 	if = {
+				# 		limit = {
+				# 			check_variable = { nuclear_doctrine_array^7 = 7 }
+				# 		}
+				# 		use_condition_RSTK = yes
+				# 		set_temp_variable = { temp_strike_limit = var_RSTK_strike_limit }
+				# 	}
+				# 	### temp_strike_limit does not work??? 
+				# 	custom_trigger_tooltip = {
+				# 		tooltip = strike_limit_TT
+				# 		set_temp_variable = { temp2 = var_total_firing }
+				# 		multiply_temp_variable  = { temp2 = var_gui_MIRV }
+				# 		OR = {
+				# 			check_variable = { temp_strike_limit > temp2 }
+				# 			check_variable = { temp_strike_limit = temp2 }
+				# 		}
+				# 	}
+				# }
 				custom_trigger_tooltip = {
 					tooltip = has_trajectory_TT
 					has_country_flag = has_trajectory
@@ -5529,6 +5595,7 @@ scripted_gui = {
 					value = nuclear_doctrine_array^i
 				}
 				update_nuclear_deterrence = yes
+				set_nuke_arrays_selected_TAG = yes
 			}
 			LEU_button_click = {
 				clear_variable = var_selected_TAG_LEU_selected
@@ -5819,6 +5886,12 @@ scripted_gui = {
 		}
 		triggers = {
 			nuclear_status_entry_button_click_enabled = {
+				NOT = {
+					is_in_array = {
+						array = nuclear_status_array
+						value = i
+					}
+				}
 				#PNW
 				if = {
 					limit = {
@@ -5922,6 +5995,84 @@ scripted_gui = {
 					}
 					has_NPOWER_OR_SPOWER = yes
 					NOT_has_N3 = yes
+				}
+			}
+			nuclear_doctrine_entry_button_click_enabled = {
+				NOT = {
+					is_in_array = {
+						array = nuclear_doctrine_array
+						value = i
+					}
+				}
+				#NFU
+				if = {
+					limit = {
+						check_variable = { nuclear_doctrine_display_array^i = 0 }
+					}
+					NOT_has_MASSR_FXRSP_NDESC_FSTK = yes
+				}
+				#MAD
+				if = {
+					limit = {
+						check_variable = { nuclear_doctrine_display_array^i = 1 }
+					}
+					NOT_has_MASSR_FXRSP = yes
+				}
+				#MASSR
+				if = {
+					limit = {
+						check_variable = { nuclear_doctrine_display_array^i = 2 }
+					}
+					NOT_has_NFU = yes
+					NOT_has_MAD_FXRSP = yes
+				}
+				#FXRSP
+				if = {
+					limit = {
+						check_variable = { nuclear_doctrine_display_array^i = 3 }
+					}
+					NOT_has_NFU = yes
+					NOT_has_MAD_MASSR = yes
+				}
+				#PRMTR
+				if = {
+					limit = {
+						check_variable = { nuclear_doctrine_display_array^i = 4 }
+					}
+					###
+				}
+				#NDESC
+				if = {
+					limit = {
+						check_variable = { nuclear_doctrine_display_array^i = 5 }
+					}
+					NOT_has_NFU = yes
+				}
+				#FSTK
+				if = {
+					limit = {
+						check_variable = { nuclear_doctrine_display_array^i = 6 }
+					}
+					custom_trigger_tooltip = {
+						tooltip = GAME_RULE_FSTK_TT
+						has_global_flag = FSTK_allowed
+					}
+					NOT = { is_ai = yes }
+					NOT_has_NFU = yes
+				}
+				#RSTK
+				if = {
+					limit = {
+						check_variable = { nuclear_doctrine_display_array^i = 7 }
+					}
+					###
+				}
+				#NTERROR
+				if = {
+					limit = {
+						check_variable = { nuclear_doctrine_display_array^i = 8 }
+					}
+					###
 				}
 			}
 		}
