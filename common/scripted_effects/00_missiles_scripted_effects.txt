@@ -2044,7 +2044,7 @@ set_missile_warhead_effects = {
 		launch_nuclear_warhead = yes
 		var:ROOT.missile_target_controller_array^i = {
 			ROOT = {
-				set_country_flag = has_dropped_nuke@PREV
+				set_country_flag = { flag = has_dropped_nuke@PREV days = 90 value = 1 }
 			}
 		}
 		if = {
@@ -2055,7 +2055,7 @@ set_missile_warhead_effects = {
 			}
 			var:ROOT.missile_target_controller_array^i = {
 				ROOT = {
-					set_country_flag = has_dropped_nuke_on_capital_@PREV
+					set_country_flag = { flag = has_dropped_nuke_on_capital_@PREV days = 90 value = 1 }
 				}
 			}
 		}
@@ -2131,9 +2131,11 @@ launch_nuclear_warhead = {
 					controller = [target_TAG]
 				}
 			}
-			set_variable = { global.nuke_drop_salvo_idx = 0 }
+			set_variable = { global.nuke_drop_salvo_idx = -1 } # was zero, did not work, cause arrays start with zero, not 1
 			var:ROOT.missile_target_controller_array^i = {
+				log = "ROOT.missile_target_controller_array^i [?ROOT.missile_target_controller_array^i.GetName]"
 				add_to_variable = { global.nuke_drop_salvo_idx = 1 } ### for on_nuke_drop
+				log = "global.nuke_drop_salvo_idx [?global.nuke_drop_salvo_idx]"
 				set_temp_variable = { idx = i } ### for logging
 				set_nuke_damage = yes
 			}
@@ -2172,7 +2174,7 @@ launch_nuclear_warhead = {
 			var:ROOT.missile_target_controller_array^i = {
 				country_event = {
 					id = nukes.1 #file: missiles_events.txt
-					hours = 1
+					hours = 2 # was 1 hour, changed to 2 for testing
 				}
 			}
 		}
