@@ -9,6 +9,7 @@ tags={
 supported_version="1.10.*"
 picture = "thumbnail.png"
 remote_file_id="719416488"
+path="mod/Millennium_Dawn"
 
 replace_path = "events"
 replace_path = "common/abilities"
@@ -44,4 +45,3 @@ replace_path = "history/countries/"
 replace_path = "events/"
 replace_path = "gfx/loadingscreens"
 replace_path = "portraits"
-path="C:/Users/user_name/Documents/Paradox Interactive/Hearts of Iron IV/mod/Millennium_Dawn"
