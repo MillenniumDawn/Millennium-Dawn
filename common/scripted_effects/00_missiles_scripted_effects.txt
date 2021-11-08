@@ -29,7 +29,7 @@ set_landbased_missile_defense_cap = {
 					}
 				}
 				set_temp_variable = { temp1 = 0 }	
-				add_to_temp_variable = { temp1 = building_level@anti_air_building }
+				add_to_temp_variable = { temp1 = non_damaged_building_level@anti_air_building }
 				multiply_temp_variable = { temp1 = PREV.var_SAM_launcher_tech }
 				add_to_variable = { ROOT.var_intercept_capacity_boost_land = temp1 }
 			}
@@ -45,7 +45,7 @@ set_landbased_missile_defense_cap = {
 					}	
 				}
 				set_temp_variable = { temp1 = 0 }	
-				add_to_temp_variable = { temp1 = building_level@missile_defense_station }
+				add_to_temp_variable = { temp1 = non_damaged_building_level@missile_defense_station }
 				multiply_temp_variable = { temp1 = PREV.var_ABM_launcher_tech }
 				add_to_variable = { ROOT.var_intercept_capacity_midcourse_land = temp1 }
 				set_state_flag = defend_land_launch_point
@@ -64,7 +64,7 @@ set_landbased_missile_defense_cap = {
 					}	
 				}
 				set_temp_variable = { temp1 = 0 }	
-				add_to_temp_variable = { temp1 = building_level@missile_defense_station }
+				add_to_temp_variable = { temp1 = non_damaged_building_level@missile_defense_station }
 				multiply_temp_variable = { temp1 = PREV.var_ABM_launcher_tech }
 				add_to_variable = { ROOT.var_intercept_capacity_midcourse_land = temp1 }
 			}
@@ -83,7 +83,7 @@ set_landbased_missile_defense_cap = {
 					}	
 				}
 				set_temp_variable = { temp1 = 0 }	
-				add_to_temp_variable = { temp1 = building_level@anti_air_building }
+				add_to_temp_variable = { temp1 = non_damaged_building_level@anti_air_building }
 				multiply_temp_variable = { temp1 = PREV.var_SAM_launcher_tech }
 				add_to_variable = { ROOT.var_intercept_capacity_terminal_land = temp1 }
 			}
@@ -1735,6 +1735,12 @@ clear_gui_salvo_duration_vars = {
 #######################
 
 set_launch_trigger_num = {
+	meta_effect = {
+		text = {
+			set_missile_model_[missile_type] = yes
+		}
+		missile_type = "[?missile_type_array^i]"
+	}
 	set_ship_number_LAM_trigger = yes
 	set_sub_number_LAM_trigger = yes
 	set_bomber_number_ALCM_trigger = yes
@@ -1751,7 +1757,7 @@ set_ship_number_LAM_trigger = {
 		limit = {
 	 		check_variable = { var_ship_VLS_launcher > var_ship_launcher }
 		}
-		set_variable = { var_ship_number_LAM_trigger = 0 }
+		set_variable = { var_ship_number_LAM = 0 }
 		#set_variable = { var_ship_number_LAM_loc = 0 }
 		#set_variable = { var_ship_number_LAM_VLS_loc = 0 }
 		set_temp_variable = { temp1_ship_number_LAM = 0 }
@@ -1760,9 +1766,9 @@ set_ship_number_LAM_trigger = {
 			limit = {
 				check_variable = { missile_salvo_array^i > temp1_ship_number_LAM }
 			}
-			add_to_variable = { var_ship_number_LAM_trigger = 1 }
+			add_to_variable = { var_ship_number_LAM = 1 }
 			#add_to_variable = { var_ship_number_LAM_VLS_loc = 1 }
-			set_temp_variable = { temp1_ship_number_LAM = var_ship_number_LAM_trigger }
+			set_temp_variable = { temp1_ship_number_LAM = var_ship_number_LAM }
 			multiply_temp_variable = { temp1_ship_number_LAM = var_ship_VLS_launcher }
 		}
 		# while_loop_effect = {
@@ -1773,10 +1779,10 @@ set_ship_number_LAM_trigger = {
 		# 	#set_temp_variable = { temp2_ship_number_LAM = var_ship_number_LAM_loc }
 		# 	#multiply_temp_variable = { temp2_ship_number_LAM = var_ship_launcher }
 		# }
-		subtract_from_variable = { var_ship_number_LAM_trigger = 1 }
+		subtract_from_variable = { var_ship_number_LAM = 1 }
 	}
 	else = {
-		set_variable = { var_ship_number_LAM_trigger = 0 }
+		set_variable = { var_ship_number_LAM = 0 }
 		#set_variable = { var_ship_number_LAM_loc = 0 }
 		#set_variable = { var_ship_number_LAM_VLS_loc = 0 }
 		set_temp_variable = { temp1_ship_number_LAM = 0 }
@@ -1785,9 +1791,9 @@ set_ship_number_LAM_trigger = {
 			limit = {
 				check_variable = { missile_salvo_array^i > temp1_ship_number_LAM }
 			}
-			add_to_variable = { var_ship_number_LAM_trigger = 1 }
+			add_to_variable = { var_ship_number_LAM = 1 }
 			#add_to_variable = { var_ship_number_LAM_loc = 1 }
-			set_temp_variable = { temp1_ship_number_LAM = var_ship_number_LAM_trigger }
+			set_temp_variable = { temp1_ship_number_LAM = var_ship_number_LAM }
 			multiply_temp_variable = { temp1_ship_number_LAM = var_ship_launcher }
 		}
 		# while_loop_effect = {
@@ -1798,7 +1804,7 @@ set_ship_number_LAM_trigger = {
 		# 	set_temp_variable = { temp2_ship_number_LAM = var_ship_number_LAM_VLS_loc }
 		# 	multiply_temp_variable = { temp2_ship_number_LAM = var_ship_VLS_launcher }
 		# }
-		subtract_from_variable = { var_ship_number_LAM_trigger = 1 }
+		subtract_from_variable = { var_ship_number_LAM = 1 }
 	}
 	###
 	#log = "set_ship_number_LAM stop var_ship_number_LAM = [?var_ship_number_LAM] var_gui_salvo = [?var_gui_salvo]"
@@ -1809,101 +1815,101 @@ set_sub_number_LAM_trigger = {
 	###
 	#log = "var_sub_number_LAM start var_sub_number_LAM = [?var_sub_number_LAM] var_gui_salvo = [?var_gui_salvo]"
 	###
-	set_variable = { var_sub_number_LAM_trigger = 0 }
+	set_variable = { var_sub_number_LAM = 0 }
 	#set_variable = { var_sub_number_LAM_loc = 0 }
 	set_temp_variable = { temp1_sub_number_LAM = 0 }
 	while_loop_effect = {
 		limit = {
 			check_variable = { missile_salvo_array^i > temp1_sub_number_LAM }
 		}
-		add_to_variable = { var_sub_number_LAM_trigger = 1 }
+		add_to_variable = { var_sub_number_LAM = 1 }
 		#add_to_variable = { var_sub_number_LAM_loc = 1 }
-		set_temp_variable = { temp1_sub_number_LAM = var_sub_number_LAM_trigger }
+		set_temp_variable = { temp1_sub_number_LAM = var_sub_number_LAM }
 		multiply_temp_variable = { temp1_sub_number_LAM = var_sub_launcher }
 	}
-	subtract_from_variable = { var_sub_number_LAM_trigger = 1 }
+	subtract_from_variable = { var_sub_number_LAM = 1 }
 	###
 	#log = "var_sub_number_LAM stop var_sub_number_LAM = [?var_sub_number_LAM] var_gui_salvo = [?var_gui_salvo] var_sub_launcher = [?var_sub_launcher]"
 	###
 }
 
 set_bomber_number_ALCM_trigger = {
-	set_variable = { var_bomber_number_ALCM_trigger = 0 }
+	set_variable = { var_bomber_number_ALCM = 0 }
 	set_temp_variable = { temp1_bomber_number_ALCM = 0 }
 	while_loop_effect = {
 		limit = {
 			check_variable = { missile_salvo_array^i > temp1_bomber_number_ALCM }
 		}
-		add_to_variable = { var_bomber_number_ALCM_trigger = 1 }
-		set_temp_variable = { temp1_bomber_number_ALCM = var_bomber_number_ALCM_trigger }
+		add_to_variable = { var_bomber_number_ALCM = 1 }
+		set_temp_variable = { temp1_bomber_number_ALCM = var_bomber_number_ALCM }
 		multiply_temp_variable = { temp1_bomber_number_ALCM = var_bomber_launcher }
 	}
 	#set_variable = { var_bomber_number_ALCM_loc = var_bomber_number_ALCM_trigger }
 	if = {
 		limit = {
-			check_variable = { var_bomber_number_ALCM_trigger > 0 }
+			check_variable = { var_bomber_number_ALCM > 0 }
 		}
-		subtract_from_variable = { var_bomber_number_ALCM_trigger = 1 }
+		subtract_from_variable = { var_bomber_number_ALCM = 1 }
 	}
 }
 
 set_STK_number_ALCM_trigger = {
-	set_variable = { var_STK_number_ALCM_trigger = 0 }
+	set_variable = { var_STK_number_ALCM = 0 }
 	set_temp_variable = { temp1_STK_number_ALCM = 0 }
 	while_loop_effect = {
 		limit = {
 			check_variable = { missile_salvo_array^i > temp1_STK_number_ALCM }
 		}
-		add_to_variable = { var_STK_number_ALCM_trigger = 1 }
-		set_temp_variable = { temp1_STK_number_ALCM = var_STK_number_ALCM_trigger }
+		add_to_variable = { var_STK_number_ALCM = 1 }
+		set_temp_variable = { temp1_STK_number_ALCM = var_STK_number_ALCM }
 		multiply_temp_variable = { temp1_STK_number_ALCM = var_STK_launcher }
 	}
 	#set_variable = { var_STK_number_ALCM_loc = var_STK_number_ALCM_trigger }
 	if = {
 		limit = {
-			check_variable = { var_STK_number_ALCM_trigger > 0 }
+			check_variable = { var_STK_number_ALCM > 0 }
 		}
-		subtract_from_variable = { var_STK_number_ALCM_trigger = 1 }
+		subtract_from_variable = { var_STK_number_ALCM = 1 }
 	}
 }
 
 set_MR_number_ALCM_trigger = {
-	set_variable = { var_MR_number_ALCM_trigger = 0 }
+	set_variable = { var_MR_number_ALCM = 0 }
 	set_temp_variable = { temp1_MR_number_ALCM = 0 }
 	while_loop_effect = {
 		limit = {
 			check_variable = { missile_salvo_array^i > temp1_MR_number_ALCM }
 		}
-		add_to_variable = { var_MR_number_ALCM_trigger = 1 }
-		set_temp_variable = { temp1_MR_number_ALCM = var_MR_number_ALCM_trigger }
+		add_to_variable = { var_MR_number_ALCM = 1 }
+		set_temp_variable = { temp1_MR_number_ALCM = var_MR_number_ALCM }
 		multiply_temp_variable = { temp1_MR_number_ALCM = var_MR_launcher }
 	}
 	#set_variable = { var_MR_number_ALCM_loc = var_MR_number_ALCM_trigger }
 	if = {
 		limit = {
-			check_variable = { var_MR_number_ALCM_trigger > 0 }
+			check_variable = { var_MR_number_ALCM > 0 }
 		}
-		subtract_from_variable = { var_MR_number_ALCM_trigger = 1 }
+		subtract_from_variable = { var_MR_number_ALCM = 1 }
 	}
 }
 
 set_MR_CV_number_ALCM_trigger = {
-	set_variable = { var_MR_CV_number_ALCM_trigger = 0 }
+	set_variable = { var_MR_CV_number_ALCM = 0 }
 	set_temp_variable = { temp1_MR_CV_number_ALCM = 0 }
 	while_loop_effect = {
 		limit = {
 			check_variable = { missile_salvo_array^i > temp1_MR_CV_number_ALCM }
 		}
-		add_to_variable = { var_MR_CV_number_ALCM_trigger = 1 }
-		set_temp_variable = { temp1_MR_CV_number_ALCM = var_MR_CV_number_ALCM_trigger }
+		add_to_variable = { var_MR_CV_number_ALCM = 1 }
+		set_temp_variable = { temp1_MR_CV_number_ALCM = var_MR_CV_number_ALCM }
 		multiply_temp_variable = { temp1_MR_CV_number_ALCM = var_MR_CV_launcher }
 	}
 	#set_variable = { var_MR_CV_number_ALCM_loc = var_MR_CV_number_ALCM_trigger }
 	if = {
 		limit = {
-			check_variable = { var_MR_CV_number_ALCM_trigger > 0 }
+			check_variable = { var_MR_CV_number_ALCM > 0 }
 		}
-		subtract_from_variable = { var_MR_CV_number_ALCM_trigger = 1 }
+		subtract_from_variable = { var_MR_CV_number_ALCM = 1 }
 	}
 }
 
@@ -3309,7 +3315,9 @@ fire_on_alert = {
 	for_each_loop = {
 		array = missile_target_point_array
 		### needs to be tested
+		#set_missile_model = yes
 		set_launch_trigger_num = yes
+		log = "[GetDateText]: [Root.GetName]: fire_on_alert: Missile Target: [?missile_target_point_array^i.GetName] ID = [?missile_target_point_array^i.GetID]"
 		#
 		if = {
 			limit = {
@@ -3348,7 +3356,7 @@ fire_on_alert = {
 				subtract_from_variable = { ROOT.var_strike_limit = temp7 }
 			}
 
-			log = "[GetDateText]: [Root.GetName]: missile_on_daily: Missile Target: [?missile_target_point_array^i.GetName] ID = [?missile_target_point_array^i.GetID]"
+			log = "[GetDateText]: [Root.GetName]: fire_on_alert: Missile Target: [?missile_target_point_array^i.GetName] ID = [?missile_target_point_array^i.GetID]"
 			set_variable = { var_salvo = missile_salvo_array^i }
 
 			var:ROOT.missile_target_controller_array^i = {
@@ -3373,7 +3381,7 @@ fire_on_alert = {
 				set_variable = { ROOT.var_intercept_chance_midcourse_land = var_ABM_intercept_chance_land }
 				set_variable = { ROOT.var_intercept_chance_terminal_land = var_SAM_intercept_chance_land }
 			}
-
+			### moved upwards in the effect, reactivated
 			set_missile_model = yes ### add modify intercept chance
 
 			set_temp_variable = { temp_missile_type = missile_type_array^i }
@@ -3434,6 +3442,33 @@ fire_on_alert = {
 
 			set_missile_warhead_effects = yes
 
+		}
+		else = {
+			add_to_array = { array = missile_boost_completed_sea_stat_array value = 0 index = i }
+			add_to_array = { array = missile_interception_boost_sea_stat_array value = 0 index = i }
+
+			add_to_array = { array = missile_boost_completed_land_stat_array value = 0 index = i }
+			add_to_array = { array = missile_interception_boost_land_stat_array value = 0 index = i }
+
+			add_to_array = { array = missile_midcourse_completed_sea_stat_array value = 0 index = i }
+			add_to_array = { array = missile_interception_midcourse_sea_stat_array value = 0 index = i }
+
+			add_to_array = { array = missile_midcourse_completed_land_stat_array value = 0 index = i }
+			add_to_array = { array = missile_interception_midcourse_land_stat_array value = 0 index = i }
+
+			add_to_array = { array = missile_terminal_completed_sea_stat_array value = 0 index = i }
+			add_to_array = { array = missile_interception_terminal_sea_stat_array value = 0 index = i }
+
+			add_to_array = { array = missile_interception_terminal_land_stat_array value = 0 index = i }
+			add_to_array = { array = missile_target_miss_stat_array value = 0 index = i }
+			add_to_array = { array = missile_target_hit_stat_array value = 0 index = i }
+
+			add_to_array = { array = SAM_consumption_sea_array value = 0 index = i }
+			add_to_array = { array = SAM_consumption_land_array value = 0 index = i }
+			add_to_array = { array = ABM_consumption_sea_array value = 0 index = i }
+			add_to_array = { array = ABM_consumption_land_array value = 0 index = i }
+
+			set_missile_damage_stats = yes ### should be zero for all
 		}
 	}
 }
@@ -7294,7 +7329,7 @@ set_enrichment_efficiency_LEU = {
 	set_variable = { var_enrichment_nuclear_energy_prod_factor = 1 }
 	set_variable = { var_enrichment_nuclear_material_prod_factor = 0.1 }
 	every_controlled_state = {
-		add_to_variable = { ROOT.var_num_nuclear_reactor = building_level@nuclear_reactor }
+		add_to_variable = { ROOT.var_num_nuclear_reactor = non_damaged_building_level@nuclear_reactor }
 	}
 	update_enrichment_efficiency = yes
 }
@@ -7320,7 +7355,7 @@ set_enrichment_efficiency_HEU = {
 	set_variable = { var_enrichment_nuclear_energy_prod_factor = 2 }
 	set_variable = { var_enrichment_nuclear_material_prod_factor = 4 }
 	every_controlled_state = {
-		add_to_variable = { ROOT.var_num_nuclear_reactor = building_level@nuclear_reactor }
+		add_to_variable = { ROOT.var_num_nuclear_reactor = non_damaged_building_level@nuclear_reactor }
 	}
 	update_enrichment_efficiency = yes
 }
@@ -7331,7 +7366,7 @@ update_nuclear_production = {
 	multiply_temp_variable = { temp1 = var_nuke_energy_ratio }
 	set_temp_variable = { temp_num_nuclear_reactor = 0 }
 	every_controlled_state = {
-		add_to_temp_variable = { temp_num_nuclear_reactor = building_level@nuclear_reactor }
+		add_to_temp_variable = { temp_num_nuclear_reactor = non_damaged_building_level@nuclear_reactor }
 	}
 	multiply_temp_variable = { temp1 = temp_num_nuclear_reactor }
 	multiply_temp_variable = { temp1 = 6 } #### fuel production nuke reactor
@@ -7385,7 +7420,7 @@ update_nuclear_deterrence = {
 		}
 	}
 	every_controlled_state = {
-		add_to_variable = { PREV.var_nuclear_reactor_nuclear_deterrence = building_level@nuclear_reactor }
+		add_to_variable = { PREV.var_nuclear_reactor_nuclear_deterrence = non_damaged_building_level@nuclear_reactor }
 	}
 	multiply_variable = { var_nuclear_reactor_nuclear_deterrence = 10 }
 	set_variable = { var_nuclear_material_nuclear_deterrence = var_nuclear_material_nuclear_deterrence_factor }
@@ -7516,6 +7551,7 @@ missile_on_weekly = {
 	for_each_loop = {
 		array = missile_target_point_array
 		### needs to be tested
+		#set_missile_model = yes
 		set_launch_trigger_num = yes
 		#
 		if = {
@@ -7554,6 +7590,7 @@ missile_on_weekly = {
 				set_variable = { ROOT.var_intercept_chance_terminal_land = var_SAM_intercept_chance_land }
 			}
 
+			### moved upwards in the effect, reactivated
 			set_missile_model = yes ### add modify intercept chance
 			#OLD VERSION
 			#set_warhead = yes
@@ -7626,6 +7663,33 @@ missile_on_weekly = {
 
 			set_missile_warhead_effects = yes
 
+		}
+		else = {
+			add_to_array = { array = missile_boost_completed_sea_stat_array value = 0 index = i }
+			add_to_array = { array = missile_interception_boost_sea_stat_array value = 0 index = i }
+
+			add_to_array = { array = missile_boost_completed_land_stat_array value = 0 index = i }
+			add_to_array = { array = missile_interception_boost_land_stat_array value = 0 index = i }
+
+			add_to_array = { array = missile_midcourse_completed_sea_stat_array value = 0 index = i }
+			add_to_array = { array = missile_interception_midcourse_sea_stat_array value = 0 index = i }
+
+			add_to_array = { array = missile_midcourse_completed_land_stat_array value = 0 index = i }
+			add_to_array = { array = missile_interception_midcourse_land_stat_array value = 0 index = i }
+
+			add_to_array = { array = missile_terminal_completed_sea_stat_array value = 0 index = i }
+			add_to_array = { array = missile_interception_terminal_sea_stat_array value = 0 index = i }
+
+			add_to_array = { array = missile_interception_terminal_land_stat_array value = 0 index = i }
+			add_to_array = { array = missile_target_miss_stat_array value = 0 index = i }
+			add_to_array = { array = missile_target_hit_stat_array value = 0 index = i }
+
+			add_to_array = { array = SAM_consumption_sea_array value = 0 index = i }
+			add_to_array = { array = SAM_consumption_land_array value = 0 index = i }
+			add_to_array = { array = ABM_consumption_sea_array value = 0 index = i }
+			add_to_array = { array = ABM_consumption_land_array value = 0 index = i }
+
+			set_missile_damage_stats = yes ### should be zero for all
 		}
 	}
 }
