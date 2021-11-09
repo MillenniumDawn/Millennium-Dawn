@@ -256,6 +256,57 @@ has_HSCM_trigger = {
 	}
 }
 
+### 
+
+selected_TAG_has_ICBM_trigger = {
+	ROOT = {
+		check_variable = { selected_TAG_missile_type_array^i > 10 }
+		check_variable = { selected_TAG_missile_type_array^i < 20 }
+	}
+}
+
+selected_TAG_has_IRBM_trigger = {
+	ROOT = {
+		check_variable = { selected_TAG_missile_type_array^i > 20 }
+		check_variable = { selected_TAG_missile_type_array^i < 30 }
+	}
+}
+
+selected_TAG_has_SLBM_trigger = {
+	ROOT = {
+		check_variable = { selected_TAG_missile_type_array^i > 30 }
+		check_variable = { selected_TAG_missile_type_array^i < 40 }
+	}
+}
+
+selected_TAG_has_ALCM_trigger = {
+	ROOT = {
+		check_variable = { selected_TAG_missile_type_array^i > 40 }
+		check_variable = { selected_TAG_missile_type_array^i < 50 }
+	}
+}
+
+selected_TAG_has_GLCM_trigger = {
+	ROOT = {
+		check_variable = { selected_TAG_missile_type_array^i > 50 }
+		check_variable = { selected_TAG_missile_type_array^i < 60 }
+	}
+}
+
+selected_TAG_has_SLCM_trigger = {
+	ROOT = {
+		check_variable = { selected_TAG_missile_type_array^i > 60 }
+		check_variable = { selected_TAG_missile_type_array^i < 70 }
+	}
+}
+
+selected_TAG_has_HSCM_trigger = {
+	ROOT =  {
+		check_variable = { selected_TAG_missile_type_array^i > 70 }
+		check_variable = { selected_TAG_missile_type_array^i < 80 }
+	}
+}
+
 # OLD VERSION
 # MD_missiles_ground_launch_button_trigger = {
 # 	ROOT = {
@@ -1315,6 +1366,527 @@ check_launch_point = {
 	}
 }
 
+### for launch gui entry ###
+
+### ROOT / var:missile_launch_selected_TAG = {
+check_launch_point_gui = {
+	var:ROOT.selected_TAG_missile_launch_point_array^i = {
+		OR = {
+			### ground_launch ###
+			### ICBM ###
+			AND = {
+				PREV = {
+					set_temp_variable = { temp1 = PREV.non_damaged_building_level@missile_silo }
+					#set_temp_variable = { temp2 = PREV.building_level@TEL_base }
+					multiply_temp_variable = { temp1 = ROOT.selected_TAG_silo_launcher_array^i }
+					#multiply_temp_variable = { temp2 = var_TEL_launcher }
+					add_to_temp_variable = { temp1 = 1 }
+					#add_to_temp_variable = { temp2 = 1 }
+					AND = {
+						selected_TAG_has_ICBM_trigger = yes
+						check_variable = { temp1 > ROOT.selected_TAG_missile_salvo_array^i }
+					}
+				}
+			}
+			### IRBM ###
+			AND = {
+				PREV = {
+					set_temp_variable = { temp1 = PREV.non_damaged_building_level@missile_silo }
+					set_temp_variable = { temp2 = PREV.non_damaged_building_level@TEL_base }
+					multiply_temp_variable = { temp1 = ROOT.selected_TAG_silo_launcher_array^i }
+					multiply_temp_variable = { temp2 = ROOT.selected_TAG_TEL_launcher_array^i }
+					add_to_temp_variable = { temp1 = 1 }
+					add_to_temp_variable = { temp2 = 1 }
+					AND = {
+						selected_TAG_has_IRBM_trigger = yes
+						OR = {
+							check_variable = { temp1 > ROOT.selected_TAG_missile_salvo_array^i }
+							check_variable = { temp2 > ROOT.selected_TAG_missile_salvo_array^i }
+						}
+					}
+				}
+			}
+			### GLCM ###
+			AND = {
+				PREV = {
+					#set_temp_variable = { temp1 = PREV.building_level@missile_silo }
+					set_temp_variable = { temp2 = PREV.non_damaged_building_level@TEL_base }
+					#multiply_temp_variable = { temp1 = var_silo_launcher }
+					multiply_temp_variable = { temp2 = ROOT.selected_TAG_TEL_launcher_array^i }
+					#add_to_temp_variable = { temp1 = 1 }
+					add_to_temp_variable = { temp2 = 1 }
+					AND = {
+						selected_TAG_has_GLCM_trigger = yes
+						# only TEL_base
+						check_variable = { temp2 > ROOT.selected_TAG_missile_salvo_array^i }
+					}
+				}
+			}
+			### HSCM ###
+			AND = {
+				PREV = {
+					#set_temp_variable = { temp1 = PREV.building_level@missile_silo }
+					set_temp_variable = { temp2 = PREV.non_damaged_building_level@TEL_base }
+					#multiply_temp_variable = { temp1 = var_silo_launcher }
+					multiply_temp_variable = { temp2 = ROOT.selected_TAG_TEL_launcher_array^i }
+					#add_to_temp_variable = { temp1 = 1 }
+					add_to_temp_variable = { temp2 = 1 }
+					AND = {
+						selected_TAG_has_HSCM_trigger = yes
+						# only TEL_base
+						check_variable = { temp2 > ROOT.selected_TAG_missile_salvo_array^i }
+					}
+				}
+			}
+			### sea_launch ###
+			### SLBM ###
+			AND = {
+				meta_trigger = {
+					text = {
+						PREV = {
+							### SLBM ###
+							AND = {
+								[sea_launch_point] = {
+									has_state_flag = sea_launch_point
+								}
+								selected_TAG_has_SLBM_trigger = yes
+								sea_launch_point_sub_[sea_launch_point] = yes
+							}
+						}
+					}
+					sea_launch_point = "[PREV.GetID]"
+				}
+			}
+			### SLCM ###
+			AND = {
+				meta_trigger = {
+					text = {
+						PREV = {
+							### SLCM ###
+							AND = {
+								[sea_launch_point] = {
+									has_state_flag = sea_launch_point
+								}
+								selected_TAG_has_SLCM_trigger = yes
+								OR = {
+									sea_launch_point_[sea_launch_point] = yes
+									sea_launch_point_sub_[sea_launch_point] = yes
+								}
+							}
+						}
+					}
+					sea_launch_point = "[PREV.GetID]"
+				}
+			}
+			### HSCM ### trigger for SLCM mod to add
+			AND = {
+				meta_trigger = {
+					text = {
+						PREV = {
+							### HSCM ### trigger for SLCM mod to add
+							AND = {
+								[sea_launch_point] = {
+									has_state_flag = sea_launch_point
+								}
+								selected_TAG_has_HSCM_trigger = yes
+								OR = {
+									sea_launch_point_[sea_launch_point] = yes
+									sea_launch_point_sub_[sea_launch_point] = yes
+								}
+							}
+						}
+					}
+					sea_launch_point = "[PREV.GetID]"
+				}
+			}
+			### air_launch ###
+			### ALCM ###
+			AND = {
+				meta_trigger = {
+					text = {
+						PREV = {
+							### ALCM ###
+							AND = {
+								selected_TAG_has_ALCM_trigger = yes
+								OR = {
+									AND = {
+										PREV = {
+											air_base > 0
+											is_controlled_by = PREV.PREV
+										}
+										THIS = {
+											OR = {
+												has_deployed_air_force_size = {
+													size > [bomber_number_ALCM]
+													type = strategic_bomber
+												}
+												has_deployed_air_force_size = {
+													size > [STK_number_ALCM]
+													type = fighter
+													type = cas
+													type = tactical_bomber
+													type = scout_plane
+												}
+												has_deployed_air_force_size = {
+													size > [MR_number_ALCM]
+													type = fighter
+													type = interceptor
+													type = cas
+													type = tactical_bomber
+													type = scout_plane
+												}
+											}
+										}
+									}
+									AND = {
+										[sea_launch_point] = {
+											has_state_flag = sea_launch_point
+										}
+										THIS = { sea_launch_point_CV_[sea_launch_point] = yes }
+										has_deployed_air_force_size = {
+											size > [MR_CV_number_ALCM]
+											type = fighter
+											type = interceptor
+											type = cas
+											type = tactical_bomber
+											type = naval_bomber
+										}
+									}
+								}
+							}
+						}
+					}
+					sea_launch_point = "[PREV.GetID]"
+					bomber_number_ALCM = "[?ROOT.selected_TAG_bomber_number_ALCM_array^i]"
+					STK_number_ALCM = "[?ROOT.selected_TAG_STK_number_ALCM_array^i]"
+					MR_number_ALCM = "[?ROOT.selected_TAG_MR_number_ALCM_array^i]"
+					MR_CV_number_ALCM = "[?ROOT.selected_TAG_MR_CV_number_ALCM_array^i]"
+				}
+			}
+			### HSCM ### trigger for ALCM mod to add
+			AND = {
+				meta_trigger = {
+					text = {
+						PREV = {
+							### HSCM ### trigger for ALCM mod to add
+							AND = {
+								selected_TAG_has_HSCM_trigger = yes
+								OR = {
+									AND = {
+										PREV = {
+											air_base > 0
+											is_controlled_by = PREV.PREV
+										}
+										OR = {
+											has_deployed_air_force_size = {
+												size > [bomber_number_ALCM]
+												type = strategic_bomber
+											}
+											has_deployed_air_force_size = {
+												size > [STK_number_ALCM]
+												type = fighter
+												type = cas
+												type = tactical_bomber
+												type = scout_plane
+											}
+											has_deployed_air_force_size = {
+												size > [MR_number_ALCM]
+												type = fighter
+												type = interceptor
+												type = cas
+												type = tactical_bomber
+												type = scout_plane
+											}
+										}
+									}
+									AND = {
+										[sea_launch_point] = {
+											has_state_flag = sea_launch_point
+										}
+										THIS = { sea_launch_point_CV_[sea_launch_point] = yes }
+										has_deployed_air_force_size = {
+											size > [MR_CV_number_ALCM]
+											type = fighter
+											type = interceptor
+											type = cas
+											type = tactical_bomber
+											type = naval_bomber
+										}
+									}
+								}
+							}
+						}
+					}
+					sea_launch_point = "[PREV.GetID]"
+					bomber_number_ALCM = "[?ROOT.selected_TAG_bomber_number_ALCM_array^i]"
+					STK_number_ALCM = "[?ROOT.selected_TAG_STK_number_ALCM_array^i]"
+					MR_number_ALCM = "[?ROOT.selected_TAG_MR_number_ALCM_array^i]"
+					MR_CV_number_ALCM = "[?ROOT.selected_TAG_MR_CV_number_ALCM_array^i]"
+				}
+			}
+		}
+	}
+}
+
+### OLD VERSION
+# check_launch_point_gui = {
+# 	var:ROOT.missile_launch_point_array^i = {
+# 		OR = {
+# 			### ground_launch ###
+# 			### ICBM ###
+# 			AND = {
+# 				PREV = {
+# 					set_temp_variable = { temp1 = PREV.non_damaged_building_level@missile_silo }
+# 					#set_temp_variable = { temp2 = PREV.building_level@TEL_base }
+# 					multiply_temp_variable = { temp1 = silo_launcher_array^i }
+# 					#multiply_temp_variable = { temp2 = var_TEL_launcher }
+# 					add_to_temp_variable = { temp1 = 1 }
+# 					#add_to_temp_variable = { temp2 = 1 }
+# 					AND = {
+# 						has_ICBM_trigger = yes
+# 						check_variable = { temp1 > missile_salvo_array^i }
+# 					}
+# 				}
+# 			}
+# 			### IRBM ###
+# 			AND = {
+# 				PREV = {
+# 					set_temp_variable = { temp1 = PREV.non_damaged_building_level@missile_silo }
+# 					set_temp_variable = { temp2 = PREV.non_damaged_building_level@TEL_base }
+# 					multiply_temp_variable = { temp1 = silo_launcher_array^i }
+# 					multiply_temp_variable = { temp2 = TEL_launcher_array^i }
+# 					add_to_temp_variable = { temp1 = 1 }
+# 					add_to_temp_variable = { temp2 = 1 }
+# 					AND = {
+# 						has_IRBM_trigger = yes
+# 						OR = {
+# 							check_variable = { temp1 > missile_salvo_array^i }
+# 							check_variable = { temp2 > missile_salvo_array^i }
+# 						}
+# 					}
+# 				}
+# 			}
+# 			### GLCM ###
+# 			AND = {
+# 				PREV = {
+# 					#set_temp_variable = { temp1 = PREV.building_level@missile_silo }
+# 					set_temp_variable = { temp2 = PREV.non_damaged_building_level@TEL_base }
+# 					#multiply_temp_variable = { temp1 = var_silo_launcher }
+# 					multiply_temp_variable = { temp2 = TEL_launcher_array^i }
+# 					#add_to_temp_variable = { temp1 = 1 }
+# 					add_to_temp_variable = { temp2 = 1 }
+# 					AND = {
+# 						has_GLCM_trigger = yes
+# 						# only TEL_base
+# 						check_variable = { temp2 > missile_salvo_array^i }
+# 					}
+# 				}
+# 			}
+# 			### HSCM ###
+# 			AND = {
+# 				PREV = {
+# 					#set_temp_variable = { temp1 = PREV.building_level@missile_silo }
+# 					set_temp_variable = { temp2 = PREV.non_damaged_building_level@TEL_base }
+# 					#multiply_temp_variable = { temp1 = var_silo_launcher }
+# 					multiply_temp_variable = { temp2 = TEL_launcher_array^i }
+# 					#add_to_temp_variable = { temp1 = 1 }
+# 					add_to_temp_variable = { temp2 = 1 }
+# 					AND = {
+# 						has_HSCM_trigger = yes
+# 						# only TEL_base
+# 						check_variable = { temp2 > missile_salvo_array^i }
+# 					}
+# 				}
+# 			}
+# 			### sea_launch ###
+# 			### SLBM ###
+# 			AND = {
+# 				meta_trigger = {
+# 					text = {
+# 						PREV = {
+# 							### SLBM ###
+# 							AND = {
+# 								[sea_launch_point] = {
+# 									has_state_flag = sea_launch_point
+# 								}
+# 								has_SLBM_trigger = yes
+# 								sea_launch_point_sub_[sea_launch_point] = yes
+# 							}
+# 						}
+# 					}
+# 					sea_launch_point = "[PREV.GetID]"
+# 				}
+# 			}
+# 			### SLCM ###
+# 			AND = {
+# 				meta_trigger = {
+# 					text = {
+# 						PREV = {
+# 							### SLCM ###
+# 							AND = {
+# 								[sea_launch_point] = {
+# 									has_state_flag = sea_launch_point
+# 								}
+# 								has_SLCM_trigger = yes
+# 								OR = {
+# 									sea_launch_point_[sea_launch_point] = yes
+# 									sea_launch_point_sub_[sea_launch_point] = yes
+# 								}
+# 							}
+# 						}
+# 					}
+# 					sea_launch_point = "[PREV.GetID]"
+# 				}
+# 			}
+# 			### HSCM ### trigger for SLCM mod to add
+# 			AND = {
+# 				meta_trigger = {
+# 					text = {
+# 						PREV = {
+# 							### HSCM ### trigger for SLCM mod to add
+# 							AND = {
+# 								[sea_launch_point] = {
+# 									has_state_flag = sea_launch_point
+# 								}
+# 								has_HSCM_trigger = yes
+# 								OR = {
+# 									sea_launch_point_[sea_launch_point] = yes
+# 									sea_launch_point_sub_[sea_launch_point] = yes
+# 								}
+# 							}
+# 						}
+# 					}
+# 					sea_launch_point = "[PREV.GetID]"
+# 				}
+# 			}
+# 			### air_launch ###
+# 			### ALCM ###
+# 			AND = {
+# 				meta_trigger = {
+# 					text = {
+# 						PREV = {
+# 							### ALCM ###
+# 							AND = {
+# 								has_ALCM_trigger = yes
+# 								OR = {
+# 									AND = {
+# 										PREV = {
+# 											air_base > 0
+# 											is_controlled_by = PREV.PREV
+# 										}
+# 										THIS = {
+# 											OR = {
+# 												has_deployed_air_force_size = {
+# 													size > [bomber_number_ALCM]
+# 													type = strategic_bomber
+# 												}
+# 												has_deployed_air_force_size = {
+# 													size > [STK_number_ALCM]
+# 													type = fighter
+# 													type = cas
+# 													type = tactical_bomber
+# 													type = scout_plane
+# 												}
+# 												has_deployed_air_force_size = {
+# 													size > [MR_number_ALCM]
+# 													type = fighter
+# 													type = interceptor
+# 													type = cas
+# 													type = tactical_bomber
+# 													type = scout_plane
+# 												}
+# 											}
+# 										}
+# 									}
+# 									AND = {
+# 										[sea_launch_point] = {
+# 											has_state_flag = sea_launch_point
+# 										}
+# 										THIS = { sea_launch_point_CV_[sea_launch_point] = yes }
+# 										has_deployed_air_force_size = {
+# 											size > [MR_CV_number_ALCM]
+# 											type = fighter
+# 											type = interceptor
+# 											type = cas
+# 											type = tactical_bomber
+# 											type = naval_bomber
+# 										}
+# 									}
+# 								}
+# 							}
+# 						}
+# 					}
+# 					sea_launch_point = "[PREV.GetID]"
+# 					bomber_number_ALCM = "[?THIS.bomber_number_ALCM_array^i]"
+# 					STK_number_ALCM = "[?THIS.STK_number_ALCM_array^i]"
+# 					MR_number_ALCM = "[?THIS.MR_number_ALCM_array^i]"
+# 					MR_CV_number_ALCM = "[?THIS.MR_CV_number_ALCM_array^i]"
+# 				}
+# 			}
+# 			### HSCM ### trigger for ALCM mod to add
+# 			AND = {
+# 				meta_trigger = {
+# 					text = {
+# 						PREV = {
+# 							### HSCM ### trigger for ALCM mod to add
+# 							AND = {
+# 								has_HSCM_trigger = yes
+# 								OR = {
+# 									AND = {
+# 										PREV = {
+# 											air_base > 0
+# 											is_controlled_by = PREV.PREV
+# 										}
+# 										OR = {
+# 											has_deployed_air_force_size = {
+# 												size > [bomber_number_ALCM]
+# 												type = strategic_bomber
+# 											}
+# 											has_deployed_air_force_size = {
+# 												size > [STK_number_ALCM]
+# 												type = fighter
+# 												type = cas
+# 												type = tactical_bomber
+# 												type = scout_plane
+# 											}
+# 											has_deployed_air_force_size = {
+# 												size > [MR_number_ALCM]
+# 												type = fighter
+# 												type = interceptor
+# 												type = cas
+# 												type = tactical_bomber
+# 												type = scout_plane
+# 											}
+# 										}
+# 									}
+# 									AND = {
+# 										[sea_launch_point] = {
+# 											has_state_flag = sea_launch_point
+# 										}
+# 										THIS = { sea_launch_point_CV_[sea_launch_point] = yes }
+# 										has_deployed_air_force_size = {
+# 											size > [MR_CV_number_ALCM]
+# 											type = fighter
+# 											type = interceptor
+# 											type = cas
+# 											type = tactical_bomber
+# 											type = naval_bomber
+# 										}
+# 									}
+# 								}
+# 							}
+# 						}
+# 					}
+# 					sea_launch_point = "[PREV.GetID]"
+# 					bomber_number_ALCM = "[?THIS.bomber_number_ALCM_array^i]"
+# 					STK_number_ALCM = "[?THIS.STK_number_ALCM_array^i]"
+# 					MR_number_ALCM = "[?THIS.MR_number_ALCM_array^i]"
+# 					MR_CV_number_ALCM = "[?THIS.MR_CV_number_ALCM_array^i]"
+# 				}
+# 			}
+# 		}
+# 	}
+# }
 
 ####################################
 ####################################
