@@ -995,6 +995,22 @@ set_missile_launch_arrays_selected_TAG = {
 	clear_array = ROOT.selected_TAG_target_selected_13_array
 	clear_array = ROOT.selected_TAG_target_selected_14_array
 	clear_array = ROOT.selected_TAG_target_selected_15_array
+	#
+	clear_array = ROOT.selected_TAG_silo_launcher_array
+	clear_array = ROOT.selected_TAG_TEL_launcher_array
+	clear_array = ROOT.selected_TAG_bomber_number_ALCM_array
+	clear_array = ROOT.selected_TAG_STK_number_ALCM_array
+	clear_array = ROOT.selected_TAG_MR_number_ALCM_array
+	clear_array = ROOT.selected_TAG_MR_CV_number_ALCM_array
+
+	var:missile_launch_selected_TAG = {	
+		clear_launch_trigger_num_gui_arrays = yes
+		for_each_loop = {
+			array = missile_target_point_array
+			#array = ROOT.selected_TAG_missile_target_point_array
+			set_launch_trigger_num_gui = yes
+		}
+	}
 
 
 	var:missile_launch_selected_TAG = {
@@ -1234,6 +1250,67 @@ set_missile_launch_arrays_selected_TAG = {
 					check_variable = { THIS.missile_alert_array^i = ROOT.var_alert_sort_button }
 				}
 				add_to_array = { ROOT.selected_TAG_target_selected_15_array = v }
+			}
+		}
+		###
+		# clear_launch_trigger_num_gui_arrays = yes
+		# for_each_loop = {
+		# 	array = missile_target_point_array
+		# 	#array = ROOT.selected_TAG_missile_target_point_array
+		# 	set_launch_trigger_num_gui = yes
+		# }
+		for_each_loop = {
+			array = THIS.silo_launcher_array
+			if = {
+				limit = {
+					check_variable = { THIS.missile_alert_array^i = ROOT.var_alert_sort_button }
+				}
+				add_to_array = { ROOT.selected_TAG_silo_launcher_array = v }
+			}
+		}
+		for_each_loop = {
+			array = THIS.TEL_launcher_array
+			if = {
+				limit = {
+					check_variable = { THIS.missile_alert_array^i = ROOT.var_alert_sort_button }
+				}
+				add_to_array = { ROOT.selected_TAG_TEL_launcher_array = v }
+			}
+		}
+		for_each_loop = {
+			array = THIS.bomber_number_ALCM_array
+			if = {
+				limit = {
+					check_variable = { THIS.missile_alert_array^i = ROOT.var_alert_sort_button }
+				}
+				add_to_array = { ROOT.selected_TAG_bomber_number_ALCM_array = v }
+			}
+		}
+		for_each_loop = {
+			array = THIS.STK_number_ALCM_array
+			if = {
+				limit = {
+					check_variable = { THIS.missile_alert_array^i = ROOT.var_alert_sort_button }
+				}
+				add_to_array = { ROOT.selected_TAG_STK_number_ALCM_array = v }
+			}
+		}
+		for_each_loop = {
+			array = THIS.MR_number_ALCM_array
+			if = {
+				limit = {
+					check_variable = { THIS.missile_alert_array^i = ROOT.var_alert_sort_button }
+				}
+				add_to_array = { ROOT.selected_TAG_MR_number_ALCM_array = v }
+			}
+		}
+		for_each_loop = {
+			array = THIS.MR_CV_number_ALCM_array
+			if = {
+				limit = {
+					check_variable = { THIS.missile_alert_array^i = ROOT.var_alert_sort_button }
+				}
+				add_to_array = { ROOT.selected_TAG_MR_CV_number_ALCM_array = v }
 			}
 		}
 	}
@@ -1913,6 +1990,38 @@ set_MR_CV_number_ALCM_trigger = {
 	}
 }
 
+### for launch gui entry ###
+
+set_launch_trigger_num_gui = {
+	meta_effect = {
+		text = {
+			set_missile_model_[missile_type] = yes
+		}
+		missile_type = "[?missile_type_array^i]"
+	}
+	set_ship_number_LAM_trigger = yes
+	set_sub_number_LAM_trigger = yes
+	set_bomber_number_ALCM_trigger = yes
+	set_STK_number_ALCM_trigger = yes
+	set_MR_number_ALCM_trigger = yes
+	set_MR_CV_number_ALCM_trigger = yes
+
+	add_to_array = { array = silo_launcher_array value = var_silo_launcher index = i }
+	add_to_array = { array = TEL_launcher_array value = var_TEL_launcher index = i }
+	add_to_array = { array = bomber_number_ALCM_array value = var_bomber_number_ALCM index = i }
+	add_to_array = { array = STK_number_ALCM_array value = var_STK_number_ALCM index = i }
+	add_to_array = { array = MR_number_ALCM_array value = var_MR_number_ALCM index = i }
+	add_to_array = { array = MR_CV_number_ALCM_array value = var_MR_CV_number_ALCM index = i }
+}
+
+clear_launch_trigger_num_gui_arrays = {
+	clear_array = silo_launcher_array
+	clear_array = TEL_launcher_array
+	clear_array = bomber_number_ALCM_array
+	clear_array = STK_number_ALCM_array
+	clear_array = MR_number_ALCM_array
+	clear_array = MR_CV_number_ALCM_array
+}
 
 ### target selection ###
 
@@ -7548,6 +7657,9 @@ remove_nuclear_status_special_effect = {
 # new name
 # if change here, change fire_on_alert as well
 missile_on_weekly = {
+	### for launch gui entry ### 
+	clear_launch_trigger_num_gui_arrays = yes
+	#
 	for_each_loop = {
 		array = missile_target_point_array
 		### needs to be tested
@@ -7691,5 +7803,7 @@ missile_on_weekly = {
 
 			set_missile_damage_stats = yes ### should be zero for all
 		}
+		### for launch gui entry ### 
+		set_launch_trigger_num_gui = yes
 	}
 }
