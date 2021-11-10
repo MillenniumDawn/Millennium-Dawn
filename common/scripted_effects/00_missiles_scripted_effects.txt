@@ -1003,7 +1003,7 @@ set_missile_launch_arrays_selected_TAG = {
 	clear_array = ROOT.selected_TAG_MR_number_ALCM_array
 	clear_array = ROOT.selected_TAG_MR_CV_number_ALCM_array
 
-	var:missile_launch_selected_TAG = {	
+	var:missile_launch_selected_TAG = {
 		clear_launch_trigger_num_gui_arrays = yes
 		for_each_loop = {
 			array = missile_target_point_array
@@ -3456,6 +3456,24 @@ fire_on_alert = {
 						}
 					}
 				}
+				# check missiles and warhead inventory
+				set_temp_variable = { temp_check_missile_type = missile_type_array^i }
+				OR = {
+					check_variable = { missile_inventory_array^temp_check_missile_type > missile_salvo_array^i }
+					check_variable = { missile_inventory_array^temp_check_missile_type = missile_salvo_array^i }
+				}
+				if = {
+					limit = {
+						check_variable = { missile_nuke_array^i = 2 }
+					}
+					set_temp_variable = { temp_check_warhead_num = missile_salvo_array^i }
+					multiply_temp_variable = { temp_check_warhead_num = missile_MIRV_array^i }
+					set_temp_variable = { temp_check_warhead_type = missile_nuclear_warhead_array^i }
+					OR = {
+						check_variable = { nuclear_warhead_inventory_array^temp_check_warhead_type > temp_check_warhead_num }
+						check_variable = { nuclear_warhead_inventory_array^temp_check_warhead_type = temp_check_warhead_num }
+					}
+				}
 			}
 			### subtract from strike limit
 			if = {
@@ -3500,7 +3518,16 @@ fire_on_alert = {
 			set_variable = { var_MIRV = missile_MIRV_array^i }
 			set_variable = { var_decoy = missile_decoy_array^i }
 
-			### subtract warheads need to be added
+			### subtract warheads
+			if = {
+				limit = {
+					check_variable = { missile_nuke_array^i = 2 }
+				}
+				set_temp_variable = { temp_check_warhead_num = var_salvo }
+				multiply_temp_variable = { temp_check_warhead_num = var_MIRV }
+				set_temp_variable = { temp_check_warhead_type = missile_nuclear_warhead_array^i }
+				subtract_from_variable = { nuclear_warhead_inventory_array^temp_check_warhead_type = temp_check_warhead_num }
+			}
 
 			subtract_from_variable = { missile_duration_array^i = 1 }
 
@@ -7671,7 +7698,26 @@ missile_on_weekly = {
 				check_variable = { missile_duration_array^i > 0 }
 				#### 1 = fire; 2 = alert
 				check_variable = { missile_alert_array^i = 1 }
-				### needs to be tested
+				### check missiles and warhead inventory
+				set_temp_variable = { temp_check_missile_type = missile_type_array^i }
+				OR = {
+					check_variable = { missile_inventory_array^temp_check_missile_type > missile_salvo_array^i }
+					check_variable = { missile_inventory_array^temp_check_missile_type = missile_salvo_array^i }
+				}
+				if = {
+					limit = {
+						check_variable = { missile_nuke_array^i = 2 }
+					}
+					set_temp_variable = { temp_check_warhead_num = missile_salvo_array^i }
+					multiply_temp_variable = { temp_check_warhead_num = missile_MIRV_array^i }
+					set_temp_variable = { temp_check_warhead_type = missile_nuclear_warhead_array^i }
+					OR = {
+						check_variable = { nuclear_warhead_inventory_array^temp_check_warhead_type > temp_check_warhead_num }
+						check_variable = { nuclear_warhead_inventory_array^temp_check_warhead_type = temp_check_warhead_num }
+					}
+				}
+
+				#check_variable = { missile_alert_array^i = 1 }
 				check_launch_point = yes
 				#
 			}
@@ -7712,8 +7758,16 @@ missile_on_weekly = {
 			set_variable = { var_MIRV = missile_MIRV_array^i }
 			set_variable = { var_decoy = missile_decoy_array^i }
 
-			### subtract warheads need to be added
-
+			### subtract warheads
+			if = {
+				limit = {
+					check_variable = { missile_nuke_array^i = 2 }
+				}
+				set_temp_variable = { temp_check_warhead_num = var_salvo }
+				multiply_temp_variable = { temp_check_warhead_num = var_MIRV }
+				set_temp_variable = { temp_check_warhead_type = missile_nuclear_warhead_array^i }
+				subtract_from_variable = { nuclear_warhead_inventory_array^temp_check_warhead_type = temp_check_warhead_num }
+			}
 
 			#OLD VERSION
 			# meta_effect = {
