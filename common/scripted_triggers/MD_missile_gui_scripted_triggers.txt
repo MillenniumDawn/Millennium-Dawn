@@ -916,9 +916,16 @@ MD_missiles_target_button_distance_trigger = {
 #var_total_firing
 
 has_num_nuke_warheads = {
-	check_variable = { var_gui_nuke = 2 }
-	#check_variable = { var_nuclear_warhead = 2 }
-	#var_gui_MIRV
+	custom_trigger_tooltip = {
+		tooltip = has_num_nuke_warheads_TT
+		set_temp_variable = { temp_num_nuke_warheads = var_total_firing }
+		multiply_temp_variable = { temp_num_nuke_warheads = var_gui_MIRV }
+		set_temp_variable = { temp_warhead_type_ID = var_nuclear_warhead }
+		#subtract_from_variable = { nuclear_warhead_inventory_array^temp_warhead_type_ID = temp_check_warhead_num }
+		NOT = {
+			check_variable = { nuclear_warhead_inventory_array^temp_warhead_type_ID < temp_num_nuke_warheads }
+		}
+	}
 }
 
 has_num_missiles = {
@@ -2206,6 +2213,263 @@ nuclear_warhead_prod_start_button_trigger = {
 		OR = {
 			check_variable = { var_nuclear_material_stockpile > temp1 }
 			check_variable = { var_nuclear_material_stockpile = temp1 }
+		}
+	}
+}
+
+#################################
+### Satellite System Triggers ###
+#################################
+
+has_GNSS_mil_system_for_CM = {
+	custom_trigger_tooltip = {
+		tooltip = has_GNSS_mil_system_for_CM_TT
+		set_temp_variable = { temp_smaller_CM_idx = cruise_missile_display_array^i }
+		if = {
+			limit = {
+				check_variable = { temp_smaller_CM_idx > 40 }
+				check_variable = { temp_smaller_CM_idx < 49 }
+			}
+			subtract_from_temp_variable = { temp_smaller_CM_idx = 41 }
+		}
+		if = {
+			limit = {
+				check_variable = { temp_smaller_CM_idx > 50 }
+				check_variable = { temp_smaller_CM_idx < 59 }
+			}
+			subtract_from_temp_variable = { temp_smaller_CM_idx = 51 }
+		}
+		if = {
+			limit = {
+				check_variable = { temp_smaller_CM_idx > 60 }
+				check_variable = { temp_smaller_CM_idx < 69 }
+			}
+			subtract_from_temp_variable = { temp_smaller_CM_idx = 61 }
+		}
+		if = {
+			limit = {
+				check_variable = { temp_smaller_CM_idx = 71 }
+			}
+			set_temp_variable = { temp_smaller_CM_idx = 6 }
+		}
+		if = {
+			limit = {
+				check_variable = { temp_smaller_CM_idx = 72 }
+			}
+			set_temp_variable = { temp_smaller_CM_idx = 7 }
+		}
+		set_temp_variable = { temp_GNSS_idx = temp_smaller_CM_idx }
+		subtract_from_temp_variable = { temp_smaller_CM_idx = 1 }
+		OR = {
+			check_variable = { var_GNSS_mil_system_idx > temp_smaller_CM_idx }
+			AND = {
+				if = {
+					limit = {
+						is_in_array = { GNSS_mil_access_system_idx_array = 7 }
+					}
+					set_temp_variable = { temp_GNSS_mil_access_system_idx = 7 }
+				}
+				else_if = {
+					limit = {
+						is_in_array = { GNSS_mil_access_system_idx_array = 6 }
+					}
+					set_temp_variable = { temp_GNSS_mil_access_system_idx = 6 }
+				}
+				else_if = {
+					limit = {
+						is_in_array = { GNSS_mil_access_system_idx_array = 5 }
+					}
+					set_temp_variable = { temp_GNSS_mil_access_system_idx = 5 }
+				}
+				else_if = {
+					limit = {
+						is_in_array = { GNSS_mil_access_system_idx_array = 4 }
+					}
+					set_temp_variable = { temp_GNSS_mil_access_system_idx = 4 }
+				}
+				else_if = {
+					limit = {
+						is_in_array = { GNSS_mil_access_system_idx_array = 3 }
+					}
+					set_temp_variable = { temp_GNSS_mil_access_system_idx = 3 }
+				}
+				else_if = {
+					limit = {
+						is_in_array = { GNSS_mil_access_system_idx_array = 2 }
+					}
+					set_temp_variable = { temp_GNSS_mil_access_system_idx = 2 }
+				}
+				else_if = {
+					limit = {
+						is_in_array = { GNSS_mil_access_system_idx_array = 1 }
+					}
+					set_temp_variable = { temp_GNSS_mil_access_system_idx = 1 }
+				}
+				check_variable = { temp_GNSS_mil_access_system_idx > temp_smaller_CM_idx }
+			}
+
+			# any_of = {
+			# 	array = GNSS_mil_access_system_idx_array
+			# 	check_variable = { v > temp_smaller_CM_idx }
+			# }
+		}
+	}
+}
+
+# has_GNSS_mil_system_for_CM = {
+# 	custom_trigger_tooltip = {
+# 		tooltip = has_GNSS_mil_system_for_CM_TT
+# 		OR = {
+# 			AND = {
+# 				OR = {
+# 					check_variable = { cruise_missile_display_array^i = 41 }
+# 					check_variable = { cruise_missile_display_array^i = 51 }
+# 					check_variable = { cruise_missile_display_array^i = 61 }
+# 				}
+# 				OR = {
+# 					any_of = {
+# 						array = GNSS_mil_systems_array
+# 						check_variable = { v > -1 }
+# 					}
+# 					any_of = {
+# 						array = GNSS_mil_access_system_idx_array
+# 						check_variable = { v > -1 }
+# 					}
+# 				}
+# 			}
+# 		}
+
+# 	}
+# }
+
+
+has_GNSS_mil_system_0 = {
+	custom_trigger_tooltip = {
+		tooltip = has_GNSS_mil_system_0_TT
+		OR = {
+			any_of = {
+				array = GNSS_mil_systems_array
+				check_variable = { GNSS_mil_systems_array^i > -1 }
+			}
+			any_of = {
+				array = GNSS_mil_access_system_idx_array
+				check_variable = { GNSS_mil_access_system_idx_array^i > -1 }
+			}
+		}
+	}
+}
+
+has_GNSS_mil_system_1 = {
+	custom_trigger_tooltip = {
+		tooltip = has_GNSS_mil_system_1_TT
+		OR = {
+			any_of = {
+				array = GNSS_mil_systems_array
+				check_variable = { GNSS_mil_systems_array^i > 0 }
+			}
+			any_of = {
+				array = GNSS_mil_access_system_idx_array
+				check_variable = { GNSS_mil_access_system_idx_array^i > 0 }
+			}
+		}
+	}
+}
+
+has_GNSS_mil_system_2 = {
+	custom_trigger_tooltip = {
+		tooltip = has_GNSS_mil_system_2_TT
+		OR = {
+			any_of = {
+				array = GNSS_mil_systems_array
+				check_variable = { GNSS_mil_systems_array^i > 1 }
+			}
+			any_of = {
+				array = GNSS_mil_access_system_idx_array
+				check_variable = { GNSS_mil_access_system_idx_array^i > 1 }
+			}
+		}
+	}
+}
+
+has_GNSS_mil_system_3 = {
+	custom_trigger_tooltip = {
+		tooltip = has_GNSS_mil_system_3_TT
+		OR = {
+			any_of = {
+				array = GNSS_mil_systems_array
+				check_variable = { GNSS_mil_systems_array^i > 2 }
+			}
+			any_of = {
+				array = GNSS_mil_access_system_idx_array
+				check_variable = { GNSS_mil_access_system_idx_array^i > 2 }
+			}
+		}
+	}
+}
+
+has_GNSS_mil_system_4 = {
+	custom_trigger_tooltip = {
+		tooltip = has_GNSS_mil_system_4_TT
+		OR = {
+			any_of = {
+				array = GNSS_mil_systems_array
+				check_variable = { GNSS_mil_systems_array^i > 3 }
+			}
+			any_of = {
+				array = GNSS_mil_access_system_idx_array
+				check_variable = { GNSS_mil_access_system_idx_array^i > 3 }
+			}
+		}
+	}
+}
+
+
+has_GNSS_mil_system_5 = {
+	custom_trigger_tooltip = {
+		tooltip = has_GNSS_mil_system_5_TT
+		OR = {
+			any_of = {
+				array = GNSS_mil_systems_array
+				check_variable = { GNSS_mil_systems_array^i > 4 }
+			}
+			any_of = {
+				array = GNSS_mil_access_system_idx_array
+				check_variable = { GNSS_mil_access_system_idx_array^i > 4 }
+			}
+		}
+	}
+}
+
+
+has_GNSS_mil_system_6 = {
+	custom_trigger_tooltip = {
+		tooltip = has_GNSS_mil_system_6_TT
+		OR = {
+			any_of = {
+				array = GNSS_mil_systems_array
+				check_variable = { GNSS_mil_systems_array^i > 5 }
+			}
+			any_of = {
+				array = GNSS_mil_access_system_idx_array
+				check_variable = { GNSS_mil_access_system_idx_array^i > 5 }
+			}
+		}
+	}
+}
+
+
+has_GNSS_mil_system_7 = {
+	custom_trigger_tooltip = {
+		tooltip = has_GNSS_mil_system_7_TT
+		OR = {
+			any_of = {
+				array = GNSS_mil_systems_array
+				check_variable = { GNSS_mil_systems_array^i > 6 }
+			}
+			any_of = {
+				array = GNSS_mil_access_system_idx_array
+				check_variable = { GNSS_mil_access_system_idx_array^i > 6 }
+			}
 		}
 	}
 }
