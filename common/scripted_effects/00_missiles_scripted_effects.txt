@@ -4018,6 +4018,117 @@ set_ABM_display_array = {
 	add_to_array = { ABM_display_array = 97 }
 }
 
+######################################
+### air & missile defense on daily ###
+######################################
+
+update_deployed_air_missile_defense = {
+	update_NSAM_AD_deployed = yes
+	update_SAM_AD_deployed = yes
+	update_deployed_SAM_MD_sea = yes
+	update_deployed_SAM_MD_land = yes
+	update_deployed_ABM_sea = yes
+	update_deployed_ABM_land = yes
+}
+
+update_NSAM_AD_deployed = {
+	### add all aa ships
+	set_variable = { var_AD_ships = 0 }
+	add_to_variable = { var_AD_ships = num_ships_with_type@cruiser_mtg }
+	add_to_variable = { var_AD_ships = num_ships_with_type@stealth_destroyer_mtg }
+	add_to_variable = { var_AD_ships = num_ships_with_type@frigate_mtg }
+	### multiply launchers
+	set_variable = { var_NSAM_AD_launchers = var_ship_SAM_launcher_tech }
+	multiply_variable = { var_NSAM_AD_launchers = var_AD_ships }
+	### subtract destroyed NSAM
+	if = {
+		limit = {
+			check_variable = { var_NSAM_AD_deployed > var_NSAM_AD_launchers }
+		}
+		set_temp_variable = { temp_NSAM_lost = var_NSAM_AD_deployed }
+		subtract_from_temp_variable = { temp_NSAM_lost = var_NSAM_AD_launchers }
+		add_to_variable = { var_NSAM_AD_lost = temp_NSAM_lost }
+	}
+	### auto redeploy
+	else_if = {
+		limit = {
+			check_variable = { var_NSAM_AD_launchers > var_NSAM_AD_deployed }
+			check_variable = { var_NSAM_auto_redeploy = 2 }
+		}
+		set_temp_variable = { temp_NSAM_add = var_NSAM_AD_launchers }
+		subtract_from_temp_variable = { temp_NSAM_add = var_NSAM_AD_deployed }
+		add_to_variable = { var_NSAM_AD_deployed = temp_NSAM_add }
+		subtract_from_variable = { missile_inventory_array^var_NSAM_type = temp_NSAM_add }
+	}
+	### ratio
+	set_variable = { var_NSAM_AD_deploy_ratio = var_NSAM_AD_deployed }
+	divide_variable = { var_NSAM_AD_deploy_ratio = var_NSAM_AD_launchers }
+	set_variable = { var_fleet_air_defense_system = -0.5 }
+	add_to_variable = { var_fleet_air_defense_system = var_NSAM_AD_deploy_ratio }
+}
+
+update_SAM_AD_deployed = {
+	### non-damaged batteries
+	set_variable = { var_AD_batteries = 0 }
+	every_controlled_state = {
+		limit = {
+			anti_air_building > 0
+		}
+		add_to_variable = { ROOT.var_AD_batteries = non_damaged_building_level@anti_air_building }
+	}
+	set_variable = { var_SAM_AD_launcher_total = var_SAM_AD_launcher_tech }
+	multiply_variable = { var_SAM_AD_launcher_total = var_AD_batteries }
+	### subtract destroyed NSAM
+	if = {
+		limit = {
+			check_variable = { var_SAM_AD_deployed > var_SAM_AD_launcher_total }
+		}
+		set_temp_variable = { temp_SAM_lost = var_SAM_AD_deployed }
+		subtract_from_temp_variable = { temp_SAM_lost = var_SAM_AD_launcher_total }
+		add_to_variable = { var_SAM_AD_lost = temp_SAM_lost }
+	}
+	### auto redeploy
+	else_if = {
+		limit = {
+			check_variable = { var_SAM_AD_launcher_total > var_SAM_AD_deployed }
+			check_variable = { var_SAM_auto_redeploy = 2 }
+		}
+		set_temp_variable = { temp_SAM_add = var_SAM_AD_launcher_total }
+		subtract_from_temp_variable = { temp_SAM_add = var_SAM_AD_deployed }
+		add_to_variable = { var_SAM_AD_deployed = temp_SAM_add }
+		subtract_from_variable = { missile_inventory_array^var_SAM_type = temp_SAM_add }
+	}
+	### ratio
+	set_variable = { var_SAM_AD_deploy_ratio = var_SAM_AD_deployed }
+	divide_variable = { var_SAM_AD_deploy_ratio = var_SAM_AD_launcher_total }
+	multiply_variable = { var_SAM_AD_damage = var_SAM_AD_deploy_ratio }
+	multiply_variable = { var_SAM_AD_intercept_chance_total = var_SAM_AD_deploy_ratio }
+	### costs
+	set_variable = { var_SAM_AD_costs_total = var_SAM_AD_costs_unit }
+	multiply_variable = { var_SAM_AD_costs_total = var_SAM_AD_deployed }
+	if = {
+		limit = {
+			has_war = yes
+		}
+		multiply_variable = { var_SAM_AD_costs_total = 4 }
+	}
+}
+
+update_deployed_SAM_MD_sea = {
+
+}
+
+update_deployed_SAM_MD_land = {
+
+}
+
+update_deployed_ABM_sea = {
+
+}
+
+update_deployed_ABM_land = {
+
+}
 
 ######################
 ### satellites gui ###
