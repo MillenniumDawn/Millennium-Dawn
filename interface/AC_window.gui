@@ -74,6 +74,7 @@ guiTypes = {
 			name = "AC_allied_construction_bg1"
 			position = { x=0 y=0 }
 			spriteType = "GFX_AC_building_background"
+
 		}
 
 		buttonType = {
@@ -121,7 +122,7 @@ guiTypes = {
 			name = "AC_build_amount_text"
 			position = { x=50 y=59 }
 			font = "hoi_18b"
-			text = "[?Root.AC_build_amount]"
+			text = "[AC_GetBuildAmount]"
 			maxWidth = 340
 			maxHeight = 23
 			format = center
@@ -136,8 +137,12 @@ guiTypes = {
 			spriteType = "GFX_AC_button_background"
 
 			pdx_tooltip = "AC_build_cost_tt"
+			pdx_tooltip_delayed = "AC_build_cost_tt_delayed"
 		}
 
+		# Investment Cost Windows
+		# AC_build_cost == Treasury cost of the project
+		# AC_Time == Duration of the project
 		iconType = {
 			name = "AC_build_cost_icon"
 			position = { x=155 y=15 }
@@ -149,7 +154,7 @@ guiTypes = {
 			name = "AC_build_cost_text"
 			position = { x=50 y=20 }
 			font = "hoi_18b"
-			text = "[?Root.AC_build_cost] Billion"
+			text = "[?ROOT.project_monetary_cost^-1] Billion"
 			maxWidth = 340
 			maxHeight = 23
 			format = center
@@ -164,6 +169,7 @@ guiTypes = {
 			spriteType = "GFX_AC_button_background2"
 
 			pdx_tooltip = "AC_clock_tt"
+			pdx_tooltip_delayed = "AC_clock_tt_delayed"
 		}
 		iconType = {
 			name = "AC_Time_icon"
@@ -171,64 +177,22 @@ guiTypes = {
 			spriteType = "GFX_AC_clock"
 
 			pdx_tooltip = "AC_clock_tt"
+			pdx_tooltip_delayed = "AC_clock_tt_delayed"
 		}
 		instantTextboxType = {
 			name = "AC_time_text"
 			position = { x=-50 y=20 }
 			font = "hoi_18b"
-			text = "[?Root.AC_construction_duration] days"
+			text = "[?ROOT.project_total_construction_duration_display^-1] days"
 			maxWidth = 340
 			maxHeight = 23
 			format = center
 			alwaystransparent = yes
 
 			pdx_tooltip = "AC_clock_tt"
+			pdx_tooltip_delayed = "AC_clock_tt_delayed"
 		}
 
-		#################### assigned factories
-
-		# iconType = {
-			# name = "GFX_AC_button_background2"
-			# position = { x=190 y=12 }
-			# spriteType = "GFX_AC_button_background"
-
-			# pdx_tooltip = "AC_assigned_factories_button_tt"
-		# }
-
-		# iconType = {
-			# name = "AC_assigned_factories_icon"
-			# position = { x=200 y=18 }
-			# spriteType = "GFX_AC_assigned_factories_button"
-
-			# pdx_tooltip = "AC_assigned_factories_button_tt"
-		# }
-
-		# buttonType = {
-			# name = "AC_assigned_factories_increase_button"
-			# position = { x=278 y=15 }
-			# spriteType = "GFX_naval_increase_amount"
-
-			# pdx_tooltip = "AC_assigned_factories_button_tt"
-		# }
-
-		# buttonType = {
-			# name = "AC_assigned_factories_decrease_button"
-			# position = { x=227 y=15 }
-			# spriteType = "GFX_naval_decrease_amount"
-
-			# pdx_tooltip = "AC_assigned_factories_button_tt"
-		# }
-
-		# instantTextboxType = {
-			# name = "AC_assigned_factories_value"
-			# position = { x=98 y=21 }
-			# font = "hoi_18b"
-			# text = "[?Root.AC_assigned_factories]"
-			# maxWidth = 340
-			# maxHeight = 23
-			# format = center
-			# alwaystransparent = yes
-		# }
 
 		#################### build button
 
@@ -238,87 +202,148 @@ guiTypes = {
 			spriteType = "GFX_AC_build_button"
 
 			pdx_tooltip = "AC_build_button_tt"
+			pdx_tooltip_delayed = "AC_build_button_tt_delayed"
 		}
 
 		instantTextboxType = {
 			name = "AC_build_button_text"
 			position = { x=41 y=103 }
 			font = "hoi_18mbs"
-			text = "AC_build_button_text"
+			text = "[AC_GetBuildButtonText] "
 			maxWidth = 340
 			maxHeight = 23
 			format = center
 			alwaystransparent = yes
 		}
 
-		####################
-
-		# STATE BUILDINGS
-
-		buttonType = {
-			name = "AC_building_infra_button"
-			position = { x=8 y=45 }
-			spriteType = "GFX_AC_building_infra"
-
-			pdx_tooltip = "AC_construction_INF"
+		instantTextboxType = {
+			name = "AC_build_button_text2"
+			position = { x=80 y=113 }
+			font = "hoi_20b"
+			text = "[?ROOT.active_projects]/[AC_GetMaxProjects]"
+			maxWidth = 340
+			maxHeight = 23
+			format = center
+			alwaystransparent = yes
 		}
 
-		buttonType = {
-			name = "AC_building_airbase_button"
-			position = { x=45 y=45 }
-			spriteType = "GFX_AC_building_airbase"
+		# Button Indexes and Positions
+		# Page 1
+		# line One - CIC - 1, MIC - 2, NIC - 3
+		# Line Two - Infrastructure - 4, Offices - 5, SAM - 6, Radar - 7
+		# Page 2
+		# Line One - Air Bases - 8, Fuel Silo - 9, Internet Station - 10
+		# Line Two - Biofuel Refineries - 11
+		# Positions of Line One: { 8, 45, 82, 119 }, 45
+		# Positions of Line Two: { 8, 45, 82, 119 }, 76
 
-			pdx_tooltip = "AC_construction_AIR"
-		}
-
-		buttonType = {
-			name = "AC_building_antiair_button"
-			position = { x=8 y=76 }
-			spriteType = "GFX_AC_building_antiair"
-
-			pdx_tooltip = "AC_construction_AA"
-		}
-
-		buttonType = {
-			name = "AC_building_radar_button"
-			position = { x=45 y=76 }
-			spriteType = "GFX_AC_building_radar"
-
-			pdx_tooltip = "AC_construction_RAD"
-		}
-
-		# SHARED BUILDINGS
-
-		buttonType = {
-			name = "AC_building_mic_button"
-			position = { x=82 y=45 }
-			spriteType = "GFX_AC_building_mic"
-
-			pdx_tooltip = "AC_construction_MIC"
-		}
-
+		# Page One: 1 - 8 Indexes
 		buttonType = {
 			name = "AC_building_cic_button"
-			position = { x=119 y=45 }
+			position = { x=8 y=45 }
 			spriteType = "GFX_AC_building_cic"
 
 			pdx_tooltip = "AC_construction_CIC"
+			pdx_tooltip_delayed = "AC_construction_CIC_delayed"
+		}
+
+		buttonType = {
+			name = "AC_building_mic_button"
+			position = { x=45 y=45 }
+			spriteType = "GFX_AC_building_mic"
+
+			pdx_tooltip = "AC_construction_MIC"
+			pdx_tooltip_delayed = "AC_construction_MIC_delayed"
 		}
 
 		buttonType = {
 			name = "AC_building_nic_button"
-			position = { x=82 y=76 }
+			position = { x=82 y=45 }
 			spriteType = "GFX_AC_building_nic"
 
 			pdx_tooltip = "AC_construction_NIC"
+			pdx_tooltip_delayed = "AC_construction_NIC_delayed"
+		}
+
+		buttonType = {
+			name = "AC_building_infra_button"
+			position = { x=8 y=76 }
+			spriteType = "GFX_AC_building_infra"
+
+			pdx_tooltip = "AC_construction_INF"
+			pdx_tooltip_delayed = "AC_construction_INF_delayed"
+		}
+
+		buttonType = {
+			name = "AC_building_offices_button"
+			position = { x=45 y=76 }
+			spriteType = "GFX_AC_building_office"
+
+			pdx_tooltip = "AC_construction_offices"
+			pdx_tooltip_delayed = "AC_construction_offices_delayed"
+		}
+
+		buttonType = {
+			name = "AC_building_antiair_button"
+			position = { x=82 y=76 }
+			spriteType = "GFX_AC_building_antiair"
+
+			pdx_tooltip = "AC_construction_AA"
+			pdx_tooltip_delayed = "AC_construction_AA_delayed"
+		}
+
+		buttonType = {
+			name = "AC_building_radar_button"
+			position = { x=119 y=76 }
+			spriteType = "GFX_AC_building_radar"
+
+			pdx_tooltip = "AC_construction_RAD"
+			pdx_tooltip_delayed = "AC_construction_RAD_delayed"
+		}
+
+		#Page Two: 9 - 12 Indexes
+		buttonType = {
+			name = "AC_building_airbase_button"
+			position = { x=8 y=45 }
+			spriteType = "GFX_AC_building_airbase"
+
+			pdx_tooltip = "AC_construction_AIR"
+			pdx_tooltip_delayed = "AC_construction_AIR_delayed"
+		}
+
+		buttonType = {
+			name = "AC_building_fuel_silos_button"
+			position = { x=45 y=45 }
+			spriteType = "GFX_AC_building_fuel_silo"
+
+			pdx_tooltip = "AC_construction_fuel_silo"
+			pdx_tooltip_delayed = "AC_construction_fuel_silo_delayed"
+		}
+
+		buttonType = {
+			name = "AC_building_internet_station_button"
+			position = { x=82 y=45 }
+			spriteType = "GFX_AC_building_internet_station"
+
+			pdx_tooltip = "AC_construction_internet_station"
+			pdx_tooltip_delayed = "AC_construction_internet_station_delayed"
 		}
 
 		buttonType = {
 			name = "AC_building_ref_button"
-			position = { x=119 y=76 }
+			position = { x=8 y=76 }
 			spriteType = "GFX_AC_building_ref"
 
 			pdx_tooltip = "AC_construction_REF"
+			pdx_tooltip_delayed = "AC_construction_REF_delayed"
+		}
+
+		buttonType = {
+			name = "AC_increase_page"
+			position = { x = 119 y = 45 }
+			spriteType = "GFX_naval_increase_amount"
+			pdx_tooltip = "AC_page_up"
+			pdx_tooltip_delayed = "AC_construction_page_up_delayed"
 		}
 	}
 

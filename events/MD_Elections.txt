@@ -29,6 +29,23 @@ news_event = {
 
 		add_political_power = 25
 
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+		}
+
 		if = {
 			limit = {
 				is_North_America = yes
@@ -112,7 +129,7 @@ news_event = {
 			limit = { tag = ITA }
 				reforme_expectance_government_change_update = yes
 				calculate_abandon_coalition_threshold = yes
-				remove_gov_crisis_ai_flags	= yes		
+				remove_gov_crisis_ai_flags	= yes
 		}
 	}
 }
@@ -144,6 +161,7 @@ country_event = {
 		custom_effect_tooltip = coalition_pass_dismantle_tt
 		custom_effect_tooltip = coalition_pass_pol_change_0_tt
 		set_leader = yes #set in decision which party is selected
+		set_variable = { current_term = 0 }
 		update_government_coalition_strength = yes
 		clear_coalition_count_ideas = yes
 	}
@@ -185,6 +203,7 @@ country_event = {
 		custom_effect_tooltip = coalition_pass_dismantle_tt
 		custom_effect_tooltip = coalition_pass_pol_change_1_tt
 		set_leader = yes #set in desicion which party is selected
+		set_variable = { current_term = 0 }
 		update_government_coalition_strength = yes
 		clear_coalition_count_ideas = yes
 	}
@@ -1424,7 +1443,7 @@ country_event = {
 	desc = MD4_election_campaign.0.d
 	picture = GFX_election_day
 	is_triggered_only = yes
-	
+
 	trigger = {
 		NOT = { has_country_flag = generic_election_killswitch }
 	}
@@ -2700,7 +2719,30 @@ country_event = {
 	id = MD4_election.1
 	immediate = { log = "[GetDateText]: [Root.GetName]: event MD4_election.1" }
 	title = MD4_election.1.t
-	desc = MD4_election.1.d
+	desc = {
+		text = MD4_election.1.d
+		trigger = {
+			OR = {
+				check_variable = {
+					var = current_term
+					value = term_limit
+					compare = not_equals
+				}
+				check_variable = { term_limits = 0 }
+			}
+		}
+	}
+	desc = {
+		text = MD4_election.1.d_term_ended
+		trigger = {
+			check_variable = { term_limit > 0 } #make sure term limits are a thing
+			check_variable = {
+				var = current_term
+				value = term_limit
+				compare = equals
+			}
+		}
+	}
 	picture = GFX_election_rally
 
 	is_triggered_only = yes
@@ -2714,6 +2756,22 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD4_election.1.a executed"
 		add_political_power = 150
 		hidden_effect = { ROOT = { news_event = { days = 1 id = News_MD4_election.0 } } }
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+		}
 		if = {
 			limit = {
 				is_North_America = yes
@@ -2801,7 +2859,27 @@ country_event = {
 	id = MD4_election.2
 	immediate = { log = "[GetDateText]: [Root.GetName]: event MD4_election.2" }
 	title = MD4_election.2.t
-	desc = MD4_election.2.d
+	desc = {
+		text = MD4_election.2.d
+		trigger = {
+			check_variable = {
+				var = current_term
+				value = term_limit
+				compare = not_equals
+			}
+		}
+	}
+	desc = {
+		text = MD4_election.2.d_term_ended
+		trigger = {
+			check_variable = { term_limit > 0 } #make sure term limits are a thing
+			check_variable = {
+				var = current_term
+				value = term_limit
+				compare = equals
+			}
+		}
+	}
 	picture = GFX_election_rally
 	is_triggered_only = yes
 
@@ -2813,6 +2891,22 @@ country_event = {
 		name = MD4_election.2.a
 		log = "[GetDateText]: [This.GetName]: MD4_election.2.a executed"
 		hidden_effect = { ROOT = { news_event = { days = 1 id = News_MD4_election.0 } } }
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+			}
+		}
 		if = {
 			limit = {
 				is_North_America = yes
@@ -3113,7 +3207,22 @@ news_event = {
 	id = News_MD4_election.0
 	immediate = { log = "[GetDateText]: [Root.GetName]: event News_MD4_election.0" }
 	title = News_MD4_election.0.t
-	desc = News_MD4_election.0.d
+	desc = {
+		text = News_MD4_election.0.d
+		trigger = {
+			FROM = {
+				check_variable = { current_term > 1 } #not their first term
+			}
+		}
+	}
+	desc = {
+		text = News_MD4_election.0.d_first_term
+		trigger = {
+			FROM = {
+				check_variable = { current_term = 1 } #first term
+			}
+		}
+	}
 	picture = GFX_news_election_rally
 
 	#major = yes
