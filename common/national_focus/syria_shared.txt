@@ -70,10 +70,10 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_ANNEXATION }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_lebanese_chaos"
-		202 = { add_claim_by = ROOT }
-		203 = { add_claim_by = ROOT }
-		553 = { add_claim_by = ROOT }
-		201 = { add_claim_by = ROOT }
+		every_state = {
+			limit = { is_core_of = LEB }
+			add_claim_by = ROOT
+		}
 		LEB = { country_event = { id = SyriaFocus.50 days = 1 } }
 	}
 
@@ -128,19 +128,19 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_deal_with_scraps"
 		if = {
 			limit = { LEB = { is_subject_of = ROOT } }
-			202 = { add_core_of = ROOT }
-			203 = { add_core_of = ROOT }
-			553 = { add_core_of = ROOT }
-			201 = { add_core_of = ROOT }
+			every_state = {
+				limit = { is_core_of = LEB }
+				add_core_of = ROOT
+			}
 			annex_country = { target = LEB transfer_troops = yes }
 		}
 		else_if = {
 			limit = { HEZ = { is_subject_of = ROOT } }
 			annex_country = { target = HEZ transfer_troops = yes }
-			202 = { add_core_of = ROOT }
-			203 = { add_core_of = ROOT }
-			553 = { add_core_of = ROOT }
-			201 = { add_core_of = ROOT }
+			every_state = {
+				limit = { is_core_of = HEZ }
+				add_core_of = ROOT
+			}
 		}
 		else_if = {
 			limit = { LEB = { exists = YES } }
@@ -277,7 +277,8 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_palestinian_unemployment_program"
-		SE_remove_5_treasury = yes
+		set_temp_variable = { treasury_change = -7.5 }
+		modify_treasury_effect = yes
 		remove_ideas = large_refugee_population
 		random_owned_state = {
 			add_extra_state_shared_building_slots = 1
@@ -531,6 +532,9 @@ shared_focus = {
 		}
 		NOT = { owns_state = 213 }
 		EGY = { owns_state = 213 }
+		NOT = {
+			has_global_flag = SUEZ_CANAL_BLOCKED
+		}
 	}
 
 	bypass = {
@@ -798,8 +802,10 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_ANNEXATION }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_submission_kuwait"
-		add_state_claim = 172
-		add_state_claim = 488
+		every_state = {
+			limit = { is_core_of = KUW }
+			add_claim_by = ROOT
+		}
 		KUW = { country_event = { id = md4.14 hours = 6 } }
 	}
 
@@ -1115,6 +1121,13 @@ shared_focus = {
 			}
 			add_state_claim = 992
 		}
+		if = {
+			limit = {
+				935 = { NOT = { is_core_of = ROOT } }
+				935 = { NOT = { is_claimed_by = ROOT } }
+			}
+			add_state_claim = 935
+		}
 	}
 
 }
@@ -1345,9 +1358,15 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_ANNEXATION }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_claim_cyprus"
-		add_state_claim = 146
-		add_state_claim = 145
-		add_state_claim = 812
+		every_state = {
+			limit = {
+				OR = {
+					is_core_of = CYP
+					is_core_of = NCY
+				}
+			}
+			add_claim_by = ROOT
+		}
 	}
 
 }
@@ -1655,25 +1674,7 @@ shared_focus = {
 		}
 		else_if = {
 			limit = { has_idea = draft_army }
-			army_experience = 15 
-		}
-		if = {
-			limit = { has_idea = no_women_in_military }
-			swap_ideas = {
-				remove_idea = no_women_in_military
-				add_idea = drafted_women
-			}
-		}
-		else_if = {
-			limit = { has_idea = volunteer_women }
-			swap_ideas = {
-				remove_idea = volunteer_women
-				add_idea = drafted_women
-			}
-		}
-		else_if = {
-			limit = { has_idea = drafted_women }
-			army_experience = 5 
+			army_experience = 15
 		}
 	}
 
@@ -1722,7 +1723,7 @@ shared_focus = {
 		}
 		else_if = {
 			limit = { has_idea = volunteer_army }
-			army_experience = 15 
+			army_experience = 15
 		}
 		else_if = {
 			limit = { has_idea = partial_draft_army }
@@ -1739,17 +1740,6 @@ shared_focus = {
 			}
 		}
 		if = {
-			limit = { has_idea = no_women_in_military }
-			swap_ideas = {
-				remove_idea = no_women_in_military
-				add_idea = volunteer_women
-			}
-		}
-		else_if = {
-			limit = { has_idea = volunteer_women }
-			army_experience = 5 
-		}
-		else_if = {
 			limit = { has_idea = drafted_women }
 			swap_ideas = {
 				remove_idea = drafted_women
@@ -1802,12 +1792,7 @@ shared_focus = {
 		else = {
 			add_ideas = syrian_peoples_army
 		}
-		if = {
-			limit = { has_idea = the_military }
-			set_country_flag = current_the_military
-			decrease_internal_faction_opinion = yes
-			visually_display_opinion_fall_the_military = yes
-		}
+		decrease_the_military_opinion = yes
 	}
 
 }
@@ -2063,7 +2048,8 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_expand_tartus_base"
-		SE_remove_1_treasury = yes
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
 		189 = {
 			add_building_construction = {
 				type = naval_base
@@ -2105,32 +2091,14 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_tartus_dockyards"
-		SE_remove_3_treasury = yes
-		if = {
-			limit = {
-				189 = {
-					free_building_slots = {
-						building = dockyard
-						size > 0
-					}
-				}
-			}
-			189 = {
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-		else = {
-			189 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
-				}
+		set_temp_variable = { treasury_change = -7.5 }
+		modify_treasury_effect = yes
+		189 = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = dockyard
+				level = 1
+				instant_build = yes
 			}
 		}
 	}
@@ -2171,7 +2139,8 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_expand_tiyas_air_base"
-		SE_remove_1_treasury = yes
+		set_temp_variable = { treasury_change = -2.25 }
+		modify_treasury_effect = yes
 		188 = {
 			add_building_construction = {
 				type = air_base
@@ -2210,7 +2179,8 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_RESOURCE }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_fuel_reserve"
-		SE_remove_2_treasury = yes
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
 		random_owned_state = {
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
@@ -2291,38 +2261,14 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_military_production"
-		SE_remove_3_treasury = yes
-		if = {
-			limit = {
-				any_owned_state = {
-					free_building_slots = {
-						building = arms_factory
-						size > 0
-					}
-				}
-			}
-			random_owned_state = {
-				limit = {
-					free_building_slots = {
-						building = arms_factory
-						size > 0
-					}
-				}
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-		else = {
-			random_owned_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
+		set_temp_variable = { treasury_change = -7.5 }
+		modify_treasury_effect = yes
+		random_owned_state = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
 			}
 		}
 	}
@@ -2359,7 +2305,8 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_EQUIPMENT }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_purchase_armoured_vehicles"
-		SE_remove_2_treasury = yes
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
 		if = {
 			limit = { has_government = democratic } #Western Syria will buy from France
 			add_equipment_to_stockpile = {
@@ -2491,7 +2438,8 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_EQUIPMENT }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_purchase_planes"
-		SE_remove_6_treasury = yes
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
 		if = {
 			limit = { has_government = democratic } #Western Syria will buy from France
 			add_equipment_to_stockpile = {
@@ -2616,7 +2564,8 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_RESOURCE }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_fuel_production"
-		SE_remove_1_treasury = yes
+		set_temp_variable = { treasury_change = -4.25 }
+		modify_treasury_effect = yes
 		random_owned_state = {
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
@@ -2656,7 +2605,8 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_improved_supply"
-		SE_remove_2_treasury = yes
+		set_temp_variable = { treasury_change = -7.5 }
+		modify_treasury_effect = yes
 		random_owned_state = {
 			limit = {
 				free_building_slots = {
@@ -2705,38 +2655,14 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_maintenance_depots"
-		SE_remove_3_treasury = yes
-		if = {
-			limit = {
-				any_owned_state = {
-					free_building_slots = {
-						building = arms_factory
-						size > 0
-					}
-				}
-			}
-			random_owned_state = {
-				limit = {
-					free_building_slots = {
-						building = arms_factory
-						size > 0
-					}
-				}
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-		else = {
-			random_owned_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
+		set_temp_variable = { treasury_change = -7.5 }
+		modify_treasury_effect = yes
+		random_owned_state = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
 			}
 		}
 	}
@@ -2805,7 +2731,8 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_RESEARCH }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_research_center"
-		SE_remove_5_treasury = yes
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
 		add_research_slot = 1
 	}
 
@@ -2841,48 +2768,19 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_form_damascus_steel"
-		SE_remove_5_treasury = yes
-		if = {
-			limit = {
-				any_owned_state = {
-					free_building_slots = {
-						building = arms_factory
-						size > 0
-					}
-				}
-			}
-			random_owned_state = {
-				limit = {
-					free_building_slots = {
-						building = arms_factory
-						size > 0
-					}
-				}
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-		else = {
-			random_owned_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
+		set_temp_variable = { treasury_change = -7.5 }
+		modify_treasury_effect = yes
+		random_owned_state = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
 			}
 		}
 		custom_effect_tooltip = TT_AVAILABLE_AS_DEFENCE_COMPANY
 		show_ideas_tooltip = SYR_damascus_steel
-		if = {
-			limit = { has_idea = defense_industry }
-			set_country_flag = current_defense_industry
-			increase_internal_faction_opinion = yes
-			visually_display_opinion_rise_defense_industry = yes
-		}
+		increase_defense_industry_opinion = yes
 	}
 
 }
@@ -2917,7 +2815,8 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INTERNAL_FACTION }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_subsidise_hmisho_vehicles"
-		SE_remove_5_treasury = yes
+		set_temp_variable = { treasury_change = -7.5 }
+		modify_treasury_effect = yes
 		random_owned_state = {
 			add_resource = {
 				type = steel
@@ -2926,12 +2825,7 @@ shared_focus = {
 		}
 		custom_effect_tooltip = TT_AVAILABLE_AS_DEFENCE_COMPANY
 		show_ideas_tooltip = SYR_hmisho_vehicles
-		if = {
-			limit = { has_idea = oligarchs }
-			set_country_flag = current_oligarchs
-			increase_internal_faction_opinion = yes
-			visually_display_opinion_rise_oligarchs = yes
-		}
+		increase_oligarchs_opinion = yes
 	}
 
 }
@@ -3585,7 +3479,7 @@ shared_focus = {
 shared_focus = {
 	id = SYR_meeting_with_kings
 	icon = monarchism
-	cost = 10
+	cost = 5
 	prerequisite = {
 		focus = SYR_diplomatic_effort
 	}
@@ -3656,7 +3550,7 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_open_saudi_mosques"
 		add_ideas = saudi_aid
-		generic_grant_1_percent_influence_of_SAU = yes
+		generic_grant_2_percent_influence_of_SAU = yes
 		increase_wahabi_ulema_opinion = yes
 	}
 
@@ -3665,7 +3559,7 @@ shared_focus = {
 shared_focus = {
 	id = SYR_saudi_oil_cooperation
 	icon = oil_trade
-	cost = 10
+	cost = 5
 	prerequisite = {
 		focus = SYR_meeting_with_kings
 	}
@@ -3702,12 +3596,7 @@ shared_focus = {
 			modifier = improve_trade
 			target = SAU
 		}
-		if = {
-			limit = { has_idea = fossil_fuel_industry }
-			set_country_flag = current_fossil_fuel_industry
-			increase_internal_faction_opinion = yes
-			visually_display_opinion_rise_fossil_fuel_industry = yes
-		}
+		increase_fossil_fuel_industry_opinion = yes
 	}
 
 }
@@ -3746,8 +3635,8 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_join_peninsula_shield"
-		# SAU = { country_event = { id = SyriaFocus.80 days = 3 } }
-		# custom_effect_tooltip = TT_SYR_ALIGN_SAUDI_ARABIA
+		SAU = { country_event = { id = SyriaFocus.80 days = 3 } }
+		custom_effect_tooltip = TT_SYR_ALIGN_SAUDI_ARABIA
 	}
 
 }
@@ -3822,12 +3711,7 @@ shared_focus = {
 				amount = 5
 			}
 		}
-		if = {
-			limit = { has_idea = fossil_fuel_industry }
-			set_country_flag = current_fossil_fuel_industry
-			increase_internal_faction_opinion = yes
-			visually_display_opinion_rise_fossil_fuel_industry = yes
-		}
+		increase_fossil_fuel_industry_opinion = yes
 	}
 
 }
@@ -3835,7 +3719,7 @@ shared_focus = {
 shared_focus = {
 	id = SYR_trade_deal_with_egypt
 	icon = align_to_egypt
-	cost = 10
+	cost = 5
 	prerequisite = {
 		focus = SYR_diplomatic_effort
 	}
@@ -4072,7 +3956,7 @@ shared_focus = {
 			add_to_variable = { var = party_pop_array^7 value = 5 }
 			recalculate_party = yes
 			add_to_variable = { ROOT.treasury = -1 }
-			generic_grant_1_percent_influence_of_ROOT = yes
+			generic_grant_2_percent_influence_of_ROOT = yes
 		}
 	}
 
@@ -4225,7 +4109,7 @@ shared_focus = {
 shared_focus = {
 	id = SYR_denounce_iraq
 	icon = aggressive_diplomacy
-	cost = 10
+	cost = 5
 	prerequisite = {
 		focus = SYR_diplomatic_effort
 	}
@@ -4339,10 +4223,12 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INFLUENCE }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_fund_hezbollah"
-		SE_remove_2_treasury = yes
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
 		HEZ = {
 			generic_grant_2_percent_influence_of_ROOT = yes
-			add_to_variable = { treasury = 2 }
+			set_temp_variable = { treasury_change = 2 }
+			modify_treasury_effect = yes
 		}
 	}
 
@@ -4420,12 +4306,7 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_iranian_quds"
-		if = {
-			limit = { has_idea = iranian_quds_force }
-			set_country_flag = current_iranian_quds_force
-			increase_internal_faction_opinion = yes
-			visually_display_opinion_rise_iranian_quds_force = yes
-		}
+		increase_iranian_quds_force_opinion = yes
 	}
 
 }
@@ -4631,7 +4512,7 @@ shared_focus = {
 			amount = 1000
 			target = PKK
 		}
-		PKK = { generic_grant_1_percent_influence_of_ROOT = yes }
+		PKK = { generic_grant_2_percent_influence_of_ROOT = yes }
 	}
 
 }
@@ -4639,7 +4520,7 @@ shared_focus = {
 shared_focus = {
 	id = SYR_approach_armenia
 	icon = align_to_armenia
-	cost = 10
+	cost = 5
 	prerequisite = {
 		focus = SYR_provide_intelligence_to_pkk
 	}
@@ -4679,7 +4560,7 @@ shared_focus = {
 shared_focus = {
 	id = SYR_approach_greece
 	icon = align_to_greece
-	cost = 10
+	cost = 5
 	prerequisite = {
 		focus = SYR_reaffirm_claims_on_hatay
 	}
@@ -4757,7 +4638,7 @@ shared_focus = {
 			modifier = supports_us
 			target = CYP
 		}
-		CYP = { generic_grant_1_percent_influence_of_ROOT = yes }
+		CYP = { generic_grant_2_percent_influence_of_ROOT = yes }
 	}
 
 }
@@ -4849,7 +4730,7 @@ shared_focus = {
 shared_focus = {
 	id = SYR_approach_azerbaijan
 	icon = align_to_azerbaijan
-	cost = 10
+	cost = 5
 	prerequisite = {
 		focus = SYR_close_pkk_border
 	}
@@ -4968,7 +4849,7 @@ shared_focus = {
 			modifier = supports_us
 			target = NCY
 		}
-		NCY = { generic_grant_1_percent_influence_of_ROOT = yes }
+		NCY = { generic_grant_2_percent_influence_of_ROOT = yes }
 	}
 
 }
@@ -4976,7 +4857,7 @@ shared_focus = {
 shared_focus = {
 	id = SYR_approach_russia
 	icon = align_to_russia
-	cost = 10
+	cost = 5
 	prerequisite = {
 		focus = SYR_reaffirm_claims_on_hatay
 		focus = SYR_renounce_claims_on_hatay
@@ -5139,7 +5020,7 @@ shared_focus = {
 				active = yes
 			}
 		}
-		generic_grant_2_percent_influence_of_SOV = yes
+		generic_grant_4_percent_influence_of_SOV = yes
 	}
 
 }
@@ -5297,7 +5178,7 @@ shared_focus = {
 shared_focus = {
 	id = SYR_closer_ties_to_france
 	icon = align_to_france
-	cost = 10
+	cost = 5
 	prerequisite = {
 		focus = SYR_joint_us_operations
 	}
@@ -5338,7 +5219,7 @@ shared_focus = {
 shared_focus = {
 	id = SYR_condemn_taliban
 	icon = war_in_asia
-	cost = 10
+	cost = 5
 	prerequisite = {
 		focus = SYR_join_war_on_terror
 	}
@@ -5482,41 +5363,17 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_french_investments"
 		FRA = {
-			add_to_variable = { treasury = -10 }
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 			add_to_variable = { int_investments = 10 }
 		}
 		generic_grant_2_percent_influence_of_FRA = yes
-		if = {
-			limit = {
-				any_owned_state = {
-					free_building_slots = {
-						building = industrial_complex
-						size > 0
-					}
-				}
-			}
-			random_owned_state = {
-				limit = {
-					free_building_slots = {
-						building = industrial_complex
-						size > 0
-					}
-				}
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-		else = {
-			random_owned_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
+		random_owned_state = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
 			}
 		}
 	}
@@ -5557,7 +5414,8 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_us_investments"
 		USA = {
-			add_to_variable = { treasury = -10 }
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 			add_to_variable = { int_investments = 10 }
 		}
 		generic_grant_2_percent_influence_of_USA = yes
@@ -5605,41 +5463,17 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_british_investments"
 		ENG = {
-			add_to_variable = { treasury = -10 }
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 			add_to_variable = { int_investments = 10 }
 		}
 		generic_grant_2_percent_influence_of_ENG = yes
-		if = {
-			limit = {
-				any_owned_state = {
-					free_building_slots = {
-						building = arms_factory
-						size > 0
-					}
-				}
-			}
-			random_owned_state = {
-				limit = {
-					free_building_slots = {
-						building = arms_factory
-						size > 0
-					}
-				}
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-		else = {
-			random_owned_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
+		random_owned_state = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
 			}
 		}
 	}
@@ -5897,7 +5731,7 @@ shared_focus = {
 			target = TAL
 		}
 		TAL = {
-			generic_grant_1_percent_influence_of_ROOT = yes
+			generic_grant_2_percent_influence_of_ROOT = yes
 		}
 	}
 
@@ -5939,7 +5773,7 @@ shared_focus = {
 			target = SHB
 		}
 		SHB = {
-			generic_grant_1_percent_influence_of_ROOT = yes
+			generic_grant_2_percent_influence_of_ROOT = yes
 		}
 	}
 

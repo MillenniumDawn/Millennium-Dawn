@@ -87,9 +87,9 @@ scripted_gui = {
 				#our country is a top 7 influencer
 				is_influencer = yes
 				#selected country have lower GDP/C than us
-				check_variable = { gdp_capita < ROOT.gdp_capita }
+				check_variable = { gdp_per_capita < ROOT.gdp_per_capita }
 				#Num of Civ Greater
-				check_variable = { size_modifier < ROOT.size_modifier }
+				check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories }
 				#Recently Sent Aid
 				ROOT = { PREV = { ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } } } }
 			}
@@ -422,17 +422,26 @@ scripted_gui = {
 				}
 			}
 
-			# give gift of money
+			# Economic Aid Section
+			# Gift an nation a percentage of their GDP to gain some influence and assist them
 			opt_aid_button_click = {
-				ROOT = {
-					PREV = {
-						country_event = { id = influence.0 }
-						ROOT = { set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 } }
+				ROOT = { # Player Nation
+					save_event_target_as = influence_sender
+					PREV = { # THIS Nation
+						PREV = { # Goes back to Player Nation for Proper Scoping
+							PREV = { #THIS Nation
+								country_event = { id = influence.0 }
+							}
+						}
+						ROOT = {
+							set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 }
+						}
 					}
 				}
 			}
 
-			#Send Military Equipment
+			# Send Military Equipment
+			# Similar to Economic Aid but it is related to military equipment
 			opt_aid_military_button_click = {
 				ROOT = { #Uses the same as Economic AID to ensure the root is correct
 					PREV = {

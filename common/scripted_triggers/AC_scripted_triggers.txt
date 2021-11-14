@@ -8,1136 +8,240 @@
 #There are 8 project types * 5 of each allowed per country = 40 investments possibile in one country * 210 countries the player can invest in = 8400 possibile investments for the player
 #Now if the AI also does the same that's 210 * 8400 = 1,764,000 possibile investments possibile
 
-
-AC_project_type_not_active = { #Checks if the project you're trying to start is already being build here by you
-	check_variable = { AC_building_type_selected > 0 }
-	if = { limit = { check_variable = { AC_building_type_selected = 1 } }
-		PREV = { not = { AC_has_INF_state_flag = yes } }
-	}
-	if = { limit = { check_variable = { AC_building_type_selected = 2 } }
-		PREV = { not = { AC_has_AB_state_flag = yes } }
-	}
-	if = { limit = { check_variable = { AC_building_type_selected = 3 } }
-		PREV = { not = { AC_has_AA_state_flag = yes } }
-	}
-	if = { limit = { check_variable = { AC_building_type_selected = 4 } }
-		PREV = { not = { AC_has_RAD_state_flag = yes } }
-	}
-	if = { limit = { check_variable = { AC_building_type_selected = 5 } }
-		PREV = { not = { AC_has_MIC_state_flag = yes } }
-	}
-	if = { limit = { check_variable = { AC_building_type_selected = 6 } }
-		PREV = { not = { AC_has_CIC_state_flag = yes } }
-	}
-	if = { limit = { check_variable = { AC_building_type_selected = 7 } }
-		PREV = { not = { AC_has_NIC_state_flag = yes } }
-	}
-	if = { limit = { check_variable = { AC_building_type_selected = 8 } }
-		PREV = { not = { AC_has_REF_state_flag = yes } }
-	}
-}
-AC_project_type_not_active2 = { #Checks if the project you're trying to start is already being build here by you
-	ROOT = { check_variable = { AC_building_type_selected > 0 } }
-	if = { limit = { ROOT = { check_variable = { AC_building_type_selected = 1 } } }
-		not = { AC_has_INF_state_flag = yes }
-	}
-	if = { limit = { ROOT = { check_variable = { AC_building_type_selected = 2 } } }
-		not = { AC_has_AB_state_flag = yes }
-	}
-	if = { limit = { ROOT = { check_variable = { AC_building_type_selected = 3 } } }
-		not = { AC_has_AA_state_flag = yes }
-	}
-	if = { limit = { ROOT = { check_variable = { AC_building_type_selected = 4 } } }
-		not = { AC_has_RAD_state_flag = yes }
-	}
-	if = { limit = { ROOT = { check_variable = { AC_building_type_selected = 5 } } }
-		not = { AC_has_MIC_state_flag = yes }
-	}
-	if = { limit = { ROOT = { check_variable = { AC_building_type_selected = 6 } } }
-		not = { AC_has_CIC_state_flag = yes }
-	}
-	if = { limit = { ROOT = { check_variable = { AC_building_type_selected = 7 } } }
-		not = { AC_has_NIC_state_flag = yes }
-	}
-	if = { limit = { ROOT = { check_variable = { AC_building_type_selected = 8 } } }
-		not = { AC_has_REF_state_flag = yes }
-	}
-}
-
-###
-AC_Building_available = {
-	ROOT = {
-		has_variable = AC_building_type_selected
-		has_variable = AC_build_amount
-
-		######### STATE BUILDINGS
-
-		if = { limit = { check_variable = { AC_building_type_selected = 1 } }
-
-			PREV = {
-				AC_building_infra_available = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 2 } }
-
-			PREV = {
-				AC_building_airbase_available = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 3 } }
-
-			PREV = {
-				AC_building_antiair_available = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 4 } }
-
-			PREV = {
-				AC_building_radar_available = yes
-			}
-		}
-
-		######### SHARED BUILDINGS
-
-		if = { limit = { check_variable = { AC_building_type_selected = 5 } }
-
-			PREV = {
-				AC_building_mic_available = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 6 } }
-
-			PREV = {
-				AC_building_cic_available = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 7 } }
-
-			PREV = {
-				AC_building_nic_available = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 8 } }
-
-			PREV = {
-				AC_building_ref_available = yes
-			}
-		}
-	}
-}
 AC_building_infra_available = {
-	#Cannot be at war
-	NOT = { OWNER = { has_war_with = ROOT } }
-	NOT = { ROOT = { controls_state = PREV.id } }
-	#Cannot be being justified upon investment country
-	ROOT = { NOT = { is_justifying_wargoal_against = PREV } }
-
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = infrastructure size > 0 include_locked = no }
+	ROOT = {
+		meta_trigger = {
+			text = { NOT = { PREV = { free_building_slots = { building = infrastructure size < [x] include_locked = no } } } }
+			x = "[?project_build_amount^-1]"
+		}
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = infrastructure size > 1 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = infrastructure size > 2 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = infrastructure size > 3 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = infrastructure size > 4 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 6 } } }
-		free_building_slots = { building = infrastructure size > 5 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 7 } } }
-		free_building_slots = { building = infrastructure size > 6 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 8 } } }
-		free_building_slots = { building = infrastructure size > 7 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 9 } } }
-		free_building_slots = { building = infrastructure size > 8 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 10 } } }
-		free_building_slots = { building = infrastructure size > 9 include_locked = no }
-	}
-	else = { always = no }
 }
 
 AC_building_airbase_available = {
-
-	#Cannot be at war
-	NOT = { OWNER = { has_war_with = ROOT } }
-	NOT = { ROOT = { controls_state = PREV.id } }
-	#Cannot be being justified upon investment country
-	ROOT = { not = { is_justifying_wargoal_against = PREV } }
-
 	#Investor has Military Industrial Complex
 	ROOT = { has_idea = defense_industry }
 
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = air_base size > 0 include_locked = no }
+	ROOT = {
+		meta_trigger = {
+			text = { NOT = { PREV = { free_building_slots = { building = air_base size < [x] include_locked = no } } } }
+			x = "[?project_build_amount^-1]"
+		}
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = air_base size > 1 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = air_base size > 2 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = air_base size > 3 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = air_base size > 4 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 6 } } }
-		free_building_slots = { building = air_base size > 5 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 7 } } }
-		free_building_slots = { building = air_base size > 6 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 8 } } }
-		free_building_slots = { building = air_base size > 7 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 9 } } }
-		free_building_slots = { building = air_base size > 8 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 10 } } }
-		free_building_slots = { building = air_base size > 9 include_locked = no }
-	}
-	else = { always = no }
 }
 
 AC_building_antiair_available = {
 
-	#Cannot be at war
-	NOT = { OWNER = { has_war_with = ROOT } }
-	NOT = { ROOT = { controls_state = PREV.id } }
-
-	#Cannot be being justified upon investment country
-	ROOT = { not = { is_justifying_wargoal_against = PREV } }
-
 	#Investor has Military Industrial Complex
 	ROOT = { has_idea = defense_industry }
 
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = anti_air_building size > 0 include_locked = no }
+	ROOT = {
+		meta_trigger = {
+			text = { NOT = { PREV = { free_building_slots = { building = anti_air_building size < [x] include_locked = no } } } }
+			x = "[?project_build_amount^-1]"
+		}
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = anti_air_building size > 1 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = anti_air_building size > 2 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = anti_air_building size > 3 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = anti_air_building size > 4 include_locked = no }
-	}
-	else = { always = no }
 }
 
 AC_building_radar_available = {
-	#Cannot be at war
-		NOT = { OWNER = { has_war_with = ROOT } }
-	NOT = { ROOT = { controls_state = PREV.id } }
-	#Cannot be being justified upon investment country
-	ROOT = { not = { is_justifying_wargoal_against = PREV } }
+
 	#Investor has Military Industrial Complex
 	ROOT = { has_idea = defense_industry }
-	##Target country MUST have researched radar
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = radar_station size > 0 include_locked = no }
+
+	if = { limit = { ROOT = { has_tech = radar check_variable = { project_build_amount^-1 = 1 } } }
+		radar_station < 6
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = radar_station size > 1 include_locked = no }
+	else_if = { limit = { ROOT = { has_tech = radar check_variable = { project_build_amount^-1 = 2 } } }
+		radar_station < 5
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = radar_station size > 2 include_locked = no }
+	else_if = { limit = { ROOT = { has_tech = radar check_variable = { project_build_amount^-1 = 3 } } }
+		radar_station < 4
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = radar_station size > 3 include_locked = no }
+	else_if = { limit = { ROOT = { has_tech = radar check_variable = { project_build_amount^-1 = 4 } } }
+		radar_station < 3
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = radar_station size > 4 include_locked = no }
+	else_if = { limit = { ROOT = { has_tech = radar check_variable = { project_build_amount^-1 = 5 } } }
+		radar_station < 2
+	}
+	else_if = { limit = { ROOT = { has_tech = radar check_variable = { project_build_amount^-1 = 6 } } }
+		radar_station < 1
 	}
 	else = { always = no }
 }
 
 AC_building_mic_available = {
 
-	#Cannot be at war
-		NOT = { OWNER = { has_war_with = ROOT } }
-	NOT = { ROOT = { controls_state = PREV.id } }
-	#Cannot be being justifying upon investment country
-	ROOT = { not = { is_justifying_wargoal_against = PREV } }
 	#Investor has Military Industrial Complex
 	ROOT = { has_idea = defense_industry }
 
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = arms_factory size > 0 include_locked = no }
-		free_building_slots = { building = industrial_complex size > 0 include_locked = no }
+	ROOT = {
+		meta_trigger = {
+			text = { NOT = { PREV = { free_building_slots = { building = arms_factory size < [x] include_locked = no } } } }
+			x = "[?project_build_amount^-1]"
+		}
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = arms_factory size > 1 include_locked = no }
-		free_building_slots = { building = industrial_complex size > 1 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = arms_factory size > 2 include_locked = no }
-		free_building_slots = { building = industrial_complex size > 2 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = arms_factory size > 3 include_locked = no }
-		free_building_slots = { building = industrial_complex size > 3 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = arms_factory size > 4 include_locked = no }
-		free_building_slots = { building = industrial_complex size > 4 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 6 } } }
-		free_building_slots = { building = arms_factory size > 5 include_locked = no }
-		free_building_slots = { building = industrial_complex size > 5 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 7 } } }
-		free_building_slots = { building = arms_factory size > 6 include_locked = no }
-		free_building_slots = { building = industrial_complex size > 6 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 8 } } }
-		free_building_slots = { building = arms_factory size > 7 include_locked = no }
-		free_building_slots = { building = industrial_complex size > 7 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 9 } } }
-		free_building_slots = { building = arms_factory size > 8 include_locked = no }
-		free_building_slots = { building = industrial_complex size > 8 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 10 } } }
-		free_building_slots = { building = arms_factory size > 9 include_locked = no }
-		free_building_slots = { building = industrial_complex size > 9 include_locked = no }
-	}
-	else = { always = no }
 }
 
 AC_building_cic_available = {
 
-	#Cannot be at war
-		NOT = { OWNER = { has_war_with = ROOT } }
-	NOT = { ROOT = { controls_state = PREV.id } }
+	ROOT = {
+		meta_trigger = {
+			text = { NOT = { PREV = { free_building_slots = { building = industrial_complex size < [x] include_locked = no } } } }
+			x = "[?project_build_amount^-1]"
+		}
+	}
+}
 
-	#Cannot be being justifying upon investment country
-	ROOT = { not = { is_justifying_wargoal_against = PREV } }
+AC_building_offices_available = {
 
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = industrial_complex size > 0 include_locked = no }
+	ROOT = {
+		meta_trigger = {
+			text = { NOT = { PREV = { free_building_slots = { building = offices size < [x] include_locked = no } } } }
+			x = "[?project_build_amount^-1]"
+		}
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = industrial_complex size > 1 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = industrial_complex size > 2 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = industrial_complex size > 3 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = industrial_complex size > 4 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 6 } } }
-		free_building_slots = { building = industrial_complex size > 5 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 7 } } }
-		free_building_slots = { building = industrial_complex size > 6 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 8 } } }
-		free_building_slots = { building = industrial_complex size > 7 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 9 } } }
-		free_building_slots = { building = industrial_complex size > 8 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 10 } } }
-		free_building_slots = { building = industrial_complex size > 9 include_locked = no }
-	}
-	else = { always = no }
 }
 
 AC_building_nic_available = {
 
-	#Cannot be at war
-		NOT = { OWNER = { has_war_with = ROOT } }
-	NOT = { ROOT = { controls_state = PREV.id } }
-
-	#Cannot be being justified upon investment country
-	ROOT = { not = { is_justifying_wargoal_against = PREV } }
-
 	#Owner has Maritime Industry
 	ROOT = { has_idea = maritime_industry }
 
-	#You don't need to be coastal to sell imo
-	#is_coastal = yes
-
-	#or = {
-	#	controller = { has_war = yes }
-	#	threat > 0.5
-	#	any_country = { is_justifying_wargoal_against = FROM }
-	#	#has_idea = maritime_industry
-	#}
-
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = dockyard size > 0 include_locked = no }
+	ROOT = {
+		meta_trigger = {
+			text = { NOT = { PREV = { free_building_slots = { building = dockyard size < [x] include_locked = no } } } }
+			x = "[?project_build_amount^-1]"
+		}
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = dockyard size > 1 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = dockyard size > 2 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = dockyard size > 3 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = dockyard size > 4 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 6 } } }
-		free_building_slots = { building = dockyard size > 5 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 7 } } }
-		free_building_slots = { building = dockyard size > 6 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 8 } } }
-		free_building_slots = { building = dockyard size > 7 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 9 } } }
-		free_building_slots = { building = dockyard size > 8 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 10 } } }
-		free_building_slots = { building = dockyard size > 9 include_locked = no }
-	}
-	else = { always = no }
 }
 
 AC_building_ref_available = {
-	##ROOT = { has_tech = synth_oil_experiments }
+	ROOT = { has_tech = fuel_silos }
 	#always = no
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
+	if = { limit = { ROOT = { check_variable = { project_build_amount^-1 = 1 } } }
 		OR = {
-			#free_building_slots = { building = synthetic_refinery size > 0 include_locked = no }
+			free_building_slots = { building = synthetic_refinery size > 0 include_locked = no }
 			free_building_slots = { building = industrial_complex size > 0 include_locked = no }
 			free_building_slots = { building = arms_factory size > 0 include_locked = no }
 			free_building_slots = { building = dockyard size > 0 include_locked = no }
 		}
-		#synthetic_refinery < 3
+		synthetic_refinery < 1
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
+	else_if = { limit = { ROOT = { check_variable = { project_build_amount^-1 = 2 } has_tech = synth_oil_experiments } }
 		OR = {
-			#free_building_slots = { building = synthetic_refinery size > 1 include_locked = no }
+			free_building_slots = { building = synthetic_refinery size > 1 include_locked = no }
 			free_building_slots = { building = industrial_complex size > 1 include_locked = no }
 			free_building_slots = { building = arms_factory size > 1 include_locked = no }
 			free_building_slots = { building = dockyard size > 1 include_locked = no }
 		}
-		#synthetic_refinery < 2
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		OR = {
-			#free_building_slots = { building = synthetic_refinery size > 2 include_locked = no }
-			free_building_slots = { building = industrial_complex size > 2 include_locked = no }
-			free_building_slots = { building = arms_factory size > 2 include_locked = no }
-			free_building_slots = { building = dockyard size > 2 include_locked = no }
-		}
-		#synthetic_refinery < 1
+		synthetic_refinery < 2
 	}
 	else = { always = no }
 }
 
-###Used to limit the + button from being pressed when you can't build anymore
-AC_can_increase_build_ammount = {
-	#####Below can be fixed, just need to check gdp/c first and increase if needed
-	THIS = { # block multiple players creating a project in the same state
-		NOT = {
-			any_country = { PREV = { has_state_flag = AC_construction_target_state_@PREV } }
-		}
+building_internet_station_available = {
+	if = { limit = { ROOT = { check_variable = { project_build_amount^-1 = 1 } } }
+		if = { 		limit = { ROOT = { has_tech = internet6 } } free_building_slots = { building = internet_station size > 0 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet5 } } free_building_slots = { building = internet_station size > 0 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet4 } } free_building_slots = { building = internet_station size > 0 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet3 } } free_building_slots = { building = internet_station size > 0 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet2 } } free_building_slots = { building = internet_station size > 0 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet1 } } free_building_slots = { building = internet_station size > 0 include_locked = no } }
+		else = { always = no }
 	}
+	else_if = { limit = { ROOT = { check_variable = { project_build_amount^-1 = 2 } } }
+		if = { 		limit = { ROOT = { has_tech = internet6 } } free_building_slots = { building = internet_station size > 1 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet5 } } free_building_slots = { building = internet_station size > 1 include_locked = no }}
+		else_if = { limit = { ROOT = { has_tech = internet4 } } free_building_slots = { building = internet_station size > 1 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet3 } } free_building_slots = { building = internet_station size > 1 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet2 } } free_building_slots = { building = internet_station size > 1 include_locked = no } }
+		else = { always = no }
+	}
+	else_if = { limit = { ROOT = { check_variable = { project_build_amount^-1 = 3 } } }
+		if = { 		limit = { ROOT = { has_tech = internet6 } } free_building_slots = { building = internet_station size > 2 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet5 } } free_building_slots = { building = internet_station size > 2 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet4 } } free_building_slots = { building = internet_station size > 2 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet3 } } free_building_slots = { building = internet_station size > 2 include_locked = no } }
+		else = { always = no }
+	}
+	else_if = { limit = { ROOT = { check_variable = { project_build_amount^-1 = 4 } } }
+		if = { 		limit = { ROOT = { has_tech = internet6 } } free_building_slots = { building = internet_station size > 3 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet5 } } free_building_slots = { building = internet_station size > 3 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet4 } } free_building_slots = { building = internet_station size > 3 include_locked = no } }
+		else = { always = no }
+	}
+	else_if = { limit = { ROOT = { check_variable = { project_build_amount^-1 = 5 } } }
+		if = { 		limit = { ROOT = { has_tech = internet6 } } free_building_slots = { building = internet_station size > 4 include_locked = no } }
+		else_if = { limit = { ROOT = { has_tech = internet5 } } free_building_slots = { building = internet_station size > 4 include_locked = no } }
+		else = { always = no }
+	}
+	else_if = { limit = { ROOT = { check_variable = { project_build_amount^-1 = 6 } } }
+		if = { 		limit = { ROOT = { has_tech = internet6 } } free_building_slots = { building = internet_station size > 5 include_locked = no } }
+		else = { always = no }
+	}
+}
 
+building_fuel_silos_available = {
 	ROOT = {
-		has_variable = AC_building_type_selected
-		has_variable = AC_build_amount
-
-		######### STATE BUILDINGS
-
-		if = { limit = { check_variable = { AC_building_type_selected = 1 } }
-
-			PREV = {
-				AC_building_infra_available2 = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 2 } }
-
-			PREV = {
-				AC_building_airbase_available2 = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 3 } }
-
-			PREV = {
-				AC_building_antiair_available2 = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 4 } }
-
-			PREV = {
-				AC_building_radar_available2 = yes
-			}
-		}
-
-		######### SHARED BUILDINGS
-
-		if = { limit = { check_variable = { AC_building_type_selected = 5 } }
-
-			PREV = {
-				AC_building_mic_available2 = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 6 } }
-
-			PREV = {
-				AC_building_cic_available2 = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 7 } }
-
-			PREV = {
-				AC_building_nic_available2 = yes
-			}
-		}
-
-		if = { limit = { check_variable = { AC_building_type_selected = 8 } }
-
-			PREV = {
-				AC_building_ref_available2 = yes
-			}
+		meta_trigger = {
+			text = { NOT = { PREV = { free_building_slots = { building = fuel_silo size < [x] include_locked = no } } } }
+			x = "[?project_build_amount^-1]"
 		}
 	}
 }
 
-AC_building_infra_available2 = {
-
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = infrastructure size > 1 include_locked = no }
+investment_building_slot_available = {
+	if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 1 } }
+		free_building_slots = { building = industrial_complex size > 0 include_locked = no }
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = infrastructure size > 2 include_locked = no }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 2 } }
+		free_building_slots = { building = arms_factory size > 0 include_locked = no }
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = infrastructure size > 3 include_locked = no }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 3 } }
+		free_building_slots = { building = dockyard size > 0 include_locked = no }
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = infrastructure size > 4 include_locked = no }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 4 } }
+		free_building_slots = { building = infrastructure size > 0 include_locked = no }
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = infrastructure size > 5 include_locked = no }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 5 } }
+		free_building_slots = { building = offices size > 0 include_locked = no }
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 6 } } }
-		free_building_slots = { building = infrastructure size > 6 include_locked = no }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 6 } }
+		free_building_slots = { building = anti_air_building size > 0 include_locked = no }
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 7 } } }
-		free_building_slots = { building = infrastructure size > 7 include_locked = no }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 7 } }
+		free_building_slots = { building = radar_station size > 0 include_locked = no }
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 8 } } }
-		free_building_slots = { building = infrastructure size > 8 include_locked = no }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 8 } }
+		free_building_slots = { building = air_base size > 0 include_locked = no }
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 9 } } }
-		free_building_slots = { building = infrastructure size > 9 include_locked = no }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 9 } }
+		free_building_slots = { building = fuel_silo size > 0 include_locked = no }
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 10 } } }
-		free_building_slots = { building = infrastructure size > 10 include_locked = no }
-	}
-	else = { always = no }
-}
-
-AC_building_airbase_available2 = {
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = air_base size > 1 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = air_base size > 2 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = air_base size > 3 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = air_base size > 4 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = air_base size > 5 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 6 } } }
-		free_building_slots = { building = air_base size > 6 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 7 } } }
-		free_building_slots = { building = air_base size > 7 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 8 } } }
-		free_building_slots = { building = air_base size > 8 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 9 } } }
-		free_building_slots = { building = air_base size > 9 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 10 } } }
-		free_building_slots = { building = air_base size > 10 include_locked = no }
-	}
-	else = { always = no }
-}
-
-AC_building_antiair_available2 = {
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = anti_air_building size > 1 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = anti_air_building size > 2 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = anti_air_building size > 3 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = anti_air_building size > 4 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = anti_air_building size > 5 include_locked = no }
-	}
-	else = { always = no }
-}
-
-AC_building_radar_available2 = {
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 10 } }
 		OR = {
-			#AND = { ROOT = { has_tech = radio_detection } 				radar_station < 2 }
-			#AND = { ROOT = { has_tech = decimetric_radar } 				radar_station < 3 }
-			#AND = { ROOT = { has_tech = improved_decimetric_radar } 	radar_station < 4 }
-			#AND = { ROOT = { has_tech = centimetric_radar } 			radar_station < 5 }
-			#AND = { ROOT = { has_tech = improved_centimetric_radar } 	radar_station < 6 }
+			AND = { ROOT = { has_tech = internet6 } free_building_slots = { building = internet_station size > 1 include_locked = no } }
+			AND = { ROOT = { has_tech = internet5 } free_building_slots = { building = internet_station size > 1 include_locked = no } }
+			AND = { ROOT = { has_tech = internet4 } free_building_slots = { building = internet_station size > 1 include_locked = no } }
+			AND = { ROOT = { has_tech = internet3 } free_building_slots = { building = internet_station size > 1 include_locked = no } }
+			AND = { ROOT = { has_tech = internet2 } free_building_slots = { building = internet_station size > 1 include_locked = no } }
+			AND = { ROOT = { has_tech = internet1 } free_building_slots = { building = internet_station size > 1 include_locked = no } }
 		}
 	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 11 } }
 		OR = {
-			#AND = { ROOT = { has_tech = decimetric_radar } 				radar_station < 2 }
-			#AND = { ROOT = { has_tech = improved_decimetric_radar } 	radar_station < 3 }
-			#AND = { ROOT = { has_tech = centimetric_radar } 			radar_station < 4 }
-			#AND = { ROOT = { has_tech = improved_centimetric_radar } 	radar_station < 5 }
+			free_building_slots = { building = synthetic_refinery size > 0 include_locked = no }
+			free_building_slots = { building = industrial_complex size > 0 include_locked = no }
+			free_building_slots = { building = arms_factory size > 0 include_locked = no }
+			free_building_slots = { building = dockyard size > 0 include_locked = no }
 		}
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		OR = {
-			#AND = { ROOT = { has_tech = improved_decimetric_radar } 	radar_station < 2 }
-			#AND = { ROOT = { has_tech = centimetric_radar } 			radar_station < 3 }
-			#AND = { ROOT = { has_tech = improved_centimetric_radar } 	radar_station < 4 }
-		}
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		OR = {
-			#AND = { ROOT = { has_tech = centimetric_radar } 			radar_station < 2 }
-			#AND = { ROOT = { has_tech = improved_centimetric_radar } 	radar_station < 3 }
-		}
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		OR = {
-			#AND = { ROOT = { has_tech = improved_centimetric_radar } 	radar_station < 2 }
-		}
-	}
-	else = { always = no }
-	#always = no
-}
-
-AC_building_mic_available2 = {
-		NOT = { OWNER = { has_war_with = ROOT } }
-	NOT = { ROOT = { controls_state = PREV.id } }
-	ROOT = { not = { is_justifying_wargoal_against = PREV } }
-	or = {
-		controller = { has_war = yes }
-		threat > 0.5
-		any_country = { is_justifying_wargoal_against = FROM }
-		#has_idea = defense_industry
-		#has_idea = defense_industry
-	}
-
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = arms_factory size > 1 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = arms_factory size > 2 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = arms_factory size > 3 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = arms_factory size > 4 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = arms_factory size > 5 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 6 } } }
-		free_building_slots = { building = arms_factory size > 6 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 7 } } }
-		free_building_slots = { building = arms_factory size > 7 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 8 } } }
-		free_building_slots = { building = arms_factory size > 8 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 9 } } }
-		free_building_slots = { building = arms_factory size > 9 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 10 } } }
-		free_building_slots = { building = arms_factory size > 10 include_locked = no }
-	}
-	else = { always = no }
-}
-
-AC_building_cic_available2 = {
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = industrial_complex size > 1 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = industrial_complex size > 2 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = industrial_complex size > 3 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = industrial_complex size > 4 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = industrial_complex size > 5 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 6 } } }
-		free_building_slots = { building = industrial_complex size > 6 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 7 } } }
-		free_building_slots = { building = industrial_complex size > 7 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 8 } } }
-		free_building_slots = { building = industrial_complex size > 8 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 9 } } }
-		free_building_slots = { building = industrial_complex size > 9 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 10 } } }
-		free_building_slots = { building = industrial_complex size > 10 include_locked = no }
-	}
-	else = { always = no }
-}
-
-AC_building_nic_available2 = {
-	is_coastal = yes
-		NOT = { OWNER = { has_war_with = ROOT } }
-	NOT = { ROOT = { controls_state = PREV.id } }
-	ROOT = { not = { is_justifying_wargoal_against = PREV } }
-	or = {
-		controller = { has_war = yes }
-		threat > 0.5
-		any_country = { is_justifying_wargoal_against = FROM }
-		#has_idea = maritime_industry
-	}
-
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		free_building_slots = { building = dockyard size > 1 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		free_building_slots = { building = dockyard size > 2 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		free_building_slots = { building = dockyard size > 3 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 4 } } }
-		free_building_slots = { building = dockyard size > 4 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 5 } } }
-		free_building_slots = { building = dockyard size > 5 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 6 } } }
-		free_building_slots = { building = dockyard size > 6 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 7 } } }
-		free_building_slots = { building = dockyard size > 7 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 8 } } }
-		free_building_slots = { building = dockyard size > 8 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 9 } } }
-		free_building_slots = { building = dockyard size > 9 include_locked = no }
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 10 } } }
-		free_building_slots = { building = dockyard size > 10 include_locked = no }
-	}
-	else = { always = no }
-}
-
-AC_building_ref_available2 = {
-	#ROOT = { has_tech = synth_oil_experiments }
-	#always = no
-	if = { limit = { ROOT = { check_variable = { AC_build_amount = 1 } } }
-		OR = {
-			#free_building_slots = { building = synthetic_refinery size > 1 include_locked = no }
-			free_building_slots = { building = industrial_complex size > 1 include_locked = no }
-			free_building_slots = { building = arms_factory size > 1 include_locked = no }
-			free_building_slots = { building = dockyard size > 1 include_locked = no }
-		}
-		#synthetic_refinery < 3
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 2 } } }
-		OR = {
-			#free_building_slots = { building = synthetic_refinery size > 2 include_locked = no }
-			free_building_slots = { building = industrial_complex size > 2 include_locked = no }
-			free_building_slots = { building = arms_factory size > 2 include_locked = no }
-			free_building_slots = { building = dockyard size > 2 include_locked = no }
-		}
-		#synthetic_refinery < 2
-	}
-	else_if = { limit = { ROOT = { check_variable = { AC_build_amount = 3 } } }
-		OR = {
-			#free_building_slots = { building = synthetic_refinery size > 3 include_locked = no }
-			free_building_slots = { building = industrial_complex size > 3 include_locked = no }
-			free_building_slots = { building = arms_factory size > 3 include_locked = no }
-			free_building_slots = { building = dockyard size > 3 include_locked = no }
-		}
-		#synthetic_refinery < 1
-	}
-	else = { always = no }
-}
-
-
-AC_building_slot_available = {
-	OR = {
-		AND = {
-			any_owned_state = { has_state_flag = AC_construction_INF_target_state_@ROOT infrastructure < 10 }
-		}
-		AND = {
-			any_owned_state = { has_state_flag = AC_construction_AIR_target_state_@ROOT air_base < 10 }
-		}
-		AND = {
-			any_owned_state = { has_state_flag = AC_construction_AA_target_state_@ROOT anti_air_building < 5 }
-		}
-		AND = {
-			any_owned_state = { has_state_flag = AC_construction_RAD_target_state_@ROOT radar_station < 5 }
-		}
-		AND = {
-			any_owned_state = { has_state_flag = AC_construction_MIC_target_state_@ROOT free_building_slots = { building = arms_factory size > 0 include_locked = no } }
-		}
-		AND = {
-			any_owned_state = { has_state_flag = AC_construction_CIC_target_state_@ROOT free_building_slots = { building = industrial_complex size > 0 include_locked = no } }
-		}
-		AND = {
-			any_owned_state = { has_state_flag = AC_construction_DOC_target_state_@ROOT free_building_slots = { building = dockyard size > 0 include_locked = no } }
-		}
-		# AND = {
-			# any_owned_state = {
-				# has_state_flag = AC_construction_REF_target_state_@ROOT
-				# synthetic_refinery < 3
-				# OR = {
-					# free_building_slots = { building = synthetic_refinery size > 0 include_locked = no }
-					# free_building_slots = { building = industrial_complex size > 0 include_locked = no }
-					# free_building_slots = { building = arms_factory size > 0 include_locked = no }
-					# free_building_slots = { building = dockyard size > 0 include_locked = no }
-				# }
-			# }
-		# }
+		synthetic_refinery < 2
 	}
 }
 
-###
-
-AC_radar_location = { # good radar locations
-	OR = {
-		radar_station > 1
-
-		state = 282 #tokyo
-		state = 645 #iwo jima
-		state = 648 #marcus
-		state = 684 #caroline
-		state = 646 #saipan
-		state = 629 #hawaii
-		state = 632 #wake
-		state = 336 #singapore
-
-		state = 631 #midway
-		state = 630 #johnston
-
-		state = 327 #manila
-		state = 422 #ceylon
-
-		state = 219 #moscow
-		state = 217 #stalingrad
-		state = 137 #sevastopol
-		state = 195 #leningrad
-
-		state = 116 #malta
-		state = 118 #gibraltar
-		state = 126 #london
-		state = 446 #cairo
-
-		state = 337 #faroe
-		state = 100 #iceland
-
-		state = 361 #washington
-		state = 378 #san francisco
-		state = 386 #seattle
-		state = 366 #florida
-
-		state = 685 #panama
-
-		state = 60  #thuringen
-		state = 5 	#ostpreussen
-
-		state = 2 	#rome
-
-		state = 41	#madrid
-
-		state = 16	#paris
-
-		state = 341 #istanbul
+# AI Related STuff
+AI_is_ready_for_another_project = {
+	AND = {
+		is_ai = yes
+		check_variable = { active_projects < 15 }
 	}
-}
-
-AC_has_INF_state_flag = {
-	or = {
-		has_state_flag = AC_construction_INF_target_state1_@ROOT
-		has_state_flag = AC_construction_INF_target_state2_@ROOT
-		has_state_flag = AC_construction_INF_target_state3_@ROOT
-		has_state_flag = AC_construction_INF_target_state4_@ROOT
-		has_state_flag = AC_construction_INF_target_state5_@ROOT
-	}
-
-}
-AC_has_AB_state_flag = {
-	or = {
-		has_state_flag = AC_construction_AB_target_state1_@ROOT
-		has_state_flag = AC_construction_AB_target_state2_@ROOT
-		has_state_flag = AC_construction_AB_target_state3_@ROOT
-		has_state_flag = AC_construction_AB_target_state4_@ROOT
-		has_state_flag = AC_construction_AB_target_state5_@ROOT
-	}
-
-}
-AC_has_AA_state_flag = {
-	or = {
-		has_state_flag = AC_construction_AA_target_state1_@ROOT
-		has_state_flag = AC_construction_AA_target_state2_@ROOT
-		has_state_flag = AC_construction_AA_target_state3_@ROOT
-		has_state_flag = AC_construction_AA_target_state4_@ROOT
-		has_state_flag = AC_construction_AA_target_state5_@ROOT
-	}
-
-}
-AC_has_RAD_state_flag = {
-	or = {
-		has_state_flag = AC_construction_RAD_target_state1_@ROOT
-		has_state_flag = AC_construction_RAD_target_state2_@ROOT
-		has_state_flag = AC_construction_RAD_target_state3_@ROOT
-		has_state_flag = AC_construction_RAD_target_state4_@ROOT
-		has_state_flag = AC_construction_RAD_target_state5_@ROOT
-	}
-
-}
-AC_has_MIC_state_flag = {
-	or = {
-		has_state_flag = AC_construction_MIC_target_state1_@ROOT
-		has_state_flag = AC_construction_MIC_target_state2_@ROOT
-		has_state_flag = AC_construction_MIC_target_state3_@ROOT
-		has_state_flag = AC_construction_MIC_target_state4_@ROOT
-		has_state_flag = AC_construction_MIC_target_state5_@ROOT
-	}
-
-}
-AC_has_CIC_state_flag = {
-
-	or = {
-		has_state_flag = AC_construction_CIC_target_state1_@ROOT
-		has_state_flag = AC_construction_CIC_target_state2_@ROOT
-		has_state_flag = AC_construction_CIC_target_state3_@ROOT
-		has_state_flag = AC_construction_CIC_target_state4_@ROOT
-		has_state_flag = AC_construction_CIC_target_state5_@ROOT
-	}
-
-}
-AC_has_NIC_state_flag = {
-	or = {
-		has_state_flag = AC_construction_NIC_target_state1_@ROOT
-		has_state_flag = AC_construction_NIC_target_state2_@ROOT
-		has_state_flag = AC_construction_NIC_target_state3_@ROOT
-		has_state_flag = AC_construction_NIC_target_state4_@ROOT
-		has_state_flag = AC_construction_NIC_target_state5_@ROOT
-	}
-
-}
-AC_has_REF_state_flag = {
-	or = {
-		has_state_flag = AC_construction_REF_target_state1_@ROOT
-		has_state_flag = AC_construction_REF_target_state2_@ROOT
-		has_state_flag = AC_construction_REF_target_state3_@ROOT
-		has_state_flag = AC_construction_REF_target_state4_@ROOT
-		has_state_flag = AC_construction_REF_target_state5_@ROOT
-	}
-
-}
-
-AC_Control_change_has_flag = {
-	or = {
-		has_state_flag = AC_construction_INF_target_state1_@PREV
-		has_state_flag = AC_construction_INF_target_state2_@PREV
-		has_state_flag = AC_construction_INF_target_state3_@PREV
-		has_state_flag = AC_construction_INF_target_state4_@PREV
-		has_state_flag = AC_construction_INF_target_state5_@PREV
-
-		has_state_flag = AC_construction_AB_target_state1_@PREV
-		has_state_flag = AC_construction_AB_target_state2_@PREV
-		has_state_flag = AC_construction_AB_target_state3_@PREV
-		has_state_flag = AC_construction_AB_target_state4_@PREV
-		has_state_flag = AC_construction_AB_target_state5_@PREV
-
-		has_state_flag = AC_construction_AA_target_state1_@PREV
-		has_state_flag = AC_construction_AA_target_state2_@PREV
-		has_state_flag = AC_construction_AA_target_state3_@PREV
-		has_state_flag = AC_construction_AA_target_state4_@PREV
-		has_state_flag = AC_construction_AA_target_state5_@PREV
-
-		has_state_flag = AC_construction_RAD_target_state1_@PREV
-		has_state_flag = AC_construction_RAD_target_state2_@PREV
-		has_state_flag = AC_construction_RAD_target_state3_@PREV
-		has_state_flag = AC_construction_RAD_target_state4_@PREV
-		has_state_flag = AC_construction_RAD_target_state5_@PREV
-
-		has_state_flag = AC_construction_MIC_target_state1_@PREV
-		has_state_flag = AC_construction_MIC_target_state2_@PREV
-		has_state_flag = AC_construction_MIC_target_state3_@PREV
-		has_state_flag = AC_construction_MIC_target_state4_@PREV
-		has_state_flag = AC_construction_MIC_target_state5_@PREV
-
-		has_state_flag = AC_construction_CIC_target_state1_@PREV
-		has_state_flag = AC_construction_CIC_target_state2_@PREV
-		has_state_flag = AC_construction_CIC_target_state3_@PREV
-		has_state_flag = AC_construction_CIC_target_state4_@PREV
-		has_state_flag = AC_construction_CIC_target_state5_@PREV
-
-		has_state_flag = AC_construction_NIC_target_state1_@PREV
-		has_state_flag = AC_construction_NIC_target_state2_@PREV
-		has_state_flag = AC_construction_NIC_target_state3_@PREV
-		has_state_flag = AC_construction_NIC_target_state4_@PREV
-		has_state_flag = AC_construction_NIC_target_state5_@PREV
-
-		has_state_flag = AC_construction_REF_target_state1_@PREV
-		has_state_flag = AC_construction_REF_target_state2_@PREV
-		has_state_flag = AC_construction_REF_target_state3_@PREV
-		has_state_flag = AC_construction_REF_target_state4_@PREV
-		has_state_flag = AC_construction_REF_target_state5_@PREV
-	}
-}
-
-AC_has_max_investments = {
-	if = {
-		limit = { ROOT = { check_variable = { AC_building_type_selected = 1 } } }
-		and = {
-			#not = {
-				any_owned_state = { has_state_flag = AC_construction_INF_target_state1_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_INF_target_state2_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_INF_target_state3_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_INF_target_state4_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_INF_target_state5_@ROOT }
-			# }
-		}
-	}
-	else_if = {
-		limit = { ROOT = { check_variable = { AC_building_type_selected = 2 } } }
-		and = {
-			#not = {
-				any_owned_state = { has_state_flag = AC_construction_AB_target_state1_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_AB_target_state2_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_AB_target_state3_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_AB_target_state4_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_AB_target_state5_@ROOT }
-			# }
-		}
-	}
-	else_if = {
-		limit = { ROOT = { check_variable = { AC_building_type_selected = 3 } } }
-		and = {
-			#not = {
-				any_owned_state = { has_state_flag = AC_construction_AA_target_state1_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_AA_target_state2_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_AA_target_state3_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_AA_target_state4_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_AA_target_state5_@ROOT }
-			# }
-		}
-	}
-	else_if = {
-		limit = { ROOT = { check_variable = { AC_building_type_selected = 4 } } }
-		and = {
-			#not = {
-				any_owned_state = { has_state_flag = AC_construction_RAD_target_state1_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_RAD_target_state2_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_RAD_target_state3_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_RAD_target_state4_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_RAD_target_state5_@ROOT }
-			# }
-		}
-	}
-	else_if = {
-		limit = { ROOT = { check_variable = { AC_building_type_selected = 5 } } }
-		and = {
-			#not = {
-				any_owned_state = { has_state_flag = AC_construction_MIC_target_state1_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_MIC_target_state2_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_MIC_target_state3_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_MIC_target_state4_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_MIC_target_state5_@ROOT }
-			# }
-		}
-	}
-	else_if = {
-		limit = { ROOT = { check_variable = { AC_building_type_selected = 6 } } }
-		and = {
-			#not = {
-				any_owned_state = { has_state_flag = AC_construction_CIC_target_state1_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_CIC_target_state2_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_CIC_target_state3_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_CIC_target_state4_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_CIC_target_state5_@ROOT }
-			# }
-		}
-	}
-	else_if = {
-		limit = { ROOT = { check_variable = { AC_building_type_selected = 7 } } }
-		and = {
-			#not = {
-				any_owned_state = { has_state_flag = AC_construction_NIC_target_state1_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_NIC_target_state2_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_NIC_target_state3_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_NIC_target_state4_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_NIC_target_state5_@ROOT }
-			# }
-		}
-	}
-	else_if = {
-		limit = { ROOT = { check_variable = { AC_building_type_selected = 8 } } }
-		and = {
-			#not = {
-				any_owned_state = { has_state_flag = AC_construction_REF_target_state1_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_REF_target_state2_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_REF_target_state3_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_REF_target_state4_@ROOT }
-				any_owned_state = { has_state_flag = AC_construction_REF_target_state5_@ROOT }
-			# }
-		}
-	}
-
 }
