@@ -31,6 +31,15 @@ set_landbased_missile_defense_cap = {
 				set_temp_variable = { temp1 = 0 }	
 				add_to_temp_variable = { temp1 = non_damaged_building_level@anti_air_building }
 				multiply_temp_variable = { temp1 = PREV.var_SAM_launcher_tech }
+				# already coded in defense effects
+				# if = {
+				# 	limit = {
+				# 		check_variable = { PREV.var_deployed_SAM_MD_land < temp1 }
+				# 	}
+				# 	set_temp_variable = { temp1 = PREV.var_deployed_SAM_MD_land }
+				# }
+				# set_temp_variable = { temp_deployed_SAM_MD_land = PREV.var_deployed_SAM_MD_land }
+				# subtract_from_temp_variable = { temp_deployed_SAM_MD_land = temp1 }
 				add_to_variable = { ROOT.var_intercept_capacity_boost_land = temp1 }
 			}
 			### midcourse phase defense ###
@@ -47,6 +56,15 @@ set_landbased_missile_defense_cap = {
 				set_temp_variable = { temp1 = 0 }	
 				add_to_temp_variable = { temp1 = non_damaged_building_level@missile_defense_station }
 				multiply_temp_variable = { temp1 = PREV.var_ABM_launcher_tech }
+				# already coded in defense effects
+				# if = {
+				# 	limit = {
+				# 		check_variable = { PREV.var_deployed_ABM_land < temp1 }
+				# 	}
+				# 	set_temp_variable = { temp1 = PREV.var_deployed_SAM_MD_land }
+				# }
+				# set_temp_variable = { temp_deployed_ABM_land = PREV.var_deployed_ABM_land }
+				# subtract_from_temp_variable = { temp_deployed_ABM_land = temp1 }
 				add_to_variable = { ROOT.var_intercept_capacity_midcourse_land = temp1 }
 				set_state_flag = defend_land_launch_point
 			}
@@ -66,6 +84,13 @@ set_landbased_missile_defense_cap = {
 				set_temp_variable = { temp1 = 0 }	
 				add_to_temp_variable = { temp1 = non_damaged_building_level@missile_defense_station }
 				multiply_temp_variable = { temp1 = PREV.var_ABM_launcher_tech }
+				# already coded in defense effects
+				# if = {
+				# 	limit = {
+				# 		check_variable = { temp_deployed_ABM_land < temp1 }
+				# 	}
+				# 	set_temp_variable = { temp1 = temp_deployed_ABM_land }
+				# }
 				add_to_variable = { ROOT.var_intercept_capacity_midcourse_land = temp1 }
 			}
 			every_controlled_state = {
@@ -85,6 +110,13 @@ set_landbased_missile_defense_cap = {
 				set_temp_variable = { temp1 = 0 }	
 				add_to_temp_variable = { temp1 = non_damaged_building_level@anti_air_building }
 				multiply_temp_variable = { temp1 = PREV.var_SAM_launcher_tech }
+				# already coded in defense effects
+				# if = {
+				# 	limit = {
+				# 		check_variable = { temp_deployed_SAM_MD_land < temp1 }
+				# 	}
+				# 	set_temp_variable = { temp1 = temp_deployed_SAM_MD_land }
+				# }
 				add_to_variable = { ROOT.var_intercept_capacity_terminal_land = temp1 }
 			}
 		}
@@ -4025,10 +4057,25 @@ set_ABM_display_array = {
 update_deployed_air_missile_defense = {
 	update_NSAM_AD_deployed = yes
 	update_SAM_AD_deployed = yes
+	### needs to be tested
 	update_deployed_SAM_MD_sea = yes
 	update_deployed_SAM_MD_land = yes
 	update_deployed_ABM_sea = yes
 	update_deployed_ABM_land = yes
+
+	add_to_variable = { var_NSAM_AD_lost_monthly = var_NSAM_AD_lost }
+	add_to_variable = { var_SAM_AD_lost_monthly = var_SAM_AD_lost }
+	add_to_variable = { var_NSAM_MD_lost_monthly = var_NSAM_MD_lost }
+	add_to_variable = { var_SAM_MD_lost_monthly = var_SAM_MD_lost }
+	add_to_variable = { var_NABM_lost_monthly = var_NABM_lost }
+	add_to_variable = { var_ABM_lost_monthly = var_ABM_lost }
+
+	add_to_variable = { var_NSAM_AD_lost_total = var_NSAM_AD_lost }
+	add_to_variable = { var_SAM_AD_lost_total = var_SAM_AD_lost }
+	add_to_variable = { var_NSAM_MD_lost_total = var_NSAM_MD_lost }
+	add_to_variable = { var_SAM_MD_lost_total = var_SAM_MD_lost }
+	add_to_variable = { var_NABM_lost_total = var_NABM_lost }
+	add_to_variable = { var_ABM_lost_total = var_ABM_lost }
 }
 
 update_NSAM_AD_deployed = {
@@ -4047,7 +4094,8 @@ update_NSAM_AD_deployed = {
 		}
 		set_temp_variable = { temp_NSAM_lost = var_NSAM_AD_deployed }
 		subtract_from_temp_variable = { temp_NSAM_lost = var_NSAM_AD_launchers }
-		add_to_variable = { var_NSAM_AD_lost = temp_NSAM_lost }
+		set_variable = { var_NSAM_AD_lost = temp_NSAM_lost }
+		subtract_from_variable = { var_NSAM_AD_deployed = temp_NSAM_lost }
 	}
 	### auto redeploy
 	else_if = {
@@ -4057,8 +4105,37 @@ update_NSAM_AD_deployed = {
 		}
 		set_temp_variable = { temp_NSAM_add = var_NSAM_AD_launchers }
 		subtract_from_temp_variable = { temp_NSAM_add = var_NSAM_AD_deployed }
-		add_to_variable = { var_NSAM_AD_deployed = temp_NSAM_add }
-		subtract_from_variable = { missile_inventory_array^var_NSAM_type = temp_NSAM_add }
+		while_loop_effect = {
+			limit = {
+				check_variable = { temp_NSAM_add > 0 }
+				OR = {
+					check_variable = { missile_inventory_array^var_NSAM_type > temp_NSAM_add }
+					check_variable = { missile_inventory_array^var_NSAM_type = temp_NSAM_add }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { temp_NSAM_add > 1000 }
+				}
+				add_to_variable = { var_NSAM_AD_deployed = 100 }
+				subtract_from_variable = { missile_inventory_array^var_NSAM_type = 100 }
+				subtract_from_temp_variable = { temp_NSAM_add = 100 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { temp_NSAM_add > 100 }
+					check_variable = { temp_NSAM_add < 1001 }
+				}
+				add_to_variable = { var_NSAM_AD_deployed = 10 }
+				subtract_from_variable = { missile_inventory_array^var_NSAM_type = 10 }
+				subtract_from_temp_variable = { temp_NSAM_add = 10 }
+			}
+			else = {
+				add_to_variable = { var_NSAM_AD_deployed = 1 }
+				subtract_from_variable = { missile_inventory_array^var_NSAM_type = 1 }
+				subtract_from_temp_variable = { temp_NSAM_add = 1 }
+			}
+		}
 	}
 	### ratio
 	set_variable = { var_NSAM_AD_deploy_ratio = var_NSAM_AD_deployed }
@@ -4078,14 +4155,15 @@ update_SAM_AD_deployed = {
 	}
 	set_variable = { var_SAM_AD_launcher_total = var_SAM_AD_launcher_tech }
 	multiply_variable = { var_SAM_AD_launcher_total = var_AD_batteries }
-	### subtract destroyed NSAM
+	### subtract destroyed SAM AD
 	if = {
 		limit = {
 			check_variable = { var_SAM_AD_deployed > var_SAM_AD_launcher_total }
 		}
 		set_temp_variable = { temp_SAM_lost = var_SAM_AD_deployed }
 		subtract_from_temp_variable = { temp_SAM_lost = var_SAM_AD_launcher_total }
-		add_to_variable = { var_SAM_AD_lost = temp_SAM_lost }
+		set_variable = { var_SAM_AD_lost = temp_SAM_lost }
+		subtract_from_variable = { var_SAM_AD_deployed = temp_SAM_lost }
 	}
 	### auto redeploy
 	else_if = {
@@ -4095,10 +4173,39 @@ update_SAM_AD_deployed = {
 		}
 		set_temp_variable = { temp_SAM_add = var_SAM_AD_launcher_total }
 		subtract_from_temp_variable = { temp_SAM_add = var_SAM_AD_deployed }
-		add_to_variable = { var_SAM_AD_deployed = temp_SAM_add }
-		subtract_from_variable = { missile_inventory_array^var_SAM_type = temp_SAM_add }
+		while_loop_effect = {
+			limit = {
+				check_variable = { temp_SAM_add > 0 }
+				OR = {
+					check_variable = { missile_inventory_array^var_SAM_type > temp_SAM_add }
+					check_variable = { missile_inventory_array^var_SAM_type = temp_SAM_add }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { temp_SAM_add > 1000 }
+				}
+				add_to_variable = { var_SAM_AD_deployed = 100 }
+				subtract_from_variable = { missile_inventory_array^var_SAM_type = 100 }
+				subtract_from_temp_variable = { temp_SAM_add = 100 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { temp_SAM_add > 100 }
+					check_variable = { temp_SAM_add < 1001 }
+				}
+				add_to_variable = { var_SAM_AD_deployed = 10 }
+				subtract_from_variable = { missile_inventory_array^var_SAM_type = 10 }
+				subtract_from_temp_variable = { temp_SAM_add = 10 }
+			}
+			else = {
+				add_to_variable = { var_SAM_AD_deployed = 1 }
+				subtract_from_variable = { missile_inventory_array^var_SAM_type = 1 }
+				subtract_from_temp_variable = { temp_SAM_add = 1 }
+			}
+		}
 	}
-	### ratio
+	## ratio
 	set_variable = { var_SAM_AD_deploy_ratio = var_SAM_AD_deployed }
 	divide_variable = { var_SAM_AD_deploy_ratio = var_SAM_AD_launcher_total }
 	multiply_variable = { var_SAM_AD_damage = var_SAM_AD_deploy_ratio }
@@ -4115,19 +4222,255 @@ update_SAM_AD_deployed = {
 }
 
 update_deployed_SAM_MD_sea = {
-
+	### add all aa ships
+	set_temp_variable = { temp_MD_ships = 0 }
+	add_to_temp_variable = { temp_MD_ships = num_ships_with_type@cruiser_mtg }
+	add_to_temp_variable = { temp_MD_ships = num_ships_with_type@stealth_destroyer_mtg }
+	add_to_temp_variable = { temp_MD_ships = num_ships_with_type@frigate_mtg }
+	### multiply launchers
+	set_temp_variable = { temp_NSAM_MD_launcher_total = var_ship_SAM_launcher_tech }
+	multiply_variable = { temp_NSAM_MD_launcher_total = temp_MD_ships }
+	### subtract destroyed NSAM
+	if = {
+		limit = {
+			check_variable = { var_deployed_SAM_MD_sea > temp_NSAM_MD_launcher_total }
+		}
+		set_temp_variable = { temp_NSAM_MD_lost = var_deployed_SAM_MD_sea }
+		subtract_from_temp_variable = { temp_NSAM_MD_lost = temp_NSAM_MD_launcher_total }
+		set_variable = { var_NSAM_MD_lost = temp_NSAM_MD_lost }
+		subtract_from_variable = { var_deployed_SAM_MD_sea = temp_NSAM_MD_lost }
+	}
+	### auto redeploy
+	else_if = {
+		limit = {
+			check_variable = { temp_NSAM_MD_launcher_total > var_deployed_SAM_MD_sea }
+			check_variable = { var_NSAM_MD_auto_redeploy = 2 }
+		}
+		set_temp_variable = { temp_NSAM_MD_add = temp_NSAM_MD_launcher_total }
+		subtract_from_temp_variable = { temp_NSAM_MD_add = var_deployed_SAM_MD_sea }
+		while_loop_effect = {
+			limit = {
+				check_variable = { temp_NSAM_MD_add > 0 }
+				OR = {
+					check_variable = { missile_inventory_array^var_NSAM_MD_type > temp_NSAM_MD_add }
+					check_variable = { missile_inventory_array^var_NSAM_MD_type = temp_NSAM_MD_add }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { temp_NSAM_MD_add > 1000 }
+				}
+				add_to_variable = { var_deployed_SAM_MD_sea = 100 }
+				subtract_from_variable = { missile_inventory_array^var_NSAM_MD_type = 100 }
+				subtract_from_temp_variable = { temp_SAM_MD_add = 100 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { temp_NSAM_MD_add > 100 }
+					check_variable = { temp_NSAM_MD_add < 1001 }
+				}
+				add_to_variable = { var_deployed_SAM_MD_sea = 10 }
+				subtract_from_variable = { missile_inventory_array^var_NSAM_MD_type = 10 }
+				subtract_from_temp_variable = { temp_NSAM_MD_add = 10 }
+			}
+			else = {
+				add_to_variable = { var_deployed_SAM_MD_sea = 1 }
+				subtract_from_variable = { missile_inventory_array^var_NSAM_MD_type = 1 }
+				subtract_from_temp_variable = { temp_NSAM_MD_add = 1 }
+			}
+		}
+	}
+	calculate_SAM_MD_sea_gui_vars = yes
 }
 
 update_deployed_SAM_MD_land = {
-
+	### check total launcher
+	set_temp_variable = { temp_MD_batteries = 0 }
+	every_controlled_state = {
+		limit = {
+			anti_air_building > 0
+		}
+		add_to_temp_variable = { temp_MD_batteries = non_damaged_building_level@anti_air_building }
+	}
+	set_temp_variable = { temp_SAM_MD_launcher_total = var_SAM_launcher_tech }
+	multiply_temp_variable = { temp_SAM_MD_launcher_total = temp_MD_batteries }
+	### subtract destroyed SAM MD
+	if = {
+		limit = {
+			check_variable = { var_deployed_SAM_MD_land > temp_SAM_MD_launcher_total }
+		}
+		set_temp_variable = { temp_SAM_MD_lost = var_deployed_SAM_MD_land }
+		subtract_from_temp_variable = { temp_SAM_MD_lost = temp_SAM_MD_launcher_total }
+		set_variable = { var_SAM_MD_lost = temp_SAM_MD_lost }
+		subtract_from_variable = { var_deployed_SAM_MD_land = temp_SAM_MD_lost }
+	}
+	### auto redeploy
+	if = {
+		limit = {
+			check_variable = { temp_SAM_MD_launcher_total > var_deployed_SAM_MD_land }
+			check_variable = { var_SAM_MD_auto_redeploy = 2 }
+		}
+		set_temp_variable = { temp_SAM_MD_add = temp_SAM_MD_launcher_total }
+		subtract_from_temp_variable = { temp_SAM_MD_add = var_deployed_SAM_MD_land }
+		while_loop_effect = {
+			limit = {
+				check_variable = { temp_SAM_MD_add > 0 }
+				OR = {
+					check_variable = { missile_inventory_array^var_SAM_MD_type > temp_SAM_MD_add }
+					check_variable = { missile_inventory_array^var_SAM_MD_type = temp_SAM_MD_add }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { temp_SAM_MD_add > 1000 }
+				}
+				add_to_variable = { var_deployed_SAM_MD_land = 100 }
+				subtract_from_variable = { missile_inventory_array^var_SAM_MD_type = 100 }
+				subtract_from_temp_variable = { temp_SAM_MD_add = 100 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { temp_SAM_MD_add > 100 }
+					check_variable = { temp_SAM_MD_add < 1001 }
+				}
+				add_to_variable = { var_deployed_SAM_MD_land = 10 }
+				subtract_from_variable = { missile_inventory_array^var_SAM_MD_type = 10 }
+				subtract_from_temp_variable = { temp_SAM_MD_add = 10 }
+			}
+			else = {
+				add_to_variable = { var_deployed_SAM_MD_land = 1 }
+				subtract_from_variable = { missile_inventory_array^var_SAM_MD_type = 1 }
+				subtract_from_temp_variable = { temp_SAM_MD_add = 1 }
+			}
+		}
+	}
+	calculate_SAM_MD_land_gui_vars = yes
 }
 
 update_deployed_ABM_sea = {
-
+	### add all aa ships
+	set_temp_variable = { temp_MD_ships = 0 }
+	add_to_temp_variable = { temp_MD_ships = num_ships_with_type@cruiser_mtg }
+	add_to_temp_variable = { temp_MD_ships = num_ships_with_type@stealth_destroyer_mtg }
+	add_to_temp_variable = { temp_MD_ships = num_ships_with_type@frigate_mtg }
+	### multiply launchers
+	set_temp_variable = { temp_NABM_launcher_total = var_ship_ABM_launcher_tech }
+	multiply_variable = { temp_NABM_launcher_total = temp_MD_ships }
+	### subtract destroyed NABM
+	if = {
+		limit = {
+			check_variable = { var_deployed_ABM_sea > temp_NABM_launcher_total }
+		}
+		set_temp_variable = { temp_NABM_lost = var_deployed_ABM_sea }
+		subtract_from_temp_variable = { temp_NABM_lost = temp_NABM_launcher_total }
+		set_variable = { var_NABM_lost = temp_NABM_lost }
+		subtract_from_variable = { var_deployed_ABM_sea = temp_NABM_lost }
+	}
+	### auto redeploy
+	else_if = {
+		limit = {
+			check_variable = { temp_NABM_launcher_total > var_deployed_ABM_sea }
+			check_variable = { var_NABM_auto_redeploy = 2 }
+		}
+		set_temp_variable = { temp_NABM_add = temp_NABM_launcher_total }
+		subtract_from_temp_variable = { temp_NABM_add = var_deployed_ABM_sea }
+		while_loop_effect = {
+			limit = {
+				check_variable = { temp_NABM_add > 0 }
+				OR = {
+					check_variable = { missile_inventory_array^var_NABM_type > temp_NABM_add }
+					check_variable = { missile_inventory_array^var_NABM_type = temp_NABM_add }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { temp_NABM_add > 1000 }
+				}
+				add_to_variable = { var_deployed_ABM_sea = 100 }
+				subtract_from_variable = { missile_inventory_array^var_NABM_type = 100 }
+				subtract_from_temp_variable = { temp_NABM_add = 100 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { temp_NABM_add > 100 }
+					check_variable = { temp_NABM_add < 1001 }
+				}
+				add_to_variable = { var_deployed_ABM_sea = 10 }
+				subtract_from_variable = { missile_inventory_array^var_NABM_type = 10 }
+				subtract_from_temp_variable = { temp_NABM_add = 10 }
+			}
+			else = {
+				add_to_variable = { var_deployed_ABM_sea = 1 }
+				subtract_from_variable = { missile_inventory_array^var_NABM_type = 1 }
+				subtract_from_temp_variable = { temp_NABM_add = 1 }
+			}
+		}
+	}
+	calculate_ABM_sea_gui_vars = yes
 }
 
 update_deployed_ABM_land = {
-
+	### check total launcher
+	set_temp_variable = { temp_ABM_batteries = 0 }
+	every_controlled_state = {
+		limit = {
+			missile_defense_station > 0
+		}
+		add_to_temp_variable = { temp_ABM_batteries = non_damaged_building_level@missile_defense_station }
+	}
+	set_temp_variable = { temp_ABM_launcher_total = var_ABM_launcher_tech }
+	multiply_temp_variable = { temp_ABM_launcher_total = temp_ABM_batteries }
+	### subtract destroyed ABM
+	if = {
+		limit = {
+			check_variable = { var_deployed_ABM_land > temp_ABM_launcher_total }
+		}
+		set_temp_variable = { temp_ABM_lost = var_deployed_ABM_land }
+		subtract_from_temp_variable = { temp_ABM_lost = temp_ABM_launcher_total }
+		set_variable = { var_ABM_lost = temp_ABM_lost }
+		subtract_from_variable = { var_deployed_ABM_land = temp_ABM_lost }
+	}
+	### auto redeploy
+	if = {
+		limit = {
+			check_variable = { temp_ABM_launcher_total > var_deployed_ABM_land }
+			check_variable = { var_ABM_auto_redeploy = 2 }
+		}
+		set_temp_variable = { temp_ABM_add = temp_ABM_launcher_total }
+		subtract_from_temp_variable = { temp_ABM_add = var_deployed_ABM_land }
+		while_loop_effect = {
+			limit = {
+				check_variable = { temp_ABM_add > 0 }
+				OR = {
+					check_variable = { missile_inventory_array^var_ABM_type > temp_ABM_add }
+					check_variable = { missile_inventory_array^var_ABM_type = temp_ABM_add }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { temp_ABM_add > 1000 }
+				}
+				add_to_variable = { var_deployed_ABM_land = 100 }
+				subtract_from_variable = { missile_inventory_array^var_ABM_type = 100 }
+				subtract_from_temp_variable = { temp_ABM_add = 100 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { temp_ABM_add > 100 }
+					check_variable = { temp_ABM_add < 1001 }
+				}
+				add_to_variable = { var_deployed_ABM_land = 10 }
+				subtract_from_variable = { missile_inventory_array^var_ABM_type = 10 }
+				subtract_from_temp_variable = { temp_ABM_add = 10 }
+			}
+			else = {
+				add_to_variable = { var_deployed_ABM_land = 1 }
+				subtract_from_variable = { missile_inventory_array^var_ABM_type = 1 }
+				subtract_from_temp_variable = { temp_ABM_add = 1 }
+			}
+		}
+	}
+	calculate_ABM_land_gui_vars = yes
 }
 
 ######################
