@@ -165,6 +165,17 @@ scripted_gui = {
 					}
 				}
 			}
+			MD_missiles_rods_target_button_click = {
+				ROOT = {
+					set_country_flag = RODS_has_target
+					add_to_variable = { var_KB_ID = 1 }
+					add_to_array = {
+						array = kinetic_bombardment_target_array
+						value = PREV.id
+						index = var_KB_ID
+					}
+				}
+			}
 			### redeploy ###
 			open_redeploy_view_button_click = {
 				if = {
@@ -275,7 +286,35 @@ scripted_gui = {
 					ROOT = { NOT = { has_country_flag = has_trajectory } }
 				}
 				#OLD VERSION
-				#MD_missiles_air_launch_button_trigger = yes
+				#MD_missiles_air_launch_button_trigger = yes 
+			}
+			MD_missiles_ground_launch_button_visible = {
+				ROOT = { NOT = { check_variable = { var_open_MD_missiles_gui_ledger_4 = 2 } } }
+			}
+			MD_missiles_sea_launch_button_visible = {
+				ROOT = { NOT = { check_variable = { var_open_MD_missiles_gui_ledger_4 = 2 } } }
+			}
+			MD_missiles_air_launch_button_visible = {
+				ROOT = { NOT = { check_variable = { var_open_MD_missiles_gui_ledger_4 = 2 } } }
+			}
+			MD_missiles_target_button_visible = {
+				ROOT = { NOT = { check_variable = { var_open_MD_missiles_gui_ledger_4 = 2 } } }
+			}
+			MD_missiles_rods_target_button_visible = {
+				ROOT = { check_variable = { var_open_MD_missiles_gui_ledger_4 = 2 } }
+			}
+			MD_missiles_rods_target_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = MD_missiles_rods_target_button_TT
+					ROOT = { check_variable = { var_RODS_type > 0 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = MD_missiles_rods_target_button_TT2
+					ROOT = { NOT = { has_country_flag = RODS_has_target } }
+				}
+				controller = {
+					has_war_with = ROOT
+				}
 			}
 		}
 
@@ -5238,6 +5277,41 @@ scripted_gui = {
 					set_country_flag = RODS_model
 				}
 			}
+			kinetic_bombardment_button_click = {
+				set_kinetic_bombardment_damage = yes
+				if = {
+					limit = {
+						check_variable = { var_kinetic_bombardment_stats = 2 }
+					}
+					news_event = {
+						id = satellites.9
+					}
+				}
+				clr_country_flag = RODS_has_target
+				clear_variable = var_RODS_type
+			}
+			kinetic_bombardment_stats_button_click = {
+				if = {
+					limit = {
+						NOT = { check_variable = { var_kinetic_bombardment_stats = 1 } }
+					}
+					set_variable = { var_kinetic_bombardment_stats = 1 }
+				}
+				else = {
+					set_variable = { var_kinetic_bombardment_stats = 2 }
+				}
+			}
+			rods_search_target_button_click = {
+				if = {
+					limit = {
+						NOT = { has_country_flag = rods_search_target }
+					}
+					set_country_flag = rods_search_target
+				}
+				else = {
+					clr_country_flag = rods_search_target
+				}
+			}
 		}
 		triggers = {
 			OLV_launch_button_click_enabled = {
@@ -5279,6 +5353,9 @@ scripted_gui = {
 			}
 			RODS_model_icon = {
 				image = "[RODS_selected_icon_texture]"
+			}
+			kinetic_bombardment_stats_button = {
+				frame = var_kinetic_bombardment_stats
 			}
 		}
 		dynamic_lists = {
@@ -5415,6 +5492,7 @@ scripted_gui = {
 			}
 			RODS_type_button_click = {
 				set_variable = { var_RODS_type = RODS_display_array^i }
+				set_variable = { var_kinetic_bombardment_damage = RODS_damage_array^i }
 				#set_variable = { var_OLV_reliability = OLV_reliability_array^i }
 				#set_variable = { var_OLV_payload_mass = OLV_payload_mass_array^i }
 				#set_variable = { var_OLV_inventory = missile_inventory_array^OLV_display_array^i }
@@ -6638,6 +6716,7 @@ scripted_gui = {
 			ROOT = {
 				check_variable = { var_open_MD_missiles_gui_ledger_4 = 2 }
 				has_country_flag = open_MD_countrymissilesview
+				NOT = { has_country_flag = rods_search_target }
 			}
 		}
 		effects = {
