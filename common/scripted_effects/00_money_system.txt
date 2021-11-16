@@ -72,9 +72,6 @@ ingame_update_setup = {
 calculate_tax_rate = {
 	remove_tax_cost = yes
 	set_variable = { tax_rate = corporate_tax_rate }
-	multiply_variable = { tax_rate = 1.5 }
-	round_variable = tax_rate
-	clamp_variable = { var = tax_rate min = 0 max = 100 }
 	set_tax_cost = yes
 	
 	if = {
@@ -171,7 +168,7 @@ calculate_tax_gain = {
 	}
 	multiply_variable = { dockyard_tax = 1.5 }
 	set_variable = { office_tax = office_park_total }
-	multiply_variable = { office_tax = 6 }
+	multiply_variable = { office_tax = 5 }
 	#Control factors
 	divide_variable = { civil_fac_tax = 4.2 }
 	divide_variable = { military_fac_tax = 4.2 }
@@ -186,7 +183,7 @@ calculate_tax_gain = {
 
 	##POP
 	set_variable = { var = population_tax value = population_total }
-	divide_variable = { population_tax = 32 } #Gives TOTAL potential tax assuming 100%
+	divide_variable = { population_tax = 22 } #Gives TOTAL potential tax assuming 100%
 	multiply_variable = { var = population_tax value = population_tax_rate }
 
 	#Additional additive modifiers
@@ -384,6 +381,46 @@ calculate_additional_income_rate = {
 		limit = { has_idea = WAA_Narcotics_Producer }
 		set_variable = { additional_income_WAA_Narcotics_Producer = 0.08 }
 		add_to_variable = { additional_income_rate = additional_income_WAA_Narcotics_Producer }
+	}
+	##north korea
+	if = {
+		limit = { has_idea = NKO_the_black_economy }
+		set_variable = { additional_income_NKO_the_black_economy = 0.08 }
+		add_to_variable = { additional_income_rate = additional_income_NKO_the_black_economy }
+	}
+	if = {
+		limit = { has_idea = DPRK_Exporting_Workforce }
+		set_variable = { additional_income_DPRK_Exporting_Workforce = 0.03 }
+		add_to_variable = { additional_income_rate = additional_income_DPRK_Exporting_Workforce }
+	}
+	if = {
+		limit = { has_idea = Ryugyong_Hotel }
+		set_variable = { additional_income_Ryugyong_Hotel = 0.02 }
+		add_to_variable = { additional_income_rate = additional_income_Ryugyong_Hotel }
+	}
+	##Botswana
+	if = {
+		limit = { original_tag = BOT }
+		if = {
+			limit = { has_idea = BOT_coal_focused_energy_small_profit }
+			set_variable = { additional_income_BOT_coal_focused_energy_small_profit = 0.05 }
+			add_to_variable = { additional_income_rate = additional_income_BOT_coal_focused_energy_small_profit }
+		}
+		if = {
+			limit = { has_idea = BOT_coal_focused_energy_rich }
+			set_variable = { additional_income_BOT_coal_focused_energy_rich = 0.1 }
+			add_to_variable = { additional_income_rate = additional_income_BOT_coal_focused_energy_rich }
+		}
+		if = {
+			limit = { has_idea = BOT_renewable_focused_energy_small_profit }
+			set_variable = { additional_income_BOT_renewable_focused_energy_small_profit = 0.04 }
+			add_to_variable = { additional_income_rate = additional_income_BOT_renewable_focused_energy_small_profit }
+		}
+		if = {
+			limit = { has_idea = BOT_renewable_focused_energy_rich }
+			set_variable = { additional_income_BOT_renewable_focused_energy_rich = 0.08 }
+			add_to_variable = { additional_income_rate = additional_income_BOT_renewable_focused_energy_rich }
+		}
 	}
 }
 
@@ -1048,6 +1085,27 @@ update_military_rate = {
 			add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
 		}
 	}
+	##Botswana
+	if = {
+		limit = { original_tag = BOT }
+		if = {
+			limit = { 
+				OR = {
+					has_idea = BOT_house_of_chiefs_militarised
+					has_idea = BOT_house_of_chiefs_empowered_and_militarised
+				}	
+			}
+			add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
+		}
+		if = {
+			limit = { has_idea = BOT_army_against_poaching }	
+			subtract_from_temp_variable = { personnel_cost_multiplier = 0.10 }
+		}
+		if = {
+			limit = { has_idea = BOT_professional_military }	
+			add_to_temp_variable = { personnel_cost_multiplier = 0.10 }
+		}
+	}
 
 	#Modify personnel cost with total wage modifier
 	multiply_temp_variable = { land_count = personnel_cost_multiplier }
@@ -1195,6 +1253,29 @@ update_bureaucracy_rate = {
 			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.05 }
 		}
 	}
+	##Botswana
+	if = {
+		limit = { original_tag = BOT }
+		if = {
+			limit = { 
+				OR = {
+					has_idea = BOT_house_of_chiefs
+					has_idea = BOT_house_of_chiefs_militarised
+				}	
+			}
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.05 }
+		}
+		if = {
+			limit = { 
+				OR = {
+					has_idea = BOT_house_of_chiefs_empowered
+					has_idea = BOT_house_of_chiefs_empowered_and_militarised
+				}
+			}
+			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.10 }
+		}
+	}
+			
 
 	for_each_loop = {
 		array = array_bureaucracy_spend
@@ -1309,6 +1390,35 @@ update_police_rate = {
 		if = {
 			limit = { has_idea = CAN_overburdened_economy2 }
 			add_to_temp_variable = { police_cost_multiplier = 0.05 }
+		}
+	}
+	##Botswana
+	if = {
+		limit = { original_tag = BOT }
+		if = {
+			limit = {
+				OR = {
+					has_idea = BOT_zimbabwean_refugees
+					has_idea = BOT_zimbabwean_refugees_encouraged
+				}
+			}
+			add_to_temp_variable = { police_cost_multiplier = 0.10 }
+		}
+		if = {
+			limit = { has_idea = BOT_army_against_poaching }
+			add_to_temp_variable = { police_cost_multiplier = 0.10 }
+		}
+		if = {
+			limit = { has_idea = BOT_ilea }
+			subtract_from_temp_variable = { police_cost_multiplier = 0.05 }
+		}
+		if = {
+			limit = { has_decision = BOT_anti_poaching_extra_security }
+			add_to_temp_variable = { police_cost_multiplier = 0.50 }
+		}
+		if = {
+			limit = { has_decision = BOT_anti_poaching_heavy_weapons }
+			add_to_temp_variable = { police_cost_multiplier = 0.50 }
 		}
 	}
 
@@ -1478,6 +1588,18 @@ update_education_rate = {
 			subtract_from_temp_variable = { education_cost_multiplier = 0.10 }
 		}
 	}
+	##Botswana
+	if = {
+		limit = { original_tag = BOT }
+		if = {
+			limit = { has_idea = BOT_extra_school_funding }
+			add_to_temp_variable = { education_cost_multiplier = 0.05 }			
+		}
+		if = {
+			limit = { has_idea = BOT_school_fees }
+			subtract_from_temp_variable = { education_cost_multiplier = 0.10 }			
+		}
+	}
 
 	for_each_loop = {
 		array = array_education_spend
@@ -1556,6 +1678,26 @@ update_health_rate = {
 		limit = { has_tech = medical_nanorobots }
 		subtract_from_temp_variable = { health_cost_multiplier = 0.05 }
 	}
+	if = {
+		limit = { has_idea = low_level_of_aids }
+		add_to_temp_variable = { health_cost_multiplier = 0.05 }
+	}
+	if = {
+		limit = { has_idea = rising_level_of_aids }
+		add_to_temp_variable = { health_cost_multiplier = 0.10 }
+	}	
+	if = {
+		limit = { has_idea = high_level_of_aids }
+		add_to_temp_variable = { health_cost_multiplier = 0.15 }
+	}
+	if = {
+		limit = { has_idea = very_high_level_of_aids }
+		add_to_temp_variable = { health_cost_multiplier = 0.20 }
+	}
+	if = {
+		limit = { has_idea = critical_level_of_aids }
+		add_to_temp_variable = { health_cost_multiplier = 0.25 }
+	}	
 	##USA
 	if = {
 		limit = { original_tag = USA }
@@ -1724,6 +1866,19 @@ update_social_rate = {
 			add_to_temp_variable = { social_cost_multiplier = 0.05 }
 		}
 	}
+	##Botswana
+	if = {
+		limit = { original_tag = BOT }
+		if = {
+			limit = {
+				OR = {
+					has_idea = BOT_zimbabwean_refugees
+					has_idea = BOT_zimbabwean_refugees_encouraged
+				}
+			}
+			add_to_temp_variable = { social_cost_multiplier = 0.10 }
+		}
+	}
 
 	for_each_loop = {
 		array = array_social_spend
@@ -1867,6 +2022,19 @@ calculate_additional_expense_rate = {
 			limit = { has_idea = al_jazeera }
 			set_variable = { additional_expense_al_jazeera = 0.02 }
 			add_to_variable = { additional_expenses_rate = additional_expense_al_jazeera }
+		}
+	}
+	if = {
+		limit = { original_tag = BOT }
+		if = {
+			limit = { has_idea = BOT_coal_focused_energy }
+			set_variable = { additional_expense_BOT_coal_focused_energy = 0.05 }
+			add_to_variable = { additional_expenses_rate = additional_expense_BOT_coal_focused_energy }
+		}
+		if = {
+			limit = { has_idea = BOT_renewable_focused_energy }
+			set_variable = { additional_expense_BOT_renewable_focused_energy = 0.05 }
+			add_to_variable = { additional_expenses_rate = additional_expense_BOT_renewable_focused_energy }
 		}
 	}
 }

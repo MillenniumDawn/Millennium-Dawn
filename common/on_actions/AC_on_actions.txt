@@ -11,7 +11,8 @@ on_actions = {
 
 			if = { limit = { check_variable = { active_projects > 0 } }
 
-				for_each_loop = { array = project_array
+				for_each_loop = {
+					array = project_array
 
 					if = { limit = { check_variable = { v < 0 } }
 
@@ -21,8 +22,6 @@ on_actions = {
 							limit = {
 								OR = {
 									CONTROLLER = { has_war_with = ROOT } # target state controller at war with project owner
-									CONTROLLER = { is_justifying_wargoal_against = ROOT }
-									ROOT = { is_justifying_wargoal_against = CONTROLLER }
 									var:v = { NOT = { investment_building_slot_available = yes } } # building slot unavailable in target state
 								}
 							}
@@ -49,16 +48,37 @@ on_actions = {
 					for_each_scope_loop = {
 						array = projects_in_state
 
-
-						### update project target country
-
-						meta_effect = { # remove target decision from old controller
-							text = { var:project_target_country^PREV.project_target_state_@THIS = { remove_targeted_decision = { target = PREV decision = project_[x]_target_decision } } }
-							x = "[?PREV.project_target_state_@THIS]"
+						if = {
+							limit = {
+								NOT = {
+									ROOT = { is_justifying_wargoal_against = PREV }
+									tag = ROOT
+									ROOT = { has_war_with = PREV }
+								}
+							}
+							add_to_array = { PREV.remove_projects = THIS.id }
 						}
+						else = {
+							### update project target country
 
-						set_variable = { project_target_country^PREV.project_target_state_@THIS = ROOT.id }
+							meta_effect = { # remove target decision from old controller
+								text = { var:project_target_country^PREV.project_target_state_@THIS = { remove_targeted_decision = { target = PREV decision = project_[x]_target_decision } } }
+								x = "[?PREV.project_target_state_@THIS]"
+							}
+
+							set_variable = { project_target_country^PREV.project_target_state_@THIS = ROOT.id }
+						}
 					}
+
+					for_each_scope_loop = {
+						array = remove_projects
+
+						set_variable = { project = PREV.project_target_state_@THIS }
+						log = "AC - [GetDate] [This.GetTag] - on_state_control_changed - deleted invalid project [?AC_project] in [?AC_project_array^AC_project] [?AC_project_array^AC_project.GetName]"
+						end_project = yes
+					}
+
+					clear_array = remove_projects
 				}
 			}
 		}
