@@ -5485,13 +5485,42 @@ update_SPY_system_stats = {
 }
 
 update_SPY_mission_num = {
+	# var:orbit_selected_TAG = {
+	# 	set_variable = { ROOT.var_SPY_mission_num_gui = num_controlled_states }
+	# }
+	#set_variable = { var_SPY_mission_num_gui = temp_spy_mission_num_states }
+	set_variable = { var_SPY_mission_active_sat = 0 }
+	for_each_loop = {
+		array = ROOT.spy_mission_sat_num_array
+		add_to_variable = { var_SPY_mission_active_sat = v }
+	}
 	set_variable = { var_SPY_mission_num_total = var_SPY_sat_total }
 	subtract_from_variable = { var_SPY_mission_num_total = var_SPY_mil_sat_system_num }
 	subtract_from_variable = { var_SPY_mission_num_total = var_SPY_civ_sat_system_num }
 	set_variable = { var_SPY_mission_num_available = var_SPY_mission_num_total }
 	subtract_from_variable = { var_SPY_mission_num_available = var_SPY_mission_active_sat }
+	update_SPY_mission_start_button = yes
 }
 
+update_SPY_mission_start_button = {
+	set_variable = { ROOT.var_SPY_mission_intel_ratio = ROOT.var_SPY_mission_num_gui }
+	var:orbit_selected_TAG = {
+		#set_variable = { ROOT.var_SPY_mission_num_gui = num_controlled_states }
+		divide_variable = { ROOT.var_SPY_mission_intel_ratio = ROOT.var_SPY_mission_num_gui }
+	}
+	set_variable = { ROOT.var_SPY_mission_intel_add = ROOT.var_SPY_mission_intel_ratio }
+	multiply_variable = { ROOT.var_SPY_mission_intel_add = 30 }
+}
+
+update_SPY_mission_plus_minus_button = {
+	#set_variable = { ROOT.var_SPY_mission_intel_ratio = ROOT.var_SPY_mission_num_gui }
+	var:orbit_selected_TAG = {
+		set_variable = { ROOT.var_SPY_mission_intel_ratio = ROOT.var_SPY_mission_num_gui }
+		divide_variable = { ROOT.var_SPY_mission_intel_ratio = num_controlled_states }
+	}
+	set_variable = { ROOT.var_SPY_mission_intel_add = ROOT.var_SPY_mission_intel_ratio }
+	multiply_variable = { ROOT.var_SPY_mission_intel_add = 30 }
+}
 
 calculate_GNSS_mil_gui_vars = {
 	meta_effect = {
@@ -6976,6 +7005,33 @@ add_offer_access_SPY_civ_vars = {
 		}
 	}
 }
+
+########################
+### spy sat missions ### ROOT.spy_mission_array^num
+########################
+
+clear_spy_sat_mission_arrays = {
+	for_each_loop = {
+		array = ROOT.spy_mission_array
+		var:ROOT.spy_mission_array^i = {
+			if = {
+				limit = {
+					NOT = { has_country_flag = spy_sat_mission_from_@ROOT }
+				}
+				remove_from_array = {
+					array = ROOT.spy_mission_array
+					index = i
+				}
+				remove_from_array = {
+					array = ROOT.spy_mission_sat_num_array
+					index = i
+				}
+			}
+		}
+	}
+}
+
+
 
 #####################
 ### space launch ###
@@ -8622,6 +8678,7 @@ on_weekly_redeploy = {
 	set_variable = { var_TEL_redeploy_week1 = var_TEL_redeploy }
 	set_variable = { var_TEL_redeploy = 0 }
 }
+
 
 ###########################
 ### for on daily effect ###
