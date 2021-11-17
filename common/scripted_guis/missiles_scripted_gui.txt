@@ -6887,35 +6887,51 @@ scripted_gui = {
 			}
 			#
 			spy_mission_start_button_click = {
-				set_variable = { var_sat_civilian_intel = 15 }
+				#set_variable = { var_sat_civilian_intel = 15 }
 				var:orbit_selected_TAG = {
 					add_to_array = { ROOT.spy_mission_array = THIS.id }
-					add_to_array = { ROOT.spy_mission_sat_num_array = num_controlled_states }
-					# ROOT = {
-					# 	add_intel = {
-					# 		target = PREV
-					# 		civilian_intel = 10
-					# 	}
-					# 	add_intel = {
-					# 		target = PREV
-					# 		army_intel = 10
-					# 	}
-					# 	add_intel = {
-					# 		target = PREV
-					# 		navy_intel = 10
-					# 	}
-					# 	add_intel = {
-					# 		target = PREV
-					# 		airforce_intel = 10
-					# 	}
-					# }
+					add_to_array = { ROOT.spy_mission_sat_num_array = ROOT.var_SPY_mission_num_gui }
 					ROOT = {
-						activate_targeted_decision = {
+						add_intel = {
 							target = PREV
-							decision = spy_sat_mission_decision
+							civilian_intel = ROOT.var_SPY_mission_intel_add
+						}
+						add_intel = {
+							target = PREV
+							army_intel = ROOT.var_SPY_mission_intel_add
+						}
+						add_intel = {
+							target = PREV
+							navy_intel = ROOT.var_SPY_mission_intel_add
+						}
+						add_intel = {
+							target = PREV
+							airforce_intel = ROOT.var_SPY_mission_intel_add
+						}
+						PREV = {
+							set_country_flag = {
+								flag = spy_sat_mission_from_@ROOT
+								days = 30
+								value = 1
+							}
 						}
 					}
+					# ROOT = {
+					# 	activate_targeted_decision = {
+					# 		target = PREV
+					# 		decision = spy_sat_mission_decision
+					# 	}
+					# }
 				}
+				update_SPY_mission_num = yes
+			}
+			spy_sat_small_plus_button_bg_click = {
+				add_to_variable = { var_SPY_mission_num_gui = 1 }
+				update_SPY_mission_plus_minus_button = yes
+			}
+			spy_sat_small_minus_button_bg_click = {
+				subtract_from_variable = { var_SPY_mission_num_gui = 1 }
+				update_SPY_mission_plus_minus_button = yes
 			}
 			spy_mission_button_click = {
 
@@ -7001,9 +7017,9 @@ scripted_gui = {
 				NOT = { has_country_flag = globe_back_view }
 			}
 
-			#################
+			##################
 			### front view ###
-			#################
+			##################
 			globe_icon_visible = {
 				NOT = { has_country_flag = globe_back_view }
 			}
@@ -7029,6 +7045,20 @@ scripted_gui = {
 					has_country_flag = globe_back_view
 				}
 			}
+			####################
+			### spy missions ###
+			####################
+			spy_mission_start_button_click_enabled = {
+				var:orbit_selected_TAG = {
+					NOT = { original_tag = ROOT }
+					NOT = { has_country_flag = spy_sat_mission_from_@ROOT }
+				}
+			}
+			# spy_mission_button_visible = {
+			# 	var:ROOT.spy_mission_array^i = {
+			# 		has_country_flag = spy_sat_mission_from_@ROOT
+			# 	}
+			# }
 		}
 		dynamic_lists = {
 			sat_1_gridbox = {
@@ -7199,6 +7229,10 @@ scripted_gui = {
 			country_list_flag_button_click = {
 				set_variable = { orbit_selected_TAG = ROOT.temp_countries^i }
 				set_sat_access_arrays_selected_TAG = yes
+				var:orbit_selected_TAG = {
+					set_variable = { ROOT.var_SPY_mission_num_gui = num_controlled_states }
+				}
+				update_SPY_mission_start_button = yes
 				clr_country_flag = open_MD_satellite_orbit_country_selection
 			}
 			close_button_click = {
