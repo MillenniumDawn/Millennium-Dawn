@@ -2378,9 +2378,9 @@ focus_tree = {
 	# Political Branch
 	focus = {
 		id = AFG_future_national_policy
-		icon = alliance
+		icon = angel
 
-		x = 33
+		x = 36
 		y = 0
 		cost = 10
 
@@ -2398,7 +2398,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_future_national_policy"
-
+			add_stability = -0.02
+			add_political_power = 50
 		}
 
 		ai_will_do = {
@@ -2406,19 +2407,19 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = AFG_approaching_nato
-		icon = align_to_nato
+		id = AFG_future_diplomacy
+		icon = diplomacy
 
 		x = -3
 		y = 1
-		cost = 10
 		relative_position_id = AFG_future_national_policy
+		cost = 5
+
 		prerequisite = {
 			focus = AFG_future_national_policy
 		}
 
 		mutually_exclusive = {
-			focus = AFG_emerging
 		}
 
 		available = {
@@ -2427,8 +2428,77 @@ focus_tree = {
 		bypass = { }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus AFG_approaching_nato"
+			log = "[GetDateText]: [Root.GetName]: Focus AFG_future_diplomacy"
+			add_political_power = 50
+			add_timed_idea = {
+				idea = AFG_idea_diplomatic_interaction
+				days = 365
+			}
+		}
 
+		ai_will_do = {
+			factor = 1
+		}
+
+	}
+	focus = {
+		id = AFG_approaching_nato
+		icon = western_alignment
+
+		x = -2
+		y = 1
+		cost = 10
+		relative_position_id = AFG_future_diplomacy
+		prerequisite = {
+			focus = AFG_future_diplomacy
+		}
+
+		mutually_exclusive = {
+			focus = AFG_emerging
+		}
+
+		available = {
+			NOT = {
+				has_government = communism
+			}
+			NOT = {
+				has_government = fascism
+			}
+		}
+
+		bypass = { }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus AFG_approaching_nato"
+			every_other_country = {
+				limit = {
+					has_government = democratic
+					OR = {
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = superpower
+					}
+				}
+				add_opinion_modifier = {
+					target = AFG
+					modifier = diplomatic_proximity
+				}
+			}
+			every_other_country = {
+				limit = {
+					has_government = communism
+					OR = {
+						has_idea = regional_power
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = superpower
+					}
+				}
+				add_opinion_modifier = {
+					target = AFG
+					modifier = diplomatic_distance
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -2439,10 +2509,11 @@ focus_tree = {
 		id = AFG_aspiring_nato
 		icon = nato
 
-		x = -3
-		y = 2
+		x = -1
+		y = 1
+		relative_position_id = AFG_approaching_nato
 		cost = 10
-		relative_position_id = AFG_future_national_policy
+
 		prerequisite = {
 			focus = AFG_approaching_nato
 		}
@@ -2451,13 +2522,89 @@ focus_tree = {
 		}
 
 		available = {
+			NOT = {
+				has_government = communism
+			}
+			NOT = {
+				has_government = fascism
+			}
+			USA = {
+				has_opinion = {
+					target = AFG
+					value > 24
+				}
+			}
 		}
 
 		bypass = { }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AFG_aspiring_nato"
+			add_ideas = Major_non_NATO_Ally
+			USA = {
+				add_opinion_modifier = {
+					target = AFG
+					modifier = Major_Non_NATO_Ally
+				}
+			}
+			AFG = {
+				add_opinion_modifier = {
+					target = USA
+					modifier = Major_Non_NATO_Ally
+				}
+			}
+		}
 
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = AFG_invite_western_investors
+		icon = ExpandTrade
+
+		x = 1
+		y = 1
+		relative_position_id = AFG_approaching_nato
+		cost = 10
+
+		prerequisite = {
+			focus = AFG_approaching_nato
+		}
+
+		mutually_exclusive = {
+		}
+
+		available = {
+			NOT = {
+				has_government = communism
+			}
+			NOT = {
+				has_government = fascism
+			}
+		}
+
+		bypass = { }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus AFG_invite_western_investors"
+			increase_international_bankers_opinion = yes
+			decrease_industrial_conglomerates_opinion = yes
+			every_other_country = {
+				limit = {
+					has_government = democratic
+					OR = {
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = superpower
+					}
+				}
+				country_event = {
+					id = AfghanistanInvestment.1
+					days = 1
+				}
+			}
+			custom_effect_tooltip = AFG_invest_investment_tt
 		}
 
 		ai_will_do = {
@@ -2468,12 +2615,17 @@ focus_tree = {
 		id = AFG_seek_american_protection
 		icon = USA_glorify_the_military
 
-		x = -3
-		y = 3
+		x = 1
+		y = 1
 		cost = 10
-		relative_position_id = AFG_future_national_policy
+		relative_position_id = AFG_aspiring_nato
+
 		prerequisite = {
 			focus = AFG_aspiring_nato
+		}
+
+		prerequisite = {
+			focus = AFG_invite_western_investors
 		}
 
 		mutually_exclusive = {
@@ -2482,11 +2634,22 @@ focus_tree = {
 		available = {
 		}
 
-		bypass = { }
+		bypass = {
+			OR = {
+				is_guaranteed_by = USA
+				is_subject_of = USA
+				is_in_faction_with = USA
+			}
+		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus AFG_nato_member"
-
+			log = "[GetDateText]: [Root.GetName]: Focus AFG_seek_american_protection"
+			USA = {
+				country_event = {
+					id = Afghanistan.8
+					days = 1
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -2497,12 +2660,12 @@ focus_tree = {
 		id = AFG_emerging
 		icon = eastern_alignment
 
-		x = -1
+		x = 2
 		y = 1
 		cost = 10
-		relative_position_id = AFG_future_national_policy
+		relative_position_id = AFG_future_diplomacy
 		prerequisite = {
-			focus = AFG_future_national_policy
+			focus = AFG_future_diplomacy
 		}
 
 		mutually_exclusive = {
@@ -2510,6 +2673,7 @@ focus_tree = {
 		}
 
 		available = {
+			has_government = democratic
 		}
 
 		bypass = { }
@@ -2527,7 +2691,7 @@ focus_tree = {
 		id = AFG_monarchy
 		icon = monarchism
 
-		x = 1
+		x = 3
 		y = 1
 		cost = 10
 		relative_position_id = AFG_future_national_policy
@@ -2556,10 +2720,10 @@ focus_tree = {
 		id = AFG_prepare_the_king
 		icon = authoritarian_democracy
 
-		x = 1
-		y = 2
+		x = 0
+		y = 1
 		cost = 10
-		relative_position_id = AFG_future_national_policy
+		relative_position_id = AFG_monarchy
 		prerequisite = {
 			focus = AFG_monarchy
 		}
@@ -2583,12 +2747,12 @@ focus_tree = {
 	}
 	focus = {
 		id = AFG_the_king_returns
-		icon = champagne_bribes2
+		icon = monarchism3
 
-		x = 1
-		y = 3
+		x = 0
+		y = 1
 		cost = 10
-		relative_position_id = AFG_future_national_policy
+		relative_position_id = AFG_prepare_the_king
 		prerequisite = {
 			focus = AFG_prepare_the_king
 		}
