@@ -6,7 +6,7 @@ tags={
 	"Events"
 	"Graphics"
 }
-supported_version="1.10.*"
+supported_version="1.11.*"
 picture = "thumbnail.png"
 remote_file_id="719416488"
 
@@ -18,6 +18,7 @@ replace_path = "common/ai_strategy"
 replace_path = "common/ai_strategy_plans"
 replace_path = "common/ai_templates"
 replace_path = "common/autonomous_states"
+replace_path = "common/characters"
 replace_path = "common/countries"
 replace_path = "common/decisions"
 replace_path = "common/decisions/categories"
