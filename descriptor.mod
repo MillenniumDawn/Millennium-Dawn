@@ -12,6 +12,7 @@ remote_file_id="719416488"
 
 replace_path = "events"
 replace_path = "common/abilities"
+replace_path = "common/ai_equipment"
 replace_path = "common/ai_focuses"
 replace_path = "common/ai_peace"
 replace_path = "common/ai_strategy"
