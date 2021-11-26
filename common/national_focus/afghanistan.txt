@@ -2953,7 +2953,7 @@ focus_tree = {
 	}
 	focus = {
 		id = AFG_internal_policy
-		icon = Election_graphics
+		icon = generic_government
 
 		x = 4
 		y = 1
@@ -2974,7 +2974,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: AFG_internal_policy"
-
+			add_timed_idea = {
+				idea = AFG_idea_internal_policy_debate
+				days = 365
+			}
 		}
 
 		ai_will_do = {
@@ -2986,9 +2989,9 @@ focus_tree = {
 		icon = monarchism
 
 		x = 2
-		y = 2
+		y = 1
 		cost = 10
-		relative_position_id = AFG_future_national_policy
+		relative_position_id = AFG_internal_policy
 
 		prerequisite = {
 			focus = AFG_internal_policy
@@ -2998,17 +3001,40 @@ focus_tree = {
 		}
 
 		available = {
+			nationalist > 0.05
 		}
 
-		bypass = { }
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = AFG_monarchist_in_power_tt
+				is_in_array = {
+					array = ruling_party
+					value = 23
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: AFG_monarchy"
-
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.1
+			}
+			hidden_effect = {
+				set_temp_variable = { party_index = 23 }
+				set_temp_variable = { party_popularity_increase = 0.1 }
+				add_relative_party_popularity = yes
+			}
+			custom_effect_tooltip = AFG_monarchist_10_precent_tt
 		}
 
 		ai_will_do = {
 			factor = 1
+
+			modifier = {
+				factor = 2
+				has_government = nationalist
+			}
 		}
 	}
 	focus = {
@@ -3029,11 +3055,22 @@ focus_tree = {
 		available = {
 		}
 
-		bypass = { }
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = AFG_monarchist_in_power_tt
+				is_in_array = {
+					array = ruling_party
+					value = 23
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: AFG_prepare_the_king"
-
+			add_timed_idea = {
+				idea = AFG_idea_prepare_king_return
+				days = 1095
+			}
 		}
 
 		ai_will_do = {
@@ -3056,17 +3093,122 @@ focus_tree = {
 		}
 
 		available = {
+			custom_trigger_tooltip = {
+				check_variable = { party_pop_array^23 > 0.50 }
+				tooltip = AFG_more_than_fifty_percent_monarchist_tt
+			}
 		}
 
-		bypass = { }
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = AFG_monarchist_in_power_tt
+				is_in_array = {
+					array = ruling_party
+					value = 23
+				}
+			}
+			OR = {
+				has_country_leader = {
+					name = "Mohammed Zahir Shah"
+					ruling_only = yes
+				}
+				has_country_leader = {
+					name = "Ahmad Shah Khan"
+					ruling_only = yes
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: AFG_the_king_returns"
-
+			IF = {
+				limit = {
+					date < 2017.1.1
+					NOT = {
+						has_government = nationalist
+					}
+				}
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.15
+				}
+				set_politics = {
+					ruling_party = nationalist
+				}
+				create_country_leader = {
+					name = "Mohammed Zahir Shah"
+					picture = "Mohammed_Zahir_Shah.dds"
+					expire = "2016.1.1"
+					ideology = Monarchist
+					traits = {
+						king
+						nationalist_Monarchist
+						popular_figurehead
+					}
+				}
+				set_variable = { Monarchist_leader = 1 }
+			}
+			else_if = {
+				limit = {
+					date > 2016.12.30
+					NOT = {
+						has_government = nationalist
+					}
+				}
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.15
+				}
+				set_politics = {
+					ruling_party = nationalist
+				}
+				create_country_leader = {
+					name = "Ahmad Shah Khan"
+					picture = "Ahmad_Shah_Khan.dds"
+					expire = "2035.1.1"
+					ideology = Monarchist
+					traits = {
+						king
+						nationalist_Monarchist
+					}
+				}
+				set_variable = { Monarchist_leader = 2 }
+			}
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 23 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				add_to_variable = { party_pop_array^23 = 0.15 }
+				recalculate_party = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+			}
 		}
 
 		ai_will_do = {
 			factor = 1
+
+			modifier = {
+				factor = 2
+				has_government = nationalist
+			}
+
+			modifier = {
+				factor = 2
+				nationalist > 0.5
+			}
+
+			modifier = {
+				factor = 2
+				nationalist > 0.6
+			}
 		}
 	}
 	# War Branch
