@@ -231,7 +231,7 @@
 	NDefines.NMilitary.NEW_ARMY_LEADER_LEVEL_CHANCES = {                    -- chances for new army leaders to start at a given level
         0.90, -- 90% for level one
         0.10  -- 10% for level two
-        0.00  -- 0% for level three to ten
+			  -- 0% for level three to ten
     }
 
 	--Operative Stuff in NMilitary
@@ -701,7 +701,7 @@
 	
 	--Character defines
 	NDefines.NCharacter.OFFICER_CORP_ADVISOR_ENTRIES_IN_MENU = { "high_command", "theorist", "army_chief", "air_chief", "navy_chief" }
-	NDefines.NCharacter.OFFICER_CORP_HIGH_COMMAND_SLOTS_IN_MENU = 3, --For Alert manager to count the number of High Command Slots in the UI
+	NDefines.NCharacter.OFFICER_CORP_HIGH_COMMAND_SLOTS_IN_MENU = 3 --For Alert manager to count the number of High Command Slots in the UI
 	
-	NDefines.NSupply.MAX_RAILWAY_LEVEL = 6, -- update railway texture as well, each frame corresponds to a level
-	NDefines.NSupply.DEFAULT_STARTING_TRUCK_RATIO = 1, -- countries get this ratio of starting truck in their buffers compared to their need -- vanilla 1.5
+	NDefines.NSupply.MAX_RAILWAY_LEVEL = 6 -- update railway texture as well, each frame corresponds to a level
+	NDefines.NSupply.DEFAULT_STARTING_TRUCK_RATIO = 1 -- countries get this ratio of starting truck in their buffers compared to their need -- vanilla 1.5
