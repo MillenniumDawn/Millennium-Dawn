@@ -3391,10 +3391,18 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: AFG_aggresive_foreign_policy"
 			add_ideas = AFG_idea_offensive_army
+			add_stability = -0.05
+			add_war_support = 0.05
 		}
 
 		ai_will_do = {
 			factor = 1
+
+			modifier = {
+				factor = 2
+				has_government = nationalist
+				has_idea = intervention_neo_imperialism
+			}
 		}
 	}
 	focus = {
@@ -3419,6 +3427,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: AFG_increased_mobilization"
+			increase_conscription_effect = yes
 			swap_ideas = {
 				remove_idea = AFG_idea_offensive_army
 				add_idea = AFG_idea_offensive_army2
@@ -3428,6 +3437,8 @@ focus_tree = {
 				uses = 2
 				technology = Network_Centric_Warfare
 			}
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -3466,6 +3477,8 @@ focus_tree = {
 				uses = 2
 				technology = special_forces
 			}
+			set_temp_variable = { treasury_change = -2.5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -3503,6 +3516,8 @@ focus_tree = {
 				uses = 2
 				category = Cat_UTIL
 			}
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -3526,6 +3541,7 @@ focus_tree = {
 		}
 
 		available = {
+			arms_factory > 1
 		}
 
 		bypass = { }
@@ -3546,6 +3562,15 @@ focus_tree = {
 				uses = 1
 				category = Cat_MBT
 			}
+			hidden_effect = {
+				subtract_from_variable = { treasury = -10 }
+				add_equipment_to_stockpile = {
+					type = MBT_1
+					amount = 50
+					producer = SOV
+				}
+			}
+			custom_effect_tooltip = AFG_recover_damaged_tanks_tt
 		}
 
 		ai_will_do = {
@@ -3568,9 +3593,26 @@ focus_tree = {
 		}
 
 		available = {
+			has_idea = intervention_neo_imperialism
+			country_exists = PAK
+			PAK = {
+				OR = {
+					controls_state = 416
+					controls_state = 417
+					controls_state = 419
+					controls_state = 594
+					controls_state = 418
+				}
+			}
 		}
 
-		bypass = { }
+		bypass = {
+			owns_state = 416
+			owns_state = 417
+			owns_state = 419
+			owns_state = 594
+			owns_state = 418
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: AFG_eyes_on_pakistan"
@@ -3580,15 +3622,41 @@ focus_tree = {
 			PAK = {
 				add_opinion_modifier = { target = AFG modifier = declaration_of_hostility }
 			}
-			416 = { add_core_of = AFG }
-			417 = { add_core_of = AFG }
-			419 = { add_core_of = AFG }
-			594 = { add_core_of = AFG }
-			418 = { add_core_of = AFG }
+			416 = { add_claim_by = AFG }
+			417 = { add_claim_by = AFG }
+			419 = { add_claim_by = AFG }
+			594 = { add_claim_by = AFG }
+			418 = { add_claim_by = AFG }
+			add_named_threat = {
+				threat = 5
+				name = AFG_claim_pashtunistan
+			}
+			add_war_support = 0.05
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.05
+			}
+			PAK = {
+				country_event = {
+					id = Afghanistan.14
+					days = 1
+				}
+			}
+			hidden_effect = {
+				news_event = {
+					id = AfghanistanNews.7
+					days = 1
+				}
+			}
 		}
 
 		ai_will_do = {
 			factor = 1
+
+			modifier = {
+				factor = 0
+				num_divisions < 25
+			}
 		}
 	}
 	focus = {
@@ -3607,9 +3675,29 @@ focus_tree = {
 		}
 
 		available = {
+			has_war = no
+			has_idea = intervention_neo_imperialism
+			arms_factory > 4
+			has_war_support > 0.5
+			country_exists = PAK
+			PAK = {
+				OR = {
+					controls_state = 416
+					controls_state = 417
+					controls_state = 419
+					controls_state = 594
+					controls_state = 418
+				}
+			}
 		}
 
-		bypass = { }
+		bypass = {
+			owns_state = 416
+			owns_state = 417
+			owns_state = 419
+			owns_state = 594
+			owns_state = 418
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: AFG_preparing_invasion"
@@ -3634,47 +3722,9 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			set_temp_variable = { treasury_change = -15 }
+			add_ideas = AFG_offensive_war_preparation
+			set_temp_variable = { treasury_change = -25 }
 			modify_treasury_effect = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = AFG_invade_pakistan
-		icon = executions
-
-		x = 0
-		y = 3
-		cost = 10
-		relative_position_id = AFG_aggresive_foreign_policy
-		prerequisite = {
-			focus = AFG_preparing_invasion
-		}
-
-		mutually_exclusive = {
-		}
-
-		available = {
-		}
-
-		bypass = { }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: AFG_invade_pakistan"
-			create_wargoal = {
-				type = take_core_state
-				target = PAK
-				generator = {
-					416
-					417
-					418
-					419
-					594
-				}
-			}
 		}
 
 		ai_will_do = {
@@ -3697,17 +3747,57 @@ focus_tree = {
 		}
 
 		available = {
+			has_war = no
+			NOT = {
+				country_exists = TAL
+			}
+			has_idea = intervention_neo_imperialism
+			num_divisions > 30
+			country_exists = PAK
+			PAK = {
+				OR = {
+					controls_state = 416
+					controls_state = 417
+					controls_state = 419
+					controls_state = 594
+					controls_state = 418
+				}
+			}
 		}
 
-		bypass = { }
+		bypass = {
+			owns_state = 416
+			owns_state = 417
+			owns_state = 419
+			owns_state = 594
+			owns_state = 418
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: AFG_invade_pakistan"
-
+			create_wargoal = {
+				type = take_claimed_state
+				target = PAK
+			}
+			if = {
+				limit = {
+					country_exists = TTP
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = TTP
+				}
+			}
+			remove_ideas = AFG_offensive_war_preparation
 		}
 
 		ai_will_do = {
 			factor = 1
+
+			modifier = {
+				factor = 2
+				num_divisions > 40
+			}
 		}
 	}
 	focus = {
@@ -3735,6 +3825,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: AFG_isolism"
 			add_ideas = AFG_idea_defensive_army
+			boost_domestic_influence_2_percent = yes
 		}
 
 		ai_will_do = {
