@@ -3060,6 +3060,12 @@ focus_tree = {
 				set_temp_variable = { party_popularity_increase = 0.1 }
 				add_relative_party_popularity = yes
 			}
+			if = {
+				limit = {
+					has_ideas = hybrid_regime_western
+				}
+				remove_ideas = hybrid_regime_western
+			}
 			custom_effect_tooltip = AFG_monarchist_10_precent_tt
 		}
 
@@ -3102,10 +3108,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: AFG_prepare_the_king"
-			add_timed_idea = {
-				idea = AFG_idea_prepare_king_return
-				days = 1095
-			}
+			add_ideas = AFG_idea_prepare_king_return
 		}
 
 		ai_will_do = {
@@ -3173,7 +3176,7 @@ focus_tree = {
 				create_country_leader = {
 					name = "Mohammed Zahir Shah"
 					picture = "Mohammed_Zahir_Shah.dds"
-					expire = "2016.1.1"
+					desc = "MOHAMMED_ZAHIR_SHAH_DESC"
 					ideology = Monarchist
 					traits = {
 						king
@@ -3200,7 +3203,6 @@ focus_tree = {
 				create_country_leader = {
 					name = "Ahmad Shah Khan"
 					picture = "Ahmad_Shah_Khan.dds"
-					expire = "2035.1.1"
 					ideology = Monarchist
 					traits = {
 						king
@@ -3226,6 +3228,7 @@ focus_tree = {
 				}
 				clr_country_flag = no_leader_change
 			}
+			remove_ideas = AFG_idea_prepare_king_return
 		}
 
 		ai_will_do = {
@@ -3249,7 +3252,7 @@ focus_tree = {
 	}
 	focus = {
 		id = AFG_restore_the_constitution
-		icon = afghan_king_zahir
+		icon = Kingdom_of_Afghanistan
 
 		x = 0
 		y = 1
@@ -3272,7 +3275,7 @@ focus_tree = {
 		bypass = {}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: AFG_the_king_returns"
+			log = "[GetDateText]: [Root.GetName]: AFG_restore_the_constitution"
 			add_political_power = 100
 			add_stability = 0.1
 			set_cosmetic_tag = AFG_NAT_monarchist
@@ -3386,7 +3389,48 @@ focus_tree = {
 					id = AfghanistanNews.8
 					hours = 3
 				}
+				increase_economic_growth = yes
 			}
+			if = {
+				limit = {
+					has_ideas = hybrid_regime_western
+				}
+				remove_ideas = hybrid_regime_western
+			}
+			if = {
+				limit = {
+					has_ideas = USA_usaid
+				}
+				hidden_effect = {
+					remove_ideas = USA_usaid
+				}
+			}
+			if = {
+				limit = {
+					has_idea = Major_Non_NATO_Ally
+				}
+				hidden_effect = {
+					remove_ideas = Major_Non_NATO_Ally
+					USA = {
+						remove_opinion_modifier = {
+							target = AFG
+							modifier = Major_Non_NATO_Ally
+						}
+						diplomatic_relation = {
+							country = AFG
+							relation = military_access
+							active = no
+						}
+					}
+					AFG = {
+						remove_opinion_modifier = {
+							target = USA
+							modifier = Major_Non_NATO_Ally
+						}
+					}
+				}
+			}
+
 			custom_effect_tooltip = AFG_taliban_to_hezbi_islami_ten_percent
 		}
 
@@ -3397,7 +3441,172 @@ focus_tree = {
 				factor = 2
 				fascism > 0.5
 			}
+
+			modifier = {
+				factor = 2
+				has_stability < 0.05
+			}
 		}
+	}
+	focus = {
+		id = AFG_bring_military_to_our_side
+		icon = Afghan_Officer
+
+		x = 0
+		y = 1
+		relative_position_id = AFG_pro_establishment
+		cost = 10
+
+		prerequisite = {
+			focus = AFG_pro_establishment
+		}
+
+		mutually_exclusive = {}
+
+		available = {
+			has_government = fascism
+			NOT = {
+				has_idea = paralyzing_corruption
+				has_idea = crippling_corruption
+				has_idea = rampant_corruption
+				has_idea = defence_01
+				has_idea = defence_02
+			}
+		}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: AFG_bring_military_to_our_side"
+			add_political_power = -200
+			swap_ideas = {
+				remove_idea = landowners
+				add_idea = the_military
+			}
+			increase_the_military_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+
+			modifier = {
+				factor = 2
+				has_stability < 0.5
+			}
+		}
+	}
+	focus = {
+		id = AFG_secure_the_power
+		icon = Armored_Troops
+
+		x = 0
+		y = 1
+		relative_position_id = AFG_bring_military_to_our_side
+		cost = 10
+
+		prerequisite = {
+			focus = AFG_bring_military_to_our_side
+		}
+
+		mutually_exclusive = {}
+
+		available = {
+			has_government = fascism
+			has_idea = the_military
+			has_army_manpower = {
+				size > 300000
+			}
+			custom_trigger_tooltip = {
+				tooltip = AFG_hezb_i_islami_seventy_five_support_tt
+				check_variable = { party_pop_array^10 > 0.75 }
+			}
+		}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: AFG_secure_the_power"
+			add_ideas = SAL_closed_nation
+
+			if = {
+				limit = { has_idea = police_01 }
+				swap_ideas = { remove_idea = police_01 add_idea = police_05 }
+			}
+			else_if = {
+				limit = { has_idea = police_02 }
+				swap_ideas = { remove_idea = police_02 add_idea = police_05 }
+			}
+			else_if = {
+				limit = { has_idea = police_03 }
+				swap_ideas = { remove_idea = police_03 add_idea = police_05 }
+			}
+			else_if = {
+				limit = { has_idea = police_04 }
+				swap_ideas = { remove_idea = police_04 add_idea = police_05 }
+			}
+			else_if = {
+				limit = { has_idea = police_05 }
+				add_political_power = 150
+			}
+
+			ingame_update_setup = yes
+
+			hidden_effect = {
+				news_event = {
+					id = AfghanistanNews.9
+					hours = 2
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+
+			modifier = {
+				factor = 2
+				has_stability > 0.8
+			}
+		}
+	}
+	focus = {
+		id = AFG_declare_the_emirate
+		icon = Emirate_of_Afghanistan
+
+		x = 0
+		y = 1
+		cost = 10
+		relative_position_id = AFG_secure_the_power
+
+		prerequisite = {
+			focus = AFG_secure_the_power
+		}
+
+		mutually_exclusive = {}
+
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = AFG_hezb_i_islami_seventy_five_support_tt
+				check_variable = { party_pop_array^10 > 0.75 }
+			}
+		}
+
+		bypass = {}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: AFG_declare_the_emirate"
+			add_political_power = 200
+			set_cosmetic_tag = AFG_AUTH_S_fascism
+			clr_country_flag = dynamic_flag
+			if = {
+				limit = {
+					has_ideas = AFG_idea_tribal_culture
+				}
+				remove_ideas = AFG_idea_tribal_culture
+			}
+		}
+
+
 	}
 	focus = {
 		id = AFG_moderate_islamists
