@@ -1,8 +1,59 @@
+# leader_traits contain a list of UnitLeaderTrait with the following structure:
+# trait_key = {
+# 	type = all # or either of field_marshal, corps_commander, navy
+#	trait_type = basic_trait # or either of status_trait, personality_trait, assignable_trait, basic_terrain_trait, assignable_terrain_trait, exile
+#	attack_skill = 0 # integer
+#	defense_skill = 0 # integer
+#	logistics_skill = 0 # integer
+#	planning_skill = 0 # integer
+#	maneuvering_skill = 0 # integer
+#	coordination_skill = 0 # integer
+#	attack_skill_factor = 0.0 # decimal
+#	defense_skill_factor = 0.0 # decimal
+#	logistics_skill_factor = 0.0 # decimal
+#	planning_skill_factor = 0.0 # decimal
+#	maneuvering_skill_factor = 0.0 # decimal
+#	coordination_skill_factor = 0.0 # decimal
+#	show_in_combat = yes # boolean
+#	override_effect_tooltip = "" # loc key
+#	custom_effect_tooltip = "" # loc key
+#	custom_prerequisite_tooltip = "" # loc key
+#	custom_gain_xp_trigger_tooltip = "" # loc key
+#	mutually_exclusive = other_trait # trait key
+#	parent = other_trait # trait key
+#	num_parents_needed = -1 # integer, -1 means "all"
+#	gui_row = -1 # integer, starts at 0, -1 means auto
+#	gui_column = -1 # integer, starts at 0, -1 means auto
+#	allowed = trigger # scope is a unit leader
+#	prerequisites = trigger # scope is an unit leader
+#	gain_xp = trigger # scope is a combatant
+#	gain_xp_leader = trigger # scope is a unit leader. ROOT is country you are from and FROM is any target nationality for agents
+#	gain_xp_on_spotting = 0 # integer
+#	modifier = { } # list of modifiers
+#	non_shared_modifier = {} #
+#	corps_commander_modifier = {} #
+#	field_marshal_modifier = {} #
+#	sub_unit_modifiers = { # list of sub unit def
+#		# e.g.
+#		submarine {
+#			units = {} # list of adjusters
+#			# list of modifiers e.g.
+#			naval_visibility = -0.1
+#		}
+#	}
+#	trait_xp_factor = {} # list of trait_key/decimal
+#	on_add = effect # scope is an unit leader
+#	on_remove = effect # scope is an unit leader
+#	daily_effect = effect # scope is an unit leader
+#	cost = 1000 # integer
+#	ai_will_do = {} # weight
+#	new_commander_weight = {} # weight
+#	enable_ability = ability_key
+#}
+
 leader_traits = {
-
-
 ##################################
-# Common Traits
+# Random Personality/Starting traits
 ##################################
 	old_guard = { 
 		type = land
@@ -18,18 +69,13 @@ leader_traits = {
 
 		new_commander_weight = {
 			factor = 1
-
+			#Military Junta more likely to favor older generals
 			modifier = {
-				FROM = { has_idea = best_of_the_best_spirit }
-				factor = 0
-			}
-			modifier = {
-				FROM = { has_idea = academy_scholarships_spirit }
-				factor = 0
+				factor = 3
+				FROM = { is_in_array = { ruling_party = 22 } }
 			}
 		}
-	}
-	
+	}	
 	brilliant_strategist = { 
 		type = land
 		trait_type = personality_trait
@@ -42,18 +88,12 @@ leader_traits = {
 
 		new_commander_weight = {
 			factor = 1
-
 			modifier = {
-				FROM = { has_idea = best_of_the_best_spirit }
 				factor = 0
-			}
-			modifier = {
-				FROM = { has_idea = academy_scholarships_spirit }
-				factor = 0
+				has_trait = inflexible_strategist
 			}
 		}
 	}
-
 	inflexible_strategist = { 
 		type = land
 		trait_type = personality_trait
@@ -66,19 +106,12 @@ leader_traits = {
 
 		new_commander_weight = {
 			factor = 1
-
 			modifier = {
-				is_army_leader = yes
-				FROM = { has_idea = best_of_the_best_spirit }
 				factor = 0
-			}
-			modifier = {
-				FROM = { has_idea = academy_scholarships_spirit }
-				factor = 0
+				has_trait = brilliant_strategist
 			}
 		}
 	}
-
 	politically_connected = { 
 		type = { land navy }
 		trait_type = personality_trait
@@ -87,34 +120,37 @@ leader_traits = {
 			experience_gain_factor = -0.1
 			promote_cost_factor = -0.5
 		}
-
-		new_commander_weight = {
-			factor = 1  
-			
-			modifier = {
-				is_army_leader = yes
-				FROM = { has_idea = best_of_the_best_spirit }
-				factor = 0
-			}
-			modifier = {
-				is_navy_leader = yes
-				FROM = { has_idea = best_of_the_best_naval_academy_spirit }
-				factor = 0
-			}
-			modifier = {
-				FROM = { has_idea = academy_scholarships_spirit }
-				factor = 0
-			}
-			modifier = {
-				FROM = { has_idea = naval_academy_scholarships_spirit }
-				factor = 0
-			}
-		}
 		
 		planning_skill_factor = 1
 		logistics_skill_factor = 1
-	}
 
+		new_commander_weight = {
+			factor = 1 
+			#Military Junta more likely connected
+			modifier = {
+				factor = 2
+				FROM = { is_in_array = { ruling_party = 22 } }
+			}
+			#Corruption allows military to intervene in politics
+			modifier = {
+				factor = 2
+				FROM = {
+					OR = {
+						has_idea = paralyzing_corruption 
+						has_idea = crippling_corruption  
+						has_idea = rampant_corruption  
+						has_idea = unrestrained_corruption  
+						has_idea = systematic_corruption  
+					}
+				}
+			}
+			#Military is an internal faction
+			modifier = {
+				factor = 2
+				FROM = { has_idea = the_military }
+			}				
+		}
+	}
 	war_hero = { 
 		type = { land navy }
 		trait_type = personality_trait
@@ -124,13 +160,17 @@ leader_traits = {
 			reassignment_duration_factor = 0.5   # +50% cost to replace leader
 		}
 		
-		new_commander_weight = {
-			factor = 0  # Scripted starting leaders only
-		}
 		attack_skill_factor = 1
 		planning_skill_factor = 1
+		
+		new_commander_weight = {
+			factor = 1
+			modifier = {
+				factor = 0
+				FROM = { has_war = no }
+			}
+		}
 	}
-
 	career_officer = { 
 		type = land
 		trait_type = personality_trait
@@ -138,24 +178,18 @@ leader_traits = {
 		non_shared_modifier = {
 			promote_cost_factor = -0.25
 		}
-
-		new_commander_weight = {
-			factor = 1
-
-			modifier = {
-				FROM = { has_idea = best_of_the_best_spirit }
-				factor = 0
-			}
-			modifier = {
-				FROM = { has_idea = academy_scholarships_spirit }
-				factor = 0
-			}
-		}
 		
 		planning_skill_factor = 1
 		logistics_skill_factor = 1
-	}
 
+		new_commander_weight = {
+			factor = 1
+			modifier = {
+				factor = 2
+				FROM = { has_idea = the_military }
+			}
+		}
+	}
 	trait_cautious = { 
 		type = land
 		trait_type = personality_trait
@@ -165,29 +199,17 @@ leader_traits = {
 			wounded_chance_factor = -0.5
 		}
 		
+		defense_skill_factor = 1
+		logistics_skill_factor = 1
 		
 		new_commander_weight = {
 			factor = 1
-			
 			modifier = {
-				has_trait = trait_reckless
 				factor = 0 
-			}
-			modifier = {
-				FROM = { has_idea = best_of_the_best_spirit }
-				factor = 0
-			}
-			modifier = {
-				FROM = { has_idea = academy_scholarships_spirit }
-				factor = 0
+				has_trait = trait_reckless
 			}
 		}
-		
-		
-		defense_skill_factor = 1
-		logistics_skill_factor = 1
 	}
-
 	trait_reckless = { 
 		type = land
 		trait_type = personality_trait
@@ -197,28 +219,18 @@ leader_traits = {
 			wounded_chance_factor = 0.5  # +50% chance to get wounded
 		}
 		
-		new_commander_weight = {
-			factor = 1
-			
-			modifier = {
-				has_trait = trait_cautious
-				factor = 0 
-			}
-			modifier = {
-				FROM = { has_idea = best_of_the_best_spirit }
-				factor = 0
-			}
-			modifier = {
-				FROM = { has_idea = academy_scholarships_spirit }
-				factor = 0
-			}
-		}
-		
 		attack_skill_factor = 1
 		defense_skill_factor = -1
 		planning_skill_factor = 1
+		
+		new_commander_weight = {
+			factor = 1
+			modifier = {
+				factor = 0 
+				has_trait = trait_cautious
+			}
+		}
 	}
-
 	media_personality = { 
 		type = land
 		trait_type = personality_trait
@@ -232,59 +244,49 @@ leader_traits = {
 
 		new_commander_weight = {
 			factor = 1
-
-			modifier = {
-				FROM = { has_idea = best_of_the_best_spirit }
-				factor = 0
-			}
-			modifier = {
-				FROM = { has_idea = academy_scholarships_spirit }
-				factor = 0
-			}
 		}
 	}
-
 	harsh_leader = { 
 		type = land
 		trait_type = personality_trait
-		
-		attack_skill = 1
 
 		modifier = {
 			army_morale_factor = -0.10
 		}
-
-		new_commander_weight = {
-			factor = 1
-
-			modifier = {
-				FROM = { has_idea = best_of_the_best_spirit }
-				factor = 0
-			}
-			modifier = {
-				FROM = { has_idea = academy_scholarships_spirit }
-				factor = 0
-			}
-		}
+		
+		attack_skill = 1
 		
 		attack_skill_factor = 1
 		logistics_skill_factor = 1
-	}
 
-	bearer_of_artillery = {
-		type = corps_commander
-		
+		new_commander_weight = {
+			factor = 1
+		}
+	}
+	armor_officer = { 
+		type = land
 		trait_type = personality_trait
 		
-		modifier = {
-			army_artillery_attack_factor = 0.15
+		attack_skill_factor = 1
+		planning_skill_factor = 1
+		
+		trait_xp_factor = {
+			panzer_leader = 1     #+100%
 		}
 		
 		new_commander_weight = {
-			factor = 0
+			factor = 1
+			#You can't have armor officers with no armor
+			modifier = {
+				factor = 0
+				FROM = {
+					check_variable = { num_battalions_with_type@armor_Bat < 1 }
+					check_variable = { num_battalions_with_type@armor_Recce_Bat < 1 }
+				}
+			}
 		}
 	}
-
+	
 	infantry_officer = { 
 		type = land
 		trait_type = personality_trait
@@ -337,34 +339,6 @@ leader_traits = {
 		
 		attack_skill_factor = 1
 		logistics_skill_factor = 1
-	}
-
-	armor_officer = { 
-		type = land
-		trait_type = personality_trait
-		
-		trait_xp_factor = {
-			panzer_leader = 1     #+100%
-		}
-		new_commander_weight = {
-			factor = 1
-			
-			modifier = {
-				FROM = { has_idea = mobile_warfare_academy_spirit }
-				factor = 1.5 
-			}
-
-			modifier = {
-				FROM = { has_idea = best_of_the_best_spirit }
-				factor = 0
-			}
-			modifier = {
-				FROM = { has_idea = academy_scholarships_spirit }
-				factor = 0
-			}
-		}
-		attack_skill_factor = 1
-		planning_skill_factor = 1
 	}
 	
 	engineer_officer = { 
