@@ -41,6 +41,10 @@ set_landbased_missile_defense_cap = {
 				# set_temp_variable = { temp_deployed_SAM_MD_land = PREV.var_deployed_SAM_MD_land }
 				# subtract_from_temp_variable = { temp_deployed_SAM_MD_land = temp1 }
 				add_to_variable = { ROOT.var_intercept_capacity_boost_land = temp1 }
+				log = "[GetDateText]: [ROOT.GetName]: ### boost phase defense ### in meta"
+				log = "[THIS.GetName]"
+				log = "var_SAM_range [?var_SAM_range]"
+				log = "ROOT.var_intercept_capacity_boost_land [?ROOT.var_intercept_capacity_boost_land]"
 			}
 			### midcourse phase defense ###
 			every_controlled_state = {
@@ -120,8 +124,8 @@ set_landbased_missile_defense_cap = {
 				add_to_variable = { ROOT.var_intercept_capacity_terminal_land = temp1 }
 			}
 		}
-		launch_point_ID = "[?missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
-		target_point_ID = "[?missile_target_point_array^i.GetID]" # "[?var_target_point_ID.GetID]"
+		launch_point_ID = "[?ROOT.missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
+		target_point_ID = "[?ROOT.missile_target_point_array^i.GetID]" # "[?var_target_point_ID.GetID]"
 		SAM_range = "[?var_SAM_range]"
 		ABM_range = "[?var_ABM_range]"
 	}
@@ -224,8 +228,8 @@ set_seabased_missile_defense_cap = {
 			}
 			clear_variable = var_ship_number_AA
 		}
-		launch_point_ID = "[?PREV.missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
-		target_point_ID = "[?PREV.missile_target_point_array^i.GetID]" # "[?var_target_point_ID.GetID]"
+		launch_point_ID = "[?ROOT.missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
+		target_point_ID = "[?ROOT.missile_target_point_array^i.GetID]" # "[?var_target_point_ID.GetID]"
 	}
 }
 
@@ -2589,13 +2593,14 @@ set_missile_warhead_effects = {
 		}
 	}
 	else = {
-		while_loop_effect = {
-			limit = {
-				check_variable = { temp1 > 0 }
-			}
-			subtract_from_temp_variable = { temp1 = 1 }
+		### bugfixing? already coded in set_conventional_warhead_damage
+		# while_loop_effect = {
+		# 	limit = {
+		# 		check_variable = { temp1 > 0 }
+		# 	}
+		# 	subtract_from_temp_variable = { temp1 = 1 }
 			set_conventional_warhead_damage = yes
-		}
+		#}
 	}
 }
 
@@ -3182,7 +3187,9 @@ set_conventional_warhead_damage = {
 	### to test
 	set_temp_provincial_building_level = yes
 	###
-	set_temp_variable = { temp1 = missile_target_hit_stat_array^i } # var_missile_target_hit 
+	### bugfixing? already coded in set_missile_warhead_effects
+	#set_temp_variable = { temp1 = missile_target_hit_stat_array^i } # var_missile_target_hit 
+	#
 	while_loop_effect = {
 		limit = {
 			check_variable = { temp1 > 0 }
@@ -3220,6 +3227,15 @@ set_conventional_warhead_damage = {
 					factor = 0
 					NOT = { check_variable = { target_selected_1_array^i = 1 } }
 				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@industrial_complex < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
 			}
 			1 = {
 				while_loop_effect = {
@@ -3248,6 +3264,15 @@ set_conventional_warhead_damage = {
 				modifier = {
 					factor = 0
 					NOT = { check_variable = { target_selected_2_array^i = 1 } }
+				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@arms_factory < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
 				}
 			}
 			1 = {
@@ -3278,6 +3303,15 @@ set_conventional_warhead_damage = {
 					factor = 0
 					NOT = { check_variable = { target_selected_3_array^i = 1 } }
 				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@infrastructure < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
 			}
 			1 = {
 				while_loop_effect = {
@@ -3306,6 +3340,15 @@ set_conventional_warhead_damage = {
 				modifier = {
 					factor = 0
 					NOT = { check_variable = { target_selected_4_array^i = 1 } }
+				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@internet_station < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
 				}
 			}
 			1 = {
@@ -3336,6 +3379,15 @@ set_conventional_warhead_damage = {
 					factor = 0
 					NOT = { check_variable = { target_selected_5_array^i = 1 } }
 				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@dockyard < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
 			}
 			1 = {
 				while_loop_effect = {
@@ -3364,6 +3416,15 @@ set_conventional_warhead_damage = {
 				modifier = {
 					factor = 0
 					NOT = { check_variable = { target_selected_6_array^i = 1 } }
+				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@air_base < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
 				}
 			}
 			1 = {
@@ -3394,6 +3455,15 @@ set_conventional_warhead_damage = {
 					factor = 0
 					NOT = { check_variable = { target_selected_7_array^i = 1 } }
 				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@radar_station < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
 			}
 			1 = {
 				while_loop_effect = {
@@ -3422,6 +3492,15 @@ set_conventional_warhead_damage = {
 				modifier = {
 					factor = 0
 					NOT = { check_variable = { target_selected_8_array^i = 1 } }
+				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@anti_air_building < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
 				}
 			}
 			1 = {
@@ -3452,6 +3531,15 @@ set_conventional_warhead_damage = {
 					factor = 0
 					NOT = { check_variable = { target_selected_9_array^i = 1 } }
 				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@missile_defense_station < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
 			}
 			1 = {
 				while_loop_effect = {
@@ -3480,6 +3568,15 @@ set_conventional_warhead_damage = {
 				modifier = {
 					factor = 0
 					NOT = { check_variable = { target_selected_10_array^i = 1 } }
+				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@TEL_base < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
 				}
 			}
 			1 = {
@@ -3510,6 +3607,15 @@ set_conventional_warhead_damage = {
 					factor = 0
 					NOT = { check_variable = { target_selected_11_array^i = 1 } }
 				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@missile_silo < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
 			}
 			1 = {
 				while_loop_effect = {
@@ -3538,6 +3644,15 @@ set_conventional_warhead_damage = {
 				modifier = {
 					factor = 0
 					NOT = { check_variable = { target_selected_12_array^i = 1 } }
+				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@nuclear_reactor < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
 				}
 			}
 			1 = {
@@ -3568,6 +3683,15 @@ set_conventional_warhead_damage = {
 					factor = 0
 					NOT = { check_variable = { target_selected_13_array^i = 1 } }
 				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@synthetic_refinery < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
 			}
 			1 = {
 				while_loop_effect = {
@@ -3597,6 +3721,15 @@ set_conventional_warhead_damage = {
 					factor = 0
 					NOT = { check_variable = { target_selected_14_array^i = 1 } }
 				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@fuel_silo < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
 			}
 			1 = {
 				while_loop_effect = {
@@ -3625,6 +3758,15 @@ set_conventional_warhead_damage = {
 				modifier = {
 					factor = 0
 					NOT = { check_variable = { target_selected_15_array^i = 1 } }
+				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@offices < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
 				}
 			}
 			### provincial buildings
@@ -3657,6 +3799,10 @@ set_conventional_warhead_damage = {
 					factor = 0
 					NOT = { check_variable = { target_selected_16_array^i = 1 } }
 				}
+				modifier = {
+					factor = 0
+					check_variable = { temp_level_naval_base < 1 }
+				}
 			}
 			1 = {
 				while_loop_effect = {
@@ -3686,6 +3832,10 @@ set_conventional_warhead_damage = {
 				modifier = {
 					factor = 0
 					NOT = { check_variable = { target_selected_17_array^i = 1 } }
+				}
+				modifier = {
+					factor = 0
+					check_variable = { temp_level_bunker < 1 }
 				}
 			}
 			1 = {
@@ -3717,6 +3867,10 @@ set_conventional_warhead_damage = {
 					factor = 0
 					NOT = { check_variable = { target_selected_18_array^i = 1 } }
 				}
+				modifier = {
+					factor = 0
+					check_variable = { temp_level_coastal_bunker < 1 }
+				}
 			}
 			1 = {
 				while_loop_effect = {
@@ -3747,6 +3901,10 @@ set_conventional_warhead_damage = {
 					factor = 0
 					NOT = { check_variable = { target_selected_19_array^i = 1 } }
 				}
+				modifier = {
+					factor = 0
+					check_variable = { temp_level_supply_node < 1 }
+				}
 			}
 			1 = {
 				while_loop_effect = {
@@ -3776,6 +3934,10 @@ set_conventional_warhead_damage = {
 				modifier = {
 					factor = 0
 					NOT = { check_variable = { target_selected_20_array^i = 1 } }
+				}
+				modifier = {
+					factor = 0
+					check_variable = { temp_level_rail_way < 1 }
 				}
 			}
 			#
