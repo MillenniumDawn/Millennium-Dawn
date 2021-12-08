@@ -78,6 +78,7 @@
 	NDefines.NCountry.DAYS_OF_WAR_BEFORE_SURRENDER = 7
 	NDefines.NCountry.BASE_MOBILIZATION_SPEED = 0.01 --0.01
 	NDefines.NCountry.SCORCHED_EARTH_STATE_COST = 25                        -- pp cost to scorch a state -- 5 in vanilla
+	NDefines.NCountry.BASE_MAX_COMMAND_POWER = 250.0                       -- base value for maximum command power
 
 	NDefines.NProduction.MAX_EQUIPMENT_RESOURCES_NEED = 4
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
