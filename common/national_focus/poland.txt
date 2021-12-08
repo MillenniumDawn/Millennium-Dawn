@@ -6622,7 +6622,7 @@ focus = {
 	focus = {
 		id = POL_falanga
 		icon = POL_oboz
-		x = 12
+		x = 18
 		y = 1
 		relative_position_id = POL_change_of_path
 		cost = 10
@@ -7034,6 +7034,492 @@ focus = {
 
 			set_temp_variable = { treasury_change = nationalist_debt }
 			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_new_foreighn_ministry
+		icon = Poland
+		x = 0
+		y = 1
+		relative_position_id = POL_day_of_Phalanga
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_day_of_Phalanga }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_idea = POL_reformed_ministry
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_nationalist_leave_eu
+		icon = Poland
+		x = 0
+		y = 1
+		relative_position_id = POL_new_foreighn_ministry
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_new_foreighn_ministry }
+		bypass = {
+			NOT = { has_idea = EU_member }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			#TODO leave EU via focus
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_local_cooperation
+		icon = Poland
+		x = -1
+		y = 1
+		relative_position_id = POL_nationalist_leave_eu
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_nationalist_leave_eu }
+		mutually_exclusive = { focus = POL_reach_out_to_russia }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_idea = POL_reformed_ministry
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_reach_out_to_russia
+		icon = Poland
+		x = 1
+		y = 1
+		relative_position_id = POL_nationalist_leave_eu
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_nationalist_leave_eu }
+		mutually_exclusive = { focus = POL_local_cooperation }
+		available = {
+			SOV = {
+				OR = {
+					has_government = communism
+					has_government = nationalist
+				}
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			set_country_flag = POL_nationalist_influence
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_reach_to_chechz
+		icon = Poland
+		x = -1
+		y = 1
+		relative_position_id = POL_local_cooperation
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_local_cooperation }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			CZE = {
+				add_to_variable = { party_pop_array^20 = 0.05 }
+				recalculate_party = yes
+
+				if = {
+					limit = {
+						has_idea = medium_far_right_movement
+					}
+
+					swap_ideas = {
+						remove_idea = medium_far_right_movement
+						add_idea = large_far_right_movement
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_fund_friendly_movements
+		icon = Poland
+		x = 1
+		y = 1
+		relative_position_id = POL_local_cooperation
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = {
+			focus = POL_local_cooperation
+			focus = POL_reach_out_to_russia
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			set_country_flag = POL_nationalist_influence
+			set_country_flag = Eastern_europe_pact_flag
+			create_faction = Eastern_europe_pact
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_russian_right_wing
+		icon = Poland
+		x = 1
+		y = 1
+		relative_position_id = POL_reach_out_to_russia
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_reach_out_to_russia }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			SOV = {
+				generic_grant_5_percent_influence_of_ROOT = yes
+				add_to_variable = { party_pop_array^20 = 0.075 }
+				recalculate_party = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_split_ukraine
+		icon = Poland
+		x = -1
+		y = 1
+		relative_position_id = POL_russian_right_wing
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_russian_right_wing }
+		prerequisite = { focus = POL_fund_friendly_movements }
+		mutually_exclusive = { POL_invite_ukraine }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_invite_ukraine
+		icon = Poland
+		x = 1
+		y = 1
+		relative_position_id = POL_reach_to_chechz
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_reach_to_chechz }
+		prerequisite = { focus = POL_fund_friendly_movements }
+		mutually_exclusive = { focus = POL_split_ukraine }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_invite_baltics
+		icon = Poland
+		x = 0
+		y = 1
+		relative_position_id = POL_invite_ukraine
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = {
+			focus = POL_invite_ukraine
+			focus = POL_split_ukraine
+		}
+
+		mutually_exclusive = { focus = POL_capture_baltics }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_capture_baltics
+		icon = Poland
+		x = 0
+		y = 1
+		relative_position_id = POL_split_ukraine
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = {
+			focus = POL_invite_ukraine
+			focus = POL_split_ukraine
+		}
+
+		mutually_exclusive = { focus = POL_invite_baltics }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_chechz_and_slovaks
+		icon = Poland
+		x = 0
+		y = 1
+		relative_position_id = POL_invite_baltics
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = {
+			focus = POL_invite_baltics
+			focus = POL_capture_baltics
+		}
+
+		mutually_exclusive = { focus = POL_capture_chechz }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_capture_chechz
+		icon = Poland
+		x = 0
+		y = 1
+		relative_position_id = POL_capture_baltics
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = {
+			focus = POL_invite_baltics
+			focus = POL_capture_baltics
+		}
+
+		mutually_exclusive = { focus = POL_chechz_and_slovaks }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_invite_romania
+		icon = Poland
+		x = 0
+		y = 1
+		relative_position_id = POL_chechz_and_slovaks
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = {
+			focus = POL_chechz_and_slovaks
+			focus = POL_capture_chechz
+		}
+
+		mutually_exclusive = { focus = POL_capture_romania }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_capture_romania
+		icon = Poland
+		x = 0
+		y = 1
+		relative_position_id = POL_capture_chechz
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = {
+			focus = POL_chechz_and_slovaks
+			focus = POL_capture_chechz
+		}
+
+		mutually_exclusive = { focus = POL_invite_romania }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_invite_belarus
+		icon = Poland
+		x = 0
+		y = 1
+		relative_position_id = POL_invite_romania
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = {
+			focus = POL_invite_romania
+			focus = POL_capture_romania
+		}
+
+		mutually_exclusive = { focus = POL_split_belarus }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_split_belarus
+		icon = Poland
+		x = 0
+		y = 1
+		relative_position_id = POL_capture_romania
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = {
+			focus = POL_invite_romania
+			focus = POL_capture_romania
+		}
+
+		prerequisite = { focus = POL_russian_right_wing }
+
+		mutually_exclusive = { focus = POL_invite_belarus }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_economical_comitee
+		icon = Poland
+		x = -8
+		y = 1
+		relative_position_id = POL_day_of_Phalanga
+		cost = 5
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_day_of_Phalanga }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_idea = POL_economical_comitee_idea
 		}
 
 		ai_will_do = {
