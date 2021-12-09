@@ -123,9 +123,9 @@
 	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.2 -- -0.8
 	NDefines.NMilitary.INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02 -- -0.05
 	NDefines.NMilitary.WAR_SCORE_AIR_WORTH = 0.3 -- 0.1
-	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 24 -- Returned to Vanilla Value
+	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 18 -- Vanilla 24
 	NDefines.NMilitary.FIELD_MARSHAL_DIVISIONS_CAP = 15 --24
-	NDefines.NMilitary.FIELD_MARSHAL_ARMIES_CAP = 5 -- Returned to Vanilla Value
+	NDefines.NMilitary.FIELD_MARSHAL_ARMIES_CAP = 4 -- Vanilla 5
 	NDefines.NMilitary.BASE_DIVISION_SUPPORT_SLOT_COST = 5 -- 10
 	NDefines.NMilitary.COMBAT_MINIMUM_TIME = 8 -- 4
 	NDefines.NMilitary.LAND_COMBAT_ORG_DICE_SIZE = 2 -- 4
