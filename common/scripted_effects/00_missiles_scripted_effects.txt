@@ -4300,6 +4300,148 @@ set_temp_provincial_building_level = {
 	}
 }
 
+#########################
+### nuclear terorrism ###
+#########################
+
+## controller
+# state scope
+# set_temp_variable = { temp_stateID = THIS.id }
+# set_temp_variable = { temp_controllerID = THIS.id }
+# set_variable = { ROOT.var_nuke_warhead_ID = 13 }
+launch_nuclear_terrorism = {
+	meta_effect = {
+		text = {
+			var:ROOT.temp_controllerID = {
+				set_variable = { nuke_temp0 = [target_point_ID].building_level@industrial_complex }
+				set_variable = { nuke_temp1 = [target_point_ID].building_level@arms_factory }
+				set_variable = { nuke_temp2 = [target_point_ID].building_level@infrastructure }
+				set_variable = { nuke_temp3 = [target_point_ID].building_level@internet_station }
+				set_variable = { nuke_temp4 = [target_point_ID].building_level@dockyard }
+				set_variable = { nuke_temp5 = [target_point_ID].building_level@air_base }
+				set_variable = { nuke_temp6 = [target_point_ID].building_level@radar_station }
+				set_variable = { nuke_temp7 = [target_point_ID].building_level@anti_air_building }
+				set_variable = { nuke_temp8 = [target_point_ID].building_level@missile_defense_station }
+				set_variable = { nuke_temp9 = [target_point_ID].building_level@TEL_base }
+				set_variable = { nuke_temp10 = [target_point_ID].building_level@missile_silo }
+				set_variable = { nuke_temp11 = [target_point_ID].building_level@nuclear_reactor }
+				set_variable = { nuke_temp12 = [target_point_ID].building_level@synthetic_refinery }
+				set_variable = { nuke_temp13 = [target_point_ID].building_level@fuel_silo }
+				set_variable = { nuke_temp14 = [target_point_ID].building_level@offices }
+				# provincial buildings can't be targeted, all province buildings get reduced to 0 HP by vanilla nukes
+				#set_variable = { nuke_temp15 = [target_point_ID].building_level@naval_base }
+				#set_variable = { nuke_temp16 = [target_point_ID].building_level@bunker }
+				#set_variable = { nuke_temp17 = [target_point_ID].building_level@coastal_bunker }
+
+				set_variable = { nuke_temp0_d = [target_point_ID].damaged_building_level@industrial_complex }
+				set_variable = { nuke_temp1_d = [target_point_ID].damaged_building_level@arms_factory }
+				set_variable = { nuke_temp2_d = [target_point_ID].damaged_building_level@infrastructure }
+				set_variable = { nuke_temp3_d = [target_point_ID].damaged_building_level@internet_station }
+				set_variable = { nuke_temp4_d = [target_point_ID].damaged_building_level@dockyard }
+				set_variable = { nuke_temp5_d = [target_point_ID].damaged_building_level@air_base }
+				set_variable = { nuke_temp6_d = [target_point_ID].damaged_building_level@radar_station }
+				set_variable = { nuke_temp7_d = [target_point_ID].damaged_building_level@anti_air_building }
+				set_variable = { nuke_temp8_d = [target_point_ID].damaged_building_level@missile_defense_station }
+				set_variable = { nuke_temp9_d = [target_point_ID].damaged_building_level@TEL_base }
+				set_variable = { nuke_temp10_d = [target_point_ID].damaged_building_level@missile_silo }
+				set_variable = { nuke_temp11_d = [target_point_ID].damaged_building_level@nuclear_reactor }
+				set_variable = { nuke_temp12_d = [target_point_ID].damaged_building_level@synthetic_refinery }
+				set_variable = { nuke_temp13_d = [target_point_ID].damaged_building_level@fuel_silo }
+				set_variable = { nuke_temp14_d = [target_point_ID].damaged_building_level@offices }
+				# provincial buildings can't be targeted, all province buildings get reduced to 0 HP by vanilla nukes
+				#set_variable = { nuke_temp15_d = [target_point_ID].damaged_building_level@naval_base }
+				#set_variable = { nuke_temp16_d = [target_point_ID].damaged_building_level@bunker }
+				#set_variable = { nuke_temp17_d = [target_point_ID].damaged_building_level@coastal_bunker }
+			}
+			set_temp_variable = { temp2 = 1 }
+			# while_loop_effect = {
+			# 	limit = {
+			# 		check_variable = { temp1 > 0 }
+			# 	}
+			# 	subtract_from_temp_variable = { temp1 = 1 }
+				launch_nuke = {
+					state = [target_point_ID]
+					controller = [target_TAG]
+				}
+			# }
+			set_variable = { global.nuke_drop_salvo_idx = -1 } # was zero, did not work, cause arrays start with zero, not 1
+			var:ROOT.temp_controllerID = {
+				log = "ROOT.missile_target_controller_array^i [?ROOT.missile_target_controller_array^i.GetName]"
+				add_to_variable = { global.nuke_drop_salvo_idx = 1 } ### for on_nuke_drop
+				log = "global.nuke_drop_salvo_idx [?global.nuke_drop_salvo_idx]"
+				set_temp_variable = { idx = i } ### for logging
+				set_nuke_damage = yes
+			}
+
+			var:ROOT.temp_stateID = {
+				set_variable = { var_nuke_radiation_factor = PREV.nuclear_warhead_radiation_factor_array^[warhead_ID] }
+				while_loop_effect = {
+					limit = {
+						check_variable = { temp2 > 0 }
+					}
+					subtract_from_temp_variable = { temp2 = 1 }
+
+					add_to_variable = { var_nuke_local_manpower = var_nuke_radiation_factor }
+					add_to_variable = { var_nuke_local_non_core_manpower = var_nuke_radiation_factor }
+					add_to_variable = { var_nuke_non_core_manpower = var_nuke_radiation_factor }
+					add_to_variable = { var_nuke_recruitable_population = var_nuke_radiation_factor }
+					add_to_variable = { var_nuke_recruitable_population_factor = var_nuke_radiation_factor }
+				}
+				add_dynamic_modifier = {
+					modifier =  radiation_modifier
+				}
+				add_province_modifier = {
+					static_modifiers = { radiation_[warhead_ID] }
+					province = {
+						all_provinces = yes
+					}
+				}
+				add_province_modifier = {
+					static_modifiers = { radiation_[warhead_ID]_naval_base }
+					province = {
+						all_provinces = yes
+						limit_to_naval_base = yes
+					}
+				}
+			}
+			var:ROOT.temp_controllerID = {
+				country_event = {
+					id = nukes.1 #file: missiles_events.txt
+					hours = 2 # was 1 hour, changed to 2 for testing
+				}
+			}
+			var:ROOT.temp_controllerID = {
+				ROOT = {
+					set_country_flag = { flag = has_dropped_nuke_@PREV days = 90 value = 1 }
+				}
+			}
+			if = {
+				limit = {
+					var:ROOT.temp_stateID = {
+						is_capital = yes
+					}
+				}
+				var:ROOT.temp_controllerID = {
+					ROOT = {
+						set_country_flag = { flag = has_dropped_nuke_on_capital_@PREV days = 90 value = 1 }
+					}
+				}
+			}
+			var:ROOT.temp_controllerID = {
+				### change var_RSTK_strike_limit to array?
+				#add_to_variable = { var_RSTK_strike_limit_@ROOT = ROOT.missile_target_hit_stat_array^i }
+				add_to_array = { retaliatory_strike_target_array = ROOT.id }
+				add_to_array = { retaliatory_strike_limit_array = ROOT.missile_target_hit_stat_array^i }
+			}
+		}
+		target_point_ID = "[?ROOT.temp_stateID.GetID]"
+		target_TAG = "[?ROOT.temp_controllerID.GetID]"
+		warhead_ID = "[?ROOT.var_nuke_warhead_ID]"
+	}
+
+}
+
+
 
 ###########################
 ### kinetic bombardment ###
