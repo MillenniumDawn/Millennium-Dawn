@@ -1079,4 +1079,136 @@ Taliban_insurgency_category = {
 			factor = 1
 		}
 	}
+
+	eliminate_taliban_insurgency = {
+		icon = GFX_decision_oppression
+
+		custom_cost_trigger = {
+			command_power > 40
+		}
+
+		custom_cost_text = command_power_more_than_40
+
+		visible = {
+			NOT = {
+				country_exists = TAL
+			}
+			has_country_flag = afg_active_taliban_insurgency
+		}
+
+		available = {
+			no_jihadist_government = yes
+			custom_trigger_tooltip = {
+				tooltip = AFG_taliban_strength_lower_than_five_percent_tt
+				check_variable = {
+					var = taliban_strength
+					value = 5
+					compare = less_than
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = AFG_pakistan_border_more_than_two_fort_tt
+				AND = {
+					411 = {
+						any_province_building_level = {
+							province = {
+								id = 7519
+								id = 6209
+								id = 10826
+							}
+							building = bunker
+							level > 2
+						}
+					}
+					414 = {
+						any_province_building_level = {
+							province = {
+								id = 12831
+								id = 6114
+								id = 5082
+								id = 8090
+							}
+							building = bunker
+							level > 2
+						}
+					}
+					415 = {
+						any_province_building_level = {
+							province = {
+								id = 5064
+								id = 5020
+								id = 4949
+								id = 2101
+							}
+							building = bunker
+							level > 2
+						}
+					}
+				}
+			}
+			has_stability > 0.5
+			NOT = {
+				OR = {
+					has_idea = rampant_corruption
+					has_idea = crippling_corruption
+					has_idea = paralyzing_corruption
+				}
+			}
+			414 = {
+				num_divisions > 4
+			}
+			415 = {
+				num_divisions > 4
+			}
+			411 = {
+				num_divisions > 4
+			}
+		}
+
+		complete_effect = {
+			add_command_power = -40
+			log = "[GetDateText]: [This.GetName]: decision eliminate_taliban_insurgency executed"
+		}
+
+		days_remove = 15
+
+		remove_effect = {
+			clear_variable = taliban_strength
+			clr_country_flag = afg_active_taliban_insurgency
+			news_event = {
+				id = TalibanInsurgency.8
+				hours = 3
+			}
+			add_stability = 0.1
+			add_political_power = 100
+			add_popularity = {
+				ideology = ROOT
+				popularity = 0.05
+			}
+			if = {
+				limit = {
+					country_exists = TTP
+				}
+				TTP = {
+					add_manpower = 2500
+					add_popularity = {
+						ideology = fascism
+						popularity = 0.05
+					}
+				}
+			}
+			else = {
+				594 = {
+					add_manpower = 2500
+				}
+				PAK = {
+					add_stability = -0.01
+					add_popularity = {
+						ideology = fascism
+						popularity = 0.01
+					}
+				}
+			}
+		}
+	}
 }
