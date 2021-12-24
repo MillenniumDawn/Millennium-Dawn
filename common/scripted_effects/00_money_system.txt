@@ -36,7 +36,8 @@
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 ###
 
-#Use this update all economic values in-game
+# ingame_update_setup
+# This function is used to update the economic setup mid game
 ingame_update_setup = {
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
@@ -68,11 +69,12 @@ ingame_update_setup = {
 	update_display = yes
 }
 
-#Tax rate shit
+# calculate_tax_rate
+# Calculates the tax rate of a given nation where you flow in the corporate_tax_rate of a given nation
 calculate_tax_rate = {
 	hidden_effect = {
 		remove_tax_cost = yes
-		set_variable = { tax_rate = corporate_tax_rate }
+		set_temp_variable = { tax_rate = corporate_tax_rate }
 		set_tax_cost = yes
 	}
 	if = {
@@ -83,7 +85,9 @@ calculate_tax_rate = {
 	divide_variable = { stability_factor_from_population_tax = -100 }
 
 }
-
+# Tax Cost Meta Effects
+# add_tax_laws
+# Adds a tax law from corporate_tax_rate
 add_tax_laws = {
 	meta_effect = {
 		text = {
@@ -92,6 +96,8 @@ add_tax_laws = {
 		TAX_RATE_VAR = "[?tax_rate|0]"
 	}
 }
+# remove_tax_cost
+# Removes a tax law
 remove_tax_cost = {
 	meta_effect = {
 		text = {
@@ -100,6 +106,8 @@ remove_tax_cost = {
 		TAX_RATE_VAR = "[?tax_rate|0]"
 	}
 }
+# set_tax_cost
+# Sets a tax cost
 set_tax_cost = {
 	meta_effect = {
 		text = {
@@ -108,39 +116,9 @@ set_tax_cost = {
 		TAX_RATE_VAR = "[?tax_rate|0]"
 	}
 }
-increase_tax_cost = {
-	set_temp_variable = { tax_increased = tax_rate }
-	subtract_from_temp_variable = { tax_increased = 1 }
-	meta_effect = {
-		text = {
-			remove_ideas = tax_cost_[TAX_RATE_VAR_INCR]
-		}
-		TAX_RATE_VAR_INCR = "[?tax_increased|0]"
-	}
-	meta_effect = {
-		text = {
-			add_ideas = tax_cost_[TAX_RATE_VAR]
-		}
-		TAX_RATE_VAR = "[?tax_rate|0]"
-	}
-}
-decrease_tax_cost = {
-	set_temp_variable = { tax_decreased = tax_rate }
-	add_to_temp_variable = { tax_decreased = 1 }
-	meta_effect = {
-		text = {
-			remove_ideas = tax_cost_[TAX_RATE_VAR_DECR]
-		}
-		TAX_RATE_VAR_DECR = "[?tax_decreased|0]"
-	}
-	meta_effect = {
-		text = {
-			add_ideas = tax_cost_[TAX_RATE_VAR]
-		}
-		TAX_RATE_VAR = "[?tax_rate|0]"
-	}
-}
 
+# calculate_tax_gain
+# Calculates the amount of taxes earned based of ROOT's corporate taxes and population taxes
 calculate_tax_gain = {
 	set_variable = { tax_gain = 0 }
 	#Update starting tax rate
