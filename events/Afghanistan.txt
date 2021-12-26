@@ -792,6 +792,7 @@ country_event = {
 						has_military_access_to = AFG
 						is_neighbor_of = AFG
 						has_guaranteed = AFG
+						has_country_flag = military_advisors_@FROM
 					}
 					is_full_state = yes
 				}
@@ -962,6 +963,19 @@ country_event = {
 				hours = 1
 			}
 		}
+		random_country = {
+			limit = {
+				OR = {
+					is_in_array = { FROM.influence_array = THIS.id }
+					has_military_access_to = AFG
+				}
+				is_full_state = yes
+			}
+			news_event = {
+				id = TalibanAttack.3
+				hours = 1
+			}
+		}
 		hidden_effect = {
 			every_other_country = {
 				limit = {
@@ -972,6 +986,7 @@ country_event = {
 					OR = {
 						is_neighbor_of = AFG
 						has_guaranteed = AFG
+						has_country_flag = military_advisors_@FROM
 					}
 					is_full_state = yes
 				}
@@ -1040,6 +1055,9 @@ country_event = {
 				var = taliban_strength
 				value = 15
 				compare = greater_than_or_equals
+			}
+			any_owned_state = {
+				infrastructure > 0
 			}
 		}
 	}
@@ -1173,6 +1191,7 @@ country_event = {
 						has_military_access_to = AFG
 						is_neighbor_of = AFG
 						has_guaranteed = AFG
+						has_country_flag = military_advisors_@FROM
 					}
 					is_full_state = yes
 				}
@@ -1352,6 +1371,7 @@ country_event = {
 						has_military_access_to = AFG
 						is_neighbor_of = AFG
 						has_guaranteed = AFG
+						has_country_flag = military_advisors_@FROM
 					}
 					is_full_state = yes
 				}
@@ -1411,7 +1431,7 @@ country_event = {
 	}
 
 	mean_time_to_happen = {
-		days = 2500
+		days = 2250
 		modifier = {
 			factor = 0.5
 			check_variable = {
@@ -1604,6 +1624,254 @@ news_event = {
 	}
 }
 
+#Taliban Bombs Buildings
+country_event = {
+	id = TalibanAttack.12
+	title = TalibanAttack.12.t
+	desc = TalibanAttack.12.d
+	picture = GFX_taliban_attack_building
+
+	trigger = {
+		original_tag = AFG
+		AFG = {
+			check_variable = {
+				var = taliban_strength
+				value = 45
+				compare = greater_than_or_equals
+			}
+			any_owned_state = {
+				OR = {
+					industrial_complex > 0
+					offices > 0
+				}
+			}
+		}
+		any_country = {
+			is_in_array = { FROM.influence_array = THIS.id }
+		}
+	}
+
+	mean_time_to_happen = {
+		days = 2500
+		modifier = {
+			factor = 0.5
+			check_variable = {
+				var = taliban_strength
+				value = 45
+				compare = greater_than_or_equals
+			}
+		}
+		modifier = {
+			factor = 0.5
+			check_variable = {
+				var = taliban_strength
+				value = 60
+				compare = greater_than_or_equals
+			}
+		}
+		modifier = {
+			factor = 0.5
+			check_variable = {
+				var = taliban_strength
+				value = 75
+				compare = greater_than_or_equals
+			}
+		}
+		modifier = {
+			factor = 0.5
+			check_variable = {
+				var = taliban_strength
+				value = 90
+				compare = greater_than_or_equals
+			}
+		}
+	}
+
+	option = {
+		name = TalibanAttack.12.a
+		log = "[GetDateText]: [This.GetName]: TalibanAttack.12.a executed"
+		add_political_power = -30
+		add_stability = -0.02
+		if = {
+			limit = {
+				any_owned_state = {
+					offices > 0
+				}
+			}
+			random_owned_controlled_state = {
+				limit = {
+					offices > 0
+				}
+				add_manpower = -35
+				damage_building = {
+					type = offices
+					damage = 0.45
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				any_owned_state = {
+					industrial_complex > 0
+				}
+			}
+			random_owned_controlled_state = {
+				limit = {
+					industrial_complex > 0
+				}
+				add_manpower = -35
+				damage_building = {
+					type = industrial_complex
+					damage = 0.45
+				}
+			}
+		}
+		if = {
+			limit = {
+				original_tag = AFG
+				check_variable = {
+					var = taliban_strength
+					value = 45
+					compare = greater_than_or_equals
+				}
+				check_variable = {
+					var = taliban_strength
+					value = 60
+					compare = less_than
+				}
+			}
+			set_temp_variable = { taliban_strength_increase = 2 }
+			increase_taliban_strength = yes
+		}
+		else_if = {
+			limit = {
+				original_tag = AFG
+				check_variable = {
+					var = taliban_strength
+					value = 60
+					compare = greater_than_or_equals
+				}
+				check_variable = {
+					var = taliban_strength
+					value = 75
+					compare = less_than
+				}
+			}
+			set_temp_variable = { taliban_strength_increase = 3 }
+			increase_taliban_strength = yes
+		}
+		else_if = {
+			limit = {
+				original_tag = AFG
+				check_variable = {
+					var = taliban_strength
+					value = 75
+					compare = greater_than_or_equals
+				}
+				check_variable = {
+					var = taliban_strength
+					value = 90
+					compare = less_than
+				}
+			}
+			set_temp_variable = { taliban_strength_increase = 4 }
+			increase_taliban_strength = yes
+		}
+		else_if = {
+			limit = {
+				original_tag = AFG
+				check_variable = {
+					var = taliban_strength
+					value = 90
+					compare = greater_than_or_equals
+				}
+			}
+			set_temp_variable = { taliban_strength_increase = 5 }
+			increase_taliban_strength = yes
+		}
+		random_country = {
+			limit = {
+				is_in_array = { FROM.influence_array = THIS.id }
+				is_full_state = yes
+			}
+			news_event = {
+				id = TalibanAttack.13
+				hours = 1
+			}
+		}
+		random_country = {
+			limit = {
+				is_in_array = { FROM.influence_array = THIS.id }
+				is_full_state = yes
+			}
+			news_event = {
+				id = TalibanAttack.13
+				hours = 1
+			}
+		}
+		hidden_effect = {
+			every_other_country = {
+				limit = {
+					NOT = {
+						is_in_array = { FROM.influence_array = THIS.id }
+					}
+					OR = {
+						is_neighbor_of = AFG
+						has_guaranteed = AFG
+						has_country_flag = military_advisors_@FROM
+					}
+					is_full_state = yes
+				}
+				news_event = {
+					id = TalibanAttack.14
+					hours = 1
+				}
+			}
+		}
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+news_event = {
+	id = TalibanAttack.13
+	title = TalibanAttack.13.t
+	desc = TalibanAttack.13.d
+	picture = GFX_afghan_news_taliban_attack_building
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: TalibanAttack.13.a executed"
+		name = TalibanAttack.13.a
+		add_manpower = -3
+		add_political_power = -20
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+news_event = {
+	id = TalibanAttack.14
+	title = TalibanAttack.14.t
+	desc = TalibanAttack.14.d
+	picture = GFX_afghan_news_taliban_attack_building
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: TalibanAttack.14.a executed"
+		name = TalibanAttack.14.a
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
 
 #Asks USA for Guarantee
 country_event = {
