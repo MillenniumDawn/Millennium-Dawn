@@ -735,6 +735,12 @@ country_event = {
 			# 	disband = yes
 			# }
 		}
+		every_other_country = {
+			limit = {
+				has_country_flag = afg_support_counter_insurgency
+			}
+			clr_country_flag = afg_support_counter_insurgency
+		}
 	}
 
 }
@@ -807,6 +813,205 @@ country_event = {
 	immediate = {
 		clr_country_flag = afg_active_taliban_insurgency
 		clear_variable = taliban_strength
+	}
+}
+
+#Hidden event that asks countries with military access to take part in the counterinsurgency operations
+country_event = {
+	id = TalibanInsurgency.13
+	immediate = { log = "[GetDateText]: [Root.GetName]: event TalibanInsurgency.13" }
+
+	hidden = yes
+
+	trigger = {
+		tag = AFG
+		AFG = {
+			no_jihadist_government = yes
+			has_country_flag = afg_active_taliban_insurgency
+			check_variable = {
+				var = taliban_strength
+				value = 45
+				compare = greater_than_or_equals
+			}
+		}
+		any_country = {
+			limit = {
+				no_jihadist_government = yes
+				NOT = {
+					has_country_flag = afg_support_counter_insurgency
+				}
+			}
+			has_military_access_to = AFG
+		}
+	}
+
+	mean_time_to_happen = {
+		days = 1
+	}
+
+	immediate = {
+		every_other_country = {
+			limit = {
+				no_jihadist_government = yes
+				has_military_access_to = AFG
+				NOT = {
+					has_country_flag = afg_support_counter_insurgency
+				}
+			}
+			country_event = {
+				id = TalibanInsurgency.14
+				hours = 1
+			}
+		}
+	}
+}
+
+#Asks if the country has military access wants to take part in the counter-insurgency warfare
+country_event = {
+	id = TalibanInsurgency.14
+	title = TalibanInsurgency.14.t
+	desc = TalibanInsurgency.14.d
+	picture = GFX_taliban_insurgency_start
+
+	is_triggered_only = yes
+
+	option = {
+		name = TalibanInsurgency.14.a
+		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.14.a executed"
+		add_command_power = 5
+		set_country_flag = afg_support_counter_insurgency
+		custom_effect_tooltip = AFG_support_afghan_counter_insurgency_tt
+		AFG = {
+			news_event = {
+				id = TalibanInsurgency.15
+				hours = 1
+			}
+		}
+
+		ai_chance = {
+			factor = 1
+
+			modifier = {
+				factor = 2
+				OR = {
+					has_government = democratic
+					has_government = communism
+				}
+			}
+
+			modifier = {
+				factor = 2
+				has_opinion = {
+					target = AFG
+					value > 10
+				}
+			}
+
+			modifier = {
+				factor = 2
+				is_influencer = yes
+			}
+		}
+	}
+
+	option = {
+		name = TalibanInsurgency.14.b
+		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.14.b executed"
+		add_political_power = 15
+		if = {
+			limit = {
+				has_military_access_to = AFG
+			}
+			diplomatic_relation = {
+				country = AFG
+				relation = military_access
+				active = no
+			}
+		}
+		AFG = {
+			news_event = {
+				id = TalibanInsurgency.16
+				hours = 1
+			}
+		}
+
+		ai_chance = {
+			factor = 1
+
+			modifier = {
+				factor = 0
+				OR = {
+					tag = USA
+					tag = CHI
+					tag = PER
+				}
+			}
+
+			modifier = {
+				factor = 2
+				check_variable = {
+					var = taliban_strength
+					value = 75
+					compare = greater_than_or_equals
+				}
+			}
+
+			modifier = {
+				factor = 2
+				check_variable = {
+					var = taliban_strength
+					value = 85
+					compare = greater_than_or_equals
+				}
+			}
+
+			modifier = {
+				factor = 2
+				check_variable = {
+					var = taliban_strength
+					value = 95
+					compare = greater_than_or_equals
+				}
+			}
+		}
+	}
+}
+
+#The country joins counter-insurgency operations
+news_event = {
+	id = TalibanInsurgency.15
+	title = TalibanInsurgency.15.t
+	desc = TalibanInsurgency.15.d
+	picture = GFX_afghanistan_war4
+
+	is_triggered_only = yes
+
+	option = {
+		name = TalibanInsurgency.15.a
+		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.15.b executed"
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#The country pulls out troops
+news_event = {
+	id = TalibanInsurgency.16
+	title = TalibanInsurgency.16.t
+	desc = TalibanInsurgency.16.d
+	picture = GFX_news_usa_withdraw_from_afghanistan
+
+	is_triggered_only = yes
+
+	option = {
+		name = TalibanInsurgency.16.a
+		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.16.b executed"
+
+		ai_chance = {
+			factor = 1
+		}
 	}
 }
 
@@ -1743,6 +1948,7 @@ news_event = {
 		name = TalibanAttack.10.a
 		add_manpower = -5
 		add_political_power = -20
+		decrease_popularity_2 = yes
 		add_equipment_to_stockpile = {
 			type = Inf_equipment
 			amount = -5
@@ -1773,6 +1979,32 @@ news_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: TalibanAttack.11.a executed"
 		name = TalibanAttack.11.a
+		effect_tooltip = {
+			random_country = {
+				limit = {
+					OR = {
+						has_military_access_to = AFG
+						has_country_flag = military_advisors_@FROM
+					}
+					is_full_state = yes
+				}
+				add_manpower = -5
+				add_political_power = -20
+				decrease_popularity_2 = yes
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = -5
+				}
+				add_equipment_to_stockpile = {
+					type = cnc_equipment
+					amount = -3
+				}
+				add_equipment_to_stockpile = {
+					type = util_vehicle_equipment
+					amount = -2
+				}
+			}
+		}
 
 		ai_chance = {
 			factor = 1
@@ -2548,6 +2780,7 @@ country_event = {
 			}
 		}
 		date > 2011.9.18
+		date < 2017.1.1
 	}
 
 	mean_time_to_happen = {
