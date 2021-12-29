@@ -1102,6 +1102,114 @@ Taliban_insurgency_category = {
 		}
 	}
 
+	isaf_raid_taliban_hideouts = {
+		icon = GFX_decision_humvee
+
+		custom_cost_trigger = {
+			command_power > 40
+		}
+
+		custom_cost_text = command_power_more_than_40
+
+		visible = {
+			NOT = {
+				original_tag = AFG
+			}
+			has_country_flag = afg_support_counter_insurgency
+			AFG = {
+				check_variable = {
+					var = taliban_strength
+					value = 0
+					compare = greater_than
+				}
+			}
+		}
+
+		available = {
+			has_military_access_to = AFG
+		}
+
+		complete_effect = {
+			add_command_power = -40
+			log = "[GetDateText]: [This.GetName]: decision isaf_raid_taliban_hideouts executed"
+		}
+
+		days_remove = 15
+		days_re_enable = 30
+
+		fixed_random_seed = no
+
+		remove_effect = {
+			random_list = {
+				90 = {
+					news_event = {
+						id = TalibanInsurgency.17
+						hours = 1
+					}
+					modifier = {
+						factor = 1.2
+						AFG = {
+							has_stability > 0.5
+						}
+					}
+					modifier = {
+						factor = 1.5
+						AFG = {
+							has_stability > 0.6
+						}
+					}
+				}
+				10 = {
+					news_event = {
+						id = TalibanInsurgency.18
+						hours = 1
+					}
+					modifier = {
+						factor = 1.25
+						AFG = {
+							has_idea = widespread_corruption
+						}
+					}
+					modifier = {
+						factor = 1.5
+						AFG = {
+							has_idea = systematic_corruption
+						}
+					}
+					modifier = {
+						factor = 1.75
+						AFG = {
+							has_idea = unrestrained_corruption
+						}
+					}
+					modifier = {
+						factor = 2.25
+						AFG = {
+							has_idea = rampant_corruption
+						}
+					}
+					modifier = {
+						factor = 2.5
+						AFG = {
+							has_idea = crippling_corruption
+						}
+					}
+					modifier = {
+						factor = 3.0
+						AFG = {
+							has_idea = paralyzing_corruption
+						}
+					}
+				}
+			}
+			custom_effect_tooltip = isaf_raid_taliban_success_tt
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
 	eliminate_taliban_insurgency = {
 		icon = GFX_decision_oppression
 
@@ -1199,6 +1307,12 @@ Taliban_insurgency_category = {
 			clear_variable = taliban_strength
 			clr_country_flag = afg_active_taliban_insurgency
 			set_country_flag = afg_taliban_insurgency_eliminated
+			every_other_country = {
+				limit = {
+					has_country_flag = afg_support_counter_insurgency
+				}
+				clr_country_flag = afg_support_counter_insurgency
+			}
 			news_event = {
 				id = TalibanInsurgency.8
 				hours = 3
@@ -1245,9 +1359,6 @@ Taliban_insurgency_category = {
 
 		visible = {
 			tag = AFG
-			AFG = {
-				has_country_flag = afg_active_taliban_insurgency
-			}
 		}
 
 		available = {
