@@ -426,6 +426,16 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.0.a executed"
 		add_command_power = 20
 		set_country_flag = afg_active_taliban_insurgency
+		custom_effect_tooltip = AFG_support_afghan_counter_insurgency_tt
+		hidden_effect = {
+			if = {
+				limit = {
+					date > 2017.1.1
+				}
+				set_temp_variable = { taliban_strength_increase = 10 }
+				increase_taliban_strength  = yes
+			}
+		}
 
 		ai_chance = {
 			factor = 1
@@ -837,6 +847,7 @@ country_event = {
 		any_country = {
 			limit = {
 				no_jihadist_government = yes
+				is_full_state = yes
 				NOT = {
 					has_country_flag = afg_support_counter_insurgency
 				}
@@ -853,6 +864,7 @@ country_event = {
 		every_other_country = {
 			limit = {
 				no_jihadist_government = yes
+				is_full_state = yes
 				has_military_access_to = AFG
 				NOT = {
 					has_country_flag = afg_support_counter_insurgency
@@ -1014,6 +1026,104 @@ news_event = {
 		}
 	}
 }
+
+#ISAF Raid Successful
+news_event = {
+	id = TalibanInsurgency.17
+	title = TalibanInsurgency.17.t
+	desc = TalibanInsurgency.17.d
+	picture = GFX_afghan_commando_raid_successful
+
+	is_triggered_only = yes
+
+	option = {
+		name = TalibanInsurgency.17.a
+		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.17.a executed"
+		add_command_power = 15
+		army_experience = 25
+		AFG = {
+			set_temp_variable = { taliban_strength_decrease = 5 }
+			decrease_taliban_strength = yes
+		}
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#ISAF Raid Failure
+news_event = {
+	id = TalibanInsurgency.18
+	title = TalibanInsurgency.18.t
+	desc = TalibanInsurgency.18.d
+	picture = GFX_afghan_commando_raid_failure
+
+	is_triggered_only = yes
+
+	option = {
+		name = TalibanInsurgency.18.a
+		log = "[GetDateText]: [This.GetName]: TalibanInsurgency.18.a executed"
+		add_manpower = -5
+		add_command_power = -5
+		army_experience = 5
+		add_political_power = -15
+		decrease_popularity_1 = yes
+		AFG = {
+			set_temp_variable = { taliban_strength_increase = 1 }
+			increase_taliban_strength = yes
+		}
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#Hidden Event Removes Counter Insurgency Missions If No Military Access
+country_event = {
+	id = TalibanInsurgency.19
+	immediate = { log = "[GetDateText]: [Root.GetName]: event TalibanInsurgency.19" }
+
+	hidden = yes
+
+	trigger = {
+		tag = AFG
+		AFG = {
+			no_jihadist_government = yes
+			has_country_flag = afg_active_taliban_insurgency
+		}
+		any_country = {
+			limit = {
+				no_jihadist_government = yes
+				is_full_state = yes
+				has_country_flag = afg_support_counter_insurgency
+			}
+			NOT = {
+				has_military_access_to = AFG
+			}
+		}
+	}
+
+	mean_time_to_happen = {
+		days = 1
+	}
+
+	immediate = {
+		every_other_country = {
+			limit = {
+				no_jihadist_government = yes
+				is_full_state = yes
+				has_country_flag = afg_support_counter_insurgency
+				NOT = {
+					has_military_access_to = AFG
+				}
+			}
+			clr_country_flag = afg_support_counter_insurgency
+		}
+	}
+}
+
 
 #Taliban Attacks Police
 country_event = {
