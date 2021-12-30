@@ -1110,6 +1110,21 @@ Taliban_insurgency_category = {
 		}
 	}
 
+	show_supporting_counter_insurgency_countries = {
+		icon = GFX_decision_generic_army_support
+
+		visible = {
+			tag = AFG
+			AFG = {
+				has_country_flag = afg_active_taliban_insurgency
+			}
+		}
+
+		complete_effect = {
+			statehood_show_afghan_counter_insurgency_support = yes
+		}
+	}
+
 	isaf_raid_taliban_hideouts = {
 		icon = GFX_decision_humvee
 
@@ -1419,6 +1434,79 @@ Taliban_insurgency_category = {
 
 		ai_will_do = {
 			factor = 10
+		}
+	}
+
+	isaf_withdraw_from_afghanistan = {
+		icon = GFX_decision_jet_transport
+		cost = 50
+
+		visible = {
+			has_military_access_to = AFG
+			NOT = {
+				original_tag = AFG
+				original_tag = USA
+			}
+			has_country_flag = afg_support_counter_insurgency
+			AFG = {
+				has_country_flag = afg_active_taliban_insurgency
+			}
+		}
+
+		available = {
+			has_military_access_to = AFG
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision isaf_withdraw_from_afghanistan executed"
+			add_2_popularity = yes
+			AFG = {
+				news_event = {
+					id = TalibanInsurgency.16
+					hours = 1
+				}
+			}
+		}
+
+		days_remove = 30
+		fire_only_once = yes
+
+		remove_effect = {
+			if = {
+				limit = {
+					has_military_access_to = AFG
+				}
+				diplomatic_relation = {
+					country = AFG
+					relation = military_access
+					active = no
+				}
+			}
+			clr_country_flag = afg_support_counter_insurgency
+		}
+
+		ai_will_do = {
+			factor = 0
+
+			modifier = {
+				add = 1
+				date > 2015.1.1
+			}
+
+			modifier = {
+				add = 20
+				has_government = nationalist
+			}
+
+			modifier = {
+				add = 10
+				has_government = neutrality
+			}
+
+			modifier = {
+				add = 100
+				has_stability < 0.4
+			}
 		}
 	}
 
