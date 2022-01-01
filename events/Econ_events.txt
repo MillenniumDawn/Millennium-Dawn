@@ -98,11 +98,11 @@ country_event = {
 
 # Target Nation
 # Do we accept FROM economic Aid?
-news_event = {
+country_event = {
 	id = News_influence.0
 	title = News_influence.0.t
 	desc = News_influence.0.d
-	picture = GFX_update_gdpc
+	picture = GFX_united_states_dollar
 	is_triggered_only = yes
 
 	# Accept the Aid
@@ -758,41 +758,37 @@ news_event = {
 country_event = {
 	id = influence.4
 	immediate = { log = "[GetDateText]: [Root.GetName]: event influence.4" }
-	title = influence.4.t
-	desc = influence.4.d
-	#picture = GFX_united_states_dollar
-
 	is_triggered_only = yes
 	hidden = yes
 
 	immediate = {
-
-		### Chance of failure for ROOT add-up ###
+		# Influence Array
+		# This section of code adds the influence of ROOT to the factor
 		for_loop_effect = {
 			end = influence_array_calc^num
-			if = {
+			if = { # Democratic Outlook
 				limit = { var:influence_array^v = { has_government = democratic } }
 				add_to_temp_variable = { influence_democratic = influence_array_calc^v }
 			}
-			else_if = {
+			else_if = { # Neutral Outlook
 				limit = { var:influence_array^v = { has_government = neutrality } }
 				add_to_temp_variable = { influence_neutrality = influence_array_calc^v }
 			}
-			else_if = {
+			else_if = { # Emerging Outlook
 				limit = { var:influence_array^v = { has_government = communism } }
 				add_to_temp_variable = { influence_communism = influence_array_calc^v }
 			}
-			else_if = {
+			else_if = { # Nationalist Outlook
 				limit = { var:influence_array^v = { has_government = nationalist } }
 				add_to_temp_variable = { influence_nationalist = influence_array_calc^v }
 			}
-			else_if = {
+			else_if = { # Salafist Outlook
 				limit = { var:influence_array^v = { has_government = fascism } }
 				add_to_temp_variable = { influence_fascism = influence_array_calc^v }
 			}
 		}
-		#
 
+		# Coup Failure Rate
 		set_variable = { fail_factor_biggest = party_popularity@ruling_party }
 		divide_variable = { fail_factor_biggest = 100 }
 
@@ -821,9 +817,9 @@ country_event = {
 			add_to_variable = { fail_factor_biggest = influence_fascism }
 			add_to_variable = { fail_factor_biggest = domestic_influence_amount_calc }
 		}
-		set_temp_variable = { add_factor = gdp_total_display }
-		divide_temp_variable = { add_factor = 7 }
-		add_to_temp_variable = { add_factor = 1 }
+
+		set_temp_variable = { add_factor = gdp_per_capita }
+		divide_temp_variable = { add_factor = 2 } #pepehands cri
 		multiply_variable = { fail_factor_biggest = add_factor }
 
 		### Chance of success for ROOT add-up ###
@@ -834,7 +830,7 @@ country_event = {
 			divide_variable = { success_factor_biggest = 100 }
 			add_to_variable = { success_factor_biggest = influence_democratic }
 
-			#storing biggest party
+			# Storing the biggest party
 			set_temp_variable = { prevmax_temp = 0 }
 			if = {
 				limit = {
@@ -864,6 +860,7 @@ country_event = {
 				}
 				set_temp_variable = { prevmax_temp = party_pop_array^0 }
 			}
+
 			#Set for highest value
 			if = { limit = { check_variable = { prevmax_temp = party_pop_array^1 } }
 				set_country_flag = set_conservatism
@@ -1169,9 +1166,6 @@ country_event = {
 country_event = {
 	id = influence.44
 	immediate = { log = "[GetDateText]: [Root.GetName]: event influence.44" }
-	title = influence.44.t
-	desc = influence.44.d
-	#picture = GFX_united_states_dollar
 
 	is_triggered_only = yes
 	hidden = yes
@@ -1232,9 +1226,8 @@ country_event = {
 			add_to_variable = { fail_factor_biggest = influence_fascism }
 			add_to_variable = { fail_factor_biggest = domestic_influence_amount_calc }
 		}
-		set_temp_variable = { add_factor = gdp_total_display }
-		divide_temp_variable = { add_factor = 7 }
-		add_to_temp_variable = { add_factor = 1 }
+		set_temp_variable = { add_factor = gdp_per_capita }
+		divide_temp_variable = { add_factor = 2 }
 		multiply_variable = { fail_factor_biggest = add_factor }
 
 		### Chance of success for ROOT add-up ###
@@ -4449,8 +4442,8 @@ country_event = {
 		increase_economic_growth = yes
 		calculate_tax_gain = yes
 		custom_effect_tooltip = econvent.10.a_tt
-		subtract_from_variable = { treasury = 5 }
-		custom_effect_tooltip = 5_billion_expense_tt
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
 		set_country_flag = { flag = stock_market_boom_accelerate value = 1 days = 200 }
 	}
 	option = {
@@ -4576,8 +4569,8 @@ country_event = {
 		custom_effect_tooltip = bankruptcy_bailout_sum_TT
 		custom_effect_tooltip = bankruptcy_bailout_influence_TT
 		FROM = { news_event = { id = News_bankruptcy.1 hours = 3  } }
-		ai_chance = { 
-			factor = 90 
+		ai_chance = {
+			factor = 90
 			modifier = {
 				factor = 0.8
 				check_variable = { interest_rate > 5 }
@@ -4598,7 +4591,7 @@ country_event = {
 		name = bankruptcy.1.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.1.b executed"
 		FROM = { country_event = { id = bankruptcy.4 hours = 3  } }
-		ai_chance = { 
+		ai_chance = {
 			factor = 10
 			modifier = {
 				factor = 2.5
@@ -4633,8 +4626,8 @@ country_event = {
 		custom_effect_tooltip = bankruptcy_bailout_sum_TT
 		custom_effect_tooltip = bankruptcy_bailout_influence_second_biggest_TT
 		FROM = { news_event = { id = News_bankruptcy.2 hours = 3  } }
-		ai_chance = { 
-			factor = 90 
+		ai_chance = {
+			factor = 90
 			modifier = {
 				factor = 0.8
 				check_variable = { interest_rate > 5 }
@@ -4656,7 +4649,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: bankruptcy.3.b executed"
 		ai_chance = { factor = 0 }
 		FROM = { country_event = { id = bankruptcy.4 hours = 3  } }
-		ai_chance = { 
+		ai_chance = {
 			factor = 10
 			modifier = {
 				factor = 2.5
@@ -4691,8 +4684,8 @@ country_event = {
 		custom_effect_tooltip = bankruptcy_bailout_sum_TT
 		custom_effect_tooltip = bankruptcy_bailout_influence_neighbour_TT
 		FROM = { news_event = { id = News_bankruptcy.3 hours = 3  } }
-		ai_chance = { 
-			factor = 90 
+		ai_chance = {
+			factor = 90
 			modifier = {
 				factor = 0.8
 				check_variable = { interest_rate > 5 }
@@ -4714,7 +4707,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: bankruptcy.3.b executed"
 		ai_chance = { factor = 0 }
 		FROM = { country_event = { id = bankruptcy.4 hours = 3  } }
-		ai_chance = { 
+		ai_chance = {
 			factor = 10
 			modifier = {
 				factor = 2.5
@@ -5027,13 +5020,82 @@ country_event = {
 	option = {
 		name = bankruptcy.12.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.12.b executed"
-		country_event = { id = bankruptcy.11 days = 1 }	
+		country_event = { id = bankruptcy.11 days = 1 }
 		ai_chance = {
 			factor = 5
 		}
 	}
 
 }
+
+#Country fails to pay their defaulted debt
+country_event = {
+	id = bankruptcy.13
+	title = bankruptcy.13.t
+	desc = bankruptcy.13.d
+	picture = GFX_election_rally
+	is_triggered_only = yes
+
+	option = {
+		name = bankruptcy.13.a	#Agree
+		log = "[GetDateText]: [This.GetName]: bankruptcy.13.a executed"
+		create_wargoal = { type = puppet_wargoal_focus target = FROM }
+		ai_chance = {
+			factor = 60
+			modifier = {
+				factor = 0
+				OR = {
+					#Don't attack Western if Western
+					AND = {
+						has_government = democratic
+						FROM = { has_government = democratic }
+					}
+					#Don't attack Emerging if Emerging
+					AND = {
+						has_government = communism
+						FROM = { has_government = communism }
+					}
+					#Don't get new enemies
+					has_war = yes
+					#Don't attack if they are land locked non-neighbour
+					AND = {
+						NOT = { is_neighbor_of = FROM }
+						FROM = { NOT = { any_owned_state = { is_coastal = yes } } }
+					}
+					#Ignore if they are small and not a neighbour
+					AND = {
+						check_variable = { FROM.gdp_total_display < 10 }
+						NOT = { is_neighbor_of = FROM }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.6
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0.3
+				has_government = neutrality
+			}
+		}
+	}
+	option = {
+		name = bankruptcy.13.b	#Reject offer
+		log = "[GetDateText]: [This.GetName]: bankruptcy.13.b executed"
+		ai_chance = {
+			factor = 40
+			modifier = {
+				factor = 0.1
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 2
+				has_government = neutrality
+			}
+		}
+	}
+}
+
 
 #### IMF EVENTS ####
 #lower bureaucracy
