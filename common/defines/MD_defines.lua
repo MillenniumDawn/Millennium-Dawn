@@ -222,9 +222,9 @@
 	NDefines.NMilitary.BASE_LEADER_TRAIT_GAIN_XP = 0.55 -- 0.45
 	NDefines.NMilitary.ARMY_LEADER_XP_GAIN_PER_UNIT_IN_COMBAT = 0.175 -- 0.1
 	NDefines.NMilitary.TRAINING_ATTRITION = 0.1 -- 0.05
-	NDefines.NMilitary.MAX_ARMY_EXPERIENCE = 1000 --500 --Increased Max Experience cuz reasons
-	NDefines.NMilitary.MAX_AIR_EXPERIENCE = 1000 --500
-	NDefines.NMilitary.MAX_NAVY_EXPERIENCE = 1000 --500
+	NDefines.NMilitary.MAX_ARMY_EXPERIENCE = 999 --500 --Increased Max Experience cuz reasons
+	NDefines.NMilitary.MAX_AIR_EXPERIENCE = 999 --500
+	NDefines.NMilitary.MAX_NAVY_EXPERIENCE = 999 --500
 	NDefines.NMilitary.SHIP_MORALE_TO_ORG_REGAIN_BASE = 0.25 -- buffed from 0.2 -- Handles the Hourly Reorganization
 	NDefines.NMilitary.ENGAGEMENT_WIDTH_PER_WIDTH = 3.0                    -- how much enemy combat width we are allowed to engage per width of our own -- vanilla is 2.0
 	
