@@ -2,9 +2,10 @@
 
 on_actions = {
 
-	on_weekly = {
+	# FIXME: temp conversion to a on_daily to see if it cancels the invalid project immediately
+	on_daily = {
 		effect = {
-			### cancel invalid projects
+			# Cancel Invalid Projects
 			if = {
 				limit = { check_variable = { active_projects > 0 } }
 				for_each_loop = {
@@ -18,12 +19,12 @@ on_actions = {
 							limit = {
 								OR = {
 									CONTROLLER = { has_war_with = ROOT } # target state controller at war with project owner
-									var:v = { NOT = { investment_building_slot_available = yes } } # building slot unavailable in target state
+									var:v = { investment_building_slot_available = no } # building slot unavailable in target state
 								}
 							}
 
 							set_variable = { project = i }
-							log = "AC Project Deletion - [GetDate] [This.GetTag] - on_weekly - deleted invalid project [?project] in [?project_array^project.GetName] [?project_array^project.GetName] [?project_array"
+							log = "AC Project Deletion - [GetDate] [This.GetTag] - on_weekly - deleted invalid project [?project] in [?project_array^project] [?project_array^project.GetName] [?project_array^project.GetName]"
 							end_project = yes
 						}
 					}
@@ -34,7 +35,7 @@ on_actions = {
 		}
 	}
 
-	#ROOT is new controller #FROM is old controller #FROM.FROM is state ID
+	# ROOT is new controller #FROM is old controller #FROM.FROM is state ID
 	on_state_control_changed = {
 		effect = {
 			FROM.FROM = {
@@ -69,7 +70,7 @@ on_actions = {
 						array = remove_projects
 
 						set_variable = { project = PREV.project_target_state_@THIS }
-						log = "AC - [GetDate] [This.GetTag] - on_state_control_changed - deleted invalid project [?AC_project] in [?AC_project_array^AC_project] [?AC_project_array^AC_project.GetName]"
+						log = "AC - [GetDate] [This.GetTag] - on_state_control_changed - deleted invalid project [?project] in [?project_array^project] [?project_array^project.GetName] [?project_array^project.GetName]"
 						end_project = yes
 					}
 
