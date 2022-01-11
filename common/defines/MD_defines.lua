@@ -222,12 +222,12 @@
 	NDefines.NMilitary.BASE_LEADER_TRAIT_GAIN_XP = 0.55 -- 0.45
 	NDefines.NMilitary.ARMY_LEADER_XP_GAIN_PER_UNIT_IN_COMBAT = 0.175 -- 0.1
 	NDefines.NMilitary.TRAINING_ATTRITION = 0.1 -- 0.05
-	NDefines.NMilitary.MAX_ARMY_EXPERIENCE = 999 --500 --Increased Max Experience cuz reasons
-	NDefines.NMilitary.MAX_AIR_EXPERIENCE = 999 --500
-	NDefines.NMilitary.MAX_NAVY_EXPERIENCE = 999 --500
+	NDefines.NMilitary.MAX_ARMY_EXPERIENCE = 1000 --500 --Increased Max Experience cuz reasons
+	NDefines.NMilitary.MAX_AIR_EXPERIENCE = 1000 --500
+	NDefines.NMilitary.MAX_NAVY_EXPERIENCE = 1000 --500
 	NDefines.NMilitary.SHIP_MORALE_TO_ORG_REGAIN_BASE = 0.25 -- buffed from 0.2 -- Handles the Hourly Reorganization
 	NDefines.NMilitary.ENGAGEMENT_WIDTH_PER_WIDTH = 3.0                    -- how much enemy combat width we are allowed to engage per width of our own -- vanilla is 2.0
-	
+
 	NDefines.NMilitary.NEW_ARMY_LEADER_LEVEL_CHANCES = {                    -- chances for new army leaders to start at a given level
         0.90, -- 90% for level one
         0.10  -- 10% for level two
@@ -696,10 +696,10 @@
 	NDefines.NAI.DIPLOMACY_AT_WAR_WITH_ALLY_RELUCTANCE = -1000
 	NDefines.NAI.DIPLOMACY_FACTION_JOIN_COUP_INITIATOR_BONUS = 70	-- If a country initiated coup on an another country, civil war revolter is more likely to join initiator's faction
 	NDefines.NAI.DEMOCRATIC_AI_FACTION_KICKING_PLAYER_THREAT_DIFFERENCE = 6.0 -- World threat generation difference needed to kick a player from a democratic faction
-	
+
 	--Character defines
 	NDefines.NCharacter.OFFICER_CORP_ADVISOR_ENTRIES_IN_MENU = { "high_command", "theorist", "army_chief", "air_chief", "navy_chief" }
 	NDefines.NCharacter.OFFICER_CORP_HIGH_COMMAND_SLOTS_IN_MENU = 3 --For Alert manager to count the number of High Command Slots in the UI
-	
+
 	NDefines.NSupply.MAX_RAILWAY_LEVEL = 6 -- update railway texture as well, each frame corresponds to a level
 	NDefines.NSupply.DEFAULT_STARTING_TRUCK_RATIO = 1 -- countries get this ratio of starting truck in their buffers compared to their need -- vanilla 1.5
