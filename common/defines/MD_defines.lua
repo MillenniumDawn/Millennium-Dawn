@@ -78,7 +78,7 @@
 	NDefines.NCountry.DAYS_OF_WAR_BEFORE_SURRENDER = 7
 	NDefines.NCountry.BASE_MOBILIZATION_SPEED = 0.01 --0.01
 	NDefines.NCountry.SCORCHED_EARTH_STATE_COST = 25                        -- pp cost to scorch a state -- 5 in vanilla
-	NDefines.NCountry.BASE_MAX_COMMAND_POWER = 300.0                       -- base value for maximum command power -- 200 in vanilla
+	NDefines.NCountry.BASE_MAX_COMMAND_POWER = 250.0                       -- base value for maximum command power -- 200 in vanilla
 
 	NDefines.NProduction.MAX_EQUIPMENT_RESOURCES_NEED = 4
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
@@ -202,7 +202,7 @@
 	NDefines.NMilitary.GARRISON_ORDER_ARMY_CAP_FACTOR = 2.0 -- 3.0
 	NDefines.NMilitary.ACCLIMATIZATION_SPEED_GAIN = 0.1 -- 0.15
 	NDefines.NMilitary.ACCLIMATIZATION_LOSS_SPEED_FACTOR = 0.5 -- 2.0
-	NDefines.NMilitary.UNIT_LEADER_ASSIGN_TRAIT_COST = 25.0 -- 15
+	NDefines.NMilitary.UNIT_LEADER_ASSIGN_TRAIT_COST = 15.0 -- 15
 	NDefines.NMilitary.ATTACHED_WINGS_ORDER_UPDATE_DAYS = 1 -- 5
 	NDefines.NMilitary.BORDER_WAR_WIN_DAYS_AGAINST_EMPTY_OPPONENTS = 21 -- 14
 	NDefines.NMilitary.XP_GAIN_FOR_SHATTERING = 10.0 -- 30.0
