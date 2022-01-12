@@ -123,9 +123,9 @@
 	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.2 -- -0.8
 	NDefines.NMilitary.INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02 -- -0.05
 	NDefines.NMilitary.WAR_SCORE_AIR_WORTH = 0.3 -- 0.1
-	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 24 -- Returned to Vanilla Value
+	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 18 -- Vanilla 24
 	NDefines.NMilitary.FIELD_MARSHAL_DIVISIONS_CAP = 15 --24
-	NDefines.NMilitary.FIELD_MARSHAL_ARMIES_CAP = 5 -- Returned to Vanilla Value
+	NDefines.NMilitary.FIELD_MARSHAL_ARMIES_CAP = 4 -- Vanilla 5
 	NDefines.NMilitary.BASE_DIVISION_SUPPORT_SLOT_COST = 5 -- 10
 	NDefines.NMilitary.COMBAT_MINIMUM_TIME = 8 -- 4
 	NDefines.NMilitary.LAND_COMBAT_ORG_DICE_SIZE = 2 -- 4
@@ -206,7 +206,6 @@
 	NDefines.NMilitary.ATTACHED_WINGS_ORDER_UPDATE_DAYS = 1 -- 5
 	NDefines.NMilitary.BORDER_WAR_WIN_DAYS_AGAINST_EMPTY_OPPONENTS = 21 -- 14
 	NDefines.NMilitary.XP_GAIN_FOR_SHATTERING = 10.0 -- 30.0
-	NDefines.NMilitary.UNIT_UPKEEP_ATTRITION = 0.015 -- 0.0 -- Test this one!
 	NDefines.NMilitary.ARMY_IDLE_FUEL_MULT = 0.05 -- 0.0
 	NDefines.NMilitary.OUT_OF_FUEL_SPEED_MULT = 0.7 -- 0.4
 	NDefines.NMilitary.ANTI_AIR_TARGETTING_TO_CHANCE = 0.01 -- 0.07
@@ -257,7 +256,7 @@
 	NDefines.NAir.COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.90 -- 0.45
 	NDefines.NAir.COMBAT_MULTIPLANE_CAP = 2.0 -- 3.0
 	NDefines.NAir.COMBAT_DAMAGE_SCALE = 0.055 -- 0.1
-	NDefines.NAir.COMBAT_DAMAGE_SCALE_CARRIER = 2 -- 6	
+	NDefines.NAir.COMBAT_DAMAGE_SCALE_CARRIER = 2 -- 6
 	NDefines.NAir.COMBAT_AMOUNT_DIFF_AFFECT_GANG_CHANCE = 0.4 -- 0.5
 	NDefines.NAir.COMBAT_ONE_ON_ONE_CHANCE = 0.7 -- 0.6
 	NDefines.NAir.COMBAT_SITUATION_WIN_CHANCE_FROM_STATS = 1.5 -- 0.3
@@ -420,18 +419,16 @@
 		0, -- RESERVE_FLEET
 		100, -- NAVAL INVASION SUPPORT
 	}
-	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2 		-- optimum carrier count for carrier taskforces
-	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 4 		-- optimum capital count for capital taskforces
-	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 8			-- optimum screen count for screen taskforces
-	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 4				-- optimum sub count for sub taskforces
-	NDefines.NAI.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 8
-	NDefines.NAI.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 4
-	NDefines.NAI.BEST_CAPITALS_TO_CARRIER_RATIO = 2
-	NDefines.NAI.BEST_CAPITALS_TO_SCREENS_RATIO = 0.5
+	NDefines.NNavy.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 1 		-- optimum carrier count for carrier taskforces
+	NDefines.NNavy.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 2 		-- optimum capital count for capital taskforces
+	NDefines.NNavy.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 4			-- optimum screen count for screen taskforces
+	NDefines.NNavy.SUB_TASKFORCE_MAX_SHIP_COUNT = 4				-- optimum sub count for sub taskforces
+	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 4
+	NDefines.NNavy.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 4
 
-	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2			-- carrier fleets will at least have this amount of capitals
-	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 2				-- capital to carrier count in carrier taskfoces
-	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 2					-- screens to capital/carrier count in carrier & capital taskforces
+	NDefines.NNavy.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2			-- carrier fleets will at least have this amount of capitals
+	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 2				-- capital to carrier count in carrier taskfoces
+	NDefines.NNavy.SCREENS_TO_CAPITAL_RATIO = 2					-- screens to capital/carrier count in carrier & capital taskforces
 
 
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
