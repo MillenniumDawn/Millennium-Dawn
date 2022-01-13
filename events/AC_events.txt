@@ -35,7 +35,6 @@ country_event = {
 			# Activates the Investment Project
 			# FROM is the investor nation
 			# ROOT is the target country or if you just don't scope it
-
 			# Investor Nation Begins Project
 			FROM = {
 				start_project = yes
@@ -44,6 +43,8 @@ country_event = {
 			if = {
 				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
 				set_temp_variable = { AC_influence_gain = FROM.project_monetary_cost^-1 }
+
+				# Influence Gain reduction
 				if = {
 					limit = {
 						FROM = {
@@ -62,6 +63,7 @@ country_event = {
 				else = {
 					divide_temp_variable = { AC_influence_gain = 2.5 }
 				}
+
 				multiply_temp_variable = { AC_influence_gain = FROM.influence_multiplier }
 				round_temp_variable = AC_influence_gain
 				for_loop_effect = {
@@ -187,15 +189,15 @@ country_event = {
 
 	option = { name = AC_event.1.o2 # refuse
 		log = "[GetDateText]: [This.GetName]: AC_event.1.o2 executed"
-		hidden_effect = {
-			FROM = {
-				country_event = AC_event.11
-			}
-		}
+		# FROM is the original investor nation
+		# THIS is the target nation
 		FROM = {
+			# @PREV is looking at the target nation
 			set_country_flag = this_investment_offer_pending@PREV
 			country_event = AC_event.11
 		}
+
+		# AI chance for rejecting
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -267,9 +269,10 @@ country_event = {
 					NOT = { check_variable = { influence_array^2 = FROM } }
 				}
 			}
+
 			# Tag Specific Rejections
 			modifier = {
-				add = 15
+				add = 20
 				tag = NKO
 			}
 		}
@@ -287,7 +290,7 @@ country_event = {
 
 	option = {
 		name = AC_event.2.o1
-		log = "[GetDateText]: [This.GetName]: AC_event.2.o1 executed"
+		log = "[GetDateText]: [This.GetName]: AC_event.11.o1 executed"
 		clr_country_flag = this_investment_offer_pending@FROM
 		add_to_variable = { treasury = AC_build_cost }
 		subtract_from_variable = { int_investments = AC_build_cost }
