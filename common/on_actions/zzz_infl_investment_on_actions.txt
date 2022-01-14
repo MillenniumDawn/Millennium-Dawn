@@ -1,5 +1,107 @@
 on_actions = {
-	# TODO: Influencer/Investment AI
+	# Investment Actions
+	# FIXME: temp conversion to a on_daily to see if it cancels the invalid project immediately
+	on_daily = {
+		effect = {
+			# Cancel Invalid Projects
+			if = {
+				limit = { check_variable = { active_projects > 0 } }
+				# Project loop.
+				for_each_loop = { array = project_array
+
+					if = { limit = { check_variable = { v < 0 } }
+
+						set_variable = { project_type = i }
+
+						if = {
+							limit = {
+								OR = {
+									CONTROLLER = { has_war_with = ROOT } # target state controller at war with project owner
+									var:v = { investment_building_slot_available = no } # building slot unavailable in target state
+								}
+							}
+
+							set_variable = { project = i }
+							log = "AC Project Deletion - [GetDate] [This.GetTag] - on_weekly - deleted invalid project [?project] in [?project_array^project] [?project_array^project.GetName] [?project_array^project.GetName]"
+							end_project = yes
+						}
+					}
+				}
+
+				clear_variable = project_type
+			}
+		}
+	}
+
+	# ROOT is new controller #FROM is old controller #FROM.FROM is state ID
+	on_state_control_changed = {
+		effect = {
+			FROM.FROM = {
+				if = { limit = { check_variable = { projects_in_state^num > 0 } }
+
+					for_each_scope_loop = {
+						array = projects_in_state
+
+						if = {
+							limit = {
+								NOT = {
+									ROOT = { is_justifying_wargoal_against = PREV }
+									tag = ROOT
+									ROOT = { has_war_with = PREV }
+								}
+							}
+							add_to_array = { PREV.remove_projects = THIS.id }
+						}
+						else = {
+							### update project target country
+
+							meta_effect = { # remove target decision from old controller
+								text = { var:project_target_country^PREV.project_target_state_@THIS = { remove_targeted_decision = { target = PREV decision = project_[x]_target_decision } } }
+								x = "[?PREV.project_target_state_@THIS]"
+							}
+
+							set_variable = { project_target_country^PREV.project_target_state_@THIS = ROOT.id }
+						}
+					}
+
+					for_each_scope_loop = {
+						array = remove_projects
+
+						set_variable = { project = PREV.project_target_state_@THIS }
+						log = "AC - [GetDate] [This.GetTag] - on_state_control_changed - deleted invalid project [?project] in [?project_array^project] [?project_array^project.GetName] [?project_array^project.GetName]"
+						end_project = yes
+					}
+
+					clear_array = remove_projects
+				}
+			}
+		}
+	}
+
+	on_annex = { #ROOT is winner #FROM gets annexed - For civil wars on_civil_war_end is also fired
+		effect = {
+			FROM = {
+				# projects
+				# remove all projects by the annexed country
+				if = { limit = { check_variable = { active_projects > 0 } }
+
+					for_each_loop = {
+						array = project_array
+
+						if = { limit = { check_variable = { v < 0 } }
+
+							set_variable = { project = i }
+							end_project = yes
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	# Influencer/Investment AI
+	# TODO Nations:
 	# POL, SWE, TUR, SAU, ISR, IND, PAK, EGY
 	# MEX, SPR, UAE, EGY, MOR, ALG, PHI
 
@@ -29,46 +131,24 @@ on_actions = {
 						check_variable = { active_projects < 15 }
 						check_variable = { debt_ratio < 2.50 }
 					}
-					if = {
+					random_scope_in_array = {
+						array = CHI.investment_targets
 						limit = {
-							check_variable = { investment_targets > 0 }
-						}
-						random_scope_in_array = {
-							array = CHI.investment_targets
-							limit = {
-								country_exists = THIS
-								NOT = { has_war_with = CHI }
-								NOT = {
-									CHI = { is_justifying_wargoal_against = THIS }
-									THIS = { is_justifying_wargoal_against = CHI }
-								}
-								has_opinion = { target = CHI value > -20 }
-								if = { limit = { NOT = { CHI = { has_government = democratic } THIS = { tag = USA } } }
-									NOT = { is_in_faction_with = USA }
-								}
-								is_subject = no
+							country_exists = THIS
+							NOT = { has_war_with = CHI }
+							NOT = {
+								CHI = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = CHI }
 							}
-
-							AI_initiate_project = yes
-						}
-					}
-					else = {
-						random_country = {
-							limit = {
-								NOT = { has_war_with = CHI }
-								NOT = {
-									CHI = { is_justifying_wargoal_against = THIS }
-									THIS = { is_justifying_wargoal_against = CHI }
-								}
-								has_opinion = { target = CHI value > -20 }
-								if = { limit = { NOT = { CHI = { has_government = democratic } THIS = { tag = USA } } }
-									NOT = { is_in_faction_with = USA }
-								}
-								is_subject = no
+							has_opinion = { target = CHI value > -20 }
+							if = { limit = { NOT = { CHI = { has_government = democratic } THIS = { tag = USA } } }
+								NOT = { is_in_faction_with = USA }
 							}
-
-							AI_initiate_project = yes
+							is_subject = no
+							NOT = { has_decision = AC_project_14_target_decision }
 						}
+
+						AI_initiate_project = yes
 					}
 				}
 			}
@@ -1146,46 +1226,23 @@ on_actions = {
 						check_variable = { active_projects < 15 }
 						check_variable = { debt_ratio < 2.50 }
 					}
-					if = {
+					random_scope_in_array = {
+						array = USA.investment_targets
 						limit = {
-							check_variable = { investment_targets > 0 }
-						}
-						random_scope_in_array = {
-							array = USA.investment_targets
-							limit = {
-								country_exists = THIS
-								NOT = { has_war_with = USA }
-								NOT = {
-									USA = { is_justifying_wargoal_against = THIS }
-									THIS = { is_justifying_wargoal_against = USA }
-								}
-								has_opinion = { target = USA value > -20 }
-								if = { limit = { NOT = { CHI = { has_government = democratic } THIS = { tag = CHI } } }
-									NOT = { is_in_faction_with = CHI }
-								}
-								is_subject = no
+							country_exists = THIS
+							NOT = { has_war_with = USA }
+							NOT = {
+								USA = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = USA }
 							}
-
-							AI_initiate_project = yes
-						}
-					}
-					else = {
-						random_country = {
-							limit = {
-								NOT = { has_war_with = USA }
-								NOT = {
-									USA = { is_justifying_wargoal_against = THIS }
-									THIS = { is_justifying_wargoal_against = USA }
-								}
-								has_opinion = { target = USA value > -20 }
-								if = { limit = { NOT = { CHI = { has_government = democratic } THIS = { tag = CHI } } }
-									NOT = { is_in_faction_with = CHI }
-								}
-								is_subject = no
+							has_opinion = { target = USA value > -20 }
+							if = { limit = { NOT = { CHI = { has_government = democratic } THIS = { tag = CHI } } }
+								NOT = { is_in_faction_with = CHI }
 							}
-
-							AI_initiate_project = yes
+							is_subject = no
+							NOT = { has_decision = AC_project_14_target_decision }
 						}
+						AI_initiate_project = yes
 					}
 				}
 			}
@@ -1954,40 +2011,21 @@ on_actions = {
 					check_variable = { active_projects < 15 }
 					check_variable = { debt_ratio < 2.50 }
 				}
-				if = {
+				random_scope_in_array = {
+					array = FRA.investment_targets
 					limit = {
-						check_variable = { investment_targets > 0 }
-					}
-					random_scope_in_array = {
-						array = FRA.investment_targets
-						limit = {
-							country_exists = THIS
-							NOT = { has_war_with = FRA }
-							NOT = {
-								FRA = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = FRA }
-							}
-							has_opinion = { target = FRA value > -20 }
-							is_subject = no
+						country_exists = THIS
+						NOT = { has_war_with = FRA }
+						NOT = {
+							FRA = { is_justifying_wargoal_against = THIS }
+							THIS = { is_justifying_wargoal_against = FRA }
 						}
-
-						AI_initiate_project = yes
+						has_opinion = { target = FRA value > -20 }
+						is_subject = no
+						NOT = { has_decision = AC_project_14_target_decision }
 					}
-				}
-				else = {
-					random_country = {
-						limit = {
-							NOT = { has_war_with = FRA }
-							NOT = {
-								FRA = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = FRA }
-							}
-							has_opinion = { target = FRA value > -20 }
-							is_subject = no
-						}
 
-						AI_initiate_project = yes
-					}
+					AI_initiate_project = yes
 				}
 			}
 		}
@@ -3358,49 +3396,30 @@ on_actions = {
 							}
 						}
 					}
-					if = {
+				}
+				if = {
+					limit = {
+						is_ai = yes
+						check_variable = { active_projects < 15 }
+						check_variable = { debt_ratio < 2.50 }
+					}
+					random_scope_in_array = {
+						array = PER.investment_targets
 						limit = {
-							check_variable = { active_projects < 15 }
-							check_variable = { debt_ratio < 2.50 }
-						}
-						if = {
-							limit = {
-								check_variable = { investment_targets > 0 }
+							country_exists = THIS
+							NOT = { has_war_with = PER }
+							NOT = {
+								PER = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = PER }
 							}
-							random_scope_in_array = {
-								array = PER.investment_targets
-								limit = {
-									country_exists = THIS
-									NOT = { has_war_with = PER }
-									NOT = {
-										PER = { is_justifying_wargoal_against = THIS }
-										THIS = { is_justifying_wargoal_against = PER }
-									}
-									has_opinion = { target = PER value > -20 }
-									is_subject = no
-								}
+							has_opinion = { target = PER value > -20 }
+							is_subject = no
+							NOT = { has_decision = AC_project_14_target_decision }
+						}
 
-								AI_initiate_project = yes
-							}
-						}
-						else = {
-							random_country = {
-								limit = {
-									NOT = { has_war_with = PER }
-									NOT = {
-										PER = { is_justifying_wargoal_against = THIS }
-										THIS = { is_justifying_wargoal_against = PER }
-									}
-									has_opinion = { target = PER value > -20 }
-									is_subject = no
-								}
-
-								AI_initiate_project = yes
-							}
-						}
+						AI_initiate_project = yes
 					}
 				}
-
 			}
 		}
 	}
@@ -3415,46 +3434,24 @@ on_actions = {
 						check_variable = { active_projects < 15 }
 						check_variable = { debt_ratio < 2.50 }
 					}
-					if = {
+					random_scope_in_array = {
+						array = SOV.investment_targets
 						limit = {
-							check_variable = { investment_targets > 0 }
-						}
-						random_scope_in_array = {
-							array = SOV.investment_targets
-							limit = {
-								country_exists = THIS
-								NOT = { has_war_with = SOV }
-								NOT = {
-									SOV = { is_justifying_wargoal_against = THIS }
-									THIS = { is_justifying_wargoal_against = SOV }
-								}
-								has_opinion = { target = SOV value > -20 }
-								if = { limit = { NOT = { SOV = { has_government = democratic } THIS = { tag = USA } } }
-									NOT = { is_in_faction_with = USA }
-								}
-								is_subject = no
+							country_exists = THIS
+							NOT = { has_war_with = SOV }
+							NOT = {
+								SOV = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = SOV }
 							}
-
-							AI_initiate_project = yes
-						}
-					}
-					else = {
-						random_country = {
-							limit = {
-								NOT = { has_war_with = SOV }
-								NOT = {
-									SOV = { is_justifying_wargoal_against = THIS }
-									THIS = { is_justifying_wargoal_against = SOV }
-								}
-								has_opinion = { target = SOV value > -20 }
-								if = { limit = { NOT = { SOV = { has_government = democratic } THIS = { tag = USA } } }
-									NOT = { is_in_faction_with = USA }
-								}
-								is_subject = no
+							has_opinion = { target = SOV value > -20 }
+							if = { limit = { NOT = { SOV = { has_government = democratic } THIS = { tag = USA } } }
+								NOT = { is_in_faction_with = USA }
 							}
-
-							AI_initiate_project = yes
+							is_subject = no
+							NOT = { has_decision = AC_project_14_target_decision }
 						}
+
+						AI_initiate_project = yes
 					}
 				}
 			}
@@ -4038,40 +4035,21 @@ on_actions = {
 						check_variable = { active_projects < 15 }
 						check_variable = { debt_ratio < 2.50 }
 					}
-					if = {
+					random_scope_in_array = {
+						array = GER.investment_targets
 						limit = {
-							check_variable = { investment_targets > 0 }
-						}
-						random_scope_in_array = {
-							array = GER.investment_targets
-							limit = {
-								country_exists = THIS
-								NOT = { has_war_with = GER }
-								NOT = {
-									GER = { is_justifying_wargoal_against = THIS }
-									THIS = { is_justifying_wargoal_against = GER }
-								}
-								has_opinion = { target = GER value > -20 }
-								is_subject = no
+							country_exists = THIS
+							NOT = { has_war_with = GER }
+							NOT = {
+								GER = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = GER }
 							}
-
-							AI_initiate_project = yes
+							has_opinion = { target = GER value > -20 }
+							is_subject = no
+							NOT = { has_decision = AC_project_14_target_decision }
 						}
-					}
-					else = {
-						random_country = {
-							limit = {
-								NOT = { has_war_with = GER }
-								NOT = {
-									GER = { is_justifying_wargoal_against = THIS }
-									THIS = { is_justifying_wargoal_against = GER }
-								}
-								has_opinion = { target = GER value > -20 }
-								is_subject = no
-							}
 
-							AI_initiate_project = yes
-						}
+						AI_initiate_project = yes
 					}
 				}
 			}
@@ -4809,40 +4787,21 @@ on_actions = {
 						check_variable = { active_projects < 15 }
 						check_variable = { debt_ratio < 2.50 }
 					}
-					if = {
+					random_scope_in_array = {
+						array = ENG.investment_targets
 						limit = {
-							check_variable = { investment_targets > 0 }
-						}
-						random_scope_in_array = {
-							array = ENG.investment_targets
-							limit = {
-								country_exists = THIS
-								NOT = { has_war_with = ENG }
-								NOT = {
-									ENG = { is_justifying_wargoal_against = THIS }
-									THIS = { is_justifying_wargoal_against = ENG }
-								}
-								has_opinion = { target = ENG value > -20 }
-								is_subject = no
+							country_exists = THIS
+							NOT = { has_war_with = ENG }
+							NOT = {
+								ENG = { is_justifying_wargoal_against = THIS }
+								THIS = { is_justifying_wargoal_against = ENG }
 							}
-
-							AI_initiate_project = yes
+							has_opinion = { target = ENG value > -20 }
+							is_subject = no
+							NOT = { has_decision = AC_project_14_target_decision }
 						}
-					}
-					else = {
-						random_country = {
-							limit = {
-								NOT = { has_war_with = ENG }
-								NOT = {
-									ENG = { is_justifying_wargoal_against = THIS }
-									THIS = { is_justifying_wargoal_against = ENG }
-								}
-								has_opinion = { target = ENG value > -20 }
-								is_subject = no
-							}
 
-							AI_initiate_project = yes
-						}
+						AI_initiate_project = yes
 					}
 				}
 			}
@@ -5411,40 +5370,21 @@ on_actions = {
 					check_variable = { active_projects < 15 }
 					check_variable = { debt_ratio < 2.50 }
 				}
-				if = {
+				random_scope_in_array = {
+					array = BRA.investment_targets
 					limit = {
-						check_variable = { investment_targets > 0 }
-					}
-					random_scope_in_array = {
-						array = BRA.investment_targets
-						limit = {
-							country_exists = THIS
-							NOT = { has_war_with = BRA }
-							NOT = {
-								BRA = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = BRA }
-							}
-							has_opinion = { target = BRA value > -20 }
-							is_subject = no
+						country_exists = THIS
+						NOT = { has_war_with = BRA }
+						NOT = {
+							BRA = { is_justifying_wargoal_against = THIS }
+							THIS = { is_justifying_wargoal_against = BRA }
 						}
-
-						AI_initiate_project = yes
+						has_opinion = { target = BRA value > -20 }
+						is_subject = no
+						NOT = { has_decision = AC_project_14_target_decision }
 					}
-				}
-				else = {
-					random_country = {
-						limit = {
-							NOT = { has_war_with = BRA }
-							NOT = {
-								BRA = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = BRA }
-							}
-							has_opinion = { target = BRA value > -20 }
-							is_subject = no
-						}
 
-						AI_initiate_project = yes
-					}
+					AI_initiate_project = yes
 				}
 			}
 		}
@@ -5889,45 +5829,26 @@ on_actions = {
 			if = {
 				limit = {
 					is_ai = yes
-					check_variable = { active_projects < 15 }
-					check_variable = { debt_ratio < 2.50 }
+					check_variable = { active_projects < 10 }
+					check_variable = { debt_ratio < 2.00 }
 					NOT = { has_country_flag = bi_weekly_investment }
 				}
 				set_country_flag = { flag = bi_weekly_investment value = 1 days = 10 }
-				if = {
+				random_scope_in_array = {
+					array = KOR.investment_targets
 					limit = {
-						check_variable = { investment_targets > 0 }
-					}
-					random_scope_in_array = {
-						array = KOR.investment_targets
-						limit = {
-							country_exists = THIS
-							NOT = { has_war_with = KOR }
-							NOT = {
-								KOR = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = KOR }
-							}
-							has_opinion = { target = KOR value > -20 }
-							is_subject = no
+						country_exists = THIS
+						NOT = { has_war_with = KOR }
+						NOT = {
+							KOR = { is_justifying_wargoal_against = THIS }
+							THIS = { is_justifying_wargoal_against = KOR }
 						}
-
-						AI_initiate_project = yes
+						has_opinion = { target = KOR value > -20 }
+						is_subject = no
+						NOT = { has_decision = AC_project_14_target_decision }
 					}
-				}
-				else = {
-					random_country = {
-						limit = {
-							NOT = { has_war_with = KOR }
-							NOT = {
-								KOR = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = KOR }
-							}
-							has_opinion = { target = KOR value > -20 }
-							is_subject = no
-						}
 
-						AI_initiate_project = yes
-					}
+					AI_initiate_project = yes
 				}
 			}
 		}
@@ -6130,43 +6051,26 @@ on_actions = {
 			if = {
 				limit = {
 					is_ai = yes
-					check_variable = { active_projects < 15 }
-					check_variable = { debt_ratio < 2.50 }
+					check_variable = { active_projects < 10 }
+					check_variable = { debt_ratio < 2.00 }
+					NOT = { has_country_flag = bi_weekly_investment }
 				}
-				if = {
+				set_country_flag = { flag = bi_weekly_investment value = 1 days = 10 }
+				random_scope_in_array = {
+					array = ITA.investment_targets
 					limit = {
-						check_variable = { investment_targets > 0 }
-					}
-					random_scope_in_array = {
-						array = ITA.investment_targets
-						limit = {
-							country_exists = THIS
-							NOT = { has_war_with = ITA }
-							NOT = {
-								ITA = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = ITA }
-							}
-							has_opinion = { target = ITA value > -20 }
-							is_subject = no
+						country_exists = THIS
+						NOT = { has_war_with = ITA }
+						NOT = {
+							ITA = { is_justifying_wargoal_against = THIS }
+							THIS = { is_justifying_wargoal_against = ITA }
 						}
-
-						AI_initiate_project = yes
+						has_opinion = { target = ITA value > -20 }
+						is_subject = no
+						NOT = { has_decision = AC_project_14_target_decision }
 					}
-				}
-				else = {
-					random_country = {
-						limit = {
-							NOT = { has_war_with = ITA }
-							NOT = {
-								ITA = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = ITA }
-							}
-							has_opinion = { target = ITA value > -20 }
-							is_subject = no
-						}
 
-						AI_initiate_project = yes
-					}
+					AI_initiate_project = yes
 				}
 			}
 		}
@@ -6482,43 +6386,24 @@ on_actions = {
 			if = {
 				limit = {
 					is_ai = yes
-					check_variable = { active_projects < 15 }
+					check_variable = { active_projects < 10 }
 					check_variable = { debt_ratio < 2.50 }
 				}
-				if = {
+				random_scope_in_array = {
+					array = JAP.investment_targets
 					limit = {
-						check_variable = { investment_targets > 0 }
-					}
-					random_scope_in_array = {
-						array = JAP.investment_targets
-						limit = {
-							country_exists = THIS
-							NOT = { has_war_with = JAP }
-							NOT = {
-								JAP = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = JAP }
-							}
-							has_opinion = { target = JAP value > -20 }
-							is_subject = no
+						country_exists = THIS
+						NOT = { has_war_with = JAP }
+						NOT = {
+							JAP = { is_justifying_wargoal_against = THIS }
+							THIS = { is_justifying_wargoal_against = JAP }
 						}
-
-						AI_initiate_project = yes
+						has_opinion = { target = JAP value > -20 }
+						is_subject = no
+						NOT = { has_decision = AC_project_14_target_decision }
 					}
-				}
-				else = {
-					random_country = {
-						limit = {
-							NOT = { has_war_with = JAP }
-							NOT = {
-								JAP = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = JAP }
-							}
-							has_opinion = { target = JAP value > -20 }
-							is_subject = no
-						}
 
-						AI_initiate_project = yes
-					}
+					AI_initiate_project = yes
 				}
 			}
 		}
@@ -7110,43 +6995,24 @@ on_actions = {
 			if = {
 				limit = {
 					is_ai = yes
-					check_variable = { active_projects < 15 }
-					check_variable = { debt_ratio < 2.50 }
+					check_variable = { active_projects < 10 }
+					check_variable = { debt_ratio < 2.00 }
 				}
-				if = {
+				random_scope_in_array = {
+					array = RAJ.investment_targets
 					limit = {
-						check_variable = { investment_targets > 0 }
-					}
-					random_scope_in_array = {
-						array = RAJ.investment_targets
-						limit = {
-							country_exists = THIS
-							NOT = { has_war_with = RAJ }
-							NOT = {
-								RAJ = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = RAJ }
-							}
-							has_opinion = { target = RAJ value > -20 }
-							is_subject = no
+						country_exists = THIS
+						NOT = { has_war_with = RAJ }
+						NOT = {
+							RAJ = { is_justifying_wargoal_against = THIS }
+							THIS = { is_justifying_wargoal_against = RAJ }
 						}
-
-						AI_initiate_project = yes
+						has_opinion = { target = RAJ value > -20 }
+						is_subject = no
+						NOT = { has_decision = AC_project_14_target_decision }
 					}
-				}
-				else = {
-					random_country = {
-						limit = {
-							NOT = { has_war_with = RAJ }
-							NOT = {
-								RAJ = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = RAJ }
-							}
-							has_opinion = { target = RAJ value > -20 }
-							is_subject = no
-						}
 
-						AI_initiate_project = yes
-					}
+					AI_initiate_project = yes
 				}
 			}
 		}
@@ -8206,43 +8072,26 @@ on_actions = {
 			if = {
 				limit = {
 					is_ai = yes
-					check_variable = { active_projects < 15 }
-					check_variable = { debt_ratio < 2.50 }
+					check_variable = { active_projects < 5 }
+					check_variable = { debt_ratio < 1.50 }
+					NOT = { has_country_flag = bi_weekly_investment }
 				}
-				if = {
+				set_country_flag = { flag = bi_weekly_investment value = 1 days = 10 }
+				random_scope_in_array = {
+					array = SYR.investment_targets
 					limit = {
-						check_variable = { investment_targets > 0 }
-					}
-					random_scope_in_array = {
-						array = SYR.investment_targets
-						limit = {
-							country_exists = THIS
-							NOT = { has_war_with = SYR }
-							NOT = {
-								SYR = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = SYR }
-							}
-							has_opinion = { target = SYR value > -20 }
-							is_subject = no
+						country_exists = THIS
+						NOT = { has_war_with = SYR }
+						NOT = {
+							SYR = { is_justifying_wargoal_against = THIS }
+							THIS = { is_justifying_wargoal_against = SYR }
 						}
-
-						AI_initiate_project = yes
+						has_opinion = { target = SYR value > -20 }
+						is_subject = no
+						NOT = { has_decision = AC_project_14_target_decision }
 					}
-				}
-				else = {
-					random_country = {
-						limit = {
-							NOT = { has_war_with = SYR }
-							NOT = {
-								SYR = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = SYR }
-							}
-							has_opinion = { target = SYR value > -20 }
-							is_subject = no
-						}
 
-						AI_initiate_project = yes
-					}
+					AI_initiate_project = yes
 				}
 			}
 		}
@@ -8888,43 +8737,26 @@ on_actions = {
 			if = {
 				limit = {
 					is_ai = yes
-					check_variable = { active_projects < 15 }
-					check_variable = { debt_ratio < 2.50 }
+					check_variable = { active_projects < 10 }
+					check_variable = { debt_ratio < 1.50 }
+					NOT = { has_country_flag = bi_weekly_investment }
 				}
-				if = {
+				set_country_flag = { flag = bi_weekly_investment value = 1 days = 10 }
+				random_scope_in_array = {
+					array = NOR.investment_targets
 					limit = {
-						check_variable = { investment_targets > 0 }
-					}
-					random_scope_in_array = {
-						array = NOR.investment_targets
-						limit = {
-							country_exists = THIS
-							NOT = { has_war_with = NOR }
-							NOT = {
-								NOR = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = NOR }
-							}
-							has_opinion = { target = NOR value > -20 }
-							is_subject = no
+						country_exists = THIS
+						NOT = { has_war_with = NOR }
+						NOT = {
+							NOR = { is_justifying_wargoal_against = THIS }
+							THIS = { is_justifying_wargoal_against = NOR }
 						}
-
-						AI_initiate_project = yes
+						has_opinion = { target = NOR value > -20 }
+						is_subject = no
+						NOT = { has_decision = AC_project_14_target_decision }
 					}
-				}
-				else = {
-					random_country = {
-						limit = {
-							NOT = { has_war_with = NOR }
-							NOT = {
-								NOR = { is_justifying_wargoal_against = THIS }
-								THIS = { is_justifying_wargoal_against = NOR }
-							}
-							has_opinion = { target = NOR value > -20 }
-							is_subject = no
-						}
 
-						AI_initiate_project = yes
-					}
+					AI_initiate_project = yes
 				}
 			}
 		}
