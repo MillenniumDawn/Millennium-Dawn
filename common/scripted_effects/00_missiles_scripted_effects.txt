@@ -18,33 +18,38 @@ set_landbased_missile_defense_cap = {
 	meta_effect = {
 		text = {
 			### boost phase defense ###
-			every_controlled_state = {
+			if = {
 				limit = {
-					anti_air_building > 0
-					[launch_point_ID] = {
-						distance_to = {
-							value < [SAM_range]
-							target = PREV
+					has_country_flag = boost_phase_defense
+				}
+				every_controlled_state = {
+					limit = {
+						anti_air_building > 0
+						[launch_point_ID] = {
+							distance_to = {
+								value < [SAM_range]
+								target = PREV
+							}
 						}
 					}
+					set_temp_variable = { temp1 = 0 }	
+					add_to_temp_variable = { temp1 = non_damaged_building_level@anti_air_building }
+					multiply_temp_variable = { temp1 = PREV.var_SAM_launcher_tech }
+					# already coded in defense effects
+					# if = {
+					# 	limit = {
+					# 		check_variable = { PREV.var_deployed_SAM_MD_land < temp1 }
+					# 	}
+					# 	set_temp_variable = { temp1 = PREV.var_deployed_SAM_MD_land }
+					# }
+					# set_temp_variable = { temp_deployed_SAM_MD_land = PREV.var_deployed_SAM_MD_land }
+					# subtract_from_temp_variable = { temp_deployed_SAM_MD_land = temp1 }
+					add_to_variable = { ROOT.var_intercept_capacity_boost_land = temp1 }
+					log = "[GetDateText]: [ROOT.GetName]: ### boost phase defense ### in meta"
+					log = "[THIS.GetName]"
+					log = "var_SAM_range [?var_SAM_range]"
+					log = "ROOT.var_intercept_capacity_boost_land [?ROOT.var_intercept_capacity_boost_land]"
 				}
-				set_temp_variable = { temp1 = 0 }	
-				add_to_temp_variable = { temp1 = non_damaged_building_level@anti_air_building }
-				multiply_temp_variable = { temp1 = PREV.var_SAM_launcher_tech }
-				# already coded in defense effects
-				# if = {
-				# 	limit = {
-				# 		check_variable = { PREV.var_deployed_SAM_MD_land < temp1 }
-				# 	}
-				# 	set_temp_variable = { temp1 = PREV.var_deployed_SAM_MD_land }
-				# }
-				# set_temp_variable = { temp_deployed_SAM_MD_land = PREV.var_deployed_SAM_MD_land }
-				# subtract_from_temp_variable = { temp_deployed_SAM_MD_land = temp1 }
-				add_to_variable = { ROOT.var_intercept_capacity_boost_land = temp1 }
-				log = "[GetDateText]: [ROOT.GetName]: ### boost phase defense ### in meta"
-				log = "[THIS.GetName]"
-				log = "var_SAM_range [?var_SAM_range]"
-				log = "ROOT.var_intercept_capacity_boost_land [?ROOT.var_intercept_capacity_boost_land]"
 			}
 			### midcourse phase defense ###
 			every_controlled_state = {
@@ -101,27 +106,32 @@ set_landbased_missile_defense_cap = {
 				clr_state_flag = defend_land_launch_point
 			}
 			### terminal phase defense ###
-			every_controlled_state = {
+			if = {
 				limit = {
-					anti_air_building > 0
-					[target_point_ID] = {
-						distance_to = {
-							value < [SAM_range]
-							target = PREV
-						}
-					}	
+					has_country_flag = terminal_phase_defense
 				}
-				set_temp_variable = { temp1 = 0 }	
-				add_to_temp_variable = { temp1 = non_damaged_building_level@anti_air_building }
-				multiply_temp_variable = { temp1 = PREV.var_SAM_launcher_tech }
-				# already coded in defense effects
-				# if = {
-				# 	limit = {
-				# 		check_variable = { temp_deployed_SAM_MD_land < temp1 }
-				# 	}
-				# 	set_temp_variable = { temp1 = temp_deployed_SAM_MD_land }
-				# }
-				add_to_variable = { ROOT.var_intercept_capacity_terminal_land = temp1 }
+				every_controlled_state = {
+					limit = {
+						anti_air_building > 0
+						[target_point_ID] = {
+							distance_to = {
+								value < [SAM_range]
+								target = PREV
+							}
+						}	
+					}
+					set_temp_variable = { temp1 = 0 }	
+					add_to_temp_variable = { temp1 = non_damaged_building_level@anti_air_building }
+					multiply_temp_variable = { temp1 = PREV.var_SAM_launcher_tech }
+					# already coded in defense effects
+					# if = {
+					# 	limit = {
+					# 		check_variable = { temp_deployed_SAM_MD_land < temp1 }
+					# 	}
+					# 	set_temp_variable = { temp1 = temp_deployed_SAM_MD_land }
+					# }
+					add_to_variable = { ROOT.var_intercept_capacity_terminal_land = temp1 }
+				}
 			}
 		}
 		launch_point_ID = "[?ROOT.missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
@@ -358,23 +368,23 @@ boost_phase_defense_sea = {
 		}
 		subtract_from_temp_variable = { temp1 = 1 }	
 		if = {
-			limit = {						
+			limit = {
 				check_variable = { var_intercept_capacity_boost_sea > 0 }
 				check_variable = { PREV.var_deployed_SAM_MD_sea > 0 }
-			}	
+			}
 			subtract_from_variable = { var_intercept_capacity_boost_sea = 1 }
 			subtract_from_variable = { PREV.var_deployed_SAM_MD_sea = 1 }
 			add_to_variable = { SAM_consumption_sea = 1 }
 			if = {
-				limit = {	
+				limit = {
 					check_variable = { var_missile_trajectory < var_intercept_chance_boost_sea }
-				}					
+				}
 				add_to_variable = { var_missile_interception_boost_sea = 1 }
 			}
 			else = {
 				add_to_variable = { var_missile_boost_completed_sea = 1 }
 			}
-		}	
+		}
 		else = {
 			add_to_variable = { var_missile_boost_completed_sea = 1 }
 		}
