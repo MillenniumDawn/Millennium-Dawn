@@ -513,6 +513,14 @@ midcourse_phase_defense_land = {
 	add_to_array = { array = missile_interception_midcourse_land_stat_array value = var_missile_interception_midcourse_land index = i }
 }
 
+### for cruise missiles
+midcourse_bypass = {
+	add_to_variable = { var_missile_midcourse_completed_sea = var_missile_boost_completed_land }
+	add_to_variable = { var_missile_midcourse_completed_land = var_missile_boost_completed_land }
+	add_to_array = { array = missile_midcourse_completed_sea_stat_array value = var_missile_boost_completed_land }
+	add_to_array = { array = missile_midcourse_completed_land_stat_array value = var_missile_boost_completed_land }
+}
+
 ### terminal phase vs defense sea ###
 terminal_phase_defense_sea = {
 	set_temp_variable = { temp3 = var_missile_midcourse_completed_land }
@@ -2778,7 +2786,7 @@ set_launch_trigger_num = {
 		text = {
 			set_missile_model_[missile_type] = yes
 		}
-		missile_type = "[?missile_type_array^i]"
+		missile_type = "[?ROOT.missile_type_array^i]"
 	}
 	set_ship_number_LAM_trigger = yes
 	set_sub_number_LAM_trigger = yes
@@ -2802,9 +2810,11 @@ set_ship_number_LAM_trigger = {
 		#set_variable = { var_ship_number_LAM_VLS_loc = 0 }
 		set_temp_variable = { temp1_ship_number_LAM = 0 }
 		#set_temp_variable = { temp2_ship_number_LAM = 0 }
+		#did not work #set_temp_variable = { temp_missile_salvo = missile_salvo_array^i }
 		while_loop_effect = {
 			limit = {
 				check_variable = { missile_salvo_array^i > temp1_ship_number_LAM }
+				#did not work #check_variable = { temp_missile_salvo > temp1_ship_number_LAM }
 			}
 			add_to_variable = { var_ship_number_LAM = 1 }
 			#add_to_variable = { var_ship_number_LAM_VLS_loc = 1 }
@@ -2827,9 +2837,12 @@ set_ship_number_LAM_trigger = {
 		#set_variable = { var_ship_number_LAM_VLS_loc = 0 }
 		set_temp_variable = { temp1_ship_number_LAM = 0 }
 		#set_temp_variable = { temp2_ship_number_LAM = 0 }
+		#did not work
+		#did not work #set_temp_variable = { temp_missile_salvo = missile_salvo_array^i }
 		while_loop_effect = {
 			limit = {
 				check_variable = { missile_salvo_array^i > temp1_ship_number_LAM }
+				#did not work #check_variable = { temp_missile_salvo > temp1_ship_number_LAM }
 			}
 			add_to_variable = { var_ship_number_LAM = 1 }
 			#add_to_variable = { var_ship_number_LAM_loc = 1 }
@@ -2986,6 +2999,7 @@ set_launch_trigger_num_gui = {
 	}
 	set_ship_number_LAM_trigger = yes
 	set_sub_number_LAM_trigger = yes
+	set_attack_sub_number_LAM_trigger = yes
 	set_bomber_number_ALCM_trigger = yes
 	set_STK_number_ALCM_trigger = yes
 	set_MR_number_ALCM_trigger = yes
@@ -11052,8 +11066,9 @@ missile_on_weekly = {
 	#
 	for_each_loop = {
 		array = missile_target_point_array
-		### needs to be tested
+		### needs to be tested 
 		#set_missile_model = yes
+		#deactivate for testing #
 		set_launch_trigger_num = yes
 		#
 		if = {
@@ -11081,6 +11096,7 @@ missile_on_weekly = {
 				}
 
 				#check_variable = { missile_alert_array^i = 1 }
+				#deactivate for testing #
 				check_launch_point = yes
 				#
 			}
@@ -11171,6 +11187,9 @@ missile_on_weekly = {
 						}
 						midcourse_phase_defense_sea = yes
 						midcourse_phase_defense_land = yes
+					}
+					else = {
+						midcourse_bypass = yes
 					}
 					### terminal phase vs defense ###
 					terminal_phase_defense_sea = yes
