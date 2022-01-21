@@ -303,47 +303,48 @@ add_finished_buildings = {
 	multiply_temp_variable = { var_cost = -1 }
 	divide_temp_variable = { var_cost = ROOT.project_build_amount^ROOT.project }
 
-	if = { limit = { ROOT = { check_variable = { project_building_type^project = 1 } } }
+	if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 1 } }
 		add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 2 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 2 } }
 		add_building_construction = { type = arms_factory level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 3 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 3 } }
 		add_building_construction = { type = dockyard level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 4 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 4 } }
 		add_building_construction = { type = infrastructure level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 5 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 5 } }
 		add_building_construction = { type = offices level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 6 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 6 } }
 		add_building_construction = { type = anti_air_building level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 7 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 7 } }
 		add_building_construction = { type = radar_station level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 8 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 8 } }
 		add_building_construction = { type = air_base level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 9 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 9 } }
 		add_building_construction = { type = fuel_silo level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 10 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 10 } }
 		add_building_construction = { type = internet_station level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 11 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 11 } }
 		add_building_construction = { type = synthetic_refinery level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
@@ -548,6 +549,8 @@ complete_project = {
 
 		set_variable = { project_type = project }
 
+		# State in the project:
+		# project_array^project represents the actual project
 		var:project_array^project = {
 			if = {
 				limit = {
@@ -563,7 +566,6 @@ complete_project = {
 				}
 
 				add_finished_buildings = yes
-
 				# Opinion Bonus Towards Builder
 				CONTROLLER = { add_opinion_modifier = { target = ROOT modifier = AC_construction_opinion4 } }
 
@@ -594,12 +596,12 @@ complete_project = {
 							x = "[?ROOT.project]"
 						}
 					}
-					else = { end_project = yes }
+					else = {
+						end_project = yes
+					}
 				}
 			}
-			else = {
-				ROOT = { end_project = yes }
-			}
+			else = { ROOT = { end_project = yes } }
 		}
 	}
 
@@ -629,7 +631,6 @@ end_project = {
 			}
 			x = "[?project]"
 		}
-
 
 		clear_variable = project_build_amount^project
 		clear_variable = project_building_type^project
