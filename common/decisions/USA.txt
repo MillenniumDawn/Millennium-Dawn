@@ -852,6 +852,14 @@ USA_congress_md = {
 				}
 				tooltip = USA_not_total_support_tt
 			}
+			custom_trigger_tooltip = {
+				check_variable = { personal_tax_rate > 3 }
+				tooltip = per_tax_rate_at_least_3_tt
+			}
+			custom_trigger_tooltip = {
+				check_variable = { var = population_tax_rate value = 50 compare = less_than_or_equals }
+				tooltip = per_tax_rate_less_than_or_equals_50
+			}
 		}
 		cost = 0
 		ai_will_do = {
@@ -866,30 +874,22 @@ USA_congress_md = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_give_tax_break"
 			hidden_effect = {
-				remove_tax_cost = yes
-				subtract_from_variable = { tax_rate = 3 }
-				set_tax_cost = yes
-				calculate_tax_gain = yes
-				update_military_rate = yes
-				ingame_calculate_size_modifier = yes
-				calculate_resource_sale_rate = yes
+				subtract_from_variable = { population_tax_rate = 3 }
+				ingame_update_setup = yes
+				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
+				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
+				law_attitude_change = yes
 			}
-			custom_effect_tooltip = reduce_tax_rate_3_tt
-			custom_effect_tooltip = "While this decision is active, you can not raise or lower your taxes."
+			disable_personal_tax_rate_change = yes
+			custom_effect_tooltip = reduce_per_tax_rate_3_tt
 		}
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove USA_give_tax_break"
-			USA_congress_small_support = yes
 			hidden_effect = {
-				remove_tax_cost = yes
-				add_to_variable = { tax_rate = 3 }
-				set_tax_cost = yes
-				calculate_tax_gain = yes
-				update_military_rate = yes
-				ingame_calculate_size_modifier = yes
-				calculate_resource_sale_rate = yes
+				add_to_variable = { population_tax_rate = 3 }
+				ingame_update_setup = yes
 			}
-			custom_effect_tooltip = add_tax_rate_3_tt
+			enable_personal_tax_rate_change = yes
+			custom_effect_tooltip = add_per_tax_rate_3_tt
 		}
 	}
 	USA_amend_the_budget = {
@@ -1245,8 +1245,8 @@ USA_asteroid_mining_decision = {
 		fixed_random_seed = no
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_pull_small_asteroid_into_orbit"
-			subtract_from_variable = { treasury = 2 }
-			custom_effect_tooltip = 2_billion_expense_tt
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
 		}
 		days_remove = 120
 		remove_effect = {
@@ -1284,8 +1284,8 @@ USA_asteroid_mining_decision = {
 		days_remove = 210
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_pull_moderate_asteroid_into_orbit"
-			subtract_from_variable = { treasury = 5 }
-			custom_effect_tooltip = 5_billion_expense_tt
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_pull_moderate_asteroid_into_orbit"
@@ -1321,8 +1321,8 @@ USA_asteroid_mining_decision = {
 		fixed_random_seed = no
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_pull_large_asteroid_into_orbit"
-			subtract_from_variable = { treasury = 10 }
-			custom_effect_tooltip = 10_billion_expense_tt
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 		}
 		days_remove = 360
 		remove_effect = {
@@ -1357,10 +1357,11 @@ USA_asteroid_mining_decision = {
 		cost = 25
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_expand_our_operations"
-			subtract_from_variable = { treasury = 3 }
-			custom_effect_tooltip = 3_billion_expense_tt
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
 		}
 		days_remove = 30
+		fixed_random_seed = no
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_expand_our_operations"
 			capital_scope = {
@@ -1417,9 +1418,10 @@ USA_asteroid_mining_decision = {
 		cost = 10
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_sell_mining_equipment"
-			add_to_variable = { treasury = 1 }
-			custom_effect_tooltip = 1_billion_revenue_tt
+			set_temp_variable = { treasury_change = 1 }
+			modify_treasury_effect = yes
 		}
+		fixed_random_seed = no
 		days_remove = 5
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_sell_mining_equipment"
@@ -1493,8 +1495,8 @@ USA_asteroid_mining_decision = {
 		cost = 50
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_start_asteroid_mining"
-			subtract_from_variable = { treasury = 30 }
-			custom_effect_tooltip = 30_billion_expense_tt
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
 		}
 		days_remove = 60
 		remove_effect = {
@@ -1701,8 +1703,8 @@ USA_the_trump_agenda = {
 			788 = {
 				add_resource = { type = oil amount = 1 }
 			}
-			subtract_from_variable = { treasury = 10 }
-			custom_effect_tooltip = 10_billion_expense_tt
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -1739,8 +1741,8 @@ USA_the_trump_agenda = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_increase_border_security"
 			add_stability = 0.02
 			add_0_25_Nat_Populism_popularity = yes
-			subtract_from_variable = { treasury = 0.5 }
-			custom_effect_tooltip = 0_5_billion_expense_tt
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
 			MEX = { add_opinion_modifier = { target = USA modifier = recent_actions_negative } }
 			set_country_flag = increased_border_security
 		}

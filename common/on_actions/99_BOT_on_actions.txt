@@ -1,0 +1,182 @@
+on_actions = {
+
+	on_startup = {
+		effect = {
+			if = {
+				limit = {
+					has_start_date < 2001.1.1 
+				}
+				BOT = { 
+					country_event = { id = Botswana_pulse.8 days = 240 random_days = 60 } #Negro of Banyoles
+					country_event = { id = Botswana_pulse.9 days = 420 random_days = 30 }	#Execution of Mariette Bosch
+					country_event = { id = Botswana_pulse.11 days = 720 random_days = 180 }	#Mosadi Seboko crowned
+					news_event = { id = Botswana_pulse.14 days = 2460 random_days = 30 }	#Top Gear Botswana Special
+				}
+			}
+		}
+	}
+
+	on_weekly_BOT = {
+		effect = {
+			#Sum of BDP-A and BDP-B popularites
+			set_temp_variable = { BDP_total_pop = party_pop_array^14 }
+			add_to_temp_variable = { BDP_total_pop = party_pop_array^16 }
+			#BDP splits if popularity less than 40%
+			if = {
+				limit = { check_variable = { BDP_total_pop < 0.40 } }
+				country_event = { id = Botswana_pulse.5 }
+			}
+			#If BDP popularity is more than 60%, UDC forms
+			if = {
+				limit = { check_variable = { BDP_total_pop > 0.60 } }
+				random_list = {
+					75 = {
+						set_country_flag = BNF_joined_UDC
+					}
+					25 = {
+					}
+				}
+				random_list = {
+					75 = {
+						set_country_flag = MELS_joined_UDC
+					}
+					25 = {
+					}
+				}
+				random_list = {
+					75 = {
+						modifier = { 
+							factor = 0
+							NOT = { has_country_flag = BDP_split }
+						}						
+						set_country_flag = BMD_joined_UDC
+					}
+					25 = {
+					}
+				}
+				random_list = {
+					75 = {
+						set_country_flag = BPP_joined_UDC
+					}
+					25 = {
+					}
+				}
+				random_list = {
+					75 = {
+						set_country_flag = ISBO_joined_UDC
+					}
+					25 = {
+					}
+				}
+				random_list = {
+					75 = {
+						set_country_flag = BWF_joined_UDC
+					}
+					25 = {
+					}
+				}
+				country_event = { id = Botswana_pulse.6 }
+			}
+			#If UDC is in power, split it up
+			if = {
+				limit = {
+					is_in_array = { ruling_party = 18 }
+					has_country_flag = UDC_formed
+				}
+				country_event = { id = Botswana_pulse.7 }
+			}
+		}
+	}
+	
+	on_monthly_BOT = {
+		random_events = {
+			3000 = 0
+			
+			50 = Botswana_pulse.10	#Bushmen sue government
+			25 = Botswana_pulse.12	#Strike at a mine
+			17 = Botswana_pulse.13	#Modise Mokwadi Fly murders his son
+			10 = Botswana_pulse.15	#Moremi Air Cessna 208 crash
+			10 = Botswana_pulse.16	#Generic plane crash
+			8 = Botswana_pulse.17	#Mmusi and Others v Ramantele and Another		
+			7 = Botswana_pulse.18	#Death of Gomolemo Motswaledi		
+			7 = Botswana_pulse.19	#Lesedi La Rona	
+			7 = Botswana_pulse.20	#Sewelo	
+			12 = Botswana_pulse.21	#Electricity shortage
+			50 = Botswana_pulse.22	#Botswana Motor Company goes bankrupt
+			10 = Botswana_pulse.23	#Kgosi accused of flogging
+		}
+		
+		effect = {
+			random_list = {
+				40 = {
+					add_to_variable = { no_of_poachers = 15 }
+				}
+				60 = {
+				}
+			}
+			if = {
+				limit = { 
+					NOT = { has_country_flag = on_yearly_done_BOT }
+					date > 2001.1.1
+				}
+				random_list = {
+					kalahari_expands = {
+						country_event = { id = Botswana_pulse.1 }
+					}
+					kalahari_steady = {
+						country_event = { id = Botswana_pulse.2 }
+					}
+					kalahari_retreats = {
+						country_event = { id = Botswana_pulse.3 }
+					}
+				}
+				set_country_flag = { flag = on_yearly_done_BOT days = 350 value = 1 }
+			}				
+		}
+	}
+	
+	on_new_term_election = {
+		effect = {
+			if = {
+				limit = {
+					original_tag = BOT
+					has_country_flag = generic_election_killswitch
+				}
+				#Sum of BDP-A and BDP-B popularites
+				set_temp_variable = { BDP_total_pop = party_pop_array^14 }
+				if = {
+					limit = { 
+						NOT = { has_country_flag = BDP_split }
+					}
+					add_to_temp_variable = { BDP_total_pop = party_pop_array^16 }
+				}
+				#Find the strongest party
+				set_temp_variable = { party_index = 0 }
+				set_temp_variable = { party_popularity = 0 }
+				for_each_loop = {
+					array = party_pop_array
+					value = v
+					index = i
+					break = break
+					if = {
+						limit = {
+							check_variable = { v > party_popularity }
+						}
+						set_temp_variable = { party_index = i }
+						set_temp_variable = { party_popularity = v }
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { BDP_total_pop > party_pop_array^party_index }
+					}
+					country_event = { id = Botswana_pulse.4 }
+				}
+				else = {
+					clr_country_flag = generic_election_killswitch
+					country_event = { id = MD4_election_campaign.0 }
+				}
+			}
+		}
+	}
+}
