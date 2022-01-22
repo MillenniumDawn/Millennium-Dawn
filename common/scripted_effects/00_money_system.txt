@@ -36,7 +36,8 @@
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 ###
 
-#Use this update all economic values in-game
+# ingame_update_setup
+# This function is used to update the economic setup mid game
 ingame_update_setup = {
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
@@ -68,21 +69,25 @@ ingame_update_setup = {
 	update_display = yes
 }
 
-#Tax rate shit
+# calculate_tax_rate
+# Calculates the tax rate of a given nation where you flow in the corporate_tax_rate of a given nation
 calculate_tax_rate = {
-	remove_tax_cost = yes
-	set_variable = { tax_rate = corporate_tax_rate }
-	set_tax_cost = yes
-	
-	if = {
-		limit = { NOT = { has_dynamic_modifier = { modifier = population_tax_stability_hit } } }
-		add_dynamic_modifier = { modifier = population_tax_stability_hit }
-	}
-	set_variable = { stability_factor_from_population_tax = population_tax_rate }
-	divide_variable = { stability_factor_from_population_tax = -100 }
-	
-}
+	hidden_effect = {
+		remove_tax_cost = yes
+		set_variable = { tax_rate = corporate_tax_rate }
+		set_tax_cost = yes
 
+		if = {
+			limit = { NOT = { has_dynamic_modifier = { modifier = population_tax_stability_hit } } }
+			add_dynamic_modifier = { modifier = population_tax_stability_hit }
+		}
+		set_variable = { stability_factor_from_population_tax = population_tax_rate }
+		divide_variable = { stability_factor_from_population_tax = -100 }
+	}
+}
+# Tax Cost Meta Effects
+# add_tax_laws
+# Adds a tax law from corporate_tax_rate
 add_tax_laws = {
 	meta_effect = {
 		text = {
@@ -91,6 +96,8 @@ add_tax_laws = {
 		TAX_RATE_VAR = "[?tax_rate|0]"
 	}
 }
+# remove_tax_cost
+# Removes a tax law
 remove_tax_cost = {
 	meta_effect = {
 		text = {
@@ -99,6 +106,8 @@ remove_tax_cost = {
 		TAX_RATE_VAR = "[?tax_rate|0]"
 	}
 }
+# set_tax_cost
+# Sets a tax cost
 set_tax_cost = {
 	meta_effect = {
 		text = {
@@ -107,39 +116,9 @@ set_tax_cost = {
 		TAX_RATE_VAR = "[?tax_rate|0]"
 	}
 }
-increase_tax_cost = {
-	set_temp_variable = { tax_increased = tax_rate }
-	subtract_from_temp_variable = { tax_increased = 1 }
-	meta_effect = {
-		text = {
-			remove_ideas = tax_cost_[TAX_RATE_VAR_INCR]
-		}
-		TAX_RATE_VAR_INCR = "[?tax_increased|0]"
-	}
-	meta_effect = {
-		text = {
-			add_ideas = tax_cost_[TAX_RATE_VAR]
-		}
-		TAX_RATE_VAR = "[?tax_rate|0]"
-	}
-}
-decrease_tax_cost = {
-	set_temp_variable = { tax_decreased = tax_rate }
-	add_to_temp_variable = { tax_decreased = 1 }
-	meta_effect = {
-		text = {
-			remove_ideas = tax_cost_[TAX_RATE_VAR_DECR]
-		}
-		TAX_RATE_VAR_DECR = "[?tax_decreased|0]"
-	}
-	meta_effect = {
-		text = {
-			add_ideas = tax_cost_[TAX_RATE_VAR]
-		}
-		TAX_RATE_VAR = "[?tax_rate|0]"
-	}
-}
 
+# calculate_tax_gain
+# Calculates the amount of taxes earned based of ROOT's corporate taxes and population taxes
 calculate_tax_gain = {
 	set_variable = { tax_gain = 0 }
 	#Update starting tax rate
@@ -515,11 +494,11 @@ calculate_interest_rate = {
 	divide_variable = { debt_rate = 100 }
 	divide_variable = { debt_rate = 52 }	#Weekly interest rate, 52 weeks in a year
 	multiply_variable = { debt_rate = interest_rate }	#Yearly interest rate
-	
+
 	#If interest rate is really high, add additional modifier
 	if = {
 		limit = {
-			check_variable = { interest_rate > 14.999 }	
+			check_variable = { interest_rate > 14.999 }
 		}
 		if = {
 			limit = {
@@ -564,7 +543,7 @@ calculate_interest_rate = {
 		if = {
 			limit = { has_government = nationalist }
 			add_to_variable = { nationalist_drift_very_high_interest_modifier = outlook_drift }
-		}		
+		}
 		force_update_dynamic_modifier = yes
 	}
 	if = {
@@ -1089,22 +1068,22 @@ update_military_rate = {
 	if = {
 		limit = { original_tag = BOT }
 		if = {
-			limit = { 
+			limit = {
 				OR = {
 					has_idea = BOT_house_of_chiefs_militarised
 					has_idea = BOT_house_of_chiefs_empowered_and_militarised
-				}	
+				}
 			}
 			add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
 		}
 		if = {
-			limit = { has_idea = BOT_army_against_poaching }	
+			limit = { has_idea = BOT_army_against_poaching }
 			subtract_from_temp_variable = { personnel_cost_multiplier = 0.10 }
 		}
-		if = {
-			limit = { has_idea = BOT_professional_military }	
-			add_to_temp_variable = { personnel_cost_multiplier = 0.10 }
-		}
+		# if = { -- Removed and replaced w/ something with their officer corp
+		# 	limit = { has_idea = BOT_professional_military }
+		# 	add_to_temp_variable = { personnel_cost_multiplier = 0.10 }
+		# }
 	}
 
 	#Modify personnel cost with total wage modifier
@@ -1257,16 +1236,16 @@ update_bureaucracy_rate = {
 	if = {
 		limit = { original_tag = BOT }
 		if = {
-			limit = { 
+			limit = {
 				OR = {
 					has_idea = BOT_house_of_chiefs
 					has_idea = BOT_house_of_chiefs_militarised
-				}	
+				}
 			}
 			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.05 }
 		}
 		if = {
-			limit = { 
+			limit = {
 				OR = {
 					has_idea = BOT_house_of_chiefs_empowered
 					has_idea = BOT_house_of_chiefs_empowered_and_militarised
@@ -1275,7 +1254,7 @@ update_bureaucracy_rate = {
 			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.10 }
 		}
 	}
-			
+
 
 	for_each_loop = {
 		array = array_bureaucracy_spend
@@ -1593,11 +1572,11 @@ update_education_rate = {
 		limit = { original_tag = BOT }
 		if = {
 			limit = { has_idea = BOT_extra_school_funding }
-			add_to_temp_variable = { education_cost_multiplier = 0.05 }			
+			add_to_temp_variable = { education_cost_multiplier = 0.05 }
 		}
 		if = {
 			limit = { has_idea = BOT_school_fees }
-			subtract_from_temp_variable = { education_cost_multiplier = 0.10 }			
+			subtract_from_temp_variable = { education_cost_multiplier = 0.10 }
 		}
 	}
 
@@ -1685,7 +1664,7 @@ update_health_rate = {
 	if = {
 		limit = { has_idea = rising_level_of_aids }
 		add_to_temp_variable = { health_cost_multiplier = 0.10 }
-	}	
+	}
 	if = {
 		limit = { has_idea = high_level_of_aids }
 		add_to_temp_variable = { health_cost_multiplier = 0.15 }
@@ -1697,7 +1676,7 @@ update_health_rate = {
 	if = {
 		limit = { has_idea = critical_level_of_aids }
 		add_to_temp_variable = { health_cost_multiplier = 0.25 }
-	}	
+	}
 	##USA
 	if = {
 		limit = { original_tag = USA }
