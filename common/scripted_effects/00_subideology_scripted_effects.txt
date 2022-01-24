@@ -1617,38 +1617,23 @@ update_party_name = {
 	}
 }
 
-gov_pop_idea_add = {
+gov_pop_calculation = {
+	if = { limit = { NOT = { has_dynamic_modifier = government_popularity_modifier } }
+		add_dynamic_modifier = { modifier = government_popularity_modifier }
+	}
 	set_temp_variable = { add_t = government_coalition_differential }
 	multiply_temp_variable = { add_t = 100 }
-	if = {
-		limit = {
-			check_variable = { add_t > 100 }
-		}
-		set_temp_variable = { add_t = 100 }
-	}
-	meta_effect = {
-		text = {
-			add_ideas = gov_pop_[POP_DIFF_ADD]
-		}
-		POP_DIFF_ADD = "[?add_t|0]"
-	}
-}
+	clamp_variable = { var = add_t max = 100 min = -100 }
 
-gov_pop_idea_remove = {
-	set_temp_variable = { remove_t = government_coalition_differential }
-	multiply_temp_variable = { remove_t = 100 }
-	if = {
-		limit = {
-			check_variable = { remove_t > 100 }
-		}
-		set_temp_variable = { remove_t = 100 }
-	}
-	meta_effect = {
-		text = {
-			remove_ideas = gov_pop_[POP_DIFF_REMOVE]
-		}
-		POP_DIFF_REMOVE = "[?remove_t|0]"
-	}
+	subtract_from_temp_variable = { add_t = 0 }
+
+	set_variable = { gov_pop_stability_factor = add_t }
+	set_variable = { gov_pop_political_power_factor = add_t }
+
+	multiply_variable = { gov_pop_stability_factor = 0.005 }
+	multiply_variable = { gov_pop_political_power_factor = 0.005 }
+
+	force_update_dynamic_modifier = yes
 }
 
 set_coalition_drift = {
@@ -1692,7 +1677,6 @@ update_government_coalition_strength = {
 		limit = { is_debug = yes }
 		log = "[This.GetName] update_government_coalition_strength"
 	}
-	hidden_effect = { gov_pop_idea_remove = yes }
 	set_temp_variable = { sum = 0 }
 	for_each_loop = {
 		array = gov_coalition_array
@@ -1731,7 +1715,7 @@ update_government_coalition_strength = {
 	#find the differentials
 	set_variable = { government_coalition_differential = government_coalition_strength }
 	subtract_from_variable = { government_coalition_differential = government_coalition_strength_elect }
-	hidden_effect = { gov_pop_idea_add = yes }
+	gov_pop_calculation = yes
 	set_coalition_drift = yes
 }
 
@@ -1951,234 +1935,57 @@ update_majority_threshold = {
 		divide_variable = { majority_threshold = 2 }
 }
 
-
 campaign_spending_initial = {
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 3
-				}
-			}
-		}
-		set_temp_variable = { set_variable = 0.6 }
+	if = { limit = { check_variable = { campaign_funding_count < 3 } }
+		set_variable = { ads_budget_effect = 0.6 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 2
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 4
-				}
-			}
-		}
-		set_temp_variable = { set_variable = 0.68 }
+	else_if = { limit = { check_variable = { campaign_funding_count = 3 } }
+		set_variable = { ads_budget_effect = 0.68 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 3
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
-			}
-		}
-		set_temp_variable = { set_variable = 0.76 }
+	else_if = { limit = { check_variable = { campaign_funding_count = 4 } }
+		set_variable = { ads_budget_effect = 0.76 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 4
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 6
-				}
-			}
-		}
-		set_temp_variable = { set_variable = 0.8 }
+	else_if = { limit = { check_variable = { campaign_funding_count = 5 } }
+		set_variable = { ads_budget_effect = 0.80 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 5
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 7
-				}
-			}
-		}
-		set_temp_variable = { set_variable = 0.84 }
+	else_if = { limit = { check_variable = { campaign_funding_count = 6 } }
+		set_variable = { ads_budget_effect = 0.84 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 6
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 8
-				}
-			}
-		}
-		set_temp_variable = { set_variable = 0.88 }
+	else_if = { limit = { check_variable = { campaign_funding_count = 7 } }
+		set_variable = { ads_budget_effect = 0.88 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 7
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 9
-				}
-			}
-		}
-		set_temp_variable = { set_variable = 0.92 }
+	else_if = { limit = { check_variable = { campaign_funding_count = 8 } }
+		set_variable = { ads_budget_effect = 0.92 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 8
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 10
-				}
-			}
-		}
-		set_temp_variable = { set_variable = 0.96 }
+	else_if = { limit = { check_variable = { campaign_funding_count = 9 } }
+		set_variable = { ads_budget_effect = 0.96 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 9
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 11
-				}
-			}
-		}
+	else_if = { limit = { check_variable = { campaign_funding_count = 10 } }
 		random_list = {
-					50 = {
-						set_temp_variable = { set_variable = 0.96 }
-					}
-					50 = {
-						set_temp_variable = { set_variable = 1.04 }
-					}
-		}
-	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 10
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 12
-				}
+			50 = {
+				set_variable = { ads_budget_effect = 0.96 }
+			}
+			50 = {
+				set_variable = { ads_budget_effect = 1.04 }
 			}
 		}
+	}
+	else_if = { limit = { check_variable = { campaign_funding_count = 11 } }
 		set_variable = { ads_budget_effect = 1.04 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 11
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 13
-				}
-			}
-		}
+	else_if = { limit = { check_variable = { campaign_funding_count = 12 } }
 		set_variable = { ads_budget_effect = 1.08 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 12
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 14
-				}
-			}
-		}
+	else_if = { limit = { check_variable = { campaign_funding_count = 13 } }
 		set_variable = { ads_budget_effect = 1.12 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 13
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 15
-				}
-			}
-		}
+	else_if = { limit = { check_variable = { campaign_funding_count = 14 } }
 		set_variable = { ads_budget_effect = 1.16 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 14
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 16
-				}
-			}
-		}
+	else_if = { limit = { check_variable = { campaign_funding_count = 15 } }
 		set_variable = { ads_budget_effect = 1.2 }
 	}
-	if = {
-		limit = {
-			and = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 15
-				}
-			}
-		}
+	else_if = { limit = { check_variable = { campaign_funding_count > 15 } }
 		set_variable = { ads_budget_effect = 1.24 }
 	}
 }
@@ -2390,10 +2197,8 @@ make_affinity_arrays = {
 		if = {
 			limit = {
 				NOT = {
-					OR = {
-						check_variable = { max_index_1 = v }
-						check_variable = { max_index_2 = v }
-					}
+					check_variable = { max_index_1 = v }
+					check_variable = { max_index_2 = v }
 				}
 			}
 			if = {
