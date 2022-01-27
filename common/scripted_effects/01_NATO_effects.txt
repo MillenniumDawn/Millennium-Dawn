@@ -31,6 +31,37 @@ NATO_join = {
 	hidden_effect = { news_event = { id = NATO.8 hours = 6 } }
 }
 
+
+NATO_join2 = {
+	for_each_scope_loop = {
+		array = global.nato_members
+
+		# Mutual opinion boost.
+		add_opinion_modifier = { target = PREV modifier = NATO_member_modifier }
+		reverse_add_opinion_modifier = { target = PREV modifier = NATO_member_modifier }
+
+		# Add military access.
+		diplomatic_relation = {
+			country = PREV
+			relation = military_access
+			active = yes
+		}
+		PREV = {
+			diplomatic_relation = {
+				country = PREV
+				relation = military_access
+				active = yes
+			}
+		}
+	}
+
+	add_to_array = { global.nato_members = THIS }
+	add_ideas = { NATO_member }
+	add_to_tech_sharing_group = NATO_Tech_Share
+
+	custom_effect_tooltip = NATO_join_tt
+}
+
 NATO_leave = {
 	remove_from_array = { global.nato_members = THIS }
 	remove_ideas = NATO_member
@@ -64,6 +95,39 @@ NATO_leave = {
 	custom_effect_tooltip = NATO_leave_tt
 
 	hidden_effect = { news_event = { id = NATO.6 hours = 6 } }
+}
+
+NATO_leave2 = {
+	remove_from_array = { global.nato_members = THIS }
+	remove_ideas = NATO_member
+	remove_from_tech_sharing_group = NATO_Tech_Share
+
+	for_each_scope_loop = {
+		array = global.nato_members
+
+		# Nato members are mad you left.
+		add_opinion_modifier = { target = PREV modifier = left_nato }
+
+		# Remove nato opinion boost.
+		remove_opinion_modifier = { target = PREV modifier = NATO_member_modifier }
+		PREV = { remove_opinion_modifier = { target = PREV modifier = NATO_member_modifier } }
+
+		# Remove military access.
+		diplomatic_relation = {
+			country = PREV
+			relation = military_access
+			active = no
+		}
+		PREV = {
+			diplomatic_relation = {
+				country = PREV
+				relation = military_access
+				active = no
+			}
+		}
+	}
+
+	custom_effect_tooltip = NATO_leave_tt
 }
 
 NATO_show_non_ratified_countries = {
