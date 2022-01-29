@@ -6624,7 +6624,7 @@ focus = {
 		x = 14
 		y = 1
 		relative_position_id = POL_change_of_path
-		cost = 10
+		cost = 5
 
 		prerequisite = { focus = POL_change_of_path }
 		mutually_exclusive = { focus = POL_reinstate_crown }
@@ -6638,7 +6638,10 @@ focus = {
 
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus POL_falanga"
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.1
+			}
 		}
 
 		ai_will_do = {
@@ -6717,6 +6720,7 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: POL_manifest_nacii"
+			custom_effect_tooltip = POL_increase_nationalist_support_TT
 			add_war_support = 0.05
 			add_stability = -0.05
 			add_to_variable = { party_pop_array^20 = 0.05 }
@@ -6745,6 +6749,7 @@ focus = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: POL_connect_to_conservative_politicians"
 
+			custom_effect_tooltip = POL_increase_nationalist_support_TT
 			set_temp_variable = { current_cons_popularity = party_pop_array^1 }
 			multiply_temp_variable = { current_cons_popularity = 0.5 }
 			# Remove most of support, retrack it to fascists party
@@ -6774,7 +6779,7 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: POL_reorganize_nationalists_squads"
-
+			custom_effect_tooltip = POL_nationalist_spending_TT
 			add_to_variable = { nationalist_debt = -3.0 }
 			add_timed_idea = {
 				idea = POL_nationalists_squads
@@ -6833,6 +6838,8 @@ focus = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: POL_increase_media_exposure"
 
+			custom_effect_tooltip = POL_increase_nationalist_support_TT
+			custom_effect_tooltip = POL_nationalist_spending_TT
 			add_to_variable = { nationalist_debt = -5.0 }
 
 			add_to_variable = { party_pop_array^20 = 0.1 }
@@ -6861,6 +6868,7 @@ focus = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: POL_gather_guns"
 
+			custom_effect_tooltip = POL_nationalist_spending_TT
 			random_list = {
 				20 = {
 					add_equipment_to_stockpile = {
@@ -6913,6 +6921,7 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: POL_train_nationalist_troops"
+			custom_effect_tooltip = POL_nationalist_spending_TT
 			army_experience = 30
 			add_to_variable = { nationalist_debt = -3.0 }
 		}
@@ -6938,6 +6947,7 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: POL_train_nationalist_troops"
+			custom_effect_tooltip = POL_nationalist_spending_TT
 			add_stability = 0.05
 			add_to_variable = { party_pop_array^20 = 0.05 }
 			recalculate_party = yes
@@ -6965,7 +6975,9 @@ focus = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
+			#TODO add descr
 			log = "[GetDateText]: [Root.GetName]: POL_train_nationalist_troops"
+			custom_effect_tooltip = POL_increase_nationalist_support_TT
 			add_stability = -0.05
 			set_temp_variable = { current_soc_popularity = party_pop_array^3 }
 			multiply_temp_variable = { current_soc_popularity = 0.25 }
@@ -6996,6 +7008,7 @@ focus = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
+			custom_effect_tooltip = POL_day_of_phalanga_TT
 			if = {
 				limit = { NOT = { is_in_array = { ruling_party = 20 } } }
 				hidden_effect = {
@@ -7086,10 +7099,11 @@ focus = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
+			custom_effect_tooltip = POL_Phalanga_leave_EU_TT
 			if = {
 				limit = { has_idea = EU_member }
 
-				remove_idea = EU_member
+				remove_ideas = EU_member
 			}
 		}
 
@@ -7144,6 +7158,7 @@ focus = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
+			custom_effect_tooltip = POL_local_cooperation_TT
 			every_neighbor_country = {
 				if = {
 					limit = {
@@ -7189,7 +7204,14 @@ focus = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			set_country_flag = POL_nationalist_influence
+			add_opinion_modifier = {
+				target = SOV
+				modifier = POL_nationalist_reached_Russia
+			}
+			reverse_add_opinion_modifier = {
+				target = SOV
+				modifier = POL_nationalist_reached_Russia
+			}
 		}
 
 		ai_will_do = {
@@ -7252,6 +7274,7 @@ focus = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
+			custom_effect_tooltip = POL_fund_movements_TT
 			set_country_flag = POL_nationalist_influence
 		}
 
@@ -7309,8 +7332,6 @@ focus = {
 			set_country_flag = POL_enabled_justification
 			set_country_flag = Eastern_europe_pact_flag
 			create_faction = Eastern_europe_pact
-			add_to_array = { global.poland_nationalist_faction = THIS }
-			set_variable = { global.poland_nationalist_faction_members_count = 1 }
 		}
 
 		ai_will_do = {
@@ -7333,6 +7354,40 @@ focus = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
+			custom_effect_tooltip = POL_ally_industry_TT
+			set_temp_variable = { base_change = -7 }
+			multiply_temp_variable = { base_change = num_faction_members }
+
+			set_temp_variable = {
+				treasury_change = base_change
+			}
+			modify_treasury_effect = yes
+
+			every_other_country = {
+				limit = {
+					is_in_faction_with = POL
+				}
+
+				generic_grant_5_percent_influence_of_ROOT = yes
+				random_owned_controlled_state = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+
+				random_owned_controlled_state = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+
+				set_temp_variable = { treasury_change = -7 }
+				modify_treasury_effect = yes
+			}
 		}
 
 		ai_will_do = {
@@ -7359,6 +7414,7 @@ focus = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
+			custom_effect_tooltip = POL_ally_industry_TT
 			set_temp_variable = { base_change = -7.5 }
 			multiply_temp_variable = { base_change = num_faction_members }
 
@@ -7439,26 +7495,26 @@ focus = {
 		completion_reward = {
 			if = {
 				limit = { num_faction_members < 4 }
-				add_idea = { POL_nationalist_research_small }
+				add_ideas = { POL_nationalist_research_small }
 
 				every_other_country = {
 					limit = { is_in_faction_with = POL }
-					add_idea = { POL_nationalist_research_small }
+					add_ideas = { POL_nationalist_research_small }
 				}
 			}
 			else_if = {
 				limit = { num_faction_members < 6 }
-				add_idea = { POL_nationalist_research_medium }
+				add_ideas = { POL_nationalist_research_medium }
 				every_other_country = {
 					limit = { is_in_faction_with = POL }
-					add_idea = { POL_nationalist_research_medium }
+					add_ideas = { POL_nationalist_research_medium }
 				}
 			}
 			else = {
-				add_idea = { POL_nationalist_research_large }
+				add_ideas = { POL_nationalist_research_large }
 				every_other_country = {
 					limit = { is_in_faction_with = POL }
-					add_idea = { POL_nationalist_research_large }
+					add_ideas = { POL_nationalist_research_large }
 				}
 			}
 		}
@@ -7507,7 +7563,7 @@ focus = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			add_idea = POL_mass_nationalization_idea
+			add_ideas = POL_mass_nationalization_idea
 			random_owned_controlled_state = {
 				if = {
 					limit = {
@@ -7569,7 +7625,7 @@ focus = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			add_idea = POL_limited_nationalization_idea
+			add_ideas = POL_limited_nationalization_idea
 			random_owned_controlled_state = {
 				if = {
 					limit = {
