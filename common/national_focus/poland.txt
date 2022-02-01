@@ -107,7 +107,7 @@ focus_tree = {
 		prerequisite = { focus = POL_change_of_path }
 		mutually_exclusive = { focus = POL_falanga }
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		cancel_if_invalid = yes
 		continue_if_invalid = no
@@ -115,6 +115,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POL_red_dream"
+			add_popularity = {
+				ideology = communism
+				popularity = 0.1
+			}
 		}
 
 		ai_will_do = {
@@ -133,14 +137,17 @@ focus_tree = {
 
 		prerequisite = { focus = POL_red_dream }
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
+			log = "[GetDateText]: [Root.GetName]: Focus POL_red_front"
+			add_to_variable = { party_pop_array^4 = 0.1 }
+			add_to_variable = { party_pop_array^5 = 0.1 }
+			recalculate_party = yes
 		}
 
 		ai_will_do = {
@@ -158,14 +165,16 @@ focus_tree = {
 
 		prerequisite = { focus = POL_red_front }
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
 
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
+			log = "[GetDateText]: [Root.GetName]: Focus POL_militias"
+			add_stability = -0.1
+			add_war_support = 0.05
 		}
 
 		ai_will_do = {
@@ -175,7 +184,7 @@ focus_tree = {
 
 	focus = {
 		id = POL_weapon_smugling
-		icon = rearmament
+		icon = union_negotiations
 		x = 1
 		y = 2
 		relative_position_id = POL_red_dream
@@ -183,14 +192,18 @@ focus_tree = {
 
 		prerequisite = { focus = POL_red_front }
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
+			add_to_variable = { party_pop_array^4 = 0.05 }
+			add_to_variable = { party_pop_array^5 = 0.05 }
+			recalculate_party = yes
+
+			decrease_labour_unions_opinion = yes
 		}
 
 		ai_will_do = {
@@ -208,14 +221,17 @@ focus_tree = {
 
 		prerequisite = { focus = POL_militias focus = POL_weapon_smugling }
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
+			add_timed_idea = {
+				idea = POL_communist_strike
+				days = 300
+			}
 		}
 
 		ai_will_do = {
@@ -224,847 +240,1143 @@ focus_tree = {
 	}
 
 	focus = {
-		id = POL_radical_reforms
-		icon = forceful_treaty
-		x = -1
-		y = 4
-		relative_position_id = POL_red_dream
-		cost = 10
+		id = POL_new_communism
+		icon = communism2
+		x = 0
+		y = 1
+		relative_position_id = POL_the_war_ends
+		cost = 20
 
 		prerequisite = { focus = POL_the_war_ends }
-		mutually_exclusive = { focus = POL_moderate_reforms }
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
-		}
-
-		ai_will_do = {
-			factor = 4
+			country_event = poland.12
 		}
 	}
 
 	focus = {
-		id = POL_moderate_reforms
-		icon = treaty
-		x = 1
-		y = 4
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_the_war_ends }
-		mutually_exclusive = { focus = POL_radical_reforms }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_abaddon_tripartite_system
-		icon = scrap_sejm
+		id = POL_settle_things_down
+		icon = legislation
 		x = 0
-		y = 5
-		relative_position_id = POL_red_dream
+		y = 1
+		relative_position_id = POL_new_communism
 		cost = 10
 
-		prerequisite = { focus = POL_radical_reforms focus = POL_moderate_reforms }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
+		prerequisite = { focus = POL_new_communism }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
-		}
+			add_political_power = -50
+			add_stability = 0.03
 
-		ai_will_do = {
-			factor = 4
+			if = {
+				limit = { has_idea = POL_communist_strike }
+
+				remove_ideas = { POL_communist_strike }
+			}
 		}
 	}
 
 	focus = {
-		id = POL_pgr
-		icon = POL_pgr
+		id = POL_ZKP
+		icon = communism
 		x = -1
-		y = 6
-		relative_position_id = POL_red_dream
-		cost = 10
+		y = 1
+		relative_position_id = POL_settle_things_down
+		cost = 1
 
-		prerequisite = { focus = POL_abaddon_tripartite_system }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
+		available = {
+			emerging_communist_state_are_in_power = yes
 		}
 
-		ai_will_do = {
-			factor = 4
+		prerequisite = { focus = POL_settle_things_down }
+	}
+
+	focus = {
+		id = POL_start_detransition
+		icon = anti_establishment
+		x = -1
+		y = 1
+		relative_position_id = POL_ZKP
+		cost = 10
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+
+		prerequisite = { focus = POL_ZKP }
+
+		completion_reward = {
+			add_political_power = 50
+			add_stability = -0.05
+
+			decrease_international_bankers_opinion = yes
 		}
 	}
 
 	focus = {
-		id = POL_armia_ludowa
-		icon = Communal_Militias
+		id = POL_communist_mass_nationalisation
+		icon = central_planned_economy3
+		x = -1
+		y = 1
+		relative_position_id = POL_start_detransition
+		cost = 10
+
+		mutually_exclusive = { focus = POL_communist_limited_nationalisation }
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+
+		prerequisite = { focus = POL_start_detransition }
+
+		completion_reward = {
+			random_owned_controlled_state = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = industrial_complex
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+
+			random_owned_controlled_state = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+
+			set_temp_variable = { treasury_change = -22.5 }
+			modify_treasury_effect = yes
+
+			decrease_international_bankers_opinion = yes
+			add_stability = -0.05
+		}
+	}
+
+	focus = {
+		id = POL_communist_limited_nationalisation
+		icon = central_planned_economy
 		x = 1
-		y = 6
-		relative_position_id = POL_red_dream
+		y = 1
+		relative_position_id = POL_start_detransition
 		cost = 10
 
-		prerequisite = { focus = POL_abaddon_tripartite_system }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
+		mutually_exclusive = { focus = POL_communist_mass_nationalisation }
+		available = {
+			emerging_communist_state_are_in_power = yes
 		}
 
-		ai_will_do = {
-			factor = 4
+		prerequisite = { focus = POL_start_detransition }
+
+		completion_reward = {
+			add_political_power = -50
+			decrease_international_bankers_opinion = yes
+			random_owned_controlled_state = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+
+			random_owned_controlled_state = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 		}
 	}
 
 	focus = {
-		id = POL_close_the_country
-		icon = anti_immigration1
-		x = -3
-		y = 5
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_radical_reforms }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_purge_the_enemies
-		icon = backstab
-		x = -3
-		y = 6
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_close_the_country }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_limit_emigation_policy
-		icon = pro_immigration1
-		x = 3
-		y = 5
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_moderate_reforms }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_put_enemies_in_jail
-		icon = become_puppet
-		x = 3
-		y = 6
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_limit_emigation_policy }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_collectivization
-		icon = centralization
+		id = POL_comm_infrastructure_development
+		icon = infrastructure1
 		x = 0
-		y = 7
-		relative_position_id = POL_red_dream
+		y = 1
+		relative_position_id = POL_communist_mass_nationalisation
 		cost = 10
 
-		prerequisite = { focus = POL_armia_ludowa focus = POL_pgr }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
 		cancel_if_invalid = yes
-		continue_if_invalid = no
 		available_if_capitulated = no
 
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
 
+		prerequisite = {
+			focus = POL_communist_mass_nationalisation
+			focus = POL_communist_limited_nationalisation
+		}
+		mutually_exclusive = { focus = POL_comm_naval_development }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+
+			set_temp_variable = { treasury_change = -21 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
-			factor = 4
+			factor = 10
 		}
 	}
 
 	focus = {
-		id = POL_militarize_industry
-		icon = industry_military
-		x = -4
-		y = 7
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_pgr }
-		mutually_exclusive = { focus = POL_expand_civilian_industry }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_expand_civilian_industry
-		icon = industry_civilian
-		x = -2
-		y = 7
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_pgr }
-		mutually_exclusive = { focus = POL_militarize_industry }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_free_housing
-		icon = anarchist_economy
-		x = -3
-		y = 8
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_militarize_industry focus = POL_expand_civilian_industry }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus "
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_mandatory_service_for_man
-		icon = military_mission
-		x = 2
-		y = 7
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_armia_ludowa }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_mandatory_service_for_all
-		icon = little_entente
-		x = 4
-		y = 7
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_armia_ludowa }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_military_investments
-		icon = factory_complex
-		x = 3
-		y = 8
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_mandatory_service_for_all focus = POL_mandatory_service_for_man }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_xenophobia
-		icon = anti_immigration3
-		x = 1
-		y = 8
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_collectivization }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_xenophilia
-		icon = improve_relations
-		x = -1
-		y = 8
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_collectivization }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_drift_towards_russia
-		icon = align_to_russia
-		x = -1
-		y = 9
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_xenophilia }
-		mutually_exclusive = { focus = POL_best_country_on_earth }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_best_country_on_earth
-		icon = POL_first
-		x = 1
-		y = 9
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_xenophobia }
-		mutually_exclusive = { focus = POL_drift_towards_russia }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_unite_all_slavs
-		icon = wip
-		x = 2
-		y = 10
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_best_country_on_earth }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_baltic_friends
-		icon = align_to_baltic_states
-		x = 1
-		y = 11
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_unite_all_slavs }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_ukraine
-		icon = align_to_ukraine
-		x = 3
-		y = 11
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_unite_all_slavs }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_help_the_soviets
-		icon = align_to_soviet_union2
-		x = 2
-		y = 12
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_ukraine }
-		prerequisite = { focus = POL_baltic_friends }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_soviet_slavic_federation
-		icon = wip
-		x = 1
-		y = 13
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_help_the_soviets }
-		mutually_exclusive = { focus = POL_united_soviet_slavia }
-
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_united_soviet_slavia
-		icon = wip
-		x = 3
-		y = 13
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_help_the_soviets }
-		mutually_exclusive = { focus = POL_soviet_slavic_federation }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_strike_the_west
-		icon = wip
+		id = POL_comm_naval_development
+		icon = naval_industry
 		x = 0
-		y = 14
-		relative_position_id = POL_red_dream
+		y = 1
+		relative_position_id = POL_communist_limited_nationalisation
 		cost = 10
 
-		prerequisite = { focus = POL_united_soviet_slavia focus = POL_soviet_slavic_federation focus = POL_reestablish_warsaw_packt }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
 		cancel_if_invalid = yes
-		continue_if_invalid = no
 		available_if_capitulated = no
 
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
 
+		prerequisite = {
+			focus = POL_communist_mass_nationalisation
+			focus = POL_communist_limited_nationalisation
+		}
+		mutually_exclusive = { focus = POL_comm_infrastructure_development }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
+			random_owned_state = {
+				limit = {
+					is_coastal = yes
+					free_building_slots = {
+						building = dockyard
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
 
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
-			factor = 4
+			factor = 10
 		}
 	}
 
-	focus = {
-		id = POL_spread_communism
-		icon = labor_unions
-		x = -2
-		y = 10
-		relative_position_id = POL_red_dream
-		cost = 10
+	# focus = {
+	# 	id = POL_radical_reforms
+	# 	icon = forceful_treaty
+	# 	x = -1
+	# 	y = 4
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
 
-		prerequisite = { focus = POL_drift_towards_russia }
+	# 	mutually_exclusive = { focus = POL_moderate_reforms }
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_install_communism_in_belarus
-		icon = war_against_russia2
-		x = -3
-		y = 11
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_spread_communism }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
 
 
-		completion_reward = {
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
 
-		}
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
 
-		ai_will_do = {
-			factor = 4
-		}
-	}
+	# focus = {
+	# 	id = POL_moderate_reforms
+	# 	icon = treaty
+	# 	x = 1
+	# 	y = 4
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
 
-	focus = {
-		id = POL_install_communism_in_ukraine
-		icon = attack_ukraine
-		x = -1
-		y = 11
-		relative_position_id = POL_red_dream
-		cost = 10
+	# 	mutually_exclusive = { focus = POL_radical_reforms }
 
-		prerequisite = { focus = POL_spread_communism }
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
-
-
-		completion_reward = {
-
-		}
-
-		ai_will_do = {
-			factor = 4
-		}
-	}
-
-	focus = {
-		id = POL_restoration_of_ussr
-		icon = great_red_menace
-		x = -2
-		y = 12
-		relative_position_id = POL_red_dream
-		cost = 10
-
-		prerequisite = { focus = POL_install_communism_in_belarus }
-		prerequisite = { focus = POL_install_communism_in_ukraine }
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
 
 
-		completion_reward = {
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
 
-		}
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
 
-		ai_will_do = {
-			factor = 4
-		}
-	}
+	# focus = {
+	# 	id = POL_abaddon_tripartite_system
+	# 	icon = scrap_sejm
+	# 	x = 0
+	# 	y = 5
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
 
-	focus = {
-		id = POL_reestablish_warsaw_packt
-		icon = major_alliance3
-		x = -2
-		y = 13
-		relative_position_id = POL_red_dream
-		cost = 10
+	# 	prerequisite = { focus = POL_radical_reforms focus = POL_moderate_reforms }
 
-		prerequisite = { focus = POL_restoration_of_ussr }
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = no
-		available_if_capitulated = no
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
 
 
-		completion_reward = {
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
 
-		}
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
 
-		ai_will_do = {
-			factor = 4
-		}
-	}
+	# focus = {
+	# 	id = POL_pgr
+	# 	icon = POL_pgr
+	# 	x = -1
+	# 	y = 6
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_abaddon_tripartite_system }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_armia_ludowa
+	# 	icon = Communal_Militias
+	# 	x = 1
+	# 	y = 6
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_abaddon_tripartite_system }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_close_the_country
+	# 	icon = anti_immigration1
+	# 	x = -3
+	# 	y = 5
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_radical_reforms }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_purge_the_enemies
+	# 	icon = backstab
+	# 	x = -3
+	# 	y = 6
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_close_the_country }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_limit_emigation_policy
+	# 	icon = pro_immigration1
+	# 	x = 3
+	# 	y = 5
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_moderate_reforms }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_put_enemies_in_jail
+	# 	icon = become_puppet
+	# 	x = 3
+	# 	y = 6
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_limit_emigation_policy }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_collectivization
+	# 	icon = centralization
+	# 	x = 0
+	# 	y = 7
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_armia_ludowa focus = POL_pgr }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_militarize_industry
+	# 	icon = industry_military
+	# 	x = -4
+	# 	y = 7
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_pgr }
+	# 	mutually_exclusive = { focus = POL_expand_civilian_industry }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_expand_civilian_industry
+	# 	icon = industry_civilian
+	# 	x = -2
+	# 	y = 7
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_pgr }
+	# 	mutually_exclusive = { focus = POL_militarize_industry }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_free_housing
+	# 	icon = anarchist_economy
+	# 	x = -3
+	# 	y = 8
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_militarize_industry focus = POL_expand_civilian_industry }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus "
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_mandatory_service_for_man
+	# 	icon = military_mission
+	# 	x = 2
+	# 	y = 7
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_armia_ludowa }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_mandatory_service_for_all
+	# 	icon = little_entente
+	# 	x = 4
+	# 	y = 7
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_armia_ludowa }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_military_investments
+	# 	icon = factory_complex
+	# 	x = 3
+	# 	y = 8
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_mandatory_service_for_all focus = POL_mandatory_service_for_man }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_xenophobia
+	# 	icon = anti_immigration3
+	# 	x = 1
+	# 	y = 8
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_collectivization }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_xenophilia
+	# 	icon = improve_relations
+	# 	x = -1
+	# 	y = 8
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_collectivization }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_drift_towards_russia
+	# 	icon = align_to_russia
+	# 	x = -1
+	# 	y = 9
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_xenophilia }
+	# 	mutually_exclusive = { focus = POL_best_country_on_earth }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_best_country_on_earth
+	# 	icon = POL_first
+	# 	x = 1
+	# 	y = 9
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_xenophobia }
+	# 	mutually_exclusive = { focus = POL_drift_towards_russia }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_unite_all_slavs
+	# 	icon = wip
+	# 	x = 2
+	# 	y = 10
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_best_country_on_earth }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_baltic_friends
+	# 	icon = align_to_baltic_states
+	# 	x = 1
+	# 	y = 11
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_unite_all_slavs }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_ukraine
+	# 	icon = align_to_ukraine
+	# 	x = 3
+	# 	y = 11
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_unite_all_slavs }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_help_the_soviets
+	# 	icon = align_to_soviet_union2
+	# 	x = 2
+	# 	y = 12
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_ukraine }
+	# 	prerequisite = { focus = POL_baltic_friends }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_soviet_slavic_federation
+	# 	icon = wip
+	# 	x = 1
+	# 	y = 13
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_help_the_soviets }
+	# 	mutually_exclusive = { focus = POL_united_soviet_slavia }
+
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_united_soviet_slavia
+	# 	icon = wip
+	# 	x = 3
+	# 	y = 13
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_help_the_soviets }
+	# 	mutually_exclusive = { focus = POL_soviet_slavic_federation }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_strike_the_west
+	# 	icon = wip
+	# 	x = 0
+	# 	y = 14
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_united_soviet_slavia focus = POL_soviet_slavic_federation focus = POL_reestablish_warsaw_packt }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_spread_communism
+	# 	icon = labor_unions
+	# 	x = -2
+	# 	y = 10
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_drift_towards_russia }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_install_communism_in_belarus
+	# 	icon = war_against_russia2
+	# 	x = -3
+	# 	y = 11
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_spread_communism }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_install_communism_in_ukraine
+	# 	icon = attack_ukraine
+	# 	x = -1
+	# 	y = 11
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_spread_communism }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_restoration_of_ussr
+	# 	icon = great_red_menace
+	# 	x = -2
+	# 	y = 12
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_install_communism_in_belarus }
+	# 	prerequisite = { focus = POL_install_communism_in_ukraine }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = POL_reestablish_warsaw_packt
+	# 	icon = major_alliance3
+	# 	x = -2
+	# 	y = 13
+	# 	relative_position_id = POL_red_dream
+	# 	cost = 10
+
+	# 	prerequisite = { focus = POL_restoration_of_ussr }
+
+	# 	search_filters = {FOCUS_FILTER_POLITICAL}
+
+	# 	cancel_if_invalid = yes
+	# 	continue_if_invalid = no
+	# 	available_if_capitulated = no
+
+
+	# 	completion_reward = {
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		factor = 4
+	# 	}
+	# }
 
 ############################################################### Roseru's Space: ###########################################################################################
 focus = {
@@ -6210,12 +6522,11 @@ focus = {
 		prerequisite = { focus = POL_change_of_path }
 		mutually_exclusive = { focus = POL_red_dream }
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		cancel_if_invalid = yes
 		continue_if_invalid = no
 		available_if_capitulated = no
-
 
 		completion_reward = {
 			add_popularity = {
