@@ -99,7 +99,7 @@ focus_tree = {
 	focus = {
 		id = POL_red_dream
 		icon = communism6
-		x = -8
+		x = -2
 		y = 1
 		relative_position_id = POL_change_of_path
 		cost = 10
@@ -279,9 +279,37 @@ focus_tree = {
 	}
 
 	focus = {
+		id = POL_red_down_peaceful
+		icon = communism9
+		x = -6
+		y = 0
+		relative_position_id = POL_settle_things_down
+		cost = 1
+
+		available = {
+			date > 2005.11.11
+			emerging_communist_state_are_in_power = yes
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			# communist manage to secure 2005+ elections
+			log = "[GetDateText]: [Root.GetName]: Focus POL_pravda_i_spravedlivost"
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
 		id = POL_ZKP
 		icon = communism
-		x = -1
+		x = -3
 		y = 1
 		relative_position_id = POL_settle_things_down
 		cost = 1
@@ -290,13 +318,16 @@ focus_tree = {
 			emerging_communist_state_are_in_power = yes
 		}
 
-		prerequisite = { focus = POL_settle_things_down }
+		prerequisite = {
+			focus = POL_settle_things_down
+			focus = POL_red_down_peaceful
+		}
 	}
 
 	focus = {
 		id = POL_start_detransition
 		icon = anti_establishment
-		x = -1
+		x = -5
 		y = 1
 		relative_position_id = POL_ZKP
 		cost = 10
@@ -813,7 +844,7 @@ focus_tree = {
 	focus = {
 		id = POL_comm_internal_affairs
 		icon = liberalization_policies
-		x = 4
+		x = 0
 		y = 1
 		relative_position_id = POL_ZKP
 		cost = 10
@@ -831,6 +862,38 @@ focus_tree = {
 		completion_reward = {
 			add_stability = 0.05
 			add_war_support = -0.05
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_comm_external_affairs
+		icon = examine_foreign_laws
+		x = 3
+		y = 1
+		relative_position_id = POL_ZKP
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_ZKP }
+		bypass = {
+			NOT = { has_idea = EU_member }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			# TODO rename tooltip
+			custom_effect_tooltip = POL_Phalanga_leave_EU_TT
+			if = {
+				limit = { has_idea = EU_member }
+
+				remove_ideas = EU_member
+			}
 		}
 
 		ai_will_do = {
@@ -958,36 +1021,6 @@ focus_tree = {
 	}
 
 	focus = {
-		id = POL_increase_internal_security
-		icon = black_market
-		x = 1
-		y = 1
-		relative_position_id = POL_increase_healthcare
-		cost = 10
-
-		cancel_if_invalid = yes
-		available_if_capitulated = no
-
-		available = {
-			emerging_communist_state_are_in_power = yes
-		}
-
-		prerequisite = { focus = POL_increase_healthcare }
-		mutually_exclusive = { focus = POL_increase_social_support }
-
-		bypass = { has_idea = police_05 }
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			increase_policing_budget = yes
-		}
-
-		ai_will_do = {
-			factor = 10
-		}
-	}
-
-	focus = {
 		id = POL_combat_far_right_movement
 		icon = anti_establishment2
 		x = -1
@@ -1046,6 +1079,292 @@ focus_tree = {
 			add_stability = -0.05
 			decrease_farmers_opinion = yes
 			add_ideas = { POL_comm_land_reform }
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_hold_communist_summit
+		icon = major_alliance
+		x = 2
+		y = 1
+		relative_position_id = POL_comm_internal_affairs
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+
+		prerequisite = { focus = POL_comm_internal_affairs }
+		prerequisite = { focus = POL_comm_external_affairs }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			every_other_country = {
+				limit = {
+					emerging_communist_state_are_in_power = yes
+				}
+
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = POL_communist_summit
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_connect_to_neighbours
+		icon = stability
+		x = 0
+		y = 1
+		relative_position_id = POL_hold_communist_summit
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+
+		prerequisite = { focus = POL_hold_communist_summit }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			every_neighbor_country = {
+				if = {
+					limit = {
+						emerging_communist_state_are_in_power = yes
+					}
+
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = POL_comm_connection_big
+					}
+				}
+				else = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = POL_comm_connection_small
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_comm_leave_eu
+		icon = generic_euroscepticism
+		x = 1
+		y = 1
+		relative_position_id = POL_comm_external_affairs
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_comm_external_affairs }
+		bypass = {
+			NOT = { has_idea = EU_member }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			# TODO rename tooltip
+			custom_effect_tooltip = POL_Phalanga_leave_EU_TT
+			if = {
+				limit = { has_idea = EU_member }
+
+				remove_ideas = EU_member
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_push_on_clergy
+		icon = anti_catholicism
+		x = 0
+		y = 1
+		relative_position_id = POL_connect_to_neighbours
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_communist_state_are_in_power = yes }
+
+		prerequisite = { focus = POL_connect_to_neighbours }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+		completion_reward = {
+			add_ideas = { POL_clergy_opressed }
+			decrease_The_Clergy_opinion = yes
+			add_stability = -0.1
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_comm_leave_nato
+		icon = nato3
+		x = 0
+		y = 1
+		relative_position_id = POL_comm_leave_eu
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_comm_leave_eu }
+		bypass = {
+			NOT = { has_idea = NATO_member }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			if = {
+				limit = { has_idea = NATO_member }
+
+				NATO_leave = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_reduce_extensive_military_funding
+		icon = crucial_contribution
+		x = 0
+		y = 1
+		relative_position_id = POL_comm_leave_nato
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_comm_leave_nato }
+		bypass = {
+			OR = {
+				has_idea = officer_military_school
+				has_idea = officer_advanced_training
+				has_idea = officer_basic_training
+				has_idea = officer_baptism_by_fire
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+		completion_reward = {
+			decrease_the_military_opinion = yes
+
+			if = {
+				limit = { has_idea = officer_international_education }
+
+				swap_ideas = {
+					remove_idea = officer_international_education
+					add_idea = officer_military_school
+				}
+			}
+			else_if = {
+				limit = { has_idea = officer_military_academy }
+
+				swap_ideas = {
+					remove_idea = officer_military_academy
+					add_idea = officer_military_school
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_armia_ludowa
+		icon = Communal_Militias
+		x = 1
+		y = 1
+		relative_position_id = POL_push_on_clergy
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_push_on_clergy }
+		prerequisite = { focus = POL_reduce_extensive_military_funding }
+
+		bypass = {
+			OR = {
+				has_idea = partial_draft_army
+				has_idea = draft_army
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+		completion_reward = {
+			increase_the_military_opinion = yes
+			swap_ideas = {
+				remove_idea = volunteer_army
+				add_idea = partial_draft_army
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_prepare_for_worst
+		icon = license_production
+		x = 0
+		y = 1
+		relative_position_id = POL_armia_ludowa
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = {
+			AND = {
+				emerging_communist_state_are_in_power = yes
+				threat > 0.5
+			}
+		}
+
+		prerequisite = { focus = POL_armia_ludowa }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_timed_idea = {
+				idea = POL_prepare_for_worst_idea
+				days = 1095
+			}
 		}
 
 		ai_will_do = {
@@ -1899,7 +2218,7 @@ focus = {
 		id = POL_polish_armed_forces
 		icon = POL_armed_forces
 
-		x = 105
+		x = 120
 		y = 0
 
 		cost = 5
@@ -7030,7 +7349,7 @@ focus = {
 	focus = {
 		id = POL_falanga
 		icon = POL_oboz
-		x = 8
+		x = 20
 		y = 1
 		relative_position_id = POL_change_of_path
 		cost = 5
