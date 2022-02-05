@@ -887,13 +887,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			# TODO rename tooltip
-			custom_effect_tooltip = POL_Phalanga_leave_EU_TT
-			if = {
-				limit = { has_idea = EU_member }
-
-				remove_ideas = EU_member
-			}
+			add_political_power = 100
 		}
 
 		ai_will_do = {
@@ -1178,7 +1172,11 @@ focus_tree = {
 		cancel_if_invalid = yes
 		available_if_capitulated = no
 
-		prerequisite = { focus = POL_comm_external_affairs }
+		prerequisite = {
+			focus = POL_comm_external_affairs
+			focus = POL_external_relations_revision
+		}
+
 		bypass = {
 			NOT = { has_idea = EU_member }
 		}
@@ -1365,6 +1363,382 @@ focus_tree = {
 				idea = POL_prepare_for_worst_idea
 				days = 1095
 			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_anarchy_peaceful
+		icon = communism9
+		x = 8
+		y = 0
+		relative_position_id = POL_settle_things_down
+		cost = 1
+
+		available = {
+			date > 2005.11.11
+			emerging_anarchist_communism_are_in_power = yes
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			# communist manage to secure 2005+ elections
+			log = "[GetDateText]: [Root.GetName]: Focus POL_pravda_i_spravedlivost"
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_PPS
+		icon = license_production
+		x = 5
+		y = 1
+		relative_position_id = POL_settle_things_down
+		cost = 1
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+
+		prerequisite = {
+			focus = POL_settle_things_down
+			focus = POL_anarchy_peaceful
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = { }
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_external_relations_revision
+		icon = communist_propaganda
+		x = -3
+		y = 1
+		relative_position_id = POL_PPS
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_PPS }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_timed_idea = {
+				idea = POL_external_relations_revision_idea
+				days = 180
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_influence_neighbours
+		icon = revolutionary_government
+		x = 1
+		y = 1
+		relative_position_id = POL_external_relations_revision
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_external_relations_revision }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			every_neighbor_country = {
+				generic_grant_2_percent_influence_of_ROOT = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_close_the_market
+		icon = market_socialism
+		x = 0
+		y = 1
+		relative_position_id = POL_influence_neighbours
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_influence_neighbours }
+
+		bypass = {
+			OR = {
+				has_idea = consumption_economy
+				has_idea = md_closed_economy
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			if = {
+				limit = { has_idea = semi_consumption_economy }
+
+				swap_ideas = {
+					remove_idea = semi_consumption_economy
+					add_idea = consumption_economy
+				}
+			}
+			else_if = {
+				limit = { has_idea = mixed_economy }
+
+				swap_ideas = {
+					remove_idea = mixed_economy
+					add_idea = consumption_economy
+				}
+			}
+			else_if = {
+				limit = { has_idea = export_economy }
+
+				swap_ideas = {
+					remove_idea = export_economy
+					add_idea = consumption_economy
+				}
+			}
+			else_if = {
+				limit = { has_idea = globalized_trade_economy }
+
+				swap_ideas = {
+					remove_idea = globalized_trade_economy
+					add_idea = consumption_economy
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_leave_capitalist_deals
+		icon = anti_democracy2
+		x = 0
+		y = 1
+		relative_position_id = POL_close_the_market
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_close_the_market }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_political_power = -50
+			set_temp_variable = { treasury_change = 10.0 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_social_matters
+		icon = house
+		x = 0
+		y = 1
+		relative_position_id = POL_PPS
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_PPS }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_stability = 0.03
+			add_political_power = 50
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_rework_unions
+		icon = liberalized_socialism
+		x = 0
+		y = 1
+		relative_position_id = POL_social_matters
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_social_matters }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_political_power = -100
+			increase_labour_unions_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_leftist_propaganda
+		icon = hammer_star
+		x = 0
+		y = 1
+		relative_position_id = POL_rework_unions
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_rework_unions }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			set_temp_variable = { treasury_change = -5.0 }
+			modify_treasury_effect = yes
+
+			add_timed_idea = {
+				idea = POL_leftist_propaganda_idea
+				days = 1095
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_women_power
+		icon = women_in_the_economy
+		x = 0
+		y = 1
+		relative_position_id = POL_leftist_propaganda
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_leftist_propaganda }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_ideas = { POL_women_economy }
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_decrease_centralization
+		icon = anarchist_economy
+		x = 0
+		y = 1
+		relative_position_id = POL_women_power
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_women_power }
+
+		bypass = { has_idea = bureau_01 }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			decrease_centralization = yes
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_anarchy_healthcare
+		icon = generic_healthcare
+		x = 0
+		y = 1
+		relative_position_id = POL_decrease_centralization
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_decrease_centralization }
+
+		bypass = { has_idea = health_06 }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			increase_healthcare_budget = yes
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_women_in_the_army
+		icon = military_women
+		x = 0
+		y = 1
+		relative_position_id = POL_leave_capitalist_deals
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_women_power }
+		prerequisite = { focus = POL_reduce_extensive_military_funding }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			country_event = poland.13
 		}
 
 		ai_will_do = {
