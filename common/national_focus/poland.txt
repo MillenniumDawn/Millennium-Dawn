@@ -1746,6 +1746,557 @@ focus_tree = {
 		}
 	}
 
+	focus = {
+		id = POL_reorganize_construction
+		icon = construction4
+		x = 3
+		y = 1
+		relative_position_id = POL_PPS
+		cost = 10
+
+		cancel_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = { focus = POL_PPS }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			set_temp_variable = { treasury_change = -5.0 }
+			modify_treasury_effect = yes
+
+			add_timed_idea = {
+				idea = POL_construction_reform
+				days = 1095
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_develop_central_areas
+		icon = economic_prosperity
+		x = -1
+		y = 1
+		relative_position_id = POL_reorganize_construction
+		cost = 10
+
+		available = {
+			emerging_anarchist_communism_are_in_power = yes
+		}
+
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = { focus = POL_reorganize_construction }
+		mutually_exclusive = { POL_anarchist_development }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus POL_centralized_development"
+			111 = { # Wielkopolska
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			474 = { # West Pomerania
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			625 = { # Lubisz
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			626 = { # Lower Silesia
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_anarchist_development
+		icon = central_planned_economy
+		x = 1
+		y = 1
+		relative_position_id = POL_reorganize_construction
+		cost = 10
+
+		mutually_exclusive = { focus = POL_develop_central_areas }
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_CORRUPTION }
+
+		prerequisite = { focus = POL_reorganize_construction }
+
+		completion_reward = {
+			decrease_corruption = yes
+
+			random_owned_controlled_state = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+
+			random_owned_controlled_state = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+
+			random_owned_controlled_state = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+
+			set_temp_variable = { treasury_change = -22.5 }
+			modify_treasury_effect = yes
+		}
+	}
+
+	focus = {
+		id = POL_develop_airports
+		icon = air_industry
+
+		x = 0
+		y = 1
+
+		cost = 10
+		relative_position_id = POL_develop_central_areas
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+
+		prerequisite = {
+			focus = POL_develop_central_areas
+			focus = POL_anarchist_development
+		}
+
+		mutually_exclusive = { focus = POL_develop_ports }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -3.0 }
+			modify_treasury_effect = yes
+
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = air_base
+					level = 3
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_develop_ports
+		icon = maritime_trade
+
+		x = 0
+		y = 1
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+
+		cost = 10
+		relative_position_id = POL_anarchist_development
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		prerequisite = {
+			focus = POL_develop_central_areas
+			focus = POL_anarchist_development
+		}
+
+		mutually_exclusive = { focus = POL_develop_airports }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -3.0 }
+			modify_treasury_effect = yes
+
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = naval_base
+					level = 2
+					instant_build = yes
+					province = {
+						all_provinces = yes
+						limit_to_coastal = yes
+						limit_to_naval_base = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_quality_control
+		icon = export_economy
+
+		x = 0
+		y = 1
+
+		cost = 10
+		relative_position_id = POL_develop_airports
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+
+		prerequisite = {
+			focus = POL_develop_ports
+			focus = POL_develop_airports
+		}
+
+		mutually_exclusive = { focus = POL_speed_development }
+
+		completion_reward = {
+			add_timed_idea = {
+				idea = POL_quality_control_idea
+				days = 1095
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_speed_development
+		icon = consumer_goods
+
+		x = 0
+		y = 1
+
+		cost = 10
+		relative_position_id = POL_develop_ports
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+
+		prerequisite = {
+			focus = POL_develop_ports
+			focus = POL_develop_airports
+		}
+
+		mutually_exclusive = { focus = POL_quality_control }
+
+		completion_reward = {
+			add_timed_idea = {
+				idea = POL_speed_development_idea
+				days = 1095
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_oligarchic_control
+		icon = business_man
+
+		x = 0
+		y = 1
+
+		cost = 10
+		relative_position_id = POL_quality_control
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = {
+			focus = POL_quality_control
+			focus = POL_speed_development
+		}
+
+		mutually_exclusive = { focus = POL_fight_oligarchs }
+
+		completion_reward = {
+			# some is paid by oligarchs
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			increase_oligarchs_opinion = yes
+			increase_corruption = yes
+
+			random_owned_controlled_state = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+
+			random_owned_controlled_state = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_fight_oligarchs
+		icon = sustainable_development
+
+		x = 0
+		y = 1
+
+		cost = 10
+		relative_position_id = POL_speed_development
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = {
+			focus = POL_quality_control
+			focus = POL_speed_development
+		}
+
+		mutually_exclusive = { focus = POL_oligarchic_control }
+
+		completion_reward = {
+			add_stability = 0.05
+			add_political_power = 50
+			decrease_corruption = yes
+			decrease_oligarchs_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_broaden_university_education
+		icon = university
+
+		x = 0
+		y = 1
+
+		cost = 10
+		relative_position_id = POL_oligarchic_control
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		available = {
+			AND = {
+				OR = {
+					has_idea = edu_04
+					has_idea = edu_05
+				}
+
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		prerequisite = {
+			focus = POL_oligarchic_control
+			focus = POL_fight_oligarchs
+		}
+
+		mutually_exclusive = { focus = POL_increase_research_funding }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -15.0 }
+			modify_treasury_effect = yes
+
+			add_research_slot = 1
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_increase_research_funding
+		icon = science
+
+		x = 0
+		y = 1
+
+		cost = 10
+		relative_position_id = POL_fight_oligarchs
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		available = {
+			AND = {
+				OR = {
+					has_idea = edu_04
+					has_idea = edu_05
+				}
+
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		prerequisite = {
+			focus = POL_oligarchic_control
+			focus = POL_fight_oligarchs
+		}
+
+		mutually_exclusive = { focus = POL_broaden_university_education }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -15.0 }
+			modify_treasury_effect = yes
+
+			add_ideas = { POL_increase_research_funding_idea }
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = POL_farmer_league
+		icon = agriculture2
+
+		x = 1
+		y = 1
+
+		cost = 10
+		relative_position_id = POL_broaden_university_education
+		cancel_if_invalid = yes
+		continue_if_invalid = yes
+		available_if_capitulated = no
+
+		available = { emerging_anarchist_communism_are_in_power = yes }
+		prerequisite = {
+			focus = POL_broaden_university_education
+			focus = POL_increase_research_funding
+		}
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+
+		completion_reward = {
+			increase_farmers_opinion = yes
+			set_temp_variable = { treasury_change = 10 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
 	# focus = {
 	# 	id = POL_radical_reforms
 	# 	icon = forceful_treaty
