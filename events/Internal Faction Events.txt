@@ -4,22 +4,6 @@ add_namespace = internal_factions_deposed
 
 # Author(s): Kalkalash, Angriest Bird
 # Last Modified: Feb. 5th, 2022 - Angriest Bird
-# Index of Events:
-# SMBO - 0 to 15
-# INTC - 16 - 30
-# FFI - 31 - 45
-# IND - 46 - 60
-# OLI - 61 - 75
-# DEF - 76 - 90
-# MAR - 91 - 105
-# MIL - 106 - 120
-# INTC - 121 - 135
-# LAB - 136 - 150
-
-######################################
-### Small & Medium Business Owners ###
-######################################
-### Requests ###
 #S&M Business Owners Demand a Tax Cut
 country_event = {
 	id = internal_factions_events.0
@@ -663,7 +647,7 @@ country_event = {
 	}
 }
 
-#Shops open during holy day
+# Business Open on Religious Day
 country_event = {
 	id = internal_factions_events.8
 	title = internal_factions_events.8.t
@@ -749,9 +733,8 @@ country_event = {
 	}
 }
 
-### Bonus events just for having a faction ###
 
-#A small company lists at the stock market
+# Small Company Lists Shares on Exchange
 country_event = {
 	id = internal_factions_events.9
 	title = internal_factions_events.9.t
@@ -760,40 +743,41 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		has_idea = small_medium_business_owners
+		check_variable = { small_medium_business_owners_opinion > 60 }
 	}
-
-
 
 	option = {
 		name = internal_factions_events.9.o1
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.9.o1 executed"	#Buy some shares
-		ai_chance = { factor = 1 }
 		custom_effect_tooltip = TT_SYR_INVEST_IN_FINANCE
 		add_to_variable = { treasury = -5 }
 		add_to_variable = { int_investments = 5 }
+
+		ai_chance = {
+			factor = 0
+		}
 	}
 	option = {
 		name = internal_factions_events.9.o2
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.9.o2 executed"	#Don't buy
-		ai_chance = { factor = 1 }
+
+		ai_chance = {
+			factor = 1
+		}
 	}
 }
 
-#Boom in new companies
+# Explosion of New Business
+# Fire only if enthusiastic or higher
 country_event = {
 	id = internal_factions_events.10
 	title = internal_factions_events.10.t
 	desc = internal_factions_events.10.d
-	immediate = { }
 	picture = GFX_internal_faction_business_purchase
-
 	is_triggered_only = yes
 	trigger = {
 		has_idea = small_medium_business_owners
-	}
-
-	mean_time_to_happen = {
-		days = 1
+		check_variable = { small_medium_business_owners_opinion > 80 }
 	}
 
 	option = {
@@ -887,7 +871,6 @@ country_event = {
 	desc = internal_factions_events.12.d
 	immediate = { }
 	picture = GFX_internal_faction_political_conflict
-
 	is_triggered_only = yes
 
 	option = {
@@ -917,5 +900,66 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		add_relative_party_popularity = yes
 		clear_variable = party_to_be_boosted
+	}
+}
+
+# Large Company Goes Bankrupt
+country_event = {
+	id = internal_factions_events.13
+	title = internal_factions_events.13.t
+	desc = internal_factions_events.13.d
+	picture = GFX_internal_faction_political_conflict
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			has_idea = industrial_conglomerates
+			has_idea = the_donju
+			has_idea = small_medium_business_owners
+			has_idea = international_bankers
+			has_idea = the_bazaar
+			has_idea = wall_street
+			has_idea = chaebols
+		}
+	}
+
+	option = {
+		name = internal_factions_events.13.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.13.a executed"	#Damn
+
+		set_temp_variable = { temp_opinion = -10 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+	}
+}
+
+# Labour Unions Demand Business Pay More
+country_event = {
+	id = internal_factions_events.14
+	title = internal_factions_events.14.t
+	desc = internal_factions_events.14.d
+	picture = GFX_internal_faction_political_conflict
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			has_idea = industrial_conglomerates
+			has_idea = the_donju
+			has_idea = small_medium_business_owners
+			has_idea = international_bankers
+			has_idea = the_bazaar
+			has_idea = wall_street
+			has_idea = chaebols
+		}
+		has_idea = labour_unions
+	}
+
+	option = { #Side with Businesses
+		name = internal_factions_events.14.a
+
+	}
+
+	option = { #Side with Labour Unions
+
 	}
 }
