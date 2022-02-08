@@ -21,10 +21,6 @@
 	NDefines.NAirGfx.AIRPLANES_3_FIGHTER_PATROL_ANIM = 3			-- Number of fighters needed for a single instance of this animation
 	NDefines.NAirGfx.AIRPLANES_1_BOMBER_BOMBING_ANIM = 1 			-- Number of bombers needed for a single instance of this animation
 	NDefines.NAirGfx.AIRPLANES_3_BOMBER_BOMBING_ANIM = 3				-- Number of bombers needed for a single instance of this animation
-	NDefines.NAirGfx.AIRPLANES_1_BOMER_CAS_SUCCESS_ANIM = 1
-	NDefines.NAirGfx.AIRPLANES_1_BOMBER_CAS_FAIL_ANIM = 1
-	NDefines.NAirGfx.AIRPLANES_3_BOMBER_CAS_SUCCESS_ANIM = 3
-	NDefines.NAirGfx.AIRPLANES_3_BOMBER_CAS_FAIL_ANIM = 3
 	NDefines.NAirGfx.AIRPLANES_1_FIGHTER_VS_1_FIGHTER_ANIM = 1 		-- Number of fighters needed per side for a single instance of this animation
 	NDefines.NAirGfx.AIRPLANES_3_FIGHTER_VS_3_FIGHTER_ANIM = 3		-- Number of bombers needed per side for a single instance of this animation
 	NDefines.NAirGfx.AIRPLANES_1_TRANSPORT_SUPPLY_ANIM = 1			-- Number of planes needed for a single instance of this animation
