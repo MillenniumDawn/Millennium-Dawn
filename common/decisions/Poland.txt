@@ -628,7 +628,7 @@ POL_military_intervention_category = {
 
 POL_state_controlled_economy_category = {
 	POL_sre_main_countdown_mission = {
-		allowed = { always = yes }
+		allowed = { always = no }
 		fire_only_once = no
 		is_good = no
 		selectable_mission = no
@@ -641,10 +641,12 @@ POL_state_controlled_economy_category = {
 				activate_mission = POL_sre_main_countdown_mission
 			}
 		}
+
+		complete_effect = {}
 	}
 
 	POL_sre_monthly_mission = {
-		allowed = { always = yes }
+		allowed = { always = no }
 		fire_only_once = no
 		is_good = yes
 		selectable_mission = no
@@ -657,6 +659,8 @@ POL_state_controlled_economy_category = {
 				activate_mission = POL_sre_monthly_mission
 			}
 		}
+
+		complete_effect = {}
 	}
 
 	POL_add_tools_factory = {
@@ -734,7 +738,7 @@ POL_state_controlled_economy_category = {
 		}
 	}
 
-	POL_subtract_mmaterials_factory = {
+	POL_subtract_materials_factory = {
 		allowed = { always = yes }
 		available = {
 			check_variable = { POL.industrial_materials_factories > 0 }
@@ -746,6 +750,64 @@ POL_state_controlled_economy_category = {
 		complete_effect = {
 			subtract_from_variable = { POL.industrial_materials_factories = 1 }
 			add_to_variable = { POL.free_factories = 1 }
+		}
+	}
+
+	POL_increase_effort = {
+		allowed = { always = yes }
+		visible = {
+			NOT = { has_idea = POL_sre_max_effort }
+		}
+
+		fire_only_once = no
+		days_re_enable = 1
+
+		complete_effect = {
+			if = {
+				limit = { has_idea = POL_sre_low_effort }
+
+				swap_ideas = {
+					add_idea = POL_sre_medium_effort
+					remove_idea = POL_sre_low_effort
+				}
+			}
+			else = {
+				swap_ideas = {
+					add_idea = POL_sre_max_effort
+					remove_idea = POL_sre_medium_effort
+				}
+			}
+
+			sre_calculate_number_of_factories_and_clear = yes
+		}
+	}
+
+	POL_decrease_effort = {
+		allowed = { always = yes }
+		visible = {
+			NOT = { has_idea = POL_sre_low_effort }
+		}
+
+		fire_only_once = no
+		days_re_enable = 1
+
+		complete_effect = {
+			if = {
+				limit = { has_idea = POL_sre_medium_effort }
+
+				swap_ideas = {
+					add_idea = POL_sre_low_effort
+					remove_idea = POL_sre_medium_effort
+				}
+			}
+			else = {
+				swap_ideas = {
+					add_idea = POL_sre_medium_effort
+					remove_idea = POL_sre_max_effort
+				}
+			}
+
+			sre_calculate_number_of_factories_and_clear = yes
 		}
 	}
 }
