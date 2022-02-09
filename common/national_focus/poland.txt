@@ -11,7 +11,7 @@ focus_tree = {
 			tag = POL
 		}
 	}
-	continuous_focus_position = { x = 8000 y = 3000 }
+	continuous_focus_position = { x = 8500 y = 3000 }
 
 	focus = {
 		id = POL_revitalize_government
@@ -126,6 +126,8 @@ focus_tree = {
 			add_to_variable = { party_pop_array^4 = 0.1 }
 			add_to_variable = { party_pop_array^5 = 0.1 }
 			recalculate_party = yes
+
+			country_event = poland.14
 		}
 
 		ai_will_do = { factor = 4 }
@@ -710,15 +712,25 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			sre_clear = yes
-			sre_initialize = yes
-			sre_calculate_tools = yes
-			sre_calculate_machinery = yes
-			sre_calculate_materials = yes
-			sre_calculate_number_of_factories_and_clear = yes
+			if = {
+				limit = { is_ai = yes }
 
-			activate_mission = POL_sre_main_countdown_mission
-			activate_mission = POL_sre_monthly_mission
+				add_ideas = {
+					POL_sre_medium_effort
+					POL_sre_medium_success
+				}
+			}
+			else {
+				sre_clear = yes
+				sre_initialize = yes
+				sre_calculate_tools = yes
+				sre_calculate_machinery = yes
+				sre_calculate_materials = yes
+				sre_calculate_number_of_factories_and_clear = yes
+
+				activate_mission = POL_sre_main_countdown_mission
+				activate_mission = POL_sre_monthly_mission
+			}
 		}
 
 		ai_will_do = { factor = 10 }
@@ -753,6 +765,7 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = POL_ZKP }
+		available = { emerging_communist_state_are_in_power = yes }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -1983,18 +1996,13 @@ focus_tree = {
 focus = {
 		id = POL_polish_armed_forces
 		icon = POL_armed_forces
-
-		x = 120
+		x = 115
 		y = 0
-
 		cost = 5
 		cancel_if_invalid = no
 
-
 		completion_reward = {
-			add_ideas = {
-                POL_paf
-            }
+			add_ideas = { POL_paf }
 		}
 
 		ai_will_do = { factor = 10 }
@@ -2010,7 +2018,6 @@ focus = {
 		cost = 5
 		relative_position_id = POL_polish_armed_forces
 		cancel_if_invalid = no
-
 
 		prerequisite = { focus = POL_polish_armed_forces }
 
@@ -6524,7 +6531,7 @@ focus = {
 	focus = {
 		id = POL_falanga
 		icon = POL_oboz
-		x = 20
+		x = 17
 		y = 1
 		relative_position_id = POL_change_of_path
 		cost = 5
@@ -6895,6 +6902,23 @@ focus = {
 	}
 
 	focus = {
+		id = POL_rise_of_nation
+		icon = demand_territory
+		x = -3
+		y = 0
+		relative_position_id = POL_day_of_Phalanga
+		cost = 1
+
+		available = {
+			date > 2005.11.11
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+	}
+
+	focus = {
 		id = POL_new_foreighn_ministry
 		icon = anti_establishment2
 		x = 0
@@ -6902,7 +6926,17 @@ focus = {
 		relative_position_id = POL_day_of_Phalanga
 		cost = 10
 
-		prerequisite = { focus = POL_day_of_Phalanga }
+		prerequisite = {
+			focus = POL_day_of_Phalanga
+			focus = POL_rise_of_nation
+		}
+
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -6921,6 +6955,14 @@ focus = {
 		cost = 10
 
 		prerequisite = { focus = POL_new_foreighn_ministry }
+
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+
 		bypass = {
 			NOT = { has_idea = EU_member }
 		}
@@ -6947,6 +6989,14 @@ focus = {
 		cost = 10
 
 		prerequisite = { focus = POL_nationalist_leave_eu }
+
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+
 		bypass = {
 			NOT = { has_idea = NATO_member }
 		}
@@ -6973,6 +7023,13 @@ focus = {
 
 		prerequisite = { focus = POL_nationalist_leave_nato }
 		mutually_exclusive = { focus = POL_reach_out_to_russia }
+
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -7013,6 +7070,11 @@ focus = {
 					has_government = nationalist
 				}
 			}
+
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
 		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7039,6 +7101,12 @@ focus = {
 		cost = 10
 
 		prerequisite = { focus = POL_local_cooperation }
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -7075,6 +7143,13 @@ focus = {
 			focus = POL_reach_out_to_russia
 		}
 
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			custom_effect_tooltip = POL_fund_movements_TT
@@ -7093,6 +7168,12 @@ focus = {
 		cost = 10
 
 		prerequisite = { focus = POL_reach_out_to_russia }
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -7120,6 +7201,13 @@ focus = {
 			focus = POL_reach_to_chechz
 		}
 
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			custom_effect_tooltip = POL_allowed_justification_TT
@@ -7142,6 +7230,10 @@ focus = {
 		prerequisite = { focus = POL_new_allience }
 		available = {
 			check_variable = { num_faction_members > 1 }
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
 		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7205,6 +7297,10 @@ focus = {
 
 		available = {
 			check_variable = { num_faction_members > 1 }
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
 		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7297,6 +7393,10 @@ focus = {
 		prerequisite = { focus = POL_new_allience }
 		available = {
 			check_variable = { num_faction_members > 1 }
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
 		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7338,7 +7438,17 @@ focus = {
 		relative_position_id = POL_day_of_Phalanga
 		cost = 10
 
-		prerequisite = { focus = POL_day_of_Phalanga }
+		prerequisite = {
+			focus = POL_day_of_Phalanga
+			focus = POL_rise_of_nation
+		}
+
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -7355,6 +7465,13 @@ focus = {
 		y = 1
 		relative_position_id = POL_economical_comitee
 		cost = 10
+
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		prerequisite = { focus = POL_economical_comitee }
 		mutually_exclusive = { focus = POL_limited_nationalization }
@@ -7416,6 +7533,13 @@ focus = {
 		prerequisite = { focus = POL_economical_comitee }
 		mutually_exclusive = { focus = POL_mass_nationalization }
 
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			decrease_international_bankers_opinion = yes
@@ -7474,6 +7598,14 @@ focus = {
 			focus = POL_mass_nationalization
 			focus = POL_limited_nationalization
 		}
+
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+
 		mutually_exclusive = { focus = POL_local_infrastructure_development }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7520,6 +7652,14 @@ focus = {
 			focus = POL_mass_nationalization
 			focus = POL_limited_nationalization
 		}
+
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+
 		mutually_exclusive = { focus = POL_centralized_infrastructure_development }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7559,6 +7699,13 @@ focus = {
 			focus = POL_local_infrastructure_development
 		}
 
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+
 		mutually_exclusive = { focus = POL_limited_social_support }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7585,6 +7732,13 @@ focus = {
 			focus = POL_local_infrastructure_development
 		}
 
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+
 		mutually_exclusive = { focus = POL_full_social_support }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7609,6 +7763,13 @@ focus = {
 		prerequisite = {
 			focus = POL_full_social_support
 			focus = POL_limited_social_support
+		}
+
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
 		}
 
 		mutually_exclusive = { focus = POL_military_expansion }
@@ -7668,6 +7829,13 @@ focus = {
 		prerequisite = {
 			focus = POL_full_social_support
 			focus = POL_limited_social_support
+		}
+
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
 		}
 
 		mutually_exclusive = { focus = POL_further_industrial_expansion }
@@ -7730,6 +7898,13 @@ focus = {
 			focus = POL_military_expansion
 		}
 
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+
 		mutually_exclusive = { focus = POL_develop_metals }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
@@ -7790,6 +7965,13 @@ focus = {
 			focus = POL_military_expansion
 		}
 
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
+
 		mutually_exclusive = { focus = POL_develop_bio_fuel }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7822,11 +8004,16 @@ focus = {
 		relative_position_id = POL_day_of_Phalanga
 		cost = 10
 
-
-
-
 		prerequisite = {
 			focus = POL_day_of_Phalanga
+			focus = POL_rise_of_nation
+		}
+
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
 		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -7847,10 +8034,13 @@ focus = {
 		relative_position_id = POL_social_comitee
 		cost = 10
 
-
-
-
 		prerequisite = { focus = POL_social_comitee }
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
@@ -7869,10 +8059,13 @@ focus = {
 		relative_position_id = POL_set_state_religion
 		cost = 10
 
-
-
-
 		prerequisite = { focus = POL_set_state_religion }
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
@@ -7891,10 +8084,13 @@ focus = {
 		relative_position_id = POL_ban_abortions
 		cost = 10
 
-
-
-
 		prerequisite = { focus = POL_ban_abortions }
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -7915,10 +8111,13 @@ focus = {
 		relative_position_id = POL_promote_egalatarianism
 		cost = 10
 
-
-
-
 		prerequisite = { focus = POL_promote_egalatarianism }
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -7939,10 +8138,13 @@ focus = {
 		relative_position_id = POL_social_comitee
 		cost = 10
 
-
-
-
 		prerequisite = { focus = POL_social_comitee }
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -7964,6 +8166,12 @@ focus = {
 		cost = 10
 
 		prerequisite = { focus = POL_mandatory_patriotic_education }
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
@@ -7986,6 +8194,12 @@ focus = {
 		cost = 10
 
 		prerequisite = { focus = POL_paramilitary_organization }
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -8007,6 +8221,12 @@ focus = {
 		cost = 10
 
 		prerequisite = { focus = POL_local_hitleryugent }
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
