@@ -62,6 +62,9 @@
 # Should be set for easier maintenance
 
 # Called in the on_startup
+# init_investment_system simply initializes the variable.
+# This is used only ONCE as it sets global variables.
+# Please do not trigger this more than once.
 init_investment_system = {
 	### BUILDING CONSTRUCTION COSTS
 
@@ -100,6 +103,8 @@ init_investment_system = {
 	}
 }
 
+# Called in the spawning of a new nation in-game
+# Purely used to update the variables of a nation if you are trying to play as a releasable
 ingame_init_investment_system = {
 	set_variable = { project_build_amount^-1 = 1 }
 	set_variable = { constructable_buildings = 1 }
@@ -115,6 +120,8 @@ refresh_gui = {
 	else = { set_variable = { ROOT.refresh_gui = 0 } }
 }
 
+# update_gui:
+# fired in the context of a state selection
 update_gui = {
 	project_monetary_cost_calculation = yes
 
@@ -222,6 +229,8 @@ project_monetary_cost_calculation = { # Replaces AC_calc_pp_cost in the section
 	multiply_variable = { project_monetary_cost_effect = -1 }
 }
 
+# get_building_construction_values
+# method for handling the cost and construction_speed of any given project.
 get_building_construction_values = {
 	if = { limit = { check_variable = { project_building_type^project_type  = 1 } }
 		set_temp_variable = { building_cost = global.BUILD_CONST_COST_CIVILIAN_FACTORY }
@@ -271,6 +280,10 @@ get_building_construction_values = {
 	add_to_temp_variable = { construction_speed = modifier@production_speed_buildings_factor }
 }
 
+# get_available_project
+# project_array is the total number of projects that are available
+# v is the float number that indexes whether a project exists
+# new_project sets itself to the index
 get_available_project = {
 	for_each_loop = {
 		array = project_array
@@ -283,57 +296,63 @@ get_available_project = {
 	}
 }
 
+# add_finished_buildings
+# I think this is fairly obvious what this does.
 add_finished_buildings = {
 	set_temp_variable = { var_cost = ROOT.project_monetary_cost^ROOT.project }
 	multiply_temp_variable = { var_cost = -1 }
 	divide_temp_variable = { var_cost = ROOT.project_build_amount^ROOT.project }
 
-	if = { limit = { ROOT = { check_variable = { project_building_type^project = 1 } } }
+	if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 1 } }
 		add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 2 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 2 } }
 		add_building_construction = { type = arms_factory level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 3 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 3 } }
 		add_building_construction = { type = dockyard level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 4 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 4 } }
 		add_building_construction = { type = infrastructure level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 5 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 5 } }
 		add_building_construction = { type = offices level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 6 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 6 } }
 		add_building_construction = { type = anti_air_building level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 7 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 7 } }
 		add_building_construction = { type = radar_station level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 8 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 8 } }
 		add_building_construction = { type = air_base level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 9 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 9 } }
 		add_building_construction = { type = fuel_silo level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 10 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 10 } }
 		add_building_construction = { type = internet_station level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
-	else_if = { limit = { ROOT = { check_variable = { project_building_type^project = 11 } } }
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 11 } }
 		add_building_construction = { type = synthetic_refinery level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 }
 
+# init_project
+#
+#
 init_project = {
 	ROOT = {
 		# Get Construction Speed Modifiers and Set Building Cost
@@ -344,7 +363,7 @@ init_project = {
 		if = { limit = { NOT = { check_variable = { project_building_type^project_type = 4 } } }
 			# Infrastructure
 			set_temp_variable = { target_state_infra_speed = PREV.infrastructure_level }
-			multiply_temp_variable = { target_state_infra_speed = 0.075 }
+			multiply_temp_variable = { target_state_infra_speed = 0.10 }
 			add_to_temp_variable = { target_state_infra_speed = 1 }
 			multiply_temp_variable = { construction_speed = target_state_infra_speed }
 		}
@@ -362,7 +381,7 @@ init_project = {
 		# Days to build
 		divide_temp_variable = { building_cost = construction_speed }
 
-
+		# Sets and round build cost
 		set_variable = { project_construction_duration^project = building_cost }
 		round_variable = project_construction_duration^project
 
@@ -372,16 +391,16 @@ init_project = {
 	}
 }
 
-init_project_2 = {
+init_project_two = {
 	# Get Construction Speed Modifiers and Set Building Cost
 	set_temp_variable = { construction_speed = 1 }
 
 	get_building_construction_values = yes
 
-	# Infrastructure
 	if = { limit = { NOT = { check_variable = { project_building_type^project_type = 4 } } }
-		set_temp_variable = { target_state_infra_speed = event_target:AC_state_event_target.infrastructure_level }
-		multiply_temp_variable = { target_state_infra_speed = 0.075 }
+		# Infrastructure
+		set_temp_variable = { target_state_infra_speed = PREV.infrastructure_level }
+		multiply_temp_variable = { target_state_infra_speed = 0.10 }
 		add_to_temp_variable = { target_state_infra_speed = 1 }
 		multiply_temp_variable = { construction_speed = target_state_infra_speed }
 	}
@@ -389,12 +408,17 @@ init_project_2 = {
 	# Reduce Construction speed by 25%
 	multiply_temp_variable = { construction_speed = 0.75 }
 
+	set_variable = { project_construction_speed_display^project = 1 }
+	multiply_variable = { project_construction_speed_display^project = 100 }
+	round_variable = project_construction_speed_display^project
+
 	# Total Factory Output
 	multiply_temp_variable = { construction_speed = 100 }
 
 	# Days to build
 	divide_temp_variable = { building_cost = construction_speed }
 
+	# Sets and round build cost
 	set_variable = { project_construction_duration^project = building_cost }
 	round_variable = project_construction_duration^project
 
@@ -403,21 +427,28 @@ init_project_2 = {
 	multiply_variable = { project_total_construction_duration_display^project = project_build_amount^project_type }
 }
 
-# Either FROM or Country
-start_project = {
+start_project_two = {
+	# Get available project
 	get_available_project = yes
 
+	# new_project sets the correct index for the new project
 	if = { limit = { has_variable = new_project }
+
+		# Initializes the Project
 		set_variable = { project = new_project }
 		set_variable = { project_type = -1 }
 
-		init_project_2 = yes
+		init_project_two = yes
 
-		event_target:AC_state_event_target = {
+		# Should scope to the actual project
+		var:AC_state_target = {
 			add_to_array = { projects_in_state = PREV.id } #Should be FROM
 			set_variable = { project_target_state_@PREV = PREV.project }
+			# Sets the starting nation
 			set_variable = { PREV.project_array^PREV.project = THIS.id }
-			CONTROLLER = { set_variable = { PREV.PREV.project_target_country^PREV.PREV.project = THIS.id } }
+			CONTROLLER = {
+				set_variable = { PREV.PREV.project_target_country^PREV.PREV.project = THIS.id }
+			}
 		}
 
 		# Active Project Variables
@@ -432,12 +463,13 @@ start_project = {
 		add_to_variable = { int_investments = temp_calculator }
 		add_to_variable = { active_projects = 1 }
 
+		# Initializes the target decisions for the investment project
 		meta_effect = {
 			text = {
 				activate_decision = AC_project_[x]_decision
 
 				var:project_target_country^project = {
-					set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+					set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
 					activate_targeted_decision = { target = PREV decision = AC_project_[x]_target_decision }
 				}
 			}
@@ -445,9 +477,68 @@ start_project = {
 		}
 
 		clear_variable = project
-		clear_variable = project_state
 		clear_variable = project_type
 		clear_variable = new_project
+	}
+
+	refresh_gui = yes
+}
+
+# Either FROM or Country
+start_project = {
+	# Get available project
+	ROOT = { get_available_project = yes }
+
+	# new_project sets the correct index for the new project
+	if = { limit = { ROOT = { has_variable = new_project } }
+
+		ROOT = {
+			# Initializes the Project
+			set_variable = { project = new_project }
+			set_variable = { project_type = -1 }
+		}
+
+		init_project = yes
+
+		# Should scope to the actual project
+		var:ROOT.AC_state_target = {
+			add_to_array = { projects_in_state = ROOT.id } #Should be FROM
+			set_variable = { project_target_state_@ROOT = ROOT.project }
+			# Sets the starting nation
+			set_variable = { ROOT.project_array^ROOT.project = THIS.id }
+			CONTROLLER = { set_variable = { ROOT.project_target_country^ROOT.project = THIS.id } }
+		}
+
+		ROOT = {
+			# Active Project Variables
+			set_variable = { project_build_amount^project = project_build_amount^-1 }
+			set_variable = { project_building_type^project = project_building_type^-1 }
+			set_variable = { project_monetary_cost^project = project_monetary_cost^-1 }
+
+			# Activate Project
+			add_to_variable = { treasury = project_monetary_cost_effect } # Project Monetary Cost Effect is -1
+			set_temp_variable = { temp_calculator = project_monetary_cost_effect }
+			multiply_temp_variable = { temp_calculator = -1 }
+			add_to_variable = { int_investments = temp_calculator }
+			add_to_variable = { active_projects = 1 }
+
+			# Initializes the target decisions for the investment project
+			meta_effect = {
+				text = {
+					activate_decision = AC_project_[x]_decision
+
+					var:project_target_country^project = {
+						set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+						activate_targeted_decision = { target = ROOT decision = AC_project_[x]_target_decision }
+					}
+				}
+				x = "[?ROOT.project]"
+			}
+
+			clear_variable = project
+			clear_variable = project_type
+			clear_variable = new_project
+		}
 	}
 
 	refresh_gui = yes
@@ -458,12 +549,23 @@ complete_project = {
 
 		set_variable = { project_type = project }
 
+		# State in the project:
+		# project_array^project represents the actual project
 		var:project_array^project = {
 			if = {
-				limit = { investment_building_slot_available = yes }
+				limit = {
+					CONTROLLER = {
+						OR = {
+							#is_in_array = { array = ROOT.investment_targets value = THIS.id }
+							tag = ROOT
+							is_subject_of = ROOT
+							ROOT = { is_subject_of = PREV }
+						}
+					}
+					investment_building_slot_available = yes
+				}
 
 				add_finished_buildings = yes
-
 				# Opinion Bonus Towards Builder
 				CONTROLLER = { add_opinion_modifier = { target = ROOT modifier = AC_construction_opinion4 } }
 
@@ -477,7 +579,7 @@ complete_project = {
 
 						subtract_from_variable = { project_build_amount^project = 1 }
 
-						PREV = { init_project_2 = yes }
+						PREV = { init_project = yes }
 
 						meta_effect = {
 							text = {
@@ -494,7 +596,9 @@ complete_project = {
 							x = "[?ROOT.project]"
 						}
 					}
-					else = { end_project = yes }
+					else = {
+						end_project = yes
+					}
 				}
 			}
 			else = { ROOT = { end_project = yes } }
@@ -523,7 +627,7 @@ end_project = {
 				}
 
 				set_variable = { project_array^project = 1 }
-				country_event = { id = AC_event.3[x] hours = 26 }
+				country_event = { id = AC_event.3[x] }
 			}
 			x = "[?project]"
 		}
