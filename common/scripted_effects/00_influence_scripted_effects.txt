@@ -213,34 +213,19 @@ economic_exploitation_action = {
 
 manipulate_politics_action = {
 	#Add +5 to our outlook
-	if = {
-		limit = {
-			PREV = { has_government = fascism }
-		}
+	if = { limit = { PREV = { has_government = fascism } }
 		add_popularity = { ideology = fascism popularity = 0.05 }
 	}
-	if = {
-		limit = {
-			PREV = { has_government = neutrality }
-		}
+	else_if = { limit = { PREV = { has_government = neutrality } }
 		add_popularity = { ideology = neutrality popularity = 0.05 }
 	}
-	if = {
-		limit = {
-			PREV = { has_government = communism }
-		}
+	else_if = { limit = { PREV = { has_government = communism } }
 		add_popularity = { ideology = communism popularity = 0.05 }
 	}
-	if = {
-		limit = {
-			PREV = { has_government = nationalist }
-		}
+	else_if = { limit = { PREV = { has_government = nationalist } }
 		add_popularity = { ideology = nationalist popularity = 0.05 }
 	}
-	if = {
-		limit = {
-			PREV = { has_government = democratic }
-		}
+	else_if = { limit = { PREV = { has_government = democratic } }
 		add_popularity = { ideology = democratic popularity = 0.05 }
 	}
 
@@ -268,14 +253,8 @@ manipulate_politics_action = {
 	recalculate_influence = yes
 
 	#reduce relations if different gov
-	if = {
-		limit = {
-			NOT = { is_same_government_PREV = yes }
-		}
-		add_opinion_modifier = {
-				target = PREV
-				modifier = supported_opposition
-		}
+	if = { limit = { NOT = { is_same_government_PREV = yes } }
+		add_opinion_modifier = { target = PREV modifier = supported_opposition }
 	}
 }
 
@@ -768,7 +747,32 @@ delete_influencer_check = {
 
 ##GENERIC SCRIPTED DOMESTIC EFFECTS
 
-##Boost Domestic Influence
+# Boost Domestic Influence
+# set_temp_variable = { percentage_change = x } (x = 1 +- 0.00)
+# Change by 1% would be 0.01
+
+change_domestic_influence_percentage = {
+	set_temp_variable = { total_change = 1 }
+	add_to_temp_variable = { var = total_change value = percentage_change }
+	hidden_effect = {
+		set_temp_variable = { influence_increase = influence_total }
+		multiply_temp_variable = { var = influence_increase value = total_change }
+		multiply_temp_variable = { var = influence_increase value = percentage_change }
+		round_temp_variable = influence_increase
+		add_to_variable = { domestic_influence_amount = influence_increase }
+
+		# Debug code to ensure some domestic is added
+		if = { limit = { check_variable = { influence_increase < 1 } }
+			add_to_variable = { domestic_influence_amount = 5 }
+		}
+
+		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
+		recalculate_influence = yes
+	}
+
+	custom_effect_tooltip = change_domestic_influence_percentage_tt
+}
+
 boost_domestic_influence_1_percent = {
 	custom_effect_tooltip = increase_domestic_influence_1_percent_tt
 	hidden_effect = {
