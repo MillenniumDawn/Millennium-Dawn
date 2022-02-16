@@ -73,9 +73,12 @@ ingame_update_setup = {
 # Calculates the tax rate of a given nation where you flow in the corporate_tax_rate of a given nation
 calculate_tax_rate = {
 	hidden_effect = {
-		remove_tax_cost = yes
-		set_variable = { tax_rate = corporate_tax_rate }
-		set_tax_cost = yes
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit } }}
+			add_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit }
+		}
+		set_variable = { consumer_goods_from_corporate_tax = corporate_tax_rate }
+		divide_variable = { consumer_goods_from_corporate_tax = 100 }
+		multiply_variable = { consumer_goods_from_corporate_tax = 2 } # Doubles the Consumer Goods Penalty
 
 		if = {
 			limit = { NOT = { has_dynamic_modifier = { modifier = population_tax_stability_hit } } }
@@ -85,37 +88,7 @@ calculate_tax_rate = {
 		divide_variable = { stability_factor_from_population_tax = -100 }
 	}
 }
-# Tax Cost Meta Effects
-# add_tax_laws
-# Adds a tax law from corporate_tax_rate
-add_tax_laws = {
-	meta_effect = {
-		text = {
-			add_ideas = tax_cost_[TAX_RATE_VAR]
-		}
-		TAX_RATE_VAR = "[?tax_rate|0]"
-	}
-}
-# remove_tax_cost
-# Removes a tax law
-remove_tax_cost = {
-	meta_effect = {
-		text = {
-			remove_ideas = tax_cost_[TAX_RATE_VAR]
-		}
-		TAX_RATE_VAR = "[?tax_rate|0]"
-	}
-}
-# set_tax_cost
-# Sets a tax cost
-set_tax_cost = {
-	meta_effect = {
-		text = {
-			add_ideas = tax_cost_[TAX_RATE_VAR]
-		}
-		TAX_RATE_VAR = "[?tax_rate|0]"
-	}
-}
+
 
 # calculate_tax_gain
 # Calculates the amount of taxes earned based of ROOT's corporate taxes and population taxes
@@ -898,16 +871,14 @@ update_military_rate = {
 		}
 	}
 	##Ukraine
-	if = {
-		limit = { original_tag = UKR }
+	if = { limit = { original_tag = UKR }
 		if = {
 			limit = { has_idea = UKR_to_many_generals }
 			add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
 		}
 	}
 	##Botswana
-	if = {
-		limit = { original_tag = BOT }
+	if = { limit = { original_tag = BOT }
 		if = {
 			limit = {
 				OR = {
