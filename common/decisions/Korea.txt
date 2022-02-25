@@ -1,0 +1,629 @@
+KOR_wartime_control = {
+	KOR_grant_wartime_control = {
+
+		icon = GFX_decision_generic_army_support_new
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = KOR_expeditionary_forces_tt
+				has_army_size = {
+					size < 1
+				}
+			}
+		}
+
+
+		activation = {
+			has_idea = KOR_wartime_control
+			has_war_with = NKO
+			is_in_faction_with = USA
+			has_army_size = {
+				size > 0
+			}
+		}
+
+
+		Is_good = no
+
+		selectable_mission = yes
+		days_mission_timeout = 14
+		days_remove = 1
+
+
+		fire_only_once = no
+
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout KOR_grant_wartime_control"
+			swap_ideas = {
+				remove_idea = KOR_wartime_control
+				add_idea = KOR_wartime_control1
+			}
+		}
+
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision KOR_grant_wartime_control"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+
+KOR_38th_parallel = {
+
+	KOR_close_kaesong_industrial_park = {
+		icon = GFX_decision_generic_factory
+
+		visible = {
+			OR = {
+				has_idea = KOR_kaesong_industrial_park
+				has_idea = NKO_kaesong_industrial_park
+			}
+		}
+
+		highlight_states = { state = 603 }
+
+		cost = 100
+
+		complete_effect = {
+			set_country_flag = closed_kaesong
+			set_temp_variable = { temp_opinion = -10 }
+			change_chaebols_opinion = yes
+			KOR = {
+				remove_opinion_modifier = {
+					target = NKO
+					modifier = kaesong_industrial_park
+				}
+				support_for_reunification_2_less = yes
+				remove_ideas = KOR_kaesong_industrial_park
+			}
+			NKO = {
+				remove_opinion_modifier = {
+					target = KOR
+					modifier = kaesong_industrial_park
+				}
+				remove_ideas = NKO_kaesong_industrial_park
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	KOR_reopen_kaesong_industrial_park = {
+		icon = GFX_decision_generic_factory
+
+		cost = 100
+
+		visible = {
+			has_country_flag = closed_kaesong
+		}
+
+		highlight_states = { state = 603 }
+
+		complete_effect = {
+			clr_country_flag = closed_kaesong
+			set_temp_variable = { temp_opinion = 10 }
+			change_chaebols_opinion = yes
+			KOR = {
+				add_opinion_modifier = {
+					target = NKO
+					modifier = kaesong_industrial_park
+				}
+				support_for_reunification_2 = yes
+				add_ideas = KOR_kaesong_industrial_park
+			}
+			NKO = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = kaesong_industrial_park
+				}
+				add_ideas = NKO_kaesong_industrial_park
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	KOR_organize_joint_sporting_events = {
+		icon = GFX_decision_generic_nationalism
+
+		cost = 100
+
+		visible = {
+		}
+
+		highlight_states = { state = 604 }
+
+		available = {
+			NOT = {
+				has_war_with = NKO
+			}
+			NKO = {
+				has_opinion = {
+					target = KOR
+					value > -101
+				}
+			}
+			has_war_support < 0.6
+			has_completed_focus = KOR_sporting_events
+		}
+
+		complete_effect = {
+			support_for_reunification_1 = yes
+			add_war_support = -0.01
+			NKO = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
+		}
+
+		days_re_enable = 120
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				KOR_has_conservative_government = yes
+			}
+		}
+	}
+
+	KOR_screen_north_korean_films = {
+		icon = GFX_decision_hol_exchange_intelligence_data
+
+		cost = 100
+
+		visible = {
+		}
+
+		highlight_states = { state = 604 }
+
+		available = {
+			NOT = {
+				has_war_with = NKO
+			}
+			has_completed_focus = KOR_sporting_events
+		}
+
+		complete_effect = {
+			support_for_reunification_1 = yes
+			add_war_support = -0.01
+			NKO = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = political_outreach
+				}
+			}
+		}
+
+		days_re_enable = 120
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				KOR_has_conservative_government = yes
+			}
+		}
+	}
+
+	KOR_encourage_sympathetic_portrayals_of_the_north = {
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 100
+
+		visible = {
+		}
+
+		highlight_states = { state = 604 }
+
+		available = {
+			NOT = {
+				has_war_with = NKO
+			}
+			has_completed_focus = KOR_sporting_events
+		}
+
+		complete_effect = {
+			support_for_reunification_1 = yes
+			add_war_support = -0.01
+		}
+
+		days_re_enable = 120
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				KOR_has_conservative_government = yes
+			}
+		}
+	}
+
+	KOR_cease_propaganda_broadcasts = {
+		icon = GFX_decision_eng_propaganda_campaigns
+
+		available = {
+			NOT = { has_war_with = NKO }
+			has_completed_focus = KOR_wind_down_propaganda
+		}
+
+		highlight_states = { state = 604 }
+
+		visible = {
+			NKO = {
+				has_idea = NKO_southern_propaganda_broadcasts
+			}
+		}
+
+		cost = 100
+
+		complete_effect = {
+			custom_effect_tooltip = KOR_negotiation_success_tt
+			add_to_variable = { reunification_chance = 1 }
+			NKO = {
+				remove_ideas = NKO_southern_propaganda_broadcasts
+				remove_opinion_modifier = {
+					target = KOR
+					modifier = propaganda_broadcasts
+				}
+			}
+		}
+
+	}
+
+	KOR_restart_propaganda_broadcasts = {
+		icon = GFX_decision_eng_propaganda_campaigns
+
+		available = {
+		}
+
+		highlight_states = { state = 604 }
+
+		visible = {
+			NKO = {
+				NOT = { has_idea = NKO_southern_propaganda_broadcasts }
+			}
+		}
+
+		cost = 100
+
+		complete_effect = {
+			custom_effect_tooltip = KOR_negotiation_failure_tt
+			subtract_from_variable = { reunification_chance = 1 }
+			NKO = {
+				add_ideas = NKO_southern_propaganda_broadcasts
+				add_opinion_modifier = {
+					target = KOR
+					modifier = propaganda_broadcasts
+				}
+			}
+		}
+	}
+
+	KOR_cease_propaganda_leaflets = {
+		icon = GFX_decision_generic_arrest
+
+		available = {
+			NOT = { has_war_with = NKO }
+			has_completed_focus = KOR_wind_down_propaganda
+		}
+
+		highlight_states = { state = 604 }
+
+		visible = {
+			NKO = {
+				has_idea = NKO_southern_balloon_leaflets
+			}
+		}
+
+		cost = 100
+
+		complete_effect = {
+			custom_effect_tooltip = KOR_negotiation_success_tt
+			add_to_variable = { reunification_chance = 1 }
+			NKO = {
+				remove_ideas = NKO_southern_balloon_leaflets
+				remove_opinion_modifier = {
+					target = KOR
+					modifier = propaganda_leaflets
+				}
+			}
+			custom_effect_tooltip = KOR_popularity_decrease_tt
+			ruling_party_decrease_5 = yes
+		}
+	}
+
+	KOR_restart_propaganda_leaflets = {
+		icon = GFX_decision_generic_independence
+
+		available = {
+		}
+
+		highlight_states = { state = 604 }
+
+		visible = {
+			NKO = {
+				NOT = { has_idea = NKO_southern_balloon_leaflets }
+			}
+		}
+
+		cost = 100
+
+		complete_effect = {
+			custom_effect_tooltip = KOR_negotiation_failure_tt
+			subtract_from_variable = { reunification_chance = 1 }
+			NKO = {
+				add_ideas = NKO_southern_balloon_leaflets
+				add_opinion_modifier = {
+					target = KOR
+					modifier = propaganda_leaflets
+				}
+			}
+		}
+	}
+
+	KOR_restart_peace_talks = {
+		icon = GFX_decision_generic_speech
+
+		visible = {
+			has_completed_focus = KOR_offer_talks
+			has_country_flag = KOR_peace_talks_failed
+		}
+
+		highlight_states = { state = 604 }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					is_in_array = { ruling_party = 3  }
+				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
+			}
+			has_war_support < 0.6
+			custom_trigger_tooltip = {
+				tooltip = support_for_reunification_more_50_tt
+				check_variable = { KOR.SFR > 50 }
+			}
+			country_exists = NKO
+			NOT = {
+				has_war_with = NKO
+			}
+			NKO = {
+				has_opinion = {
+					target = KOR
+					value > -51
+				}
+			}
+		}
+
+		cost = 200
+
+		days_remove = 30
+
+		days_re_enable = 365
+
+		complete_effect = {
+			liberal_policy_effect = yes
+			clr_country_flag = KOR_peace_talks_failed
+		}
+
+		remove_effect = {
+			NKO = {
+				country_event = {
+					id = korea.23
+				}
+			}
+		}
+	}
+
+	KOR_propose_south_led_reunification_decision = {
+		icon = GFX_decision_generic_form_nation
+
+		visible = {
+			OR = {
+				has_completed_focus = KOR_propose_south_led_unification
+				has_completed_focus = KOR_propose_unity_government
+			}
+			has_country_flag = KOR_reunification_talks_failed
+		}
+
+		highlight_states = { state = 604 }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					is_in_array = { ruling_party = 3  }
+				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
+			}
+			has_war_support < 0.55
+			custom_trigger_tooltip = {
+				tooltip = support_for_reunification_more_50_tt
+				check_variable = { KOR.SFR > 50 }
+			}
+			country_exists = NKO
+			NOT = {
+				has_war_with = NKO
+			}
+			custom_trigger_tooltip = {
+				tooltip = NKO_KOR_Koren_War_Ceasefire_tt
+				NOT = { has_opinion_modifier = NKO_KOR_Koren_War_Ceasefire }
+			}
+			NKO = {
+				has_opinion = {
+					target = KOR
+					value > -26
+				}
+			}
+		}
+
+		cost = 200
+
+		days_remove = 30
+
+		days_re_enable = 365
+
+		complete_effect = {
+			clr_country_flag = KOR_reunification_talks_failed
+			set_country_flag = KOR_proposed_south_reunification
+		}
+
+		remove_effect = {
+			NKO = {
+				country_event = {
+					id = korea.26
+				}
+			}
+		}
+
+	}
+
+	KOR_propose_unity_reunification_decision = {
+		icon = GFX_decision_generic_form_nation
+
+		visible = {
+			OR = {
+				has_completed_focus = KOR_propose_south_led_unification
+				has_completed_focus = KOR_propose_unity_government
+			}
+			has_country_flag = KOR_reunification_talks_failed
+		}
+
+		highlight_states = { state = 604 }
+
+		available = {
+			OR = {
+				KOR_has_progressive_government = yes
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					is_in_array = { ruling_party = 3  }
+				}
+				NKO = { has_government = democratic }
+				NKO = { has_government = neutrality }
+			}
+			has_war_support < 0.55
+			custom_trigger_tooltip = {
+				tooltip = support_for_reunification_more_50_tt
+				check_variable = { KOR.SFR > 50 }
+			}
+			country_exists = NKO
+			NOT = {
+				has_war_with = NKO
+			}
+			custom_trigger_tooltip = {
+				tooltip = NKO_KOR_Koren_War_Ceasefire_tt
+				NOT = { has_opinion_modifier = NKO_KOR_Koren_War_Ceasefire }
+			}
+			NKO = {
+				has_opinion = {
+					target = KOR
+					value > -26
+				}
+			}
+		}
+
+		cost = 200
+
+		days_remove = 30
+
+		days_re_enable = 365
+
+		complete_effect = {
+			clr_country_flag = KOR_reunification_talks_failed
+			set_country_flag = KOR_proposed_unity_reunification
+		}
+
+		remove_effect = {
+			NKO = {
+				country_event = {
+					id = korea.26
+				}
+			}
+		}
+
+	}
+}
+
+KOR_guerrilla_mobilization = {
+	KOR_recruitment_campaign = {
+
+		icon = GFX_decision_generic_civil_support
+
+		visible = {
+			has_completed_focus = KOR_form_armed_militias
+			NOT = { has_completed_focus = KOR_ignite_the_rebellion }
+		}
+
+		available = {
+			communism > 0.25
+		}
+
+		days_remove = 15
+
+		remove_effect = {
+			add_to_variable = { juche_volunteers = 1 }
+			custom_effect_tooltip = juche_volunteers_tt
+		}
+
+	}
+
+	KOR_raid_armories = {
+
+		icon = GFX_decision_ger_military_buildup
+
+		visible = {
+			has_completed_focus = KOR_make_preparations
+			NOT = { has_completed_focus = KOR_ignite_the_rebellion }
+		}
+
+		available = {
+			has_idea = police_01
+		}
+
+		days_remove = 15
+
+		remove_effect = {
+			add_to_variable = { juche_arms = 1 }
+			custom_effect_tooltip = juche_arms_tt
+		}
+
+	}
+
+	KOR_smuggle_arms = {
+
+		icon = GFX_decision_generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = KOR_make_preparations
+			NOT = { has_completed_focus = KOR_ignite_the_rebellion }
+		}
+
+		available = {
+			has_idea = police_01
+		}
+
+		days_remove = 15
+
+		remove_effect = {
+			add_to_variable = { juche_arms1 = 1 }
+			custom_effect_tooltip = juche_arms1_tt
+		}
+
+	}
+}

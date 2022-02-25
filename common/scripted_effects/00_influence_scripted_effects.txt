@@ -7,13 +7,7 @@
 effect_add_generic = {
 	add_ideas = generic_bureaucratic_drain_idea
 }
-effect_sample = {
-	CHI = {
-		GER = {
-			country_event = { id = influence.0 }
-		}
-	}
-}
+
 init_influence = {
 	clear_array = influence_array_val
 	clear_array = influence_array_calc
@@ -219,34 +213,19 @@ economic_exploitation_action = {
 
 manipulate_politics_action = {
 	#Add +5 to our outlook
-	if = {
-		limit = {
-			PREV = { has_government = fascism }
-		}
+	if = { limit = { PREV = { has_government = fascism } }
 		add_popularity = { ideology = fascism popularity = 0.05 }
 	}
-	if = {
-		limit = {
-			PREV = { has_government = neutrality }
-		}
+	else_if = { limit = { PREV = { has_government = neutrality } }
 		add_popularity = { ideology = neutrality popularity = 0.05 }
 	}
-	if = {
-		limit = {
-			PREV = { has_government = communism }
-		}
+	else_if = { limit = { PREV = { has_government = communism } }
 		add_popularity = { ideology = communism popularity = 0.05 }
 	}
-	if = {
-		limit = {
-			PREV = { has_government = nationalist }
-		}
+	else_if = { limit = { PREV = { has_government = nationalist } }
 		add_popularity = { ideology = nationalist popularity = 0.05 }
 	}
-	if = {
-		limit = {
-			PREV = { has_government = democratic }
-		}
+	else_if = { limit = { PREV = { has_government = democratic } }
 		add_popularity = { ideology = democratic popularity = 0.05 }
 	}
 
@@ -274,14 +253,8 @@ manipulate_politics_action = {
 	recalculate_influence = yes
 
 	#reduce relations if different gov
-	if = {
-		limit = {
-			NOT = { is_same_government_PREV = yes }
-		}
-		add_opinion_modifier = {
-				target = PREV
-				modifier = supported_opposition
-		}
+	if = { limit = { NOT = { is_same_government_PREV = yes } }
+		add_opinion_modifier = { target = PREV modifier = supported_opposition }
 	}
 }
 
@@ -774,7 +747,32 @@ delete_influencer_check = {
 
 ##GENERIC SCRIPTED DOMESTIC EFFECTS
 
-##Boost Domestic Influence
+# Boost Domestic Influence
+# set_temp_variable = { percentage_change = x } (x = 1 +- 0.00)
+# Change by 1% would be 0.01
+
+change_domestic_influence_percentage = {
+	set_temp_variable = { total_change = 1 }
+	add_to_temp_variable = { var = total_change value = percentage_change }
+	hidden_effect = {
+		set_temp_variable = { influence_increase = influence_total }
+		multiply_temp_variable = { var = influence_increase value = total_change }
+		multiply_temp_variable = { var = influence_increase value = percentage_change }
+		round_temp_variable = influence_increase
+		add_to_variable = { domestic_influence_amount = influence_increase }
+
+		# Debug code to ensure some domestic is added
+		if = { limit = { check_variable = { influence_increase < 1 } }
+			add_to_variable = { domestic_influence_amount = 5 }
+		}
+
+		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
+		recalculate_influence = yes
+	}
+
+	custom_effect_tooltip = change_domestic_influence_percentage_tt
+}
+
 boost_domestic_influence_1_percent = {
 	custom_effect_tooltip = increase_domestic_influence_1_percent_tt
 	hidden_effect = {
@@ -1936,6 +1934,37 @@ generic_grant_5_percent_influence_of_CURRENT_SCOPE = {
 	custom_effect_tooltip = improve_CURRENT_SCOPE_influence_5_percent_TT
 
 }
+generic_grant_20_percent_influence_of_CURRENT_SCOPE = {
+	ROOT = {
+		set_temp_variable = { influence_gain = influence_total }
+		multiply_temp_variable = { influence_gain = 1.20 }
+		multiply_temp_variable = { influence_gain = 0.20 }
+		multiply_temp_variable = { influence_gain = PREV.influence_multiplier } #from global rank idea
+		round_temp_variable = influence_gain
+		add_to_temp_variable = { influence_gain = 10 } #10 Debugging value to prevent additions by 0
+		for_loop_effect = {
+			end = influence_array^num
+			value = v
+			if = {
+				limit = {
+					check_variable = { influence_array^v = PREV }
+				}
+				add_to_variable = { influence_array_val^v = influence_gain }
+				set_country_flag = found
+			}
+		}
+		if = {
+			limit = { NOT = { has_country_flag = found } }
+			add_to_array = { influence_array = FROM.id }
+			add_to_array = { influence_array_val = influence_gain }
+		}
+		clr_country_flag = found
+		recalculate_influence = yes
+	}
+
+	custom_effect_tooltip = improve_CURRENT_SCOPE_influence_20_percent_TT
+
+}
 
 ##ADD to FROM
 generic_grant_1_percent_influence_of_FROM = {
@@ -2084,6 +2113,96 @@ generic_grant_5_percent_influence_of_FROM = {
 	recalculate_influence = yes
 
 	custom_effect_tooltip = improve_FROM_influence_5_percent_TT
+
+}
+
+generic_grant_10_percent_influence_of_FROM = {
+	set_temp_variable = { influence_gain = influence_total }
+	multiply_temp_variable = { influence_gain = 1.10 }
+	multiply_temp_variable = { influence_gain = 0.10 }
+	multiply_temp_variable = { influence_gain = FROM.influence_multiplier } #from global rank idea
+	round_temp_variable = influence_gain
+	add_to_temp_variable = { influence_gain = 10 } #10 Debugging value to prevent additions by 0
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
+		if = {
+			limit = {
+				check_variable = { influence_array^v = FROM }
+			}
+			add_to_variable = { influence_array_val^v = influence_gain }
+			set_country_flag = found
+		}
+	}
+	if = {
+		limit = { NOT = { has_country_flag = found } }
+		add_to_array = { influence_array = FROM.id }
+		add_to_array = { influence_array_val = influence_gain }
+	}
+	clr_country_flag = found
+	recalculate_influence = yes
+
+	custom_effect_tooltip = improve_FROM_influence_10_percent_TT
+
+}
+
+generic_grant_15_percent_influence_of_FROM = {
+	set_temp_variable = { influence_gain = influence_total }
+	multiply_temp_variable = { influence_gain = 1.15 }
+	multiply_temp_variable = { influence_gain = 0.15 }
+	multiply_temp_variable = { influence_gain = FROM.influence_multiplier } #from global rank idea
+	round_temp_variable = influence_gain
+	add_to_temp_variable = { influence_gain = 10 } #10 Debugging value to prevent additions by 0
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
+		if = {
+			limit = {
+				check_variable = { influence_array^v = FROM }
+			}
+			add_to_variable = { influence_array_val^v = influence_gain }
+			set_country_flag = found
+		}
+	}
+	if = {
+		limit = { NOT = { has_country_flag = found } }
+		add_to_array = { influence_array = FROM.id }
+		add_to_array = { influence_array_val = influence_gain }
+	}
+	clr_country_flag = found
+	recalculate_influence = yes
+
+	custom_effect_tooltip = improve_FROM_influence_15_percent_TT
+
+}
+
+generic_grant_20_percent_influence_of_FROM = {
+	set_temp_variable = { influence_gain = influence_total }
+	multiply_temp_variable = { influence_gain = 1.20 }
+	multiply_temp_variable = { influence_gain = 0.20 }
+	multiply_temp_variable = { influence_gain = FROM.influence_multiplier } #from global rank idea
+	round_temp_variable = influence_gain
+	add_to_temp_variable = { influence_gain = 10 } #10 Debugging value to prevent additions by 0
+	for_loop_effect = {
+		end = influence_array^num
+		value = v
+		if = {
+			limit = {
+				check_variable = { influence_array^v = FROM }
+			}
+			add_to_variable = { influence_array_val^v = influence_gain }
+			set_country_flag = found
+		}
+	}
+	if = {
+		limit = { NOT = { has_country_flag = found } }
+		add_to_array = { influence_array = FROM.id }
+		add_to_array = { influence_array_val = influence_gain }
+	}
+	clr_country_flag = found
+	recalculate_influence = yes
+
+	custom_effect_tooltip = improve_FROM_influence_20_percent_TT
 
 }
 

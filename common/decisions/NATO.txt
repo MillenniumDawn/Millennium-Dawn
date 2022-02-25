@@ -16,94 +16,59 @@ NATO_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision leave_NATO"
-			remove_ideas = NATO_member
-			remove_from_tech_sharing_group = NATO_Tech_Share
-			every_other_country = {
-				limit = { has_idea = NATO_member }
-				add_opinion_modifier = { target = ROOT modifier = left_alliance }
-			}
-			hidden_effect = {
-				news_event = { id = NATO.6 hours = 6 }
-			}
+			NATO_leave = yes
 		}
 
 		ai_will_do = {
 			factor = 0
-			modifier = {
-				add = 100
-				has_government = nationalist
-				NOT = {
-					tag = HUN
-					tag = FYR #North Macedonia
-				}
-			}
+			#By default a country will leave if not Western
 			modifier = {
 				add = 1000
-				NOT = {
-					original_tag = TUR #Turks
-					original_tag = HUN #Hungary
-					original_tag = GRE #Greece
-					original_tag = EST #Estonia
-					original_tag = LAT #Latvia
-					original_tag = LIT #Lithuania
-				}
+				NOT = { has_government = democratic }
+				#Countries with special AI
+				NOT = { original_tag = TUR }
+				NOT = { original_tag = EST }
+				NOT = { original_tag = LAT }
+				NOT = { original_tag = LIT }
+				NOT = { original_tag = HUN }
+				NOT = { original_tag = NOR }
+			}
+			#Turkey will stay in the EU if Western or if led by AKP
+			modifier = {
+				add = 1000
+				original_tag = TUR
 				OR = {
+					has_government = nationalist
+					has_government = communism
+					has_government = fascism
 					AND = {
-						NOT = { has_government = democratic }
-						NOT = { has_government = neutrality }
-					}
-					AND = {
-						USA = { has_idea = NATO_member }
-						NOT = { tag = USA }
-						has_opinion = { target = USA value < -100 }
+						has_government = neutrality
+						NOT = { is_in_array = { ruling_party = 12 } }
 					}
 				}
 			}
+			#Baltic countries will only leave if Emerging
 			modifier = {
-				factor = 0
+				add = 1000
 				OR = {
-					original_tag = TUR #Turks
-					original_tag = HUN #Hungary
-					original_tag = GRE #Greece
-					original_tag = EST #Estonia
-					original_tag = LAT #Latvia
-					original_tag = LIT #Lithuania
+					original_tag = EST
+					original_tag = LAT
+					original_tag = LIT
 				}
 				OR = {
-					OR = {
-						has_government = neutrality
-						has_government = nationalist
-						has_government = democratic
-						has_government = communism
-					}
-					OR = {
-						if = {
-							limit = { USA = { has_idea = NATO_member } }
-							has_opinion = { target = USA value > 25 }
-						}
-						if = {
-							limit = { ENG = { has_idea = NATO_member } }
-							has_opinion = { target = ENG value > 25 }
-						}
-						if = {
-							limit = { FRA = { has_idea = NATO_member } }
-							has_opinion = { target = FRA value > 25 }
-						}
-						if = {
-							limit = { GER = { has_idea = NATO_member } }
-							has_opinion = { target = GER value > 25 }
-						}
-						if = {
-							limit = { ITA = { has_idea = NATO_member } }
-							has_opinion = { target = ITA value > 25 }
-						}
-						if = {
-							limit = { SPR = { has_idea = NATO_member } }
-							has_opinion = { target = SPR value > 25 }
-						}
-					}
-
+					has_government = communism
+					has_government = fascism
 				}
+			}
+			#Hungary and Norway leaves if not Western or Non-Aligned
+			modifier = {
+				add = 1000
+				OR = {
+					original_tag = HUN
+					original_tag = NOR
+				}
+				NOT = { has_government = democratic }
+				NOT = { has_government = neutrality }
 			}
 		}
 	}
@@ -127,31 +92,24 @@ NATO_decisions = {
 			remove_ideas = Major_Non_NATO_Ally
 			clr_country_flag = Major_Non_NATO_Ally
 			remove_from_tech_sharing_group = Major_Non_NATO_Ally_Share
-			every_other_country = {
-				limit = { tag = usa }
-				add_opinion_modifier = { target = ROOT modifier = left_alliance }
+
+			USA = {
+				add_opinion_modifier = { target = PREV modifier = left_alliance }
 			}
+
+			#news_event = { id = NATO.6 hours = 6 }
+
+			# Remove opinion modifiers.
 			every_other_country = {
 				limit = {
 					has_opinion_modifier = Major_Non_NATO_Ally
 				}
-				remove_opinion_modifier = { target = ROOT modifier = Major_Non_NATO_Ally }
-			}
-			hidden_effect = {
-				#news_event = { id = NATO.6 hours = 6 }
 
-				# Remove MY modifier to others.
-				every_other_country = {
-					limit = {
-						has_opinion_modifier = Major_Non_NATO_Ally
-					}
-					ROOT = { remove_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally } }
+				remove_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally }
+				hidden_effect = {
+					PREV = { remove_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally } }
 				}
 			}
-		}
-
-		ai_will_do = {
-			factor = 0
 		}
 	}
 
@@ -160,11 +118,7 @@ NATO_decisions = {
 		icon = GFX_decision_generic_join_nato
 
 		available = {
-			NOT = { has_idea = NATO_member }
 			has_government = democratic
-			hidden_trigger = {
-				NOT = { has_country_flag = NATO_Aspirant }
-			}
 		}
 
 		visible = {
@@ -176,10 +130,12 @@ NATO_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision become_NATO_aspirant"
-			every_other_country = {
-				limit = { has_idea = NATO_member }
+			for_each_scope_loop = {
+				array = global.nato_members
+
 				country_event = NATO.7
 			}
+
 			set_country_flag = NATO_Aspirant
 		}
 
@@ -244,7 +200,6 @@ NATO_decisions = {
 		ai_will_do = {
 			factor = 10
 		}
-
 	}
 
 	ratify_country_accession = {
@@ -255,13 +210,6 @@ NATO_decisions = {
 
 		target_trigger = {
 			FROM = { has_country_flag = NATO_Accession_Voting }
-		}
-
-		available = {
-			has_idea = NATO_member
-			hidden_trigger = {
-				NOT = { has_country_flag = NATO_Ratified_@FROM }
-			}
 		}
 
 		visible = {
@@ -298,48 +246,48 @@ NATO_decisions = {
 		}
 
 		available = {
-			hidden_trigger = {
-				has_country_flag = NATO_Accession_Voting
-			}
 			custom_trigger_tooltip = {
 				tooltip = TT_ALL_NATO_MEMBERS_RATIFIED
-				NOT = {
-					any_other_country = {
-						has_idea = NATO_member
-						NOT = { has_country_flag = NATO_Ratified_@ROOT }
-					}
+
+				# Check if all members in nato has ratified the accenssion.
+				all_of_scopes = {
+					array = global.nato_members
+
+					has_country_flag = NATO_Ratified_@ROOT
 				}
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision join_NATO"
-			add_ideas = NATO_member
-			add_to_tech_sharing_group = NATO_Tech_Share
+
+			# Join NATO.
+			NATO_join = yes
+
+			# Remove the canditate stuff.
 			hidden_effect = {
 				clr_country_flag = NATO_Accession_Voting
 				remove_from_array = {
 					global.NATO_Accession_Candidates = THIS
 				}
 				clr_country_flag = NATO_Aspirant
-				every_country = {
-					limit = {
-						has_idea = NATO_member
-					}
+
+				for_each_scope_loop = {
+					array = global.nato_members
+
 					clr_country_flag = NATO_Ratified_@ROOT
 				}
+
 				if = {
 					limit = { has_idea = Major_Non_NATO_Ally }
 					remove_ideas = Major_Non_NATO_Ally
 				}
 			}
-			hidden_effect = { news_event = { id = NATO.8 hours = 6 } }
 		}
 
 		ai_will_do = {
 			factor = 10
 		}
-
 	}
 
 	show_non_ratified_countries = {
@@ -360,7 +308,6 @@ NATO_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision show_non_ratified_countries"
 			NATO_show_non_ratified_countries = yes
 		}
-
 	}
 
 	call_nato_to_arms = {
@@ -421,7 +368,6 @@ NATO_decisions = {
 		ai_will_do = {
 			factor = 10
 		}
-
 	}
 
 	nato_enhance_forward_presence_brigade = {

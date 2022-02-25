@@ -13,6 +13,7 @@ sco_category = {
 				NOT = { has_completed_focus = CHI_Development_Assistance }
 			}
 			FROM = { is_sco = yes }
+			is_sco = yes
 		}
 
 		available = {
@@ -68,6 +69,8 @@ sco_category = {
 			}
 		}
 
+		days_re_enable = 365
+
 		ai_will_do = {
 			factor = 1
 		}
@@ -100,7 +103,7 @@ sco_category = {
 		target_trigger = {
 			country_exists = FROM
 			FROM = {
-				check_variable = { gdp_capita < ROOT.gdp_capita }
+				check_variable = { gdp_per_capita < ROOT.gdp_per_capita }
 			}
 			NOT = {
 				original_tag = CHI
@@ -127,6 +130,8 @@ sco_category = {
 
 		days_remove = 90
 
+		days_re_enable = 365
+
 		remove_effect = {
 			FROM = {
 				generic_grant_3_percent_influence_of_ROOT = yes
@@ -146,7 +151,7 @@ sco_category = {
 					has_completed_focus = ITA_attempt_join_aedu
 					CHI = {
 						has_country_flag = accepted_italy_as_sco_candidate
-					}					
+					}
 					NOT = {
 						has_idea = sco_member
 						has_idea = sco_observer
@@ -227,6 +232,7 @@ sco_category = {
 				has_idea = Lacks_International_Recognition
 				has_idea = rival_government
 				has_idea = Massive_International_Sanctions
+				has_idea = International_Sanctions
 			}
 			if = {
 				limit = { CHI = { NOT = { has_completed_focus = CHI_Chinese_Dominance } } }
@@ -275,6 +281,14 @@ sco_category = {
 				check_variable = { Chinese_Aggression < -9 }
 			}
 			modifier = {
+				add = 1
+				check_variable = { Chinese_Aggression < -19 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { Chinese_Aggression < -29 }
+			}
+			modifier = {
 				factor = 0
 				has_war = yes
 			}
@@ -292,6 +306,16 @@ sco_category = {
 				factor = 0
 				PAK = { is_sco = yes }
 				has_war_with = PAK
+			}
+			modifier = {
+				factor = 0
+				original_tag = NKO
+				NKO = {
+					OR = {
+						has_idea = international_sanctions
+						has_idea = Massive_International_Sanctions
+					}
+				}
 			}
 			modifier = {
 				factor = 0
@@ -323,11 +347,6 @@ sco_category = {
 
 		ai_will_do = {
 			factor = 0
-			modifier = {
-				add = 2
-				CHI = { has_government = communism }
-				has_government = democratic
-			}
 			modifier = {
 				add = 1
 				NOT = { has_government = communism }
@@ -474,6 +493,10 @@ sco_category = {
 				check_variable = { Chinese_Aggression < -19 }
 			}
 			modifier = {
+				add = 1
+				check_variable = { Chinese_Aggression < -29 }
+			}
+			modifier = {
 				factor = 0
 				has_war = yes
 			}
@@ -526,11 +549,6 @@ sco_category = {
 
 		ai_will_do = {
 			factor = 0
-			modifier = {
-				add = 2
-				has_government = democratic
-				CHI = { has_government = communism }
-			}
 			modifier = {
 				add = 1
 				NOT = { has_government = communism }
@@ -592,7 +610,8 @@ sco_category = {
 			custom_trigger_tooltip = {
 				tooltip = SCO_peace_tt
 				NOT = {
-					any_country = {
+					any_of_scopes = {
+						array = global.sco_members
 						is_sco = yes
 						has_war = yes
 					}
@@ -601,8 +620,8 @@ sco_category = {
 			custom_trigger_tooltip = {
 				tooltip = SCO_any_drills_tt
 				NOT = {
-					any_country = {
-						is_sco = yes
+					any_of_scopes = {
+						array = global.sco_members
 						OR = {
 							has_country_flag = SCO_joint_exercises_accepted
 							has_country_flag = SCO_joint_exercises_offered
@@ -2701,6 +2720,7 @@ south_china_sea_category = {
 			if = {
 				limit = { original_tag = CHI }
 				526 = { remove_claim_by = MAY }
+				491 = { remove_claim_by = MAY }
 				custom_effect_tooltip = CHI_reduce_aggression_2_tt
 				subtract_from_variable = { chinese_aggression = 2 }
 			}
@@ -2770,6 +2790,7 @@ south_china_sea_category = {
 			if = {
 				limit = { original_tag = CHI }
 				526 = { remove_claim_by = PHI }
+				491 = { remove_claim_by = PHI }
 				custom_effect_tooltip = CHI_reduce_aggression_2_tt
 				subtract_from_variable = { chinese_aggression = 2 }
 			}
@@ -2839,6 +2860,7 @@ south_china_sea_category = {
 			if = {
 				limit = { original_tag = CHI }
 				526 = { remove_claim_by = VIE }
+				491 = { remove_claim_by = VIE }
 				custom_effect_tooltip = CHI_reduce_aggression_2_tt
 				subtract_from_variable = { chinese_aggression = 2 }
 			}
@@ -3157,9 +3179,7 @@ one_china_category = {
 			statehood_show_recognised_ROC = yes
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
+
 	}
 
 	resubmit_roadmap = {
@@ -3789,7 +3809,8 @@ xinjiang_category = {
 					max = 100
 				}
 			}
-			increase_communist_cadres_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_communist_cadres_opinion = yes
 			log = "[GetDateText]: [This.GetName]: decision increase_restrictions_on_the_uighur_language executed"
 		}
 	}
@@ -3830,7 +3851,8 @@ xinjiang_category = {
 				}
 			}
 			clr_country_flag = restricted_uighur_language
-			decrease_communist_cadres_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_communist_cadres_opinion = yes
 			log = "[GetDateText]: [This.GetName]: decision reduce_restrictions_on_the_uighur_language executed"
 		}
 	}
@@ -3876,7 +3898,8 @@ xinjiang_category = {
 					max = 100
 				}
 			}
-			increase_communist_cadres_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_communist_cadres_opinion = yes
 			clr_country_flag = dissidents_released
 			log = "[GetDateText]: [This.GetName]: decision arrest_dissidents executed"
 		}
@@ -3919,7 +3942,8 @@ xinjiang_category = {
 					max = 100
 				}
 			}
-			decrease_communist_cadres_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_communist_cadres_opinion = yes
 			set_country_flag = dissidents_released
 			log = "[GetDateText]: [This.GetName]: decision release_dissidents executed"
 		}
@@ -4439,7 +4463,8 @@ hongkong_category = {
 
 		complete_effect = {
 			add_command_power = -40
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 			log = "[GetDateText]: [This.GetName]: decision deploy_troops executed"
 		}
 
@@ -4921,6 +4946,71 @@ hongkong_category = {
 				remove_ideas = Hong_Kong_Protests_03
 			}
 			HKG = { clr_country_flag = troops_deployed }
+		}
+	}
+}
+
+invigorate_country_through_STE_category = {
+
+	strategy_of_invigorating_through_STE = {
+
+		allowed = { original_tag = CHI }
+
+		icon = GFX_decision_generic_research
+
+		is_good = yes
+
+		days_mission_timeout = 730
+		fire_only_once = yes
+
+		activation = {
+			has_completed_focus = CHI_Invigorate_Country_Through_STE
+		}
+
+		available = {
+			always = no
+		}
+
+		timeout_effect = {
+			add_research_slot = 1
+			if = {
+				limit = {
+					has_idea = CHI_Invigorate_Country_Through_STE1
+				}
+				remove_ideas = CHI_Invigorate_Country_Through_STE1
+			}
+		}
+	}
+
+	increase_research_funds = {
+		icon = GFX_decision_category_debt_payments
+
+		available = {
+			has_completed_focus = CHI_Invigorate_Country_Through_STE
+		}
+
+		visible = {
+			always = yes
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.4 }
+		}
+
+		custom_cost_text = cost_0_5
+
+		days_remove = 75
+
+		days_re_enable = 30
+
+        modifier = {
+			research_speed_factor= 0.02
+        }
+
+		complete_effect = {
+			subtract_from_variable = { treasury = 0.5 }
+		}
+		remove_effect = {
 		}
 	}
 }

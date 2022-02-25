@@ -148,10 +148,6 @@ ethnic_insurgency_category = {
 				}
 			}
 		}
-
-		ai_will_do = {
-			factor = 0
-		}
 	}
 
 	BRM_ceasefire_KAC = {
@@ -1451,32 +1447,36 @@ ethnic_insurgency_category = {
 		}
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_influence_0_tt
-				OR = {
-					ROOT = {
-						set_temp_variable = { temp_idx = -1 }
-						any_of = {
-							array = influence_array
-							value = v
-							index = i
-							if = {
-								limit = { var:v = { tag = BRM } }
-								set_temp_variable = { temp_idx = i }
-								always = yes
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = 11_BRM_influence_0_tt
+					OR = {
+						ROOT = {
+							set_temp_variable = { temp_idx = -1 }
+							any_of = {
+								array = influence_array
+								value = v
+								index = i
+								if = {
+									limit = { var:v = { tag = BRM } }
+									set_temp_variable = { temp_idx = i }
+									always = yes
+								}
+								else = { always = no }
 							}
-							else = { always = no }
+							check_variable = { temp_idx > -1 }
+							check_variable = { influence_array_calc^temp_idx = 0 }
 						}
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx = 0 }
-					}
-					NOT = {
-						is_in_array = {
-							array = influence_array
-							value = BRM
+						NOT = {
+							is_in_array = {
+								array = influence_array
+								value = BRM
+							}
 						}
 					}
 				}
+				BRM = { is_subject = yes }
+				BRM = { exists = no }
 			}
 		}
 
@@ -1530,9 +1530,6 @@ ethnic_insurgency_category = {
 				set_country_flag = original_owner_@FROM
 			}
 			CHI = { set_country_flag = original_owner_@FROM }
-			set_rule = {
-				can_join_factions = yes
-			}
 		}
 
 		ai_will_do = {
@@ -1560,7 +1557,8 @@ BRM_sangha_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRM_impose_state_religion"
 			add_ideas = Buddhism_Official
-			increase_the_priesthood_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
 		}
 	}
 
@@ -1579,7 +1577,8 @@ BRM_sangha_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRM_remove_state_religion"
 			remove_ideas = Buddhism_Official
-			decrease_the_priesthood_opinion = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_priesthood_opinion = yes
 		}
 
 		days_remove = 30
@@ -1614,57 +1613,53 @@ BRM_sangha_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRM_minor_funding"
-			subtract_from_variable = { treasury = 0.5 }
-			if = {
-				limit = { has_country_flag = indifferent_the_priesthood }
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			if = { limit = { indifferent_the_priesthood = yes }
 				random_list = {
 					25 = {
-						increase_the_priesthood_opinion = yes
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
 					}
-
 					75 = {
-					add_political_power = -100
+						add_political_power = -100
 					}
 				}
 			}
-			if = {
-				limit = { has_country_flag = negative_the_priesthood }
+			else_if = { limit = { negative_the_priesthood = yes }
 				random_list = {
 					20 = {
-						increase_the_priesthood_opinion = yes
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
 					}
-
 					80 = {
-					add_political_power = -100
+						add_political_power = -100
 					}
 				}
 			}
-			if = {
-				limit = { has_country_flag = hostile_the_priesthood }
+			else_if = { limit = { hostile_the_priesthood = yes }
 				random_list = {
 					10 = {
-						increase_the_priesthood_opinion = yes
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
 					}
-
 					90 = {
-					add_political_power = -100
+						add_political_power = -100
 					}
 				}
 			}
-			if = {
-				limit = { has_country_flag = positive_the_priesthood }
+			else_if = { limit = { positive_the_priesthood = yes }
 				random_list = {
 					30 = {
-						increase_the_priesthood_opinion = yes
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
 					}
-
 					70 = {
-					add_political_power = -100
+						add_political_power = -100
 					}
 				}
 			}
-			if = {
-				limit = { has_country_flag = enthusiastic_the_priesthood }
+			else_if = { limit = { enthusiastic_the_priesthood = yes }
 				add_political_power = 50
 			}
 		}
@@ -1700,58 +1695,54 @@ BRM_sangha_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRM_moderate_funding"
-			subtract_from_variable = { treasury = 2 }
-			if = {
-				limit = { has_country_flag = indifferent_the_priesthood }
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			if = { limit = { indifferent_the_priesthood = yes }
 				random_list = {
-					50 = {
-						increase_the_priesthood_opinion = yes
+					25 = {
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
 					}
-
-					50 = {
-					add_political_power = -100
+					75 = {
+						add_political_power = -100
 					}
 				}
 			}
-			if = {
-				limit = { has_country_flag = negative_the_priesthood }
+			else_if = { limit = { negative_the_priesthood = yes }
 				random_list = {
-					40 = {
-						increase_the_priesthood_opinion = yes
+					20 = {
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
 					}
-
-					60 = {
-					add_political_power = -100
+					80 = {
+						add_political_power = -100
 					}
 				}
 			}
-			if = {
-				limit = { has_country_flag = hostile_the_priesthood }
+			else_if = { limit = { hostile_the_priesthood = yes }
+				random_list = {
+					10 = {
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
+					}
+					90 = {
+						add_political_power = -100
+					}
+				}
+			}
+			else_if = { limit = { positive_the_priesthood = yes }
 				random_list = {
 					30 = {
-						increase_the_priesthood_opinion = yes
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
 					}
-
 					70 = {
-					add_political_power = -100
+						add_political_power = -100
 					}
 				}
 			}
-			if = {
-				limit = { has_country_flag = positive_the_priesthood }
-				random_list = {
-					60 = {
-						increase_the_priesthood_opinion = yes
-					}
-
-					40 = {
-					add_political_power = -100
-					}
-				}
-			}
-			if = {
-				limit = { has_country_flag = enthusiastic_the_priesthood }
-				add_political_power = 150
+			else_if = { limit = { enthusiastic_the_priesthood = yes }
+				add_political_power = 50
 			}
 		}
 
@@ -1786,58 +1777,54 @@ BRM_sangha_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRM_major_funding"
-			subtract_from_variable = { treasury = 5 }
-			if = {
-				limit = { has_country_flag = indifferent_the_priesthood }
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			if = { limit = { indifferent_the_priesthood = yes }
 				random_list = {
-					75 = {
-						increase_the_priesthood_opinion = yes
-					}
-
 					25 = {
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
+					}
+					75 = {
 						add_political_power = -100
 					}
 				}
 			}
-			if = {
-				limit = { has_country_flag = negative_the_priesthood }
+			else_if = { limit = { negative_the_priesthood = yes }
 				random_list = {
-					60 = {
-						increase_the_priesthood_opinion = yes
-					}
-
-					40 = {
-					add_political_power = -100
-					}
-				}
-			}
-			if = {
-				limit = { has_country_flag = hostile_the_priesthood }
-				random_list = {
-					50 = {
-						increase_the_priesthood_opinion = yes
-					}
-
-					50 = {
-					add_political_power = -100
-					}
-				}
-			}
-			if = {
-				limit = { has_country_flag = positive_the_priesthood }
-				random_list = {
-					80 = {
-						increase_the_priesthood_opinion = yes
-					}
-
 					20 = {
-					add_political_power = -100
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
+					}
+					80 = {
+						add_political_power = -100
 					}
 				}
 			}
-			if = {
-				limit = { has_country_flag = enthusiastic_the_priesthood }
-				add_political_power = 250
+			else_if = { limit = { hostile_the_priesthood = yes }
+				random_list = {
+					10 = {
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
+					}
+					90 = {
+						add_political_power = -100
+					}
+				}
+			}
+			else_if = { limit = { positive_the_priesthood = yes }
+				random_list = {
+					30 = {
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_priesthood_opinion = yes
+					}
+					70 = {
+						add_political_power = -100
+					}
+				}
+			}
+			else_if = { limit = { enthusiastic_the_priesthood = yes }
+				add_political_power = 50
 			}
 		}
 
@@ -1898,13 +1885,14 @@ BRM_Administrative_Decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRM_begin_construction_capital"
-			subtract_from_variable = { treasury = 4 }
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
 		}
 
 		days_remove = 100
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove BRM_begin_construction_capital"
-			set_capital = 505
+			set_capital = { state = 505 }
 			add_ideas = Strategic_Capital
 		}
 

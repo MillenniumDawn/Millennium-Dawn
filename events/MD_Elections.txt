@@ -29,6 +29,18 @@ news_event = {
 
 		add_political_power = 25
 
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
+
 		if = {
 			limit = {
 				is_North_America = yes
@@ -112,7 +124,7 @@ news_event = {
 			limit = { tag = ITA }
 				reforme_expectance_government_change_update = yes
 				calculate_abandon_coalition_threshold = yes
-				remove_gov_crisis_ai_flags	= yes		
+				remove_gov_crisis_ai_flags	= yes
 		}
 	}
 }
@@ -144,6 +156,7 @@ country_event = {
 		custom_effect_tooltip = coalition_pass_dismantle_tt
 		custom_effect_tooltip = coalition_pass_pol_change_0_tt
 		set_leader = yes #set in decision which party is selected
+		set_variable = { current_term = 0 }
 		update_government_coalition_strength = yes
 		clear_coalition_count_ideas = yes
 	}
@@ -151,12 +164,7 @@ country_event = {
 	option = {
 		name = coalition_pass.0.b
 		log = "[GetDateText]: [This.GetName]: coalition_pass.0.b executed"
-		meta_effect = {
-			text = {
-				clr_country_flag = [META_SET_PARTY1]
-			}
-			META_SET_PARTY1 = "[meta_set_ideology1]"
-		}
+		clear_max_index_1 = yes
 	}
 }
 
@@ -185,6 +193,7 @@ country_event = {
 		custom_effect_tooltip = coalition_pass_dismantle_tt
 		custom_effect_tooltip = coalition_pass_pol_change_1_tt
 		set_leader = yes #set in desicion which party is selected
+		set_variable = { current_term = 0 }
 		update_government_coalition_strength = yes
 		clear_coalition_count_ideas = yes
 	}
@@ -192,12 +201,7 @@ country_event = {
 	option = {
 		name = coalition_pass.1.b
 		log = "[GetDateText]: [This.GetName]: coalition_pass.1.b executed"
-		meta_effect = {
-				text = {
-					clr_country_flag = [META_SET_PARTY2]
-				}
-				META_SET_PARTY2 = "[meta_set_ideology2]"
-		}
+		clear_max_index_2 = yes
 	}
 }
 
@@ -760,9 +764,6 @@ country_event = {
 
 	is_triggered_only = yes
 
-	immediate = {
-
-	}
 
 	option = {
 		name = coalition.11.a #add to coalition
@@ -1424,7 +1425,7 @@ country_event = {
 	desc = MD4_election_campaign.0.d
 	picture = GFX_election_day
 	is_triggered_only = yes
-	
+
 	trigger = {
 		NOT = { has_country_flag = generic_election_killswitch }
 	}
@@ -1462,12 +1463,7 @@ country_event = {
 			value = v
 			multiply_variable = { party_pop_array^v = ads_budget_effect?1 }
 		}
-		# print_variables = {
-			# file = log_filetest
-			# text = header_text
-			# append = yes
-			# print_global = yes
-		# }
+
 		hidden_effect = {
 			recalculate_party = yes
 			clear_variable = ads_budget_effect
@@ -1475,8 +1471,7 @@ country_event = {
 	}
 }
 
-
-#Negative campaign against others
+# Negative campaign against others
 country_event = {
 	id = MD4_election_campaign.1
 	immediate = { log = "[GetDateText]: [Root.GetName]: event MD4_election_campaign.1" }
@@ -1487,7 +1482,7 @@ country_event = {
 	is_triggered_only = yes
 
 
-	### Attack the Salafists ###
+	# Attack the Salafists in the Nation
 	option = {
 		name = MD4_election_campaign.1.b
 		log = "[GetDateText]: [This.GetName]: MD4_election_campaign.1.b executed"
@@ -1496,70 +1491,43 @@ country_event = {
 			NOT = { has_government = fascism }
 			fascism > 0.05
 		}
+		# Check on Funding Costs
 		if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count < 5 }
 			}
 			add_popularity = { ideology = fascism popularity = -0.01 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 4
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 8
-				}
+				check_variable = { campaign_funding_count > 4 }
+				check_variable = { campaign_funding_count < 8 }
 			}
 			add_popularity = { ideology = fascism popularity = -0.02 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 7
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 11
-				}
+				check_variable = { campaign_funding_count > 7 }
+				check_variable = { campaign_funding_count < 11 }
 			}
 			add_popularity = { ideology = fascism popularity = -0.04 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 10
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 15
-				}
+				check_variable = { campaign_funding_count > 10 }
+				check_variable = { campaign_funding_count < 15 }
 			}
 			add_popularity = { ideology = fascism popularity = -0.06 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 14
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 17
-				}
+				check_variable = { campaign_funding_count > 14 }
+				check_variable = { campaign_funding_count < 17 }
 			}
 			add_popularity = { ideology = fascism popularity = -0.08 }
+		}
+		else = {
+			add_popularity = { ideology = fascism popularity = -0.10 }
 		}
 		recalculate_party = yes
 		random_list = {
@@ -1568,7 +1536,7 @@ country_event = {
 		}
 	}
 
-	### Attack the nationalist ###
+	# Attack the Nationalists
 	option = {
 		name = MD4_election_campaign.1.c
 		log = "[GetDateText]: [This.GetName]: MD4_election_campaign.1.c executed"
@@ -1577,71 +1545,45 @@ country_event = {
 			NOT = { has_government = nationalist }
 			nationalist > 0.10
 		}
+		# Check on Funding Costs
 		if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count < 5 }
 			}
 			add_popularity = { ideology = nationalist popularity = -0.01 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 4
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 8
-				}
+				check_variable = { campaign_funding_count > 4 }
+				check_variable = { campaign_funding_count < 8 }
 			}
 			add_popularity = { ideology = nationalist popularity = -0.02 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 7
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 11
-				}
+				check_variable = { campaign_funding_count > 7 }
+				check_variable = { campaign_funding_count < 11 }
 			}
 			add_popularity = { ideology = nationalist popularity = -0.04 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 10
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 15
-				}
+				check_variable = { campaign_funding_count > 10 }
+				check_variable = { campaign_funding_count < 15 }
 			}
 			add_popularity = { ideology = nationalist popularity = -0.06 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 14
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 17
-				}
+				check_variable = { campaign_funding_count > 14 }
+				check_variable = { campaign_funding_count < 17 }
 			}
 			add_popularity = { ideology = nationalist popularity = -0.08 }
 		}
+		else = {
+			add_popularity = { ideology = nationalist popularity = -0.10 }
+		}
+
 		recalculate_party = yes
 		random_list = {
 			75 = { custom_effect_tooltip = MD_election_campaign_no_tt }
@@ -1649,7 +1591,7 @@ country_event = {
 		}
 	}
 
-	### Attack the Non Alligned's ###
+	# Attack the Non Aligned
 	option = {
 		name = MD4_election_campaign.1.e
 		log = "[GetDateText]: [This.GetName]: MD4_election_campaign.1.e executed"
@@ -1658,71 +1600,45 @@ country_event = {
 			NOT = { has_government = neutrality }
 			neutrality > 0.12
 		}
+		# Check on Funding Costs
 		if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count < 5 }
 			}
 			add_popularity = { ideology = neutrality popularity = -0.01 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 4
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 8
-				}
+				check_variable = { campaign_funding_count > 4 }
+				check_variable = { campaign_funding_count < 8 }
 			}
 			add_popularity = { ideology = neutrality popularity = -0.02 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 7
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 11
-				}
+				check_variable = { campaign_funding_count > 7 }
+				check_variable = { campaign_funding_count < 11 }
 			}
 			add_popularity = { ideology = neutrality popularity = -0.04 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 10
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 15
-				}
+				check_variable = { campaign_funding_count > 10 }
+				check_variable = { campaign_funding_count < 15 }
 			}
 			add_popularity = { ideology = neutrality popularity = -0.06 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 14
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 17
-				}
+				check_variable = { campaign_funding_count > 14 }
+				check_variable = { campaign_funding_count < 17 }
 			}
 			add_popularity = { ideology = neutrality popularity = -0.08 }
 		}
+		else = {
+			add_popularity = { ideology = neutrality popularity = -0.10 }
+		}
+
 		recalculate_party = yes
 		random_list = {
 			75 = { custom_effect_tooltip = MD_election_campaign_no_tt }
@@ -1739,70 +1655,43 @@ country_event = {
 			NOT = { has_government = communism }
 			communism > 0.12
 		}
+		# Check on Funding Costs
 		if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count < 5 }
 			}
 			add_popularity = { ideology = communism popularity = -0.01 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 4
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 8
-				}
+				check_variable = { campaign_funding_count > 4 }
+				check_variable = { campaign_funding_count < 8 }
 			}
 			add_popularity = { ideology = communism popularity = -0.02 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 7
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 11
-				}
+				check_variable = { campaign_funding_count > 7 }
+				check_variable = { campaign_funding_count < 11 }
 			}
 			add_popularity = { ideology = communism popularity = -0.04 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 10
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 15
-				}
+				check_variable = { campaign_funding_count > 10 }
+				check_variable = { campaign_funding_count < 15 }
 			}
 			add_popularity = { ideology = communism popularity = -0.06 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 14
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 17
-				}
+				check_variable = { campaign_funding_count > 14 }
+				check_variable = { campaign_funding_count < 17 }
 			}
 			add_popularity = { ideology = communism popularity = -0.08 }
+		}
+		else = {
+			add_popularity = { ideology = communism popularity = -0.10 }
 		}
 		recalculate_party = yes
 		random_list = {
@@ -1819,70 +1708,43 @@ country_event = {
 			NOT = { has_government = democratic }
 			democratic > 0.12
 		}
+		# Check on Funding Costs
 		if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count < 5 }
 			}
 			add_popularity = { ideology = democratic popularity = -0.01 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 4
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 8
-				}
+				check_variable = { campaign_funding_count > 4 }
+				check_variable = { campaign_funding_count < 8 }
 			}
 			add_popularity = { ideology = democratic popularity = -0.02 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 7
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 11
-				}
+				check_variable = { campaign_funding_count > 7 }
+				check_variable = { campaign_funding_count < 11 }
 			}
 			add_popularity = { ideology = democratic popularity = -0.04 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 10
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 15
-				}
+				check_variable = { campaign_funding_count > 10 }
+				check_variable = { campaign_funding_count < 15 }
 			}
 			add_popularity = { ideology = democratic popularity = -0.06 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 14
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 17
-				}
+				check_variable = { campaign_funding_count > 14 }
+				check_variable = { campaign_funding_count < 17 }
 			}
 			add_popularity = { ideology = democratic popularity = -0.08 }
+		}
+		else = {
+			add_popularity = { ideology = democratic popularity = -0.10 }
 		}
 		recalculate_party = yes
 		random_list = {
@@ -1936,14 +1798,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD4_election_campaign.3.a executed"
 		if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count < 5 }
 			}
 			add_popularity = { ideology = fascism popularity = 0.02 }
 			for_each_loop = {
@@ -1953,16 +1808,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 4
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 8
-				}
+				check_variable = { campaign_funding_count > 4 }
+				check_variable = { campaign_funding_count < 8 }
 			}
 			add_popularity = { ideology = fascism popularity = 0.04 }
 			for_each_loop = {
@@ -1972,16 +1821,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 7
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 11
-				}
+				check_variable = { campaign_funding_count > 7 }
+				check_variable = { campaign_funding_count < 11 }
 			}
 			add_popularity = { ideology = fascism popularity = 0.08 }
 			for_each_loop = {
@@ -1991,16 +1834,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 10
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 15
-				}
+				check_variable = { campaign_funding_count > 10 }
+				check_variable = { campaign_funding_count < 15 }
 			}
 			add_popularity = { ideology = fascism popularity = 0.12 }
 			for_each_loop = {
@@ -2010,16 +1847,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 14
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 17
-				}
+				check_variable = { campaign_funding_count > 14 }
+				check_variable = { campaign_funding_count < 17 }
 			}
 			add_popularity = { ideology = fascism popularity = 0.16 }
 			for_each_loop = {
@@ -2047,14 +1878,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD4_election_campaign.4.a executed"
 		if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count < 5 }
 			}
 			add_popularity = { ideology = nationalist popularity = 0.02 }
 			for_each_loop = {
@@ -2064,16 +1888,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 4
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 8
-				}
+				check_variable = { campaign_funding_count > 4 }
+				check_variable = { campaign_funding_count < 8 }
 			}
 			add_popularity = { ideology = nationalist popularity = 0.04 }
 			for_each_loop = {
@@ -2083,16 +1901,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 7
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 11
-				}
+				check_variable = { campaign_funding_count > 7 }
+				check_variable = { campaign_funding_count < 11 }
 			}
 			add_popularity = { ideology = nationalist popularity = 0.08 }
 			for_each_loop = {
@@ -2102,16 +1914,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 10
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 15
-				}
+				check_variable = { campaign_funding_count > 10 }
+				check_variable = { campaign_funding_count < 15 }
 			}
 			add_popularity = { ideology = nationalist popularity = 0.12 }
 			for_each_loop = {
@@ -2121,16 +1927,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 14
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 17
-				}
+				check_variable = { campaign_funding_count > 14 }
+				check_variable = { campaign_funding_count < 17 }
 			}
 			add_popularity = { ideology = nationalist popularity = 0.16 }
 			for_each_loop = {
@@ -2158,14 +1958,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD4_election_campaign.5.a executed"
 		if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 4
-				}
+				check_variable = { campaign_funding_count < 5 }
 			}
 			add_popularity = { ideology = neutrality popularity = 0.02 }
 			for_each_loop = {
@@ -2175,16 +1968,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 4
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 8
-				}
+				check_variable = { campaign_funding_count > 4 }
+				check_variable = { campaign_funding_count < 8 }
 			}
 			add_popularity = { ideology = neutrality popularity = 0.04 }
 			for_each_loop = {
@@ -2194,16 +1981,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 7
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 11
-				}
+				check_variable = { campaign_funding_count > 7 }
+				check_variable = { campaign_funding_count < 11 }
 			}
 			add_popularity = { ideology = neutrality popularity = 0.08 }
 			for_each_loop = {
@@ -2213,16 +1994,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 10
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 15
-				}
+				check_variable = { campaign_funding_count > 10 }
+				check_variable = { campaign_funding_count < 15 }
 			}
 			add_popularity = { ideology = neutrality popularity = 0.12 }
 			for_each_loop = {
@@ -2232,16 +2007,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 14
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 17
-				}
+				check_variable = { campaign_funding_count > 14 }
+				check_variable = { campaign_funding_count < 17 }
 			}
 			add_popularity = { ideology = neutrality popularity = 0.16 }
 			for_each_loop = {
@@ -2269,14 +2038,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD4_election_campaign.6.a executed"
 		if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count < 5 }
 			}
 			add_popularity = { ideology = communism popularity = 0.02 }
 			for_each_loop = {
@@ -2286,16 +2048,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count > 4 }
+				check_variable = { campaign_funding_count < 8 }
 			}
 			add_popularity = { ideology = communism popularity = 0.04 }
 			for_each_loop = {
@@ -2305,16 +2061,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count > 7 }
+				check_variable = { campaign_funding_count < 11 }
 			}
 			add_popularity = { ideology = communism popularity = 0.08 }
 			for_each_loop = {
@@ -2324,16 +2074,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count > 10 }
+				check_variable = { campaign_funding_count < 15 }
 			}
 			add_popularity = { ideology = communism popularity = 0.12 }
 			for_each_loop = {
@@ -2343,16 +2087,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count > 14 }
+				check_variable = { campaign_funding_count < 17 }
 			}
 			add_popularity = { ideology = communism popularity = 0.16 }
 			for_each_loop = {
@@ -2380,14 +2118,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD4_election_campaign.7.a executed"
 		if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count < 5 }
 			}
 			add_popularity = { ideology = democratic popularity = 0.02 }
 			for_each_loop = {
@@ -2397,16 +2128,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count > 4 }
+				check_variable = { campaign_funding_count < 8 }
 			}
 			add_popularity = { ideology = democratic popularity = 0.04 }
 			for_each_loop = {
@@ -2416,16 +2141,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count > 7 }
+				check_variable = { campaign_funding_count < 11 }
 			}
 			add_popularity = { ideology = democratic popularity = 0.08 }
 			for_each_loop = {
@@ -2435,16 +2154,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count > 10 }
+				check_variable = { campaign_funding_count < 15 }
 			}
 			add_popularity = { ideology = democratic popularity = 0.12 }
 			for_each_loop = {
@@ -2454,16 +2167,10 @@ country_event = {
 			}
 			recalculate_party = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				has_country_flag = {
-					flag = campaign_funding_count
-					value > 1
-				}
-				has_country_flag = {
-					flag = campaign_funding_count
-					value < 5
-				}
+				check_variable = { campaign_funding_count > 14 }
+				check_variable = { campaign_funding_count < 17 }
 			}
 			add_popularity = { ideology = democratic popularity = 0.16 }
 			for_each_loop = {
@@ -2556,7 +2263,7 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		clr_country_flag = campaign_funding_count
+		clear_variable = campaign_funding_count
 		hold_elections = yes
 		#any single party is over election threshold - set them to rule immediately
 		if = {
@@ -2682,7 +2389,7 @@ country_event = {
 				}
 				country_event = { id = MD4_election.5 }
 			}
-			else_if = {
+			else = {
 				country_event = { id = MD4_election.4 }
 			}
 		}
@@ -2700,7 +2407,30 @@ country_event = {
 	id = MD4_election.1
 	immediate = { log = "[GetDateText]: [Root.GetName]: event MD4_election.1" }
 	title = MD4_election.1.t
-	desc = MD4_election.1.d
+	desc = {
+		text = MD4_election.1.d
+		trigger = {
+			OR = {
+				check_variable = {
+					var = current_term
+					value = term_limit
+					compare = not_equals
+				}
+				check_variable = { term_limits = 0 }
+			}
+		}
+	}
+	desc = {
+		text = MD4_election.1.d_term_ended
+		trigger = {
+			check_variable = { term_limit > 0 } #make sure term limits are a thing
+			check_variable = {
+				var = current_term
+				value = term_limit
+				compare = equals
+			}
+		}
+	}
 	picture = GFX_election_rally
 
 	is_triggered_only = yes
@@ -2714,6 +2444,17 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD4_election.1.a executed"
 		add_political_power = 150
 		hidden_effect = { ROOT = { news_event = { days = 1 id = News_MD4_election.0 } } }
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
 		if = {
 			limit = {
 				is_North_America = yes
@@ -2801,7 +2542,27 @@ country_event = {
 	id = MD4_election.2
 	immediate = { log = "[GetDateText]: [Root.GetName]: event MD4_election.2" }
 	title = MD4_election.2.t
-	desc = MD4_election.2.d
+	desc = {
+		text = MD4_election.2.d
+		trigger = {
+			check_variable = {
+				var = current_term
+				value = term_limit
+				compare = not_equals
+			}
+		}
+	}
+	desc = {
+		text = MD4_election.2.d_term_ended
+		trigger = {
+			check_variable = { term_limit > 0 } #make sure term limits are a thing
+			check_variable = {
+				var = current_term
+				value = term_limit
+				compare = equals
+			}
+		}
+	}
 	picture = GFX_election_rally
 	is_triggered_only = yes
 
@@ -2813,6 +2574,17 @@ country_event = {
 		name = MD4_election.2.a
 		log = "[GetDateText]: [This.GetName]: MD4_election.2.a executed"
 		hidden_effect = { ROOT = { news_event = { days = 1 id = News_MD4_election.0 } } }
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
 		if = {
 			limit = {
 				is_North_America = yes
@@ -2930,12 +2702,7 @@ country_event = {
 		hidden_effect = { recalculate_party = yes }
 		#switch to ruling
 		hidden_effect = {
-			meta_effect = {
-				text = {
-					set_country_flag = [META_SET_RULING_PARTY]
-				}
-				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-			}
+			set_ruling_leader = yes
 			set_leader = yes
 		}
 		hidden_effect = { ROOT = { news_event = { days = 1 id = News_MD4_election.2 } } }
@@ -3057,12 +2824,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD4_election.5.a executed"
 		ai_chance = { factor = 0 }
 
-		meta_effect = {
-			text = {
-				set_country_flag = [META_SET_PARTY1]
-			}
-			META_SET_PARTY1 = "[meta_set_ideology1]"
-		}
+		set_max_index_1 = yes
 		hidden_effect = {
 			clear_array = gov_coalition_array
 			clear_array = ruling_party
@@ -3084,12 +2846,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD4_election.5.b executed"
 		ai_chance = { factor = 0 }
 
-		meta_effect = {
-			text = {
-				set_country_flag = [META_SET_PARTY2]
-			}
-			META_SET_PARTY2 = "[meta_set_ideology2]"
-		}
+		set_max_index_2 = yes
 		hidden_effect = {
 				refund_government_coalition = yes #give 75% of invested PP back
 				clear_array = gov_coalition_array
@@ -3113,7 +2870,22 @@ news_event = {
 	id = News_MD4_election.0
 	immediate = { log = "[GetDateText]: [Root.GetName]: event News_MD4_election.0" }
 	title = News_MD4_election.0.t
-	desc = News_MD4_election.0.d
+	desc = {
+		text = News_MD4_election.0.d
+		trigger = {
+			FROM = {
+				check_variable = { current_term > 1 } #not their first term
+			}
+		}
+	}
+	desc = {
+		text = News_MD4_election.0.d_first_term
+		trigger = {
+			FROM = {
+				check_variable = { current_term = 1 } #first term
+			}
+		}
+	}
 	picture = GFX_news_election_rally
 
 	#major = yes
