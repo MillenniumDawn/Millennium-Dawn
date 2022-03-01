@@ -151,7 +151,7 @@
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY = -0.25 -- -0.25
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY_LARGE = -0.45 -- -0.5
 	NDefines.NMilitary.BASE_FORT_PENALTY = -0.075 -- -0.15
-	NDefines.NMilitary.RECON_SKILL_IMPACT = 10 -- 5
+	NDefines.NMilitary.RECON_SKILL_IMPACT = 0.05 -- 5
 	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_IMPACT = -0.65 -- -0.35
 	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_SPEED_IMPACT = -0.3 -- -0.3
 	NDefines.NMilitary.SLOWEST_SPEED = 8 -- 4
