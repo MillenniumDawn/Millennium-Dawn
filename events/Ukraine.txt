@@ -745,6 +745,55 @@ country_event = { ###Kharkiv Pact
 	}
 }
 
+# Servant of the People Forms
+# Meme Ukraine Event -- 5% chance to fire on any given start of 2017
+country_event = {
+	id = ukraine_md.13
+	title = ukraine_md.13.t
+	desc = ukraine_md.13.d
+	picture = GFX_UKR_meme
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = UKR
+		date > 2016.1.1
+	}
+
+	option = {
+		name = ukraine_md.13.a
+		log = "[GetDateText]: [This.GetName]: ukraine_md.13.a executed"
+		set_country_flag = UKR_servant_of_the_people_formed
+		capital_scope = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.01
+			}
+		}
+	}
+}
+
+# Servant of the People
+# Non-Meme Event -- 95% chance to fire at any given start of 2017
+country_event = {
+	id = ukraine_md.14
+	title = ukraine_md.14.t
+	desc = ukraine_md.14.d
+	picture = GFX_UKR_zelenskyy
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = UKR
+		date > 2016.1.1
+	}
+
+	option = {
+		name = ukraine_md.14.a
+		log = "[GetDateText]: [This.GetName]: ukraine_md.14.a executed"
+		set_country_flag = UKR_servant_of_the_people_formed
+	}
+}
+
+
 ############ Revolution Events/Tied to the UKR specific variables
 #New Event goes here/###Euromaidan revolution!
 #Help Event in Decisions to better help#
@@ -930,9 +979,7 @@ news_event = { ##Annexation of the Crimea
 	option = {
 		name = ukraine_news.8.a
 		log = "[GetDateText]: [This.GetName]: ukraine_news.8.a executed"
-		trigger = {
-			tag = UKR
-		}
+		trigger = { tag = UKR }
 	}
 	option = {
 		name = ukraine_news.8.b
@@ -960,48 +1007,14 @@ country_event = { ##End of the Civil War
 	title = ukraine_revolution.3.t
 	desc = ukraine_revolution.3.d
 	picture = GFX_ukraine_revolution1
-
 	trigger = {
 		OR = {
-			AND = {
-				UKR = {
-					has_country_flag = UKR_civil_war_in_the_donbass_flag
-				}
-				OR = {
-					NOT = { country_exists = NOV }
-					UKR = { NOT = { has_war_with = NOV } }
-				}
-				UKR = {
-					owns_state = 693
-				}
-				date < 2016.12.31
-			}
-			AND = {
-				NOV = {
-					has_country_flag = NOV_civil_war_in_the_donbass_flag
-				}
-				OR = {
-					NOV = { NOT = { has_war_with = UKR } }
-					NOT = { country_exists = UKR }
-				}
-				NOV = { owns_state = 693 }
-				date < 2016.12.31
-			}
-			AND = {
-				UKR = { NOT = { has_war_with = NOV } }
-				country_exists = NOV
-				NOV = { NOT = { is_puppet_of = UKR } }
-				date < 2016.12.31
-			}
+			tag = NOV
+			tag = UKR
 		}
 	}
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
-	mean_time_to_happen = {
-		days = 31
-
-	}
 
 	option = {
 		name = ukraine_revolution.3.a
@@ -1043,8 +1056,10 @@ country_event = { ##End of the Civil War
 		name = ukraine_revolution.3.c
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.3.c executed"
 		trigger = {
-			tag = UKR
-			tag = NOV
+			OR = {
+				tag = UKR
+				tag = NOV
+			}
 			country_exists = NOV
 			UKR = { NOT = { has_war_with = NOV } }
 		}
