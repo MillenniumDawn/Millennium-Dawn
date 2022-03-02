@@ -8,6 +8,12 @@
 	@cardoso = 48 #was 42
 	@carwash = 60 #was 52
 
+	# Notes from Birdy:
+	# The mercosur section needs an extreme improvement. The mercosur stuff should be array based and not using every_country
+	# It is better optimized then using every_country. Furthermore, you will want to improve the logical actions in these focuses.
+	# Nations who don't exist should not get free things, as well as you shouldn't be able to court america if you are at war with them.
+
+
 
 	##South American unity focus tree
 	shared_focus = {
@@ -22,34 +28,62 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_americas_unity"
-			add_opinion_modifier = { target = ARG modifier = medium_increase }
-			reverse_add_opinion_modifier = { target = ARG modifier = medium_increase }
-			add_opinion_modifier = { target = BOL modifier = medium_increase }
-			reverse_add_opinion_modifier = { target = BOL modifier = medium_increase }
-			add_opinion_modifier = { target = CHL modifier = medium_increase }
-			reverse_add_opinion_modifier = { target = CHL modifier = medium_increase }
-			add_opinion_modifier = { target = COL modifier = medium_increase }
-			reverse_add_opinion_modifier = { target = COL modifier = medium_increase }
-			add_opinion_modifier = { target = ECU modifier = medium_increase }
-			reverse_add_opinion_modifier = { target = ECU modifier = medium_increase }
-			add_opinion_modifier = { target = GUY modifier = medium_increase }
-			reverse_add_opinion_modifier = { target = GUY modifier = medium_increase }
-			add_opinion_modifier = { target = PAR modifier = medium_increase }
-			reverse_add_opinion_modifier = { target = PAR modifier = medium_increase }
-			add_opinion_modifier = { target = SUR modifier = medium_increase }
-			reverse_add_opinion_modifier = { target = SUR modifier = medium_increase }
-			add_opinion_modifier = { target = URG modifier = medium_increase }
-			reverse_add_opinion_modifier = { target = URG modifier = medium_increase }
-			add_opinion_modifier = { target = VEN modifier = medium_increase }
-			reverse_add_opinion_modifier = { target = VEN modifier = medium_increase }
-			add_opinion_modifier = { target = PRU modifier = medium_increase }
-			reverse_add_opinion_modifier = { target = PRU modifier = medium_increase }
+			# FIXME: Aranha these need to be wrapped in a if country_exists thing. You don't wanna give things to nations that don't exist.
+			if = { limit = { country_exists = ARG }
+				add_opinion_modifier = { target = ARG modifier = medium_increase }
+				reverse_add_opinion_modifier = { target = ARG modifier = medium_increase }
+			}
+			if = { limit = { country_exists = BOL }
+				add_opinion_modifier = { target = BOL modifier = medium_increase }
+				reverse_add_opinion_modifier = { target = BOL modifier = medium_increase }
+			}
+			if = { limit = { country_exists = CHL }
+				add_opinion_modifier = { target = CHL modifier = medium_increase }
+				reverse_add_opinion_modifier = { target = CHL modifier = medium_increase }
+			}
+			if = { limit = { country_exists = COL }
+				add_opinion_modifier = { target = COL modifier = medium_increase }
+				reverse_add_opinion_modifier = { target = COL modifier = medium_increase }
+			}
+			if = { limit = { country_exists = ECU }
+				add_opinion_modifier = { target = ECU modifier = medium_increase }
+				reverse_add_opinion_modifier = { target = ECU modifier = medium_increase }
+			}
+			if = { limit = { country_exists = GUY }
+				add_opinion_modifier = { target = GUY modifier = medium_increase }
+				reverse_add_opinion_modifier = { target = GUY modifier = medium_increase }
+			}
+			if = { limit = { country_exists = PAR }
+				add_opinion_modifier = { target = PAR modifier = medium_increase }
+				reverse_add_opinion_modifier = { target = PAR modifier = medium_increase }
+			}
+			if = { limit = { country_exists = SUR }
+				add_opinion_modifier = { target = SUR modifier = medium_increase }
+				reverse_add_opinion_modifier = { target = SUR modifier = medium_increase }
+			}
+			if = { limit = { country_exists = URG }
+				add_opinion_modifier = { target = URG modifier = medium_increase }
+				reverse_add_opinion_modifier = { target = URG modifier = medium_increase }
+			}
+			if = { limit = { country_exists = VEN }
+				add_opinion_modifier = { target = VEN modifier = medium_increase }
+				reverse_add_opinion_modifier = { target = VEN modifier = medium_increase }
+			}
+			if = { limit = { country_exists = PRU }
+				add_opinion_modifier = { target = PRU modifier = medium_increase }
+				reverse_add_opinion_modifier = { target = PRU modifier = medium_increase }
+			}
 
 			country_event = brazil.17
 		}
 
 		ai_will_do = {
 			factor = 1
+
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
@@ -103,16 +137,9 @@
 		y = 1
 		relative_position_id = BRA_americas_unity
 
-		cost = 10
+		cost = 10 # 70 Days
 
 		prerequisite = { focus = BRA_americas_unity }
-		available = {
-			OR = {
-				country_exists = ARG
-				country_exists = PAR
-				country_exists = URG
-			}
-		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_neighborly_development"
@@ -126,7 +153,6 @@
 			if = { limit = { country_exists = URG }
 				URG = { add_ideas = BRA_idea_mercosur_member_state }
 			}
-
 		}
 
 		ai_will_do = {
@@ -147,6 +173,9 @@
 			add_political_power = 100
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	shared_focus = {
@@ -165,6 +194,9 @@
 			add_political_power = 100
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
 	shared_focus = {
@@ -183,9 +215,12 @@
 			add_ideas = BRA_unasul_member
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
 
-		shared_focus = {
+	shared_focus = {
 		id = BRA_suspend_ven
 		icon = attack_venezuela
 		x = -4
@@ -200,6 +235,7 @@
 		continue_if_invalid = yes
 
 		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BRA_suspend_ven"
 			VEN = {
 				if = {
 					limit = {
@@ -211,8 +247,12 @@
 			}
 		}
 
+		ai_will_do = {
+			factor = 1
+		}
 	}
-		shared_focus = {
+
+	shared_focus = {
 		id = BRA_trade_agreement
 		icon = liberalization
 		x = -2
@@ -234,20 +274,20 @@
 
 	}
 
-		shared_focus = {
+	shared_focus = {
 		id = BRA_discuss_currency
 		icon = coins
 		x = 0
 		y = 1
 		relative_position_id = BRA_mercosur
 		cost = 5
-		prerequisite = { focus = BRA_mercosur}
+		prerequisite = { focus = BRA_mercosur }
 		mutually_exclusive = { }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_discuss_currency"
 			every_country = {
-				limit = {has_idea = BRA_idea_mercosur_member_state}
+				limit = {has_idea = BRA_idea_mercosur_member_state }
 				add_stability = 0.10
 				add_political_power = 100
 			}
@@ -528,10 +568,7 @@
 		available = { NOT = {
 			has_completed_focus = BRA_suspend_ven}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+
 		cancel_if_invalid = yes
 		continue_if_invalid = yes
 
@@ -867,15 +904,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_mercosur }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_mercosur_international_diplomacy"
 			add_political_power = 100
@@ -927,15 +960,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_mercosur_international_diplomacy }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_with_au"
 			every_country = {
@@ -961,15 +990,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_mercosur_international_diplomacy }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_closer_alignment_un"
 			every_country = {
@@ -1000,13 +1025,10 @@
 			has_completed_focus = BRA_unasal
 			has_idea = BRA_unasul_member
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_closer_alignment_un"
 			every_country = {
@@ -1033,15 +1055,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_closer_alignment_un }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_amazon_question"
 			country_event = {
@@ -1066,15 +1084,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_align_with_eu }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_mercosur_eu_trade_agreements"
 			every_country = {
@@ -1099,15 +1113,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_align_with_au }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_agro_agreement"
 			every_country = {
@@ -1136,15 +1146,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_align_with_eu }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_educational_support"
 			every_country = {
@@ -1169,15 +1175,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_closer_alignment_un }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_water_act"
 			every_country = {
@@ -1202,15 +1204,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_align_with_au }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_literacy_act"
 			every_country = {
@@ -1239,15 +1237,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_align_with_eu }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_european_investments"
 			custom_effect_tooltip = BRA_mercosur_market_tt
@@ -1285,15 +1279,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_closer_alignment_un }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BRA_peacekeeping_contributions"
 			every_country = {
@@ -1319,15 +1309,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_align_with_au }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus BRA_mercosur_au_economic_plan"
 			every_country = {
@@ -1361,15 +1347,11 @@
 		prerequisite = { focus = BRA_agro_agreement }
 		prerequisite = { focus = BRA_mercosur_au_economic_plan }
 		prerequisite = { focus = BRA_literacy_act }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_improve_african_infrastructure"
 			every_country = {
@@ -1396,15 +1378,7 @@
 		prerequisite = { focus = BRA_agro_agreement }
 		prerequisite = { focus = BRA_mercosur_au_economic_plan }
 		prerequisite = { focus = BRA_literacy_act }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_invest_in_african_industries"
 			every_country = {
@@ -1430,19 +1404,13 @@
 
 		prerequisite = { focus = BRA_improve_african_infrastructure }
 		prerequisite = { focus = BRA_invest_in_african_industries }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-
-		complete_tooltip = { }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_gain_african_support"
 			add_political_power = 50
-			add_war_support = 0.1
+			add_war_support = 0.03
+			# FIXME: You should never give 10% war support
 		}
 
 		ai_will_do = {
@@ -1463,18 +1431,11 @@
 		prerequisite = { focus = BRA_amazon_question }
 		prerequisite = { focus = BRA_water_act }
 		prerequisite = { focus = BRA_peacekeeping_contributions }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-
-		complete_tooltip = { }
+		search_filters = { FOCUS_FILTER_POLITICAL}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_gather_international_support"
-			add_political_power = 100
+			add_political_power = 75
 		}
 
 		ai_will_do = {
@@ -1495,15 +1456,8 @@
 		prerequisite = { focus = BRA_amazon_question }
 		prerequisite = { focus = BRA_water_act }
 		prerequisite = { focus = BRA_peacekeeping_contributions }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-
-		complete_tooltip = { }
+		search_filters = { FOCUS_FILTER_MANPOWER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_welfare_expansion_for_mercosur"
 			add_manpower = 25000
@@ -1526,29 +1480,28 @@
 		y = 2
 		relative_position_id = BRA_amazon_question
 
-		cost = 5
+		cost = 8.6 # 60 Days
 
 		prerequisite = { focus = BRA_gather_international_support }
 		prerequisite = { focus = BRA_welfare_expansion_for_mercosur }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-
-		complete_tooltip = { }
+		search_filters = { FOCUS_FILTER_STABILITY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_maitain_peace"
+			add_political_power = -200
 			every_country = {
 				limit = { has_idea = BRA_idea_mercosur_member_state }
-				add_stability = 0.1
+				add_stability = 0.05
 			}
+			#FIXME: You need to give some kind of penalty here...
 		}
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0.1
+				has_political_power < 100
+			}
 		}
 	}
 
@@ -1560,33 +1513,31 @@
 		y = 1
 		relative_position_id = BRA_mercosur_eu_trade_agreements
 
-		cost = 5
+		cost = 8.6 # 60 Days
 
 		prerequisite = { focus = BRA_mercosur_eu_trade_agreements }
 		prerequisite = { focus = BRA_european_investments }
 		prerequisite = { focus = BRA_educational_support }
 
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_WAR_SUPPORT}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_embrace_eu_tourists_immigrants"
+			add_political_power = -100
 			every_country = {
 				limit = { has_idea = BRA_idea_mercosur_member_state }
-				add_stability = 0.1
+				add_stability = 0.05
 				add_war_support = 0.05
-				add_manpower = 20000
+				add_manpower = 10000
 			}
+			#FIXME: Same issue as the one above
 		}
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0.1
+				has_political_power < 0
+			}
 		}
 	}
 
@@ -1631,15 +1582,9 @@
 		prerequisite = { focus = BRA_research_agreement_eu }
 		prerequisite = { focus = BRA_embrace_eu_tourists_immigrants }
 
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_get_inspiration_from_eu_model"
 			every_country = {
@@ -1939,7 +1884,7 @@
 		cancel = { date > 2002.12.31 }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_2002_elections"
 			#country_event = { id = brazil.39 days = 0 }
@@ -1961,10 +1906,6 @@
 
 		prerequisite = { }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_nossa_economia"
 			add_ideas = BRA_idea_nossa_economia
@@ -1991,10 +1932,6 @@
 
 		prerequisite = { focus = BRA_nossa_economia }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pay_back_the_imf"
 			if = {
@@ -2025,10 +1962,6 @@
 			focus = BRA_pay_back_the_imf
 		}
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_exports"
 			country_event = brazil.5
@@ -2053,10 +1986,6 @@
 			focus = BRA_brazilian_exports
 		}
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_foreign_companies"
@@ -2107,7 +2036,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_lula"
 		}
@@ -2134,7 +2063,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_workers_party_political_path"
 			add_3_emerging_left_wing_radical = yes
@@ -2165,7 +2094,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_true_moderate_path"
 			add_2_emerging_left_wing_radical = yes
@@ -2212,7 +2141,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_centrao"
 			add_2_emerging_left_wing_radical = yes
@@ -2258,7 +2187,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_media_tatics"
 			add_3_emerging_left_wing_radical = yes
@@ -2289,7 +2218,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_mensalao"
 			add_3_emerging_left_wing_radical = yes
@@ -2322,7 +2251,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_crush_corruption"
 			decrease_corruption = yes
@@ -2354,7 +2283,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_push_for_an_agrarian_reform"
 			add_ideas = BRA_idea_agrarian_reform
@@ -2384,7 +2313,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_an_example_of_honesty"
 			add_country_leader_trait = popular_figurehead
@@ -2412,7 +2341,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_lula_foreign_policy"
 			add_political_power = 100
@@ -2440,7 +2369,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_to_cuba"
 			CUB = {
@@ -2471,7 +2400,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_to_venezuela"
 			VEN = {
@@ -2502,7 +2431,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_to_bolivia"
 			BOL = {
@@ -2533,7 +2462,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_chinese_alignment"
 			CHI = {
@@ -2564,7 +2493,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_chinese_trade"
 			add_opinion_modifier = { target = BRA modifier = mutual_trade_opinion }
@@ -2592,7 +2521,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brics_investments"
 			add_offsite_building = { type = industrial_complex level = 2 }
@@ -2622,7 +2551,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_international_support"
 			add_political_power = 100
@@ -2650,7 +2579,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_improve_workers_rights"
 			set_temp_variable = { temp_opinion = 5 }
@@ -2680,7 +2609,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_increase_taxes"
 			set_temp_variable = { temp_opinion = -5 }
@@ -2715,7 +2644,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_improve_the_public_sector"
 			add_ideas = idea_focus_generic_public_service_investment
@@ -2745,7 +2674,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_social_enterprises"
 			add_ideas = BRA_idea_social_interprises
@@ -2786,7 +2715,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_economic_interventionism"
 			set_temp_variable = { temp_opinion = -5 }
@@ -2828,7 +2757,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_expand_state_owned_companies"
 			increase_economic_growth = yes
@@ -2875,7 +2804,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_introduce_new_regulations"
 			add_ideas = ITA_rigid_labour_market
@@ -2906,7 +2835,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_encourage_consumption"
 			set_temp_variable = { temp_opinion = 5 }
@@ -2936,7 +2865,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_national_developmentalism"
 			increase_economic_growth = yes
@@ -2980,7 +2909,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_social_programs_lula"
 			add_stability = 0.08
@@ -3014,7 +2943,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_fome_zero"
 			increase_social_spending = yes
@@ -3042,7 +2971,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_bolsa_familia"
 			increase_social_spending = yes
@@ -3070,7 +2999,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_expand_social_benefits"
 			increase_social_spending = yes
@@ -3098,7 +3027,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_education_funding"
 			increase_education_budget = yes
@@ -3126,7 +3055,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_university_funding"
 			increase_education_budget = yes
@@ -3154,7 +3083,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_gather_the_teachers_support"
 			add_popularity = {
@@ -3187,7 +3116,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_increase_the_minimun_wage"
 			add_ideas = BRA_idea_higher_minimun_wage_1
@@ -3222,7 +3151,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_serra"
 		}
@@ -3250,7 +3179,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_foreign_policy_serra"
 			add_political_power = 100
@@ -3279,7 +3208,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_american_diplomacy"
 			USA = {
@@ -3311,7 +3240,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_american_trade"
 			add_opinion_modifier = { target = USA modifier = mutual_trade_opinion }
@@ -3340,7 +3269,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_american_investments"
 			add_offsite_building = { type = industrial_complex level = 1 }
@@ -3372,7 +3301,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_looking_to_europe"
 			every_country = {
@@ -3405,7 +3334,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_european_trade"
 			every_country = {
@@ -3438,7 +3367,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_european_investments_serra"
 			add_offsite_building = { type = industrial_complex level = 1 }
@@ -3471,7 +3400,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_global_aligment"
 			add_political_power = 100
@@ -3500,7 +3429,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_fiscal_reform"
 			increase_economic_growth = yes
@@ -3529,7 +3458,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_education_investment"
 			increase_education_budget = yes
@@ -3558,7 +3487,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_improve_healthcare_conditions"
 			increase_healthcare_budget = yes
@@ -3588,7 +3517,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_administrative_reform_serra"
 			add_ideas = FRA_administrative_reforms_2
@@ -3618,7 +3547,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_federalization_ethos"
 			add_ideas = BRA_idea_federalization_1
@@ -3647,7 +3576,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_improve_the_real"
 			increase_economic_growth = yes
@@ -3677,7 +3606,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_effective_public_sector"
 			add_ideas = NIG_efficent_government_spending_reform_idea
@@ -3707,7 +3636,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pay_off_the_debt"
 			#subtract_from_variable = { debt = 500 }
@@ -3739,7 +3668,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_empower_the_states"
 			swap_ideas = {
@@ -3771,7 +3700,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_scientific_efforts"
 			set_temp_variable = { treasury_change = -20 }
@@ -3802,7 +3731,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_weaken_economic_regulations"
 			set_temp_variable = { temp_opinion = 5 }
@@ -3833,7 +3762,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_employment_projects"
 			set_temp_variable = { treasury_change = -15 }
@@ -3877,7 +3806,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_infrastructure_projects"
 			set_temp_variable = { treasury_change = -15 }
@@ -3923,7 +3852,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_diversify_the_economy"
 			set_temp_variable = { treasury_change = -15 }
@@ -3966,7 +3895,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_increase_private_sector_role"
 			increase_economic_growth = yes
@@ -3998,7 +3927,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_guarantee_civil_liberties"
 			add_popularity = { ideology = democratic popularity = 0.05 }
@@ -4027,7 +3956,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_protect_brazilian_democracy"
 			add_popularity = { ideology = democratic popularity = 0.05 }
@@ -4056,7 +3985,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_maintain_power"
 			increase_corruption = yes
@@ -4086,7 +4015,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_crackdown_on_corruption"
 			decrease_corruption = yes
@@ -4116,7 +4045,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_gather_the_popular_support"
 			add_5_western_liberalism = yes
@@ -4145,7 +4074,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_ensure_political_majority_psdb"
 			increase_corruption = yes
@@ -4175,7 +4104,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_positivism"
 			add_5_western_liberalism = yes
@@ -4248,13 +4177,10 @@
 		available = {
 			#threat > 0.10
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_global_diplomacy"
 			add_political_power = 100
@@ -4285,10 +4211,6 @@
 			focus = BRA_our_own_industry
 		}
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_new_wave_ideas"
 			add_ideas = BRA_idea_new_wave_ideas
@@ -4317,13 +4239,10 @@
 		available = {
 
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_to_nato"
 			every_country = {
@@ -4381,13 +4300,7 @@
 		available = {
 
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_western_investiments"
 			953 = {
@@ -4423,13 +4336,10 @@
 		available = {
 
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_non_aligned"
 			add_political_power = 100
@@ -4457,13 +4367,10 @@
 		available = {
 
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_our_own_industry"
 			885 = {
@@ -4496,10 +4403,6 @@
 			focus = BRA_global_diplomacy
 		}
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_eastern_alignment"
 			add_opinion_modifier = { target = SOV modifier = supports_the_east }
@@ -4547,13 +4450,10 @@
 		available = {
 
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_eastern_investiments"
 			954 = {
@@ -4586,10 +4486,6 @@
 
 		prerequisite = { focus = BRA_nossa_economia }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_growth_through_freedom"
 			add_ideas = BRA_idea_growth_through_freedom
@@ -4619,13 +4515,10 @@
 				has_idea = negligible_corruption
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_research_and_development"
@@ -4650,13 +4543,10 @@
 		prerequisite = { focus = BRA_growth_through_freedom }
 		mutually_exclusive = { }
 
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_major_development_projects"
@@ -4683,13 +4573,10 @@
 		available = {
 			has_full_control_of_state = 883
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_presal"
@@ -4776,13 +4663,10 @@
 			has_full_control_of_state = 886
 			has_full_control_of_state = 885
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_develop_the_interior_and_amazon"
@@ -4891,13 +4775,10 @@
 		available = {
 			has_full_control_of_state = 892
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_amazonian_el_dorado"
@@ -4973,13 +4854,10 @@
 		available = {
 			has_full_control_of_state = 889
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_canadian_vale_incorporation"
@@ -5070,15 +4948,6 @@
 		prerequisite = { focus = BRA_canadian_vale_incorporation }
 		prerequisite = { focus = BRA_build_fortaleza }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_expanded_brazilian_economy"
@@ -5111,13 +4980,10 @@
 			has_full_control_of_state = 953
 			has_full_control_of_state = 879
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_northeastern_stimulus"
@@ -5226,13 +5092,10 @@
 		available = {
 			has_full_control_of_state = 888
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_develop_recife"
@@ -5397,13 +5260,10 @@
 		available = {
 			has_full_control_of_state = 889
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_build_fortaleza"
@@ -5505,10 +5365,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_help_business_owners }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_help_business_owners"
@@ -5535,10 +5391,6 @@
 
 		prerequisite = { focus = BRA_brazilian_research_and_development }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_foreign_research_methods"
@@ -5564,10 +5416,6 @@
 
 		prerequisite = { focus = BRA_growth_through_freedom }
 		mutually_exclusive = {  }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_energy_mining_ministry"
@@ -5591,10 +5439,6 @@
 
 		prerequisite = { focus = BRA_energy_mining_ministry }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_santos_oilfields"
@@ -5618,10 +5462,6 @@
 
 		prerequisite = { focus = BRA_santos_oilfields }
 		mutually_exclusive = {  }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			 log = "[GetDateText]: [Root.GetName]: Focus BRA_clean_energy_path"
@@ -5652,10 +5492,6 @@
 
 		prerequisite = { focus = BRA_petrobras_tech }
 		mutually_exclusive = { focus = BRA_clean_energy_path }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_fossil_fuel_industry"
@@ -5681,10 +5517,6 @@
 
 		prerequisite = { focus = BRA_petrobras_tech }
 		mutually_exclusive = { focus = BRA_fossil_fuel_industry }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_clean_energy_path"
@@ -5732,10 +5564,6 @@
 
 		prerequisite = { focus = BRA_fossil_fuel_industry }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
 		completion_reward = {
 			add_resource = { type = oil amount = 25 state = 883 }
@@ -5765,10 +5593,6 @@
 
 		prerequisite = { focus = BRA_clean_energy_path }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_develop_angra3"
@@ -5826,10 +5650,6 @@
 
 		prerequisite = { focus = BRA_comperj }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_presal_dev"
@@ -5861,10 +5681,6 @@
 
 		prerequisite = { focus = BRA_develop_angra3 }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			887 = {
@@ -5925,10 +5741,6 @@
 		prerequisite = { focus = BRA_support_international_bankers }
 		prerequisite = { focus = BRA_foreign_research_methods }
 		mutually_exclusive = { focus = BRA_support_industries }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_help_the_farmers"
@@ -5957,10 +5769,6 @@
 		prerequisite = { focus = BRA_support_international_bankers }
 		prerequisite = { focus = BRA_foreign_research_methods }
 		mutually_exclusive = { focus = BRA_help_the_farmers }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_support_industries"
@@ -5998,10 +5806,6 @@
 
 		prerequisite = { focus = BRA_support_industries }
 		mutually_exclusive = {  }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_further_industrialization"
@@ -6113,10 +5917,6 @@
 
 		prerequisite = { focus = BRA_help_the_farmers }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_agrarian_economy"
@@ -6141,10 +5941,6 @@
 
 		prerequisite = { focus = BRA_agrarian_economy }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_agrotech"
@@ -6169,10 +5965,6 @@
 
 		prerequisite = { focus = BRA_agrotech }
 		mutually_exclusive = { focus = BRA_free_trade_agro_producs }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_agricultural_protectionism"
@@ -6200,10 +5992,6 @@
 
 		prerequisite = { focus = BRA_agrotech }
 		mutually_exclusive = { focus = BRA_agricultural_protectionism }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_free_trade_agro_producs"
@@ -6233,10 +6021,6 @@
 
 		prerequisite = { focus = BRA_new_wave_ideas }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_way_we_judge"
 			add_political_power = 100
@@ -6267,13 +6051,10 @@
 				has_government = neutrality
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_isolationism"
 			if = {
@@ -6350,10 +6131,6 @@
 
 		prerequisite = { focus = BRA_isolationism }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_restrict_travelers"
 			add_ideas = BRA_idea_restricted_travelers
@@ -6376,10 +6153,6 @@
 
 		prerequisite = { focus = BRA_restrict_travelers }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_shut_down_the_borders"
 			swap_ideas = {
@@ -6405,10 +6178,6 @@
 
 		prerequisite = { focus = BRA_isolationism }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazil_first"
 			add_political_power = 100
@@ -6436,10 +6205,6 @@
 
 		prerequisite = { focus = BRA_brazil_first }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_gunboat_diplomacy"
 			893 = { add_claim_by = BRA }
@@ -6465,10 +6230,6 @@
 
 		prerequisite = { focus = BRA_brazil_first }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazil_above_all"
 			if = {
@@ -6513,10 +6274,6 @@
 
 		prerequisite = { focus = BRA_the_country_of_brotherly_love }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_international_mediator"
 			swap_ideas = {
@@ -6542,10 +6299,6 @@
 
 		prerequisite = { focus = BRA_the_country_of_brotherly_love }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_strength_in_cooperation"
 			add_political_power = 100
@@ -6568,10 +6321,6 @@
 
 		prerequisite = { focus = BRA_the_international_mediator }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_visit_every_country"
 			add_stability = 0.10
@@ -6597,13 +6346,10 @@
 		available = {
 
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_support_the_little_guys"
 			if = {
@@ -6673,10 +6419,6 @@
 		prerequisite = { focus = BRA_visit_every_country }
 		prerequisite = { focus = BRA_support_the_little_guys }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_a_global_power"
 			add_ideas = BRA_idea_a_global_power
@@ -6704,7 +6446,7 @@
 		cost = 5
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_nosso_exercito"
 			army_experience = 25
@@ -6726,10 +6468,6 @@
 
 		prerequisite = { }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_marinha_do_brasil"
 			navy_experience = 25
@@ -6752,10 +6490,6 @@
 
 		prerequisite = { focus = BRA_nosso_exercito }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_imbel"
 			add_ideas = BRA_idea_imbel
@@ -6778,10 +6512,6 @@
 
 		prerequisite = { focus = BRA_imbel }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_modern_artillery"
 			add_ideas = BRA_idea_modern_artillery
@@ -6807,13 +6537,10 @@
 		available = {
 			threat > 0.15
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_strength_on_land"
 			add_ideas = BRA_idea_strength_on_land
@@ -6836,10 +6563,6 @@
 
 		prerequisite = { focus = BRA_nosso_exercito }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_homemade_rifles"
 			add_ideas = BRA_idea_homemade_rifles
@@ -6862,10 +6585,6 @@
 
 		prerequisite = { focus = BRA_homemade_rifles }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_western_military_factories"
 			886 = {
@@ -6895,10 +6614,6 @@
 
 		prerequisite = { focus = BRA_western_military_factories }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_northeastern_military_factories"
 			889 = {
@@ -6936,10 +6651,6 @@
 
 		prerequisite = { focus = BRA_marinha_do_brasil }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_national_drydocks"
 			889 = {
@@ -6969,10 +6680,6 @@
 
 		prerequisite = { focus = BRA_national_drydocks }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_sao_paulo_naval_industries"
 			882 = {
@@ -7002,10 +6709,6 @@
 
 		prerequisite = { focus = BRA_sao_paulo_naval_industries }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_rio_drydocks"
 			883 = {
@@ -7036,10 +6739,6 @@
 
 		prerequisite = { focus = BRA_marinha_do_brasil }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_behind_the_times"
 			navy_experience = 10
@@ -7062,10 +6761,6 @@
 
 		prerequisite = { focus = BRA_behind_the_times }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_underwater_flotilla"
 			add_ideas = BRA_idea_underwater_flotilla
@@ -7091,13 +6786,10 @@
 		available = {
 			threat > 0.15
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_reform_the_navy"
 			add_ideas = BRA_idea_reform_the_navy
@@ -7120,10 +6812,6 @@
 
 		prerequisite = { focus = BRA_strength_on_land }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_ee_11"
 			add_tech_bonus = {
@@ -7158,10 +6846,6 @@
 
 		prerequisite = { focus = BRA_strength_on_land }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_acquire_new_equipment"
 			add_tech_bonus = {
@@ -7204,10 +6888,6 @@
 
 		prerequisite = { focus = BRA_ee_11 }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_update_the_ifvs"
 			add_tech_bonus = {
@@ -7241,10 +6921,6 @@
 
 		prerequisite = { focus = BRA_acquire_new_equipment }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_decentralized_warfare"
 			add_doctrine_cost_reduction = {
@@ -7272,10 +6948,6 @@
 
 		prerequisite = { focus = BRA_update_the_ifvs }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_modern_armor"
 			add_ideas = BRA_idea_modern_armor
@@ -7310,10 +6982,6 @@
 
 		prerequisite = { focus = BRA_decentralized_warfare }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_larger_artillery"
 			add_tech_bonus = {
@@ -7349,10 +7017,6 @@
 		prerequisite = { focus = BRA_modern_armor }
 		prerequisite = { focus = BRA_larger_artillery }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_braco_forte_mao_amiga"
 			add_ideas = BRA_idea_braco_forte_mao_amiga
@@ -7375,10 +7039,6 @@
 
 		prerequisite = { focus = BRA_reform_the_navy }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_french_naval_studies"
 			if = {
@@ -7410,10 +7070,6 @@
 
 		prerequisite = { focus = BRA_french_naval_studies }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_lets_go_nuclear"
 			add_tech_bonus = {
@@ -7447,10 +7103,6 @@
 
 		prerequisite = { focus = BRA_lets_go_nuclear }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_assault_carriers"
 			add_tech_bonus = {
@@ -7482,10 +7134,6 @@
 
 		prerequisite = { focus = BRA_reform_the_navy }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_usn_carriers"
 			add_tech_bonus = {
@@ -7519,10 +7167,6 @@
 
 		prerequisite = { focus = BRA_usn_carriers }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_juruena_class"
 			add_tech_bonus = {
@@ -7556,10 +7200,6 @@
 
 		prerequisite = { focus = BRA_juruena_class }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_cgn_1985"
 			add_tech_bonus = {
@@ -7594,10 +7234,6 @@
 		prerequisite = { focus = BRA_cgn_1985 }
 		prerequisite = { focus = BRA_assault_carriers }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_protegendo_nossas_riquezas"
 			add_ideas = BRA_idea_protegendo_nossas_riquezas
@@ -7621,15 +7257,11 @@
 
 		prerequisite = { focus = BRA_strength_on_land }
 		prerequisite = { focus = BRA_reform_the_navy }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_air_force_expansion"
 			army_experience = 25
@@ -7709,10 +7341,6 @@
 
 		prerequisite = { focus = BRA_air_force_expansion }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_invest_in_heli"
 			add_tech_bonus = {
@@ -7746,10 +7374,6 @@
 
 		prerequisite = { focus = BRA_air_force_expansion }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_carrier_planes"
 			add_tech_bonus = {
@@ -7788,10 +7412,6 @@
 
 		prerequisite = { focus = BRA_invest_in_heli }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_cas_research"
 			add_tech_bonus = {
@@ -7823,10 +7443,6 @@
 
 		prerequisite = { focus = BRA_carrier_planes }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_maritime_routine"
 			add_tech_bonus = {
@@ -7893,10 +7509,6 @@
 
 		prerequisite = { focus = BRA_maritime_routine }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_light_fighters"
 			add_tech_bonus = {
@@ -7927,15 +7539,11 @@
 
 		prerequisite = { focus = BRA_light_fighters }
 		prerequisite = { focus = BRA_mr_fighters }
-		mutually_exclusive = { }
-		available = {}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_air_trained_pilots"
 			army_experience = 25
@@ -7991,13 +7599,10 @@
 		available = {
 			is_major = yes
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_cooperate_with_nasa"
 			add_research_slot = 1
@@ -8023,13 +7628,10 @@
 		available = {
 			is_major = yes
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_create_launchpads"
 			889 = {
@@ -8062,13 +7664,10 @@
 		available = {
 			is_major = yes
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_first_time_in_the_moon"
 			add_war_support = 0.15
@@ -8095,13 +7694,10 @@
 		available = {
 			is_major = yes
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_a_mission_to_mars"
 			add_war_support = 0.05
@@ -8130,13 +7726,10 @@
 		available = {
 			is_major = yes
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_space_force"
 			add_ideas = BRA_idea_brazilian_space_force
@@ -8162,13 +7755,10 @@
 		available = {
 			is_major = yes
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 
-		complete_tooltip = { }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_mining_in_space"
 			882 = {
@@ -8232,7 +7822,7 @@
 		}
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_cardosos_last_years"
 			add_stability = -0.05
@@ -8286,12 +7876,7 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_logging_reform }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
 
-		bypass = { }
-		cancel = { }
 
 
 		complete_tooltip = {}
@@ -8316,12 +7901,7 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_preserve_amazon }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
 
-		bypass = { }
-		cancel = { }
 
 
 		complete_tooltip = {}
@@ -8347,10 +7927,6 @@
 
 		prerequisite = { focus = BRA_cardosos_last_years }
 		mutually_exclusive = { focus = BRA_logging_reform}
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_amazonian_development_project"
 			country_event = brazil.3
@@ -8385,7 +7961,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_project_devastate_the_amazon"
 			country_event = brazil.6
@@ -8408,10 +7984,6 @@
 
 		prerequisite = { focus = BRA_project_devastate_the_amazon }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_dismantle_the_agency"
 			add_stability = 0.075
@@ -8459,10 +8031,6 @@
 
 		prerequisite = { focus = BRA_march_of_the_excluded }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_native_protests"
 			add_stability = -0.02
@@ -8491,10 +8059,6 @@
 
 		prerequisite = { focus = BRA_native_protests }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_angry_natives"
 			add_ideas = BRA_idea_angry_natives
@@ -8517,10 +8081,6 @@
 
 		prerequisite = { focus = BRA_cardosos_last_years }
 		mutually_exclusive = { focus = BRA_foreign_assist}
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_reinstating_imf_debts"
 			add_ideas = BRA_idea_imf_debts
@@ -8569,10 +8129,6 @@
 
 		prerequisite = { focus = BRA_cardosos_last_years }
 		mutually_exclusive = { focus = BRA_reinstating_imf_debts }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_foreign_assist"
 			USA = {
@@ -8599,10 +8155,6 @@
 
 		prerequisite = { focus = BRA_foreign_assist }
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_deficit_spending"
 			add_to_variable = { debt = 100 }
@@ -8625,13 +8177,11 @@
 
 		cost = 10
 
-		prerequisite = { focus = BRA_a_modern_recession
-						 focus = BRA_deficit_spending}
-		mutually_exclusive = { }
+		prerequisite = {
+			focus = BRA_a_modern_recession
+			focus = BRA_deficit_spending
+		}
 
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_crippled_currency"
 			add_ideas = BRA_idea_crippled_currency
@@ -8661,19 +8211,14 @@
 		prerequisite = { focus = BRA_angry_natives }
 		prerequisite = { focus = BRA_dismantle_the_agency
 		focus = BRA_protect_amazon }
-		mutually_exclusive = { }
 		available = {
 			NOT = { has_country_leader = { name = "Fernando Henrique Cardoso" } }
 		}
-		historical_ai = { }
-		select_effect = { }
 		bypass = {
 			date > 2016.12.31
 		}
-		cancel = { }
 
-
-		complete_tooltip = { }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_cardoso_is_gone"
 			add_stability = 0.10
@@ -8697,10 +8242,6 @@
 
 		prerequisite = {}
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_op_car_wash"
 			country_event = { id = brazil.19 days = 0 }
@@ -8724,10 +8265,6 @@
 
 		prerequisite = { focus = BRA_op_car_wash}
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_odebrecht_corruption"
 			if = {
@@ -8773,10 +8310,6 @@
 
 		prerequisite = { focus = BRA_op_car_wash}
 		mutually_exclusive = { }
-
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_petrobras_indictment"
 			if = {
@@ -8828,7 +8361,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_searchandseizure"
 			if = {
@@ -8893,7 +8426,7 @@
 		cancel = { }
 
 		search_filters = {FOCUS_FILTER_CORRUPTION}
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_anti_corruption_measures"
 			decrease_corruption = yes
@@ -8918,15 +8451,6 @@
 		prerequisite = { focus = BRA_odebrecht_corruption }
 		prerequisite = { focus = BRA_petrobras_indictment }
 		prerequisite = { focus = BRA_searchandseizure }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_parties_of_the_left"
 			add_timed_idea = {
@@ -8954,15 +8478,6 @@
 		prerequisite = { focus = BRA_odebrecht_corruption }
 		prerequisite = { focus = BRA_petrobras_indictment }
 		prerequisite = { focus = BRA_searchandseizure }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_psl_growth"
 			add_timed_idea = {
@@ -9003,7 +8518,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_new_elections"
 			country_event = { id = brazil.18 days = 0 }
@@ -9027,15 +8542,6 @@
 
 		prerequisite = { focus = BRA_parties_of_the_left }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_acquit_pmdb"
 			add_popularity = {
@@ -9061,15 +8567,6 @@
 
 		prerequisite = { focus = BRA_parties_of_the_left }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_acquit_workers_party"
 			custom_effect_tooltip = BRA_add_pt_4_tt
@@ -9098,15 +8595,6 @@
 
 		prerequisite = { focus = BRA_psl_growth }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_rw_populist"
 			hidden_effect = {
@@ -9149,7 +8637,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pt_pmdb_coop"
 			add_popularity = {
@@ -9191,7 +8679,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pt_hegemony"
 			custom_effect_tooltip = BRA_add_pt_4_tt
@@ -9232,7 +8720,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_rise_electoral_media"
 			add_ideas = BRA_idea_electoral_media1
@@ -9256,15 +8744,6 @@
 
 		prerequisite = { focus = BRA_pt_pmdb_coop }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_new_coalition"
 			custom_effect_tooltip = BRA_new_coalition_tt
@@ -9306,15 +8785,6 @@
 
 		prerequisite = { focus = BRA_new_coalition }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_parties_of_the_people"
 			add_popularity = {
@@ -9341,15 +8811,6 @@
 
 		prerequisite = { focus = BRA_new_coalition}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			 log = "[GetDateText]: [Root.GetName]: Focus BRA_anti_rw_rethoric"
 			 add_popularity = {
@@ -9376,15 +8837,6 @@
 
 		prerequisite = { focus = BRA_new_coalition}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			 log = "[GetDateText]: [Root.GetName]: Focus BRA_strenghten_coalition"
 			 add_stability = 0.10
@@ -9410,15 +8862,6 @@
 		prerequisite = { focus = BRA_anti_rw_rethoric}
 		prerequisite = { focus = BRA_strenghten_coalition}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_new_brazil"
 			swap_ideas = {
@@ -9445,15 +8888,6 @@
 
 		prerequisite = { focus = BRA_pt_hegemony}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_lulismo"
 			add_popularity = {
@@ -9481,15 +8915,6 @@
 
 		prerequisite = { focus = BRA_pt_hegemony}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_absorb_left_wing"
 			custom_effect_tooltip = BRA_add_pt_annex_parties_tt
@@ -9520,15 +8945,6 @@
 		prerequisite = { focus = BRA_absorb_left_wing }
 		prerequisite = { focus = BRA_lulismo }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_pheonix_reborn"
 			country_event = { id = brazil.25 days = 15 }
@@ -9563,7 +8979,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_mst"
 			add_ideas = BRA_idea_agrarian_reform
@@ -9587,15 +9003,6 @@
 
 		prerequisite = { focus = BRA_the_pheonix_reborn focus = BRA_new_brazil}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pro_workers"
 			set_temp_variable = { temp_opinion = 5 }
@@ -9620,15 +9027,6 @@
 
 		prerequisite = { focus = BRA_the_pheonix_reborn focus = BRA_new_brazil}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = {FOCUS_FILTER_CORRUPTION}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_popular_government"
@@ -9656,15 +9054,6 @@
 
 		prerequisite = { focus = BRA_the_pheonix_reborn focus = BRA_new_brazil}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_crush_psdb"
 			add_popularity = {
@@ -9693,15 +9082,6 @@
 		prerequisite = { focus = BRA_crush_psdb }
 		prerequisite = { focus = BRA_mst }
 		prerequisite = { focus = BRA_pro_workers }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_bring_back_dilma"
 			add_popularity = {
@@ -9730,15 +9110,6 @@
 		prerequisite = { focus = BRA_crush_psdb }
 		prerequisite = { focus = BRA_mst }
 		prerequisite = { focus = BRA_pro_workers }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_appease_south_american_socialists"
 			VEN = {
@@ -9775,15 +9146,6 @@
 		prerequisite = { focus = BRA_crush_psdb }
 		prerequisite = { focus = BRA_mst }
 		prerequisite = { focus = BRA_pro_workers }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_industrialization_help_from_china"
 			CHI = {
@@ -9833,15 +9195,6 @@
 		prerequisite = { focus = BRA_appease_south_american_socialists }
 		prerequisite = { focus = BRA_bring_back_dilma }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_new_communist_goverment"
 			set_cosmetic_tag = BRA_AUTH_S_communism
@@ -9875,15 +9228,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_new_communist_goverment }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_five_year_plan"
@@ -9944,7 +9288,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_CORRUPTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_corruption_question"
@@ -9977,7 +9321,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_CORRUPTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_empower_the_government"
@@ -10002,15 +9346,6 @@
 
 		prerequisite = { focus = BRA_new_communist_goverment}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_better_sus"
@@ -10035,15 +9370,6 @@
 
 		prerequisite = { focus = BRA_new_communist_goverment}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_unions"
@@ -10070,15 +9396,6 @@
 		prerequisite = { focus = BRA_align_unions}
 		prerequisite = { focus = BRA_better_sus}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_aid_the_poor"
@@ -10111,15 +9428,6 @@
 		prerequisite = { focus = BRA_align_unions}
 		prerequisite = { focus = BRA_better_sus}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_left_wing_education"
@@ -10146,15 +9454,6 @@
 
 		prerequisite = { focus = BRA_empower_the_government focus = BRA_the_corruption_question}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_ban_nationalists"
@@ -10179,15 +9478,6 @@
 
 		prerequisite = { focus = BRA_five_year_plan }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_socialist_market"
@@ -10220,15 +9510,6 @@
 		prerequisite = { focus = BRA_left_wing_education }
 		prerequisite = { focus = BRA_ban_nationalists }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_state_industries"
@@ -10281,15 +9562,6 @@
 		prerequisite = { focus = BRA_left_wing_education }
 		prerequisite = { focus = BRA_ban_nationalists }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_break_banks"
@@ -10320,15 +9592,6 @@
 		prerequisite = { focus = BRA_left_wing_education }
 		prerequisite = { focus = BRA_ban_nationalists }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_left_wing_propaganda_effort"
@@ -10358,15 +9621,6 @@
 		prerequisite = { focus = BRA_break_banks }
 		prerequisite = { focus = BRA_foro_de_sp }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_influence_our_neighbors"
@@ -10424,15 +9678,6 @@
 
 		prerequisite = { focus = BRA_rise_electoral_media}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_populist_wave"
@@ -10458,15 +9703,6 @@
 
 		prerequisite = { focus = BRA_rise_electoral_media}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_christian_democracy"
 			add_stability = 0.05
@@ -10491,15 +9727,6 @@
 		prerequisite = { focus = BRA_populist_wave}
 		prerequisite = { focus = BRA_christian_democracy}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_rise_of_bolsonaro"
@@ -10526,15 +9753,6 @@
 
 		prerequisite = { focus = BRA_rise_of_bolsonaro}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_diplomacy"
@@ -10563,15 +9781,6 @@
 
 		prerequisite = { focus = BRA_rise_of_bolsonaro}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_ensure_military_support"
 			add_war_support = 0.10
@@ -10599,7 +9808,7 @@
 		continue_if_invalid = yes
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_allow_access_to_guns"
 			add_ideas = BRA_idea_guns_allowed
@@ -10623,15 +9832,6 @@
 
 		prerequisite = { focus = BRA_rise_of_bolsonaro }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_bolsonarismo"
@@ -10664,7 +9864,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_fight_foreign_influence"
 			add_ideas = BRA_fight_influence
@@ -10700,7 +9900,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_no_ideology"
 			add_political_power = 50
@@ -10728,15 +9928,6 @@
 
 		prerequisite = { focus = BRA_ensure_military_support}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_improve_mil_conditions"
 			add_ideas = BRA_idea_improved_military_conditions
@@ -10759,15 +9950,6 @@
 
 		prerequisite = { focus = BRA_ensure_military_support}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = {FOCUS_FILTER_EXPENDITURE}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_increase_mil_budget"
@@ -10791,15 +9973,6 @@
 
 		prerequisite = { focus = BRA_bolsonarismo}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_olavist_policies"
 			add_stability = 0.05
@@ -10828,15 +10001,6 @@
 
 		prerequisite = { focus = BRA_bolsonarismo}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_court_evangelicals"
 			add_ideas = BRA_idea_christian_values
@@ -10859,15 +10023,6 @@
 
 		prerequisite = { focus = BRA_bolsonarismo}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_call_paulo_guedes"
 			add_stability = 0.10
@@ -10892,15 +10047,6 @@
 
 		prerequisite = { focus = BRA_fight_foreign_influence}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_insult_usa"
 			USA = {
@@ -10932,15 +10078,6 @@
 
 		prerequisite = { focus = BRA_fight_foreign_influence}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_insult_china"
 			CHI = {
@@ -10973,15 +10110,6 @@
 
 		prerequisite = { focus = BRA_fight_foreign_influence}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_insult_europe"
 			every_country = {
@@ -11008,15 +10136,6 @@
 		prerequisite = { focus = BRA_crackdown_south_american_socialists}
 		prerequisite = { focus = BRA_the_caribbean_menace}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_new_domestic_identity"
 			set_rule = {
@@ -11029,10 +10148,10 @@
 			factor = 1
 		}
 	}
+
 	shared_focus = {
 		id = BRA_crackdown_south_american_socialists
 		icon = attack_venezuela
-
 
 		x = -1
 		y = 1
@@ -11091,6 +10210,7 @@
 			factor = 1
 		}
 	}
+
 	shared_focus = {
 		id = BRA_court_usa
 		icon = align_to_america
@@ -11171,15 +10291,6 @@
 		prerequisite = { focus = BRA_court_usa}
 		prerequisite = { focus = BRA_court_israel}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_talks_with_china"
 			SOV = {
@@ -11222,15 +10333,6 @@
 		prerequisite = { focus = BRA_court_usa}
 		prerequisite = { focus = BRA_court_israel}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_our_south_american_allies"
 			ARG = {
@@ -11274,15 +10376,6 @@
 		prerequisite = { focus = BRA_our_south_american_allies}
 		prerequisite = { focus = BRA_talks_with_china}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_be_friend_european_conservatives"
 			POL = {
@@ -11325,15 +10418,6 @@
 
 		prerequisite = { focus = BRA_be_friend_european_conservatives}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_invite_nationalists"
 			country_event = { id = brazil.30 days = 0 }
@@ -11391,7 +10475,7 @@
 		mutually_exclusive = {focus = BRA_volunteer_reformation }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_harsher_conscription"
 			add_ideas = BRA_idea_harsher_conscription
@@ -11422,7 +10506,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_volunteer_reformation"
 			add_ideas = BRA_idea_volunteer_reformation
@@ -11448,7 +10532,7 @@
 		continue_if_invalid = yes
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_abundant_force"
 			army_experience = 25
@@ -11478,15 +10562,6 @@
 
 		prerequisite = { focus = BRA_olavist_policies}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = {FOCUS_FILTER_CORRUPTION}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_dealing_with_congress"
@@ -11523,7 +10598,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_appease_centrao"
 			add_political_power = 200
@@ -11547,15 +10622,6 @@
 
 		prerequisite = { focus = BRA_appease_centrao}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_try_to_coup_psl"
 			add_stability = -0.05
@@ -11579,15 +10645,6 @@
 
 		prerequisite = { focus = BRA_try_to_coup_psl }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_bolsokids_position"
 			add_popularity = { ideology = nationalist popularity = 0.05 }
@@ -11610,15 +10667,6 @@
 
 		prerequisite = { focus = BRA_bolsokids_position}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_eduardobolsonaro"
 			country_event = { id = brazil.29 days = 0 }
@@ -11643,15 +10691,6 @@
 		prerequisite = { focus = BRA_eduardobolsonaro }
 		prerequisite = { focus = BRA_push_for_economic_liberalisation }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_brazilian_dream"
 			if = {
@@ -11690,15 +10729,6 @@
 
 		prerequisite = { focus = BRA_appease_centrao }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_make_alliances_with_centrao"
 			country_event = { id = brazil.26 days = 0 }
@@ -11722,15 +10752,6 @@
 
 		prerequisite = { focus = BRA_make_alliances_with_centrao}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = {FOCUS_FILTER_EXPENDITURE}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_new_ministries"
@@ -11755,15 +10776,6 @@
 
 		prerequisite = { focus = BRA_new_ministries}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_push_for_economic_liberalisation"
 			add_ideas = BRA_idea_liberal_economy
@@ -11796,7 +10808,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_rally_far_right"
 			add_political_power = -50
@@ -11823,15 +10835,6 @@
 
 		prerequisite = { focus = BRA_rally_far_right}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_assign_military_cabinet"
 			add_stability = 0.10
@@ -11855,15 +10858,6 @@
 
 		prerequisite = { focus = BRA_rally_far_right}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_glorify_1964_coup"
 			hidden_effect = {
@@ -11892,15 +10886,6 @@
 
 		prerequisite = { focus = BRA_glorify_1964_coup}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_hypernationalism"
 			add_popularity = { ideology = nationalist popularity = 0.05 }
@@ -11923,15 +10908,6 @@
 
 		prerequisite = { focus = BRA_brazilian_hypernationalism}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_absorb_right_wing"
 			add_popularity = { ideology = nationalist popularity = 0.1 }
@@ -11955,15 +10931,6 @@
 
 		prerequisite = { focus = BRA_assign_military_cabinet}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_attack_press"
 			country_event = { id = brazil.27 days = 0 }
@@ -11986,15 +10953,6 @@
 
 		prerequisite = { focus = BRA_attack_press}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_rally_military"
 			hidden_effect = {
@@ -12030,15 +10988,6 @@
 		prerequisite = { focus = BRA_rally_military }
 		prerequisite = { focus = BRA_absorb_right_wing }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_auto_coup"
 			set_politics = {
@@ -12097,7 +11046,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_a_new_way"
 			country_event = { id = brazil.24 days = 0 }
@@ -12121,15 +11070,6 @@
 
 		prerequisite = { focus = BRA_a_new_way}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_old_values"
 			add_political_power = 50
@@ -12159,15 +11099,6 @@
 
 		prerequisite = { focus = BRA_old_values}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_side_with_psl"
 			hidden_effect = {
@@ -12202,15 +11133,6 @@
 
 		prerequisite = { focus = BRA_side_with_psl}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_monarchy_model"
 			add_popularity = { ideology = nationalist popularity = 0.075 }
@@ -12235,15 +11157,6 @@
 
 		prerequisite = { focus = BRA_a_new_way}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_learnings_from_past"
 			hidden_effect = {
@@ -12272,15 +11185,6 @@
 
 		prerequisite = { focus = BRA_learnings_from_past}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_unite_the_people"
 			add_stability = 0.05
@@ -12308,15 +11212,6 @@
 
 		prerequisite = { focus = BRA_unite_the_people}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_monarchist_propaganda"
 			hidden_effect = {
@@ -12350,15 +11245,6 @@
 		prerequisite = { focus = BRA_monarchist_propaganda }
 		prerequisite = { focus = BRA_monarchy_model }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_restauration"
 			if = {
@@ -12421,16 +11307,13 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_restauration}
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_new_imperial_university"
@@ -12455,16 +11338,13 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_restauration}
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_government_reform"
@@ -12490,16 +11370,13 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_restauration focus = BRA_the_brazilian_dream focus = BRA_auto_coup }
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_traditional_values"
@@ -12523,16 +11400,13 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_the_brazilian_dream focus = BRA_restauration focus = BRA_auto_coup }
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_fight_crime"
@@ -12558,16 +11432,13 @@
 		prerequisite = { focus = BRA_brazilian_traditional_values}
 		prerequisite = { focus = BRA_government_reform}
 		prerequisite = { focus = BRA_new_imperial_university}
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_cisplatina"
@@ -12593,16 +11464,13 @@
 		prerequisite = { focus = BRA_brazilian_traditional_values}
 		prerequisite = { focus = BRA_government_reform}
 		prerequisite = { focus = BRA_new_imperial_university}
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_modern_monarchies"
@@ -12635,16 +11503,13 @@
 
 		prerequisite = { focus = BRA_the_cisplatina}
 		prerequisite = { focus = BRA_modern_monarchies}
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_empire_proud"
 			add_political_power = 50
@@ -12680,7 +11545,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_appease_military"
 			add_political_power = 100
@@ -12709,16 +11574,13 @@
 		prerequisite = { focus = BRA_appease_military }
 		prerequisite = { focus = BRA_fight_crime }
 		prerequisite = { focus = BRA_brazilian_traditional_values }
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_CORRUPTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_acabar_isso"
@@ -12755,7 +11617,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_CORRUPTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pro_bolsonaro_parties"
@@ -12786,16 +11648,13 @@
 
 		prerequisite = { focus = BRA_pro_bolsonaro_parties }
 		prerequisite = { focus = BRA_acabar_isso }
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_CORRUPTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_ending_mamata"
@@ -12828,7 +11687,7 @@
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_CORRUPTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_empower_militaries"
@@ -12854,16 +11713,13 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_auto_coup }
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_eneas_legacy"
@@ -12914,16 +11770,13 @@
 
 		prerequisite = { focus = BRA_appease_military focus = BRA_empower_militaries }
 		prerequisite = { focus = BRA_eneas_legacy }
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_ending_communism"
@@ -12948,16 +11801,13 @@
 
 		prerequisite = { focus = BRA_appease_military focus = BRA_empower_militaries }
 		prerequisite = { focus = BRA_eneas_legacy }
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_intervention_in_south_america"
@@ -12993,16 +11843,13 @@
 
 		prerequisite = { focus = BRA_intervention_in_south_america }
 		prerequisite = { focus = BRA_ending_communism }
-
-		mutually_exclusive = { }
-		available = {}
 		historical_ai = { }
 
 		bypass = { }
 		cancel = { }
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pax_brasilis"
@@ -13037,15 +11884,6 @@
 
 		prerequisite = { focus = BRA_court_evangelicals}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_defund_progressive_policies"
 			add_popularity = { ideology = nationalist popularity = 0.05 }
@@ -13069,15 +11907,6 @@
 
 		prerequisite = { focus = BRA_defund_progressive_policies}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_assign_evangelical_judge"
 			add_stability = 0.05
@@ -13107,15 +11936,6 @@
 
 		prerequisite = { focus = BRA_call_paulo_guedes}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_socialsecurity_reform"
@@ -13172,15 +11992,6 @@
 
 		prerequisite = { focus = BRA_tax_reform}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_privatize_national_companies"
@@ -13214,15 +12025,6 @@
 
 		prerequisite = { focus = BRA_tax_reform}
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_privatize_petrobras"
@@ -13261,15 +12063,6 @@
 		prerequisite = { focus = BRA_privatize_national_companies }
 		prerequisite = { focus = BRA_privatize_petrobras }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_RESOURCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_mining_amazon"
@@ -13328,15 +12121,6 @@
 
 		prerequisite = { focus = BRA_mining_amazon }
 
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_federal_pact"
 			increase_economic_growth = yes
@@ -13375,7 +12159,7 @@
 		continue_if_invalid = no
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_cardoso_legacy"
@@ -13420,7 +12204,7 @@
 		continue_if_invalid = no
 
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_psdb_pdt_coalition"
@@ -13541,7 +12325,7 @@
 			}
 		}
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_social_democracy"
@@ -13571,10 +12355,6 @@
 			 focus =  BRA_social_democracy
 			 focus =  BRA_liberal_resurgence
 		}
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_reduce_debts"
@@ -13603,10 +12383,6 @@
 		prerequisite = { focus =  BRA_restoration_image }
 		prerequisite = { focus =  BRA_underdog }
 		prerequisite = { focus =  BRA_social_democracy }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_ciro_gomes"
@@ -13637,10 +12413,6 @@
 
 
 		prerequisite = { focus =  BRA_ciro_gomes }
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_mobilize_working_class"
@@ -13867,7 +12639,7 @@
 			continue_if_invalid = no
 
 
-			complete_tooltip = { }
+
 			search_filters = { FOCUS_FILTER_POLITICAL }
 			completion_reward = {
 				log = "[GetDateText]: [Root.GetName]: Focus BRA_rise_of_moderates"
@@ -13897,10 +12669,6 @@
 		ai_will_do = {
 			factor = 1
 		}
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_business_deregulation"
@@ -13935,10 +12703,6 @@
 		ai_will_do = {
 			factor = 5
 		}
-
-
-
-		complete_tooltip = { }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_business_regulation"
@@ -13968,7 +12732,7 @@
 
 		prerequisite = { focus = BRA_social_programs }
 
-		complete_tooltip = { }
+
 		search_filters = {FOCUS_FILTER_CORRUPTION}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_fight_corruption"
@@ -14043,7 +12807,7 @@
 					instant_build = yes
 				}
 			}
-			set_temp_variable = { treasury_change = -15 }
+			set_temp_variable = { treasury_change = -17 }
 			modify_treasury_effect = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
@@ -14084,12 +12848,12 @@
 		x = -1
 		y = 1
 		relative_position_id = BRA_fight_corruption
-		cost = 5
+		cost = 6.4 # 45 Days
 
-		prerequisite = { focus =  BRA_fight_corruption }
-		prerequisite = { focus =  BRA_industrial_congolmerates }
-		prerequisite = { focus =  BRA_revitalize_economy }
-		prerequisite = { focus =  BRA_expansive_spending focus = BRA_foreign_buyouts }
+		prerequisite = { focus = BRA_fight_corruption }
+		prerequisite = { focus = BRA_industrial_congolmerates }
+		prerequisite = { focus = BRA_revitalize_economy }
+		prerequisite = { focus = BRA_expansive_spending focus = BRA_foreign_buyouts }
 
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
@@ -14142,7 +12906,7 @@
 		prerequisite = { focus =  BRA_social_programs }
 		prerequisite = { focus =  BRA_seek_young_vote }
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pre_campaigning"
@@ -14169,7 +12933,7 @@
 		prerequisite = { focus =  BRA_revitalize_economy }
 		prerequisite = { focus =  BRA_expansive_spending focus = BRA_foreign_buyouts }
 
-		complete_tooltip = { }
+
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_agri_buissneses"
@@ -14289,6 +13053,8 @@
 			add_popularity = {
 				ideology = democratic popularity = 0.075
 			}
+			recalculate_party = yes
+			#FIXME: this needs a recalculate_party = yes
 			if = {
 				limit = { is_major = no }
 				set_major = yes
