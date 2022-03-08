@@ -19,15 +19,14 @@ economy_decisions = {
 			if = {
 				limit = {
 					has_idea = defense_industry
-					NOT = { has_country_flag = recently_leased_military_factories }
+					NOT = { has_country_flag = lease_modifier_economic_decisions }
 				}
-				set_country_flag = { flag = recently_leased_military_factories days = 185 value = 1 }
+				set_country_flag = { flag = lease_modifier_economic_decisions days = 365 value = 1 }
+				custom_effect_tooltip = internal_faction_every_year_tt
 
 				# Modify Opinion
-				if = { limit = { check_variable = { defense_industry_opinion > 0 } }
-					set_temp_variable = { temp_opinion = -2 }
-					change_defense_industry_opinion = yes
-				}
+				set_temp_variable = { temp_opinion = -10 }
+				change_defense_industry_opinion = yes
 			}
 			custom_effect_tooltip = treasury_loss_lease_mils_TT
 		}
@@ -64,48 +63,18 @@ economy_decisions = {
 						has_idea = chaebols
 						has_idea = small_medium_business_owners
 					}
-					NOT = { has_country_flag = recently_supported_small_business }
+					NOT = { has_country_flag = lease_modifier_economic_decisions }
 				}
-				set_country_flag = { flag = recently_supported_small_business days = 180 value = 1 }
+				set_country_flag = { flag = lease_modifier_economic_decisions days = 365 value = 1 }
+				custom_effect_tooltip = internal_faction_every_year_tt
 
 				# Modify Opinion
-				set_temp_variable = { temp_opinion = 2 }
-				if = {
-					limit = {
-						has_idea = industrial_conglomerates
-						check_variable = { industrial_conglomerates_opinion < 100 }
-					}
-					change_industrial_conglomerates_opinion = yes
-				}
-				if = {
-					limit = {
-						has_idea = small_medium_business_owners
-						check_variable = { small_medium_business_owners_opinion < 100 }
-					}
-					change_small_medium_business_owners_opinion = yes
-				}
-				if = {
-					limit = {
-						has_idea = the_donju
-						check_variable = { the_donju_opinion < 100 }
-					}
-					change_the_donju_opinion = yes
-				}
-				if = {
-					limit = {
-						has_idea = the_bazaar
-						check_variable = { the_bazaar_opinion < 100 }
-					}
-					change_the_bazaar_opinion = yes
-				}
-				if = {
-					limit = {
-						has_idea = chaebols
-						check_variable = { chaebols_opinion  < 100 }
-					}
-					change_chaebols_opinion = yes
-				}
-				custom_effect_tooltip = internal_faction_every_six_months_tt
+				set_temp_variable = { temp_opinion = -10 }
+				change_industrial_conglomerates_opinion = yes
+				change_small_medium_business_owners_opinion = yes
+				change_the_donju_opinion = yes
+				change_the_bazaar_opinion = yes
+				change_chaebols_opinion = yes
 			}
 			custom_effect_tooltip = treasury_loss_lease_civs_TT
 		}
@@ -137,9 +106,12 @@ economy_decisions = {
 			if = {
 				limit = {
 					has_idea = maritime_industry
-					check_variable = { maritime_industry_opinion < 100 }
+					NOT = { has_country_flag = lease_modifier_economic_decisions }
 				}
-				set_temp_variable = { temp_opinion = -2 }
+				set_country_flag = { flag = lease_modifier_economic_decisions days = 365 value = 1 }
+				custom_effect_tooltip = internal_faction_every_year_tt
+
+				set_temp_variable = { temp_opinion = -10 }
 				change_maritime_industry_opinion = yes
 			}
 			custom_effect_tooltip = treasury_loss_lease_navs_TT
@@ -178,26 +150,17 @@ economy_decisions = {
 						has_idea = chaebols
 						has_idea = small_medium_business_owners
 					}
-					NOT = { has_country_flag = recently_supported_small_business }
+					NOT = { has_country_flag = recent_modifier_economic_decisions }
 				}
-				custom_effect_tooltip = internal_faction_every_six_months_tt
-				set_country_flag = { flag = recently_supported_small_business days = 180 value = 1 }
+				set_country_flag = { flag = recent_modifier_economic_decisions days = 365 value = 1 }
+				custom_effect_tooltip = internal_faction_every_year_tt
+
 				set_temp_variable = { temp_opinion = 5 }
-				if = { limit = { has_idea = small_medium_business_owners }
-					change_small_medium_business_owners_opinion = yes
-				}
-				if = { limit = { has_idea = industrial_conglomerates }
-					change_industrial_conglomerates_opinion = yes
-				}
-				if = { limit = { has_idea = the_donju }
-					change_the_donju_opinion = yes
-				}
-				if = { limit = { has_idea = the_bazaar }
-					change_the_bazaar_opinion = yes
-				}
-				if = { limit = { has_idea = chaebols }
-					change_chaebols_opinion = yes
-				}
+				change_small_medium_business_owners_opinion = yes
+				change_industrial_conglomerates_opinion = yes
+				change_the_donju_opinion = yes
+				change_the_bazaar_opinion = yes
+				change_chaebols_opinion = yes
 			}
 			custom_effect_tooltip = treasury_loss_projects_TT
 		}
@@ -224,6 +187,27 @@ economy_decisions = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision infrastructure_projects"
+			if = {
+				limit = {
+					OR = {
+						has_idea = industrial_conglomerates
+						has_idea = the_donju
+						has_idea = the_bazaar
+						has_idea = chaebols
+						has_idea = small_medium_business_owners
+					}
+					NOT = { has_country_flag = recent_modifier_economic_decisions }
+				}
+				set_country_flag = { flag = recent_modifier_economic_decisions days = 365 value = 1 }
+				custom_effect_tooltip = internal_faction_every_year_tt
+
+				set_temp_variable = { temp_opinion = 5 }
+				change_small_medium_business_owners_opinion = yes
+				change_industrial_conglomerates_opinion = yes
+				change_the_donju_opinion = yes
+				change_the_bazaar_opinion = yes
+				change_chaebols_opinion = yes
+			}
 			custom_effect_tooltip = treasury_loss_projects_TT
 		}
 		modifier = {
@@ -252,10 +236,11 @@ economy_decisions = {
 			if = {
 				limit = {
 					has_idea = defense_industry
-					NOT = { has_country_flag = recently_did_arms_factory_project }
+					NOT = { has_country_flag = recent_modifier_economic_decisions }
 				}
+				set_country_flag = { flag = recent_modifier_economic_decisions days = 365 value = 1 }
 				custom_effect_tooltip = internal_faction_every_year_tt
-				set_country_flag = { flag = recently_did_arms_factory_project days = 365 value = 1 }
+
 				set_temp_variable = { temp_opinion = 5 }
 				change_defense_industry_opinion = yes
 			}
@@ -290,10 +275,11 @@ economy_decisions = {
 			if = {
 				limit = {
 					has_idea = maritime_industry
-					NOT = { has_country_flag = recently_did_dockyard_project }
+					NOT = { has_country_flag = recent_modifier_economic_decisions }
 				}
+				set_country_flag = { flag = recent_modifier_economic_decisions days = 365 value = 1 }
 				custom_effect_tooltip = internal_faction_every_year_tt
-				set_country_flag = { flag = recently_did_dockyard_project days = 365 value = 1 }
+
 				set_temp_variable = { temp_opinion = 5 }
 				change_maritime_industry_opinion = yes
 			}

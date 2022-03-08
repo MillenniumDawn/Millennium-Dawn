@@ -117,7 +117,7 @@
 	NDefines.NBuildings.MAX_SHARED_SLOTS = 56
 	NDefines.NBuildings.OWNER_CHANGE_EXTRA_SHARED_SLOTS_FACTOR = 0.5
 	NDefines.NBuildings.INFRASTRUCTURE_RESOURCE_BONUS = 0.05	--upped from 0.02, vanilla 0.2
-	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 4.0 --Fucked with this to see
+	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 1.0 -- was 4.0 --Fucked with this to see
 
 	NDefines.NMilitary.HOURLY_ORG_MOVEMENT_IMPACT = -0.1 -- -0.2
 	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.2 -- -0.8
@@ -151,7 +151,7 @@
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY = -0.25 -- -0.25
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY_LARGE = -0.45 -- -0.5
 	NDefines.NMilitary.BASE_FORT_PENALTY = -0.075 -- -0.15
-	NDefines.NMilitary.RECON_SKILL_IMPACT = 10 -- 5
+	NDefines.NMilitary.RECON_SKILL_IMPACT = 0.05 -- 5
 	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_IMPACT = -0.65 -- -0.35
 	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_SPEED_IMPACT = -0.3 -- -0.3
 	NDefines.NMilitary.SLOWEST_SPEED = 8 -- 4
@@ -594,10 +594,10 @@
 	NDefines.NResistance.RESISTANCE_GROWTH_BASE = 0.1 --base resistance growth
 	NDefines.NResistance.COMPLIANCE_GROWTH_BASE = 0.1 --base compliance gain
 	NDefines.NOperatives.BASE_COUNTER_INTELLIGENCE_RATING = 1.0 -- Set to 1 to prevent weird negatives
-	NDefines.NOperatives.AGENCY_UPGRADE_PER_OPERATIVE_SLOT = 4 -- Reduced from vanilla
-	NDefines.NOperatives.BECOME_SPYMASTER_MIN_UPGRADES = 5 -- Boosted from 3
+	NDefines.NOperatives.AGENCY_UPGRADE_PER_OPERATIVE_SLOT = 6 -- Reduced from vanilla
+	NDefines.NOperatives.BECOME_SPYMASTER_MIN_UPGRADES = 10 -- Boosted from 3
 
-	NDefines.NOperatives.MAX_OPERATIVE_SLOT_FROM_AGENCY_UPGRADES = 8					-- (normaly 1) max operative slots gained from upgrades
+	NDefines.NOperatives.MAX_OPERATIVE_SLOT_FROM_AGENCY_UPGRADES = 4					-- (normaly 1) max operative slots gained from upgrades
 	NDefines.NOperatives.INTEL_NETWORK_GAIN_RATE_ON_WRONG_CONTROLLER = -9.9				-- (normaly -10.0) Amount of network strength lost in a state when it does not have the right controller anymore
 	NDefines.NOperatives.INTEL_NETWORK_GAIN_RATE_ON_OUT_OF_RANGE = -1.57				-- (normaly -1.75) Amount of network strength lost in a state that has the right controller but is out of range of any operative
 				--may come back to below, but makes much more of a diffrence than i thaught
@@ -650,7 +650,7 @@
 
 	NDefines.NOperatives.DIPLOMATIC_PRESSURE_OPERATIVE_STACKING_FACTOR = 0.6	-- (normaly 0.5) The diminishing return factor to apply to operative working for the same faction after the first one. Operatives operating for a same faction are ranked by their efficiency and their opinion and tension drift are individually applyied a stacking factor like so: DRIFT * STACKING_FACTOR^RANK where RANK is a value from 0 to the number of operative -1 where the opperative with the highest drift value has rank 0
 	NDefines.NOperatives.DIPLOMATIC_PRESSURE_DAILY_XP_GAIN = 0.164				-- (Normaly 0.137)
-	NDefines.NOperatives.MAX_RECRUITED_OPERATIVES = 16							-- (Normaly 10)
+	NDefines.NOperatives.MAX_RECRUITED_OPERATIVES = 10							-- (Normaly 10)
 	NDefines.NOperatives.OPERATION_COMPLETION_XP = 24							-- (normaly 18)
 	NDefines.NOperatives.ON_CAPTURE_COUNTERINTELLIGENCE_OPERATIVE_XP_GAIN = 120	-- (normaly 100) Xp gain when an enemy operative is captured in the country the operative is assigned to counter intelligence to. Apply to a single randomly selected operative
 	NDefines.NIntel.RADAR_INTEL_STACKING_FACTOR = 0.6							-- (Normaly 0.5) Used when multiple radars cover the same province
@@ -703,3 +703,8 @@
 
 	NDefines.NSupply.MAX_RAILWAY_LEVEL = 6 -- update railway texture as well, each frame corresponds to a level
 	NDefines.NSupply.DEFAULT_STARTING_TRUCK_RATIO = 1 -- countries get this ratio of starting truck in their buffers compared to their need -- vanilla 1.5
+
+	 -- MD new nukes
+	 NDefines.NMilitary.NUKE_MIN_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
+	 NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
+	 NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen

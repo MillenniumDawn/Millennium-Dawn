@@ -3483,6 +3483,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: econvent.4.a executed"
 		set_country_flag = { flag = bank_crisis value = 1 days = 365 }
 
+		set_temp_variable = { treasury_change = -5.00 }
+		modify_treasury_effect = yes
 		if = { limit = { has_idea = economic_boom }
 			custom_effect_tooltip = econvent.from_booming_tt
 			random_list = {
@@ -3578,6 +3580,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: econvent.4.b executed"
 		set_country_flag = { flag = bank_crisis value = 2 days = 365 }
 
+		add_political_power = -75
 		if = { limit = { has_idea = economic_boom }
 			custom_effect_tooltip = econvent.from_booming_tt
 			random_list = {
@@ -4789,14 +4792,13 @@ country_event = {
 					set_politics = {
 						ruling_party = [OUTLOOK]
 						elections_allowed = yes
-						last_election = "[YEAR].[MONTH].[DATE]"
+						last_election = "[YEAR].[MONTH].1"
 						election_frequency = 48
 					}
 				}
 				OUTLOOK = "[meta_ideology_names]"
 				YEAR = global.year
 				MONTH = global.month
-				DATE = global.date
 			}
 			clr_country_flag = do_not_retire
 		}
@@ -5625,10 +5627,7 @@ country_event = {
 	option = {
 		name = bankruptcy.111.a	#Agree
 		log = "[GetDateText]: [This.GetName]: bankruptcy.111.a executed"
-		if = {
-			limit = {
-				check_variable = { gdp_per_capita < 5 }
-			}
+		if = { limit = { check_variable = { gdp_per_capita < 5 } }
 			random_owned_state = {
 				limit = {
 					arms_factory > 1
@@ -5650,9 +5649,13 @@ country_event = {
 				}
 			}
 		}
-		set_temp_variable = { temp_opinion = -5 }
+
+		# Internal Faction Effect
+		set_temp_variable = { temp_opinion = -10 }
 		change_the_military_opinion = yes
 		change_defense_industry_opinion = yes
+
+		# Economic Stuff
 		custom_effect_tooltip = bailout_given_tt
 		subtract_from_variable = { debt = debt_bailout }
 		clear_variable = debt_bailout
@@ -5683,10 +5686,9 @@ country_event = {
 	option = {
 		name = bankruptcy.112.a	#Agree
 		log = "[GetDateText]: [This.GetName]: bankruptcy.112.a executed"
-		if = {
-			limit = {
-				check_variable = { gdp_per_capita < 5 }
-			}
+
+		# Dismantles the Dockyards
+		if = { limit = { check_variable = { gdp_per_capita < 5 } }
 			random_owned_state = {
 				limit = {
 					dockyard > 1
@@ -5708,8 +5710,12 @@ country_event = {
 				}
 			}
 		}
-		set_temp_variable = { temp_opinion = -5 }
+
+		# Maritime Industry No likey
+		set_temp_variable = { temp_opinion = -10 }
 		change_maritime_industry_opinion = yes
+
+		# Economic Effects
 		custom_effect_tooltip = bailout_given_tt
 		subtract_from_variable = { debt = debt_bailout }
 		clear_variable = debt_bailout
@@ -5745,17 +5751,13 @@ country_event = {
 			}
 			custom_effect_tooltip = bankruptcy.113_low_gdp_tt
 			add_to_variable = { population_tax_rate = 10 }
-			remove_tax_cost = yes
 			add_to_variable = { corporate_tax_rate = 10 }
-			add_tax_laws = yes
 			remove_10_popularity_sub = yes
 		}
 		else = {
 			custom_effect_tooltip = bankruptcy.113_tt
 			add_to_variable = { population_tax_rate = 5 }
-			remove_tax_cost = yes
 			add_to_variable = { corporate_tax_rate = 5 }
-			add_tax_laws = yes
 			remove_5_popularity_sub = yes
 		}
 		clr_country_flag = no_personal_tax_rate_change
@@ -5774,12 +5776,20 @@ country_event = {
 		custom_effect_tooltip = bailout_given_tt
 		subtract_from_variable = { debt = debt_bailout }
 		clear_variable = debt_bailout
+
+		#Internal Faction Effects
 		set_temp_variable = { temp_opinion = -5 }
 		change_wall_street_opinion = yes
 		change_the_donju_opinion = yes
 		change_the_bazaar_opinion = yes
 		change_small_medium_business_owners_opinion = yes
 		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_chaebols_opinion = yes
+		change_oligarchs_opinion = yes
+		change_landowners_opinion = yes
+		change_farmers_opinion = yes
+		change_labour_unions_opinion = yes
 
 		add_timed_idea = { idea = IMF_debt_relief_received days = 360 }
 		ingame_update_setup = yes
@@ -5796,6 +5806,13 @@ country_event = {
 		change_the_bazaar_opinion = yes
 		change_small_medium_business_owners_opinion = yes
 		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_chaebols_opinion = yes
+		change_oligarchs_opinion = yes
+		change_landowners_opinion = yes
+		change_farmers_opinion = yes
+		change_labour_unions_opinion = yes
+
 		ingame_update_setup = yes
 		ai_chance = { factor = 10 }
 	}
@@ -5856,7 +5873,7 @@ country_event = {
 		ai_chance = { factor = 10 }
 	}
 }
-#dismantle military factories
+# Dismantle State Owned industry
 country_event = {
 	id = bankruptcy.115
 	title = bankruptcy.115.t
