@@ -183,33 +183,6 @@ country_event = {
 	option = { #a
 		name = EUevent.3.a
 		log = "[GetDateText]: [Root.GetName]: event EUevent.3.a"
-		#EU_set_most_advanced_naval_tech = yes
-		#every_country = {
-		#	limit = {
-		#		has_idea = EU_member
-		#		NOT = { original_tag = ROOT }
-		#	}
-		#		set_country_flag = USoE_transfer_navy
-		#		transfer_navy = {
-		#			target = EUU
-		#		}
-		#}
-		#ROOT = {
-		#	annex_country = {
-		#		target = EUU
-		#	}
-		#}
-		#release = EUU
-		#if = {
-		#	limit = {
-		#		date < 2017.01.01
-		#	}
-		#	EU_load_naval_oob_2000 = yes
-		#}
-		#else = {
-		#	EU_load_naval_oob_2017 = yes
-		#}
-
 		### bug fix
 		every_country = {
 			limit = {  has_idea = EU_member }
@@ -217,7 +190,29 @@ country_event = {
 				inherit_technology = PREV
 			}
 		}
-		inherit_technology = EUU
+		EUU = {
+			for_each_loop = {
+				array = researched_techs
+				if = {
+					limit = {
+						NOT = { is_in_array = { eu_technologies = v } }
+					}
+					add_to_temp_array = { eu_technologies = v }
+				}
+			}
+		}
+		for_each_loop = {
+			array = eu_technologies
+			meta_effect = {
+				text = {
+					set_technology = {
+						[TECH] = 1
+						popup = no
+					}
+				}
+				TECH = "[?v.GetTokenKey]"
+			}
+		}
 		### end of bug fix
 		every_country = {
 			limit = {  has_idea = EU_member }
