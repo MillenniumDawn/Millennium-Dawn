@@ -1886,8 +1886,7 @@
 
 #War on the cartels
 
-#Lula main political tree
-
+	#Lula main political tree
 	shared_focus = {
 		id = BRA_2002_elections
 		icon = GFX_BRA_the_2018_elections
@@ -1897,21 +1896,11 @@
 
 		cost = 5
 
-		prerequisite = { }
-		mutually_exclusive = { }
-		available = {
-			always = no
-		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = {	}
+		available = { always = no }
 		cancel = { date > 2002.12.31 }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_2002_elections"
-			#country_event = { id = brazil.39 days = 0 }
 		}
 
 		ai_will_do = {
@@ -1928,8 +1917,6 @@
 
 		cost = 5
 
-		prerequisite = { }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_nossa_economia"
 			add_ideas = BRA_idea_nossa_economia
@@ -6478,8 +6465,7 @@
 		}
 	}
 
-
-#military
+	# Military
 	shared_focus = {
 		id = BRA_nosso_exercito
 		icon = GFX_Brazilian_Army_1
@@ -6489,11 +6475,9 @@
 
 		cost = 5
 
-
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_nosso_exercito"
-			army_experience = 25
+			army_experience = 50
 		}
 
 		ai_will_do = {
@@ -6510,11 +6494,9 @@
 
 		cost = 5
 
-		prerequisite = { }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_marinha_do_brasil"
-			navy_experience = 25
+			navy_experience = 50
 		}
 
 		ai_will_do = {
@@ -6533,7 +6515,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_nosso_exercito }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_imbel"
 			add_ideas = BRA_idea_imbel
@@ -6555,7 +6536,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_imbel }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_modern_artillery"
 			add_ideas = BRA_idea_modern_artillery
@@ -6577,13 +6557,9 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_modern_artillery }
-		mutually_exclusive = { }
 		available = {
 			threat > 0.15
 		}
-
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_strength_on_land"
@@ -6606,7 +6582,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_nosso_exercito }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_homemade_rifles"
 			add_ideas = BRA_idea_homemade_rifles
@@ -6625,20 +6600,41 @@
 		y = 1
 		relative_position_id = BRA_homemade_rifles
 
-		cost = 5
-
+		cost = 6.4 # 45 Days
 		prerequisite = { focus = BRA_homemade_rifles }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_western_military_factories"
-			886 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = arms_factory
-					level = 2
-					instant_build = yes
+			if = { limit = { has_full_control_of_state = 886 }
+				886 = {
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = arms_factory
+						level = 2
+						instant_build = yes
+					}
 				}
 			}
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 1
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = arms_factory
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+
+			set_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6654,28 +6650,71 @@
 		y = 2
 		relative_position_id = BRA_homemade_rifles
 
-		cost = 5
+		cost = 6.4 # 45 Days
 
 		prerequisite = { focus = BRA_western_military_factories }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_northeastern_military_factories"
-			889 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
+			if = { limit = { has_full_control_of_state = 889 }
+				889 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
-			888 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = arms_factory
-					level = 2
-					instant_build = yes
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
+
+			if = { limit = { has_full_control_of_state = 888 }
+				888 = {
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = arms_factory
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+
+			set_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6691,18 +6730,37 @@
 		y = 1
 		relative_position_id = BRA_marinha_do_brasil
 
-		cost = 5
+		cost = 6.4
 
 		prerequisite = { focus = BRA_marinha_do_brasil }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_national_drydocks"
-			889 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
+			if = { limit = { has_full_control_of_state = 889 }
+				889 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = dockyard
+							size > 1
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
 		}
@@ -6720,18 +6778,37 @@
 		y = 1
 		relative_position_id = BRA_national_drydocks
 
-		cost = 5
+		cost = 6.4
 
 		prerequisite = { focus = BRA_national_drydocks }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_sao_paulo_naval_industries"
-			882 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
+			if = { limit = { has_full_control_of_state = 882 }
+				882 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = dockyard
+							size > 1
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
 		}
@@ -6749,18 +6826,38 @@
 		y = 2
 		relative_position_id = BRA_national_drydocks
 
-		cost = 5
+		cost = 6.4
 
 		prerequisite = { focus = BRA_sao_paulo_naval_industries }
 		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_rio_drydocks"
-			883 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = dockyard
-					level = 2
-					instant_build = yes
+			if = { limit = { has_full_control_of_state = 883 }
+				883 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = dockyard
+							size > 1
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
 
@@ -6782,10 +6879,15 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_marinha_do_brasil }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_behind_the_times"
-			navy_experience = 10
+			navy_experience = 25
+			add_doctrine_cost_reduction = {
+				name = GENERIC_naval_doctrine_innovations
+                category = Cat_naval_doctrine
+                uses = 1
+                cost_reduction = 0.5
+            }
 		}
 
 		ai_will_do = {
@@ -11942,7 +12044,7 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_defund_progressive_policies"
 			add_popularity = { ideology = nationalist popularity = 0.05 }
-			-add_stability = 0.05
+			add_stability = 0.05
 		}
 
 		ai_will_do = {
@@ -11995,7 +12097,7 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_socialsecurity_reform"
 			add_political_power = 50
-			-add_stability = 0.02
+			add_stability = 0.02
 			#set_temp_variable = { temp_opinion = 5 }
 			#change_international_bankers_opinion = yes
 			set_temp_variable = { temp_opinion = -5 }
