@@ -5987,8 +5987,10 @@ scripted_gui = {
 						id = satellites.9
 					}
 				}
+				remove_rods_used = yes
 				clr_country_flag = RODS_has_target
 				clear_variable = var_RODS_type
+				clear_variable = var_RODS_orbit
 			}
 			kinetic_bombardment_stats_button_click = {
 				if = {
@@ -6060,15 +6062,63 @@ scripted_gui = {
 				}
 			}
 			ASAT_button_click_enabled = {
-				OR = {
-					check_variable = { var_ASAT_salvo < var_ASAT_inventory }
-					check_variable = { var_ASAT_salvo = var_ASAT_inventory }
+				custom_trigger_tooltip = {
+					tooltip = ASAT_salvo_trigger_1_TT
+					check_variable = { var_ASAT_salvo > 0 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = ASAT_salvo_trigger_2_TT
+					OR = {
+						check_variable = { var_ASAT_salvo < var_ASAT_inventory }
+						check_variable = { var_ASAT_salvo = var_ASAT_inventory }
+					}
+				}
+				custom_trigger_tooltip = {
+					tooltip = has_target_list_TT
+					check_variable = { ROOT.sat_target_array^num > 0 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = has_war_sat_trigger_TT
+					all_of_scopes = {
+						array = ROOT.sat_target_TAG_array
+
+						ROOT = { has_war_with = PREV }
+					}
 				}
 			}
 			activate_killsat_button_click_enabled = {
-				OR = {
-					check_variable = { var_KILLSAT_salvo < var_KILLSAT_orbit }
-					check_variable = { var_KILLSAT_salvo = var_KILLSAT_orbit }
+				custom_trigger_tooltip = {
+					tooltip = KILLSAT_salvo_trigger_1_TT
+					check_variable = { var_KILLSAT_salvo > 0 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = KILLSAT_salvo_trigger_2_TT
+					OR = {
+						check_variable = { var_KILLSAT_salvo < var_KILLSAT_orbit }
+						check_variable = { var_KILLSAT_salvo = var_KILLSAT_orbit }
+					}
+				}
+				custom_trigger_tooltip = {
+					tooltip = has_target_list_TT
+					check_variable = { ROOT.sat_target_array^num > 0 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = has_war_sat_trigger_TT
+					all_of_scopes = {
+						array = ROOT.sat_target_TAG_array
+
+						ROOT = { has_war_with = PREV }
+					}
+				}
+			}
+			kinetic_bombardment_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = has_RODS_orbit_target_TT
+					check_variable = { var_RODS_orbit > 0 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = RODS_has_target_TT
+					has_country_flag = RODS_has_target
 				}
 			}
 			OLV_flights_small_minus_button_bg_click_enabled = {
@@ -6237,6 +6287,7 @@ scripted_gui = {
 			RODS_type_button_click = {
 				set_variable = { var_RODS_type = RODS_display_array^i }
 				set_variable = { var_kinetic_bombardment_damage = global.RODS_damage_array^i }
+				set_variable = { var_RODS_orbit = RODS_satellite_array^i }
 				#set_variable = { var_OLV_reliability = global.OLV_reliability_array^i }
 				#set_variable = { var_OLV_payload_mass = global.OLV_payload_mass_array^i }
 				#set_variable = { var_OLV_inventory = missile_inventory_array^OLV_display_array^i }
@@ -7899,6 +7950,8 @@ scripted_gui = {
 				set_variable = { orbit_selected_TAG = ROOT.id }
 				set_sat_access_arrays_selected_TAG = yes
 				set_satellites_gui = yes
+				# clear_array = ROOT.sat_target_array
+				# clear_array = ROOT.sat_target_TAG_array
 			}
 			### sat access buttons
 			GNSS_mil_access_flags_button_click = {
@@ -8196,6 +8249,8 @@ scripted_gui = {
 					set_variable = { ROOT.var_SPY_mission_num_gui = num_controlled_states }
 				}
 				update_SPY_mission_start_button = yes
+				# clear_array = ROOT.sat_target_array
+				# clear_array = ROOT.sat_target_TAG_array
 				clr_country_flag = open_MD_satellite_orbit_country_selection
 			}
 			close_button_click = {
