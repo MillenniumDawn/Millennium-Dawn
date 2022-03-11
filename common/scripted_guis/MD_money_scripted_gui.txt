@@ -47,7 +47,7 @@ scripted_gui = {
 			#Take debt
 			debt_bg_click = {
 				if = {
-					limit = { check_variable = { interest_rate < 20 } } 
+					limit = { check_variable = { interest_rate < 20 } }
 					add_to_variable = { treasury = 1 }
 					add_to_variable = { debt = 1.01 }
 					ingame_update_setup = yes
@@ -56,7 +56,7 @@ scripted_gui = {
 			}
 			debt_bg_control_click = {
 				if = {
-					limit = { check_variable = { interest_rate < 20 } } 
+					limit = { check_variable = { interest_rate < 20 } }
 					add_to_variable = { treasury = 10 }
 					add_to_variable = { debt = 10.1 }
 					ingame_update_setup = yes
@@ -65,7 +65,7 @@ scripted_gui = {
 			}
 			debt_bg_shift_click = {
 				if = {
-					limit = { check_variable = { interest_rate < 20 } } 
+					limit = { check_variable = { interest_rate < 20 } }
 					add_to_variable = { treasury = 100 }
 					add_to_variable = { debt = 101 }
 					ingame_update_setup = yes
@@ -692,7 +692,13 @@ scripted_gui = {
 		effects = {
 			treasury_bg_click = {
 				if = {
-					limit = { NOT = { has_country_flag = open_economy_screen } }
+					limit = {
+						OR = {
+							NOT = { has_country_flag = open_economy_screen }
+							is_ai = yes
+						}
+					}
+
 					set_country_flag = open_economy_screen
 				}
 				else = {
@@ -891,7 +897,14 @@ scripted_gui = {
 		context_type = player_context
 		window_name = "budget_tab"
 
-		visible = { ROOT = { has_country_flag = open_economy_screen } }
+		visible = {
+			ROOT = {
+				OR = {
+					is_ai = yes
+					has_country_flag = open_economy_screen
+				}
+			}
+		}
 
 		triggers = {
 			# Population taxes
@@ -1094,7 +1107,7 @@ scripted_gui = {
 		# ai_weights - modifiers to determine AI habits
 
 		ai_enabled = { always = yes }
-		ai_test_interval = 24
+		ai_test_interval = 72
 		ai_max_weight_taken_per_test = 2
 		ai_check = {
 			has_political_power > 50
@@ -1249,17 +1262,11 @@ scripted_gui = {
 						factor = 0.50
 						has_stability < 0.10
 					}
-					# General Command to be less likely to increase income tax
-					modifier = {
-						factor = 0.95
-						is_ai = yes
-					}
 					# Killswitch
 					modifier = {
 						factor = 0
 						OR = {
 							has_country_flag = no_personal_tax_rate_change
-							check_variable = { population_tax_rate > 49 }
 							has_stability < 0.05 # AI should avoid lowering taxes if they have no stability obviously
 						}
 					}
@@ -1267,7 +1274,7 @@ scripted_gui = {
 			}
 			decrease_population_tax_click = {
 				ai_will_do = {
-					factor = 1
+					factor = 50
 					# Generic
 					modifier = {
 						factor = 1.25
@@ -1381,28 +1388,6 @@ scripted_gui = {
 						factor = 2.50
 						has_political_power > 149
 					}
-					# Reducers
-					modifier = {
-						factor = 0.65
-						OR = {
-							ai_has_acceptable_deficit = yes
-							ai_has_acceptable_deficit_factories = yes
-						}
-					}
-					modifier = {
-						factor = 0.85
-						OR = {
-							ai_has_acceptable_deficit = yes
-							ai_has_acceptable_deficit_factories = yes
-						}
-					}
-					modifier = {
-						factor = 0.15
-						OR = {
-							ai_has_acceptable_surplus = yes
-							ai_has_acceptable_surplus_factories = yes
-						}
-					}
 					# Stability Increase Needed
 					modifier = {
 						factor = 1.50
@@ -1423,17 +1408,14 @@ scripted_gui = {
 					# Killswitch
 					modifier = {
 						factor = 0
-						OR = {
-							check_variable = { population_tax_rate > 0 }
-							has_country_flag = no_personal_tax_rate_change
-						}
+						has_country_flag = no_personal_tax_rate_change
 					}
 				}
 			}
 			# Corporate Tax Rate Clicks
 			increase_corporate_tax_click = {
 				ai_will_do = {
-					factor = 1
+					factor = 10
 					# Generic Economic
 					# Be less likely to increase if you have surplus greater than 4 billion
 					modifier = {
@@ -1541,39 +1523,16 @@ scripted_gui = {
 						factor = 2.50
 						has_political_power > 149
 					}
-					# Reducers
-					modifier = {
-						factor = 0.95
-						OR = {
-							ai_has_acceptable_deficit = yes
-							ai_has_acceptable_deficit_factories = yes
-						}
-					}
-					modifier = {
-						factor = 0.30
-						OR = {
-							ai_has_acceptable_surplus = yes
-							ai_has_acceptable_surplus_factories = yes
-						}
-					}
-					# AI should focus on consumer goods
-					modifier = {
-						factor = 1.25
-						is_ai = yes
-					}
 					# Killswitch
 					modifier = {
 						factor = 0
-						OR = {
-							check_variable = { corporate_tax_rate > 49 }
-							has_country_flag = no_corporate_tax_rate_change
-						}
+						has_country_flag = no_corporate_tax_rate_change
 					}
 				}
 			}
 			decrease_corporate_tax_click = {
 				ai_will_do = {
-					factor = 1
+					factor = 5
 					# Generic Economic
 					modifier = {
 						factor = 1.25
@@ -1680,33 +1639,10 @@ scripted_gui = {
 						factor = 2.50
 						has_political_power > 149
 					}
-					# Reducers
-					modifier = {
-						factor = 0.95
-						OR = {
-							ai_has_acceptable_deficit = yes
-							ai_has_acceptable_deficit_factories = yes
-						}
-					}
-					modifier = {
-						factor = 0.30
-						OR = {
-							ai_has_acceptable_surplus = yes
-							ai_has_acceptable_surplus_factories = yes
-						}
-					}
-					# AI should focus on consumer goods
-					modifier = {
-						factor = 1.25
-						is_ai = yes
-					}
 					# Killswitch
 					modifier = {
 						factor = 0
-						OR = {
-							check_variable = { corporate_tax_rate > 0 }
-							has_country_flag = no_corporate_tax_rate_change
-						}
+						has_country_flag = no_corporate_tax_rate_change
 					}
 				}
 			}
