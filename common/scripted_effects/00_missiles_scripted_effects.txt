@@ -6157,6 +6157,29 @@ calculate_SAM_MD_sea_gui_vars = {
 		}
 		multiply_variable = { var_NSAM_MD_costs_total = 4 }
 	}
+	### check for max deployed
+	### add all aa ships
+	set_temp_variable = { temp_MD_ships = 0 }
+	if = {
+		limit = {
+			has_dlc = "Man the Guns"
+		}
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@cruiser_mtg }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@stealth_destroyer_mtg }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@destroyer_mtg }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@frigate_mtg }
+	}
+	else = {
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@nuclear_cruiser }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@cruiser }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@destroyer }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@frigate }
+	}
+
+	### multiply launchers
+	set_temp_variable = { temp_NSAM_MD_launcher_total = var_ship_SAM_launcher_tech }
+	multiply_temp_variable = { temp_NSAM_MD_launcher_total = temp_MD_ships }
+	set_variable = { var_max_deployed_SAM_MD_sea = temp_NSAM_MD_launcher_total }
 }
 
 calculate_SAM_MD_land_gui_vars = {
@@ -6175,6 +6198,17 @@ calculate_SAM_MD_land_gui_vars = {
 		}
 		multiply_variable = { var_SAM_MD_costs_total = 4 }
 	}
+	### check for max deployed
+	set_temp_variable = { temp_MD_batteries = 0 }
+	every_controlled_state = {
+		limit = {
+			anti_air_building > 0
+		}
+		add_to_temp_variable = { temp_MD_batteries = non_damaged_building_level@anti_air_building }
+	}
+	set_temp_variable = { temp_SAM_MD_launcher_total = var_SAM_launcher_tech }
+	multiply_temp_variable = { temp_SAM_MD_launcher_total = temp_MD_batteries }
+	set_variable = { var_max_deployed_SAM_MD_land = temp_SAM_MD_launcher_total }
 }
 
 calculate_ABM_sea_gui_vars = {
@@ -6193,6 +6227,28 @@ calculate_ABM_sea_gui_vars = {
 		}
 		multiply_variable = { var_NABM_costs_total = 4 }
 	}
+	### check for max deployed
+	### add all aa ships
+	set_temp_variable = { temp_MD_ships = 0 }
+	if = {
+		limit = {
+			has_dlc = "Man the Guns"
+		}
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@cruiser_mtg }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@stealth_destroyer_mtg }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@destroyer_mtg }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@frigate_mtg }
+	}
+	else = {
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@nuclear_cruiser }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@cruiser }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@destroyer }
+		add_to_temp_variable = { temp_MD_ships = num_ships_with_type@frigate }
+	}
+	### multiply launchers
+	set_temp_variable = { temp_NABM_launcher_total = var_ship_ABM_launcher_tech }
+	multiply_temp_variable = { temp_NABM_launcher_total = temp_MD_ships }
+	set_variable = { var_max_deployed_ABM_sea = temp_NABM_launcher_total }
 }
 
 calculate_ABM_land_gui_vars = {
@@ -6211,6 +6267,17 @@ calculate_ABM_land_gui_vars = {
 		}
 		multiply_variable = { var_ABM_costs_total = 4 }
 	}
+	### check for max deployed
+	set_temp_variable = { temp_ABM_batteries = 0 }
+	every_controlled_state = {
+		limit = {
+			missile_defense_station > 0
+		}
+		add_to_temp_variable = { temp_ABM_batteries = non_damaged_building_level@missile_defense_station }
+	}
+	set_temp_variable = { temp_ABM_launcher_total = var_ABM_launcher_tech }
+	multiply_temp_variable = { temp_ABM_launcher_total = temp_ABM_batteries }
+	set_variable = { var_max_deployed_ABM_land = temp_ABM_launcher_total }
 }
 
 
@@ -6690,7 +6757,7 @@ update_deployed_ABM_sea = {
 	}
 	### multiply launchers
 	set_temp_variable = { temp_NABM_launcher_total = var_ship_ABM_launcher_tech }
-	multiply_variable = { temp_NABM_launcher_total = temp_MD_ships }
+	multiply_temp_variable = { temp_NABM_launcher_total = temp_MD_ships }
 	### subtract destroyed NABM
 	if = {
 		limit = {
