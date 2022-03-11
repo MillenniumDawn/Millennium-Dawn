@@ -243,7 +243,7 @@ scripted_gui = {
 					modifier = {
 						factor = 0
 						OR = {
-							check_variable = { interest_rate > 11.999 } #12% interest is the AI soft cap
+							check_variable = { interest_rate < 11.999 } #12% interest is the AI soft cap
 							has_idea = bankrupcy #Obviously can't take debt
 							check_variable = { treasury < -50.000 }
 							num_of_factories < 50
@@ -343,7 +343,7 @@ scripted_gui = {
 					modifier = {
 						factor = 0
 						OR = {
-							check_variable = { interest_rate > 11.999 }
+							check_variable = { interest_rate < 11.999 }
 							has_idea = bankrupcy
 							check_variable = { treasury < -30.00 }
 							num_of_factories < 15
@@ -1099,7 +1099,7 @@ scripted_gui = {
 		}
 
 		# AI Section
-		# Note: 5 days - 120 Hrs
+		# Note: 7 days - 168 Hrs
 		# Functional Notes:
 		# ai_enabled - triggers that engage the AI for this GUI
 		# ai_test_interval - timeframe between AI checks
@@ -1107,17 +1107,17 @@ scripted_gui = {
 		# ai_weights - modifiers to determine AI habits
 
 		ai_enabled = { always = yes }
-		ai_test_interval = 72
+		ai_test_interval = 168 # 7 Days
 		ai_max_weight_taken_per_test = 2
 		ai_check = {
-			has_political_power > 50
+			has_political_power > 200
 		}
 
 		ai_weights = {
 			# Population Tax Rate Clicks
 			increase_population_tax_click = {
 				ai_will_do = {
-					factor = 100
+					factor = 25
 					# General Economic Factors
 					modifier = {
 						factor = 1.25
@@ -1262,19 +1262,29 @@ scripted_gui = {
 						factor = 0.50
 						has_stability < 0.10
 					}
+					# Reducer
+					modifier = {
+						factor = 0.01
+						check_variable = { treasury_rate < 2.99 }
+						check_variable = { treasury_rate > -2.99 }
+					}
 					# Killswitch
 					modifier = {
 						factor = 0
 						OR = {
 							has_country_flag = no_personal_tax_rate_change
 							has_stability < 0.05 # AI should avoid lowering taxes if they have no stability obviously
+							check_variable = { treasury_rate > 9.99 }
 						}
 					}
+				}
+				ignore_lower_weights = {
+					factor = 10
 				}
 			}
 			decrease_population_tax_click = {
 				ai_will_do = {
-					factor = 50
+					factor = 25
 					# Generic
 					modifier = {
 						factor = 1.25
@@ -1405,11 +1415,24 @@ scripted_gui = {
 						factor = 1.10
 						has_stability < 0.25
 					}
+
+					# Reducer
+					modifier = {
+						factor = 0.01
+						check_variable = { treasury_rate < 2.99 }
+						check_variable = { treasury_rate > -2.99 }
+					}
 					# Killswitch
 					modifier = {
 						factor = 0
-						has_country_flag = no_personal_tax_rate_change
+						OR = {
+							has_country_flag = no_personal_tax_rate_change
+							check_variable = { treasury_rate < -4.99 }
+						}
 					}
+				}
+				ignore_lower_weights = {
+					factor = 10
 				}
 			}
 			# Corporate Tax Rate Clicks
@@ -1523,11 +1546,27 @@ scripted_gui = {
 						factor = 2.50
 						has_political_power > 149
 					}
+					modifier = {
+						factor = 0.60
+						num_of_available_civilian_factories < 15
+					}
+					# Reducer
+					modifier = {
+						factor = 0.01
+						check_variable = { treasury_rate < 2.99 }
+						check_variable = { treasury_rate > -2.99 }
+					}
 					# Killswitch
 					modifier = {
 						factor = 0
-						has_country_flag = no_corporate_tax_rate_change
+						OR = {
+							has_country_flag = no_corporate_tax_rate_change
+							check_variable = { treasury_rate > 9.99 }
+						}
 					}
+				}
+				ignore_lower_weights = {
+					factor = 10
 				}
 			}
 			decrease_corporate_tax_click = {
@@ -1639,11 +1678,23 @@ scripted_gui = {
 						factor = 2.50
 						has_political_power > 149
 					}
+					# Reducer
+					modifier = {
+						factor = 0.01
+						check_variable = { treasury_rate < 2.99 }
+						check_variable = { treasury_rate > -2.99 }
+					}
 					# Killswitch
 					modifier = {
 						factor = 0
-						has_country_flag = no_corporate_tax_rate_change
+						OR = {
+							has_country_flag = no_corporate_tax_rate_change
+							check_variable = { treasury_rate < -4.99 }
+						}
 					}
+				}
+				ignore_lower_weights = {
+					factor = 10
 				}
 			}
 		}
