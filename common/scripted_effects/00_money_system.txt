@@ -67,6 +67,10 @@ ingame_update_setup = {
 
 	#Visuals
 	update_display = yes
+	if = {
+		limit = { is_debug = yes }
+		log = "[GetDateText]: [Root.GetName]: Ingame Update Setup Treasury: [?ROOT.treasury] Treasury Rate: [?ROOT.treasury_rate] Debt: [?ROOT.debt]"
+	}
 }
 
 # calculate_tax_rate
@@ -78,7 +82,7 @@ calculate_tax_rate = {
 		}
 		set_variable = { consumer_goods_from_corporate_tax = corporate_tax_rate }
 		divide_variable = { consumer_goods_from_corporate_tax = 100 }
-		multiply_variable = { consumer_goods_from_corporate_tax = 2 } # Doubles the Consumer Goods Penalty
+		multiply_variable = { consumer_goods_from_corporate_tax = 1.5 } # Doubles the Consumer Goods Penalty
 
 		if = {
 			limit = { NOT = { has_dynamic_modifier = { modifier = population_tax_stability_hit } } }
@@ -204,6 +208,10 @@ calculate_tax_gain = {
 		limit = { original_tag = NIG }
 		if = {
 			limit = { has_idea = NIG_efficent_government_spending_idea }
+			add_to_temp_variable = { tax_gain_multiplier = 0.10 }
+		}
+		else_if = {
+			limit = { has_idea = NIG_efficent_government_spending_reform_idea }
 			add_to_temp_variable = { tax_gain_multiplier = 0.10 }
 		}
 	}
@@ -810,7 +818,7 @@ update_military_rate = {
 		## add to count
 		add_to_temp_variable = { capital_count = capital_count_nukes }
 		add_to_temp_variable = { destroyer_count = destroyer_count_nukes }
-		add_to_temp_variable = { minor_count = minor_count_nukes }		
+		add_to_temp_variable = { minor_count = minor_count_nukes }
 	}
 	else_if = {
 		limit = { has_dlc = "Man the Guns" }
@@ -987,28 +995,24 @@ update_military_rate = {
 	##Calculate TEL_base and missile_silo
 	#Don't calculate stockpiled missiles, they already cost money when produced
 	# missile_silo
-	set_temp_variable = { num_missile_silo = 0 }
-	every_controlled_state = {
-		add_to_temp_variable = { PREV.num_missile_silo = building_level@missile_silo }
+	hidden_effect = {
+		# missile_silo
+		set_temp_variable = { num_missile_silo = 0 }
+		# TEL_base
+		set_temp_variable = { num_TEL_base = 0 }
+		##Calculate anti_air_building and missile_defense_station
+		#Don't calculate stockpiled SAM and ABM, they are calculated separate
+		# anti_air_building
+		set_temp_variable = { num_anti_air_building = 0 }
+		# missile_defense_station
+		set_temp_variable = { num_missile_defense_station = 0 }
+		every_controlled_state = {
+			add_to_temp_variable = { PREV.num_missile_silo = building_level@missile_silo }
+			add_to_temp_variable = { PREV.num_TEL_base = building_level@TEL_base }
+			add_to_temp_variable = { PREV.num_anti_air_building = building_level@anti_air_building }
+			add_to_temp_variable = { PREV.num_missile_defense_station = building_level@missile_defense_station }
+		}
 	}
-	# TEL_base
-	set_temp_variable = { num_TEL_base = 0 }
-	every_controlled_state = {
-		add_to_temp_variable = { PREV.num_TEL_base = building_level@TEL_base }
-	}
-	##Calculate anti_air_building and missile_defense_station
-	#Don't calculate stockpiled SAM and ABM, they are calculated separate
-	# anti_air_building
-	set_temp_variable = { num_anti_air_building = 0 }
-	every_controlled_state = {
-		add_to_temp_variable = { PREV.num_anti_air_building = building_level@anti_air_building }
-	}
-	# missile_defense_station
-	set_temp_variable = { num_missile_defense_station = 0 }
-	every_controlled_state = {
-		add_to_temp_variable = { PREV.num_missile_defense_station = building_level@missile_defense_station }
-	}
-
 
 
 	#Multiply each category with a weight value, and then add up categories together (eg. one strategic bomber is worth 14 helicopters etc) - Kal's note: changed math to match land/navy stuff

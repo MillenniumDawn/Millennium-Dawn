@@ -6,167 +6,6 @@ add_namespace = TalibanAttack
 add_namespace = TalibanInsurgency
 add_namespace = AfghanistanHostageCrisis
 
-### Afghanistan civil war cleanup events ###
-
-#Give the winner AFG cosmetic tag
-country_event = {
-	id = Afghanistan.0
-	immediate = { log = "[GetDateText]: [Root.GetName]: event Afghanistan.0" }
-
-	hidden = yes
-
-	trigger = {
-		OR = {
-			AND = {
-				tag = AFG
-				NOT = {
-					country_exists = TAL
-				}
-			}
-			AND = {
-				tag = TAL
-				NOT = {
-					country_exists = AFG
-				}
-			}
-		}
-		NOT = { has_global_flag = Afghanistan_Civil_War_Over }
-	}
-
-	mean_time_to_happen = {
-		days = 2
-	}
-
-	immediate = {
-		#Civil war is over
-		set_global_flag = Afghanistan_Civil_War_Over
-		#Clear core status
-		409 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		410 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		411 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		412 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		414 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		415 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		#Make the winner Afghanistan
-		drop_cosmetic_tag = yes
-		if = {
-			limit = { has_idea = Non_State_Actor }
-			remove_ideas = Non_State_Actor
-		}
-		if = {
-			limit = { has_idea = rival_government }
-			remove_ideas = rival_government
-		}
-		if = {
-			limit = {
-				tag = TAL
-			}
-			set_cosmetic_tag = AFG
-			set_country_flag = dynamic_flag
-			set_country_flag = dynamic_rebel_flag
-			add_ideas = intervention_neo_imperialism
-		}
-		add_state_core = 409
-		add_state_core = 410
-		add_state_core = 411
-		add_state_core = 412
-		add_state_core = 414
-		add_state_core = 415
-		set_capital = { state = 414 }
-		subtract_from_variable = { threat_level = 30 }
-		clamp_threat = yes
-
-		#Start of Taliban Insurgency
-		if = {
-			limit = {
-				original_tag = AFG
-			}
-			set_temp_variable = { taliban_strength_increase = 35 }
-			increase_taliban_strength = yes
-			country_event = {
-				id = TalibanInsurgency.0
-				days = 1
-			}
-		}
-
-		news_event = { id = AfghanistanNews.1 hours = 6 }
-	}
-}
-
-#Recreate Afghanistan in case it has been annexed
-country_event = {
-	id = Afghanistan.1
-	immediate = { log = "[GetDateText]: [Root.GetName]: event Afghanistan.1" }
-
-	hidden = yes
-
-	trigger = {
-		NOT = {
-			country_exists = AFG
-			country_exists = TAL
-		}
-		NOT = { 414 = { is_core_of = AFG } }
-	}
-
-	mean_time_to_happen = {
-		days = 2
-	}
-
-	immediate = {
-		#Clear core status
-		409 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		410 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		411 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		412 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		414 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		415 = {
-			remove_core_of = AFG
-			remove_core_of = TAL
-		}
-		AFG = {
-			add_state_core = 409
-			add_state_core = 410
-			add_state_core = 411
-			add_state_core = 412
-			add_state_core = 414
-			add_state_core = 415
-			set_capital = { state = 414 }
-		}
-	}
-}
 
 #Death of Ahmad Shah Massoud  Neutral_conservatism
 country_event = {
@@ -211,10 +50,8 @@ country_event = {
 				}
 				modifier = {
 					factor = 3.5
-					AND = {
-						has_completed_focus = AFG_loyal_guards
-						has_completed_focus = AFG_elite_guards
-					}
+					has_completed_focus = AFG_loyal_guards
+					has_completed_focus = AFG_elite_guards
 				}
 			}
 		}
@@ -521,10 +358,7 @@ news_event = {
 		}
 		add_political_power = -20
 		add_stability = -0.02
-		add_popularity = {
-			ideology = ROOT
-			popularity = -0.02
-		}
+		decrease_popularity_2 = yes
 		set_temp_variable = { taliban_strength_increase = 5 }
 		increase_taliban_strength = yes
 
@@ -799,9 +633,7 @@ news_event = {
 country_event = {
 	id = TalibanInsurgency.12
 	immediate = { log = "[GetDateText]: [Root.GetName]: event TalibanInsurgency.12" }
-
 	hidden = yes
-
 	trigger = {
 		original_tag = AFG
 		ROOT = {
@@ -811,7 +643,7 @@ country_event = {
 	}
 
 	mean_time_to_happen = {
-		days = 2
+		days = 14
 	}
 
 	immediate = {
@@ -839,19 +671,17 @@ country_event = {
 			}
 		}
 		any_country = {
-			limit = {
-				no_jihadist_government = yes
-				is_full_state = yes
-				NOT = {
-					has_country_flag = afg_support_counter_insurgency
-				}
+			no_jihadist_government = yes
+			is_full_state = yes
+			NOT = {
+				has_country_flag = afg_support_counter_insurgency
 			}
 			has_military_access_to = AFG
 		}
 	}
 
 	mean_time_to_happen = {
-		days = 1
+		days = 14
 	}
 
 	immediate = {
@@ -1090,11 +920,9 @@ country_event = {
 			has_country_flag = afg_active_taliban_insurgency
 		}
 		any_country = {
-			limit = {
-				no_jihadist_government = yes
-				is_full_state = yes
-				has_country_flag = afg_support_counter_insurgency
-			}
+			no_jihadist_government = yes
+			is_full_state = yes
+			has_country_flag = afg_support_counter_insurgency
 			NOT = {
 				has_military_access_to = AFG
 			}
@@ -1102,7 +930,7 @@ country_event = {
 	}
 
 	mean_time_to_happen = {
-		days = 1
+		days = 14
 	}
 
 	immediate = {
@@ -1179,96 +1007,90 @@ country_event = {
 					modifier = {
 						factor = 3
 						any_country = {
-							limit = {
-								OR = {
-									has_idea = large_power
-									has_idea = great_power
-									has_idea = superpower
-								}
-								no_jihadist_government = yes
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
 							}
+							no_jihadist_government = yes
 							has_military_access_to = AFG
 						}
 					}
 
 					modifier = {
 						factor = 2
-						AND = {
-							411 = {
-								any_province_building_level = {
-									province = {
-										id = 7519
-										id = 6209
-										id = 10826
-									}
-									building = bunker
-									level > 1
+						411 = {
+							any_province_building_level = {
+								province = {
+									id = 7519
+									id = 6209
+									id = 10826
 								}
+								building = bunker
+								level > 1
 							}
-							414 = {
-								any_province_building_level = {
-									province = {
-										id = 12831
-										id = 6114
-										id = 5082
-										id = 8090
-									}
-									building = bunker
-									level > 1
+						}
+						414 = {
+							any_province_building_level = {
+								province = {
+									id = 12831
+									id = 6114
+									id = 5082
+									id = 8090
 								}
+								building = bunker
+								level > 1
 							}
-							415 = {
-								any_province_building_level = {
-									province = {
-										id = 5064
-										id = 5020
-										id = 4949
-										id = 2101
-									}
-									building = bunker
-									level > 1
+						}
+						415 = {
+							any_province_building_level = {
+								province = {
+									id = 5064
+									id = 5020
+									id = 4949
+									id = 2101
 								}
+								building = bunker
+								level > 1
 							}
 						}
 					}
 
 					modifier = {
 						factor = 2
-						AND = {
-							411 = {
-								any_province_building_level = {
-									province = {
-										id = 7519
-										id = 6209
-										id = 10826
-									}
-									building = bunker
-									level > 2
+						411 = {
+							any_province_building_level = {
+								province = {
+									id = 7519
+									id = 6209
+									id = 10826
 								}
+								building = bunker
+								level > 2
 							}
-							414 = {
-								any_province_building_level = {
-									province = {
-										id = 12831
-										id = 6114
-										id = 5082
-										id = 8090
-									}
-									building = bunker
-									level > 2
+						}
+						414 = {
+							any_province_building_level = {
+								province = {
+									id = 12831
+									id = 6114
+									id = 5082
+									id = 8090
 								}
+								building = bunker
+								level > 2
 							}
-							415 = {
-								any_province_building_level = {
-									province = {
-										id = 5064
-										id = 5020
-										id = 4949
-										id = 2101
-									}
-									building = bunker
-									level > 2
+						}
+						415 = {
+							any_province_building_level = {
+								province = {
+									id = 5064
+									id = 5020
+									id = 4949
+									id = 2101
 								}
+								building = bunker
+								level > 2
 							}
 						}
 					}
@@ -1364,82 +1186,78 @@ country_event = {
 
 					modifier = {
 						factor = 2
-						AND = {
-							411 = {
-								any_province_building_level = {
-									province = {
-										id = 7519
-										id = 6209
-										id = 10826
-									}
-									building = bunker
-									level > 3
+						411 = {
+							any_province_building_level = {
+								province = {
+									id = 7519
+									id = 6209
+									id = 10826
 								}
+								building = bunker
+								level > 3
 							}
-							414 = {
-								any_province_building_level = {
-									province = {
-										id = 12831
-										id = 6114
-										id = 5082
-										id = 8090
-									}
-									building = bunker
-									level > 3
+						}
+						414 = {
+							any_province_building_level = {
+								province = {
+									id = 12831
+									id = 6114
+									id = 5082
+									id = 8090
 								}
+								building = bunker
+								level > 3
 							}
-							415 = {
-								any_province_building_level = {
-									province = {
-										id = 5064
-										id = 5020
-										id = 4949
-										id = 2101
-									}
-									building = bunker
-									level > 3
+						}
+						415 = {
+							any_province_building_level = {
+								province = {
+									id = 5064
+									id = 5020
+									id = 4949
+									id = 2101
 								}
+								building = bunker
+								level > 3
 							}
 						}
 					}
 
 					modifier = {
 						factor = 3
-						AND = {
-							411 = {
-								any_province_building_level = {
-									province = {
-										id = 7519
-										id = 6209
-										id = 10826
-									}
-									building = bunker
-									level > 4
+						411 = {
+							any_province_building_level = {
+								province = {
+									id = 7519
+									id = 6209
+									id = 10826
 								}
+								building = bunker
+								level > 4
 							}
-							414 = {
-								any_province_building_level = {
-									province = {
-										id = 12831
-										id = 6114
-										id = 5082
-										id = 8090
-									}
-									building = bunker
-									level > 4
+						}
+						414 = {
+							any_province_building_level = {
+								province = {
+									id = 12831
+									id = 6114
+									id = 5082
+									id = 8090
 								}
+								building = bunker
+								level > 4
 							}
-							415 = {
-								any_province_building_level = {
-									province = {
-										id = 5064
-										id = 5020
-										id = 4949
-										id = 2101
-									}
-									building = bunker
-									level > 4
+						}
+						415 = {
+							any_province_building_level = {
+								province = {
+									id = 5064
+									id = 5020
+									id = 4949
+									id = 2101
 								}
+								building = bunker
+								level > 4
 							}
 						}
 					}
@@ -3057,41 +2875,24 @@ country_event = {
 			factor = 1
 
 			modifier = {
-				factor = 0
-				AFG = {
-					NOT = {
-						has_government = democratic
-						has_government = neutrality
-					}
-				}
-			}
-
-			modifier  = {
-				factor = 0
-				AFG = {
-					has_offensive_war = yes
-				}
-			}
-
-			modifier = {
-				factor = 0
-				AFG = {
-					has_added_tension_amount = 10
-				}
-			}
-
-			modifier = {
-				factor = 0
-				check_variable = {
-					debt > 10000
-				}
-			}
-
-			modifier = {
 				factor = 2
 				has_opinion = {
 					target = AFG
 					value > 25
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					check_variable = { debt > 1000 }
+					AFG = { has_added_tension_amount > 10 }
+					AFG = { has_offensive_war = yes }
+					AFG = {
+						NOT = {
+							has_government = democratic
+							has_government = neutrality
+						}
+					}
 				}
 			}
 		}
@@ -3106,10 +2907,7 @@ country_event = {
 			popularity = 0.02
 		}
 		AFG = {
-			country_event = {
-			id = Afghanistan.10
-			days = 2
-			}
+			country_event = { id = Afghanistan.10 days = 2 }
 		}
 
 		ai_chance = {
@@ -3119,7 +2917,6 @@ country_event = {
 				factor = 2
 				has_war_support < 0.5
 			}
-
 			modifier = {
 				factor = 2
 				AFG = {
@@ -3165,10 +2962,7 @@ country_event = {
 		name = Afghanistan.10.a
 		log = "[GetDateText]: [This.GetName]: Afghanistan.10.a executed"
 		add_political_power = -50
-		add_popularity = {
-			ideology = ROOT
-			popularity = -0.02
-		}
+		decrease_popularity_2 = yes
 		ai_chance = {
 			factor = 1
 		}
@@ -3310,10 +3104,7 @@ country_event = {
 		name = Afghanistan.13.a
 		log = "[GetDateText]: [This.GetName]: Afghanistan.13.a executed"
 		add_political_power = -20
-		add_popularity = {
-			ideology = ROOT
-			popularity = -0.02
-		}
+		decrease_popularity_2 = yes
 		ai_chance = {
 			factor = 1
 		}
@@ -3374,7 +3165,7 @@ country_event = {
 	}
 
 	mean_time_to_happen = {
-		days = 1
+		days = 7
 	}
 
 	option = {
@@ -3571,7 +3362,7 @@ country_event = {
 	}
 
 	mean_time_to_happen = {
-		days = 2
+		days = 7
 	}
 
 	option = {
@@ -3892,7 +3683,7 @@ news_event = {
 	}
 
 	mean_time_to_happen = {
-		days = 2
+		days = 7
 	}
 
 	fire_only_once = yes
@@ -3964,7 +3755,7 @@ news_event = {
 	}
 
 	mean_time_to_happen = {
-		days = 2
+		days = 7
 	}
 	fire_only_once = yes
 
@@ -3982,6 +3773,7 @@ news_event = {
 		}
 	}
 }
+
 #World Food Programme News Event
 news_event = {
 	id = AfghanistanNews.14
@@ -3996,11 +3788,11 @@ news_event = {
 	}
 
 	mean_time_to_happen = {
-		days = 2
+		days = 7
 	}
 	fire_only_once = yes
 
-		option = {
+	option = {
 		name = AfghanistanNews.14.a
 		trigger = {
 			NOT = {
@@ -4013,6 +3805,7 @@ news_event = {
 		}
 	}
 }
+
 #Investment Offer
 country_event = {
 	id = AfghanistanInvestment.1
@@ -4353,9 +4146,9 @@ country_event = {
 	title = AfghanistanHostageCrisis.1.t
 	desc = AfghanistanHostageCrisis.1.d
 	picture = GFX_afghan_sk_hostage_crisis
-	
+
 	fire_only_once = yes
-	
+
 	trigger = {
 		original_tag = AFG
 		AFG = {
@@ -4370,7 +4163,7 @@ country_event = {
 			date > 2007.7.19
 		}
 	}
-	
+
 	#Attemp to release hostages
 	option = {
 		name = AfghanistanHostageCrisis.1.a
@@ -4380,15 +4173,15 @@ country_event = {
 		}
 		random_list = {
 			50 = {
-				AFG = { news_event = { AfghanistanHostageCrisis.2 days = 4 } }
+				AFG = { news_event = { id = AfghanistanHostageCrisis.2 days = 4 } }
 			}
 			50 = {
-					AFG = { news_event = { AfghanistanHostageCrisis.3 days = 4 } }
+				AFG = { news_event = { id = AfghanistanHostageCrisis.3 days = 4 } }
 			}
 		}
-		
+
 	}
-	
+
 	#Negotations with South Korea
 	option = {
 		name = AfghanistanHostageCrisis.1.b
@@ -4398,11 +4191,11 @@ country_event = {
 		}
 		random_list = {
 			90 = {
-				AFG = { country_event = { AfghanistanHostageCrisis.4 days = 2 } }
+				AFG = { country_event = { id = AfghanistanHostageCrisis.4 days = 2 } }
 			}
 			10 = {
-				KOR = { country_event = { AfghanistanHostageCrisis.5 days = 4 } }
-			}	
+				KOR = { country_event = { id = AfghanistanHostageCrisis.5 days = 4 } }
+			}
 		}
 	}
 }
@@ -4413,7 +4206,7 @@ news_event = {
 	title = AfghanistanHostageCrisis.2.t
 	desc = AfghanistanHostageCrisis.2.d
 	picture = GFX_afghan_sk_hostage_released
-	
+
 	is_triggered_only = yes
 
 	option = {
@@ -4435,9 +4228,9 @@ news_event = {
 	title = AfghanistanHostageCrisis.3.t
 	desc = AfghanistanHostageCrisis.3.d
 	picture = GFX_afghan_sk_hostages_killed
-	
+
 	is_triggered_only = yes
-	
+
 	option = {
 		name = AfghanistanHostageCrisis.3.a
 		log = "[GetDateText]: [This.GetName]: AfghanistanHostageCrisis.3.a executed"
@@ -4449,7 +4242,7 @@ news_event = {
 			modifier = insult
 		}
 		KOR = {
-			add_popularity = {  
+			add_popularity = {
 				ideology = democratic
 			    popularity = -0.1
 			}
@@ -4464,9 +4257,9 @@ country_event = {
 	title = AfghanistanHostageCrisis.4.t
 	desc = AfghanistanHostageCrisis.4.d
 	picture = GFX_afghan_sk_hostage_crisis
-	
+
 	is_triggered_only = yes
-	
+
 	#Talk with USA
 	option = {
 		name = AfghanistanHostageCrisis.4.a
@@ -4474,9 +4267,9 @@ country_event = {
 		ai_chance = {
 			factor = 1
 		}
-		AFG = { country_event = { AfghanistanHostageCrisis.6 days = 2 } }
+		AFG = { country_event = { id = AfghanistanHostageCrisis.6 days = 2 } }
 	}
-	
+
 	#Refuse
 	option = {
 		name = AfghanistanHostageCrisis.4.b
@@ -4484,7 +4277,7 @@ country_event = {
 		ai_chance = {
 			factor = 0
 		}
-		AFG = { news_event = { AfghanistanHostageCrisis.7 days = 2 } }
+		AFG = { news_event = { id = AfghanistanHostageCrisis.7 days = 2 } }
 	}
 
 }
@@ -4495,9 +4288,9 @@ country_event = {
 	title = AfghanistanHostageCrisis.5.t
 	desc = AfghanistanHostageCrisis.5.d
 	picture = GFX_afghan_sk_hostage_crisis
-	
+
 	is_triggered_only = yes
-	
+
 	#South Korea agrees
 	option = {
 		name = AfghanistanHostageCrisis.5.a
@@ -4505,9 +4298,9 @@ country_event = {
 		ai_chance = {
 			factor = 1
 		}
-		KOR = { news_event = { AfghanistanHostageCrisis.8 days = 2 } }
+		KOR = { news_event = { id = AfghanistanHostageCrisis.8 days = 2 } }
 	}
-	
+
 	#South Korea refuses
 	option = {
 		name = AfghanistanHostageCrisis.5.b
@@ -4515,7 +4308,7 @@ country_event = {
 		ai_chance = {
 			factor = 0
 		}
-		KOR = { news_event = { AfghanistanHostageCrisis.9 days = 2 } }
+		KOR = { news_event = { id = AfghanistanHostageCrisis.9 days = 2 } }
 	}
 
 }
@@ -4526,9 +4319,9 @@ country_event = {
 	title = AfghanistanHostageCrisis.6.t
 	desc = AfghanistanHostageCrisis.6.d
 	picture = GFX_afghan_sk_two_hostage_killed
-	
+
 	is_triggered_only = yes
-	
+
 	#Second Taliban demand(Taliban demands ransom and troop withdrawal)
 	option = {
 		name = AfghanistanHostageCrisis.6.a
@@ -4536,11 +4329,11 @@ country_event = {
 		ai_chance = {
 			factor = 1
 		}
-		KOR = { news_event = { AfghanistanHostageCrisis.4 days = 2 } }
 		AFG = {
-			add_stability = - 0.05
+			add_stability = -0.05
 		}
 		KOR = {
+			country_event = { id = AfghanistanHostageCrisis.4 days = 2 }
 			add_popularity = {
 				ideology = democratic
 				popularity = -0.05
@@ -4556,9 +4349,9 @@ news_event = {
 	title = AfghanistanHostageCrisis.7.t
 	desc = AfghanistanHostageCrisis.7.d
 	picture = GFX_afghan_sk_two_hostage_killed
-	
+
 	is_triggered_only = yes
-	
+
 	#Second Taliban demand(Taliban demands ransom and troop withdrawal)
 	option = {
 		name = AfghanistanHostageCrisis.7.a
@@ -4566,9 +4359,9 @@ news_event = {
 		ai_chance = {
 			factor = 1
 		}
-		KOR = { news_event = { AfghanistanHostageCrisis.4 days = 2 } }
+		KOR = { country_event = { id = AfghanistanHostageCrisis.4 days = 2 } }
 		AFG = {
-			add_stability = - 0.1
+			add_stability = -0.1
 		}
 		KOR = {
 			add_popularity = {
@@ -4585,9 +4378,9 @@ news_event = {
 	title = AfghanistanHostageCrisis.8.t
 	desc = AfghanistanHostageCrisis.8.d
 	picture = GFX_afghan_sk_hostage_released
-	
+
 	is_triggered_only = yes
-	
+
 	#Good Ending
 	option = {
 		name = AfghanistanHostageCrisis.8.a
@@ -4597,7 +4390,7 @@ news_event = {
 		}
 		KOR = {
 			set_temp_variable = { treasury_change = -0.02 }
-			modify_treasury_effect = yes 
+			modify_treasury_effect = yes
 		}
 		diplomatic_relation = {
 			country = KOR
@@ -4613,9 +4406,9 @@ news_event = {
 	title = AfghanistanHostageCrisis.9.t
 	desc = AfghanistanHostageCrisis.9.d
 	picture = GFX_afghan_sk_hostages_killed
-	
+
 	is_triggered_only = yes
-	
+
 	#Bad Ending
 	option = {
 		name = AfghanistanHostageCrisis.9.a
