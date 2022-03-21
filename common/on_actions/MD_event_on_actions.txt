@@ -15,6 +15,16 @@ on_actions = {
 					# Deal with Gongadze
 					country_event = { id = ukraine_md.3 days = 243 random_days = 15 }
 				}
+				SOV = {
+					country_event = { id = russia.1 days = 144 random_days = 86 }
+				}
+				AFG = {
+					country_event = { id = Afghanistan.3 days = 560 random_days = 240 }
+					country_event = { id = AfghanistanNews.11 days = 30 random_days = 15 }
+
+					news_event = { id = AfghanistanNews.13 days = 90 random_days = 30 }
+					news_event = { id = AfghanistanNews.14 days = 105 random_days = 36 }
+				}
 			}
 			else = { # 2017 start date
 				UKR = {
@@ -29,6 +39,9 @@ on_actions = {
 						}
 					}
 				}
+				MNT = {
+					country_event = { id = MNT_NATO.1 days = 180 random_days = 45 }
+				}
 
 			}
 		}
@@ -36,21 +49,40 @@ on_actions = {
 
 	on_monthly = {
 		random_events = {
-			1000 = 0		#Weight for getting no event, the higher this is, the less likely it is to get an event
+			1500 = 0		#Weight for getting no event, the higher this is, the less likely it is to get an event
 
 			#Base: How many times should the event happen in a year * 100
 
 			#Economic events (total 200)
-			25 = econvent.1		#Central Bank warns of housing bubble & possible crisis
+			20 = econvent.1		#Central Bank warns of housing bubble & possible crisis
 			25 = econvent.2		#Collapsing housing prices
 			25 = econvent.3		#Stock Market Crash
 			10 = econvent.4 	#Bank Crisis
-			10 = econvent.5 	#Slowdown Consumption
+			15 = econvent.5 	#Slowdown Consumption
 			10 = econvent.6 	#Lower Demand for our Goods in International Markets
 			10 = econvent.7		#Drought
 			10 = econvent.8		#Famine
 			50 = econvent.9		#Increase Consumer Confidence
 			25 = econvent.10	#Stock Market Boom
+
+			#Internal Factions
+			25 = internal_factions_events.0
+			25 = internal_factions_events.1
+			25 = internal_factions_events.2
+			25 = internal_factions_events.3
+			25 = internal_factions_events.4
+			25 = internal_factions_events.5
+			25 = internal_factions_events.6
+			25 = internal_factions_events.7
+			25 = internal_factions_events.8
+			25 = internal_factions_events.9
+			25 = internal_factions_events.10
+			25 = internal_factions_events.11
+			# 25 = internal_factions_events.12 --- Commenting until I can figure out what to do here
+			25 = internal_factions_events.13
+			25 = internal_factions_events.14
+			25 = internal_factions_events.15
+			25 = internal_factions_events.16
 
 			#Financial collapse (only if interest_rate > 15)
 			#X party leader makes a speech
@@ -352,7 +384,7 @@ on_actions = {
 		}
 	}
 
-	##Custom Event Pulses for deterministic events with set dates
+	##Custom Event Pulses for deterministic events with set datesl
 	on_monthly_AFG = {
 		effect = {
 			if = {
@@ -422,10 +454,192 @@ on_actions = {
 					}
 				}
 
-				news_event = { id = AfghanistanNews.1 hours = 6 }
+				AFG = { news_event = { id = AfghanistanNews.1 hours = 6 } }
+			}
+
+			if = {
+				limit = {
+					original_tag = AFG
+					AFG = {
+						jihadist_government = yes
+						has_country_flag = afg_active_taliban_insurgency
+					}
+				}
+
+				AFG = { country_event = TalibanInsurgency.12 }
+			}
+
+			if = {
+				limit = {
+					original_tag = AFG
+					AFG = {
+						no_jihadist_government = yes
+						has_country_flag = afg_active_taliban_insurgency
+					}
+				}
+
+				AFG = { country_event = TalibanInsurgency.20 }
+			}
+
+			if = {
+				limit = {
+					OR = {
+						check_variable = { global.month = 3 }
+						check_variable = { global.month = 6 }
+						check_variable = { global.month = 9 }
+						check_variable = { global.month = 12 }
+					}
+					original_tag = AFG
+					AFG = {
+						check_variable = {
+							var = taliban_strength
+							value = 0
+							compare = greater_than_or_equals
+						}
+						has_country_flag = afg_active_taliban_insurgency
+					}
+				}
+				random_list = {
+					20 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								original_tag = AFG
+								AFG = {
+									check_variable = {
+										var = taliban_strength
+										value = 0
+										compare = greater_than_or_equals
+									}
+									has_country_flag = afg_active_taliban_insurgency
+								}
+							}
+						}
+
+						AFG = { country_event = { id = TalibanAttack.0 random_days = 20 } }
+					}
+					15 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								original_tag = AFG
+								AFG = {
+									check_variable = {
+										var = taliban_strength
+										value = 25
+										compare = greater_than_or_equals
+									}
+									has_country_flag = afg_active_taliban_insurgency
+								}
+							}
+						}
+						AFG = { country_event = { id = TalibanAttack.2 random_days = 20 } }
+					}
+					20 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								original_tag = AFG
+								AFG = {
+									check_variable = {
+										var = taliban_strength
+										value = 10
+										compare = greater_than_or_equals
+									}
+									any_owned_state = {
+										infrastructure > 0
+									}
+									has_country_flag = afg_active_taliban_insurgency
+								}
+							}
+						}
+
+						AFG = { country_event = { id = TalibanAttack.5 random_days = 20 } }
+					}
+					15 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								AFG = {
+									check_variable = {
+										var = taliban_strength
+										value = 45
+										compare = greater_than_or_equals
+									}
+									any_owned_state = {
+										OR = {
+											industrial_complex > 0
+											offices > 0
+										}
+									}
+								}
+								any_country = {
+									is_in_array = { FROM.influence_array = THIS.id }
+								}
+							}
+						}
+
+						AFG = { country_event = { id = TalibanAttack.7 random_days = 20 } }
+					}
+					15 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								original_tag = AFG
+								AFG = {
+									check_variable = {
+										var = taliban_strength
+										value = 45
+										compare = greater_than_or_equals
+									}
+									has_country_flag = afg_active_taliban_insurgency
+								}
+								any_country = {
+									OR = {
+										has_military_access_to = AFG
+										has_country_flag = military_advisors_@FROM
+									}
+								}
+							}
+						}
+
+						AFG = { country_event = { id = TalibanAttack.9 random_days = 20 } }
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								original_tag = AFG
+								AFG = {
+									check_variable = {
+										var = taliban_strength
+										value = 55
+										compare = greater_than_or_equals
+									}
+									any_owned_state = {
+										air_base > 0
+									}
+									has_country_flag = afg_active_taliban_insurgency
+								}
+							}
+						}
+
+						AFG = { country_event = { id = TalibanAttack.15 random_days = 20 } }
+					}
+				}
 			}
 		}
 	}
+	on_yearly_AFG = {
+		effect = {
+			if = { limit = { has_start_date < 2016.1.1 }
+				if = { limit = { check_variable = { global.year = 2011 } }
+					AFG = { country_event = { id = Afghanistan.15 days = 260 random_days = 720 } }
+				}
+			}
+		}
+	}
+
 	on_monthly_TAL = {
 		effect = {
 			if = {
@@ -491,7 +705,7 @@ on_actions = {
 				subtract_from_variable = { threat_level = 30 }
 				clamp_threat = yes
 
-				news_event = { id = AfghanistanNews.1 hours = 6 }
+				TAL = { news_event = { id = AfghanistanNews.1 hours = 6 } }
 			}
 		}
 	}
@@ -1093,6 +1307,133 @@ on_actions = {
 		}
 	}
 
+	on_monthly_CHI = {
+		effect = {
+			if = {
+				limit = {
+					OR = {
+						check_variable = { global.month = 4 }
+						check_variable = { global.month = 8 }
+						check_variable = { global.month = 12 }
+					}
+				}
+				random_list = {
+					20 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								CHI = {
+									controls_state = 592
+									check_variable = {
+										var = uighur_opinion
+										value = 100
+										compare = less_than
+									}
+									check_variable = {
+										var = uighur_threat
+										value = 50
+										compare = greater_than
+									}
+								}
+							}
+						}
+
+						country_event = china.9
+					}
+					20 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								CHI = {
+									controls_state = 592
+									check_variable = {
+										var = uighur_opinion
+										value = 100
+										compare = less_than
+									}
+									check_variable = {
+										var = uighur_threat
+										value = 70
+										compare = greater_than
+									}
+								}
+							}
+						}
+						country_event = china.10
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								controls_state = 592
+								check_variable = {
+									var = uighur_opinion
+									value = 100
+									compare = less_than
+								}
+							}
+						}
+						country_event = china.11
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								CHI = {
+									controls_state = 592
+									check_variable = {
+										var = uighur_opinion
+										value = 100
+										compare = less_than
+									}
+								}
+							}
+						}
+						country_event = china.8
+					}
+					5 = {
+						modifier = {
+							factor = 0
+							NOT = {
+								CHI = {
+									controls_state = 592
+									check_variable = {
+										var = uighur_opinion
+										value = 100
+										compare = less_than
+									}
+									check_variable = {
+										var = uighur_threat
+										value = 90
+										compare = greater_than
+									}
+								}
+							}
+						}
+						modifier = {
+							factor = 1.50
+							check_variable = {
+								var = uighur_threat
+								value = 95
+								compare = greater_than
+							}
+						}
+						modifier = {
+							factor = 1.75
+							CHI = { has_war = yes }
+						}
+						modifier = {
+							factor = 1.25
+							CHI = { has_stability < 0.4 }
+						}
+						country_event = china.42
+					}
+				}
+
+			}
+		}
+	}
+
 	on_weekly_ENG = {
 		effect = {
 			if = {
@@ -1513,6 +1854,27 @@ on_actions = {
 						}
 					}
 				}
+			}
+		}
+	}
+
+	on_monthly_SWI = {
+		effect = {
+			if = {
+				limit = {
+					original_tag = SWI
+					has_idea = swiss_political_system
+					OR = {
+						AND = {
+							NOT = { has_government = democratic }
+							NOT = { has_government = neutrality }
+						}
+						has_country_flag = end_of_the_swiss_political_system
+					}
+				}
+				remove_ideas = swiss_political_system
+				news_event = switzerland.2
+				set_country_flag = end_of_the_swiss_political_system
 			}
 		}
 	}
