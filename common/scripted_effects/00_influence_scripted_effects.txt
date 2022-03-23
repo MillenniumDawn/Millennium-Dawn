@@ -800,39 +800,162 @@ change_domestic_influence_percentage = {
 # set_temp_variable = { percent_change = +-x }
 # set_temp_variable = { influencer_index = 0-6 }
 change_current_influencer_index_percentage = {
-	set_temp_variable = { influence_outlook_amount = 0 }
-	add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
+	if = { limit = { check_variable = { influencer_index > 0 } }
+		set_temp_variable = { influence_outlook_amount = 0 }
+		add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
 
-	for_each_loop = {
-		array = influence_array_val
-		value = v
-		index = i
+		for_each_loop = {
+			array = influence_array_val
+			value = v
+			index = i
 
-		add_to_temp_variable = { influence_outlook_amount = v }
+			add_to_temp_variable = { influence_outlook_amount = v }
+		}
+		subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^influencer_index }
+
+		# Modified by Power Ranking
+		multiply_temp_variable = { percent_change = influence_multiplier }
+
+		add_to_variable = { influence_array_val^influencer_index = percent_change }
+		set_temp_variable = { temp_total = 100 }
+		subtract_from_temp_variable = { temp_total = influence_array_val^influencer_index }
+
+		divide_temp_variable = { temp_total = influence_outlook_amount }
+		multiply_variable = { domestic_influence_amount = temp_total }
+		for_each_loop = {
+			array = influence_array_val
+			value = v
+			index = i
+
+			if = { limit = { NOT = { check_variable = { i = 0 } } }
+				multiply_variable = { influence_array_val^i = temp_total }
+			}
+		}
+		recalculate_influence = yes
+
+		custom_effect_tooltip = change_influencer_tt
 	}
-	subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^influencer_index }
+	else = {
+		if = { limit = { check_variable = { influence_array_val^6 > 0 } }
+			if = {
+				limit = { check_variable = { percent_change > influence_array_val^6 } }
+				set_variable = { influence_array^6 = ROOT.id }
+				set_variable = { influence_array_val^6 = percent_change }
+				set_temp_variable = { influencer_index = 6 }
 
-	# Modified by Power Ranking
-	multiply_temp_variable = { percent_change = influence_multiplier }
+				set_temp_variable = { influence_outlook_amount = 0 }
+				add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
 
-	add_to_variable = { influence_array_val^influencer_index = percent_change }
-	set_temp_variable = { temp_total = 100 }
-	subtract_from_temp_variable = { temp_total = influence_array_val^influencer_index }
+				for_each_loop = {
+					array = influence_array_val
+					value = v
+					index = i
 
-	divide_temp_variable = { temp_total = influence_outlook_amount }
-	multiply_variable = { domestic_influence_amount = temp_total }
-	for_each_loop = {
-		array = influence_array_val
-		value = v
-		index = i
+					add_to_temp_variable = { influence_outlook_amount = v }
+				}
+				subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^influencer_index }
 
-		if = { limit = { NOT = { check_variable = { i = 0 } } }
-			multiply_variable = { influence_array_val^i = temp_total }
+				# Modified by Power Ranking
+				multiply_temp_variable = { percent_change = influence_multiplier }
+
+				add_to_variable = { influence_array_val^influencer_index = percent_change }
+				set_temp_variable = { temp_total = 100 }
+				subtract_from_temp_variable = { temp_total = influence_array_val^influencer_index }
+
+				divide_temp_variable = { temp_total = influence_outlook_amount }
+				multiply_variable = { domestic_influence_amount = temp_total }
+				for_each_loop = {
+					array = influence_array_val
+					value = v
+					index = i
+
+					if = { limit = { NOT = { check_variable = { i = 0 } } }
+						multiply_variable = { influence_array_val^i = temp_total }
+					}
+				}
+				recalculate_influence = yes
+
+				custom_effect_tooltip = change_influencer_tt
+			}
+			else = {
+				# Creates the summation of all array calculations
+				set_temp_variable = { influence_outlook_amount = 0 }
+				for_each_loop = {
+					array = influence_array_val
+					value = v
+					index = i
+					add_to_temp_variable = { influence_outlook_amount = v }
+				}
+
+				# Modified by Power Ranking
+				multiply_temp_variable = { percent_change = influence_multiplier }
+
+				add_to_variable = { domestic_influence_amount = percent_change }
+				set_temp_variable = { temp_total = 100 }
+				subtract_from_temp_variable = { temp_total = domestic_influence_amount }
+
+				divide_temp_variable = { temp_total = influence_outlook_amount }
+				for_each_loop = {
+					array = influence_array_val
+					value = v
+					index = i
+
+					multiply_variable = { influence_array_val^i = temp_total }
+				}
+				recalculate_influence = yes
+
+				custom_effect_tooltip = change_domestic_influence_percentage_tt
+			}
+		}
+		else = {
+			add_to_array = { influence_array = ROOT.id }
+			add_to_array = { influence_array_val = percent_change }
+
+			for_loop_effect = {
+				end = influence_array^num
+				value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = ROOT }
+					}
+					set_temp_variable = { influencer_index = v }
+					set_country_flag = found
+				}
+			}
+
+			set_temp_variable = { influence_outlook_amount = 0 }
+			add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
+
+			for_each_loop = {
+				array = influence_array_val
+				value = v
+				index = i
+
+				add_to_temp_variable = { influence_outlook_amount = v }
+			}
+			subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^influencer_index }
+
+			# Modified by Power Ranking
+			multiply_temp_variable = { percent_change = influence_multiplier }
+
+			add_to_variable = { influence_array_val^influencer_index = percent_change }
+			set_temp_variable = { temp_total = 100 }
+			subtract_from_temp_variable = { temp_total = influence_array_val^influencer_index }
+
+			divide_temp_variable = { temp_total = influence_outlook_amount }
+			multiply_variable = { domestic_influence_amount = temp_total }
+			for_each_loop = {
+				array = influence_array_val
+				value = v
+				index = i
+
+				if = { limit = { NOT = { check_variable = { i = 0 } } }
+					multiply_variable = { influence_array_val^i = temp_total }
+				}
+			}
+			recalculate_influence = yes
 		}
 	}
-	recalculate_influence = yes
-
-	custom_effect_tooltip = change_influencer_tt
 }
 
 
