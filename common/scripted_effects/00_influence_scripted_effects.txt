@@ -27,13 +27,20 @@ recalculate_influence = {
 	}
 }
 
+# sort_influence:
+# The sort influence method handles the sorting and sequential placement of values in the influence array
 sort_influence = {
-	#Creates the Sample Array
-	resize_temp_array = { array = influence_array_val_temp size = influence_array_val^num } #values
+	# Creation of temp arrays.
+	# The arrays are "copied" from influence_array and influence_array_val for sorting
 	resize_temp_array = {
-		array = influence_array_temp #tags
+		array = influence_array_val_temp
 		size = influence_array_val^num
 	}
+	resize_temp_array = {
+		array = influence_array_temp
+		size = influence_array_val^num
+	}
+	# Sort the values by largest influencer
 	for_loop_effect = {
 		end = influence_array_val^num
 		value = v
@@ -46,11 +53,15 @@ sort_influence = {
 		set_temp_variable = { influence_array_temp^v = influence_array^max_index } #sets biggest TAG at the earliest available position
 		set_variable = { influence_array_val^max_index = -1 } #removes it from selection
 	}
-	clear_array = influence_array_val
-	clear_array = influence_array_calc
-	clear_array = influence_array
+
+	# Clears the Values
+	init_influence = yes
+
+	# Creation of the Sorted Influence
+	# FIXME: Remove this set once this is functioning properly
+
 	set_variable = { influence_total = 0 }
-	#restores destroyed arrays in the above process - i.e. if they were deleted due to being less then 1%
+	# Restores destroyed arrays in the above process - i.e. if they were deleted due to being less then 1%
 	for_each_loop = {
 		array = influence_array_val_temp
 		add_to_array = { influence_array_val = v  }
@@ -59,10 +70,12 @@ sort_influence = {
 	}
 	for_each_loop = {
 		array = influence_array_temp
-		add_to_array = { influence_array = v  }
+		add_to_array = { influence_array = v }
 	}
 	clear_temp_array = influence_array_val_temp
 	clear_temp_array = influence_array_temp
+
+	# This could probably be removed
 	set_variable = { domestic_influence_amount_calc = domestic_influence_amount }
 	add_to_variable = { influence_total = domestic_influence_amount_calc }
 
@@ -120,6 +133,7 @@ calculate_influence_percentage = {
 	if = { limit = { check_variable = { influence_nationalist > 0.04 } } reset_nationalist_influence_ideas = yes }
 	if = { limit = { check_variable = { influence_fascism > 0.04 } } reset_fascism_influence_ideas = yes }
 }
+
 
 ### Actions ###
 
@@ -745,709 +759,150 @@ delete_influencer_check = {
 	}
 }
 
-##GENERIC SCRIPTED DOMESTIC EFFECTS
-
-# Boost Domestic Influence
-# set_temp_variable = { percentage_change = x } (x = 1 +- 0.00)
-# Change by 1% would be 0.01
-
+# Boost Influence Effects
+# Boost Domestic Influence:
+# The Boost Domestic Influence is a macro function
+# set_temp_variable = { percent_change = +-x }
 change_domestic_influence_percentage = {
-	set_temp_variable = { total_change = 1 }
-	add_to_temp_variable = { var = total_change value = percentage_change }
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { var = influence_increase value = total_change }
-		multiply_temp_variable = { var = influence_increase value = percentage_change }
-		round_temp_variable = influence_increase
-		add_to_variable = { domestic_influence_amount = influence_increase }
-
-		# Debug code to ensure some domestic is added
-		if = { limit = { check_variable = { influence_increase < 1 } }
-			add_to_variable = { domestic_influence_amount = 5 }
-		}
-
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
+	# Creates the summation of all array calculations
+	set_temp_variable = { influence_outlook_amount = 0 }
+	for_each_loop = {
+		array = influence_array_val
+		value = v
+		index = i
+		add_to_temp_variable = { influence_outlook_amount = v }
 	}
+
+	# Modified by Power Ranking
+	multiply_temp_variable = { percent_change = influence_multiplier }
+
+	add_to_variable = { domestic_influence_amount = percent_change }
+	set_temp_variable = { temp_total = 100 }
+	subtract_from_temp_variable = { temp_total = domestic_influence_amount }
+
+	divide_temp_variable = { temp_total = influence_outlook_amount }
+	for_each_loop = {
+		array = influence_array_val
+		value = v
+		index = i
+
+		multiply_variable = { influence_array_val^i = temp_total }
+	}
+	recalculate_influence = yes
 
 	custom_effect_tooltip = change_domestic_influence_percentage_tt
 }
 
-boost_domestic_influence_1_percent = {
-	custom_effect_tooltip = increase_domestic_influence_1_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total } #IT = 1000
-		multiply_temp_variable = { influence_increase = 1.01 } #IT = 1040
-		multiply_temp_variable = { influence_increase = 0.01 } #II = 41.6
-		round_temp_variable = influence_increase
-		add_to_variable = { domestic_influence_amount = influence_increase }
-		if = {
-			limit = {
-				check_variable = { influence_increase < 1 }
-			}
-			add_to_variable = { domestic_influence_amount = 20 }
+# Change Top Influence Effect:
+# This is from the perspective of the influencer nation
+# Usually used in scripted content
+# set_temp_variable = { percent_change = +-x }
+change_biggest_influencer_percentage = {
+	set_temp_variable = { influence_outlook_amount = 0 }
+	add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
+
+	for_each_loop = {
+		array = influence_array_val
+		value = v
+		index = i
+
+		add_to_temp_variable = { influence_outlook_amount = v }
+	}
+	subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^0 }
+
+	# Modified by Power Ranking
+	multiply_temp_variable = { percent_change = influence_multiplier }
+
+	add_to_variable = { influence_array_val^0 = percent_change }
+	set_temp_variable = { temp_total = 100 }
+	subtract_from_temp_variable = { temp_total = influence_array_val^0 }
+
+	divide_temp_variable = { temp_total = influence_outlook_amount }
+	multiply_variable = { domestic_influence_amount = temp_total }
+	for_each_loop = {
+		array = influence_array_val
+		value = v
+		index = i
+
+		if = { limit = { NOT = { check_variable = { i = 0 } } }
+			multiply_variable = { influence_array_val^i = temp_total }
 		}
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
 	}
+	recalculate_influence = yes
+
+	custom_effect_tooltip = change_biggest_influencer_tt
 }
-boost_domestic_influence_2_percent = {
-	custom_effect_tooltip = increase_domestic_influence_2_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 1.02 }
-		multiply_temp_variable = { influence_increase = 0.02 }
-		round_temp_variable = influence_increase
-		add_to_variable = { domestic_influence_amount = influence_increase }
-		if = {
-			limit = {
-				check_variable = { influence_increase < 1 }
-			}
-			add_to_variable = { domestic_influence_amount = 20 }
+
+change_second_largest_influencer_percentage = {
+	set_temp_variable = { influence_outlook_amount = 0 }
+	add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
+
+	for_each_loop = {
+		array = influence_array_val
+		value = v
+		index = i
+
+		add_to_temp_variable = { influence_outlook_amount = v }
+	}
+	subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^1 }
+
+	# Modified by Power Ranking
+	multiply_temp_variable = { percent_change = influence_multiplier }
+
+	add_to_variable = { influence_array_val^1 = percent_change }
+	set_temp_variable = { temp_total = 100 }
+	subtract_from_temp_variable = { temp_total = influence_array_val^1 }
+
+	divide_temp_variable = { temp_total = influence_outlook_amount }
+	multiply_variable = { domestic_influence_amount = temp_total }
+	for_each_loop = {
+		array = influence_array_val
+		value = v
+		index = i
+
+		if = { limit = { NOT = { check_variable = { i = 0 } } }
+			multiply_variable = { influence_array_val^i = temp_total }
 		}
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
 	}
+	recalculate_influence = yes
+
+	custom_effect_tooltip = change_second_largest_influence_tt
 }
-boost_domestic_influence_3_percent = {
-	custom_effect_tooltip = increase_domestic_influence_3_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 1.03 }
-		multiply_temp_variable = { influence_increase = 0.03 }
-		round_temp_variable = influence_increase
-		add_to_variable = { domestic_influence_amount = influence_increase }
-		if = {
-			limit = {
-				check_variable = { influence_increase < 1 }
-			}
-			add_to_variable = { domestic_influence_amount = 20 }
+
+change_third_largest_influencer_percentage = {
+	set_temp_variable = { influence_outlook_amount = 0 }
+	add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
+
+	for_each_loop = {
+		array = influence_array_val
+		value = v
+		index = i
+
+		add_to_temp_variable = { influence_outlook_amount = v }
+	}
+	subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^2 }
+
+	# Modified by Power Ranking
+	multiply_temp_variable = { percent_change = influence_multiplier }
+
+	add_to_variable = { influence_array_val^2 = percent_change }
+	set_temp_variable = { temp_total = 100 }
+	subtract_from_temp_variable = { temp_total = influence_array_val^2 }
+
+	divide_temp_variable = { temp_total = influence_outlook_amount }
+	multiply_variable = { domestic_influence_amount = temp_total }
+	for_each_loop = {
+		array = influence_array_val
+		value = v
+		index = i
+
+		if = { limit = { NOT = { check_variable = { i = 0 } } }
+			multiply_variable = { influence_array_val^i = temp_total }
 		}
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
 	}
-}
-
-boost_domestic_influence_4_percent = {
-	custom_effect_tooltip = increase_domestic_influence_4_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 1.04 }
-		multiply_temp_variable = { influence_increase = 0.04 }
-		round_temp_variable = influence_increase
-		add_to_variable = { domestic_influence_amount = influence_increase }
-		if = {
-			limit = {
-				check_variable = { influence_increase < 1 }
-			}
-			add_to_variable = { domestic_influence_amount = 20 }
-		}
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-boost_domestic_influence_5_percent = {
-	custom_effect_tooltip = increase_domestic_influence_5_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 1.05 }
-		multiply_temp_variable = { influence_increase = 0.05 }
-		round_temp_variable = influence_increase
-		add_to_variable = { domestic_influence_amount = influence_increase }
-		if = {
-			limit = {
-				check_variable = { influence_increase < 1 }
-			}
-			add_to_variable = { domestic_influence_amount = 20 }
-		}
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-
-boost_domestic_influence_6_percent = {
-	custom_effect_tooltip = increase_domestic_influence_6_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 1.06 }
-		multiply_temp_variable = { influence_increase = 0.06 }
-		round_temp_variable = influence_increase
-		add_to_variable = { domestic_influence_amount = influence_increase }
-		if = {
-			limit = {
-				check_variable = { influence_increase < 1 }
-			}
-			add_to_variable = { domestic_influence_amount = 20 }
-		}
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-boost_domestic_influence_7_percent = {
-	custom_effect_tooltip = increase_domestic_influence_7_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 1.07 }
-		multiply_temp_variable = { influence_increase = 0.07 }
-		round_temp_variable = influence_increase
-		add_to_variable = { domestic_influence_amount = influence_increase }
-		if = {
-			limit = {
-				check_variable = { influence_increase < 1 }
-			}
-			add_to_variable = { domestic_influence_amount = 20 }
-		}
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-
-boost_domestic_influence_8_percent = {
-	custom_effect_tooltip = increase_domestic_influence_8_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 1.08 }
-		multiply_temp_variable = { influence_increase = 0.08 }
-		round_temp_variable = influence_increase
-		add_to_variable = { domestic_influence_amount = influence_increase }
-		if = {
-			limit = {
-				check_variable = { influence_increase < 1 }
-			}
-			add_to_variable = { domestic_influence_amount = 20 }
-		}
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-boost_domestic_influence_9_percent = {
-	custom_effect_tooltip = increase_domestic_influence_9_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 1.09 }
-		multiply_temp_variable = { influence_increase = 0.09 }
-		round_temp_variable = influence_increase
-		add_to_variable = { domestic_influence_amount = influence_increase }
-		if = {
-			limit = {
-				check_variable = { influence_increase < 1 }
-			}
-			add_to_variable = { domestic_influence_amount = 20 }
-		}
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-boost_domestic_influence_10_percent = {
-	custom_effect_tooltip = increase_domestic_influence_10_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 1.10 }
-		multiply_temp_variable = { influence_increase = 0.10 }
-		round_temp_variable = influence_increase
-		add_to_variable = { domestic_influence_amount = influence_increase }
-		if = {
-			limit = {
-				check_variable = { influence_increase < 1 }
-			}
-			add_to_variable = { domestic_influence_amount = 20 }
-		}
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-
-##Reduce Domestic influence
-decrease_domestic_influence_1_percent = {
-	custom_effect_tooltip = decrease_domestic_influence_1_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 0.01 }
-		round_temp_variable = influence_increase
-		subtract_from_variable = { domestic_influence_amount = influence_increase }
-		subtract_from_variable = { domestic_influence_amount = 5 }
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-decrease_domestic_influence_2_percent = {
-	custom_effect_tooltip = decrease_domestic_influence_2_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 0.02 }
-		round_temp_variable = influence_increase #2% Increase to Domestic support
-		subtract_from_variable = { domestic_influence_amount = influence_increase }
-		subtract_from_variable = { domestic_influence_amount = 5 }
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-decrease_domestic_influence_3_percent = {
-	custom_effect_tooltip = decrease_domestic_influence_3_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 0.03 }
-		round_temp_variable = influence_increase
-		subtract_from_variable = { domestic_influence_amount = influence_increase }
-		subtract_from_variable = { domestic_influence_amount = 5 }
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-decrease_domestic_influence_4_percent = {
-	custom_effect_tooltip = decrease_domestic_influence_4_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 0.04 }
-		round_temp_variable = influence_increase
-		subtract_from_variable = { domestic_influence_amount = influence_increase }
-		subtract_from_variable = { domestic_influence_amount = 5 }
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-decrease_domestic_influence_5_percent = {
-	custom_effect_tooltip = decrease_domestic_influence_5_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 0.05 }
-		round_temp_variable = influence_increase
-		subtract_from_variable = { domestic_influence_amount = influence_increase }
-		subtract_from_variable = { domestic_influence_amount = 5 }
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-decrease_domestic_influence_6_percent = {
-	custom_effect_tooltip = decrease_domestic_influence_6_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 0.06 }
-		round_temp_variable = influence_increase
-		subtract_from_variable = { domestic_influence_amount = influence_increase }
-		subtract_from_variable = { domestic_influence_amount = 5 }
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-decrease_domestic_influence_7_percent = {
-	custom_effect_tooltip = decrease_domestic_influence_7_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 0.07 }
-		round_temp_variable = influence_increase
-		subtract_from_variable = { domestic_influence_amount = influence_increase }
-		subtract_from_variable = { domestic_influence_amount = 5 }
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-decrease_domestic_influence_8_percent = {
-	custom_effect_tooltip = decrease_domestic_influence_8_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 0.08 }
-		round_temp_variable = influence_increase
-		subtract_from_variable = { domestic_influence_amount = influence_increase }
-		subtract_from_variable = { domestic_influence_amount = 5 }
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-decrease_domestic_influence_9_percent = {
-	custom_effect_tooltip = decrease_domestic_influence_9_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 0.09 }
-		round_temp_variable = influence_increase
-		subtract_from_variable = { domestic_influence_amount = influence_increase }
-		subtract_from_variable = { domestic_influence_amount = 5 }
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-decrease_domestic_influence_10_percent = {
-	custom_effect_tooltip = decrease_domestic_influence_10_percent_tt
-	hidden_effect = {
-		set_temp_variable = { influence_increase = influence_total }
-		multiply_temp_variable = { influence_increase = 0.10 }
-		round_temp_variable = influence_increase
-		subtract_from_variable = { domestic_influence_amount = influence_increase }
-		subtract_from_variable = { domestic_influence_amount = 5 }
-		clamp_variable = { var = domestic_influence_amount min = 0 max = influence_total }
-		recalculate_influence = yes
-
-	}
-}
-
-##Add to Top Influencer
-increase_biggest_influencer_by_1_percent = {
-	custom_effect_tooltip = increase_biggest_influencer_by_1_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.01 }
-	multiply_temp_variable = { influence_increase = 0.01 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^0 = influence_increase }
-	add_to_variable = { influence_array_val^0 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
 	recalculate_influence = yes
 
-}
-increase_biggest_influencer_by_2_percent = {
-	custom_effect_tooltip = increase_biggest_influencer_by_2_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.02 }
-	multiply_temp_variable = { influence_increase = 0.02 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^0 = influence_increase }
-	add_to_variable = { influence_array_val^0 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-increase_biggest_influencer_by_3_percent = {
-	custom_effect_tooltip = increase_biggest_influencer_by_3_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.03 }
-	multiply_temp_variable = { influence_increase = 0.03 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^0 = influence_increase }
-	add_to_variable = { influence_array_val^0 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-increase_biggest_influencer_by_4_percent = {
-	custom_effect_tooltip = increase_biggest_influencer_by_4_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.04 }
-	multiply_temp_variable = { influence_increase = 0.04 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^0 = influence_increase }
-	add_to_variable = { influence_array_val^0 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-increase_biggest_influencer_by_5_percent = {
-	custom_effect_tooltip = increase_biggest_influencer_by_5_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.05 }
-	multiply_temp_variable = { influence_increase = 0.05 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^0 = influence_increase }
-	add_to_variable = { influence_array_val^0 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-##Reduction of Biggest Influencer
-reduce_biggest_influencer_by_1_percent = {
-	custom_effect_tooltip = attack_first_influence_1_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.01 }
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^0 = influence_reduce }
-	subtract_from_variable = { influence_array_val^0 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_biggest_influencer_by_2_percent = {
-	custom_effect_tooltip = attack_first_influence_2_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.02 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^0 = influence_reduce }
-	subtract_from_variable = { influence_array_val^0 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_biggest_influencer_by_3_percent = {
-	custom_effect_tooltip = attack_first_influence_3_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.03 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^0 = influence_reduce }
-	subtract_from_variable = { influence_array_val^0 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_biggest_influencer_by_4_percent = {
-	custom_effect_tooltip = attack_first_influence_4_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.04 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^0 = influence_reduce }
-	subtract_from_variable = { influence_array_val^0 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_biggest_influencer_by_5_percent = {
-	custom_effect_tooltip = attack_first_influence_5_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.05 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^0 = influence_reduce }
-	subtract_from_variable = { influence_array_val^0 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-
-#SECOND BIGGEST INFLUENCER
-increase_second_influencer_by_1_percent = {
-	custom_effect_tooltip = increase_second_influencer_by_1_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.01 }
-	multiply_temp_variable = { influence_increase = 0.01 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^1 = influence_increase }
-	add_to_variable = { influence_array_val^1 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-increase_second_influencer_by_2_percent = {
-	custom_effect_tooltip = increase_second_influencer_by_2_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.02 }
-	multiply_temp_variable = { influence_increase = 0.02 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^1 = influence_increase }
-	add_to_variable = { influence_array_val^1 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-increase_second_influencer_by_3_percent = {
-	custom_effect_tooltip = increase_second_influencer_by_3_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.03 }
-	multiply_temp_variable = { influence_increase = 0.03 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^1 = influence_increase }
-	add_to_variable = { influence_array_val^1 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-increase_second_influencer_by_4_percent = {
-	custom_effect_tooltip = increase_second_influencer_by_4_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.04 }
-	multiply_temp_variable = { influence_increase = 0.04 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^1 = influence_increase }
-	add_to_variable = { influence_array_val^1 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-increase_second_influencer_by_5_percent = {
-	custom_effect_tooltip = increase_second_influencer_by_5_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.05 }
-	multiply_temp_variable = { influence_increase = 0.05 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^1 = influence_increase }
-	add_to_variable = { influence_array_val^1 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_second_influencer_by_1_percent = {
-	custom_effect_tooltip = attack_second_influence_1_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.01 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^1 = influence_reduce }
-	subtract_from_variable = { influence_array_val^1 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_second_influencer_by_2_percent = {
-	custom_effect_tooltip = attack_second_influence_2_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.02 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^1 = influence_reduce }
-	subtract_from_variable = { influence_array_val^1 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_second_influencer_by_3_percent = {
-	custom_effect_tooltip = attack_second_influence_3_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.03 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^1 = influence_reduce }
-	subtract_from_variable = { influence_array_val^1 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_second_influencer_by_4_percent = {
-	custom_effect_tooltip = attack_second_influence_4_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.04 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^1 = influence_reduce }
-	subtract_from_variable = { influence_array_val^1 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_second_influencer_by_5_percent = {
-	custom_effect_tooltip = attack_second_influence_5_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.05 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^1 = influence_reduce }
-	subtract_from_variable = { influence_array_val^1 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-
-#THIRD BIGGEST INFLUENCER
-increase_third_influencer_by_1_percent = {
-	custom_effect_tooltip = increase_third_influencer_by_1_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.01 }
-	multiply_temp_variable = { influence_increase = 0.01 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^2 = influence_increase }
-	add_to_variable = { influence_array_val^2 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-increase_third_influencer_by_2_percent = {
-	custom_effect_tooltip = increase_third_influencer_by_2_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.02 }
-	multiply_temp_variable = { influence_increase = 0.02 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^2 = influence_increase }
-	add_to_variable = { influence_array_val^2 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-increase_third_influencer_by_3_percent = {
-	custom_effect_tooltip = increase_third_influencer_by_3_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.03 }
-	multiply_temp_variable = { influence_increase = 0.03 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^2 = influence_increase }
-	add_to_variable = { influence_array_val^2 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-increase_third_influencer_by_4_percent = {
-	custom_effect_tooltip = increase_third_influencer_by_4_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.04 }
-	multiply_temp_variable = { influence_increase = 0.04 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^2 = influence_increase }
-	add_to_variable = { influence_array_val^2 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-increase_third_influencer_by_5_percent = {
-	custom_effect_tooltip = increase_third_influencer_by_5_percent_tt
-	set_temp_variable = { influence_increase = influence_total }
-	multiply_temp_variable = { influence_increase = 1.05 }
-	multiply_temp_variable = { influence_increase = 0.05 }
-	round_temp_variable = influence_increase
-	add_to_variable = { influence_array_val^2 = influence_increase }
-	add_to_variable = { influence_array_val^2 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_third_influencer_by_1_percent = {
-	custom_effect_tooltip = attack_third_influence_1_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.01 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^2 = influence_reduce }
-	subtract_from_variable = { influence_array_val^2 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_third_influencer_by_2_percent = {
-	custom_effect_tooltip = attack_third_influence_2_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.02 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^2 = influence_reduce }
-	subtract_from_variable = { influence_array_val^2 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_third_influencer_by_3_percent = {
-	custom_effect_tooltip = attack_third_influence_3_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.03 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^2 = influence_reduce }
-	subtract_from_variable = { influence_array_val^2 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_third_influencer_by_4_percent = {
-	custom_effect_tooltip = attack_third_influence_4_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.04 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^2 = influence_reduce }
-	subtract_from_variable = { influence_array_val^2 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
-}
-reduce_third_influencer_by_5_percent = {
-	custom_effect_tooltip = attack_third_influence_5_amount_TT
-	set_temp_variable = { influence_reduce = influence_total }
-	multiply_temp_variable = { influence_reduce = 0.05 } #Reduce by 4%
-	round_temp_variable = influence_reduce
-	subtract_from_variable = { influence_array_val^2 = influence_reduce }
-	subtract_from_variable = { influence_array_val^2 = 10 } #Hardcoded 10 point reduction
-	#Safeguard: #Removes any influencer if below 1%
-	recalculate_influence = yes
-
+	custom_effect_tooltip = change_third_largest_influence_tt
 }
 
 ##General give influence of ROOT - ROOT being player country while THIS
