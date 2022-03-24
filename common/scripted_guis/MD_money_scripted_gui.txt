@@ -46,22 +46,31 @@ scripted_gui = {
 		effects = {
 			#Take debt
 			debt_bg_click = {
-				add_to_variable = { treasury = 1 }
-				add_to_variable = { debt = 1.01 }
-				ingame_update_setup = yes
-				log = "[GetDateText]: [Root.GetName]: 1k debt taken ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
+				if = {
+					limit = { check_variable = { interest_rate < 20 } }
+					add_to_variable = { treasury = 1 }
+					add_to_variable = { debt = 1.01 }
+					ingame_update_setup = yes
+				}
+				log = "[GetDateText]: [Root.GetName]: 1k debt taken ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 			}
 			debt_bg_control_click = {
-				add_to_variable = { treasury = 10 }
-				add_to_variable = { debt = 10.1 }
-				ingame_update_setup = yes
-				log = "[GetDateText]: [Root.GetName]: 10k debt taken ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
+				if = {
+					limit = { check_variable = { interest_rate < 20 } }
+					add_to_variable = { treasury = 10 }
+					add_to_variable = { debt = 10.1 }
+					ingame_update_setup = yes
+				}
+				log = "[GetDateText]: [Root.GetName]: 10k debt taken ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 			}
 			debt_bg_shift_click = {
-				add_to_variable = { treasury = 100 }
-				add_to_variable = { debt = 101 }
-				ingame_update_setup = yes
-				log = "[GetDateText]: [Root.GetName]: 100k debt taken ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
+				if = {
+					limit = { check_variable = { interest_rate < 20 } }
+					add_to_variable = { treasury = 100 }
+					add_to_variable = { debt = 101 }
+					ingame_update_setup = yes
+				}
+				log = "[GetDateText]: [Root.GetName]: 100k debt taken ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 			}
 
 		  	#Repay debt
@@ -71,7 +80,7 @@ scripted_gui = {
 					subtract_from_variable = { treasury = 1 }
 					subtract_from_variable = { debt = 1 }
 					ingame_update_setup = yes
-					log = "[GetDateText]: [Root.GetName]: 1k debt repayed ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
+					log = "[GetDateText]: [Root.GetName]: 1k debt paid ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 				}
 			}
 			debt_bg_control_right_click = {
@@ -80,7 +89,7 @@ scripted_gui = {
 					subtract_from_variable = { treasury = 10 }
 					subtract_from_variable = { debt = 10 }
 					ingame_update_setup = yes
-					log = "[GetDateText]: [Root.GetName]: 10k debt repayed ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
+					log = "[GetDateText]: [Root.GetName]: 10k debt paid ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 				}
 			}
 			debt_bg_shift_right_click = {
@@ -89,7 +98,7 @@ scripted_gui = {
 					subtract_from_variable = { treasury = 100 }
 					subtract_from_variable = { debt = 100 }
 					ingame_update_setup = yes
-					log = "[GetDateText]: [Root.GetName]: 100k debt repayed ([?debt]k, intrest: [?interest_rate]% balance:[?treasury_rate]k)"
+					log = "[GetDateText]: [Root.GetName]: 100k debt paid ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 				}
 			}
 			#Pay off all debt
@@ -122,15 +131,12 @@ scripted_gui = {
 
 			debt_bg_click_enabled = {
 				NOT = { has_idea = bankrupcy }
-				# check_variable = { interest_rate < 25 }
 			}
 			debt_bg_control_click_enabled = {
 				NOT = { has_idea = bankrupcy }
-				# check_variable = { interest_rate < 25 }
 			}
 			debt_bg_shift_click_enabled = {
 				NOT = { has_idea = bankrupcy }
-				# check_variable = { interest_rate < 25 }
 			}
 		}
 
@@ -160,7 +166,7 @@ scripted_gui = {
 			# The AI will not use "Take 1 Debt" they should avoid taking minimal debt if they need it
 			debt_bg_shift_click = { #Adds debt -- 100 billion
 				ai_will_do = {
-					factor = 0.25
+					factor = 0.05
 					modifier = { # Generic Loan conditions
 						factor = 1.5
 						AND = {
@@ -237,12 +243,12 @@ scripted_gui = {
 					modifier = {
 						factor = 0
 						OR = {
-							check_variable = { interest_rate > 11.999 } #12% interest is the AI soft cap
+							check_variable = { interest_rate < 11.999 } #12% interest is the AI soft cap
 							has_idea = bankrupcy #Obviously can't take debt
 							check_variable = { treasury < -50.000 }
 							num_of_factories < 50
 							has_country_flag = AI_economic_downspiral
-							check_variable = { treasury_rate > 20.00 }
+							check_variable = { treasury_rate > 2.99 }
 							is_subject = yes
 							ai_has_high_treasury = yes
 						}
@@ -251,7 +257,7 @@ scripted_gui = {
 			}
 			debt_bg_control_click = { #Adds debt -- 10billion
 				ai_will_do = {
-					factor = 0.25
+					factor = 0.05
 					modifier = { # Generic Loan conditions
 						factor = 1.5
 						AND = {
@@ -287,7 +293,7 @@ scripted_gui = {
 					}
 					# Don't take 10 Debt if the AI is CHI/USA
 					modifier = {
-						factor = 0.05
+						factor = 0.01
 						OR = {
 							tag = USA
 							tag = CHI
@@ -337,12 +343,12 @@ scripted_gui = {
 					modifier = {
 						factor = 0
 						OR = {
-							check_variable = { interest_rate > 11.999 }
+							check_variable = { interest_rate < 11.999 }
 							has_idea = bankrupcy
 							check_variable = { treasury < -30.00 }
 							num_of_factories < 15
 							has_country_flag = AI_economic_downspiral
-							check_variable = { treasury_rate > 5.00 }
+							check_variable = { treasury_rate > 2.99 }
 							is_subject = yes
 							ai_has_high_treasury = yes
 						}
@@ -354,14 +360,14 @@ scripted_gui = {
 			# This section primarily deals with the AI decreasing debt
 			debt_bg_right_click = { # Repay Debt -- 1 Billion
 				ai_will_do = {
-					factor = 3.5
+					factor = 5
 					modifier = {
-						factor = 2.0
-						check_variable = { treasury_rate > .50 }
+						factor = 5.0
+						check_variable = { treasury_rate > .10 }
 					}
 					modifier = { # High Interest Rate
-						factor = 1.5
-						check_variable = { interest_rate > 3.50 }
+						factor = 2.0
+						check_variable = { interest_rate > 4.50 }
 					}
 					modifier = {
 						factor = 1.75
@@ -400,45 +406,61 @@ scripted_gui = {
 						has_country_flag = AI_economic_downspiral
 					}
 					modifier = {
-						factor = 0.80
+						factor = 0.90
 						has_war = yes
 					}
 					# GDP Debt Ratio Methodology
 					# Start being more likely to pay debt
 					modifier = {
 						factor = 1.10
-						check_variable = { debt_ratio > 1.24 }
+						check_variable = { debt_ratio > 1.09 }
 					}
 					modifier = {
-						factor = 1.15
+						factor = 1.20
+						check_variable = { debt_ratio > 1.19 }
+					}
+					modifier = {
+						factor = 1.40
+						check_variable = { debt_ratio > 1.39 }
+					}
+					modifier = {
+						factor = 1.60
 						check_variable = { debt_ratio > 1.49 }
+					}
+					modifier = {
+						factor = 1.80
+						check_variable = { debt_ratio > 1.59 }
+					}
+					modifier = {
+						factor = 1.90
+						check_variable = { debt_ratio > 1.69 }
+					}
+					modifier = {
+						factor = 2.00
+						check_variable = { debt_ratio > 1.79 }
+					}
+					modifier = {
+						factor = 2.50
+						check_variable = { debt_ratio > 1.89 }
+					}
+					modifier = {
+						factor = 5.00
+						check_variable = { debt_ratio > 1.99 }
+					}
+					modifier = {
+						factor = 10.00
+						check_variable = { debt_ratio > 2.59 }
 					}
 					modifier = {
 						factor = 1.65
 						check_variable = { debt_ratio > 1.74 }
-					}
-					modifier = {
-						factor = 2.25
-						check_variable = { debt_ratio > 1.99 }
-					}
-					modifier = {
-						factor = 2.5
-						check_variable = { debt_ratio > 2.49 }
-					}
-					modifier = {
-						factor = 2.75
-						check_variable = { debt_ratio > 2.74 }
-					}
-					modifier = {
-						factor = 3.50
-						check_variable = { debt_ratio > 2.99 }
 					}
 					# Killswitches
 					modifier = {
 						factor = 0
 						OR = {
 							check_variable = { treasury < 0 }
-							check_variable = { treasury_rate < 0 }
+							check_variable = { treasury_rate < -10 }
 						}
 					}
 				}
@@ -498,31 +520,47 @@ scripted_gui = {
 					# Start being more likely to pay debt
 					modifier = {
 						factor = 1.10
-						check_variable = { debt_ratio > 1.24 }
+						check_variable = { debt_ratio > 1.09 }
 					}
 					modifier = {
-						factor = 1.15
+						factor = 1.20
+						check_variable = { debt_ratio > 1.19 }
+					}
+					modifier = {
+						factor = 1.40
+						check_variable = { debt_ratio > 1.39 }
+					}
+					modifier = {
+						factor = 1.60
 						check_variable = { debt_ratio > 1.49 }
+					}
+					modifier = {
+						factor = 1.80
+						check_variable = { debt_ratio > 1.59 }
+					}
+					modifier = {
+						factor = 1.90
+						check_variable = { debt_ratio > 1.69 }
+					}
+					modifier = {
+						factor = 2.00
+						check_variable = { debt_ratio > 1.79 }
+					}
+					modifier = {
+						factor = 2.50
+						check_variable = { debt_ratio > 1.89 }
+					}
+					modifier = {
+						factor = 5.00
+						check_variable = { debt_ratio > 1.99 }
+					}
+					modifier = {
+						factor = 10.00
+						check_variable = { debt_ratio > 2.59 }
 					}
 					modifier = {
 						factor = 1.65
 						check_variable = { debt_ratio > 1.74 }
-					}
-					modifier = {
-						factor = 2.25
-						check_variable = { debt_ratio > 1.99 }
-					}
-					modifier = {
-						factor = 2.5
-						check_variable = { debt_ratio > 2.49 }
-					}
-					modifier = {
-						factor = 2.75
-						check_variable = { debt_ratio > 2.74 }
-					}
-					modifier = {
-						factor = 3.50
-						check_variable = { debt_ratio > 2.99 }
 					}
 					# Killswitches
 					modifier = {
@@ -590,31 +628,47 @@ scripted_gui = {
 					# Start being more likely to pay debt
 					modifier = {
 						factor = 1.10
-						check_variable = { debt_ratio > 1.24 }
+						check_variable = { debt_ratio > 1.09 }
 					}
 					modifier = {
-						factor = 1.15
+						factor = 1.20
+						check_variable = { debt_ratio > 1.19 }
+					}
+					modifier = {
+						factor = 1.40
+						check_variable = { debt_ratio > 1.39 }
+					}
+					modifier = {
+						factor = 1.60
 						check_variable = { debt_ratio > 1.49 }
+					}
+					modifier = {
+						factor = 1.80
+						check_variable = { debt_ratio > 1.59 }
+					}
+					modifier = {
+						factor = 1.90
+						check_variable = { debt_ratio > 1.69 }
+					}
+					modifier = {
+						factor = 2.00
+						check_variable = { debt_ratio > 1.79 }
+					}
+					modifier = {
+						factor = 2.50
+						check_variable = { debt_ratio > 1.89 }
+					}
+					modifier = {
+						factor = 5.00
+						check_variable = { debt_ratio > 1.99 }
+					}
+					modifier = {
+						factor = 10.00
+						check_variable = { debt_ratio > 2.59 }
 					}
 					modifier = {
 						factor = 1.65
 						check_variable = { debt_ratio > 1.74 }
-					}
-					modifier = {
-						factor = 2.25
-						check_variable = { debt_ratio > 1.99 }
-					}
-					modifier = {
-						factor = 2.5
-						check_variable = { debt_ratio > 2.49 }
-					}
-					modifier = {
-						factor = 2.75
-						check_variable = { debt_ratio > 2.74 }
-					}
-					modifier = {
-						factor = 3.50
-						check_variable = { debt_ratio > 2.99 }
 					}
 					# General Killswitches
 					modifier = {
@@ -638,7 +692,13 @@ scripted_gui = {
 		effects = {
 			treasury_bg_click = {
 				if = {
-					limit = { NOT = { has_country_flag = open_economy_screen } }
+					limit = {
+						OR = {
+							NOT = { has_country_flag = open_economy_screen }
+							is_ai = yes
+						}
+					}
+
 					set_country_flag = open_economy_screen
 				}
 				else = {
@@ -837,7 +897,14 @@ scripted_gui = {
 		context_type = player_context
 		window_name = "budget_tab"
 
-		visible = { ROOT = { has_country_flag = open_economy_screen } }
+		visible = {
+			ROOT = {
+				OR = {
+					is_ai = yes
+					has_country_flag = open_economy_screen
+				}
+			}
+		}
 
 		triggers = {
 			# Population taxes
@@ -925,7 +992,7 @@ scripted_gui = {
 				}
 				ingame_update_setup = yes
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
-				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
+				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
 				log = "[GetDateText]: [Root.GetName]: population_tax_rate decrease [?population_tax_rate]% (balance:[?treasury_rate])"
 			}
@@ -968,7 +1035,7 @@ scripted_gui = {
 				}
 				ingame_update_setup = yes
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
-				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
+				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
 				log = "[GetDateText]: [Root.GetName]: corporate_tax_rate decrease [?corporate_tax_rate]% (balance:[?treasury_rate])"
 			}
@@ -982,7 +1049,7 @@ scripted_gui = {
 				}
 				ingame_update_setup = yes
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
-				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
+				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
 				log = "[GetDateText]: [Root.GetName]: corporate_tax_rate decrease [?corporate_tax_rate]% (balance:[?treasury_rate])"
 			}
@@ -1032,7 +1099,7 @@ scripted_gui = {
 		}
 
 		# AI Section
-		# Note: 5 days - 120 Hrs
+		# Note: 7 days - 168 Hrs
 		# Functional Notes:
 		# ai_enabled - triggers that engage the AI for this GUI
 		# ai_test_interval - timeframe between AI checks
@@ -1040,28 +1107,88 @@ scripted_gui = {
 		# ai_weights - modifiers to determine AI habits
 
 		ai_enabled = { always = yes }
-		ai_test_interval = 72
+		ai_test_interval = 168 # 7 Days
 		ai_max_weight_taken_per_test = 2
 		ai_check = {
-			has_political_power > 50
+			has_political_power > 200
 		}
 
 		ai_weights = {
 			# Population Tax Rate Clicks
 			increase_population_tax_click = {
 				ai_will_do = {
-					factor = 1
+					factor = 25
 					# General Economic Factors
 					modifier = {
 						factor = 1.25
-						ai_has_deficit = yes
+						check_variable = { treasury_rate < -0.25 }
 					}
 					modifier = {
-						factor = 2.0
-						ai_has_high_deficit = yes
+						factor = 1.50
+						check_variable = { treasury_rate < -0.50 }
 					}
 					modifier = {
-						factor = 0.70
+						factor = 2.50
+						check_variable = { treasury_rate < -0.75 }
+					}
+					modifier = {
+						factor = 3.0
+						check_variable = { treasury_rate < -1.50 }
+					}
+					modifier = {
+						factor = 3.50
+						check_variable = { treasury_rate < -2.00 }
+					}
+					modifier = {
+						factor = 4.00
+						check_variable = { treasury_rate < -3.00 }
+					}
+					modifier = {
+						factor = 4.50
+						check_variable = { treasury_rate < -3.50 }
+					}
+					modifier = {
+						factor = 5.50
+						check_variable = { treasury_rate < -4.00 }
+					}
+					modifier = {
+						factor = 10.0
+						check_variable = { treasury_rate < -10.00 }
+					}
+					modifier = {
+						factor = 0.90
+						check_variable = { treasury_rate > 0.25 }
+					}
+					modifier = {
+						factor = 0.80
+						check_variable = { treasury_rate > 0.50 }
+					}
+					modifier = {
+						factor = 0.60
+						check_variable = { treasury_rate > 0.75 }
+					}
+					modifier = {
+						factor = 0.50
+						check_variable = { treasury_rate > 1.50 }
+					}
+					modifier = {
+						factor = 0.40
+						check_variable = { treasury_rate > 2.00 }
+					}
+					modifier = {
+						factor = 0.30
+						check_variable = { treasury_rate > 3.00 }
+					}
+					modifier = {
+						factor = 0.20
+						check_variable = { treasury_rate > 3.50 }
+					}
+					modifier = {
+						factor = 0.10
+						check_variable = { treasury_rate > 4.00 }
+					}
+					modifier = {
+						factor = 0.25
 						AI_has_high_population_taxes = yes
 					}
 					modifier = {
@@ -1088,80 +1215,154 @@ scripted_gui = {
 						}
 					}
 					modifier = {
-						factor = 1.25
+						factor = 0.40
 						has_idea = economic_boom
-					}
-					# Political Power
-					modifier = {
-						factor = 1.25
-						has_political_power > 49
-					}
-					modifier = {
-						factor = 1.50
-						has_political_power > 99
-					}
-					modifier = {
-						factor = 2.0
-						has_political_power > 149
 					}
 					# Reducers
 					modifier = {
-						factor = 0.85
+						factor = 0.05
 						OR = {
 							ai_has_acceptable_deficit = yes
 							ai_has_acceptable_deficit_factories = yes
 						}
 					}
 					modifier = {
-						factor = 0.15
+						factor = 0.05
 						OR = {
 							ai_has_acceptable_surplus = yes
 							ai_has_acceptable_surplus_factories = yes
 						}
 					}
 					modifier = {
-						factor = 0.75
+						factor = 0.05
 						has_stability < 0.25
 					}
 					modifier = {
-						factor = 0.70
+						factor = 0.01
 						has_stability < 0.20
 					}
 					modifier = {
-						factor = 0.60
+						factor = 0.005
 						has_stability < 0.15
 					}
 					modifier = {
-						factor = 0.50
+						factor = 0.001
 						has_stability < 0.10
 					}
-					# General Command to be less likely to increase income tax
 					modifier = {
-						factor = 0.95
-						is_ai = yes
+						factor = 5
+						num_of_available_civilian_factories < 5
+					}
+					modifier = {
+						factor = 2.5
+						num_of_available_civilian_factories < 10
+					}
+					modifier = {
+						factor = 1.50
+						num_of_available_civilian_factories < 15
+					}
+					modifier = {
+						factor = 1.25
+						num_of_available_civilian_factories < 30
+					}
+					# Reducer
+					modifier = {
+						factor = 0.01
+						NOT = { tag = USA }
+						check_variable = { treasury_rate < 2.99 }
+						check_variable = { treasury_rate > -2.99 }
+					}
+					modifier = {
+						factor = 0.01
+						tag = USA
+						check_variable = { treasury_rate < 0 }
+						check_variable = { treasury_rate > -9.99 }
 					}
 					# Killswitch
 					modifier = {
 						factor = 0
 						OR = {
 							has_country_flag = no_personal_tax_rate_change
-							check_variable = { population_tax_rate > 49 }
 							has_stability < 0.05 # AI should avoid lowering taxes if they have no stability obviously
+							check_variable = { treasury_rate > 9.99 }
 						}
 					}
+				}
+				ignore_lower_weights = {
+					factor = 20
 				}
 			}
 			decrease_population_tax_click = {
 				ai_will_do = {
-					factor = 1
+					factor = 25
 					# Generic
 					modifier = {
 						factor = 1.25
-						ai_has_surplus = yes
+						check_variable = { treasury_rate > 0.25 }
 					}
 					modifier = {
-						factor = 1.25
-						ai_has_high_surplus = yes
+						factor = 1.50
+						check_variable = { treasury_rate > 0.50 }
+					}
+					modifier = {
+						factor = 2.50
+						check_variable = { treasury_rate > 0.75 }
+					}
+					modifier = {
+						factor = 3.0
+						check_variable = { treasury_rate > 1.50 }
+					}
+					modifier = {
+						factor = 3.50
+						check_variable = { treasury_rate > 2.00 }
+					}
+					modifier = {
+						factor = 4.00
+						check_variable = { treasury_rate > 3.00 }
+					}
+					modifier = {
+						factor = 4.50
+						check_variable = { treasury_rate > 3.50 }
+					}
+					modifier = {
+						factor = 5.50
+						check_variable = { treasury_rate > 4.00 }
+					}
+					modifier = {
+						factor = 10.0
+						check_variable = { treasury_rate > 10.00 }
+					}
+					modifier = {
+						factor = 0.90
+						check_variable = { treasury_rate < -0.25 }
+					}
+					modifier = {
+						factor = 0.80
+						check_variable = { treasury_rate < -0.50 }
+					}
+					modifier = {
+						factor = 0.60
+						check_variable = { treasury_rate < -0.75 }
+					}
+					modifier = {
+						factor = 0.50
+						check_variable = { treasury_rate < -1.50 }
+					}
+					modifier = {
+						factor = 0.40
+						check_variable = { treasury_rate < -2.00 }
+					}
+					modifier = {
+						factor = 0.30
+						check_variable = { treasury_rate < -3.00 }
+					}
+					modifier = {
+						factor = 0.20
+						check_variable = { treasury_rate < -3.50 }
+					}
+					modifier = {
+						factor = 0.10
+						check_variable = { treasury_rate < -4.00 }
 					}
 					modifier = {
 						factor = 0.70
@@ -1194,84 +1395,119 @@ scripted_gui = {
 						factor = 1.15
 						has_idea = economic_boom
 					}
-					# Political Power
-					modifier = {
-						factor = 1.25
-						has_political_power > 49
-					}
-					modifier = {
-						factor = 1.50
-						has_political_power > 99
-					}
-					modifier = {
-						factor = 2.0
-						has_political_power > 149
-					}
-					# Reducers
-					modifier = {
-						factor = 0.65
-						OR = {
-							ai_has_acceptable_deficit = yes
-							ai_has_acceptable_deficit_factories = yes
-						}
-					}
-					modifier = {
-						factor = 0.85
-						OR = {
-							ai_has_acceptable_deficit = yes
-							ai_has_acceptable_deficit_factories = yes
-						}
-					}
-					modifier = {
-						factor = 0.15
-						OR = {
-							ai_has_acceptable_surplus = yes
-							ai_has_acceptable_surplus_factories = yes
-						}
-					}
 					# Stability Increase Needed
 					modifier = {
-						factor = 1.50
+						factor = 5.0
 						has_stability < 0.10
 					}
 					modifier = {
-						factor = 1.25
+						factor = 3.50
 						has_stability < 0.15
 					}
 					modifier = {
-						factor = 1.15
+						factor = 2.0
 						has_stability < 0.20
 					}
 					modifier = {
 						factor = 1.10
 						has_stability < 0.25
 					}
+
+					# Reducer
+					modifier = {
+						factor = 0.001
+						NOT = { tag = USA }
+						check_variable = { treasury_rate < 2.99 }
+						check_variable = { treasury_rate > -2.99 }
+					}
+					modifier = {
+						factor = 0.001
+						tag = USA
+						check_variable = { treasury_rate < 0 }
+						check_variable = { treasury_rate > -9.99 }
+					}
 					# Killswitch
 					modifier = {
 						factor = 0
 						OR = {
-							check_variable = { population_tax_rate > 0 }
 							has_country_flag = no_personal_tax_rate_change
+							check_variable = { treasury_rate < -4.99 }
 						}
 					}
+				}
+				ignore_lower_weights = {
+					factor = 20
 				}
 			}
 			# Corporate Tax Rate Clicks
 			increase_corporate_tax_click = {
 				ai_will_do = {
-					factor = 1
+					factor = 10
 					# Generic Economic
+					# Be less likely to increase if you have surplus greater than 4 billion
+					modifier = {
+						factor = 1.25
+						check_variable = { treasury_rate < -0.25 }
+					}
 					modifier = {
 						factor = 1.50
-						ai_has_deficit = yes
+						check_variable = { treasury_rate < -0.50 }
 					}
 					modifier = {
-						factor = 1.75
-						ai_has_high_deficit = yes
+						factor = 2.50
+						check_variable = { treasury_rate < -0.75 }
 					}
 					modifier = {
-						factor = 1.15
-						ai_has_surplus = yes
+						factor = 3.0
+						check_variable = { treasury_rate < -1.50 }
+					}
+					modifier = {
+						factor = 3.50
+						check_variable = { treasury_rate < -2.00 }
+					}
+					modifier = {
+						factor = 4.00
+						check_variable = { treasury_rate < -3.00 }
+					}
+					modifier = {
+						factor = 4.50
+						check_variable = { treasury_rate < -3.50 }
+					}
+					modifier = {
+						factor = 5.50
+						check_variable = { treasury_rate > -4.00 }
+					}
+					modifier = {
+						factor = 0.90
+						check_variable = { treasury_rate > 0.25 }
+					}
+					modifier = {
+						factor = 0.80
+						check_variable = { treasury_rate > 0.50 }
+					}
+					modifier = {
+						factor = 0.60
+						check_variable = { treasury_rate > 0.75 }
+					}
+					modifier = {
+						factor = 0.50
+						check_variable = { treasury_rate > 1.50 }
+					}
+					modifier = {
+						factor = 0.40
+						check_variable = { treasury_rate > 2.00 }
+					}
+					modifier = {
+						factor = 0.30
+						check_variable = { treasury_rate > 3.00 }
+					}
+					modifier = {
+						factor = 0.20
+						check_variable = { treasury_rate > 3.50 }
+					}
+					modifier = {
+						factor = 0.10
+						check_variable = { treasury_rate > 4.00 }
 					}
 					modifier = {
 						factor = 0.65
@@ -1286,7 +1522,7 @@ scripted_gui = {
 						ai_has_low_corporate_taxes = yes
 					}
 					modifier = {
-						factor =  1.15
+						factor = 1.15
 						OR = {
 							has_idea = depression
 							has_idea = recession
@@ -1301,68 +1537,120 @@ scripted_gui = {
 							has_idea = economic_boom
 						}
 					}
-					# Political Power
 					modifier = {
-						factor = 1.25
-						has_political_power > 49
+						factor = 0.25
+						num_of_available_civilian_factories < 5
+					}
+					modifier = {
+						factor = 0.50
+						num_of_available_civilian_factories < 10
+					}
+					modifier = {
+						factor = 0.75
+						num_of_available_civilian_factories < 15
 					}
 					modifier = {
 						factor = 1.50
-						has_political_power > 99
+						num_of_available_civilian_factories > 14
+					}
+					# Reducer
+					modifier = {
+						factor = 0.01
+						NOT = { tag = USA }
+						check_variable = { treasury_rate < 2.99 }
+						check_variable = { treasury_rate > -2.99 }
 					}
 					modifier = {
-						factor = 2.0
-						has_political_power > 149
-					}
-					# Reducers
-					modifier = {
-						factor = 0.95
-						OR = {
-							ai_has_acceptable_deficit = yes
-							ai_has_acceptable_deficit_factories = yes
-						}
+						factor = 0.01
+						tag = USA
+						check_variable = { treasury_rate < 0 }
+						check_variable = { treasury_rate > -9.99 }
 					}
 					modifier = {
-						factor = 0.30
-						OR = {
-							ai_has_acceptable_surplus = yes
-							ai_has_acceptable_surplus_factories = yes
-						}
-					}
-					# AI should focus on consumer goods
-					modifier = {
-						factor = 1.25
-						is_ai = yes
+						factor = 0.01
+						tag = USA
+						check_variable = { corporate_tax_rate > 30 }
 					}
 					# Killswitch
 					modifier = {
 						factor = 0
 						OR = {
-							check_variable = { corporate_tax_rate > 49 }
 							has_country_flag = no_corporate_tax_rate_change
+							check_variable = { treasury_rate > 9.99 }
 						}
 					}
+				}
+				ignore_lower_weights = {
+					factor = 10
 				}
 			}
 			decrease_corporate_tax_click = {
 				ai_will_do = {
-					factor = 1
+					factor = 5
 					# Generic Economic
 					modifier = {
-						factor = 0.75
-						ai_has_deficit = yes
-					}
-					modifier = {
-						factor = 0.15
-						ai_has_high_deficit = yes
-					}
-					modifier = {
-						factor = 1.15
-						ai_has_surplus = yes
-					}
-					modifier = {
 						factor = 1.25
-						ai_has_high_surplus = yes
+						check_variable = { treasury_rate > 0.25 }
+					}
+					modifier = {
+						factor = 1.50
+						check_variable = { treasury_rate > 0.50 }
+					}
+					modifier = {
+						factor = 2.50
+						check_variable = { treasury_rate > 0.75 }
+					}
+					modifier = {
+						factor = 3.0
+						check_variable = { treasury_rate > 1.50 }
+					}
+					modifier = {
+						factor = 3.50
+						check_variable = { treasury_rate > 2.00 }
+					}
+					modifier = {
+						factor = 4.00
+						check_variable = { treasury_rate > 3.00 }
+					}
+					modifier = {
+						factor = 4.50
+						check_variable = { treasury_rate > 3.50 }
+					}
+					modifier = {
+						factor = 5.50
+						check_variable = { treasury_rate > 4.00 }
+					}
+					modifier = {
+						factor = 0.90
+						check_variable = { treasury_rate < -0.25 }
+					}
+					modifier = {
+						factor = 0.80
+						check_variable = { treasury_rate < -0.50 }
+					}
+					modifier = {
+						factor = 0.60
+						check_variable = { treasury_rate < -0.75 }
+					}
+					modifier = {
+						factor = 0.50
+						check_variable = { treasury_rate < -1.50 }
+					}
+					modifier = {
+						factor = 0.40
+						check_variable = { treasury_rate < -2.00 }
+					}
+					modifier = {
+						factor = 0.30
+						check_variable = { treasury_rate < -3.00 }
+					}
+					modifier = {
+						factor = 0.20
+						check_variable = { treasury_rate < -3.50 }
+					}
+					modifier = {
+						factor = 0.10
+						check_variable = { treasury_rate < -4.00 }
 					}
 					modifier = {
 						factor = 1.35
@@ -1392,47 +1680,51 @@ scripted_gui = {
 							has_idea = economic_boom
 						}
 					}
-					# Political Power
 					modifier = {
-						factor = 1.25
-						has_political_power > 49
+						factor = 10
+						num_of_available_civilian_factories < 5
 					}
 					modifier = {
-						factor = 1.50
-						has_political_power > 99
+						factor = 5.5
+						num_of_available_civilian_factories < 10
 					}
 					modifier = {
-						factor = 2.0
-						has_political_power > 149
-					}
-					# Reducers
-					modifier = {
-						factor = 0.95
-						OR = {
-							ai_has_acceptable_deficit = yes
-							ai_has_acceptable_deficit_factories = yes
-						}
+						factor = 3.50
+						num_of_available_civilian_factories < 15
 					}
 					modifier = {
-						factor = 0.30
-						OR = {
-							ai_has_acceptable_surplus = yes
-							ai_has_acceptable_surplus_factories = yes
-						}
+						factor = 0.75
+						num_of_available_civilian_factories > 14
 					}
-					# AI should focus on consumer goods
+					# Reducer
 					modifier = {
-						factor = 1.25
-						is_ai = yes
+						factor = 0.01
+						NOT = { tag = USA }
+						check_variable = { treasury_rate < 2.99 }
+						check_variable = { treasury_rate > -2.99 }
+					}
+					modifier = {
+						factor = 0.01
+						tag = USA
+						check_variable = { treasury_rate < 0 }
+						check_variable = { treasury_rate > -9.99 }
+					}
+					modifier = {
+						factor = 25
+						tag = USA
+						check_variable = { corporate_tax_rate > 30 }
 					}
 					# Killswitch
 					modifier = {
 						factor = 0
 						OR = {
-							check_variable = { corporate_tax_rate > 0 }
 							has_country_flag = no_corporate_tax_rate_change
+							check_variable = { treasury_rate < -4.99 }
 						}
 					}
+				}
+				ignore_lower_weights = {
+					factor = 10
 				}
 			}
 		}

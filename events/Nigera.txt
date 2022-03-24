@@ -713,7 +713,7 @@ country_event = {
 		text = nigeria_md.4.d2
 		trigger = { has_completed_focus = NIG_convert_the_christians }
 	}
-	picture = GFX_Tahrir_Al_Sham
+	picture = GFX_boko_haram_insurgency
 	is_triggered_only = yes
 	fire_only_once = yes
 
@@ -721,29 +721,28 @@ country_event = {
 	option = {
 		name = nigeria_md.4.a
 		log = "[GetDateText]: [This.GetName]: nigeria_md.4.a executed"
-
+		set_country_flag = NIG_religious_war_flag
 		if = {
 			limit = { has_completed_focus = NIG_suppresion_of_islam }
 			#Islamic Uprising
 			hidden_effect = {
 				delete_unit_template_and_units = { division_template = "Islamic Militas" }
 			}
-			every_state = {
-				limit = {
-					is_owned_by = NIG
-					NOT = { has_state_flag = NIG_christian_state }
+			for_each_scope_loop = {
+				array = owned_states
+				if = { limit = { NOT = { has_state_flag = NIG_christian_state } }
+					set_state_flag = NIG_islamic_state
 				}
-				set_state_flag = NIG_islamic_state
 			}
-			if = {
-				limit = { 340 = { NOT = { has_state_flag = NIG_christian_state } } }
+			if = { limit = { 340 = { NOT = { has_state_flag = NIG_christian_state } } }
 				random_owned_state = {
 					limit = { has_state_flag = NIG_christian_state }
 					NIG = { set_capital = { state = PREV } }
 				}
 			}
-			if = {
-				limit = { has_government = neutrality }
+
+
+			if = { limit = { has_government = neutrality }
 				start_civil_war = {
 					ruling_party = neutrality
 					ideology = fascism
@@ -754,7 +753,7 @@ country_event = {
 					}
 				}
 			}
-			if = {
+			else_if = {
 				limit = { has_government = democratic }
 				start_civil_war = {
 					ruling_party = democratic
@@ -767,9 +766,7 @@ country_event = {
 				}
 			}
 			random_other_country = {
-				limit = {
-					original_tag = NIG
-				}
+				limit = { original_tag = NIG }
 				save_event_target_as = boko_haram_insurgents_civil_war
 			}
 			event_target:boko_haram_insurgents_civil_war = {
@@ -856,25 +853,24 @@ country_event = {
 
 			}
 		}
-		if = {
+		else_if = {
 			limit = { has_completed_focus = NIG_convert_the_christians }
 			#Chrisitan Uprising
 			hidden_effect = {
 				delete_unit_template_and_units = { division_template = "Christian Militas" }
 				delete_unit_template_and_units = { division_template = "Islamic Militas" }
 			}
-			every_state = {
-				limit = {
-					is_owned_by = NIG
-					NOT = { has_state_flag = NIG_islamic_state }
+
+			for_each_scope_loop = {
+				array = owned_states
+				if = { limit = { NOT = { has_state_flag = NIG_islamic_state } }
+					set_state_flag = NIG_christian_state
 				}
-				set_state_flag = NIG_christian_state
 			}
-			if = {
-				limit = { 340 = { NOT = { has_state_flag = NIG_islamic_state } } }
+			if = { limit = { 340 = { NOT = { has_state_flag = NIG_islamic_state } } }
 				random_owned_state = {
 					limit = { has_state_flag = NIG_islamic_state }
-					NIG = { set_capital = { state = PREV } }
+					NIG = { set_capital = { state = PREV }}
 				}
 			}
 			start_civil_war = {
