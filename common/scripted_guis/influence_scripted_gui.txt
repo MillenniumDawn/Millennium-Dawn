@@ -119,15 +119,15 @@ scripted_gui = {
 				OR = {
 					AND = {
 						check_variable = { influence_array^0 = ROOT }
-						check_variable = { influence_array_calc^0 > 0.2 }
+						check_variable = { influence_array_val^0 > 19.999 }
 					}
 					AND = {
 						check_variable = { influence_array^1 = ROOT }
-						check_variable = { influence_array_calc^1 > 0.2 }
+						check_variable = { influence_array_val^1 > 19.999 }
 					}
 					AND = {
 						check_variable = { influence_array^2 = ROOT }
-						check_variable = { influence_array_calc^2 > 0.2 }
+						check_variable = { influence_array_val^2 > 19.999 }
 					}
 				}
 			}
@@ -135,7 +135,7 @@ scripted_gui = {
 			opt_make_puppet_button_click_enabled = {
 				AND = {
 					check_variable = { influence_array^0 = ROOT }
-					check_variable = { influence_array_calc^0 > 0.8 }
+					check_variable = { influence_array_val^0 > 79.999 }
 					is_same_government = yes
 					NOT = { is_subject_of = ROOT }
 					is_subject = no
@@ -194,11 +194,11 @@ scripted_gui = {
 				OR = {
 					AND = {
 						check_variable = { influence_array^0 = ROOT }
-						check_variable = { influence_array_calc^0 > 0.3 }
+						check_variable = { influence_array_val^0 > 29.999 }
 					}
 					AND = {
 						check_variable = { influence_array^1 = ROOT }
-						check_variable = { influence_array_calc^1 > 0.3 }
+						check_variable = { influence_array_val^1 > 29.999 }
 					}
 				}
 			}
@@ -206,7 +206,7 @@ scripted_gui = {
 			opt_economic_exploitation_button_click_enabled = {
 				AND = {
 					check_variable = { influence_array^0 = ROOT }
-					check_variable = { influence_array_calc^0 > 0.5 }
+					check_variable = { influence_array_val^0 > 49.999 }
 					NOT = { is_puppet_of = ROOT }
 					OR = {
 						AND = {
@@ -374,34 +374,10 @@ scripted_gui = {
 
 				ROOT = {
 					PREV = {
-						set_temp_variable = { influence_gain = influence_total }
-						multiply_temp_variable = { influence_gain = 1.02 }
-						multiply_temp_variable = { influence_gain = 0.02 }
-						multiply_temp_variable = { influence_gain = ROOT.influence_multiplier } #from global rank idea
-						round_temp_variable = influence_gain
-						if = {
-							limit = { check_variable = { var = influence_gain value = 1 compare = less_than_or_equals } }
-							add_to_temp_variable = { influence_gain = 10 } #10 Debugging value to prevent additions by 0
-						}
-						for_loop_effect = {
-							end = influence_array^num
-							value = v
-							if = {
-								limit = {
-									check_variable = { influence_array^v = ROOT }
-								}
-								add_to_variable = { influence_array_val^v = influence_gain }
-								set_country_flag = found
-							}
-						}
-						if = {
-							limit = { NOT = { has_country_flag = found } }
-							add_to_array = { influence_array = ROOT.id }
-							add_to_array = { influence_array_val = influence_gain }
-						}
-						clr_country_flag = found
-						recalculate_influence = yes
-						custom_effect_tooltip = improve_ROOT_influence_2_percent_TT
+						set_temp_variable = { percent_change = 2 }
+						set_temp_variable = { tag_index = ROOT.id }
+						set_temp_variable = { influence_target = THIS.id }
+						change_influence_percentage = yes
 					}
 				}
 			}
@@ -864,23 +840,10 @@ scripted_gui = {
 					}
 				}
 
-				#remove 10% influence
-				set_temp_variable = { influence_reduce = influence_total } #from global rank idea
-				multiply_temp_variable = { influence_reduce = 0.1 } #10%
-				round_temp_variable = influence_reduce
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT } #Influencer
-						}
-						subtract_from_variable = { influence_array_val^v = influence_reduce }
-						set_country_flag = found
-					}
-				}
-				clr_country_flag = found
-				recalculate_influence = yes
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = PREV.id }
+				change_influence_percentage = yes
 				#reduce relations if different gov
 				if = {
 					limit = {
@@ -900,8 +863,6 @@ scripted_gui = {
 					}
 				}
 			}
-
-	####################################
 
 			opt_make_puppet_button_click = {
 
@@ -950,20 +911,10 @@ scripted_gui = {
 				}
 
 				#remove 10% influence
-				set_temp_variable = { influence_reduce = influence_total } #from global rank idea
-				multiply_temp_variable = { influence_reduce = 0.1 } #10%
-				round_temp_variable = influence_reduce
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						subtract_from_variable = { influence_array_val^v = influence_reduce }
-					}
-				}
-				recalculate_influence = yes
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = PREV.id }
+				change_influence_percentage = yes
 
 				#Timer until next exploit
 				set_country_flag = { flag = country_exploited value = 1 days = 90 }
@@ -1038,9 +989,7 @@ scripted_gui = {
 
 		window_name = "position_5_diplo"
 
-		visible = {
-		  always = yes
-		}
+		visible = { always = yes }
 	}
 	position_6_diplo = {
 		context_type = selected_country_context
@@ -1048,9 +997,7 @@ scripted_gui = {
 
 		window_name = "position_6_diplo"
 
-		visible = {
-			always = yes
-		}
+		visible = { always = yes }
 	}
 	position_7_diplo = {
 		context_type = selected_country_context
@@ -1058,9 +1005,6 @@ scripted_gui = {
 
 		window_name = "position_7_diplo"
 
-		visible = {
-			always = yes
-		}
+		visible = { always = yes }
 	}
 }
-
