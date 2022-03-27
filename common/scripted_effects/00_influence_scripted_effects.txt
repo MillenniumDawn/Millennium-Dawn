@@ -1,4 +1,8 @@
 # Author(s): Angriest Bird, Kal, SWF51, Killerrabit
+# Millennium Dawn's Influence System:
+# The influence system is MD's take on using political soft power and pressuring other nations.
+# It is intended to mock superpower's sphere of influence.
+
 
 # init_influence:
 # The init influence acts as a reset to get an influence array prepared for additions
@@ -11,11 +15,17 @@ startup_influence = {
 	sort_influence = yes #the rest is on_startup
 }
 
+# Recalculate Influence:
+# The main macro for influence sections.
+# Here we handle the deletion of influencers who fail the three basic conditions:
+# 1.) Don't exist, 2.) falls below 0.01% Influence 3.) Multiple influencers are the same tag
+# Next we sort influence
+# Calculate influence percentage to determine drifts and that
 recalculate_influence = {
 	hidden_effect = {
+		delete_influencer_check = yes
 		sort_influence = yes
 		calculate_influence_percentage = yes
-		delete_influencer_check = yes
 	}
 }
 
@@ -76,6 +86,7 @@ sort_influence = {
 		clamp_variable = { var = influence_array_val^i max = 100 min = 0 }
 	}
 
+	set_temp_variable = { new_influence_total = 0 }
 	add_to_temp_variable = { new_influence_total = domestic_influence_amount }
 	for_each_loop = {
 		array = influence_array_val
@@ -231,6 +242,9 @@ manipulate_politics_action = {
 	}
 }
 
+# Delete Influencer Check:
+# The delete influencer check handles the double checking to clean up the influence arrays.
+# First it checks if you are even
 delete_influencer_check = {
 	if = {
 		limit = {
@@ -541,11 +555,16 @@ change_influence_percentage = {
 			}
 		}
 
-		var:tag_index = {
-			set_temp_variable = { influence_change = influence_multiplier }
+		# Apply multiplier in positive interaction
+		# You shouldn't lose more because you are a bigger power
+		if = { limit = { check_variable = { percent_change > 0 } }
+			var:tag_index = {
+				set_temp_variable = { influence_change = influence_multiplier }
+			}
+
+			multiply_temp_variable = { percent_change = influence_change }
 		}
 
-		multiply_temp_variable = { percent_change = influence_change }
 
 		if = {
 			limit = {
