@@ -63,48 +63,10 @@ country_event = {
 			# Influence Section
 			if = {
 				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
-				set_temp_variable = { AC_influence_gain = FROM.project_monetary_cost^-1 }
-
-				# Influence Gain reduction
-				if = {
-					limit = {
-						FROM = {
-							OR = {
-								check_variable = { project_building_type^project_type = 4 } #Infra
-								check_variable = { project_building_type^project_type = 6 } #Air Base
-								check_variable = { project_building_type^project_type = 8 } #AA
-								check_variable = { project_building_type^project_type = 7 } #Radar
-								check_variable = { project_building_type^project_type = 9 } #Radar
-								check_variable = { project_building_type^project_type = 10 } #Radar
-							}
-						}
-					}
-					divide_temp_variable = { AC_influence_gain = 1.5 }
-				}
-				else = {
-					divide_temp_variable = { AC_influence_gain = 2.5 }
-				}
-
-				multiply_temp_variable = { AC_influence_gain = FROM.influence_multiplier }
-				round_temp_variable = AC_influence_gain
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = FROM }
-						}
-						add_to_variable = { influence_array_val^v = AC_influence_gain }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = FROM.id }
-					add_to_array = { influence_array_val = AC_influence_gain }
-				}
-				clr_country_flag = found
-				recalculate_influence = yes
+				set_temp_variable = { percent_change = 0.50 }
+				set_temp_variable = { tag_index = FROM.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 
 				# Cool Down for the Influence Gain
 				if = {
@@ -124,9 +86,7 @@ country_event = {
 			# THIS Nation
 			# take 10% of the cost of the project
 			custom_effect_tooltip = AC_event.1.o1_TT
-			if = { limit = { NOT = { has_country_flag = influence_gained_@FROM } }
-				custom_effect_tooltip = AC_event_influence_gain
-			}
+
 			set_temp_variable = { temp_investment = FROM.project_monetary_cost_effect }
 			multiply_temp_variable = { temp_investment = 0.10 }
 			add_to_variable = { treasury = temp_investment }
