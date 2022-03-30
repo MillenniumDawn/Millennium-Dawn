@@ -154,13 +154,29 @@ calculate_influence_percentage = {
 # Spread Influence:
 # Corresponds with the general spread influence button.
 spread_influence = {
-	PREV = { add_political_power = -80 }
+	log = "[GetDateText]: [Root.GetName]: On Actions -- [ROOT.GetName] influence action in [PREV.GetName]"
+	PREV = { add_political_power = -50 }
 
 	set_temp_variable = { percent_change = 2 }
 	set_temp_variable = { tag_index = PREV.id }
 	set_temp_variable = { influence_target = THIS.id }
 	change_influence_percentage = yes
 
+	if = { limit = { coup_is_available = yes }
+		influence_coup_action = yes
+	}
+	if = { limit = { economic_aid_available = yes }
+		economic_aid_action = yes
+	}
+	if = { limit = { target_other_influence_available = yes }
+		target_other_influencer_action = yes
+	}
+	if = { limit = { manipulate_politics_action_available = yes }
+		manipulate_politics_action = yes
+	}
+	if = { limit = { make_puppet_action_available = yes }
+		make_puppet_action = yes
+	}
 }
 
 # Puppet:
@@ -252,6 +268,30 @@ manipulate_politics_action = {
 	#reduce relations if different gov
 	if = { limit = { NOT = { is_same_government_PREV = yes } }
 		add_opinion_modifier = { target = PREV modifier = supported_opposition }
+	}
+}
+
+economic_aid_action = {
+	PREV = {
+		PREV = {
+			country_event = { id = influence.0 }
+		}
+	}
+}
+
+target_other_influencer_action = {
+	PREV = {
+		PREV = {
+			country_event = { id = influence.22 }
+		}
+	}
+}
+
+influence_coup_action = {
+	PREV = {
+		PREV = {
+			country_event = { id = influence.44 }
+		}
 	}
 }
 
