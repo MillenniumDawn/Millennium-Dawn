@@ -26,24 +26,14 @@
 # AC_building_type_selected = 9 = Fuel Silo
 # AC_building_type_selected = 10 = Internet Station
 # AC_building_type_selected = 11 = Biofuel Refineries
-@BUILD_COST_CIVILIAN_FACTORY = 7.50
-@BUILD_COST_MILITARY_FACTORY = 8.00
-@BUILD_COST_DOCKYARD = 7.50
-@BUILD_COST_INFRASTRUCTURE = 3.5
-@BUILD_COST_OFFICES = 12.0
-@BUILD_COST_ANTIAIR = 3.25
-@BUILD_COST_RADAR = 1.75
-@BUILD_COST_AIRBASE = 2.25
-@BUILD_COST_FUEL_SILO = 3
-@BUILD_COST_INTERNET_STATION = 3.0
-@BUILD_COST_REFINERY = 4.25
-
 scripted_gui = {
 	AC_show_Investment_window = {
 		context_type = selected_state_context
 		window_name = "AC_show_Investment_window"
 
 		parent_window_token = selected_state_view
+
+		dirty = ROOT.refresh_gui
 
 		visible = {
 			ROOT = { has_country_flag = AC_hide_investment_window }
@@ -52,6 +42,7 @@ scripted_gui = {
 		effects = {
 			AC_up_arrow_click = {
 				ROOT = { clr_country_flag = AC_hide_investment_window }
+				refresh_gui = yes
 			}
 		}
 	}
@@ -61,6 +52,8 @@ scripted_gui = {
 		context_type = selected_state_context
 		window_name = "AC_allied_construction_window"
 		parent_window_token = selected_state_view
+
+		dirty = ROOT.refresh_gui
 
 		visible = {
 			OR = {
@@ -112,6 +105,7 @@ scripted_gui = {
 			AC_down_arrow_click = {
 				# ROOT is the investor nation
 				ROOT = { set_country_flag = AC_hide_investment_window }
+				refresh_gui = yes
 			}
 			# Begins project or it cancels the project if you have one active in given state
 			AC_build_button_click = {
@@ -125,16 +119,17 @@ scripted_gui = {
 						# CONTROLLER is pretty obvious
 						CONTROLLER = { set_variable = { ROOT.AC_nation_target = THIS.id } }
 					}
-					ROOT = { country_event = { id = AC_event.3 } }
+					ROOT = {
+						country_event = { id = AC_event.3 }
+					}
 				}
 				else = {
 					ROOT = {
 						set_variable = { project = PREV.project_target_state_@ROOT }
 						end_project = yes
+						refresh_gui = yes
 					}
 				}
-
-				refresh_gui = yes
 			}
 
 			# Increase/Decrease the number of buildings
@@ -246,6 +241,7 @@ scripted_gui = {
 						set_variable = { constructable_buildings = 1 }
 					}
 				}
+				refresh_gui = yes
 			}
 
 			# Investable Buildings
