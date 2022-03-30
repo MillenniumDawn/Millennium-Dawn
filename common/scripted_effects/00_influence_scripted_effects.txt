@@ -30,7 +30,6 @@ recalculate_influence = {
 		calculate_influence_percentage = yes
 		delete_influencer_check = yes
 		sort_influence = yes
-		calculate_influence_percentage = yes
 	}
 }
 
@@ -116,41 +115,44 @@ calculate_influence_percentage = {
 
 	for_loop_effect = {
 		end = influence_array_val^num
-		if = {
-			limit = { var:influence_array^v = { has_government = democratic } }
+		if = { limit = { var:influence_array^v = { has_government = democratic } }
 			add_to_temp_variable = { influence_democratic = influence_array_val^v }
 		}
-		else_if = {
-			limit = { var:influence_array^v = { has_government = neutrality } }
+		else_if = { limit = { var:influence_array^v = { has_government = neutrality } }
 			add_to_temp_variable = { influence_neutrality = influence_array_val^v }
 		}
-		else_if = {
-			limit = { var:influence_array^v = { has_government = communism } }
+		else_if = { limit = { var:influence_array^v = { has_government = communism } }
 			add_to_temp_variable = { influence_communism = influence_array_val^v }
 		}
-		else_if = {
-			limit = { var:influence_array^v = { has_government = nationalist } }
+		else_if = { limit = { var:influence_array^v = { has_government = nationalist } }
 			add_to_temp_variable = { influence_nationalist = influence_array_val^v }
 		}
-		else_if = {
-			limit = { var:influence_array^v = { has_government = fascism } }
+		else_if = { limit = { var:influence_array^v = { has_government = fascism } }
 			add_to_temp_variable = { influence_fascism = influence_array_val^v }
 		}
 	}
 
-	## see ideology_drifts.txt: ###
-	clear_influence_count_ideas = yes
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = influence_drift_modifier } } }
+		add_dynamic_modifier = { modifier = influence_drift_modifier }
+	}
 
-	if = { limit = { check_variable = { influence_democratic > 0.04 } } reset_democratic_influence_ideas = yes }
-	if = { limit = { check_variable = { influence_neutrality > 0.04 } } reset_neutrality_influence_ideas = yes }
-	if = { limit = { check_variable = { influence_communism > 0.04 } } reset_communism_influence_ideas = yes }
-	if = { limit = { check_variable = { influence_nationalist > 0.04 } } reset_nationalist_influence_ideas = yes }
-	if = { limit = { check_variable = { influence_fascism > 0.04 } } reset_fascism_influence_ideas = yes }
+	set_variable = { nationalist_drift_influence_var = influence_nationalist }
+	set_variable = { fascism_drift_influence_var = influence_fascism }
+	set_variable = { neutrality_drift_influence_var = influence_neutrality }
+	set_variable = { communism_drift_influence_var = influence_communism }
+	set_variable = { democratic_drift_influence_var = influence_democratic }
+
+	multiply_variable = { nationalist_drift_influence_var = 0.001 }
+	multiply_variable = { fascism_drift_influence_var = 0.001 }
+	multiply_variable = { neutrality_drift_influence_var = 0.001 }
+	multiply_variable = { communism_drift_influence_var = 0.001 }
+	multiply_variable = { democratic_drift_influence_var = 0.001 }
+
+	force_update_dynamic_modifier = yes
 }
 
 # Influence AI Section:
 # These are general macro effects used in the influence AI.
-
 # Spread Influence:
 # Corresponds with the general spread influence button.
 spread_influence = {
@@ -224,7 +226,6 @@ economic_exploitation_action = {
 	set_temp_variable = { influence_target = THIS.id }
 	change_influence_percentage = yes
 
-
 	#Opinion Modifiers
 	add_opinion_modifier = { target = PREV modifier = exploited_us }
 	every_neighbor_country = {
@@ -235,7 +236,7 @@ economic_exploitation_action = {
 # Manipulate Politics:
 # Manipulates the politics of another nation
 manipulate_politics_action = {
-	#Add +5 to our outlook
+	# Add +5 to Our Outlook
 	if = { limit = { PREV = { has_government = fascism } }
 		add_popularity = { ideology = fascism popularity = 0.05 }
 	}
