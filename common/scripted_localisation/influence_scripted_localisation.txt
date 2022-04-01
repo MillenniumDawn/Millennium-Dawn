@@ -2,7 +2,7 @@
 # Column 1: Influence Nation
 # PP for Influence
 defined_text = {
-   name = select_influence_action_button
+	name = select_influence_action_button
 
 	text = {
 		trigger = {
@@ -48,6 +48,7 @@ defined_text = {
 					ROOT = { has_political_power > 50 }
 				}
 			}
+			ROOT = { PREV = { ROOT = { NOT = { has_country_flag = spread_influence@PREV } } } }
 		}
 		localization_key = "GFX_influence_action_button"
 	}
@@ -56,10 +57,10 @@ defined_text = {
 	}
 }
 defined_text = {
-   name = influence_button_req
+	name = influence_button_req
 
 	text = {
-	   trigger = {
+		trigger = {
 			OR = {
 				AND = {
 					has_idea = negligible_corruption
@@ -103,21 +104,32 @@ defined_text = {
 				}
 			}
 		}
-	   localization_key = influence_action_button_req_enable_TT
+		localization_key = influence_action_button_req_enable_TT
 	}
 	text = {
 		localization_key = influence_action_button_req_disable_TT
 	}
 }
 
-#Economic Aid/Military Aid
 defined_text = {
-   name = select_aid_button
-
+	name = not_recently_spread_influence
 	text = {
 		trigger = {
-			is_influencer = yes
+			ROOT = { PREV = { ROOT = { NOT = { has_country_flag = spread_influence@PREV } } } }
 		}
+		localization_key = influence_action_button_req_2_enable_TT
+	}
+	text = {
+		localization_key = influence_action_button_req_2_disable_TT
+	}
+}
+
+#Economic Aid/Military Aid
+defined_text = {
+	name = select_aid_button
+
+	text = {
+		trigger = { is_influencer = yes }
 		localization_key = "GFX_aid_button"
 	}
 	text = {
@@ -125,54 +137,6 @@ defined_text = {
 	}
 }
 
-defined_text = {
-	name = aid_button_req
-	text = {
-		trigger = {
-			is_influencer = yes
-			check_variable = { gdp_per_capita < ROOT.gdp_per_capita }
-
-		}
-		localization_key = aid_button_req_enable_TT
-	}
-	text = {
-		trigger = {
-			is_influencer = yes
-			NOT = { check_variable = { gdp_per_capita < ROOT.gdp_per_capita } }
-
-		}
-		localization_key = aid_button_req_disable1_TT
-	}
-	text = {
-		trigger = {
-			NOT = {
-				is_influencer = yes
-			}
-
-			check_variable = { gdp_per_capita < ROOT.gdp_per_capita }
-		}
-
-		localization_key = aid_button_req_disable2_TT
-	}
-	text = {
-
-		localization_key = aid_button_req_disable3_TT
-	}
-}
-defined_text = {
-	name = aid_button_sizemod_check
-
-	text = {
-		trigger = {
-			check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories }
-		}
-		localization_key = aid_button_sizemod_check_true
-	}
-	text = {
-
-		localization_key = aid_button_sizemod_check_false
-	}
-}
 
 defined_text = {
 	name = sent_aid_recently_check
@@ -236,20 +200,6 @@ defined_text = {
 }
 
 defined_text = {
-	name = military_aid_is_influencer_req
-	text = {
-		trigger = {
-			is_influencer = yes
-		}
-		localization_key = is_influencer_true_TT
-	}
-	text = {
-
-		localization_key = is_influencer_false_TT
-	}
-}
-
-defined_text = {
 	name = military_aid_has_purpose_for_aid_req
 	text = {
 		trigger = {
@@ -290,15 +240,11 @@ defined_text = {
 }
 #Target Other
 defined_text = {
-   name = select_target_other_button
+	name = select_target_other_button
 
 	text = {
-	   trigger = {
-			OR = {
-				check_variable = { influence_array^0 = ROOT }
-				check_variable = { influence_array^1 = ROOT }
-				check_variable = { influence_array^2 = ROOT }
-			}
+		trigger = {
+			is_top3_influencer = yes
 			OR = {
 				AND = {
 					has_idea = negligible_corruption
@@ -350,20 +296,16 @@ defined_text = {
 }
 
 defined_text = {
-	name = trigger_select_target_other_button
+	name = is_top_three_influencer_trigger
 
 	text = {
 		trigger = {
-				OR = {
-					check_variable = { influence_array^0 = ROOT }
-					check_variable = { influence_array^1 = ROOT }
-					check_variable = { influence_array^2 = ROOT }
-				}
+			is_top3_influencer = yes
 		}
-	   localization_key = "trigger_target_other_button_true"
+		localization_key = is_top_three_influencer_trigger_true
 	}
 	text = {
-		localization_key = "trigger_target_other_button_false"
+		localization_key = is_top_three_influencer_trigger_false
 	}
 }
 
@@ -414,7 +356,7 @@ defined_text = {
 				}
 			}
 		}
-	   localization_key = trigger_manipulate_politics_button_true
+		localization_key = trigger_manipulate_politics_button_true
 	}
 	text = {
 		localization_key = trigger_manipulate_politics_button_false
@@ -464,42 +406,42 @@ defined_text = {
 	}
 }
 defined_text = {
-   name = influence_pp_requirement
+	name = influence_pp_requirement
 
 	text = {
-		trigger = {	THIS = {has_idea = negligible_corruption} }
+		trigger = { THIS = { has_idea = negligible_corruption } }
 	   localization_key = influence_pp_requirement_1
 	}
 	text = {
-		trigger = {	THIS={has_idea = slight_corruption} }
+		trigger = { THIS = { has_idea = slight_corruption } }
 	   localization_key = influence_pp_requirement_2
 	}
 	text = {
-		trigger = {	THIS={has_idea = modest_corruption} }
+		trigger = { THIS = { has_idea = modest_corruption } }
 	   localization_key = influence_pp_requirement_3
 	}
 	text = {
-		trigger = {	THIS={has_idea = medium_corruption} }
+		trigger = { THIS = { has_idea = medium_corruption } }
 	   localization_key = influence_pp_requirement_4
 	}
 	text = {
-		trigger = {	THIS={has_idea = widespread_corruption} }
-	   localization_key = influence_pp_requirement_5
+		trigger = { THIS = { has_idea = widespread_corruption } }
+		localization_key = influence_pp_requirement_5
 	}
 	text = {
-		trigger = {	THIS={has_idea = systematic_corruption} }
-	   localization_key = influence_pp_requirement_6
+		trigger = { THIS = {has_idea = systematic_corruption } }
+	localization_key = influence_pp_requirement_6
 	}
 	text = {
-		trigger = {	THIS={has_idea = unrestrained_corruption} }
-	   localization_key = influence_pp_requirement_7
+		trigger = { THIS = { has_idea = unrestrained_corruption } }
+		localization_key = influence_pp_requirement_7
 	}
 	text = {
-		trigger = {	THIS={has_idea = rampant_corruption} }
+		trigger = { THIS = { has_idea = rampant_corruption } }
 	   localization_key = influence_pp_requirement_8
 	}
 	text = {
-		trigger = {	THIS={has_idea = crippling_corruption} }
+		trigger = { THIS = { has_idea = crippling_corruption } }
 	   localization_key = influence_pp_requirement_9
 	}
 	text = {
@@ -515,34 +457,34 @@ defined_text = {
 	}
 	text = {
 		trigger = {	THIS={has_idea = slight_corruption} }
-	   localization_key = influence_pp_requirement_16
+		localization_key = influence_pp_requirement_16
 	}
 	text = {
 		trigger = {	THIS={has_idea = modest_corruption} }
-	   localization_key = influence_pp_requirement_15
+		localization_key = influence_pp_requirement_15
 	}
 	text = {
 		trigger = {	THIS={has_idea = medium_corruption} }
-	   localization_key = influence_pp_requirement_14
+		localization_key = influence_pp_requirement_14
 	}
 	text = {
 		trigger = {	THIS={has_idea = widespread_corruption} }
-	   localization_key = influence_pp_requirement_13
+		localization_key = influence_pp_requirement_13
 	}
 	text = {
 		trigger = {	THIS={has_idea = systematic_corruption} }
-	   localization_key = influence_pp_requirement_12
+		localization_key = influence_pp_requirement_12
 	}
 	text = {
 		trigger = {	THIS={has_idea = unrestrained_corruption} }
-	   localization_key = influence_pp_requirement_11
+		localization_key = influence_pp_requirement_11
 	}
 	text = {
-		trigger = {	THIS={has_idea = rampant_corruption} }
+		trigger = {	THIS={has_idea = rampant_corruption } }
 	   localization_key = influence_pp_requirement_1
 	}
 	text = {
-		trigger = {	THIS={has_idea = crippling_corruption} }
+		trigger = {	THIS={has_idea = crippling_corruption } }
 	   localization_key = influence_pp_requirement_3
 	}
 	text = {
@@ -696,13 +638,6 @@ defined_text = {
 	}
 }
 
-defined_text = {
-   name = root_tag_loc
-
-	text = {
-	   localization_key = root_tag_loc_txt
-	}
-}
 
 
 defined_text = {
@@ -754,13 +689,13 @@ defined_text = {
 }
 
 defined_text = {
-   name = trigger3_select_make_puppet_button
+	name = trigger3_select_make_puppet_button
 
 	text = {
 		trigger = {
-			FROM = { has_war = no }
+			has_war = no
 		}
-	  	localization_key = trigger3_make_puppet_button_true
+		localization_key = trigger3_make_puppet_button_true
 	}
 	text = {
 		localization_key = trigger3_make_puppet_button_false
@@ -793,6 +728,41 @@ defined_text = {
 		localization_key = trigger5_make_puppet_button_false
 	}
 
+}
+
+defined_text = {
+	name = is_influencer_trigger
+	text = {
+		trigger = { is_influencer = yes }
+		localization_key = is_influencer_true_TT
+	}
+	text = {
+		localization_key = is_influencer_false_TT
+	}
+}
+
+defined_text = {
+	name = gdp_per_capita_trigger
+	text = {
+		trigger = {
+			check_variable = { gdp_per_capita < ROOT.gdp_per_capita }
+		}
+		localization_key = gdp_per_capita_trigger_true_TT
+	}
+	text = {
+		localization_key = gdp_per_capita_trigger_false_TT
+	}
+}
+
+defined_text = {
+	name = num_of_civilian_factories_trigger
+	text = {
+		trigger = { check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories } }
+		localization_key = num_of_civilian_factories_trigger_true_TT
+	}
+	text = {
+		localization_key = num_of_civilian_factories_trigger_false_TT
+	}
 }
 
 defined_text = {

@@ -77,6 +77,8 @@ scripted_gui = {
 						ROOT = { has_political_power > 50 }
 					}
 				}
+				# Recently Sent Aid
+				ROOT = { PREV = { ROOT = { NOT = { has_country_flag = spread_influence@PREV } } } }
 			}
 
 			opt_aid_button_click_enabled = {
@@ -111,7 +113,6 @@ scripted_gui = {
 			}
 
 			opt_manipulate_politics_button_click_enabled = {
-
 				OR = {
 					AND = {
 						check_variable = { influence_array^0 = ROOT }
@@ -129,14 +130,12 @@ scripted_gui = {
 			}
 
 			opt_make_puppet_button_click_enabled = {
-				AND = {
-					check_variable = { influence_array^0 = ROOT }
-					check_variable = { influence_array_val^0 > 79.999 }
-					is_same_government = yes
-					NOT = { is_subject_of = ROOT }
-					is_subject = no
-					has_war = no
-				}
+				check_variable = { influence_array^0 = ROOT }
+				check_variable = { influence_array_val^0 > 79.999 }
+				is_same_government = yes
+				NOT = { is_subject_of = ROOT }
+				is_subject = no
+				NOT = { ROOT = { PREV = { has_war = yes } } }
 			}
 
 			opt_coup_button_click_enabled = {
@@ -374,6 +373,9 @@ scripted_gui = {
 						set_temp_variable = { tag_index = ROOT.id }
 						set_temp_variable = { influence_target = THIS.id }
 						change_influence_percentage = yes
+						ROOT = {
+							set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
+						}
 					}
 				}
 			}
@@ -399,7 +401,8 @@ scripted_gui = {
 					PREV = {
 						country_event = { id = influence.50 }
 						ROOT = {
-							set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 30 } }
+							set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 30 }
+						}
 					}
 				}
 			}
