@@ -14,12 +14,24 @@
  # be more hesitant if your changes gives the country controlling the state more longterm advantages, as balance can be rubbed in favour to one country for something like adding an extra naval factory.
 #
 #if you creat or mod coastal states you need to add/mod the respective missile launch point triggers for the coastal state and all adjacent seazones
- # there are four files that have to be adapted in \common\scripted_triggers
+# examples when you need to modify the missile launch point triggers:
+#	- you have a state with a coastline to one seazone, now you change the map so that the coastline of the state covers two seazones
+#	- you have a state with a coastline to two seazones, now you change the map so that the coastline of the state only covers one seazone
+#	- you add a new state with a coastline
+#	- you remove a state with a coastline
+#	- you split a state with a coastline into two states
+#	- you merge two states with a coastline into one
+#	- every other change to states with coastline that adds or removes adjacent seazones
+#	- you change the seazones with islands or coastlines
+# how you do this:
+ # there are 5 files that have to be adapted in \common\scripted_triggers
  # MD_missile_sea_launch_points.txt
+ # MD_missile_sea_launch_points_attack_sub.txt
  # MD_missile_sea_launch_points_CV.txt
  # MD_missile_sea_launch_points_defense.txt
  # MD_missile_sea_launch_points_sub.txt
- # there is a example at the top of each file
+ # there is a example at the top of each file, you either have to adept the existing scripted triggers or add new ones in all five files
+# please also add your changes to the list at the bottom of this file
 #
 #ledger for aprox. what state_category per number of pop a state should have
  # state_00 for <300,000 inhabitants
@@ -41,4 +53,10 @@
  # state_16 for 42,000,000 - 52,000,000 inhabitants
  # state_17 for 52,000,000 - 65,000,000 inhabitants
  # state_18 for >65,000,000 inhabitants
+#
+#
+#
+# state coastline changes after 1.6.1
+# e.g. 9999 - added seazone AAA, removed seazone BBB
+# state ID - changes
 #
