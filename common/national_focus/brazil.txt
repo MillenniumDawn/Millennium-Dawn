@@ -13,8 +13,6 @@
 	# It is better optimized then using every_country. Furthermore, you will want to improve the logical actions in these focuses.
 	# Nations who don't exist should not get free things, as well as you shouldn't be able to court america if you are at war with them.
 
-
-
 	##South American unity focus tree
 	shared_focus = {
 		id = BRA_americas_unity
@@ -258,7 +256,7 @@
 		x = -2
 		y = 1
 		relative_position_id = BRA_mercosur
-		cost = 5
+		cost = 10
 		prerequisite = { focus = BRA_mercosur }
 		cancel_if_invalid = yes
 		continue_if_invalid = yes
@@ -270,6 +268,13 @@
 			# 	add_ideas = BRA_idea_mercosur_trade_agreement
 			# }
 			#FIXME: Aranha this is looking for a idea that doesn't exist
+			every_country = {
+				limit = {has_idea = BRA_idea_mercosur_member_state }
+				set_temp_variable = { temp_opinion = 5 }
+				change_international_bankers_opinion = yes
+				set_temp_variable = { treasury_change = 15 }
+				modify_treasury_effect = yes
+			}
 		}
 
 	}
@@ -280,7 +285,7 @@
 		x = 0
 		y = 1
 		relative_position_id = BRA_mercosur
-		cost = 5
+		cost = 10
 		prerequisite = { focus = BRA_mercosur }
 		mutually_exclusive = { }
 
@@ -300,7 +305,7 @@
 		x = 2
 		y = 1
 		relative_position_id = BRA_mercosur
-		cost = 5
+		cost = 10
 		prerequisite = { focus = BRA_mercosur }
 		mutually_exclusive = { }
 
@@ -311,6 +316,10 @@
 			# 	add_ideas = BRA_idea_mercosur_people_goods
 			# }
 			#FIXME: Aranha this is looking for a idea that doesn't exist
+			every_country = {
+				limit = {has_idea = BRA_idea_mercosur_member_state }
+				add_manpower = 2000
+			}
 		}
 	}
 
@@ -350,37 +359,45 @@
 			# 	add_ideas = BRA_idea_mercosur_education_integration
 			# }
 			#FIXME: Aranha this is looking for a idea that doesn't exist
+			every_country = {
+				limit = {has_idea = BRA_idea_mercosur_member_state }
+				add_research_slot = 1
+			}
 		}
 	}
 
-		shared_focus = {
+	shared_focus = {
 		id = BRA_mercosur_market
 		icon = industry_democratic
 		x = 0
 		y = 1
 		relative_position_id = BRA_assoc_members
-		cost = 5
+		cost = 10
 		prerequisite = { focus = BRA_assoc_members }
 		mutually_exclusive = { }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_mercosur_market"
-			custom_effect_tooltip = BRA_mercosur_market_tt
+			#custom_effect_tooltip = BRA_mercosur_market_tt
 			every_other_country = {
 				limit = { has_idea = BRA_idea_mercosur_member_state }
-				random_owned_controlled_state = {
-					add_extra_state_shared_building_slots = 2
-					add_building_construction = {
-						type = industrial_complex
-						level = 2
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 2
-						instant_build = yes
-					}
-				}
+				#random_owned_controlled_state = {
+				#	add_extra_state_shared_building_slots = 2
+				#	add_building_construction = {
+				#		type = industrial_complex
+				#		level = 2
+				#		instant_build = yes
+				#	}
+				#	add_building_construction = {
+				#		type = infrastructure
+				#		level = 2
+				#		instant_build = yes
+				#	}
+				#}
+				set_temp_variable = { temp_opinion = 5 }
+				change_international_bankers_opinion = yes
+				set_temp_variable = { treasury_change = 20 }
+				modify_treasury_effect = yes
 			}
 		}
 	}
@@ -422,10 +439,13 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_inv_assoc"
 			every_country = {
-				limit = {has_idea = BRA_idea_associate_states}
-				swap_ideas = {
-					remove_idea = BRA_idea_associate_states add_idea = BRA_idea_mercosur_member_state
+				limit = {
+					has_idea = BRA_idea_associate_states
 				}
+				country_event = { id = brazil.16 days = 1 }
+				#swap_ideas = {
+				#	remove_idea = BRA_idea_associate_states add_idea = BRA_idea_mercosur_member_state
+				#}
 			}
 		}
 
@@ -470,12 +490,14 @@
 					is_in_faction = no
 					NOT = {has_idea = BRA_idea_mercosur_member_state }
 				}
-				add_ideas = BRA_idea_mercosur_member_state
+				#add_ideas = BRA_idea_mercosur_member_state
+				country_event = { id = brazil.16 days = 1 }
 				# add_ideas = BRA_idea_mercosur_education_integration
 				# add_ideas = BRA_idea_mercosur_people_goods
 				# add_ideas = BRA_idea_mercosur_trade_agreement
 				MEX = {
-					add_ideas = BRA_idea_mercosur_member_state
+					country_event = { id = brazil.16 days = 1 }
+					#add_ideas = BRA_idea_mercosur_member_state
 					# add_ideas = BRA_idea_mercosur_education_integration
 					# add_ideas = BRA_idea_mercosur_people_goods
 					# add_ideas = BRA_idea_mercosur_trade_agreement
@@ -563,10 +585,10 @@
 		y = 1
 		relative_position_id = BRA_unasal
 		cost = 5
-		prerequisite = { focus = BRA_unasal}
+		prerequisite = { focus = BRA_unasal }
 		mutually_exclusive = { }
-		available = { NOT = {
-			has_completed_focus = BRA_suspend_ven}
+		available = {
+			NOT = { has_completed_focus = BRA_suspend_ven }
 		}
 
 		cancel_if_invalid = yes
@@ -588,9 +610,7 @@
 						original_tag = BOL
 						original_tag = PRU
 					}
-					AND = {
-						NOT = { has_war_with = BRA }
-					}
+					NOT = { has_war_with = BRA }
 				}
 				add_ideas = BRA_unasul_member
 				add_opinion_modifier = { target = BRA modifier = has_expressed_loyalty }
@@ -1589,7 +1609,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_get_inspiration_from_eu_model"
 			every_country = {
 				limit = { has_idea = BRA_idea_mercosur_member_state }
-				add_stability = 0.1
+				add_stability = 0.05
 			}
 		}
 
@@ -1862,8 +1882,7 @@
 
 #War on the cartels
 
-#Lula main political tree
-
+	#Lula main political tree
 	shared_focus = {
 		id = BRA_2002_elections
 		icon = GFX_BRA_the_2018_elections
@@ -1873,25 +1892,11 @@
 
 		cost = 5
 
-		prerequisite = { }
-		mutually_exclusive = { }
-		available = {
-			always = no
-		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = {	}
+		available = { always = no }
 		cancel = { date > 2002.12.31 }
 
-
-
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRA_2002_elections"
-			#country_event = { id = brazil.39 days = 0 }
-		}
-
-		ai_will_do = {
-			factor = 1
+			#log = "[GetDateText]: [Root.GetName]: Focus BRA_2002_elections"
 		}
 	}
 
@@ -1904,8 +1909,6 @@
 
 		cost = 5
 
-		prerequisite = { }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_nossa_economia"
 			add_ideas = BRA_idea_nossa_economia
@@ -1961,7 +1964,7 @@
 		prerequisite = {
 			focus = BRA_pay_back_the_imf
 		}
-		mutually_exclusive = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_exports"
 			country_event = brazil.5
@@ -1982,23 +1985,12 @@
 
 		cost = 5
 
-		prerequisite = {
-			focus = BRA_brazilian_exports
-		}
-		mutually_exclusive = { }
+		prerequisite = { focus = BRA_brazilian_exports }
+
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_foreign_companies"
-			#889 = {
-			#	add_extra_state_shared_building_slots = 2
-			#	add_building_construction = {
-			#		type = industrial_complex
-			#		level = 2
-			#		instant_build = yes
-			#	}
-			#}
-			#add_to_variable = { treasury = 25 }
-			#custom_effect_tooltip = BRA_gain_10_billion_tt
+
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
 			change_international_bankers_opinion = yes
@@ -2022,29 +2014,13 @@
 		cost = 1
 
 		prerequisite = { focus = BRA_2002_elections }
-		mutually_exclusive = { }
 		available = {
 			has_country_leader = { name = "Luiz Inacio Lula De Silva" }
-			#custom_trigger_tooltip = {
-			#	tooltip = BRA_lula_win_TT
-			#	has_country_flag = BRA_lula_win
-			#}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = {
-			date > 2016.12.31
-		}
-		cancel = { }
-
-
+		bypass = { date > 2016.12.31 }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRA_lula"
-		}
-
-		ai_will_do = {
-			factor = 1
+			#log = "[GetDateText]: [Root.GetName]: Focus BRA_lula"
 		}
 	}
 
@@ -2091,11 +2067,6 @@
 		available = {
 			#has_country_flag = BRA_flag_lula_true_moderate
 		}
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_true_moderate_path"
@@ -2138,11 +2109,6 @@
 		available = {
 			#has_country_flag = BRA_flag_lula_true_moderate
 		}
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_centrao"
@@ -2153,12 +2119,7 @@
 			hidden_effect = {
 				add_to_array = { gov_coalition_array = 15 }
 				update_government_coalition_strength = yes
-				if = {
-					limit = {
-						NOT = {
-							has_government = neutrality
-						}
-					}
+				if = { limit = { NOT = { has_government = neutrality } }
 					clear_coalition_non_alligned_count_ideas = yes
 					reset_neutrality_coalition_ideas = yes
 				}
@@ -2180,15 +2141,9 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_align_centrao }
-		mutually_exclusive = { }
 		available = {
 			#has_country_flag = BRA_flag_lula_true_moderate
 		}
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_media_tatics"
@@ -2280,11 +2235,6 @@
 				has_idea = farmers
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_push_for_an_agrarian_reform"
@@ -2310,11 +2260,6 @@
 		available = {
 			#has_country_flag = BRA_flag_lula_true_moderate
 		}
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_an_example_of_honesty"
@@ -2333,20 +2278,13 @@
 		x = 12
 		y = 1
 		relative_position_id = BRA_lula
-		cost = 2
+		cost = 5
 
 		prerequisite = { focus = BRA_lula }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_lula_foreign_policy"
-			add_political_power = 100
+			add_political_power = 150
 		}
 
 		ai_will_do = {
@@ -2364,13 +2302,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_lula_foreign_policy }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_to_cuba"
@@ -2395,13 +2326,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_align_to_cuba }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_to_venezuela"
@@ -2426,13 +2350,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_align_to_venezuela }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_to_bolivia"
@@ -2457,13 +2374,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_lula_foreign_policy }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_chinese_alignment"
@@ -2488,17 +2398,11 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_chinese_alignment }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_chinese_trade"
-			add_opinion_modifier = { target = BRA modifier = mutual_trade_opinion }
+			add_opinion_modifier = { target = CHI modifier = mutual_trade_opinion }
+			reverse_add_opinion_modifier = { target = CHI modifier = mutual_trade_opinion }
 		}
 
 		ai_will_do = {
@@ -2513,19 +2417,14 @@
 		x = 0
 		y = 1
 		relative_position_id = BRA_chinese_trade
-		cost = 5
+		cost = 10 # 70 Days
 
 		prerequisite = { focus = BRA_chinese_trade }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brics_investments"
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
 			add_offsite_building = { type = industrial_complex level = 2 }
 			add_offsite_building = { type = offices level = 2 }
 		}
@@ -2546,13 +2445,6 @@
 
 		prerequisite = { focus = BRA_brics_investments }
 		prerequisite = { focus = BRA_align_to_bolivia }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_international_support"
@@ -2604,13 +2496,6 @@
 		cost = 2
 
 		prerequisite = { focus = BRA_improve_workers_rights }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_increase_taxes"
@@ -2666,7 +2551,7 @@
 		x = -1
 		y = 1
 		relative_position_id = BRA_improve_the_public_sector
-		cost = 4
+		cost = 10
 
 		prerequisite = { focus = BRA_improve_the_public_sector }
 		mutually_exclusive = { }
@@ -2683,7 +2568,7 @@
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 			change_industrial_conglomerates_opinion = yes
-			set_temp_variable = { treasury_change = -5 }
+			set_temp_variable = { treasury_change = -7.5 }
 			modify_treasury_effect = yes
 			889 = {
 				add_extra_state_shared_building_slots = 1
@@ -2707,7 +2592,7 @@
 		x = 1
 		y = 1
 		relative_position_id = BRA_improve_the_public_sector
-		cost = 3.2
+		cost = 10
 
 		prerequisite = { focus = BRA_improve_the_public_sector }
 		mutually_exclusive = { }
@@ -2723,6 +2608,8 @@
 			set_temp_variable = { temp_opinion = -5 }
 			change_small_medium_business_owners_opinion = yes
 			change_international_bankers_opinion = yes
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
 			887 = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -2747,7 +2634,7 @@
 		x = -1
 		y = 1
 		relative_position_id = BRA_social_enterprises
-		cost = 7
+		cost = 10
 
 		prerequisite = { focus = BRA_social_enterprises }
 		mutually_exclusive = { }
@@ -2767,6 +2654,8 @@
 			change_labour_unions_opinion = yes
 			change_industrial_conglomerates_opinion = yes
 			change_fossil_fuel_industry_opinion = yes
+			set_temp_variable = { treasury_change = -12.5 }
+			modify_treasury_effect = yes
 			add_resource = { type = oil amount = 5 state = 883 }
 			883 = {
 				add_extra_state_shared_building_slots = 2
@@ -2843,6 +2732,10 @@
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
 			increase_economic_growth = yes
+			if = {
+				limit = { has_idea = BRA_idea_crippled_currency }
+				remove_ideas = BRA_idea_crippled_currency
+			}
 		}
 
 		ai_will_do = {
@@ -2857,28 +2750,21 @@
 		x = 1
 		y = 2
 		relative_position_id = BRA_economic_interventionism
-		cost = 5
+		cost = 6.4
 
 		prerequisite = { focus = BRA_economic_interventionism }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_national_developmentalism"
 			increase_economic_growth = yes
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
 			add_ideas = developmentalism
+			set_temp_variable = { treasury_change = -22.50 }
+			modify_treasury_effect = yes
 			887 = {
 				add_extra_state_shared_building_slots = 3
 				add_building_construction = {
 					type = industrial_complex
-					level = 2
+					level = 1
 					instant_build = yes
 				}
 				add_building_construction = {
@@ -3135,31 +3021,15 @@
 
 		x = 20
 		y = 0
-		#relative_position_id = BRA_lula
 
 		cost = 5
 		prerequisite = { focus = BRA_2002_elections }
-		mutually_exclusive = { }
 		available = {
 			has_country_leader = { name = "José Serra" }
-			#custom_trigger_tooltip = {
-			#	tooltip = BRA_serra_win_TT
-			#	has_country_flag = BRA_serra_win
-			#}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRA_serra"
-		}
-
-		ai_will_do = {
-			factor = 1
+			#log = "[GetDateText]: [Root.GetName]: Focus BRA_serra"
 		}
 	}
 
@@ -3171,15 +3041,8 @@
 		y = 1
 		relative_position_id = BRA_serra
 
-		cost = 2
+		cost = 5
 		prerequisite = { focus = BRA_serra }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
 
 
 		completion_reward = {
@@ -3234,18 +3097,11 @@
 
 		cost = 5
 		prerequisite = { focus = BRA_american_diplomacy }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_american_trade"
 			add_opinion_modifier = { target = USA modifier = mutual_trade_opinion }
+			reverse_add_opinion_modifier = { target = USA modifier = mutual_trade_opinion }
 		}
 
 		ai_will_do = {
@@ -3263,17 +3119,11 @@
 
 		cost = 5
 		prerequisite = { focus = BRA_american_trade }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_american_investments"
+			set_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
 			add_offsite_building = { type = industrial_complex level = 1 }
 			add_offsite_building = { type = offices level = 1 }
 			set_temp_variable = { temp_opinion = 5 }
@@ -3295,14 +3145,6 @@
 
 		cost = 5
 		prerequisite = { focus = BRA_foreign_policy_serra }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_looking_to_europe"
@@ -3328,14 +3170,6 @@
 
 		cost = 5
 		prerequisite = { focus = BRA_looking_to_europe }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_european_trade"
@@ -3361,17 +3195,11 @@
 
 		cost = 5
 		prerequisite = { focus = BRA_european_trade }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_european_investments_serra"
+			set_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
 			add_offsite_building = { type = industrial_complex level = 1 }
 			add_offsite_building = { type = offices level = 1 }
 			set_temp_variable = { temp_opinion = 5 }
@@ -3394,14 +3222,6 @@
 		cost = 5
 		prerequisite = { focus = BRA_european_investments_serra }
 		prerequisite = { focus = BRA_american_investments }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_global_aligment"
@@ -3421,20 +3241,17 @@
 		y = 1
 		relative_position_id = BRA_serra
 
-		cost = 3.5
+		cost = 6.4
 		prerequisite = { focus = BRA_serra }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_fiscal_reform"
 			increase_economic_growth = yes
+
+			set_temp_variable = { temp_opinion = 5 }
+			change_industrial_conglomerates_opinion = yes
+			change_international_bankers_opinion = yes
+			change_small_medium_business_owners_opinion = yes
 		}
 
 		ai_will_do = {
@@ -3452,13 +3269,6 @@
 
 		cost = 5
 		prerequisite = { focus = BRA_fiscal_reform }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
 
 
 		completion_reward = {
@@ -3481,14 +3291,6 @@
 
 		cost = 5
 		prerequisite = { focus = BRA_fiscal_reform }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_improve_healthcare_conditions"
@@ -3511,14 +3313,6 @@
 		cost = 10
 		prerequisite = { focus = BRA_education_investment }
 		prerequisite = { focus = BRA_improve_healthcare_conditions }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_administrative_reform_serra"
@@ -3541,14 +3335,6 @@
 
 		cost = 8
 		prerequisite = { focus = BRA_administrative_reform_serra }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_federalization_ethos"
@@ -3568,20 +3354,16 @@
 		y = 1
 		relative_position_id = BRA_administrative_reform_serra
 
-		cost = 3
+		cost = 5
 		prerequisite = { focus = BRA_administrative_reform_serra }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_improve_the_real"
 			increase_economic_growth = yes
+			if = {
+				limit = { has_idea = BRA_idea_crippled_currency }
+				remove_ideas = BRA_idea_crippled_currency
+			}
 		}
 
 		ai_will_do = {
@@ -3600,14 +3382,6 @@
 		cost = 10
 		prerequisite = { focus = BRA_federalization_ethos }
 		prerequisite = { focus = BRA_improve_the_real }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_effective_public_sector"
@@ -3630,14 +3404,6 @@
 
 		cost = 6
 		prerequisite = { focus = BRA_improve_the_real }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pay_off_the_debt"
@@ -3756,18 +3522,10 @@
 
 		cost = 4
 		prerequisite = { focus = BRA_fiscal_reform }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_employment_projects"
-			set_temp_variable = { treasury_change = -15 }
+			set_temp_variable = { treasury_change = -22.50 }
 			modify_treasury_effect = yes
 			1030 = {
 				add_extra_state_shared_building_slots = 3
@@ -3800,18 +3558,10 @@
 		cost = 5.5
 		prerequisite = { focus = BRA_weaken_economic_regulations }
 		prerequisite = { focus = BRA_employment_projects }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_infrastructure_projects"
-			set_temp_variable = { treasury_change = -15 }
+			set_temp_variable = { treasury_change = -7 }
 			modify_treasury_effect = yes
 			1025 = {
 				add_extra_state_shared_building_slots = 1
@@ -3846,18 +3596,10 @@
 
 		cost = 7
 		prerequisite = { focus = BRA_infrastructure_projects }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_diversify_the_economy"
-			set_temp_variable = { treasury_change = -15 }
+			set_temp_variable = { treasury_change = -22.50 }
 			modify_treasury_effect = yes
 			1022 = {
 				add_extra_state_shared_building_slots = 3
@@ -3868,7 +3610,7 @@
 				}
 				add_building_construction = {
 					type = industrial_complex
-					level = 3
+					level = 2
 					instant_build = yes
 				}
 			}
@@ -4168,19 +3910,15 @@
 		icon = GFX_BRA_Itamaraty
 
 		x = 5
-		y = 8
-		#relative_position_id = BRA_root_out_corrpution
+		y = 6
+
 
 		cost = 5
 
-		#prerequisite = { focus = BRA_root_out_corrpution }
-		#prerequisite = { focus = BRA_fome_zero }
 		mutually_exclusive = { }
 		available = {
 			#threat > 0.10
 		}
-
-
 
 
 		completion_reward = {
@@ -4234,50 +3972,15 @@
 
 		cost = 10
 
-		prerequisite = {
-			focus = BRA_global_diplomacy
-		}
-		mutually_exclusive = { }
-		available = {
-
-		}
-
-
-
+		prerequisite = { focus = BRA_global_diplomacy }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_align_to_nato"
-			every_country = {
-				limit = { has_idea = NATO_member }
+			for_each_scope_loop = {
+				array = global.nato_members
 				add_opinion_modifier = { target = BRA modifier = supports_nato }
 			}
-			#add_opinion_modifier = { target = BRA modifier = supports_nato }
-			#USA = {
-			#	add_opinion_modifier = { target = ROOT modifier = supports_nato }
-			#	add_political_power = 25
-			#}
-			#add_opinion_modifier = { target = FRA modifier = supports_nato }
-			#FRA = {
-			#	add_opinion_modifier = { target = ROOT modifier = supports_nato }
-			#	add_political_power = 25
-			#}
-			#add_opinion_modifier = { target = GER modifier = supports_nato }
-			#GER = {
-			#	add_opinion_modifier = { target = ROOT modifier = supports_nato }
-			#	add_political_power = 25
-			#}
-			#add_opinion_modifier = { target = ENG modifier = supports_nato }
-			#ENG = {
-			#	add_opinion_modifier = { target = ROOT modifier = supports_nato }
-			#	add_political_power = 25
-			#}
-			#add_opinion_modifier = { target = CAN modifier = supports_nato }
-			#CAN = {
-			#	add_opinion_modifier = { target = ROOT modifier = supports_nato }
-			#	add_political_power = 25
-			#}
-			#add_political_power = 50
-			#add_ideas = Major_Non_NATO_Ally
+			custom_effect_tooltip = BRA_supports_nato_tt
 		}
 
 		ai_will_do = {
@@ -4295,13 +3998,7 @@
 
 		cost = 5
 
-		prerequisite = {
-			focus = BRA_align_to_nato
-		}
-		mutually_exclusive = { }
-		available = {
-
-		}
+		prerequisite = { focus = BRA_align_to_nato }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_western_investiments"
@@ -4331,16 +4028,7 @@
 
 		cost = 10
 
-		prerequisite = {
-			focus = BRA_global_diplomacy
-		}
-		mutually_exclusive = { }
-		available = {
-
-		}
-
-
-
+		prerequisite = { focus = BRA_global_diplomacy }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_non_aligned"
@@ -4362,16 +4050,7 @@
 
 		cost = 5
 
-		prerequisite = {
-			focus = BRA_non_aligned
-		}
-		mutually_exclusive = { }
-		available = {
-
-		}
-
-
-
+		prerequisite = { focus = BRA_non_aligned }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_our_own_industry"
@@ -4852,13 +4531,9 @@
 
 		prerequisite = { focus = BRA_northeastern_stimulus }
 		prerequisite = { focus = BRA_amazonian_el_dorado }
-		mutually_exclusive = { }
 		available = {
 			has_full_control_of_state = 889
 		}
-
-
-
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
 		completion_reward = {
@@ -4945,7 +4620,7 @@
 		x = -1
 		y = 1
 
-		cost = 10
+		cost = 6.4 # 45 Days
 
 		prerequisite = { focus = BRA_canadian_vale_incorporation }
 		prerequisite = { focus = BRA_build_fortaleza }
@@ -4988,7 +4663,7 @@
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRA_northeastern_stimulus"
+			log = "[GetDateText]: [Root.GetName]: Focus BRA_develop_sp_mg_and_the_south"
 			882 = {
 				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
@@ -5034,38 +4709,38 @@
 
 			# Treasury Effect
 			if = { limit = { has_idea = paralyzing_corruption }
-				set_temp_variable = { treasury_change = -50 }
+				set_temp_variable = { treasury_change = -290 }
 			}
 			else_if = { limit = { has_idea = crippling_corruption }
-				set_temp_variable = { treasury_change = -47.5 }
+				set_temp_variable = { treasury_change = -261 }
 			}
 			else_if = {
 				limit = { has_idea = rampant_corruption }
-				set_temp_variable = { treasury_change = -45 }
+				set_temp_variable = { treasury_change = -232 }
 			}
 			else_if = {
 				limit = { has_idea = unrestrained_corruption }
-				set_temp_variable = { treasury_change = -42.5 }
+				set_temp_variable = { treasury_change = -203 }
 			}
 			else_if = {
 				limit = { has_idea = systematic_corruption }
-				set_temp_variable = { treasury_change = -40 }
+				set_temp_variable = { treasury_change = -174 }
 			}
 			else_if = {
 				limit = { has_idea = widespread_corruption }
-				set_temp_variable = { treasury_change = -37.5 }
+				set_temp_variable = { treasury_change = -145 }
 			}
 			else_if = {
 				limit = { has_idea = medium_corruption }
-				set_temp_variable = { treasury_change = -35 }
+				set_temp_variable = { treasury_change = -116 }
 			}
 			else_if = {
 				limit = { has_idea = modest_corruption }
-				set_temp_variable = { treasury_change = -33 }
+				set_temp_variable = { treasury_change = -87 }
 			}
 			else_if = {
 				limit = { has_idea = slight_corruption }
-				set_temp_variable = { treasury_change = -31 }
+				set_temp_variable = { treasury_change = -58 }
 			}
 			else_if = {
 				limit = { has_idea = negligible_corruption }
@@ -5116,42 +4791,42 @@
 			}
 			# Treasury Effect
 			if = { limit = { has_idea = paralyzing_corruption }
-				set_temp_variable = { treasury_change = -40 }
+				set_temp_variable = { treasury_change = -220 }
 			}
 			else_if = { limit = { has_idea = crippling_corruption }
-				set_temp_variable = { treasury_change = -35 }
+				set_temp_variable = { treasury_change = -198 }
 			}
 			else_if = {
 				limit = { has_idea = rampant_corruption }
-				set_temp_variable = { treasury_change = -32.5 }
+				set_temp_variable = { treasury_change = -176 }
 			}
 			else_if = {
 				limit = { has_idea = unrestrained_corruption }
-				set_temp_variable = { treasury_change = -30.0 }
+				set_temp_variable = { treasury_change = -154 }
 			}
 			else_if = {
 				limit = { has_idea = systematic_corruption }
-				set_temp_variable = { treasury_change = -27.5 }
+				set_temp_variable = { treasury_change = -132 }
 			}
 			else_if = {
 				limit = { has_idea = widespread_corruption }
-				set_temp_variable = { treasury_change = -25.0 }
+				set_temp_variable = { treasury_change = -110 }
 			}
 			else_if = {
 				limit = { has_idea = medium_corruption }
-				set_temp_variable = { treasury_change = -22.5 }
+				set_temp_variable = { treasury_change = -88 }
 			}
 			else_if = {
 				limit = { has_idea = modest_corruption }
-				set_temp_variable = { treasury_change = -20 }
+				set_temp_variable = { treasury_change = -66 }
 			}
 			else_if = {
 				limit = { has_idea = slight_corruption }
-				set_temp_variable = { treasury_change = -17.5 }
+				set_temp_variable = { treasury_change = -44 }
 			}
 			else_if = {
 				limit = { has_idea = negligible_corruption }
-				set_temp_variable = { treasury_change = -15 }
+				set_temp_variable = { treasury_change = -22 }
 			}
 			modify_treasury_effect = yes
 			custom_effect_tooltip = BRA_economic_focuses_advice_tt
@@ -5200,38 +4875,38 @@
 			}
 			# Treasury Effect
 			if = { limit = { has_idea = paralyzing_corruption }
-				set_temp_variable = { treasury_change = -40 }
+				set_temp_variable = { treasury_change = -150 }
 			}
 			else_if = { limit = { has_idea = crippling_corruption }
-				set_temp_variable = { treasury_change = -35 }
+				set_temp_variable = { treasury_change = -135 }
 			}
 			else_if = {
 				limit = { has_idea = rampant_corruption }
-				set_temp_variable = { treasury_change = -32.5 }
+				set_temp_variable = { treasury_change = -120 }
 			}
 			else_if = {
 				limit = { has_idea = unrestrained_corruption }
-				set_temp_variable = { treasury_change = -30.0 }
+				set_temp_variable = { treasury_change = -105 }
 			}
 			else_if = {
 				limit = { has_idea = systematic_corruption }
-				set_temp_variable = { treasury_change = -27.5 }
+				set_temp_variable = { treasury_change = -90 }
 			}
 			else_if = {
 				limit = { has_idea = widespread_corruption }
-				set_temp_variable = { treasury_change = -25.0 }
+				set_temp_variable = { treasury_change = -75 }
 			}
 			else_if = {
 				limit = { has_idea = medium_corruption }
-				set_temp_variable = { treasury_change = -22.5 }
+				set_temp_variable = { treasury_change = -60 }
 			}
 			else_if = {
 				limit = { has_idea = modest_corruption }
-				set_temp_variable = { treasury_change = -20 }
+				set_temp_variable = { treasury_change = -45 }
 			}
 			else_if = {
 				limit = { has_idea = slight_corruption }
-				set_temp_variable = { treasury_change = -17.5 }
+				set_temp_variable = { treasury_change = -30 }
 			}
 			else_if = {
 				limit = { has_idea = negligible_corruption }
@@ -5284,38 +4959,38 @@
 			}
 			# Treasury Effect
 			if = { limit = { has_idea = paralyzing_corruption }
-				set_temp_variable = { treasury_change = -40 }
+				set_temp_variable = { treasury_change = -150 }
 			}
 			else_if = { limit = { has_idea = crippling_corruption }
-				set_temp_variable = { treasury_change = -35 }
+				set_temp_variable = { treasury_change = -135 }
 			}
 			else_if = {
 				limit = { has_idea = rampant_corruption }
-				set_temp_variable = { treasury_change = -32.5 }
+				set_temp_variable = { treasury_change = -120 }
 			}
 			else_if = {
 				limit = { has_idea = unrestrained_corruption }
-				set_temp_variable = { treasury_change = -30.0 }
+				set_temp_variable = { treasury_change = -105 }
 			}
 			else_if = {
 				limit = { has_idea = systematic_corruption }
-				set_temp_variable = { treasury_change = -27.5 }
+				set_temp_variable = { treasury_change = -90 }
 			}
 			else_if = {
 				limit = { has_idea = widespread_corruption }
-				set_temp_variable = { treasury_change = -25.0 }
+				set_temp_variable = { treasury_change = -75 }
 			}
 			else_if = {
 				limit = { has_idea = medium_corruption }
-				set_temp_variable = { treasury_change = -22.5 }
+				set_temp_variable = { treasury_change = -60 }
 			}
 			else_if = {
 				limit = { has_idea = modest_corruption }
-				set_temp_variable = { treasury_change = -20 }
+				set_temp_variable = { treasury_change = -45 }
 			}
 			else_if = {
 				limit = { has_idea = slight_corruption }
-				set_temp_variable = { treasury_change = -17.5 }
+				set_temp_variable = { treasury_change = -30 }
 			}
 			else_if = {
 				limit = { has_idea = negligible_corruption }
@@ -5345,8 +5020,8 @@
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_help_business_owners"
-			add_stability = 0.05
-			add_political_power = 50
+			add_stability = 0.03
+			add_political_power = -50
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
 			change_industrial_conglomerates_opinion = yes
@@ -5370,10 +5045,12 @@
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_help_business_owners"
-			add_stability = 0.05
-			add_political_power = 25
+			add_stability = -0.03
+			add_political_power = 100
 			set_temp_variable = { temp_opinion = 5 }
 			change_international_bankers_opinion = yes
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
 			add_offsite_building = { type = industrial_complex level = 1 }
 		}
 		ai_will_do = {
@@ -5444,7 +5121,7 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_santos_oilfields"
-			add_resource = { type = oil amount = 25 state = 882 }
+			add_resource = { type = oil amount = 8 state = 882 }
 		}
 		ai_will_do = {
 			factor = 1
@@ -5467,6 +5144,8 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			 log = "[GetDateText]: [Root.GetName]: Focus BRA_clean_energy_path"
+			 set_temp_variable = { treasury_change = -4.25 }
+			 modify_treasury_effect = yes
 			 883 = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -5568,7 +5247,9 @@
 		mutually_exclusive = { }
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
 		completion_reward = {
-			add_resource = { type = oil amount = 25 state = 883 }
+			set_temp_variable = { treasury_change = -4.25 }
+			modify_treasury_effect = yes
+			add_resource = { type = oil amount = 7 state = 883 }
 			883 = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -5656,7 +5337,9 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_presal_dev"
 			add_ideas = BRA_idea_presal_dev
-			add_resource = { type = oil amount = 25 state = 883 }
+			add_resource = { type = oil amount = 6 state = 883 }
+			set_temp_variable = { treasury_change = -12.75 }
+			modify_treasury_effect = yes
 			883 = {
 				add_extra_state_shared_building_slots = 3
 				add_building_construction = {
@@ -5780,6 +5463,8 @@
 			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -5814,6 +5499,8 @@
 			add_ideas = BRA_idea_pro_industries
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
@@ -5973,7 +5660,7 @@
 			954 = {
 				add_extra_state_shared_building_slots = 2
 			}
-			add_stability = 0.05
+			add_stability = 0.02
 			set_temp_variable = { temp_opinion = 5 }
 			change_farmers_opinion = yes
 		}
@@ -6325,7 +6012,7 @@
 		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_visit_every_country"
-			add_stability = 0.10
+			add_stability = 0.05
 		}
 
 		ai_will_do = {
@@ -6436,8 +6123,7 @@
 		}
 	}
 
-
-#military
+	# Military
 	shared_focus = {
 		id = BRA_nosso_exercito
 		icon = GFX_Brazilian_Army_1
@@ -6447,11 +6133,9 @@
 
 		cost = 5
 
-
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_nosso_exercito"
-			army_experience = 25
+			army_experience = 50
 		}
 
 		ai_will_do = {
@@ -6468,11 +6152,9 @@
 
 		cost = 5
 
-		prerequisite = { }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_marinha_do_brasil"
-			navy_experience = 25
+			navy_experience = 50
 		}
 
 		ai_will_do = {
@@ -6491,7 +6173,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_nosso_exercito }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_imbel"
 			add_ideas = BRA_idea_imbel
@@ -6513,7 +6194,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_imbel }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_modern_artillery"
 			add_ideas = BRA_idea_modern_artillery
@@ -6535,13 +6215,9 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_modern_artillery }
-		mutually_exclusive = { }
 		available = {
 			threat > 0.15
 		}
-
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_strength_on_land"
@@ -6564,7 +6240,6 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_nosso_exercito }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_homemade_rifles"
 			add_ideas = BRA_idea_homemade_rifles
@@ -6583,20 +6258,41 @@
 		y = 1
 		relative_position_id = BRA_homemade_rifles
 
-		cost = 5
-
+		cost = 6.4 # 45 Days
 		prerequisite = { focus = BRA_homemade_rifles }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_western_military_factories"
-			886 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = arms_factory
-					level = 2
-					instant_build = yes
+			if = { limit = { has_full_control_of_state = 886 }
+				886 = {
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = arms_factory
+						level = 2
+						instant_build = yes
+					}
 				}
 			}
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 1
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = arms_factory
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+
+			set_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6612,28 +6308,71 @@
 		y = 2
 		relative_position_id = BRA_homemade_rifles
 
-		cost = 5
+		cost = 6.4 # 45 Days
 
 		prerequisite = { focus = BRA_western_military_factories }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_northeastern_military_factories"
-			889 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
+			if = { limit = { has_full_control_of_state = 889 }
+				889 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
-			888 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = arms_factory
-					level = 2
-					instant_build = yes
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
+
+			if = { limit = { has_full_control_of_state = 888 }
+				888 = {
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = arms_factory
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+
+			set_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6649,20 +6388,42 @@
 		y = 1
 		relative_position_id = BRA_marinha_do_brasil
 
-		cost = 5
+		cost = 6.4
 
 		prerequisite = { focus = BRA_marinha_do_brasil }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_national_drydocks"
-			889 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
+			if = { limit = { has_full_control_of_state = 889 }
+				889 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = dockyard
+							size > 1
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6678,20 +6439,42 @@
 		y = 1
 		relative_position_id = BRA_national_drydocks
 
-		cost = 5
+		cost = 6.4
 
 		prerequisite = { focus = BRA_national_drydocks }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_sao_paulo_naval_industries"
-			882 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
+			if = { limit = { has_full_control_of_state = 882 }
+				882 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = dockyard
+							size > 1
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6707,21 +6490,43 @@
 		y = 2
 		relative_position_id = BRA_national_drydocks
 
-		cost = 5
+		cost = 6.4
 
 		prerequisite = { focus = BRA_sao_paulo_naval_industries }
 		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_rio_drydocks"
-			883 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = dockyard
-					level = 2
-					instant_build = yes
+			if = { limit = { has_full_control_of_state = 883 }
+				883 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else = {
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = dockyard
+							size > 1
+							include_locked = yes
+						}
+					}
+
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
 
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6740,10 +6545,15 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_marinha_do_brasil }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_behind_the_times"
-			navy_experience = 10
+			navy_experience = 25
+			add_doctrine_cost_reduction = {
+				name = GENERIC_naval_doctrine_innovations
+                category = Cat_naval_doctrine
+                uses = 1
+                cost_reduction = 0.5
+            }
 		}
 
 		ai_will_do = {
@@ -6813,21 +6623,13 @@
 		cost = 10
 
 		prerequisite = { focus = BRA_strength_on_land }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_ee_11"
 			add_tech_bonus = {
 				name = BRA_ee_11
 				bonus = 0.75
 				uses = 1
-				technology = APC_1
-				technology = APC_2
-				technology = APC_3
-				technology = APC_4
-				technology = APC_5
-				technology = APC_6
-				technology = APC_7
-				technology = APC_8
+				category = Cat_APC
 			}
 		}
 
@@ -6853,23 +6655,8 @@
 			add_tech_bonus = {
 				name = BRA_acquire_new_equipment
 				bonus = 0.50
-				uses = 1
-				technology = command_control_equipment
-				technology = command_control_equipment1
-				technology = command_control_equipment2
-				technology = command_control_equipment3
-				technology = command_control_equipment4
-				technology = command_control_equipment5
-				technology = command_control_equipment6
-			}
-			add_tech_bonus = {
-				name = BRA_acquire_new_equipment
-				bonus = 0.50
-				uses = 1
-				technology = body_armor_1980
-				technology = body_armor_2000
-				technology = body_armor_2010
-				technology = body_armor_2030
+				uses = 2
+				category = Cat_INF
 			}
 		}
 
@@ -6896,13 +6683,7 @@
 				name = BRA_update_the_ifvs
 				bonus = 0.75
 				uses = 1
-				technology = IFV_1
-				technology = IFV_2
-				technology = IFV_3
-				technology = IFV_4
-				technology = IFV_5
-				technology = IFV_6
-				technology = IFV_7
+				category = Cat_IFV
 			}
 		}
 
@@ -6957,13 +6738,7 @@
 				name = BRA_modern_armor
 				bonus = 1.0
 				uses = 1
-				technology = MBT_1
-				technology = MBT_2
-				technology = MBT_3
-				technology = MBT_4
-				technology = MBT_5
-				technology = MBT_7
-				technology = MBT_8
+				category = Cat_MBT
 			}
 		}
 
@@ -6990,14 +6765,7 @@
 				name = BRA_larger_artillery
 				bonus = 0.75
 				uses = 2
-				technology = artillery_1
-				technology = artillery_2
-				technology = artillery_3
-				technology = artillery_4
-				technology = SP_arty_1
-				technology = SP_arty_2
-				technology = SP_arty_3
-				technology = SP_arty_4
+				category = Cat_ARTY
 			}
 		}
 
@@ -7078,13 +6846,7 @@
 				name = BRA_lets_go_nuclear
 				bonus = 0.75
 				uses = 1
-				technology = attack_submarine_1
-				technology = attack_submarine_2
-				technology = attack_submarine_3
-				technology = attack_submarine_4
-				technology = attack_submarine_5
-				technology = attack_submarine_6
-				technology = attack_submarine_7
+				category = Cat_ATT_SUB
 			}
 		}
 
@@ -7111,11 +6873,7 @@
 				name = BRA_assault_carriers
 				bonus = 0.50
 				uses = 1
-				technology = LHA_0
-				technology = LHA_1
-				technology = LHA_2
-				technology = LHA_3
-				technology = LHA_4
+				category = Cat_LHA
 			}
 		}
 
@@ -7142,13 +6900,7 @@
 				name = BRA_usn_carriers
 				bonus = 0.50
 				uses = 1
-				technology = modern_carrier_0
-				technology = modern_carrier_1
-				technology = modern_carrier_2
-				technology = modern_carrier_3
-				technology = modern_carrier_4
-				technology = modern_carrier_5
-				technology = modern_carrier_6
+				category = Cat_CARRIER
 			}
 		}
 
@@ -7175,13 +6927,7 @@
 				name = BRA_juruena_class
 				bonus = 0.50
 				uses = 1
-				technology = destroyer_1
-				technology = destroyer_2
-				technology = missile_destroyer_1
-				technology = missile_destroyer_2
-				technology = missile_destroyer_3
-				technology = missile_destroyer_4
-				technology = missile_destroyer_5
+				category = Cat_DESTROYER
 			}
 		}
 
@@ -7208,13 +6954,7 @@
 				name = BRA_assault_carriers
 				bonus = 0.75
 				uses = 1
-				technology = frigate_1
-				technology = frigate_2
-				technology = missile_frigate_1
-				technology = missile_frigate_2
-				technology = missile_frigate_3
-				technology = missile_frigate_4
-				technology = missile_frigate_5
+				category = Cat_FRIGATE
 			}
 		}
 
@@ -7420,11 +7160,7 @@
 				name = BRA_cas_research
 				bonus = 0.50
 				uses = 1
-				technology = cas1
-				technology = cas2
-				technology = cas3
-				technology = cas4
-				technology = cas5
+				category = Cat_CAS
 			}
 		}
 
@@ -7451,12 +7187,7 @@
 				name = BRA_maritime_routine
 				bonus = 0.50
 				uses = 1
-				technology = naval_plane1
-				technology = naval_plane2
-				technology = naval_plane3
-				technology = naval_plane4
-				technology = naval_plane5
-				technology = naval_plane6
+				category = Cat_NAVAL_PLANE
 			}
 		}
 
@@ -7484,13 +7215,7 @@
 				name = BRA_mr_fighters
 				bonus = 0.50
 				uses = 1
-				technology = MR_Fighter1
-				technology = MR_Fighter2
-				technology = MR_Fighter3
-				technology = MR_Fighter4
-				technology = MR_Fighter5
-				technology = MR_Fighter6
-				technology = MR_Fighter7
+				category = Cat_MR_FIGHTER
 			}
 		}
 
@@ -7517,11 +7242,7 @@
 				name = BRA_light_fighters
 				bonus = 0.50
 				uses = 1
-				technology = L_Strike_fighter1
-				technology = L_Strike_fighter2
-				technology = L_Strike_fighter3
-				technology = L_Strike_fighter4
-				technology = L_Strike_fighter5
+				category = Cat_L_Fighter
 			}
 		}
 
@@ -7541,10 +7262,6 @@
 
 		prerequisite = { focus = BRA_light_fighters }
 		prerequisite = { focus = BRA_mr_fighters }
-
-
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_air_trained_pilots"
@@ -7575,7 +7292,6 @@
 			}
 		}
 
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_space_program"
 			add_ideas = BRA_idea_space_2
@@ -7597,13 +7313,9 @@
 		cost = 10
 
 		prerequisite = { focus = BRA_brazilian_space_program }
-		mutually_exclusive = { }
 		available = {
 			is_major = yes
 		}
-
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_cooperate_with_nasa"
@@ -7626,13 +7338,9 @@
 		cost = 10
 
 		prerequisite = { focus = BRA_brazilian_space_program }
-		mutually_exclusive = { }
 		available = {
 			is_major = yes
 		}
-
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_create_launchpads"
@@ -7644,6 +7352,8 @@
 					type = anti_air_building level = 1 instant_build = yes
 				}
 			}
+			set_temp_variable = { treasury_change = -6.75 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -7662,13 +7372,9 @@
 		cost = 10
 
 		prerequisite = { focus = BRA_cooperate_with_nasa }
-		mutually_exclusive = { }
 		available = {
 			is_major = yes
 		}
-
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_first_time_in_the_moon"
@@ -7692,13 +7398,9 @@
 		cost = 10
 
 		prerequisite = { focus = BRA_create_launchpads }
-		mutually_exclusive = { }
 		available = {
 			is_major = yes
 		}
-
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_a_mission_to_mars"
@@ -7724,13 +7426,9 @@
 		cost = 10
 
 		prerequisite = { focus = BRA_first_time_in_the_moon }
-		mutually_exclusive = { }
 		available = {
 			is_major = yes
 		}
-
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_space_force"
@@ -7757,9 +7455,6 @@
 		available = {
 			is_major = yes
 		}
-
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_mining_in_space"
@@ -7823,8 +7518,6 @@
 			NOT = { has_country_leader = { name = "Fernando Henrique Cardoso" } }
 		}
 
-
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_cardosos_last_years"
 			add_stability = -0.05
@@ -7847,15 +7540,8 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_cardosos_last_years }
-		mutually_exclusive = { focus = BRA_amazonian_development_project}
-		available = { }
-		historical_ai = { }
+		mutually_exclusive = { focus = BRA_amazonian_development_project }
 
-		bypass = { }
-		cancel = { }
-
-
-		complete_tooltip = {}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_logging_reform"
 			country_event = { id = brazil.31 days = 0 }
@@ -7879,9 +7565,6 @@
 
 		prerequisite = { focus = BRA_logging_reform }
 
-
-
-		complete_tooltip = {}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_preserve_amazon"
 			country_event = { id = brazil.32 days = 0 }
@@ -7904,9 +7587,6 @@
 
 		prerequisite = { focus = BRA_preserve_amazon }
 
-
-
-		complete_tooltip = {}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_protect_amazon"
 			add_ideas = BRA_idea_rainforest_protectors
@@ -7928,7 +7608,7 @@
 		cost = 10
 
 		prerequisite = { focus = BRA_cardosos_last_years }
-		mutually_exclusive = { focus = BRA_logging_reform}
+		mutually_exclusive = { focus = BRA_logging_reform }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_amazonian_development_project"
 			country_event = brazil.3
@@ -7951,18 +7631,12 @@
 		cost = 10
 
 		prerequisite = { focus = BRA_amazonian_development_project }
-		mutually_exclusive = { }
 		available = {
 			has_country_flag = amazonian_development_project
 		}
-		historical_ai = { }
-		select_effect = { }
 		bypass = {
 			has_country_flag = denied_amazonian_development_project
 		}
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_project_devastate_the_amazon"
@@ -8006,7 +7680,7 @@
 		y = 1
 		relative_position_id = BRA_cardosos_last_years
 
-		cost = 10
+		cost = 5
 
 		prerequisite = { focus = BRA_cardosos_last_years }
 
@@ -8020,7 +7694,6 @@
 		}
 	}
 
-
 	shared_focus = {
 		id = BRA_native_protests
 		icon = native_americans
@@ -8029,18 +7702,14 @@
 		y = 2
 		relative_position_id = BRA_cardosos_last_years
 
-		cost = 10
+		cost = 6.4
 
 		prerequisite = { focus = BRA_march_of_the_excluded }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_native_protests"
 			add_stability = -0.02
 			increase_policing_budget = yes
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.075
-			}
+			add_popularity = { ideology = nationalist popularity = 0.075 }
 			recalculate_party = yes
 		}
 
@@ -8057,10 +7726,9 @@
 		y = 3
 		relative_position_id = BRA_cardosos_last_years
 
-		cost = 10
+		cost = 6.4
 
 		prerequisite = { focus = BRA_native_protests }
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_angry_natives"
 			add_ideas = BRA_idea_angry_natives
@@ -8082,13 +7750,14 @@
 		cost = 10
 
 		prerequisite = { focus = BRA_cardosos_last_years }
-		mutually_exclusive = { focus = BRA_foreign_assist}
+		mutually_exclusive = { focus = BRA_foreign_assist }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_reinstating_imf_debts"
 			add_ideas = BRA_idea_imf_debts
 			add_to_variable = { debt = 225 }
 			add_to_variable = { treasury = 225 }
 			custom_effect_tooltip = BRA_reinstating_imf_debts_tt
+			ingame_update_setup = yes
 		}
 
 		ai_will_do = {
@@ -8107,7 +7776,6 @@
 		cost = 10
 
 		prerequisite = { focus = BRA_reinstating_imf_debts }
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_a_modern_recession"
@@ -8187,10 +7855,7 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_crippled_currency"
 			add_ideas = BRA_idea_crippled_currency
-			add_popularity = {
-				ideology = democratic
-				popularity = -0.05
-			}
+			add_popularity = { ideology = democratic popularity = -0.05 }
 			recalculate_party = yes
 		}
 
@@ -8207,7 +7872,7 @@
 		y = 4
 		relative_position_id = BRA_cardosos_last_years
 
-		cost = 10
+		cost = 5
 
 		prerequisite = { focus = BRA_crippled_currency }
 		prerequisite = { focus = BRA_angry_natives }
@@ -8223,8 +7888,8 @@
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_cardoso_is_gone"
-			add_stability = 0.10
-			add_political_power = 50
+			add_stability = 0.05
+			add_political_power = 100
 		}
 
 		ai_will_do = {
@@ -8245,8 +7910,6 @@
 			date < 2018.10.01
 			date > 2010.01.01
 		}
-		prerequisite = {}
-		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_op_car_wash"
 			country_event = { id = brazil.19 days = 0 }
@@ -8268,34 +7931,11 @@
 
 		cost = 3
 
-		prerequisite = { focus = BRA_op_car_wash}
+		prerequisite = { focus = BRA_op_car_wash }
 		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_odebrecht_corruption"
-			if = {
-				limit = {
-					has_idea = BRA_idea_car_wash1
-				}
-				swap_ideas = {
-					remove_idea = BRA_idea_car_wash1 add_idea = BRA_idea_car_wash2
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = BRA_idea_car_wash2
-				}
-				swap_ideas = {
-					remove_idea = BRA_idea_car_wash2 add_idea = BRA_idea_car_wash3
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = BRA_idea_car_wash3
-				}
-				swap_ideas = {
-					remove_idea = BRA_idea_car_wash3 add_idea = BRA_idea_car_wash4
-				}
-			}
+			BRA_operation_car_wash_switch = yes
 		}
 
 		ai_will_do = {
@@ -8313,34 +7953,10 @@
 
 		cost = 3
 
-		prerequisite = { focus = BRA_op_car_wash}
-		mutually_exclusive = { }
+		prerequisite = { focus = BRA_op_car_wash }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_petrobras_indictment"
-			if = {
-				limit = {
-					has_idea = BRA_idea_car_wash1
-				}
-				swap_ideas = {
-					remove_idea = BRA_idea_car_wash1 add_idea = BRA_idea_car_wash2
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = BRA_idea_car_wash2
-				}
-				swap_ideas = {
-					remove_idea = BRA_idea_car_wash2 add_idea = BRA_idea_car_wash3
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = BRA_idea_car_wash3
-				}
-				swap_ideas = {
-					remove_idea = BRA_idea_car_wash3 add_idea = BRA_idea_car_wash4
-				}
-			}
+			BRA_operation_car_wash_switch = yes
 		}
 
 		ai_will_do = {
@@ -8358,41 +7974,11 @@
 
 		cost = 3
 
-		prerequisite = { focus = BRA_op_car_wash}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		bypass = { }
-		cancel = { }
-
-
+		prerequisite = { focus = BRA_op_car_wash }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_searchandseizure"
-			if = {
-				limit = {
-					has_idea = BRA_idea_car_wash1
-				}
-				swap_ideas = {
-					remove_idea = BRA_idea_car_wash1 add_idea = BRA_idea_car_wash2
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = BRA_idea_car_wash2
-				}
-				swap_ideas = {
-					remove_idea = BRA_idea_car_wash2 add_idea = BRA_idea_car_wash3
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = BRA_idea_car_wash3
-				}
-				swap_ideas = {
-					remove_idea = BRA_idea_car_wash3 add_idea = BRA_idea_car_wash4
-				}
-			}
+			BRA_operation_car_wash_switch = yes
 		}
 
 		ai_will_do = {
@@ -8413,7 +7999,6 @@
 		prerequisite = { focus = BRA_odebrecht_corruption }
 		prerequisite = { focus = BRA_petrobras_indictment }
 		prerequisite = { focus = BRA_searchandseizure }
-		mutually_exclusive = { }
 		available = {
 			OR = {
 				has_idea = paralyzing_corruption
@@ -8425,10 +8010,6 @@
 				has_idea = medium_corruption
 			}
 		}
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
 
 		search_filters = {FOCUS_FILTER_CORRUPTION}
 
@@ -8512,17 +8093,10 @@
 			focus = BRA_parties_of_the_left
 		}
 
-		mutually_exclusive = { }
 		available = {
 			date < 2018.10.01
 			date > 2010.01.01
 		}
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_new_elections"
@@ -8549,10 +8123,8 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_acquit_pmdb"
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}
+			add_popularity = { ideology = communism popularity = 0.05 }
+			recalculate_party = yes
 		}
 
 		ai_will_do = {
@@ -8574,12 +8146,10 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_acquit_workers_party"
-			custom_effect_tooltip = BRA_add_pt_4_tt
 			hidden_effect = {
 				add_popularity = { ideology = communism popularity = 0.04 }
-				add_to_variable = { party_pop_array^5 = 0.04 }
-				recalculate_party = yes
 			}
+			add_4_emerging_left_wing_radical = yes
 		}
 
 		ai_will_do = {
@@ -8604,10 +8174,8 @@
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_rw_populist"
 			hidden_effect = {
 				add_popularity = { ideology = nationalist popularity = 0.04 }
-				add_to_variable = { party_pop_array^20 = 0.04 }
-				recalculate_party = yes
 			}
-			custom_effect_tooltip = BRA_add_populism_4_tt
+			add_4_nationalist_right_wing_populists = yes
 		}
 
 		ai_will_do = {
@@ -8636,19 +8204,11 @@
 				has_country_flag = BRA_pt_win
 			}
 		}
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pt_pmdb_coop"
-			add_popularity = {
-				ideology = communism
-				popularity = 0.075
-			}
+			add_popularity = { ideology = communism popularity = 0.075 }
+			recalculate_party = yes
 			add_political_power = 100
 		}
 
@@ -8678,21 +8238,13 @@
 				has_country_flag = BRA_pt_win
 			}
 		}
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pt_hegemony"
-			custom_effect_tooltip = BRA_add_pt_4_tt
 			hidden_effect = {
 				add_popularity = { ideology = communism popularity = 0.04 }
-				add_to_variable = { party_pop_array^5 = 0.04 }
-				recalculate_party = yes
 			}
+			add_4_emerging_left_wing_radical = yes
 		}
 
 		ai_will_do = {
@@ -8719,17 +8271,10 @@
 				has_country_flag = BRA_psl_win
 			}
 		}
-		historical_ai = { }
-
-		bypass = { }
-		cancel = { }
-
-
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_rise_electoral_media"
 			add_ideas = BRA_idea_electoral_media1
-		 }
+		}
 
 		ai_will_do = {
 			factor = 1
@@ -8844,7 +8389,7 @@
 
 		completion_reward = {
 			 log = "[GetDateText]: [Root.GetName]: Focus BRA_strenghten_coalition"
-			 add_stability = 0.10
+			 add_stability = 0.05
 			 add_popularity = { ideology = communism popularity = 0.10 }
 		}
 
@@ -9239,6 +8784,8 @@
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 			change_industrial_conglomerates_opinion = yes
+			set_temp_variable = { treasury_change = -22.50 }
+			modify_treasury_effect = yes
 			882 = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -9520,6 +9067,8 @@
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_state_industries"
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
+			set_temp_variable = { treasury_change = -22.50 }
+			modify_treasury_effect = yes
 			883 = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -9976,7 +9525,7 @@
 
 		cost = 5
 
-		prerequisite = { focus = BRA_bolsonarismo}
+		prerequisite = { focus = BRA_bolsonarismo }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_olavist_policies"
@@ -10004,7 +9553,7 @@
 
 		cost = 5
 
-		prerequisite = { focus = BRA_bolsonarismo}
+		prerequisite = { focus = BRA_bolsonarismo }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_court_evangelicals"
@@ -10030,7 +9579,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_call_paulo_guedes"
-			add_stability = 0.10
+			add_stability = 0.03
 			add_political_power = 250
 			custom_effect_tooltip = BRA_paulo_guedes_tt
 		}
@@ -10842,7 +10391,8 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_assign_military_cabinet"
-			add_stability = 0.10
+			add_political_power = 50
+			add_stability = -0.2
 			#custom_effect_tooltip = BRA_army_aproval_increase_much_tt
 		}
 
@@ -10966,7 +10516,8 @@
 				recalculate_party = yes
 			}
 			custom_effect_tooltip = BRA_add_military_15_tt
-			add_stability = 0.10
+			add_political_power = 50
+			add_stability = -0.03
 			add_political_power = 50
 			add_popularity = {
 				ideology = nationalist
@@ -11731,6 +11282,8 @@
 			add_popularity = { ideology = nationalist popularity = 0.075 }
 			add_war_support = 0.05
 			increase_economic_growth = yes
+			set_temp_variable = { treasury_change = -17 }
+			modify_treasury_effect = yes
 			883 = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -11887,12 +11440,12 @@
 
 		cost = 5
 
-		prerequisite = { focus = BRA_court_evangelicals}
+		prerequisite = { focus = BRA_court_evangelicals }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_defund_progressive_policies"
 			add_popularity = { ideology = nationalist popularity = 0.05 }
-			add_stability = 0.05
+			add_stability = -0.05
 		}
 
 		ai_will_do = {
@@ -11914,7 +11467,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_assign_evangelical_judge"
-			add_stability = 0.05
+			add_stability = 0.02
 			add_political_power = 50
 			add_popularity = {
 				ideology = nationalist
@@ -11945,9 +11498,11 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_socialsecurity_reform"
 			add_political_power = 50
-			add_stability = 0.05
-			set_temp_variable = { temp_opinion = 5 }
-			change_international_bankers_opinion = yes
+			add_stability = -0.02
+			#set_temp_variable = { temp_opinion = 5 }
+			#change_international_bankers_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
 			decrease_social_spending = yes
 		}
 
@@ -12008,6 +11563,8 @@
 			#		instant_build = yes
 			#	}
 			#}
+			set_temp_variable = { treasury_change = -22.50 }
+			modify_treasury_effect = yes
 			add_offsite_building = { type = industrial_complex level = 3 }
 			set_temp_variable = { temp_opinion = 5 }
 			change_international_bankers_opinion = yes
@@ -12033,7 +11590,9 @@
 		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_privatize_petrobras"
-			add_resource = { type = oil amount = 15 state = 883 }
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+			add_resource = { type = oil amount = 3 state = 883 }
 			#883 = {
 			#	add_extra_state_shared_building_slots = 1
 			#	add_building_construction = {
@@ -12071,6 +11630,8 @@
 		search_filters = { FOCUS_FILTER_RESOURCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_mining_amazon"
+			set_temp_variable = { treasury_change = -70 }
+			modify_treasury_effect = yes
 			892 = {
 				add_resource = {
 					type = steel
@@ -12168,7 +11729,7 @@
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_cardoso_legacy"
-			add_stability = 0.05
+			add_stability = 0.03
 			add_political_power = 150
 			add_popularity = {
 				ideology = democratic
@@ -12214,7 +11775,7 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_psdb_pdt_coalition"
 			custom_effect_tooltip = BRA_pdt_coalition_tt
-			add_stability = 0.05
+			add_stability = 0.03
 			add_political_power = 150
 			add_popularity = {
 				ideology = democratic
@@ -12562,10 +12123,10 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_expansive_spending"
 			882 = {
-				add_extra_state_shared_building_slots = 1
+				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
 					type = industrial_complex
-					level = 1
+					level = 2
 					instant_build = yes
 				}
 			}
@@ -12677,14 +12238,14 @@
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_business_deregulation"
-			882 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-			}
+			#882 = {
+			#	add_extra_state_shared_building_slots = 1
+			#	add_building_construction = {
+			#		type = industrial_complex
+			#		level = 1
+			#		instant_build = yes
+			#	}
+			#}
 			decrease_centralization = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
@@ -12703,7 +12264,7 @@
 
 		prerequisite = { focus = BRA_reduce_debts }
 
-		mutually_exclusive = {focus = BRA_business_deregulation}
+		mutually_exclusive = {focus = BRA_business_deregulation }
 
 		ai_will_do = {
 			factor = 5
@@ -12711,14 +12272,14 @@
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_business_regulation"
-			882 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-			}
+			#882 = {
+			#	add_extra_state_shared_building_slots = 1
+			#	add_building_construction = {
+			#		type = industrial_complex
+			#		level = 1
+			#		instant_build = yes
+			#	}
+			#}
 			increase_centralization = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
@@ -12812,7 +12373,7 @@
 					instant_build = yes
 				}
 			}
-			set_temp_variable = { treasury_change = -17 }
+			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
@@ -13055,11 +12616,8 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_bastion_of_liberty"
 			add_political_power = 50
-			add_popularity = {
-				ideology = democratic popularity = 0.075
-			}
+			add_popularity = { ideology = democratic popularity = 0.075 }
 			recalculate_party = yes
-			#FIXME: this needs a recalculate_party = yes
 			if = {
 				limit = { is_major = no }
 				set_major = yes
