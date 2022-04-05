@@ -560,22 +560,29 @@ end_project = {
 		var:project_array^project = {
 			clear_variable = project_target_state_@PREV
 			remove_from_array = { array = projects_in_state value = PREV.id }
+			set_temp_variable = { tag_index = THIS.id }
+		}
+
+		# Refund Remaining Cash if the project is unfinished
+		if = { limit = { check_variable = { project_monetary_cost^project > 0 } }
+			add_to_variable = { var = treasury value = project_monetary_cost^project }
+			subtract_from_variable = { var = int_investments value = project_monetary_cost^project }
+			set_temp_variable = { return_to_sender = project_monetary_cost^project }
+			multiply_temp_variable = { return_to_sender = 0.10 }
+			var:project_array^project = {
+				CONTROLLER = { add_to_variable = { var = treasury value = return_to_sender } }
+			}
 		}
 
 		initialize_end_project_decisions = yes
 
+		# Clear Utility
 		clear_variable = project_build_amount^project
 		clear_variable = project_building_type^project
 		clear_variable = project_construction_duration^project
 		clear_variable = project_construction_speed_display^project
 		clear_variable = project_total_construction_duration_display^project
 		clear_variable = project_target_country^project
-
-		# Refund Remaining Cash if the project is unfinished
-		if = { limit = { check_variable = { project_monetary_cost^project > 0 } }
-			add_to_variable = { var = treasury value = project_monetary_cost^project }
-			subtract_from_variable = { var = int_investments value = project_monetary_cost^project }
-		}
 		clear_variable = project_monetary_cost^project
 	}
 
@@ -585,18 +592,6 @@ end_project = {
 }
 
 initialize_start_project_decisions = {
-	# meta_effect = {
-	# 	text = {
-	# 		activate_decision = AC_project_[x]_decision
-
-	# 		var:project_target_country^project = {
-	# 			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
-	# 			activate_targeted_decision = { target = PREV decision = AC_project_[x]_target_decision }
-	# 		}
-	# 	}
-	# 	x = "[?project]"
-	# }
-
 	if = { limit = { check_variable = { project = 0 } }
 		activate_decision = AC_project_0_decision
 
@@ -721,21 +716,6 @@ initialize_start_project_decisions = {
 }
 
 initialize_complete_project_decisions = {
-	# meta_effect = {
-	# 	text = {
-	# 		activate_decision = AC_project_[x]_decision
-
-	# 		PREV = {
-	# 			CONTROLLER = {
-	# 				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
-	# 				remove_targeted_decision = { target = ROOT decision = AC_project_[x]_target_decision }
-	# 				activate_targeted_decision = { target = ROOT decision = AC_project_[x]_target_decision }
-	# 			}
-	# 		}
-	# 	}
-	# 	x = "[?ROOT.project]"
-	# }
-
 	if = { limit = { check_variable = { ROOT.project = 0 } }
 		activate_decision = AC_project_0_decision
 
