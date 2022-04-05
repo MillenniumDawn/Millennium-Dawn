@@ -132,6 +132,22 @@ scripted_gui = {
 						set_variable = { project = PREV.project_target_state_@ROOT }
 						end_project = yes
 						refresh_gui = yes
+						if = { limit = { has_global_flag = GAME_RULE_gain_0_5_percent_invest }
+							set_temp_variable = { percent_change = -1.0 }
+						}
+						else_if = { limit = { has_global_flag = GAME_RULE_gain_2_percent_invest }
+							set_temp_variable = { percent_change = -2.50 }
+						}
+						else = {
+							set_temp_variable = { percent_change = -1.50 }
+						}
+						set_temp_variable = { tag_index = ROOT.id }
+						PREV = {
+							CONTROLLER = {
+								set_temp_variable = { influence_target = THIS.id }
+							}
+						}
+						change_influence_percentage = yes
 					}
 				}
 			}
@@ -167,6 +183,11 @@ scripted_gui = {
 					}
 					# Infrastructure
 					else_if = { limit = { check_variable = { project_building_type^-1 = 4 } }
+						add_to_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
+					}
+					# Office Sectors
+					else_if = { limit = { check_variable = { project_building_type^-1 = 5 } }
 						add_to_variable = { project_build_amount^-1 = 1 }
 						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
 					}
@@ -208,6 +229,11 @@ scripted_gui = {
 					}
 					# Infrastructure
 					else_if = { limit = { check_variable = { project_building_type^-1 = 4 } }
+						subtract_from_variable = { project_build_amount^-1 = 1 }
+						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
+					}
+					# Office Sectors
+					else_if = { limit = { check_variable = { project_building_type^-1 = 5 } }
 						subtract_from_variable = { project_build_amount^-1 = 1 }
 						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
 					}
