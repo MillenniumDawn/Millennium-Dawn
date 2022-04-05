@@ -64,7 +64,15 @@ country_event = {
 			# Influence Section
 			if = {
 				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
-				set_temp_variable = { percent_change = 1.0 }
+				if = { limit = { has_global_flag = GAME_RULE_gain_0_5_percent_invest }
+					set_temp_variable = { percent_change = 0.50 }
+				}
+				else_if = { limit = { has_global_flag = GAME_RULE_gain_2_percent_invest }
+					set_temp_variable = { percent_change = 2.0 }
+				}
+				else = {
+					set_temp_variable = { percent_change = 1.0 }
+				}
 				set_temp_variable = { tag_index = FROM.id }
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
@@ -72,9 +80,11 @@ country_event = {
 				# Cool Down for the Influence Gain
 				if = { limit = { has_global_flag = GAME_RULE_influence_cooldown_limits_14 }
 					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 14 }
+					custom_effect_tooltip = cooldown_influence_limit_14_tooltip
 				}
 				else_if = { limit = { has_global_flag = GAME_RULE_influence_cooldown_limits_30 }
 					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 30 }
+					custom_effect_tooltip = cooldown_influence_limit_30_tooltip
 				}
 			}
 
