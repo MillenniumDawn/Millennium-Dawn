@@ -42,3 +42,11 @@
  # state_17 for 52,000,000 - 65,000,000 inhabitants
  # state_18 for >65,000,000 inhabitants
 #
+
+
+### MISSILE MAP CHANGES ###
+#
+# 2022-04-04 - Bluehunter
+# Merged provinces from 1030 to 1029. 1030 became "Outer Donbas".
+#
+#
