@@ -1,6 +1,6 @@
 #read this if you plan on modding states in any capacity
 #
-#if you create a new state, remember these key things:	
+#if you create a new state, remember these key things:
  # transfer resources, factories, population etc accordingly (ex. if you split a state in two)
  # set the correct state_category according to the population (see the list at the bottom)
  # victory points be put in the correct state file
@@ -54,9 +54,17 @@
  # state_17 for 52,000,000 - 65,000,000 inhabitants
  # state_18 for >65,000,000 inhabitants
 #
-#
+
+
+### MISSILE MAP CHANGES ###
 #
 # state coastline changes after 1.6.1
 # e.g. 9999 - added seazone AAA, removed seazone BBB
 # state ID - changes
+#
+# 2022-04-04 - Bluehunter
+# Merged provinces from 1030 to 1029. 1030 became "Outer Donbas".
+#
+#
+#
 #
