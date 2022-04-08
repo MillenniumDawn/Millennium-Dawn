@@ -10,14 +10,9 @@ country_event = {
 	hidden = yes
 	immediate = {
 		log = "[GetDateText]: [This.GetName]: influence.11.a executed"
-		set_variable = { gift_sum = gdp_total }
-		divide_variable = { gift_sum = 1000 }
-		multiply_variable = { gift_sum = 2 } # Balance unit
-		clamp_variable = {
-			var = gift_sum
-			min = 1
-			max = 5000 # Max Gift Amount Period
-		}
+		set_variable = { gift_sum = debt }
+		multiply_variable = { gift_sum = 0.05 }
+		clamp_variable = { var = gift_sum min = 1 max = 5000 } # Max Gift Amount Period
 		# event_target is set in the targeting scope
 		event_target:influence_sender = { country_event = { id = influence.1 } }
 	}
@@ -42,7 +37,7 @@ country_event = {
 		FROM = {
 			effect_tooltip = {
 				custom_effect_tooltip = accept_money
-				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { percent_change = 3 }
 				set_temp_variable = { tag_index = ROOT.id }
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
@@ -58,6 +53,21 @@ country_event = {
 				add = 1
 				ai_has_same_organization = yes
 			}
+			modifier = {
+				factor = 2
+				OR = {
+					FROM = { check_variable = { interest_rate > 15.0 } }
+					FROM = { check_variable = { debt_ratio > 0.99 } }
+				}
+			}
+			# Fail Safe Commands
+			modifier = {
+				factor = 0
+				OR = {
+					check_variable = { interest_rate < 15.00 }
+					check_variable = { debt_ratio < 2.00 }
+				}
+			}
 		}
 	}
 
@@ -67,12 +77,19 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.1.b executed"
 		FROM = { ROOT = { clr_country_flag = recently_sent_aid@PREV } }
 
-		#AI Here
+		# AI Section
 		ai_chance = {
 			factor = 0.50
 			modifier = {
 				add = 1
 				ai_has_same_organization = no
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					check_variable = { interest_rate < 15.00 }
+					check_variable = { debt_ratio < 2.00 }
+				}
 			}
 		}
 	}
@@ -196,8 +213,8 @@ country_event = {
 				OR = {
 					has_opinion = { target = FROM value < -100 }
 					ai_has_high_treasury = yes
-					check_variable = { interest_rate < 6.00 }
-					check_variable = { debt_ratio < 0.90 }
+					check_variable = { interest_rate < 8.00 }
+					check_variable = { debt_ratio < 1.20 }
 				}
 			}
 		}
@@ -212,7 +229,11 @@ country_event = {
 			limit = { NOT = { has_country_flag = recently_refused_aid } }
 			add_political_power = 100
 			set_country_flag = { flag = recently_refused_aid value = 1 days = 90 }
+			else = {
+				custom_effect_tooltip = recently_refused_economic_aid_tt
+			}
 		}
+
 		add_2_popularity = yes # Outlook gets slightly popular
 
 		# Returns Funds to the Influencer Nation
@@ -321,7 +342,7 @@ country_event = {
 			modifier = {
 				factor = 0
 				OR = {
-					ai_has_low_treasury = yes
+					check_variable = { debt_ratio > 1.50 }
 					has_idea = bankrupcy
 					has_country_flag = AI_economic_downspiral
 					check_variable = { interest_rate > 15.000 }
