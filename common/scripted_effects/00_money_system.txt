@@ -67,15 +67,22 @@ ingame_update_setup = {
 
 	#Visuals
 	update_display = yes
+	if = {
+		limit = { is_debug = yes }
+		log = "[GetDateText]: [Root.GetName]: Ingame Update Setup Treasury: [?ROOT.treasury] Treasury Rate: [?ROOT.treasury_rate] Debt: [?ROOT.debt]"
+	}
 }
 
 # calculate_tax_rate
 # Calculates the tax rate of a given nation where you flow in the corporate_tax_rate of a given nation
 calculate_tax_rate = {
 	hidden_effect = {
-		remove_tax_cost = yes
-		set_variable = { tax_rate = corporate_tax_rate }
-		set_tax_cost = yes
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit } }}
+			add_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit }
+		}
+		set_variable = { consumer_goods_from_corporate_tax = corporate_tax_rate }
+		divide_variable = { consumer_goods_from_corporate_tax = 100 }
+		multiply_variable = { consumer_goods_from_corporate_tax = 1.5 } # Doubles the Consumer Goods Penalty
 
 		if = {
 			limit = { NOT = { has_dynamic_modifier = { modifier = population_tax_stability_hit } } }
@@ -83,39 +90,15 @@ calculate_tax_rate = {
 		}
 		set_variable = { stability_factor_from_population_tax = population_tax_rate }
 		divide_variable = { stability_factor_from_population_tax = -100 }
+
+		# Average Tax Rate
+		set_variable = { tax_rate = corporate_tax_rate }
+		add_to_variable = { tax_rate = population_tax_rate }
+		divide_variable = { tax_rate = 2 }
+		round_variable = tax_rate
 	}
 }
-# Tax Cost Meta Effects
-# add_tax_laws
-# Adds a tax law from corporate_tax_rate
-add_tax_laws = {
-	meta_effect = {
-		text = {
-			add_ideas = tax_cost_[TAX_RATE_VAR]
-		}
-		TAX_RATE_VAR = "[?tax_rate|0]"
-	}
-}
-# remove_tax_cost
-# Removes a tax law
-remove_tax_cost = {
-	meta_effect = {
-		text = {
-			remove_ideas = tax_cost_[TAX_RATE_VAR]
-		}
-		TAX_RATE_VAR = "[?tax_rate|0]"
-	}
-}
-# set_tax_cost
-# Sets a tax cost
-set_tax_cost = {
-	meta_effect = {
-		text = {
-			add_ideas = tax_cost_[TAX_RATE_VAR]
-		}
-		TAX_RATE_VAR = "[?tax_rate|0]"
-	}
-}
+
 
 # calculate_tax_gain
 # Calculates the amount of taxes earned based of ROOT's corporate taxes and population taxes
@@ -227,6 +210,10 @@ calculate_tax_gain = {
 			limit = { has_idea = NIG_efficent_government_spending_idea }
 			add_to_temp_variable = { tax_gain_multiplier = 0.10 }
 		}
+		else_if = {
+			limit = { has_idea = NIG_efficent_government_spending_reform_idea }
+			add_to_temp_variable = { tax_gain_multiplier = 0.10 }
+		}
 	}
 	#Italy
 	if = {
@@ -323,6 +310,30 @@ calculate_additional_income_rate = {
 		multiply_variable = { additional_income_iranian_aid = 0.02 }	#weekly
 		add_to_variable = { additional_income_rate = additional_income_iranian_aid }
 	}
+	if = {
+		limit = { has_idea = AFG_idea_Opium_Economy }
+		set_variable = { additional_income_AFG_idea_Opium_Economy = population_total }
+		divide_variable = { additional_income_AFG_idea_Opium_Economy = 10 }	#Millions of people
+		multiply_variable = { additional_income_AFG_idea_Opium_Economy = 0.10 } #per million
+		multiply_variable = { additional_income_AFG_idea_Opium_Economy = 0.50 }	#weekly
+		add_to_variable = { additional_income_rate = additional_income_AFG_idea_Opium_Economy }
+	}
+	if = {
+		limit = { has_idea = AFG_idea_Opium_barons }
+		set_variable = { additional_income_AFG_idea_Opium_barons = population_total }
+		divide_variable = { additional_income_AFG_idea_Opium_barons = 10 }	#Millions of people
+		multiply_variable = { additional_income_AFG_idea_Opium_barons = 0.15 } #per million
+		multiply_variable = { additional_income_AFG_idea_Opium_barons = 0.50 }	#weekly
+		add_to_variable = { additional_income_rate = additional_income_AFG_idea_Opium_barons }
+	}
+	if = {
+		limit = { has_idea = AFG_idea_state_sponsored_opium_industry }
+		set_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = population_total }
+		divide_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 10 }	#Millions of people
+		multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.20 } #per million
+		multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.50 }	#weekly
+		add_to_variable = { additional_income_rate = additional_income_AFG_idea_state_sponsored_opium_industry }
+	}
 
 	# EU
 	if = {
@@ -399,6 +410,15 @@ calculate_additional_income_rate = {
 			limit = { has_idea = BOT_renewable_focused_energy_rich }
 			set_variable = { additional_income_BOT_renewable_focused_energy_rich = 0.08 }
 			add_to_variable = { additional_income_rate = additional_income_BOT_renewable_focused_energy_rich }
+		}
+	}
+	##Brazil
+	if = {
+		limit = { original_tag = BRA  }
+		if = {
+			limit = { has_idea = BRA_idea_plano_real }
+			set_variable = { additional_income_BRA_plano_real = 0.25 }
+			add_to_variable = { additional_income_rate = additional_income_BRA_plano_real }
 		}
 	}
 }
@@ -661,6 +681,31 @@ update_military_rate = {
 		divide_variable = { array_defence_spend^i = gdp_defence_modifier_industry }
 	}
 
+	#Air & Missile Defense - Papinian7
+	set_temp_variable = { temp_NSAM_AD_costs_total = var_NSAM_AD_costs_total }
+	set_temp_variable = { temp_SAM_AD_costs_total = var_SAM_AD_costs_total }
+	set_temp_variable = { temp_NSAM_MD_costs_total = var_NSAM_MD_costs_total }
+	set_temp_variable = { temp_SAM_MD_costs_total = var_SAM_MD_costs_total }
+	set_temp_variable = { temp_NABM_costs_total = var_NABM_costs_total }
+	set_temp_variable = { temp_ABM_costs_total = var_ABM_costs_total }
+
+	divide_temp_variable = { temp_NSAM_AD_costs_total = 365 }
+	divide_temp_variable = { temp_SAM_AD_costs_total = 365 }
+	divide_temp_variable = { temp_NSAM_MD_costs_total = 365 }
+	divide_temp_variable = { temp_SAM_MD_costs_total = 365 }
+	divide_temp_variable = { temp_NABM_costs_total = 365 }
+	divide_temp_variable = { temp_ABM_costs_total = 365 }
+	for_each_loop = {
+		array = array_defence_spend
+		index = i
+		add_to_variable = { array_defence_spend^i = temp_NSAM_AD_costs_total }
+		add_to_variable = { array_defence_spend^i = temp_SAM_AD_costs_total }
+		add_to_variable = { array_defence_spend^i = temp_NSAM_MD_costs_total }
+		add_to_variable = { array_defence_spend^i = temp_SAM_MD_costs_total }
+		add_to_variable = { array_defence_spend^i = temp_NABM_costs_total }
+		add_to_variable = { array_defence_spend^i = temp_ABM_costs_total }
+	}
+
 	## Calculate the cost of fielded military ##
 	### Land ###
 	#Below sets up the personnel cost for mil spending based on how many battalions a country has (divided into special, elite, regular and irregular units)
@@ -670,7 +715,7 @@ update_military_rate = {
 
 	#Count number of elite units - Kal's note; set normal support battalions to be regular
 	set_temp_variable = { elite_btn = num_battalions_with_type@L_Air_assault_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Arm_Air_assault_Bat }
+	add_to_temp_variable = { var = elite_btn value = num_battalions_with_type@Arm_Air_assault_Bat }
 	add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Air_Inf_Bat }
 	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mot_Air_Inf_Bat }
 	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mech_Air_Inf_Bat }
@@ -736,6 +781,44 @@ update_military_rate = {
 		set_temp_variable = { minor_count = num_ships_with_type@frigate }
 		add_to_temp_variable = { minor_count = num_ships_with_type@corvette }
 		add_to_temp_variable = { minor_count = num_ships_with_type@diesel_attack_submarine }
+
+		#Add higher costs for nuclear weapons capability - Papinian7
+		# nuclear status 'Nuclear Navy' +30% ship costs
+		## capital
+		# nuclear_cruiser
+		set_temp_variable = { temp_nuclear_cruiser = num_ships_with_type@nuclear_cruiser }
+		multiply_temp_variable = { temp_nuclear_cruiser = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { capital_count_nukes = temp_nuclear_cruiser }
+		# cruiser
+		set_temp_variable = { temp_cruiser = num_ships_with_type@cruiser }
+		multiply_temp_variable = { temp_cruiser = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { capital_count_nukes = temp_cruiser }
+		# attack_submarine
+		set_temp_variable = { temp_attack_submarine = num_ships_with_type@attack_submarine }
+		multiply_temp_variable = { temp_attack_submarine = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { capital_count_nukes = temp_attack_submarine }
+		# missile_submarine
+		set_temp_variable = { temp_missile_submarine = num_ships_with_type@missile_submarine }
+		multiply_temp_variable = { temp_missile_submarine = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { capital_count_nukes = temp_missile_submarine }
+		## destroyer
+		set_temp_variable = { temp_destroyer = num_ships_with_type@destroyer }
+		multiply_temp_variable = { temp_destroyer = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { destroyer_count_nukes = temp_destroyer }
+		## screen
+		# frigate
+		set_temp_variable = { temp_frigate = num_ships_with_type@frigate }
+		multiply_temp_variable = { temp_frigate = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { minor_count_nukes = temp_frigate }
+		# diesel_attack_submarine
+		set_temp_variable = { temp_diesel_attack_submarine = num_ships_with_type@diesel_attack_submarine }
+		multiply_temp_variable = { temp_diesel_attack_submarine = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { minor_count_nukes = temp_diesel_attack_submarine }
+
+		## add to count
+		add_to_temp_variable = { capital_count = capital_count_nukes }
+		add_to_temp_variable = { destroyer_count = destroyer_count_nukes }
+		add_to_temp_variable = { minor_count = minor_count_nukes }
 	}
 	else_if = {
 		limit = { has_dlc = "Man the Guns" }
@@ -745,9 +828,10 @@ update_military_rate = {
 		#Count number of capital/large ships
 		set_temp_variable = { capital_count = num_ships_with_type@battleship_mtg }
 		add_to_temp_variable = { capital_count = num_ships_with_type@cruiser_mtg }
-		add_to_temp_variable = { capital_count = num_ships_with_type@battleship_mtg }
+		#add_to_temp_variable = { capital_count = num_ships_with_type@battleship_mtg } # seems to be a bug
 		add_to_temp_variable = { capital_count = num_ships_with_type@battle_cruiser_mtg }
 		add_to_temp_variable = { capital_count = num_ships_with_type@missile_submarine_mtg }
+
 
 		#Count number of destroyers
 		set_temp_variable = { destroyer_count = num_ships_with_type@destroyer_mtg }
@@ -757,6 +841,45 @@ update_military_rate = {
 		set_temp_variable = { minor_count = num_ships_with_type@frigate_mtg }
 		add_to_temp_variable = { minor_count = num_ships_with_type@corvette_mtg }
 		add_to_temp_variable = { minor_count = num_ships_with_type@attack_submarine_mtg }
+
+		#Add higher costs for nuclear weapons capability - Papinian7
+		# nuclear status 'Nuclear Navy' +30% ship costs
+		## capital
+		# battleship_mtg
+		set_temp_variable = { temp_battleship_mtg = num_ships_with_type@battleship_mtg }
+		multiply_temp_variable = { temp_battleship_mtg = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { capital_count_nukes = temp_battleship_mtg }
+		# cruiser_mtg
+		set_temp_variable = { temp_cruiser_mtg = num_ships_with_type@cruiser_mtg }
+		multiply_temp_variable = { temp_cruiser_mtg = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { capital_count_nukes = temp_cruiser_mtg }
+		# battle_cruiser_mtg
+		set_temp_variable = { temp_battle_cruiser_mtg = num_ships_with_type@battle_cruiser_mtg }
+		multiply_temp_variable = { temp_battle_cruiser_mtg = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { capital_count_nukes = temp_battle_cruiser_mtg }
+		# missile_submarine_mtg
+		set_temp_variable = { temp_missile_submarine_mtg = num_ships_with_type@missile_submarine_mtg }
+		multiply_temp_variable = { temp_missile_submarine_mtg = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { capital_count_nukes = temp_missile_submarine_mtg }
+		## destroyer
+		# destroyer_mtg
+		set_temp_variable = { temp_destroyer_mtg = num_ships_with_type@destroyer_mtg }
+		multiply_temp_variable = { temp_destroyer_mtg = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { destroyer_count_nukes = temp_destroyer_mtg }
+		# stealth_destroyer_mtg
+		set_temp_variable = { temp_stealth_destroyer_mtg = num_ships_with_type@stealth_destroyer_mtg }
+		multiply_temp_variable = { temp_stealth_destroyer_mtg = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { destroyer_count_nukes = temp_stealth_destroyer_mtg }
+		## screen
+		# frigate_mtg
+		set_temp_variable = { temp_frigate_mtg = num_ships_with_type@frigate_mtg }
+		multiply_temp_variable = { temp_frigate_mtg = var_nuclear_status_ship_cost_factor }
+		add_to_temp_variable = { minor_count_nukes = temp_frigate_mtg }
+
+		## add to count
+		add_to_temp_variable = { capital_count = capital_count_nukes }
+		add_to_temp_variable = { destroyer_count = destroyer_count_nukes }
+		add_to_temp_variable = { minor_count = minor_count_nukes }
 	}
 
 	#Multiply each category with a weight value, and then add up categories together (eg. one carrier is worth 10 small ships etc). Use these if you want to control costs of different ships to each other - Kal's note: changed math to match land stuff
@@ -814,16 +937,106 @@ update_military_rate = {
 	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@L_Strike_fighter_equipment }
 	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@CV_L_Strike_fighter_equipment }
 
+	#Add higher costs for nuclear weapons capability - Papinian7
+	# nuclear status 'Nuclear Air Force' +30% planes costs or 'Nuclear Triad' +25% planes costs
+	### strategic_airforce
+	## strategic_bomber
+	# equipment
+	set_temp_variable = { temp_strategic_airforce_equipment = num_equipment@strategic_bomber_equipment }
+	multiply_temp_variable = { temp_strategic_airforce_equipment = var_nuclear_status_planes_cost_factor }
+	divide_temp_variable = { temp_strategic_airforce_equipment = 4 }
+	# deployed
+	set_temp_variable = { temp_strategic_airforce_deployed = num_deployed_planes_with_type@strategic_bomber_equipment }
+	multiply_temp_variable = { temp_strategic_airforce_deployed = var_nuclear_status_planes_cost_factor }
+	# add
+	add_to_temp_variable = { strategic_airforce = temp_strategic_airforce_equipment }
+	add_to_temp_variable = { strategic_airforce = temp_strategic_airforce_deployed }
+	### regular_airforce
+	set_temp_variable = { temp_regular_airforce = 0 }
+	## MR_Fighter_equipment
+	# equipment
+	set_temp_variable = { temp_MR_Fighter_equipment = num_equipment@MR_Fighter_equipment }
+	multiply_temp_variable = { temp_MR_Fighter_equipment = var_nuclear_status_planes_cost_factor }
+	divide_temp_variable = { temp_MR_Fighter_equipment = 4 }
+	# deployed
+	set_temp_variable = { temp_MR_Fighter_deployed = num_deployed_planes_with_type@MR_Fighter_equipment }
+	multiply_temp_variable = { temp_MR_Fighter_deployed = var_nuclear_status_planes_cost_factor }
+	# add
+	add_to_temp_variable = { temp_regular_airforce = temp_MR_Fighter_equipment }
+	add_to_temp_variable = { temp_regular_airforce = temp_MR_Fighter_deployed }
+	## CV_MR_Fighter_equipment
+	# equipment
+	set_temp_variable = { temp_CV_MR_Fighter_equipment = num_equipment@CV_MR_Fighter_equipment }
+	multiply_temp_variable = { temp_CV_MR_Fighter_equipment = var_nuclear_status_planes_cost_factor }
+	divide_temp_variable = { temp_CV_MR_Fighter_equipment = 4 }
+	# deployed
+	set_temp_variable = { temp_CV_MR_Fighter_deployed = num_deployed_planes_with_type@CV_MR_Fighter_equipment }
+	multiply_temp_variable = { temp_CV_MR_Fighter_deployed = var_nuclear_status_planes_cost_factor }
+	# add
+	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_equipment }
+	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_deployed }
+	## Strike_fighter_equipment
+	# equipment
+	set_temp_variable = { temp_Strike_fighter_equipment = num_equipment@Strike_fighter_equipment }
+	multiply_temp_variable = { temp_Strike_fighter_equipment = var_nuclear_status_planes_cost_factor }
+	divide_temp_variable = { temp_Strike_fighter_equipment = 4 }
+	# deployed
+	set_temp_variable = { temp_Strike_fighter_deployed = num_deployed_planes_with_type@Strike_fighter_equipment }
+	multiply_temp_variable = { temp_Strike_fighter_deployed = var_nuclear_status_planes_cost_factor }
+	# add
+	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_equipment }
+	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_deployed }
+
+	# add regular_airforce
+	add_to_temp_variable = { regular_airforce = temp_regular_airforce }
+
+	### Missiles ### - Papinian7
+	## Missiles add to the Air Force Personnel Cost
+	##Calculate TEL_base and missile_silo
+	#Don't calculate stockpiled missiles, they already cost money when produced
+	# missile_silo
+	hidden_effect = {
+		# missile_silo
+		set_temp_variable = { num_missile_silo = 0 }
+		# TEL_base
+		set_temp_variable = { num_TEL_base = 0 }
+		##Calculate anti_air_building and missile_defense_station
+		#Don't calculate stockpiled SAM and ABM, they are calculated separate
+		# anti_air_building
+		set_temp_variable = { num_anti_air_building = 0 }
+		# missile_defense_station
+		set_temp_variable = { num_missile_defense_station = 0 }
+		every_controlled_state = {
+			add_to_temp_variable = { PREV.num_missile_silo = building_level@missile_silo }
+			add_to_temp_variable = { PREV.num_TEL_base = building_level@TEL_base }
+			add_to_temp_variable = { PREV.num_anti_air_building = building_level@anti_air_building }
+			add_to_temp_variable = { PREV.num_missile_defense_station = building_level@missile_defense_station }
+		}
+	}
+
+
 	#Multiply each category with a weight value, and then add up categories together (eg. one strategic bomber is worth 14 helicopters etc) - Kal's note: changed math to match land/navy stuff
 	multiply_temp_variable = { strategic_airforce = 14 }
 	multiply_temp_variable = { expensive_airforce = 5 }
 	multiply_temp_variable = { regular_airforce = 3 }
 	multiply_temp_variable = { cheap_airforce = 1 }
+	# weight value for TEL_base and missile_silo - Papinian7
+	multiply_temp_variable = { num_missile_silo = 28 }
+	multiply_temp_variable = { num_TEL_base = 14 }
+	multiply_temp_variable = { num_anti_air_building = 14 }
+	multiply_temp_variable = { num_missile_defense_station = 16 }
+
 	set_temp_variable = { airforce_count = 0 }
 	add_to_temp_variable = { airforce_count = strategic_airforce }
 	add_to_temp_variable = { airforce_count = expensive_airforce }
 	add_to_temp_variable = { airforce_count = regular_airforce }
 	add_to_temp_variable = { airforce_count = cheap_airforce }
+	# add missile building to air force
+	add_to_temp_variable = { airforce_count = num_missile_silo }
+	add_to_temp_variable = { airforce_count = num_TEL_base }
+	add_to_temp_variable = { airforce_count = num_anti_air_building }
+	add_to_temp_variable = { airforce_count = num_missile_defense_station }
+	##
 
 	### Total ###
 	#Control factors to scale different branches with each other in cost. Use these control how expensive different branches are against each other
@@ -898,16 +1111,14 @@ update_military_rate = {
 		}
 	}
 	##Ukraine
-	if = {
-		limit = { original_tag = UKR }
+	if = { limit = { original_tag = UKR }
 		if = {
 			limit = { has_idea = UKR_to_many_generals }
 			add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
 		}
 	}
 	##Botswana
-	if = {
-		limit = { original_tag = BOT }
+	if = { limit = { original_tag = BOT }
 		if = {
 			limit = {
 				OR = {
@@ -2260,11 +2471,11 @@ calculate_gdp_modifiers = {
 
 	#Population growth rate
 	#-0.389 * GDP/C + 2.989
-	#Cap at -1.15
+	#Cap at -1
 	set_variable = { monthly_population_gdp_modifier = gdp_per_capita }
 	multiply_variable = { monthly_population_gdp_modifier = -0.389 }
 	add_to_variable = { monthly_population_gdp_modifier = 2.989 }
-	clamp_variable = { var = monthly_population_gdp_modifier min = -1.15 }
+	clamp_variable = { var = monthly_population_gdp_modifier min = -1 }
 
 	#Research speed factor
 	#0.003 * GDP/C - 0.153
