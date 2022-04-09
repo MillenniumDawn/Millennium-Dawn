@@ -9,31 +9,6 @@
 #There are 8 project types * 5 of each allowed per country = 40 investments possible in one country * 210 countries the player can invest in = 8400 possibile investments for the player
 #Now if the AI also does the same that's 210 * 8400 = 1,764,000 possible investments possible
 
-# BUILDING CONSTRUCTION MONETARY COSTS
-@BUILD_COST_CIVILIAN_FACTORY = 7.50
-@BUILD_COST_MILITARY_FACTORY = 8.00
-@BUILD_COST_DOCKYARD = 7.50
-@BUILD_COST_INFRASTRUCTURE = 3.5
-@BUILD_COST_OFFICES = 12.0
-@BUILD_COST_ANTIAIR = 3.25
-@BUILD_COST_RADAR = 1.75
-@BUILD_COST_AIRBASE = 2.25
-@BUILD_COST_FUEL_SILO = 3
-@BUILD_COST_INTERNET_STATION = 3.0
-@BUILD_COST_REFINERY = 4.25
-
-@BUILD_CONST_COST_CIVILIAN_FACTORY = 38000
-@BUILD_CONST_COST_MILITARY_FACTORY = 42000
-@BUILD_CONST_COST_DOCKYARD = 45000
-@BUILD_CONST_COST_INFRASTRUCTURE = 12500
-@BUILD_CONST_COST_OFFICES = 40000
-@BUILD_CONST_COST_ANTIAIR = 12500
-@BUILD_CONST_COST_RADAR = 4000
-@BUILD_CONST_COST_AIRBASE = 1250
-@BUILD_CONST_COST_FUEL_SILO = 12000
-@BUILD_CONST_COST_INTERNET_STATION = 4000
-@BUILD_CONST_COST_REFINERY = 25000
-
 # Country:
 #
 # var: AC_active_projects - number of active projects
@@ -66,32 +41,34 @@
 # This is used only ONCE as it sets global variables.
 # Please do not trigger this more than once.
 init_investment_system = {
-	### BUILDING CONSTRUCTION COSTS
-
-	set_variable = { global.BUILD_CONST_COST_CIVILIAN_FACTORY = 38000 }
-	set_variable = { global.BUILD_CONST_COST_MILITARY_FACTORY = 42000 }
-	set_variable = { global.BUILD_CONST_COST_DOCKYARD = 45000 }
-	set_variable = { global.BUILD_CONST_COST_INFRASTRUCTURE = 12500 }
-	set_variable = { global.BUILD_CONST_COST_OFFICES = 40000 }
-	set_variable = { global.BUILD_CONST_COST_ANTIAIR = 12500 }
-	set_variable = { global.BUILD_CONST_COST_RADAR = 4000 }
-	set_variable = { global.BUILD_CONST_COST_AIRBASE = 1250 }
-	set_variable = { global.BUILD_CONST_COST_FUEL_SILO = 12000 }
-	set_variable = { global.BUILD_CONST_COST_INTERNET_STATION = 4000 }
-	set_variable = { global.BUILD_CONST_COST_REFINERY = 25000 }
+	# NOTE: Increased cost for construction AND monetary by a flat 25% (excluding Offices which are now 50% more expensive monetarily.)
+	# NOTE: Fuck Fire_Hair for you abusing my shit you filthy Malmo looking Swede.
+	# NOTE: Love, Birdy <3
+	### BUILDING CONSTRUCTION COST
+	set_variable = { global.BUILD_CONST_COST_CIVILIAN_FACTORY = 47500 }
+	set_variable = { global.BUILD_CONST_COST_MILITARY_FACTORY = 52500 }
+	set_variable = { global.BUILD_CONST_COST_DOCKYARD = 56250 }
+	set_variable = { global.BUILD_CONST_COST_INFRASTRUCTURE = 15625 }
+	set_variable = { global.BUILD_CONST_COST_OFFICES = 50000 }
+	set_variable = { global.BUILD_CONST_COST_ANTIAIR = 15625 }
+	set_variable = { global.BUILD_CONST_COST_RADAR = 5000 }
+	set_variable = { global.BUILD_CONST_COST_AIRBASE = 1575 }
+	set_variable = { global.BUILD_CONST_COST_FUEL_SILO = 15000 }
+	set_variable = { global.BUILD_CONST_COST_INTERNET_STATION = 5000 }
+	set_variable = { global.BUILD_CONST_COST_REFINERY = 31250 }
 
 	### BUILDING MONETARY COST
-	set_variable = { global.BUILD_COST_CIVILIAN_FACTORY = 7.50 }
-	set_variable = { global.BUILD_COST_MILITARY_FACTORY = 8.0 }
-	set_variable = { global.BUILD_COST_DOCKYARD = 7.50 }
-	set_variable = { global.BUILD_COST_INFRASTRUCTURE = 3.5 }
-	set_variable = { global.BUILD_COST_OFFICES = 12.0 }
-	set_variable = { global.BUILD_COST_ANTIAIR = 3.25 }
-	set_variable = { global.BUILD_COST_RADAR = 1.75 }
-	set_variable = { global.BUILD_COST_AIRBASE = 2.25 }
-	set_variable = { global.BUILD_COST_FUEL_SILO = 3 }
-	set_variable = { global.BUILD_COST_INTERNET_STATION = 3.0 }
-	set_variable = { global.BUILD_COST_REFINERY = 4.25 }
+	set_variable = { global.BUILD_COST_CIVILIAN_FACTORY = 9.375 }
+	set_variable = { global.BUILD_COST_MILITARY_FACTORY = 10.0 }
+	set_variable = { global.BUILD_COST_DOCKYARD = 9.375 }
+	set_variable = { global.BUILD_COST_INFRASTRUCTURE = 4.375 }
+	set_variable = { global.BUILD_COST_OFFICES = 16.0 }
+	set_variable = { global.BUILD_COST_ANTIAIR = 4.25 }
+	set_variable = { global.BUILD_COST_RADAR = 2.25 }
+	set_variable = { global.BUILD_COST_AIRBASE = 3.375 }
+	set_variable = { global.BUILD_COST_FUEL_SILO = 3.75 }
+	set_variable = { global.BUILD_COST_INTERNET_STATION = 3.75 }
+	set_variable = { global.BUILD_COST_REFINERY = 6.375 }
 
 	every_country = {
 		if = { limit = { is_ai = no }
@@ -465,17 +442,7 @@ start_project_two = {
 		add_to_variable = { active_projects = 1 }
 
 		# Initializes the target decisions for the investment project
-		meta_effect = {
-			text = {
-				activate_decision = AC_project_[x]_decision
-
-				var:project_target_country^project = {
-					set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
-					activate_targeted_decision = { target = PREV decision = AC_project_[x]_target_decision }
-				}
-			}
-			x = "[?project]"
-		}
+		initialize_start_project_decisions = yes
 
 		clear_variable = project
 		clear_variable = project_type
@@ -524,17 +491,7 @@ start_project = {
 			add_to_variable = { active_projects = 1 }
 
 			# Initializes the target decisions for the investment project
-			meta_effect = {
-				text = {
-					activate_decision = AC_project_[x]_decision
-
-					var:project_target_country^project = {
-						set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
-						activate_targeted_decision = { target = ROOT decision = AC_project_[x]_target_decision }
-					}
-				}
-				x = "[?ROOT.project]"
-			}
+			initialize_start_project_decisions = yes
 
 			clear_variable = project
 			clear_variable = project_type
@@ -571,20 +528,7 @@ complete_project = {
 
 						PREV = { init_project = yes }
 
-						meta_effect = {
-							text = {
-								activate_decision = AC_project_[x]_decision
-
-								PREV = {
-									CONTROLLER = {
-										set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
-										remove_targeted_decision = { target = ROOT decision = AC_project_[x]_target_decision }
-										activate_targeted_decision = { target = ROOT decision = AC_project_[x]_target_decision }
-									}
-								}
-							}
-							x = "[?ROOT.project]"
-						}
+						initialize_complete_project_decisions = yes
 					}
 					else = {
 						end_project = yes
@@ -609,18 +553,7 @@ end_project = {
 			remove_from_array = { array = projects_in_state value = PREV.id }
 		}
 
-		meta_effect = {
-			text = {
-				var:project_target_country^project = {
-					clear_variable = project_target_construction_duration
-					remove_targeted_decision = { target = PREV decision = AC_project_[x]_target_decision }
-				}
-
-				set_variable = { project_array^project = 1 }
-				country_event = { id = AC_event.3[x] }
-			}
-			x = "[?project]"
-		}
+		initialize_end_project_decisions = yes
 
 		clear_variable = project_build_amount^project
 		clear_variable = project_building_type^project
@@ -640,4 +573,461 @@ end_project = {
 	clear_variable = project
 
 	refresh_gui = yes
+}
+
+initialize_start_project_decisions = {
+	# meta_effect = {
+	# 	text = {
+	# 		activate_decision = AC_project_[x]_decision
+
+	# 		var:project_target_country^project = {
+	# 			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+	# 			activate_targeted_decision = { target = PREV decision = AC_project_[x]_target_decision }
+	# 		}
+	# 	}
+	# 	x = "[?project]"
+	# }
+
+	if = { limit = { check_variable = { project = 0 } }
+		activate_decision = AC_project_0_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_0_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 1 } }
+		activate_decision = AC_project_1_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_1_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 2 } }
+		activate_decision = AC_project_2_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_2_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 3 } }
+		activate_decision = AC_project_3_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_3_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 4 } }
+		activate_decision = AC_project_4_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_4_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 5 } }
+		activate_decision = AC_project_5_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_5_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 6 } }
+		activate_decision = AC_project_6_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_6_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 7 } }
+		activate_decision = AC_project_7_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_7_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 8 } }
+		activate_decision = AC_project_8_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_8_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 9 } }
+		activate_decision = AC_project_9_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_9_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 10 } }
+		activate_decision = AC_project_10_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_10_target_decision }
+		}
+
+	}
+	else_if = { limit = { check_variable = { project = 11 } }
+		activate_decision = AC_project_11_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_11_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 12 } }
+		activate_decision = AC_project_12_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_12_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 13 } }
+		activate_decision = AC_project_13_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_13_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 14 } }
+		activate_decision = AC_project_14_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^ROOT.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_14_target_decision }
+		}
+	}
+}
+
+initialize_complete_project_decisions = {
+	# meta_effect = {
+	# 	text = {
+	# 		activate_decision = AC_project_[x]_decision
+
+	# 		PREV = {
+	# 			CONTROLLER = {
+	# 				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+	# 				remove_targeted_decision = { target = ROOT decision = AC_project_[x]_target_decision }
+	# 				activate_targeted_decision = { target = ROOT decision = AC_project_[x]_target_decision }
+	# 			}
+	# 		}
+	# 	}
+	# 	x = "[?ROOT.project]"
+	# }
+
+	if = { limit = { check_variable = { ROOT.project = 0 } }
+		activate_decision = AC_project_0_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_0_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_0_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 1 } }
+		activate_decision = AC_project_1_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_1_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_1_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 2 } }
+		activate_decision = AC_project_2_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_2_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_2_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 3 } }
+		activate_decision = AC_project_3_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_3_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_3_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 4 } }
+		activate_decision = AC_project_4_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_4_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_4_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 5 } }
+		activate_decision = AC_project_5_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_5_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_5_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 6 } }
+		activate_decision = AC_project_6_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_6_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_6_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 7 } }
+		activate_decision = AC_project_7_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_7_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_7_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 8 } }
+		activate_decision = AC_project_8_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_8_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_8_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 9 } }
+		activate_decision = AC_project_9_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_9_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_9_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 10 } }
+		activate_decision = AC_project_10_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_10_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_10_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 11 } }
+		activate_decision = AC_project_11_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_11_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_11_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 12 } }
+		activate_decision = AC_project_12_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_12_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_12_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 13 } }
+		activate_decision = AC_project_13_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_13_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_13_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 14 } }
+		activate_decision = AC_project_14_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_14_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_14_target_decision }
+			}
+		}
+	}
+}
+
+initialize_end_project_decisions = {
+	if = { limit = { check_variable = { project = 0 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_0_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.30 }
+	}
+	else_if = { limit = { check_variable = { project = 1 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_1_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.31 }
+	}
+	else_if = { limit = { check_variable = { project = 2 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_2_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.32 }
+	}
+	else_if = { limit = { check_variable = { project = 3 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_3_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.33 }
+	}
+	else_if = { limit = { check_variable = { project = 4 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_4_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.34 }
+	}
+	else_if = { limit = { check_variable = { project = 5 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_5_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.35 }
+	}
+	else_if = { limit = { check_variable = { project = 6 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_6_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.36 }
+	}
+	else_if = { limit = { check_variable = { project = 7 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_7_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.37 }
+	}
+	else_if = { limit = { check_variable = { project = 8 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_8_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.38 }
+	}
+	else_if = { limit = { check_variable = { project = 9 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_9_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.39 }
+	}
+	else_if = { limit = { check_variable = { project = 10 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_10_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.310 }
+	}
+	else_if = { limit = { check_variable = { project = 11 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_11_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.311 }
+	}
+	else_if = { limit = { check_variable = { project = 12 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_12_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.312 }
+	}
+	else_if = { limit = { check_variable = { project = 13 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_13_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.313 }
+	}
+	else_if = { limit = { check_variable = { project = 14 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_14_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.314 }
+	}
 }

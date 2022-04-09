@@ -46,7 +46,7 @@ country_event = {
 		name = internal_factions_events.0.o2
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.0.o2 executed"	#Do nothing
 		ai_chance = { factor = 1 }
-		set_temp_variable = { temp_opinion = -5 }
+		set_temp_variable = { temp_opinion = -10 }
 		change_small_medium_business_owners_opinion = yes
 	}
 	option = {
@@ -56,7 +56,7 @@ country_event = {
 		set_temp_variable = { corp_change = 3 }
 		modify_corporate_tax_rate_effect = yes
 
-		set_temp_variable = { temp_opinion = -5 }
+		set_temp_variable = { temp_opinion = -15 }
 		change_small_medium_business_owners_opinion = yes
 		change_fossil_fuel_industry_opinion = yes
 		change_oligarchs_opinion = yes
@@ -79,8 +79,9 @@ country_event = {
 			has_idea = labour_unions
 			check_variable = { labour_unions_opinion > 49 }
 		}
-		set_temp_variable = { temp_opinion = -5 }
+		set_temp_variable = { temp_opinion = 5 }
 		change_labour_unions_opinion = yes
+		add_political_power = -50
 	}
 }
 
@@ -94,7 +95,10 @@ country_event = {
 
 	is_triggered_only = yes
 	trigger = {
-		has_idea = small_medium_business_owners
+		OR = {
+			has_idea = small_medium_business_owners
+			has_idea = industrial_conglomerates
+		}
 	}
 
 
@@ -168,8 +172,9 @@ country_event = {
 		name = internal_factions_events.1.o3
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.1.o3 executed"	#State buys it
 		ai_chance = { factor = 1 }
-		set_temp_variable = { treasury_change = -5 }
-		modify_treasury_effect = yes
+		medium_expenditure = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_international_bankers_opinion = yes
 		if = {
@@ -296,8 +301,7 @@ country_event = {
 		name = internal_factions_events.3.o1
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.3.o1 executed"	#Grant more money
 		ai_chance = { factor = 1 }
-		set_temp_variable = { treasury_change = -5 }
-		modify_treasury_effect = yes
+		medium_expenditure = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_small_medium_business_owners_opinion = yes
 		if = {
@@ -363,10 +367,6 @@ country_event = {
 		has_idea = international_bankers
 	}
 
-	mean_time_to_happen = {
-		days = 1
-	}
-
 	option = {
 		name = internal_factions_events.4.o1
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.4.o1 executed"	#Force banks to give money
@@ -413,8 +413,7 @@ country_event = {
 		name = internal_factions_events.4.o3
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.4.o3 executed"	#The state steps in
 		ai_chance = { factor = 1 }
-		set_temp_variable = { treasury_change = -5 }
-		modify_treasury_effect = yes
+		medium_expenditure = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_small_medium_business_owners_opinion = yes
 		if = {
@@ -569,10 +568,6 @@ country_event = {
 	trigger = {
 		has_idea = small_medium_business_owners
 		has_idea = labour_unions
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -736,7 +731,15 @@ country_event = {
 	picture = GFX_internal_faction_business_purchase
 	is_triggered_only = yes
 	trigger = {
-		has_idea = small_medium_business_owners
+		OR = {
+			has_idea = industrial_conglomerates
+			has_idea = the_donju
+			has_idea = the_bazaar
+			has_idea = chaebols
+			has_idea = small_medium_business_owners
+			has_idea = international_bankers
+			has_idea = wall_street
+		}
 		check_variable = { small_medium_business_owners_opinion > 60 }
 	}
 
@@ -754,6 +757,7 @@ country_event = {
 	option = {
 		name = internal_factions_events.9.o2
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.9.o2 executed"	#Don't buy
+		add_political_power = 100
 
 		ai_chance = {
 			factor = 1
@@ -799,10 +803,6 @@ country_event = {
 	trigger = {
 		has_idea = small_medium_business_owners
 		check_variable = { small_medium_business_owners_opinion < 51 }
-	}
-
-	mean_time_to_happen = {
-		days = 1
 	}
 
 	option = {
@@ -914,17 +914,22 @@ country_event = {
 			has_idea = wall_street
 			has_idea = chaebols
 		}
+		NOT = { has_country_flag = large_company_goes_bankrupt }
 	}
 
 	option = {
 		name = internal_factions_events.13.a
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.13.a executed"	#Damn
+		set_country_flag = { flag = large_company_goes_bankrupt value = 1 days = 365 }
 
 		set_temp_variable = { temp_opinion = -10 }
 		change_small_medium_business_owners_opinion = yes
 		change_industrial_conglomerates_opinion = yes
 		change_international_bankers_opinion = yes
 		change_the_donju_opinion = yes
+		change_wall_street_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_chaebols_opinion = yes
 	}
 }
 
@@ -1019,7 +1024,8 @@ country_event = {
 		NOT = {
 			has_country_flag = health_decrease_blocked
 			has_country_flag = health_increase_blocked
-		}
+			has_idea = health_06 # Can't have this if you are max
+ 		}
 	}
 
 	option = { # Agree to the Demands
@@ -1038,8 +1044,8 @@ country_event = {
 	}
 
 	option = { # Deny the Demands
-		name = internal_factions_events.15.a
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.15.a executed"
+		name = internal_factions_events.15.b
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.15.b executed"
 
 		set_temp_variable = { temp_opinion = -10 }
 		change_labour_unions_opinion = yes
@@ -1064,6 +1070,7 @@ country_event = {
 		NOT = {
 			has_country_flag = social_decrease_blocked
 			has_country_flag = social_increase_blocked
+			has_idea = social_06
 		}
 	}
 
@@ -1076,6 +1083,7 @@ country_event = {
 
 		increase_social_spending = yes
 		block_social_change = yes
+		add_political_power = -50
 
 		ai_chance = {
 			factor = 1
@@ -1083,11 +1091,12 @@ country_event = {
 	}
 
 	option = { # Deny the Demands
-		name = internal_factions_events.16.a
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.16.a executed"
+		name = internal_factions_events.16.b
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.16.b executed"
 
 		set_temp_variable = { temp_opinion = -10 }
 		change_labour_unions_opinion = yes
+		add_political_power = 50
 
 		ai_chance = {
 			factor = 1
@@ -1105,29 +1114,78 @@ country_event = {
 
 	trigger = {
 		has_idea = farmers
+		OR = {
+			has_idea = industrial_conglomerates
+			has_idea = the_donju
+			has_idea = the_bazaar
+			has_idea = chaebols
+			has_idea = small_medium_business_owners
+			has_idea = international_bankers
+			has_idea = wall_street
+		}
 	}
 
-	option = {
+	option = { # Side with the Farmers
 		name = internal_factions_events.17.a
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.17.a executed"
 
+		set_temp_variable = { temp_opinion = 5 }
+		change_farmers_opinion = yes
+		set_temp_variable = { temp_opinion = -10 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_wall_street_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_chaebols_opinion = yes
+
 	}
 
-	option = {
+	option = { # Side with Businesses
 		name = internal_factions_events.17.b
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.17.b executed"
-
+		set_temp_variable = { temp_opinion = -10 }
+		change_farmers_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_wall_street_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_chaebols_opinion = yes
 	}
 
-	option = {
+	option = { # Compromise
 		name = internal_factions_events.17.c
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.17.GFX_internal_faction_tax_cut executed"
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.17.c executed"
+		add_political_power = -200
 
+		set_temp_variable = { temp_opinion = 5 }
+		change_farmers_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_wall_street_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_chaebols_opinion = yes
 	}
 
-	option = {
+	option = { # Ignore both of them
 		name = internal_factions_events.17.dd
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.17.dd executed"
 
+		add_political_power = 100
+		set_temp_variable = { temp_opinion = -5 }
+		change_farmers_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_wall_street_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_chaebols_opinion = yes
 	}
 }

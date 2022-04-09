@@ -15528,11 +15528,72 @@ news_event = {
 						has_idea = EU_member
 					}
 					### focus_EU308 effect
-					add_ideas = EU_nuke_power
-				}
-					ROOT = {
-						set_global_flag = EU_nuke_power
+					#add_ideas = EU_nuke_power
+					if = {
+						limit = {
+							NOT = { is_in_array = { array = nuclear_status_array value = 3 } }
+						}
+						set_country_flag = NPROG_completed
+						add_to_array = { nuclear_status_array = 3 }
+						add_to_array = { selected_TAG_nuclear_status_array = 3 }
+						if = {
+							limit = {
+								NOT = {
+									has_dynamic_modifier = {
+										modifier = nuclear_state_modifier
+									}
+								}
+							}
+							add_dynamic_modifier = { modifier = nuclear_state_modifier }
+						}
 					}
+					for_each_loop = {
+						array = nuclear_status_array
+						if = {
+							limit = {
+								check_variable = { nuclear_status_array^i = 6 }
+							}
+							remove_from_array = {
+								array = nuclear_status_array
+								value = 6
+								index = i
+							}
+						}
+						if = {
+							limit = {
+								check_variable = { nuclear_status_array^i = 7 }
+							}
+							remove_from_array = {
+								array = nuclear_status_array
+								value = 7
+								index = i
+							}
+						}
+					}
+					set_variable = { nukes_selected_TAG = THIS.id }
+					clear_array = THIS.selected_TAG_nuclear_status_array
+					clear_array = THIS.selected_TAG_nuclear_doctrine_array
+					var:nukes_selected_TAG = {
+						for_each_loop = {
+							array = THIS.nuclear_status_array
+							add_to_array = { THIS.selected_TAG_nuclear_status_array = v }
+						}
+						for_each_loop = {
+							array = THIS.nuclear_doctrine_array
+							add_to_array = { THIS.selected_TAG_nuclear_doctrine_array = v }
+						}
+					}
+					var:nukes_selected_TAG = {
+						set_variable = { THIS.var_selected_TAG_LEU_selected = var_LEU_selected }
+					}
+					var:nukes_selected_TAG = {
+						set_variable = { THIS.var_selected_TAG_HEU_selected = var_HEU_selected }
+					}
+					update_nuclear_deterrence = yes
+				}
+				ROOT = {
+					set_global_flag = EU_nuke_power
+				}
 				clr_global_flag = focus_EU308_voted
 				clr_global_flag = focus_EU308_QMV_voted
 				clr_global_flag = focus_EU308_maj_voted
