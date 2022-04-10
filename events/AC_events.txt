@@ -37,6 +37,7 @@ country_event = {
 		var:ROOT.AC_nation_target = {
 			country_event = { id = AC_event.10 }
 		}
+		refresh_gui = yes
 	}
 }
 
@@ -63,70 +64,34 @@ country_event = {
 			# Influence Section
 			if = {
 				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
-				set_temp_variable = { AC_influence_gain = FROM.project_monetary_cost^-1 }
-
-				# Influence Gain reduction
-				if = {
-					limit = {
-						FROM = {
-							OR = {
-								check_variable = { project_building_type^project_type = 4 } #Infra
-								check_variable = { project_building_type^project_type = 6 } #Air Base
-								check_variable = { project_building_type^project_type = 8 } #AA
-								check_variable = { project_building_type^project_type = 7 } #Radar
-								check_variable = { project_building_type^project_type = 9 } #Radar
-								check_variable = { project_building_type^project_type = 10 } #Radar
-							}
-						}
-					}
-					divide_temp_variable = { AC_influence_gain = 1.5 }
+				if = { limit = { has_global_flag = GAME_RULE_gain_0_5_percent_invest }
+					set_temp_variable = { percent_change = 0.50 }
+				}
+				else_if = { limit = { has_global_flag = GAME_RULE_gain_2_percent_invest }
+					set_temp_variable = { percent_change = 2.0 }
 				}
 				else = {
-					divide_temp_variable = { AC_influence_gain = 2.5 }
+					set_temp_variable = { percent_change = 1.0 }
 				}
-
-				multiply_temp_variable = { AC_influence_gain = FROM.influence_multiplier }
-				round_temp_variable = AC_influence_gain
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = FROM }
-						}
-						add_to_variable = { influence_array_val^v = AC_influence_gain }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { NOT = { has_country_flag = found } }
-					add_to_array = { influence_array = FROM.id }
-					add_to_array = { influence_array_val = AC_influence_gain }
-				}
-				clr_country_flag = found
-				recalculate_influence = yes
+				set_temp_variable = { tag_index = FROM.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 
 				# Cool Down for the Influence Gain
-				if = {
-					limit = {
-						has_global_flag = GAME_RULE_influence_cooldown_limits_14
-					}
+				if = { limit = { has_global_flag = GAME_RULE_influence_cooldown_limits_14 }
 					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 14 }
+					custom_effect_tooltip = cooldown_influence_limit_14_tooltip
 				}
-				else_if = {
-					limit = {
-						has_global_flag = GAME_RULE_influence_cooldown_limits_30
-					}
+				else_if = { limit = { has_global_flag = GAME_RULE_influence_cooldown_limits_30 }
 					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 30 }
+					custom_effect_tooltip = cooldown_influence_limit_30_tooltip
 				}
 			}
 
 			# THIS Nation
 			# take 10% of the cost of the project
 			custom_effect_tooltip = AC_event.1.o1_TT
-			if = { limit = { NOT = { has_country_flag = influence_gained_@FROM } }
-				custom_effect_tooltip = AC_event_influence_gain
-			}
+
 			set_temp_variable = { temp_investment = FROM.project_monetary_cost_effect }
 			multiply_temp_variable = { temp_investment = 0.10 }
 			add_to_variable = { treasury = temp_investment }
@@ -139,7 +104,6 @@ country_event = {
 				add = 1
 				ai_has_same_organization = yes
 			}
-
 			modifier = {
 				add = 1
 				has_opinion = { target = FROM value > 10 }
@@ -191,11 +155,11 @@ country_event = {
 			}
 			modifier = {
 				factor = 2
-				check_variable = { gdp_per_capita < 20 }
+				check_variable = { gdp_per_capita < 15 }
 			}
 			modifier = {
 				add = 5
-				num_of_factories < 50
+				num_of_factories < 30
 			}
 			modifier = { #More likely if you are a top influencer
 				factor = 2
@@ -203,6 +167,15 @@ country_event = {
 					check_variable = { influence_array^0 = FROM }
 					check_variable = { influence_array^1 = FROM }
 					check_variable = { influence_array^2 = FROM }
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					check_variable = { influence_array_val^0 > 59.999 }
+					check_variable = { debt_ratio > 0.90 }
+					check_variable = { interest_rate > 9.999 }
+					has_country_flag = recently_refused@FROM
 				}
 			}
 		}
@@ -217,6 +190,7 @@ country_event = {
 			set_country_flag = this_investment_offer_pending@PREV
 			country_event = AC_event.11
 		}
+		set_country_flag = { flag = recently_refused@FROM days = 30 value = 1 }
 
 		# AI chance for rejecting
 		ai_chance = {
@@ -290,11 +264,14 @@ country_event = {
 					NOT = { check_variable = { influence_array^2 = FROM } }
 				}
 			}
-
 			# Tag Specific Rejections
 			modifier = {
 				add = 20
 				tag = NKO
+			}
+			modifier = {
+				factor = 500
+				has_country_flag = recently_refused@FROM
 			}
 		}
 	}

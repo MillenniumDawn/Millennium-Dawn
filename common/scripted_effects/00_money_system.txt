@@ -10,21 +10,21 @@
 #int_investments_rate - money your gaining from international investments
 #resource_sale_rate - money your gaining from exports
 
-#####expense_gain - total amount of money your spending#####
-#debt_rate - How much money your country owes in debt
-#interest_rate - the interest  rate you pay DAILY on debt.
-#econ_cycle_upg_cost - cost to upgrade economic cycle
-#bureaucracy_gain cost for bureaucracy law
-#education_gain cost of education law
-#health_gain cost of health care law
-#welfare_gain cost of welfare law
-#military_rate cost of military law
-#personnel_cost - how much you pay soldiers and maintenance on equipment
+# expense_gain - total amount of money your spending
+# debt_rate - How much money your country owes in debt
+# interest_rate - the interest  rate you pay DAILY on debt.
+# econ_cycle_upg_cost - cost to upgrade economic cycle
+# bureaucracy_gain cost for bureaucracy law
+# education_gain cost of education law
+# health_gain cost of health care law
+# welfare_gain cost of welfare law
+# military_rate cost of military law
+# personnel_cost - how much you pay soldiers and maintenance on equipment
 
-#corporation_tax - Value of the Corporate taxes
-#population_tax - value of the population tax
-#corporation_tax_rate - Tax rate
-#population_tax_rate - pop tax rate
+# corporation_tax - Value of the Corporate taxes
+# population_tax - value of the population tax
+# corporation_tax_rate - Corporate Tax rate
+# population_tax_rate - pop tax rate
 
 ###Treasury reset### -- Legacy commands. Moved this functionality to a update_display command
 #In a couple places I've left a comment saying referring to treasury reset explanation. This is the explanation
@@ -99,6 +99,17 @@ calculate_tax_rate = {
 		add_to_variable = { tax_rate = population_tax_rate }
 		divide_variable = { tax_rate = 2 }
 		round_variable = tax_rate
+
+		set_variable = { tax_rate_change_5 = 250 }
+		set_variable = { tax_rate_change = 50 }
+
+		set_temp_variable = { tax_rate_multiplier = 1 }
+		add_to_temp_variable = { tax_rate_multiplier = modifier@tax_rate_change_multiplier_modifier }
+
+		multiply_variable = { tax_rate_change_5 = tax_rate_multiplier }
+		multiply_variable = { tax_rate_change = tax_rate_multiplier }
+		round_variable = tax_rate_change_5
+		round_variable = tax_rate_change
 	}
 }
 
@@ -151,97 +162,9 @@ calculate_tax_gain = {
 	divide_variable = { population_tax = 22 } #Gives TOTAL potential tax assuming 100%
 	multiply_variable = { var = population_tax value = population_tax_rate }
 
-	#Additional additive modifiers
+	# Additional additive modifiers
 	set_temp_variable = { tax_gain_multiplier = 1 }
-
-	##Economic Cycle modifiers
-	if = { limit = { has_idea = depression }
-		add_to_temp_variable = { tax_gain_multiplier = -0.40 }
-	}
-	else_if = { limit = { has_idea = recession }
-		add_to_temp_variable = { tax_gain_multiplier = -0.20 }
-	}
-	else_if = { limit = { has_idea = stagnation }
-		add_to_temp_variable = { tax_gain_multiplier = -0.10 }
-	}
-	else_if = { limit = { has_idea = stable_growth }
-		add_to_temp_variable = { tax_gain_multiplier = 0 }
-	}
-	else_if = { limit = { has_idea = fast_growth }
-		add_to_temp_variable = { tax_gain_multiplier = 0.05 }
-	}
-	else_if = { limit = { has_idea = economic_boom }
-		add_to_temp_variable = { tax_gain_multiplier = 0.10 }
-	}
-
-	##Corruption modifiers
-	if = { limit = { has_idea = paralyzing_corruption }
-		add_to_temp_variable = { tax_gain_multiplier = -0.35 }
-	}
-	else_if = { limit = { has_idea = crippling_corruption }
-		add_to_temp_variable = { tax_gain_multiplier = -0.30 }
-	}
-	else_if = { limit = { has_idea = rampant_corruption }
-		add_to_temp_variable = { tax_gain_multiplier = -0.25 }
-	}
-	else_if = { limit = { has_idea = unrestrained_corruption }
-		add_to_temp_variable = { tax_gain_multiplier = -0.20 }
-	}
-	else_if = { limit = { has_idea = systematic_corruption }
-		add_to_temp_variable = { tax_gain_multiplier = -0.15 }
-	}
-	else_if = { limit = { has_idea = widespread_corruption }
-		add_to_temp_variable = { tax_gain_multiplier = -0.10 }
-	}
-	else_if = { limit = { has_idea = medium_corruption }
-		add_to_temp_variable = { tax_gain_multiplier = -0.05 }
-	}
-	else_if = { limit = { has_idea = modest_corruption }
-		add_to_temp_variable = { tax_gain_multiplier = -0.03 }
-	}
-	else_if = { limit = { has_idea = slight_corruption }
-		add_to_temp_variable = { tax_gain_multiplier = -0.02 }
-	}
-	else_if = { limit = { has_idea = negligible_corruption }
-		add_to_temp_variable = { tax_gain_multiplier = -0.01 }
-	}
-	##Country specific
-	#Nigeria
-	if = {
-		limit = { original_tag = NIG }
-		if = {
-			limit = { has_idea = NIG_efficent_government_spending_idea }
-			add_to_temp_variable = { tax_gain_multiplier = 0.10 }
-		}
-		else_if = {
-			limit = { has_idea = NIG_efficent_government_spending_reform_idea }
-			add_to_temp_variable = { tax_gain_multiplier = 0.10 }
-		}
-	}
-	#Italy
-	if = {
-		limit = { tag = ITA }
-		if = {
-			limit = { has_idea = ITA_tax_evasion }
-			subtract_from_temp_variable = { tax_gain_multiplier = 0.1 }
-		}
-		if = {
-			limit = { has_idea = ITA_building_abuse_1 }
-			subtract_from_temp_variable = { tax_gain_multiplier = 0.05 }
-		}
-		if = {
-			limit = { has_idea = ITA_decentralized_nation }
-			subtract_from_temp_variable = { tax_gain_multiplier = 0.05 }
-		}
-	}
-	#Canada
-	if = {
-		limit = { original_tag = CAN }
-		if = {
-			limit = { has_idea = CAN_tax_english }
-			add_to_temp_variable = { tax_gain_multiplier = 0.05 }
-		}
-	}
+	add_to_temp_variable = { tax_gain_multiplier = modifier@tax_gain_multiplier_modifier }
 
 	##For display
 	set_variable = { tax_gain_multiplier_display = tax_gain_multiplier }
@@ -437,57 +360,8 @@ calculate_interest_rate = {
 	multiply_variable = { interest_rate = 100 }
 
 	#Additional additive modifiers
-	set_variable = { interest_rate_multiplier = 0 }
-	##Generic
-	if = {
-		limit = { has_idea = international_bankers }
-		subtract_from_variable = { interest_rate_multiplier = 1 }
-	}
-	if = {
-		limit = { has_idea = the_euro }
-		subtract_from_variable = { interest_rate_multiplier = 1 }
-	}
-	if = {
-		limit = { has_decision = bankruptcy_cheap_loans_from_imf }
-		subtract_from_variable = { interest_rate_multiplier = 2 }
-	}
-	if = {
-		limit = { has_idea = IMF_debt_relief_received }
-		subtract_from_variable = { interest_rate_multiplier = 2 }
-	}
-	if = {
-		limit = { has_idea = IMF_debt_relief_rejected }
-		add_to_variable = { interest_rate_multiplier = 2 }
-	}
-	##USA
-	if = {
-		limit = { original_tag = USA }
-		if = {
-			limit = { has_idea = petro_dollar }
-			subtract_from_variable = { interest_rate_multiplier = 2 }
-		}
-		if = {
-			limit = { has_idea = wall_street }
-			subtract_from_variable = { interest_rate_multiplier = 1 }
-		}
-	}
-	##Japan
-	if = {
-		limit = { original_tag = JAP }
-		if = {
-			limit = { has_idea = JAP_deflation }
-			subtract_from_variable = { interest_rate_multiplier = 10 }
-		}
-	}
-	##Nigeria
-	if = {
-		limit = { original_tag = NIG }
-		if = {
-			limit = { has_idea = NIG_efficent_government_spending_reform_idea }
-			subtract_from_variable = { interest_rate_multiplier = 3 }
-		}
-	}
-	##Russia
+	set_variable = { interest_rate_multiplier = modifier@interest_rate_multiplier_modifier }
+	# Russia
 	if = {
 		limit = { original_tag = SOV }
 		if = {
@@ -495,7 +369,7 @@ calculate_interest_rate = {
 			subtract_from_variable = { interest_rate_multiplier = 2 }
 		}
 	}
-	##Italy
+	# Italy
 	if = {
 		limit = { original_tag = ITA }
 		if = {
@@ -519,10 +393,7 @@ calculate_interest_rate = {
 	multiply_variable = { debt_rate = interest_rate }	#Yearly interest rate
 
 	#If interest rate is really high, add additional modifier
-	if = {
-		limit = {
-			check_variable = { interest_rate > 14.999 }
-		}
+	if = { limit = { check_variable = { interest_rate > 14.999 } }
 		if = {
 			limit = {
 				NOT = { has_dynamic_modifier = { modifier = very_high_interest_country_modifiers } }
@@ -1049,97 +920,7 @@ update_military_rate = {
 
 	#Additive personnel cost multiplier
 	set_temp_variable = { personnel_cost_multiplier = 1 }
-	#Wages for a volunteer army is higher, this math was dumb before
-	if = {
-		limit = { has_idea = draft_army }
-		add_to_temp_variable = { personnel_cost_multiplier = 0 }
-	}
-	else_if ={
-		limit = { has_idea = partial_draft_army }
-		add_to_temp_variable = { personnel_cost_multiplier = 0.4 }
-	}
-	else_if = {
-		limit = { has_idea = volunteer_army }
-		add_to_temp_variable = { personnel_cost_multiplier = 0.8 }
-	}
-	else_if = {
-		limit = { has_idea = no_military }
-		add_to_temp_variable = { personnel_cost_multiplier = 1 }		#TODO MISSING FROM TOOLTIP
-	}
-	#Having higher officer spending increases personnel cost
-	if = {
-		limit = { has_idea = officer_baptism_by_fire }
-		add_to_temp_variable = { personnel_cost_multiplier = 0 }
-	}
-	else_if = {
-		limit = { has_idea = officer_basic_training }
-		add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
-	}
-	else_if = {
-		limit = { has_idea = officer_advanced_training }
-		add_to_temp_variable = { personnel_cost_multiplier = 0.1 }
-	}
-	else_if = {
-		limit = { has_idea = officer_military_school }
-		add_to_temp_variable = { personnel_cost_multiplier = 0.15 }
-	}
-	else_if = {
-		limit = { has_idea = officer_military_academy }
-		add_to_temp_variable = { personnel_cost_multiplier = 0.2 }
-	}
-	else_if = {
-		limit = { has_idea = officer_international_education }
-		add_to_temp_variable = { personnel_cost_multiplier = 0.25 }
-	}
-	#Other modifiers
-	##Generic
-	if = {
-		limit = { has_idea = child_soldiers }
-		subtract_from_temp_variable = { personnel_cost_multiplier = 0.25 }
-	}
-	##Canada
-	if = {
-		limit = { original_tag = CAN }
-		if = {
-			limit = { has_idea = CAN_overburdened_economy }
-			add_to_temp_variable = { personnel_cost_multiplier = 0.15 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy1 }
-			add_to_temp_variable = { personnel_cost_multiplier = 0.10 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy2 }
-			add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
-		}
-	}
-	##Ukraine
-	if = { limit = { original_tag = UKR }
-		if = {
-			limit = { has_idea = UKR_to_many_generals }
-			add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
-		}
-	}
-	##Botswana
-	if = { limit = { original_tag = BOT }
-		if = {
-			limit = {
-				OR = {
-					has_idea = BOT_house_of_chiefs_militarised
-					has_idea = BOT_house_of_chiefs_empowered_and_militarised
-				}
-			}
-			add_to_temp_variable = { personnel_cost_multiplier = 0.05 }
-		}
-		if = {
-			limit = { has_idea = BOT_army_against_poaching }
-			subtract_from_temp_variable = { personnel_cost_multiplier = 0.10 }
-		}
-		# if = { -- Removed and replaced w/ something with their officer corp
-		# 	limit = { has_idea = BOT_professional_military }
-		# 	add_to_temp_variable = { personnel_cost_multiplier = 0.10 }
-		# }
-	}
+	add_to_temp_variable = { personnel_cost_multiplier = modifier@personnel_cost_multiplier_modifier }
 
 	#Modify personnel cost with total wage modifier
 	multiply_temp_variable = { land_count = personnel_cost_multiplier }
@@ -1247,69 +1028,7 @@ update_bureaucracy_rate = {
 
 	#Additional additive modifiers
 	set_temp_variable = { bureaucracy_cost_multiplier = 1 }
-	##Italy
-	if = {
-		limit = { original_tag = ITA }
-		if = {
-			limit = { has_idea = ITA_inefficient_administration_4 }
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.20 }
-		}
-		if = {
-			limit = { has_idea = ITA_inefficient_administration_3 }
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.15 }
-		}
-		if = {
-			limit = { has_idea = ITA_inefficient_administration_2 }
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.10 }
-		}
-		if = {
-			limit = { has_idea = ITA_inefficient_administration_1 }
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.05 }
-		}
-		if = {
-			limit = { has_idea = ITA_bloated_local_administrations }
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.025 }
-		}
-	}
-	##Canada
-	if = {
-		limit = { original_tag = CAN }
-		if = {
-			limit = { has_idea = CAN_overburdened_economy }
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.15 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy1 }
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.10 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy2 }
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.05 }
-		}
-	}
-	##Botswana
-	if = {
-		limit = { original_tag = BOT }
-		if = {
-			limit = {
-				OR = {
-					has_idea = BOT_house_of_chiefs
-					has_idea = BOT_house_of_chiefs_militarised
-				}
-			}
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.05 }
-		}
-		if = {
-			limit = {
-				OR = {
-					has_idea = BOT_house_of_chiefs_empowered
-					has_idea = BOT_house_of_chiefs_empowered_and_militarised
-				}
-			}
-			add_to_temp_variable = { bureaucracy_cost_multiplier = 0.10 }
-		}
-	}
-
+	add_to_temp_variable = { bureaucracy_cost_multiplier = modifier@bureaucracy_cost_multiplier_modifier }
 
 	for_each_loop = {
 		array = array_bureaucracy_spend
@@ -1385,76 +1104,7 @@ update_police_rate = {
 
 	#Additional additive modifiers
 	set_temp_variable = { police_cost_multiplier = 1 }
-	##Generic
-	if = {
-		limit = { has_tech = DNA_fingerprinting }
-		subtract_from_temp_variable = { police_cost_multiplier = 0.05 }
-	}
-	##Italy
-	if = {
-		limit = { original_tag = ITA }
-		if = {
-			limit = { has_idea = ITA_legalized_light_drugs }
-			subtract_from_temp_variable = { police_cost_multiplier = 0.10 }
-		}
-		if = {
-			limit = { has_idea = ITA_war_with_Mafia }
-			add_to_temp_variable = { police_cost_multiplier = 0.10 }
-		}
-	}
-	##UK
-	if = {
-		limit = { original_tag = ENG }
-		if = {
-			limit = { has_idea = ENG_CCTV_systems }
-			add_to_temp_variable = { police_cost_multiplier = 0.05 }
-		}
-	}
-	##Canada
-	if = {
-		limit = { original_tag = CAN }
-		if = {
-			limit = { has_idea = CAN_overburdened_economy }
-			add_to_temp_variable = { police_cost_multiplier = 0.15 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy1 }
-			add_to_temp_variable = { police_cost_multiplier = 0.10 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy2 }
-			add_to_temp_variable = { police_cost_multiplier = 0.05 }
-		}
-	}
-	##Botswana
-	if = {
-		limit = { original_tag = BOT }
-		if = {
-			limit = {
-				OR = {
-					has_idea = BOT_zimbabwean_refugees
-					has_idea = BOT_zimbabwean_refugees_encouraged
-				}
-			}
-			add_to_temp_variable = { police_cost_multiplier = 0.10 }
-		}
-		if = {
-			limit = { has_idea = BOT_army_against_poaching }
-			add_to_temp_variable = { police_cost_multiplier = 0.10 }
-		}
-		if = {
-			limit = { has_idea = BOT_ilea }
-			subtract_from_temp_variable = { police_cost_multiplier = 0.05 }
-		}
-		if = {
-			limit = { has_decision = BOT_anti_poaching_extra_security }
-			add_to_temp_variable = { police_cost_multiplier = 0.50 }
-		}
-		if = {
-			limit = { has_decision = BOT_anti_poaching_heavy_weapons }
-			add_to_temp_variable = { police_cost_multiplier = 0.50 }
-		}
-	}
+	add_to_temp_variable = { police_cost_multiplier = modifier@police_cost_multiplier_modifier }
 
 	for_each_loop = {
 		array = array_security_spend
@@ -1544,96 +1194,7 @@ update_education_rate = {
 
 	#Additional additive modifiers
 	set_temp_variable = { education_cost_multiplier = 1 }
-	##Generic
-	if = {
-		limit = { has_tech = internet1 }
-		subtract_from_temp_variable = { education_cost_multiplier = 0.03 }
-	}
-	if = {
-		limit = { has_tech = internet2 }
-		subtract_from_temp_variable = { education_cost_multiplier = 0.05 }
-	}
-	if = {
-		limit = { has_tech = internet3 }
-		subtract_from_temp_variable = { education_cost_multiplier = 0.03 }
-	}
-	if = {
-		limit = { has_tech = internet4 }
-		subtract_from_temp_variable = { education_cost_multiplier = 0.05 }
-	}
-	if = {
-		limit = { has_tech = internet5 }
-		subtract_from_temp_variable = { education_cost_multiplier = 0.03 }
-	}
-	if = {
-		limit = { has_tech = internet6 }
-		subtract_from_temp_variable = { education_cost_multiplier = 0.05 }
-	}
-	if = {
-		limit = { has_idea = african_brain_drain }
-		add_to_temp_variable = { education_cost_multiplier = 0.05 }
-	}
-	if = {
-		limit = { has_idea = child_soldiers }
-		add_to_temp_variable = { education_cost_multiplier = 0.15 }
-	}
-	#Country specific
-	##Canada
-	if = {
-		limit = { original_tag = CAN }
-		if = {
-			limit = { has_idea = CAN_overburdened_economy }
-			add_to_temp_variable = { education_cost_multiplier = 0.15 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy1 }
-			add_to_temp_variable = { education_cost_multiplier = 0.10 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy2 }
-			add_to_temp_variable = { education_cost_multiplier = 0.05 }
-		}
-	}
-	##Italy
-	if = {
-		limit = { original_tag = ITA }
-		if = {
-			limit = { has_idea = ITA_outdated_education_1 }
-			subtract_from_temp_variable = { education_cost_multiplier = 0.025 }
-		}
-		if = {
-			limit = { has_idea = ITA_outdated_education_2 }
-			subtract_from_temp_variable = { education_cost_multiplier = 0.05 }
-		}
-		if = {
-			limit = { has_idea = ITA_modern_education_1 }
-			add_to_temp_variable = { education_cost_multiplier = 0.025 }
-		}
-		if = {
-			limit = { has_idea = ITA_modern_education_2 }
-			add_to_temp_variable = { education_cost_multiplier = 0.05 }
-		}
-	}
-	##Ukraine
-	if = {
-		limit = { original_tag = UKR }
-		if = {
-			limit = { has_idea = UKR_idea_neglected_education }
-			subtract_from_temp_variable = { education_cost_multiplier = 0.10 }
-		}
-	}
-	##Botswana
-	if = {
-		limit = { original_tag = BOT }
-		if = {
-			limit = { has_idea = BOT_extra_school_funding }
-			add_to_temp_variable = { education_cost_multiplier = 0.05 }
-		}
-		if = {
-			limit = { has_idea = BOT_school_fees }
-			subtract_from_temp_variable = { education_cost_multiplier = 0.10 }
-		}
-	}
+	add_to_temp_variable = { education_cost_multiplier = modifier@education_cost_multiplier_modifier }
 
 	for_each_loop = {
 		array = array_education_spend
@@ -1703,79 +1264,7 @@ update_health_rate = {
 
 	#Additional additive modifiers
 	set_temp_variable = { health_cost_multiplier = 1 }
-	##Generic
-	if = {
-		limit = { has_tech = nanocellulose_in_medicine }
-		subtract_from_temp_variable = { health_cost_multiplier = 0.10 }
-	}
-	if = {
-		limit = { has_tech = medical_nanorobots }
-		subtract_from_temp_variable = { health_cost_multiplier = 0.05 }
-	}
-	if = {
-		limit = { has_idea = low_level_of_aids }
-		add_to_temp_variable = { health_cost_multiplier = 0.05 }
-	}
-	if = {
-		limit = { has_idea = rising_level_of_aids }
-		add_to_temp_variable = { health_cost_multiplier = 0.10 }
-	}
-	if = {
-		limit = { has_idea = high_level_of_aids }
-		add_to_temp_variable = { health_cost_multiplier = 0.15 }
-	}
-	if = {
-		limit = { has_idea = very_high_level_of_aids }
-		add_to_temp_variable = { health_cost_multiplier = 0.20 }
-	}
-	if = {
-		limit = { has_idea = critical_level_of_aids }
-		add_to_temp_variable = { health_cost_multiplier = 0.25 }
-	}
-	##USA
-	if = {
-		limit = { original_tag = USA }
-		if = {
-			limit = { has_idea = USA_privatised_healthcare }
-			add_to_temp_variable = { health_cost_multiplier = 1 }
-		}
-	}
-	##Syria
-	if = {
-		limit = { original_tag = SYR }
-		if = {
-			limit = { has_idea = syrian_health_care_reform }
-			subtract_from_temp_variable = { health_cost_multiplier = 0.15 }
-		}
-	}
-	##UK
-	if = {
-		limit = { original_tag = ENG }
-		if = {
-			limit = { has_idea = ENG_idea_expanded_nhs  }
-			add_to_temp_variable = { health_cost_multiplier = 0.05 }
-		}
-		if = {
-			limit = { has_idea = ENG_idea_privatized_nhs }
-			add_to_temp_variable = { health_cost_multiplier = -0.10 }
-		}
-	}
-	##Canada
-	if = {
-		limit = { original_tag = CAN }
-		if = {
-			limit = { has_idea = CAN_overburdened_economy }
-			add_to_temp_variable = { health_cost_multiplier = 0.15 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy1 }
-			add_to_temp_variable = { health_cost_multiplier = 0.10 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy2 }
-			add_to_temp_variable = { health_cost_multiplier = 0.05 }
-		}
-	}
+	add_to_temp_variable = { health_cost_multiplier = modifier@health_cost_multiplier_modifier }
 
 	for_each_loop = {
 		array = array_health_spend
@@ -1854,65 +1343,7 @@ update_social_rate = {
 
 	#Additional additive modifiers
 	set_temp_variable = { social_cost_multiplier = 1 }
-	#Generic
-	if = {
-		limit = { has_idea = child_soldiers }
-		add_to_temp_variable = { social_cost_multiplier = 0.15 }
-	}
-	#Country specific
-	##Canada
-	if = {
-		limit = { original_tag = CAN }
-		if = {
-			limit = { has_idea = CAN_overburdened_economy }
-			add_to_temp_variable = { social_cost_multiplier = 0.15 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy1 }
-			add_to_temp_variable = { social_cost_multiplier = 0.10 }
-		}
-		if = {
-			limit = { has_idea = CAN_overburdened_economy2 }
-			add_to_temp_variable = { social_cost_multiplier = 0.05 }
-		}
-	}
-	##Italy
-	if = {
-		limit = { original_tag = ITA }
-		if = {
-			limit = { has_idea = ITA_unsustainable_pension_system_1 }
-			add_to_temp_variable = { social_cost_multiplier = 0.025 }
-		}
-		if = {
-			limit = { has_idea = ITA_unsustainable_pension_system_2 }
-			add_to_temp_variable = { social_cost_multiplier = 0.05 }
-		}
-		if = {
-			limit = { has_idea = ITA_unsustainable_pension_system_3 }
-			add_to_temp_variable = { social_cost_multiplier = 0.075 }
-		}
-		if = {
-			limit = { has_idea = ITA_unsustainable_pension_system_4 }
-			add_to_temp_variable = { social_cost_multiplier = 0.1 }
-		}
-		if = {
-			limit = { has_idea = ITA_citizenship_income_spirit }
-			add_to_temp_variable = { social_cost_multiplier = 0.05 }
-		}
-	}
-	##Botswana
-	if = {
-		limit = { original_tag = BOT }
-		if = {
-			limit = {
-				OR = {
-					has_idea = BOT_zimbabwean_refugees
-					has_idea = BOT_zimbabwean_refugees_encouraged
-				}
-			}
-			add_to_temp_variable = { social_cost_multiplier = 0.10 }
-		}
-	}
+	add_to_temp_variable = { social_cost_multiplier = modifier@social_cost_multiplier_modifier }
 
 	for_each_loop = {
 		array = array_social_spend
@@ -1975,6 +1406,18 @@ calculate_additional_expense_rate = {
 		set_variable = { propaganda_campaign_influence_decision_costs = gdp_total_display }
 		multiply_variable = { propaganda_campaign_influence_decision_costs = 0.001 }
 		add_to_variable = { additional_expenses_rate = propaganda_campaign_influence_decision_costs }
+	}
+	if = {
+		limit = { has_country_flag = large_company_subsidies }
+		set_variable = { large_company_subsidies = gdp_total_display }
+		multiply_variable = { large_company_subsidies = 0.001 }
+		add_to_variable = { additional_expenses_rate = large_company_subsidies }
+	}
+	if = {
+		limit = { has_country_flag = farmer_subsidies }
+		set_variable = { farmer_subsidies = gdp_total_display }
+		multiply_variable = { farmer_subsidies = 0.001 }
+		add_to_variable = { additional_expenses_rate = farmer_subsidies }
 	}
 	# Generic Economic Decisions
 	if = {
@@ -2140,22 +1583,7 @@ calculate_resource_sale_rate = {
 
 	#Additional additive modifiers
 	set_temp_variable = { resource_export_multiplier = 1 }
-	#Burma
-	if = {
-		limit = { original_tag = BRM }
-		if = {
-			limit = { has_idea = Western_Sanctions }
-			add_to_temp_variable = { resource_export_multiplier = -0.50 }
-		}
-		if = {
-			limit = { has_idea = Reduced_Western_Sanctions }
-			add_to_temp_variable = { resource_export_multiplier = -0.20 }
-		}
-		if = {
-			limit = { has_idea = Massive_International_Sanctions }
-			add_to_temp_variable = { resource_export_multiplier = -0.75 }
-		}
-	}
+	add_to_temp_variable = { resource_export_multiplier = modifier@resource_export_multiplier_modifier }
 
 	multiply_variable = { oil_exports = resource_export_multiplier }
 	multiply_variable = { steel_exports = resource_export_multiplier }
@@ -2218,10 +1646,7 @@ update_economic_cycle_cost = {
 
 	#Additional additive modifiers
 	set_temp_variable = { econ_cycle_upg_cost_multiplier = 1 }
-	if = {
-		limit = { has_idea = the_euro }
-		add_to_temp_variable = { econ_cycle_upg_cost_multiplier = 0.5 }
-	}
+	add_to_temp_variable = { econ_cycle_upg_cost_multiplier = modifier@econ_cycle_upg_cost_multiplier_modifier }
 
 	multiply_variable = { econ_cycle_upg_cost = econ_cycle_upg_cost_multiplier }
 }
