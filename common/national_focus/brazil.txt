@@ -179,7 +179,7 @@
 	shared_focus = {
 		id = BRA_court_locals
 		icon = global_community
-		x = 0
+		x = 8
 		y = 1
 		relative_position_id = BRA_americas_unity
 		cost = 5
@@ -221,10 +221,11 @@
 	shared_focus = {
 		id = BRA_suspend_ven
 		icon = attack_venezuela
-		x = -4
+		x = 4
 		y = 1
 		relative_position_id = BRA_mercosur
 		cost = 5
+		mutually_exclusive = { focus = BRA_united_continent }
 		prerequisite = { focus = BRA_mercosur }
 		available = {
 			NOT = { has_completed_focus = BRA_united_continent }
@@ -585,6 +586,7 @@
 		y = 1
 		relative_position_id = BRA_unasal
 		cost = 5
+		mutually_exclusive = { focus = BRA_suspend_ven }
 		prerequisite = { focus = BRA_unasal }
 		mutually_exclusive = { }
 		available = {
@@ -685,9 +687,8 @@
 		y = 1
 		relative_position_id = BRA_cooperation
 		cost = 5
-		prerequisite = { focus = BRA_follow_euro}
-		prerequisite = {focus = BRA_united_continent}
-		prerequisite = {focus = BRA_cooperation}
+		prerequisite = { focus = BRA_follow_euro }
+		prerequisite = {focus = BRA_cooperation }
 		mutually_exclusive = { focus = BRA_sa_left }
 		available = {
 			NOT = {
@@ -960,7 +961,10 @@
 			for_each_scope_loop = {
 				array = global.EU_member
 				add_opinion_modifier = { target = ROOT modifier = friendship }
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -990,7 +994,10 @@
 			every_country = {
 				limit = { has_idea = AU_member }
 				add_opinion_modifier = { target = ROOT modifier = friendship }
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -1934,6 +1941,7 @@
 		cost = 5
 
 		prerequisite = { focus = BRA_nossa_economia }
+		available = { has_completed_focus = BRA_crippled_currency }
 		mutually_exclusive = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_pay_back_the_imf"
@@ -1941,9 +1949,14 @@
 				limit = { has_idea = BRA_idea_imf_debts }
 				remove_ideas = BRA_idea_imf_debts
 			}
-			subtract_from_variable = { debt = 100 }
+			set_temp_variable = { treasury_change = -100.00 }
+			modify_treasury_effect = yes 
+			set_temp_variable = { debt_change = -100.00 }
+			modify_debt_effect = yes 
 			add_to_variable = { BRA_brazilian_party_alignment = 5.0 }
+			
 			custom_effect_tooltip = BRA_pay_back_the_imf_tt
+			custom_effect_tooltip = BRA_pay_back_the_imf_crippled_tt
 		}
 
 		ai_will_do = {
@@ -1967,7 +1980,8 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_exports"
-			country_event = brazil.5
+			add_ideas = BRA_idea_brazilian_exports
+			increase_exports = yes
 		}
 
 		ai_will_do = {
@@ -2732,6 +2746,10 @@
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
 			increase_economic_growth = yes
+			if = {
+				limit = { has_idea = BRA_idea_crippled_currency }
+				remove_ideas = BRA_idea_crippled_currency
+			}
 		}
 
 		ai_will_do = {
@@ -3147,7 +3165,10 @@
 			every_country = {
 				limit = { has_idea = EU_member }
 				add_opinion_modifier = { target = ROOT modifier = friendship }
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -3172,7 +3193,10 @@
 			every_country = {
 				limit = { has_idea = EU_member }
 				add_opinion_modifier = { target = ROOT modifier = economic_mission }
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -3356,6 +3380,10 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_improve_the_real"
 			increase_economic_growth = yes
+			if = {
+				limit = { has_idea = BRA_idea_crippled_currency }
+				remove_ideas = BRA_idea_crippled_currency
+			}
 		}
 
 		ai_will_do = {
@@ -5754,11 +5782,8 @@
 				limit = { has_idea = intervention_isolation  }
 				add_political_power = 100 #If player already has desired law
 			}
-			hidden_effect = {
-				add_to_variable = { domestic_influence_amount = 5 }
-				recalculate_influence = yes
-			}
-			custom_effect_tooltip = gain_5_domestic_influence_TT
+			set_temp_variable = { percent_change = 2 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -5862,11 +5887,8 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazil_first"
 			add_political_power = 100
-			hidden_effect = {
-				add_to_variable = { domestic_influence_amount = 5 }
-				recalculate_influence = yes
-			}
-			custom_effect_tooltip = gain_5_domestic_influence_TT
+			set_temp_variable = { percent_change = 2 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -5931,11 +5953,8 @@
 					popularity = 0.05
 				}
 			}
-			hidden_effect = {
-				add_to_variable = { domestic_influence_amount = 5 }
-				recalculate_influence = yes
-			}
-			custom_effect_tooltip = gain_5_domestic_influence_TT
+			set_temp_variable = { percent_change = 2 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -6041,7 +6060,10 @@
 				GUY = {
 					877 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
 					add_opinion_modifier = { target = BRA modifier = brazilian_investments }
-					generic_grant_2_percent_influence_of_ROOT = yes
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
 				}
 			}
 
@@ -6053,7 +6075,10 @@
 				SUR = {
 					878 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
 					add_opinion_modifier = { target = BRA modifier = brazilian_investments }
-					generic_grant_2_percent_influence_of_ROOT = yes
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
 				}
 			}
 
@@ -6065,7 +6090,10 @@
 				PAR = {
 					895 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
 					add_opinion_modifier = { target = BRA modifier = brazilian_investments }
-					generic_grant_2_percent_influence_of_ROOT = yes
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
 				}
 			}
 
@@ -6077,7 +6105,10 @@
 				URG = {
 					894 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
 					add_opinion_modifier = { target = BRA modifier = brazilian_investments }
-					generic_grant_2_percent_influence_of_ROOT = yes
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
 				}
 			}
 		}
@@ -6103,11 +6134,8 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_a_global_power"
 			add_ideas = BRA_idea_a_global_power
-			hidden_effect = {
-				add_to_variable = { domestic_influence_amount = 5 }
-				recalculate_influence = yes
-			}
-			custom_effect_tooltip = gain_5_domestic_influence_TT
+			set_temp_variable = { percent_change = 2 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -9303,11 +9331,8 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_diplomacy"
 			add_political_power = 200
-			hidden_effect = {
-				add_to_variable = { domestic_influence_amount = 5 }
-				recalculate_influence = yes
-			}
-			custom_effect_tooltip = gain_5_domestic_influence_TT
+			set_temp_variable = { percent_change = 2 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -9414,11 +9439,8 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_fight_foreign_influence"
 			add_ideas = BRA_fight_influence
-			hidden_effect = {
-				add_to_variable = { domestic_influence_amount = 10 }
-				recalculate_influence = yes
-			}
-			custom_effect_tooltip = gain_10_domestic_influence_TT
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -9450,11 +9472,8 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_no_ideology"
 			add_political_power = 50
-			hidden_effect = {
-				add_to_variable = { domestic_influence_amount = 5 }
-				recalculate_influence = yes
-			}
-			custom_effect_tooltip = gain_5_domestic_influence_TT
+			set_temp_variable = { percent_change = 2 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -9687,7 +9706,7 @@
 			set_rule = {
 				can_create_factions = yes
 			}
-			custom_effect_tooltip = gain_10_domestic_influence_TT
+
 		}
 
 		ai_will_do = {
@@ -10990,7 +11009,13 @@
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRA_the_cisplatina"
-			country_event = { id = brazil.36 }
+			add_threat = 2
+			create_wargoal = {
+				target = URG
+				type = annex_everything
+			}
+			add_state_core = 894
+			add_state_core = 893
 		}
 
 		ai_will_do = {
@@ -11524,7 +11549,10 @@
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
 			change_international_bankers_opinion = yes
-			custom_effect_tooltip = BRA_gain_lose_25_billion_tt
+			set_temp_variable = { treasury_change = -25 }
+			modify_treasury_effect = yes
+			set_temp_variable = { debt_change = -25 }
+			modify_debt_effect = yes
 		}
 
 		ai_will_do = {

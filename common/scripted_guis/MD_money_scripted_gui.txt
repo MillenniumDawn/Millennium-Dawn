@@ -51,6 +51,7 @@ scripted_gui = {
 					add_to_variable = { treasury = 1 }
 					add_to_variable = { debt = 1.01 }
 					ingame_update_setup = yes
+					refresh_gui = yes
 				}
 				log = "[GetDateText]: [Root.GetName]: 1k debt taken ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 			}
@@ -60,6 +61,7 @@ scripted_gui = {
 					add_to_variable = { treasury = 10 }
 					add_to_variable = { debt = 10.1 }
 					ingame_update_setup = yes
+					refresh_gui = yes
 				}
 				log = "[GetDateText]: [Root.GetName]: 10k debt taken ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 			}
@@ -69,6 +71,7 @@ scripted_gui = {
 					add_to_variable = { treasury = 100 }
 					add_to_variable = { debt = 101 }
 					ingame_update_setup = yes
+					refresh_gui = yes
 				}
 				log = "[GetDateText]: [Root.GetName]: 100k debt taken ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 			}
@@ -80,6 +83,7 @@ scripted_gui = {
 					subtract_from_variable = { treasury = 1 }
 					subtract_from_variable = { debt = 1 }
 					ingame_update_setup = yes
+					refresh_gui = yes
 					log = "[GetDateText]: [Root.GetName]: 1k debt paid ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 				}
 			}
@@ -89,6 +93,7 @@ scripted_gui = {
 					subtract_from_variable = { treasury = 10 }
 					subtract_from_variable = { debt = 10 }
 					ingame_update_setup = yes
+					refresh_gui = yes
 					log = "[GetDateText]: [Root.GetName]: 10k debt paid ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 				}
 			}
@@ -98,6 +103,7 @@ scripted_gui = {
 					subtract_from_variable = { treasury = 100 }
 					subtract_from_variable = { debt = 100 }
 					ingame_update_setup = yes
+					refresh_gui = yes
 					log = "[GetDateText]: [Root.GetName]: 100k debt paid ([?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k)"
 				}
 			}
@@ -108,6 +114,7 @@ scripted_gui = {
 					subtract_from_variable = { treasury = debt }
 					subtract_from_variable = { debt = debt }
 					ingame_update_setup = yes
+					refresh_gui = yes
 				}
 			}
 		}
@@ -248,7 +255,7 @@ scripted_gui = {
 							check_variable = { treasury < -50.000 }
 							num_of_factories < 50
 							has_country_flag = AI_economic_downspiral
-							check_variable = { treasury_rate > 20.00 }
+							check_variable = { treasury_rate > 0.99 }
 							is_subject = yes
 							ai_has_high_treasury = yes
 						}
@@ -293,7 +300,7 @@ scripted_gui = {
 					}
 					# Don't take 10 Debt if the AI is CHI/USA
 					modifier = {
-						factor = 0.05
+						factor = 0.01
 						OR = {
 							tag = USA
 							tag = CHI
@@ -348,7 +355,7 @@ scripted_gui = {
 							check_variable = { treasury < -30.00 }
 							num_of_factories < 15
 							has_country_flag = AI_economic_downspiral
-							check_variable = { treasury_rate > 5.00 }
+							check_variable = { treasury_rate > 0.99 }
 							is_subject = yes
 							ai_has_high_treasury = yes
 						}
@@ -363,7 +370,7 @@ scripted_gui = {
 					factor = 5
 					modifier = {
 						factor = 5.0
-						check_variable = { treasury_rate > .10 }
+						check_variable = { treasury_rate > 0.10 }
 					}
 					modifier = { # High Interest Rate
 						factor = 2.0
@@ -396,6 +403,10 @@ scripted_gui = {
 					modifier = {
 						factor = 1.15
 						ai_has_low_treasury = yes
+					}
+					modifier = {
+						factor = 2.0
+						check_variable = { treasury > 4.99 }
 					}
 					modifier = {
 						factor = 150
@@ -778,30 +789,18 @@ scripted_gui = {
 
 		window_name = "diplo_treasury_container"
 		parent_window_token = selected_country_view
-
-		visible = {
-			always = yes
-		}
 	}
 	int_investments_dip = {
 		context_type = selected_country_context
 
 		window_name = "diplo_int_investments_container"
 		parent_window_token = selected_country_view
-
-		visible = {
-			always = yes
-		}
 	}
 	debt_dip = {
 		context_type = selected_country_context
 
 		window_name = "diplo_debt_container"
 		parent_window_token = selected_country_view
-
-		visible = {
-			always = yes
-		}
 	}
 	tax_rate_dip = {
 		context_type = selected_country_context
@@ -809,29 +808,18 @@ scripted_gui = {
 		window_name = "tax_rate_diplo"
 		parent_window_token = selected_country_view_diplomacy
 
-		visible = {
-			always = yes
-		}
 	}
 	expense_gain_dip = {
 		context_type = selected_country_context
 
 		window_name = "expense_gain_diplo"
 		parent_window_token = selected_country_view_diplomacy
-
-		visible = {
-			always = yes
-		}
 	}
 	tax_gain_dip = {
 		context_type = selected_country_context
 
 		window_name = "tax_gain_diplo"
 		parent_window_token = selected_country_view_diplomacy
-
-		visible = {
-			always = yes
-		}
 	}
 
 	# Open Economy Buttons
@@ -874,12 +862,6 @@ scripted_gui = {
 		window_name = "politics_economy_open_button"
 		parent_window_token = politics_tab
 
-		visible = { always = yes }
-		triggers = {
-			open_economy_political_button_click_enabled = {
-				always = yes
-			}
-		}
 		effects = {
 			open_economy_political_button_click = {
 				if = {
@@ -912,49 +894,49 @@ scripted_gui = {
 				check_variable = { var = population_tax_rate value = 0 compare = greater_than_or_equals }
 				check_variable = { var = population_tax_rate value = 50 compare = less_than }
 				NOT = { has_country_flag = no_personal_tax_rate_change }
-				ROOT = { has_political_power > 50 }
+				ROOT = { has_political_power > tax_rate_change }
 			}
 			increase_population_tax_shift_click_enabled = { #56-60 NO
 				check_variable = { var = population_tax_rate value = 0 compare = greater_than_or_equals }
 				check_variable = { var = population_tax_rate value = 45 compare = less_than_or_equals }
 				NOT = { has_country_flag = no_personal_tax_rate_change }
-				ROOT = { has_political_power > 250 }
+				ROOT = { has_political_power > tax_rate_change_5 }
 			}
 			decrease_population_tax_click_enabled = {
 				check_variable = { var = population_tax_rate value = 0 compare = greater_than }
 				NOT = { has_country_flag = no_personal_tax_rate_change }
-				ROOT = { has_political_power > 50 }
+				ROOT = { has_political_power > tax_rate_change }
 			}
 			decrease_population_tax_shift_click_enabled = { #0-5 NO
 				check_variable = { var = population_tax_rate value = 5 compare = greater_than_or_equals }
 				check_variable = { var = population_tax_rate value = 50 compare = less_than_or_equals }
 				NOT = { has_country_flag = no_personal_tax_rate_change }
-				ROOT = { has_political_power > 250 }
+				ROOT = { has_political_power > tax_rate_change_5 }
 			}
 			# Corporate Taxes
 			increase_corporate_tax_click_enabled = {
 				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than_or_equals }
 				check_variable = { var = corporate_tax_rate value = 50 compare = less_than }
 				NOT = { has_country_flag = no_corporate_tax_rate_change }
-				ROOT = { has_political_power > 50 }
+				ROOT = { has_political_power > tax_rate_change }
 			}
 			increase_corporate_tax_shift_click_enabled = {
 				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than_or_equals }
 				check_variable = { var = corporate_tax_rate value = 45 compare = less_than_or_equals }
 				NOT = { has_country_flag = no_corporate_tax_rate_change }
-				ROOT = { has_political_power > 250 }
+				ROOT = { has_political_power > tax_rate_change_5 }
 			}
 			decrease_corporate_tax_click_enabled = {
 				check_variable = { var = corporate_tax_rate value = 0 compare = greater_than }
 				check_variable = { var = corporate_tax_rate value = 50 compare = less_than_or_equals }
 				NOT = { has_country_flag = no_corporate_tax_rate_change }
-				ROOT = { has_political_power > 50 }
+				ROOT = { has_political_power > tax_rate_change }
 			}
 			decrease_corporate_tax_shift_click_enabled = {
 				check_variable = { var = corporate_tax_rate value = 5 compare = greater_than_or_equals }
 				check_variable = { var = corporate_tax_rate value = 50 compare = less_than_or_equals }
 				NOT = { has_country_flag = no_corporate_tax_rate_change }
-				ROOT = { has_political_power > 250 }
+				ROOT = { has_political_power > tax_rate_change_5 }
 			}
 			# Extra Features
 			print_money_button_click_enabled = {
@@ -969,7 +951,9 @@ scripted_gui = {
 			}
 			# Population Tax Increase/Decrease
 			increase_population_tax_click = {
-				ROOT = { add_political_power = -50 }
+				set_temp_variable = { tax_rate_change_temp = tax_rate_change }
+				multiply_temp_variable = { tax_rate_change_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_temp }
 				add_to_variable = { population_tax_rate = 1 }
 				clamp_variable = {
 					var = population_tax_rate
@@ -977,13 +961,16 @@ scripted_gui = {
 					max = 50
 				}
 				ingame_update_setup = yes
+				refresh_gui = yes
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
 				log = "[GetDateText]: [Root.GetName]: population_tax_rate decrease [?population_tax_rate]% (balance:[?treasury_rate])"
 			}
 			increase_population_tax_shift_click = {
-				ROOT = { add_political_power = -250 }
+				set_temp_variable = { tax_rate_change_5_temp = tax_rate_change_5 }
+				multiply_temp_variable = { tax_rate_change_5_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_5_temp }
 				add_to_variable = { population_tax_rate = 5 }
 				clamp_variable = {
 					var = population_tax_rate
@@ -991,13 +978,16 @@ scripted_gui = {
 					max = 50
 				}
 				ingame_update_setup = yes
+				refresh_gui = yes
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
 				log = "[GetDateText]: [Root.GetName]: population_tax_rate decrease [?population_tax_rate]% (balance:[?treasury_rate])"
 			}
 			decrease_population_tax_click = {
-				ROOT = { add_political_power = -50 }
+				set_temp_variable = { tax_rate_change_temp = tax_rate_change }
+				multiply_temp_variable = { tax_rate_change_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_temp }
 				subtract_from_variable = { population_tax_rate = 1 }
 				clamp_variable = {
 					var = population_tax_rate
@@ -1005,13 +995,16 @@ scripted_gui = {
 					max = 50
 				}
 				ingame_update_setup = yes
+				refresh_gui = yes
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
 				log = "[GetDateText]: [Root.GetName]: population_tax_rate decrease [?population_tax_rate]% (balance:[?treasury_rate])"
 			}
 			decrease_population_tax_shift_click = {
-				ROOT = { add_political_power = -250 }
+				set_temp_variable = { tax_rate_change_5_temp = tax_rate_change_5 }
+				multiply_temp_variable = { tax_rate_change_5_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_5_temp }
 				subtract_from_variable = { population_tax_rate = 5 }
 				clamp_variable = {
 					var = population_tax_rate
@@ -1019,6 +1012,7 @@ scripted_gui = {
 					max = 50
 				}
 				ingame_update_setup = yes
+				refresh_gui = yes
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
@@ -1026,7 +1020,9 @@ scripted_gui = {
 			}
 			##Corporate Tax Increase/Decrease
 			increase_corporate_tax_click = {
-				ROOT = { add_political_power = -50 }
+				set_temp_variable = { tax_rate_change_temp = tax_rate_change }
+				multiply_temp_variable = { tax_rate_change_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_temp }
 				add_to_variable = { corporate_tax_rate = 1 }
 				clamp_variable = {
 					var = corporate_tax_rate
@@ -1034,13 +1030,16 @@ scripted_gui = {
 					max = 50
 				}
 				ingame_update_setup = yes
+				refresh_gui = yes
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
 				log = "[GetDateText]: [Root.GetName]: corporate_tax_rate decrease [?corporate_tax_rate]% (balance:[?treasury_rate])"
 			}
 			increase_corporate_tax_shift_click = {
-				ROOT = { add_political_power = -250 }
+				set_temp_variable = { tax_rate_change_5_temp = tax_rate_change_5 }
+				multiply_temp_variable = { tax_rate_change_5_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_5_temp }
 				add_to_variable = { corporate_tax_rate = 5 }
 				clamp_variable = {
 					var = corporate_tax_rate
@@ -1048,13 +1047,16 @@ scripted_gui = {
 					max = 50
 				}
 				ingame_update_setup = yes
+				refresh_gui = yes
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
 				log = "[GetDateText]: [Root.GetName]: corporate_tax_rate decrease [?corporate_tax_rate]% (balance:[?treasury_rate])"
 			}
 			decrease_corporate_tax_click = {
-				ROOT = { add_political_power = -50 }
+				set_temp_variable = { tax_rate_change_temp = tax_rate_change }
+				multiply_temp_variable = { tax_rate_change_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_temp }
 				subtract_from_variable = { corporate_tax_rate = 1 }
 				clamp_variable = {
 					var = corporate_tax_rate
@@ -1062,13 +1064,16 @@ scripted_gui = {
 					max = 50
 				}
 				ingame_update_setup = yes
+				refresh_gui = yes
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
 				log = "[GetDateText]: [Root.GetName]: corporate_tax_rate decrease [?corporate_tax_rate]% (balance:[?treasury_rate])"
 			}
 			decrease_corporate_tax_shift_click = {
-				ROOT = { add_political_power = -250 }
+				set_temp_variable = { tax_rate_change_5_temp = tax_rate_change_5 }
+				multiply_temp_variable = { tax_rate_change_5_temp = -1 }
+				ROOT = { add_political_power = tax_rate_change_5_temp }
 				subtract_from_variable = { corporate_tax_rate = 5 }
 				clamp_variable = {
 					var = corporate_tax_rate
@@ -1076,6 +1081,7 @@ scripted_gui = {
 					max = 50
 				}
 				ingame_update_setup = yes
+				refresh_gui = yes
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
@@ -1085,6 +1091,7 @@ scripted_gui = {
 			refresh_tax_rates_bg_click = {
 				log = "Triggered Tax Rate Refresh"
 				ingame_update_setup = yes
+				refresh_gui = yes
 			}
 			# - Printing Money action
 			# This action prints the money and immediately adds the value of the printing exchange to treasury and debt.
@@ -1218,64 +1225,51 @@ scripted_gui = {
 						factor = 0.40
 						has_idea = economic_boom
 					}
-					# Political Power
-					modifier = {
-						factor = 1.50
-						has_political_power > 49
-					}
-					modifier = {
-						factor = 2.0
-						has_political_power > 99
-					}
-					modifier = {
-						factor = 2.50
-						has_political_power > 149
-					}
 					# Reducers
 					modifier = {
-						factor = 0.85
+						factor = 0.05
 						OR = {
 							ai_has_acceptable_deficit = yes
 							ai_has_acceptable_deficit_factories = yes
 						}
 					}
 					modifier = {
-						factor = 0.15
+						factor = 0.05
 						OR = {
 							ai_has_acceptable_surplus = yes
 							ai_has_acceptable_surplus_factories = yes
 						}
 					}
 					modifier = {
-						factor = 0.75
+						factor = 0.05
 						has_stability < 0.25
 					}
 					modifier = {
-						factor = 0.70
+						factor = 0.01
 						has_stability < 0.20
 					}
 					modifier = {
-						factor = 0.60
+						factor = 0.005
 						has_stability < 0.15
 					}
 					modifier = {
-						factor = 0.50
+						factor = 0.001
 						has_stability < 0.10
 					}
 					modifier = {
-						factor = 10
+						factor = 5
 						num_of_available_civilian_factories < 5
 					}
 					modifier = {
-						factor = 5.5
+						factor = 2.5
 						num_of_available_civilian_factories < 10
 					}
 					modifier = {
-						factor = 3.50
+						factor = 1.50
 						num_of_available_civilian_factories < 15
 					}
 					modifier = {
-						factor = 1.50
+						factor = 1.25
 						num_of_available_civilian_factories < 30
 					}
 					# Reducer
@@ -1302,7 +1296,7 @@ scripted_gui = {
 					}
 				}
 				ignore_lower_weights = {
-					factor = 10
+					factor = 20
 				}
 			}
 			decrease_population_tax_click = {
@@ -1408,30 +1402,17 @@ scripted_gui = {
 						factor = 1.15
 						has_idea = economic_boom
 					}
-					# Political Power
-					modifier = {
-						factor = 1.50
-						has_political_power > 49
-					}
-					modifier = {
-						factor = 2.0
-						has_political_power > 99
-					}
-					modifier = {
-						factor = 2.50
-						has_political_power > 149
-					}
 					# Stability Increase Needed
 					modifier = {
-						factor = 1.50
+						factor = 5.0
 						has_stability < 0.10
 					}
 					modifier = {
-						factor = 1.25
+						factor = 3.50
 						has_stability < 0.15
 					}
 					modifier = {
-						factor = 1.15
+						factor = 2.0
 						has_stability < 0.20
 					}
 					modifier = {
@@ -1441,13 +1422,13 @@ scripted_gui = {
 
 					# Reducer
 					modifier = {
-						factor = 0.01
+						factor = 0.001
 						NOT = { tag = USA }
 						check_variable = { treasury_rate < 2.99 }
 						check_variable = { treasury_rate > -2.99 }
 					}
 					modifier = {
-						factor = 0.01
+						factor = 0.001
 						tag = USA
 						check_variable = { treasury_rate < 0 }
 						check_variable = { treasury_rate > -9.99 }
@@ -1462,7 +1443,7 @@ scripted_gui = {
 					}
 				}
 				ignore_lower_weights = {
-					factor = 10
+					factor = 20
 				}
 			}
 			# Corporate Tax Rate Clicks
@@ -1562,19 +1543,6 @@ scripted_gui = {
 							has_idea = stable_growth
 							has_idea = economic_boom
 						}
-					}
-					# Political Power
-					modifier = {
-						factor = 1.50
-						has_political_power > 49
-					}
-					modifier = {
-						factor = 2.0
-						has_political_power > 99
-					}
-					modifier = {
-						factor = 2.50
-						has_political_power > 149
 					}
 					modifier = {
 						factor = 0.25
@@ -1718,19 +1686,6 @@ scripted_gui = {
 							has_idea = stable_growth
 							has_idea = economic_boom
 						}
-					}
-					# Political Power
-					modifier = {
-						factor = 1.50
-						has_political_power > 49
-					}
-					modifier = {
-						factor = 2.0
-						has_political_power > 99
-					}
-					modifier = {
-						factor = 2.50
-						has_political_power > 149
 					}
 					modifier = {
 						factor = 10

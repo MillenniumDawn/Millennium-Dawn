@@ -46,12 +46,10 @@ on_actions = {
 					recalculate_party = yes
 				}
 			}
-			if = {
-				limit = { NOT = { has_country_flag = has_done_intro_startup } }
+			if = { limit = { NOT = { has_country_flag = has_done_intro_startup } }
 				ingame_update_setup = yes
 				set_country_flag = has_done_intro_startup
 			}
-			# Cancel Invalid Projects
 		}
 	}
 
@@ -64,11 +62,38 @@ on_actions = {
 			#Automated taking debt - has calculate_interest_rate at the end
 			automated_debt_taker = yes
 
-			# If child soldier thing
-			if = {
-				limit = {
-					has_idea = child_soldiers
+			# Force Update Influencer Map Mode
+			recalculate_influence = yes
+			force_update_map_mode = { mapmode = influence_map_mode }
+
+			# Cancel Invalid Projects
+			if = { limit = { check_variable = { active_projects > 0 } }
+				# Project loop.
+				for_each_loop = { array = project_array
+
+					if = { limit = { check_variable = { v < 0 } }
+
+						set_variable = { project_type = i }
+
+						if = {
+							limit = {
+								OR = {
+									CONTROLLER = { has_war_with = ROOT } # target state controller at war with project owner
+									var:v = { NOT = { investment_building_slot_available = yes } } # building slot unavailable in target state
+								}
+							}
+
+							set_variable = { project = i }
+							log = "AC Project Deletion - [GetDate] [This.GetTag] - on_weekly - deleted invalid project [?project] in [?project_array^project] [?project_array^project.GetName] [?project_array^project.GetName]"
+							end_project = yes
+						}
+					}
 				}
+
+				clear_variable = project_type
+			}
+			# If child soldier thing
+			if = { limit = { has_idea = child_soldiers }
 				add_to_variable = { child_soldiers = child_soldiers_recruitment }
 			}
 		}
