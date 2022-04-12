@@ -1396,8 +1396,11 @@ prevent_parties_disappearing = {
 }
 
 ruling_subparty_drift_effect = {
+	reform_expectance_from_situation = yes
 	set_variable = { ruling_subparty_drift_modified_var = ruling_subparty_drift_var }
+	add_to_variable = { ruling_subparty_drift_modified_var = reform_expectance_from_situation_subideology_drift_var }
 	set_variable = { coalition_subparty_drift_modified_var = ruling_subparty_drift_var }
+	add_to_variable = { coalition_subparty_drift_modified_var = reform_expectance_from_situation_subideology_drift_var }
 	set_variable = { coalition_parties_number = gov_coalition_array^num }
 	multiply_variable = { coalition_parties_number = 0.25 }
 	set_variable = { coalition_parties_switch_var = 1 }
@@ -1704,6 +1707,9 @@ reforme_expectance_government_change_update = {
 				set_variable = { number_of_coalition_parties = gov_coalition_array^num }
 				set_variable = { ruling_drift_switch_var = drift_switch_var_base }
 				set_variable = { coalition_drift_switch_var = drift_switch_var_base }
+				reform_expectance_from_situation = yes
+				add_to_variable = { ruling_drift_switch_var = reform_expectance_from_situation_drift_var }
+				add_to_variable = { coalition_drift_switch_var = reform_expectance_from_situation_drift_var }
 				multiply_variable = { number_of_coalition_parties = 0.25 }
 				set_variable = { coalition_switch_var = 1 }
 				subtract_from_variable = { coalition_switch_var = number_of_coalition_parties }
@@ -1873,6 +1879,23 @@ reforme_expectance_government_change_update = {
 					limit = { has_government = nationalist }
 						add_to_variable = { nationalist_drift_var = ruling_drift_switch_var }
 				}
+}
+reform_expectance_from_situation = {
+	set_temp_variable = { reform_expectance_from_stability = 1 }
+	subtract_from_temp_variable = { reform_expectance_from_stability = stability }
+	multiply_temp_variable = { reform_expectance_from_stability = -0.1 }
+	set_temp_variable = { reform_expectance_from_interest_rate = interest_rate }
+	subtract_from_temp_variable = { reform_expectance_from_interest_rate = 4 }
+	clamp_temp_variable = {
+		var = reform_expectance_from_interest_rate
+		min = 0
+		max = 20
+	}
+	multiply_temp_variable = { reform_expectance_from_interest_rate = -0.01 }
+	add_to_temp_variable = { reform_expectance_from_interest_rate = reform_expectance_from_stability }
+	set_variable = { reform_expectance_from_situation_drift_var = reform_expectance_from_interest_rate }
+	set_variable = { reform_expectance_from_situation_subideology_drift_var = reform_expectance_from_situation_drift_var }
+	multiply_variable = { reform_expectance_from_situation_subideology_drift_var = 0.2 }
 }
 
 remove_gov_crisis_ai_flags = {
