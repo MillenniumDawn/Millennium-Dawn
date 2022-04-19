@@ -33,12 +33,6 @@ on_actions = {
 	# country
 
 	#Timed pulses, four year and thri yearly pulses copied from EUIV, weekly and monthly from the top of my head, doesn't given an error at least?
-	on_weekly = {
-		effect = {
-			##Influence Checks This is just to keep the influence arrays down and remove all non-existing nations
-			recalculate_influence = yes
-		}
-	}
 	on_monthly_SUD = {
 		effect = {
 			if = {
@@ -833,7 +827,8 @@ on_actions = {
 
 	}
 
-	#FROM is war target
+	# FROM is war target
+	# ROOT is the declaring nation
 	on_declare_war = {
 		effect = {
 			if = {
@@ -2038,8 +2033,6 @@ on_actions = {
 					update_military_rate = yes
 					every_neighbor_country = { country_event = low_stability.4 }
 				}
-				log = "FROM IS [From.GetName] hello"
-				log = "ROOT IS [ROOT.GetName] hello"
 			}
 
 			#NATO
@@ -2056,6 +2049,27 @@ on_actions = {
 					FROM = { country_event = NATO.2 }
 				}
 				set_country_flag = Attacked_NATO
+			}
+
+			# Reduce 15% Influence in This Nation
+			set_temp_variable = { percent_change = -15 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = FROM.id }
+			change_influence_percentage = yes
+
+			FROM = {
+				every_neighbor_country = {
+					limit = {
+						NOT = { tag = ROOT }
+						NOT = { is_puppet_of = ROOT }
+						NOT = { has_opinion = { target = ROOT value > 50 } }
+						NOT = { is_in_faction_with = ROOT }
+					}
+					set_temp_variable = { percent_change = -5 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+				}
 			}
 
 			#Rio Pact
@@ -2821,34 +2835,19 @@ on_actions = {
 			}
 			# Clearing Economic Drifts
 			clear_previous_economic_drift = yes
-			if = {
-				limit = {
-					has_idea = economic_boom
-				}
+			if = { limit = { has_idea = economic_boom }
 				update_drift_economic_boom = yes
 			}
-			else_if = {
-				limit = {
-					has_idea = fast_growth
-				}
+			else_if = { limit = { has_idea = fast_growth }
 				update_drift_fast_growth = yes
 			}
-			else_if = {
-				limit = {
-					has_idea = stagnation
-				}
+			else_if = { limit = { has_idea = stagnation }
 				update_drift_stagnation = yes
 			}
-			else_if = {
-				limit = {
-					has_idea = recession
-				}
+			else_if = { limit = { has_idea = recession }
 				update_drift_recession = yes
 			}
-			else_if = {
-				limit = {
-					has_idea = depression
-				}
+			else_if = { limit = { has_idea = depression }
 				update_drift_depression = yes
 			}
 			#Nullify all guarantees
