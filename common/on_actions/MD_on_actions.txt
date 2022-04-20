@@ -1,58 +1,5 @@
-# monthly on_action by Yard1
+# Author(s): Angriest Bird
 on_actions = {
-	on_startup = { # on_daily is executed before on_startup
-		effect = {
-			add_to_variable = { global.next_month = 1 }
-		}
-	}
-	on_daily = {
-		effect = {
-			if = {
-				# don't touch!
-				limit = {
-					NOT = {
-						has_global_flag = on_monthly_done
-					}
-					meta_trigger = {
-						text = {
-							date > [YEAR].[MONTH].1
-						}
-						YEAR = "[?global.year]"
-						MONTH = "[?global.next_month]"
-					}
-				}
-				add_to_variable = { global.month = 1 }
-				add_to_variable = { global.next_month = 1 }
-				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
-				if = {
-					limit = { check_variable = { global.month > 12 } }
-					set_variable = { global.month = 1 }
-				}
-				if = {
-					limit = { check_variable = { global.next_month > 12 } }
-					set_variable = { global.next_month = 1 }
-
-					set_global_flag = { flag = on_monthly_done value = 1 days = 31 }
-				}
-				# this is done only ONCE per month, even though on_daily fires for every country
-				# will also be done on startup
-
-				# your code here
-				country_event = { id = low_stability.1 }
-				set_power_ranking_ideas_for_every_country = yes
-
-				#killrabbit stuff
-				every_country = {
-					recalculate_party = yes
-				}
-			}
-			if = { limit = { NOT = { has_country_flag = has_done_intro_startup } }
-				ingame_update_setup = yes
-				set_country_flag = has_done_intro_startup
-			}
-		}
-	}
-
 	on_weekly = {
 		effect = {
 			#Update money system right before adjusting weekly value
@@ -95,6 +42,28 @@ on_actions = {
 			# If child soldier thing
 			if = { limit = { has_idea = child_soldiers }
 				add_to_variable = { child_soldiers = child_soldiers_recruitment }
+			}
+		}
+	}
+
+	on_monthly = {
+		effect = {
+			# MD Custom On_Actions
+			if = { limit = { NOT = { has_global_flag = on_monthly_done } }
+
+				# National Updates:
+				country_event = { id = low_stability.1 }
+				set_power_ranking_ideas_for_every_country = yes
+
+				#killrabbit stuff
+				every_country = {
+					recalculate_party = yes
+				}
+
+				# On Monthly Flag:
+				# Set this to 27 days to time out so that way February isn't missed
+				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
+				log = "[GetDateText]: [Root.GetName]: MD Monthly On_Action Triggered"
 			}
 		}
 	}
