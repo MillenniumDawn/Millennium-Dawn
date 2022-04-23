@@ -1,0 +1,581 @@
+on_actions = {
+
+	on_startup = {
+		effect = {
+			#Set correct focus tree for Syria
+			SYR = {
+				if = {
+					limit = { has_start_date < 2016.1.1 }
+					load_focus_tree = Syria_2000
+				}
+				else = {
+					load_focus_tree = Syria_Focus_2017
+				}
+			}
+			if = {
+				limit = { 
+					has_start_date < 2001.1.1 
+				}
+				SYR = { country_event = { id = SyriaFocus.39 days = 150 random = 8760 } }	#Death of Hafez
+			}
+		}
+	}
+	
+	on_monthly_SYR = {
+		random_events = {
+			300 = 0
+			
+			100 = SyriaFocus.40
+			100 = SyriaFocus.41
+			100 = SyriaFocus.42
+		}
+	}
+	
+	on_monthly_FSA = {
+		effect = {
+			#FSA deals with Al-Nusra
+			if = {
+				limit = {
+					country_exists = NUS
+					NOT = { country_exists = SYR }
+					NOT = { has_war_with = NUS }
+				}
+				country_event = { id = Syria.2 hours = 6 }
+			}
+			#Annex Al-Nusra if they are losing and we are not
+			if = {
+				limit = {
+					country_exists = NUS
+					country_exists = SYR
+					NOT = { country_exists = ISI }
+					NOT = { SYR = { surrender_progress > 0.4 } }
+					NUS = { is_ai = yes }
+					surrender_progress < 0.4
+					NUS = {
+						surrender_progress > 0.6
+					}
+				}
+				country_event = { id = Syria.15 hours = 6 }
+			}
+		}		
+	}
+	
+	on_monthly_NUS = {
+		effect = {
+			#Annex FSA if they are losing and we are not
+			if = {
+				limit = {
+					country_exists = FSA
+					country_exists = SYR
+					NOT = { country_exists = ISI }
+					NOT = { SYR = { surrender_progress > 0.4 } }
+					FSA = { is_ai = yes }
+					surrender_progress < 0.6
+					FSA = {
+						surrender_progress > 0.45
+					}
+				}
+				country_event = { id = Syria.16 hours = 6 }
+			}
+		}
+	}
+	
+	on_monthly_HEZ = {
+		effect = {
+			#Hezbollah discovers Syrian infiltrators
+			if = {
+				limit = {
+					has_country_flag = HEZ_Infiltrated_by_SYR
+					NOT = { is_subject_of = SYR }
+					NOT = { is_subject_of = FSA }
+					NOT = { is_subject_of = NUS }
+				}
+				random_list = {
+					30 = {
+						modifier = {
+							factor = 0.67
+							OR = {
+								SYR = { has_idea = intelligence_community }
+								NUS = { has_idea = intelligence_community }
+								FSA = { has_idea = intelligence_community }
+							}
+						}
+						country_event = { id = SyriaDecisions.9 hours = 6 }
+					}
+					70 = {
+						modifier = {
+							factor = 1.14
+							OR = {
+								SYR = { has_idea = intelligence_community }
+								NUS = { has_idea = intelligence_community }
+								FSA = { has_idea = intelligence_community }
+							}
+						}
+					}
+				}
+			}
+			#Discord between Hezbollah and Iran
+			if = {
+				limit = {
+					has_country_flag = Discord_Between_HEZ_PER
+					NOT = { is_subject_of = SYR }
+					NOT = { is_subject_of = FSA }
+					NOT = { is_subject_of = NUS }
+				}
+				random_list = {
+					20 = {
+						modifier = {
+							factor = 1.5
+							OR = {
+								SYR = { has_idea = intelligence_community }
+								NUS = { has_idea = intelligence_community }
+								FSA = { has_idea = intelligence_community }
+							}
+						}
+						country_event = { id = SyriaDecisions.14 hours = 6 }
+					}
+					80 = {
+						modifier = {
+							factor = 0.875
+							OR = {
+								SYR = { has_idea = intelligence_community }
+								NUS = { has_idea = intelligence_community }
+								FSA = { has_idea = intelligence_community }
+							}
+						}
+					}
+				}
+			}			
+		}
+	}
+	
+	#Civil war peace
+	on_monthly_SYR = {
+		effect = {
+			if = {
+				limit = {	
+					NOT = { has_global_flag = Syria_Civil_War_Over }
+					NOT = { country_exists = FSA }
+					NOT = { country_exists = NUS }
+					NOT = { country_exists = ISI }
+					OR = {
+						has_start_date > 2016.1.1
+						has_global_flag = SYR_civil_war_started_early
+					}
+					has_civil_war = no
+				}
+				#Remove ISIS
+				every_state = {
+					limit = {
+						OR = {
+							is_core_of = ISI
+							is_claimed_by = ISI
+						}
+					}
+					remove_claim_by = ISI
+					remove_core_of = ISI
+				}
+				subtract_from_variable = { threat_level = 30 }
+				clamp_threat = yes
+				#Reset Core Status
+				587 = {			#Golan
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				184 = {			#Daraa
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				185 = {			#Suwayda
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				186 = {			#Damascus
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				561 = {			#Central Desert
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				188 = {			#Homs
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				189 = {			#Latakia
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				192 = {			#Deir Ez Zor
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				191 = {			#Raqqa
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				566 = {			#Aleppo
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				190 = {			#Idlib
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				158 = {			#Hatay
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				193 = {			#Hasakah
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				571 = {			#North Aleppo
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				575 = {			#Afrin
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				if = {
+					limit = { NOT = { has_country_flag = Relinquished_Golan } }
+					add_state_core = 587
+				}
+				add_state_core = 184
+				add_state_core = 185
+				add_state_core = 186
+				add_state_core = 561
+				add_state_core = 188
+				add_state_core = 189
+				add_state_core = 192
+				add_state_core = 191
+				add_state_core = 566
+				add_state_core = 190
+				if = {
+					limit = { 
+						NOT = { has_country_flag = Relinquished_Hatay }
+					}
+					add_state_core = 158
+				}
+				if = {
+					limit = { NOT = { has_country_flag = Deal_With_Rojava } }
+					add_state_core = 193
+					add_state_core = 571
+					add_state_core = 575
+				}
+				set_capital = { state = 186 }
+				set_global_flag = Syria_Civil_War_Over
+				hidden_effect = { news_event = { id = SyriaNews.1 hours = 6 } }
+			}
+		}
+	}
+	on_monthly_FSA = {
+		effect = {
+			if = {
+				limit = {	
+					NOT = { has_global_flag = Syria_Civil_War_Over }
+					NOT = { country_exists = SYR }
+					NOT = { country_exists = NUS }
+					NOT = { country_exists = ISI }
+					OR = {
+						has_start_date > 2016.1.1
+						has_global_flag = SYR_civil_war_started_early
+					}
+					has_civil_war = no
+				}
+				#Remove ISIS
+				every_state = {
+					limit = {
+						OR = {
+							is_core_of = ISI
+							is_claimed_by = ISI
+						}
+					}
+					remove_claim_by = ISI
+					remove_core_of = ISI
+				}
+				subtract_from_variable = { threat_level = 30 }
+				clamp_threat = yes
+				#Reset Core Status
+				587 = {			#Golan
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				184 = {			#Daraa
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				185 = {			#Suwayda
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				186 = {			#Damascus
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				561 = {			#Central Desert
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				188 = {			#Homs
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				189 = {			#Latakia
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				192 = {			#Deir Ez Zor
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				191 = {			#Raqqa
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				566 = {			#Aleppo
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				190 = {			#Idlib
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				158 = {			#Hatay
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				193 = {			#Hasakah
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				571 = {			#North Aleppo
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				575 = {			#Afrin
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				if = {
+					limit = { NOT = { has_country_flag = Relinquished_Golan } }
+					add_state_core = 587
+				}
+				add_state_core = 184
+				add_state_core = 185
+				add_state_core = 186
+				add_state_core = 561
+				add_state_core = 188
+				add_state_core = 189
+				add_state_core = 192
+				add_state_core = 191
+				add_state_core = 566
+				add_state_core = 190
+				if = {
+					limit = { NOT = { has_country_flag = Deal_With_Rojava } }
+					add_state_core = 193
+					add_state_core = 571
+					add_state_core = 575
+				}
+				set_capital = { state = 186 }
+				set_cosmetic_tag = SYR
+				set_country_flag = dynamic_flag
+				set_country_flag = dynamic_rebel_flag
+				add_ideas = divided_syria
+				remove_ideas = rival_government
+				add_offsite_building = {
+					type = industrial_complex
+					level = -1
+				}
+				add_offsite_building = {
+					type = arms_factory
+					level = -1
+				}
+				set_global_flag = Syria_Civil_War_Over
+				hidden_effect = { news_event = { id = SyriaNews.1 hours = 6 } }
+			}
+		}
+	}
+	on_monthly_NUS = {
+		effect = {
+			if = {
+				limit = {	
+					NOT = { has_global_flag = Syria_Civil_War_Over }
+					NOT = { country_exists = FSA }
+					NOT = { country_exists = SYR }
+					NOT = { country_exists = ISI }
+					OR = {
+						has_start_date > 2016.1.1
+						has_global_flag = SYR_civil_war_started_early
+					}
+					has_civil_war = no
+				}
+				#Remove ISIS
+				every_state = {
+					limit = {
+						OR = {
+							is_core_of = ISI
+							is_claimed_by = ISI
+						}
+					}
+					remove_claim_by = ISI
+					remove_core_of = ISI
+				}
+				subtract_from_variable = { threat_level = 30 }
+				clamp_threat = yes
+				#Reset Core Status
+				587 = {			#Golan
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				184 = {			#Daraa
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				185 = {			#Suwayda
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				186 = {			#Damascus
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				561 = {			#Central Desert
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				188 = {			#Homs
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				189 = {			#Latakia
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				192 = {			#Deir Ez Zor
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				191 = {			#Raqqa
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				566 = {			#Aleppo
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				190 = {			#Idlib
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				158 = {			#Hatay
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				193 = {			#Hasakah
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				571 = {			#North Aleppo
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				575 = {			#Afrin
+					remove_core_of = SYR
+					remove_core_of = FSA
+					remove_core_of = NUS
+				}
+				if = {
+					limit = { NOT = { has_country_flag = Relinquished_Golan } }
+					add_state_core = 587
+				}
+				add_state_core = 184
+				add_state_core = 185
+				add_state_core = 186
+				add_state_core = 561
+				add_state_core = 188
+				add_state_core = 189
+				add_state_core = 192
+				add_state_core = 191
+				add_state_core = 566
+				add_state_core = 190
+				if = {
+					limit = { 
+						NOT = { has_country_flag = Relinquished_Hatay }
+					}
+					add_state_core = 158
+				}
+				if = {
+					limit = { NOT = { has_country_flag = Deal_With_Rojava } }
+					add_state_core = 193
+					add_state_core = 571
+					add_state_core = 575
+				}
+				set_capital = { state = 186 }
+				set_cosmetic_tag = SYR
+				set_country_flag = dynamic_flag
+				set_country_flag = dynamic_rebel_flag
+				add_ideas = divided_syria
+				add_ideas = intervention_neo_imperialism
+				remove_ideas = Non_State_Actor
+				add_offsite_building = {
+					type = industrial_complex
+					level = -1
+				}
+				add_offsite_building = {
+					type = arms_factory
+					level = -1
+				}
+				set_global_flag = Syria_Civil_War_Over
+				hidden_effect = { news_event = { id = SyriaNews.1 hours = 6 } }
+			}
+		}
+	}
+	
+	
+}
