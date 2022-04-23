@@ -15,7 +15,7 @@
 	focus = {
 		id = GENERIC_political_reform
 		icon = Election_graphics
-		x = -5
+		x = -7
 		y = 0
 
 		cost = 10
@@ -24,7 +24,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_political_reform"
-			add_political_power = 150
+			add_political_power = 200
 		}
 
 		ai_will_do = {
@@ -305,11 +305,8 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_our_place"
-			hidden_effect = {
-				add_to_variable = { domestic_influence_amount = 10 }
-				recalculate_influence = yes
-			}
-			custom_effect_tooltip = gain_10_domestic_influence_TT
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -325,7 +322,7 @@
 		y = 2
 		relative_position_id = GENERIC_political_reform
 
-		cost = 10
+		cost = 4.9
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = GENERIC_diplomatic_positions }
@@ -333,7 +330,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_station_in_the_world"
-			add_political_power = 150
+			add_political_power = 100
 		}
 
 		ai_will_do = {
@@ -356,6 +353,7 @@
 		mutually_exclusive = { focus = GENERIC_eastern_emergence }
 		mutually_exclusive = { focus = GENERIC_the_nationalist_rise }
 		mutually_exclusive = { focus = GENERIC_the_salafist_rise }
+		mutually_exclusive = { focus = GENERIC_non_aligned }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_the_west"
@@ -366,6 +364,27 @@
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 1.25
+				OR = {
+					var:influence_array^0 = {
+						has_government = democratic
+					}
+					var:influence_array^1 = {
+						has_government = democratic
+					}
+					var:influence_array^2 = {
+						has_government = democratic
+					}
+					var:influence_array^3 = {
+						has_government = democratic
+					}
+				}
+			}
+			modifier = {
+				factor = 1.25
+				has_idea = EU_member
+			}
 		}
 	}
 
@@ -384,6 +403,7 @@
 		mutually_exclusive = { focus = GENERIC_the_nationalist_rise }
 		mutually_exclusive = { focus = GENERIC_the_west }
 		mutually_exclusive = { focus = GENERIC_the_salafist_rise }
+		mutually_exclusive = { focus = GENERIC_non_aligned }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_eastern_emergence"
@@ -394,12 +414,29 @@
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 1.25
+				OR = {
+					var:influence_array^0 = {
+						has_government = communism
+					}
+					var:influence_array^1 = {
+						has_government = communism
+					}
+					var:influence_array^2 = {
+						has_government = communism
+					}
+					var:influence_array^3 = {
+						has_government = communism
+					}
+				}
+			}
 		}
 	}
-
 	focus = {
-		id = GENERIC_the_nationalist_rise
-		icon = fascism
+		id = GENERIC_non_aligned
+		icon = demand_territory2
+
 
 		x = 4
 		y = 3
@@ -412,22 +449,17 @@
 		mutually_exclusive = { focus = GENERIC_eastern_emergence }
 		mutually_exclusive = { focus = GENERIC_the_west }
 		mutually_exclusive = { focus = GENERIC_the_salafist_rise }
-
+		mutually_exclusive = { focus = GENERIC_the_nationalist_rise }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_the_nationalist_rise"
-			add_ideas = generic_nationalist_boost_idea
-			add_popularity = { ideology = nationalist popularity = 0.025 }
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_non_aligned"
+			add_ideas = generic_non_aligned_boost_idea
+			add_popularity = { ideology = neutrality popularity = 0.025 }
 			recalculate_party = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
+		 }
 	}
-
 	focus = {
-		id = GENERIC_the_salafist_rise
-		icon = isis_allegiance
+		id = GENERIC_the_nationalist_rise
+		icon = fascism
 
 		x = 6
 		y = 3
@@ -439,7 +471,44 @@
 		prerequisite = { focus = GENERIC_station_in_the_world }
 		mutually_exclusive = { focus = GENERIC_eastern_emergence }
 		mutually_exclusive = { focus = GENERIC_the_west }
+		mutually_exclusive = { focus = GENERIC_the_salafist_rise }
+		mutually_exclusive = { focus = GENERIC_non_aligned }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_the_nationalist_rise"
+			add_ideas = generic_nationalist_boost_idea
+			add_popularity = { ideology = nationalist popularity = 0.025 }
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				OR = {
+					NOT = { has_government = nationalist }
+					is_historical_focus_on = yes
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = GENERIC_the_salafist_rise
+		icon = isis_allegiance
+
+		x = 8
+		y = 3
+		relative_position_id = GENERIC_political_reform
+
+		cost = 10
+
+		search_filters = {FOCUS_FILTER_POLITICAL}
+		prerequisite = { focus = GENERIC_station_in_the_world }
+		mutually_exclusive = { focus = GENERIC_eastern_emergence }
+		mutually_exclusive = { focus = GENERIC_the_west }
 		mutually_exclusive = { focus = GENERIC_the_nationalist_rise }
+		mutually_exclusive = { focus = GENERIC_non_aligned }
 		allow_branch = {
 			OR = {
 				has_idea = sunni
@@ -575,6 +644,13 @@
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				OR = {
+					NOT = { has_government = fascism }
+					is_historical_focus_on = yes
+				}
+			}
 		}
 	}
 
@@ -633,12 +709,39 @@
 			factor = 1
 		}
 	}
+	focus = {
+		id = GENERIC_the_others
+		icon = ultimatum2
+
+		x = 4
+		y = 4
+		relative_position_id = GENERIC_political_reform
+
+		cost = 10
+
+		search_filters = {FOCUS_FILTER_POLITICAL}
+		prerequisite = { focus = GENERIC_non_aligned }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_the_rising_powers"
+			swap_ideas = {
+				remove_idea = generic_non_aligned_boost_idea
+				add_idea = generic_non_aligned_boost_idea2
+			}
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
 
 	focus = {
 		id = GENERIC_us_above_all
 		icon = fascism3
 
-		x = 4
+		x = 6
 		y = 4
 		relative_position_id = GENERIC_political_reform
 
@@ -665,7 +768,7 @@
 		id = GENERIC_jihad
 		icon = jihad
 
-		x = 6
+		x = 8
 		y = 4
 		relative_position_id = GENERIC_political_reform
 
