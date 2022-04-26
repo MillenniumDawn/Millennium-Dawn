@@ -1,0 +1,1225 @@
+﻿add_namespace = internal_factions_events
+add_namespace = internal_factions_news
+add_namespace = internal_factions_deposed
+
+# Author(s): Kalkalash, Angriest Bird
+# Last Modified: Feb. 5th, 2022 - Angriest Bird
+#S&M Business Owners Demand a Tax Cut
+country_event = {
+	id = internal_factions_events.0
+	title = internal_factions_events.0.t
+	desc = internal_factions_events.0.d
+	picture = GFX_internal_faction_tax_cut
+	is_triggered_only = yes
+	trigger = {
+		has_idea = small_medium_business_owners
+
+		# SMBO can demand if they have over 70%
+		check_variable = { small_medium_business_owners_opinion > 69 }
+		check_variable = { corporate_tax_rate > 9 }
+	}
+
+	option = {
+		name = internal_factions_events.0.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.0.o1 executed"	#Decrease taxes
+		ai_chance = { factor = 1 }
+		set_temp_variable = { corp_change = -3 }
+		modify_corporate_tax_rate_effect = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+
+		if = {
+			limit = {
+				OR = {
+					has_socialist_government = yes
+					has_communist_government = yes
+				}
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_fiscal_liberals = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.0.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.0.o2 executed"	#Do nothing
+		ai_chance = { factor = 1 }
+		set_temp_variable = { temp_opinion = -10 }
+		change_small_medium_business_owners_opinion = yes
+	}
+	option = {
+		name = internal_factions_events.0.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.0.o3 executed"	#Increase taxes
+		ai_chance = { factor = 1 }
+		set_temp_variable = { corp_change = 3 }
+		modify_corporate_tax_rate_effect = yes
+
+		set_temp_variable = { temp_opinion = -15 }
+		change_small_medium_business_owners_opinion = yes
+		change_fossil_fuel_industry_opinion = yes
+		change_oligarchs_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		if = {
+			limit = {
+				has_economically_liberal_government = yes
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			add_relative_party_popularity = yes
+			steal_popularity_from_socialists = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.0.o4
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.0.o4 executed"	#Use labour unions
+		ai_chance = { factor = 1 }
+		trigger = {
+			has_idea = labour_unions
+			check_variable = { labour_unions_opinion > 49 }
+		}
+		set_temp_variable = { temp_opinion = 5 }
+		change_labour_unions_opinion = yes
+		add_political_power = -50
+	}
+}
+
+#A large foreign company buys domestic small business
+country_event = {
+	id = internal_factions_events.1
+	title = internal_factions_events.1.t
+	desc = internal_factions_events.1.d
+	immediate = { }
+	picture = GFX_internal_faction_business_purchase
+
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			has_idea = small_medium_business_owners
+			has_idea = industrial_conglomerates
+		}
+	}
+
+
+	option = {
+		name = internal_factions_events.1.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.1.o1 executed"	#Allow it
+		ai_chance = { factor = 1 }
+		hidden_effect = {
+			random_other_country = {
+				limit = { has_idea = industrial_conglomerates }
+				set_temp_variable = { percent_change = 3.5 }
+				set_temp_variable = { tag_index = THIS.id }
+				set_temp_variable = { influence_target = PREV.id }
+			}
+		}
+		change_influence_percentage = yes
+		if = {
+			limit = {
+				OR = {
+					has_socialist_government = yes
+					has_reactionary_government = yes
+				}
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_fiscal_liberals = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.1.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.1.o2 executed"	#Prevent it
+		ai_chance = { factor = 1 }
+		lose_pp_for_month = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_small_medium_business_owners_opinion = yes
+		change_international_bankers_opinion = yes
+		if = {
+			limit = {
+				has_economically_liberal_government = yes
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_patriots = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.1.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.1.o3 executed"	#State buys it
+		ai_chance = { factor = 1 }
+		medium_expenditure = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_international_bankers_opinion = yes
+		if = {
+			limit = {
+				has_economically_liberal_government = yes
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_socialists = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.1.o4
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.1.o3 executed"	#Merge with a domestic company
+		trigger = {
+			has_idea = industrial_conglomerates
+			has_communist_government = yes
+		}
+		ai_chance = { factor = 1 }
+		set_temp_variable = { temp_opinion = -5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_industrial_conglomerates_opinion = yes
+	}
+}
+
+#Small startups strangled by bureaucracy
+country_event = {
+	id = internal_factions_events.2
+	title = internal_factions_events.2.t
+	desc = internal_factions_events.2.d
+	immediate = { }
+	picture = GFX_internal_faction_too_much_bureaucracy
+
+	is_triggered_only = yes
+	trigger = {
+		has_idea = small_medium_business_owners
+		OR = {
+			has_idea = bureau_04
+			has_idea = bureau_05
+		}
+	}
+
+	option = {
+		name = internal_factions_events.2.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.2.o1 executed"	#Lower bureaucracy
+		ai_chance = { factor = 1 }
+		decrease_centralization = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		block_bureau_change = yes
+	}
+	option = {
+		name = internal_factions_events.2.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.2.o2 executed"	#Don't lower bureaucracy
+		ai_chance = { factor = 1 }
+		set_temp_variable = { temp_opinion = -5 }
+		change_small_medium_business_owners_opinion = yes
+	}
+	option = {
+		name = internal_factions_events.2.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.2.o3 executed"	#Give advantages to some
+		ai_chance = { factor = 1 }
+		increase_corruption = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		add_2_popularity = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+	}
+}
+
+#More start-up money requested
+country_event = {
+	id = internal_factions_events.3
+	title = internal_factions_events.3.t
+	desc = internal_factions_events.3.d
+	immediate = { }
+	picture = GFX_internal_faction_money
+
+	is_triggered_only = yes
+	trigger = {
+		has_idea = small_medium_business_owners
+	}
+
+	option = {
+		name = internal_factions_events.3.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.3.o1 executed"	#Grant more money
+		ai_chance = { factor = 1 }
+		medium_expenditure = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		if = {
+			limit = {
+				OR = {
+					has_socialist_government = yes
+					has_communist_government = yes
+				}
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_fiscal_liberals = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.3.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.3.o2 executed"	#No more money
+		ai_chance = { factor = 1 }
+		set_temp_variable = { temp_opinion = -5 }
+		change_small_medium_business_owners_opinion = yes
+		if = {
+			limit = {
+				has_economically_liberal_government = yes
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_socialists = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.3.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.3.o3 executed"	#Make an arrangement with bankers
+		trigger = {
+			has_idea = international_bankers
+		}
+		ai_chance = { factor = 1 }
+		lose_pp_for_month = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_international_bankers_opinion = yes
+	}
+
+}
+
+### Special requests if two or more internal factions ###
+
+#Internatioanl bankers not loaning money to S&M business owners
+country_event = {
+	id = internal_factions_events.4
+	title = internal_factions_events.4.t
+	desc = internal_factions_events.4.d
+	immediate = { }
+	picture = GFX_internal_faction_money
+
+	is_triggered_only = yes
+	trigger = {
+		has_idea = small_medium_business_owners
+		has_idea = international_bankers
+	}
+
+	option = {
+		name = internal_factions_events.4.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.4.o1 executed"	#Force banks to give money
+		ai_chance = { factor = 1 }
+		lose_pp_for_15_days = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_international_bankers_opinion = yes
+		if = {
+			limit = {
+				has_economically_liberal_government = yes
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_socialists = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.4.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.4.o2 executed"	#No one has to loan anyone
+		ai_chance = { factor = 1 }
+		set_temp_variable = { temp_opinion = -5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_international_bankers_opinion = yes
+		if = {
+			limit = {
+				OR = {
+					has_socialist_government = yes
+					has_communist_government = yes
+				}
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_fiscal_liberals = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.4.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.4.o3 executed"	#The state steps in
+		ai_chance = { factor = 1 }
+		medium_expenditure = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		if = {
+			limit = {
+				has_economically_liberal_government = yes
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_socialists = yes
+		}
+	}
+
+}
+
+#Fossil fuel industry campaigns against clean energy
+country_event = {
+	id = internal_factions_events.5
+	title = internal_factions_events.5.t
+	desc = internal_factions_events.5.d
+	picture = GFX_internal_faction_energy
+	is_triggered_only = yes
+	trigger = {
+		has_idea = small_medium_business_owners
+		has_idea = fossil_fuel_industry
+	}
+
+	option = {
+		name = internal_factions_events.5.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.5.o1 executed"	#Support green energy
+		ai_chance = { factor = 1 }
+		increase_corruption = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_fossil_fuel_industry_opinion = yes
+		steal_popularity_from_enviromentalists = yes
+	}
+	option = {
+		name = internal_factions_events.5.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.5.o2 executed"	#Support fossil fuel
+		ai_chance = { factor = 1 }
+		increase_corruption = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_fossil_fuel_industry_opinion = yes
+		if = {
+			limit = {
+				has_environmentalist_government = yes
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.5.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.5.o3 executed"	#Just ignore it
+		ai_chance = { factor = 1 }
+		decrease_popularity_2 = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		add_relative_party_popularity = yes
+	}
+}
+
+#Large companies harass small ones
+country_event = {
+	id = internal_factions_events.6
+	title = internal_factions_events.6.t
+	desc = internal_factions_events.6.d
+	immediate = { }
+	picture = GFX_internal_faction_business_purchase
+
+	is_triggered_only = yes
+	trigger = {
+		has_idea = small_medium_business_owners
+		OR = {
+			has_idea = industrial_conglomerates
+			has_idea = oligarchs
+		}
+	}
+
+	option = {
+		name = internal_factions_events.6.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.6.o1 executed"	#Who cares?
+		ai_chance = { factor = 1 }
+		set_temp_variable = { temp_opinion = -5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_industrial_conglomerates_opinion = yes
+		change_oligarchs_opinion = yes
+		if = {
+			limit = {
+				OR = {
+					has_socialist_government = yes
+					has_communist_government = yes
+				}
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_fiscal_liberals = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.6.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.6.o2 executed"	#Reform legislation
+		ai_chance = { factor = 1 }
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_industrial_conglomerates_opinion = yes
+		change_oligarchs_opinion = yes
+		if = {
+			limit = {
+				has_economically_liberal_government = yes
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_socialists = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.6.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.6.o3 executed"	#Make a backroom deal
+		ai_chance = { factor = 1 }
+		increase_corruption = yes
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_oligarchs_opinion = yes
+	}
+}
+
+#Work contract dispute between S&B owners and labour unions
+country_event = {
+	id = internal_factions_events.7
+	title = internal_factions_events.7.t
+	desc = internal_factions_events.7.d
+	immediate = { }
+	picture = GFX_internal_faction_labour_dispute
+
+	is_triggered_only = yes
+	trigger = {
+		has_idea = small_medium_business_owners
+		has_idea = labour_unions
+	}
+
+	option = {
+		name = internal_factions_events.7.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.7.o1 executed"	#Loosen contracts
+		ai_chance = { factor = 1 }
+		add_timed_idea = {
+			idea = internal_faction_labour_dispute_companies_favoured
+			days = 360
+		}
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_labour_unions_opinion = yes
+		if = {
+			limit = {
+				OR = {
+					has_socialist_government = yes
+					has_communist_government = yes
+				}
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_fiscal_liberals = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.7.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.7.o2 executed"	#Tighten contracts
+		ai_chance = { factor = 1 }
+		add_timed_idea = {
+			idea = internal_faction_labour_dispute_union_favoured
+			days = 360
+		}
+		set_temp_variable = { temp_opinion = -5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_labour_unions_opinion = yes
+		if = {
+			limit = {
+				has_economically_liberal_government = yes
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_socialists = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.7.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.7.o3 executed"	#Tighten contracts
+		ai_chance = { factor = 1 }
+		lose_pp_for_month = yes
+		random_list = {
+			75 = {
+			}
+			25 = {
+				set_temp_variable = { temp_opinion = -5 }
+				change_small_medium_business_owners_opinion = yes
+				change_labour_unions_opinion = yes
+			}
+		}
+	}
+}
+
+# Business Open on Religious Day
+country_event = {
+	id = internal_factions_events.8
+	title = internal_factions_events.8.t
+	desc = internal_factions_events.8.d
+	picture = GFX_internal_faction_religion
+
+	is_triggered_only = yes
+	trigger = {
+		has_idea = small_medium_business_owners
+		has_religious_faction = yes
+	}
+
+	option = {
+		name = internal_factions_events.8.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.8.o1 executed"	#Prioritise traditional values
+		ai_chance = { factor = 1 }
+		add_stability = 0.02
+		set_temp_variable = { temp_opinion = -5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_priesthood_opinion = yes
+		change_the_ulema_opinion = yes
+		change_the_clergy_opinion = yes
+		change_the_wahabi_ulema_opinion = yes
+
+		if = {
+			limit = { check_variable = { social_conservatism_government > 0 } }
+			custom_effect_tooltip = conservatism_government_increase_2_tt
+			add_to_variable = { social_conservatism_government = 2 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					has_socialist_government = yes
+					has_liberal_government = yes
+				}
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_conservatives = yes
+		}
+	}
+	option = {
+		name = internal_factions_events.8.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.8.o2 executed"	#Who cares?
+		ai_chance = { factor = 1 }
+		add_stability = -0.02
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_priesthood_opinion = yes
+		change_the_ulema_opinion = yes
+		change_the_clergy_opinion = yes
+		change_the_wahabi_ulema_opinion = yes
+
+		if = {
+			limit = { check_variable = { social_conservatism_government > 0 } }
+			custom_effect_tooltip = conservatism_government_decrease_2_tt
+			subtract_from_variable = { social_conservatism_government = 2 }
+			clamp_variable = {
+				var = social_conservatism_government
+				min = 0
+				max = 100
+			}
+		}
+		if = {
+			limit = {
+				has_conservative_government = yes
+			}
+			decrease_popularity_5 = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+			steal_popularity_from_progressives = yes
+		}
+	}
+}
+
+
+# Small Company Lists Shares on Exchange
+country_event = {
+	id = internal_factions_events.9
+	title = internal_factions_events.9.t
+	desc = internal_factions_events.9.d
+	picture = GFX_internal_faction_business_purchase
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			has_idea = industrial_conglomerates
+			has_idea = the_donju
+			has_idea = the_bazaar
+			has_idea = chaebols
+			has_idea = small_medium_business_owners
+			has_idea = international_bankers
+			has_idea = wall_street
+		}
+		check_variable = { small_medium_business_owners_opinion > 60 }
+	}
+
+	option = {
+		name = internal_factions_events.9.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.9.o1 executed"	#Buy some shares
+		custom_effect_tooltip = TT_SYR_INVEST_IN_FINANCE
+		add_to_variable = { treasury = -5 }
+		add_to_variable = { int_investments = 5 }
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+	option = {
+		name = internal_factions_events.9.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.9.o2 executed"	#Don't buy
+		add_political_power = 100
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# Explosion of New Business
+# Fire only if enthusiastic or higher
+country_event = {
+	id = internal_factions_events.10
+	title = internal_factions_events.10.t
+	desc = internal_factions_events.10.d
+	picture = GFX_internal_faction_business_purchase
+	is_triggered_only = yes
+	trigger = {
+		has_idea = small_medium_business_owners
+		check_variable = { small_medium_business_owners_opinion > 80 }
+	}
+
+	option = {
+		name = internal_factions_events.10.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.10.o1 executed"	#Great
+		ai_chance = { factor = 1 }
+		add_timed_idea = {
+			idea = internal_faction_economic_boom
+			days = 360
+		}
+	}
+}
+
+### Negative effects if disliked by S&M business owners
+
+#Boom in new companies (needs a hidden event first)
+country_event = {
+	id = internal_factions_events.11
+	title = internal_factions_events.11.t
+	desc = internal_factions_events.11.d
+	picture = GFX_internal_faction_business_purchase
+
+	is_triggered_only = yes
+	trigger = {
+		has_idea = small_medium_business_owners
+		check_variable = { small_medium_business_owners_opinion < 51 }
+	}
+
+	option = {
+		name = internal_factions_events.11.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.0.o1 executed"	#Damn
+		ai_chance = { factor = 1 }
+		random_list = {
+			20 = {
+				if = {
+					limit = { NOT = { is_in_array = { ruling_party = 1 } } }
+					set_variable = { party_to_be_boosted = 1 }
+				}
+				else = {
+					set_variable = { party_to_be_boosted = 2 }
+				}
+				set_temp_variable = { party_index = party_to_be_boosted }
+				set_temp_variable = { party_popularity_increase = 0.02 }
+				add_relative_party_popularity = yes
+				clear_variable = party_to_be_boosted
+			}
+			20 = {
+				if = {
+					limit = { NOT = { is_in_array = { ruling_party = 1 } } }
+					set_variable = { party_to_be_boosted = 2 }
+				}
+				else = {
+					set_variable = { party_to_be_boosted = 14 }
+				}
+				set_temp_variable = { party_index = party_to_be_boosted }
+				set_temp_variable = { party_popularity_increase = 0.02 }
+				add_relative_party_popularity = yes
+				clear_variable = party_to_be_boosted
+			}
+			20 = {
+				if = {
+					limit = { NOT = { is_in_array = { ruling_party = 14 } } }
+					set_variable = { party_to_be_boosted = 14 }
+				}
+				else = {
+					set_variable = { party_to_be_boosted = 15 }
+				}
+				set_temp_variable = { party_index = party_to_be_boosted }
+				set_temp_variable = { party_popularity_increase = 0.02 }
+				add_relative_party_popularity = yes
+				clear_variable = party_to_be_boosted
+			}
+			20 = {
+				if = {
+					limit = { NOT = { is_in_array = { ruling_party = 15 } } }
+					set_variable = { party_to_be_boosted = 15 }
+				}
+				else = {
+					set_variable = { party_to_be_boosted = 16 }
+				}
+				set_temp_variable = { party_index = party_to_be_boosted }
+				set_temp_variable = { party_popularity_increase = 0.02 }
+				add_relative_party_popularity = yes
+				clear_variable = party_to_be_boosted
+			}
+			20 = {
+				if = {
+					limit = { NOT = { is_in_array = { ruling_party = 16 } } }
+					set_variable = { party_to_be_boosted = 16 }
+				}
+				else = {
+					set_variable = { party_to_be_boosted = 1 }
+				}
+				set_temp_variable = { party_index = party_to_be_boosted }
+				set_temp_variable = { party_popularity_increase = 0.02 }
+				add_relative_party_popularity = yes
+				clear_variable = party_to_be_boosted
+			}
+		}
+		country_event = { id = internal_factions_events.1 }
+	}
+}
+country_event = {
+	id = internal_factions_events.12
+	title = internal_factions_events.12.t
+	desc = internal_factions_events.12.d
+	immediate = { }
+	picture = GFX_internal_faction_political_conflict
+	is_triggered_only = yes
+
+	option = {
+		name = internal_factions_events.12.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.12.o1 executed"	#Damn
+		ai_chance = { factor = 1 }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { party_to_be_boosted = 1 }
+					check_variable = { party_to_be_boosted = 2 }
+				}
+			}
+			add_popularity = { ideology = democratic popularity = 0.02 }
+		}
+		if = {
+			limit = {
+				OR = {
+					check_variable = { party_to_be_boosted = 14 }
+					check_variable = { party_to_be_boosted = 15 }
+					check_variable = { party_to_be_boosted = 16 }
+				}
+			}
+			add_popularity = { ideology = neutrality popularity = 0.02 }
+		}
+		set_temp_variable = { party_index = party_to_be_boosted }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		clear_variable = party_to_be_boosted
+	}
+}
+
+# Large Company Goes Bankrupt
+country_event = {
+	id = internal_factions_events.13
+	title = internal_factions_events.13.t
+	desc = internal_factions_events.13.d
+	picture = GFX_internal_faction_political_conflict
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			has_idea = industrial_conglomerates
+			has_idea = the_donju
+			has_idea = small_medium_business_owners
+			has_idea = international_bankers
+			has_idea = the_bazaar
+			has_idea = wall_street
+			has_idea = chaebols
+		}
+		NOT = {
+			has_country_flag = large_company_goes_bankrupt
+			has_country_flag = large_company_subsidies
+		}
+	}
+
+	option = {
+		name = internal_factions_events.13.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.13.a executed"	#Damn
+		set_country_flag = { flag = large_company_goes_bankrupt value = 1 days = 365 }
+
+		set_temp_variable = { temp_opinion = -10 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_wall_street_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_chaebols_opinion = yes
+	}
+
+	option = {
+		name = internal_factions_events.13.b
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.13.a executed" #Subsidy
+		set_country_flag = { flag = large_company_subsidies value = 1 days = 180 }
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_wall_street_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_chaebols_opinion = yes
+
+		custom_effect_tooltip = propaganda_campaign_costs_tt
+		ingame_update_setup = yes
+	}
+}
+
+# Labour Unions Demand Business Pay More
+country_event = {
+	id = internal_factions_events.14
+	title = internal_factions_events.14.t
+	desc = internal_factions_events.14.d
+	picture = GFX_internal_faction_political_conflict
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			has_idea = industrial_conglomerates
+			has_idea = the_donju
+			has_idea = small_medium_business_owners
+			has_idea = international_bankers
+			has_idea = the_bazaar
+			has_idea = wall_street
+			has_idea = chaebols
+		}
+		has_idea = labour_unions
+	}
+
+	option = { #Side with Businesses
+		name = internal_factions_events.14.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.14.a executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_chaebols_opinion = yes
+		change_the_bazaar_opinion = yes
+		set_temp_variable = { temp_opinion = -10 }
+		change_labour_unions_opinion = yes
+
+		add_political_power = -100
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = { #Side with Labour Unions
+		name = internal_factions_events.14.b
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.14.b executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_chaebols_opinion = yes
+		change_the_bazaar_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_labour_unions_opinion = yes
+
+		add_political_power = -100
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = { # Side with Neither
+		name = internal_factions_events.14.c
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.14.c executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_labour_unions_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_chaebols_opinion = yes
+		change_the_bazaar_opinion = yes
+
+		add_political_power = 50
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# Labour Unions Demand Federal Government Raise Healthcare Spending
+country_event = {
+	id = internal_factions_events.15
+	title = internal_factions_events.15.t
+	desc = internal_factions_events.15.d
+	picture = GFX_internal_faction_political_conflict
+	is_triggered_only = yes
+
+	trigger = {
+		has_idea = labour_unions
+		check_variable = { labour_unions_opinion > 49 }
+		NOT = {
+			has_country_flag = health_decrease_blocked
+			has_country_flag = health_increase_blocked
+			has_idea = health_06 # Can't have this if you are max
+ 		}
+	}
+
+	option = { # Agree to the Demands
+		name = internal_factions_events.15.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.15.a executed"
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_labour_unions_opinion = yes
+
+		increase_healthcare_budget = yes
+		block_health_change = yes
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = { # Deny the Demands
+		name = internal_factions_events.15.b
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.15.b executed"
+
+		set_temp_variable = { temp_opinion = -10 }
+		change_labour_unions_opinion = yes
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# Labour Unions Demand Federal Government Raise Social Spending
+country_event = {
+	id = internal_factions_events.16
+	title = internal_factions_events.16.t
+	desc = internal_factions_events.16.d
+	picture = GFX_internal_faction_political_conflict
+	is_triggered_only = yes
+
+	trigger = {
+		has_idea = labour_unions
+		check_variable = { labour_unions_opinion > 49 }
+		NOT = {
+			has_country_flag = social_decrease_blocked
+			has_country_flag = social_increase_blocked
+			has_idea = social_06
+		}
+	}
+
+	option = { # Agree to the Demands
+		name = internal_factions_events.16.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.16.a executed"
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_labour_unions_opinion = yes
+
+		increase_social_spending = yes
+		block_social_change = yes
+		add_political_power = -50
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = { # Deny the Demands
+		name = internal_factions_events.16.b
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.16.b executed"
+
+		set_temp_variable = { temp_opinion = -10 }
+		change_labour_unions_opinion = yes
+		add_political_power = 50
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# Farmers Resist Agrarian Change
+country_event = {
+	id = internal_factions_events.17
+	title = internal_factions_events.17.t
+	desc = internal_factions_events.17.d
+	picture = GFX_internal_faction_political_conflict
+	is_triggered_only = yes
+
+	trigger = {
+		has_idea = farmers
+		OR = {
+			has_idea = industrial_conglomerates
+			has_idea = the_donju
+			has_idea = the_bazaar
+			has_idea = chaebols
+			has_idea = small_medium_business_owners
+			has_idea = international_bankers
+			has_idea = wall_street
+		}
+	}
+
+	option = { # Side with the Farmers
+		name = internal_factions_events.17.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.17.a executed"
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_farmers_opinion = yes
+		set_temp_variable = { temp_opinion = -10 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_wall_street_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_chaebols_opinion = yes
+
+	}
+
+	option = { # Side with Businesses
+		name = internal_factions_events.17.b
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.17.b executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_farmers_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_wall_street_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_chaebols_opinion = yes
+	}
+
+	option = { # Compromise
+		name = internal_factions_events.17.c
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.17.c executed"
+		add_political_power = -200
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_farmers_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_wall_street_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_chaebols_opinion = yes
+	}
+
+	option = { # Ignore both of them
+		name = internal_factions_events.17.dd
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.17.dd executed"
+
+		add_political_power = 100
+		set_temp_variable = { temp_opinion = -5 }
+		change_farmers_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_international_bankers_opinion = yes
+		change_the_donju_opinion = yes
+		change_wall_street_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_chaebols_opinion = yes
+	}
+}
+
+# Farmers Losing Ground
+country_event = {
+	id = internal_factions_events.18
+	title = internal_factions_events.18.t
+	desc = internal_factions_events.18.d
+	picture = GFX_internal_faction_labour_dispute
+	is_triggered_only = yes
+	trigger = {
+		has_idea = farmers
+		NOT = {
+			has_country_flag = lump_sum_farmer_subsidy
+			has_country_flag = farmer_subsidies
+		}
+	}
+
+	# Subsidize the Farmers
+	option = {
+		name = internal_factions_events.18.a
+		set_country_flag = { flag = farmer_subsidies value = 1 days = 180 }
+		set_temp_variable = { temp_opinion = 5 }
+		change_farmers_opinion = yes
+
+		custom_effect_tooltip = propaganda_campaign_costs_tt
+		ingame_update_setup = yes
+	}
+
+	# Lump Sum
+	option = {
+		name = internal_factions_events.18.b
+		set_country_flag = { flag = lump_sum_farmer_subsidy value = 1 days = 180 }
+		set_temp_variable = { temp_opinion = 3 }
+		change_farmers_opinion = yes
+
+		set_temp_variable = { gdp_percent = gdp_total }
+		multiply_temp_variable = { gdp_percent = -0.01 }
+
+		set_temp_variable = { treasury_change = gdp_percent }
+		modify_treasury_effect = yes
+	}
+
+	# Ignore their Request
+	option = {
+		name = internal_factions_events.18.c
+		set_temp_variable = { temp_opinion = -5 }
+		change_farmers_opinion = yes
+	}
+}

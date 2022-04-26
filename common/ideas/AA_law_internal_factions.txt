@@ -1,176 +1,137 @@
+# The Internal Faction System:
+# Authored: Killerrabbit, Angriest Bird
+# ---
+# The Internal Faction System is meant to represent internal politics and strife within a country.
+# It also represents special interest groups such as Labour Unions or Small & Medium Business Owners
+# All effects are housed in md/common/scripted_effects/00_internal_factions_effects.txt
+# Last Updated in January, 2022
+
+# List of Factions sorted by category
+# Economic Type: Small & Medium Business Owners, International Bankers, Fossil Fuel Industry
+# Industrial Conglomerates, Oligarchs
+# Militaristic: Maritime Industry, Military-Industrial Complex, The Military, Intelligence Community
+# Special Interest: Labour Unions, Landowners, Farmers, Communist Cadres
+# Religious Factions: Wahhabi Ulema, The Ulema, The Clergy, The Priesthood
+# Nation Specific: The Donju, The Bazaar, Saudi Royal Family, IRGC, Iranian Quds Force,
+# Foreign Jihadis, VEVAK, Chaebols, Wall Street, ISI Pakistan
+
 ideas = {
 	internal_factions = {
-	
 		#####################
-		### Economic-type ####
+		### Economic-type ###
 		#####################
-		
 		small_medium_business_owners = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea small_medium_business_owners"}
-			
-			cost = 900
+			cost = 1500
+			# Korea, North Korea, and Iran all get unique versions of the SMBO faction.
 			allowed = {
-				NOT = { original_tag = NKO }
-				NOT = { original_tag = PER }
-			}
-			available = {
-				always = yes
-			}
-			modifier = {
-				production_speed_industrial_complex_factor = 0.10
-				stability_factor = 0.02
-			}
-			
-			do_effect = {
 				NOT = {
-					has_country_flag = hostile_small_medium_business_owners
+					original_tag = KOR
+					original_tag = NKO
+					original_tag = PER
 				}
 			}
-			
+
 			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_small_medium_business_owners
-				line = yes
-				display_opinion_small_medium_business_owners = yes
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction small_medium_business_owners"
+				check_deposed_faction = yes
+				custom_effect_tooltip = business_owners_opinion_tt
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { small_medium_business_owners_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
+				}
 			}
-			
+
 			ai_will_do = {
 				factor = 0
 			}
 			cancel_if_invalid = no
 		}
-		
+
 		international_bankers = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea international_bankers"}
-		
-		cost = 900
-			
-			allowed = {
-				NOT = { original_tag = USA }
-			
-			}
-			available = {
-				always = yes
-			}
-			modifier = {
-				production_speed_industrial_complex_factor = 0.05
-				economic_cycles_cost_factor = -0.25
-				local_resources_factor = 0.05
-				trade_opinion_factor = 0.25
-				democratic_acceptance = 20
-				democratic_drift = 0.03
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_international_bankers
+			# USA Get's the Wall Street Faction which is essentially a better version of this
+			allowed = { NOT = { original_tag = USA } }
+			cost = 1500
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction international_bankers"
+				check_deposed_faction = yes
+				custom_effect_tooltip = international_bankers_opinion_tt
+				hidden_effect = {
+					ingame_update_setup = yes
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { international_bankers_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_international_bankers
-				custom_effect_tooltip = wall_street_interest_tt
-				calculate_interest_rate = yes
-				line = yes
-				display_opinion_international_bankers = yes
+			modifier = {
+				interest_rate_multiplier_modifier = -1
 			}
-			
+
 			ai_will_do = {
 				factor = 0
 			}
 			cancel_if_invalid = no
 		}
-		
+
 		fossil_fuel_industry = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea fossil_fuel_industry"}
-		
-		cost = 900
-			
-			allowed = {
-				
-			}
-			
-			available = {
-				always = yes
-			}
+			cost = 1500
 
-			modifier = {
-				local_resources_factor = 0.25
-				base_fuel_gain_factor = 0.2
-				justify_war_goal_time = -0.3
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_fossil_fuel_industry
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction fossil_fuel_industry"
+				check_deposed_faction = yes
+				custom_effect_tooltip = fossil_fuel_industry_opinion_tt
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { fossil_fuel_industry_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_fossil_fuel_industry
-				line = yes
-				display_opinion_fossil_fuel_industry = yes
-			}
-			
+
 			ai_will_do = {
 				factor = 0
 			}
 			cancel_if_invalid = no
 		}
-		
+
 		industrial_conglomerates = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea industrial_conglomerates"}
-			
-			cost = 900
-			
+			cost = 1500
+
+			# These are the Oligarch Nations
+			# They don't take industrial conglomerates
 			allowed = {
 				NOT = {
-					OR = {
-						original_tag = KOR
-						original_tag = SOV
-						original_tag = UKR
-						original_tag = KAZ
-						original_tag = MLV
-						original_tag = PMR
-						original_tag = NOV
-						original_tag = ARM
-						original_tag = KYR
-						original_tag = SOO
-						original_tag = ABK
-						original_tag = GEO
-						original_tag = TRK
-						original_tag = UZB
-						original_tag = BLR
-						original_tag = SYR
-						original_tag = EGY
-					}
+					original_tag = KOR
+					original_tag = SOV
+					original_tag = UKR
+					original_tag = KAZ
+					original_tag = MLV
+					original_tag = PMR
+					original_tag = NOV
+					original_tag = ARM
+					original_tag = KYR
+					original_tag = SOO
+					original_tag = ABK
+					original_tag = GEO
+					original_tag = TRK
+					original_tag = UZB
+					original_tag = BLR
+					original_tag = SYR
+					original_tag = EGY
 				}
 			}
-			available = {
-				always = yes
-			}
-			modifier = {
-				production_speed_industrial_complex_factor = 0.05
-				production_speed_infrastructure_factor = 0.2
-				local_resources_factor = 0.075
-				communism_acceptance = 20
-				communism_drift = 0.03
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_industrial_conglomerates
-				}
-			}
-			
+
 			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_industrial_conglomerates
-				custom_effect_tooltip = industrial_conglomerates_investment
-				line = yes
-				display_opinion_industrial_conglomerates = yes
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction industrial_conglomerates"
+				check_deposed_faction = yes
+				custom_effect_tooltip = industrial_conglomerates_opinion_tt
+				hidden_effect = {
+					# Cleanup Function
+					if_no_longer_has_faction_clear_previous = yes
+					# Intializes the Dynamic Modifier Properly
+					set_variable = { industrial_conglomerates_opinion = 60 }
+					apply_industrial_conglomerates_dynamic_effect_DYNMOD = yes
+				}
 			}
 
 			ai_will_do = {
@@ -178,364 +139,245 @@ ideas = {
 			}
 			cancel_if_invalid = no
 		}
-		
+
 		oligarchs = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea oligarchs"}
-			
-			cost = 900
-			
+			cost = 1500
+
 			allowed = {
-					OR = {
-						original_tag = SOV
-						original_tag = UKR
-						original_tag = KAZ
-						original_tag = MLV
-						original_tag = PMR
-						original_tag = NOV
-						original_tag = ARM
-						original_tag = KYR
-						original_tag = TAJ
-						original_tag = SOO
-						original_tag = ABK
-						original_tag = GEO
-						original_tag = TRK
-						original_tag = UZB
-						original_tag = BLR
-						original_tag = SYR
-						original_tag = EGY
-						original_tag = VEN
-					}
+				OR = {
+					is_in_array = { ruling_party = 15 }
+					is_in_array = { gov_coalition_array = 15 }
+					original_tag = SOV
+					original_tag = UKR
+					original_tag = KAZ
+					original_tag = MLV
+					original_tag = PMR
+					original_tag = NOV
+					original_tag = ARM
+					original_tag = KYR
+					original_tag = TAJ
+					original_tag = SOO
+					original_tag = ABK
+					original_tag = GEO
+					original_tag = TRK
+					original_tag = UZB
+					original_tag = BLR
+					original_tag = SYR
+					original_tag = EGY
+					original_tag = VEN
+					original_tag = NIG
+				}
 			}
+
 			available = {
-				always = yes
+				OR = {
+					is_in_array = { ruling_party = 15 }
+					is_in_array = { gov_coalition_array = 15 }
+					original_tag = SOV
+					original_tag = UKR
+					original_tag = KAZ
+					original_tag = MLV
+					original_tag = PMR
+					original_tag = NOV
+					original_tag = ARM
+					original_tag = KYR
+					original_tag = TAJ
+					original_tag = SOO
+					original_tag = ABK
+					original_tag = GEO
+					original_tag = TRK
+					original_tag = UZB
+					original_tag = BLR
+					original_tag = SYR
+					original_tag = EGY
+					original_tag = VEN
+					original_tag = NIG
+				}
 			}
+
 			modifier = {
-				production_speed_industrial_complex_factor = 0.06
-				local_resources_factor = 0.075
-				communism_acceptance = 20
-				communism_drift = 0.03
 				corruption_cost_factor = 0.25
 			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_oligarchs
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction oligarchs"
+				check_deposed_faction = yes
+				custom_effect_tooltip = oligarchs_opinion_tt
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { oligarchs_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_oligarchs
-				line = yes
-				display_opinion_oligarchs = yes
-			}
-			
+
 			ai_will_do = {
 				factor = 0
 			}
 			cancel_if_invalid = no
 		}
-		
+
 		#####################
 		### Militaristic ####
 		#####################
-		
+
 		maritime_industry = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea maritime_industry"}
-			
-			cost = 900
-			
-			allowed = {
-				#exists = yes
-			}
+			cost = 1500
 			available = {
 				any_owned_state = {
 					is_coastal = yes
 				}
 			}
-			available = {
-				always = yes
-			}
-			modifier = {
-				production_speed_dockyard_factor = 0.25
-				production_speed_naval_base_factor = 0.25
-				industrial_capacity_dockyard = 0.2
-				amphibious_invasion = 0.25
-				navy_refit_speed = 0.25
-				experience_gain_navy = 0.05
-				navy_max_range_factor = 0.2
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_maritime_industry
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction maritime_industry"
+				check_deposed_faction = yes
+				custom_effect_tooltip = maritime_industry_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { maritime_industry_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_maritime_industry
-				custom_effect_tooltip = maritime_Industry_investment
-				line = yes
-				display_opinion_maritime_industry = yes
-				
-			}
 
-			ai_will_do = {
-				factor = 0
-			}
 			cancel_if_invalid = no
 		}
-		
+
 		defense_industry = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea defense_industry"}
-			
-			cost = 900
-			#removal_cost = -1
-			
-			allowed = {
-				#exists = yes
-			}
-			available = {
-				always = yes
-			}
-			modifier = {
-				production_speed_arms_factory_factor = 0.25
-				conversion_cost_civ_to_mil_factor = -0.25
-				equipment_conversion_speed = 0.2
-				production_factory_efficiency_gain_factor = 0.1
-				production_factory_start_efficiency_factor = 0.1
-				justify_war_goal_time = -0.2
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_defense_industry
+			cost = 1500
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction defense_industry"
+				check_deposed_faction = yes
+				custom_effect_tooltip = defense_industry_opinion_tt
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { defense_industry_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_defense_industry
-				custom_effect_tooltip = defense_industry_investment
-				line = yes
-				display_opinion_defense_industry = yes
-			}
 
-			ai_will_do = {
-				factor = 0
-			}
 			cancel_if_invalid = no
 		}
 
 		the_military = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea the_military"}
-			
-			cost = 900
-			
-			allowed = {
-				#exists = yes
-			}
-			available = {
-				always = yes
-			}
+			cost = 1500
+
+			available = { NOT = { has_idea = no_military } }
 			modifier = {
-				army_org_Factor = 0.04
-				army_morale_factor = 0.04
-				military_leader_cost_factor = -0.50
-				army_leader_start_level = 1
-				training_time_army_factor = -0.25
-				experience_gain_army = 0.05
-				experience_gain_air = 0.05
-				production_speed_air_base_factor = 0.25
+				nationalist_drift = 0.02
 			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_the_military
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction the_military"
+				check_deposed_faction = yes
+				custom_effect_tooltip = the_military_opinion_tt
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { the_military_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_the_military
-				line = yes
-				display_opinion_the_military = yes
-			}
-			
-			ai_will_do = {
-				factor = 0
-			}
+
 			cancel_if_invalid = no
 		}
-		
+
 		intelligence_community = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea intelligence_community"}
-		
-		cost = 900
-			
+			cost = 1500
+			# Pakistan & Iran have their own unique factions
 			allowed = {
-				NOT = { original_tag = PAK }
-				NOT = { original_tag = PER }
-			}
-			available = {
-				always = yes
-			}
-			modifier = {
-				recon_factor = 0.30
-				decryption_factor = 0.2
-				encryption_factor = 0.2
-				production_speed_radar_station_factor = 0.25
-				subversive_activites_upkeep = -0.4
-				foreign_subversive_activites = -0.5
-				justify_war_goal_time = -0.2
-				enemy_justify_war_goal_time = 0.2
-			}
-			
-			do_effect = {
 				NOT = {
-					has_country_flag = hostile_intelligence_community
+					original_tag = PAK
+					original_tag = PER
 				}
 			}
-			
+
 			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_intelligence_community
-				display_opinion_intelligence_community = yes
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction intelligence_community"
+				check_deposed_faction = yes
+				custom_effect_tooltip = intelligence_community_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { intelligence_community_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
+				}
 			}
-			
-			ai_will_do = {
-				factor = 0
-			}
+
 			cancel_if_invalid = no
 		}
-		
+
 		##########################
 		### Special interests ####
 		##########################
-		
 		labour_unions = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea labour_unions"}
-			
-			cost = 900
-			#removal_cost = -1
-			
-			allowed = {
-				#exists = yes
-			}
+			cost = 1500
 			available = {
-				always = yes
-			}
-			modifier = {
-				stability_factor = 0.03
-				political_power_factor = 0.15
-			}
-			
-			do_effect = {
 				NOT = {
-					has_country_flag = hostile_labour_unions
+					has_government = nationalist
+					has_government = fascism
 				}
 			}
-			
+
 			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_labour_unions
-				line = yes
-				display_opinion_labour_unions = yes
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction labour_unions"
+				check_deposed_faction = yes
+				custom_effect_tooltip = labour_unions_opinion_tt
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { labour_unions_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
+				}
 			}
 
-			ai_will_do = {
-				factor = 0
-			}
 			cancel_if_invalid = no
 		}
-		
+
 		landowners = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea landowners"}
-			
-			cost = 900
-			#removal_cost = -1
-			
-			allowed = {
-				#exists = yes
-			}
-			available = {
-				always = yes
-			}
+			cost = 1500
+
 			modifier = {
-				conscription = 0.01
-				local_resources_factor = 0.05
-				industry_air_damage_factor = -0.2
-				nationalist_acceptance = 20
-				nationalist_drift = 0.02
+				corruption_cost_factor = 0.15
 			}
-			
+
 			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_landowners
-				line = yes
-				display_opinion_landowners = yes
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_landowners
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction landowners"
+				check_deposed_faction = yes
+				custom_effect_tooltip = landowners_opinion_tt
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { landowners_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
 
-			ai_will_do = {
-				factor = 0
-			}
 			cancel_if_invalid = no
 		}
-		
+
 		farmers = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea farmers"}
-			
-			cost = 900
-			#removal_cost = -1
-			
-			allowed = {
-				#exists = yes
-			}
-			available = {
-				always = yes
-			}
-			modifier = {
-				stability_factor = 0.05
-				industry_free_repair_factor = 0.5
-				industry_repair_factor = 0.25
-				industry_air_damage_factor = -0.5
-				consumer_goods_factor = -0.01
-				fuel_gain_factor_from_states = 0.1
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_farmers
+			cost = 1500
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction farmers"
+				check_deposed_faction = yes
+				custom_effect_tooltip = farmers_opinion_tt
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { farmers_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_farmers
-				display_opinion_farmers = yes
-			}
 
-			ai_will_do = {
-				factor = 0
-			}
 			cancel_if_invalid = no
 		}
-		
+
 		communist_cadres = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea communist_cadres"}
-			
-			cost = 900
-			#removal_cost = -1
-			
-			allowed = {
-				OR = {
+			cost = 1500
+
+			# Hide the Communist Cadres
+			# If you are not communist you can't have communist things
+			visible = {
+				NOT = {
 					original_tag = CHI
 					original_tag = VIE
 					original_tag = LAO
@@ -545,93 +387,80 @@ ideas = {
 					original_tag = ROJ
 					original_tag = CUB
 				}
+				is_in_array = { ruling_party = 4 }
+				is_in_array = { ruling_party = 19 }
 			}
 
 			available = {
-				always = yes
-			}
-			
-			modifier = {
-				mobilization_speed = 0.5
-				army_org_regain = 0.2
-				surrender_limit = 0.1
-				partisan_effect = 0.2
-				army_core_defence_factor = 0.05
-				consumer_goods_factor = -0.02
-			}
-
-
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_communist_cadres
+				OR = {
+					original_tag = CHI
+					original_tag = VIE
+					original_tag = LAO
+					original_tag = NEP
+					original_tag = NKO
+					original_tag = PMR
+					original_tag = ROJ
+					original_tag = CUB
+					OR = {
+						is_in_array = { ruling_party = 4 }
+						is_in_array = { ruling_party = 19 }
+					}
 				}
 			}
-			
+
 			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_communist_cadres
-				line = yes
-				display_opinion_communist_cadres = yes
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction communist_cadres"
+				check_deposed_faction = yes
+				custom_effect_tooltip = communist_cadres_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { communist_cadres_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
+				}
 			}
 
-			ai_will_do = {
-				factor = 0
-			}
 			cancel_if_invalid = no
 		}
-		
-		
+
+
+		# Religious Factions
+		# the_priesthood - for all non muslim or christians
+		# The_Ulema - for all muslims
+		# wahabi_ulema - for radical muslims kek
+		# The_Clergy - for all christian based faiths
 		the_priesthood = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea the_priesthood"}
-		
-		cost = 900
-				
-			allowed = {
-				
-			}
+			cost = 1500
+
 			available = {
 				OR = {
 					has_idea = buddism
 					has_idea = hindu
 					has_idea = shinto
 					has_idea = cheondo
-					}
-			}
-
-			modifier = {
-				stability_factor = 0.04
-				MONTHLY_POPULATION = 0.5
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_the_priesthood
 				}
 			}
-			
+
 			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_the_priesthood
-				line = yes
-				display_opinion_the_priesthood = yes
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction the_priesthood"
+				check_deposed_faction = yes
+				custom_effect_tooltip = the_priesthood_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { the_priesthood_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
+				}
 			}
 
-			ai_will_do = {
-				factor = 0
-			}
 			cancel_if_invalid = no
 		}
-		
+
 		The_Ulema = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea The_Ulema"}
-		
-		cost = 900
-				
-			allowed = {
-				
-			}
+			cost = 1500
+
 			available = {
-			OR = {
+				OR = {
 					has_idea = sunni
 					has_idea = ibadi
 					has_idea = sufi_islam
@@ -639,74 +468,52 @@ ideas = {
 				}
 			}
 
-			modifier = {
-				stability_factor = 0.04
-				MONTHLY_POPULATION = 0.5
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_The_Ulema
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction The_Ulema"
+				check_deposed_faction = yes
+				custom_effect_tooltip = the_ulema_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { The_Ulema_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_The_Ulema
-				line = yes
-				display_opinion_The_Ulema = yes
-			}
-			
-			ai_will_do = {
-				factor = 0
-			}
+
 			cancel_if_invalid = no
 		}
-		
+
 		The_Clergy = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea The_Clergy"}
-		
-		cost = 900
-				
-			allowed = {
-				
-			}
+			cost = 1500
+
 			available = {
 				OR = {
 					has_idea = orthodox_christian
 					has_idea = christian
-					}
-			}
-
-			modifier = {
-				stability_factor = 0.04
-				MONTHLY_POPULATION = 0.5
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_The_Clergy
+					has_idea = UKR_idea_orthodox_chrisitan_church
 				}
 			}
-			
+
 			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_The_Clergy
-				line = yes
-				display_opinion_The_Clergy = yes
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction The_Clergy"
+				check_deposed_faction = yes
+				custom_effect_tooltip = the_clergy_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { The_Clergy_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
+				}
 			}
 
-			ai_will_do = {
-				factor = 0
-			}
 			cancel_if_invalid = no
 		}
-		
+
 		wahabi_ulema = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea wahabi_ulema"}
-		
-		cost = 900
-				
+			cost = 1500
+
+			# Wahabbism only exists in specific nations really
+			# Keeping this allowed - Bird
 			allowed = {
 				OR = {
 					original_tag = AQY
@@ -726,107 +533,70 @@ ideas = {
 				}
 			}
 
-			modifier = {
-				stability_factor = 0.04
-				MONTHLY_POPULATION = 0.5
-				fascism_drift = 0.05
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_wahabi_ulema
-					
-				}
-			}
-			
 			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_wahabi_ulema
-				line = yes
-				display_opinion_wahabi_ulema = yes
-			}
-			
-			ai_will_do = {
-					factor = 0
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction wahabi_ulema"
+				check_deposed_faction = yes
+				custom_effect_tooltip = wahabi_ulema_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { wahabi_ulema_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
+			}
+
 			cancel_if_invalid = no
 		}
-		
-		
+
+
 		### NATION SPECIFIC ###
-		
+		# North Korean version of SMBO
 		the_donju = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea the_donju"}
-			
-			cost = 900
-			allowed = {
-					original_tag = NKO
-			}
-			available = {
-			}
+			cost = 1500
+			allowed = { original_tag = NKO }
+			available = { original_tag = NKO }
 			modifier = {
-				production_speed_industrial_complex_factor = 0.10
-				stability_factor = 0.02
+				corruption_cost_factor = 0.30
 			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_the_donju
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction the_donju"
+				check_deposed_faction = yes
+				custom_effect_tooltip = the_donju_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { the_donju_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_the_donju
-				line = yes
-				display_opinion_the_donju = yes
-			}
-			
-			ai_will_do = {
-				factor = 0
-			}
+
 			cancel_if_invalid = no
 		}
-		
+
 		the_bazaar = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea the_bazaar"}
-			
-			cost = 900
-			allowed = {
-					original_tag = PER
-			}
-			available = {
-			}
-			modifier = {
-				production_speed_industrial_complex_factor = 0.10
-				stability_factor = 0.02
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_the_bazaar
+			cost = 1500
+			allowed = { original_tag = PER }
+			available = { original_tag = PER }
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction the_bazaar"
+				check_deposed_faction = yes
+				custom_effect_tooltip = the_bazaar_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { the_bazaar_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_the_bazaar
-				line = yes
-				display_opinion_the_bazaar = yes
-			}
-			
-			ai_will_do = {
-				factor = 0
-			}
+
 			cancel_if_invalid = no
 		}
-		
+
 		saudi_royal_family = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea saudi_royal_family"}
-			
-			cost = 900
-			#removal_cost = -1
-			
+			cost = 1500
+
 			allowed = {
 				OR = {
 					original_tag = SAU
@@ -834,73 +604,53 @@ ideas = {
 					original_tag = BHR
 					original_tag = OMA
 					original_tag = KUW
-					}
-			}
-			available = {
-			}
-
-			modifier = {
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_saudi_royal_family
 				}
 			}
-			
+
 			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_saudi_royal_family
-				line = yes
-				display_opinion_saudi_royal_family = yes
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction saudi_royal_family"
+				check_deposed_faction = yes
+				custom_effect_tooltip = saudi_royal_family_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { saudi_royal_family_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
+				}
 			}
 
-			ai_will_do = {
-				factor = 0
-			}
 			cancel_if_invalid = no
 		}
-		
+
 		irgc = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea irgc"}
-		
-		cost = 900
-			
-			allowed = {
-					original_tag = PER
-			}
-			available = {
-			}
+			cost = 1500
+			# Iranian unique intelligence community
+			allowed = { original_tag = PER }
+			available = { original_tag = PER }
 			modifier = {
-				send_volunteer_size = 1
-				communism_drift = 0.05
+				send_volunteer_size = 5
+				corruption_cost_factor = 0.15
 			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_IRGC
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction irgc"
+				check_deposed_faction = yes
+				custom_effect_tooltip = irgc_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { irgc_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_IRGC
-				line = yes
-				display_opinion_IRGC = yes
-			}
-			
-			ai_will_do = {
-				factor = 0
-			}
+
 			cancel_if_invalid = no
 		}
-		
+
 		#for proxies
 		iranian_quds_force = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea iranian_quds_force"}
-		
-		cost = 900
-			
+			cost = 1500
+
 			allowed = {
 				OR = {
 					original_tag = IRQ
@@ -915,238 +665,165 @@ ideas = {
 					original_tag = TAL
 					original_tag = TAJ
 					original_tag = BHR
+					original_tag = KUW
+					original_tag = OMA
+					original_tag = QAT
+					original_tag = SAU
+					original_tag = UAE
 				}
 			}
-			
+
 			available = {
-			OR = {
-				has_government = communism
-				has_government = neutrality
-				has_government = nationalist
+				OR = {
+					has_government = communism
+					has_government = neutrality
+					has_government = nationalist
 				}
 			}
-			
+
 			modifier = {
-				send_volunteer_size = 1
-				communism_drift = 0.04
+				send_volunteer_size = 2
 			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_iranian_quds_force
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction iranian_quds_force"
+				check_deposed_faction = yes
+				custom_effect_tooltip = iranian_quds_force_opinion_tt
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { iranian_quds_force_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_iranian_quds_force
-				line = yes
-				display_opinion_iranian_quds_force = yes
-			}
-			
-			ai_will_do = {
-				factor = 0
-			}
+
 			cancel_if_invalid = no
 		}
-		
+
+		# Custom Faction for all Islamic Extremist Groups
+		# Specifically to represent the Jihadists from abroad who flock to support a terror cell
+		# It also represents their ability to send jihadists abroad hence the volunteer size
 		foreign_jihadis = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea foreign_jihadis"}
-		
-		cost = 900
-			
-			
-			allowed = {
-					
-			}
-			available = {
-				has_government = fascism
-				}
-			
+			cost = 1500
+			available = { has_government = fascism }
+
 			modifier = {
 				send_volunteer_size = 1
-				non_core_manpower = 0.05
-				fascism_drift = 0.05
 				surrender_limit = 0.2
-				special_forces_cap = 0.2
 			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_foreign_jihadis
-				}
-			}
-			
+
 			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add Internal Faction foreign_jihadis"
 				add_manpower = 7500
-				check_deposed_faction = yes	
-				set_country_flag = active_foreign_jihadis
-				line = yes
-				display_opinion_foreign_jihadis = yes
+				check_deposed_faction = yes
+				custom_effect_tooltip = foreign_jihadis_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { foreign_jihadis_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
+				}
 			}
-			
+
 			ai_will_do = {
 				factor = 0
 			}
 			cancel_if_invalid = no
 		}
-		
+
+		# VEVAK
+		# Iranian unique intelligence faction
 		vevak = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea vevak"}
-		
-		cost = 900
-			
-			allowed = {
-				original_tag = PER
-			}
-			available = {
-			}
-			modifier = {
-				recon_factor = 0.30
-				decryption_factor = 0.2
-				encryption_factor = 0.2
-				production_speed_radar_station_factor = 0.25
-				subversive_activites_upkeep = -0.4
-				foreign_subversive_activites = -0.75
-				enemy_partisan_effect = -0.10
-				justify_war_goal_time = -0.2
-				enemy_justify_war_goal_time = 0.3
-				communism_drift = 0.04
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_VEVAK
+			cost = 1500
+			allowed = { original_tag = PER }
+			available = { original_tag = PER }
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction vevak"
+				check_deposed_faction = yes
+				custom_effect_tooltip = vevak_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { vevak_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_VEVAK
-				line = yes
-				display_opinion_VEVAK = yes
-			}
-			
-			ai_will_do = {
-				factor = 0
-			}
+
 			cancel_if_invalid = no
 		}
-		
+
+		# ISI
+		# Pakistani unique intelligence faction
 		isi_pakistan = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea isi_pakistan"}
-		
-		cost = 900
-			
-			allowed = {
-				original_tag = PAK
-			}
-			available = {
-			}
-			modifier = {
-			recon_factor = 0.35
-			decryption_factor = 0.3
-			encryption_factor = 0.3
-			subversive_activites_upkeep = -0.5
-			foreign_subversive_activites = -0.75
-			enemy_partisan_effect = -0.35
-			fascism_acceptance = 20
-			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_isi_pakistan
+			cost = 1500
+			allowed = { original_tag = PAK }
+			available = { original_tag = PAK }
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction isi_pakistan"
+				check_deposed_faction = yes
+				custom_effect_tooltip = isi_pakistan_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { isi_pakistan_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_isi_pakistan
-				line = yes
-				display_opinion_isi_pakistan = yes
-			}
-			
-			ai_will_do = {
-				factor = 0
-			}
+
 			cancel_if_invalid = no
 		}
-		
+
+		# Wall Street
+		# American replacement to International Bankers
 		wall_street = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea wall_street"}
-		
-		cost = 900
-			
-			allowed = {
-				original_tag = USA
-			}
-			available = {
-			}
+			cost = 1500
+			allowed = { original_tag = USA }
+			available = { original_tag = USA }
 			modifier = {
-				production_speed_industrial_complex_factor = 0.05
 				economic_cycles_cost_factor = -0.25
-				local_resources_factor = 0.05
-				trade_opinion_factor = 0.25
-				democratic_acceptance = 20
-				democratic_drift = 0.04
+				democratic_drift = 0.02
+				interest_rate_multiplier_modifier = -1
 			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_wall_street
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: added Internal Faction wall_street"
+				check_deposed_faction = yes
+				custom_effect_tooltip = wall_street_opinion_tt
+
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { wall_street_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
+					ingame_update_setup = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_wall_street
-				custom_effect_tooltip = wall_street_interest_tt
-				calculate_interest_rate = yes
-				line = yes
-				display_opinion_wall_street = yes
-			}
-			
-			ai_will_do = {
-				factor = 0
-			}
+
 			cancel_if_invalid = no
 		}
-		
+
+		# Chaebols
+		# Unique Small Medium Business Owners Replacement
 		chaebols = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea chaebols"}
-		
-		cost = 900
-			
-			allowed = {
-				original_tag = KOR
-			}
-			available = {
-			}
+			cost = 1500
+			allowed = { original_tag = KOR }
+			available = { original_tag = KOR }
+
 			modifier = {
-				production_speed_industrial_complex_factor = 0.1
-				production_speed_infrastructure_factor = 0.2
-				local_resources_factor = 0.1
-				communism_acceptance = 20
-				communism_drift = 0.01
 				corruption_cost_factor = 0.25
 			}
-			
-			do_effect = {
-				NOT = {
-					has_country_flag = hostile_chaebols
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: added faction The Chaebols"
+				check_deposed_faction = yes
+				custom_effect_tooltip = chaebol_opinion_tt
+				hidden_effect = {
+					if_no_longer_has_faction_clear_previous = yes
+					set_variable = { chaebols_opinion = 60 }
+					initialize_internal_faction_dynamic_modifiers = yes
 				}
 			}
-			
-			on_add = {
-				check_deposed_faction = yes	
-				set_country_flag = active_chaebols
-				line = yes
-				display_opinion_chaebols = yes
-			}
-			
-			ai_will_do = {
-				factor = 0
-			}
+
 			cancel_if_invalid = no
 		}
 	}
@@ -1154,20 +831,59 @@ ideas = {
 	country = {
 		#Ideas related to Internal Faction events
 		internal_faction_decreased_investments = {
-			on_add = {log = "[GetDateText]: [Root.GetName]: add idea internal_faction_decreased_investments"}
-		
-			allowed = {
-				always = yes
-			}
-			
+			on_add = { log = "[GetDateText]: [Root.GetName]: add Internal Faction internal_faction_decreased_investments" }
+
 			removal_cost = -1
-			
+
 			picture = internal_faction_decreased_investments
-			
+
 			modifier = {
 				production_speed_buildings_factor = -0.15
 			}
 		}
-		
+
+		internal_faction_labour_dispute_companies_favoured = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add internal_faction_labour_dispute_companies_favoured" }
+
+			allowed = { always = yes }
+
+			removal_cost = -1
+
+			picture = GFX_internal_faction_dispute
+
+			modifier = {
+				production_speed_buildings_factor = 0.10
+				stability_factor = -0.05
+			}
+		}
+
+		internal_faction_labour_dispute_union_favoured = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add internal_faction_labour_dispute_union_favoured" }
+
+			allowed = { always = yes }
+
+			removal_cost = -1
+
+			picture = GFX_internal_faction_dispute
+
+			modifier = {
+				production_speed_buildings_factor = -0.10
+				stability_factor = 0.05
+			}
+		}
+
+		internal_faction_economic_boom = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add internal_faction_economic_boom" }
+
+			allowed = { always = yes }
+
+			removal_cost = -1
+
+			picture = GFX_internal_faction_bonus
+
+			modifier = {
+				production_speed_buildings_factor = 0.10
+			}
+		}
 	}
 }

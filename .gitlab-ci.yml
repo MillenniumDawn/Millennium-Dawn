@@ -1,47 +1,39 @@
-stages:
-  - StandardsTest
-  - StylingTest
-  - FixStyling
-  
-  
-CodingStandards:
-  stage: StandardsTest
-  image: python:3.6
-  only:
-    - merge_requests
-  script:
-    - pip install requests
-    - python3 tools/coding_standards.py $Bot_Token
+# cwtools-action v1.0, 2019-12-02
+# Please occasionally check below for updates to this template
+# https://github.com/cwtools/cwtools-action
+# Example GitLab CI workflow file for a Stellaris project
+# Will trigger when a merge request to master is created
+# Rename to .gitlab-ci.yml and put in root of your repository
 
-Styling:
-  stage: StylingTest
-  image: python:3.6
-  only:
-    - merge_requests
-  script:
-    - pip install requests
-    - python3 tools/check_basic_style_2.py $Bot_Token
+# image: mcr.microsoft.com/dotnet/core/sdk:3.0
 
-FixingStyling:
-  stage: FixStyling
-  image: python:3.6
-  only:
-    - merge_requests
-  script:
-    - pip install requests
-    - python3 tools/fix_styling.py $Bot_Token
-  after_script:
-    - git config --global user.email "x-mike-x_@live.com"
-    - git config --global user.name "MD4GitBot"
-    - git config --global push.default simple
-    - git remote set-url origin https://MD4GitBot:$Bot_Token@gitlab.com/Millennium_Dawn/Millennium_Dawn.git
-    - git add -A
-    - git commit -m 'Fixed Styling for you'
-    - git push -u origin HEAD:$CI_COMMIT_REF_NAME
-    - python3 tools/check_basic_style.py $Bot_Token
-    - python3 tools/check_basic_style_2.py $Bot_Token
-    
-  when: on_failure
+# variables:
+#   DOCKER_DRIVER: overlay2
+#   GIT_STRATEGY: clone # Please see https://github.com/cwtools/cwtools-action/issues/3 for details as to why this is needed
+#   INPUT_GAME: "hoi4" # Change to the game used in your project
+#   # Variables below are optional and set to their default values - uncomment and change them if you wish so
+#   #INPUT_MODPATH: ''
+#   #INPUT_CACHE: ''
+#   #INPUT_LOCLANGUAGES: 'english'
+#   INPUT_RULES: "https://github.com/AngriestBird/cwtools-hoi4-config.git"
+#   #INPUT_RULESREF: 'master'
+#   #INPUT_VANILLAMODE: '0'
+#   #INPUT_SUPPRESSEDOFFENCECATEGORIES: '{"failure":[], "warning":[], "notice":[]}'
+#   #INPUT_SUPPRESSEDFILES: '[]'
+#   #INPUT_CWTOOLSCLIVERSION: ''
 
-  
-  
+# stages:
+#   - CWTools_CI
+
+# CWTools_CI:
+#     stage: CWTools_CI
+#     only: [merge_requests]
+#     script:
+#         - wget -O - -q https://raw.githubusercontent.com/cwtools/cwtools-action/v1.0.0/lib/gitlab_setup.sh | sh -s
+
+#     # Optional, expose the CWTools errors in JSON
+#     artifacts:
+#         expose_as: 'CWTools output'
+#         paths:
+#             - output.json
+#         when: always

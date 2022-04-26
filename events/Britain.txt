@@ -3,10 +3,9 @@
 #Become England?
 country_event = {
 	id = britain_md.1
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.1"}
 	title = britain_md.1.t
 	desc = britain_md.1.d
-	picture = GFX_report_event_scottish_independence
+	picture = GFX_ENG_generic
 
 	trigger = {
 		tag = ENG
@@ -37,15 +36,22 @@ country_event = {
 			}
 		}
 	}
-
-	mean_time_to_happen = {
-		days = 10
-	}
+	is_triggered_only = yes
 
 	option = { #We shall accept our fate
 		name = britain_md.1.o1
 		log = "[GetDateText]: [This.GetName]: britain_md.1.o1 executed"
-		set_cosmetic_tag = ENG_England
+		if = {
+			limit = {
+				has_global_flag = european_federation
+				has_idea = EU_member
+			}
+			set_cosmetic_tag = ENG_england
+		}
+		else = {
+			set_cosmetic_tag = ENG_England
+		}
+		clr_country_flag = dynamic_flag
 		add_political_power = 10
 
 		ai_chance = {
@@ -68,10 +74,9 @@ country_event = {
 #The Future of the NHS
 country_event = {
 	id = britain_md.2
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.2"}
 	title = britain_md.2.t
 	desc = britain_md.2.d
-	picture = GFX_british_flag
+	picture = GFX_ENG_generic
 
 	is_triggered_only = yes
 
@@ -89,6 +94,7 @@ country_event = {
 			popularity = 0.02
 		}
 		recalculate_party = yes
+		increase_healthcare_budget = yes
 	}
 
 	option = {
@@ -104,13 +110,29 @@ country_event = {
 			popularity = 0.02
 		}
 		recalculate_party = yes
+		if = {
+			limit = { has_idea = health_06 }
+			swap_ideas = {
+				add_idea = health_04
+				remove_idea = health_06
+			}
+		}
+		else_if = {
+			limit = { has_idea = health_05 }
+			swap_ideas = {
+				add_idea = health_04
+				remove_idea = health_05
+			}
+		}
+		else = {
+			decrease_healthcare_budget = yes
+		}
 	}
 }
 
 #Britain demands Special Treatment
 country_event = {
 	id = britain_md.3
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.3"}
 	title = britain_md.3.t
 	desc = britain_md.3.d
 	picture = GFX_british_flag
@@ -130,7 +152,6 @@ country_event = {
 #The Brexit Referendum (britain_md.4)
 country_event = {
 	id = britain_md.4
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.4"}
 	title = britain_md.4.t
 	desc = britain_md.4.d
 	picture = GFX_brexit
@@ -150,7 +171,7 @@ country_event = {
 				is_historical_focus_on = yes
 			}
 			set_country_flag = brexit_referendum_leave
-			country_event = britain_md.22
+			news_event = britain_md.22
 		}
 		if = {
 			limit = {
@@ -158,11 +179,11 @@ country_event = {
 			}
 			random_list = {
 				60 = {
-					country_event = britain_md.22
+					news_event = britain_md.22
 					set_country_flag = brexit_referendum_leave
 				}
 				40 = {
-					country_event = britain_md.23
+					news_event = britain_md.23
 					set_country_flag = brexit_referendum_remain
 				}
 			}
@@ -173,7 +194,6 @@ country_event = {
 #The monarchy abolished (britain_md.5)
 country_event = {
 	id = britain_md.5
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.5"}
 	title = britain_md.5.t
 	desc = britain_md.5.d
 	picture = GFX_elizabeth_II
@@ -201,9 +221,8 @@ country_event = {
 }
 
 #Elizabeth II abdicates (britain_md.6)
-country_event = {
+news_event = {
 	id = britain_md.6
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.6"}
 	title = britain_md.6.t
 	desc = {
 		text = britain_md.6.d1
@@ -214,8 +233,6 @@ country_event = {
 		trigger = { has_country_flag = elizabeth_abdicates_nationalist }
 	}
 	picture = GFX_elizabeth_II
-
-
 	is_triggered_only = yes
 
 	option = {
@@ -235,10 +252,9 @@ country_event = {
 #British support for NATO (britain_md.7)
 country_event = {
 	id = britain_md.7
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.7"}
 	title = britain_md.7.t
 	desc = britain_md.7.d
-	picture = GFX_british_flag
+	picture = GFX_british_military
 
 	is_triggered_only = yes
 
@@ -274,10 +290,9 @@ country_event = {
 #Investments Abroad (britain_md.8)
 country_event = {
 	id = britain_md.8
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.8"}
 	title = britain_md.8.t
 	desc = britain_md.8.d
-	picture = GFX_NATO_picture
+	picture = GFX_united_states_dollar
 
 	is_triggered_only = yes
 
@@ -301,10 +316,9 @@ country_event = {
 #National Development (britain_md.9)
 country_event = {
 	id = britain_md.9
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.9"}
 	title = britain_md.9.t
 	desc = britain_md.9.d
-	picture = GFX_british_flag
+	picture = GFX_generic_factory
 
 	is_triggered_only = yes
 
@@ -312,7 +326,7 @@ country_event = {
 		name = britain_md.9.o1
 		log = "[GetDateText]: [This.GetName]: britain_md.9.o1 executed"
 		random_list = {
-			30 = {
+			25 = {
 				random_owned_state = {
 					limit = {
 						state_population > 5000
@@ -320,6 +334,11 @@ country_event = {
 							building = industrial_complex
 							size > 0
 							include_locked = yes
+						}
+						OR = {
+							region = 1
+							region = 2
+							region = 3
 						}
 					}
 					add_building_construction = {
@@ -329,8 +348,10 @@ country_event = {
 					}
 					add_extra_state_shared_building_slots = 1
 				}
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
 			}
-			30 = {
+			25 = {
 				random_owned_state = {
 					limit = {
 						state_population > 5000
@@ -338,6 +359,11 @@ country_event = {
 							building = arms_factory
 							size > 0
 							include_locked = yes
+						}
+						OR = {
+							region = 1
+							region = 2
+							region = 3
 						}
 					}
 					add_building_construction = {
@@ -347,8 +373,10 @@ country_event = {
 					}
 					add_extra_state_shared_building_slots = 1
 				}
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
 			}
-			30 = {
+			25 = {
 				random_owned_state = {
 					limit = {
 						state_population > 5000
@@ -356,6 +384,11 @@ country_event = {
 							building = dockyard
 							size > 0
 							include_locked = yes
+						}
+						OR = {
+							region = 1
+							region = 2
+							region = 3
 						}
 					}
 					add_building_construction = {
@@ -365,6 +398,33 @@ country_event = {
 					}
 					add_extra_state_shared_building_slots = 1
 				}
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
+			}
+			25 = {
+				random_owned_state = {
+					limit = {
+						state_population > 5000
+						free_building_slots = {
+							building = offices
+							size > 0
+							include_locked = yes
+						}
+						OR = {
+							region = 1
+							region = 2
+							region = 3
+						}
+					}
+					add_building_construction = {
+						type = offices
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
+				set_temp_variable = { treasury_change = -12 }
+				modify_treasury_effect = yes
 			}
 		}
 	}
@@ -373,10 +433,9 @@ country_event = {
 #Britain attacks Capitalism (britain_md.10)
 country_event = {
 	id = britain_md.10
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.10"}
 	title = britain_md.10.t
 	desc = britain_md.10.d
-	picture = GFX_british_flag
+	picture = GFX_politics_communism
 
 	is_triggered_only = yes
 
@@ -401,10 +460,9 @@ country_event = {
 #The EU border compromise (britain_md.11)
 country_event = {
 	id = britain_md.11
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.11"}
 	title = britain_md.11.t
 	desc = britain_md.11.d
-	picture = GFX_british_flag
+	picture = GFX_northern_ireland_uk_border
 	is_triggered_only = yes
 
 	option = {	#We should keep our borders shut
@@ -443,10 +501,9 @@ country_event = {
 #The CANZUK Alliance (britain_md.12)
 country_event = {
 	id = britain_md.12
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.12"}
 	title = britain_md.12.t
 	desc = britain_md.12.d
-	picture = GFX_british_flag
+	picture = GFX_ENG_canzuk_alliance
 
 	is_triggered_only = yes
 
@@ -525,7 +582,6 @@ country_event = {
 #The Workforce Deal with Ireland (britain_md.13)
 country_event = {
 	id = britain_md.13
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.13"}
 	title = britain_md.13.t
 	desc = britain_md.13.d
 	picture = GFX_british_flag
@@ -563,10 +619,9 @@ country_event = {
 #Air Travel Agreement with Europe (britain_md.14)
 country_event = {
 	id = britain_md.14
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.14"}
 	title = britain_md.14.t
 	desc = britain_md.14.d
-	picture = GFX_british_flag
+	picture = GFX_passenger_plane
 
 	is_triggered_only = yes
 
@@ -586,7 +641,6 @@ country_event = {
 #Invited to British Alliance (britain_md.15)
 country_event = {
 	id = britain_md.15
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.15"}
 	title = britain_md.15.t
 	desc = britain_md.15.d
 	picture = GFX_british_flag
@@ -635,70 +689,88 @@ country_event = {
 #European Military Cooperation (britain_md.16)
 country_event = {
 	id = britain_md.16
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.16"}
 	title = britain_md.16.t
 	desc = britain_md.16.d
-	picture = GFX_eu
+	picture = GFX_submarine
 
 	is_triggered_only = yes
 
 	option = {
 		name = britain_md.16.o1
 		log = "[GetDateText]: [This.GetName]: britain_md.16.o1 executed"
-		add_political_power = 50
-		army_experience = 10
-		navy_experience = 10
-		air_experience = 10
+		army_experience = 25
+		navy_experience = 25
+		air_experience = 25
 	}
 }
 
 #Reorganize the Education System (britain_md.17)
 country_event = {
 	id = britain_md.17
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.17"}
 	title = britain_md.17.t
 	desc = britain_md.17.d
-	picture = GFX_eu
+	picture = GFX_politics_negotiations
 
 	is_triggered_only = yes
 
 	option = {	#We should pick our students entirely based on merit.
 		name = britain_md.17.o1
 		log = "[GetDateText]: [This.GetName]: britain_md.17.o1 executed"
-		add_popularity = {
-			ideology = nationalist
-			popularity = 0.1
-		}
+		add_popularity = { ideology = nationalist popularity = 0.05 }
 		recalculate_party = yes
-		add_stability = 0.05
+		add_political_power = -50
+		add_ideas = ENG_merit_based_education_system_idea
+		increase_education_budget = yes
+		ai_chance = {
+			factor = 3
+		}
 	}
 
 	option = {	#We should pick our students entirely based on race.
 		name = britain_md.17.o2
 		log = "[GetDateText]: [This.GetName]: britain_md.17.o2 executed"
-		add_popularity = {
-			ideology = nationalist
-			popularity = 0.1
-		}
+		add_popularity = { ideology = nationalist popularity = 0.10 }
 		recalculate_party = yes
-		add_stability = -0.05
+		add_stability = -0.025
+		add_ideas = ENG_race_based_education_system_idea
+		add_political_power = -25
+		increase_education_budget = yes
+		ai_chance = {
+			factor = 5
+			modifier = {
+				OR = {
+					is_in_array = { ruling_party = 21 }
+					is_in_array = { ruling_party = 20 }
+				}
+				add = 1
+			}
+		}
 	}
 
 	option = {	#A hybrid system seems appropriate
 		name = britain_md.17.o3
 		log = "[GetDateText]: [This.GetName]: britain_md.17.o3 executed"
-		add_popularity = {
-			ideology = nationalist
-			popularity = 0.05
-		}
+		add_popularity = { ideology = nationalist popularity = 0.05 }
 		recalculate_party = yes
+		add_ideas = ENG_hybrid_based_education_system_idea
+		increase_education_budget = yes
+		ai_chance = {
+			factor = 2
+			modifier = {
+				OR = {
+					democratic > 0.20
+					communism > 0.20
+					neutrality > 0.20
+				}
+				add = 2
+			}
+		}
 	}
 }
 
 #Britain's revolutionary committee (britain_md.18)
 country_event = {
 	id = britain_md.18
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.18"}
 	title = britain_md.18.t
 	desc = britain_md.18.d
 	picture = GFX_politics_communism
@@ -720,7 +792,6 @@ country_event = {
 #Britain: The Revolt in Quebec (britain_md.19)
 country_event = {
 	id = britain_md.19
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.19"}
 	title = britain_md.19.t
 	desc = britain_md.19.d
 	picture = GFX_politics_autocracy
@@ -737,7 +808,6 @@ country_event = {
 #Canada: The Revolt in Quebec (britain_md.20)
 country_event = {
 	id = britain_md.20
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.20"}
 	title = britain_md.20.t
 	desc = britain_md.20.d
 	picture = GFX_politics_autocracy
@@ -801,7 +871,6 @@ country_event = {
 #Defensive Assistance (britain_md.21)
 country_event = {
 	id = britain_md.21
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.21"}
 	title = britain_md.21.t
 	desc = britain_md.21.d
 	picture = GFX_british_flag
@@ -832,9 +901,8 @@ country_event = {
 }
 
 #Britain votes "Leave"
-country_event = {
+news_event = {
 	id = britain_md.22
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.22"}
 	title = britain_md.22.t
 	desc = britain_md.22.d
 	picture = GFX_brexit
@@ -843,33 +911,31 @@ country_event = {
 	option = {
 		name = britain_md.22.o1
 		log = "[GetDateText]: [This.GetName]: britain_md.22.o1 executed"
-		add_stability = -0.05
-		remove_ideas = EU_member
-		news_event = news.4
+		#add_stability = -0.05
+		#remove_ideas = EU_member
+		#news_event = news.4
 	}
 }
 
 #Britain votes "Remain"
-country_event = {
+news_event = {
 	id = britain_md.23
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.23"}
 	title = britain_md.23.t
 	desc = britain_md.23.d
-	picture = GFX_brexit
+	picture = GFX_eu
 
 	is_triggered_only = yes
 
 	option = {
 		name = britain_md.23.o1
 		log = "[GetDateText]: [This.GetName]: britain_md.23.o1 executed"
-		add_stability = -0.05
+		#add_stability = -0.05
 	}
 }
 
 #Britain: Ireland accepts Workforce deal!
 country_event = {
 	id = britain_md.24
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.24"}
 	title = britain_md.24.t
 	desc = britain_md.24.d
 	picture = GFX_brexit
@@ -885,10 +951,9 @@ country_event = {
 #Queen Elizabeth II dies
 country_event = {
 	id = britain_md.25
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.25"}
 	title = britain_md.25.t
 	desc = britain_md.25.d
-	picture = GFX_report_event_monarch_death
+	picture = GFX_ENG_generic
 
 	trigger = {
 		tag = ENG
@@ -896,14 +961,13 @@ country_event = {
 		has_idea = ENG_queen_elizabeth_2
 		date > 2020.1.1
 	}
-
-	mean_time_to_happen = {
-		days = 1700
-	}
+	is_triggered_only = yes
+	fire_only_once = yes
 
 	option = {
 		name = britain_md.25.o1
 		log = "[GetDateText]: [This.GetName]: britain_md.25.o1 executed"
+		set_country_flag = ENG_elizabeth_dead_dead
 		remove_ideas = ENG_queen_elizabeth_2
 		add_ideas = ENG_king_charles_3
 		hidden_effect = {
@@ -919,10 +983,9 @@ country_event = {
 #King Charles III dies
 country_event = {
 	id = britain_md.26
-	immediate = {log = "[GetDateText]: [Root.GetName]: event britain_md.26"}
 	title = britain_md.26.t
 	desc = britain_md.26.d
-	picture = GFX_report_event_monarch_death
+	picture = GFX_ENG_generic
 
 	trigger = {
 		tag = ENG
@@ -930,10 +993,8 @@ country_event = {
 		has_idea = ENG_king_charles_3
 		date > 2035.1.1
 	}
-
-	mean_time_to_happen = {
-		days = 1800
-	}
+	is_triggered_only = yes
+	fire_only_once = yes
 
 	option = {
 		name = britain_md.26.o1

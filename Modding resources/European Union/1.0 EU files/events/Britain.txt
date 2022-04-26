@@ -1,0 +1,953 @@
+﻿add_namespace = britain_md
+
+#Become England?
+country_event = {
+	id = britain_md.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.1" }
+	title = britain_md.1.t
+	desc = britain_md.1.d
+	picture = GFX_report_event_scottish_independence
+
+	trigger = {
+		tag = ENG
+		NOT = { has_cosmetic_tag = ENG_England }
+		NOT = { has_country_flag = refused_to_be_england }
+		OR = {	#Scotland
+			AND = {	#Scotland might exist. If it does, it needs to be at peace with britain_md.
+				SCO = { exists = yes }
+				NOT = { has_war_with = SCO }
+			}
+			AND = {	#Maybe Britain also lost control of Scotland through war. If the owners of the Scottish states are not at war with Britain, then Scotland is lost. As long as Britain still owns at least one state, Scotland is not yet lost.
+				NOT = { controls_state = 437 }
+				NOT = { controls_state = 9 }
+				NOT = { controls_state = 8 }
+				437 = { owner = { NOT = { has_war_with = ENG } } }
+				9 = { owner = { NOT = { has_war_with = ENG } } }
+				8 = { owner = { NOT = { has_war_with = ENG } } }
+			}
+		}
+		OR = {	#WASes
+			AND = {	#WASes might exist.
+				WAS = { exists = yes }
+				NOT = { has_war_with = WAS }
+			}
+			AND = {	#The state of WASes might have been lost.
+				NOT = { controls_state = 16 }
+				16 = { owner = { NOT = { has_war_with = ENG } } }
+			}
+		}
+	}
+
+	mean_time_to_happen = {
+		days = 10
+	}
+
+	option = { #We shall accept our fate
+		name = britain_md.1.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.1.o1 executed"
+		set_cosmetic_tag = ENG_England
+		add_political_power = 10
+
+		ai_chance = {
+			factor = 100
+		}
+	}
+
+	option = { #Never!
+		name = britain_md.1.o2
+		log = "[GetDateText]: [This.GetName]: britain_md.1.o2 executed"
+		add_stability = 0.02
+		set_country_flag = refused_to_be_england
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+#The Future of the NHS
+country_event = {
+	id = britain_md.2
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.2" }
+	title = britain_md.2.t
+	desc = britain_md.2.d
+	picture = GFX_british_flag
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.2.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.2.o1 executed"
+		add_ideas = ENG_idea_expanded_nhs
+		add_stability = 0.03
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.02
+		}
+		add_popularity = {
+			ideology = communism
+			popularity = 0.02
+		}
+		recalculate_party = yes
+		increase_healthcare_budget = yes
+	}
+
+	option = {
+		name = britain_md.2.o2
+		log = "[GetDateText]: [This.GetName]: britain_md.2.o2 executed"
+		add_ideas = ENG_idea_privatized_nhs
+		add_popularity = {
+			ideology = communism
+			popularity = 0.03
+		}
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.02
+		}
+		recalculate_party = yes
+		increase_healthcare_budget = yes
+	}
+}
+
+#Britain demands Special Treatment
+country_event = {
+	id = britain_md.3
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.3" }
+	title = britain_md.3.t
+	desc = britain_md.3.d
+	picture = GFX_british_flag
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.3.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.3.o1 executed"
+		add_timed_idea = {
+			idea = british_special_treatment
+			days = 730
+		}
+	}
+}
+
+#The Brexit Referendum (britain_md.4)
+country_event = {
+	id = britain_md.4
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.4" }
+	title = britain_md.4.t
+	desc = britain_md.4.d
+	picture = GFX_brexit
+
+
+	is_triggered_only = yes
+
+	immediate = {
+		set_country_flag = brexit_referendum
+	}
+
+	option = {	#Let the Referendum be held
+		name = britain_md.4.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.4.o1 executed"
+		if = {
+			limit = {
+				is_historical_focus_on = yes
+			}
+			set_country_flag = brexit_referendum_leave
+			country_event = britain_md.22
+		}
+		if = {
+			limit = {
+				is_historical_focus_on = no
+			}
+			random_list = {
+				60 = {
+					country_event = britain_md.22
+					set_country_flag = brexit_referendum_leave
+				}
+				40 = {
+					country_event = britain_md.23
+					set_country_flag = brexit_referendum_remain
+				}
+			}
+		}
+	}
+}
+
+#The monarchy abolished (britain_md.5)
+country_event = {
+	id = britain_md.5
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.5" }
+	title = britain_md.5.t
+	desc = britain_md.5.d
+	picture = GFX_elizabeth_II
+
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.5.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.5.o1 executed"
+		set_country_flag = ENG_monarchy_abolished
+		if = {
+			limit = { has_idea = ENG_queen_elizabeth_2 }
+			remove_ideas = ENG_queen_elizabeth_2
+		}
+		if = {
+			limit = { has_idea = ENG_king_charles_3 }
+			remove_ideas = ENG_king_charles_3
+		}
+		if = {
+			limit = { has_idea = ENG_king_william_5 }
+			remove_ideas = ENG_king_william_5
+		}
+	}
+}
+
+#Elizabeth II abdicates (britain_md.6)
+country_event = {
+	id = britain_md.6
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.6" }
+	title = britain_md.6.t
+	desc = {
+		text = britain_md.6.d1
+		trigger = { has_country_flag = elizabeth_abdicates_monarchist }
+	}
+	desc = {
+		text = britain_md.6.d2
+		trigger = { has_country_flag = elizabeth_abdicates_nationalist }
+	}
+	picture = GFX_elizabeth_II
+
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.6.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.6.o1 executed"
+		add_stability = -0.05
+		remove_ideas = ENG_queen_elizabeth_2
+		add_ideas = ENG_king_charles_3
+		create_country_leader = {
+			name = "Charles III"
+			picture = "Charles.dds"
+			ideology = Monarchist
+		}
+	}
+}
+
+#British support for NATO (britain_md.7)
+country_event = {
+	id = britain_md.7
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.7" }
+	title = britain_md.7.t
+	desc = britain_md.7.d
+	picture = GFX_british_flag
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.7.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.7.o1 executed"
+		add_political_power = 10
+		if = {
+			limit = {
+				ENG = {
+					NOT = { has_completed_focus = ENG_focus_on_the_army }
+					NOT = { has_completed_focus = ENG_focus_on_the_navy }
+				}
+			}
+			army_experience = 5
+			navy_experience = 5
+		}
+		if = {
+			limit = {
+				ENG = { has_completed_focus = ENG_focus_on_the_army }
+			}
+			army_experience = 15
+		}
+		if = {
+			limit = {
+				ENG = { has_completed_focus = ENG_focus_on_the_navy }
+			}
+			navy_experience = 15
+		}
+	}
+}
+
+#Investments Abroad (britain_md.8)
+country_event = {
+	id = britain_md.8
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.8" }
+	title = britain_md.8.t
+	desc = britain_md.8.d
+	picture = GFX_NATO_picture
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.8.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.8.o1 executed"
+		add_political_power = 15
+		add_opinion_modifier = {
+			target = ENG
+			modifier = trade_mission
+		}
+		ENG = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = trade_mission
+			}
+		}
+	}
+}
+
+#National Development (britain_md.9)
+country_event = {
+	id = britain_md.9
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.9" }
+	title = britain_md.9.t
+	desc = britain_md.9.d
+	picture = GFX_british_flag
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.9.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.9.o1 executed"
+		random_list = {
+			30 = {
+				random_owned_state = {
+					limit = {
+						state_population > 5000
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
+			}
+			30 = {
+				random_owned_state = {
+					limit = {
+						state_population > 5000
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
+			}
+			30 = {
+				random_owned_state = {
+					limit = {
+						state_population > 5000
+						free_building_slots = {
+							building = dockyard
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
+			}
+		}
+	}
+}
+
+#Britain attacks Capitalism (britain_md.10)
+country_event = {
+	id = britain_md.10
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.10" }
+	title = britain_md.10.t
+	desc = britain_md.10.d
+	picture = GFX_british_flag
+
+	is_triggered_only = yes
+
+	option = {	#Completely unacceptable!
+		name = britain_md.10.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.10.o1 executed"
+		add_political_power = -5
+	}
+
+	option = {	#Maybe these reforms are even necessary.
+		name = britain_md.10.o2
+		log = "[GetDateText]: [This.GetName]: britain_md.10.o2 executed"
+		add_political_power = -10
+		add_popularity = {
+			ideology = communism
+			popularity = 0.05
+		}
+		recalculate_party = yes
+	}
+}
+
+#The EU border compromise (britain_md.11)
+country_event = {
+	id = britain_md.11
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.11" }
+	title = britain_md.11.t
+	desc = britain_md.11.d
+	picture = GFX_british_flag
+	is_triggered_only = yes
+
+	option = {	#We should keep our borders shut
+		name = britain_md.11.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.11.o1 executed"
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.05
+		}
+		recalculate_party = yes
+		add_stability = 0.05
+	}
+
+	option = {	#We should pursue a more open border policy
+		name = britain_md.11.o2
+		log = "[GetDateText]: [This.GetName]: britain_md.11.o2 executed"
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.05
+		}
+		recalculate_party = yes
+		add_political_power = 100
+		every_country = {
+			limit = {
+				NOT = { tag = ENG }
+				has_idea = EU_member
+			}
+			add_opinion_modifier = {
+				target = ENG
+				modifier = recent_actions_positive
+			}
+		}
+	}
+}
+
+#The CANZUK Alliance (britain_md.12)
+country_event = {
+	id = britain_md.12
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.12" }
+	title = britain_md.12.t
+	desc = britain_md.12.d
+	picture = GFX_british_flag
+
+	is_triggered_only = yes
+
+	option = {	#Sure
+		name = britain_md.12.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.12.o1 executed"
+		set_country_flag = seeks_british_alliance
+		if = {
+			limit = {
+				is_in_faction = yes
+				is_faction_leader = no
+			}
+			random_country = {
+				limit = {
+					is_in_faction_with = ROOT
+					is_faction_leader = yes
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = recent_actions_negative
+				}
+			}
+		}
+		ENG = {
+			add_to_faction = ROOT
+			country_event = diplomatic_response.1
+		}
+
+		ai_chance = {
+			factor = 75
+
+			modifier = {
+				add = -50
+				has_opinion = {
+					target = ENG
+					value < 10
+				}
+			}
+			modifier = {
+				add = 50
+				has_opinion = {
+					target = ENG
+					value > 40
+				}
+			}
+		}
+	}
+
+	option = {	#Ah hell nah
+		name = britain_md.12.o2
+		log = "[GetDateText]: [This.GetName]:britain_md.12.o2 executed"
+		add_political_power = 10
+		ENG = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = recent_actions_negative
+			}
+			country_event = diplomatic_response.2
+		}
+
+		ai_chance = {
+			factor = 25
+
+			modifier = {
+				add = 50
+				is_in_faction = yes
+			}
+			modifier = {
+				add = 500
+				is_faction_leader = yes
+			}
+		}
+	}
+}
+
+#The Workforce Deal with Ireland (britain_md.13)
+country_event = {
+	id = britain_md.13
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.13" }
+	title = britain_md.13.t
+	desc = britain_md.13.d
+	picture = GFX_british_flag
+
+	is_triggered_only = yes
+
+	option = {	#Sure, why not
+		name = britain_md.13.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.13.01 executed"
+		add_political_power = 25
+		ENG = {
+			add_opinion_modifier = {
+				target = IRE
+				modifier = recent_actions_positive
+			}
+			country_event = britain_md.24
+		}
+	}
+
+	option = {	#Lul no
+		name = britain_md.13.o2
+		log = "[GetDateText]: [This.GetName]: britain_md.13.o2 executed"
+		add_political_power = -10
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.04
+		}
+		recalculate_party = yes
+		ENG = {
+			country_event = diplomatic_response.2
+		}
+	}
+}
+
+#Air Travel Agreement with Europe (britain_md.14)
+country_event = {
+	id = britain_md.14
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.14" }
+	title = britain_md.14.t
+	desc = britain_md.14.d
+	picture = GFX_british_flag
+
+	is_triggered_only = yes
+
+	option = {	#Good.
+		name = britain_md.14.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.14.o1 executed"
+		add_stability = 0.01
+		add_political_power = 50
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.05
+		}
+		recalculate_party = yes
+	}
+}
+
+#Invited to British Alliance (britain_md.15)
+country_event = {
+	id = britain_md.15
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.15" }
+	title = britain_md.15.t
+	desc = britain_md.15.d
+	picture = GFX_british_flag
+	is_triggered_only = yes
+
+	option = {	#Sure
+		name = britain_md.15.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.15.o1 executed"
+		set_country_flag = seeks_british_alliance
+		if = {
+			limit = {
+				is_in_faction = yes
+				is_faction_leader = no
+			}
+			random_country = {
+				limit = {
+					is_in_faction_with = ROOT
+					is_faction_leader = yes
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = recent_actions_negative
+				}
+			}
+		}
+		ENG = {
+			add_to_faction = ROOT
+			country_event = diplomatic_response.1
+		}
+	}
+
+	option = {	#Ah hell nah
+		name = britain_md.15.o2
+		log = "[GetDateText]: [This.GetName]: britain_md.15.o2 executed"
+		add_political_power = 10
+		ENG = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = recent_actions_negative
+			}
+			country_event = diplomatic_response.2
+		}
+	}
+}
+
+#European Military Cooperation (britain_md.16)
+country_event = {
+	id = britain_md.16
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.16" }
+	title = britain_md.16.t
+	desc = britain_md.16.d
+	picture = GFX_eu
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.16.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.16.o1 executed"
+		add_political_power = 50
+		army_experience = 10
+		navy_experience = 10
+		air_experience = 10
+	}
+}
+
+#Reorganize the Education System (britain_md.17)
+country_event = {
+	id = britain_md.17
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.17" }
+	title = britain_md.17.t
+	desc = britain_md.17.d
+	picture = GFX_eu
+
+	is_triggered_only = yes
+
+	option = {	#We should pick our students entirely based on merit.
+		name = britain_md.17.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.17.o1 executed"
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.1
+		}
+		recalculate_party = yes
+		add_stability = 0.05
+	}
+
+	option = {	#We should pick our students entirely based on race.
+		name = britain_md.17.o2
+		log = "[GetDateText]: [This.GetName]: britain_md.17.o2 executed"
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.1
+		}
+		recalculate_party = yes
+		add_stability = -0.05
+	}
+
+	option = {	#A hybrid system seems appropriate
+		name = britain_md.17.o3
+		log = "[GetDateText]: [This.GetName]: britain_md.17.o3 executed"
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.05
+		}
+		recalculate_party = yes
+	}
+}
+
+#Britain's revolutionary committee (britain_md.18)
+country_event = {
+	id = britain_md.18
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.18" }
+	title = britain_md.18.t
+	desc = britain_md.18.d
+	picture = GFX_politics_communism
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.18.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.18.o1 executed"
+		add_stability = -0.02
+		add_popularity = {
+			ideology = communism
+			popularity = 0.05
+		}
+		recalculate_party = yes
+	}
+}
+
+#Britain: The Revolt in Quebec (britain_md.19)
+country_event = {
+	id = britain_md.19
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.19" }
+	title = britain_md.19.t
+	desc = britain_md.19.d
+	picture = GFX_politics_autocracy
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.19.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.19.o1 executed"
+		CAN = { country_event = britain_md.20 }
+	}
+}
+
+#Canada: The Revolt in Quebec (britain_md.20)
+country_event = {
+	id = britain_md.20
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.20" }
+	title = britain_md.20.t
+	desc = britain_md.20.d
+	picture = GFX_politics_autocracy
+
+	is_triggered_only = yes
+
+	option = {	#We concede then.
+		name = britain_md.20.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.20.o1 executed"
+		release = QUE
+		hidden_effect = {
+			every_state = {
+				limit = {
+					is_owned_by = QUE
+				}
+				add_core_of = CAN
+			}
+		}
+		if = {
+			limit = { 762 = { is_owned_by = CAN } }
+			ENG = { transfer_state = 762 }
+		}
+		if = {
+			limit = { 759 = { is_owned_by = CAN } }
+			ENG = { transfer_state = 759 }
+		}
+		762 = { add_core_of = ENG }
+		759 = { add_core_of = ENG }
+		ENG = {
+			country_event = diplomatic_response.3
+		}
+	}
+
+	option = {	#Never!
+		name = britain_md.20.o2
+		log = "[GetDateText]: [This.GetName]: britain_md.20.o2 executed"
+		release = QUE
+		if = {
+			limit = {
+				ENG = {
+					NOT = { is_in_faction_with = CAN }
+					is_faction_leader = yes
+				}
+			}
+			ENG = { add_to_faction = QUE }
+		}
+		CAN = {
+			declare_war_on = {
+				target = QUE
+				type = annex_everything
+			}
+		}
+		762 = { add_core_of = ENG }
+		759 = { add_core_of = ENG }
+		ENG = {
+			country_event = diplomatic_response.4
+		}
+	}
+}
+
+#Defensive Assistance (britain_md.21)
+country_event = {
+	id = britain_md.21
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.21" }
+	title = britain_md.21.t
+	desc = britain_md.21.d
+	picture = GFX_british_flag
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.21.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.21.o1 executed"
+		army_experience = 25
+		random_owned_state = {
+			limit = {
+				state_population > 5000
+				free_building_slots = {
+					building = arms_factory
+					size > 0
+					include_locked = yes
+				}
+			}
+			add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
+			}
+			add_extra_state_shared_building_slots = 1
+		}
+	}
+}
+
+#Britain votes "Leave"
+country_event = {
+	id = britain_md.22
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.22" }
+	title = britain_md.22.t
+	desc = britain_md.22.d
+	picture = GFX_brexit
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.22.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.22.o1 executed"
+		add_stability = -0.05
+		remove_ideas = EU_member
+		news_event = news.4
+	}
+}
+
+#Britain votes "Remain"
+country_event = {
+	id = britain_md.23
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.23" }
+	title = britain_md.23.t
+	desc = britain_md.23.d
+	picture = GFX_brexit
+
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.23.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.23.o1 executed"
+		add_stability = -0.05
+	}
+}
+
+#Britain: Ireland accepts Workforce deal!
+country_event = {
+	id = britain_md.24
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.24" }
+	title = britain_md.24.t
+	desc = britain_md.24.d
+	picture = GFX_brexit
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.24.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.24.o1 executed"
+		add_ideas = ENG_workforce_deal_with_ireland
+	}
+}
+
+#Queen Elizabeth II dies
+country_event = {
+	id = britain_md.25
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.25" }
+	title = britain_md.25.t
+	desc = britain_md.25.d
+	picture = GFX_report_event_monarch_death
+
+	trigger = {
+		tag = ENG
+		NOT = { has_country_flag = ENG_monarchy_abolished }
+		has_idea = ENG_queen_elizabeth_2
+		date > 2020.1.1
+	}
+
+	mean_time_to_happen = {
+		days = 1700
+	}
+
+	option = {
+		name = britain_md.25.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.25.o1 executed"
+		remove_ideas = ENG_queen_elizabeth_2
+		add_ideas = ENG_king_charles_3
+		hidden_effect = {
+			create_country_leader = {
+				name = "Charles III"
+				ideology = Monarchist
+				picture = "Charles.dds"
+			}
+		}
+	}
+}
+
+#King Charles III dies
+country_event = {
+	id = britain_md.26
+	immediate = { log = "[GetDateText]: [Root.GetName]: event britain_md.26" }
+	title = britain_md.26.t
+	desc = britain_md.26.d
+	picture = GFX_report_event_monarch_death
+
+	trigger = {
+		tag = ENG
+		NOT = { has_country_flag = ENG_monarchy_abolished }
+		has_idea = ENG_king_charles_3
+		date > 2035.1.1
+	}
+
+	mean_time_to_happen = {
+		days = 1800
+	}
+
+	option = {
+		name = britain_md.26.o1
+		log = "[GetDateText]: [This.GetName]: britain_md.26.o1 executed"
+		remove_ideas = ENG_king_charles_3
+		add_ideas = ENG_king_william_5
+		hidden_effect = {
+			create_country_leader = {
+				name = "William V"
+				ideology = Monarchist
+				picture = "William.dds"
+			}
+		}
+	}
+}

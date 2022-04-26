@@ -1,0 +1,285 @@
+### SRE = State Run Economy
+
+# clears all arrays and sets variables to 0
+sre_clear = {
+	set_variable = { POL.free_factories = 0 }
+	set_variable = { POL.machine_tools_factories = 0 }
+	set_variable = { POL.heavy_machinery_factories = 0 }
+	set_variable = { POL.industrial_materials_factories = 0 }
+
+	set_variable = { POL.machine_tools_req = 0 }
+	set_variable = { POL.machine_tools_current = 0 }
+	set_variable = { POL.heavy_machinery_req = 0 }
+	set_variable = { POL.heavy_machinery_current = 0 }
+	set_variable = { POL.industrial_materials_req = 0 }
+	set_variable = { POL.industrial_materials_current = 0 }
+}
+
+# needs to be called when first enabling the mechanic
+sre_initialize = {
+	add_ideas = {
+		POL_sre_medium_effort
+		POL_sre_medium_success
+	}
+
+	# how much factories produce per month
+	set_variable = { POL.production_base = 10 }
+
+	# constants to determine how much stuff is needed, act as modifiers
+	set_variable = { POL.const_civ_to_tools_modifier = 10 }
+	set_variable = { POL.const_civ_to_machinery_modifier = 5 }
+	set_variable = { POL.const_civ_to_materials_modifier = 3 }
+
+	set_variable = { POL.const_mil_to_tools_modifier = 3 }
+	set_variable = { POL.const_mil_to_machinery_modifier = 10 }
+	set_variable = { POL.const_mil_to_materials_modifier = 5 }
+
+	set_variable = { POL.const_dock_to_tools_modifier = 5 }
+	set_variable = { POL.const_dock_to_machinery_modifier = 3 }
+	set_variable = { POL.const_dock_to_materials_modifier = 10 }
+
+	set_variable = { POL.const_factories_effort_min = 0.075 }
+	set_variable = { POL.const_factories_effort_med = 0.15 }
+	set_variable = { POL.const_factories_effort_max = 0.225 }
+}
+
+# Calculates how much Machine Tools country needs per year
+# Result: POL.machine_tools_req - contains required number
+sre_calculate_tools = {
+	set_temp_variable = { civ_tools_count = num_of_civilian_factories }
+	multiply_temp_variable = { civ_tools_count = POL.const_civ_to_tools_modifier }
+
+	set_temp_variable = { mil_tools_count = num_of_military_factories }
+	multiply_temp_variable = { mil_tools_count = POL.const_mil_to_tools_modifier }
+
+	set_temp_variable = { dock_tools_count = num_of_naval_factories }
+	multiply_temp_variable = { dock_tools_count = POL.const_dock_to_tools_modifier }
+
+	set_variable = { POL.machine_tools_req = 0 }
+	add_to_variable = { POL.machine_tools_req = civ_tools_count }
+	add_to_variable = { POL.machine_tools_req = mil_tools_count }
+	add_to_variable = { POL.machine_tools_req = dock_tools_count }
+
+	round_variable = POL.machine_tools_req
+}
+
+# Calculates how much heavy machinery country needs per year
+# Result: POL.heavy_machinery_req - contains required number
+sre_calculate_machinery = {
+	set_temp_variable = { civ_machinery_count = num_of_civilian_factories }
+	multiply_temp_variable = { civ_machinery_count = POL.const_civ_to_machinery_modifier }
+
+	set_temp_variable = { mil_machinery_count = num_of_military_factories }
+	multiply_temp_variable = { mil_machinery_count = POL.const_mil_to_machinery_modifier }
+
+	set_temp_variable = { dock_machinery_count = num_of_naval_factories }
+	multiply_temp_variable = { dock_machinery_count = POL.const_dock_to_machinery_modifier }
+
+	set_variable = { POL.heavy_machinery_req = 0 }
+	add_to_variable = { POL.heavy_machinery_req = civ_machinery_count }
+	add_to_variable = { POL.heavy_machinery_req = mil_machinery_count }
+	add_to_variable = { POL.heavy_machinery_req = dock_machinery_count }
+
+	round_variable = POL.heavy_machinery_req
+}
+
+# Calculates how much industrial materials country needs per year
+# Result: POL.industrial_materials_req - contains required number
+sre_calculate_materials = {
+	set_temp_variable = { civ_materials_count = num_of_civilian_factories }
+	multiply_temp_variable = { civ_materials_count = POL.const_civ_to_materials_modifier }
+
+	set_temp_variable = { mil_materials_count = num_of_military_factories }
+	multiply_temp_variable = { mil_materials_count = POL.const_mil_to_materials_modifier }
+
+	set_temp_variable = { dock_materials_count = num_of_naval_factories }
+	multiply_temp_variable = { dock_materials_count = POL.const_dock_to_materials_modifier }
+
+	set_variable = { POL.industrial_materials_req = 0 }
+	add_to_variable = { POL.industrial_materials_req = civ_materials_count }
+	add_to_variable = { POL.industrial_materials_req = mil_materials_count }
+	add_to_variable = { POL.industrial_materials_req = dock_materials_count }
+
+	round_variable = POL.industrial_materials_req
+}
+
+# Calculates current amount of factories available to SRE
+sre_calculate_number_of_factories_and_clear = {
+	set_variable = { POL.machine_tools_factories = 0 }
+	set_variable = { POL.heavy_machinery_factories = 0 }
+	set_variable = { POL.industrial_materials_factories = 0 }
+	set_temp_variable = { buf = num_of_factories }
+
+	if = {
+		limit = { has_idea = POL_sre_low_effort }
+
+		multiply_temp_variable = { buf = POL.const_factories_effort_min }
+		set_variable = { POL.free_factories = buf }
+	}
+	else_if = {
+		limit = { has_idea = POL_sre_max_effort }
+
+		multiply_temp_variable = { buf = POL.const_factories_effort_max }
+		set_variable = { POL.free_factories = buf }
+	}
+	else = {
+		multiply_temp_variable = { buf = POL.const_factories_effort_med }
+		set_variable = { POL.free_factories = buf }
+	}
+
+	round_variable = POL.free_factories
+}
+
+# Decreases success - lowers buffs from national spirits
+sre_decrease_success = {
+	if = {
+		limit = { has_idea = POL_sre_highest_success }
+
+		swap_ideas = {
+			remove_idea = POL_sre_highest_success
+			add_idea = POL_sre_high_success
+		}
+	}
+	else_if = {
+		limit = { has_idea = POL_sre_high_success }
+
+		swap_ideas = {
+			remove_idea = POL_sre_high_success
+			add_idea = POL_sre_medium_success
+		}
+	}
+	else_if = {
+		limit = { has_idea = POL_sre_medium_success }
+
+		swap_ideas = {
+			remove_idea = POL_sre_medium_success
+			add_idea = POL_sre_low_success
+		}
+	}
+	else_if = {
+		limit = { has_idea = POL_sre_low_success }
+
+		swap_ideas = {
+			remove_idea = POL_sre_low_success
+			add_idea = POL_sre_lowest_success
+		}
+	}
+	else_if = {
+		# lets keep if, just in case something breaks,
+		# we do not wont to punish player for that
+		limit = { has_idea = POL_sre_low_success }
+
+		add_stability = -0.05
+		add_political_power = -100
+	}
+}
+
+# Increases success - increases buffs from spirits
+sre_increase_success = {
+	if = {
+		limit = { has_idea = POL_sre_lowest_success }
+
+		swap_ideas = {
+			remove_idea = POL_sre_lowest_success
+			add_idea = POL_sre_low_success
+		}
+	}
+	else_if = {
+		limit = { has_idea = POL_sre_low_success }
+
+		swap_ideas = {
+			remove_idea = POL_sre_low_success
+			add_idea = POL_sre_medium_success
+		}
+	}
+	else_if = {
+		limit = { has_idea = POL_sre_medium_success }
+
+		swap_ideas = {
+			remove_idea = POL_sre_medium_success
+			add_idea = POL_sre_high_success
+		}
+	}
+	else_if = {
+		limit = { has_idea = POL_sre_high_success }
+
+		swap_ideas = {
+			remove_idea = POL_sre_high_success
+			add_idea = POL_sre_highest_success
+		}
+	}
+	else_if = {
+		# lets keep if, just in case something breaks,
+		# we do not wont to punish player for that
+		limit = { has_idea = POL_sre_highest_success }
+
+		add_stability = 0.02
+		add_war_support = 0.01
+		add_political_power = 50
+	}
+}
+
+# Checks if all quotas are met. If they are - buffs, else - debuffs
+sre_check_if_met_quotas = {
+	set_temp_variable = { met_quotas = 1 }
+	if = {
+		limit = {
+			check_variable = { POL.machine_tools_current < POL.machine_tools_req }
+		}
+
+		set_temp_variable = { met_quotas = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { POL.heavy_machinery_current < POL.heavy_machinery_req }
+		}
+
+		set_temp_variable = { met_quotas = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { POL.industrial_materials_current < POL.industrial_materials_req }
+		}
+
+		set_temp_variable = { met_quotas = 0 }
+	}
+
+	if = {
+		limit = { check_variable = { met_quotas = 0 } }
+
+		sre_decrease_success = yes
+	}
+	else = {
+		sre_increase_success = yes
+	}
+}
+
+# calculates how much stuff we need, updates ideas, clears variables
+sre_recalculate_year_quotas = {
+	sre_check_if_met_quotas = yes
+
+	sre_calculate_tools = yes
+	sre_calculate_machinery = yes
+	sre_calculate_materials = yes
+
+	sre_calculate_number_of_factories_and_clear = yes
+
+	set_variable = { POL.machine_tools_current = 0 }
+	set_variable = { POL.heavy_machinery_current = 0 }
+	set_variable = { POL.industrial_materials_current = 0 }
+}
+
+# monthly summary of production
+sre_calculate_monthly_report = {
+	set_temp_variable = { tools_inc = POL.production_base }
+	multiply_temp_variable = { tools_inc = POL.machine_tools_factories }
+	add_to_variable = { POL.machine_tools_current = tools_inc }
+
+	set_temp_variable = { machinery_inc = POL.production_base }
+	multiply_temp_variable = { machinery_inc = POL.heavy_machinery_factories }
+	add_to_variable = { POL.heavy_machinery_current = machinery_inc }
+
+	set_temp_variable = { materials_inc = POL.production_base }
+	multiply_temp_variable = { materials_inc = POL.industrial_materials_factories }
+	add_to_variable = { POL.industrial_materials_current = materials_inc }
+}

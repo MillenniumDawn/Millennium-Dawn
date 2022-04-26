@@ -1,0 +1,1133 @@
+on_actions = {
+	# called when an operative performing an offensive mission in a country
+	# has been spotted
+	on_operative_on_mission_spotted = {
+		effect = {
+            # SCOPE  the operative
+            # ROOT   the country the operative was performing its mission in
+            # FROM   the country the operative is operating for
+
+			# base values
+            set_temp_variable = {
+                var = capture_chance
+                value = 90
+            }
+            set_temp_variable = {
+                var = kill_chance
+                value = 10
+            }
+
+            # nullify kill chance for some missions
+            if = {
+                limit = {
+                    OR = {
+                        operative_leader_mission = control_trade
+                        operative_leader_mission = diplomatic_pressure
+                    }
+                }
+                set_temp_variable = {
+                    var = kill_chance
+                    value = 0
+                }
+            }
+
+            # Capture chance modifier unused as it would just increased or decrease death chance
+            #multiply_temp_variable = {
+            #   var = capture_chance
+            #   value = own_capture_chance_factor # the operative's capture chance modifiers
+            #}
+            #clamp_temp_variable = {
+            #   var = capture_chance
+            #   min = 0
+            #   max = 100
+            #}
+
+            random_list = {
+                #log = yes # log picked effect in game.log
+
+                temp_var:capture_chance = {
+                   	capture_operative = {
+                   	    captured_by = ROOT
+                   	}
+                }
+                temp_var:kill_chance = {
+                    kill_operative = {
+                        killed_by = ROOT
+                    }
+                }
+
+            }
+
+        }
+
+    }
+
+	on_operative_captured = {
+		effect = {
+			# SCOPE  the operative
+			# ROOT   the country the operative was performing its mission in
+			# FROM   the country the operative is operating for
+			# operative_leader_event = {
+			# 		id = lar_operative_event.6
+			# 		recipient = ROOT
+			# 		originator = ROOT
+			# 		set_from_from = ROOT
+			# 		set_from = FROM
+			# 		days = 1
+			# }
+			if = {
+				limit = {
+					NOT = { has_unit_leader_flag = le_clerc1 }
+				}
+				set_unit_leader_flag = le_clerc1
+			}
+			else_if = {
+				limit = {
+					has_unit_leader_flag = le_clerc1
+				}
+				set_unit_leader_flag = le_clerc2
+			}
+			random_list = {
+				log = yes
+				85 = { #regular #TALL its cool and fun when this happens - original = 90
+					operative_leader_event = {
+						id = lar_operative_event.1
+						set_from_from = ROOT
+					}
+				}
+				15 = { #operative turned #TALL its cool and fun when this happens - origingal = 10
+					modifier = {
+						has_trait = operative_tough
+						factor = 0 #tough operatives never get turned
+					}
+					modifier = {
+						has_trait = operative_double_agent
+						factor = 0 #no tripple agents please
+					}
+					turn_operative = { turned_by = ROOT }
+					# ensure the operative has the nationality of the country he is coming from
+					add_nationality = FROM
+					operative_leader_event = {
+            	    	id = lar_operative_event.5
+						set_from_from = FROM #tells the event which nationality to add
+            		}
+            	}
+			}
+		}
+	}
+
+	on_operative_death = {
+		effect = {
+			# SCOPE  the operative
+			# ROOT   the killer country (optional)
+			# FROM   the country the operative is operating for
+			if = {
+				limit = {
+					country_exists = ROOT
+				}
+
+				# operative killed by a country, likelly while on mission
+				operative_leader_event = {
+					id = lar_operative_event.3
+					set_from_from = ROOT
+				}
+			}
+			else = {
+				# other cause of death
+			}
+
+			if = {
+				limit = {
+					FROM = {
+						NOT = { is_ai = yes }
+						has_done_agency_upgrade = upgrade_suicide_pills
+					}
+				}
+				set_global_flag = kill_me_alive_flag
+			}
+		}
+	}
+
+	# SCOPE_UNIT_LEADER [
+	#	ROOT, FROM
+	#	FROM.FROM : SCOPE_STATE ( will only be set if the operation has a specific selection_target )
+	# ]
+	on_operative_detected_during_operation = {
+		effect = {
+			random_list = {
+				40 = {
+					force_operative_leader_into_hiding = 45
+					operative_leader_event = {
+						id = lar_operative_event.2
+						set_from_from = FROM
+					}
+				}
+				35 = {
+					capture_operative = {
+						captured_by = FROM
+					}
+				}
+				20 = {
+					harm_operative_leader = 90
+					operative_leader_event = {
+						id = lar_operative_event.4
+						set_from_from = FROM
+					}
+				}
+				5 = {
+					kill_operative = {
+						killed_by = FROM
+					}
+				}
+			}
+		}
+	}
+
+	on_operation_completed = {
+		effect = {
+			# same scope setup as in operation outcome:
+			# THIS: the operation
+			# ROOT: the initiating country
+			# FROM: the target country
+			#log = "This: [This.GetName] From: [From.GetName] Root: [Root.GetName]"
+
+			if = {
+				limit = {
+					ROOT = { has_country_flag = just_freed_operative_flag }
+				}
+				every_operative = {
+					if = {
+						limit = {
+							NOT = { has_trait = operative_escape_artist }
+						}
+						random_list = {
+							15 = { add_unit_leader_trait = operative_escape_artist }
+							85 = {}
+						}
+					}
+				}
+				ROOT = { clr_country_flag = just_freed_operative_flag }
+			}
+			#Talleis - below section has been radically changed, most of the below is taken from the R56 mod. That team has come up with a good solution to the broken linguist trait.  Their fix is included here.
+			every_operative = { #add target nationality if linguist
+				if = {
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission } this line from the base game just break the thing
+						NOT = { has_nationality = FROM }
+						# ROOT = {
+						# 	NOT = { has_country_flag = upgrade_linguistic_training_flag }
+						# }
+
+					}
+					random_list = {
+						20 = { add_nationality = FROM }
+						80 = {}
+					}
+				}
+
+				if = { #Second nationality roll if you already know arabic
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = IRQ
+								original_tag = SAU
+								original_tag = YEM
+								original_tag = OMA
+								original_tag = EGY
+								original_tag = LBA
+								original_tag = JOR
+								original_tag = PAL
+								original_tag = LEB
+								original_tag = SYR
+								original_tag = KUW
+								original_tag = UAE
+								original_tag = QAT
+								original_tag = ALG
+								original_tag = MOR
+							}
+						}
+						OR = {
+							has_nationality = IRQ
+							has_nationality = SAU
+							has_nationality = YEM
+							has_nationality = OMA
+							has_nationality = EGY
+							has_nationality = LBA
+							has_nationality = JOR
+							has_nationality = PAL
+							has_nationality = LEB
+							has_nationality = SYR
+							has_nationality = KUW
+							has_nationality = UAE
+							has_nationality = QAT
+							has_nationality = ALG
+							has_nationality = MOR
+						}
+						# ROOT = {
+						# 	NOT = { has_country_flag = upgrade_linguistic_training_flag }
+						# }
+					}
+					random_list = {
+						10 = { add_nationality = FROM }
+						90 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know Spanish
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = SPR
+								original_tag = EGU
+								original_tag = MEX
+								original_tag = COL
+								original_tag = ARG
+								original_tag = PRU
+								original_tag = VEN
+								original_tag = CHL
+								original_tag = ECU
+								original_tag = GUA
+								original_tag = BOL
+								original_tag = DOM
+								original_tag = HON
+								original_tag = PAR
+								original_tag = ELS
+								original_tag = NIC
+								original_tag = COS
+								original_tag = CUB
+								original_tag = PAN
+								original_tag = URG
+							}
+						}
+						OR = {
+							has_nationality = SPR
+							has_nationality = EGU
+							has_nationality = MEX
+							has_nationality = COL
+							has_nationality = ARG
+							has_nationality = PRU
+							has_nationality = VEN
+							has_nationality = CHL
+							has_nationality = ECU
+							has_nationality = GUA
+							has_nationality = BOL
+							has_nationality = DOM
+							has_nationality = HON
+							has_nationality = PAR
+							has_nationality = ELS
+							has_nationality = NIC
+							has_nationality = COS
+							has_nationality = CUB
+							has_nationality = PAN
+							has_nationality = URG
+						}
+						# ROOT = {
+						# 	NOT = { has_country_flag = upgrade_linguistic_training_flag }
+						# }
+					}
+					random_list = {
+						10 = { add_nationality = FROM }
+						90 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know Portuguese
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = POR
+								original_tag = BRA
+								original_tag = AGL
+								original_tag = MOZ
+								original_tag = GUB
+								original_tag = TIM
+								original_tag = VER
+								original_tag = SAO
+							}
+						}
+						OR = {
+							has_nationality = POR
+							has_nationality = BRA
+							has_nationality = AGL
+							has_nationality = MOZ
+							has_nationality = GUB
+							has_nationality = TIM
+							has_nationality = VER
+							has_nationality = SAO
+						}
+						# ROOT = {
+						# 	NOT = { has_country_flag = upgrade_linguistic_training_flag }
+						# }
+					}
+					random_list = {
+						10 = { add_nationality = FROM }
+						90 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know English
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = ENG
+								original_tag = CAN
+								original_tag = AST
+								original_tag = NZL
+								original_tag = USA
+								original_tag = IRE
+								original_tag = BAH
+								original_tag = BAR
+								original_tag = BLZ
+								original_tag = DMI
+								original_tag = GUY
+								original_tag = JAM
+								original_tag = GRA
+								original_tag = STK
+								original_tag = STV
+								original_tag = STL
+								original_tag = TRI
+								original_tag = NIG
+								original_tag = GAH
+							}
+						}
+						OR = {
+							has_nationality = ENG
+							has_nationality = CAN
+							has_nationality = AST
+							has_nationality = NZL
+							has_nationality = USA
+							has_nationality = IRE
+							has_nationality = BAH
+							has_nationality = BAR
+							has_nationality = BLZ
+							has_nationality = DMI
+							has_nationality = GUY
+							has_nationality = JAM
+							has_nationality = GRA
+							has_nationality = STK
+							has_nationality = STV
+							has_nationality = STL
+							has_nationality = TRI
+							has_nationality = NIG
+							has_nationality = GAH
+						}
+						# ROOT = {
+						# 	NOT = { has_country_flag = upgrade_linguistic_training_flag }
+						# }
+					}
+					random_list = {
+						10 = { add_nationality = FROM }
+						90 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know Dutch
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = SAF
+								original_tag = HOL
+								original_tag = BEL
+								original_tag = SUR
+							}
+						}
+						OR = {
+							has_nationality = SAF
+							has_nationality = HOL
+							has_nationality = BEL
+							has_nationality = SUR
+						}
+						# ROOT = {
+						# 	NOT = { has_country_flag = upgrade_linguistic_training_flag }
+						# }
+					}
+					random_list = {
+						10 = { add_nationality = FROM }
+						90 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know French
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = FRA
+								original_tag = DRC
+								original_tag = MAD
+								original_tag = CAM
+								original_tag = NGR
+								original_tag = BFA
+								original_tag = MAL
+								original_tag = SEN
+								original_tag = CHA
+								original_tag = GUI
+								original_tag = RWA
+								original_tag = BUR
+								original_tag = BEN
+								original_tag = HAI
+								original_tag = TOG
+								original_tag = CAR
+								original_tag = GAB
+								original_tag = DJI
+								original_tag = COM
+								original_tag = SEY
+								original_tag = BAL
+								original_tag = LOG
+								original_tag = SEL
+								original_tag = BEL
+							}
+						}
+						OR = {
+							has_nationality = FRA
+							has_nationality = DRC
+							has_nationality = MAD
+							has_nationality = CAM
+							has_nationality = NGR
+							has_nationality = BFA
+							has_nationality = MAL
+							has_nationality = SEN
+							has_nationality = CHA
+							has_nationality = GUI
+							has_nationality = RWA
+							has_nationality = BUR
+							has_nationality = BEN
+							has_nationality = HAI
+							has_nationality = TOG
+							has_nationality = CAR
+							has_nationality = GAB
+							has_nationality = DJI
+							has_nationality = COM
+							has_nationality = SEY
+							has_nationality = BAL
+							has_nationality = LOG
+							has_nationality = SEL
+							has_nationality = BEL
+						}
+						# ROOT = {
+						# 	NOT = { has_country_flag = upgrade_linguistic_training_flag }
+						# }
+					}
+					random_list = {
+						10 = { add_nationality = FROM }
+						90 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know Greek
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = CYP
+								original_tag = GRE
+							}
+						}
+						OR = {
+							has_nationality = GRE
+							has_nationality = CYP
+						}
+						# ROOT = {
+						# 	NOT = { has_country_flag = upgrade_linguistic_training_flag }
+						# }
+					}
+					random_list = {
+						10 = { add_nationality = FROM }
+						90 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know Romanian
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = ROM
+								original_tag = MLV
+								original_tag = PMR
+							}
+						}
+						OR = {
+							has_nationality = ROM
+							has_nationality = MLV
+							has_nationality = PMR
+						}
+						# ROOT = {
+						# 	NOT = { has_country_flag = upgrade_linguistic_training_flag }
+						# }
+					}
+					random_list = {
+						10 = { add_nationality = FROM }
+						90 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know serbo-croat
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = SER
+								original_tag = BOS
+								original_tag = CRO
+								original_tag = MNT
+							}
+						}
+						OR = {
+							has_nationality = SER
+							has_nationality = BOS
+							has_nationality = CRO
+							has_nationality = MNT
+						}
+						# ROOT = {
+						# 	NOT = { has_country_flag = upgrade_linguistic_training_flag }
+						# }
+					}
+					random_list = {
+						10 = { add_nationality = FROM }
+						90 = {}
+					}
+				}
+				if = {
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						# ROOT = {
+						# 	has_country_flag = upgrade_linguistic_training_flag
+						# }
+					}
+					random_list = {
+						30 = { add_nationality = FROM }
+						70 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know arabic
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = IRQ
+								original_tag = SAU
+								original_tag = YEM
+								original_tag = OMA
+								original_tag = EGY
+								original_tag = LBA
+								original_tag = JOR
+								original_tag = PAL
+								original_tag = LEB
+								original_tag = SYR
+								original_tag = KUW
+								original_tag = UAE
+								original_tag = QAT
+								original_tag = ALG
+								original_tag = MOR
+							}
+						}
+						OR = {
+							has_nationality = IRQ
+							has_nationality = SAU
+							has_nationality = YEM
+							has_nationality = OMA
+							has_nationality = EGY
+							has_nationality = LBA
+							has_nationality = JOR
+							has_nationality = PAL
+							has_nationality = LEB
+							has_nationality = SYR
+							has_nationality = KUW
+							has_nationality = UAE
+							has_nationality = QAT
+							has_nationality = ALG
+							has_nationality = MOR
+						}
+						# ROOT = {
+						# 	has_country_flag = upgrade_linguistic_training_flag
+						# }
+					}
+					random_list = {
+						20 = { add_nationality = FROM }
+						80 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know Spanish
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = SPR
+								original_tag = EGU
+								original_tag = MEX
+								original_tag = COL
+								original_tag = ARG
+								original_tag = PRU
+								original_tag = VEN
+								original_tag = CHL
+								original_tag = ECU
+								original_tag = GUA
+								original_tag = BOL
+								original_tag = DOM
+								original_tag = HON
+								original_tag = PAR
+								original_tag = ELS
+								original_tag = NIC
+								original_tag = COS
+								original_tag = CUB
+								original_tag = PAN
+								original_tag = URG
+							}
+						}
+						OR = {
+							has_nationality = SPR
+							has_nationality = EGU
+							has_nationality = MEX
+							has_nationality = COL
+							has_nationality = ARG
+							has_nationality = PRU
+							has_nationality = VEN
+							has_nationality = CHL
+							has_nationality = ECU
+							has_nationality = GUA
+							has_nationality = BOL
+							has_nationality = DOM
+							has_nationality = HON
+							has_nationality = PAR
+							has_nationality = ELS
+							has_nationality = NIC
+							has_nationality = COS
+							has_nationality = CUB
+							has_nationality = PAN
+							has_nationality = URG
+						}
+						# ROOT = {
+						# 	has_country_flag = upgrade_linguistic_training_flag
+						# }
+					}
+					random_list = {
+						20 = { add_nationality = FROM }
+						80 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know Portuguese
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = POR
+								original_tag = BRA
+								original_tag = AGL
+								original_tag = MOZ
+								original_tag = GUB
+								original_tag = TIM
+								original_tag = VER
+								original_tag = SAO
+							}
+						}
+						OR = {
+							has_nationality = POR
+							has_nationality = BRA
+							has_nationality = AGL
+							has_nationality = MOZ
+							has_nationality = GUB
+							has_nationality = TIM
+							has_nationality = VER
+							has_nationality = SAO
+						}
+						# ROOT = {
+						# 	has_country_flag = upgrade_linguistic_training_flag
+						# }
+					}
+					random_list = {
+						20 = { add_nationality = FROM }
+						80 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know English
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = ENG
+								original_tag = CAN
+								original_tag = AST
+								original_tag = NZL
+								original_tag = USA
+								original_tag = IRE
+								original_tag = BAH
+								original_tag = BAR
+								original_tag = BLZ
+								original_tag = DMI
+								original_tag = GUY
+								original_tag = JAM
+								original_tag = GRA
+								original_tag = STK
+								original_tag = STV
+								original_tag = STL
+								original_tag = TRI
+								original_tag = NIG
+								original_tag = GAH
+							}
+						}
+						OR = {
+							has_nationality = ENG
+							has_nationality = CAN
+							has_nationality = AST
+							has_nationality = NZL
+							has_nationality = USA
+							has_nationality = IRE
+							has_nationality = BAH
+							has_nationality = BAR
+							has_nationality = BLZ
+							has_nationality = DMI
+							has_nationality = GUY
+							has_nationality = JAM
+							has_nationality = GRA
+							has_nationality = STK
+							has_nationality = STV
+							has_nationality = STL
+							has_nationality = TRI
+							has_nationality = NIG
+							has_nationality = GAH
+						}
+						# ROOT = {
+						# 	has_country_flag = upgrade_linguistic_training_flag
+						# }
+					}
+					random_list = {
+						20 = { add_nationality = FROM }
+						80 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know Dutch
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = SAF
+								original_tag = HOL
+								original_tag = BEL
+								original_tag = SUR
+							}
+						}
+						OR = {
+							has_nationality = SAF
+							has_nationality = HOL
+							has_nationality = BEL
+							has_nationality = SUR
+						}
+						# ROOT = {
+						# 	has_country_flag = upgrade_linguistic_training_flag
+						# }
+					}
+					random_list = {
+						20 = { add_nationality = FROM }
+						80 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know French
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = FRA
+								original_tag = DRC
+								original_tag = MAD
+								original_tag = CAM
+								original_tag = NGR
+								original_tag = BFA
+								original_tag = MAL
+								original_tag = SEN
+								original_tag = CHA
+								original_tag = GUI
+								original_tag = RWA
+								original_tag = BUR
+								original_tag = BEN
+								original_tag = HAI
+								original_tag = TOG
+								original_tag = CAR
+								original_tag = GAB
+								original_tag = DJI
+								original_tag = COM
+								original_tag = SEY
+								original_tag = BAL
+								original_tag = LOG
+								original_tag = SEL
+								original_tag = BEL
+							}
+						}
+						OR = {
+							has_nationality = FRA
+							has_nationality = DRC
+							has_nationality = MAD
+							has_nationality = CAM
+							has_nationality = NGR
+							has_nationality = BFA
+							has_nationality = MAL
+							has_nationality = SEN
+							has_nationality = CHA
+							has_nationality = GUI
+							has_nationality = RWA
+							has_nationality = BUR
+							has_nationality = BEN
+							has_nationality = HAI
+							has_nationality = TOG
+							has_nationality = CAR
+							has_nationality = GAB
+							has_nationality = DJI
+							has_nationality = COM
+							has_nationality = SEY
+							has_nationality = BAL
+							has_nationality = LOG
+							has_nationality = SEL
+							has_nationality = BEL
+						}
+						# ROOT = {
+						# 	has_country_flag = upgrade_linguistic_training_flag
+						# }
+					}
+					random_list = {
+						20 = { add_nationality = FROM }
+						80 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know Greek
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = CYP
+								original_tag = GRE
+							}
+						}
+						OR = {
+							has_nationality = GRE
+							has_nationality = CYP
+						}
+						# ROOT = {
+						# 	has_country_flag = upgrade_linguistic_training_flag
+						# }
+					}
+					random_list = {
+						20 = { add_nationality = FROM }
+						80 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know Romanian
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = ROM
+								original_tag = MLV
+								original_tag = PMR
+							}
+						}
+						OR = {
+							has_nationality = ROM
+							has_nationality = MLV
+							has_nationality = PMR
+						}
+					}
+					random_list = {
+						20 = { add_nationality = FROM }
+						80 = {}
+					}
+				}
+				if = { #Second nationality roll if you already know serbo-croat
+					limit = {
+						has_trait = operative_linguist
+					#	NOT = { operative_leader_mission = no_mission }
+						NOT = { has_nationality = FROM }
+						FROM = {
+							OR = {
+								original_tag = SER
+								original_tag = BOS
+								original_tag = CRO
+								original_tag = MNT
+							}
+						}
+						OR = {
+							has_nationality = SER
+							has_nationality = BOS
+							has_nationality = CRO
+							has_nationality = MNT
+						}
+						# ROOT = {
+						# 	has_country_flag = upgrade_linguistic_training_flag
+						# }
+					}
+					random_list = {
+						20 = { add_nationality = FROM }
+						80 = {}
+					}
+				}
+			}
+			#TALLeis - End Edit
+			every_operative = {
+				if = {
+					limit = {
+						has_nationality = FRA
+					}
+					ROOT = {
+						add_to_variable = {
+							var = fra_nat
+							value = 1
+						}
+					}
+				}
+				if = {
+					limit = {
+						has_nationality = ENG
+					}
+					ROOT = {
+						add_to_variable = {
+							var = eng_nat
+							value = 1
+						}
+					}
+				}
+			}
+			ROOT = {
+				if = {
+					limit = {
+						check_variable = { fra_nat > 0 }
+						check_variable = { eng_nat > 0 }
+					}
+					set_country_flag = achievement_listen_carefully_flag
+				}
+				set_variable = {
+					var = fra_nat
+					value = 0
+				}
+				set_variable = {
+					var = eng_nat
+					value = 0
+				}
+			}
+		}
+	}
+
+	# ROOT is capitulated country, FROM is winner
+	on_capitulation = {
+		effect = {
+		}
+	}
+
+	# called a country fully decrypts cipher of a target country
+	# scope is the target country that its cipher is decrypted
+	# from scope is the decrypter country
+	on_fully_decrypted_cipher = {
+
+	}
+
+	# called when a country activates its active cipher bonuses against a target
+	# scope is the target country
+	# from scope is the country that activates its bonuses
+	on_activated_active_decryption_bonuses = {
+
+	}
+
+	#FROM is the one that joins the faction
+	on_create_faction = {
+		effect = {
+		}
+	}
+
+	#FROM is faction leader on join faction requests.
+	on_join_faction = {
+		effect = {
+		}
+	}
+
+	#FROM is country getting invited.
+	on_offer_join_faction = {
+		effect = {
+		}
+	}
+
+	# called when a country send volunteers to another
+	# ROOT is sender, FROM is receiver
+	on_send_volunteers = {
+		effect = {
+		}
+	}
+
+	#FROM is war target
+	on_declare_war = {
+		effect = {
+		}
+	}
+	#ROOT is winner #FROM gets annexed - This fires just before FROM gets annexed, meaning the country and everything it owns still exists. It will also fire on_annex and on_civil_war_end
+	on_civil_war_end_before_annexation = {
+		effect = {
+		}
+	}
+
+	#ROOT is winner #FROM gets annexed - This will also fire on_annex
+	on_civil_war_end = {
+		effect = {
+		}
+	}
+
+	#ROOT is winner #FROM gets annexed - This fires just before FROM gets annexed, meaning the country and everything it owns still exists. It will also fire on_annex and on_civil_war_end
+	on_civil_war_end_before_annexation = {
+		effect = {
+		}
+	}
+
+	#ROOT is new controller #FROM is old controller #FROM.FROM is state ID
+	on_state_control_changed = {
+		effect = {
+		}
+	}
+
+	#THIS is country that has just gotten into a war
+	on_war = {
+		effect = {
+		}
+	}
+
+	on_weekly = {
+		effect = {
+			if = {
+				limit = {
+					has_intelligence_agency = yes
+					is_ai = yes
+				}
+				update_operation_ai = yes
+			}
+		}
+	}
+}

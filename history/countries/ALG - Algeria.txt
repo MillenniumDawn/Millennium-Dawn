@@ -1,23 +1,22 @@
-﻿2000.1.1 = {
-	capital = 386
+﻿capital = 386
+set_research_slots = 3
+
+2000.1.1 = {
 	oob = "ALG_2000"
+	set_cosmetic_tag = ALG
 	if = {
-		limit = {
-			has_dlc = "Man the Guns"
-		}
+		limit = { has_dlc = "Man the Guns" }
 		set_naval_oob = "ALG_2000_naval_mtg"
 		else = {
 			set_naval_oob = "ALG_2000_naval_legacy"
 		}
 	}
 	set_convoys = 40
-	
+
 	add_ideas = {
-		gdp_4
-		#tax_cost_27
-		#pop_050
 		unrestrained_corruption
 		sunni
+		hybrid_regime_emerging
 		rentier_state
 		export_economy
 		LoAS_member
@@ -29,21 +28,33 @@
 		AU_member
 		bureau_03
 		police_04
-		#state_religion
-		#state_press
-		#gerrymandering
-		al_jazeera_banned
+		moderately_conservative_society
+		youth_radicalization
+		al_jazeera_allowed
 		draft_army
 		volunteer_women
 		fossil_fuel_industry
 		the_military
 		The_Ulema
-		#hybrid
+		officer_basic_training
 	}
-	
+
+	# Technology Set
 	set_technology = {
+		integrated_transportation_system = 1
+		post_conventional_rail = 1
+		early_freight_locomotive = 1
+
+		legacy_doctrines = 1
+		modern_blitzkrieg = 1
+		forward_defense = 1
+		encourage_nco_iniative = 1
+		air_land_battle = 1
 		night_vision_1 = 1
 		command_control_equipment = 1
+		combat_eng_equipment = 1
+		special_forces = 1
+		support_weapons = 1
 		Anti_tank_0 = 1
 		Heavy_Anti_tank_0 = 1
 		artillery_0 = 1
@@ -57,16 +68,70 @@
 		Rec_tank_0 = 1
 		MBT_1 = 1
 		infantry_weapons = 1
-		corvette_1 = 1
-		corvette_2 = 1
-		missile_corvette_1 = 1
 		util_vehicle_0 = 1
 		infantry_weapons1 = 1
-		diesel_attack_submarine_1 = 1
-		
+		support_weapons = 1
+		special_forces = 1
+		fuel_silos = 1
+
 		body_armor_1980 = 1
+
+		basic_computing = 1
+		integrated_circuit = 1
+		computing1 = 1
+		decryption1 = 1
+		encryption1 = 1
+		radar = 1
+		internet1 = 1 	#1G
 	}
-	
+
+	# Naval Tech Setting
+	if = {
+		limit = {
+			has_dlc = "Man the Guns"
+		}
+		set_technology = {
+			corvette_hull_1 = 1
+			attack_submarine_hull_1 = 1
+			frigate_hull_1 = 1
+
+			tech_early_naval_weapon_systems = 1
+			tech_naval_systems_engineering = 1
+			tech_power_systems = 1
+
+			tech_combat_support_systems = 1
+
+			tech_mtg_landing_craft = 1
+		}
+
+		#Djebel Chenoua Class https://en.wikipedia.org/wiki/Djebel_Chenoua-class_corvette
+		create_equipment_variant = {
+			name = "Djebel Chenoua Class"
+			type = corvette_hull_3
+			#name_group = ALG_DD_HISTORICAL
+			parent_version = 0
+			modules = {
+				fixed_ship_engine_slot = module_light_surface_diesel_power
+				fixed_ship_fire_control_system_slot = module_analog_fire_control
+				fixed_ship_radar_slot = module_radar_3
+				fixed_ship_auxillary_slot = module_chain_gun_3
+				fixed_ship_battery_slot = module_light_guns_2
+				front_1_custom_slot = module_asm_1
+			}
+		}
+
+		else = { # Should apply ONLY Non-MTG
+			set_technology = {
+				landing_craft = 1
+				corvette_1 = 1
+				corvette_2 = 1
+				missile_corvette_1 = 1
+				diesel_attack_submarine_1 = 1
+			}
+		}
+	}
+
+
 	init_influence = yes
 	set_variable = { domestic_influence_amount = 306 }
 	add_to_array = { influence_array = FRA.id }
@@ -82,19 +147,34 @@
 	add_to_array = { influence_array = USA.id }
 	add_to_array = { influence_array_val = 10 }
 	startup_influence = yes
-	
+
+	#CT
+	set_country_flag = threat_level_substantial
+	set_variable = { threat_level = 40 }
+	set_variable = { radicalization = 30 }
+	add_to_array = { global.ct_states = THIS }
+	set_variable = { ct_training = 5 }
+	#Islamism
+	set_variable = { social_conservatism_government = 50 }
+	set_variable = { social_conservatism_society = 50 }
+	set_country_flag = limited_alcohol
+	set_country_flag = alcohol
+	set_country_flag = relaxed_dress_code
+
 	### Economy
-	set_variable = { var = debt value = 50 }
-	set_variable = { var = int_investments value = 0 }
+	set_variable = { var = debt value = 161 }
+	set_variable = { var = int_investments value = 1 }
 	set_variable = { var = treasury value = 20 }
-	set_variable = { var = tax_rate value = 27 }
-	
+	set_variable = { var = corporate_tax_rate value = 25 }
+	set_variable = { var = population_tax_rate value = 35 }
+
+	# Politics
 	set_popularities = {
-		democratic = 29.8
-		communism = 38.2
-		fascism = 2.0
-		neutrality = 29.0
-		nationalist = 1.0
+		democratic = 25.7
+		communism = 46.0
+		fascism = 0.1
+		neutrality = 28.2
+		nationalist = 0.0
 	}
 	set_politics = {
 		ruling_party = communism
@@ -104,158 +184,82 @@
 	}
 
 	start_politics_input = yes
-	
-	### Party Popularities
+	set_variable = { election_threshold = 0.01 }
+
+	# Party Popularities
 	set_variable = { party_pop_array^0 = 0 } #Western_Autocracy
-	set_variable = { party_pop_array^1 = 0 } #conservatism
-	set_variable = { party_pop_array^2 = 0.298 } #liberalism
-	set_variable = { party_pop_array^3 = 0.0 } #socialism
-	set_variable = { party_pop_array^4 = 0.03 } #Communist-State
-	set_variable = { party_pop_array^5 = 0.022 } #anarchist_communism
-	set_variable = { party_pop_array^6 = 0.03 } #Conservative
-	set_variable = { party_pop_array^7 = 0.30 } #Autocracy
+	set_variable = { party_pop_array^1 = 0 } #conservatism - ANR
+	set_variable = { party_pop_array^2 = 0.257 } #liberalism - RND
+	set_variable = { party_pop_array^3 = 0 } #socialism - MPA
+	set_variable = { party_pop_array^4 = 0 } #Communist-State
+	set_variable = { party_pop_array^5 = 0 } #anarchist_communism
+	set_variable = { party_pop_array^6 = 0.013 } #Conservative - FNA
+	set_variable = { party_pop_array^7 = 0.447 } #Autocracy - FLN
 	set_variable = { party_pop_array^8 = 0 } #Mod_Vilayat_e_Faqih
 	set_variable = { party_pop_array^9 = 0 } #Vilayat_e_Faqih
 	set_variable = { party_pop_array^10 = 0 } #Kingdom
-	set_variable = { party_pop_array^11 = 0.02 } #Caliphate
-	set_variable = { party_pop_array^12 = 0.15 } #Neutral_Muslim_Brotherhood
-	set_variable = { party_pop_array^13 = 0 } #Neutral_Autocracy
-	set_variable = { party_pop_array^14 = 0.09 } #Neutral_conservatism
+	set_variable = { party_pop_array^11 = 0.001 } #Caliphate - Salafist Group for Preaching and Combat
+	set_variable = { party_pop_array^12 = 0.143 } #Neutral_Muslim_Brotherhood - Movement of Society for Peace
+	set_variable = { party_pop_array^13 = 0.024 } #Neutral_Autocracy - Islah/MRN
+	set_variable = { party_pop_array^14 = 0.056 } #Neutral_conservatism - Nahda/MRI
 	set_variable = { party_pop_array^15 = 0 } #oligarchism
 	set_variable = { party_pop_array^16 = 0 } #Neutral_Libertarian
 	set_variable = { party_pop_array^17 = 0 } #Neutral_green
-	set_variable = { party_pop_array^18 = 0.03 } #neutral_Social
-	set_variable = { party_pop_array^19 = 0.02 } #Neutral_Communism
-	set_variable = { party_pop_array^20 = 0 } #Nat_Populism
-	set_variable = { party_pop_array^21 = 0 } #Nat_Fascism
-	set_variable = { party_pop_array^22 = 0 } #Nat_Autocracy
-	set_variable = { party_pop_array^23 = 0.01 } #Monarchist
-	
+	set_variable = { party_pop_array^18 = 0.02 } #neutral_Social - FFS
+	set_variable = { party_pop_array^19 = 0.039 } #Neutral_Communism - Worker's Party
+	set_variable = { party_pop_array^20 = 0 } #Nat_Populism - FJD
+	set_variable = { party_pop_array^21 = 0 } #Nat_Fascism - New Dawn
+	set_variable = { party_pop_array^22 = 0 } #Nat_Autocracy - Algerian People's National Armed Forces
+	set_variable = { party_pop_array^23 = 0 } #Monarchist
+
 	### Ruling Party
-	add_to_array = { ruling_party = 3 }
-	
+	add_to_array = { ruling_party = 7 }
+
+	#1997 election results
+	set_variable = { party_pop_elect_array^1 = 0 } #conservatism - ANR
+	set_variable = { party_pop_elect_array^2 = 0.337 } #liberalism - RND
+	set_variable = { party_pop_elect_array^3 = 0 } #socialist - MPA
+	set_variable = { party_pop_elect_array^6 = 0 } #Conservative - FNA
+	set_variable = { party_pop_elect_array^7 = 0.143 } #Autocracy - FLN
+	set_variable = { party_pop_elect_array^11 = 0 } #Caliphate - Salafist Group for Preaching and Combat
+	set_variable = { party_pop_elect_array^12 = 0.148 } #Neutral_Muslim_Brotherhood - Movement of Society for Peace
+	set_variable = { party_pop_elect_array^13 = 0 } #Neutral_Autocracy - Islah/MRN
+	set_variable = { party_pop_elect_array^14 = 0.087 } #Neutral_conservatism - Nahda/MRI
+	set_variable = { party_pop_elect_array^18 = 0.05 } #neutral_Social - FFS
+	set_variable = { party_pop_elect_array^19 = 0.019 } #Neutral_Communism - Worker's Party
+	set_variable = { party_pop_elect_array^20 = 0 } #Nat_Populism - FJD
+	set_variable = { party_pop_elect_array^21 = 0 } #Nat_Fascism - New Dawn
+	set_variable = { party_pop_elect_array^22 = 0 } #Nat_Autocracy - Algerian People's National Armed Forces
+
 	startup_politics = yes
+
+	### Banned Parties & Balance
+	set_country_flag = party12_banned
+
 
 	create_country_leader = {
 		name = "Abdelaziz Bouteflika"
 		picture = "ALG_Abdelaziz_Bouteflika.dds"
+		expire = "2004.1.1"
 		ideology = Autocracy
 		traits = {
 			emerging_Autocracy
 		}
 	}
-	
-	create_corps_commander = { 
-		name = "Kaidi Mohamed" 
-		picture = "Kaidi_Mohamed.dds"
-		traits = { panzer_leader }
-		id = 2400
-		skill = 1
-		attack_skill = 1
-		defense_skill = 1
-		planning_skill = 1
-		logistics_skill = 1
-	}
 
-	create_corps_commander = { 
-		name = "Khaled Nezzar" 
-		picture = "Khaled_Nezzar.dds"
-		traits = { bearer_of_artillery }
-		id = 2401
-		skill = 2
-		attack_skill = 2
-		defense_skill = 2
-		planning_skill = 2
-		logistics_skill = 2
-	}				
-
-	create_corps_commander = { 
-		name = "Mohamed Mediène" 
-		picture = "Mohamed_Medine.dds"
-		traits = { commando }
-		id = 2402
-		skill = 1
-		attack_skill = 1
-		defense_skill = 1
-		planning_skill = 1
-		logistics_skill = 1
-	}
-	create_field_marshal = {
-		name = "Ahmed Gaid Salah"
-		picture = "generals/Portrait_Ahmed_Gaid_Salah.dds"
-		traits = { old_guard organisational_leader }
-		id = 2403
-		skill = 3
-		attack_skill = 3
-		defense_skill = 3
-		planning_skill = 3
-		logistics_skill = 3
-	}
-
-	create_field_marshal = {
-		name = "Abdelkader Lounes"
-		picture = "generals/Portrait_Abdelkader_Lounes.dds"
-		traits = { logistics_wizard }
-		id = 2404
-		skill = 2
-		attack_skill = 2
-		defense_skill = 2
-		planning_skill = 2
-		logistics_skill = 2
-	}
-
-	create_corps_commander = {
-		name = "Ahcène Tafer"
-		picture = "generals/Portrait_Ahcene_Tafer.dds"
-		traits = { panzer_leader desert_fox }
-		id = 2405
-		skill = 2
-		attack_skill = 2
-		defense_skill = 2
-		planning_skill = 2
-		logistics_skill = 2
-	}
-
-	create_corps_commander = {
-		name = "Amrani Amar"
-		picture = "generals/Portrait_Amrani_Amar.dds"
-		traits = { bearer_of_artillery }
-		id = 2406
-		skill = 2
-		attack_skill = 2
-		defense_skill = 2
-		planning_skill = 2
-		logistics_skill = 2
-	}
-
-	create_corps_commander = {
-		name = "Menad Nouba"
-		picture = "generals/Portrait_Menad_Nouba.dds"
-		traits = { urban_assault_specialist }
-		id = 2407
-		skill = 2
-		attack_skill = 2
-		defense_skill = 2
-		planning_skill = 2
-		logistics_skill = 2
-	}
-
-	create_navy_leader = {
-		name = "Mohammed Larbi Haouli"
-		picture = "admirals/Portrait_Mohammed_Larbi_Haouli.dds"
-		traits = { superior_tactician }
-		id = 2408
-	}
-	create_navy_leader = { 
-		name = "Malik Nasib" 
-		picture = "Malik_Nasib.dds"
-		traits = { blockade_runner }
-		id = 2409
-	} 
+	recruit_character = ALG_ahmed_gaid_salah
+	recruit_character = ALG_kaidi_mohamed
+	recruit_character = ALG_ahcene_tafer
+	recruit_character = ALG_mohammed_larbi_haouli
+	recruit_character = ALG_ammar_atamnia
+	recruit_character = ALG_mohammed_al_arabi_hawalli
+	recruit_character = ALG_mahmoud_laraba
+	recruit_character = ALG_mohamed_lamari
+	recruit_character = ALG_said_chengriha
+	recruit_character = ALG_ben_ali_ben_ali
 }
 
 2017.1.1 = {
-	capital = 386
 	oob = "ALG_2017"
 	if = {
 		limit = {
@@ -267,32 +271,29 @@
 		}
 	}
 	set_convoys = 20
-	
+
+	#CT
+	clr_country_flag = threat_level_moderate
+	set_variable = { threat_level = 30 }
+	set_variable = { radicalization = 25 }
+
 	add_opinion_modifier = { target = MOR modifier = ALG_MOR_Is_Occuping_WS_Border_Closed }
-	
-	set_variable = { var = debt value = 46 }
-	set_variable = { var = int_investments value = 7.6 }
+
+	set_variable = { var = debt value = 83 }
+	set_variable = { var = int_investments value = 8 }
 	set_variable = { var = treasury value = 115 }
-	set_variable = { var = tax_rate value = 14 }
-	
-	#set_variable = { var = size_modifier value = 0.96 } #7 CIC
-	#initial_money_setup = yes
-	
+	set_variable = { var = corporate_tax_rate value = 26 }
+	set_variable = { var = population_tax_rate value = 35 }
+
 	# Starting tech
-	set_technology = { 
-		legacy_doctrines = 1 
-		modern_blitzkrieg = 1 
-		forward_defense = 1 
-		encourage_nco_iniative = 1 
-		air_land_battle = 1
-		
-		#Nimr in cooperation with UAE
+	set_technology = {
+
+		# Nimr in cooperation w/ UAE
 		util_vehicle_1 = 1
 		util_vehicle_2 = 1
 		util_vehicle_3 = 1
-		
-		#For templates
-		
+
+		# For templates
 		night_vision_1 = 1
 		command_control_equipment = 1
 		Anti_tank_0 = 1
@@ -307,95 +308,156 @@
 		IFV_1 = 1
 		Rec_tank_0 = 1
 		MBT_1 = 1
-		
-		#Djebel Chenoua-Class
-		corvette_1 = 1
-		corvette_2 = 1
-		missile_corvette_1 = 1
-		
-		landing_craft = 1
-		frigate_1 = 1
-		
+		microprocessors = 1
+		computing2 = 1
+		decryption2 = 1
+		encryption2 = 1
+		computing3 = 1
+		decryption3 = 1
+		encryption3 = 1
+		DNA_fingerprinting = 1
+		internet2 = 1 	#2G
+		gprs = 1
+		wifi = 1
+		internet3 = 1	#3G
 	}
 
-	remove_ideas = {
-		gdp_4
-		#tax_cost_27
-		stagnation
+	# Naval Techs
+	if = {
+		limit = {
+			has_dlc = "Man the Guns"
+		}
+		set_technology = {
+			corvette_hull_1 = 1
+			corvette_hull_2 = 1
+
+			frigate_hull_1 = 1
+			frigate_hull_2 = 1
+			frigate_hull_3 = 1
+
+			destroyer_hull_1 = 1
+
+			attack_submarine_hull_1 = 1
+
+			tech_submarine_engineering = 1
+
+			tech_naval_systems_engineering = 1
+			tech_power_systems = 1
+
+			tech_combat_support_systems = 1
+			tech_fire_control = 1
+			tech_combat_radar = 1
+			tech_combat_radar_1 = 1
+			tech_combat_sonar = 1
+
+			tech_early_naval_weapon_systems = 1
+			tech_naval_weapon_systems = 1
+			tech_light_guns = 1
+
+			tech_point_defense_system = 1
+
+			tech_missile_systems = 1
+
+			tech_torpedoes = 1
+
+			tech_asw_systems = 1
+			tech_mine_warfare = 1
+
+			tech_mtg_landing_craft = 1
+		}
+
+		# Non-MTG Stuff
+		else = {
+			set_technology = {
+				landing_craft = 1
+				frigate_1 = 1
+				#Djebel Chenoua-Class
+				corvette_1 = 1
+				corvette_2 = 1
+				missile_corvette_1 = 1
+			}
+		}
 	}
-	
+
+
+	# 2017 Idea Updates
 	add_ideas = {
-		gdp_6
+		Enduring_Freedom
 		depression
-		#tax_cost_14
 	}
-	
-	#set_country_flag = gdp_3
+
 	set_country_flag = Major_Importer_RUS_Arms
-	set_country_flag = enthusiastic_fossil_fuel_industry
-	set_country_flag = enthusiastic_the_military
-	set_country_flag = negative_The_Ulema
-	
+	set_variable = { fossil_fuel_industry_opinion = 80 }
+	set_variable = { the_military_opinion = 80 }
+	set_variable = { The_Ulema_opinion  = 40 }
+
 	#Nat focus
-	
-	
-	
-	
-	
 
 	set_popularities = {
-		democratic = 15.1
-		communism = 60.2
-		fascism = 3.0
-		neutrality = 20.4
-		nationalist = 1.3
+		democratic = 32.0
+		communism = 40.5
+		fascism = 0.1
+		neutrality = 23.5
+		nationalist = 3.9
 	}
 	set_politics = {
 		ruling_party = communism
-		last_election = "2014.4.7"
+		last_election = "2014.4.17"
 		election_frequency = 60
 		elections_allowed = yes
 	}
-	
+
 	start_politics_input = yes
+
+	set_variable = { election_threshold = 0.01 }
 
 	### Party Popularities
 	set_variable = { party_pop_array^0 = 0 } #Western_Autocracy
-	set_variable = { party_pop_array^1 = 0 } #conservatism
-	set_variable = { party_pop_array^2 = 0.151 } #liberalism
-	set_variable = { party_pop_array^3 = 0 } #socialism
-	set_variable = { party_pop_array^4 = 0.03 } #Communist-State
-	set_variable = { party_pop_array^5 = 0.05 } #anarchist_communism
-	set_variable = { party_pop_array^6 = 0.059 } #Conservative
-	set_variable = { party_pop_array^7 = 0.463 } #Autocracy
+	set_variable = { party_pop_array^1 = 0.03 } #conservatism - National Republican Alliance
+	set_variable = { party_pop_array^2 = 0.232 } #liberalism - Democratic National Rally
+	set_variable = { party_pop_array^3 = 0.058 } #socialism - Algerian Popular Movement
+	set_variable = { party_pop_array^4 = 0 } #Communist-State
+	set_variable = { party_pop_array^5 = 0 } #anarchist_communism
+	set_variable = { party_pop_array^6 = 0 } #Conservative - Algerian National Front
+	set_variable = { party_pop_array^7 = 0.405 } #Autocracy - National Liberation Front
 	set_variable = { party_pop_array^8 = 0 } #Mod_Vilayat_e_Faqih
 	set_variable = { party_pop_array^9 = 0 } #Vilayat_e_Faqih
 	set_variable = { party_pop_array^10 = 0 } #Kingdom
-	set_variable = { party_pop_array^11 = 0.03 } #Caliphate
-	set_variable = { party_pop_array^12 = 0.06 } #Neutral_Muslim_Brotherhood
-	set_variable = { party_pop_array^13 = 0 } #Neutral_Autocracy
-	set_variable = { party_pop_array^14 = 0.078 } #Neutral_conservatism
+	set_variable = { party_pop_array^11 = 0.001 } #Caliphate - Al-Qaeda in the Islamic Maghreb
+	set_variable = { party_pop_array^12 = 0.093 } #Neutral_Muslim_Brotherhood - Movement of Society for Peace
+	set_variable = { party_pop_array^13 = 0.019 } #Neutral_Autocracy - Movement for National Reform
+	set_variable = { party_pop_array^14 = 0.039 } #Neutral_conservatism - Islamic Renaissance Movement
 	set_variable = { party_pop_array^15 = 0 } #oligarchism
 	set_variable = { party_pop_array^16 = 0 } #Neutral_Libertarian
 	set_variable = { party_pop_array^17 = 0 } #Neutral_green
-	set_variable = { party_pop_array^18 = 0.036 } #neutral_Social
-	set_variable = { party_pop_array^19 = 0.03 } #Neutral_Communism
-	set_variable = { party_pop_array^20 = 0 } #Nat_Populism
-	set_variable = { party_pop_array^21 = 0.013 } #Nat_Fascism
-	set_variable = { party_pop_array^22 = 0 } #Nat_Autocracy
+	set_variable = { party_pop_array^18 = 0.037 } #neutral_Social - Socialist Forces Front
+	set_variable = { party_pop_array^19 = 0.047 } #Neutral_Communism - Workers' Party
+	set_variable = { party_pop_array^20 = 0.019 } #Nat_Populism - Justice and Development Front
+	set_variable = { party_pop_array^21 = 0.02 } #Nat_Fascism - New Dawn
+	set_variable = { party_pop_array^22 = 0 } #Nat_Autocracy - Algerian People's National Armed Forces
 	set_variable = { party_pop_array^23 = 0 } #Monarchist
 
 	### Ruling Party
 	add_to_array = { ruling_party = 7 }
 
+	#2012 election results
+	set_variable = { party_pop_elect_array^1 = 0.014 } #conservatism - ANR
+	set_variable = { party_pop_elect_array^2 = 0.069 } #liberalism - RND
+	set_variable = { party_pop_elect_array^3 = 0.022 } #socialist - MPA
+	set_variable = { party_pop_elect_array^6 = 0.026 } #Conservative - FNA
+	set_variable = { party_pop_elect_array^7 = 0.174 } #Autocracy - FLN
+	set_variable = { party_pop_elect_array^11 = 0.001 } #Caliphate - Salafist Group for Preaching and Combat
+	set_variable = { party_pop_elect_array^12 = 0.062 } #Neutral_Muslim_Brotherhood - Movement of Society for Peace
+	set_variable = { party_pop_elect_array^13 = 0.062 } #Neutral_Autocracy - Islah/MRN
+	set_variable = { party_pop_elect_array^14 = 0.062 } #Neutral_conservatism - Nahda/MRI
+	set_variable = { party_pop_elect_array^18 = 0.025 } #neutral_Social - FFS
+	set_variable = { party_pop_elect_array^19 = 0.037 } #Neutral_Communism - Worker's Party
+	set_variable = { party_pop_elect_array^20 = 0.031 } #Nat_Populism - FJD
+	set_variable = { party_pop_elect_array^21 = 0.017 } #Nat_Fascism - New Dawn
+	set_variable = { party_pop_elect_array^22 = 0 } #Nat_Autocracy - Algerian People's National Armed Forces
+
 	startup_politics = yes
 
-	#create_country_leader = {				###Created in 2000
-		#name = "Abdelaziz Bouteflika"
-		#picture = "ALG_Abdelaziz_Bouteflika.dds"
-		#ideology = Autocracy
-		#traits = {
-			#emerging_Autocracy
-		#}
-	#}
+	retire_character = ALG_mohamed_lamari
+	recruit_character = ALG_fatima_zohra_ardjoune
 }

@@ -89,7 +89,7 @@ def check_event_for_logs(filepath):
         for line in content:
             lineNum +=1
             if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
-                if "option" in line and "=" in line:
+                if "option" in line and "{" in line and "=" in line:
                     optionFound = 1
                     optionLine = lineNum
                     hasLog = 0

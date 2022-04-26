@@ -1,0 +1,947 @@
+track_HVTs = {
+	icon = GFX_coordinated_strike
+	map_icon = GFX_operations_coordinated_strike_map
+	name = track_HVTs
+	desc = track_HVTs_desc
+	days = 30
+
+	allowed = {
+	}
+	available = {
+
+	}
+	visible = {
+		no_jihadist_government = yes
+		FROM = {
+			jihadist_government = yes
+		}
+		network_national_coverage = {
+			target = FROM
+			value > 0
+		}
+	}
+
+	operatives = 1
+
+	# Integer [0-100] - Every operation has a hard requirement of network strength in the target country
+	network_strength = 50
+
+	equipment = {
+	}
+
+	on_start = {  # SCOPE_OPERATION
+
+	}
+
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+	risk_modifiers = { operation_risk }
+
+	outcome_potential = {
+		ROOT = {
+			add_operation_token = {
+				tag = FROM
+				token = token_hvt
+			}
+		}
+	}
+
+	awarded_tokens = {
+		token_hvt
+	}
+
+	risk_chance = 0.1
+	outcome_extra_chance = 0.25
+	experience = 1
+	# outcome is an effect that runs when the operation has completed
+	outcome_execute = { # SCOPE_OPERATION
+		ROOT = {
+			add_operation_token = {
+				tag = FROM
+				token = token_hvt
+			}
+		}
+	}
+	outcome_extra_execute = { # SCOPE_OPERATION
+		random_list = {
+			33 = {
+				ROOT = {
+					add_operation_token = {
+						tag = FROM
+						token = token_hvt
+					}
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+					add_intel = {
+						target = FROM
+						army_intel = 10
+					}
+				}
+			}
+			67 = {
+				ROOT = {
+					add_operation_token = {
+						tag = FROM
+						token = token_hvt
+					}
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+				}
+			}
+		}
+	}
+
+	# This is where all the separate phases are defined
+	# Each phase for an operation may have a single actual phase assigned to it, which is determined here
+	phases = { #infiltration
+		infiltration_paradrop = { base = 100 }
+	}
+	phases = {
+		ct_track_HVTs = { base = 100 }
+	}
+	phases = {
+		exfiltration_go_to_ground = { base = 100 }
+	}
+}
+
+ct_decapitation_strike = {
+	icon = GFX_coordinated_strike
+	map_icon = GFX_operations_coordinated_strike_map
+	name = decapitation_strike
+	desc = decapitation_strike_desc
+	days = 10
+
+	allowed = {
+	}
+	available = {
+		FROM = {
+			OR = {
+				any_home_area_neighbor_country = {
+					gives_military_access_to = ROOT
+					is_puppet_of = ROOT
+					is_in_faction_with = ROOT
+					tag = ROOT
+				}
+			}
+		}
+	}
+	visible = {
+		no_jihadist_government = yes
+		FROM = {
+			jihadist_government = yes
+		}
+		has_operation_token = {
+			tag = FROM
+			token = token_hvt
+		}
+	}
+
+	required_tokens = {
+		token_hvt
+	}
+
+	operatives = 2
+
+	# Integer [0-100] - Every operation has a hard requirement of network strength in the target country
+	network_strength = 75
+
+	equipment = {
+	}
+
+	on_start = {  # SCOPE_OPERATION
+	}
+
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+	risk_modifiers = { operation_risk }
+
+	outcome_potential = {
+		random_list = {
+			60 = { #Success
+				ROOT = { country_event = { id = terror.17 }}
+				FROM = { country_event = { id = terror.17 }}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = Decapitation_strike }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = terminal_attack_controllers }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = standoff_precision_strikes }
+				}
+			}
+			40 = { #Failure
+				ROOT = { country_event = { id = terror.18 }}
+			}
+		}
+		ROOT = {
+			remove_operation_token = {
+				tag = FROM
+				token = token_hvt
+			}
+		}
+	}
+
+	risk_chance = 0.05
+	outcome_extra_chance = 0.1
+	experience = 2
+	# outcome is an effect that runs when the operation has completed
+	outcome_execute = { # SCOPE_OPERATION
+		random_list = {
+			60 = { #Success
+				ROOT = { country_event = { id = terror.17 }}
+				FROM = { country_event = { id = terror.17 }}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = Decapitation_strike }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = terminal_attack_controllers }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = standoff_precision_strikes }
+				}
+			}
+			40 = { #Failure
+				ROOT = { country_event = { id = terror.18 }}
+			}
+		}
+		ROOT = {
+			remove_operation_token = {
+				tag = FROM
+				token = token_hvt
+			}
+		}
+	}
+	outcome_extra_execute = { # SCOPE_OPERATION
+		ROOT = { country_event = { id = terror.17 }}
+		FROM = { country_event = { id = terror.17 }}
+		ROOT = {
+			remove_operation_token = {
+				tag = FROM
+				token = token_hvt
+			}
+			air_experience = 10
+		}
+	}
+
+	# This is where all the separate phases are defined
+	# Each phase for an operation may have a single actual phase assigned to it, which is determined here
+	phases = { #infiltration
+		infiltration_paradrop = { base = 100 }
+	}
+	phases = {
+		ct_drone_strike = {
+			base = 33
+			modifier = {
+				factor = 2
+				ROOT = { has_equipment = { Air_UAV_equipment > 0 } }
+			}
+		}
+		ct_helicopter_strike = {
+			base = 33
+			modifier = {
+				factor = 2
+				ROOT = { has_equipment = { attack_helicopter_equipment > 0 } }
+			}
+		}
+		ct_fighter_strike = {
+			base = 33
+			modifier = {
+				factor = 2
+				ROOT = { has_equipment = { Strike_fighter_equipment > 0 } }
+			}
+		}
+	}
+	phases = {
+		exfiltration_go_to_ground = { base = 100 }
+	}
+}
+
+kill_or_capture_raid = {
+	icon = GFX_coordinated_strike
+	map_icon = GFX_operations_coordinated_strike_map
+	name = kill_or_capture_raid
+	desc = kill_or_capture_raid_desc
+	days = 15
+
+	allowed = {
+	}
+	available = {
+		FROM = {
+			OR = {
+				any_home_area_neighbor_country = {
+					OR = {
+						gives_military_access_to = ROOT
+						is_puppet_of = ROOT
+						is_in_faction_with = ROOT
+						tag = ROOT
+					}
+				}
+			}
+		}
+		has_template_majority_unit = Special_Forces
+		has_tech = night_vision_1
+	}
+	visible = {
+		no_jihadist_government = yes
+		FROM = {
+			jihadist_government = yes
+		}
+		has_operation_token = {
+			tag = FROM
+			token = token_hvt
+		}
+	}
+
+	required_tokens = {
+		token_hvt
+	}
+
+	operatives = 2
+
+	# Integer [0-100] - Every operation has a hard requirement of network strength in the target country
+	network_strength = 75
+
+	equipment = {
+	}
+
+	on_start = {  # SCOPE_OPERATION
+	}
+
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+	risk_modifiers = { operation_risk }
+
+	outcome_potential = {
+		random_list = {
+			60 = { #Success
+				ROOT = { set_country_flag = killed_commander }
+				ROOT = { country_event = { id = terror.19 }}
+				FROM = { country_event = { id = terror.19 }}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_2 }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_3 }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_4 }
+				}
+			}
+			40 = { #Failure
+				ROOT = { country_event = { id = terror.20 }}
+			}
+		}
+		ROOT = {
+			remove_operation_token = {
+				tag = FROM
+				token = token_hvt
+			}
+		}
+	}
+
+	risk_chance = 0.2
+	outcome_extra_chance = 0.5
+	experience = 2
+	# outcome is an effect that runs when the operation has completed
+	outcome_execute = { # SCOPE_OPERATION
+		random_list = {
+			60 = { #Success
+				ROOT = { set_country_flag = killed_commander }
+				ROOT = { country_event = { id = terror.19 }}
+				FROM = { country_event = { id = terror.19 }}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_2 }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_3 }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_4 }
+				}
+			}
+			40 = { #Failure
+				ROOT = { country_event = { id = terror.20 }}
+			}
+		}
+		ROOT = {
+			remove_operation_token = {
+				tag = FROM
+				token = token_hvt
+			}
+		}
+	}
+	outcome_extra_execute = { # SCOPE_OPERATION
+		random_list = {
+			10 = {
+				ROOT = { set_country_flag = captured_commander }
+				ROOT = { country_event = { id = terror.19 }}
+				FROM = { country_event = { id = terror.19 }}
+				ROOT = {
+					remove_operation_token = {
+						tag = FROM
+						token = token_hvt
+					}
+					add_intel = {
+						target = FROM
+						civilian_intel = 25
+					}
+					add_intel = {
+						target = FROM
+						army_intel = 25
+					}
+				}
+			}
+			10 = {
+				ROOT = { set_country_flag = captured_commander }
+				ROOT = { country_event = { id = terror.19 }}
+				FROM = { country_event = { id = terror.19 }}
+				ROOT = {
+					remove_operation_token = {
+						tag = FROM
+						token = token_arms_cache
+					}
+					add_intel = {
+						target = FROM
+						civilian_intel = 25
+					}
+					add_intel = {
+						target = FROM
+						army_intel = 25
+					}
+				}
+			}
+			35 = {
+				ROOT = { set_country_flag = captured_commander }
+				ROOT = { country_event = { id = terror.19 }}
+				FROM = { country_event = { id = terror.19 }}
+				ROOT = {
+					remove_operation_token = {
+						tag = FROM
+						token = token_hvt
+					}
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+					add_intel = {
+						target = FROM
+						army_intel = 10
+					}
+				}
+			}
+			45 = {
+				ROOT = { set_country_flag = captured_commander }
+				ROOT = { country_event = { id = terror.19 }}
+				FROM = { country_event = { id = terror.19 }}
+				ROOT = {
+					remove_operation_token = {
+						tag = FROM
+						token = token_hvt
+					}
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+				}
+			}
+		}
+	}
+
+	# This is where all the separate phases are defined
+	# Each phase for an operation may have a single actual phase assigned to it, which is determined here
+	phases = { #infiltration
+		helicopter_infiltration = { base = 100 }
+	}
+	phases = {
+		raid_compound = { base = 100 }
+	}
+	phases = {
+		helicopter_exfiltration = { base = 100 }
+	}
+}
+
+locate_arms_caches = {
+	icon = GFX_coordinated_strike
+	map_icon = GFX_operations_coordinated_strike_map
+	name = locate_arms_caches
+	desc = locate_arms_caches_desc
+	days = 30
+
+	allowed = {
+	}
+	available = {
+
+	}
+	visible = {
+		no_jihadist_government = yes
+		FROM = {
+			jihadist_government = yes
+		}
+		network_national_coverage = {
+			target = FROM
+			value > 0
+		}
+	}
+
+	operatives = 1
+
+	# Integer [0-100] - Every operation has a hard requirement of network strength in the target country
+	network_strength = 40
+
+	equipment = {
+	}
+
+	on_start = {  # SCOPE_OPERATION
+
+	}
+
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+	risk_modifiers = { operation_risk }
+
+	outcome_potential = {
+		ROOT = {
+			add_operation_token = {
+				tag = FROM
+				token = token_arms_cache
+			}
+		}
+	}
+
+	awarded_tokens = {
+		token_arms_cache
+	}
+
+	risk_chance = 0.1
+	outcome_extra_chance = 0.25
+	experience = 1
+	# outcome is an effect that runs when the operation has completed
+	outcome_execute = { # SCOPE_OPERATION
+		ROOT = {
+			add_operation_token = {
+				tag = FROM
+				token = token_arms_cache
+			}
+		}
+	}
+	outcome_extra_execute = { # SCOPE_OPERATION
+		random_list = {
+			33 = {
+				ROOT = {
+					add_operation_token = {
+						tag = FROM
+						token = token_arms_cache
+					}
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+					add_intel = {
+						target = FROM
+						army_intel = 10
+					}
+				}
+			}
+			67 = {
+				ROOT = {
+					add_operation_token = {
+						tag = FROM
+						token = token_arms_cache
+					}
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+				}
+			}
+		}
+	}
+
+	# This is where all the separate phases are defined
+	# Each phase for an operation may have a single actual phase assigned to it, which is determined here
+	phases = { #infiltration
+		infiltration_paradrop = { base = 100 }
+	}
+	phases = {
+		ct_track_HVTs = { base = 100 }
+	}
+	phases = {
+		exfiltration_go_to_ground = { base = 100 }
+	}
+}
+
+strike_arms_caches = {
+	icon = GFX_coordinated_strike
+	map_icon = GFX_operations_coordinated_strike_map
+	name = strike_arms_caches
+	desc = strike_arms_caches_desc
+	days = 10
+
+	allowed = {
+	}
+	available = {
+		FROM = {
+			OR = {
+				any_home_area_neighbor_country = {
+					gives_military_access_to = ROOT
+					is_puppet_of = ROOT
+					is_in_faction_with = ROOT
+					tag = ROOT
+				}
+			}
+		}
+	}
+	visible = {
+		no_jihadist_government = yes
+		FROM = {
+			jihadist_government = yes
+		}
+		has_operation_token = {
+			tag = FROM
+			token = token_arms_cache
+		}
+	}
+
+	required_tokens = {
+		token_arms_cache
+	}
+
+	operatives = 2
+
+	# Integer [0-100] - Every operation has a hard requirement of network strength in the target country
+	network_strength = 50
+
+	equipment = {
+	}
+
+	on_start = {  # SCOPE_OPERATION
+	}
+
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+	risk_modifiers = { operation_risk }
+
+	outcome_potential = {
+		random_list = {
+			60 = { #Success
+				ROOT = { country_event = { id = terror.22 }}
+				FROM = { country_event = { id = terror.22 }}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = Decapitation_strike }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = terminal_attack_controllers }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = standoff_precision_strikes }
+				}
+			}
+			40 = { #Failure
+				ROOT = { country_event = { id = terror.18 }}
+			}
+		}
+		ROOT = {
+			remove_operation_token = {
+				tag = FROM
+				token = token_arms_cache
+			}
+		}
+	}
+
+	risk_chance = 0.02
+	outcome_extra_chance = 0.1
+	experience = 1.5
+	# outcome is an effect that runs when the operation has completed
+	outcome_execute = { # SCOPE_OPERATION
+		random_list = {
+			60 = { #Success
+				ROOT = { country_event = { id = terror.22 }}
+				FROM = { country_event = { id = terror.22 }}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = Decapitation_strike }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = terminal_attack_controllers }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = standoff_precision_strikes }
+				}
+			}
+			40 = { #Failure
+				ROOT = { country_event = { id = terror.18 }}
+			}
+		}
+		ROOT = {
+			remove_operation_token = {
+				tag = FROM
+				token = token_arms_cache
+			}
+		}
+	}
+	outcome_extra_execute = { # SCOPE_OPERATION
+		ROOT = { country_event = { id = terror.22 }}
+		FROM = { country_event = { id = terror.22 }}
+		ROOT = {
+			remove_operation_token = {
+				tag = FROM
+				token = token_arms_cache
+			}
+			air_experience = 10
+		}
+	}
+
+	# This is where all the separate phases are defined
+	# Each phase for an operation may have a single actual phase assigned to it, which is determined here
+	phases = { #infiltration
+		infiltration_paradrop = { base = 100 }
+	}
+	phases = {
+		ct_drone_strike = {
+			base = 33
+			modifier = {
+				factor = 2
+				ROOT = { has_equipment = { Air_UAV_equipment > 0 } }
+			}
+		}
+		ct_helicopter_strike = {
+			base = 33
+			modifier = {
+				factor = 2
+				ROOT = { has_equipment = { attack_helicopter_equipment > 0 } }
+			}
+		}
+		ct_fighter_strike = {
+			base = 33
+			modifier = {
+				factor = 2
+				ROOT = { has_equipment = { Strike_fighter_equipment > 0 } }
+			}
+		}
+	}
+	phases = {
+		exfiltration_go_to_ground = { base = 100 }
+	}
+}
+
+raid_arms_caches = {
+	icon = GFX_coordinated_strike
+	map_icon = GFX_operations_coordinated_strike_map
+	name = raid_arms_caches
+	desc = raid_arms_caches_desc
+	days = 15
+
+	allowed = {
+	}
+	available = {
+		FROM = {
+			OR = {
+				any_home_area_neighbor_country = {
+					OR = {
+						gives_military_access_to = ROOT
+						is_puppet_of = ROOT
+						is_in_faction_with = ROOT
+						tag = ROOT
+					}
+				}
+			}
+		}
+		has_template_majority_unit = Special_Forces
+		has_tech = night_vision_1
+	}
+	visible = {
+		no_jihadist_government = yes
+		FROM = {
+			jihadist_government = yes
+		}
+		has_operation_token = {
+			tag = FROM
+			token = token_arms_cache
+		}
+	}
+
+	required_tokens = {
+		token_arms_cache
+	}
+
+	operatives = 2
+
+	# Integer [0-100] - Every operation has a hard requirement of network strength in the target country
+	network_strength = 50
+
+	equipment = {
+	}
+
+	on_start = {  # SCOPE_OPERATION
+	}
+
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+	risk_modifiers = { operation_risk }
+
+	outcome_potential = {
+		random_list = {
+			60 = { #Success
+				ROOT = { country_event = { id = terror.23 }}
+				FROM = { country_event = { id = terror.23 }}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_2 }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_3 }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_4 }
+				}
+			}
+			40 = { #Failure
+				ROOT = { country_event = { id = terror.20 }}
+			}
+		}
+		ROOT = {
+			remove_operation_token = {
+				tag = FROM
+				token = token_arms_cache
+			}
+		}
+	}
+
+	risk_chance = 0.2
+	outcome_extra_chance = 0.5
+	experience = 2
+	# outcome is an effect that runs when the operation has completed
+	outcome_execute = { # SCOPE_OPERATION
+		random_list = {
+			60 = { #Success
+				ROOT = { country_event = { id = terror.23 }}
+				FROM = { country_event = { id = terror.23 }}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_2 }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_3 }
+				}
+				modifier = {
+					factor = 2
+					ROOT = { has_tech = night_vision_4 }
+				}
+			}
+			40 = { #Failure
+				ROOT = { country_event = { id = terror.20 }}
+			}
+		}
+		ROOT = {
+			remove_operation_token = {
+				tag = FROM
+				token = token_arms_cache
+			}
+		}
+	}
+	outcome_extra_execute = { # SCOPE_OPERATION
+		random_list = {
+			10 = {
+				ROOT = { set_country_flag = seized_intel }
+				ROOT = { country_event = { id = terror.23 }}
+				FROM = { country_event = { id = terror.23 }}
+				ROOT = {
+					remove_operation_token = {
+						tag = FROM
+						token = token_hvt
+					}
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+					add_intel = {
+						target = FROM
+						army_intel = 10
+					}
+				}
+			}
+			10 = {
+				ROOT = { set_country_flag = seized_intel }
+				ROOT = { country_event = { id = terror.23 }}
+				FROM = { country_event = { id = terror.23 }}
+				ROOT = {
+					remove_operation_token = {
+						tag = FROM
+						token = token_arms_cache
+					}
+					add_intel = {
+						target = FROM
+						army_intel = 10
+					}
+				}
+			}
+			35 = {
+				ROOT = { set_country_flag = seized_intel }
+				ROOT = { country_event = { id = terror.23 }}
+				FROM = { country_event = { id = terror.23 }}
+				ROOT = {
+					remove_operation_token = {
+						tag = FROM
+						token = token_arms_cache
+					}
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+				}
+			}
+			45 = {
+				ROOT = { set_country_flag = seized_intel }
+				ROOT = { country_event = { id = terror.23 }}
+				FROM = { country_event = { id = terror.23 }}
+				ROOT = {
+					remove_operation_token = {
+						tag = FROM
+						token = token_arms_cache
+					}
+					add_intel = {
+						target = FROM
+						civilian_intel = 5
+					}
+				}
+			}
+		}
+	}
+
+	# This is where all the separate phases are defined
+	# Each phase for an operation may have a single actual phase assigned to it, which is determined here
+	phases = { #infiltration
+		helicopter_infiltration = { base = 100 }
+	}
+	phases = {
+		raid_cache = { base = 100 }
+	}
+	phases = {
+		helicopter_exfiltration = { base = 100 }
+	}
+}

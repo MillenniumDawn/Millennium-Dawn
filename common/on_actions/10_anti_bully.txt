@@ -1,0 +1,35 @@
+# Author(s): Angriest Bird, Kalkalash, Killerrabbit, Hiddengearz
+# Purpose:
+# This on_action file is to handle the Public War Weariness system (formerly known as Anti-Bully
+on_actions ={
+
+	# FROM is defender
+	# THIS is attacker
+	on_declare_war = {
+		effect = {
+			#Used in MD4_Anti_bully decisions
+			hidden_effect = { add_timed_idea = { idea = three_months_of_war days = 90 } }
+			FROM = { hidden_effect = { add_timed_idea = { idea = three_months_of_war days = 90 } } }
+			# Initializes the Anti-Bully (Public War Weariness) system
+			if = {
+				limit = {
+					NOT = { has_global_flag = GAME_RULE_disable_anti_bully }
+					FROM = {
+						is_major = no
+						ic_ratio = { tag = ROOT ratio < 0.4 }
+					}
+					NOT = { has_government = fascism }
+					# TODO: Tension seems odd here. Potential look into cutting this
+					threat < 0.60
+					# TODO: Potential review this as well. I think that it would still trigger a Public War Weariness war
+					FROM = { any_owned_state = { NOT = { is_core_of = ROOT } } }
+				}
+				hidden_effect = {
+					save_event_target_as = AB_ATT
+					FROM = { save_event_target_as = AB_DEFF }
+					country_event = { id = anti_bully.1 }
+				}
+			}
+		}
+	}
+}

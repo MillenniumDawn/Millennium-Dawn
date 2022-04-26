@@ -1,0 +1,270 @@
+SWE_estonia_is_protected = { # If Estonia is protected, do not attack.
+	allowed = { original_tag = SWE }
+	enable = {
+		OR = {
+			has_wargoal_against = EST
+			has_completed_focus = SWE_offer_province_status_to_estonia
+		}
+		EST = {
+			OR = { # Check if EST is member of major bloc, or is too strong on its own to attack
+				has_idea = EU_member
+				has_idea = NATO_member
+				strength_ratio = {
+					tag = SWE
+					ratio > 0.8
+				}
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = EST
+		value = -4000
+	}
+}
+SWE_finland_is_protected = { # If Finland is protected, do not attack.
+	allowed = { original_tag = SWE }
+	enable = {
+		OR = {
+			has_wargoal_against = FIN
+			has_completed_focus = SWE_tillbaka_till_riket
+		}
+		FIN = {
+			OR = {
+				has_idea = EU_member
+				has_idea = NATO_member
+				strength_ratio = {
+					tag = SWE
+					ratio > 0.8
+				}
+			}
+		}
+		NOT = {
+			SWE = {
+				has_completed_focus = SWE_ally_the_kaiser
+				is_in_faction_with = GER
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = FIN
+		value = -4000
+	}
+}
+
+SWE_prepare_to_attack_FIN = {
+	allowed = { original_tag = SWE }
+	enable = {
+		country_exists = FIN
+		NOT = { # If Finland is too protected, don't bother preparing for war; move onto next targets.
+			FIN = {
+				OR = {
+					has_idea = NATO_member
+					has_idea = EU_member
+					is_in_faction_with = SOV
+					is_in_faction_with = GER
+					is_in_faction_with = USA
+				}
+			}
+		}
+		OR = {
+			SWE = {
+				has_war = no
+				OR = {
+					has_wargoal_against = FIN
+					has_completed_focus = SWE_tillbaka_till_riket
+				}
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = prepare_for_war
+		id = FIN
+		value = 4000
+	}
+}
+
+SWE_prepare_to_attack_estonia = {
+	allowed = { original_tag = SWE }
+	enable = {
+		country_exists = EST
+		OR = {
+			SWE = {
+				has_war = no
+				OR = {
+					has_wargoal_against = EST
+					has_completed_focus = SWE_offer_province_status_to_estonia
+				}
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = prepare_for_war
+		id = EST
+		value = 4000
+	}
+}
+
+SWE_prepare_to_attack_norway = { # After Finland is conquered or pacified (or is too protected), move on to Norway
+	allowed = { original_tag = SWE }
+	enable = {
+		country_exists = NOR
+		has_war = no
+		OR = {
+			FIN = {
+				OR = {
+					exists = no
+					is_in_faction_with = SWE
+					is_puppet_of = SWE
+					has_idea = NATO_member
+					has_idea = EU_member
+					is_in_faction_with = SOV # If Finland too protected, move on to attack Norway instead
+					is_in_faction_with = GER
+					is_in_faction_with = USA
+				}
+			}
+			SWE = {
+				owns_state = 111
+				owns_state = 145
+				owns_state = 149
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = prepare_for_war
+		id = NOR
+		value = 4000
+	}
+
+	ai_strategy = {
+		type = conquer
+		id = NOR
+		value = 400
+	}
+}
+
+SWE_norway_too_stronk = { # Norway is too strong to attack
+	allowed = { original_tag = SWE }
+	enable = {
+		country_exists = NOR
+		NOR = {
+			OR = {
+				strength_ratio = {
+					tag = SWE
+					ratio > 1
+				}
+				has_idea = NATO_member
+				has_idea = EU_member
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = NOR
+		value = -4000
+	}
+}
+
+SWE_denmark_too_stronk = { # Denmark is too strong to attack
+	allowed = { original_tag = SWE }
+	enable = {
+		country_exists = DEN
+		DEN = {
+			OR = {
+				strength_ratio = {
+					tag = SWE
+					ratio > 1
+				}
+				has_idea = NATO_member
+				has_idea = EU_member
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = DEN
+		value = -4000
+	}
+}
+
+SWE_prepare_to_attack_denmark = { # After Norway and Finland are conquered or pacified, move on to Denmark
+	allowed = { original_tag = SWE }
+	enable = {
+		country_exists = DEN
+		has_war = no
+		OR = {
+			FIN = {
+				OR = {
+					exists = no
+					is_in_faction_with = SWE
+					is_puppet_of = SWE
+				}
+			}
+			SWE = {
+				owns_state = 111
+				owns_state = 145
+				owns_state = 149
+			}
+		}
+		OR = {
+			NOR = {
+				OR = {
+					exists = no
+					is_in_faction_with = SWE
+					is_puppet_of = SWE
+				}
+			}
+			SWE = {
+				owns_state = 30
+				owns_state = 31
+				owns_state = 32
+				owns_state = 542
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = prepare_for_war
+		id = DEN
+		value = 4000
+	}
+
+	ai_strategy = {
+		type = conquer
+		id = DEN
+		value = 400
+	}
+}
+
+##Sweden unique AI for combat units
+SWE_default_naval_breakdown = {
+	allowed = { original_tag = SWE }
+	enable = { original_tag = SWE }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = naval_corvettes value = 25 }
+	ai_strategy = { type = role_ratio id = naval_frigate value = 30 }
+	ai_strategy = { type = role_ratio id = naval_destroyer value = 15 }
+	ai_strategy = { type = role_ratio id = naval_stealth_destroyer value = 2 }
+	ai_strategy = { type = role_ratio id = naval_attack_submarine value = 20 }
+	ai_strategy = { type = role_ratio id = naval_missile_submarine value = 2 }
+	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 4 }
+	ai_strategy = { type = role_ratio id = naval_carrier value = 1 }
+	ai_strategy = { type = role_ratio id = naval_cruiser value = 1 }
+}

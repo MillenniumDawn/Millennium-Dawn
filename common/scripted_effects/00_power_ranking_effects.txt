@@ -22,10 +22,13 @@ get_global_factories = {
 	set_variable = { global.global_num_of_factories = 0 }
 	every_country = {
 		clr_country_flag = regional_power
-		set_variable = { global.tmp = num_of_factories }
-		multiply_variable = { global.tmp = domestic_influence_amount_calc?0.5 }
+		set_variable = { global.tmp = gdp_total }
+		set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
+		divide_temp_variable = { domestic_influence_amount_temp = 100 }
+		multiply_variable = { global.tmp = domestic_influence_amount_temp?0.5 }
+		divide_variable = { global.tmp = 100 }	#Scale down to prevent overflow
 		add_to_variable = { global.global_num_of_factories = global.tmp }
-		if = { 
+		if = {
 			limit = { is_european_nation = yes }
 			set_variable = { global.idx = global.european_nations^num }
 			for_each_loop = {
@@ -33,8 +36,11 @@ get_global_factories = {
 				if = {
 					limit = {
 						var:v = {
-							set_temp_variable = { num_of_factories_tmp = num_of_factories }
-							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_calc?0.5 }
+							set_temp_variable = { num_of_factories_tmp = gdp_total }
+							set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
+							divide_temp_variable = { domestic_influence_amount_temp = 100 }
+							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_temp?0.5 }
+							divide_temp_variable = { num_of_factories_tmp = 100 }	#Scale down to prevent overflow
 							check_variable = { global.tmp > num_of_factories_tmp }
 						}
 					}
@@ -48,7 +54,7 @@ get_global_factories = {
 				index = global.idx
 			}
 		}
-		else_if = { 
+		else_if = {
 			limit = { is_sub_saharan_nation = yes }
 			set_variable = { global.idx = global.sub_saharan_nations^num }
 			for_each_loop = {
@@ -56,8 +62,11 @@ get_global_factories = {
 				if = {
 					limit = {
 						var:v = {
-							set_temp_variable = { num_of_factories_tmp = num_of_factories }
-							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_calc?0.5 }
+							set_temp_variable = { num_of_factories_tmp = gdp_total }
+							set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
+							divide_temp_variable = { domestic_influence_amount_temp = 100 }
+							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_temp?0.5 }
+							divide_temp_variable = { num_of_factories_tmp = 100 }	#Scale down to prevent overflow
 							check_variable = { global.tmp > num_of_factories_tmp }
 						}
 					}
@@ -71,7 +80,7 @@ get_global_factories = {
 				index = global.idx
 			}
 		}
-		else_if = { 
+		else_if = {
 			limit = { is_middle_eastern_nation = yes }
 			set_variable = { global.idx = global.middle_eastern_nations^num }
 			for_each_loop = {
@@ -79,8 +88,11 @@ get_global_factories = {
 				if = {
 					limit = {
 						var:v = {
-							set_temp_variable = { num_of_factories_tmp = num_of_factories }
-							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_calc?0.5 }
+							set_temp_variable = { num_of_factories_tmp = gdp_total }
+							set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
+							divide_temp_variable = { domestic_influence_amount_temp = 100 }
+							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_temp?0.5 }
+							divide_temp_variable = { num_of_factories_tmp = 100 }	#Scale down to prevent overflow
 							check_variable = { global.tmp > num_of_factories_tmp }
 						}
 					}
@@ -94,7 +106,7 @@ get_global_factories = {
 				index = global.idx
 			}
 		}
-		else_if = { 
+		else_if = {
 			limit = { is_asian_nation = yes }
 			set_variable = { global.idx = global.asian_nations^num }
 			for_each_loop = {
@@ -102,8 +114,11 @@ get_global_factories = {
 				if = {
 					limit = {
 						var:v = {
-							set_temp_variable = { num_of_factories_tmp = num_of_factories }
-							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_calc?0.5 }
+							set_temp_variable = { num_of_factories_tmp = gdp_total }
+							set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
+							divide_temp_variable = { domestic_influence_amount_temp = 100 }
+							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_temp?0.5 }
+							divide_temp_variable = { num_of_factories_tmp = 100 }	#Scale down to prevent overflow
 							check_variable = { global.tmp > num_of_factories_tmp }
 						}
 					}
@@ -117,7 +132,7 @@ get_global_factories = {
 				index = global.idx
 			}
 		}
-		else_if = { 
+		else_if = {
 			limit = { is_american_nation = yes }
 			set_variable = { global.idx = global.american_nations^num }
 			for_each_loop = {
@@ -125,8 +140,11 @@ get_global_factories = {
 				if = {
 					limit = {
 						var:v = {
-							set_temp_variable = { num_of_factories_tmp = num_of_factories }
-							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_calc?0.5 }
+							set_temp_variable = { num_of_factories_tmp = gdp_total }
+							set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
+							divide_temp_variable = { domestic_influence_amount_temp = 100 }
+							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_temp?0.5 }
+							divide_temp_variable = { num_of_factories_tmp = 100 }	#Scale down to prevent overflow
 							check_variable = { global.tmp > num_of_factories_tmp }
 						}
 					}
@@ -224,27 +242,27 @@ print_region_arrays = {
 	log = "EUROPEAN NATIONS"
 	for_each_scope_loop = {
 		array = global.european_nations
-		log = "[?this.GetName]: [?this.num_of_factories] infl [?this.domestic_influence_amount_calc]"
+		log = "[?this.GetName]: [?this.gdp_total] infl [?this.domestic_influence_amount]"
 	}
 	log = "SUB SAHARAN NATIONS"
 	for_each_scope_loop = {
 		array = global.sub_saharan_nations
-		log = "[?this.GetName]: [?this.num_of_factories] infl [?this.domestic_influence_amount_calc]"
+		log = "[?this.GetName]: [?this.gdp_total] infl [?this.domestic_influence_amount]"
 	}
 	log = "MIDDLE EASTERN NATIONS"
 	for_each_scope_loop = {
 		array = global.middle_eastern_nations
-		log = "[?this.GetName]: [?this.num_of_factories] infl [?this.domestic_influence_amount_calc]"
+		log = "[?this.GetName]: [?this.gdp_total] infl [?this.domestic_influence_amount]"
 	}
 	log = "ASIAN NATIONS"
 	for_each_scope_loop = {
 		array = global.asian_nations
-		log = "[?this.GetName]: [?this.num_of_factories] infl [?this.domestic_influence_amount_calc]"
+		log = "[?this.GetName]: [?this.gdp_total] infl [?this.domestic_influence_amount]"
 	}
 	log = "AMERICAN NATIONS"
 	for_each_scope_loop = {
 		array = global.american_nations
-		log = "[?this.GetName]: [?this.num_of_factories] infl [?this.domestic_influence_amount_calc]"
+		log = "[?this.GetName]: [?this.gdp_total] infl [?this.domestic_influence_amount]"
 	}
 }
 
@@ -252,8 +270,11 @@ print_region_arrays = {
 # Calculates what percentage of global factories the country's factories (civ, mil, nav) make up
 # Saved in percentage_of_global_factories variable
 get_percentage_of_global_factories = {
-	set_variable = { percentage_of_global_factories = num_of_factories }
-	multiply_variable = { percentage_of_global_factories = domestic_influence_amount_calc?0.5 }
+	set_variable = { percentage_of_global_factories = gdp_total }
+	set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
+	divide_temp_variable = { domestic_influence_amount_temp = 100 }
+	multiply_variable = { percentage_of_global_factories = domestic_influence_amount_temp?0.5 }
+	divide_variable = { percentage_of_global_factories = 100 }	#Scale down to prevent overflow
 	divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
 }
 
@@ -267,56 +288,24 @@ determine_power_ranking = {
 		regional_power
 		minor_power
 		non_power
-		
-		superpower_hidden
-		great_power_hidden
-		large_power_hidden
-		regional_power_hidden
-		non_power_hidden
 	}
-	if = {
-		limit = {
-			check_variable = { percentage_of_global_factories < 0.002 }
-		}
+	if = { limit = { check_variable = { percentage_of_global_factories < 0.002 } }
 		add_ideas = non_power
-		add_ideas = non_power_hidden
-		set_variable = { influence_multiplier = 0.75 }
 	}
-	else_if = {
-		limit = {
-			check_variable = { percentage_of_global_factories > 0.08 }
-		}
+	else_if = { limit = { check_variable = { percentage_of_global_factories > 0.15 } }
 		add_ideas = superpower
-		add_ideas = superpower_hidden
-		set_variable = { influence_multiplier = 2 }
 	}
-	else_if = {
-		limit = {
-			check_variable = { percentage_of_global_factories > 0.035 }
-		}
+	else_if = { limit = { check_variable = { percentage_of_global_factories > 0.065 } }
 		add_ideas = great_power
-		add_ideas = great_power_hidden
-		set_variable = { influence_multiplier = 1.6 }
 	}
-	else_if = {
-		limit = {
-			check_variable = { percentage_of_global_factories > 0.018 }
-		}
+	else_if = { limit = { check_variable = { percentage_of_global_factories > 0.025 } }
 		add_ideas = large_power
-		add_ideas = large_power_hidden
-		set_variable = { influence_multiplier = 1.4 }
 	}
-	else_if = {
-		limit = {
-			has_country_flag = regional_power
-		}
+	else_if = { limit = { has_country_flag = regional_power }
 		add_ideas = regional_power
-		add_ideas = regional_power_hidden
 		clr_country_flag = regional_power
-		set_variable = { influence_multiplier = 1.2 }
 	}
-	else_if = {
+	else = {
 		add_ideas = minor_power
-		set_variable = { influence_multiplier = 1.0 }
 	}
 }

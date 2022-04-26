@@ -1,11 +1,8 @@
-
 scripted_diplomatic_actions = {
-
 	embargo_diplomatic_action = { # will be used in most localizations
-	
 		# root is the initiator of action and this is the target country
 		allowed = { #if action is valid
-			always = yes
+			ROOT = { THIS = { NOT = { has_country_flag = md_embargoed@ROOT } } }
 		}
 		visible = { #if action is visible on gui
 			always = yes
@@ -13,21 +10,17 @@ scripted_diplomatic_actions = {
 		selectable = { #if action is selectable on gui
 			always = yes
 		}
-
 		requires_acceptance = no # if true the action will require acceptance of target country
 		
 		cost = 50 # pp cost, can be zero
-		
 		command_power = 5 # cp cost, can be zero
 
 		#cost_string = loc_key # if you have a custom cost, use this loc to display it
 		
 		show_acceptance_on_action_button = yes # set to no if acceptance shouldn't be displayed on the action button
-
 		icon = 1 # icon frame to use in notification
 
 		#for effects/triggers/variables, root is the sender and this is receiver
-
 		# runs when the action is sent
 		on_sent_effect = {
 			ROOT = {
@@ -35,26 +28,27 @@ scripted_diplomatic_actions = {
 					target = THIS
 					modifier = MD_embargo
 				}
+				THIS = { set_country_flag = md_embargoed@ROOT }
 			}
 		}
 
 		# runs when the action is properly sent and accepted
 		complete_effect = {
-			#ROOT = {
-				#add_opinion_modifier = {
-					#target = THIS
-					#modifier = MD_embargo
-				#}
-			#}
+			effect_tooltip = { 
+				ROOT = {
+					add_opinion_modifier = {
+						target = THIS
+						modifier = MD_embargo
+					}
+					THIS = { set_country_flag = md_embargoed@ROOT }
+				}
+			}
 		}
-
-		# runs when the action is properly sent and rejected
-		reject_effect = {
-		}
-
+		
 		# SEND POPUP CUSTOMIZATION
 		# use diplomatic_action as context in scripted gui
 		# send_scripted_gui = send_scripted_gui_name # if specified, the diplomatic action will use this scripted gui before sending the request. the player (or ai) can make changes on that gui and store stuff as variable to customize action
+		
 		#reset_send_effect = { # if action has a send scripted gui, this effect will be used for clearing the state of gui (will run when player opens the scripted gui by sending the action or when ai proposes action
 			# clear action
 			#if = {
