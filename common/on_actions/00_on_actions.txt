@@ -33,12 +33,6 @@ on_actions = {
 	# country
 
 	#Timed pulses, four year and thri yearly pulses copied from EUIV, weekly and monthly from the top of my head, doesn't given an error at least?
-	on_weekly = {
-		effect = {
-			##Influence Checks This is just to keep the influence arrays down and remove all non-existing nations
-			recalculate_influence = yes
-		}
-	}
 	on_monthly_SUD = {
 		effect = {
 			if = {
@@ -57,25 +51,6 @@ on_actions = {
 			}
 		}
 	}
-
-	on_monthly_KOR = {
-		effect = {
-			#support for reunification
-			if = {
-				limit = {
-					country_exists = KOR
-					country_exists = NKO
-				}
-				subtract_from_variable = { SFR = 0.1 }
-				clamp_variable = {
-					var = SFR
-					min = 0
-					max = 100
-				}
-			}
-		}
-	}
-
 
 	on_monthly = {
 		effect = {
@@ -833,7 +808,8 @@ on_actions = {
 
 	}
 
-	#FROM is war target
+	# FROM is war target
+	# ROOT is the declaring nation
 	on_declare_war = {
 		effect = {
 			if = {
@@ -2038,8 +2014,6 @@ on_actions = {
 					update_military_rate = yes
 					every_neighbor_country = { country_event = low_stability.4 }
 				}
-				log = "FROM IS [From.GetName] hello"
-				log = "ROOT IS [ROOT.GetName] hello"
 			}
 
 			#NATO
@@ -2058,30 +2032,26 @@ on_actions = {
 				set_country_flag = Attacked_NATO
 			}
 
-			#Rio Pact
-			# if = {
-			# 	limit = {
-			# 		FROM = {
-			# 			has_idea = rio_pact_member
-			# 		}
-			# 		NOT = { ROOT = { original_tag = FROM } }
-			# 		ROOT = {
-			# 			NOT = {
-			# 				tag = ISI
-			# 				tag = TAL
-			# 				tag = TTP
-			# 				tag = NUS
-			# 				tag = AQY
-			# 				has_country_flag = terrorist_group
-			# 			}
-			# 		}
-			# 	}
-			# 	custom_effect_tooltip = TT_RIO_PACT
-			# 	hidden_effect = {
-			# 		FROM = { country_event = { id = rio_pact_event.1 } }
-			# 	}
-			# 	ROOT = { country_event = { id =  rio_pact_event.3 days = 20 } }
-			# }
+			# Reduce 15% Influence in This Nation
+			set_temp_variable = { percent_change = -15 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = FROM.id }
+			change_influence_percentage = yes
+
+			FROM = {
+				every_neighbor_country = {
+					limit = {
+						NOT = { tag = ROOT }
+						NOT = { is_puppet_of = ROOT }
+						NOT = { has_opinion = { target = ROOT value > 50 } }
+						NOT = { is_in_faction_with = ROOT }
+					}
+					set_temp_variable = { percent_change = -5 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+				}
+			}
 
 			#Chinese aggression increase
 			if = {
@@ -2300,9 +2270,6 @@ on_actions = {
 				calculate_abandon_coalition_threshold = yes
 			}
 
-			set_power_ranking_ideas_for_every_country = yes #ignore error from this
-
-
 			every_country = {
 				calculate_tax_rate = yes
 				calculate_influence_percentage = yes #set alignment drifts from influence
@@ -2339,206 +2306,97 @@ on_actions = {
 				}
 			}
 
+			# Organizational Arrays & Continent Arrays
+			SAU = {
+				#All Potential Nations
+				add_to_array = { global.possible_gcc_member_state = SAU }
+				add_to_array = { global.possible_gcc_member_state = QAT }
+				add_to_array = { global.possible_gcc_member_state = UAE }
+				add_to_array = { global.possible_gcc_member_state = BHR }
+				add_to_array = { global.possible_gcc_member_state = KUW }
+				add_to_array = { global.possible_gcc_member_state = OMA }
+				add_to_array = { global.possible_gcc_member_state = MOR }
+				add_to_array = { global.possible_gcc_member_state = JOR }
+				add_to_array = { global.possible_gcc_member_state = IRQ }
+				add_to_array = { global.possible_gcc_member_state = YEM }
+				add_to_array = { global.possible_gcc_member_state = EGY }
+
+				#Starting GCC Member States
+				add_to_array = { global.gcc_member_state = SAU }
+				add_to_array = { global.gcc_member_state = QAT }
+				add_to_array = { global.gcc_member_state = UAE }
+				add_to_array = { global.gcc_member_state = BHR }
+				add_to_array = { global.gcc_member_state = KUW }
+				add_to_array = { global.gcc_member_state = OMA }
+			}
+
+			if = { # 2000 start date
+				limit = { has_start_date < 2000.1.2 }
+				add_to_array = { global.nato_members = BEL }
+				add_to_array = { global.nato_members = CAN }
+				add_to_array = { global.nato_members = CZE }
+				add_to_array = { global.nato_members = DEN }
+				add_to_array = { global.nato_members = FRA }
+				add_to_array = { global.nato_members = GER }
+				add_to_array = { global.nato_members = GRE }
+				add_to_array = { global.nato_members = HOL }
+				add_to_array = { global.nato_members = HUN }
+				add_to_array = { global.nato_members = ICE }
+				add_to_array = { global.nato_members = ITA }
+				add_to_array = { global.nato_members = LUX }
+				add_to_array = { global.nato_members = NOR }
+				add_to_array = { global.nato_members = POL }
+				add_to_array = { global.nato_members = POR }
+				add_to_array = { global.nato_members = SPR }
+				add_to_array = { global.nato_members = TUR }
+				add_to_array = { global.nato_members = ENG }
+				add_to_array = { global.nato_members = USA }
+			}
+			else_if = { # 2017 start date
+				limit = { has_start_date < 2017.1.2 }
+				add_to_array = { global.nato_members = ALB }
+				add_to_array = { global.nato_members = BEL }
+				add_to_array = { global.nato_members = BUL }
+				add_to_array = { global.nato_members = CAN }
+				add_to_array = { global.nato_members = CRO }
+				add_to_array = { global.nato_members = CZE }
+				add_to_array = { global.nato_members = DEN }
+				add_to_array = { global.nato_members = EST }
+				add_to_array = { global.nato_members = FRA }
+				add_to_array = { global.nato_members = GER }
+				add_to_array = { global.nato_members = GRE }
+				add_to_array = { global.nato_members = HOL }
+				add_to_array = { global.nato_members = HUN }
+				add_to_array = { global.nato_members = ICE }
+				add_to_array = { global.nato_members = ITA }
+				add_to_array = { global.nato_members = LAT }
+				add_to_array = { global.nato_members = LIT }
+				add_to_array = { global.nato_members = LUX }
+				add_to_array = { global.nato_members = NOR }
+				add_to_array = { global.nato_members = POL }
+				add_to_array = { global.nato_members = POR }
+				add_to_array = { global.nato_members = ROM }
+				add_to_array = { global.nato_members = SLO }
+				add_to_array = { global.nato_members = SLV }
+				add_to_array = { global.nato_members = SPR }
+				add_to_array = { global.nato_members = TUR }
+				add_to_array = { global.nato_members = ENG }
+				add_to_array = { global.nato_members = USA }
+			}
+
+			# Utility Tag
 			random_country = {
 				if = {
 					limit = { has_start_date < 2001.1.1 }		#2000 relations
 					country_event = { id = init_relations.1 }
 				}
-				if = {
+				else_if = {
 					limit = { has_start_date > 2016.1.1 }		#2017 relations
 					country_event = { id = init_relations.0 }
 				}
+
 				set_power_ranking_ideas_for_every_country = yes
 			}
-
-			USA = {
-				country_event = { id = usa_vanilla.50 days = 5 }
-				country_event = { id = usa_vanilla.51 days = 5 }
-				country_event = { id = usa.1000 days = 120 random = 20  }
-				if = {
-					limit = { has_start_date < 2016.1.1 }
-					country_event = { id = usa.3 days = 5 }
-					country_event = { id = usa.4 days = 70 random_days = 20 }
-					country_event = { id = usa.6 days = 90 random = 70 }
-					country_event = { id = usa.7 days = 1 }
-					country_event = { id = usa.9 days = 25 random = 10 }
-					country_event = { id = usa.11 days = 45 random_days = 125 }
-					country_event = { id = usa.12 days = 79 random_days = 15 }
-					country_event = { id = usa.15 days = 60 random_days = 35 }
-					country_event = { id = usa.34 days = 97 random_days = 4 }
-					country_event = { id = usa.35 days = 130 random_days = 135 }
-					country_event = { id = usa.36 days = 219 random_days = 8 }
-					country_event = { id = usa.53 days = 3 random = 2 }
-				}
-				if = {
-					limit = { has_start_date > 2016.1.1 }
-					country_event = { id = donald_trump.1000 days = 1 }
-					country_event = { id = donald_trump.1001 days = 19 }
-					country_event = { id = donald_trump.1002 days = 50 random = 10 }
-				}
-				#9/11
-				if = {
-					limit = { has_start_date < 2001.1.1 }
-					country_event = { id = wot.1 days = 450 random = 8760 }
-				}
-			}
-			CAN = {
-				set_variable = { CAN.month = 1 }
-				set_variable = { CAN.year = YOUR_YEAR } #make an if with date to handle bookmarks
-				CAN_update_french_happiness = yes
-				#Flavor Events
-				if = {
-					limit = {
-						has_start_date < 2016.1.1
-					}
-					##OP Yellow Ribbion
-					country_event = { id = canada_md_politics.2 days = 73 random_days = 5 }
-					#Softwood Lumber Dispute
-					country_event = { id = canada_md_politics.3 days = 844 random_days = 5 }
-					#Ontario Goes Dark
-					country_event = { id = canada_md_politics.4 days = 1320 random_days = 5 }
-					#The Sponsorship Scandal
-					country_event = { id = canada_md_politics.5 days = 1500 random_days = 5 }
-					#American Submarines in the Northwest Passage
-					country_event = { id = canada_md_politics.6 days = 2158 random_days = 5 }
-					#The Toronto 18
-					country_event = { id = canada_md_politics.7 days = 2228 random_days = 5 }
-					#Operation Medusa
-					country_event = { id = canada_md_politics.8 days = 1307 random_days = 5 }
-					#Quebecois Nation Motion
-					country_event = { id = canada_md_politics.9 days = 2522 random_days = 5 }
-					#Indigenous Day of Action
-					country_event = { id = canada_md_politics.10 days = 2736 random_days = 5 }
-					#RCMP Raid on Conservative Headquarters
-					country_event = { id = canada_md_politics.11 days = 3027 random_days = 5 }
-					#The Golden Goal
-					country_event = { id = canada_md_politics.13 days = 3711 random_days = 5 }
-					#G20 Summit Riots in Toronto
-					country_event = { id = canada_md_politics.14 days = 3831 random_days = 5 }
-					#Withdrawing the Security Council Bid
-					country_event = { id = canada_md_politics.15 days = 3937 random_days = 5 }
-					#An Orange Wave
-					country_event = { id = canada_md_politics.16 days = 4127 random_days = 5 }
-					#War of 1812 Bicentennial
-					country_event = { id = canada_md_politics.17 days = 4552 random_days = 5 }
-					#International Space Station Expedition 35
-					country_event = { id = canada_md_politics.18 days = 4881 random_days = 5 }
-					#Negotiations with the European Union on CETA Conclude
-					country_event = { id = canada_md_politics.19 days = 5326 random_days = 5 }
-					#Terror in the Capital
-					country_event = { id = canada_md_politics.20 days = 5408 random_days = 5 }
-					#Airstrikes in Syria and Iraq
-					country_event = { id = canada_md_politics.21 days = 5614 random_days = 5 }
-					#The Case of Omar Kadhr
-					country_event = { id = canada_md_politics.22 days = 5892 random_days = 5 }
-					#Fate of the Bombardier CSeries
-					country_event = { id = canada_md_politics.23 days = 6498 random_days = 5 }
-					#Plans to increase military spending
-					country_event = { id = canada_md_politics.25 days = 6367 random_days = 5 }
-					#Canada Celebrates 150 years of being around
-					country_event = { id = canada_md_politics.26 days = 6391 }
-				}
-
-				if = {
-					limit = {
-						has_start_date > 2017.01.01
-					}
-					#Fate of the Bombardier CSeries
-					country_event = { id = canada_md_politics.23 days = 288 random_days = 5 }
-					#Plans to increase military spending
-					country_event = { id = canada_md_politics.25 days = 157 random_days = 5 }
-					#Canada Celebrates 150 years of being around
-					country_event = { id = canada_md_politics.26 days = 181 }
-				}
-			}
-			CHI = {
-				if = {
-					limit = {
-						has_start_date < 2001.1.1
-						has_dlc = "Man the Guns"
-					}
-					news_event = { id = china.63 days = 430 }
-				}
-			}
-			NKO = {
-				if = {
-					limit = {
-						has_start_date < 2001.1.1
-					}
-					country_event = { id = kim_jong_il_death.1 days = 2883 }
-					country_event = { id = kim_jong_il_death.2 days = 4368 }
-					country_event = { id = kim_jong_il_death.3 days = 1933 }
-				}
-			}
-			AFG = {
-				if = {
-					limit = { has_start_date < 2001.1.1 }
-					country_event = { id = Afghanistan.3 days = 635 random = 1440 }
-				}
-			}
-			UAE = {
-				if = {
-					limit = { has_start_date < 2001.1.1 }
-					news_event = { id = uae_royal.1 days = 1767 } #death of Sheikh Zayed
-				}
-			}
-			KOR = {
-				if = {
-					limit = { has_start_date < 2001.1.1 }
-					country_event = { id = korea.19 days = 72 } #check if elections are allowed before starting national assembly event chain
-				}
-				else_if = {
-					limit = { has_start_date > 2001.1.1 }
-					country_event = { id = korea.19 days = 1169 } #check if elections are allowed before starting national assembly event chain
-				}
-			}
-			DEN = {
-				#Flavor Events
-				if = {
-					limit = {
-						has_start_date < 2016.1.1
-					}
-					#Øresundsbroen
-					country_event = { id = denmark.22 days = 181 random_days = 5 }
-					#Thule Air base
-					country_event = { id = denmark.23 days = 1674 random_days = 5 }
-					#Hans Island
-					country_event = { id = denmark.24 days = 2008 random_days = 5 }
-					#Muhammed Drawings
-					country_event = { id = denmark.25 days = 2192 random_days = 5 }
-					#Pulling out of Iraq
-					country_event = { id = denmark.26 days = 2588  random_days = 5 }
-					#Plot to kill Kurt Westergaard
-					country_event = { id = denmark.27 days = 2953  random_days = 5 }
-					#Arctic Military Command
-					country_event = { id = denmark.28 days = 3469  random_days = 5 }
-					#Copenhagen Summit
-					country_event = { id = denmark.29 days = 3622  random_days = 5 }
-					#Axe assault on Kurt Westergaard
-					country_event = { id = denmark.30 days = 3653  random_days = 5 }
-					#foiled attack on Jyllandsposten
-					country_event = { id = denmark.31 days = 3987  random_days = 5 }
-					#Border Control
-					country_event = { id = denmark.32 days = 4199   random_days = 5 }
-					#Same-sex marriage
-					country_event = { id = denmark.33 days = 4535  random_days = 5 }
-					#Teachers union shutting down School
-					country_event = { id = denmark.34 days = 4839  random_days = 5 }
-					#Islamist Omar El-Hussein
-					country_event = { id = denmark.35 days = 5510  random_days = 5 }
-					#Asylum Seekers Valuables
-					country_event = { id = denmark.36 days = 5844  random_days = 5 }
-					#Banning Hate Speech
-					country_event = { id = denmark.37 days = 6330  random_days = 5 }
-					#Ancient Law
-					country_event = { id = denmark.38 days = 6361  random_days = 5 }
-				}
-			}
-
-			# #power projection setup
-			# every_country = {
-			# 	country_event = { id = projection.1 }
-			# }
 
 			#Arab Spring
 			every_country = {
@@ -2829,34 +2687,19 @@ on_actions = {
 			}
 			# Clearing Economic Drifts
 			clear_previous_economic_drift = yes
-			if = {
-				limit = {
-					has_idea = economic_boom
-				}
+			if = { limit = { has_idea = economic_boom }
 				update_drift_economic_boom = yes
 			}
-			else_if = {
-				limit = {
-					has_idea = fast_growth
-				}
+			else_if = { limit = { has_idea = fast_growth }
 				update_drift_fast_growth = yes
 			}
-			else_if = {
-				limit = {
-					has_idea = stagnation
-				}
+			else_if = { limit = { has_idea = stagnation }
 				update_drift_stagnation = yes
 			}
-			else_if = {
-				limit = {
-					has_idea = recession
-				}
+			else_if = { limit = { has_idea = recession }
 				update_drift_recession = yes
 			}
-			else_if = {
-				limit = {
-					has_idea = depression
-				}
+			else_if = { limit = { has_idea = depression }
 				update_drift_depression = yes
 			}
 			#Nullify all guarantees
