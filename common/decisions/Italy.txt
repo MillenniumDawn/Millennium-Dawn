@@ -1563,7 +1563,10 @@ mafia_ITA = {
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
 			add_war_support = 0.2
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			add_to_variable = { cosa_nostra_strength = -0.02 }
 			add_to_variable = { camorra_strength = -0.02 }
 			add_to_variable = { ndrangheta_strength = -0.02 }
@@ -1590,139 +1593,12 @@ mafia_ITA = {
 				command_power > 100
 			}
 		}
-		days_re_enable = 1
+		days_re_enable = 30
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision extraordinary_police_funding executed"
 			add_command_power = 25
-			set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+			set_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
-			add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
-			set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
-			multiply_variable = { extraordinary_police_funding_cost = -0.5 }
-		}
-	}
-
-	excommunicate_bosses_camorra = {
-		icon = generic_decision
-		available = {
-			has_idea = ITA_mafia
-			has_completed_focus = ITA_seek_support_of_the_church
-		}
-		visible = {
-			always = yes
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision excommunicate_bosses_camorra executed"
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_clergy_opinion = yes
-			custom_effect_tooltip = excommunicate_bosses_TT
-			add_to_variable = { camorra_strength = -0.05 }
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = The_Clergy_opinion
-				always = yes
-			}
-			modifier = {
-				factor = camorra_strength
-				always = yes
-			}
-		}
-	}
-
-	excommunicate_bosses_cosa_nostra = {
-		icon = generic_decision
-		available = {
-			has_idea = ITA_mafia
-			has_completed_focus = ITA_seek_support_of_the_church
-		}
-		visible = {
-			always = yes
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision excommunicate_bosses_cosa_nostra executed"
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_clergy_opinion = yes
-			custom_effect_tooltip = excommunicate_bosses_TT
-			add_to_variable = { cosa_nostra_strength = -0.05 }
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = The_Clergy_opinion
-				always = yes
-			}
-			modifier = {
-				factor = cosa_nostra_strength
-				always = yes
-			}
-		}
-	}
-
-	excommunicate_bosses_sacra_corona_unita = {
-		icon = generic_decision
-		available = {
-			has_idea = ITA_mafia
-			has_completed_focus = ITA_seek_support_of_the_church
-		}
-		visible = {
-			always = yes
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision excommunicate_bosses_sacra_corona_unita executed"
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_clergy_opinion = yes
-			custom_effect_tooltip = excommunicate_bosses_TT
-			add_to_variable = { sacra_corona_unita_strength = -0.05 }
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = The_Clergy_opinion
-				always = yes
-			}
-			modifier = {
-				factor = sacra_corona_unita_strength
-				always = yes
-			}
-		}
-	}
-
-	excommunicate_bosses_ndrangheta = {
-		icon = generic_decision
-		available = {
-			has_idea = ITA_mafia
-			has_completed_focus = ITA_seek_support_of_the_church
-		}
-		visible = {
-			always = yes
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision excommunicate_bosses_ndrangheta executed"
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_clergy_opinion = yes
-			custom_effect_tooltip = excommunicate_bosses_TT
-			add_to_variable = { ndrangheta_strength = -0.05 }
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = The_Clergy_opinion
-				always = yes
-			}
-			modifier = {
-				factor = ndrangheta_strength
-				always = yes
-			}
 		}
 	}
 }
@@ -1739,34 +1615,47 @@ generic_ITA = {
 		custom_cost_trigger = {
 			if = {
 				limit = { is_ai = no }
-					check_variable = { treasury > bonus_to_stimulate_consumption_cost }
+					check_variable = { treasury > 10 }
 			}
 		}
+		custom_cost_text = cost_10_0
 
 		days_re_enable = 365
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision bonus_to_stimulate_consumption executed"
-			set_temp_variable = { treasury_change = bonus_to_stimulate_consumption_cost }
+			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
-			add_to_variable = { bonus_to_stimulate_consumption_times_taken_var = 1 }
-			set_variable = { bonus_to_stimulate_consumption_cost = bonus_to_stimulate_consumption_times_taken_var }
-			multiply_variable = { bonus_to_stimulate_consumption_cost = -5 }
 			add_to_variable = { stability_weekly_stuck_var = 0.1 }
 			custom_effect_tooltip = 10_cumulated_stability_TT
 		}
 		ai_will_do = {
-			factor = 10
+			factor = 1
 			modifier = {
 				factor = 0
-				has_stability > 0.99
+				has_stability > 0.95
+			}
+			modifier = {
+				factor = 0.1
+				has_stability > 0.5
+			}
+			modifier = {
+				factor = 10
+				has_stability < 0.5
+			}
+			modifier = {
+				factor = 8
+				has_stability < 0.25
 			}
 			modifier = {
 				factor = 0
-				check_variable = { interest_rate > 8 }
+				check_variable = { interest_rate > 6 }
+			}
+			modifier = {
+				factor = 0.1
+				check_variable = { interest_rate > 4 }
 			}
 		}
 	}
-
 	one_time_paycheck_bonus = {
 		icon = generic_decision
 		available = {
@@ -1777,18 +1666,19 @@ generic_ITA = {
         }
 
 		custom_cost_trigger = {
-			check_variable = { treasury > one_time_paycheck_bonus_cost }
+			check_variable = { treasury > 5 }
 		}
+		custom_cost_text = cost_5_0
 
 		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision one_time_paycheck_bonus executed"
-			set_temp_variable = { treasury_change = one_time_paycheck_bonus_cost }
+			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
-			add_to_variable = { one_time_paycheck_bonus_times_taken_var = 1 }
-			set_variable = { one_time_paycheck_bonus_cost = one_time_paycheck_bonus_times_taken_var }
-			multiply_variable = { one_time_paycheck_bonus_cost = -5 }
-			add_4_popularity_sub_ITA = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -1796,70 +1686,20 @@ generic_ITA = {
 				factor = 0
 				check_variable = { interest_rate > 6 }
 			}
-		}
-	}
-
-	extraordinary_church_donation = {
-		icon = generic_decision
-		available = {
-			tag = ITA
-			has_completed_focus = ITA_economic_support_for_the_church
-			has_idea = The_Clergy
-		}
-		visible = {
-			always = yes
-        }
-
-		custom_cost_trigger = {
-			check_variable = { treasury > extraordinary_church_donation_cost }
-		}
-
-		days_re_enable = 180
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision extraordinary_church_donation executed"
-			set_temp_variable = { treasury_change = extraordinary_church_donation_cost }
-			modify_treasury_effect = yes
-			add_to_variable = { extraordinary_church_donation_times_taken_var = 1 }
-			set_variable = { extraordinary_church_donation_cost = extraordinary_church_donation_times_taken_var }
-			multiply_variable = { extraordinary_church_donation_cost = -5 }
-			set_temp_variable = { temp_opinion = 5 }
-			change_the_clergy_opinion = yes
-		}
-		ai_will_do = {
-			factor = 1
 			modifier = {
-				factor = 0
-				check_variable = { interest_rate > 7 }
+				factor = 0.1
+				check_variable = { interest_rate > 4 }
 			}
 			modifier = {
-				factor = 0
-				check_variable = { The_Clergy_opinion > 95 }
+				factor = 2
+				check_variable = { party_pop_stab < 8 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { party_pop_stab < 6 }
 			}
 		}
 	}
-
-	# reintroduce_democratic_party_policies = {
-	# 	icon = generic_decision
-	# 	available = {
-	# 		AND = {
-	# 			tag = ITA
-	# 			western_social_democrats_are_in_power = yes
-	# 		}
-	# 	}
-	# 	visible = {
-	# 		has_completed_focus = ITA_repeal_former_government_measures
-	# 		has_completed_focus = ITA_centre_left
-    #     }
-
-	# 	days_re_enable = 365
-	# 	complete_effect = {
-	# 		log = "[GetDateText]: [This.GetName]: decision reintroduce_democratic_party_policies executed"
-
-	# 	}
-	# 	ai_will_do = {
-	# 		factor = 1
-	# 	}
-	# }
 }
 integrative_restoration_ITA = {
 	restore_the_Colosseum = {
@@ -1896,7 +1736,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_the_Colosseum"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			81 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -1948,7 +1791,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_the_Fori_Imperiali"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			81 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2000,7 +1846,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_Pompeii"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			82 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2052,7 +1901,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_Pompeii"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			83 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2104,7 +1956,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_Heliopolis"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			553 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2156,7 +2011,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_Thysdrus"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			388 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2208,7 +2066,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_diocletians_palace"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			127 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2260,7 +2121,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_Palmyra"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			561 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2312,7 +2176,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_Arles_Nimes"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			961 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2364,7 +2231,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_Alexandria_lighthouse"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			216 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2416,7 +2286,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_Athens_acropolis"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			141 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2468,7 +2341,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_Troy"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			156 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2520,7 +2396,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_rhodes_colossus"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			143 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2572,7 +2451,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_leptis_magna"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			920 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2624,7 +2506,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_marciana_traiana"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			380 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
@@ -2676,7 +2561,10 @@ integrative_restoration_ITA = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove restore_augusta_emerita"
 			add_political_power = 250
-			add_5_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			968 = {
 				add_dynamic_modifier = { modifier = monuments_restored }
 				add_to_variable = {
