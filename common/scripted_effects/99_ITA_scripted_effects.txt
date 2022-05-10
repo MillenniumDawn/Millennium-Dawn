@@ -15,6 +15,8 @@ update_mafia_strength = {
 	multiply_variable = { mafia_strength_construction_var = -0.5 }
 	set_variable = { mafia_strength_pp_var = mafia_strength }
 	multiply_variable = { mafia_strength_pp_var = -0.5 }
+	set_variable = { mafia_strength_lega_drift_var = mafia_strength }
+	multiply_variable = { mafia_strength_lega_drift_var = 0.1 }
 }
 update_police_effectivness = {
 	update_mafia_strength = yes
@@ -1108,6 +1110,65 @@ mafia_industrial_focus_south_30 = {
 			add_to_variable = { sacra_corona_unita_strength = 0.11 }
 	}
 }
+mafia_industrial_focus_south_40 = {
+	if = {
+		limit = {
+			NOT = { has_idea = ITA_mafia }
+		}
+		set_temp_variable = { treasury_change = -40.00 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength < 0.100 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			set_temp_variable = { treasury_change = -46.50 }
+			modify_treasury_effect = yes
+			add_to_variable = { cosa_nostra_strength = 0.01 }
+			add_to_variable = { camorra_strength = 0.01 }
+			add_to_variable = { ndrangheta_strength = 0.01 }
+			add_to_variable = { sacra_corona_unita_strength = 0.01 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength > 0.099 }
+			check_variable = { mafia_strength < 0.400 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			set_temp_variable = { treasury_change = -53.00 }
+			modify_treasury_effect = yes
+			add_to_variable = { cosa_nostra_strength = 0.03 }
+			add_to_variable = { camorra_strength = 0.03 }
+			add_to_variable = { ndrangheta_strength = 0.03 }
+			add_to_variable = { sacra_corona_unita_strength = 0.03 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength > 0.399 }
+			check_variable = { mafia_strength < 0.666 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			set_temp_variable = { treasury_change = -66.00 }
+			modify_treasury_effect = yes
+			add_to_variable = { cosa_nostra_strength = 0.07 }
+			add_to_variable = { camorra_strength = 0.07 }
+			add_to_variable = { ndrangheta_strength = 0.07 }
+			add_to_variable = { sacra_corona_unita_strength = 0.07 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength > 0.665 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			set_temp_variable = { treasury_change = -80.00 }
+			modify_treasury_effect = yes
+			add_to_variable = { cosa_nostra_strength = 0.11 }
+			add_to_variable = { camorra_strength = 0.11 }
+			add_to_variable = { ndrangheta_strength = 0.11 }
+			add_to_variable = { sacra_corona_unita_strength = 0.11 }
+	}
+}
 
 #reform expectance
 remove_0_5_ruling_party_drift = {
@@ -1335,8 +1396,11 @@ prevent_parties_disappearing = {
 }
 
 ruling_subparty_drift_effect = {
+	reform_expectance_from_situation = yes
 	set_variable = { ruling_subparty_drift_modified_var = ruling_subparty_drift_var }
+	add_to_variable = { ruling_subparty_drift_modified_var = reform_expectance_from_situation_subideology_drift_var }
 	set_variable = { coalition_subparty_drift_modified_var = ruling_subparty_drift_var }
+	add_to_variable = { coalition_subparty_drift_modified_var = reform_expectance_from_situation_subideology_drift_var }
 	set_variable = { coalition_parties_number = gov_coalition_array^num }
 	multiply_variable = { coalition_parties_number = 0.25 }
 	set_variable = { coalition_parties_switch_var = 1 }
@@ -1643,6 +1707,9 @@ reforme_expectance_government_change_update = {
 				set_variable = { number_of_coalition_parties = gov_coalition_array^num }
 				set_variable = { ruling_drift_switch_var = drift_switch_var_base }
 				set_variable = { coalition_drift_switch_var = drift_switch_var_base }
+				reform_expectance_from_situation = yes
+				add_to_variable = { ruling_drift_switch_var = reform_expectance_from_situation_drift_var }
+				add_to_variable = { coalition_drift_switch_var = reform_expectance_from_situation_drift_var }
 				multiply_variable = { number_of_coalition_parties = 0.25 }
 				set_variable = { coalition_switch_var = 1 }
 				subtract_from_variable = { coalition_switch_var = number_of_coalition_parties }
@@ -1812,6 +1879,23 @@ reforme_expectance_government_change_update = {
 					limit = { has_government = nationalist }
 						add_to_variable = { nationalist_drift_var = ruling_drift_switch_var }
 				}
+}
+reform_expectance_from_situation = {
+	set_temp_variable = { reform_expectance_from_stability = 1 }
+	subtract_from_temp_variable = { reform_expectance_from_stability = stability }
+	multiply_temp_variable = { reform_expectance_from_stability = -0.1 }
+	set_temp_variable = { reform_expectance_from_interest_rate = interest_rate }
+	subtract_from_temp_variable = { reform_expectance_from_interest_rate = 4 }
+	clamp_temp_variable = {
+		var = reform_expectance_from_interest_rate
+		min = 0
+		max = 20
+	}
+	multiply_temp_variable = { reform_expectance_from_interest_rate = -0.01 }
+	add_to_temp_variable = { reform_expectance_from_interest_rate = reform_expectance_from_stability }
+	set_variable = { reform_expectance_from_situation_drift_var = reform_expectance_from_interest_rate }
+	set_variable = { reform_expectance_from_situation_subideology_drift_var = reform_expectance_from_situation_drift_var }
+	multiply_variable = { reform_expectance_from_situation_subideology_drift_var = 0.2 }
 }
 
 remove_gov_crisis_ai_flags = {
