@@ -332,7 +332,10 @@ focus_tree = {
 
 		complete_tooltip = {}
 		completion_reward = {
-			#need
+			swap_ideas = {
+			remove_idea = natanz_nuclear_facility_idea
+			add_idea = natanz_nuclear_facility_idea_2
+			}
 		}
 	}
 	focus = {
@@ -5632,9 +5635,44 @@ focus_tree = {
 
 		complete_tooltip = {}
 		completion_reward = {
-			#need
+			every_country = {
+				limit = {
+					is_major = yes
+					has_government = democratic
+				}
+					add_opinion_modifier = {
+						target = PER
+						modifier = PER_circumventing_NPT
+					}
+				}
+			ISR = {
+				remove_opinion_modifier = {
+					target = PER
+					modifier = imminent_danger_to_national_security
+				}
+			}
+			ISR = {
+				add_opinion_modifier = {
+					target = PER
+					modifier = danger_to_national_security
+				}
+			}
+			USA = {
+				remove_opinion_modifier = {
+					target = PER
+					modifier = imminent_danger_to_national_security
+				}
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = PER
+					modifier = danger_to_national_security
+				}
+			}
+			add_threat = 3
 		}
 	}
+
 	focus = {
 		id = PER_abide_by_the_npt # Abide By The NPT
  		icon = null
@@ -5647,6 +5685,9 @@ focus_tree = {
 			focus = PER_complete_the_fuel_cycle
 		}
 
+		mutually_exclusive = {
+			focus = PER_circumvent_the_npt
+		}
 		cost = 10
 		search_filters = {}
 
@@ -5654,7 +5695,24 @@ focus_tree = {
 
 		complete_tooltip = {}
 		completion_reward = {
-			#need
+			every_country = {
+				add_opinion_modifier = {
+				target = PER
+				modifier = PER_circumventing_NPT
+				}
+			}
+			ISR = {
+				remove_opinion_modifier = {
+					target = PER
+					modifier = imminent_danger_to_national_security
+				}
+			}
+			USA = {
+				remove_opinion_modifier = {
+					target = PER
+					modifier = imminent_danger_to_national_security+
+				}
+			}
 		}
 	}
 	focus = {
@@ -5672,24 +5730,66 @@ focus_tree = {
 
 		cost = 10
 		search_filters = {}
-
 		cancel_if_invalid = no
-
+		continue_if_invalid = no
+		available = {
+			404 = {
+				is_owned_and_controlled_by = PER
+			}
+		}
 		complete_tooltip = {}
 		completion_reward = {
-			#need
+			404 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+					}
+				add_building_construction = {
+					type = nuclear_reactor
+					level = 1
+					instant_build = yes
+					}
+				add_building_construction = {
+					type = anti_air_building
+					level = 1
+					instant_build = yes
+					}
+
+				add_extra_state_shared_building_slots = 2
+
+			}
+			set_temp_variable = { treasury_change = -25 }
+			modify_treasury_effect = yes
 		}
 	}
 	focus = {
 		id = PER_the_ultimate_deterrent
- 		icon = null
+ 		icon = GFX_focus_wonderweapons
 
 		x = 1
 		y = 1.5
 
 		relative_position_id = PER_arak_heavy_water_complex
+		available = {
+        	OR = {
+				NOT = {
+					has_completed_focus = PER_abide_by_the_npt
+				}
+				has_completed_focus = PER_circumvent_the_npt
+			}
+			OR = {
+				has_completed_focus = PER_no_compromises_on_our_rights
+				IF = {
+					has_completed_focus = PER_negotiate_a_compromise
+					check_variable = {
+						has_cosmetic_tag = {}
+				}
+			
+			}
+		}
 		prerequisite = {
-			focus = PER_circumvent_the_npt
+			focus = PER_circumvent_the_npt 
 			focus = PER_arak_heavy_water_complex
 		}
 
@@ -5711,6 +5811,11 @@ focus_tree = {
 		y = 1
 
 		relative_position_id = PER_the_ultimate_deterrent
+		available = {
+			NOT = {
+				has_completed_focus = PER_negotiate_a_compromise
+			}
+		}
 		prerequisite = {
 			focus = PER_the_ultimate_deterrent
 		}
@@ -5749,7 +5854,8 @@ focus_tree = {
 		search_filters = {}
 
 		cancel_if_invalid = no
-
+		continue_if_invalid = no
+		
 		complete_tooltip = {}
 		completion_reward = {
 			#need
@@ -5766,20 +5872,57 @@ focus_tree = {
 		prerequisite = {
 			focus = PER_outsource_the_project
 		}
-
+		available = {
+			OR = {
+				KOR = {
+					OR = {
+					is_subject = no
+					is_subject_of = PER
+					}
+					country_exists = KOR
+						not = {
+							has_War_with = KOR
+						}
+					}
+				NKO = {
+					OR = {
+					is_subject = no
+					is_subject_of = PER
+					}
+					country_exists = NKO
+						not = {
+							has_War_with = NKO
+						}
+					}
+				}
+			}
 		cost = 10
 		search_filters = {}
-
-		cancel_if_invalid = no
+		
+		select_effect = {
+			KOR = {
+				country_event = {
+				id = PER_contact.1
+				days = 5
+				}
+			}
+			NKO = {
+				country_event = {
+				id = PER_contact.1
+				days = 5
+				}
+			}
+		}
+		cancel_if_invalid = yes
 
 		complete_tooltip = {}
 		completion_reward = {
-			#need
+		add_political_power = 50	
 		}
 	}
 	focus = {
 		id = PER_secure_a_route
- 		icon = null
+ 		icon = naval_dockyard
 
 		x = 0
 		y = 1
@@ -5793,10 +5936,62 @@ focus_tree = {
 		search_filters = {}
 
 		cancel_if_invalid = no
+		continue_if_invalid = no
+		select_effect = {
+			RAJ = {
+				country_event = {
+				id = PER_route_secure.1
+				days = 5
+				}
+			}
+		}
+		available = {
+			401 = {
+				is_owned_and_controlled_by = PER
+			}
+			RAJ = {
+				OR = {
+				is_subject = no
+				is_subject_of = PER
+				}
+				987 = {
+					is_owned_and_controlled_by = RAJ
+				}
+			}
+		}
 
 		complete_tooltip = {}
 		completion_reward = {
-			#need
+			401 = {
+				add_building_construction = {
+					type = dockyard
+					level = 2
+				}
+				add_building_construction = {
+					type = naval_base
+					level = 2
+					province = 4891
+				}
+				add_victory_points = {
+				province = 4891
+				value = 3
+				}
+			}
+			987 = {
+				add_building_construction = {
+					type = dockyard
+					level = 2
+				}
+				add_building_construction = {
+					type = naval_base
+					level = 2
+					province = 1061
+				}
+				add_victory_points = {
+				province = 1061
+				value = 2
+				}
+			}
 		}
 	}
 	focus = {
@@ -5926,10 +6121,36 @@ focus_tree = {
 		search_filters = {}
 
 		cancel_if_invalid = no
+		continue_if_invalid = no
+		available = {
+			400 = {
+				is_owned_and_controlled_by = PER
+			}
+		}
 
 		complete_tooltip = {}
 		completion_reward = {
-			#need
+			400 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = naval_base
+					province = 10797
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = nuclear_reactor
+					level = 1
+					instant_build = yes
+					}
+				add_extra_state_shared_building_slots = 2
+			}
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
 		}
 	}
 	focus = {
@@ -5940,6 +6161,11 @@ focus_tree = {
 		y = 1
 
 		relative_position_id = PER_invest_in_bushehr
+		available = {
+        	NOT = {
+				has_completed_focus = PER_circumvent_the_npt
+			}
+		}
 		prerequisite = {
 			focus = PER_invest_in_bushehr
 		}
