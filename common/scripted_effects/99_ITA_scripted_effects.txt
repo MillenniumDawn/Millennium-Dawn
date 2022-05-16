@@ -15,6 +15,8 @@ update_mafia_strength = {
 	multiply_variable = { mafia_strength_construction_var = -0.5 }
 	set_variable = { mafia_strength_pp_var = mafia_strength }
 	multiply_variable = { mafia_strength_pp_var = -0.5 }
+	set_variable = { mafia_strength_lega_drift_var = mafia_strength }
+	multiply_variable = { mafia_strength_lega_drift_var = 0.1 }
 }
 update_police_effectivness = {
 	update_mafia_strength = yes
@@ -1108,6 +1110,65 @@ mafia_industrial_focus_south_30 = {
 			add_to_variable = { sacra_corona_unita_strength = 0.11 }
 	}
 }
+mafia_industrial_focus_south_40 = {
+	if = {
+		limit = {
+			NOT = { has_idea = ITA_mafia }
+		}
+		set_temp_variable = { treasury_change = -40.00 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength < 0.100 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			set_temp_variable = { treasury_change = -46.50 }
+			modify_treasury_effect = yes
+			add_to_variable = { cosa_nostra_strength = 0.01 }
+			add_to_variable = { camorra_strength = 0.01 }
+			add_to_variable = { ndrangheta_strength = 0.01 }
+			add_to_variable = { sacra_corona_unita_strength = 0.01 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength > 0.099 }
+			check_variable = { mafia_strength < 0.400 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			set_temp_variable = { treasury_change = -53.00 }
+			modify_treasury_effect = yes
+			add_to_variable = { cosa_nostra_strength = 0.03 }
+			add_to_variable = { camorra_strength = 0.03 }
+			add_to_variable = { ndrangheta_strength = 0.03 }
+			add_to_variable = { sacra_corona_unita_strength = 0.03 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength > 0.399 }
+			check_variable = { mafia_strength < 0.666 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			set_temp_variable = { treasury_change = -66.00 }
+			modify_treasury_effect = yes
+			add_to_variable = { cosa_nostra_strength = 0.07 }
+			add_to_variable = { camorra_strength = 0.07 }
+			add_to_variable = { ndrangheta_strength = 0.07 }
+			add_to_variable = { sacra_corona_unita_strength = 0.07 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { mafia_strength > 0.665 }
+		}
+			custom_effect_tooltip = mafia_infiltrations_focus_TT
+			set_temp_variable = { treasury_change = -80.00 }
+			modify_treasury_effect = yes
+			add_to_variable = { cosa_nostra_strength = 0.11 }
+			add_to_variable = { camorra_strength = 0.11 }
+			add_to_variable = { ndrangheta_strength = 0.11 }
+			add_to_variable = { sacra_corona_unita_strength = 0.11 }
+	}
+}
 
 #reform expectance
 remove_0_5_ruling_party_drift = {
@@ -1335,8 +1396,11 @@ prevent_parties_disappearing = {
 }
 
 ruling_subparty_drift_effect = {
+	reform_expectance_from_situation = yes
 	set_variable = { ruling_subparty_drift_modified_var = ruling_subparty_drift_var }
+	add_to_variable = { ruling_subparty_drift_modified_var = reform_expectance_from_situation_subideology_drift_var }
 	set_variable = { coalition_subparty_drift_modified_var = ruling_subparty_drift_var }
+	add_to_variable = { coalition_subparty_drift_modified_var = reform_expectance_from_situation_subideology_drift_var }
 	set_variable = { coalition_parties_number = gov_coalition_array^num }
 	multiply_variable = { coalition_parties_number = 0.25 }
 	set_variable = { coalition_parties_switch_var = 1 }
@@ -1643,6 +1707,9 @@ reforme_expectance_government_change_update = {
 				set_variable = { number_of_coalition_parties = gov_coalition_array^num }
 				set_variable = { ruling_drift_switch_var = drift_switch_var_base }
 				set_variable = { coalition_drift_switch_var = drift_switch_var_base }
+				reform_expectance_from_situation = yes
+				add_to_variable = { ruling_drift_switch_var = reform_expectance_from_situation_drift_var }
+				add_to_variable = { coalition_drift_switch_var = reform_expectance_from_situation_drift_var }
 				multiply_variable = { number_of_coalition_parties = 0.25 }
 				set_variable = { coalition_switch_var = 1 }
 				subtract_from_variable = { coalition_switch_var = number_of_coalition_parties }
@@ -1812,6 +1879,23 @@ reforme_expectance_government_change_update = {
 					limit = { has_government = nationalist }
 						add_to_variable = { nationalist_drift_var = ruling_drift_switch_var }
 				}
+}
+reform_expectance_from_situation = {
+	set_temp_variable = { reform_expectance_from_stability = 1 }
+	subtract_from_temp_variable = { reform_expectance_from_stability = stability }
+	multiply_temp_variable = { reform_expectance_from_stability = -0.1 }
+	set_temp_variable = { reform_expectance_from_interest_rate = interest_rate }
+	subtract_from_temp_variable = { reform_expectance_from_interest_rate = 4 }
+	clamp_temp_variable = {
+		var = reform_expectance_from_interest_rate
+		min = 0
+		max = 20
+	}
+	multiply_temp_variable = { reform_expectance_from_interest_rate = -0.01 }
+	add_to_temp_variable = { reform_expectance_from_interest_rate = reform_expectance_from_stability }
+	set_variable = { reform_expectance_from_situation_drift_var = reform_expectance_from_interest_rate }
+	set_variable = { reform_expectance_from_situation_subideology_drift_var = reform_expectance_from_situation_drift_var }
+	multiply_variable = { reform_expectance_from_situation_subideology_drift_var = 0.2 }
 }
 
 remove_gov_crisis_ai_flags = {
@@ -2027,416 +2111,4 @@ weekly_stability_dynamic_modifier_update = {
 		}
 		add_to_variable = { var = stability_weekly_stuck_var value = modifier@stability_weekly }
 	}
-}
-
-add_4_popularity_sub_ITA = {
-	custom_effect_tooltip = ruling_party_popularity_change_focus_TT
-	if = {
-		limit = { is_in_array = { ruling_party = 0 } }
-		custom_effect_tooltip = 4_increase_0_TT
-		hidden_effect = {
-			add_popularity = { ideology = democratic popularity = 0.02 }
-			add_to_variable = { party_pop_array^0 = 0.04 } #western autocracy
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 1 } }
-		custom_effect_tooltip = 4_increase_1_TT
-		hidden_effect = {
-			add_popularity = { ideology = democratic popularity = 0.02 }
-			add_to_variable = { party_pop_array^1 = 0.04 } #conservatism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 2 } }
-		custom_effect_tooltip = 4_increase_2_TT
-		hidden_effect = {
-			add_popularity = { ideology = democratic popularity = 0.02 }
-			add_to_variable = { party_pop_array^2 = 0.04 } #liberalism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 3 } }
-		custom_effect_tooltip = 4_increase_3_TT
-		hidden_effect = {
-			add_popularity = { ideology = democratic popularity = 0.02 }
-			add_to_variable = { party_pop_array^3 = 0.04 } #socialism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 4 } }
-		custom_effect_tooltip = 4_increase_4_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.02 }
-			add_to_variable = { party_pop_array^4 = 0.04 } #Comunist-state
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 5 } }
-		custom_effect_tooltip = 4_increase_5_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.02 }
-			add_to_variable = { party_pop_array^5 = 0.04 } #anarchist_communism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 6 } }
-		custom_effect_tooltip = 4_increase_6_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.02 }
-			add_to_variable = { party_pop_array^6 = 0.04 } #Conservative
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 7 } }
-		custom_effect_tooltip = 4_increase_7_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.02 }
-			add_to_variable = { party_pop_array^7 = 0.04 } #Autocracy
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 8 } }
-		custom_effect_tooltip = 4_increase_8_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.02 }
-			add_to_variable = { party_pop_array^8 = 0.04 } #Mod_Vilayat_e_Faqih
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 9 } }
-		custom_effect_tooltip = 4_increase_9_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.02 }
-			add_to_variable = { party_pop_array^9 = 0.04 } #Vilayat_e_Faqih
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 10 } }
-		custom_effect_tooltip = 4_increase_10_TT
-		hidden_effect = {
-			add_popularity = { ideology = fascism popularity = 0.02 }
-			add_to_variable = { party_pop_array^10 = 0.04 } #Kingdom
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 11 } }
-		custom_effect_tooltip = 4_increase_11_TT
-		hidden_effect = {
-			add_popularity = { ideology = fascism popularity = 0.02 }
-			add_to_variable = { party_pop_array^11 = 0.04 } #Caliphate
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 12 } }
-		custom_effect_tooltip = 4_increase_12_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-			add_to_variable = { party_pop_array^12 = 0.04 } #Neutral_Muslim_Brotherhood
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 13 } }
-		custom_effect_tooltip = 4_increase_13_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-			add_to_variable = { party_pop_array^13 = 0.04 } #Neutral_Autocracy
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 14 } }
-		custom_effect_tooltip = 4_increase_14_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-			add_to_variable = { party_pop_array^14 = 0.04 } #Neutral_conservatism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 15 } }
-		custom_effect_tooltip = 4_increase_15_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-			add_to_variable = { party_pop_array^15 = 0.04 } #oligarchism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 16 } }
-		custom_effect_tooltip = 4_increase_16_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-			add_to_variable = { party_pop_array^16 = 0.04 } #Neutral_Libertarian
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 17 } }
-		custom_effect_tooltip = 4_increase_17_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-			add_to_variable = { party_pop_array^17 = 0.04 } #Neutral_green
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 18 } }
-		custom_effect_tooltip = 4_increase_18_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-			add_to_variable = { party_pop_array^18 = 0.04 } #neutral_Social
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 19 } }
-		custom_effect_tooltip = 4_increase_19_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-			add_to_variable = { party_pop_array^19 = 0.04 } #Neutral_Communism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 20 } }
-		custom_effect_tooltip = 4_increase_20_TT
-		hidden_effect = {
-			add_popularity = { ideology = nationalist popularity = 0.02 }
-			add_to_variable = { party_pop_array^20 = 0.04 } #Nat_Populism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 21 } }
-		custom_effect_tooltip = 4_increase_21_TT
-		hidden_effect = {
-			add_popularity = { ideology = nationalist popularity = 0.02 }
-			add_to_variable = { party_pop_array^21 = 0.04 } #Nat_Fascism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 22 } }
-		custom_effect_tooltip = 4_increase_22_TT
-		hidden_effect = {
-			add_popularity = { ideology = nationalist popularity = 0.02 }
-			add_to_variable = { party_pop_array^22 = 0.04 } #Nat_Autocracy
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 23 } }
-		custom_effect_tooltip = 4_increase_23_TT
-		hidden_effect = {
-			add_popularity = { ideology = nationalist popularity = 0.02 }
-			add_to_variable = { party_pop_array^23 = 0.04 } #Monarchist
-		}
-	}
-	recalculate_party = yes
-}
-
-add_10_popularity_sub_ITA = {
-	custom_effect_tooltip = ruling_party_popularity_change_focus_TT
-	if = {
-		limit = { is_in_array = { ruling_party = 0 } }
-		custom_effect_tooltip = 10_increase_0_TT
-		hidden_effect = {
-			add_popularity = { ideology = democratic popularity = 0.05 }
-			add_to_variable = { party_pop_array^0 = 0.1 } #western autocracy
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 1 } }
-		custom_effect_tooltip = 10_increase_1_TT
-		hidden_effect = {
-			add_popularity = { ideology = democratic popularity = 0.05 }
-			add_to_variable = { party_pop_array^1 = 0.1 } #conservatism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 2 } }
-		custom_effect_tooltip = 10_increase_2_TT
-		hidden_effect = {
-			add_popularity = { ideology = democratic popularity = 0.05 }
-			add_to_variable = { party_pop_array^2 = 0.1 } #liberalism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 3 } }
-		custom_effect_tooltip = 10_increase_3_TT
-		hidden_effect = {
-			add_popularity = { ideology = democratic popularity = 0.05 }
-			add_to_variable = { party_pop_array^3 = 0.1 } #socialism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 4 } }
-		custom_effect_tooltip = 10_increase_4_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.05 }
-			add_to_variable = { party_pop_array^4 = 0.1 } #Comunist-state
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 5 } }
-		custom_effect_tooltip = 10_increase_5_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.05 }
-			add_to_variable = { party_pop_array^5 = 0.1 } #anarchist_communism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 6 } }
-		custom_effect_tooltip = 10_increase_6_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.05 }
-			add_to_variable = { party_pop_array^6 = 0.1 } #Conservative
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 7 } }
-		custom_effect_tooltip = 10_increase_7_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.05 }
-			add_to_variable = { party_pop_array^7 = 0.1 } #Autocracy
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 8 } }
-		custom_effect_tooltip = 10_increase_8_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.05 }
-			add_to_variable = { party_pop_array^8 = 0.1 } #Mod_Vilayat_e_Faqih
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 9 } }
-		custom_effect_tooltip = 10_increase_9_TT
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.05 }
-			add_to_variable = { party_pop_array^9 = 0.1 } #Vilayat_e_Faqih
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 10 } }
-		custom_effect_tooltip = 10_increase_10_TT
-		hidden_effect = {
-			add_popularity = { ideology = fascism popularity = 0.05 }
-			add_to_variable = { party_pop_array^10 = 0.1 } #Kingdom
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 11 } }
-		custom_effect_tooltip = 10_increase_11_TT
-		hidden_effect = {
-			add_popularity = { ideology = fascism popularity = 0.05 }
-			add_to_variable = { party_pop_array^11 = 0.1 } #Caliphate
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 12 } }
-		custom_effect_tooltip = 10_increase_12_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.05 }
-			add_to_variable = { party_pop_array^12 = 0.1 } #Neutral_Muslim_Brotherhood
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 13 } }
-		custom_effect_tooltip = 10_increase_13_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.05 }
-			add_to_variable = { party_pop_array^13 = 0.1 } #Neutral_Autocracy
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 14 } }
-		custom_effect_tooltip = 10_increase_14_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.05 }
-			add_to_variable = { party_pop_array^14 = 0.1 } #Neutral_conservatism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 15 } }
-		custom_effect_tooltip = 10_increase_15_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.05 }
-			add_to_variable = { party_pop_array^15 = 0.1 } #oligarchism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 16 } }
-		custom_effect_tooltip = 10_increase_16_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.05 }
-			add_to_variable = { party_pop_array^16 = 0.1 } #Neutral_Libertarian
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 17 } }
-		custom_effect_tooltip = 10_increase_17_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.05 }
-			add_to_variable = { party_pop_array^17 = 0.1 } #Neutral_green
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 18 } }
-		custom_effect_tooltip = 10_increase_18_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.05 }
-			add_to_variable = { party_pop_array^18 = 0.1 } #neutral_Social
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 19 } }
-		custom_effect_tooltip = 10_increase_19_TT
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.05 }
-			add_to_variable = { party_pop_array^19 = 0.1 } #Neutral_Communism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 20 } }
-		custom_effect_tooltip = 10_increase_20_TT
-		hidden_effect = {
-			add_popularity = { ideology = nationalist popularity = 0.05 }
-			add_to_variable = { party_pop_array^20 = 0.1 } #Nat_Populism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 21 } }
-		custom_effect_tooltip = 10_increase_21_TT
-		hidden_effect = {
-			add_popularity = { ideology = nationalist popularity = 0.05 }
-			add_to_variable = { party_pop_array^21 = 0.1 } #Nat_Fascism
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 22 } }
-		custom_effect_tooltip = 10_increase_22_TT
-		hidden_effect = {
-			add_popularity = { ideology = nationalist popularity = 0.05 }
-			add_to_variable = { party_pop_array^22 = 0.1 } #Nat_Autocracy
-		}
-	}
-	else_if = {
-		limit = { is_in_array = { ruling_party = 23 } }
-		custom_effect_tooltip = 10_increase_23_TT
-		hidden_effect = {
-			add_popularity = { ideology = nationalist popularity = 0.05 }
-			add_to_variable = { party_pop_array^23 = 0.1 } #Monarchist
-		}
-	}
-	recalculate_party = yes
-}
-
-add_40_western_autocracy = {
-	add_to_variable =  {
-		var = party_pop_array^0
-		value = 0.40
-	}
-	custom_effect_tooltip = 40_increase_0_TT
-	recalculate_party = yes
-}
-
-add_40_emerging_autocrats = {
-	add_to_variable =  {
-		var = party_pop_array^7
-		value = 0.40
-	}
-	custom_effect_tooltip = 40_increase_7_TT
-	recalculate_party = yes
 }
