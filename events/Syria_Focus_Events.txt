@@ -1580,6 +1580,9 @@ country_event = {
 		add_political_power = -100
 		custom_effect_tooltip = TT_SYRIA_PRESENT_TO_INNER_CIRCLE
 		add_to_variable = { bashar_popularity = 10 }
+		hidden_effect = {
+			add_to_variable = { added_bashar_popularity = 10 }
+		}
 		add_popularity = { ideology = communism popularity = 0.10 }
 	}
 	option = {
@@ -1588,6 +1591,9 @@ country_event = {
 		ai_chance = { factor = 30 }
 		custom_effect_tooltip = TT_SYRIA_GATHER_PUBLIC_SUPPORT
 		add_to_variable = { bashar_popularity = 5 }
+		hidden_effect = {
+			add_to_variable = { added_bashar_popularity = 5 }
+		}
 		add_popularity = { ideology = communism popularity = 0.05 }
 	}
 	option = {
@@ -1621,6 +1627,9 @@ country_event = {
 		add_political_power = -100
 		custom_effect_tooltip = TT_SYRIA_PRESENT_TO_INNER_CIRCLE
 		add_to_variable = { bushra_popularity = 10 }
+		hidden_effect = {
+			add_to_variable = { added_bushra_popularity = 10 }
+		}
 		add_popularity = { ideology = neutrality popularity = 0.10 }
 	}
 	option = {
@@ -1629,6 +1638,9 @@ country_event = {
 		ai_chance = { factor = 30 }
 		custom_effect_tooltip = TT_SYRIA_GATHER_PUBLIC_SUPPORT
 		add_to_variable = { bushra_popularity = 5 }
+		hidden_effect = {
+			add_to_variable = { added_bushra_popularity = 5 }
+		}
 		add_popularity = { ideology = neutrality popularity = 0.05 }
 	}
 	option = {
@@ -1662,6 +1674,9 @@ country_event = {
 		add_political_power = -100
 		custom_effect_tooltip = TT_SYRIA_PRESENT_TO_INNER_CIRCLE
 		add_to_variable = { maher_popularity = 10 }
+		hidden_effect = {
+			add_to_variable = { added_maher_popularity = 10 }
+		}
 		add_popularity = { ideology = nationalist popularity = 0.10 }
 	}
 	option = {
@@ -1670,6 +1685,9 @@ country_event = {
 		ai_chance = { factor = 30 }
 		custom_effect_tooltip = TT_SYRIA_GATHER_PUBLIC_SUPPORT
 		add_to_variable = { maher_popularity = 5 }
+		hidden_effect = {
+			add_to_variable = { added_maher_popularity = 5 }
+		}
 		add_popularity = { ideology = nationalist popularity = 0.05 }
 	}
 	option = {
@@ -1965,9 +1983,36 @@ country_event = {
 			}
 			clr_country_flag = no_leader_change
 		}
+		custom_effect_tooltip = TT_SYR_EARLY_CIVIL_WAR_CHANCE
+		set_temp_variable = { total_added_popularity = 0 }
+		add_to_temp_variable = { total_added_popularity = added_bashar_popularity }
+		add_to_temp_variable = { total_added_popularity = added_bushra_popularity }
+		add_to_temp_variable = { total_added_popularity = added_maher_popularity }
+		divide_temp_variable = { total_added_popularity = 3 }
+		set_temp_variable = { civil_war_chance = total_added_popularity }
+		multiply_temp_variable = { civil_war_chance = 2 }
+		clamp_temp_variable = {
+			var = civil_war_chance
+			min = 0
+			max = 100
+		}
+		set_temp_variable = { remaining_chance = 100 }
+		subtract_from_temp_variable = { remaining_chance = civil_war_chance }
+		clamp_temp_variable = {
+			var = remaining_chance
+			min = 0
+			max = 100
+		}
 		random_list = {
-			70 = { }
-			30 = {
+			1 = {
+				modifier = {
+					factor = remaining_chance
+				}
+			}
+			1 = {
+				modifier = {
+					factor = civil_war_chance
+				}
 				start_civil_war = {
 					ideology = communism
 					size = 0.3
@@ -4311,21 +4356,20 @@ country_event = {
 		name = SyriaFocus.90.a
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.90.a executed"
 		ai_chance = { factor = 100 }
-		hidden_effect = { kill_country_leader = yes }
 		clear_array = ruling_party
         clear_array = gov_coalition_array
         add_to_array = { ruling_party = 21 }
-            set_politics = {
-                ruling_party = nationalist
-                elections_allowed = no
-            }
-            hidden_effect = {
-				set_ruling_leader = yes
-				set_leader = yes
-            set_coalition_drift = yes
-            update_government_coalition_strength = yes
-            update_party_name = yes
-        }
+		set_politics = {
+			ruling_party = nationalist
+			elections_allowed = no
+		}
+		hidden_effect = {
+			set_ruling_leader = yes
+			set_leader = yes
+			set_coalition_drift = yes
+			update_government_coalition_strength = yes
+			update_party_name = yes
+		}
 		set_temp_variable = { party_index = 21 }
 		set_temp_variable = { party_popularity_increase = 0.20 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
