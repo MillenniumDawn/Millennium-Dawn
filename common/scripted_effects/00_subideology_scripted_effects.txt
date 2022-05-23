@@ -1604,33 +1604,152 @@ add_up_party_totals = {
 	set_variable = { pop_total_neutrality = 0 }
 	set_variable = { pop_total_nationalist = 0 }
 
-	#sum of ideologies
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = current_id
-		meta_effect = {
-			text = {
-				add_to_variable = { pop_total_[PART_OF_IDEOLOGY1] = party_pop_array^current_id }
-			}
-			PART_OF_IDEOLOGY1 = "[?this.offcial_name_party_ideology]"
-		}
-	}
-	#Maintain consistency with outlooks
+	#Outlook popularity based on party popularities (removed the unnecessary loop)
+	add_to_variable = { pop_total_democratic = party_pop_array^0 }
+	add_to_variable = { pop_total_democratic = party_pop_array^1 }
+	add_to_variable = { pop_total_democratic = party_pop_array^2 }
+	add_to_variable = { pop_total_democratic = party_pop_array^3 }
+	
+	add_to_variable = { pop_total_communism = party_pop_array^4 }
+	add_to_variable = { pop_total_communism = party_pop_array^5 }
+	add_to_variable = { pop_total_communism = party_pop_array^6 }
+	add_to_variable = { pop_total_communism = party_pop_array^7 }
+	add_to_variable = { pop_total_communism = party_pop_array^8 }
+	add_to_variable = { pop_total_communism = party_pop_array^9 }
+	
+	add_to_variable = { pop_total_fascism = party_pop_array^10 }
+	add_to_variable = { pop_total_fascism = party_pop_array^11 }
+	
+	add_to_variable = { pop_total_neutrality = party_pop_array^12 }
+	add_to_variable = { pop_total_neutrality = party_pop_array^13 }
+	add_to_variable = { pop_total_neutrality = party_pop_array^14 }
+	add_to_variable = { pop_total_neutrality = party_pop_array^15 }
+	add_to_variable = { pop_total_neutrality = party_pop_array^16 }
+	add_to_variable = { pop_total_neutrality = party_pop_array^17 }
+	add_to_variable = { pop_total_neutrality = party_pop_array^18 }
+	add_to_variable = { pop_total_neutrality = party_pop_array^19 }
+	
+	add_to_variable = { pop_total_nationalist = party_pop_array^20 }
+	add_to_variable = { pop_total_nationalist = party_pop_array^21 }
+	add_to_variable = { pop_total_nationalist = party_pop_array^22 }
+	add_to_variable = { pop_total_nationalist = party_pop_array^23 }
+	
+	#Scale party popularity totals to match actual Outlook popularity
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = current_id
 		multiply_variable = { party_pop_array^current_id = 1000 }
-		meta_effect = {
-			text = {
-				divide_variable = { party_pop_array^current_id = pop_total_[PART_OF_IDEOLOGY2] }
-				multiply_variable = { party_pop_array^current_id = party_popularity@[PART_OF_IDEOLOGY2] }
+		if = {
+			limit = {
+				check_variable = { current_id < 4 }
 			}
-			PART_OF_IDEOLOGY2 = "[?this.offcial_name_party_ideology]"
+			divide_variable = { party_pop_array^current_id = pop_total_democratic }
+			multiply_variable = { party_pop_array^current_id = party_popularity@democratic }
 		}
-		round_variable = party_pop_array^current_id
+		else_if = {
+			limit = {
+				check_variable = { current_id > 3 }
+				check_variable = { current_id < 10 }
+			}
+			divide_variable = { party_pop_array^current_id = pop_total_communism }
+			multiply_variable = { party_pop_array^current_id = party_popularity@communism }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					check_variable = { current_id = 10 }
+					check_variable = { current_id = 11 }
+				}
+			}
+			divide_variable = { party_pop_array^current_id = pop_total_fascism }
+			multiply_variable = { party_pop_array^current_id = party_popularity@fascism }
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_id > 11 }
+				check_variable = { current_id < 20 }
+			}
+			divide_variable = { party_pop_array^current_id = pop_total_neutrality }
+			multiply_variable = { party_pop_array^current_id = party_popularity@neutrality }
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_id > 19 }
+			}
+			divide_variable = { party_pop_array^current_id = pop_total_nationalist }
+			multiply_variable = { party_pop_array^current_id = party_popularity@nationalist }
+		}
 		divide_variable = { party_pop_array^current_id = 1000 }
 		clamp_variable = { var = party_pop_array^current_id min = 0 max = 1 }
 	}
+	
+	#Make sure there are no Outlooks with popularity without any party popularities
+	#Make 1% the limit, as smaller than that isn't visible on the chart
+	if = {
+		limit = {
+			democratic > 0.01
+			check_variable = { pop_total_democratic < 0.01 }
+		}
+		random_list = {
+			10 = { add_to_variable = { party_pop_array^0 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^1 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^2 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^3 = 0.01 } }
+		}
+	}
+	if = {
+		limit = {
+			communism > 0.01
+			check_variable = { pop_total_communism < 0.01 }
+		}
+		random_list = {
+			10 = { add_to_variable = { party_pop_array^4 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^5 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^6 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^7 = 0.01 } }
+			10 = { modifier = { factor = 0 NOT = { has_idea = shia } } add_to_variable = { party_pop_array^8 = 0.01 } }
+			10 = { modifier = { factor = 0 NOT = { has_idea = shia } } add_to_variable = { party_pop_array^9 = 0.01 } }
+		}
+	}
+	if = {
+		limit = {
+			fascism > 0.01
+			check_variable = { pop_total_fascism < 0.01 }
+		}
+		random_list = {
+			10 = { add_to_variable = { party_pop_array^10 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^11 = 0.01 } }
+		}
+	}
+	if = {
+		limit = {
+			neutrality > 0.01
+			check_variable = { pop_total_neutrality < 0.01 }
+		}
+		random_list = {
+			10 = { add_to_variable = { party_pop_array^12 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^13 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^14 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^15 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^16 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^17 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^18 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^19 = 0.01 } }
+		}
+	}
+	if = {
+		limit = {
+			nationalist > 0.01
+			check_variable = { pop_total_nationalist < 0.01 }
+		}
+		random_list = {
+			10 = { add_to_variable = { party_pop_array^20 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^21 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^22 = 0.01 } }
+			10 = { add_to_variable = { party_pop_array^23 = 0.01 } }
+		}
+	}
+	
 }
 
 set_party_positions = {
@@ -1721,26 +1840,71 @@ set_coalition_drift = {
 	set_variable = { coalition_democratic = 0 }
 	clear_coalition_count_ideas = yes
 
+	#Each coalition partner popularity gets added to their own Outlook
 	for_loop_effect = {
 		end = gov_coalition_array^num
 		value = v
 		set_temp_variable = { sum = party_pop_elect_array^gov_coalition_array^v } #pop of current element
 		set_temp_variable = { current_id = gov_coalition_array^v } #ID of current element
-
-		meta_effect = {
-			text = {
-				add_to_variable = { coalition_[PART_OF_IDEOLOGY] = sum }
+		if = {
+			limit = {
+				check_variable = { current_id < 4 }
 			}
-			PART_OF_IDEOLOGY = "[offcial_name_party_ideology]"
+			add_to_variable = { coalition_democratic = sum }
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_id > 3 }
+				check_variable = { current_id < 10 }
+			}
+			add_to_variable = { coalition_communism = sum }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					check_variable = { current_id = 10 }
+					check_variable = { current_id = 11 }
+				}
+			}
+			add_to_variable = { coalition_fascism = sum }
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_id > 11 }
+				check_variable = { current_id < 20 }
+			}
+			add_to_variable = { coalition_neutrality = sum }
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_id > 19 }
+			}
+			add_to_variable = { coalition_nationalist = sum }
 		}
 	}
-	#prevents adding to own ideology
-	meta_effect = {
-		text = {
-			set_variable = { coalition_[CURRENT_RULING_IDEOLOGY] = 0 }
-		}
-		CURRENT_RULING_IDEOLOGY = "[offcial_name_party_ideology]"
+	
+	#Don't get bonuses to ruling Outlook
+	if = {
+		limit = { has_government = democratic }
+		set_variable = { coalition_democratic = 0 }
 	}
+	else_if = {
+		limit = { has_government = communism }
+		set_variable = { coalition_communism = 0 }
+	}
+	else_if = {
+		limit = { has_government = fascism }
+		set_variable = { coalition_fascism = 0 }
+	}
+	else_if = {
+		limit = { has_government = neutrality }
+		set_variable = { coalition_neutrality = 0 }
+	}
+	else_if = {
+		limit = { has_government = nationalist }
+		set_variable = { coalition_nationalist = 0 }
+	}
+	
 	reset_democratic_coalition_ideas = yes
 	reset_neutrality_coalition_ideas = yes
 	reset_communism_coalition_ideas = yes
