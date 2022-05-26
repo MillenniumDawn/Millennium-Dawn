@@ -23,23 +23,31 @@ ddsdict = {}
 inputpath = ""
 
 def main():
-	inputpath = input("Please Input a Path to the goals or event picture folder:\n")
-	modfolder = input("Please Enter the Mod Folder Name with a \:\n")
+	inputpath = input(f"{bcolors.WARNING}\nPlease Input a Path to the goals or event picture folder:\n{bcolors.RESET}")
+	modfolder = input(f"{bcolors.WARNING}Please Enter the Mod Folder Name with a \. If your mod folder is Millennium_Dawn, then you need to input it as \'Millennium_Dawn\\\':\n{bcolors.RESET}")
 
 	# Retrieve files
 	getfiles(inputpath)
 
-	print("There are " + str(len(ddslist)) + " .dds files available in this directory")
+	print(f"{bcolors.OK}There are {bcolors.RESET}" + str(len(ddslist)) + f"{bcolors.OK} .dds, .png or .tga files available in this directory{bcolors.RESET}\n")
 
-	selection = int(input("Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n"))
+	userinput = input("Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n")
 
+	if userinput == "one" or "1":
+		selection = 1
+	elif selection == "two" or "2":
+		selection = 2
+
+	# Variable Init
+	x = "" # X == the file name. It is only used to parse out the path
+	y = "" # Y == becomes the path that is implemented texturefile
+	z = "" # Z == is used to "sort" for a file
+	w = "" # W == is the file name or texture name
 	# While Loop Input Section
 	while selection != 0:
 		if selection == 1:
-			x = ""
-			y = ""
-			z = ""
-			w = ""
+			gfxbool = int(input("Would you like me to append \"GFX_\" to the front of the icon?\n1 for yes, 0 for no.\n"))
+
 			print("Generating goals.gfx...\n")
 			with open("goals.gfx","w") as ffile:
 				ffile.write('spriteTypes = {\n')
@@ -48,14 +56,27 @@ def main():
 					x = x.split(modfolder)
 					y = x[1] # Should Retrieve the Path
 					z = y
-					z = z.replace("gfx\\event_pictures\\", "")
+					y = y.replace("\\", "/")
+					z = z.replace("gfx\\interface\\goals\\", "")
 					z = z.split("\\")
 					for i in range(len(z)):
 						if ".dds" in z[i]:
 							w = z[i]
-					y = y.replace("\\", "/")
-					w = w.replace(".dds", "")
-					ffile.write('	spriteType = {\n		name = \"' + w + '\"\n		texturefile = \"' + y + '\"\n	}\n')
+						elif ".png" in z[i]:
+							w = z[i]
+						elif ".tga" in z[i]:
+							w = z[i]
+					if ".dds" in w:
+						w = w.replace(".dds", "")
+					elif ".png" in w:
+						w = w.replace(".png", "")
+					elif ".tga" in w:
+						w = w.replace (".tga", "")
+
+					if gfxbool == 0:
+						ffile.write('\tspriteType = {\n\t\tname = \"' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
+					else:
+						ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
 				ffile.write('}')
 			print("Generation of goals.gfx is complete.\n\nGenerating goals_shine.gfx...\n")
 			with open("goals_shine.gfx", "w") as ffile:
@@ -65,23 +86,32 @@ def main():
 					x = x.split(modfolder)
 					y = x[1] # Should Retrieve the Path
 					z = y
-					z = z.replace("gfx\\event_pictures\\", "")
+					y = y.replace("\\", "/")
+					z = z.replace("gfx\\interface\\goals\\", "")
 					z = z.split("\\")
 					for i in range(len(z)):
 						if ".dds" in z[i]:
 							w = z[i]
-					y = y.replace("\\", "/")
-					w = w.replace(".dds", "")
-					ffile.write('	spriteType = { \n		name = \"' + w + '_shine\"\n		texturefile = \"' + y + '\"\n		effectfile = \"gfx/FX/buttonstate.lua\"\n		animation = {\n			animationmaskfile = \"' + y + '\"\n			animationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n			animationrotation = -90.0\n			animationlooping = no\n			animationtime = 0.75\n			animationdelay = 0\n			animationblendmode = "add"\n			animationtype = "scrolling"\n			animationrotationoffset = { x = 0.0 y = 0.0 }\n			animationtexturescale = { x = 1.0 y = 1.0 }\n		}\n		animation = {\n			animationmaskfile = \"' + y + '\"\n			animationtexturefile = "gfx/interface/goals/shine_overlay.tga"\n			animationrotation = 90.0\n			animationlooping = no\n			animationtime = 0.75\n			animationdelay = 0\n			animationblendmode = "add"\n			\n			animationtype = "scrolling"\n			animationrotationoffset = { x = 0.0 y = 0.0 }\n			animationtexturescale = { x = 1.0 y = 1.0 }\n		}\n		legacy_lazy_load = no\n	}\n')
+						elif ".png" in z[i]:
+							w = z[i]
+						elif ".tga" in z[i]:
+							w = z[i]
+					if ".dds" in w:
+						w = w.replace(".dds", "")
+					elif ".png" in w:
+						w = w.replace(".png", "")
+					elif ".tga" in w:
+						w = w.replace (".tga", "")
+
+					if gfxbool == 0:
+						ffile.write('\tspriteType = { \n\t\tname = \"' + w + '_shine\"\n\t\ttexturefile = \"' + y + '\"\n\t\teffectfile = \"gfx/FX/buttonstate.lua\"\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"' + y + '\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"' + y + '\"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.tga"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n')
+					else:
+						ffile.write('\tspriteType = { \n\t\tname = \"GFX_' + w + '_shine\"\n\t\ttexturefile = \"' + y + '\"\n\t\teffectfile = \"gfx/FX/buttonstate.lua\"\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"' + y + '\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"' + y + '\"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.tga"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n')
 				ffile.write('}')
 			print("Generation of goals_shine.gfx is complete.")
 			print("\ngoals.gfx and goals_shine.gfx have been generated for " + str(len(ddslist)) + " icons.\n\nThe files have been outputted in " + str(os.getcwd()) )
 			return
 		elif selection == 2:
-			x = ""
-			y = ""
-			z = ""
-			w = ""
 			print("Generating event_pictures.gfx...")
 			with open ("MD_eventpictures.gfx", "w") as ffile:
 				ffile.write('spriteTypes = {\n')
@@ -90,22 +120,37 @@ def main():
 					x = x.split(modfolder)
 					y = x[1] # Should Retrieve the Path
 					z = y
+					y = y.replace("\\", "/")
 					z = z.replace("gfx\\event_pictures\\", "")
 					z = z.split("\\")
 					for i in range(len(z)):
 						if ".dds" in z[i]:
 							w = z[i]
-					y = y.replace("\\", "/")
-					w = w.replace(".dds", "")
-					ffile.write('	spriteType = {\n		name = \"GFX_' + w + '\"\n		texturefile = \"' + y + '\"\n	}\n')
+						elif ".png" in z[i]:
+							w = z[i]
+						elif ".tga" in z[i]:
+							w = z[i]
+					if ".dds" in w:
+						w = w.replace(".dds", "")
+					elif ".png" in w:
+						w = w.replace(".png", "")
+					elif ".tga" in w:
+						w = w.replace (".tga", "")
+
+					ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
 				ffile.write('}')
 			print("Generation of event_pictures.gfx is complete.")
 			print("\neventpictures.gfx has been generated for " + str(len(ddslist)) + " event pictures.\n\nThe files have been outputted in " + str(os.getcwd()) )
 			return
 		else:
-			print("Invalid Option. Please reboot program.")
+			print(f"{bcolors.FAIL}1 or 2 dumbfuck {bcolors.RESET}" + str(selection) + f"{bcolors.FAIL} isn't a fucking option.\n{bcolors.RESET}")
 			return
 
+class bcolors:
+	OK = '\033[92m' #GREEN
+	WARNING = '\033[93m' #YELLOW
+	FAIL = '\033[91m' #RED
+	RESET = '\033[0m' #RESET COLOR
 
 
 #outputs dictionary pairing path to .dds file
@@ -114,6 +159,12 @@ def getfiles(path):
 		f = os.path.join(path,filename)
 		if os.path.isfile(f):
 			if '.dds' in f:
+				ddsdict[f] = filename
+				ddslist.append(filename)
+			elif '.png' in f:
+				ddsdict[f] = filename
+				ddslist.append(filename)
+			elif '.tga' in f:
 				ddsdict[f] = filename
 				ddslist.append(filename)
 		else:
