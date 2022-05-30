@@ -1,7 +1,5 @@
 ﻿add_namespace = italy_md
 
-#unused event numbers 26
-
 #Lateran Treaties Accepted
 country_event = {
 	id = italy_md.1
@@ -297,7 +295,10 @@ country_event = {
 			target = ITA
 			modifier = ITA_oil_investments_africa
 		}
-		add_to_variable = { party_pop_array^21 = 0.025 } #Fascist Increase by 2.5%
+		set_temp_variable = { party_index = 21 }
+		set_temp_variable = { party_popularity_increase = 0.025 }
+		set_temp_variable = { temp_outlook_increase = 0.025 }
+		add_relative_party_popularity = yes
 		ITA = { country_event = italy_md.8 }
 		ITA = { set_country_flag = EGY_oil_deal_through_fascist_tree }
 	}
@@ -793,6 +794,125 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: italy_md.25.o2 executed"
 	}
 }
+#event to change internal factions
+country_event = {
+	id = italy_md.26
+	title = italy_md.26.t
+	desc = italy_md.26.d
+	picture = GFX_report_event_Reform_ITA
+
+	is_triggered_only = yes
+
+	option = {
+		name = italy_md.26.o1 #confindustria
+		trigger = {
+			NOT = { has_idea = industrial_conglomerates }
+		}
+		log = "[GetDateText]: [This.GetName]: italy_md.26.o1 executed"
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_clergy_flag
+			}
+			swap_ideas = {
+				remove_idea = The_Clergy
+				add_idea = industrial_conglomerates
+			}
+			clr_country_flag = ITA_replace_clergy_flag
+		}
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_labour_unions
+			}
+			swap_ideas = {
+				remove_idea = labour_unions
+				add_idea = industrial_conglomerates
+			}
+			clr_country_flag = ITA_replace_labour_unions
+		}
+	}
+	option = {
+		name = italy_md.26.o2 #piazza affari
+		trigger = {
+			NOT = { has_idea = international_bankers }
+		}
+		log = "[GetDateText]: [This.GetName]: italy_md.26.o2 executed"
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_clergy_flag
+			}
+			swap_ideas = {
+				remove_idea = The_Clergy
+				add_idea = international_bankers
+			}
+			clr_country_flag = ITA_replace_clergy_flag
+		}
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_labour_unions
+			}
+			swap_ideas = {
+				remove_idea = labour_unions
+				add_idea = international_bankers
+			}
+			clr_country_flag = ITA_replace_labour_unions
+		}
+	}
+	option = {
+		name = italy_md.26.o3 #finmeccanica
+		trigger = {
+			NOT = { has_idea = defense_industry }
+		}
+		log = "[GetDateText]: [This.GetName]: italy_md.26.o3 executed"
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_clergy_flag
+			}
+			swap_ideas = {
+				remove_idea = The_Clergy
+				add_idea = defense_industry
+			}
+			clr_country_flag = ITA_replace_clergy_flag
+		}
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_labour_unions
+			}
+			swap_ideas = {
+				remove_idea = labour_unions
+				add_idea = defense_industry
+			}
+			clr_country_flag = ITA_replace_labour_unions
+		}
+	}
+	option = {
+		name = italy_md.26.o4 #coldiretti
+		trigger = {
+			NOT = { has_idea = farmers }
+		}
+		log = "[GetDateText]: [This.GetName]: italy_md.26.o4 executed"
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_clergy_flag
+			}
+			swap_ideas = {
+				remove_idea = The_Clergy
+				add_idea = farmers
+			}
+			clr_country_flag = ITA_replace_clergy_flag
+		}
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_labour_unions
+			}
+			swap_ideas = {
+				remove_idea = labour_unions
+				add_idea = farmers
+			}
+			clr_country_flag = ITA_replace_labour_unions
+		}
+	}
+}
+
 #Investments Abroad
 country_event = {
 	id = italy_md.27
@@ -984,25 +1104,61 @@ country_event = {
 		custom_effect_tooltip = ITA_end_war_on_mafia_tt
 		82 = {
 			remove_dynamic_modifier = { modifier = camorra_infiltrations_modifier }
-			set_variable = { camorra_infiltrations_var = 0 }
+			clear_variable = camorra_infiltrations_var
 			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
 		}
 		956 = {
 			remove_dynamic_modifier = { modifier = ndrangheta_infiltrations_modifier }
-			set_variable = { ndrangheta_infiltrations_var = 0 }
+			clear_variable = ndrangheta_infiltrations_var
 			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
 		}
 		957 = {
 			remove_dynamic_modifier = { modifier = sacra_corona_unita_infiltrations_modifier }
-			set_variable = { sacra_corona_unita_infiltrations_var = 0 }
+			clear_variable = sacra_corona_unita_infiltrations_var
 			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
 		}
 		83 = {
 			remove_dynamic_modifier = { modifier = cosa_nostra_infiltrations_modifier }
-			set_variable = { cosa_nostra_infiltrations_var = 0 }
+			clear_variable = cosa_nostra_infiltrations_var
 			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
 		}
 		remove_ideas = ITA_war_with_Mafia
+		clear_variable = mafia_strength
+		clear_variable = cosa_nostra_strength
+		clear_variable = camorra_strength
+		clear_variable = ndrangheta_strength
+		clear_variable = sacra_corona_unita_strength
+		clear_variable = mafia_strength_stab_var
+		clear_variable = mafia_strength_construction_var
+		clear_variable = mafia_strength_pp_var
+		clear_variable = mafia_strength_lega_drift_var
+		clear_variable = police_effectivness
+		clear_variable = police_effectivness_sicily
+		clear_variable = police_effectivness_campania
+		clear_variable = police_effectivness_calabria
+		clear_variable = police_effectivness_puglia
+		clear_variable = event_counter_1_sicily
+		clear_variable = event_counter_2_sicily
+		clear_variable = event_counter_3_sicily
+		clear_variable = event_counter_4_sicily
+		clear_variable = event_counter_1_campania
+		clear_variable = event_counter_2_campania
+		clear_variable = event_counter_3_campania
+		clear_variable = event_counter_4_campania
+		clear_variable = event_counter_1_calabria
+		clear_variable = event_counter_2_calabria
+		clear_variable = event_counter_3_calabria
+		clear_variable = event_counter_4_calabria
+		clear_variable = event_counter_1_puglia
+		clear_variable = event_counter_2_puglia
+		clear_variable = event_counter_3_puglia
+		clear_variable = event_counter_4_puglia
+		clear_variable = undercover_agents_sicily
+		clear_variable = undercover_agents_campania
+		clear_variable = undercover_agents_calabria
+		clear_variable = undercover_agents_puglia
+		clear_variable = extraordinary_police_funding_cost
+		clear_variable = lega_drift_monthly_store_var
 	}
 }
 #lateran treaties
@@ -1161,7 +1317,10 @@ country_event = {
 	option = {
 		name = italy_md.38.o2
 		log = "[GetDateText]: [This.GetName]: italy_md.38.o2 executed"
-		add_10_popularity_sub_ITA = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
 		add_to_variable = { stability_weekly_stuck_var = -0.03 }
 		custom_effect_tooltip = government_crisis_stab_hit_TT
 		if = {
@@ -1355,7 +1514,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: mafia.3.a executed"
 		custom_effect_tooltip = mafia_strength_decrease_tt
 		add_political_power = 50
-		add_5_popularity_sub = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
 	}
 }
 #insuccess in attacking hideout
