@@ -1,5 +1,6 @@
 #!/user/bin/python
 import os
+from select import select
 
 #############################
 ###
@@ -31,12 +32,7 @@ def main():
 
 	print(f"{bcolors.OK}There are {bcolors.RESET}" + str(len(ddslist)) + f"{bcolors.OK} .dds, .png or .tga files available in this directory{bcolors.RESET}\n")
 
-	userinput = input("Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n")
-
-	if userinput == "one" or "1":
-		selection = 1
-	elif selection == "two" or "2":
-		selection = 2
+	selection = int(input("Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\nPlease enter the number of the option you'd like: "))
 
 	# Variable Init
 	x = "" # X == the file name. It is only used to parse out the path
