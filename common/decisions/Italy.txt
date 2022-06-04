@@ -545,6 +545,7 @@ romanization_ITA = {
 			has_full_control_of_state = 934
 			has_full_control_of_state = 935
 			has_full_control_of_state = 992
+			has_full_control_of_state = 1032
 		}
 		ai_will_do = {
 			factor = 1
@@ -689,6 +690,12 @@ romanization_ITA = {
 			has_full_control_of_state = 710
 			has_full_control_of_state = 712
 			has_full_control_of_state = 713
+			has_full_control_of_state = 1033
+			has_full_control_of_state = 1034
+			has_full_control_of_state = 1035
+			has_full_control_of_state = 1036
+			has_full_control_of_state = 1037
+			has_full_control_of_state = 1038
 		}
 		ai_will_do = {
 			factor = 1
@@ -716,6 +723,12 @@ romanization_ITA = {
 			add_state_core = 710
 			add_state_core = 712
 			add_state_core = 713
+			add_state_core = 1033
+			add_state_core = 1034
+			add_state_core = 1035
+			add_state_core = 1036
+			add_state_core = 1037
+			add_state_core = 1038
 		}
 	}
 }
@@ -1580,28 +1593,56 @@ mafia_ITA = {
 			NOT = {
 				has_completed_focus = ITA_war_with_mafia
 			}
+			NOT = {
+				has_country_flag = extraordinary_police_funding_flag
+			}
 		}
 		visible = {
             NOT = {
 				has_completed_focus = ITA_war_with_mafia
 			}
+			NOT = {
+				has_country_flag = extraordinary_police_funding_flag
+			}
         }
 		ai_will_do = {
 			factor = 10
-			modifier = {
-				factor = 0
-				command_power > 80
-			}
 		}
-		days_re_enable = 15
+		days_re_enable = 1
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision extraordinary_police_funding executed"
-			add_command_power = 25
-			set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
-			modify_treasury_effect = yes
-			add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
-			set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
-			multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+			set_country_flag = extraordinary_police_funding_flag
+			add_political_power = -50
+		}
+	}
+
+	deactivate_extraordinary_police_funding = {
+		icon = generic_decision
+		available = {
+			has_idea = ITA_mafia
+			NOT = {
+				has_completed_focus = ITA_war_with_mafia
+			}
+			has_country_flag = extraordinary_police_funding_flag
+		}
+		visible = {
+			has_country_flag = extraordinary_police_funding_flag
+            NOT = {
+				has_completed_focus = ITA_war_with_mafia
+			}
+        }
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 8 }
+			}
+		}
+		days_re_enable = 1
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision deactivate_extraordinary_police_funding executed"
+			clr_country_flag = extraordinary_police_funding_flag
+			add_political_power = -50
 		}
 	}
 
@@ -1740,13 +1781,6 @@ generic_ITA = {
 			always = yes
         }
 
-		custom_cost_trigger = {
-			if = {
-				limit = { is_ai = no }
-					check_variable = { treasury > 10 }
-			}
-		}
-
 		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision bonus_to_stimulate_consumption executed"
@@ -1791,10 +1825,6 @@ generic_ITA = {
 			always = yes
         }
 
-		custom_cost_trigger = {
-			check_variable = { treasury > 5 }
-		}
-
 		days_re_enable = 90
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision one_time_paycheck_bonus executed"
@@ -1813,6 +1843,42 @@ generic_ITA = {
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 6 }
+			}
+			modifier = {
+				factor = 0.1
+				check_variable = { interest_rate > 4 }
+			}
+		}
+	}
+
+	economic_concessions_to_oppositions = {
+		icon = generic_decision
+		available = {
+			tag = ITA
+		}
+		visible = {
+			always = yes
+        }
+
+		days_re_enable = 90
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision economic_concessions_to_oppositions executed"
+			set_temp_variable = { treasury_change = economic_concessions_to_oppositions_cost }
+			modify_treasury_effect = yes
+			add_to_variable = { economic_concessions_to_oppositions_times_taken_var = 1 }
+			set_variable = { economic_concessions_to_oppositions_cost = economic_concessions_to_oppositions_times_taken_var }
+			multiply_variable = { economic_concessions_to_oppositions_cost = -5 }
+			add_political_power = 250
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate > 6 }
+			}
+			modifier = {
+				factor = 0
+				has_political_power > 500
 			}
 			modifier = {
 				factor = 0.1
