@@ -13,7 +13,7 @@
  # everything said above is correct
  # be more hesitant if your changes gives the country controlling the state more longterm advantages, as balance can be rubbed in favour to one country for something like adding an extra naval factory.
 #
-#if you creat or mod coastal states you need to add/mod the respective missile launch point triggers for the coastal state and all adjacent seazones
+#if you create or mod coastal states you need to add/mod the respective missile launch point triggers for the coastal state and all adjacent seazones
 # examples when you need to modify the missile launch point triggers:
 #	- you have a state with a coastline to one seazone, now you change the map so that the coastline of the state covers two seazones
 #	- you have a state with a coastline to two seazones, now you change the map so that the coastline of the state only covers one seazone
@@ -65,6 +65,7 @@
 # 2022-04-04 - Bluehunter
 # Merged provinces from 1030 to 1029. 1030 became "Outer Donbas".
 #
-#
+# 2022-05-23 - Angriest Bird
+# State 1039 "Shirvan" added and State 713 loses two provinces.
 #
 #
