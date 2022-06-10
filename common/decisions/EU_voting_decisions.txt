@@ -3662,10 +3662,10 @@ EU_apply_for_membership_category = {
 
 		}
 		ai_will_do = {
-			factor = 60
+			factor = 100
 				### Europeanism
 				modifier = {
-					add = -60
+					add = -100
 					check_variable = { global.var_europeanism < 0.50 }
 				}
 		}
@@ -4182,13 +4182,53 @@ EU_apply_for_membership_category = {
 						inherit_technology = PREV
 					}
 				}
-				inherit_technology = EUU
+				EUU = {
+					for_each_loop = {
+						array = researched_techs
+						if = {
+							limit = {
+								NOT = { is_in_array = { eu_technologies = v } }
+							}
+							add_to_temp_array = { eu_technologies = v }
+						}
+					}
+				}
+				for_each_loop = {
+					array = eu_technologies
+					meta_effect = {
+						text = {
+							set_technology = {
+								[TECH] = 1
+								popup = no
+							}
+						}
+						TECH = "[?v.GetTokenKey]"
+					}
+				}
 				### end of bug fix
+				every_country = {
+					limit = {  has_idea = EU_member }
+						#clr_country_flag = USoE_transfer_navy
+						set_country_flag = USoE_member
+						every_unit_leader = {
+							set_unit_leader_flag = USoE_unit_leader
+							set_nationality = ROOT
+							add_unit_leader_trait = military_reorganization
+						}
+				}
 				every_country = {
 					limit = {  has_idea = EU_member }
 						every_owned_state = {
 							limit = {
-								is_on_continent = Europe
+								OR = {
+									is_on_continent = europe
+									is_core_of = GEO
+									is_core_of = ARM
+									is_core_of = AZE
+									is_core_of = TUR
+									is_core_of = POR
+									is_core_of = SPR
+								}
 								NOT = { is_core_of = ROOT }
 							}
 							add_core_of = ROOT
@@ -4201,6 +4241,106 @@ EU_apply_for_membership_category = {
 			}
 		}
 
+	}
+
+
+
+	# decrease_corruption = yes
+
+	instrument_for_pre_accession_assistance = {
+		cost = 360
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "Not has active IPA"
+				NOT = { has_country_flag = instrument_for_pre_accession_assistance }
+			}
+			OR = {
+				has_idea = EU_commission_president
+				has_idea = EU_council_president
+				has_idea = EU_foreign_minister
+				has_idea = EU_parliament_president
+				has_idea = EU_finance_minister
+			}
+			custom_trigger_tooltip = {
+				tooltip = "Any country is EU candidate"
+				any_of = {
+					array = global.EU_potential
+
+					var:global.EU_potential^i = {
+						AND = {
+							has_country_flag = EU_candidate
+							NOT = { has_idea = EU_member }
+						}
+					}
+				}
+			}
+		}
+
+		visible = {
+			has_idea = EU_member
+		}
+
+		complete_effect = {
+			set_country_flag = {
+				flag = instrument_for_pre_accession_assistance
+				days = 5 #180
+				value = 1
+			}
+			custom_effect_tooltip = instrument_for_pre_accession_assistance_tt
+			for_each_scope_loop = {
+				array = global.EU_potential
+				if = {
+					limit = {
+						AND = {
+							has_country_flag = EU_candidate
+							NOT = { has_idea = EU_member }
+						}
+					}
+					activate_mission = pre_accession_assistance_program
+					add_timed_idea = {
+						idea = EU_pre_accession_assistance
+						days = 5 #180
+					}
+					set_variable = { var_IPA = ROOT.id }
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	pre_accession_assistance_program = {
+		allowed = { always = no }
+		available = {
+			OR = {
+				has_idea = modest_corruption
+				has_idea = slight_corruption
+				has_idea = negligible_corruption
+			}
+		}
+		activation = { always = no 	}
+		visible = {
+			has_country_flag = EU_candidate
+			NOT = { has_idea = EU_member }
+		}
+		days_mission_timeout = 5 #180
+		selectable_mission = yes
+		fire_only_once = yes
+		timeout_effect = {
+			var:var_IPA = {
+				country_event = {
+					id = EUevent.20
+				}
+			}
+		}
+		complete_effect = {
+			add_political_power = 360
+		}
+		ai_will_do = {
+			factor = 100
+		}
 	}
 }
 

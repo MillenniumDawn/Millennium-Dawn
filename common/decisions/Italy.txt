@@ -545,6 +545,7 @@ romanization_ITA = {
 			has_full_control_of_state = 934
 			has_full_control_of_state = 935
 			has_full_control_of_state = 992
+			has_full_control_of_state = 1032
 		}
 		ai_will_do = {
 			factor = 1
@@ -689,6 +690,12 @@ romanization_ITA = {
 			has_full_control_of_state = 710
 			has_full_control_of_state = 712
 			has_full_control_of_state = 713
+			has_full_control_of_state = 1033
+			has_full_control_of_state = 1034
+			has_full_control_of_state = 1035
+			has_full_control_of_state = 1036
+			has_full_control_of_state = 1037
+			has_full_control_of_state = 1038
 		}
 		ai_will_do = {
 			factor = 1
@@ -716,6 +723,12 @@ romanization_ITA = {
 			add_state_core = 710
 			add_state_core = 712
 			add_state_core = 713
+			add_state_core = 1033
+			add_state_core = 1034
+			add_state_core = 1035
+			add_state_core = 1036
+			add_state_core = 1037
+			add_state_core = 1038
 		}
 	}
 }
@@ -1554,10 +1567,6 @@ mafia_ITA = {
 		complete_effect = {
 			add_command_power = -100
 			log = "[GetDateText]: [This.GetName]: decision army_in_the_streets executed"
-		}
-		fire_only_once = yes
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove army_in_the_streets"
 			set_country_flag = ITA_deployed_army_against_mafia
 			custom_effect_tooltip = mafia_strength_decrease_tt
 			set_temp_variable = { treasury_change = -5 }
@@ -1572,36 +1581,76 @@ mafia_ITA = {
 			add_to_variable = { ndrangheta_strength = -0.02 }
 			add_to_variable = { sacra_corona_unita_strength = -0.02 }
 		}
+		fire_only_once = yes
+	}
+	encourage_fighting_between_families = {
+		icon = generic_decision
+		available = {
+			has_idea = ITA_mafia
+			has_completed_focus = ITA_war_with_mafia
+		}
+		visible = {
+            has_completed_focus = ITA_war_with_mafia
+        }
+		ai_will_do = {
+			factor = 10
+		}
+		custom_cost_trigger = {
+			command_power > 75
+		}
+		custom_cost_text = command_power_more_than_75
+		complete_effect = {
+			add_command_power = -75
+			log = "[GetDateText]: [This.GetName]: decision encourage_fighting_between_families executed"
+			country_event = mafia.29
+		}
+		days_re_enable = 180
 	}
 	extraordinary_police_funding = {
 		icon = generic_decision
 		available = {
 			has_idea = ITA_mafia
 			NOT = {
-				has_completed_focus = ITA_war_with_mafia
+				has_country_flag = extraordinary_police_funding_flag
 			}
 		}
 		visible = {
-            NOT = {
-				has_completed_focus = ITA_war_with_mafia
+			NOT = {
+				has_country_flag = extraordinary_police_funding_flag
 			}
         }
 		ai_will_do = {
 			factor = 10
-			modifier = {
-				factor = 0
-				command_power > 80
-			}
 		}
-		days_re_enable = 15
+		days_re_enable = 1
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision extraordinary_police_funding executed"
-			add_command_power = 25
-			set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
-			modify_treasury_effect = yes
-			add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
-			set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
-			multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+			set_country_flag = extraordinary_police_funding_flag
+			add_political_power = -50
+		}
+	}
+
+	deactivate_extraordinary_police_funding = {
+		icon = generic_decision
+		available = {
+			has_idea = ITA_mafia
+			has_country_flag = extraordinary_police_funding_flag
+		}
+		visible = {
+			has_country_flag = extraordinary_police_funding_flag
+        }
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 8 }
+			}
+		}
+		days_re_enable = 1
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision deactivate_extraordinary_police_funding executed"
+			clr_country_flag = extraordinary_police_funding_flag
+			add_political_power = -50
 		}
 	}
 
@@ -1612,7 +1661,7 @@ mafia_ITA = {
 			has_completed_focus = ITA_seek_support_of_the_church
 		}
 		visible = {
-			always = yes
+			has_completed_focus = ITA_seek_support_of_the_church
         }
 
 		days_re_enable = 365
@@ -1643,7 +1692,7 @@ mafia_ITA = {
 			has_completed_focus = ITA_seek_support_of_the_church
 		}
 		visible = {
-			always = yes
+			has_completed_focus = ITA_seek_support_of_the_church
         }
 
 		days_re_enable = 365
@@ -1674,7 +1723,7 @@ mafia_ITA = {
 			has_completed_focus = ITA_seek_support_of_the_church
 		}
 		visible = {
-			always = yes
+			has_completed_focus = ITA_seek_support_of_the_church
         }
 
 		days_re_enable = 365
@@ -1705,7 +1754,7 @@ mafia_ITA = {
 			has_completed_focus = ITA_seek_support_of_the_church
 		}
 		visible = {
-			always = yes
+			has_completed_focus = ITA_seek_support_of_the_church
         }
 
 		days_re_enable = 365
@@ -1728,6 +1777,226 @@ mafia_ITA = {
 			}
 		}
 	}
+
+	concentrate_anti_mafia_effort_cosa_nostra = {
+		icon = generic_decision
+		available = {
+			has_idea = ITA_mafia
+			NOT = {
+				has_country_flag = ITA_concentrating_on_camorra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_ndrangheta
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_cosa_nostra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_sacra_corona_unita
+			}
+		}
+		visible = {
+			NOT = {
+				has_country_flag = ITA_concentrating_on_camorra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_ndrangheta
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_cosa_nostra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_sacra_corona_unita
+			}
+        }
+		custom_cost_trigger = {
+			command_power > 25
+		}
+		custom_cost_text = command_power_more_than_25
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = cosa_nostra_strength
+				always = yes
+			}
+		}
+		days_re_enable = 89
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision concentrate_anti_mafia_effort_cosa_nostra executed"
+			add_command_power = -25
+			set_country_flag = {
+				flag = ITA_concentrating_on_cosa_nostra
+				days = 90
+				value = 1
+			}
+			update_police_effectivness = yes
+		}
+	}
+
+	concentrate_anti_mafia_effort_camorra = {
+		icon = generic_decision
+		available = {
+			has_idea = ITA_mafia
+			NOT = {
+				has_country_flag = ITA_concentrating_on_camorra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_ndrangheta
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_cosa_nostra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_sacra_corona_unita
+			}
+		}
+		visible = {
+			NOT = {
+				has_country_flag = ITA_concentrating_on_camorra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_ndrangheta
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_cosa_nostra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_sacra_corona_unita
+			}
+        }
+		custom_cost_trigger = {
+			command_power > 25
+		}
+		custom_cost_text = command_power_more_than_25
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = camorra_strength
+				always = yes
+			}
+		}
+		days_re_enable = 89
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision concentrate_anti_mafia_effort_camorra executed"
+			add_command_power = -25
+			set_country_flag = {
+				flag = ITA_concentrating_on_camorra
+				days = 90
+				value = 1
+			}
+			update_police_effectivness = yes
+		}
+	}
+
+	concentrate_anti_mafia_effort_ndrangheta = {
+		icon = generic_decision
+		available = {
+			has_idea = ITA_mafia
+			NOT = {
+				has_country_flag = ITA_concentrating_on_camorra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_ndrangheta
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_cosa_nostra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_sacra_corona_unita
+			}
+		}
+		visible = {
+			NOT = {
+				has_country_flag = ITA_concentrating_on_camorra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_ndrangheta
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_cosa_nostra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_sacra_corona_unita
+			}
+        }
+		custom_cost_trigger = {
+			command_power > 25
+		}
+		custom_cost_text = command_power_more_than_25
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = ndrangheta_strength
+				always = yes
+			}
+		}
+		days_re_enable = 89
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision concentrate_anti_mafia_effort_ndrangheta executed"
+			add_command_power = -25
+			set_country_flag = {
+				flag = ITA_concentrating_on_ndrangheta
+				days = 90
+				value = 1
+			}
+			update_police_effectivness = yes
+		}
+	}
+
+	concentrate_anti_mafia_effort_sacra_corona_unita = {
+		icon = generic_decision
+		available = {
+			has_idea = ITA_mafia
+			NOT = {
+				has_country_flag = ITA_concentrating_on_camorra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_ndrangheta
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_cosa_nostra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_sacra_corona_unita
+			}
+		}
+		visible = {
+			NOT = {
+				has_country_flag = ITA_concentrating_on_camorra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_ndrangheta
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_cosa_nostra
+			}
+			NOT = {
+				has_country_flag = ITA_concentrating_on_sacra_corona_unita
+			}
+        }
+		custom_cost_trigger = {
+			command_power > 25
+		}
+		custom_cost_text = command_power_more_than_25
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = sacra_corona_unita_strength
+				always = yes
+			}
+		}
+		days_re_enable = 89
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision concentrate_anti_mafia_effort_sacra_corona_unita executed"
+			add_command_power = -25
+			set_country_flag = {
+				flag = ITA_concentrating_on_sacra_corona_unita
+				days = 90
+				value = 1
+			}
+			update_police_effectivness = yes
+		}
+	}
 }
 
 generic_ITA = {
@@ -1740,19 +2009,14 @@ generic_ITA = {
 			always = yes
         }
 
-		custom_cost_trigger = {
-			if = {
-				limit = { is_ai = no }
-					check_variable = { treasury > 10 }
-			}
-		}
-		custom_cost_text = cost_10_0
-
-		days_re_enable = 365
+		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision bonus_to_stimulate_consumption executed"
-			set_temp_variable = { treasury_change = -10 }
+			set_temp_variable = { treasury_change = bonus_to_stimulate_consumption_cost }
 			modify_treasury_effect = yes
+			add_to_variable = { bonus_to_stimulate_consumption_times_taken_var = 1 }
+			set_variable = { bonus_to_stimulate_consumption_cost = bonus_to_stimulate_consumption_times_taken_var }
+			multiply_variable = { bonus_to_stimulate_consumption_cost = -5 }
 			add_to_variable = { stability_weekly_stuck_var = 0.1 }
 			custom_effect_tooltip = 10_cumulated_stability_TT
 		}
@@ -1763,24 +2027,20 @@ generic_ITA = {
 				has_stability > 0.95
 			}
 			modifier = {
-				factor = 0.1
-				has_stability > 0.5
-			}
-			modifier = {
 				factor = 10
 				has_stability < 0.5
 			}
 			modifier = {
-				factor = 8
+				factor = 10
 				has_stability < 0.25
 			}
 			modifier = {
 				factor = 0
-				check_variable = { interest_rate > 6 }
+				check_variable = { interest_rate > 8 }
 			}
 			modifier = {
 				factor = 0.1
-				check_variable = { interest_rate > 4 }
+				check_variable = { interest_rate > 6 }
 			}
 		}
 	}
@@ -1793,16 +2053,14 @@ generic_ITA = {
 			always = yes
         }
 
-		custom_cost_trigger = {
-			check_variable = { treasury > 5 }
-		}
-		custom_cost_text = cost_5_0
-
-		days_re_enable = 180
+		days_re_enable = 90
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision one_time_paycheck_bonus executed"
-			set_temp_variable = { treasury_change = -5 }
+			set_temp_variable = { treasury_change = one_time_paycheck_bonus_cost }
 			modify_treasury_effect = yes
+			add_to_variable = { one_time_paycheck_bonus_times_taken_var = 1 }
+			set_variable = { one_time_paycheck_bonus_cost = one_time_paycheck_bonus_times_taken_var }
+			multiply_variable = { one_time_paycheck_bonus_cost = -5 }
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
@@ -1818,16 +2076,45 @@ generic_ITA = {
 				factor = 0.1
 				check_variable = { interest_rate > 4 }
 			}
+		}
+	}
+
+	economic_concessions_to_oppositions = {
+		icon = generic_decision
+		available = {
+			tag = ITA
+		}
+		visible = {
+			always = yes
+        }
+
+		days_re_enable = 90
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision economic_concessions_to_oppositions executed"
+			set_temp_variable = { treasury_change = economic_concessions_to_oppositions_cost }
+			modify_treasury_effect = yes
+			add_to_variable = { economic_concessions_to_oppositions_times_taken_var = 1 }
+			set_variable = { economic_concessions_to_oppositions_cost = economic_concessions_to_oppositions_times_taken_var }
+			multiply_variable = { economic_concessions_to_oppositions_cost = -5 }
+			add_political_power = 250
+		}
+		ai_will_do = {
+			factor = 1
 			modifier = {
-				factor = 2
-				check_variable = { party_pop_stab < 8 }
+				factor = 0
+				check_variable = { interest_rate > 6 }
 			}
 			modifier = {
-				factor = 2
-				check_variable = { party_pop_stab < 6 }
+				factor = 0
+				has_political_power > 500
+			}
+			modifier = {
+				factor = 0.1
+				check_variable = { interest_rate > 4 }
 			}
 		}
 	}
+
 
 	extraordinary_church_donation = {
 		icon = generic_decision
