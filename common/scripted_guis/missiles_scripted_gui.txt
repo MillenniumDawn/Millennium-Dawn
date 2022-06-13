@@ -2622,6 +2622,7 @@ scripted_gui = {
 			### ICBM
 			prod_icon_1 = {
 				image = "GFX_MD_prod_icon"
+				#image = "GFX_MD_prod_icon_continous"
 				frame = 2
 			}
 			production_type_1_model_icon = {
@@ -3325,6 +3326,9 @@ scripted_gui = {
 				set_missile_launch_arrays_selected_TAG = yes
 			}
 			target_selection_button_click = {
+				set_variable = { var_strike_type = 4 } # 4 = strategic, 2 = tactical
+				set_variable = { var_strategic_strike = 1 } # 1 active, 2 not active
+				set_variable = { var_tactical_strike = 2 } # 1 active, 2 not active
 				set_building_display_array = yes
 				if = {
 					limit = {
@@ -3341,6 +3345,17 @@ scripted_gui = {
 						### effect not needed already set with  set_conventional_warhead_targets_gui
 						#set_conventional_warhead_display_targets = yes
 					}
+				}
+			}
+			target_selection_2_button_click = {
+				set_variable = { var_strike_type = 2 } # 4 = strategic, 2 = tactical
+				set_variable = { var_strategic_strike = 2 } # 1 active, 2 not active
+				set_variable = { var_tactical_strike = 1 } # 1 active, 2 not active
+				if = {
+					limit = {
+						has_country_flag = open_MD_target_selection_view
+					}
+					clr_country_flag = open_MD_target_selection_view
 				}
 			}
 			missile_model_button_click = {
@@ -3501,6 +3516,9 @@ scripted_gui = {
 					}
 				}
 				subtract_from_variable = { var_missile_trajectory_ID = 1 }
+				set_variable = { var_strategic_strike = 2 } # 1 active, 2 not active
+				set_variable = { var_tactical_strike = 2 } # 1 active, 2 not active
+				clear_variable = var_strike_type
 				clr_country_flag = search_target_point
 				clr_country_flag = has_trajectory
 			}
@@ -3556,6 +3574,10 @@ scripted_gui = {
 				}
 				add_to_array = {
 					missile_duration_array = var_gui_duration
+					index = var_missile_trajectory_ID
+				}
+				add_to_array = {
+					missile_strike_type_array = var_strike_type
 					index = var_missile_trajectory_ID
 				}
 				add_to_array = {
@@ -3634,6 +3656,10 @@ scripted_gui = {
 				}
 				add_to_array = {
 					missile_duration_array = var_gui_duration
+					index = var_missile_trajectory_ID
+				}
+				add_to_array = {
+					missile_strike_type_array = var_strike_type
 					index = var_missile_trajectory_ID
 				}
 				add_to_array = {
@@ -3732,6 +3758,11 @@ scripted_gui = {
 				#missile_duration_array
 				remove_from_array = {
 					array = missile_duration_array
+					index = delete_idx
+				}
+				#missile_strike_type_array
+				remove_from_array = {
+					array = missile_strike_type_array
 					index = delete_idx
 				}
 				#missile_alert_array
@@ -3925,6 +3956,42 @@ scripted_gui = {
 				}
 				remove_from_array = {
 					array = damage_building_15_stat_array
+					index = delete_idx
+				}
+				remove_from_array = {
+					array = damage_building_16_stat_array
+					index = delete_idx
+				}
+				remove_from_array = {
+					array = damage_building_17_stat_array
+					index = delete_idx
+				}
+				remove_from_array = {
+					array = damage_building_18_stat_array
+					index = delete_idx
+				}
+				remove_from_array = {
+					array = damage_building_19_stat_array
+					index = delete_idx
+				}
+				remove_from_array = {
+					array = damage_building_20_stat_array
+					index = delete_idx
+				}
+				remove_from_array = {
+					array = total_org_damage_stat_array
+					index = delete_idx
+				}
+				remove_from_array = {
+					array = total_str_damage_stat_array
+					index = delete_idx
+				}
+				remove_from_array = {
+					array = unit_org_damage_stat_array
+					index = delete_idx
+				}
+				remove_from_array = {
+					array = unit_str_damage_stat_array
 					index = delete_idx
 				}
 				#
@@ -4247,6 +4314,12 @@ scripted_gui = {
 				has_country_flag = has_missile_model
 				has_country_flag = has_warhead
 			}
+			target_selection_2_button_click_enabled = {
+				check_variable = { var_gui_nuke = 1 }
+				has_country_flag = has_trajectory
+				has_country_flag = has_missile_model
+				has_country_flag = has_warhead
+			}
 			# gui
 			trajectory_gui_delete_button_click_enabled = {
 				OR = {
@@ -4279,10 +4352,12 @@ scripted_gui = {
 			fire_sort_button = {
 				image = "GFX_sort_button_83x29"
 				frame = var_fire_sort_button
+				#scale = 0.75
 			}
 			alert_sort_button = {
 				image = "GFX_sort_button_83x29"
 				frame = var_alert_sort_button
+				#scale = 0.75
 			}
 			missile_model_trajectory_icon = {
 				image = "[missile_name_trajectory_selected_TAG_texture]"
@@ -4290,9 +4365,23 @@ scripted_gui = {
 			warhead_trajectory_icon = {
 				image = "[missile_trajectory_warhead_selected_TAG_textures]"
 			}
-			launch_trigger_checkbox_button = {
-				#image = "GFX_MD_nuke_checkbox_button"
-				frame = trigger_checkbox_frame #^i #"[?trigger_checkbox_frame^i]"
+			# launch_trigger_checkbox_button = {
+			# 	#image = "GFX_MD_nuke_checkbox_button"
+			# 	frame = trigger_checkbox_frame #^i #"[?trigger_checkbox_frame^i]"
+			# }
+
+			target_selection_button = {
+				image = "GFX_strategicair_mission_btn_bg"
+				frame = var_strategic_strike # 1 active, 2 not active
+			}
+			target_selection_2_button = {
+				image = "GFX_strategicair_mission_btn_bg"
+				frame = var_tactical_strike # 1 active, 2 not active
+			}
+			strike_type_trajectory_icon = {
+				image = "GFX_strategicair_mission_types"
+				#frame = missile_strike_type_array^i # 1 active, 2 not active
+				frame = selected_TAG_missile_strike_type_array^i
 			}
 		}
 		dynamic_lists = {
@@ -4652,6 +4741,9 @@ scripted_gui = {
 				}
 				set_variable = { var_gui_decoy = var_win_decoy }
 				set_variable = { var_gui_nuke = 1 }
+				set_variable = { var_strike_type = 4 } # 4 = strategic, 2 = tactical
+				set_variable = { var_strategic_strike = 1 } # 1 active, 2 not active
+				set_variable = { var_tactical_strike = 2 } # 1 active, 2 not active
 				set_gui_conventional_warhead_cost = yes
 				set_conventional_warhead_targets_gui = yes
 				clr_country_flag = open_MD_warhead_window
@@ -4676,6 +4768,9 @@ scripted_gui = {
 				}
 				set_variable = { var_gui_decoy = var_win_decoy }
 				set_variable = { var_gui_nuke = 2 }
+				set_variable = { var_strike_type = 4 } # 4 = strategic, 2 = tactical
+				set_variable = { var_strategic_strike = 1 } # 1 active, 2 not active
+				set_variable = { var_tactical_strike = 1 } # 1 active, 2 not active
 				set_gui_nuclear_warhead_cost = yes
 				clr_country_flag = open_MD_warhead_window
 				clear_variable = var_open_warhead_selection_ledger_2
