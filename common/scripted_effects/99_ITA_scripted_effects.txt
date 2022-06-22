@@ -1461,11 +1461,8 @@ prevent_parties_disappearing = {
 }
 
 ruling_subparty_drift_effect = {
-	reform_expectance_from_situation = yes
 	set_temp_variable = { ruling_subparty_drift_modified_var = ruling_subparty_drift_var }
-	add_to_temp_variable = { ruling_subparty_drift_modified_var = reform_expectance_from_situation_subideology_drift_var }
 	set_temp_variable = { coalition_subparty_drift_modified_var = ruling_subparty_drift_var }
-	add_to_temp_variable = { coalition_subparty_drift_modified_var = reform_expectance_from_situation_subideology_drift_var }
 	set_temp_variable = { coalition_parties_number = gov_coalition_array^num }
 	multiply_temp_variable = { coalition_parties_number = 0.25 }
 	set_temp_variable = { coalition_parties_switch_var = 1 }
@@ -1772,9 +1769,6 @@ reforme_expectance_government_change_update = {
 				set_temp_variable = { number_of_coalition_parties = gov_coalition_array^num }
 				set_temp_variable = { ruling_drift_switch_var = drift_switch_var_base }
 				set_temp_variable = { coalition_drift_switch_var = drift_switch_var_base }
-				reform_expectance_from_situation = yes
-				add_to_temp_variable = { ruling_drift_switch_var = reform_expectance_from_situation_drift_var }
-				add_to_temp_variable = { coalition_drift_switch_var = reform_expectance_from_situation_drift_var }
 				multiply_temp_variable = { number_of_coalition_parties = 0.25 }
 				set_temp_variable = { coalition_switch_var = 1 }
 				subtract_from_temp_variable = { coalition_switch_var = number_of_coalition_parties }
@@ -1946,21 +1940,131 @@ reforme_expectance_government_change_update = {
 				}
 }
 reform_expectance_from_situation = {
-	set_temp_variable = { reform_expectance_from_stability = 1 }
+#stability effect
+	set_temp_variable = { reform_expectance_from_stability = 0.6 }
 	subtract_from_temp_variable = { reform_expectance_from_stability = stability }
 	multiply_temp_variable = { reform_expectance_from_stability = -0.1 }
+#interest rate effect
 	set_temp_variable = { reform_expectance_from_interest_rate = interest_rate }
-	subtract_from_temp_variable = { reform_expectance_from_interest_rate = 4 }
+	subtract_from_temp_variable = { reform_expectance_from_interest_rate = 3 }
 	clamp_temp_variable = {
 		var = reform_expectance_from_interest_rate
 		min = 0
 		max = 20
 	}
-	multiply_temp_variable = { reform_expectance_from_interest_rate = -0.01 }
+	multiply_temp_variable = { reform_expectance_from_interest_rate = -0.005 }
+#laws effect
+	if = {
+		limit = {
+			has_idea = social_01
+		}
+		set_temp_variable = { reform_expectance_from_laws = -0.03 }
+	}
+	else_if = {
+		limit = {
+			has_idea = social_02
+		}
+		set_temp_variable = { reform_expectance_from_laws = -0.02 }
+	}
+	else_if = {
+		limit = {
+			has_idea = social_03
+		}
+		set_temp_variable = { reform_expectance_from_laws = -0.01 }
+	}
+	else_if = {
+		limit = {
+			has_idea = social_04
+		}
+		set_temp_variable = { reform_expectance_from_laws = 0 }
+	}
+	else_if = {
+		limit = {
+			has_idea = social_05
+		}
+		set_temp_variable = { reform_expectance_from_laws = 0.01 }
+	}
+	else_if = {
+		limit = {
+			has_idea = social_06
+		}
+		set_temp_variable = { reform_expectance_from_laws = 0.02 }
+	}
+
+	if = {
+		limit = {
+			has_idea = health_01
+		}
+		add_to_temp_variable = { reform_expectance_from_laws = -0.03 }
+	}
+	else_if = {
+		limit = {
+			has_idea = health_02
+		}
+		add_to_temp_variable = { reform_expectance_from_laws = -0.02 }
+	}
+	else_if = {
+		limit = {
+			has_idea = health_03
+		}
+		add_to_temp_variable = { reform_expectance_from_laws = -0.01 }
+	}
+	else_if = {
+		limit = {
+			has_idea = health_04
+		}
+		add_to_temp_variable = { reform_expectance_from_laws = 0 }
+	}
+	else_if = {
+		limit = {
+			has_idea = health_05
+		}
+		add_to_temp_variable = { reform_expectance_from_laws = 0.01 }
+	}
+	else_if = {
+		limit = {
+			has_idea = health_06
+		}
+		add_to_temp_variable = { reform_expectance_from_laws = 0.02 }
+	}
+
+	if = {
+		limit = {
+			has_idea = edu_01
+		}
+		add_to_temp_variable = { reform_expectance_from_laws = -0.02 }
+	}
+	else_if = {
+		limit = {
+			has_idea = edu_02
+		}
+		add_to_temp_variable = { reform_expectance_from_laws = -0.01 }
+	}
+	else_if = {
+		limit = {
+			has_idea = edu_03
+		}
+		add_to_temp_variable = { reform_expectance_from_laws = 0 }
+	}
+	else_if = {
+		limit = {
+			has_idea = edu_04
+		}
+		add_to_temp_variable = { reform_expectance_from_laws = 0.01 }
+	}
+	else_if = {
+		limit = {
+			has_idea = edu_05
+		}
+		add_to_temp_variable = { reform_expectance_from_laws = 0.02 }
+	}
+
 	add_to_temp_variable = { reform_expectance_from_interest_rate = reform_expectance_from_stability }
-	set_variable = { reform_expectance_from_situation_drift_var = reform_expectance_from_interest_rate }
-	set_variable = { reform_expectance_from_situation_subideology_drift_var = reform_expectance_from_situation_drift_var }
-	multiply_variable = { reform_expectance_from_situation_subideology_drift_var = 0.2 }
+	add_to_temp_variable = { reform_expectance_from_interest_rate = reform_expectance_from_laws }
+
+	add_to_variable = { drift_switch_var_base = reform_expectance_from_interest_rate }
+	multiply_temp_variable = { reform_expectance_from_interest_rate = 0.2 }
+	add_to_variable = { ruling_subparty_drift_var = reform_expectance_from_interest_rate }
 }
 
 remove_gov_crisis_ai_flags = {
