@@ -1,6 +1,6 @@
 #!/user/bin/python
 import os
-from select import select
+import shutil
 
 #############################
 ###
@@ -46,7 +46,9 @@ def main():
 
 			print("Generating goals.gfx...\n")
 			with open("goals.gfx","w") as ffile:
+				ffile.write('#Vanilla\n')
 				ffile.write('spriteTypes = {\n')
+				ffile.write('\tspriteType = {\n\t\tname = \"GFX_goal_unkown\"\n\t\ttexxturefile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\tlegacy_lazy_load = no\n\t}\n')
 				for fname in ddsdict:
 					x = fname
 					x = x.split(modfolder)
@@ -76,7 +78,9 @@ def main():
 				ffile.write('}')
 			print("Generation of goals.gfx is complete.\n\nGenerating goals_shine.gfx...\n")
 			with open("goals_shine.gfx", "w") as ffile:
+				ffile.write('#Vanilla\n')
 				ffile.write('spriteTypes = {\n')
+				ffile.write('\tspriteType = {\n\t\tname = \"GFX__shine\"\n\t\ttexturefile = \"gfx/interface/goals/goal_unkwno.dds\"\n\t\teffectFile = \"gfx/FX/buttonstate.lua\"\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = \"add\"\n\t\t\tanimationtype = \"scrolling\"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = \"add\"\n\t\t\tanimationtype = \"scrolling\"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n')
 				for fname in ddsdict:
 					x = fname
 					x = x.split(modfolder)
@@ -104,8 +108,13 @@ def main():
 					else:
 						ffile.write('\tspriteType = { \n\t\tname = \"GFX_' + w + '_shine\"\n\t\ttexturefile = \"' + y + '\"\n\t\teffectfile = \"gfx/FX/buttonstate.lua\"\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"' + y + '\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"' + y + '\"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.tga"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n')
 				ffile.write('}')
-			print("Generation of goals_shine.gfx is complete.")
-			print("\ngoals.gfx and goals_shine.gfx have been generated for " + str(len(ddslist)) + " icons.\n\nThe files have been outputted in " + str(os.getcwd()) )
+			print("Generation of goals_shine.gfx is complete.\n")
+			shutil.copy('goals.gfx','../interface')
+			shutil.copy('goals_shine.gfx','../interface')
+			os.remove('goals.gfx')
+			os.remove('goals_shine.gfx')
+			print("Script has completed the movement of the files.\n")
+			print("goals.gfx and goals_shine.gfx have been generated for " + str(len(ddslist)) + " icons.\n\nThe files have been outputted in " + str(os.getcwd()) )
 			return
 		elif selection == 2:
 			print("Generating event_pictures.gfx...")
@@ -136,6 +145,9 @@ def main():
 					ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
 				ffile.write('}')
 			print("Generation of event_pictures.gfx is complete.")
+			shutil.copy('MD_eventpictures.gfx','../interface')
+			os.remove('MD_eventpictures.gfx')
+			print("Script has completed the movement of the files.\n")
 			print("\neventpictures.gfx has been generated for " + str(len(ddslist)) + " event pictures.\n\nThe files have been outputted in " + str(os.getcwd()) )
 			return
 		else:
