@@ -48,7 +48,7 @@ def main():
 			with open("goals.gfx","w") as ffile:
 				ffile.write('#Vanilla\n')
 				ffile.write('spriteTypes = {\n')
-				ffile.write('\tspriteType = {\n\t\tname = \"GFX_goal_unkown\"\n\t\ttexxturefile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\tlegacy_lazy_load = no\n\t}\n')
+				ffile.write('\tspriteType = {\n\t\tname = \"GFX_goal_unkown\"\n\t\ttexturefile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\tlegacy_lazy_load = no\n\t}\n')
 				for fname in ddsdict:
 					x = fname
 					x = x.split(modfolder)
