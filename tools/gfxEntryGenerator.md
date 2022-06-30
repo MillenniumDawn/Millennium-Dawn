@@ -1,5 +1,5 @@
-<h2>How to use gfx_entry_generator.py for goals</h2>
-<h6>For whoever on gfx-input branch using this script:</h6>
+<h1>How to use gfx_entry_generator.py for goals</h1>
+<h5>For whoever on gfx-input branch using this script:</h5>
 
 1) Open powershell/cmd
 
@@ -10,7 +10,7 @@
 4) Give the complete path to the gfx entry. Which means you need to jump out of the tools folder and the Millennium_Dawn folder when giving the path.
 With this in mind, the path you give should look like this: 
 
-'..\..\Millennium_Dawn\gfx\interface\goals'
+    '..\..\Millennium_Dawn\gfx\interface\goals'
 
 5) You will be asked to enter the mod folder name. Typically you would want to enter: 'Millennium_Dawn\' 
 
