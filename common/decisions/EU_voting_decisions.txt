@@ -233,16 +233,33 @@ EU_voting_category = {
 				all_of_scopes = {
 					array = global.EU_member
 					OR = {
-						tag = PREV
 						AND = {
-							set_temp_variable = { temp_idx = -1 }
-							any_of = {
-								array = influence_array
-								check_variable = { v = ROOT }
-							}
-							set_temp_variable = { temp_idx = i }
-							check_variable = { temp_idx > -1 }
-							check_variable = { influence_array_calc^temp_idx > 0.03 }
+							check_variable = { influence_array^0 = ROOT }
+							check_variable = { influence_array_val^0 > 3 }
+						}
+						AND = {
+							check_variable = { influence_array^1 = ROOT }
+							check_variable = { influence_array_val^1 > 3 }
+						}
+						AND = {
+							check_variable = { influence_array^2 = ROOT }
+							check_variable = { influence_array_val^2 > 3 }
+						}
+						AND = {
+							check_variable = { influence_array^3 = ROOT }
+							check_variable = { influence_array_val^3 > 3 }
+						}
+						AND = {
+							check_variable = { influence_array^4 = ROOT }
+							check_variable = { influence_array_val^4 > 3 }
+						}
+						AND = {
+							check_variable = { influence_array^5 = ROOT }
+							check_variable = { influence_array_val^5 > 3 }
+						}
+						AND = {
+							check_variable = { influence_array^6 = ROOT }
+							check_variable = { influence_array_val^6 > 3 }
 						}
 					}
 				}
@@ -734,65 +751,16 @@ EU_voting_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [ROOT.GetName]: decision EU_AI_influence_cheat"
-			#every_country = {
-			#	limit = {
-			#		has_idea = EU_member
-			#		NOT = { original_tag = ROOT }
-			#	}
-			#	for_loop_effect = {
-			#		end = influence_array^num value = v
-			#			if = {
-			#				limit = {
-			#					check_variable = { influence_array^v = ROOT }
-			#				}
-			#				add_to_variable = { influence_array_val^v = 5 }
-			#				set_country_flag = found
-			#			}
-			#	}
-			#	if = {
-			#		limit = {
-			#			NOT = { has_country_flag = found }
-			#		}
-			#		add_to_array = { influence_array = ROOT.id }
-			#		add_to_array = { influence_array_val = 5 }
-			#	}
-			#	clr_country_flag = found
-			#	recalculate_influence = yes
-			#}
-			#### version of EU 1.0.5.20
-			#for_each_scope_loop = {
-			#	array = global.EU_member
-			#	set_temp_variable = { influence_gain = influence_total }
-			#	multiply_temp_variable = { influence_gain = 1.05 }
-			#	multiply_temp_variable = { influence_gain = 0.05 }
-			#	for_loop_effect = {
-			#		end = influence_array^num
-			#		value = v
-			#		if = {
-			#			limit = {
-			#				check_variable = { influence_array^v = ROOT }
-			#				check_variable = { influence_array_calc^v < 0.06 }
-			#			}
-			#			add_to_variable = { influence_array_val^v = influence_gain }
-			#			set_country_flag = found
-			#		}
-			#	}
-			#	if = {
-			#		limit = { NOT = { has_country_flag = found tag = ROOT } }
-			#		add_to_array = { influence_array = ROOT.id }
-			#		add_to_array = { influence_array_val = influence_gain }
-			#	}
-			#	clr_country_flag = found
-			#	recalculate_influence = yes
-			#}
-			#### end of version of EU 1.0.5.20
 			every_country = {
 				limit = {
 					has_idea = EU_member
 					NOT = { original_tag = ROOT }
 					NOT = { ROOT_influence_on_THIS_5_percent = yes }
 				}
-				generic_grant_1_percent_influence_of_PREV = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 		ai_will_do = {
@@ -3645,6 +3613,7 @@ EU_apply_for_membership_category = {
 			ROOT = {
 				add_ideas = EU_member
 			}
+			force_update_map_mode = { mapmode = EU_map_mode }
 			if = {
 				limit = {
 					has_global_flag = EDU
@@ -3693,10 +3662,10 @@ EU_apply_for_membership_category = {
 
 		}
 		ai_will_do = {
-			factor = 60
+			factor = 100
 				### Europeanism
 				modifier = {
-					add = -60
+					add = -100
 					check_variable = { global.var_europeanism < 0.50 }
 				}
 		}
@@ -3971,14 +3940,15 @@ EU_apply_for_membership_category = {
 				ROOT = {
 					### focus_EU402 effect
 					add_ideas = EU_copyright
-					#add_popularity #^1conservatism = -0.03 #^6Conservative = -0.03 #^14Neutral_conservatism = -0.03
-					add_to_variable = { party_pop_array^1 = -0.03 }
-					add_popularity = { ideology = democratic popularity = -0.03 }
-					add_to_variable = { party_pop_array^6 = -0.03 }
-					add_popularity = { ideology = communism popularity = -0.03 }
-					add_to_variable = { party_pop_array^14 = -0.03 }
-					add_popularity = { ideology = neutrality popularity = -0.03 }
-					recalculate_party = yes
+
+					set_temp_variable = { party_index = 1 }
+					set_temp_variable = { party_popularity_increase = -0.03 }
+					set_temp_variable = { temp_outlook_increase = -0.03 }
+					add_relative_party_popularity = yes
+					set_temp_variable = { party_index = 6 }
+					add_relative_party_popularity = yes
+					set_temp_variable = { party_index = 14 }
+					add_relative_party_popularity = yes
 				}
 			}
 			if = {
@@ -3996,9 +3966,10 @@ EU_apply_for_membership_category = {
 					### focus_EU403 effect
 					remove_ideas = asylum_shopping
 					#add_popularity #^20Nationalist popularity = 0.03
-					add_to_variable = { party_pop_array^20 = 0.03 }
-					add_popularity = { ideology = nationalist popularity = 0.03 }
-					recalculate_party = yes
+					set_temp_variable = { party_index = 20 }
+					set_temp_variable = { party_popularity_increase = 0.03 }
+					set_temp_variable = { temp_outlook_increase = 0.03 }
+					add_relative_party_popularity = yes
 				}
 			}
 			if = {
@@ -4016,9 +3987,10 @@ EU_apply_for_membership_category = {
 					### focus_EU404 effect
 					remove_ideas = Migrant_Crisis_Europe
 					#add_popularity #^20Nationalist popularity = 0.05
-					add_to_variable = { party_pop_array^20 = 0.05 }
-					add_popularity = { ideology = nationalist popularity = 0.05 }
-					recalculate_party = yes
+					set_temp_variable = { party_index = 20 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
 				}
 			}
 			if = {
@@ -4096,10 +4068,9 @@ EU_apply_for_membership_category = {
 
 		cost = 100
 		available = {
-			check_variable = {
-				var = ROOT.interest_rate
-				value = 3.5
-				compare = less_than
+			custom_trigger_tooltip = {
+				tooltip = interest_rate_less_than_3_5_tt
+				check_variable = { ROOT.interest_rate < 3.5 }
 			}
 			OR = {
 				has_idea = widespread_corruption
@@ -4211,13 +4182,53 @@ EU_apply_for_membership_category = {
 						inherit_technology = PREV
 					}
 				}
-				inherit_technology = EUU
+				EUU = {
+					for_each_loop = {
+						array = researched_techs
+						if = {
+							limit = {
+								NOT = { is_in_array = { eu_technologies = v } }
+							}
+							add_to_temp_array = { eu_technologies = v }
+						}
+					}
+				}
+				for_each_loop = {
+					array = eu_technologies
+					meta_effect = {
+						text = {
+							set_technology = {
+								[TECH] = 1
+								popup = no
+							}
+						}
+						TECH = "[?v.GetTokenKey]"
+					}
+				}
 				### end of bug fix
+				every_country = {
+					limit = {  has_idea = EU_member }
+						#clr_country_flag = USoE_transfer_navy
+						set_country_flag = USoE_member
+						every_unit_leader = {
+							set_unit_leader_flag = USoE_unit_leader
+							set_nationality = ROOT
+							add_unit_leader_trait = military_reorganization
+						}
+				}
 				every_country = {
 					limit = {  has_idea = EU_member }
 						every_owned_state = {
 							limit = {
-								is_on_continent = Europe
+								OR = {
+									is_on_continent = europe
+									is_core_of = GEO
+									is_core_of = ARM
+									is_core_of = AZE
+									is_core_of = TUR
+									is_core_of = POR
+									is_core_of = SPR
+								}
 								NOT = { is_core_of = ROOT }
 							}
 							add_core_of = ROOT
@@ -4230,6 +4241,106 @@ EU_apply_for_membership_category = {
 			}
 		}
 
+	}
+
+
+
+	# decrease_corruption = yes
+
+	instrument_for_pre_accession_assistance = {
+		cost = 360
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "Not has active IPA"
+				NOT = { has_country_flag = instrument_for_pre_accession_assistance }
+			}
+			OR = {
+				has_idea = EU_commission_president
+				has_idea = EU_council_president
+				has_idea = EU_foreign_minister
+				has_idea = EU_parliament_president
+				has_idea = EU_finance_minister
+			}
+			custom_trigger_tooltip = {
+				tooltip = "Any country is EU candidate"
+				any_of = {
+					array = global.EU_potential
+
+					var:global.EU_potential^i = {
+						AND = {
+							has_country_flag = EU_candidate
+							NOT = { has_idea = EU_member }
+						}
+					}
+				}
+			}
+		}
+
+		visible = {
+			has_idea = EU_member
+		}
+
+		complete_effect = {
+			set_country_flag = {
+				flag = instrument_for_pre_accession_assistance
+				days = 5 #180
+				value = 1
+			}
+			custom_effect_tooltip = instrument_for_pre_accession_assistance_tt
+			for_each_scope_loop = {
+				array = global.EU_potential
+				if = {
+					limit = {
+						AND = {
+							has_country_flag = EU_candidate
+							NOT = { has_idea = EU_member }
+						}
+					}
+					activate_mission = pre_accession_assistance_program
+					add_timed_idea = {
+						idea = EU_pre_accession_assistance
+						days = 5 #180
+					}
+					set_variable = { var_IPA = ROOT.id }
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	pre_accession_assistance_program = {
+		allowed = { always = no }
+		available = {
+			OR = {
+				has_idea = modest_corruption
+				has_idea = slight_corruption
+				has_idea = negligible_corruption
+			}
+		}
+		activation = { always = no 	}
+		visible = {
+			has_country_flag = EU_candidate
+			NOT = { has_idea = EU_member }
+		}
+		days_mission_timeout = 5 #180
+		selectable_mission = yes
+		fire_only_once = yes
+		timeout_effect = {
+			var:var_IPA = {
+				country_event = {
+					id = EUevent.20
+				}
+			}
+		}
+		complete_effect = {
+			add_political_power = 360
+		}
+		ai_will_do = {
+			factor = 100
+		}
 	}
 }
 

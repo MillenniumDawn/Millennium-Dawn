@@ -25,13 +25,21 @@ bankruptcy_decisions = {
 			}
 		}
 
-		cost = 100
+		modifier = {
+			interest_rate_multiplier_modifier = -2
+		}
 
 		days_remove = 360
 
 		days_re_enable = 180
 
 		complete_effect = {
+			if = { limit = { is_ai = yes }
+				add_political_power = -50
+			}
+			else = {
+				add_political_power = -100
+			}
 			set_temp_variable = { debt_addition = debt }
 			multiply_temp_variable = { debt_addition = 0.05 }
 			round_temp_variable = debt_addition
@@ -42,6 +50,10 @@ bankruptcy_decisions = {
 
 		ai_will_do = {
 			factor = 1000
+			modifier = {
+				factor = 0
+				has_political_power < 0
+			}
 		}
 
 	}
@@ -49,6 +61,7 @@ bankruptcy_decisions = {
 	bankruptcy_seek_bailout_from_biggest_influencer = {
 
 		available = {
+			is_subject = no
 			custom_trigger_tooltip = {
 				tooltip = "has_foreign_influence"
 				check_variable = { influence_array^0 > 0 }
@@ -74,9 +87,13 @@ bankruptcy_decisions = {
 
 		days_remove = 7
 
-		cost = 100
-
 		complete_effect = {
+			if = { limit = { is_ai = yes }
+				add_political_power = -50
+			}
+			else = {
+				add_political_power = -100
+			}
 			set_temp_variable = { debt_bailout_temp = debt }
 			multiply_temp_variable = { debt_bailout_temp = 0.20 }
 			set_variable = { debt_bailout = debt_bailout_temp }
@@ -92,6 +109,10 @@ bankruptcy_decisions = {
 				factor = 0
 				check_variable = { interest_rate < 15 }
 			}
+			modifier = {
+				factor = 0
+				has_political_power < 0
+			}
 		}
 
 	}
@@ -99,6 +120,7 @@ bankruptcy_decisions = {
 	bankruptcy_seek_bailout_from_second_biggest_influencer = {
 
 		available = {
+			is_subject = no
 			custom_trigger_tooltip = {
 				tooltip = "has_foreign_influence"
 				check_variable = { influence_array^1 > 0 }
@@ -124,9 +146,13 @@ bankruptcy_decisions = {
 
 		days_remove = 7
 
-		cost = 100
-
 		complete_effect = {
+			if = { limit = { is_ai = yes }
+				add_political_power = -50
+			}
+			else = {
+				add_political_power = -100
+			}
 			set_temp_variable = { debt_bailout_temp = debt }
 			multiply_temp_variable = { debt_bailout_temp = 0.15 }
 			set_variable = { debt_bailout = debt_bailout_temp }
@@ -141,6 +167,10 @@ bankruptcy_decisions = {
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate < 15 }
+			}
+			modifier = {
+				factor = 0
+				has_political_power < 0
 			}
 		}
 
@@ -160,6 +190,7 @@ bankruptcy_decisions = {
 		}
 
 		available = {
+			is_subject = no
 			FROM = { NOT = { has_war_with = ROOT } }
 			FROM = { has_opinion = { target = ROOT value > 0 } }
 			if = {
@@ -180,9 +211,14 @@ bankruptcy_decisions = {
 
 		days_remove = 7
 
-		cost = 100
-
 		complete_effect = {
+			if = { limit = { is_ai = yes }
+				add_political_power = -50
+			}
+			else = {
+				add_political_power = -100
+			}
+
 			set_temp_variable = { debt_bailout_temp = debt }
 			multiply_temp_variable = { debt_bailout_temp = 0.10 }
 			set_variable = { debt_bailout = debt_bailout_temp }
@@ -198,8 +234,66 @@ bankruptcy_decisions = {
 				factor = 0
 				check_variable = { interest_rate < 15 }
 			}
+			modifier = {
+				factor = 0
+				has_political_power < 0
+			}
 		}
 
+	}
+	
+	bankruptcy_seek_bailout_from_overlord = {
+	
+		visible = {
+			is_subject = yes
+		}
+	
+		available = {
+			if = {
+				limit = { is_ai = no }
+				custom_trigger_tooltip = {
+					tooltip = treasury_less_than_5
+					check_variable = { treasury < 5 }
+				}
+			}
+			is_subject = yes
+			NOT = { has_decision = bankruptcy_seek_bailout_from_imf }
+			overlord = { NOT = { has_dynamic_modifier = { modifier = very_high_interest_country_modifiers } } }
+		}
+		
+		days_re_enable = 360
+		
+		days_remove = 7
+
+		complete_effect = {
+			if = { limit = { is_ai = yes }
+				add_political_power = -50
+			}
+			else = {
+				add_political_power = -100
+			}
+			set_temp_variable = { debt_bailout_temp = debt }
+			multiply_temp_variable = { debt_bailout_temp = 0.50 }
+			set_variable = { debt_bailout = debt_bailout_temp }
+			clamp_variable = { var = debt_bailout min = 1 }
+			round_variable = debt_bailout
+			custom_effect_tooltip = bankruptcy_seek_bailout_from_overlord_tt
+			overlord = { country_event = { id = bankruptcy.5 hours = 3  } }
+		}
+		
+		ai_will_do = {
+			factor = 800
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 15 }
+			}
+			modifier = {
+				factor = 0
+				has_political_power < 0
+			}
+		}
+			
+	
 	}
 
 	bankruptcy_seek_bailout_from_imf = {
@@ -219,17 +313,17 @@ bankruptcy_decisions = {
 			NOT = { has_decision = bankruptcy_seek_bailout_from_biggest_influencer }
 			NOT = { has_decision = bankruptcy_seek_bailout_from_second_biggest_influencer }
 			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_overlord }
 		}
 
 		fixed_random_seed = no
-
-		cost = 50
 
 		days_re_enable = 180
 
 		days_remove = 7
 
 		complete_effect = {
+			add_political_power = -50
 			set_temp_variable = { debt_bailout_temp = debt }
 			multiply_temp_variable = { debt_bailout_temp = 0.10 }
 			set_variable = { debt_bailout = debt_bailout_temp }
@@ -637,6 +731,10 @@ bankruptcy_decisions = {
 				factor = 0
 				check_variable = { interest_rate < 15 }
 			}
+			modifier = {
+				factor = 0
+				has_political_power < 0
+			}
 		}
 	}
 
@@ -659,7 +757,10 @@ bankruptcy_decisions = {
 		days_mission_timeout = 360
 
 		timeout_effect = {
-			remove_10_popularity_sub = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.10 }
+			set_temp_variable = { temp_outlook_increase = -0.10 }
+			add_relative_party_popularity = yes
 			if = {
 				limit = { has_elections = yes }
 				country_event = bankruptcy.10
@@ -667,6 +768,10 @@ bankruptcy_decisions = {
 			if = {
 				limit = { has_elections = no }
 				country_event = bankruptcy.12
+			}
+			every_country = {
+				limit = { is_subject_of = ROOT }
+				ROOT = { end_puppet = PREV }
 			}
 		}
 
@@ -704,6 +809,10 @@ bankruptcy_decisions = {
 			custom_effect_tooltip = bankruptcy_default_on_debts_tt
 			activate_mission = debt_default_main_mission
 			set_variable = { old_gdp = gdp_total }
+			every_country = {
+				limit = { is_subject_of = ROOT }
+				ROOT = { end_puppet = PREV }
+			}
 		}
 
 		ai_will_do = {
@@ -717,7 +826,6 @@ bankruptcy_decisions = {
 			}
 		}
 	}
-
 }
 
 debt_default_decisions = {
@@ -782,10 +890,6 @@ debt_default_decisions = {
 								has_idea = EU_member
 								ROOT = { has_idea = EU_member }
 							}
-							NOT = {
-								has_idea = NATO_member
-								ROOT = { has_idea = NATO_member }
-							}
 						}
 					}
 					var:FROM.influence_array^0 = { country_event = { id = bankruptcy.13 hours = 6 } }
@@ -825,10 +929,6 @@ debt_default_decisions = {
 								has_idea = EU_member
 								ROOT = { has_idea = EU_member }
 							}
-							NOT = {
-								has_idea = NATO_member
-								ROOT = { has_idea = NATO_member }
-							}
 						}
 					}
 					var:FROM.influence_array^1 = { country_event = { id = bankruptcy.13 hours = 6 } }
@@ -866,10 +966,6 @@ debt_default_decisions = {
 							NOT = {
 								has_idea = EU_member
 								ROOT = { has_idea = EU_member }
-							}
-							NOT = {
-								has_idea = NATO_member
-								ROOT = { has_idea = NATO_member }
 							}
 						}
 					}
@@ -909,10 +1005,6 @@ debt_default_decisions = {
 								has_idea = EU_member
 								ROOT = { has_idea = EU_member }
 							}
-							NOT = {
-								has_idea = NATO_member
-								ROOT = { has_idea = NATO_member }
-							}
 						}
 					}
 					var:FROM.influence_array^3 = { country_event = { id = bankruptcy.13 hours = 6 } }
@@ -950,10 +1042,6 @@ debt_default_decisions = {
 							NOT = {
 								has_idea = EU_member
 								ROOT = { has_idea = EU_member }
-							}
-							NOT = {
-								has_idea = NATO_member
-								ROOT = { has_idea = NATO_member }
 							}
 						}
 					}
@@ -993,10 +1081,6 @@ debt_default_decisions = {
 								has_idea = EU_member
 								ROOT = { has_idea = EU_member }
 							}
-							NOT = {
-								has_idea = NATO_member
-								ROOT = { has_idea = NATO_member }
-							}
 						}
 					}
 					var:FROM.influence_array^5 = { country_event = { id = bankruptcy.13 hours = 6 } }
@@ -1034,10 +1118,6 @@ debt_default_decisions = {
 							NOT = {
 								has_idea = EU_member
 								ROOT = { has_idea = EU_member }
-							}
-							NOT = {
-								has_idea = NATO_member
-								ROOT = { has_idea = NATO_member }
 							}
 						}
 					}
@@ -1136,10 +1216,11 @@ debt_default_decisions = {
 
 		days_re_enable = 180
 
-		cost = 75
+		cost = 25
 
 		complete_effect = {
-			decrease_domestic_influence_10_percent = yes
+			set_temp_variable = { percent_change = -10 }
+			change_domestic_influence_percentage = yes
 			set_temp_variable = { debt_default_reduction = debt_default_total}
 			multiply_temp_variable = { debt_default_reduction = 0.25 }
 			round_temp_variable = debt_default_reduction
@@ -1234,18 +1315,21 @@ debt_default_decisions = {
 
 		days_re_enable = 400
 
-		cost = 75
+		cost = 25
 
 		complete_effect = {
 			var:FROM.influence_array^0 = {
-				generic_grant_20_percent_influence_of_CURRENT_SCOPE = yes
+				set_temp_variable = { percent_change = 15 }
+				set_temp_variable = { tag_index = THIS.id }
+				set_temp_variable = { influence_target = ROOT.id }
+				change_influence_percentage = yes
 				set_country_flag = {
 					flag = political_concessions_from@ROOT
 					days = 400
 					value = 1
 				}
 			}
-			set_temp_variable = { debt_default_reduction = debt_default_total}
+			set_temp_variable = { debt_default_reduction = debt_default_total }
 			multiply_temp_variable = { debt_default_reduction = 0.4 }
 			round_temp_variable = debt_default_reduction
 			custom_effect_tooltip = debt_default_political_concessions_to_biggest_influencer_tt
@@ -1292,11 +1376,14 @@ debt_default_decisions = {
 
 		days_re_enable = 400
 
-		cost = 75
+		cost = 25
 
 		complete_effect = {
 			var:FROM.influence_array^1 = {
-				generic_grant_20_percent_influence_of_CURRENT_SCOPE = yes
+				set_temp_variable = { percent_change = 10 }
+				set_temp_variable = { tag_index = THIS.id }
+				set_temp_variable = { influence_target = ROOT.id }
+				change_influence_percentage = yes
 				set_country_flag = {
 					flag = political_concessions_from@ROOT
 					days = 400

@@ -17,9 +17,6 @@ add_namespace = rio_pact_event
 #USS Cole Attacks
 country_event = {
 	id = usa.2
-	immediate = {
-		set_country_flag = usa_uss_cole_attack
-	}
 	title = usa.2.t
 	desc = usa.2.d
 	picture = GFX_uss_cole_bombing
@@ -36,17 +33,13 @@ country_event = {
 
 		news_event = { hours = 6 id = usa_news.18 }
 		add_named_threat = { threat = 0.5 name = usa.2.t }
-		if = {
-			limit = {
-				SUD = { exists = yes }
-			}
+
+		# Hate on SUD
+		if = { limit = { country_exists = SUD }
 			add_opinion_modifier = { target = SUD modifier = recent_actions_negative }
 			reverse_add_opinion_modifier = { target = SUD modifier = recent_actions_negative }
 		}
-		else_if = {
-			limit = {
-				SUD = { exists = no }
-			}
+		else = {
 			random_country = {
 				limit = {
 					has_government = fascism
@@ -63,6 +56,7 @@ country_event = {
 			}
 		}
 		USA_congress_small_opposition = yes
+		set_country_flag = usa_uss_cole_attack
 
 		ai_chance = {
 			factor = 1
@@ -76,22 +70,15 @@ country_event = {
 
 		news_event = { hours = 6 id = usa_news.18 }
 		navy_experience = 5
-		add_named_threat = {
-			threat = 0.5
-			name = usa.2.t
-		}
-		if = {
-			limit = {
-				SUD = { exists = yes }
-			}
+		add_named_threat = { threat = 0.5 name = usa.2.t }
+
+		#  Demand Repayment!
+		if = { limit = { country_exists = SUD }
 			add_opinion_modifier = { target = SUD modifier = recent_actions_negative }
 			reverse_add_opinion_modifier = { target = SUD modifier = recent_actions_negative }
 			SUD = { country_event = { id = usa.2000 days = 7 random = 2 } }
 		}
-		else_if = {
-			limit = {
-				SUD = { exists = no }
-			}
+		else = {
 			random_country = {
 				limit = {
 					has_government = fascism
@@ -109,6 +96,7 @@ country_event = {
 			}
 		}
 		USA_congress_small_opposition = yes
+		set_country_flag = usa_uss_cole_attack
 
 		ai_chance = {
 			factor = 0
@@ -182,8 +170,10 @@ country_event = {
 	option = { #Accept
 		name = usa.2001.o1
 		log = "[GetDateText]: [This.GetName}: usa.2001.o1 executed"
-		set_temp_variable = { treasury_change = -0.25 }
-		modify_treasury_effect = yes
+		SUD = {
+			set_temp_variable = { treasury_change = -0.25 }
+			modify_treasury_effect = yes
+		}
 		USA = {
 			set_temp_variable = { treasury_change = 0.25 }
 			modify_treasury_effect = yes
@@ -231,6 +221,8 @@ country_event = {
 	option = {
 		name = usa.3.o1
 		log = "[GetDateText]: [This.GetName]: usa.3.o1 executed"
+		set_temp_variable = { temp_opinion = -5 }
+		change_farmers_opinion = yes
 	}
 }
 
@@ -260,14 +252,19 @@ country_event = {
 	option = {
 		name = usa.4.o1
 		log = "[GetDateText]: [This.GetName]: usa.4.o1 executed"
-		add_political_power = 20
+		add_political_power = -100
 		set_country_flag = USA_allowed_microsoft_merger
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-		}
-		add_2_neutrality_libertarians = yes
+		set_temp_variable = { party_index = 16 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
 		usa_regulations_decreased_by_4 = yes
 		usa_strengthen_wall_street_add_by_three = yes
+
+		set_temp_variable = { temp_opinion = 3 }
+		change_wall_street_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
 
 		hidden_effect = { country_event = { id = usa.5 days = 25 random = 10 } }
 		ai_chance = {
@@ -291,14 +288,19 @@ country_event = {
 	option = {
 		name = usa.4.o2
 		log = "[GetDateText]: [This.GetName]: usa.4.o2 executed"
-		add_stability = -0.02
+		add_stability = 0.02
 		set_country_flag = USA_stopped_microsoft_merger
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.02 }
-		}
-		add_2_emerging_communist = yes
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
 		usa_regulations_increased_by_4 = yes
 		usa_strengthen_wall_street_fall_by_two = yes
+
+		set_temp_variable = { temp_opinion = -5 }
+		change_wall_street_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
 
 		hidden_effect = { country_event = { id = usa.5 days = 25 random = 10 } }
 		ai_chance = {
@@ -349,12 +351,17 @@ country_event = {
 	option = {
 		name = usa.5.o1
 		log = "[GetDateText]: [This.GetName]: usa.5.o1 executed"
-		add_political_power = 30
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-		}
-		add_2_neutrality_libertarians = yes
+		add_political_power = -50
+		set_temp_variable = { party_index = 16 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
 		usa_regulations_decreased_by_2 = yes
+
+		set_temp_variable = { temp_opinion = 2 }
+		change_wall_street_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
 
 		ai_chance = {
 			factor = 1.5
@@ -381,12 +388,16 @@ country_event = {
 	option = {
 		name = usa.5.o2
 		log = "[GetDateText]: [This.GetName]: usa.5.o2 executed"
-		add_stability = -0.03
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.05 }
-		}
-		add_5_emerging_communist = yes
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
 		usa_regulations_increased_by_2 = yes
+
+		set_temp_variable = { temp_opinion = -5 }
+		change_wall_street_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
 
 		ai_chance = {
 			factor = 0.50
@@ -427,6 +438,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: usa.6.o1 executed"
 		add_political_power = -30
 		add_stability = -0.05
+
 		ai_chance = {
 			factor = 0
 		}
@@ -435,8 +447,8 @@ country_event = {
 	option = {
 		name = usa.6.o2
 		log = "[GetDateText]: [This.GetName]: usa.6.o2 executed"
-		add_political_power = -75
 		add_stability = -0.03
+
 		set_temp_variable = { treasury_change = -0.5 }
 		modify_treasury_effect = yes
 		ai_chance = {
@@ -471,6 +483,9 @@ country_event = {
 			add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 			reverse_add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 		}
+
+		set_temp_variable = { temp_opinion = -5 }
+		change_communist_cadres_opinion = yes
 		hidden_effect = {
 			random_list = {
 				80 = {
@@ -508,14 +523,16 @@ country_event = {
 			reverse_add_opinion_modifier = { target = USA modifier = recent_actions_negative }
 		}
 
-		add_1_western_liberalism = yes
-		hidden_effect = {
-			if = {
-				limit = { communism < 0 }
-				add_popularity = { ideology = communism popularity = 0.02 }
-			}
-		}
-		add_2_emerging_communist = yes
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_communist_cadres_opinion = yes
 
 		add_named_threat = { threat = 1.5 name = usa.7.t }
 		ai_chance = {
@@ -549,7 +566,8 @@ country_event = {
 		name = usa.8.o1
 		log = "[GetDateText]: [This.GetName]: usa.8.o1 executed"
 		add_stability = -0.01
-		decrease_popularity_1 = yes
+		set_temp_variable = { arg_popularity = -0.01 }
+		add_ruling_outlook_popularity = yes
 		JAP = {
 			add_opinion_modifier = { target = USA modifier = recent_actions_positive }
 			reverse_add_opinion_modifier = { target = USA modifier = recent_actions_positive }
@@ -573,15 +591,16 @@ country_event = {
 		name = usa.8.o2
 		log = "[GetDateText]: [This.GetName]: usa.8.o2 executed"
 		add_named_threat = { threat = 0.5 name = usa.8.t }
-		decrease_popularity_2 = yes
+		set_temp_variable = { arg_popularity = -0.02 }
+		add_ruling_outlook_popularity = yes
 		JAP = {
 			add_opinion_modifier = { target = USA modifier = recent_actions_negative }
 			reverse_add_opinion_modifier = { target = USA modifier = recent_actions_negative }
 		}
-		hidden_effect = {
-			add_popularity = { ideology = nationalist popularity = 0.04 }
-		}
-		add_3_nationalist_right_wing_populists = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
 
 		ai_chance = {
 			factor = 0
@@ -614,7 +633,8 @@ country_event = {
 	option = { #Sad Day
 		name = usa.9.o1
 		log = "[GetDateText]: [This.GetName]: usa.9.01 executed"
-		decrease_popularity_1 = yes #Government Becomes a little less popular
+		set_temp_variable = { arg_popularity = -0.01 }
+		add_ruling_outlook_popularity = yes
 
 		ai_chance = {
 			factor = 1
@@ -636,7 +656,7 @@ country_event = {
 		has_elections = yes
 	}
 
-	#Unfortuante
+	#Unfortunate
 	option = {
 		name = usa.10.o1
 		log = "[GetDateText]: [This.GetName]: usa.10.o1 executed"
@@ -676,7 +696,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: usa.11.o1 executed"
 		add_political_power = -50
 		add_stability = -0.01
-		decrease_popularity_2 = yes
+		set_temp_variable = { arg_popularity = -0.02 }
+		add_ruling_outlook_popularity = yes
 		set_country_flag = usa_era_of_gun_violence #Used for future USA Gun Events
 	}
 }
@@ -728,6 +749,13 @@ country_event = {
 		set_temp_variable = { treasury_change = -0.25 }
 		modify_treasury_effect = yes
 
+		set_temp_variable = { temp_opinion = 2 }
+		change_intelligence_community_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_fossil_fuel_industry_opinion = yes
+		change_wall_street_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+
 		ai_chance = {
 			factor = 5
 			modifier = {
@@ -751,7 +779,7 @@ country_event = {
 	id = usa.13
 	title = usa.13.t
 	desc = usa.13.d
-	picture = GFX_report_event_us_flag
+	picture = GFX_us_flag
 	is_triggered_only = yes
 
 	option = {
@@ -771,7 +799,7 @@ country_event = {
 	id = usa.14
 	title = usa.14.t
 	desc = usa.14.d
-	picture = GFX_report_event_us_flag
+	picture = GFX_us_flag
 
 	is_triggered_only = yes
 
@@ -977,10 +1005,16 @@ country_event = {
 		name = usa.17.a
 		log = "[GetDateText]: [Root.GetName]: event usa.17.a"
 
-		hidden_effect = { add_popularity = { ideology = communism popularity = 0.02 } }
-		add_2_emerging_left_wing_radical = yes
-		add_2_western_liberalism = yes
-		add_2_western_social_democrat = yes
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
 
 		hidden_effect = { country_event = { id = usa.1000 days = 120 random = 20 } }
 		ai_chance = {
@@ -1004,15 +1038,18 @@ country_event = {
 		name = usa.18.a
 		log = "[GetDateText]: [This.GetName]: usa.18.o1 executed"
 
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.01 }
-			add_popularity = { ideology = neutrality popularity = 0.05 }
-		}
-		subtract_2_western_liberalism = yes
-		subtract_2_western_conservatism = yes
-		add_2_neutrality_libertarians = yes
-		add_2_neutrality_greens = yes
-		add_2_emerging_reactionary = yes
+		set_temp_variable = { party_index = 16 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 6 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
+
 
 		hidden_effect = { country_event = { id = usa.1000 days = 120 random = 20 } }
 		ai_chance = {
@@ -1035,9 +1072,16 @@ country_event = {
 		name = usa.19.a
 		log = "[GetDateText]: [Root.GetName]: event usa.19.a"
 
-		add_2_western_liberalism = yes
-		add_2_western_conservatism = yes
-		add_2_nationalist_right_wing_populists = yes
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
 
 		hidden_effect = { country_event = { id = usa.1000 days = 120 random = 20 } }
 		ai_chance = {
@@ -1129,8 +1173,12 @@ country_event = {
 		name = usa.21.a
 		log = "[GetDateText]: [Root.GetName]: event usa.21.a"
 
-		add_2_western_liberalism = yes
-		add_2_western_conservatism = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
 
 		hidden_effect = { country_event = { id = usa.1000 days = 120 random = 20 } }
 		ai_chance = {
@@ -1155,7 +1203,9 @@ country_event = {
 	option = {	#The establishment is right.
 		name = usa.22.o1
 		log = "[GetDateText]: [This.GetName]: usa.22.o1 executed"
-		add_2_western_liberalism = yes
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
 
 		ai_chance = {
 			factor = 1
@@ -1198,6 +1248,12 @@ country_event = {
 	option = {	#We accept!
 		name = usa.28.o1
 		log = "[GetDateText]: [This.GetName]: usa.28.o1 executed"
+		if = {
+			limit = {
+				has_idea = NATO_member
+			}
+			NATO_leave = yes
+		}
 		USA = { add_to_faction = ROOT }
 		hidden_effect = {
 			USA = { country_event = diplomatic_response.1 }
@@ -1235,7 +1291,7 @@ country_event = {
 	id = usa.31
 	title = usa.31.t
 	desc = usa.31.d
-	picture = GFX_report_event_us_flag
+	picture = GFX_us_flag
 	is_triggered_only = yes
 
 	option = {	#Excellent.
@@ -1245,7 +1301,10 @@ country_event = {
 		army_experience = 50
 		navy_experience = 50
 		air_experience = 50
-		generic_grant_1_percent_influence_of_USA = yes
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = USA.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
 
 		ai_chance = {
 			factor = 5
@@ -1271,12 +1330,16 @@ country_event = {
 		name = usa.31.o2
 		log = "[GetDateText]: [This.GetName]: usa.31.o2 executed"
 		add_war_support = 0.035
-		add_popularity = { ideology = nationalist popularity = 0.05 }
-		add_to_variable = { party_pop_array^20 = 0.05 }
-		recalculate_party = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
 		add_stability = 0.02
 		add_political_power = 100
-		generic_lower_5_percent_influence_of_USA = yes
+		set_temp_variable = { percent_change = -5 }
+		set_temp_variable = { tag_index = USA.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
 
 		ai_chance = {
 			factor = 0.25
@@ -1321,7 +1384,8 @@ country_event = {
 		name = usa.32.o1
 		log = "[GetDateText]: [This.GetName]: usa.32.o1 executed"
 		add_political_power = 100
-		decrease_wall_street_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_wall_street_opinion = yes
 		usa_regulations_increased_by_2 = yes #Greater Regulations to Combat Monopolies
 		ai_chance = {
 			factor = 1
@@ -1333,7 +1397,8 @@ country_event = {
 		name = usa.32.o2
 		log = "[GetDateText]: [This.GetName]: usa.32.o2 executed"
 		add_political_power = -50
-		increase_wall_street_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_wall_street_opinion = yes
 		country_event = { id = usa.33 days = 90 random = 20 }
 
 		ai_chance = {
@@ -1396,6 +1461,12 @@ country_event = {
 			}
 		}
 
+		set_temp_variable = { temp_opinion = 5 }
+		change_wall_street_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_industrial_conglomerates_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+
 		set_country_flag = USA_allowed_microsoft_monopoly
 		ai_chance = {
 			factor = 1
@@ -1425,13 +1496,15 @@ country_event = {
 		add_political_power = -50
 		add_manpower = -19
 
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_military_opinion = yes
 		ai_chance = {
 			factor = 1
 		}
 	}
 }
 
-#Datapoint files for Chapter 11 bankruptcy
+# Datapoint files for Chapter 11 bankruptcy
 country_event = {
 	id = usa.35
 	title = usa.35.t
@@ -1463,7 +1536,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: usa.35.o1 executed"
 		set_temp_variable = { treasury_change = -0.5 }
 		modify_treasury_effect = yes
-		increase_wall_street_opinion = yes
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_wall_street_opinion = yes
 
 		ai_chance = {
 			factor = 0
@@ -1520,9 +1595,9 @@ country_event = {
 	option = {
 		name = usa.37.o1
 		log = "[GetDateText]: [This.GetName]: usa.37.o1 executed"
-		USA_modify_industry_output_add_four = yes
-		increase_wall_street_opinion = yes #Competition Makes Wall Street Happy
-
+		set_temp_variable = { temp_opinion = 5 }
+		change_wall_street_opinion = yes
+		change_defense_industry_opinion = yes
 		ai_chance = {
 			factor = 1
 		}
@@ -1532,7 +1607,8 @@ country_event = {
 	option = {
 		name = usa.37.o2
 		log = "[GetDateText]: [This.GetName]: usa.37.o2 executed"
-		decrease_wall_street_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_wall_street_opinion = yes
 		add_political_power = 100
 		usa_regulations_increased_by_2 = yes
 
@@ -1565,6 +1641,8 @@ country_event = {
 		set_temp_variable = { treasury_change = -40 }
 		modify_treasury_effect = yes
 
+		set_temp_variable = { temp_opinion = -5 }
+		change_fossil_fuel_industry_opinion = yes
 		ai_chance = {
 			factor = 1
 		}
@@ -1575,7 +1653,8 @@ country_event = {
 		name = usa.38.o2
 		log = "[GetDateText]: [This.GetName]: usa.38.o2 executed"
 		add_stability = -0.01
-		decrease_popularity_2_5 = yes
+		set_temp_variable = { arg_popularity = -0.025 }
+		add_ruling_outlook_popularity = yes
 
 		ai_chance = {
 			factor = 0
@@ -1601,7 +1680,7 @@ country_event = {
 	option = {
 		name = usa.39.o1
 		log = "[GetDateText]: [This.GetName]: usa.39.o1 executed"
-		add_political_power = 25
+		add_political_power = 50
 	}
 }
 
@@ -1707,6 +1786,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: usa.60.o2 executed"
 		add_political_power = -50
 		add_stability = -0.02
+		set_temp_variable = { temp_opinion = -5 }
+		change_communist_cadres_opinion = yes
 		if = {
 			limit = {
 				NOT = {
@@ -1716,7 +1797,10 @@ country_event = {
 			}
 			add_country_leader_trait = communist_sympathizer
 		}
-		add_2_emerging_communist = yes
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
 
 		hidden_effect = {
 			if = {
@@ -1762,6 +1846,8 @@ country_event = {
 		769 = { set_state_name = "Engels" }			#New York			#Friedrich Engels
 		#Province Names
 		set_province_name = { id = 3957 name = "Gus Hall City, D.M." }
+		set_temp_variable = { temp_opinion = 15 }
+		change_communist_cadres_opinion = yes
 		set_country_flag = washington_dc_renamed_due_to_gus_hall
 		ai_chance = { factor = 100 }
 	}
@@ -1834,6 +1920,8 @@ country_event = {
 		771 = { set_state_name = "Pennsylvania" }	#Pennsylvania
 		769 = { set_state_name = "New York" }		#New York
 		set_province_name = { id = 3957 name = "Washington, D.C." }
+		set_temp_variable = { temp_opinion = -15 }
+		change_communist_cadres_opinion = yes
 	}
 }
 
@@ -1859,6 +1947,11 @@ country_event = {
 		}
 		clr_country_flag = USA_renogitate_nafta_flag
 		set_country_flag = USA_pro_american_deal
+
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_wall_street_opinion = yes
+		change_small_medium_business_owners_opinion = yes
 		ai_chance = {
 			factor = 0.5
 			modifier = {
@@ -1886,6 +1979,9 @@ country_event = {
 			MEX = { add_ideas = USA_mutually_benefical_idea }
 			CAN = { add_ideas = USA_mutually_benefical_idea }
 		}
+		set_temp_variable = { temp_opinion = 5 }
+		change_wall_street_opinion = yes
+		change_small_medium_business_owners_opinion = yes
 		clr_country_flag = USA_renogitate_nafta_flag
 		set_country_flag = USA_mutually_benefical_deal
 		ai_chance = {
@@ -1917,6 +2013,9 @@ country_event = {
 			MEX = { add_ideas = USA_america_fist_deal_mex_can_idea }
 			CAN = { add_ideas = USA_america_fist_deal_mex_can_idea }
 		}
+		set_temp_variable = { temp_opinion = 5 }
+		change_wall_street_opinion = yes
+		change_small_medium_business_owners_opinion = yes
 		clr_country_flag = USA_renogitate_nafta_flag
 		set_country_flag = USA_american_first_deal
 
@@ -2605,7 +2704,7 @@ country_event = {
 	id = usa_vanilla.64
 	title = usa_vanilla.64.t
 	desc = usa_vanilla.64.desc
-	picture = GFX_generic_submarine
+	picture = GFX_submarine
 	is_triggered_only = yes
 	trigger = { tag = USA }
 
@@ -2638,7 +2737,7 @@ news_event = {
 	id = usa_news.7
 	title = usa_news.7.t
 	desc = usa_news.7.d
-	picture = GFX_report_event_american_flag
+	picture = GFX_news_us_flag
 
 	is_triggered_only = yes
 	major = yes
@@ -2654,7 +2753,7 @@ news_event = {
 	id = usa_news.8
 	title = usa_news.8.t
 	desc = usa_news.8.d
-	picture = GFX_report_event_american_flag
+	picture = GFX_news_us_flag
 
 	is_triggered_only = yes
 	major = yes
@@ -2670,7 +2769,7 @@ news_event = {
 	id = usa_news.9
 	title = usa_news.9.t
 	desc = usa_news.9.d
-	picture = GFX_report_event_american_flag
+	picture = GFX_news_us_flag
 
 	is_triggered_only = yes
 	major = yes
@@ -2685,7 +2784,7 @@ news_event = {
 	id = usa_news.18
 	title = usa_news.18.t
 	desc = usa_news.18.d
-	picture = GFX_report_event_cole_attack
+	picture = GFX_cole_attack
 
 	major = yes
 
@@ -2783,7 +2882,7 @@ news_event = {
 	}
 	major = yes
 	is_triggered_only = yes
-	picture = GFX_report_event_united_states_army
+	picture = GFX_united_states_army
 
 	option = {
 		name = USA_FOCUS.1.a
@@ -3251,7 +3350,7 @@ country_event = {
 	id = USA_Repeal_Obama_Care.0
 	title = USA_Repeal_Obama_Care.0.t
 	desc = USA_Repeal_Obama_Care.0.d
-	picture = GFX_trump_care
+	picture = GFX_USA_trump_care
 	fire_only_once = yes
 	is_triggered_only = yes
 
@@ -3430,8 +3529,12 @@ news_event = {
 		name = USA_Repeal_Obama_Care.3.a
 		log = "[GetDateText]: [This.GetName]: USA_Repeal_Obama_Care.3.a executed" #Obama Care undermined
 		add_stability = -0.01
-		subtract_0_25_Republican_popularity = yes
-		subtract_0_25_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
 
 		ai_chance = {
 			factor = 50
@@ -3504,7 +3607,7 @@ news_event = {
 	id = USA_FOCUS.7
 	title = USA_FOCUS.7.t
 	desc = USA_FOCUS.7.d
-	picture = GFX_USA_TRUMP_ISRAEL_CAPITAL
+	picture = GFX_news_trump_isreal_capital
 
 	hidden = yes
 	major = yes
@@ -3615,7 +3718,7 @@ news_event = {
 	id = USA_Russia_Investigation.0
 	title = USA_Russia_Investigation.0.t
 	desc = USA_Russia_Investigation.0.d
-	picture = GFX_Start_Russia_Investigation
+	picture = GFX_news_start_russia_investigation
 
 	major = yes
 	fire_only_once = yes
@@ -3630,7 +3733,6 @@ news_event = {
 			set_global_flag = USA_Start_Russia_Investigation
 			hidden_effect = { add_ideas = usa_russia_investigation }
 		}
-
 	}
 }
 
@@ -3713,7 +3815,7 @@ news_event = {
 	id = USA_Purchase_Bases_ME.2
 	title = USA_Purchase_Bases_ME.2.t
 	desc = USA_Purchase_Bases_ME.2.d
-	picture = GFX_kuwait_naval_base
+	picture = GFX_news_usa_kuwait_naval_base
 	is_triggered_only = yes
 
 	trigger = {
@@ -3821,7 +3923,7 @@ news_event = {
 	id = USA_Purchase_Bases_ME.8
 	title = USA_Purchase_Bases_ME.8.t
 	desc = USA_Purchase_Bases_ME.8.d
-	picture = GFX_RAFO_Masriah
+	picture = GFX_news_usa_RAFO_Masriah
 
 	#hidden = yes
 	is_triggered_only = yes
@@ -3857,7 +3959,7 @@ country_event = {
 	hidden = yes
 	fire_only_once = yes
 	trigger = {
-		date > 2005.1.1
+		date > 2006.1.1
 		has_start_date < 2016.01.01
 		tag = USA
 		NOT = { has_country_flag = usa_american_recession_occured }
@@ -3915,7 +4017,8 @@ country_event = {
 		set_temp_variable = { treasury_change = -90 }
 		modify_treasury_effect = yes
 		recession = yes
-		decrease_wall_street_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_wall_street_opinion = yes
 		custom_effect_tooltip = usa_economic_nationalize_tt
 
 		set_country_flag = usa_nationalize_one
@@ -3950,7 +4053,8 @@ country_event = {
 		set_temp_variable = { treasury_change = -60 }
 		modify_treasury_effect = yes
 		recession = yes
-		increase_wall_street_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_wall_street_opinion = yes
 		custom_effect_tooltip = usa_economic_bailout_tt
 
 		#Obama/Democrat Route to handling the crisis
@@ -3987,12 +4091,14 @@ country_event = {
 	option = {
 		name = usa_economic_events.1.c
 		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.1.c"
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-		}
-		add_2_neutrality_libertarians = yes
+		set_temp_variable = { party_index = 16 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
+
 		recession = yes
-		decrease_wall_street_opinion = yes #Wall Street Does not like destabilized conditions
+		set_temp_variable = { temp_opinion = -5 }
+		change_wall_street_opinion = yes
 		custom_effect_tooltip = usa_economic_donothing_tt
 
 		#Begins the Libertarian/Republican Method of a Laissez Faire Approach
@@ -4088,11 +4194,15 @@ country_event = {
 	option = {
 		name = usa_economic_events.2.c
 		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.2.c"
-		decrease_popularity_2 = yes
-		hidden_effect = {
-			add_popularity = { ideology = neutrality popularity = 0.02 }
-		}
-		add_2_neutrality_libertarians = yes
+		set_temp_variable = { arg_popularity = -0.02 }
+		add_ruling_outlook_popularity = yes
+
+
+		set_temp_variable = { party_index = 16 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
+
 		custom_effect_tooltip = usa_economic_donothing_tt
 
 		set_country_flag = usa_nothing_two
@@ -4497,7 +4607,8 @@ country_event = {
 	option = {
 		name = usa_economic_events.31.a
 		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.31.a"
-		decrease_popularity_2 = yes
+		set_temp_variable = { arg_popularity = -0.02 }
+		add_ruling_outlook_popularity = yes
 		random_owned_controlled_state = {
 			remove_building = {
 				type = arms_factory
@@ -4553,7 +4664,8 @@ country_event = {
 	option = {
 		name = usa_economic_events.32.a
 		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.32.a"
-		decrease_popularity_2 = yes
+		set_temp_variable = { arg_popularity = -0.02 }
+		add_ruling_outlook_popularity = yes
 		random_owned_controlled_state = {
 			remove_building = {
 				type = industrial_complex
@@ -4597,9 +4709,11 @@ country_event = {
 	option = {
 		name = usa_economic_events.33.a
 		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.33.a"
-		decrease_popularity_2_5 = yes
+		set_temp_variable = { arg_popularity = -0.025 }
+		add_ruling_outlook_popularity = yes
 		add_stability = -0.03
-		decrease_wall_street_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_wall_street_opinion = yes
 		add_political_power = -100
 		hidden_effect = {
 			country_event = { id = usa_economic_events.30 days = 1 }
@@ -4628,8 +4742,10 @@ country_event = {
 		name = usa_economic_events.34.a
 		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.34.a"
 		add_stability = -0.02
-		decrease_popularity_2_5 = yes
-		decrease_wall_street_opinion = yes
+		set_temp_variable = { arg_popularity = -0.025 }
+		add_ruling_outlook_popularity = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_wall_street_opinion = yes
 		hidden_effect = {
 			country_event = { id = usa_economic_events.30 days = 1 }
 		}
@@ -4645,7 +4761,7 @@ country_event = {
 	title = usa_economic_events.35.t
 	desc = usa_economic_events.35.d
 	fire_only_once = yes
-	picture = GFX_bank_crisis
+	picture = GFX_banking_crisis
 	trigger = {
 		tag = USA
 		has_global_flag = usa_great_fiancial_crisis
@@ -4667,10 +4783,31 @@ country_event = {
 	mean_time_to_happen = {
 		days = 5
 		modifier = {
+			factor = 25
+			has_idea = USA_economic_crisis_severe_idea
+		}
+		modifier = {
+			factor = 20
+			has_idea = USA_economic_crisis_medium_idea
+		}
+		modifier = {
+			factor = 15
+			has_idea = USA_economic_crisis_light_idea
+		}
+		modifier = {
 			factor = 1000
-			NOT = {
+			OR = {
 				has_idea = recession
 				has_idea = depression
+				has_idea = stagnation
+			}
+		}
+		modifier = {
+			factor = 0.25
+			OR = {
+				has_idea = stable_growth
+				has_idea = fast_growth
+				has_idea = economic_boom
 			}
 		}
 	}
@@ -5025,7 +5162,7 @@ country_event = {
 	id = donald_trump.1000
 	title = donald_trump.1000.t
 	desc = donald_trump.1000.d
-	picture = GFX_new_years_2017_usa
+	picture = GFX_USA_new_years
 	fire_only_once = yes
 	is_triggered_only = yes
 
@@ -5040,7 +5177,7 @@ country_event = {
 	id = donald_trump.1001
 	title = donald_trump.1001.t
 	desc = donald_trump.1001.d
-	picture = GFX_Trump_Inaug
+	picture = GFX_USA_Trump_Inaug
 	fire_only_once = yes
 	is_triggered_only = yes
 
@@ -5061,12 +5198,7 @@ country_event = {
 				update_government_coalition_strength = yes
 				update_party_name = yes
 				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
+				set_ruling_leader = yes
 				set_leader = yes
 			}
 			set_politics = {
@@ -5099,7 +5231,7 @@ country_event = {
 	id = donald_trump.1002
 	title = donald_trump.1002.t
 	desc = donald_trump.1002.d
-	picture = GFX_Berkley_Riot
+	picture = GFX_USA_Berkley_Riot
 	is_triggered_only = yes
 	fire_only_once = yes
 	trigger = {
@@ -5114,7 +5246,9 @@ country_event = {
 		name = donald_trump.1002.a
 		log = "[GetDateText]: [This.GetName]: USA.3.a executed"
 		add_political_power = -10
-		subtract_1_5_Republican_popularity = yes
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = -0.015 }
+		add_relative_party_popularity = yes
 	}
 }
 
@@ -5274,7 +5408,7 @@ country_event = {
 	id = donald_trump.0
 	title = donald_trump.0.t
 	desc = donald_trump.0.d
-	picture = GFX_muslim_ban
+	picture = GFX_USA_muslim_ban
 	fire_only_once = yes
 	is_triggered_only = yes
 
@@ -5282,8 +5416,13 @@ country_event = {
 		name = donald_trump.0.o1 #Iraq, Syria, Iran, Sudan, Libya, Yemen, Somalia
 		log = "[GetDateText]: [This.GetName]: donald_trump.0.o1 executed"
 		set_country_flag = original_travel_ban
-		add_0_5_Republican_popularity = yes
-		add_0_5_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+
 		custom_effect_tooltip = travel_ban_challenge_possibility_tt
 		hidden_effect = {
 			random_list = {
@@ -5582,8 +5721,12 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: donald_trump.5.o1 executed"
 		add_political_power = -15
 		add_stability = -0.02
-		subtract_0_25_Republican_popularity = yes
-		subtract_0_25_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
 		custom_effect_tooltip = travel_ban_drop_tt
 	}
 }
@@ -5602,8 +5745,12 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: donald_trump.6.o1 executed"
 		add_political_power = 50
 		add_stability = 0.02
-		add_0_5_Republican_popularity = yes
-		add_0_5_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
 		custom_effect_tooltip = travel_ban_drop_tt
 	}
 }
@@ -5653,14 +5800,22 @@ country_event = {
 			}
 			add_political_power = 100
 			add_stability = 0.03
-			add_1_Republican_popularity = yes
-			add_1_Nat_Populism_popularity = yes
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			add_relative_party_popularity = yes
 		}
 		else = {
 			add_political_power = 50
 			add_stability = 0.01
-			add_0_5_Republican_popularity = yes
-			add_0_5_Nat_Populism_popularity = yes
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.005 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.005 }
+			add_relative_party_popularity = yes
 		}
 		custom_effect_tooltip = travel_ban_drop_tt
 	}
@@ -5748,7 +5903,9 @@ country_event = {
 	option = { #Huzzah!
 		name = donald_trump.11.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump.11.o1 executed"
-		add_0_25_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
 		capital_scope = {
 			add_resource = {
 				type = tungsten
@@ -5989,8 +6146,12 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: donald_trump.16.o1 executed"
 		add_political_power = 50
 		add_stability = 0.03
-		add_0_25_Republican_popularity = yes
-		add_0_25_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
 		hidden_effect = {
 			random_list = {
 				75 = {
@@ -6025,8 +6186,12 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: donald_trump.17.o1 executed"
 		add_political_power = -75
 		add_stability = -0.02
-		subtract_1_Republican_popularity = yes
-		subtract_2_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		add_relative_party_popularity = yes
 		if = {
 			limit = {
 				NOT = {
@@ -6088,8 +6253,12 @@ country_event = {
 		name = donald_trump.19.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump.19.o1 executed"
 		add_political_power = 100
-		subtract_0_5_Republican_popularity = yes
-		subtract_1_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
 		if = {
 			limit = {
 				NOT = {
@@ -6171,8 +6340,12 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: donald_trump.21.o1 executed"
 		add_political_power = 150
-		add_4_Republican_popularity = yes
-		add_2_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
 		hidden_effect = {
 			country_event = {
 				id = donald_trump.22
@@ -6188,8 +6361,12 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: donald_trump.21.o2 executed"
 		add_political_power = 50
-		add_1_Republican_popularity = yes
-		add_0_5_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
 		hidden_effect = {
 			country_event = {
 				id = donald_trump.22
@@ -6231,8 +6408,12 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: donald_trump.22.o1 executed"
 		add_political_power = 250
-		add_2_Republican_popularity = yes
-		add_1_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
 		custom_effect_tooltip = mission_to_mars_chain_end_tt
 	}
 	option = { #They're home
@@ -6242,8 +6423,12 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: donald_trump.22.o2 executed"
 		add_political_power = 50
-		add_0_25_Republican_popularity = yes
-		add_0_25_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
 		custom_effect_tooltip = mission_to_mars_chain_end_tt
 	}
 }
@@ -6291,8 +6476,12 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: donald_trump.25.o1 executed"
 		add_political_power = 100
-		add_0_5_Republican_popularity = yes
-		add_0_5_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
 		news_event = donald_trump_news.8
 	}
 	option = { #It's still an amazing accomplishment
@@ -6302,7 +6491,9 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: donald_trump.25.o2 executed"
 		add_political_power = 25
-		add_0_25_Republican_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
 		set_country_flag = spacex_reaches_mars_first
 	}
 }
@@ -6343,8 +6534,12 @@ country_event = {
 		name = donald_trump.27.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump.27.o1 executed"
 		add_political_power = -10
-		add_0_25_Republican_popularity = yes
-		add_0_25_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
 		advance_moon_base = yes
 	}
 }
@@ -6364,7 +6559,9 @@ country_event = {
 		name = donald_trump.28.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump.28.o1 executed"
 		add_political_power = 20
-		add_0_25_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
 		advance_moon_base = yes
 		swap_ideas = {
 			remove_idea = continued_space_efforts5
@@ -6388,16 +6585,24 @@ country_event = {
 		name = donald_trump.29.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump.29.o1 executed"
 		add_political_power = -75
-		subtract_0_5_Republican_popularity = yes
-		subtract_1_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
 		advance_moon_base = yes
 	}
 	option = { #Abandon the project. It's not meant for us
 		name = donald_trump.29.o2
 		log = "[GetDateText]: [This.GetName]: donald_trump.29.o2 executed"
 		add_political_power = 25
-		subtract_0_25_Republican_popularity = yes
-		subtract_1_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
 	}
 }
 
@@ -6416,7 +6621,9 @@ country_event = {
 		name = donald_trump.30.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump.30.o1 executed"
 		add_political_power = 30
-		add_0_25_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
 		advance_moon_base = yes
 		swap_ideas = {
 			remove_idea = continued_space_efforts6
@@ -6442,16 +6649,24 @@ country_event = {
 		add_political_power = -100
 		set_temp_variable = { treasury_change = -5 }
 		modify_treasury_effect = yes
-		subtract_0_5_Republican_popularity = yes
-		subtract_1_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
 		advance_moon_base = yes
 	}
 	option = { #We can't continue doing things like this.
 		name = donald_trump.31.o2
 		log = "[GetDateText]: [This.GetName]: donald_trump.31.o2 executed"
 		add_political_power = 50
-		subtract_0_25_Republican_popularity = yes
-		subtract_1_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
 	}
 }
 
@@ -6470,8 +6685,12 @@ country_event = {
 		name = donald_trump.32.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump.32.o1 executed"
 		add_political_power = 50
-		add_0_5_Republican_popularity = yes
-		add_1_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
 		swap_ideas = {
 			remove_idea = continued_space_efforts7
 			add_idea = continued_space_efforts8
@@ -6490,7 +6709,7 @@ country_event = {
 	id = donald_trump.500
 	title = donald_trump.500.t
 	desc = donald_trump.500.d
-	picture = GFX_Tahrir_Al_Sham
+	picture = GFX_SYR_tahrir_al_sham
 	fire_only_once = yes
 	is_triggered_only = yes
 
@@ -6513,8 +6732,12 @@ country_event = {
 			}
 		}
 		add_stability = 0.03
-		add_0_25_Nat_Populism_popularity = yes
-		add_0_5_Constitutionalism_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 14 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
 		set_country_flag = dealing_with_isis_suspend_us_intervention
 		news_event = donald_trump_news.0
 		hidden_effect = {
@@ -6544,7 +6767,9 @@ country_event = {
 		set_temp_variable = { treasury_change = -10 }
 		modify_treasury_effect = yes
 		add_political_power = 100
-		add_0_25_Republican_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
 		set_country_flag = dealing_with_isis_continue_operations
 		hidden_effect = {
 			ISI = {
@@ -6585,8 +6810,12 @@ country_event = {
 		}
 		add_stability = -0.03
 		set_country_flag = dealing_with_isis_escalate_the_campaign
-		subtract_0_5_Republican_popularity = yes
-		subtract_1_Nat_Populism_popularity = yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		add_relative_party_popularity = yes
 		news_event = donald_trump_news.1
 		hidden_effect = {
 			ISI = {
@@ -7213,7 +7442,7 @@ news_event = {
 	id = donald_trump_news.12
 	title = donald_trump_news.12.t
 	desc = donald_trump_news.12.d
-	picture = GFX_Start_Russia_Investigation
+	picture = GFX_news_start_russia_investigation
 	major = yes
 	fire_only_once = yes
 	is_triggered_only = yes
@@ -7224,17 +7453,15 @@ news_event = {
 		}
 		name = donald_trump_news.12.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump_news.12.o1 executed"
-		subtract_from_variable = {
-			var = party_pop_array^1
-			value = 0.15
-		}
-		custom_effect_tooltip = subtract_Republican_pop_0.15_tt
-		subtract_3_Constitutionalism_popularity = yes
-		subtract_from_variable = {
-			var = party_pop_array^20
-			value = 0.10
-		}
-		custom_effect_tooltip = subtract_Nat_Populism_pop_0.1_tt
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 14 }
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		add_relative_party_popularity = yes
 	}
 	option = { #Interesting
 		trigger = {

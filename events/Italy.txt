@@ -1,7 +1,5 @@
 ﻿add_namespace = italy_md
 
-#unused event numbers 26
-
 #Lateran Treaties Accepted
 country_event = {
 	id = italy_md.1
@@ -15,7 +13,8 @@ country_event = {
 		name = italy_md.1.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.1.o1 executed"
 		add_political_power = 10
-		increase_The_Clergy_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_clergy_opinion = yes
 		add_opinion_modifier = {
 			target = HLS
 			modifier = lateran_treaties_accepted
@@ -35,7 +34,8 @@ country_event = {
 		name = italy_md.2.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.2.o1 executed"
 		clr_country_flag = HLS_lateran_treaties
-		decrease_The_Clergy_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_clergy_opinion = yes
 		add_opinion_modifier = {
 			target = HLS
 			modifier = lateran_treaties_refused
@@ -295,7 +295,10 @@ country_event = {
 			target = ITA
 			modifier = ITA_oil_investments_africa
 		}
-		add_to_variable = { party_pop_array^21 = 0.025 } #Fascist Increase by 2.5%
+		set_temp_variable = { party_index = 21 }
+		set_temp_variable = { party_popularity_increase = 0.025 }
+		set_temp_variable = { temp_outlook_increase = 0.025 }
+		add_relative_party_popularity = yes
 		ITA = { country_event = italy_md.8 }
 		ITA = { set_country_flag = EGY_oil_deal_through_fascist_tree }
 	}
@@ -450,6 +453,7 @@ country_event = {
 	trigger = {
 		has_full_control_of_state = 960
 		date > 2016.8.23
+		date < 2016.8.25
 	}
 	fire_only_once = yes
 
@@ -496,6 +500,7 @@ country_event = {
 	trigger = {
 		has_full_control_of_state = 960
 		date > 2009.4.5
+		date < 2009.4.7
 	}
 	fire_only_once = yes
 
@@ -760,7 +765,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: italy_md.24.o1 executed"
 		if = {
 			limit = {
-				82 = { infrastructure < 10 }
+				82 = { infrastructure < 5 }
 			}
 			82 = {
 				add_building_construction = {
@@ -791,6 +796,125 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: italy_md.25.o2 executed"
 	}
 }
+#event to change internal factions
+country_event = {
+	id = italy_md.26
+	title = italy_md.26.t
+	desc = italy_md.26.d
+	picture = GFX_report_event_Reform_ITA
+
+	is_triggered_only = yes
+
+	option = {
+		name = italy_md.26.o1 #confindustria
+		trigger = {
+			NOT = { has_idea = industrial_conglomerates }
+		}
+		log = "[GetDateText]: [This.GetName]: italy_md.26.o1 executed"
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_clergy_flag
+			}
+			swap_ideas = {
+				remove_idea = The_Clergy
+				add_idea = industrial_conglomerates
+			}
+			clr_country_flag = ITA_replace_clergy_flag
+		}
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_labour_unions
+			}
+			swap_ideas = {
+				remove_idea = labour_unions
+				add_idea = industrial_conglomerates
+			}
+			clr_country_flag = ITA_replace_labour_unions
+		}
+	}
+	option = {
+		name = italy_md.26.o2 #piazza affari
+		trigger = {
+			NOT = { has_idea = international_bankers }
+		}
+		log = "[GetDateText]: [This.GetName]: italy_md.26.o2 executed"
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_clergy_flag
+			}
+			swap_ideas = {
+				remove_idea = The_Clergy
+				add_idea = international_bankers
+			}
+			clr_country_flag = ITA_replace_clergy_flag
+		}
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_labour_unions
+			}
+			swap_ideas = {
+				remove_idea = labour_unions
+				add_idea = international_bankers
+			}
+			clr_country_flag = ITA_replace_labour_unions
+		}
+	}
+	option = {
+		name = italy_md.26.o3 #finmeccanica
+		trigger = {
+			NOT = { has_idea = defense_industry }
+		}
+		log = "[GetDateText]: [This.GetName]: italy_md.26.o3 executed"
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_clergy_flag
+			}
+			swap_ideas = {
+				remove_idea = The_Clergy
+				add_idea = defense_industry
+			}
+			clr_country_flag = ITA_replace_clergy_flag
+		}
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_labour_unions
+			}
+			swap_ideas = {
+				remove_idea = labour_unions
+				add_idea = defense_industry
+			}
+			clr_country_flag = ITA_replace_labour_unions
+		}
+	}
+	option = {
+		name = italy_md.26.o4 #coldiretti
+		trigger = {
+			NOT = { has_idea = farmers }
+		}
+		log = "[GetDateText]: [This.GetName]: italy_md.26.o4 executed"
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_clergy_flag
+			}
+			swap_ideas = {
+				remove_idea = The_Clergy
+				add_idea = farmers
+			}
+			clr_country_flag = ITA_replace_clergy_flag
+		}
+		if = {
+			limit = {
+				has_country_flag = ITA_replace_labour_unions
+			}
+			swap_ideas = {
+				remove_idea = labour_unions
+				add_idea = farmers
+			}
+			clr_country_flag = ITA_replace_labour_unions
+		}
+	}
+}
+
 #Investments Abroad
 country_event = {
 	id = italy_md.27
@@ -982,25 +1106,65 @@ country_event = {
 		custom_effect_tooltip = ITA_end_war_on_mafia_tt
 		82 = {
 			remove_dynamic_modifier = { modifier = camorra_infiltrations_modifier }
-			set_variable = { camorra_infiltrations_var = 0 }
+			clear_variable = camorra_infiltrations_var
 			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
 		}
 		956 = {
 			remove_dynamic_modifier = { modifier = ndrangheta_infiltrations_modifier }
-			set_variable = { ndrangheta_infiltrations_var = 0 }
+			clear_variable = ndrangheta_infiltrations_var
 			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
 		}
 		957 = {
 			remove_dynamic_modifier = { modifier = sacra_corona_unita_infiltrations_modifier }
-			set_variable = { sacra_corona_unita_infiltrations_var = 0 }
+			clear_variable = sacra_corona_unita_infiltrations_var
 			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
 		}
 		83 = {
 			remove_dynamic_modifier = { modifier = cosa_nostra_infiltrations_modifier }
-			set_variable = { cosa_nostra_infiltrations_var = 0 }
+			clear_variable = cosa_nostra_infiltrations_var
 			remove_dynamic_modifier = { modifier = mafia_foreign_investment }
 		}
 		remove_ideas = ITA_war_with_Mafia
+		clear_variable = mafia_strength
+		clear_variable = cosa_nostra_strength
+		clear_variable = camorra_strength
+		clear_variable = ndrangheta_strength
+		clear_variable = sacra_corona_unita_strength
+		clear_variable = mafia_strength_stab_var
+		clear_variable = mafia_strength_construction_var
+		clear_variable = mafia_strength_pp_var
+		clear_variable = mafia_strength_lega_drift_var
+		clear_variable = police_effectivness
+		clear_variable = police_effectivness_sicily
+		clear_variable = police_effectivness_campania
+		clear_variable = police_effectivness_calabria
+		clear_variable = police_effectivness_puglia
+		clear_variable = event_counter_1_sicily
+		clear_variable = event_counter_2_sicily
+		clear_variable = event_counter_3_sicily
+		clear_variable = event_counter_4_sicily
+		clear_variable = event_counter_1_campania
+		clear_variable = event_counter_2_campania
+		clear_variable = event_counter_3_campania
+		clear_variable = event_counter_4_campania
+		clear_variable = event_counter_1_calabria
+		clear_variable = event_counter_2_calabria
+		clear_variable = event_counter_3_calabria
+		clear_variable = event_counter_4_calabria
+		clear_variable = event_counter_1_puglia
+		clear_variable = event_counter_2_puglia
+		clear_variable = event_counter_3_puglia
+		clear_variable = event_counter_4_puglia
+		clear_variable = undercover_agents_sicily
+		clear_variable = undercover_agents_campania
+		clear_variable = undercover_agents_calabria
+		clear_variable = undercover_agents_puglia
+		clear_variable = extraordinary_police_funding_cost
+		clear_variable = lega_drift_monthly_store_var
+		clear_variable = monthly_drift_events_cosa_nostra
+		clear_variable = monthly_drift_events_camorra
+		clear_variable = monthly_drift_events_ndrangheta
+		clear_variable = monthly_drift_events_sacra_corona_unita
 	}
 }
 #lateran treaties
@@ -1119,7 +1283,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: italy_md.36.o1 executed"
 	}
 }
-#tag switch to PAD
+#tag switch to SCL (padania)
 country_event = {
 	id = italy_md.37
 	title = italy_md.37.t
@@ -1131,7 +1295,7 @@ country_event = {
 	option = {
 		name = italy_md.37.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.37.o1 executed"
-		PAD = { change_tag_from = ITA }
+		SCL = { change_tag_from = ITA }
 	}
 	option = {
 		name = italy_md.37.o2
@@ -1150,6 +1314,7 @@ country_event = {
 	option = {
 		name = italy_md.38.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.38.o1 executed"
+		add_political_power = 300
 		country_event = { id = MD4_election_campaign.0 }
 		ai_chance = {
 			factor = 10
@@ -1158,7 +1323,10 @@ country_event = {
 	option = {
 		name = italy_md.38.o2
 		log = "[GetDateText]: [This.GetName]: italy_md.38.o2 executed"
-		add_10_popularity_sub_ITA = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
 		add_to_variable = { stability_weekly_stuck_var = -0.03 }
 		custom_effect_tooltip = government_crisis_stab_hit_TT
 		if = {
@@ -1297,6 +1465,729 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: italy_md.39.o2 executed"
 	}
 }
+#Salvini rises
+country_event = {
+	id = italy_md.40
+	title = italy_md.40.t
+	desc = italy_md.40.d
+	picture = GFX_report_event_Tavolo_Trattative_2
+
+	trigger = {
+		date > 2013.12.6
+		date < 2013.12.8
+	}
+	fire_only_once = yes
+
+	option = {
+		name = italy_md.40.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.40.o1 executed"
+		set_country_flag = ITA_salvini_took_over_lega
+		set_temp_variable = { negative_lega_popularity = party_pop_array^14 }
+		multiply_temp_variable = { negative_lega_popularity = -1 }
+		set_temp_variable = { party_index = 6 }
+		set_temp_variable = { party_popularity_increase = party_pop_array^14 }
+		set_temp_variable = { temp_outlook_increase = party_pop_array^14 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 14 }
+		set_temp_variable = { party_popularity_increase = negative_lega_popularity }
+		set_temp_variable = { temp_outlook_increase = negative_lega_popularity }
+		add_relative_party_popularity = yes
+		add_ideas = ITA_russian_propaganda
+	}
+}
+#Movimento 5 stelle is born
+country_event = {
+	id = italy_md.41
+	title = italy_md.41.t
+	desc = italy_md.41.d
+	picture = GFX_report_event_Tavolo_Trattative_1
+
+	trigger = {
+		date > 2009.10.3
+		date < 2013.10.5
+	}
+	fire_only_once = yes
+
+	option = {
+		name = italy_md.41.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.41.o1 executed"
+		set_country_flag = ITA_five_star_movement_founded
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.033 }
+		add_relative_party_popularity = yes
+	}
+}
+#Naples waste crysis
+country_event = {
+	id = italy_md.42
+	title = italy_md.42.t
+	desc = italy_md.42.d
+	picture = GFX_report_event_illegal_Waste_2
+
+	trigger = {
+		date > 2007.10.1
+		date < 2008.1.1
+	}
+	fire_only_once = yes
+
+	option = {
+		name = italy_md.42.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.42.o1 executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.1 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+		custom_effect_tooltip = decrease_nimby_culture_TT
+		add_to_variable = { nimby_culture_var = 0.05 }
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+	}
+
+	option = {
+		name = italy_md.42.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.42.o2 executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.025 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
+	}
+
+	option = {
+		name = italy_md.42.o3
+		log = "[GetDateText]: [This.GetName]: italy_md.42.o3 executed"
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+		add_to_variable = { camorra_strength = 0.05}
+	}
+}
+#Rome waste crysis
+country_event = {
+	id = italy_md.43
+	title = italy_md.43.t
+	desc = italy_md.43.d
+	picture = GFX_report_event_illegal_Waste_2
+
+	is_triggered_only = yes
+
+	option = {
+		name = italy_md.43.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.43.o1 executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.1 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+		custom_effect_tooltip = decrease_nimby_culture_TT
+		add_to_variable = { nimby_culture_var = 0.05 }
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+	}
+
+	option = {
+		name = italy_md.43.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.43.o2 executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.025 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
+	}
+
+	option = {
+		name = italy_md.43.o3
+		log = "[GetDateText]: [This.GetName]: italy_md.43.o3 executed"
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+		add_to_variable = { camorra_strength = 0.05}
+	}
+}
+#policy change repel policy events
+#PD FI
+country_event = {
+	id = italy_md.44
+	title = italy_md.44.t
+	desc = italy_md.44.d
+	picture = GFX_report_event_Tavolo_Trattative_1
+
+	is_triggered_only = yes
+
+	option = {
+		name = italy_md.44.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.44.o1 executed"
+		if = {
+			limit = { has_idea = ITA_election_tips }
+				add_political_power = -75
+				remove_6_ruling_party_drift = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.10 }
+				set_temp_variable = { temp_outlook_increase = -0.05 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_election_tips
+		}
+		if = {
+			limit = { has_idea = ITA_rigid_labour_market }
+				add_political_power = -75
+				remove_3_ruling_party_drift = yes
+				set_temp_variable = { temp_opinion = -5 }
+				change_labour_unions_opinion = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				add_political_power = -100
+				remove_ideas = ITA_rigid_labour_market
+		}
+		if = {
+			limit = { has_idea = ITA_migration_tolerated }
+				swap_ideas = {
+					add_idea = ITA_migrants_from_africa
+					remove_idea = ITA_migration_tolerated
+				}
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.05 }
+				set_temp_variable = { temp_outlook_increase = 0.025 }
+				add_relative_party_popularity = yes
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_zombie_companies }
+				remove_3_ruling_party_drift = yes
+				set_temp_variable = { temp_opinion = -5 }
+				change_labour_unions_opinion = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				add_political_power = -100
+				remove_ideas = ITA_zombie_companies
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_flexible_labour_market }
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.05 }
+				set_temp_variable = { temp_outlook_increase = 0.025 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { temp_opinion = 5 }
+				change_labour_unions_opinion = yes
+				remove_ideas = ITA_flexible_labour_market
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_privatizations	}
+				custom_effect_tooltip = ITA_debt_market_trust_decrease_TT
+				add_to_variable = { bond_markets_trust = 0.5 }
+				set_temp_variable = { money_amount = gdp_total }
+				multiply_temp_variable = { money_amount = -0.06 }
+				set_temp_variable = { treasury_change = money_amount }
+				modify_treasury_effect = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.10 }
+				set_temp_variable = { temp_outlook_increase = 0.05 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { temp_opinion = -5 }
+				change_international_bankers_opinion = yes
+				remove_ideas = ITA_privatizations
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_legalized_prostitution	}
+				if = { limit = { has_idea = ITA_mafia }
+					add_to_variable = { cosa_nostra_strength = 0.05 }
+					add_to_variable = { camorra_strength = 0.05 }
+					add_to_variable = { ndrangheta_strength = 0.05 }
+					add_to_variable = { sacra_corona_unita_strength = 0.05 }
+					add_to_variable = { police_effectivness_base = -0.05 }
+					update_police_effectivness = yes
+				}
+				remove_2_ruling_party_drift = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_legalized_prostitution
+				add_political_power = -75
+		}
+	}
+
+	option = {
+		name = italy_md.44.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.44.o2 executed"
+	}
+}
+#m5s alleanza nazionale
+country_event = {
+	id = italy_md.45
+	title = italy_md.45.t
+	desc = italy_md.45.d
+	picture = GFX_report_event_Tavolo_Trattative_1
+
+	is_triggered_only = yes
+
+	option = {
+		name = italy_md.45.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.45.o1 executed"
+		if = {
+			limit = { has_idea = ITA_flat_tax }
+				remove_3_ruling_party_drift = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_flat_tax
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_traditional_values }
+				remove_2_ruling_party_drift = yes
+				add_stability = -0.05
+				remove_ideas = ITA_traditional_values
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_capital_flight }
+				remove_4_ruling_party_drift = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.10 }
+				set_temp_variable = { temp_outlook_increase = -0.05 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_capital_flight
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_rigid_labour_market }
+				remove_3_ruling_party_drift = yes
+				set_temp_variable = { temp_opinion = -5 }
+				change_labour_unions_opinion = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				add_political_power = -100
+				remove_ideas = ITA_rigid_labour_market
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_election_tips }
+				remove_6_ruling_party_drift = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.10 }
+				set_temp_variable = { temp_outlook_increase = -0.05 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_election_tips
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_IRI }
+				remove_1_ruling_party_drift = yes
+				custom_effect_tooltip = ITA_debt_market_trust_increase_TT
+				add_to_variable = { bond_markets_trust = -0.25 }
+				set_temp_variable = { money_amount = gdp_total }
+				multiply_temp_variable = { money_amount = 0.04 }
+				set_temp_variable = { treasury_change = money_amount }
+				modify_treasury_effect = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				add_political_power = -150
+				remove_ideas = ITA_IRI
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_zombie_companies }
+				remove_3_ruling_party_drift = yes
+				set_temp_variable = { temp_opinion = -5 }
+				change_labour_unions_opinion = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				add_political_power = -100
+				remove_ideas = ITA_zombie_companies
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_migrants_from_africa_limited }
+				remove_4_ruling_party_drift = yes
+				swap_ideas = {
+					add_idea = ITA_migrants_from_africa
+					remove_idea = ITA_migrants_from_africa_limited
+				}
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_citizenship_income_spirit }
+				remove_3_ruling_party_drift = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				add_political_power = -150
+				remove_ideas = ITA_citizenship_income_spirit
+				add_political_power = -75
+		}
+	}
+
+	option = {
+		name = italy_md.45.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.45.o2 executed"
+	}
+}
+#greens leu
+country_event = {
+	id = italy_md.46
+	title = italy_md.46.t
+	desc = italy_md.46.d
+	picture = GFX_report_event_Tavolo_Trattative_1
+
+	is_triggered_only = yes
+
+	option = {
+		name = italy_md.46.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.46.o1 executed"
+		if = {
+			limit = { has_idea = ITA_IRI }
+				remove_1_ruling_party_drift = yes
+				custom_effect_tooltip = ITA_debt_market_trust_increase_TT
+				add_to_variable = { bond_markets_trust = -0.25 }
+				set_temp_variable = { money_amount = gdp_total }
+				multiply_temp_variable = { money_amount = 0.04 }
+				set_temp_variable = { treasury_change = money_amount }
+				modify_treasury_effect = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				add_political_power = -150
+				remove_ideas = ITA_IRI
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_zombie_companies }
+				remove_3_ruling_party_drift = yes
+				set_temp_variable = { temp_opinion = -5 }
+				change_labour_unions_opinion = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				add_political_power = -100
+				remove_ideas = ITA_zombie_companies
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_capital_flight }
+				remove_4_ruling_party_drift = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.10 }
+				set_temp_variable = { temp_outlook_increase = -0.05 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_capital_flight
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_carbon_tax }
+				remove_2_ruling_party_drift = yes
+				remove_ideas = ITA_carbon_tax
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_rigid_labour_market }
+				remove_3_ruling_party_drift = yes
+				set_temp_variable = { temp_opinion = -5 }
+				change_labour_unions_opinion = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				add_political_power = -100
+				remove_ideas = ITA_rigid_labour_market
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_high_minimum_wage }
+				set_temp_variable = { temp_opinion = -5 }
+				change_labour_unions_opinion = yes
+				remove_4_ruling_party_drift = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_high_minimum_wage
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_happy_degrowth_spirit }
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_happy_degrowth_spirit
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_green_subsidies }
+				remove_2_ruling_party_drift = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.10 }
+				set_temp_variable = { temp_outlook_increase = -0.05 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_green_subsidies
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_gmos_banned }
+				remove_2_ruling_party_drift = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.10 }
+				set_temp_variable = { temp_outlook_increase = -0.05 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_gmos_banned
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_migration_tolerated }
+				swap_ideas = {
+					add_idea = ITA_migrants_from_africa
+					remove_idea = ITA_migration_tolerated
+				}
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.05 }
+				set_temp_variable = { temp_outlook_increase = 0.025 }
+				add_relative_party_popularity = yes
+				add_political_power = -75
+		}
+	}
+
+	option = {
+		name = italy_md.46.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.46.o2 executed"
+	}
+}
+#liberals libertarians
+country_event = {
+	id = italy_md.47
+	title = italy_md.47.t
+	desc = italy_md.47.d
+	picture = GFX_report_event_Tavolo_Trattative_1
+
+	is_triggered_only = yes
+
+	option = {
+		name = italy_md.47.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.47.o1 executed"
+		if = {
+			limit = {
+				has_idea = ITA_legalized_light_drugs
+			}
+			if = { limit = { has_idea = ITA_mafia }
+				add_to_variable = { cosa_nostra_strength = 0.1 }
+				add_to_variable = { camorra_strength = 0.1 }
+				add_to_variable = { ndrangheta_strength = 0.1 }
+				add_to_variable = { sacra_corona_unita_strength = 0.1 }
+				add_to_variable = { police_effectivness_base = -0.1 }
+				update_police_effectivness = yes
+			}
+			remove_2_ruling_party_drift = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.1 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
+			remove_ideas = ITA_legalized_light_drugs
+		}
+		if = {
+			limit = {
+				has_idea = ITA_legalize_all_drugs
+			}
+			if = { limit = { has_idea = ITA_mafia }
+				add_to_variable = { cosa_nostra_strength = 0.1 }
+				add_to_variable = { camorra_strength = 0.1 }
+				add_to_variable = { ndrangheta_strength = 0.1 }
+				add_to_variable = { sacra_corona_unita_strength = 0.1 }
+				add_to_variable = { police_effectivness_base = -0.05 }
+				update_police_effectivness = yes
+			}
+			add_ideas = ITA_legalized_light_drugs
+			remove_ideas = ITA_legalized_all_drugs
+		}
+		if = {
+			limit = { has_idea = ITA_flexible_labour_market }
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.05 }
+				set_temp_variable = { temp_outlook_increase = 0.025 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { temp_opinion = 5 }
+				change_labour_unions_opinion = yes
+				remove_ideas = ITA_flexible_labour_market
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_dynamic_economy }
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.05 }
+				set_temp_variable = { temp_outlook_increase = 0.025 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { temp_opinion = 5 }
+				change_labour_unions_opinion = yes
+				remove_ideas = ITA_dynamic_economy
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_legalized_prostitution }
+				if = { limit = { has_idea = ITA_mafia }
+					add_to_variable = { cosa_nostra_strength = 0.05 }
+					add_to_variable = { camorra_strength = 0.05 }
+					add_to_variable = { ndrangheta_strength = 0.05 }
+					add_to_variable = { sacra_corona_unita_strength = 0.05 }
+					add_to_variable = { police_effectivness_base = -0.05 }
+					update_police_effectivness = yes
+				}
+				remove_2_ruling_party_drift = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				set_temp_variable = { temp_outlook_increase = -0.02 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_legalized_prostitution
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_carbon_tax }
+				remove_2_ruling_party_drift = yes
+				remove_ideas = ITA_carbon_tax
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_privatizations }
+				custom_effect_tooltip = ITA_debt_market_trust_decrease_TT
+				add_to_variable = { bond_markets_trust = 0.5 }
+				set_temp_variable = { money_amount = gdp_total }
+				multiply_temp_variable = { money_amount = -0.06 }
+				set_temp_variable = { treasury_change = money_amount }
+				modify_treasury_effect = yes
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.10 }
+				set_temp_variable = { temp_outlook_increase = 0.05 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { temp_opinion = -5 }
+				change_international_bankers_opinion = yes
+				remove_ideas = ITA_privatizations
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_migration_tolerated }
+				swap_ideas = {
+					add_idea = ITA_migrants_from_africa
+					remove_idea = ITA_migration_tolerated
+				}
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.05 }
+				set_temp_variable = { temp_outlook_increase = 0.025 }
+				add_relative_party_popularity = yes
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_migrants_from_africa_encouraged }
+				add_1_ruling_party_drift = yes
+				swap_ideas = {
+					add_idea = ITA_migration_tolerated
+					remove_idea = ITA_migrants_from_africa_encouraged
+				}
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.05 }
+				set_temp_variable = { temp_outlook_increase = 0.025 }
+				add_relative_party_popularity = yes
+				add_political_power = -75
+		}
+	}
+
+	option = {
+		name = italy_md.47.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.47.o2 executed"
+	}
+}
+#communists
+country_event = {
+	id = italy_md.48
+	title = italy_md.48.t
+	desc = italy_md.48.d
+	picture = GFX_report_event_Tavolo_Trattative_1
+
+	is_triggered_only = yes
+
+	option = {
+		name = italy_md.48.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.48.o1 executed"
+		if = {
+			limit = { has_idea = md_closed_economy }
+				swap_ideas = {
+					remove_idea = md_closed_economy
+					add_idea = consumption_economy
+				}
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_expropriations }
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.10 }
+				set_temp_variable = { temp_outlook_increase = -0.05 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { expropriated_amount = gdp_total }
+				multiply_temp_variable = { expropriated_amount = -0.05 }
+				set_temp_variable = { treasury_change = expropriated_amount }
+				modify_treasury_effect = yes
+				remove_ideas = ITA_expropriations
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = Planned_Economy_ITA }
+				remove_ideas = Planned_Economy_ITA
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_party_approved_media_c }
+				if = {
+					limit = {
+						has_idea = ITA_party_approved_media_c
+					}
+					remove_ideas = ITA_party_approved_media_c
+				}
+				else_if = {
+					limit = {
+						has_idea = ITA_party_approved_media_f
+					}
+					remove_ideas = ITA_party_approved_media_f
+				}
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_party_propaganda }
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.10 }
+				set_temp_variable = { temp_outlook_increase = -0.05 }
+				add_relative_party_popularity = yes
+				remove_ideas = ITA_party_propaganda
+				add_political_power = -75
+		}
+		if = {
+			limit = { has_idea = ITA_closed_nation }
+				remove_ideas = ITA_closed_nation
+				allow_elections = yes
+				add_political_power = -200
+				add_political_power = -75
+		}
+	}
+
+	option = {
+		name = italy_md.48.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.48.o2 executed"
+	}
+}
+
+
 add_namespace = mafia
 #success in provoking infighting
 country_event = {
@@ -1352,7 +2243,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: mafia.3.a executed"
 		custom_effect_tooltip = mafia_strength_decrease_tt
 		add_political_power = 50
-		add_5_popularity_sub = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
 	}
 }
 #insuccess in attacking hideout
@@ -1389,7 +2283,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: mafia.5.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					custom_effect_tooltip = reduce_mafia_strength_tt
 					add_to_variable = { cosa_nostra_strength = -0.010 }
@@ -1397,11 +2291,78 @@ country_event = {
 						factor = police_effectivness_sicily
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { cosa_nostra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = -0.001 }
+				}
+				30 = {
 					add_to_variable = { cosa_nostra_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
 				}
+				10 = {
+					add_to_variable = { cosa_nostra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
+				}
 			}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				command_power < 50
+				check_variable = { cosa_nostra_strength < 0.05 }
+			}
+		}
+	}
+	option = {
+		name = mafia.5.o2
+		log = "[GetDateText]: [This.GetName]: mafia.5.o2 executed"
+		add_to_variable = { cosa_nostra_strength = 0.020 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
+	}
+	option = {
+		name = mafia.5.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+		log = "[GetDateText]: [This.GetName]: mafia.5.o3 executed"
+		set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+		modify_treasury_effect = yes
+		add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+		set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+		multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+		random_list = {
+			50 = {
+				add_political_power = 50
+				custom_effect_tooltip = reduce_mafia_strength_tt
+				add_to_variable = { cosa_nostra_strength = -0.010 }
+				modifier = {
+					factor = police_effectivness_sicily
+				}
+			}
+			10 = {
+				add_to_variable = { cosa_nostra_strength = -0.020 }
+				add_political_power = 100
+				custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+				add_to_variable = { monthly_drift_events_cosa_nostra = -0.001 }
+				modifier = {
+					factor = police_effectivness_sicily
+				}
+			}
+			30 = {
+				add_to_variable = { cosa_nostra_strength = 0.010 }
+				custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+			}
+			10 = {
+				add_to_variable = { cosa_nostra_strength = 0.020 }
+				custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+				add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
+			}
+		}
 		ai_chance = {
 			factor = 10
 			modifier = {
@@ -1410,11 +2371,6 @@ country_event = {
 				check_variable = { cosa_nostra_strength < 0.1 }
 			}
 		}
-	}
-	option = {
-		name = mafia.5.o2
-		log = "[GetDateText]: [This.GetName]: mafia.5.o2 executed"
-		add_to_variable = { cosa_nostra_strength = 0.020 }
 	}
 }
 #waste dumps campania
@@ -1433,7 +2389,7 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: mafia.6.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					custom_effect_tooltip = reduce_mafia_strength_tt
 					add_to_variable = { camorra_strength = -0.010 }
@@ -1441,9 +2397,23 @@ country_event = {
 						factor = police_effectivness_campania
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { camorra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_camorra = -0.001 }
+					modifier = {
+						factor = police_effectivness_campania
+					}
+				}
+				30 = {
 					add_to_variable = { camorra_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { camorra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_camorra = 0.001 }
 				}
 			}
 		ai_chance = {
@@ -1451,7 +2421,7 @@ country_event = {
 			modifier = {
 				factor = 0
 				command_power < 50
-				check_variable = { camorra_strength < 0.1 }
+				check_variable = { camorra_strength < 0.05 }
 			}
 		}
 	}
@@ -1459,6 +2429,57 @@ country_event = {
 		name = mafia.6.o2
 		log = "[GetDateText]: [This.GetName]: mafia.6.o2 executed"
 		add_to_variable = { camorra_strength = 0.020 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_camorra = 0.001 }
+	}
+	option = {
+		name = mafia.6.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+		log = "[GetDateText]: [This.GetName]: mafia.6.o3 executed"
+		set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+		modify_treasury_effect = yes
+		add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+		set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+		multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+		random_list = {
+			50 = {
+				add_political_power = 50
+				custom_effect_tooltip = reduce_mafia_strength_tt
+				add_to_variable = { camorra_strength = -0.010 }
+				modifier = {
+					factor = police_effectivness_campania
+				}
+			}
+			10 = {
+				add_to_variable = { camorra_strength = -0.020 }
+				add_political_power = 100
+				custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+				add_to_variable = { monthly_drift_events_camorra = -0.001 }
+				modifier = {
+					factor = police_effectivness_campania
+				}
+			}
+			30 = {
+				add_to_variable = { camorra_strength = 0.010 }
+				custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+			}
+			10 = {
+				add_to_variable = { camorra_strength = 0.020 }
+				custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+				add_to_variable = { monthly_drift_events_camorra = 0.001 }
+			}
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				command_power < 50
+				check_variable = { camorra_strength < 0.05 }
+			}
+		}
 	}
 }
 #drug smugglers calabria
@@ -1477,7 +2498,7 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: mafia.7.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					custom_effect_tooltip = reduce_mafia_strength_tt
 					add_to_variable = { ndrangheta_strength = -0.010 }
@@ -1485,9 +2506,23 @@ country_event = {
 						factor = police_effectivness_calabria
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { ndrangheta_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = -0.001 }
+					modifier = {
+						factor = police_effectivness_calabria
+					}
+				}
+				30 = {
 					add_to_variable = { ndrangheta_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { ndrangheta_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
 				}
 			}
 		ai_chance = {
@@ -1495,7 +2530,7 @@ country_event = {
 			modifier = {
 				factor = 0
 				command_power < 50
-				check_variable = { ndrangheta_strength < 0.1 }
+				check_variable = { ndrangheta_strength < 0.05 }
 			}
 		}
 	}
@@ -1503,6 +2538,56 @@ country_event = {
 		name = mafia.7.o2
 		log = "[GetDateText]: [This.GetName]: mafia.7.o2 executed"
 		add_to_variable = { ndrangheta_strength = 0.020 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
+	}
+	option = {
+		name = mafia.7.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+		log = "[GetDateText]: [This.GetName]: mafia.7.o3 executed"
+		set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+		modify_treasury_effect = yes
+		add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+		set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+		multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+		random_list = {
+			50 = {
+				add_political_power = 50
+				custom_effect_tooltip = reduce_mafia_strength_tt
+				add_to_variable = { ndrangheta_strength = -0.010 }
+				modifier = {
+					factor = police_effectivness_calabria
+				}
+			}
+			10 = {
+				add_to_variable = { ndrangheta_strength = -0.020 }
+				add_political_power = 100
+				custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+				add_to_variable = { monthly_drift_events_ndrangheta = -0.001 }
+				modifier = {
+					factor = police_effectivness_calabria
+				}
+			}
+			30 = {
+				add_to_variable = { ndrangheta_strength = 0.010 }
+				custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+			}
+			10 = {
+				add_to_variable = { ndrangheta_strength = 0.020 }
+				custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+				add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
+			}
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				check_variable = { ndrangheta_strength < 0.05 }
+			}
+		}
 	}
 }
 #weapons smugglers puglia
@@ -1521,7 +2606,7 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: mafia.8.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					add_equipment_to_stockpile = {
 						type = infantry_weapons3
@@ -1533,9 +2618,23 @@ country_event = {
 						factor = police_effectivness_puglia
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { sacra_corona_unita_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_sacra_corona_unita = -0.001 }
+					modifier = {
+						factor = police_effectivness_puglia
+					}
+				}
+				30 = {
 					add_to_variable = { sacra_corona_unita_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { sacra_corona_unita_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
 				}
 			}
 		ai_chance = {
@@ -1543,7 +2642,7 @@ country_event = {
 			modifier = {
 				factor = 0
 				command_power < 50
-				check_variable = { sacra_corona_unita_strength < 0.1 }
+				check_variable = { sacra_corona_unita_strength < 0.05 }
 			}
 		}
 	}
@@ -1551,6 +2650,60 @@ country_event = {
 		name = mafia.8.o2
 		log = "[GetDateText]: [This.GetName]: mafia.8.o2 executed"
 		add_to_variable = { sacra_corona_unita_strength = 0.020 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
+	}
+	option = {
+		name = mafia.8.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+		log = "[GetDateText]: [This.GetName]: mafia.8.o3 executed"
+		set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+		modify_treasury_effect = yes
+		add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+		set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+		multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+		random_list = {
+			50 = {
+				add_political_power = 50
+				add_equipment_to_stockpile = {
+					type = infantry_weapons3
+					amount = 100
+				}
+				custom_effect_tooltip = reduce_mafia_strength_tt
+				add_to_variable = { sacra_corona_unita_strength = -0.010 }
+				modifier = {
+					factor = police_effectivness_puglia
+				}
+			}
+			10 = {
+				add_to_variable = { sacra_corona_unita_strength = -0.020 }
+				add_political_power = 100
+				custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+				add_to_variable = { monthly_drift_events_sacra_corona_unita = -0.001 }
+				modifier = {
+					factor = police_effectivness_puglia
+				}
+			}
+			30 = {
+				add_to_variable = { sacra_corona_unita_strength = 0.010 }
+				custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+			}
+			10 = {
+				add_to_variable = { sacra_corona_unita_strength = 0.020 }
+				custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+				add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
+			}
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				check_variable = { sacra_corona_unita_strength < 0.05 }
+			}
+		}
 	}
 }
 #drug smugglers sicily
@@ -1569,7 +2722,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: mafia.9.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					custom_effect_tooltip = reduce_mafia_strength_tt
 					add_to_variable = { cosa_nostra_strength = -0.010 }
@@ -1577,9 +2730,23 @@ country_event = {
 						factor = police_effectivness_sicily
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { cosa_nostra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = -0.001 }
+					modifier = {
+						factor = police_effectivness_sicily
+					}
+				}
+				30 = {
 					add_to_variable = { cosa_nostra_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { cosa_nostra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
 				}
 			}
 		ai_chance = {
@@ -1587,7 +2754,7 @@ country_event = {
 			modifier = {
 				factor = 0
 				command_power < 50
-				check_variable = { cosa_nostra_strength < 0.1 }
+				check_variable = { cosa_nostra_strength < 0.05 }
 			}
 		}
 	}
@@ -1595,6 +2762,56 @@ country_event = {
 		name = mafia.9.o2
 		log = "[GetDateText]: [This.GetName]: mafia.9.o2 executed"
 		add_to_variable = { cosa_nostra_strength = 0.020 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
+	}
+	option = {
+		name = mafia.9.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+		log = "[GetDateText]: [This.GetName]: mafia.9.o3 executed"
+		set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+		modify_treasury_effect = yes
+		add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+		set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+		multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+		random_list = {
+			50 = {
+				add_political_power = 50
+				custom_effect_tooltip = reduce_mafia_strength_tt
+				add_to_variable = { cosa_nostra_strength = -0.010 }
+				modifier = {
+					factor = police_effectivness_sicily
+				}
+			}
+			10 = {
+				add_to_variable = { cosa_nostra_strength = -0.020 }
+				add_political_power = 100
+				custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+				add_to_variable = { monthly_drift_events_cosa_nostra = -0.001 }
+				modifier = {
+					factor = police_effectivness_sicily
+				}
+			}
+			30 = {
+				add_to_variable = { cosa_nostra_strength = 0.010 }
+				custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+			}
+			10 = {
+				add_to_variable = { cosa_nostra_strength = 0.020 }
+				custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+				add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
+			}
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				check_variable = { cosa_nostra_strength < 0.05 }
+			}
+		}
 	}
 }
 #drug smuggler campania
@@ -1613,7 +2830,7 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: mafia.10.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					custom_effect_tooltip = reduce_mafia_strength_tt
 					add_to_variable = { camorra_strength = -0.010 }
@@ -1621,9 +2838,23 @@ country_event = {
 						factor = police_effectivness_campania
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { camorra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_camorra = -0.001 }
+					modifier = {
+						factor = police_effectivness_campania
+					}
+				}
+				30 = {
 					add_to_variable = { camorra_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { camorra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_camorra = 0.001 }
 				}
 			}
 		ai_chance = {
@@ -1631,7 +2862,7 @@ country_event = {
 			modifier = {
 				factor = 0
 				command_power < 50
-				check_variable = { camorra_strength < 0.1 }
+				check_variable = { camorra_strength < 0.05 }
 			}
 		}
 	}
@@ -1639,6 +2870,56 @@ country_event = {
 		name = mafia.10.o2
 		log = "[GetDateText]: [This.GetName]: mafia.10.o2 executed"
 		add_to_variable = { camorra_strength = 0.020 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_camorra = 0.001 }
+	}
+	option = {
+		name = mafia.10.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+		log = "[GetDateText]: [This.GetName]: mafia.10.o3 executed"
+		set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+		modify_treasury_effect = yes
+		add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+		set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+		multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+		random_list = {
+			50 = {
+				add_political_power = 50
+				custom_effect_tooltip = reduce_mafia_strength_tt
+				add_to_variable = { camorra_strength = -0.010 }
+				modifier = {
+					factor = police_effectivness_campania
+				}
+			}
+			10 = {
+				add_to_variable = { camorra_strength = -0.020 }
+				add_political_power = 100
+				custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+				add_to_variable = { monthly_drift_events_camorra = -0.001 }
+				modifier = {
+					factor = police_effectivness_campania
+				}
+			}
+			30 = {
+				add_to_variable = { camorra_strength = 0.010 }
+				custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+			}
+			10 = {
+				add_to_variable = { camorra_strength = 0.020 }
+				custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+				add_to_variable = { monthly_drift_events_camorra = 0.001 }
+			}
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				check_variable = { camorra_strength < 0.05 }
+			}
+		}
 	}
 }
 #cigarettes smugglers
@@ -1657,7 +2938,7 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: mafia.11.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					set_temp_variable = { treasury_change = 1 }
 					modify_treasury_effect = yes
@@ -1667,17 +2948,30 @@ country_event = {
 						factor = police_effectivness_calabria
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { ndrangheta_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = -0.001 }
+					modifier = {
+						factor = police_effectivness_calabria
+					}
+				}
+				30 = {
 					add_to_variable = { ndrangheta_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { ndrangheta_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
 				}
 			}
 		ai_chance = {
 			factor = 10
 			modifier = {
 				factor = 0
-				command_power < 50
-				check_variable = { ndrangheta_strength < 0.1 }
+				check_variable = { ndrangheta_strength < 0.05 }
 			}
 		}
 	}
@@ -1685,6 +2979,58 @@ country_event = {
 		name = mafia.11.o2
 		log = "[GetDateText]: [This.GetName]: mafia.11.o2 executed"
 		add_to_variable = { ndrangheta_strength = 0.020 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
+	}
+	option = {
+		name = mafia.11.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+		log = "[GetDateText]: [This.GetName]: mafia.11.o3 executed"
+		set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+		modify_treasury_effect = yes
+		add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+		set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+		multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+		random_list = {
+			50 = {
+				add_political_power = 50
+				set_temp_variable = { treasury_change = 1 }
+				modify_treasury_effect = yes
+				custom_effect_tooltip = reduce_mafia_strength_tt
+				add_to_variable = { ndrangheta_strength = -0.010 }
+				modifier = {
+					factor = police_effectivness_calabria
+				}
+			}
+			10 = {
+				add_to_variable = { ndrangheta_strength = -0.020 }
+				add_political_power = 100
+				custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+				add_to_variable = { monthly_drift_events_ndrangheta = -0.001 }
+				modifier = {
+					factor = police_effectivness_calabria
+				}
+			}
+			30 = {
+				add_to_variable = { ndrangheta_strength = 0.010 }
+				custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+			}
+			10 = {
+				add_to_variable = { ndrangheta_strength = 0.020 }
+				custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+				add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
+			}
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				check_variable = { ndrangheta_strength < 0.05 }
+			}
+		}
 	}
 }
 #cigarettes smugglers puglia
@@ -1703,7 +3049,7 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: mafia.12.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					set_temp_variable = { treasury_change = 1 }
 					modify_treasury_effect = yes
@@ -1713,17 +3059,30 @@ country_event = {
 						factor = police_effectivness_puglia
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { sacra_corona_unita_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_sacra_corona_unita = -0.001 }
+					modifier = {
+						factor = police_effectivness_puglia
+					}
+				}
+				30 = {
 					add_to_variable = { sacra_corona_unita_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { sacra_corona_unita_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
 				}
 			}
 		ai_chance = {
 			factor = 10
 			modifier = {
 				factor = 0
-				command_power < 50
-				check_variable = { sacra_corona_unita_strength < 0.1 }
+				check_variable = { sacra_corona_unita_strength < 0.05 }
 			}
 		}
 	}
@@ -1731,6 +3090,58 @@ country_event = {
 		name = mafia.12.o2
 		log = "[GetDateText]: [This.GetName]: mafia.12.o2 executed"
 		add_to_variable = { sacra_corona_unita_strength = 0.020 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
+	}
+	option = {
+		name = mafia.12.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+		log = "[GetDateText]: [This.GetName]: mafia.12.o3 executed"
+		set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+		modify_treasury_effect = yes
+		add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+		set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+		multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+		random_list = {
+			50 = {
+				add_political_power = 50
+				set_temp_variable = { treasury_change = 1 }
+				modify_treasury_effect = yes
+				custom_effect_tooltip = reduce_mafia_strength_tt
+				add_to_variable = { sacra_corona_unita_strength = -0.010 }
+				modifier = {
+					factor = police_effectivness_puglia
+				}
+			}
+			10 = {
+				add_to_variable = { sacra_corona_unita_strength = -0.020 }
+				add_political_power = 100
+				custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+				add_to_variable = { monthly_drift_events_sacra_corona_unita = -0.001 }
+				modifier = {
+					factor = police_effectivness_puglia
+				}
+			}
+			30 = {
+				add_to_variable = { sacra_corona_unita_strength = 0.010 }
+				custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+			}
+			10 = {
+				add_to_variable = { sacra_corona_unita_strength = 0.020 }
+				custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+				add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
+			}
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				check_variable = { sacra_corona_unita_strength < 0.05 }
+			}
+		}
 	}
 }
 # Suspect Corruption in Puglia
@@ -1757,9 +3168,23 @@ country_event = {
 						factor = police_effectivness_puglia
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { sacra_corona_unita_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_sacra_corona_unita = -0.001 }
+					modifier = {
+						factor = police_effectivness_puglia
+					}
+				}
+				30 = {
 					add_to_variable = { sacra_corona_unita_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { sacra_corona_unita_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
 				}
 			}
 		ai_chance = {
@@ -1767,7 +3192,7 @@ country_event = {
 			modifier = {
 				factor = 0
 				command_power < 50
-				check_variable = { sacra_corona_unita_strength < 0.1 }
+				check_variable = { sacra_corona_unita_strength < 0.05 }
 			}
 		}
 	}
@@ -1775,6 +3200,57 @@ country_event = {
 		name = mafia.13.o2
 		log = "[GetDateText]: [This.GetName]: mafia.13.o2 executed"
 		add_to_variable = { sacra_corona_unita_strength = 0.02 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
+	}
+	option = {
+		name = mafia.13.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+		log = "[GetDateText]: [This.GetName]: mafia.13.o3 executed"
+		set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+		modify_treasury_effect = yes
+		add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+		set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+		multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+		random_list = {
+			50 = {
+				add_political_power = 50
+				custom_effect_tooltip = reduce_mafia_strength_tt
+				add_to_variable = { sacra_corona_unita_strength = -0.010 }
+				modifier = {
+					factor = police_effectivness_puglia
+				}
+			}
+			10 = {
+				add_to_variable = { sacra_corona_unita_strength = -0.020 }
+				add_political_power = 100
+				custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+				add_to_variable = { monthly_drift_events_sacra_corona_unita = -0.001 }
+				modifier = {
+					factor = police_effectivness_puglia
+				}
+			}
+			30 = {
+				add_to_variable = { sacra_corona_unita_strength = 0.010 }
+				custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+			}
+			10 = {
+				add_to_variable = { sacra_corona_unita_strength = 0.020 }
+				custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+				add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
+			}
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				command_power < 50
+				check_variable = { sacra_corona_unita_strength < 0.05 }
+			}
+		}
 	}
 }
 #Suspicions of Rigged contracts in Puglia
@@ -1793,7 +3269,7 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: mafia.14.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					custom_effect_tooltip = reduce_mafia_strength_tt
 					add_to_variable = { sacra_corona_unita_strength = -0.010 }
@@ -1801,9 +3277,23 @@ country_event = {
 						factor = police_effectivness_puglia
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { sacra_corona_unita_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_sacra_corona_unita = -0.001 }
+					modifier = {
+						factor = police_effectivness_puglia
+					}
+				}
+				30 = {
 					add_to_variable = { sacra_corona_unita_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { sacra_corona_unita_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
 				}
 			}
 			ai_chance = {
@@ -1811,7 +3301,7 @@ country_event = {
 				modifier = {
 					factor = 0
 					command_power < 50
-					check_variable = { sacra_corona_unita_strength < 0.1 }
+					check_variable = { sacra_corona_unita_strength < 0.05 }
 				}
 			}
 	}
@@ -1839,6 +3329,57 @@ country_event = {
 		name = mafia.14.o3
 		log = "[GetDateText]: [This.GetName]: mafia.14.o3 executed"
 		add_to_variable = { sacra_corona_unita_strength = 0.02 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
+	}
+
+	option = {
+		name = mafia.14.o4
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+			log = "[GetDateText]: [This.GetName]: mafia.14.o4 executed"
+			set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+			modify_treasury_effect = yes
+			add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+			set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+			multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+			random_list = {
+				50 = {
+					add_political_power = 50
+					custom_effect_tooltip = reduce_mafia_strength_tt
+					add_to_variable = { sacra_corona_unita_strength = -0.010 }
+					modifier = {
+						factor = police_effectivness_puglia
+					}
+				}
+				10 = {
+					add_to_variable = { sacra_corona_unita_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_sacra_corona_unita = -0.001 }
+					modifier = {
+						factor = police_effectivness_puglia
+					}
+				}
+				30 = {
+					add_to_variable = { sacra_corona_unita_strength = 0.010 }
+					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { sacra_corona_unita_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
+				}
+			}
+			ai_chance = {
+				factor = 10
+				modifier = {
+					factor = 0
+					check_variable = { sacra_corona_unita_strength < 0.05 }
+				}
+			}
 	}
 }
 
@@ -1871,6 +3412,8 @@ country_event = {
 		name = mafia.16.o1
 		log = "[GetDateText]: [This.GetName]: mafia.16.o1 executed"
 		add_to_variable = { sacra_corona_unita_strength = 0.03 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_sacra_corona_unita = 0.001 }
 	}
 }
 
@@ -1898,9 +3441,23 @@ country_event = {
 						factor = police_effectivness_calabria
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { ndrangheta_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = -0.001 }
+					modifier = {
+						factor = police_effectivness_calabria
+					}
+				}
+				30 = {
 					add_to_variable = { ndrangheta_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { ndrangheta_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
 				}
 			}
 		ai_chance = {
@@ -1908,7 +3465,7 @@ country_event = {
 			modifier = {
 				factor = 0
 				command_power < 50
-				check_variable = { ndrangheta_strength < 0.1 }
+				check_variable = { ndrangheta_strength < 0.05 }
 			}
 		}
 	}
@@ -1916,6 +3473,58 @@ country_event = {
 		name = mafia.17.o2
 		log = "[GetDateText]: [This.GetName]: mafia.17.o2 executed"
 		add_to_variable = { ndrangheta_strength = 0.02 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
+	}
+
+	option = {
+		name = mafia.17.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+			log = "[GetDateText]: [This.GetName]: mafia.17.o3 executed"
+			set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+			modify_treasury_effect = yes
+			add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+			set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+			multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+			random_list = {
+				50 = {
+					add_political_power = 50
+					custom_effect_tooltip = reduce_mafia_strength_tt
+					add_to_variable = { ndrangheta_strength = -0.010 }
+					modifier = {
+						factor = police_effectivness_calabria
+					}
+				}
+				10 = {
+					add_to_variable = { ndrangheta_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = -0.001 }
+					modifier = {
+						factor = police_effectivness_calabria
+					}
+				}
+				30 = {
+					add_to_variable = { ndrangheta_strength = 0.010 }
+					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { ndrangheta_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
+				}
+			}
+			ai_chance = {
+				factor = 10
+				modifier = {
+					factor = 0
+					command_power < 50
+					check_variable = { ndrangheta_strength < 0.05 }
+				}
+			}
 	}
 }
 #Suspicions of a huge drug shipment in Calabria
@@ -1934,7 +3543,7 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: mafia.18.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					custom_effect_tooltip = reduce_mafia_strength_tt
 					add_to_variable = { ndrangheta_strength = -0.010 }
@@ -1942,9 +3551,23 @@ country_event = {
 						factor = police_effectivness_calabria
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { ndrangheta_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = -0.001 }
+					modifier = {
+						factor = police_effectivness_calabria
+					}
+				}
+				30 = {
 					add_to_variable = { ndrangheta_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { ndrangheta_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
 				}
 			}
 			ai_chance = {
@@ -1952,7 +3575,7 @@ country_event = {
 				modifier = {
 					factor = 0
 					command_power < 50
-					check_variable = { ndrangheta_strength < 0.1 }
+					check_variable = { ndrangheta_strength < 0.05 }
 				}
 			}
 	}
@@ -1960,7 +3583,6 @@ country_event = {
 	option = {
 		name = mafia.18.o2
 		log = "[GetDateText]: [This.GetName]: mafia.18.o2 executed"
-		add_to_variable = { ndrangheta_strength = 0.00 }
 		hidden_effect = {
 			random_list = {
 				10 = {
@@ -1980,6 +3602,58 @@ country_event = {
 		name = mafia.18.o3
 		log = "[GetDateText]: [This.GetName]: mafia.18.o3 executed"
 		add_to_variable = { ndrangheta_strength = 0.02 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
+	}
+
+	option = {
+		name = mafia.18.o4
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+			log = "[GetDateText]: [This.GetName]: mafia.18.o4 executed"
+			set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+			modify_treasury_effect = yes
+			add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+			set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+			multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+			random_list = {
+				50 = {
+					add_political_power = 50
+					custom_effect_tooltip = reduce_mafia_strength_tt
+					add_to_variable = { ndrangheta_strength = -0.010 }
+					modifier = {
+						factor = police_effectivness_calabria
+					}
+				}
+				10 = {
+					add_to_variable = { ndrangheta_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = -0.001 }
+					modifier = {
+						factor = police_effectivness_calabria
+					}
+				}
+				30 = {
+					add_to_variable = { ndrangheta_strength = 0.010 }
+					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { ndrangheta_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
+				}
+			}
+			ai_chance = {
+				factor = 10
+				modifier = {
+					factor = 0
+					command_power < 50
+					check_variable = { ndrangheta_strength < 0.05 }
+				}
+			}
 	}
 }
 
@@ -2012,6 +3686,8 @@ country_event = {
 		name = mafia.20.o1
 		log = "[GetDateText]: [This.GetName]: mafia.20.o1 executed"
 		add_to_variable = { ndrangheta_strength = 0.03 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_ndrangheta = 0.001 }
 	}
 }
 
@@ -2039,9 +3715,23 @@ country_event = {
 						factor = police_effectivness_campania
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { camorra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_camorra = -0.001 }
+					modifier = {
+						factor = police_effectivness_campania
+					}
+				}
+				30 = {
 					add_to_variable = { camorra_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { camorra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_camorra = 0.001 }
 				}
 			}
 		ai_chance = {
@@ -2049,7 +3739,7 @@ country_event = {
 			modifier = {
 				factor = 0
 				command_power < 50
-				check_variable = { camorra_strength < 0.1 }
+				check_variable = { camorra_strength < 0.05 }
 			}
 		}
 	}
@@ -2057,6 +3747,58 @@ country_event = {
 		name = mafia.21.o2
 		log = "[GetDateText]: [This.GetName]: mafia.21.o2 executed"
 		add_to_variable = { camorra_strength = 0.02 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_camorra = 0.001 }
+	}
+
+	option = {
+		name = mafia.21.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+			log = "[GetDateText]: [This.GetName]: mafia.21.o3 executed"
+			set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+			modify_treasury_effect = yes
+			add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+			set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+			multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+			random_list = {
+				50 = {
+					add_political_power = 50
+					custom_effect_tooltip = reduce_mafia_strength_tt
+					add_to_variable = { camorra_strength = -0.010 }
+					modifier = {
+						factor = police_effectivness_campania
+					}
+				}
+				10 = {
+					add_to_variable = { camorra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_camorra = -0.001 }
+					modifier = {
+						factor = police_effectivness_campania
+					}
+				}
+				30 = {
+					add_to_variable = { camorra_strength = 0.010 }
+					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { camorra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_camorra = 0.001 }
+				}
+			}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				command_power < 50
+				check_variable = { camorra_strength < 0.05 }
+			}
+		}
 	}
 }
 # Camorra 4 - piazza di spaccio scampia
@@ -2075,7 +3817,7 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: mafia.22.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					custom_effect_tooltip = reduce_mafia_strength_tt
 					add_to_variable = { camorra_strength = -0.010 }
@@ -2083,9 +3825,23 @@ country_event = {
 						factor = police_effectivness_campania
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { camorra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_camorra = -0.001 }
+					modifier = {
+						factor = police_effectivness_campania
+					}
+				}
+				30 = {
 					add_to_variable = { camorra_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { camorra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_camorra = 0.001 }
 				}
 			}
 			ai_chance = {
@@ -2093,7 +3849,7 @@ country_event = {
 				modifier = {
 					factor = 0
 					command_power < 50
-					check_variable = { camorra_strength < 0.1 }
+					check_variable = { camorra_strength < 0.05 }
 				}
 			}
 	}
@@ -2120,6 +3876,58 @@ country_event = {
 		name = mafia.22.o3
 		log = "[GetDateText]: [This.GetName]: mafia.22.o3 executed"
 		add_to_variable = { camorra_strength = 0.02 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_camorra = 0.001 }
+	}
+
+	option = {
+		name = mafia.22.o4
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+			log = "[GetDateText]: [This.GetName]: mafia.22.o4 executed"
+			set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+			modify_treasury_effect = yes
+			add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+			set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+			multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+			random_list = {
+				50 = {
+					add_political_power = 50
+					custom_effect_tooltip = reduce_mafia_strength_tt
+					add_to_variable = { camorra_strength = -0.010 }
+					modifier = {
+						factor = police_effectivness_campania
+					}
+				}
+				10 = {
+					add_to_variable = { camorra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_camorra = -0.001 }
+					modifier = {
+						factor = police_effectivness_campania
+					}
+				}
+				30 = {
+					add_to_variable = { camorra_strength = 0.010 }
+					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { camorra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_camorra = 0.001 }
+				}
+			}
+			ai_chance = {
+				factor = 10
+				modifier = {
+					factor = 0
+					command_power < 50
+					check_variable = { camorra_strength < 0.05 }
+				}
+			}
 	}
 }
 
@@ -2152,6 +3960,8 @@ country_event = {
 		name = mafia.24.o1
 		log = "[GetDateText]: [This.GetName]: mafia.24.o1 executed"
 		add_to_variable = { camorra_strength = 0.03 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_camorra = 0.001 }
 	}
 }
 
@@ -2179,9 +3989,23 @@ country_event = {
 						factor = police_effectivness_sicily
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { cosa_nostra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = -0.001 }
+					modifier = {
+						factor = police_effectivness_sicily
+					}
+				}
+				30 = {
 					add_to_variable = { cosa_nostra_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { cosa_nostra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
 				}
 			}
 		ai_chance = {
@@ -2189,7 +4013,7 @@ country_event = {
 			modifier = {
 				factor = 0
 				command_power < 50
-				check_variable = { cosa_nostra_strength < 0.1 }
+				check_variable = { cosa_nostra_strength < 0.05 }
 			}
 		}
 	}
@@ -2197,6 +4021,58 @@ country_event = {
 		name = mafia.25.o2
 		log = "[GetDateText]: [This.GetName]: mafia.25.o2 executed"
 		add_to_variable = { cosa_nostra_strength = 0.02 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
+	}
+
+	option = {
+		name = mafia.25.o3
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+			log = "[GetDateText]: [This.GetName]: mafia.25.o3 executed"
+			set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+			modify_treasury_effect = yes
+			add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+			set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+			multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+			random_list = {
+				50 = {
+					add_political_power = 50
+					custom_effect_tooltip = reduce_mafia_strength_tt
+					add_to_variable = { cosa_nostra_strength = -0.010 }
+					modifier = {
+						factor = police_effectivness_sicily
+					}
+				}
+				10 = {
+					add_to_variable = { cosa_nostra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = -0.001 }
+					modifier = {
+						factor = police_effectivness_sicily
+					}
+				}
+				30 = {
+					add_to_variable = { cosa_nostra_strength = 0.010 }
+					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { cosa_nostra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
+				}
+			}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				command_power < 50
+				check_variable = { cosa_nostra_strength < 0.05 }
+			}
+		}
 	}
 }
 # Cosa Nostra 4 - Regional corruption
@@ -2215,7 +4091,7 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: mafia.26.o1 executed"
 			add_command_power = -25
 			random_list = {
-				60 = {
+				50 = {
 					add_political_power = 50
 					custom_effect_tooltip = reduce_mafia_strength_tt
 					add_to_variable = { cosa_nostra_strength = -0.010 }
@@ -2223,9 +4099,23 @@ country_event = {
 						factor = police_effectivness_sicily
 					}
 				}
-				40 = {
+				10 = {
+					add_to_variable = { cosa_nostra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = -0.001 }
+					modifier = {
+						factor = police_effectivness_sicily
+					}
+				}
+				30 = {
 					add_to_variable = { cosa_nostra_strength = 0.010 }
 					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { cosa_nostra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
 				}
 			}
 			ai_chance = {
@@ -2233,7 +4123,7 @@ country_event = {
 				modifier = {
 					factor = 0
 					command_power < 50
-					check_variable = { cosa_nostra_strength < 0.1 }
+					check_variable = { cosa_nostra_strength < 0.05 }
 				}
 			}
 	}
@@ -2261,6 +4151,56 @@ country_event = {
 		name = mafia.26.o3
 		log = "[GetDateText]: [This.GetName]: mafia.26.o3 executed"
 		add_to_variable = { cosa_nostra_strength = 0.02 }
+	}
+
+	option = {
+		name = mafia.26.o4
+		trigger = {
+			command_power < 25
+			has_country_flag = extraordinary_police_funding_flag
+		}
+			log = "[GetDateText]: [This.GetName]: mafia.26.o4 executed"
+			set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
+			modify_treasury_effect = yes
+			add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
+			set_variable = { extraordinary_police_funding_cost = extraordinary_police_funding_times_taken_var }
+			multiply_variable = { extraordinary_police_funding_cost = -0.5 }
+			random_list = {
+				50 = {
+					add_political_power = 50
+					custom_effect_tooltip = reduce_mafia_strength_tt
+					add_to_variable = { cosa_nostra_strength = -0.010 }
+					modifier = {
+						factor = police_effectivness_sicily
+					}
+				}
+				10 = {
+					add_to_variable = { cosa_nostra_strength = -0.020 }
+					add_political_power = 100
+					custom_effect_tooltip = monthly_clan_drift_decrease_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = -0.001 }
+					modifier = {
+						factor = police_effectivness_sicily
+					}
+				}
+				30 = {
+					add_to_variable = { cosa_nostra_strength = 0.010 }
+					custom_effect_tooltip = mafia_strength_marginal_operation_success_TT
+				}
+				10 = {
+					add_to_variable = { cosa_nostra_strength = 0.020 }
+					custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+					add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
+				}
+			}
+			ai_chance = {
+				factor = 10
+				modifier = {
+					factor = 0
+					command_power < 50
+					check_variable = { cosa_nostra_strength < 0.05 }
+				}
+			}
 	}
 }
 
@@ -2293,5 +4233,202 @@ country_event = {
 		name = mafia.28.o1
 		log = "[GetDateText]: [This.GetName]: mafia.28.o1 executed"
 		add_to_variable = { cosa_nostra_strength = 0.03 }
+		custom_effect_tooltip = monthly_clan_drift_increase_events_TT
+		add_to_variable = { monthly_drift_events_cosa_nostra = 0.001 }
+	}
+}
+
+#encourage fighting between mafia clans choose target
+country_event = {
+	id = mafia.29
+	title = mafia.29.t
+	desc = mafia.29.d
+	picture = GFX_report_event_Gun_2
+
+	is_triggered_only = yes
+
+	option = {
+		name = mafia.29.o1
+		log = "[GetDateText]: [This.GetName]: mafia.29.o1 executed"
+		add_to_variable = { cosa_nostra_strength = -0.08 }
+		set_country_flag = {
+			flag = targetted_cosa_nostra
+			days = 179
+			value = 1
+		}
+		country_event = mafia.31
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = cosa_nostra_strength
+				always = yes
+			}
+		}
+	}
+
+	option = {
+		name = mafia.29.o2
+		log = "[GetDateText]: [This.GetName]: mafia.29.o2 executed"
+		add_to_variable = { camorra_strength = -0.08 }
+		set_country_flag = {
+			flag = targetted_camorra
+			days = 179
+			value = 1
+		}
+		country_event = mafia.31
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = camorra_strength
+				always = yes
+			}
+		}
+	}
+
+	option = {
+		name = mafia.29.o3
+		log = "[GetDateText]: [This.GetName]: mafia.29.o3 executed"
+		add_to_variable = { ndrangheta_strength = -0.08 }
+		set_country_flag = {
+			flag = targetted_ndrangheta
+			days = 179
+			value = 1
+		}
+		country_event = mafia.31
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = ndrangheta_strength
+				always = yes
+			}
+		}
+	}
+
+	option = {
+		name = mafia.29.o4
+		log = "[GetDateText]: [This.GetName]: mafia.29.o4 executed"
+		country_event = mafia.30
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = sacra_corona_unita_strength
+				always = yes
+			}
+		}
+	}
+}
+#encourage fighting between mafia clans choose target
+country_event = {
+	id = mafia.30
+	title = mafia.30.t
+	desc = mafia.30.d
+	picture = GFX_report_event_Gun_2
+
+	is_triggered_only = yes
+
+	option = {
+		name = mafia.30.o1
+		log = "[GetDateText]: [This.GetName]: mafia.30.o1 executed"
+		add_to_variable = { sacra_corona_unita_strength = -0.08 }
+		set_country_flag = {
+			flag = targetted_sacra_corona_unita
+			days = 179
+			value = 1
+		}
+		country_event = mafia.31
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = sacra_corona_unita_strength
+				always = yes
+			}
+		}
+	}
+
+	option = {
+		name = mafia.30.o2
+		log = "[GetDateText]: [This.GetName]: mafia.30.o2 executed"
+		country_event = mafia.29
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = mafia_strength
+				always = yes
+			}
+		}
+	}
+}
+
+#encourage fighting between mafia clans choose clan that helps
+country_event = {
+	id = mafia.31
+	title = mafia.31.t
+	desc = mafia.31.d
+	picture = GFX_report_event_Gun_2
+
+	is_triggered_only = yes
+
+	option = {
+		trigger = {
+			NOT = {
+				has_country_flag = targetted_cosa_nostra
+			}
+		}
+		name = mafia.31.o1
+		log = "[GetDateText]: [This.GetName]: mafia.31.o1 executed"
+		add_to_variable = { cosa_nostra_strength = 0.04 }
+	}
+
+	option = {
+		trigger = {
+			NOT = {
+				has_country_flag = targetted_camorra
+			}
+		}
+		name = mafia.31.o2
+		log = "[GetDateText]: [This.GetName]: mafia.31.o2 executed"
+		add_to_variable = { camorra_strength = 0.04 }
+	}
+
+	option = {
+		trigger = {
+			NOT = {
+				has_country_flag = targetted_ndrangheta
+			}
+		}
+		name = mafia.31.o3
+		log = "[GetDateText]: [This.GetName]: mafia.31.o3 executed"
+		add_to_variable = { ndrangheta_strength = 0.04 }
+	}
+
+	option = {
+		name = mafia.31.o4
+		log = "[GetDateText]: [This.GetName]: mafia.31.o4 executed"
+		country_event = mafia.32
+	}
+}
+country_event = {
+	id = mafia.32
+	title = mafia.32.t
+	desc = mafia.32.d
+	picture = GFX_report_event_Gun_2
+
+	is_triggered_only = yes
+
+	option = {
+		trigger = {
+			NOT = {
+				has_country_flag = targetted_sacra_corona_unita
+			}
+		}
+		name = mafia.32.o1
+		log = "[GetDateText]: [This.GetName]: mafia.32.o1 executed"
+		add_to_variable = { sacra_corona_unita_strength = 0.04 }
+	}
+
+	option = {
+		name = mafia.32.o2
+		log = "[GetDateText]: [This.GetName]: mafia.32.o2 executed"
+		country_event = mafia.31
 	}
 }

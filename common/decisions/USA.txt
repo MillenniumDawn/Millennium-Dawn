@@ -109,8 +109,7 @@ USA_american_economic_decisions_category = {
 			}
 			modifier = {
 				add = 5
-				has_country_flag = positive_wall_street
-				has_country_flag = indifferent_wall_street
+				check_variable = { wall_street_opinion > 49 }
 			}
 
 		}
@@ -224,9 +223,7 @@ USA_american_economic_decisions_category = {
 			}
 			modifier = {
 				add = 2
-				has_country_flag = enthusiastic_wall_street
-				has_country_flag = positive_wall_street
-				has_country_flag = indifferent_wall_street
+				check_variable = { wall_street_opinion > 49 }
 			}
 		}
 	}
@@ -339,9 +336,7 @@ USA_american_economic_decisions_category = {
 			}
 			modifier = {
 				add = 5
-				has_country_flag = enthusiastic_wall_street
-				has_country_flag = positive_wall_street
-				has_country_flag = indifferent_wall_street
+				check_variable = { wall_street_opinion > 49 }
 			}
 		}
 	}
@@ -452,9 +447,7 @@ USA_american_economic_decisions_category = {
 			}
 			modifier = {
 				add = 2
-				has_country_flag = enthusiastic_wall_street
-				has_country_flag = positive_wall_street
-				has_country_flag = indifferent_wall_street
+				check_variable = { wall_street_opinion > 49 }
 			}
 		}
 	}
@@ -580,7 +573,9 @@ USA_american_economic_decisions_category = {
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: Decision USA_industrial_outsourcing_decision"
 			add_offsite_building = { type = industrial_complex level = 2 }
-			decrease_wall_street_opinion = yes
+
+			set_temp_variable = { temp_opinion = -5 }
+			change_wall_street_opinion = yes
 		}
 		icon = generic_construction
 		days_remove = 100
@@ -796,17 +791,17 @@ USA_congress_md = {
 			USA_congress_small_support = yes
 			if = {
 				limit = { has_government = nationalist }
-				hidden_effect = {
-					add_popularity = { ideology = nationalist popularity = 0.02 }
-				}
-				add_2_nationalist_right_wing_populists = yes
+				set_temp_variable = { party_index = 20 }
+				set_temp_variable = { party_popularity_increase = 0.03 }
+				set_temp_variable = { temp_outlook_increase = 0.03 }
+				add_relative_party_popularity = yes
 			}
 			if = {
 				limit = { has_government = communism }
-				hidden_effect = {
-					add_popularity = { ideology = communism popularity = 0.02 }
-				}
-				add_2_emerging_communist = yes
+				set_temp_variable = { party_index = 4 }
+				set_temp_variable = { party_popularity_increase = 0.03 }
+				set_temp_variable = { temp_outlook_increase = 0.03 }
+				add_relative_party_popularity = yes
 			}
 		}
 	}
@@ -853,7 +848,7 @@ USA_congress_md = {
 				tooltip = USA_not_total_support_tt
 			}
 			custom_trigger_tooltip = {
-				check_variable = { personal_tax_rate > 3 }
+				check_variable = { var = population_tax_rate value = 3 compare = greater_than_or_equals }
 				tooltip = per_tax_rate_at_least_3_tt
 			}
 			custom_trigger_tooltip = {
@@ -873,23 +868,17 @@ USA_congress_md = {
 		modifier = { consumer_goods_factor = 0.05 }
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_give_tax_break"
-			hidden_effect = {
-				subtract_from_variable = { population_tax_rate = 3 }
-				ingame_update_setup = yes
-				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
-				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
-				law_attitude_change = yes
-			}
+
+			set_temp_variable = { pop_change = -3 }
+			modify_population_tax_rate_effect = yes
 			disable_personal_tax_rate_change = yes
-			custom_effect_tooltip = reduce_per_tax_rate_3_tt
 		}
 		remove_effect = {
-			hidden_effect = {
-				add_to_variable = { population_tax_rate = 3 }
-				ingame_update_setup = yes
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_give_tax_break"
+
+			set_temp_variable = { pop_change = 3 }
+			modify_population_tax_rate_effect = yes
 			enable_personal_tax_rate_change = yes
-			custom_effect_tooltip = add_per_tax_rate_3_tt
 		}
 	}
 	USA_amend_the_budget = {
@@ -1523,8 +1512,12 @@ USA_the_trump_agenda = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_donald_hold_maga_rally"
 			add_stability = 0.01
-			add_0_5_Republican_popularity = yes
-			add_0_5_Nat_Populism_popularity = yes
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.005 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.005 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -1544,8 +1537,13 @@ USA_the_trump_agenda = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_donald_travel_ban"
 			add_stability = -0.01
-			add_0_5_Republican_popularity = yes
-			add_1_Nat_Populism_popularity = yes
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.005 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			add_relative_party_popularity = yes
+
 			country_event = donald_trump.0
 		}
 
@@ -1581,8 +1579,12 @@ USA_the_trump_agenda = {
 				set_country_flag = third_republican_scotus_justice_added
 			}
 			add_political_power = 15
-			add_1_Republican_popularity = yes
-			add_1_Nat_Populism_popularity = yes
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			add_relative_party_popularity = yes
 			custom_effect_tooltip = add_republican_scotus_justice_tt
 		}
 
@@ -1601,8 +1603,12 @@ USA_the_trump_agenda = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_fire_james_comey"
 			add_stability = 0.02
-			add_0_25_Republican_popularity = yes
-			add_0_25_Nat_Populism_popularity = yes
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.002 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.002 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -1617,7 +1623,9 @@ USA_the_trump_agenda = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_pull_out_of_the_paris_climate_accords"
 			add_stability = -0.02
-			subtract_0_5_Republican_popularity = yes
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = -0.01 }
+			add_relative_party_popularity = yes
 		}
 		modifier = {
 			production_speed_buildings_factor = 0.02
@@ -1635,7 +1643,10 @@ USA_the_trump_agenda = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_finish_keystone_and_dakota_pipelines"
 			add_stability = -0.02
-			add_0_25_Republican_popularity = yes
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.002 }
+			add_relative_party_popularity = yes
+
 			set_country_flag = Keystone_Pipeline_Finished
 		}
 		modifier = {
@@ -1659,7 +1670,10 @@ USA_the_trump_agenda = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_america_first_energy_plan"
-			add_0_25_Nat_Populism_popularity = yes
+
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.002 }
+			add_relative_party_popularity = yes
 			787 = {
 				add_resource = { type = oil amount = 2 }
 			}
@@ -1693,7 +1707,9 @@ USA_the_trump_agenda = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_open_public_lands_to_fracking"
-			add_0_25_Nat_Populism_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.002 }
+			add_relative_party_popularity = yes
 			787 = {
 				add_resource = { type = oil amount = 2 }
 			}
@@ -1723,7 +1739,9 @@ USA_the_trump_agenda = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_end_catch_and_release_policy"
 			add_stability = -0.02
-			add_0_5_Nat_Populism_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.005 }
+			add_relative_party_popularity = yes
 			clr_country_flag = increased_border_security
 			set_country_flag = end_catch_and_release
 		}
@@ -1740,7 +1758,9 @@ USA_the_trump_agenda = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_increase_border_security"
 			add_stability = 0.02
-			add_0_25_Nat_Populism_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.002 }
+			add_relative_party_popularity = yes
 			set_temp_variable = { treasury_change = -0.5 }
 			modify_treasury_effect = yes
 			MEX = { add_opinion_modifier = { target = USA modifier = recent_actions_negative } }
@@ -1763,7 +1783,9 @@ USA_the_trump_agenda = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USA_stop_the_caravans"
 			add_stability = 0.03
-			add_0_25_Nat_Populism_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.002 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -1778,8 +1800,9 @@ USA_the_trump_agenda = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_stop_the_caravans"
 			country_event = { id = USA_Repeal_Obama_Care.0 days = 1 }
-			subtract_2_5_Republican_popularity = yes
-
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = -0.025 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {

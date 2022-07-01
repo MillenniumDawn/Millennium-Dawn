@@ -1,4 +1,4 @@
-focus_tree = {
+﻿focus_tree = {
 
 	id = burma_focus
 
@@ -173,7 +173,9 @@ focus_tree = {
 				popularity = 0.05
 			}
 			recalculate_party = yes
-			increase_the_priesthood_opinion = yes
+
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_priesthood_opinion = yes
 		}
 
 		ai_will_do = {
@@ -300,15 +302,9 @@ focus_tree = {
 		y = 4
 		cost = 15
 
-		prerequisite = {
-		focus = BRM_allow_labour_strikes_and_unions
-		}
-		prerequisite = {
-		focus = BRM_relax_media_censorship
-		}
-		prerequisite = {
-		focus = BRM_release_opposition_figures
-		}
+		prerequisite = { focus = BRM_allow_labour_strikes_and_unions }
+		prerequisite = { focus = BRM_relax_media_censorship }
+		prerequisite = { focus = BRM_release_opposition_figures }
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY}
 		available = {
 			if = {
@@ -324,36 +320,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_cede_power_to_the_nld"
 
-			if = {
-				limit = {
-					BRM = {
-						has_start_date < 2016.01.01
-					}
-				}
+			if = { limit = { has_start_date < 2016.01.01 }
 				news_event = {
-				id = Burma_News.3
-				days = 2
-				random = 4
+					id = Burma_News.3
+					days = 2
+					random = 4
 				}
 			}
-
-			hidden_effect = {
-				drop_cosmetic_tag = yes
-			}
-
 			add_stability = 0.1
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 16 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-			}
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = yes
-			}
 			create_country_leader = {
 				name = "Aung San Suu Kyi"
 				picture = "Western_Aung_San_Suu_Kyi.dds"
@@ -366,25 +340,45 @@ focus_tree = {
 					rational
 				}
 			}
-			set_variable = {
-				Neutral_Libertarian_leader = 1
+
+			set_country_flag = no_leader_change
+			hidden_effect = {
+				drop_cosmetic_tag = yes
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 16 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+				add_to_variable = { Neutral_Libertarian_leader = 1 } # Skips Aung in the Lineup
 			}
-			if = {
-				limit = {
-					has_idea = Reduced_Western_Sanctions
+			meta_effect = {
+				text = {
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = yes
+						last_election = "[YEAR].[MONTH].1"
+						election_frequency = 60
+					}
 				}
+				YEAR = global.year
+				MONTH = global.month
+			}
+			clr_country_flag = no_leader_change
+
+			if = { limit = { has_idea = Reduced_Western_Sanctions }
 				remove_ideas = Reduced_Western_Sanctions
 			}
-			if = {
-				limit = {
-					has_idea = Western_Sanctions
-				}
+			else_if = { limit = { has_idea = Western_Sanctions }
 				swap_ideas = {
 					remove_idea = Western_Sanctions
 					add_idea = Reduced_Western_Sanctions
 				}
 			}
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -477,7 +471,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_end_isolationism"
 			add_stability = 0.02
-			boost_domestic_influence_2_percent = yes
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -646,7 +641,8 @@ focus_tree = {
 					add_idea = Massive_International_Sanctions
 				}
 			}
-			increase_the_priesthood_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_priesthood_opinion = yes
 		}
 
 		ai_will_do = {
@@ -786,11 +782,9 @@ focus_tree = {
 				}
 				add_opinion_modifier = { target = ROOT modifier = gave_the_rohingya_citizenship }
 			}
-
-
-			decrease_the_priesthood_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_priesthood_opinion = yes
 		}
-
 
 		ai_will_do = {
 			factor = 0
@@ -919,14 +913,36 @@ focus_tree = {
 			NOT = { is_in_faction_with = CHI }
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = CHI }
+						check_variable = { influence_array_val^0 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = CHI }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = CHI }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = CHI }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = CHI }
+						check_variable = { influence_array_val^4 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = CHI }
+						check_variable = { influence_array_val^5 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = CHI }
+						check_variable = { influence_array_val^6 < 20 }
+					}
 				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
 			}
 		}
 
@@ -954,14 +970,32 @@ focus_tree = {
 				OR = {
 					is_historical_focus_on = no
 					AND = {
-						set_temp_variable = { temp_idx = -1 }
-						any_of = {
-							array = influence_array
-							check_variable = { v = CHI }
-						}
-						set_temp_variable = { temp_idx = i }
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx > 0.30 }
+						check_variable = { influence_array^0 = CHI }
+						check_variable = { influence_array_val^0 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = CHI }
+						check_variable = { influence_array_val^1 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = CHI }
+						check_variable = { influence_array_val^2 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = CHI }
+						check_variable = { influence_array_val^3 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = CHI }
+						check_variable = { influence_array_val^4 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = CHI }
+						check_variable = { influence_array_val^5 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = CHI }
+						check_variable = { influence_array_val^6 > 29.999 }
 					}
 				}
 			}
@@ -983,14 +1017,36 @@ focus_tree = {
 			NOT = { is_in_faction_with = CHI }
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = CHI }
+						check_variable = { influence_array_val^0 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = CHI }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = CHI }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = CHI }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = CHI }
+						check_variable = { influence_array_val^4 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = CHI }
+						check_variable = { influence_array_val^5 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = CHI }
+						check_variable = { influence_array_val^6 < 20 }
+					}
 				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
 			}
 			USA = { has_guaranteed = BRM }
 		}
@@ -1002,7 +1058,10 @@ focus_tree = {
 				limit = { has_dlc = "Together for Victory" }
 				add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
 			}
-			generic_grant_3_percent_influence_of_USA = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = USA.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -1118,14 +1177,36 @@ focus_tree = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = CHI }
+						check_variable = { influence_array_val^0 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = CHI }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = CHI }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = CHI }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = CHI }
+						check_variable = { influence_array_val^4 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = CHI }
+						check_variable = { influence_array_val^5 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = CHI }
+						check_variable = { influence_array_val^6 < 20 }
+					}
 				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
 			}
 		}
 
@@ -1217,14 +1298,36 @@ focus_tree = {
 			NOT = { is_in_faction_with = USA }
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_USA_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = USA }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = CHI }
+						check_variable = { influence_array_val^0 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = CHI }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = CHI }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = CHI }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = CHI }
+						check_variable = { influence_array_val^4 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = CHI }
+						check_variable = { influence_array_val^5 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = CHI }
+						check_variable = { influence_array_val^6 < 20 }
+					}
 				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
 			}
 		}
 
@@ -1268,14 +1371,32 @@ focus_tree = {
 				OR = {
 					is_historical_focus_on = no
 					AND = {
-						set_temp_variable = { temp_idx = -1 }
-						any_of = {
-							array = influence_array
-							check_variable = { v = USA }
-						}
-						set_temp_variable = { temp_idx = i }
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx > 0.30 }
+						check_variable = { influence_array^0 = USA }
+						check_variable = { influence_array_val^0 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = USA }
+						check_variable = { influence_array_val^1 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = USA }
+						check_variable = { influence_array_val^2 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = USA }
+						check_variable = { influence_array_val^3 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = USA }
+						check_variable = { influence_array_val^4 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = USA }
+						check_variable = { influence_array_val^5 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = USA }
+						check_variable = { influence_array_val^6 > 29.999 }
 					}
 				}
 			}
@@ -1297,14 +1418,36 @@ focus_tree = {
 			NOT = { is_in_faction_with = USA }
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_USA_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = USA }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = USA }
+						check_variable = { influence_array_val^0 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = USA }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = USA }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = USA }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = USA }
+						check_variable = { influence_array_val^4 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = USA }
+						check_variable = { influence_array_val^5 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = USA }
+						check_variable = { influence_array_val^6 < 20 }
+					}
 				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
 			}
 		}
 
@@ -1357,7 +1500,8 @@ focus_tree = {
 
 			add_ideas = Struggle_for_power
 			GCC_open_nation_level_up = yes
-			decrease_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1398,7 +1542,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_accept_the_role_of_the_tatmadaw"
 			add_stability = 0.1
 
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1427,7 +1572,8 @@ focus_tree = {
 			}
 			recalculate_party = yes
 
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 			GCC_censored_nation_level_up = yes
 		}
 
@@ -1461,7 +1607,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_pursue_rapprochement_with_rebel_groups"
 			add_stability = 0.02
-			decrease_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1513,7 +1660,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_target_the_corruption_of_military_enterprises"
 			decrease_corruption = yes
-			decrease_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1598,10 +1746,9 @@ focus_tree = {
 			if = {
 				limit = { has_idea = the_priesthood }
 				custom_trigger_tooltip = {
-					tooltip = 11_monks_enthusiastic_tt
-					hidden_trigger = {
-						has_country_flag = enthusiastic_the_priesthood
-					}
+					# Opinion must be greater than 80 to be enthusiastic
+					tooltip = the_priesthood_at_least_enthusiastic_tt
+					check_variable = { the_priesthood_opinion > 79 }
 				}
 			}
 		}
@@ -1610,6 +1757,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_mobilize_the_monks"
 			add_political_power = 100
 			add_stability = -0.02
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_priesthood_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1803,16 +1952,28 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_promise_autonomy"
 			add_stability = 0.02
 			KAC = {
-				generic_lower_2_percent_influence_of_BRM = yes
+				set_temp_variable = { percent_change = -2 }
+				set_temp_variable = { tag_index = BRM.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 			KAR = {
-				generic_lower_2_percent_influence_of_BRM = yes
+				set_temp_variable = { percent_change = -2 }
+				set_temp_variable = { tag_index = BRM.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 			SHN = {
-				generic_lower_2_percent_influence_of_BRM = yes
+				set_temp_variable = { percent_change = -2 }
+				set_temp_variable = { tag_index = BRM.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 			WAA = {
-				generic_lower_2_percent_influence_of_BRM = yes
+				set_temp_variable = { percent_change = -2 }
+				set_temp_variable = { tag_index = BRM.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -1838,44 +1999,132 @@ focus_tree = {
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_rebel_influence_higher_25_tt
 				KAC = {
-					set_temp_variable = { temp_idx = -1 }
-					any_of = {
-						array = influence_array
-						check_variable = { v = BRM }
+					OR = {
+						AND = {
+							check_variable = { influence_array^0 = BRM }
+							check_variable = { influence_array_val^0 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^1 = BRM }
+							check_variable = { influence_array_val^1 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^2 = BRM }
+							check_variable = { influence_array_val^2 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^3 = BRM }
+							check_variable = { influence_array_val^3 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^4 = BRM }
+							check_variable = { influence_array_val^4 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^5 = BRM }
+							check_variable = { influence_array_val^5 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^6 = BRM }
+							check_variable = { influence_array_val^6 > 24.999 }
+						}
 					}
-					set_temp_variable = { temp_idx = i }
-					check_variable = { temp_idx > -1 }
-					check_variable = { influence_array_calc^temp_idx > 0.25 }
 				}
 				KAR = {
-					set_temp_variable = { temp_idx = -1 }
-					any_of = {
-						array = influence_array
-						check_variable = { v = BRM }
+					OR = {
+						AND = {
+							check_variable = { influence_array^0 = BRM }
+							check_variable = { influence_array_val^0 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^1 = BRM }
+							check_variable = { influence_array_val^1 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^2 = BRM }
+							check_variable = { influence_array_val^2 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^3 = BRM }
+							check_variable = { influence_array_val^3 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^4 = BRM }
+							check_variable = { influence_array_val^4 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^5 = BRM }
+							check_variable = { influence_array_val^5 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^6 = BRM }
+							check_variable = { influence_array_val^6 > 24.999 }
+						}
 					}
-					set_temp_variable = { temp_idx = i }
-					check_variable = { temp_idx > -1 }
-					check_variable = { influence_array_calc^temp_idx > 0.25 }
 				}
 				SHN = {
-					set_temp_variable = { temp_idx = -1 }
-					any_of = {
-						array = influence_array
-						check_variable = { v = BRM }
+					OR = {
+						AND = {
+							check_variable = { influence_array^0 = BRM }
+							check_variable = { influence_array_val^0 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^1 = BRM }
+							check_variable = { influence_array_val^1 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^2 = BRM }
+							check_variable = { influence_array_val^2 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^3 = BRM }
+							check_variable = { influence_array_val^3 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^4 = BRM }
+							check_variable = { influence_array_val^4 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^5 = BRM }
+							check_variable = { influence_array_val^5 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^6 = BRM }
+							check_variable = { influence_array_val^6 > 24.999 }
+						}
 					}
-					set_temp_variable = { temp_idx = i }
-					check_variable = { temp_idx > -1 }
-					check_variable = { influence_array_calc^temp_idx > 0.25 }
 				}
 				WAA = {
-					set_temp_variable = { temp_idx = -1 }
-					any_of = {
-						array = influence_array
-						check_variable = { v = BRM }
+					OR = {
+						AND = {
+							check_variable = { influence_array^0 = BRM }
+							check_variable = { influence_array_val^0 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^1 = BRM }
+							check_variable = { influence_array_val^1 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^2 = BRM }
+							check_variable = { influence_array_val^2 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^3 = BRM }
+							check_variable = { influence_array_val^3 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^4 = BRM }
+							check_variable = { influence_array_val^4 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^5 = BRM }
+							check_variable = { influence_array_val^5 > 24.999 }
+						}
+						AND = {
+							check_variable = { influence_array^6 = BRM }
+							check_variable = { influence_array_val^6 > 24.999 }
+						}
 					}
-					set_temp_variable = { temp_idx = i }
-					check_variable = { temp_idx > -1 }
-					check_variable = { influence_array_calc^temp_idx > 0.25 }
 				}
 			}
 			custom_trigger_tooltip = {
@@ -1981,14 +2230,36 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = CHI }
+						check_variable = { influence_array_val^0 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = CHI }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = CHI }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = CHI }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = CHI }
+						check_variable = { influence_array_val^4 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = CHI }
+						check_variable = { influence_array_val^5 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = CHI }
+						check_variable = { influence_array_val^6 < 20 }
+					}
 				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
 			}
 		}
 
@@ -2008,7 +2279,8 @@ focus_tree = {
 				popularity = 0.05
 			}
 			recalculate_party = yes
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2049,7 +2321,8 @@ focus_tree = {
 			}
 			add_ideas = { Anti_tatmadaw_sentiment }
 			add_manpower = -1000
-			decrease_the_priesthood_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_priesthood_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2134,7 +2407,8 @@ focus_tree = {
 					modifier = asean_plus_three_relations
 				}
 			}
-			boost_domestic_influence_2_percent = yes
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -2197,7 +2471,8 @@ focus_tree = {
 				}
 			}
 			add_stability = 0.1
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2376,6 +2651,7 @@ focus_tree = {
 				country_exists = KAR
 			}
 		}
+		will_lead_to_war_with = KAR
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_karen"
@@ -2411,6 +2687,7 @@ focus_tree = {
 				country_exists = KAC
 			}
 		}
+		will_lead_to_war_with = KAC
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_kachin"
@@ -2446,6 +2723,7 @@ focus_tree = {
 				country_exists = SHN
 			}
 		}
+		will_lead_to_war_with = SHN
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_shan"
@@ -2484,14 +2762,36 @@ focus_tree = {
 			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = CHI }
+						check_variable = { influence_array_val^0 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = CHI }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = CHI }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = CHI }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = CHI }
+						check_variable = { influence_array_val^4 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = CHI }
+						check_variable = { influence_array_val^5 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = CHI }
+						check_variable = { influence_array_val^6 < 20 }
+					}
 				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
 			}
 		}
 
@@ -2500,6 +2800,7 @@ focus_tree = {
 				country_exists = WAA
 			}
 		}
+		will_lead_to_war_with = WAA
 
 		search_filters = {FOCUS_FILTER_ANNEXATION}
 
@@ -2654,7 +2955,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_reject_foreign_interference"
 			add_political_power = 100
 			add_stability = 0.1
-			boost_domestic_influence_2_percent = yes
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -2736,7 +3038,8 @@ focus_tree = {
 					modifier = criticized_us
 				}
 			}
-			boost_domestic_influence_2_percent = yes
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -2790,11 +3093,10 @@ focus_tree = {
 		y = 8
 		cost = 10
 
-		prerequisite = {
-		focus = BRM_provoke_clashes_on_the_thai_border
-		}
+		prerequisite = { focus = BRM_provoke_clashes_on_the_thai_border }
 
-		search_filters = {FOCUS_FILTER_ANNEXATION}
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+		will_lead_to_war_with = SIA
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_our_age_old_enemy"
@@ -2824,14 +3126,36 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = CHI }
+						check_variable = { influence_array_val^0 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = CHI }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = CHI }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = CHI }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = CHI }
+						check_variable = { influence_array_val^4 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = CHI }
+						check_variable = { influence_array_val^5 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = CHI }
+						check_variable = { influence_array_val^6 < 20 }
+					}
 				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
 			}
 		}
 
@@ -2886,14 +3210,36 @@ focus_tree = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = CHI }
+						check_variable = { influence_array_val^0 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = CHI }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = CHI }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = CHI }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = CHI }
+						check_variable = { influence_array_val^4 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = CHI }
+						check_variable = { influence_array_val^5 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = CHI }
+						check_variable = { influence_array_val^6 < 20 }
+					}
 				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
 			}
 		}
 
@@ -2941,19 +3287,10 @@ focus_tree = {
 			has_civil_war = no
 			nationalist > 0.5
 			has_stability > 0.4
-			if = {
-				limit = { has_idea = the_priesthood }
-				if = {
-					limit = { has_idea = the_priesthood }
-					custom_trigger_tooltip = {
-						tooltip = 11_monks_indifferent_tt
-						hidden_trigger = {
-							NOT = {
-								has_country_flag = hostile_the_priesthood
-								has_country_flag = negative_the_priesthood
-							}
-						}
-					}
+			if = { limit = { has_idea = the_priesthood }
+				custom_trigger_tooltip = {
+					tooltip = the_priesthood_at_least_indifferent_tt
+					check_variable = { the_priesthood_opinion > 49 }
 				}
 			}
 		}
@@ -2961,6 +3298,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_achieve_acceptance_of_military_rule"
 			remove_ideas = Anti_tatmadaw_sentiment
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -3090,9 +3429,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_secure_chinese_assistance_in_crushing_dissent"
 			GCC_censored_nation_level_up = yes
-			BRM = {
-				generic_grant_3_percent_influence_of_CHI = yes
-			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = CHI.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -3126,7 +3466,10 @@ focus_tree = {
 			}
 			BRM = {
 				add_opinion_modifier = { target = CHI modifier = chinese_preferential_trade }
-				generic_grant_4_percent_influence_of_CHI = yes
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = CHI.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 			CHI = {
 				add_opinion_modifier = { target = ROOT modifier = chinese_preferential_trade }
@@ -3150,22 +3493,42 @@ focus_tree = {
 		y = 10
 		cost = 15
 
-		prerequisite = {
-		focus = BRM_give_china_preferential_trade_agreements
-		}
+		prerequisite = { focus = BRM_give_china_preferential_trade_agreements }
 
 		available = {
 			NOT = { is_in_faction_with = USA }
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_USA_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = USA }
+						check_variable = { influence_array_val^0 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = USA }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = USA }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = USA }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = USA }
+						check_variable = { influence_array_val^4 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = USA }
+						check_variable = { influence_array_val^5 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = USA }
+						check_variable = { influence_array_val^6 < 20 }
+					}
 				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
 			}
 		}
 
@@ -3179,7 +3542,10 @@ focus_tree = {
 				}
 			}
 			BRM = {
-				generic_grant_5_percent_influence_of_CHI = yes
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = CHI.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -3206,7 +3572,8 @@ focus_tree = {
 			add_political_power = 50
 			army_experience = 10
 
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -3544,6 +3911,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_our_army_doctrine"
 			add_doctrine_cost_reduction = {
+				name = BRM_improve_our_army_doctrine
                 category = land_doctrine
                 uses = 2
                 cost_reduction = 0.5
@@ -3594,6 +3962,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_counter_insurgency_techniques"
 			add_doctrine_cost_reduction = {
+				name = BRM_improve_counter_insurgency_techniques
                 category = land_doctrine
                 uses = 1
                 cost_reduction = 0.2
@@ -3777,9 +4146,7 @@ focus_tree = {
 		y = 3
 		cost = 10
 
-		prerequisite = {
-		focus = BRM_strengthen_the_other_arms
-		}
+		prerequisite = { focus = BRM_strengthen_the_other_arms }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_bolster_the_air_force"
@@ -3811,6 +4178,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_our_air_doctrine"
 			add_doctrine_cost_reduction = {
+				name = BRM_improve_our_air_doctrine
                 category = air_doctrine
                 uses = 1
                 cost_reduction = 0.5

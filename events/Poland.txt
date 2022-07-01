@@ -1,138 +1,600 @@
 ﻿add_namespace = poland
 add_namespace = poland_news
+add_namespace = poland_influence
 
-### 2000 Independence March - Nationalism ###
-###Jonneh####
-country_event = { #Return Of Monarchy
-	id = poland.1
-	immediate = { }
-	title = poland.1.t
-	desc = poland.1.d
-	picture = GFX_monarch_event
+# events 1-4 were removed as part of cleanup,
+# they are no longer used and are free for grabs
+
+country_event = {
+	id = poland.5
+	title = poland.5.t
+	desc = poland.5.d
+	picture = GFX_anaconda_16_event
 
 	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = {
-		name = poland.1.a
-		hidden_effect = { POL = { set_cosmetic_tag = POL_AUTH_S } }
-		create_country_leader = {
-			name = " Rydygier Książę Saski"
-			picture = "rudiger_saski.dds"
-			ideology = Monarchist
-			traits = {
-			nationalist_Monarchist
-				likeable
-				businessman
-			}
-		}
-	}
-}
-country_event = { #Offer To Lithuania
-	id = poland.2
-	immediate = { }
-	title = poland.2.t
-	desc = poland.2.d
-	picture = GFX_plc_proposal
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = { # LIT accepts
-	name = poland.2.a
-	POL = { add_to_faction = LIT
-	puppet = LIT
-	country_event = poland.3 }
-	LIT = { hidden_effect = {
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 23 }
-		update_government_coalition_strength = yes
-		update_party_name = yes
-		set_coalition_drift = yes
-		meta_effect = {
-		text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
-
-				set_politics = {
-					ruling_party = nationalist
-					elections_allowed = no
-				} }
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^23 = 0.70 }
-				recalculate_party = yes
-	set_cosmetic_tag = LIT_AUTH_S }
-
-		ai_chance = {
-	base = 10
-	modifier = {
-		POL_base_lit_chance = yes
-		add = -5
-	}
-	modifier = {
-		add = 40
-		POL_more_than_25_less_than_40_trigger = yes
-	}
-	modifier = {
-		add = 90
-		POL_more_than_40_factor = yes
-		}
-	  }
-	}
-	option = { #LIT rejects
-		name = poland.2.b
-		log = "[GetDateText]: [This.GetName]: poland.2.b executed"
-		POL = { add_political_power = -50 country_event = poland.4 }
-
-		ai_chance = {
-			base = 40
-		}
+		name = poland.5.a
+		log = "[GetDateText]: [This.GetName]: poland.5.a executed"
+		army_experience = 50
+		air_experience = 50
+		add_political_power = 75
 	}
 }
 
-country_event = { #news of lit accepting
-	id = poland.3
-	immediate = { }
-	title = poland.3.t
-	desc = poland.3.d
-	picture = GFX_plc_proposal
-
+# Soicalists on power, corruption scandal
+country_event = {
+	id = poland.6
+	title = poland.6.t
+	desc = poland.6.d
+	picture = GFX_pol_corruption_event
 	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = {
-		name = poland.3.a
-		log = "[GetDateText]: [This.GetName]: poland.3.a executed"
-		add_political_power = 50
-		add_political_power = 50
+		name = poland.6.a
+		log = "[GetDateText]: [This.GetName]: poland.6.a executed"
+
+		custom_effect_tooltip = POL_corruption_Scandal_Soc_1_TT
+		set_temp_variable = {
+			current_soc_popularity = party_pop_array^3
+		}
+
+		multiply_temp_variable = { current_soc_popularity = 0.9 }
+
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = current_soc_popularity }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			factor = 40
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
 			}
 		}
-country_event = { #news of lit declining
-	id = poland.4
-	immediate = { }
-	title = poland.4.t
-	desc = poland.4.d
-	picture = GFX_treaty_rejected
+	}
+
+	option = {
+		name = poland.6.b
+		log = "[GetDateText]: [This.GetName]: poland.6.b executed"
+
+		custom_effect_tooltip = POL_corruption_Scandal_Soc_2_TT
+		set_temp_variable = {
+			current_soc_popularity = party_pop_array^3
+		}
+
+		multiply_temp_variable = { current_soc_popularity = 0.9 }
+
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = current_soc_popularity }
+		add_relative_party_popularity = yes
+
+		ai_chance = { factor = 40 }
+	}
+}
+
+# Cons dropping out of popularity
+country_event = {
+	id = poland.7
+	title = poland.7.t
+	desc = poland.7.d
+	picture = GFX_pol_corruption_event
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = poland.7.a
+		log = "[GetDateText]: [This.GetName]: poland.7.a executed"
+
+		custom_effect_tooltip = POL_corruption_Scandal_Con_1_TT
+		set_temp_variable = { current_cons_popularity = party_pop_array^1 }
+		multiply_temp_variable = { current_cons_popularity = 0.5 }
+
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = current_cons_popularity }
+		add_relative_party_popularity = yes
+
+		ai_chance = { factor = 40 }
+	}
+
+	option = {
+		name = poland.7.b
+		log = "[GetDateText]: [This.GetName]: poland.7.b executed"
+
+		custom_effect_tooltip = POL_corruption_Scandal_Con_2_TT
+		add_political_power = -200
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.20 }
+		add_relative_party_popularity = yes
+
+
+		ai_chance = { factor = 40 }
+	}
+}
+
+# Question of socialism
+country_event = {
+	id = poland.8
+	title = poland.8.t
+	desc = poland.8.d
+	picture = GFX_pol_socialism_event
 
 	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = {
-		name = poland.4.a
-		log = "[GetDateText]: [This.GetName]: poland.4.a executed"
+		name = poland.8.a
+		log = "[GetDateText]: [This.GetName]: poland.8.a executed"
+
+		add_political_power = 75
+		add_stability = 0.05
+
+		ai_chance = { factor = 40 }
+	}
+
+	option = {
+		name = poland.8.b
+		log = "[GetDateText]: [This.GetName]: poland.8.b executed"
+
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = party_pop_array^3 }
+		add_relative_party_popularity = yes
+
+		add_timed_idea = {
+			idea = POL_political_schism
+			days = 365
+		}
+
+		ai_chance = { factor = 10 }
+	}
+}
+
+# first elections change
+country_event = {
+	id = poland.9
+	title = poland.9.t
+	desc = poland.9.d
+	picture = GFX_pol_election_event
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = poland.9.a
+		log = "[GetDateText]: [This.GetName]: poland.9.a executed"
+
+		custom_effect_tooltip = POL_First_elections_1_TT
+		add_political_power = 75
+		add_stability = 0.03
+
+		ai_chance = { factor = 40 }
+	}
+
+	option = {
+		name = poland.9.b
+		log = "[GetDateText]: [This.GetName]: poland.9.b executed"
+
+		custom_effect_tooltip = POL_First_elections_2_TT
+		add_stability = -0.03
 		add_political_power = -50
+
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.30 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			factor = 40
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
 			}
+		}
+	}
+}
+
+# lgbt protests
+country_event = {
+	id = poland.10
+	title = poland.10.t
+	desc = poland.10.d
+	picture = GFX_pol_lgbt_protests
+	fire_only_once = yes
+	is_triggered_only = yes
 
 	option = {
-		name = poland.4.b
-		log = "[GetDateText]: [This.GetName]: poland.4.b executed"
-		create_wargoal = { type = puppet_wargoal_focus target = LIT } 110 = { add_core_of = POL } 109 = { add_core_of = POL }
-			}
+		name = poland.10.a
+		log = "[GetDateText]: [This.GetName]: poland.10.a executed"
+
+		add_political_power = -100
+		add_stability = -0.1
+
+		ai_chance = { factor = 40 }
 	}
+
+	option = {
+		name = poland.10.b
+		log = "[GetDateText]: [This.GetName]: poland.10.b executed"
+
+		custom_effect_tooltip = POL_lgbt_protest_ingored_TT
+		add_stability = 0.05
+		add_political_power = -50
+
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = -0.20 }
+		add_relative_party_popularity = yes
+
+
+		ai_chance = { factor = 10 }
+	}
+}
+
+# PO and PiS are created
+country_event = {
+	id = poland.11
+	title = poland.11.t
+	desc = poland.11.d
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = poland.11.a
+		log = "[GetDateText]: [This.GetName]: poland.11.a executed"
+		ai_chance = { factor = 40 }
+	}
+}
+
+# ZKP/PPS schism
+country_event = {
+	id = poland.12
+	title = poland.12.t
+	desc = poland.12.d
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = poland.12.a
+		log = "[GetDateText]: [This.GetName]: poland.12.a executed"
+
+		if = {
+			limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 4 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = yes
+			}
+
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.075 }
+			add_relative_party_popularity = yes
+
+			add_stability = -0.1
+		}
+		else_if = {
+			limit = { is_in_array = { ruling_party = 4 } }
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.075 }
+			add_relative_party_popularity = yes
+
+			add_stability = -0.05
+		}
+
+		ai_chance = { factor = 40 }
+	}
+
+	option = {
+		name = poland.12.b
+		log = "[GetDateText]: [This.GetName]: poland.12.b executed"
+
+		if = {
+			limit = { NOT = { is_in_array = { ruling_party = 5 } } }
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 5 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = yes
+			}
+
+
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.075 }
+			add_relative_party_popularity = yes
+
+			add_stability = -0.1
+		}
+		else_if = {
+			limit = { is_in_array = { ruling_party = 5 } }
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.075 }
+			add_relative_party_popularity = yes
+
+			add_stability = -0.05
+		}
+
+		ai_chance = { factor = 40 }
+	}
+}
+
+# women in the army
+country_event = {
+	id = poland.13
+	title = poland.13.t
+	desc = poland.13.d
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = poland.13.a
+		log = "[GetDateText]: [This.GetName]: poland.13.a executed"
+
+		if = {
+			limit = {
+				has_idea = volunteer_women
+			}
+
+			swap_ideas = {
+				remove_idea = volunteer_women
+				add_idea = no_women_in_military
+			}
+		}
+		else_if = {
+			limit = {
+				has_idea = drafted_women
+			}
+
+			swap_ideas = {
+				remove_idea = drafted_women
+				add_idea = no_women_in_military
+			}
+		}
+		else_if = {
+			limit = {
+				has_idea = no_women_in_military
+			}
+
+			add_political_power = 75
+		}
+
+		ai_chance = { factor = 10 }
+	}
+
+	option = {
+		name = poland.13.b
+		log = "[GetDateText]: [This.GetName]: poland.13.b executed"
+
+		if = {
+			limit = {
+				has_idea = volunteer_women
+			}
+
+			add_political_power = 75
+		}
+		else_if = {
+			limit = {
+				has_idea = drafted_women
+			}
+
+			swap_ideas = {
+				remove_idea = drafted_women
+				add_idea = volunteer_women
+			}
+		}
+		else_if = {
+			limit = {
+				has_idea = no_women_in_military
+			}
+
+			swap_ideas = {
+				remove_idea = no_women_in_military
+				add_idea = volunteer_women
+			}
+		}
+
+		ai_chance = { factor = 40 }
+	}
+
+	option = {
+		name = poland.13.c
+		log = "[GetDateText]: [This.GetName]: poland.13.c executed"
+
+		if = {
+			limit = {
+				has_idea = volunteer_women
+			}
+
+			swap_ideas = {
+				remove_idea = volunteer_women
+				add_idea = drafted_women
+			}
+		}
+		else_if = {
+			limit = {
+				has_idea = drafted_women
+			}
+
+			add_political_power = 75
+		}
+		else_if = {
+			limit = {
+				has_idea = no_women_in_military
+			}
+
+			swap_ideas = {
+				remove_idea = no_women_in_military
+				add_idea = drafted_women
+			}
+		}
+
+		ai_chance = { factor = 20 }
+	}
+}
+
+# ZKP and PPS parties info event
+country_event = {
+	id = poland.14
+	title = poland.14.t
+	desc = poland.14.d
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = poland.14.a
+		log = "[GetDateText]: [This.GetName]: poland.14.a executed"
+		ai_chance = { factor = 10 }
+	}
+}
+
+country_event = {
+	id = poland.15
+	title = poland.15.t
+	desc = poland.15.d
+
+	fire_only_once = no
+	is_triggered_only = yes
+
+	option = {
+		name = poland.15.a
+		log = "[GetDateText]: [This.GetName]: poland.15.a executed"
+		ai_chance = { factor = 10 }
+	}
+}
+
+# nationalist influence stuff
+country_event = {
+	id = poland_influence.1
+	title = poland_influence.1.t
+	desc = poland_influence.1.d
+
+	fire_only_once = no
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: poland_influence.1.a executed"
+		name = poland_influence.1.a
+
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.07 }
+		add_relative_party_popularity = yes
+
+		set_country_flag = accepted_pol_influence
+		set_country_flag = received_pol_influence
+		ai_chance = {
+			factor = 10
+			modifier = {
+				OR = {
+					nationalist_right_wing_populists_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+				}
+
+				factor = 20
+			}
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: poland_influence.1.b executed"
+		name = poland_influence.1.b
+
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		add_relative_party_popularity = yes
+
+		set_country_flag = rejected_pol_influence
+		set_country_flag = received_pol_influence
+
+		ai_chance = {
+			factor = 80
+			modifier = {
+				OR = {
+					nationalist_right_wing_populists_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+				}
+
+				factor = 0
+			}
+		}
+	}
+}
+
+# Smolensk disaster
+news_event = {
+	id = poland_news.2
+	title = poland_news.2.t
+	desc = poland_news.2.d
+	picture = GFX_news_smolensk_disaster
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = poland_news.2.a
+		trigger = {
+			NOT = {
+				tag = POL
+				tag = SOV
+			}
+		}
+	}
+	option = {
+		name = poland_news.2.b
+		trigger = { tag = POL }
+		hidden_effect = { kill_country_leader = yes }
+	}
+	option = {
+		name = poland_news.2.c
+		trigger = { tag = SOV }
+	}
+}
+
+# not a Smolensk disaster
+news_event = {
+	id = poland_news.3
+	title = poland_news.3.t
+	desc = poland_news.3.d
+	picture = GFX_news_smolensk_incident
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = poland_news.3.a
+		trigger = {
+			NOT = {
+				tag = POL
+				tag = SOV
+			}
+		}
+	}
+	option = {
+		name = poland_news.3.b
+		trigger = { tag = POL }
+	}
+	option = {
+		name = poland_news.3.c
+		trigger = { tag = SOV }
+	}
+}
