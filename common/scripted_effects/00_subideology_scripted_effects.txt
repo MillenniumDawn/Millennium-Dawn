@@ -1575,6 +1575,12 @@ recalculate_party = {
 
 # stores the info of popularities. modified version of store_election_values = yes
 hold_elections = {
+	if = {
+		limit = {
+			has_country_leader_with_trait = western_technocrat
+		}
+		set_variable = { party_pop_array^0 = 0 } #technocrats don't partecipate in elections
+	}
 	add_up_party_totals = yes
 	set_party_positions = yes
 	for_loop_effect = {
@@ -1594,6 +1600,26 @@ hold_elections = {
 	update_majority_threshold = yes
 	find_two_highest_parties = yes
 	update_government_coalition_strength = yes
+}
+
+recalculate_party_strength = {
+	add_up_party_totals = yes
+	set_party_positions = yes
+	for_loop_effect = {
+		end = party_pop_array^num
+		value = v
+		if = {
+			limit = {
+				#normal popularity entry is over threshold
+				check_variable = { party_pop_array^v > election_threshold }
+			}
+			set_variable = { party_pop_elect_array^v = party_pop_array^v }
+		}
+		else = {
+			set_variable = { party_pop_elect_array^v = 0 }
+		}
+	}
+	update_majority_threshold = yes
 }
 
 add_up_party_totals = {
@@ -2307,6 +2333,10 @@ AI_setup_government = {
 				OR = {
 					AND = {
 						has_country_leader_with_trait = western_Western_Autocracy
+						is_in_array = { ruling_party = 0 }
+					}
+					AND = {
+						has_country_leader_with_trait = western_technocrat
 						is_in_array = { ruling_party = 0 }
 					}
 					AND = {
