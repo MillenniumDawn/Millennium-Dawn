@@ -114,7 +114,7 @@ def main():
 			os.remove('goals.gfx')
 			os.remove('goals_shine.gfx')
 			print("Script has completed the movement of the files.\n")
-			print("goals.gfx and goals_shine.gfx have been generated for " + str(len(ddslist)) + " icons.\n\nThe files have been outputted in " + str(os.getcwd()) )
+			print("goals.gfx and goals_shine.gfx have been generated for " + str(len(ddslist)) + " icons.\n\nThe files have been outputted into the interface files.")
 			return
 		elif selection == 2:
 			print("Generating event_pictures.gfx...")
@@ -148,7 +148,7 @@ def main():
 			shutil.copy('MD_eventpictures.gfx','../interface')
 			os.remove('MD_eventpictures.gfx')
 			print("Script has completed the movement of the files.\n")
-			print("\neventpictures.gfx has been generated for " + str(len(ddslist)) + " event pictures.\n\nThe files have been outputted in " + str(os.getcwd()) )
+			print("\neventpictures.gfx has been generated for " + str(len(ddslist)) + " event pictures.\n\nThe files have been outputted in into the interface files.")
 			return
 		else:
 			print(f"{bcolors.FAIL}1 or 2 dumbfuck {bcolors.RESET}" + str(selection) + f"{bcolors.FAIL} isn't a fucking option.\n{bcolors.RESET}")
