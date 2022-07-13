@@ -4071,35 +4071,16 @@ focus_tree = {
 		cancel_if_invalid = yes
 		search_filters = {FOCUS_FILTER_ANNEXATION}
 		bypass = {
-			OR = {
-				AND = {
-					NOT = { country_exists = HLS }
-					NOT = { country_exists = MLT }
-					NOT = { country_exists = SMA }
-				}
-				AND = {
-					HLS = { is_in_faction_with = ITA }
-					MLT = { is_in_faction_with = ITA }
-					SMA = { is_in_faction_with = ITA }
- 				}
-				AND = {
-					HLS = { is_subject_of = ITA }
-					MLT = { is_subject_of = ITA }
-					SMA = { is_subject_of = ITA }
-				}
-			}
+			NOT = { country_exists = HLS }
+			NOT = { country_exists = MLT }
+			NOT = { country_exists = SMA }
+			NOT = { country_exists = MNC }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_pesky_states"
-			add_named_threat = {
-				name = threat_ITA_demands_subjugation
-				threat = 2
-			}
 			if = {
 				limit = {
-					NOT = { is_in_faction_with = MLT }
-					NOT = { MLT = { is_subject_of = ITA } }
 					country_exists = MLT
 				}
 				MLT = { country_event = italy_md.3 }
@@ -4107,8 +4088,6 @@ focus_tree = {
 			}
 			if = {
 				limit = {
-					NOT = { is_in_faction_with = SMA }
-					NOT = { SMA = { is_subject_of = ITA } }
 					country_exists = SMA
 				}
 				SMA = { country_event = italy_md.3 }
@@ -4117,8 +4096,6 @@ focus_tree = {
 			if = {
 				limit = {
 					AND = {
-						NOT = { is_in_faction_with = HLS }
-						NOT = { HLS = { is_subject_of = ITA } }
 						NOT = { has_country_flag = HLS_lateran_treaties } #No Subjugation if Pope accepted lateran treaties
 						country_exists = HLS
 						ITA = { is_neighbor_of = HLS }
@@ -4126,8 +4103,16 @@ focus_tree = {
 				}
 				HLS = { country_event = italy_md.3 }
 				add_state_core = 929
-				set_temp_variable = { temp_opinion = -5 }
+				set_temp_variable = { temp_opinion = -10 }
 				change_the_clergy_opinion = yes
+			}
+			if = {
+				limit = {
+					country_exists = MNC
+					owns_state = 1000
+				}
+				MNC = { country_event = italy_md.3 }
+				add_state_core = 946
 			}
 		}
 
@@ -4172,7 +4157,7 @@ focus_tree = {
 		icon = italian_africa
 		relative_position_id = ITA_territorial_claims
 		x = 0
-		y = 3
+		y = 4
 		cost = 5
 
 		prerequisite = {
@@ -4896,6 +4881,87 @@ focus_tree = {
 	}
 
 	focus = {
+		id = ITA_our_grisons
+		icon = attack_switzerland
+		relative_position_id = ITA_our_lands_balkans
+		x = 0
+		y = 1
+		cost = 5
+
+		bypass = {
+			ITA = {
+				owns_state = 73
+			}
+		}
+		search_filters = {FOCUS_FILTER_ANNEXATION}
+		prerequisite = {
+			focus = ITA_our_lands_balkans
+		}
+		available = {
+			has_expansionist_government = yes
+		}
+		cancel_if_invalid = yes
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_our_grisons"
+			add_state_core = 73
+			hidden_effect = {
+				SWI = {
+					remove_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+				}
+			}
+			country_event = italy_md.55
+		}
+
+		ai_will_do = {
+			factor = 160
+		}
+	}
+
+	focus = {
+		id = ITA_our_savoie
+		icon = attack_france
+		relative_position_id = ITA_our_grisons
+		x = 0
+		y = 1
+		cost = 5
+
+		prerequisite = {
+			focus = ITA_our_grisons
+		}
+		available = {
+			has_expansionist_government = yes
+		}
+		cancel_if_invalid = yes
+
+		search_filters = {FOCUS_FILTER_ANNEXATION}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_our_savoie"
+			add_state_core = 65
+			add_state_core = 1000
+			add_state_core = 857
+			country_event = italy_md.53
+			if = {
+				limit = {
+					NOT = { MNC = { is_subject_of = ITA } }
+					country_exists = MNC
+					has_completed_focus = ITA_pesky_states
+				}
+				MNC = { country_event = italy_md.3 }
+				add_state_core = 946
+			}
+		}
+
+		ai_will_do = {
+			factor = 160
+		}
+	}
+
+	focus = {
 		id = ITA_recover_anatolia
 		icon = attack_turkey
 		relative_position_id = ITA_retake_levant
@@ -5383,37 +5449,6 @@ focus_tree = {
 	}
 
 	focus = {
-		id = ITA_our_savoie
-		icon = attack_france
-		relative_position_id = ITA_our_lands_balkans
-		x = 0
-		y = 1
-		cost = 5
-
-		prerequisite = {
-			focus = ITA_our_lands_balkans
-		}
-		available = {
-			has_expansionist_government = yes
-		}
-		cancel_if_invalid = yes
-
-		search_filters = {FOCUS_FILTER_ANNEXATION}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_our_savoie"
-			add_state_core = 65
-			add_state_core = 1000
-			add_state_core = 857
-			country_event = italy_md.53
-		}
-
-		ai_will_do = {
-			factor = 160
-		}
-	}
-
-	focus = {
 		id = ITA_arabian_black_gold
 		icon = attack_saudi_arabia
 		relative_position_id = ITA_reclaim_colonies
@@ -5606,9 +5641,6 @@ focus_tree = {
 		search_filters = {FOCUS_FILTER_POLITICAL}
 		available = {
 			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
-			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
 		}
@@ -5647,9 +5679,6 @@ focus_tree = {
 		}
 		available = {
 			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
-			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
 		}
@@ -5685,9 +5714,6 @@ focus_tree = {
 			focus = ITA_what_we_are
 		}
 		available = {
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -5725,9 +5751,6 @@ focus_tree = {
 		}
 		available = {
 			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
-			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
 		}
@@ -5764,9 +5787,6 @@ focus_tree = {
 		}
 		available = {
 			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
-			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
 		}
@@ -5796,15 +5816,12 @@ focus_tree = {
 		relative_position_id = ITA_communism_resurgence
 		x = -2
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_communism_resurgence
 		}
 		available = {
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -5815,12 +5832,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_align_to_the_east"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.4 }
-			set_temp_variable = { temp_outlook_increase = 0.3 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -5842,15 +5857,12 @@ focus_tree = {
 		relative_position_id = ITA_communism_resurgence
 		x = 2
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_communism_resurgence
 		}
 		available = {
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -5861,12 +5873,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_non_aligned_communism"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 19 }
-			set_temp_variable = { party_popularity_increase = 0.4 }
-			set_temp_variable = { temp_outlook_increase = 0.3 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -5888,15 +5898,12 @@ focus_tree = {
 		relative_position_id = ITA_old_parties
 		x = 2
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_old_parties
 		}
 		available = {
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -5906,12 +5913,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_centre_right"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 1 }
-			set_temp_variable = { party_popularity_increase = 0.20 }
-			set_temp_variable = { temp_outlook_increase = 0.20 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -5933,15 +5938,12 @@ focus_tree = {
 		relative_position_id = ITA_old_parties
 		x = -2
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_old_parties
 		}
 		available = {
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -5951,12 +5953,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_centre_left"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 3 }
-			set_temp_variable = { party_popularity_increase = 0.4 }
-			set_temp_variable = { temp_outlook_increase = 0.3 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -5978,15 +5978,12 @@ focus_tree = {
 		relative_position_id = ITA_old_parties
 		x = 0
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_old_parties
 		}
 		available = {
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -5996,12 +5993,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_northern_league"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 14 }
-			set_temp_variable = { party_popularity_increase = 0.4 }
-			set_temp_variable = { temp_outlook_increase = 0.3 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -6023,15 +6018,12 @@ focus_tree = {
 		relative_position_id = ITA_liberal_parties
 		x = -2
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_liberal_parties
 		}
 		available = {
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -6041,12 +6033,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_liberals"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 2 }
-			set_temp_variable = { party_popularity_increase = 0.4 }
-			set_temp_variable = { temp_outlook_increase = 0.3 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -6068,15 +6058,12 @@ focus_tree = {
 		relative_position_id = ITA_liberal_parties
 		x = 2
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_liberal_parties
 		}
 		available = {
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -6086,12 +6073,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_libertarians"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 16 }
-			set_temp_variable = { party_popularity_increase = 0.4 }
-			set_temp_variable = { temp_outlook_increase = 0.3 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -6113,15 +6098,12 @@ focus_tree = {
 		relative_position_id = ITA_with_populism
 		x = 2
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_with_populism
 		}
 		available = {
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -6131,12 +6113,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_right_wing_populism"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 20 }
-			set_temp_variable = { party_popularity_increase = 0.4 }
-			set_temp_variable = { temp_outlook_increase = 0.3 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -6158,16 +6138,13 @@ focus_tree = {
 		relative_position_id = ITA_with_populism
 		x = -2
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_with_populism
 		}
 		available = {
 			has_country_flag = ITA_five_star_movement_founded
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -6177,12 +6154,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_left_wing_populism"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 5 }
-			set_temp_variable = { party_popularity_increase = 0.40 }
-			set_temp_variable = { temp_outlook_increase = 0.30 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -6204,16 +6179,13 @@ focus_tree = {
 		relative_position_id = ITA_with_populism
 		x = 0
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_with_populism
 		}
 		available = {
 			has_country_flag = ITA_salvini_took_over_lega
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -6223,12 +6195,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_lega_nord_populism"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 6 }
-			set_temp_variable = { party_popularity_increase = 0.40 }
-			set_temp_variable = { temp_outlook_increase = 0.30 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -6250,15 +6220,12 @@ focus_tree = {
 		relative_position_id = ITA_new_left
 		x = -2
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_new_left
 		}
 		available = {
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -6268,12 +6235,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_leu"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 18 }
-			set_temp_variable = { party_popularity_increase = 0.4 }
-			set_temp_variable = { temp_outlook_increase = 0.3 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -6295,15 +6260,12 @@ focus_tree = {
 		relative_position_id = ITA_new_left
 		x = 2
 		y = 1
-		cost = 10
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_new_left
 		}
 		available = {
-			NOT = {
-				has_country_flag = ITA_party_chosen
-			}
 			NOT = {
 				has_country_flag = ITA_undemocratic_coup
 			}
@@ -6313,12 +6275,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_greens"
-			set_country_flag = ITA_party_chosen
 			set_temp_variable = { party_index = 17 }
-			set_temp_variable = { party_popularity_increase = 0.4 }
-			set_temp_variable = { temp_outlook_increase = 0.3 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			country_event = { id = MD4_election_campaign.0 }
 		}
 
 		ai_will_do = {
@@ -6382,11 +6342,10 @@ focus_tree = {
 				western_liberals_are_in_power = yes
 			}
 		}
-		cancel_if_invalid = yes
-
 		bypass = {
 			has_completed_focus = ITA_let_companies_fail_2
 		}
+		cancel_if_invalid = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_let_companies_fail"
@@ -6424,11 +6383,11 @@ focus_tree = {
 				neutrality_neutral_oligarch_are_in_power = yes
 			}
 		}
-		cancel_if_invalid = yes
-
 		bypass = {
 			has_completed_focus = ITA_let_companies_fail
 		}
+		cancel_if_invalid = yes
+
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_let_companies_fail_2"
@@ -6543,6 +6502,14 @@ focus_tree = {
 				neutrality_neutral_oligarch_are_in_power = yes
 			}
 		}
+
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_modify_article_18
+				has_completed_focus = ITA_modify_article_18_2
+			}
+		}
+
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -6576,6 +6543,12 @@ focus_tree = {
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_refound_IRI_2
+				has_completed_focus = ITA_refound_IRI_3
+			}
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -6606,6 +6579,12 @@ focus_tree = {
 			}
 			nationalist_fascist_are_in_power = yes
 		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_refound_IRI
+				has_completed_focus = ITA_refound_IRI_3
+			}
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -6633,6 +6612,12 @@ focus_tree = {
 		available = {
 			neutrality_neutral_social_are_in_power = yes
 		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_refound_IRI
+				has_completed_focus = ITA_refound_IRI_2
+			}
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -6659,6 +6644,9 @@ focus_tree = {
 		}
 		available = {
 			emerging_anarchist_communism_are_in_power = yes
+		}
+		bypass = {
+			has_completed_focus = ITA_citizenship_income
 		}
 		cancel_if_invalid = yes
 
@@ -6693,6 +6681,12 @@ focus_tree = {
 				neutrality_neutral_conservatism_are_in_power = yes
 			}
 		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_sell_government_shares_in_companies_2
+				has_completed_focus = ITA_sell_government_shares_in_companies_3
+			}
+		}
 		cancel_if_invalid = yes
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_sell_government_shares_in_companies"
@@ -6721,6 +6715,12 @@ focus_tree = {
 			OR = {
 				neutrality_neutral_libertarians_are_in_power = yes
 				western_liberals_are_in_power = yes
+			}
+		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_sell_government_shares_in_companies
+				has_completed_focus = ITA_sell_government_shares_in_companies_3
 			}
 		}
 		cancel_if_invalid = yes
@@ -6758,6 +6758,12 @@ focus_tree = {
 				emerging_autocracy_are_in_power = yes
 				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
+			}
+		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_sell_government_shares_in_companies_2
+				has_completed_focus = ITA_sell_government_shares_in_companies
 			}
 		}
 		cancel_if_invalid = yes
@@ -6846,6 +6852,9 @@ focus_tree = {
 				western_conservatism_are_in_power = yes
 			}
 		}
+		bypass = {
+			has_completed_focus = ITA_reopen_brothels_2
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -6872,6 +6881,9 @@ focus_tree = {
 		}
 		available = {
 			neutrality_neutral_libertarians_are_in_power = yes
+		}
+		bypass = {
+			has_completed_focus = ITA_reopen_brothels
 		}
 		cancel_if_invalid = yes
 
@@ -6902,6 +6914,12 @@ focus_tree = {
 			OR = {
 				neutrality_neutral_green_are_in_power = yes
 				neutrality_neutral_social_are_in_power = yes
+			}
+		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_save_struggling_companies_2
+				has_completed_focus = ITA_save_struggling_companies_3
 			}
 		}
 		cancel_if_invalid = yes
@@ -6937,6 +6955,12 @@ focus_tree = {
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_save_struggling_companies
+				has_completed_focus = ITA_save_struggling_companies_3
+			}
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -6970,6 +6994,12 @@ focus_tree = {
 				neutrality_neutral_conservatism_are_in_power = yes
 			}
 		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_save_struggling_companies_2
+				has_completed_focus = ITA_save_struggling_companies
+			}
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -6996,6 +7026,12 @@ focus_tree = {
 		}
 		available = {
 			neutrality_neutral_social_are_in_power = yes
+		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_protect_migrant_rights_2
+				has_completed_focus = ITA_protect_migrant_rights_3
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -7024,6 +7060,12 @@ focus_tree = {
 		available = {
 			western_social_democrats_are_in_power = yes
 		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_protect_migrant_rights
+				has_completed_focus = ITA_protect_migrant_rights_3
+			}
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -7050,6 +7092,12 @@ focus_tree = {
 		}
 		available = {
 			western_liberals_are_in_power = yes
+		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_protect_migrant_rights_2
+				has_completed_focus = ITA_protect_migrant_rights
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -7084,6 +7132,9 @@ focus_tree = {
 				neutrality_neutral_conservatism_are_in_power = yes
 			}
 		}
+		bypass = {
+			has_completed_focus = ITA_normalize_extraordinary_bonuses_2
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -7117,6 +7168,9 @@ focus_tree = {
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
+		bypass = {
+			has_completed_focus = ITA_normalize_extraordinary_bonuses
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -7143,6 +7197,12 @@ focus_tree = {
 		}
 		available = {
 			neutrality_neutral_social_are_in_power = yes
+		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_further_protect_workers_rights_2
+				has_completed_focus = ITA_further_protect_workers_rights_3
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -7177,6 +7237,12 @@ focus_tree = {
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_further_protect_workers_rights
+				has_completed_focus = ITA_further_protect_workers_rights_3
+			}
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -7203,6 +7269,12 @@ focus_tree = {
 		}
 		available = {
 			western_social_democrats_are_in_power = yes
+		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_further_protect_workers_rights_2
+				has_completed_focus = ITA_further_protect_workers_rights
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -7234,6 +7306,9 @@ focus_tree = {
 				neutrality_neutral_social_are_in_power = yes
 			}
 		}
+		bypass = {
+			has_completed_focus = ITA_tax_the_rich_2
+		}
 		cancel_if_invalid = yes
 
 		search_filters = {FOCUS_FILTER_USA_ECONOMIC_REGULATION FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
@@ -7261,6 +7336,9 @@ focus_tree = {
 		}
 		available = {
 			emerging_anarchist_communism_are_in_power = yes
+		}
+		bypass = {
+			has_completed_focus = ITA_tax_the_rich
 		}
 		cancel_if_invalid = yes
 
@@ -7326,6 +7404,9 @@ focus_tree = {
 				neutrality_neutral_green_are_in_power = yes
 			}
 		}
+		bypass = {
+			has_completed_focus = ITA_carbon_tax_2
+		}
 		cancel_if_invalid = yes
 
 		search_filters = {FOCUS_FILTER_USA_ECONOMIC_REGULATION FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
@@ -7355,6 +7436,9 @@ focus_tree = {
 			OR = {
 				western_liberals_are_in_power = yes
 			}
+		}
+		bypass = {
+			has_completed_focus = ITA_carbon_tax_2
 		}
 		cancel_if_invalid = yes
 
@@ -7835,6 +7919,12 @@ focus_tree = {
 				western_liberals_are_in_power = yes
 			}
 		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_stop_building_abuse_2
+				has_completed_focus = ITA_stop_building_abuse_3
+			}
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -7866,6 +7956,12 @@ focus_tree = {
 				neutrality_neutral_conservatism_are_in_power = yes
 			}
 		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_stop_building_abuse
+				has_completed_focus = ITA_stop_building_abuse_3
+			}
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -7895,6 +7991,12 @@ focus_tree = {
 			OR = {
 				neutrality_neutral_green_are_in_power = yes
 				neutrality_neutral_social_are_in_power = yes
+			}
+		}
+		bypass = {
+			OR = {
+				has_completed_focus = ITA_stop_building_abuse_2
+				has_completed_focus = ITA_stop_building_abuse
 			}
 		}
 		cancel_if_invalid = yes
@@ -7990,6 +8092,9 @@ focus_tree = {
 				emerging_communist_state_are_in_power = yes
 			}
 		}
+		bypass = {
+			has_completed_focus = ITA_nationalize_companies_2
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -8064,6 +8169,9 @@ focus_tree = {
 				neutrality_neutral_oligarch_are_in_power = yes
 			}
 		}
+		bypass = {
+			has_completed_focus = ITA_nationalize_companies
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -8128,6 +8236,9 @@ focus_tree = {
 				neutrality_neutral_communism_are_in_power = yes
 				emerging_communist_state_are_in_power = yes
 			}
+		}
+		bypass = {
+			has_completed_focus = ITA_plan_industrial_development_2
 		}
 		cancel_if_invalid = yes
 
@@ -8214,6 +8325,9 @@ focus_tree = {
 				neutrality_neutral_oligarch_are_in_power = yes
 			}
 		}
+		bypass = {
+			has_completed_focus = ITA_plan_industrial_development
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -8290,6 +8404,9 @@ focus_tree = {
 				emerging_communist_state_are_in_power = yes
 			}
 		}
+		bypass = {
+			has_completed_focus = ITA_abolish_capitalist_media_2
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -8317,6 +8434,9 @@ focus_tree = {
 		available = {
 			NOT = { has_completed_focus = ITA_repeal_former_government_measures_7 }
 			nationalist_fascist_are_in_power = yes
+		}
+		bypass = {
+			has_completed_focus = ITA_abolish_capitalist_media
 		}
 		cancel_if_invalid = yes
 
@@ -8347,6 +8467,9 @@ focus_tree = {
 				neutrality_neutral_communism_are_in_power = yes
 				emerging_communist_state_are_in_power = yes
 			}
+		}
+		bypass = {
+			has_completed_focus = ITA_silence_defeatists_2
 		}
 		cancel_if_invalid = yes
 
@@ -8385,6 +8508,9 @@ focus_tree = {
 				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
 			}
+		}
+		bypass = {
+			has_completed_focus = ITA_silence_defeatists
 		}
 		cancel_if_invalid = yes
 
@@ -9059,7 +9185,7 @@ focus_tree = {
 	focus = {
 		id = ITA_divided_nation
 		icon = The_sick_man_of_Europe
-		x = 6
+		x = 3
 		y = 0
 		cost = 1
 
@@ -9173,7 +9299,7 @@ focus_tree = {
 		relative_position_id = ITA_North_South_divide
 		x = -3
 		y = 1
-		cost = 8
+		cost = 1
 
 		search_filters = {FOCUS_FILTER_ITA_MAFIA }
 		prerequisite = {
@@ -9187,8 +9313,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_eradicating_mafia"
-			add_political_power = -100
-			custom_effect_tooltip = eradicating_mafia_focus_TT
 		}
 
 		ai_will_do = {
@@ -9272,9 +9396,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_relax_legal_framework"
 			custom_effect_tooltip = ITA_increase_police_effectivness_TT
+			custom_effect_tooltip = eradicating_mafia_focus_TT
 			add_to_variable = { police_effectivness_base = 0.05 }
 			update_police_effectivness = yes
-						set_party_index_to_ruling_party = yes
+			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
 			add_relative_party_popularity = yes
@@ -9568,6 +9693,7 @@ focus_tree = {
 		available = {
 			OR = {
 				not_has_statalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
 				has_elections = no
 			}
 			absolute_majority_popularity = yes
@@ -9580,6 +9706,13 @@ focus_tree = {
 			modify_reform_expectance_effect = yes
 			remove_ideas = ITA_underdeveloped_south_1
 			add_ideas = ITA_decentralized_nation
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_statalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_statalist = yes
+			}
 		}
 
 		ai_will_do = {
@@ -9838,7 +9971,10 @@ focus_tree = {
 			focus = ITA_south_reforms
 		}
 		available = {
-			not_has_statalist_government_or_in_coalition = yes
+			OR = {
+				not_has_statalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -9847,7 +9983,7 @@ focus_tree = {
 			add_political_power = -50
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
-			set_temp_variable = { temp_outlook_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.025 }
 			add_relative_party_popularity = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_labour_unions_opinion = yes
@@ -9856,6 +9992,13 @@ focus_tree = {
 			swap_ideas = {
 				remove_idea = ITA_underdeveloped_south_1
 				add_idea = ITA_underdeveloped_south_2
+			}
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_statalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_statalist = yes
 			}
 		}
 
@@ -9877,7 +10020,10 @@ focus_tree = {
 			focus = ITA_fire_excessive_government_employees
 		}
 		available = {
-			not_has_statalist_government_or_in_coalition = yes
+			OR = {
+				not_has_statalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -9893,6 +10039,13 @@ focus_tree = {
 			set_temp_variable = { drift_switch_change = -0.02 }
 			modify_reform_expectance_effect = yes
 			remove_ideas = ITA_underdeveloped_south_2
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_statalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_statalist = yes
+			}
 		}
 
 		ai_will_do = {
@@ -9984,7 +10137,7 @@ focus_tree = {
 		id = ITA_generational_divide
 		icon = southern_question
 		relative_position_id = ITA_divided_nation
-		x = 14
+		x = 17
 		y = 1
 		cost = 1
 
@@ -10068,7 +10221,10 @@ focus_tree = {
 			focus = ITA_pension_reform
 		}
 		available = {
-			not_has_statalist_government_or_in_coalition = yes
+			OR = {
+				not_has_statalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10101,7 +10257,10 @@ focus_tree = {
 			focus = ITA_increase_pension_age_requirements
 		}
 		available = {
-			not_has_statalist_government_or_in_coalition= yes
+			OR = {
+				not_has_statalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10259,7 +10418,10 @@ focus_tree = {
 			focus = ITA_modern_education
 		}
 		available = {
-			not_has_antistatalist_government_or_in_coalition = yes
+			OR = {
+				not_has_antistatalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10270,6 +10432,13 @@ focus_tree = {
 			set_temp_variable = { temp_outlook_increase = 0.02 }
 			add_relative_party_popularity = yes
 			add_political_power = 100
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_antistatalist = yes
+			}
 		}
 
 		ai_will_do = {
@@ -10297,7 +10466,10 @@ focus_tree = {
 			focus = ITA_classical_education
 		}
 		available = {
-			not_has_conservative_government_or_in_coalition = yes
+			OR = {
+				not_has_conservative_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10312,6 +10484,13 @@ focus_tree = {
 			swap_ideas = {
 				remove_idea = ITA_outdated_education_1
 				add_idea = ITA_modern_education_1
+			}
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_conservative = yes
 			}
 		}
 
@@ -10333,7 +10512,10 @@ focus_tree = {
 			focus = ITA_classical_education
 		}
 		available = {
-			not_has_antistatalist_government_or_in_coalition = yes
+			OR = {
+				not_has_antistatalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10351,6 +10533,13 @@ focus_tree = {
 			swap_ideas = {
 				remove_idea = ITA_outdated_education_1
 				add_idea = ITA_outdated_education_2
+			}
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_antistatalist = yes
 			}
 		}
 
@@ -10401,7 +10590,10 @@ focus_tree = {
 			focus = ITA_modern_education
 		}
 		available = {
-			not_has_conservative_government_or_in_coalition = yes
+			OR = {
+				not_has_statalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10419,6 +10611,13 @@ focus_tree = {
 			swap_ideas = {
 				remove_idea = ITA_modern_education_1
 				add_idea = ITA_modern_education_2
+			}
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_statalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_statalist = yes
 			}
 		}
 
@@ -10464,9 +10663,6 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_introduce_meritocracy
 		}
-		available = {
-			not_has_conservative_government_or_in_coalition = yes
-		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
@@ -10500,7 +10696,10 @@ focus_tree = {
 			focus = ITA_increase_teachers_salary
 		}
 		available = {
-			not_has_conservative_government_or_in_coalition = yes
+			OR = {
+				not_has_conservative_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10511,6 +10710,13 @@ focus_tree = {
 			swap_ideas = {
 				remove_idea = ITA_modern_education_3
 				add_idea = ITA_modern_education_4
+			}
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_conservative = yes
 			}
 		}
 
@@ -10532,7 +10738,10 @@ focus_tree = {
 			focus = ITA_increase_funding_for_professional_schools
 		}
 		available = {
-			not_has_conservative_government_or_in_coalition = yes
+			OR = {
+				not_has_conservative_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10543,6 +10752,13 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -20 }
 			modify_treasury_effect = yes
 			add_research_slot = 1
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_conservative = yes
+			}
 		}
 
 		ai_will_do = {
@@ -10563,7 +10779,10 @@ focus_tree = {
 			focus = ITA_increase_funding_for_professional_schools
 		}
 		available = {
-			not_has_statalist_government_or_in_coalition = yes
+			OR = {
+				not_has_statalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10573,6 +10792,13 @@ focus_tree = {
 			modify_stability_factor_effect = yes
 			set_temp_variable = { ITA_education_cost_multiplier_modifier_change = -0.2 }
 			modify_education_cost_multiplier_modifier_effect = yes
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_statalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_statalist = yes
+			}
 		}
 
 		ai_will_do = {
@@ -10593,7 +10819,10 @@ focus_tree = {
 			focus = ITA_encourage_private_schools
 		}
 		available = {
-			not_has_antistatalist_government_or_in_coalition = yes
+			OR = {
+				not_has_antistatalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10608,6 +10837,13 @@ focus_tree = {
 			swap_ideas = {
 				remove_idea = ITA_outdated_education_3
 				add_idea = ITA_outdated_education_4
+			}
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_antistatalist = yes
 			}
 		}
 
@@ -10794,7 +11030,10 @@ focus_tree = {
 			focus = ITA_the_debt_problem
 		}
 		available = {
-			not_has_statalist_government_or_in_coalition = yes
+			OR = {
+				not_has_statalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10803,6 +11042,13 @@ focus_tree = {
 			set_temp_variable = { temp_opinion = 5 }
 			change_international_bankers_opinion = yes
 			country_event = italy_md.13
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_statalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_statalist = yes
+			}
 		}
 
 		ai_will_do = {
@@ -10823,7 +11069,10 @@ focus_tree = {
 			focus = ITA_reduce_expenses
 		}
 		available = {
-			not_has_statalist_government_or_in_coalition = yes
+			OR = {
+				not_has_statalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10833,6 +11082,13 @@ focus_tree = {
 			modify_corporate_tax_rate_effect = yes
 			set_temp_variable = { pop_change = 5 }
 			modify_population_tax_rate_effect = yes
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_statalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_statalist = yes
+			}
 		}
 
 		ai_will_do = {
@@ -10853,7 +11109,10 @@ focus_tree = {
 			focus = ITA_shift_taxation_from_income_to_property
 		}
 		available = {
-			not_has_antistatalist_government_or_in_coalition = yes
+			OR = {
+				not_has_antistatalist_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -10862,6 +11121,13 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -40 }
 			modify_treasury_effect = yes
 			increase_economic_growth = yes
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_antistatalist = yes
+			}
 		}
 
 		ai_will_do = {
@@ -11183,30 +11449,100 @@ focus_tree = {
 		id = ITA_reform_the_judiciary
 		icon = tripartite_pact
 		relative_position_id = ITA_inefficient_administration
-		x = 2
+		x = 5
 		y = 1
-		cost = 10
+		cost = 1
 
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 		prerequisite = {
 			focus = ITA_inefficient_administration
 		}
-		available = {
-			western_conservative_are_not_in_power_or_coalition = yes
-		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_reform_the_judiciary"
-			custom_effect_tooltip = ITA_increase_police_effectivness_TT
-			add_to_variable = { police_effectivness_base = 0.05 }
-			update_police_effectivness = yes
-			swap_ideas = {
-				remove_idea = ITA_inefficient_administration_4
-				add_idea = ITA_inefficient_administration_3
-            }
+		}
+		ai_will_do = {
+			factor = 160
+		}
+	}
+
+	focus = {
+		id = ITA_simplify_legal_code
+		icon = tripartite_pact
+		relative_position_id = ITA_reform_the_judiciary
+		x = 0
+		y = 1
+		cost = 4
+
+		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		prerequisite = {
+			focus = ITA_reform_the_judiciary
 		}
 
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_simplify_legal_code"
+			custom_effect_tooltip = ITA_increase_police_effectivness_TT
+			add_to_variable = { police_effectivness_base = 0.02 }
+			update_police_effectivness = yes
+			swap_ideas = {
+				remove_idea = ITA_judicial_system_1
+				add_idea = ITA_judicial_system_2
+            }
+		}
+		ai_will_do = {
+			factor = 160
+		}
+	}
+
+	focus = {
+		id = ITA_reduce_judgement_times
+		icon = tripartite_pact
+		relative_position_id = ITA_simplify_legal_code
+		x = 0
+		y = 1
+		cost = 4
+
+		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		prerequisite = {
+			focus = ITA_simplify_legal_code
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_reduce_judgement_times"
+			custom_effect_tooltip = ITA_increase_police_effectivness_TT
+			add_to_variable = { police_effectivness_base = 0.02 }
+			update_police_effectivness = yes
+			swap_ideas = {
+				remove_idea = ITA_judicial_system_2
+				add_idea = ITA_judicial_system_3
+            }
+		}
+		ai_will_do = {
+			factor = 160
+		}
+	}
+
+	focus = {
+		id = ITA_impose_better_checks_on_magistrates
+		icon = tripartite_pact
+		relative_position_id = ITA_reduce_judgement_times
+		x = 0
+		y = 1
+		cost = 4
+
+		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		prerequisite = {
+			focus = ITA_reduce_judgement_times
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_impose_better_checks_on_magistrates"
+			custom_effect_tooltip = ITA_increase_police_effectivness_TT
+			add_to_variable = { police_effectivness_base = 0.02 }
+			update_police_effectivness = yes
+			remove_ideas = ITA_judicial_system_3
+		}
 		ai_will_do = {
 			factor = 160
 		}
@@ -11215,14 +11551,14 @@ focus_tree = {
 	focus = {
 		id = ITA_merge_small_municipalities
 		icon = treaty
-		relative_position_id = ITA_reform_the_judiciary
-		x = 0
+		relative_position_id = ITA_inefficient_administration
+		x = 2
 		y = 1
 		cost = 10
 
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 		prerequisite = {
-			focus = ITA_reform_the_judiciary
+			focus = ITA_inefficient_administration
 		}
 		available = {
 			absolute_majority_popularity = yes
@@ -11316,7 +11652,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_block_municipalities_obstructionism"
 			set_temp_variable = { ITA_stability_factor_change = -0.05 }
 			modify_stability_factor_effect = yes
-			set_temp_variable = { nimby_culture_change = 0.1 }
+			set_temp_variable = { nimby_culture_change = 0.15 }
 			modify_nimby_modifier_effect = yes
 		}
 
@@ -11345,7 +11681,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_limit_rebound_of_responsibilities"
 			set_temp_variable = { ITA_stability_factor_change = -0.05 }
 			modify_stability_factor_effect = yes
-			set_temp_variable = { nimby_culture_change = 0.1 }
+			set_temp_variable = { nimby_culture_change = 0.15 }
 			modify_nimby_modifier_effect = yes
 		}
 
@@ -11387,7 +11723,7 @@ focus_tree = {
 		id = ITA_political_instability
 		icon = southern_question
 		relative_position_id = ITA_divided_nation
-		x = 4
+		x = 8
 		y = 1
 		cost = 1
 
@@ -11722,13 +12058,23 @@ focus_tree = {
 			focus = ITA_a_devout_state
 		}
 		available = {
-			not_has_conservative_government_or_in_coalition = yes
+			OR = {
+				not_has_conservative_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_a_secular_state"
 			set_temp_variable = { temp_opinion = -5 }
 			change_the_clergy_opinion = yes
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_conservative = yes
+			}
 		}
 
 		ai_will_do = {
@@ -11749,7 +12095,10 @@ focus_tree = {
 			focus = ITA_a_secular_state
 		}
 		available = {
-			not_has_conservative_government_or_in_coalition = yes
+			OR = {
+				not_has_conservative_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 
 		completion_reward = {
@@ -11760,6 +12109,13 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
 			add_relative_party_popularity = yes
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_conservative = yes
+			}
 		}
 
 		ai_will_do = {
@@ -11780,7 +12136,10 @@ focus_tree = {
 			focus = ITA_limit_8xmille
 		}
 		available = {
-			not_has_conservative_government_or_in_coalition = yes
+			OR = {
+				not_has_conservative_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 
 		completion_reward = {
@@ -11789,6 +12148,13 @@ focus_tree = {
 			change_the_clergy_opinion = yes
 			set_temp_variable = { treasury_change = 30 }
 			modify_treasury_effect = yes
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_conservative = yes
+			}
 		}
 
 		ai_will_do = {
@@ -11809,7 +12175,10 @@ focus_tree = {
 			focus = ITA_tax_church_property
 		}
 		available = {
-			not_has_conservative_government_or_in_coalition = yes
+			OR = {
+				not_has_conservative_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 
 		completion_reward = {
@@ -11820,6 +12189,13 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
 			add_relative_party_popularity = yes
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_conservative = yes
+			}
 		}
 
 		ai_will_do = {
@@ -11840,7 +12216,10 @@ focus_tree = {
 			focus = ITA_abolish_school_religion_teaching
 		}
 		available = {
-			not_has_conservative_government_or_in_coalition = yes
+			OR = {
+				not_has_conservative_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 
 		completion_reward = {
@@ -11852,6 +12231,13 @@ focus_tree = {
 			}
 			set_country_flag = ITA_replace_clergy_flag
 			country_event = italy_md.26
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					has_antistatalist_government_or_in_coalition = yes
+				}
+				technocrats_coalition_popularity_lose_conservative = yes
+			}
 		}
 
 		ai_will_do = {
@@ -11875,7 +12261,10 @@ focus_tree = {
 			focus = ITA_a_secular_state
 		}
 		available = {
-			not_has_secular_government_or_in_coalition = yes
+			OR = {
+				not_has_secular_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 
 		completion_reward = {
@@ -11902,7 +12291,10 @@ focus_tree = {
 			focus = ITA_a_devout_state
 		}
 		available = {
-			not_has_secular_government_or_in_coalition = yes
+			OR = {
+				not_has_secular_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 
 		completion_reward = {
@@ -11958,6 +12350,12 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_seek_support_of_the_church
 		}
+		available = {
+			OR = {
+				not_has_secular_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_consult_pope_on_political_matters"
@@ -11987,6 +12385,12 @@ focus_tree = {
 		search_filters = {FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ITA_consult_pope_on_political_matters
+		}
+		available = {
+			OR = {
+				not_has_secular_government_or_in_coalition = yes
+				has_country_leader_with_trait = western_technocrat
+			}
 		}
 
 		completion_reward = {
@@ -12493,9 +12897,6 @@ focus_tree = {
 			focus = ITA_great_projects
 		}
 		available = {
-			NOT = { has_completed_focus = ITA_ban_nuclear_power }
-		}
-		available = {
 			OR = {
 				has_completed_focus = ITA_fight_scientific_illiteracy
 				has_completed_focus = ITA_limit_rebound_of_responsibilities
@@ -12505,6 +12906,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_bypass_the_1987_referendum"
+			remove_ideas = ITA_nuclear_power_banned
 			if = {
 				limit = { controls_state = 77 }
 				set_temp_variable = { treasury_change = -10 }
@@ -13020,473 +13422,6 @@ focus_tree = {
 	}
 
 #POLICY CHANGE
-
-	focus = {
-		id = ITA_repeal_former_government_measures_1
-		icon = pass_legislation
-		relative_position_id = ITA_old_parties
-		x = 0
-		y = 4
-		cost = 5
-
-		search_filters = {FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = ITA_centre_left
-			focus = ITA_centre_right
-		}
-		available = {
-			western_conservatism_are_not_in_power = yes
-			western_social_democrats_are_not_in_power = yes
-			NOT = {
-				has_country_flag = elections_in_progress
-			}
-		}
-		cancel_if_invalid = yes
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_repeal_former_government_measures_1"
-			clr_country_flag = ITA_party_chosen
-			country_event = italy_md.44
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^1 < 0.1 }
-				check_variable = { party_pop_array^3 < 0.1 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^1 < 0.3 }
-				check_variable = { party_pop_array^3 < 0.3 }
-			}
-		}
-	}
-
-	focus = {
-		id = ITA_repeal_former_government_measures_1_2
-		icon = pass_legislation
-		relative_position_id = ITA_repeal_former_government_measures_1
-		x = 0
-		y = 1
-		cost = 5
-
-		search_filters = {FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = ITA_repeal_former_government_measures_1
-		}
-		available = {
-			western_conservatism_are_not_in_power = yes
-			western_social_democrats_are_not_in_power = yes
-			NOT = {
-				has_country_flag = elections_in_progress
-			}
-			has_completed_focus = ITA_centre_left
-			has_completed_focus = ITA_centre_right
-		}
-		cancel_if_invalid = yes
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_repeal_former_government_measures_1_2"
-			clr_country_flag = ITA_party_chosen
-			country_event = italy_md.44
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^1 < 0.1 }
-				check_variable = { party_pop_array^3 < 0.1 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^1 < 0.3 }
-				check_variable = { party_pop_array^3 < 0.3 }
-			}
-		}
-	}
-
-	focus = {
-		id = ITA_repeal_former_government_measures_2
-		icon = pass_legislation
-		relative_position_id = ITA_with_populism
-		x = 0
-		y = 4
-		cost = 5
-
-		search_filters = {FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = ITA_left_wing_populism
-			focus = ITA_right_wing_populism
-		}
-		available = {
-			emerging_anarchist_communism_are_not_in_power = yes
-			nationalist_right_wing_populists_are_not_in_power = yes
-			NOT = {
-				has_country_flag = elections_in_progress
-			}
-		}
-		cancel_if_invalid = yes
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_repeal_former_government_measures_2"
-			clr_country_flag = ITA_party_chosen
-			country_event = italy_md.45
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^6 < 0.1 }
-				check_variable = { party_pop_array^20 < 0.1 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^6 < 0.3 }
-				check_variable = { party_pop_array^20 < 0.3 }
-			}
-		}
-	}
-
-	focus = {
-		id = ITA_repeal_former_government_measures_2_2
-		icon = pass_legislation
-		relative_position_id = ITA_repeal_former_government_measures_2
-		x = 0
-		y = 1
-		cost = 5
-
-		search_filters = {FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = ITA_repeal_former_government_measures_2
-		}
-		available = {
-			emerging_anarchist_communism_are_not_in_power = yes
-			nationalist_right_wing_populists_are_not_in_power = yes
-			NOT = {
-				has_country_flag = elections_in_progress
-			}
-			has_completed_focus = ITA_left_wing_populism
-			has_completed_focus = ITA_right_wing_populism
-		}
-		cancel_if_invalid = yes
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_repeal_former_government_measures_2_2"
-			clr_country_flag = ITA_party_chosen
-			country_event = italy_md.45
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^6 < 0.1 }
-				check_variable = { party_pop_array^20 < 0.1 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^6 < 0.3 }
-				check_variable = { party_pop_array^20 < 0.3 }
-			}
-		}
-	}
-
-	focus = {
-		id = ITA_repeal_former_government_measures_3
-		icon = pass_legislation
-		relative_position_id = ITA_new_left
-		x = 0
-		y = 4
-		cost = 5
-
-		search_filters = {FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = ITA_greens
-			focus = ITA_leu
-		}
-		available = {
-			neutrality_neutral_green_are_not_in_power = yes
-			neutrality_neutral_social_are_not_in_power = yes
-			NOT = {
-				has_country_flag = elections_in_progress
-			}
-		}
-		cancel_if_invalid = yes
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_repeal_former_government_measures_3"
-			clr_country_flag = ITA_party_chosen
-			country_event = italy_md.46
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 40
-				check_variable = { party_pop_array^18 < 0.1 }
-				check_variable = { party_pop_array^17 < 0.1 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^18 < 0.2 }
-				check_variable = { party_pop_array^17 < 0.2 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^18 < 0.3 }
-				check_variable = { party_pop_array^17 < 0.3 }
-			}
-		}
-	}
-
-	focus = {
-		id = ITA_repeal_former_government_measures_3_2
-		icon = pass_legislation
-		relative_position_id = ITA_repeal_former_government_measures_3
-		x = 0
-		y = 1
-		cost = 5
-
-		search_filters = {FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = ITA_repeal_former_government_measures_3
-		}
-		available = {
-			neutrality_neutral_green_are_not_in_power = yes
-			neutrality_neutral_social_are_not_in_power = yes
-			NOT = {
-				has_country_flag = elections_in_progress
-			}
-			has_completed_focus = ITA_greens
-			has_completed_focus = ITA_leu
-		}
-		cancel_if_invalid = yes
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_repeal_former_government_measures_3_2"
-			clr_country_flag = ITA_party_chosen
-			country_event = italy_md.46
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 40
-				check_variable = { party_pop_array^18 < 0.1 }
-				check_variable = { party_pop_array^17 < 0.1 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^18 < 0.2 }
-				check_variable = { party_pop_array^17 < 0.2 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^18 < 0.3 }
-				check_variable = { party_pop_array^17 < 0.3 }
-			}
-		}
-	}
-
-	focus = {
-		id = ITA_repeal_former_government_measures_4
-		icon = pass_legislation
-		relative_position_id = ITA_liberal_parties
-		x = 0
-		y = 4
-		cost = 5
-
-		search_filters = {FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = ITA_liberals
-			focus = ITA_libertarians
-		}
-		available = {
-			neutrality_neutral_libertarians_are_not_in_power = yes
-			western_liberals_are_not_in_power = yes
-			NOT = {
-				has_country_flag = elections_in_progress
-			}
-		}
-		cancel_if_invalid = yes
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_repeal_former_government_measures_4"
-			clr_country_flag = ITA_party_chosen
-			country_event = italy_md.47
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 40
-				check_variable = { party_pop_array^2 < 0.1 }
-				check_variable = { party_pop_array^16 < 0.1 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^2 < 0.2 }
-				check_variable = { party_pop_array^16 < 0.2 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^2 < 0.3 }
-				check_variable = { party_pop_array^16 < 0.3 }
-			}
-		}
-	}
-
-	focus = {
-		id = ITA_repeal_former_government_measures_4_2
-		icon = pass_legislation
-		relative_position_id = ITA_repeal_former_government_measures_4
-		x = 0
-		y = 1
-		cost = 5
-
-		search_filters = {FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = ITA_repeal_former_government_measures_4
-		}
-		available = {
-			neutrality_neutral_libertarians_are_not_in_power = yes
-			western_liberals_are_not_in_power = yes
-			NOT = {
-				has_country_flag = elections_in_progress
-			}
-			has_completed_focus = ITA_liberals
-			has_completed_focus = ITA_libertarians
-		}
-		cancel_if_invalid = yes
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_repeal_former_government_measures_4_2"
-			clr_country_flag = ITA_party_chosen
-			country_event = italy_md.47
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 40
-				check_variable = { party_pop_array^2 < 0.1 }
-				check_variable = { party_pop_array^16 < 0.1 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^2 < 0.2 }
-				check_variable = { party_pop_array^16 < 0.2 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^2 < 0.3 }
-				check_variable = { party_pop_array^16 < 0.3 }
-			}
-		}
-	}
-
-	focus = {
-		id = ITA_repeal_former_government_measures_5
-		icon = pass_legislation
-		relative_position_id = ITA_communism_resurgence
-		x = 0
-		y = 6
-		cost = 5
-
-		search_filters = {FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = ITA_align_to_the_east
-			focus = ITA_non_aligned_communism
-		}
-		available = {
-			emerging_communist_state_are_not_in_power = yes
-			neutrality_neutral_communism_are_not_in_power = yes
-			NOT = {
-				has_country_flag = elections_in_progress
-			}
-		}
-		cancel_if_invalid = yes
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_repeal_former_government_measures_5"
-			allow_elections = yes
-			clr_country_flag = ITA_party_chosen
-			country_event = italy_md.48
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 40
-				check_variable = { party_pop_array^4 < 0.1 }
-				check_variable = { party_pop_array^19 < 0.1 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^4 < 0.2 }
-				check_variable = { party_pop_array^19 < 0.2 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^4 < 0.3 }
-				check_variable = { party_pop_array^19 < 0.3 }
-			}
-		}
-	}
-
-	focus = {
-		id = ITA_repeal_former_government_measures_5_2
-		icon = pass_legislation
-		relative_position_id = ITA_repeal_former_government_measures_5
-		x = 0
-		y = 1
-		cost = 5
-
-		search_filters = {FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = ITA_repeal_former_government_measures_5
-		}
-		available = {
-			emerging_communist_state_are_not_in_power = yes
-			neutrality_neutral_communism_are_not_in_power = yes
-			NOT = {
-				has_country_flag = elections_in_progress
-			}
-			has_completed_focus = ITA_align_to_the_east
-			has_completed_focus = ITA_non_aligned_communism
-		}
-		cancel_if_invalid = yes
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_repeal_former_government_measures_5_2"
-			allow_elections = yes
-			clr_country_flag = ITA_party_chosen
-			country_event = italy_md.48
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 40
-				check_variable = { party_pop_array^4 < 0.1 }
-				check_variable = { party_pop_array^19 < 0.1 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^4 < 0.2 }
-				check_variable = { party_pop_array^19 < 0.2 }
-			}
-			modifier = {
-				add = 20
-				check_variable = { party_pop_array^4 < 0.3 }
-				check_variable = { party_pop_array^19 < 0.3 }
-			}
-		}
-	}
 
 	focus = {
 		id = ITA_repeal_former_government_measures_6
