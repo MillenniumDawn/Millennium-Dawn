@@ -148,7 +148,11 @@ def main():
 					elif ".tga" in w:
 						w = w.replace (".tga", "")
 
-					ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
+					if "GFX_" in w:
+						ffile.write('\tspriteType = {\n\t\tname = \"' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
+					else:
+						ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
+
 				ffile.write('}')
 			print("Generation of event_pictures.gfx is complete.")
 			shutil.copy('MD_eventpictures.gfx','../interface')
