@@ -148,13 +148,44 @@ def main():
 					elif ".tga" in w:
 						w = w.replace (".tga", "")
 
-					ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
+					if "GFX_" in w:
+						ffile.write('\tspriteType = {\n\t\tname = \"' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
+					else:
+						ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
+
 				ffile.write('}')
 			print("Generation of event_pictures.gfx is complete.")
 			shutil.copy('MD_eventpictures.gfx','../interface')
 			os.remove('MD_eventpictures.gfx')
 			print("Script has completed the movement of the files.\n")
 			print("\neventpictures.gfx has been generated for " + str(len(ddslist)) + " event pictures.\n\nThe files have been outputted in into the interface files.")
+			return
+		elif selection == 3: # DOES NOT WORK DO NOT RUN
+			with open ("MD_ideas.gfx", "w") as ffile:
+				ffile.write('spriteTypes = {\n')
+				for fname in ddsdict:
+					x = fname
+					x = x.split(modfolder)
+					y = x[1] # Should Retrieve the Path
+					z = y
+					y = y.replace("\\", "/")
+					z = z.replace("gfx\\event_pictures\\", "")
+					z = z.split("\\")
+					for i in range(len(z)):
+						if ".dds" in z[i]:
+							w = z[i]
+						elif ".png" in z[i]:
+							w = z[i]
+						elif ".tga" in z[i]:
+							w = z[i]
+					if ".dds" in w:
+						w = w.replace(".dds", "")
+					elif ".png" in w:
+						w = w.replace(".png", "")
+					elif ".tga" in w:
+						w = w.replace (".tga", "")
+
+				ffile.write('}')
 			return
 		else:
 			print(f"{bcolors.FAIL}1 or 2 dumbfuck {bcolors.RESET}" + str(selection) + f"{bcolors.FAIL} isn't a fucking option.\n{bcolors.RESET}")
