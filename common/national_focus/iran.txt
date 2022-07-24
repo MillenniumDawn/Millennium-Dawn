@@ -1178,6 +1178,8 @@ focus_tree = {
 						local_resources = 0.1
 					}
 				}
+				set_temp_variable = { treasury_change = -8 }
+				modify_treasury_effect = yes
 			}
 		}
 	}
@@ -1211,6 +1213,8 @@ focus_tree = {
 				amount = 8
 				state = 402
 			}
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
 		}
 	}
 	focus = {
@@ -1319,6 +1323,8 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 		}
 	}
 	focus = {
@@ -1568,6 +1574,7 @@ focus_tree = {
 			add_stability = 0.05
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
+			decrease_corruption = yes
 		}
 	}
 	focus = {
@@ -1699,6 +1706,14 @@ focus_tree = {
 
 		cancel_if_invalid = no
 
+		bypass = {
+			NOT = {
+				OR = {
+					978 = { is_owned_and_controlled_by = PER }
+					407 = { is_owned_and_controlled_by = PER }
+				}
+			}
+		}
 
 		completion_reward = {
 			build_railway = {
@@ -2671,6 +2686,8 @@ focus_tree = {
 					instant_build = yes
 					}
 			}
+			set_temp_variable = { treasury_change = -10.00 }
+			modify_treasury_effect = yes
 		}
 	}
 	focus = {
@@ -2908,6 +2925,100 @@ focus_tree = {
 		}
 	}
 	focus = {
+		id = PER_identify_corrupt_officials
+ 		icon = investigation
+
+		x = 6
+		y = 1
+
+		relative_position_id = PER_the_fourth_development_plan
+		prerequisite = {
+			focus = PER_the_fourth_development_plan
+		}
+
+		cost = 10
+		search_filters = {}
+
+		cancel_if_invalid = no
+
+		completion_reward = {
+			add_political_power = 75
+		}
+	}
+	focus = {
+		id = PER_punishment_by_the_judiciary
+ 		icon = stability
+
+		x = 1
+		y = 1
+
+		relative_position_id = PER_identify_corrupt_officials
+		prerequisite = {
+			focus = PER_identify_corrupt_officials
+		}
+
+		cost = 7.15 # 50 Days
+		search_filters = {}
+
+		cancel_if_invalid = no
+
+		mutually_exclusive = { 
+			focus = PER_force_them_to_resign
+		}
+
+		completion_reward = {
+			add_stability = 0.05
+			remove_ideas = corruption_in_the_government
+		}
+	}
+	focus = {
+		id = PER_force_them_to_resign
+ 		icon = political_pressure
+
+		x = -1
+		y = 1
+
+		relative_position_id = PER_identify_corrupt_officials
+		prerequisite = {
+			focus = PER_identify_corrupt_officials
+		}
+
+		cost = 7.15 # 50 Days
+		search_filters = {}
+
+		cancel_if_invalid = no
+
+		mutually_exclusive = { 
+			focus = PER_punishment_by_the_judiciary
+		}
+		
+		completion_reward = {
+			remove_ideas = corruption_in_the_government
+			decrease_corruption = yes
+		}
+	}
+	focus = {
+		id = PER_broadcast_trial_in_media
+ 		icon = television
+
+		x = 0
+		y = 1
+
+		relative_position_id = PER_punishment_by_the_judiciary
+		prerequisite = {
+			focus = PER_punishment_by_the_judiciary
+		}
+
+		cost = 2.86 # 20 days
+		search_filters = {}
+
+		cancel_if_invalid = no
+
+		completion_reward = {
+			add_political_power = 120
+		}
+	}
+	focus = {
 		id = PER_the_university_of_tehran
  		icon = university
 
@@ -3102,7 +3213,7 @@ focus_tree = {
 			focus = PER_use_NPO_to_develop_industry
 		}
 
-		cost = 7.15 # 20 Days
+		cost = 7.15 # 50 Days
 		search_filters = {}
 
 		cancel_if_invalid = no
@@ -3381,7 +3492,7 @@ focus_tree = {
 			focus = PER_mercedes_benz
 		}
 
-		cost = 7.15 # 20 Days
+		cost = 7.15 # 50 Days
 		search_filters = {}
 
 		cancel_if_invalid = no
@@ -5142,7 +5253,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_with_foresight_and_cunning
- 		icon = null
+ 		icon = dangerous_deal
 
 		x = 0
 		y = 1
@@ -5168,7 +5279,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_streamline_resource_input
- 		icon = null
+ 		icon = trade
 
 		x = 0
 		y = 1
@@ -5191,10 +5302,16 @@ focus_tree = {
 			set_country_flag = PER_allow_resource_stuff
 			}
 		}
+		hidden_effect = {
+			if = {
+				limit = { is_ai = yes }
+				add_to_variable = { missile_inventory_array^13 = 1 }
+			}
+		}
 	}
 	focus = {
 		id = PER_work_with_local_talent
- 		icon = null
+ 		icon = house
 
 		x = 0
 		y = 1
@@ -5245,7 +5362,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_with_pride_and_prejudice
- 		icon = null
+ 		icon = volunteer_alliance
 
 		x = 0
 		y = 1
@@ -5265,7 +5382,7 @@ focus_tree = {
 
 		completion_reward = {
 			add_timed_idea = {
-			idea = PER_temp_nuke_1  days = 70
+				idea = PER_temp_nuke_1  days = 70
 			}
 		}
 	}
@@ -5316,6 +5433,12 @@ focus_tree = {
 			}
 			set_temp_variable = { treasury_change = -20 }
 			modify_treasury_effect = yes
+		}
+		hidden_effect = {
+			if = {
+				limit = { is_ai = yes }
+				add_to_variable = { missile_inventory_array^13 = 1 }
+			}
 		}
 	}
 	focus = {
@@ -5416,7 +5539,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_streamline_power_output
- 		icon = null
+ 		icon = electricity
 
 		x = 0
 		y = 1
@@ -5439,7 +5562,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_increase_employment_capacity
- 		icon = null
+ 		icon = construction4
 
 		x = 0
 		y = 1
@@ -5462,7 +5585,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_with_determination_and_tears
- 		icon = null
+ 		icon = demand_territory2
 
 		x = 0
 		y = 1
@@ -5486,10 +5609,16 @@ focus_tree = {
 				idea = PER_temp_nuke_4  days = 70
 			}
 		}
+		hidden_effect = {
+			if = {
+				limit = { is_ai = yes }
+				add_to_variable = { missile_inventory_array^13 = 1 }
+			}
+		}
 	}
 	focus = {
 		id = PER_scientific_exchange
- 		icon = intelligence_exchange
+ 		icon = race_relations2
 
 		x = 0
 		y = 1
@@ -5519,7 +5648,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_increase_power_exports
- 		icon = electricity
+ 		icon = powerplant
 
 		x = 0
 		y = 1
@@ -5537,24 +5666,52 @@ focus_tree = {
 
 
 		completion_reward = {
-		add_ideas = PER_power_export
-			IRQ = {
-				add_opinion_modifier = {
-				target = PER
-				modifier = power_exports_PER
+			add_ideas = PER_power_export
+			if = {
+				limit = {
+					NOT = { has_war_with = IRQ }
+				}
+				IRQ = {
+					add_opinion_modifier = {
+					target = PER
+					modifier = power_exports_PER
+					}
 				}
 			}
-			PAK = {
-				add_opinion_modifier = {
-				target = PER
-				modifier = power_exports_PER
+			if = {
+				limit = {
+					NOT = { has_war_with = PAK }
+				}
+				PAK = {
+					add_opinion_modifier = {
+					target = PER
+					modifier = power_exports_PER
+					}
 				}
 			}
-			AFG = {
-				add_opinion_modifier = {
-				target = PER
-				modifier = power_exports_PER
+			if = {
+				limit = {
+					NOT = { has_war_with = AFG }
 				}
+				if = {
+					limit = { 415 = { is_owned_and_controlled_by = AFG } }
+					AFG = {
+						add_opinion_modifier = {
+						target = PER
+						modifier = power_exports_PER
+						}
+					}
+				}
+				else_if = {
+					limit = { 415 = { is_owned_and_controlled_by = TAL } }
+					TAL = {
+						add_opinion_modifier = {
+						target = PER
+						modifier = power_exports_PER
+						}
+					}
+				}
+				
 			}
 			set_temp_variable = { treasury_change = 2.5 }
 			modify_treasury_effect = yes
@@ -5562,7 +5719,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_with_trust_and_patience
- 		icon = null
+ 		icon = tripartite_pact
 
 		x = 0
 		y = 1
@@ -5586,6 +5743,12 @@ focus_tree = {
 			idea = PER_temp_nuke_3  days = 70
 			}
 		}
+		hidden_effect = {
+			if = {
+				limit = { is_ai = yes }
+				add_to_variable = { missile_inventory_array^13 = 1 }
+			}
+		}
 	}
 	focus = {
 		id = PER_we_have_done_it # We Have Done It!
@@ -5595,29 +5758,30 @@ focus_tree = {
 		y = 1.5
 
 		available = {
-				if = {
-					custom_trigger_tooltip = {
-					tooltip = has_nukes_TT
-						OR = {
-							check_variable = { nuclear_warhead_inventory_array^0 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^1 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^2 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^3 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^4 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^5 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^6 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^7 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^8 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^9 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^10 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^11 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^12 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^13 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^14 > 0 }
-							check_variable = { nuclear_warhead_inventory_array^15 > 0 }
-						}
-					}
+			custom_trigger_tooltip = {
+				tooltip = has_nukes_TT
+				OR = {
+					check_variable = { nuclear_warhead_inventory_array^0 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^1 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^2 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^3 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^4 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^5 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^6 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^7 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^8 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^9 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^10 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^11 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^12 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^13 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^14 > 0 }
+					check_variable = { nuclear_warhead_inventory_array^15 > 0 }
+				}
 			}
+		}
+		bypass = {
+			is_ai = yes
 		}
 		relative_position_id = PER_with_trust_and_patience
 		prerequisite = {
@@ -5636,11 +5800,11 @@ focus_tree = {
 
 		completion_reward = {
 			if = {
-				limit = {has_decision = {complete_nuclear_program}}
+				limit = { has_decision = { complete_nuclear_program } }
 				log = "[GetDateText]: [Root.GetName]: Decision complete_nuclear_program"
 				set_country_flag = NPROG_completed
 			}
-			add_political_power = 150
+			add_political_power = 200
 			every_country = {
 				remove_opinion_modifier = {
 				target = PER
@@ -5651,7 +5815,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_prepare_for_the_next_century
- 		icon = null
+ 		icon = economic_prosperity
 
 		x = 2
 		y = 1
@@ -5671,11 +5835,12 @@ focus_tree = {
 		completion_reward = {
 			add_political_power = 75
 			add_stability = 0.03
+			add_ideas = PER_prepare_for_next_century_idea_1
 		}
 	}
 	focus = {
 		id = PER_abolish_konkour
- 		icon = null
+ 		icon = anti_establishment2
 
 		x = 1
 		y = 1
@@ -5689,14 +5854,17 @@ focus_tree = {
 			focus = PER_streamline_enterance_process
 		}
 
-		cost = 0.1
+		cost = 7.15 # 50 Days
 		search_filters = {}
 
 		cancel_if_invalid = no
 
 
 		completion_reward = {
-			#need
+			swap_ideas = {
+				remove_idea = PER_prepare_for_next_century_idea_1
+				add_idea = PER_prepare_for_next_century_idea_2
+			}
 		}
 	}
 	focus = {
@@ -5712,19 +5880,20 @@ focus_tree = {
 		}
 
 
-		cost = 0.1
+		cost = 10
 		search_filters = {}
 
 		cancel_if_invalid = no
 
 
 		completion_reward = {
-			#need
+			add_stability = 0.05
+			decrease_corruption = yes
 		}
 	}
 	focus = {
 		id = PER_streamline_enterance_process
- 		icon = null
+ 		icon = pass_legislation
 
 		x = -1
 		y = 1
@@ -5738,19 +5907,22 @@ focus_tree = {
 			focus = PER_abolish_konkour
 		}
 
-		cost = 0.1
+		cost = 10
 		search_filters = {}
 
 		cancel_if_invalid = no
 
 
 		completion_reward = {
-			#need
+			swap_ideas = {
+				remove_idea = PER_prepare_for_next_century_idea_1
+				add_idea = PER_prepare_for_next_century_idea_3
+			}
 		}
 	}
 	focus = {
 		id = PER_scientific_infrastructure_expansion_grants
- 		icon = null
+ 		icon = GENERIC_austerity_measures
 
 		x = 0
 		y = 1
@@ -5760,14 +5932,16 @@ focus_tree = {
 			focus = PER_streamline_enterance_process
 		}
 
-		cost = 0.1
+		cost = 10
 		search_filters = {}
 
 		cancel_if_invalid = no
 
 
 		completion_reward = {
-			#need
+			increase_education_budget = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 		}
 	}
 	focus = {
@@ -5791,6 +5965,14 @@ focus_tree = {
 
 		completion_reward = {
 			add_ideas = PER_prepare_reforms_5
+			if = {
+				limit = { has_idea = PER_prepare_for_next_century_idea_3 }
+				remove_ideas = PER_prepare_for_next_century_idea_3
+			}
+			else_if = {
+				limit = { has_idea = PER_prepare_for_next_century_idea_2 }
+				remove_ideas = PER_prepare_for_next_century_idea_2
+			}
 			unlock_decision_category_tooltip = PER_prepare_reforms
 		}
 	}
@@ -6266,7 +6448,7 @@ focus_tree = {
 		id = PER_the_ministry_of_defense
  		icon = iran_defence_ak_shield
 
-		x = 8
+		x = 10
 		y = 1
 
 		relative_position_id = PER_the_fourth_development_plan
@@ -6618,7 +6800,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_reorganize_the_examination_organization
- 		icon = null
+ 		icon = diplomacy
 
 		x = 1
 		y = 1
@@ -6643,7 +6825,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_official_contracts_for_students
- 		icon = null
+ 		icon = legislation
 
 		x = 0
 		y = 1
@@ -6723,7 +6905,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_nanotech_advancements
- 		icon = null
+ 		icon = research3
 
 		x = -1
 		y = 1
@@ -6741,15 +6923,15 @@ focus_tree = {
 
 		completion_reward = {
 			add_tech_bonus = {
-			bonus = 0.1
-			uses = 2
-			category = computing_tech
+				bonus = 0.4
+				uses = 2
+				category = computing_tech
 			}
 		}
 	}
 	focus = {
 		id = PER_expand_tehran_international_expo
- 		icon = null
+ 		icon = science
 
 		x = 0
 		y = 1
@@ -7008,7 +7190,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_imam_khomeini_launching_facility # Imam-Khomeini Launching Facility
- 		icon = null
+ 		icon = SIA_missiles
 
 		x = -1
 		y = 1
@@ -10991,7 +11173,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_dna_researchs # DNA researchs
- 		icon = examine_foreign_science
+ 		icon = medicine2
 
 		x = 0
 		y = 1
@@ -11009,7 +11191,7 @@ focus_tree = {
 
 		completion_reward = {
 			add_tech_bonus = {
-				bonus = 0.2
+				bonus = 1.0
 				uses = 1
 				category = Cat_GENES
 			}
