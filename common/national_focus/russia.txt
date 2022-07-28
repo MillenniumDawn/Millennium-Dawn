@@ -902,7 +902,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_take_control_of_local_administrations"
-			add_political_power = 50 #Temp
+			add_political_power = 50
+			add_ideas = SOV_idea_greased_palms_make_light_work
 		}
 		ai_will_do = {
 			factor = 1
@@ -1144,9 +1145,11 @@ focus_tree = {
 		}
 		historical_ai = { }
 		select_effect = { }
-		bypass = { }
-		cancel = { }
+		bypass = {
 
+		}
+		cancel = { }
+		# if subjects, imediate integrate nations...
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_annex_abkhazia_and_south_ossetia"
@@ -1154,11 +1157,39 @@ focus_tree = {
 				706 = { add_core_of = SOV } #Abkhazia
 				705 = { add_core_of = SOV } #South Ossetia
 			}
-			SOO = {
-				country_event = { id = russia.11 days = 1 }
+			if = { limit = { country_exists = SOO }
+				SOO = {
+					country_event = { id = russia.11 days = 1 }
+				}
 			}
-			ABK = {
-				country_event = { id = russia.11 days = 4 }
+			else = {
+				random_country = {
+					limit = { owns_state = 705 }
+				}
+				SOV = {
+					create_wargoal = {
+						type = take_state_focus
+						target = PREV
+						generator = { 705 }
+					}
+				}
+			}
+			if = { limit = { country_exists = ABK }
+				ABK = {
+					country_event = { id = russia.11 days = 4 }
+				}
+			}
+			else = {
+				random_country = {
+					limit = { owns_state = 706 }
+				}
+				SOV = {
+					create_wargoal = {
+						type = take_state_focus
+						target = PREV # prev equals scope for random country who owns state XXX
+						generator = { 706 }
+					}
+				}
 			}
 		}
 
@@ -1391,11 +1422,9 @@ focus_tree = {
 			}
 			if = {
 				limit = { BLR = { NOT = { is_subject_of = SOV } } }
-				BLR = {
-					every_owned_state = {
-						add_core_of = SOV
+					every_state = { limit = { is_controlled_by = BLR }
+						SOV =  { add_state_core = PREV }
 					}
-				}
 				create_wargoal = {
 					target = BLR
 					type = annex_everything
