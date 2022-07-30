@@ -24,15 +24,21 @@ ddsdict = {}
 inputpath = ""
 
 def main():
-	inputpath = input(f"{bcolors.WARNING}\nPlease Input a Path to the goals or event picture folder:\n{bcolors.RESET}")
-	modfolder = input(f"{bcolors.WARNING}Please Enter the Mod Folder Name with a \. If your mod folder is Millennium_Dawn, then you need to input it as \'Millennium_Dawn\\\':\n{bcolors.RESET}")
-
-	# Retrieve files
-	getfiles(inputpath)
-
-	print(f"{bcolors.OK}There are {bcolors.RESET}" + str(len(ddslist)) + f"{bcolors.OK} .dds, .png or .tga files available in this directory{bcolors.RESET}\n")
+	path = os.path.abspath(os.path.join(os.path.dirname('Millennium_Dawn'),'..'))
+	modfolder = 'Millennium_Dawn\\'
 
 	selection = int(input("Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\nPlease enter the number of the option you'd like: "))
+
+	if selection == 1:
+		path = os.path.abspath(os.path.join(os.path.dirname('Millennium_Dawn'),'..\gfx\interface\goals'))
+		print(path)
+		getfiles(path)
+	elif selection == 2:
+		path = os.path.abspath(os.path.join(os.path.dirname('Millennium_Dawn'),'..\gfx\event_pictures'))
+		print(path)
+		getfiles(path)
+
+	print(f"{bcolors.OK}There are {bcolors.RESET}" + str(len(ddslist)) + f"{bcolors.OK} .dds, .png or .tga files available in this directory{bcolors.RESET}\n")
 
 	# Variable Init
 	x = "" # X == the file name. It is only used to parse out the path
@@ -44,11 +50,11 @@ def main():
 		if selection == 1:
 			gfxbool = int(input("Would you like me to append \"GFX_\" to the front of the icon?\n1 for yes, 0 for no.\n"))
 
-			print("Generating goals.gfx...\n")
+			print(f"{bcolors.OK}Generating goals.gfx...{bcolors.RESET}\n")
 			with open("goals.gfx","w") as ffile:
-				ffile.write('#Vanilla\n')
 				ffile.write('spriteTypes = {\n')
-				ffile.write('\tspriteType = {\n\t\tname = \"GFX_goal_unkown\"\n\t\ttexxturefile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\tlegacy_lazy_load = no\n\t}\n')
+				ffile.write('\t#Vanilla DO NOT DELETE\n')
+				ffile.write('\tspriteType = {\n\t\tname = \"GFX_goal_unknown\"\n\t\ttexturefile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\tlegacy_lazy_load = no\n\t}\n')
 				for fname in ddsdict:
 					x = fname
 					x = x.split(modfolder)
@@ -78,9 +84,9 @@ def main():
 				ffile.write('}')
 			print("Generation of goals.gfx is complete.\n\nGenerating goals_shine.gfx...\n")
 			with open("goals_shine.gfx", "w") as ffile:
-				ffile.write('#Vanilla\n')
 				ffile.write('spriteTypes = {\n')
-				ffile.write('\tspriteType = {\n\t\tname = \"GFX__shine\"\n\t\ttexturefile = \"gfx/interface/goals/goal_unkwno.dds\"\n\t\teffectFile = \"gfx/FX/buttonstate.lua\"\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = \"add\"\n\t\t\tanimationtype = \"scrolling\"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = \"add\"\n\t\t\tanimationtype = \"scrolling\"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n')
+				ffile.write('\t#Vanilla DO NOT DELETE \n')
+				ffile.write('\tspriteType = {\n\t\tname = \"GFX__shine\"\n\t\ttexturefile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\teffectFile = \"gfx/FX/buttonstate.lua\"\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = \"add\"\n\t\t\tanimationtype = \"scrolling\"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = \"add\"\n\t\t\tanimationtype = \"scrolling\"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n')
 				for fname in ddsdict:
 					x = fname
 					x = x.split(modfolder)
@@ -114,7 +120,7 @@ def main():
 			os.remove('goals.gfx')
 			os.remove('goals_shine.gfx')
 			print("Script has completed the movement of the files.\n")
-			print("goals.gfx and goals_shine.gfx have been generated for " + str(len(ddslist)) + " icons.\n\nThe files have been outputted in " + str(os.getcwd()) )
+			print("goals.gfx and goals_shine.gfx have been generated for " + str(len(ddslist)) + " icons.\n\nThe files have been outputted into the interface files.")
 			return
 		elif selection == 2:
 			print("Generating event_pictures.gfx...")
@@ -142,13 +148,44 @@ def main():
 					elif ".tga" in w:
 						w = w.replace (".tga", "")
 
-					ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
+					if "GFX_" in w:
+						ffile.write('\tspriteType = {\n\t\tname = \"' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
+					else:
+						ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
+
 				ffile.write('}')
 			print("Generation of event_pictures.gfx is complete.")
 			shutil.copy('MD_eventpictures.gfx','../interface')
 			os.remove('MD_eventpictures.gfx')
 			print("Script has completed the movement of the files.\n")
-			print("\neventpictures.gfx has been generated for " + str(len(ddslist)) + " event pictures.\n\nThe files have been outputted in " + str(os.getcwd()) )
+			print("\neventpictures.gfx has been generated for " + str(len(ddslist)) + " event pictures.\n\nThe files have been outputted in into the interface files.")
+			return
+		elif selection == 3: # DOES NOT WORK DO NOT RUN
+			with open ("MD_ideas.gfx", "w") as ffile:
+				ffile.write('spriteTypes = {\n')
+				for fname in ddsdict:
+					x = fname
+					x = x.split(modfolder)
+					y = x[1] # Should Retrieve the Path
+					z = y
+					y = y.replace("\\", "/")
+					z = z.replace("gfx\\event_pictures\\", "")
+					z = z.split("\\")
+					for i in range(len(z)):
+						if ".dds" in z[i]:
+							w = z[i]
+						elif ".png" in z[i]:
+							w = z[i]
+						elif ".tga" in z[i]:
+							w = z[i]
+					if ".dds" in w:
+						w = w.replace(".dds", "")
+					elif ".png" in w:
+						w = w.replace(".png", "")
+					elif ".tga" in w:
+						w = w.replace (".tga", "")
+
+				ffile.write('}')
 			return
 		else:
 			print(f"{bcolors.FAIL}1 or 2 dumbfuck {bcolors.RESET}" + str(selection) + f"{bcolors.FAIL} isn't a fucking option.\n{bcolors.RESET}")
