@@ -56,10 +56,6 @@ ingame_update_setup = {
 	update_health_rate = yes
 	update_social_rate = yes
 	calculate_interest_rate = yes
-	lease_civilian_complex_cost = yes
-	lease_military_factories_cost = yes
-	projects_scripted_effect = yes
-	propaganda_cost_scripted_effect = yes
 	calculate_additional_expense_rate = yes
 
 	#Various
@@ -73,6 +69,14 @@ ingame_update_setup = {
 	}
 	if = { limit = { is_ai = no }
 		force_update_map_mode = { mapmode = absolute_gdp_map_mode }
+	}
+
+	# Dirty UI
+	if = { limit = { NOT = { has_variable = global.update_monie_ui } }
+		set_variable = { global.update_monie_ui = 0 }
+	}
+	else = {
+		add_to_variable = { global.update_monie_ui = 1 }
 	}
 }
 
@@ -841,11 +845,11 @@ update_military_rate = {
 	## strategic_bomber
 	# equipment
 	set_temp_variable = { temp_strategic_airforce_equipment = num_equipment@strategic_bomber_equipment }
-	multiply_temp_variable = { temp_strategic_airforce_equipment = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_strategic_airforce_equipment value = var_nuclear_status_planes_cost_factor }
 	divide_temp_variable = { temp_strategic_airforce_equipment = 4 }
 	# deployed
 	set_temp_variable = { temp_strategic_airforce_deployed = num_deployed_planes_with_type@strategic_bomber_equipment }
-	multiply_temp_variable = { temp_strategic_airforce_deployed = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_strategic_airforce_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { strategic_airforce = temp_strategic_airforce_equipment }
 	add_to_temp_variable = { strategic_airforce = temp_strategic_airforce_deployed }
@@ -854,33 +858,33 @@ update_military_rate = {
 	## MR_Fighter_equipment
 	# equipment
 	set_temp_variable = { temp_MR_Fighter_equipment = num_equipment@MR_Fighter_equipment }
-	multiply_temp_variable = { temp_MR_Fighter_equipment = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_MR_Fighter_equipment value = var_nuclear_status_planes_cost_factor }
 	divide_temp_variable = { temp_MR_Fighter_equipment = 4 }
 	# deployed
 	set_temp_variable = { temp_MR_Fighter_deployed = num_deployed_planes_with_type@MR_Fighter_equipment }
-	multiply_temp_variable = { temp_MR_Fighter_deployed = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_MR_Fighter_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { temp_regular_airforce = temp_MR_Fighter_equipment }
 	add_to_temp_variable = { temp_regular_airforce = temp_MR_Fighter_deployed }
 	## CV_MR_Fighter_equipment
 	# equipment
 	set_temp_variable = { temp_CV_MR_Fighter_equipment = num_equipment@CV_MR_Fighter_equipment }
-	multiply_temp_variable = { temp_CV_MR_Fighter_equipment = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_CV_MR_Fighter_equipment value = var_nuclear_status_planes_cost_factor }
 	divide_temp_variable = { temp_CV_MR_Fighter_equipment = 4 }
 	# deployed
 	set_temp_variable = { temp_CV_MR_Fighter_deployed = num_deployed_planes_with_type@CV_MR_Fighter_equipment }
-	multiply_temp_variable = { temp_CV_MR_Fighter_deployed = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_CV_MR_Fighter_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_equipment }
 	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_deployed }
 	## Strike_fighter_equipment
 	# equipment
 	set_temp_variable = { temp_Strike_fighter_equipment = num_equipment@Strike_fighter_equipment }
-	multiply_temp_variable = { temp_Strike_fighter_equipment = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_Strike_fighter_equipment value = var_nuclear_status_planes_cost_factor }
 	divide_temp_variable = { temp_Strike_fighter_equipment = 4 }
 	# deployed
 	set_temp_variable = { temp_Strike_fighter_deployed = num_deployed_planes_with_type@Strike_fighter_equipment }
-	multiply_temp_variable = { temp_Strike_fighter_deployed = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_Strike_fighter_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_equipment }
 	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_deployed }
@@ -1399,36 +1403,73 @@ calculate_additional_expense_rate = {
 		limit = { has_decision = promote_outlook_decision_support_pro_western_parties }
 		set_variable = { promote_outlook_western_costs = gdp_total_display }
 		multiply_variable = { promote_outlook_western_costs = 0.001 }
+
+		# Modifier
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@western_outlook_campaign_cost_modifier }
+		multiply_variable = { promote_outlook_western_costs = propaganda_campaign_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = promote_outlook_western_costs }
 	}
 	if = {
 		limit = { has_decision = promote_outlook_decision_support_emerging_parties }
 		set_variable = { promote_outlook_emerging_costs = gdp_total_display }
 		multiply_variable = { promote_outlook_emerging_costs = 0.001 }
+
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@emerging_outlook_campaign_cost_modifier }
+		multiply_variable = { promote_outlook_emerging_costs = propaganda_campaign_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = promote_outlook_emerging_costs }
 	}
 	if = {
 		limit = { has_decision = promote_outlook_decision_support_the_non_aligned_parties }
 		set_variable = { promote_outlook_nonaligned_costs = gdp_total_display }
 		multiply_variable = { promote_outlook_nonaligned_costs = 0.001 }
+
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@nonaligned_outlook_campaign_cost_modifier }
+		multiply_variable = { promote_outlook_nonaligned_costs = propaganda_campaign_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = promote_outlook_nonaligned_costs }
 	}
 	if = {
 		limit = { has_decision = promote_outlook_decision_support_the_nationalists }
 		set_variable = { promote_outlook_nationalist_costs = gdp_total_display }
 		multiply_variable = { promote_outlook_nationalist_costs = 0.001 }
+
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@nationalist_outlook_campaign_cost_modifier }
+		multiply_variable = { promote_outlook_nationalist_costs = propaganda_campaign_cost_modifier }
+
+
 		add_to_variable = { additional_expenses_rate = promote_outlook_nationalist_costs }
 	}
 	if = {
 		limit = { has_decision = promote_outlook_decision_support_the_salafists }
 		set_variable = { promote_outlook_salafist_costs = gdp_total_display }
 		multiply_variable = { promote_outlook_salafist_costs = 0.001 }
+
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@salafist_outlook_campaign_cost_modifier }
+		multiply_variable = { promote_outlook_salafist_costs = propaganda_campaign_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = promote_outlook_salafist_costs }
 	}
 	if = {
 		limit = { has_decision = propaganda_campaign_decision }
 		set_variable = { propaganda_campaign_influence_decision_costs = gdp_total_display }
 		multiply_variable = { propaganda_campaign_influence_decision_costs = 0.001 }
+
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		multiply_variable = { propaganda_campaign_influence_decision_costs = propaganda_campaign_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = propaganda_campaign_influence_decision_costs }
 	}
 	if = {
@@ -1471,13 +1512,15 @@ calculate_additional_expense_rate = {
 		set_variable = { project_decisions_cost = gdp_total_display }
 		multiply_variable = { project_decisions_cost = 0.001 }
 		divide_variable = { project_decisions_cost = 0.5 }
+
+		set_temp_variable = { project_cost_multiplier = 1 }
+		add_to_temp_variable = { projects_cost_modifier = modifier@projects_cost_modifier }
+		multiply_temp_variable = { project_decisions_cost = projects_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = project_decisions_cost }
 	}
 	# European Union Contribution Expenses
-	if = {
-		limit = {
-			has_idea = EU_member
-		}
+	if = { limit = { has_idea = EU_member }
 		add_to_variable = { additional_expenses_rate = EU_budget_contribution_weekly }
 	}
 	# Country Specific
@@ -1676,8 +1719,8 @@ update_display = {
 
 update_economic_cycle_cost = {
 	#Base on size of economy
-	set_variable = { econ_cycle_upg_cost = gdp_total }
-	divide_variable = { econ_cycle_upg_cost = 660 }
+	set_variable = { econ_cycle_upg_cost = gdp_total_display }
+	multiply_variable = { econ_cycle_upg_cost = 0.075 } # 10% of GDP Total in billions
 
 	#Additional additive modifiers
 	set_temp_variable = { econ_cycle_upg_cost_multiplier = 1 }
