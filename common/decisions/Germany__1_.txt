@@ -1,0 +1,332 @@
+GER_red_green_appeasement = {
+
+	GER_increase_stance = {
+		cost = 0
+		icon = political_actions
+
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_test"
+			add_to_variable = { GER_satisfaction_red_green_level = 15 }
+			GER_ClampRedGreenVar = yes
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	GER_decrease_stance = {
+		cost = 0
+		icon = political_actions
+
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_test"
+			subtract_from_variable = { GER_satisfaction_red_green_level = 15 }
+			GER_ClampRedGreenVar = yes
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	GER_joschka_fischer_visits_iran = {
+		cost = 25
+		icon = decision_hol_war_on_pacifism
+
+		fire_only_once = yes
+
+		available = {
+			has_country_flag = GER_hofer_free
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: GER_joschka_fischer_visits_iran GER_test"
+			add_to_variable = { GER_satisfaction_red_green_level = 5 }
+			GER_ClampRedGreenVar = yes
+			country_event = { id = germany.33 days = 3 }
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				factor = 1
+				date > 2000.3.6
+			}
+		}
+	}
+}
+
+GER_cdu_investigation = {
+
+	GER_investigate_wlk = {
+		cost = 25
+		icon = political_actions
+
+		fire_only_once = yes
+
+		days_remove = 7
+
+		visible = {
+			has_country_flag = GER_investigation_bear_head_finished
+		}
+
+		complete_effect = {
+				log = "[GetDateText]: [Root.GetName]: Decision GER_investigate_wlk"
+			}
+			remove_effect = {
+				set_country_flag = GER_found_evidence_wlk_questioned
+				country_event = germany.11	# Letter Found
+			}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GER_investigate_fuchs_tanks = {
+		cost = 25
+		icon = political_actions
+
+		fire_only_once = yes
+
+		days_remove = 7
+
+		visible = {
+			has_country_flag = GER_found_evidence_wlk_questioned
+		}
+
+		complete_effect = {
+				log = "[GetDateText]: [Root.GetName]: Decision GER_investigate_fuchs_tanks"
+			}
+			remove_effect = {
+				country_event = germany.17
+			}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GER_investigate_bear_head = {
+		cost = 25
+		icon = political_actions
+
+		fire_only_once = yes
+
+		days_remove = 7
+
+		visible = {
+		 has_country_flag = GER_investigation_files_searched
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_investigate_bear_head"
+		}
+
+		remove_effect = {
+			country_event = germany.15
+			set_country_flag = GER_investigation_bear_head_finished
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GER_investigate_missing_files = {
+		cost = 25
+		icon = political_actions
+
+		fire_only_once = yes
+
+		days_remove = 7
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_investigate_missing_files"
+		}
+
+		remove_effect = {
+			country_event = germany.16
+			set_country_flag = GER_investigation_files_searched
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	GER_investigate_send_evidences = {
+		cost = 50
+		icon = political_actions
+
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_investigate_send_evidences"
+			clr_country_flag = GER_cdu_investigation_started
+			if = {
+				limit = {
+					check_variable = {
+					    var = GER_evidence_strenght
+					    value = 33
+					    compare = less_than
+					}
+				}
+				country_event = { id = germany.12 days = 3 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+					    var = GER_evidence_strenght
+					    value = 66
+					    compare = less_than
+					}
+				}
+				country_event = { id = germany.13 days = 3 }
+			}
+			else = {
+				country_event = { id = germany.14 days = 3 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+}
+
+GER_bundeswehr = {
+
+	GER_declare_v_fall = {
+		cost = 10
+		icon = political_actions
+
+		fire_only_once = no
+
+		available = {
+			has_defensive_war = yes
+			NOT = { has_country_flag = GER_v_fall_declared_cf }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_v_fall_declared"
+			set_country_flag = GER_v_fall_declared_cf
+			load_focus_tree = germany_defense
+			unlock_decision_tooltip = GER_move_parliament_bonn
+			complete_national_focus = GER_v_fall
+			news_event = { id = germany_news.1 days = 2 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	GER_move_parliament_bonn = {
+		cost = 50
+		icon = political_actions
+
+		fire_only_once = no
+
+		visible = {
+			NOT = { has_country_flag = GER_move_parliament_bonn_cf }
+			has_country_flag = GER_v_fall_declared_cf
+		}
+
+		available = {
+			has_war = yes
+			NOT = { has_country_flag = GER_move_parliament_bonn_cf }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_move_parliament_bonn"
+			set_country_flag = GER_move_parliament_bonn_cf
+			set_capital = {
+			  state = 966
+			  remember_old_capital = yes
+			}
+			clr_country_flag = GER_move_parliament_berlin_cf
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	GER_move_parliament_berlin = {
+		cost = 50
+		icon = political_actions
+
+		fire_only_once = no
+
+		visible = {
+			has_country_flag = GER_move_parliament_bonn_cf
+		}
+
+		available = {
+			has_war = yes
+			NOT = { has_country_flag = GER_move_parliament_berlin_cf }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_move_parliament_berlin"
+			set_country_flag = GER_move_parliament_bonn_cf
+			set_capital = {
+			  state = 45
+			  remember_old_capital = no
+			}
+			clr_country_flag = GER_move_parliament_bonn_cf
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	GER_open_einsatze_tab = {
+		#cost = 10
+		icon = political_actions
+
+		fire_only_once = no
+
+		available = {
+			NOT = { has_country_flag = GER_einsatze_tab_opened }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_v_fall_declared"
+			set_country_flag = GER_missions_gui_open
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	GER_new_generals = {
+		icon = political_actions
+
+		fire_only_once = no
+		is_good = yes
+		fire_only_once = yes
+
+		available = {
+			has_war = yes
+		}
+
+		days_mission_timeout = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_new_generals"
+		}
+
+		timeout_effect = {
+			custom_effect_tooltip = GER_reshuffle_generals_tt
+			GER_update_commanders = yes
+			activate_mission = GER_new_generals
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
