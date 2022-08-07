@@ -1055,9 +1055,15 @@ country_event = {
 	option = {
 		name = korea.16.a #We must transfer control
 		log = "[GetDateText]: [This.GetName]: korea.16.a executed"
-		USA = {
-			create_faction = USA_ROK
-			add_to_faction = KOR
+		if = {
+			limit = { USA = { has_idea = NATO_member } }
+			NATO_join = yes
+		}
+		else = {
+			USA = {
+				create_faction = USA_ROK
+				add_to_faction = KOR
+			}
 		}
 	}
 }
@@ -1072,6 +1078,7 @@ country_event = {
 		original_tag = KOR
 		KOR = { is_in_faction_with = USA }
 		NOT = { has_war_with = NKO }
+		NOT = { has_country_flag = has_joined_NATO_by_event }
 	}
 
 	mean_time_to_happen = {
@@ -1081,11 +1088,17 @@ country_event = {
 	option = {
 		name = korea.17.a #Peace at last.
 		log = "[GetDateText]: [This.GetName]: korea.17.a executed"
-		USA = {
+		if = {
+			limit = { has_idea = NATO_member }
+			NATO_leave = yes
+		}
+		else = {
+			USA = { leave_faction = yes }
 			leave_faction = yes
+		}
+		USA = {
 			give_guarantee = KOR
 		}
-		KOR = { leave_faction = yes }
 	}
 }
 
@@ -1141,9 +1154,8 @@ country_event = {
 	hidden = yes
 
 	is_triggered_only = yes
-
-	option = {
-		name = korea.20.a
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: korea.20 executed"
 		random_list = {
 			33 = {
 				set_country_flag = KOR_lib_victory
@@ -1203,7 +1215,6 @@ country_event = {
 			id = korea.21
 			days = 1
 		}
-		log = "[GetDateText]: [This.GetName]: korea.20.a executed"
 	}
 }
 
@@ -1386,7 +1397,7 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			factor = 0
+			factor = 1
 			modifier = {
 				factor = 0
 				has_war_with = KOR
@@ -2594,8 +2605,8 @@ news_event = {
 			tag = USA
 			tag = CHI
 			tag = JAP
-			tag = RUS
-			}
+			tag = SOV
+		}
 		ai_chance = { factor = 100 }
 		log = "[GetDateText]: [This.GetName]: kim_jong_il_death.6.c executed"
 	}

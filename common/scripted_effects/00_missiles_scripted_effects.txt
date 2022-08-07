@@ -10,9 +10,16 @@
 # missile_warhead_array
 # missile_salvo_array
 # missile_duration_array
+# missile_strike_type_array
 #
 ##################################
 
+missile_ui_update = {
+	if = { limit = { NOT = { has_variable = global.missile_ui_updated } }
+		set_variable = { global.missile_ui_updated = 0 }
+	}
+	add_to_variable = { global.missile_ui_updated = 1 }
+}
 
 set_landbased_missile_defense_cap = {
 	meta_effect = {
@@ -2004,6 +2011,7 @@ set_missile_launch_arrays_selected_TAG = {
 	clear_array = ROOT.selected_TAG_missile_decoy_array
 	clear_array = ROOT.selected_TAG_missile_salvo_array
 	clear_array = ROOT.selected_TAG_missile_duration_array
+	clear_array = ROOT.selected_TAG_missile_strike_type_array
 	clear_array = ROOT.selected_TAG_target_selected_1_array
 	clear_array = ROOT.selected_TAG_target_selected_2_array
 	clear_array = ROOT.selected_TAG_target_selected_3_array
@@ -2139,6 +2147,15 @@ set_missile_launch_arrays_selected_TAG = {
 					check_variable = { THIS.missile_alert_array^i = ROOT.var_alert_sort_button }
 				}
 				add_to_array = { ROOT.selected_TAG_missile_duration_array = v }
+			}
+		}
+		for_each_loop = {
+			array = THIS.missile_strike_type_array
+			if = {
+				limit = {
+					check_variable = { THIS.missile_alert_array^i = ROOT.var_alert_sort_button }
+				}
+				add_to_array = { ROOT.selected_TAG_missile_strike_type_array = v }
 			}
 		}
 		for_each_loop = {
@@ -2551,7 +2568,7 @@ set_warhead = {
 set_launch_button_number_vars = {
 	###
 	log = "set_launch_button_number_vars Root.GetName: [Root.GetName]"
-	###		
+	###
 	if = {
 		limit = {
 			OR = {
@@ -2590,7 +2607,7 @@ set_launch_button_number_vars = {
 		}
 		###
 		log = "start set_bomber_number_ALCM Root.GetName: [Root.GetName]"
-		###		
+		###
 		set_bomber_number_ALCM = yes
 		set_STK_number_ALCM = yes
 		set_MR_number_ALCM = yes
@@ -2801,7 +2818,7 @@ set_STK_number_ALCM = {
 set_MR_number_ALCM = {
 	###
 	log = "set_MR_number_ALCM Root.GetName: [Root.GetName]"
-	###	
+	###
 	set_variable = { var_MR_number_ALCM = 0 }
 	set_temp_variable = { temp1_MR_number_ALCM = 0 }
 	while_loop_effect = {
@@ -2880,6 +2897,9 @@ clear_launch_button_number_vars = {
 ### testing bugfixing ###
 clear_gui_salvo_duration_vars = {
 	ROOT = {
+		set_variable = { var_strategic_strike = 2 } # 1 active, 2 not active
+		set_variable = { var_tactical_strike = 2 } # 1 active, 2 not active
+		clear_variable = var_strike_type
 		clear_variable = var_gui_salvo
 		clear_variable = var_gui_duration
 		clear_variable = var_total_firing
@@ -3490,6 +3510,7 @@ set_building_damage_stat_display_array = {
 
 
 set_missile_damage_stats = {
+	log = "set_missile_damage_stats i = [?i]"
 	add_to_array = { array = damage_building_1_stat_array value = var_damage_building_1 index = i }
 	add_to_array = { array = damage_building_2_stat_array value = var_damage_building_2 index = i }
 	add_to_array = { array = damage_building_3_stat_array value = var_damage_building_3 index = i }
@@ -3510,6 +3531,33 @@ set_missile_damage_stats = {
 	add_to_array = { array = damage_building_18_stat_array value = var_damage_building_18 index = i }
 	add_to_array = { array = damage_building_19_stat_array value = var_damage_building_19 index = i }
 	add_to_array = { array = damage_building_20_stat_array value = var_damage_building_20 index = i }
+
+	### for bugfixing???
+	log = "[?damage_building_1_stat_array^i] value = [?var_damage_building_1] index = [?i]"
+	log = "[?damage_building_2_stat_array^i] value = [?var_damage_building_2] index = [?i]"
+	log = "[?damage_building_3_stat_array^i] value = [?var_damage_building_3] index = [?i]"
+	log = "[?damage_building_4_stat_array^i] value = [?var_damage_building_4] index = [?i]"
+	log = "[?damage_building_5_stat_array^i] value = [?var_damage_building_5] index = [?i]"
+	log = "[?damage_building_6_stat_array^i] value = [?var_damage_building_6] index = [?i]"
+	log = "[?damage_building_7_stat_array^i] value = [?var_damage_building_7] index = [?i]"
+	log = "[?damage_building_8_stat_array^i] value = [?var_damage_building_8] index = [?i]"
+	log = "[?damage_building_9_stat_array^i] value = [?var_damage_building_9] index = [?i]"
+	log = "[?damage_building_10_stat_array^i] value = [?var_damage_building_10] index = [?i]"
+	log = "[?damage_building_11_stat_array^i] value = [?var_damage_building_11] index = [?i]"
+	log = "[?damage_building_12_stat_array^i] value = [?var_damage_building_12] index = [?i]"
+	log = "[?damage_building_13_stat_array^i] value = [?var_damage_building_13] index = [?i]"
+	log = "[?damage_building_14_stat_array^i] value = [?var_damage_building_14] index = [?i]"
+	log = "[?damage_building_15_stat_array^i] value = [?var_damage_building_15] index = [?i]"
+	log = "[?damage_building_16_stat_array^i] value = [?var_damage_building_16] index = [?i]"
+	log = "[?damage_building_17_stat_array^i] value = [?var_damage_building_17] index = [?i]"
+	log = "[?damage_building_18_stat_array^i] value = [?var_damage_building_18] index = [?i]"
+	log = "[?damage_building_19_stat_array^i] value = [?var_damage_building_19] index = [?i]"
+	log = "[?damage_building_20_stat_array^i] value = [?var_damage_building_20] index = [?i]"
+
+	add_to_array = { array = total_org_damage_stat_array value = var_total_org_damage index = i }
+	add_to_array = { array = total_str_damage_stat_array value = var_total_str_damage index = i }
+	add_to_array = { array = unit_org_damage_stat_array value = var_unit_org_damage index = i }
+	add_to_array = { array = unit_str_damage_stat_array value = var_unit_str_damage index = i }
 }
 
 set_missile_nuke_damage_stats = {
@@ -3543,11 +3591,18 @@ set_missile_warhead_effects = {
 		limit = {
 			check_variable = { missile_nuke_array^i = 2 }
 		}
-		set_variable = { var_nuke_warhead_ID = missile_nuclear_warhead_array^i }
-		set_variable = { var_nuke_damage = global.nuclear_warhead_building_damage_array^var_nuke_warhead_ID }
-		log = "[GetDateText]: [Root.GetName]: var_nuke_damage [?ROOT.var_nuke_damage]"
-		multiply_variable = { var_nuke_damage = temp1 }
-		log = "[GetDateText]: [Root.GetName]: multiply var_nuke_damage [?ROOT.var_nuke_damage]"
+		### first try, didn't work
+		# if = {
+		# 	limit = {
+		# 		check_variable = { ROOT.missile_strike_type_array^i = 4 } # 4 = strategic
+		# 	}
+
+			set_variable = { var_nuke_warhead_ID = missile_nuclear_warhead_array^i }
+			set_variable = { var_nuke_damage = global.nuclear_warhead_building_damage_array^var_nuke_warhead_ID }
+			log = "[GetDateText]: [Root.GetName]: var_nuke_damage [?ROOT.var_nuke_damage]"
+			multiply_variable = { var_nuke_damage = temp1 }
+			log = "[GetDateText]: [Root.GetName]: multiply var_nuke_damage [?ROOT.var_nuke_damage]"
+		#}
 		launch_nuclear_warhead = yes
 		var:ROOT.missile_target_controller_array^i = {
 			ROOT = {
@@ -3580,8 +3635,20 @@ set_missile_warhead_effects = {
 		# 		check_variable = { temp1 > 0 }
 		# 	}
 		# 	subtract_from_temp_variable = { temp1 = 1 }
-			set_conventional_warhead_damage = yes
+		#	set_conventional_warhead_damage = yes
 		#}
+		if = {
+			limit = {
+				check_variable = { ROOT.missile_strike_type_array^i = 4 } # 4 = strategic
+			}
+			set_conventional_warhead_damage = yes
+		}
+		else_if = {
+			limit = {
+				check_variable = { ROOT.missile_strike_type_array^i = 2 } # 2 = tactical
+			}
+			set_conventional_warhead_unit_damage = yes
+		}
 	}
 }
 
@@ -3648,6 +3715,8 @@ launch_nuclear_warhead = {
 				add_to_variable = { global.nuke_drop_salvo_idx = 1 } ### for on_nuke_drop
 				log = "global.nuke_drop_salvo_idx [?global.nuke_drop_salvo_idx]"
 				set_temp_variable = { idx = i } ### for logging
+
+				ROOT = { set_nuclear_warhead_unit_damage = yes }
 				set_nuke_damage = yes
 			}
 
@@ -3692,6 +3761,7 @@ launch_nuclear_warhead = {
 		target_point_ID = "[?ROOT.missile_target_point_array^i.GetID]"
 		target_TAG = "[?ROOT.missile_target_controller_array^i.GetID]"
 		warhead_ID = "[?ROOT.var_nuke_warhead_ID]"
+		#debug = yes
 	}
 
 }
@@ -4084,6 +4154,47 @@ set_nuke_damage = {
 }
 
 
+### did not work
+# set_no_nuke_building_damage = {
+# 	add_to_array = { global.damage_building_1_array = 0 }
+# 	add_to_array = { global.damage_building_2_array = 0 }
+# 	add_to_array = { global.damage_building_3_array = 0 }
+# 	add_to_array = { global.damage_building_4_array = 0 }
+# 	add_to_array = { global.damage_building_5_array = 0 }
+# 	add_to_array = { global.damage_building_6_array = 0 }
+# 	add_to_array = { global.damage_building_7_array = 0 }
+# 	add_to_array = { global.damage_building_8_array = 0 }
+# 	add_to_array = { global.damage_building_9_array = 0 }
+# 	add_to_array = { global.damage_building_10_array = 0 }
+# 	add_to_array = { global.damage_building_11_array = 0 }
+# 	add_to_array = { global.damage_building_12_array = 0 }
+# 	add_to_array = { global.damage_building_13_array = 0 }
+# 	add_to_array = { global.damage_building_14_array = 0 }
+# 	add_to_array = { global.damage_building_15_array = 0 }
+
+# 	add_to_array = { array = ROOT.damage_building_1_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_2_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_3_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_4_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_5_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_6_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_7_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_8_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_9_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_10_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_11_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_12_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_13_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_14_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_15_stat_array value = 0 index = i }
+# 	###to test
+# 	add_to_array = { array = ROOT.damage_building_16_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_17_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_18_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_19_stat_array value = 0 index = i }
+# 	add_to_array = { array = ROOT.damage_building_20_stat_array value = 0 index = i }
+# }
+
 clear_nuke_vars = {
 	clear_variable = global.nuke_drop_salvo_idx
 	THIS = {
@@ -4134,6 +4245,8 @@ clear_nuke_vars = {
 		clear_array = global.damage_building_14_array
 		clear_array = global.damage_building_15_array
 
+		#clear_variable = temp_missile_strike_type
+
 		# clear_variable = var_damage_building_1
 		# clear_variable = var_damage_building_2
 		# clear_variable = var_damage_building_3
@@ -4165,6 +4278,8 @@ clear_nuke_vars = {
 #
 # NEW NAME
 set_conventional_warhead_damage = {
+	log = "set_conventional_warhead_damage i = [?i] temp1 = [?temp1]"
+
 	### to test
 	set_temp_provincial_building_level = yes
 	###
@@ -4176,8 +4291,10 @@ set_conventional_warhead_damage = {
 			check_variable = { temp1 > 0 }
 		}
 		subtract_from_temp_variable = { temp1 = 1 }
-		set_temp_variable = { temp_warhead_idx = missile_conventional_warhead_array^i }
+		set_temp_variable = { temp_warhead_idx = ROOT.missile_conventional_warhead_array^i }
+		log = "ROOT.missile_conventional_warhead_array^i = [?ROOT.missile_conventional_warhead_array^i] i = [?i] temp1 = [?temp1]"
 		set_temp_variable = { temp2 = global.conventional_warhead_damage_array^temp_warhead_idx }
+		log = "temp2 [?temp2] global.conventional_warhead_damage_array^temp_warhead_idx [?global.conventional_warhead_damage_array^temp_warhead_idx] temp_warhead_idx [?temp_warhead_idx]"
 		### add new buildings here
 		random_list = {
 			1 = {
@@ -4946,6 +5063,12 @@ set_conventional_warhead_damage = {
 	clear_variable = var_damage_building_18
 	clear_variable = var_damage_building_19
 	clear_variable = var_damage_building_20
+
+	clear_variable = var_total_org_damage
+	clear_variable = var_total_str_damage
+	clear_variable = var_unit_org_damage
+	clear_variable = var_unit_str_damage
+	clear_variable = var_num_units
 }
 
 ### provincial building level
@@ -5275,6 +5398,148 @@ set_temp_provincial_building_level = {
 		}
 		target_point_ID = "[?missile_target_point_array^i.GetID]"
 	}
+}
+
+### unit damage
+
+set_conventional_warhead_unit_damage = {
+	meta_effect = {
+		text = {
+			set_temp_variable = { temp_warhead_idx = ROOT.missile_conventional_warhead_array^i }
+			set_temp_variable = { temp_org_damage = global.conventional_warhead_org_damage_array^temp_warhead_idx }
+			set_temp_variable = { temp_str_damage = global.conventional_warhead_str_damage_array^temp_warhead_idx }
+			set_variable = { ROOT.var_num_units = 0 }
+			for_each_scope_loop = {
+				array = enemies
+
+				add_to_variable = { ROOT.var_num_units = num_armies_in_state@[target_point_ID] }
+			}
+			multiply_temp_variable = { temp_org_damage = temp1 }
+			multiply_temp_variable = { temp_str_damage = temp1 }
+			set_variable = { ROOT.var_total_org_damage = temp_org_damage }
+			set_variable = { ROOT.var_total_str_damage = temp_str_damage }
+			divide_temp_variable = { temp_org_damage = ROOT.var_num_units }
+			divide_temp_variable = { temp_str_damage = ROOT.var_num_units }
+			set_variable = { ROOT.var_unit_org_damage = temp_org_damage }
+			set_variable = { ROOT.var_unit_str_damage = temp_str_damage }
+
+			damage_units = {
+				state = [target_point_ID]
+				limit = {
+					has_war_with = ROOT
+				}
+				org_damage = temp_org_damage
+				str_damage = temp_str_damage
+				ratio = no
+				army = yes
+			}
+		}
+		target_point_ID = "[?ROOT.missile_target_point_array^i.GetID]"
+		#debug = yes
+	}
+	log = "ROOT.var_num_units [?ROOT.var_num_units]"
+
+	set_missile_damage_stats = yes
+	clear_variable = var_damage_building_1
+	clear_variable = var_damage_building_2
+	clear_variable = var_damage_building_3
+	clear_variable = var_damage_building_4
+	clear_variable = var_damage_building_5
+	clear_variable = var_damage_building_6
+	clear_variable = var_damage_building_7
+	clear_variable = var_damage_building_8
+	clear_variable = var_damage_building_9
+	clear_variable = var_damage_building_10
+	clear_variable = var_damage_building_11
+	clear_variable = var_damage_building_12
+	clear_variable = var_damage_building_13
+	clear_variable = var_damage_building_14
+	clear_variable = var_damage_building_15
+
+	clear_variable = var_damage_building_16
+	clear_variable = var_damage_building_17
+	clear_variable = var_damage_building_18
+	clear_variable = var_damage_building_19
+	clear_variable = var_damage_building_20
+
+	clear_variable = var_total_org_damage
+	clear_variable = var_total_str_damage
+	clear_variable = var_unit_org_damage
+	clear_variable = var_unit_str_damage
+	clear_variable = var_num_units
+}
+
+set_nuclear_warhead_unit_damage = {
+	meta_effect = {
+		text = {
+			set_temp_variable = { temp_warhead_idx = ROOT.missile_nuclear_warhead_array^i }
+			set_temp_variable = { temp_org_damage = global.nuclear_warhead_org_damage_array^temp_warhead_idx }
+			set_temp_variable = { temp_str_damage = global.nuclear_warhead_str_damage_array^temp_warhead_idx }
+			set_variable = { ROOT.var_num_units = 0 }
+			for_each_scope_loop = {
+				array = enemies
+
+				add_to_variable = { ROOT.var_num_units = num_armies_in_state@[target_point_ID] }
+			}
+			multiply_temp_variable = { temp_org_damage = ROOT.missile_target_hit_stat_array^i } # was tmep1
+			multiply_temp_variable = { temp_str_damage = ROOT.missile_target_hit_stat_array^i } # was temp1
+			set_variable = { ROOT.var_total_org_damage = temp_org_damage }
+			set_variable = { ROOT.var_total_str_damage = temp_str_damage }
+			divide_temp_variable = { temp_org_damage = ROOT.var_num_units }
+			divide_temp_variable = { temp_str_damage = ROOT.var_num_units }
+			set_variable = { ROOT.var_unit_org_damage = temp_org_damage }
+			set_variable = { ROOT.var_unit_str_damage = temp_str_damage }
+
+			damage_units = {
+				state = [target_point_ID]
+				limit = {
+					has_war_with = ROOT
+				}
+				org_damage = temp_org_damage
+				str_damage = temp_str_damage
+				ratio = no
+				army = yes
+			}
+		}
+		target_point_ID = "[?ROOT.missile_target_point_array^i.GetID]"
+		#debug = yes
+	}
+	log = "ROOT.var_num_units [?ROOT.var_num_units]"
+
+
+	# set_missile_damage_stats = yes
+	# clear_variable = var_damage_building_1
+	# clear_variable = var_damage_building_2
+	# clear_variable = var_damage_building_3
+	# clear_variable = var_damage_building_4
+	# clear_variable = var_damage_building_5
+	# clear_variable = var_damage_building_6
+	# clear_variable = var_damage_building_7
+	# clear_variable = var_damage_building_8
+	# clear_variable = var_damage_building_9
+	# clear_variable = var_damage_building_10
+	# clear_variable = var_damage_building_11
+	# clear_variable = var_damage_building_12
+	# clear_variable = var_damage_building_13
+	# clear_variable = var_damage_building_14
+	# clear_variable = var_damage_building_15
+
+	# clear_variable = var_damage_building_16
+	# clear_variable = var_damage_building_17
+	# clear_variable = var_damage_building_18
+	# clear_variable = var_damage_building_19
+	# clear_variable = var_damage_building_20
+
+	add_to_array = { array = total_org_damage_stat_array value = var_total_org_damage index = i }
+	add_to_array = { array = total_str_damage_stat_array value = var_total_str_damage index = i }
+	add_to_array = { array = unit_org_damage_stat_array value = var_unit_org_damage index = i }
+	add_to_array = { array = unit_str_damage_stat_array value = var_unit_str_damage index = i }
+
+	clear_variable = var_total_org_damage
+	clear_variable = var_total_str_damage
+	clear_variable = var_unit_org_damage
+	clear_variable = var_unit_str_damage
+	clear_variable = var_num_units
 }
 
 #########################
@@ -5779,6 +6044,7 @@ set_kinetic_bombardment_damage_stats = {
 
 fire_on_alert = {
 	log = "[GetDateText]: [Root.GetName]: fire_on_alert"
+	# temp deactivate?
 	set_retaliatory_strike_limit = yes
 	for_each_loop = {
 		array = missile_target_point_array
@@ -5803,11 +6069,13 @@ fire_on_alert = {
 				check_launch_point = yes
 				#
 				# check alert target
+				# temp deactivate?
 				is_in_array = {
 					array = retaliatory_strike_target_array
 					value = missile_target_controller_array^i
 				}
 				# check strike limit
+				# temp deactivate?
 				OR = {
 					#### 1 = conventional; 2 = nuke
 					check_variable = { missile_nuke_array^i = 1 }
@@ -5877,7 +6145,8 @@ fire_on_alert = {
 			### moved upwards in the effect, reactivated
 			set_missile_model = yes
 
-			set_mod_intercept_chance = yes
+			#does it work ???
+			#set_mod_intercept_chance = yes
 
 			set_temp_variable = { temp_missile_type = missile_type_array^i }
 			subtract_from_variable = { missile_inventory_array^temp_missile_type = var_salvo }
@@ -5928,6 +6197,9 @@ fire_on_alert = {
 						midcourse_phase_defense_sea = yes
 						midcourse_phase_defense_land = yes
 					}
+					else = {
+						midcourse_bypass = yes
+					}
 					### terminal phase vs defense ###
 					terminal_phase_defense_sea = yes
 					terminal_phase_defense_land = yes
@@ -5974,6 +6246,8 @@ fire_on_alert = {
 
 			set_missile_damage_stats = yes ### should be zero for all
 		}
+		### for launch gui entry ###
+		set_launch_trigger_num_gui = yes
 	}
 }
 
@@ -6065,6 +6339,7 @@ set_retaliatory_strike_limit = {
 			}
 		}
 	}
+	log = "[GetDateText]: [Root.GetName]: ROOT.var_strike_limit [?ROOT.var_strike_limit]"
 }
 
 ###########################
@@ -9555,7 +9830,9 @@ launch_OLV = {
 						}
 						subtract_from_variable = { spp_inventory_array^i = 1 }
 						add_to_variable = { ROOT.var_spp_payload_delivered = 1 }
-						add_to_variable = { ROOT.spp_orbit_array^i = 1 }
+						set_temp_variable = { temp_sppID = payload_types_array^i }
+						subtract_from_temp_variable = { temp_sppID = 1000 }
+						add_to_variable = { ROOT.spp_orbit_array^temp_sppID = 1 }
 					}
 				}
 				else_if = {
@@ -11274,6 +11551,7 @@ update_nuclear_production = {
 	set_variable = { var_nuke_nuclear_material_prod = temp2 }
 
 	#force_update_dynamic_modifier = yes
+	missile_ui_update = yes
 }
 
 add_nuclear_material_stockpile = {
@@ -11532,6 +11810,1416 @@ on_weekly_redeploy = {
 	set_variable = { var_TEL_redeploy = 0 }
 }
 
+#######################
+#######################
+### for missiles AI ###
+#######################
+#######################
+
+
+# set_trajectory_PREV_to_THIS = {
+# }
+
+set_AI_missiles_on_alert = {
+	log = "[GetDateText]: [Root.GetName]: set_AI_missiles_on_alert"
+	set_eligible_alert_targets = yes
+	prioritize_alert_targets = yes
+	check_nuclear_warheads_for_alert_targets = yes
+	set_temp_sea_launch_point_array = yes
+	set_GLCM_on_alert = yes
+	set_ALCM_on_alert = yes
+	set_SLCM_on_alert = yes
+	set_HSCM_on_alert = yes
+	set_IRBM_on_alert = yes
+	set_ICBM_on_alert = yes
+	set_SLBM_on_alert = yes
+	set_missile_launch_arrays_selected_TAG = yes
+	clear_launch_button_loc_vars = yes
+}
+
+set_eligible_alert_targets = {
+	log = "[GetDateText]: [Root.GetName]: set_eligible_alert_targets"
+	for_each_scope_loop = {
+		array = enemies
+		every_controlled_state = {
+			limit = {
+				NOT = {
+					is_core_of = ROOT
+				}
+			}
+			set_temp_variable = { temp_target_value = 0 }
+
+			set_temp_variable = { temp0 = building_level@industrial_complex }
+			multiply_temp_variable = { temp0 = 2 }
+			add_to_temp_variable = { temp_target_value = temp0 }
+
+			set_temp_variable = { temp1 = building_level@arms_factory }
+			multiply_temp_variable = { temp1 = 2 }
+			add_to_temp_variable = { temp_target_value = temp1 }
+
+			set_temp_variable = { temp2 = building_level@infrastructure }
+			multiply_temp_variable = { temp2 = 1 }
+			add_to_temp_variable = { temp_target_value = temp2 }
+
+			set_temp_variable = { temp3 = building_level@internet_station }
+			multiply_temp_variable = { temp3 = 1 }
+			add_to_temp_variable = { temp_target_value = temp3 }
+
+			set_temp_variable = { temp4 = building_level@dockyard }
+			multiply_temp_variable = { temp4 = 2 }
+			add_to_temp_variable = { temp_target_value = temp4 }
+
+			set_temp_variable = { temp5 = building_level@air_base }
+			multiply_temp_variable = { temp5 = 2 }
+			add_to_temp_variable = { temp_target_value = temp5 }
+
+			set_temp_variable = { temp6 = building_level@radar_station }
+			multiply_temp_variable = { temp6 = 2 }
+			add_to_temp_variable = { temp_target_value = temp6 }
+
+			set_temp_variable = { temp7 = building_level@anti_air_building }
+			multiply_temp_variable = { temp7 = 2 }
+			add_to_temp_variable = { temp_target_value = temp7 }
+
+			set_temp_variable = { temp8 = building_level@missile_defense_station }
+			multiply_temp_variable = { temp8 = 2 }
+			add_to_temp_variable = { temp_target_value = temp8 }
+
+			set_temp_variable = { temp9 = building_level@TEL_base }
+			multiply_temp_variable = { temp9 = 3 }
+			add_to_temp_variable = { temp_target_value = temp9 }
+
+			set_temp_variable = { temp10 = building_level@missile_silo }
+			multiply_temp_variable = { temp10 = 3 }
+			add_to_temp_variable = { temp_target_value = temp10 }
+
+			set_temp_variable = { temp11 = building_level@nuclear_reactor }
+			multiply_temp_variable = { temp11 = 2 }
+			add_to_temp_variable = { temp_target_value = temp11 }
+
+			set_temp_variable = { temp12 = building_level@synthetic_refinery }
+			multiply_temp_variable = { temp12 = 1 }
+			add_to_temp_variable = { temp_target_value = temp12 }
+
+			set_temp_variable = { temp13 = building_level@fuel_silo }
+			multiply_temp_variable = { temp13 = 1 }
+			add_to_temp_variable = { temp_target_value = temp13 }
+
+			set_temp_variable = { temp14 = building_level@offices }
+			multiply_temp_variable = { temp14 = 1 }
+			add_to_temp_variable = { temp_target_value = temp14 }
+
+			set_temp_variable = { temp15 = building_level@naval_base }
+			multiply_temp_variable = { temp15 = 2 }
+			add_to_temp_variable = { temp_target_value = temp15 }
+
+			set_temp_variable = { temp16 = building_level@bunker }
+			multiply_temp_variable = { temp16 = 1 }
+			add_to_temp_variable = { temp_target_value = temp16 }
+
+			set_temp_variable = { temp17 = building_level@coastal_bunker }
+			multiply_temp_variable = { temp17 = 1 }
+			add_to_temp_variable = { temp_target_value = temp17 }
+
+			set_temp_variable = { temp18 = building_level@supply_node }
+			multiply_temp_variable = { temp18 = 1 }
+			add_to_temp_variable = { temp_target_value = temp18 }
+
+			set_temp_variable = { temp19 = building_level@rail_way }
+			multiply_temp_variable = { temp19 = 1 }
+			add_to_temp_variable = { temp_target_value = temp19 }
+
+			add_to_array = { ROOT.eligible_alert_targets_value_array = temp_target_value }
+			add_to_array = { ROOT.eligible_alert_targets_state_array = THIS.id }
+		}
+	}
+	log = "[GetDateText]: [Root.GetName]: ROOT.eligible_alert_targets_value_array^num [?ROOT.eligible_alert_targets_value_array^num]"
+	log = "[GetDateText]: [Root.GetName]: ROOT.eligible_alert_targets_state_array^num [?ROOT.eligible_alert_targets_state_array^num]"
+}
+
+
+prioritize_alert_targets = {
+	log = "[GetDateText]: [Root.GetName]: prioritize_alert_targets"
+	#resize_array = { ROOT.prioritize_alert_targets_array = ROOT.eligible_alert_targets_state_array^num }
+	#resize_array = { ROOT.prioritize_alert_targets_value_array = ROOT.eligible_alert_targets_value_array^num }
+	while_loop_effect = {
+		limit = {
+			check_variable = {
+				ROOT.eligible_alert_targets_state_array^num > 0
+			}
+		}
+		find_highest_in_array = {
+			array = ROOT.eligible_alert_targets_value_array
+			value = target_value
+			index = idx
+		}
+		add_to_array = { ROOT.prioritize_alert_targets_array = ROOT.eligible_alert_targets_state_array^idx }
+		add_to_array = { ROOT.prioritize_alert_targets_value_array = ROOT.eligible_alert_targets_value_array^idx }
+
+		ROOT = { set_prioritize_alert_targets_defenses = yes }
+
+		#add_to_array = { ROOT.prioritize_alert_targets_boost_defense_array = temp_boost_defense_value }
+		add_to_array = { ROOT.prioritize_alert_targets_midcourse_defense_array = temp_midcourse_defense_value }
+		add_to_array = { ROOT.prioritize_alert_targets_terminal_defense_array = temp_terminal_defense_value }
+
+		#set_variable = { ROOT.prioritize_alert_targets_array^idx = ROOT.eligible_alert_targets_state_array^idx }
+		#set_variable = { ROOT.prioritize_alert_targets_value_array^idx = ROOT.eligible_alert_targets_value_array^idx }
+		log = "ROOT.prioritize_alert_targets_array^num [?ROOT.prioritize_alert_targets_array^num]"
+		log = "ROOT.eligible_alert_targets_state_array^num [?ROOT.eligible_alert_targets_state_array^num]"
+		# set_temp_variable = { temp_val = ROOT.eligible_alert_targets_value_array^num }
+		# set_temp_variable = { temp_state = ROOT.eligible_alert_targets_state_array^num }
+		# subtract_from_variable = { temp_val = 1 }
+		# subtract_from_variable = { temp_state = 1 }
+		remove_from_array = {
+			array = ROOT.eligible_alert_targets_value_array
+			#value = target_value
+			index = idx
+		}
+		remove_from_array = {
+			array = ROOT.eligible_alert_targets_state_array
+			#value = ROOT.eligible_alert_targets_state_array^idx
+			index = idx
+		}
+		# resize_array = { ROOT.eligible_alert_targets_value_array = temp_val }
+		# resize_array = { ROOT.eligible_alert_targets_state_array = temp_state }
+		log = "after resize ROOT.eligible_alert_targets_state_array^num [?ROOT.eligible_alert_targets_state_array^num]"
+	}
+	log = "[GetDateText]: [Root.GetName]: ROOT.prioritize_alert_targets_array^num [?ROOT.prioritize_alert_targets_array^num]"
+}
+
+### limit potential sea launch points
+set_temp_sea_launch_point_array = {
+	for_each_loop = {
+		array = enemies
+		index = e
+		var:enemies^e = {
+			for_each_loop  = {
+				array = controlled_states
+				index = c
+				var:controlled_states^c = {
+					if = {
+						limit = {
+							is_in_array = {
+								array = global.sea_launch_point_array
+								value = THIS.id
+							}
+						}
+						add_to_temp_array = { temp_sea_launch_point_array = THIS.id }
+					}
+				}
+			}
+		}
+	}
+	for_each_loop  = {
+		array = controlled_states
+		index = r
+		var:controlled_states^r = {
+			if = {
+				limit = {
+					is_in_array = {
+						array = global.sea_launch_point_array
+						value = THIS.id
+					}
+				}
+				add_to_temp_array = { temp_sea_launch_point_array = THIS.id }
+			}
+		}
+	}
+	log = "[GetDateText]: [Root.GetName]: temp_sea_launch_point_array^num [?temp_sea_launch_point_array^num]"
+}
+
+set_GLCM_eligible_launch_points = {
+	log = "[GetDateText]: [Root.GetName]: set_GLCM_eligible_launch_points"
+	every_controlled_state = {
+		limit = {
+			TEL_base > 0
+		}
+		add_to_array = { ROOT.eligible_launch_point_state_array = THIS.id }
+		ROOT = {
+			set_temp_variable = { temp_max_launchers = PREV.non_damaged_building_level@TEL_base }
+			multiply_temp_variable = { temp_max_launchers = var_TEL_launcher }
+		}
+		add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers }
+
+		ROOT = { set_eligible_launch_points_defenses = yes }
+
+		add_to_array = { ROOT.eligible_launch_point_boost_defense_array = temp_boost_defense_value }
+		add_to_array = { ROOT.eligible_launch_point_midcourse_defense_array = temp_midcourse_defense_value }
+		#add_to_array = { ROOT.eligible_launch_point_terminal_defense_array = temp_terminal_defense_value }
+	}
+	log = "[GetDateText]: [Root.GetName]: ROOT.eligible_launch_point_state_array^num [?ROOT.eligible_launch_point_state_array^num]"
+}
+
+set_ALCM_eligible_launch_points = {
+	log = "[GetDateText]: [Root.GetName]: set_ALCM_eligible_launch_points"
+	every_controlled_state = {
+		limit = {
+			MD_missiles_AI_on_alert_ALCM_trigger = yes
+		}
+		add_to_array = { ROOT.eligible_launch_point_state_array = THIS.id }
+		ROOT = {
+			set_temp_variable = { temp_max_launchers_bomber = num_deployed_planes_with_type@strategic_bomber_equipment }
+			multiply_temp_variable = { temp_max_launchers_bomber = var_bomber_launcher }
+
+			set_temp_variable = { temp_max_launchers_STK = num_deployed_planes_with_type@Strike_fighter_equipment }
+			multiply_temp_variable = { temp_max_launchers_STK = var_STK_launcher }
+
+			set_temp_variable = { temp_max_launchers_MR = num_deployed_planes_with_type@MR_Fighter_equipment }
+			multiply_temp_variable = { temp_max_launchers_MR = var_MR_launcher }
+
+			set_temp_variable = { temp_max_launchers_MR_CV = num_deployed_planes_with_type@CV_MR_Fighter_equipment }
+			multiply_temp_variable = { temp_max_launchers_MR_CV = var_MR_CV_launcher }
+		}
+		if = {
+			limit = {
+				check_variable = { temp_max_launchers_bomber > temp_max_launchers_STK }
+				check_variable = { temp_max_launchers_bomber > temp_max_launchers_MR }
+				check_variable = { temp_max_launchers_bomber > temp_max_launchers_MR_CV }
+			}
+			add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers_bomber }
+		}
+		else_if = {
+			limit = {
+				check_variable = { temp_max_launchers_STK > temp_max_launchers_bomber }
+				check_variable = { temp_max_launchers_STK > temp_max_launchers_MR }
+				check_variable = { temp_max_launchers_STK > temp_max_launchers_MR_CV }
+			}
+			add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers_STK }
+		}
+		else_if = {
+			limit = {
+				check_variable = { temp_max_launchers_MR > temp_max_launchers_STK }
+				check_variable = { temp_max_launchers_MR > temp_max_launchers_bomber }
+				check_variable = { temp_max_launchers_MR > temp_max_launchers_MR_CV }
+			}
+			add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers_MR }
+		}
+		else = {
+			add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers_MR_CV }
+		}
+
+		ROOT = { set_eligible_launch_points_defenses = yes }
+
+		add_to_array = { ROOT.eligible_launch_point_boost_defense_array = temp_boost_defense_value }
+		add_to_array = { ROOT.eligible_launch_point_midcourse_defense_array = temp_midcourse_defense_value }
+		#add_to_array = { ROOT.eligible_launch_point_terminal_defense_array = temp_terminal_defense_value }
+	}
+	log = "[GetDateText]: [Root.GetName]: ROOT.eligible_launch_point_state_array^num [?ROOT.eligible_launch_point_state_array^num]"
+}
+
+#launch points need to be limited to number of ship in area???
+set_SLCM_eligible_launch_points = {
+	log = "[GetDateText]: [Root.GetName]: set_SLCM_eligible_launch_points"
+	ROOT = {
+		set_variable = { var_sub_number_LAM = 1 }
+		set_variable = { var_attack_sub_number_LAM = 1 }
+		set_variable = { var_ship_number_LAM = 1 }
+	}
+	if = {
+		limit = { NOT = { has_dlc = "Man the Guns" } }
+		# cruise missile subs
+		set_temp_variable = { temp_num_attack_sub = num_ships_with_type@attack_submarine }
+		add_to_temp_variable = { temp_num_attack_sub = num_ships_with_type@missile_submarine }
+		add_to_temp_variable = { temp_num_attack_sub = num_ships_with_type@diesel_attack_submarine }
+		# missile ships
+		set_temp_variable = { temp_num_ship = num_ships_with_type@nuclear_cruiser }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@cruiser }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@destroyer }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@frigate }
+	}
+	else_if = {
+		limit = { has_dlc = "Man the Guns" }
+		# cruise missile subs
+		set_temp_variable = { temp_num_attack_sub = num_ships_with_type@missile_submarine_mtg }
+		add_to_temp_variable = { temp_num_attack_sub = num_ships_with_type@attack_submarine_mtg }
+		# missile ships
+		set_temp_variable = { temp_num_ship = num_ships_with_type@battleship_mtg }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@cruiser_mtg }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@battle_cruiser_mtg }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@destroyer_mtg }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@stealth_destroyer_mtg }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@frigate_mtg }
+	}
+	#set_temp_sea_launch_point_array = yes
+	for_each_loop  = {
+		#array = global.sea_launch_point_array
+		array = temp_sea_launch_point_array
+		break = break_num_SLCM
+		if = {
+			limit = {
+				MD_missiles_AI_on_alert_SLCM_trigger = yes
+			}
+			#add_to_array = { ROOT.eligible_launch_point_state_array = global.sea_launch_point_array^i }
+			add_to_array = { ROOT.eligible_launch_point_state_array = temp_sea_launch_point_array^i }
+			subtract_from_temp_variable = { temp_num_attack_sub = 1 }
+			subtract_from_temp_variable = { temp_num_ship = 1 }
+			ROOT = {
+				### for the start keep it simple and check only for one ship
+				if = {
+					limit = {
+						check_variable = { var_ship_VLS_launcher > var_ship_launcher }
+						check_variable = { var_ship_VLS_launcher > var_sub_launcher }
+						check_variable = { var_ship_VLS_launcher > var_SLBM_launcher }
+					}
+					set_temp_variable = { temp_max_launchers = var_ship_VLS_launcher }
+				}
+				else_if = {
+					limit = {
+						check_variable = { var_sub_launcher > var_ship_launcher }
+						check_variable = { var_sub_launcher > var_ship_VLS_launcher }
+						check_variable = { var_sub_launcher > var_SLBM_launcher }
+					}
+					set_temp_variable = { temp_max_launchers = var_sub_launcher }
+				}
+				else_if = {
+					limit = {
+						check_variable = { var_SLBM_launcher > var_ship_launcher }
+						check_variable = { var_SLBM_launcher > var_sub_launcher }
+						check_variable = { var_SLBM_launcher > var_ship_VLS_launcher }
+					}
+					set_temp_variable = { temp_max_launchers = var_SLBM_launcher }
+				}
+				else = {
+					set_temp_variable = { temp_max_launchers = var_ship_launcher }
+				}
+			}
+			add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers }
+
+			ROOT = { set_eligible_launch_points_defenses = yes }
+
+			add_to_array = { ROOT.eligible_launch_point_boost_defense_array = temp_boost_defense_value }
+			add_to_array = { ROOT.eligible_launch_point_midcourse_defense_array = temp_midcourse_defense_value }
+			#add_to_array = { ROOT.eligible_launch_point_terminal_defense_array = temp_terminal_defense_value }
+		}
+		if = {
+			limit = {
+				check_variable = { temp_num_attack_sub < 1 }
+				check_variable = { temp_num_ship < 1 }
+			}
+			set_temp_variable = { break_num_SLCM = 1 }
+		}
+	}
+	log = "[GetDateText]: [Root.GetName]: ROOT.eligible_launch_point_state_array^num [?ROOT.eligible_launch_point_state_array^num]"
+}
+
+
+#launch points need to be limited to number of ship in area???
+set_HSCM_eligible_launch_points = {
+	log = "[GetDateText]: [Root.GetName]: set_HSCM_eligible_launch_points"
+	ROOT = {
+		set_variable = { var_sub_number_LAM = 1 }
+		set_variable = { var_attack_sub_number_LAM = 1 }
+		set_variable = { var_ship_number_LAM = 1 }
+	}
+	if = {
+		limit = { NOT = { has_dlc = "Man the Guns" } }
+		# cruise missile subs
+		set_temp_variable = { temp_num_attack_sub = num_ships_with_type@attack_submarine }
+		add_to_temp_variable = { temp_num_attack_sub = num_ships_with_type@missile_submarine }
+		add_to_temp_variable = { temp_num_attack_sub = num_ships_with_type@diesel_attack_submarine }
+		# missile ships
+		set_temp_variable = { temp_num_ship = num_ships_with_type@nuclear_cruiser }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@cruiser }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@destroyer }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@frigate }
+	}
+	else_if = {
+		limit = { has_dlc = "Man the Guns" }
+		# cruise missile subs
+		set_temp_variable = { temp_num_attack_sub = num_ships_with_type@missile_submarine_mtg }
+		add_to_temp_variable = { temp_num_attack_sub = num_ships_with_type@attack_submarine_mtg }
+		# missile ships
+		set_temp_variable = { temp_num_ship = num_ships_with_type@battleship_mtg }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@cruiser_mtg }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@battle_cruiser_mtg }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@destroyer_mtg }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@stealth_destroyer_mtg }
+		add_to_temp_variable = { temp_num_ship = num_ships_with_type@frigate_mtg }
+	}
+	for_each_loop  = {
+		#array = global.sea_launch_point_array
+		array = temp_sea_launch_point_array
+		break = break_num_HSCM
+		if = {
+			limit = {
+				MD_missiles_AI_on_alert_sea_launch_HSCM_trigger = yes
+			}
+			#add_to_array = { ROOT.eligible_launch_point_state_array = global.sea_launch_point_array^i }
+			add_to_array = { ROOT.eligible_launch_point_state_array = temp_sea_launch_point_array^i }
+			subtract_from_temp_variable = { temp_num_attack_sub = 1 }
+			subtract_from_temp_variable = { temp_num_ship = 1 }
+			ROOT = {
+				### for the start keep it simple and check only for one ship
+				if = {
+					limit = {
+						check_variable = { var_ship_VLS_launcher > var_ship_launcher }
+						check_variable = { var_ship_VLS_launcher > var_sub_launcher }
+						check_variable = { var_ship_VLS_launcher > var_SLBM_launcher }
+					}
+					set_temp_variable = { temp_max_launchers = var_ship_VLS_launcher }
+				}
+				else_if = {
+					limit = {
+						check_variable = { var_sub_launcher > var_ship_launcher }
+						check_variable = { var_sub_launcher > var_ship_VLS_launcher }
+						check_variable = { var_sub_launcher > var_SLBM_launcher }
+					}
+					set_temp_variable = { temp_max_launchers = var_sub_launcher }
+				}
+				else_if = {
+					limit = {
+						check_variable = { var_SLBM_launcher > var_ship_launcher }
+						check_variable = { var_SLBM_launcher > var_sub_launcher }
+						check_variable = { var_SLBM_launcher > var_ship_VLS_launcher }
+					}
+					set_temp_variable = { temp_max_launchers = var_SLBM_launcher }
+				}
+				else = {
+					set_temp_variable = { temp_max_launchers = var_ship_launcher }
+				}
+			}
+			add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers }
+
+			ROOT = { set_eligible_launch_points_defenses = yes }
+
+			add_to_array = { ROOT.eligible_launch_point_boost_defense_array = temp_boost_defense_value }
+			add_to_array = { ROOT.eligible_launch_point_midcourse_defense_array = temp_midcourse_defense_value }
+			#add_to_array = { ROOT.eligible_launch_point_terminal_defense_array = temp_terminal_defense_value }
+		}
+		if = {
+			limit = {
+				check_variable = { temp_num_attack_sub < 1 }
+				check_variable = { temp_num_ship < 1 }
+			}
+			set_temp_variable = { break_num_HSCM = 1 }
+		}
+	}
+	every_controlled_state = {
+		limit = {
+			OR = {
+				TEL_base > 0
+				MD_missiles_AI_on_alert_air_launch_HSCM_trigger = yes
+				#MD_missiles_AI_on_alert_sea_launch_HSCM_trigger = yes
+			}
+		}
+		add_to_array = { ROOT.eligible_launch_point_state_array = THIS.id }
+		ROOT = {
+			set_temp_variable = { temp_max_launchers = PREV.non_damaged_building_level@TEL_base }
+			multiply_temp_variable = { temp_max_launchers = var_TEL_launcher }
+		}
+		add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers }
+
+		ROOT = { set_eligible_launch_points_defenses = yes }
+
+		add_to_array = { ROOT.eligible_launch_point_boost_defense_array = temp_boost_defense_value }
+		add_to_array = { ROOT.eligible_launch_point_midcourse_defense_array = temp_midcourse_defense_value }
+		#add_to_array = { ROOT.eligible_launch_point_terminal_defense_array = temp_terminal_defense_value }
+	}
+	log = "[GetDateText]: [Root.GetName]: ROOT.eligible_launch_point_state_array^num [?ROOT.eligible_launch_point_state_array^num]"
+}
+
+set_IRBM_eligible_launch_points = {
+	log = "[GetDateText]: [Root.GetName]: set_IRBM_eligible_launch_points"
+	every_controlled_state = {
+		limit = {
+			OR = {
+				TEL_base > 0
+				missile_silo > 0
+			}
+		}
+		add_to_array = { ROOT.eligible_launch_point_state_array = THIS.id }
+		ROOT = {
+			set_temp_variable = { temp_max_launchers_TEL = PREV.non_damaged_building_level@TEL_base }
+			multiply_temp_variable = { temp_max_launchers_TEL = var_TEL_launcher }
+
+			set_temp_variable = { temp_max_launchers_silo = PREV.non_damaged_building_level@missile_silo }
+			multiply_temp_variable = { temp_max_launchers_silo = var_silo_launcher }
+		}
+		if = {
+			limit = {
+				check_variable = { temp_max_launchers_TEL > temp_max_launchers_silo }
+			}
+			add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers_TEL }
+		}
+		else = {
+			add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers_silo }
+		}
+
+		ROOT = { set_eligible_launch_points_defenses = yes }
+
+		add_to_array = { ROOT.eligible_launch_point_boost_defense_array = temp_boost_defense_value }
+		add_to_array = { ROOT.eligible_launch_point_midcourse_defense_array = temp_midcourse_defense_value }
+		#add_to_array = { ROOT.eligible_launch_point_terminal_defense_array = temp_terminal_defense_value }
+	}
+	log = "[GetDateText]: [Root.GetName]: ROOT.eligible_launch_point_state_array^num [?ROOT.eligible_launch_point_state_array^num]"
+}
+
+set_ICBM_eligible_launch_points = {
+	log = "[GetDateText]: [Root.GetName]: set_ICBM_eligible_launch_points"
+	every_controlled_state = {
+		limit = {
+			missile_silo > 0
+		}
+		add_to_array = { ROOT.eligible_launch_point_state_array = THIS.id }
+		ROOT = {
+			set_temp_variable = { temp_max_launchers_silo = PREV.non_damaged_building_level@missile_silo }
+			multiply_temp_variable = { temp_max_launchers_silo = var_silo_launcher }
+		}
+		add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers_silo }
+
+		ROOT = { set_eligible_launch_points_defenses = yes }
+
+		add_to_array = { ROOT.eligible_launch_point_boost_defense_array = temp_boost_defense_value }
+		add_to_array = { ROOT.eligible_launch_point_midcourse_defense_array = temp_midcourse_defense_value }
+		#add_to_array = { ROOT.eligible_launch_point_terminal_defense_array = temp_terminal_defense_value }
+	}
+	log = "[GetDateText]: [Root.GetName]: ROOT.eligible_launch_point_state_array^num [?ROOT.eligible_launch_point_state_array^num]"
+}
+
+#launch points need to be limited to number of ship in area???
+set_SLBM_eligible_launch_points = {
+	log = "[GetDateText]: [Root.GetName]: set_SLBM_eligible_launch_points"
+	### for the start keep it simple and check only for one ship
+	ROOT = { set_variable = { var_sub_number_LAM = 1 } }
+	if = {
+		limit = { NOT = { has_dlc = "Man the Guns" } }
+		set_temp_variable = { temp_num_sub = num_ships_with_type@missile_submarine }
+	}
+	else_if = {
+		limit = { has_dlc = "Man the Guns" }
+		set_temp_variable = { temp_num_sub = num_ships_with_type@missile_submarine_mtg }
+	}
+	#set_temp_sea_launch_point_array = yes
+	for_each_loop  = {
+		#array = global.sea_launch_point_array
+		array = temp_sea_launch_point_array
+		break = break_num_sub
+			log = "[GetDateText]: [Root.GetName]: global.sea_launch_point_array^i.GetName [?global.sea_launch_point_array^i.GetName]"
+			log = "[GetDateText]: [Root.GetName]: global.sea_launch_point_array^i.GetID [?global.sea_launch_point_array^i.GetID]"
+			log = "[GetDateText]: [Root.GetName]: global.sea_launch_point_array^i [?global.sea_launch_point_array^i]"
+			if = {
+				limit = {
+					MD_missiles_AI_on_alert_SLBM_trigger = yes
+				}
+				log = "[GetDateText]: [Root.GetName]: MD_missiles_AI_on_alert_SLBM_trigger = yes"
+				#add_to_array = { ROOT.eligible_launch_point_state_array = global.sea_launch_point_array^i }
+				add_to_array = { ROOT.eligible_launch_point_state_array = temp_sea_launch_point_array^i }
+				subtract_from_temp_variable = { temp_num_sub = 1 }
+				ROOT = {
+					set_temp_variable = { temp_max_launchers_SLBM = var_SLBM_launcher }
+				}
+				add_to_array = { ROOT.eligible_launch_point_max_salvo_array = temp_max_launchers_SLBM }
+
+				ROOT = { set_eligible_launch_points_defenses = yes }
+
+				add_to_array = { ROOT.eligible_launch_point_boost_defense_array = temp_boost_defense_value }
+				add_to_array = { ROOT.eligible_launch_point_midcourse_defense_array = temp_midcourse_defense_value }
+				#add_to_array = { ROOT.eligible_launch_point_terminal_defense_array = temp_terminal_defense_value }
+			}
+			if = {
+				limit = {
+					check_variable = { temp_num_sub < 1 }
+				}
+				set_temp_variable = { break_num_sub = 1 }
+			}
+		#}
+	}
+	log = "[GetDateText]: [Root.GetName]: ROOT.eligible_launch_point_state_array^num [?ROOT.eligible_launch_point_state_array^num]"
+}
+
+set_eligible_launch_points_defenses = {
+	meta_effect = {
+		text = {
+			set_temp_variable = { temp_intercept_capacity_terminal_land = 0 }
+			set_temp_variable = { temp_intercept_capacity_terminal_sea = 0 }
+			set_temp_variable = { temp_intercept_capacity_midcourse_land = 0 }
+			set_temp_variable = { temp_intercept_capacity_midcourse_sea = 0 }
+			#set_temp_variable = { temp_intercept_capacity_terminal_land = 0 }
+			#set_temp_variable = { temp_intercept_capacity_terminal_sea = 0 }
+
+			### set intercept capacity
+			### boost phase defense ###
+			if = {
+				limit = {
+					has_country_flag = boost_phase_defense
+				}
+				every_controlled_state = {
+					limit = {
+						anti_air_building > 0
+						[launch_point_ID] = {
+							distance_to = {
+								value < [SAM_range]
+								target = PREV
+							}
+						}
+					}
+					set_temp_variable = { temp1 = 0 }
+					add_to_temp_variable = { temp1 = non_damaged_building_level@anti_air_building }
+					multiply_temp_variable = { temp1 = PREV.var_SAM_launcher_tech }
+
+					add_to_temp_variable = { temp_intercept_capacity_boost_land = temp1 }
+					log = "[GetDateText]: [ROOT.GetName]: ### boost phase defense ### in meta"
+					log = "[THIS.GetName]"
+					log = "var_SAM_range [?var_SAM_range]"
+					log = "ROOT.var_intercept_capacity_boost_land [?ROOT.var_intercept_capacity_boost_land]"
+				}
+			}
+			### midcourse phase defense ###
+			every_controlled_state = {
+				limit = {
+					missile_defense_station > 0
+					[launch_point_ID] = {
+						distance_to = {
+							value < [ABM_range]
+							target = PREV
+						}
+					}
+				}
+				set_temp_variable = { temp1 = 0 }
+				add_to_temp_variable = { temp1 = non_damaged_building_level@missile_defense_station }
+				multiply_temp_variable = { temp1 = PREV.var_ABM_launcher_tech }
+
+				add_to_temp_variable = { temp_intercept_capacity_midcourse_land = temp1 }
+				set_state_flag = defend_land_launch_point
+			}
+
+			### seabased_missile_defense
+			if = {
+				limit = {
+					[launch_point_ID] = {
+					has_state_flag = sea_launch_point
+					}
+			}
+			set_variable = { var_ship_number_AA = 9 }
+			while_loop_effect = {
+				break = temp3
+				limit = {
+					check_variable = { var_ship_number_AA > 1 }
+				}
+				if = {
+					limit = {
+						THIS = { sea_launch_point_defense_[launch_point_ID] = yes }
+					}
+					set_temp_variable = { temp1 = 0 }
+					set_temp_variable = { temp2 = 0 }
+					### boost ###
+					add_to_temp_variable = { temp1 = var_ship_number_AA } # num of ships
+					add_to_temp_variable = { temp1 = 1 }
+					multiply_temp_variable = { temp1 = var_ship_SAM_launcher_tech }
+					add_to_temp_variable = { temp_intercept_capacity_boost_sea = temp1 }
+					### midcourse ###
+					add_to_temp_variable = { temp2 = var_ship_number_AA } # num of ships
+					add_to_temp_variable = { temp2 = 1 }
+					multiply_temp_variable = { temp2 = var_ship_ABM_launcher_tech }
+					add_to_temp_variable = { temp_intercept_capacity_midcourse_sea = temp2 }
+					###
+					set_temp_variable = { temp3 = 1 }
+					log = "set_seabased_missile_defense_cap launch_point [launch_point_ID]"
+				}
+				else = {
+					add_to_temp_variable = { temp_intercept_capacity_boost_sea = 0 }
+					add_to_temp_variable = { temp_intercept_capacity_midcourse_sea = 0 }
+					log = "set_seabased_missile_defense_cap launch_point no ships"
+				}
+				subtract_from_variable = { var_ship_number_AA = 1 }
+				log = "set_seabased_missile_defense_cap launch_point var_ship_number_AA [?var_ship_number_AA]"
+			}
+			}
+			else = {
+			add_to_temp_variable = { temp_intercept_capacity_boost_sea = 0 }
+			add_to_temp_variable = { temp_intercept_capacity_midcourse_sea = 0 }
+			log = "set_seabased_missile_defense_cap launch_point no sea_launch_point"
+			}
+			### set intercept chance
+			### sea
+			set_temp_variable = { temp_intercept_chance_boost_sea = var_SAM_intercept_chance_sea }
+			set_temp_variable = { temp_intercept_chance_midcourse_sea = var_ABM_intercept_chance_sea }
+			#set_temp_variable = { temp_intercept_chance_terminal_sea = var_SAM_intercept_chance_sea }
+			### land
+			set_temp_variable = { temp_intercept_chance_boost_land = var_SAM_intercept_chance_land }
+			set_temp_variable = { temp_intercept_chance_midcourse_land = var_ABM_intercept_chance_land }
+			#set_temp_variable = { temp_intercept_chance_terminal_land = var_SAM_intercept_chance_land }
+
+			### set defense value
+			multiply_temp_variable = { temp_intercept_capacity_boost_sea = temp_intercept_chance_boost_sea }
+			multiply_temp_variable = { temp_intercept_capacity_boost_land = temp_intercept_chance_boost_land }
+			multiply_temp_variable = { temp_intercept_capacity_midcourse_sea = temp_intercept_chance_midcourse_sea }
+			multiply_temp_variable = { temp_intercept_capacity_midcourse_land = temp_intercept_chance_midcourse_land }
+			#multiply_temp_variable = { temp_intercept_capacity_terminal_sea = temp_intercept_chance_terminal_sea }
+			#multiply_temp_variable = { temp_intercept_capacity_terminal_land = temp_intercept_chance_terminal_land }
+
+			set_temp_variable = { temp_boost_defense_value = temp_intercept_capacity_boost_sea }
+			add_to_temp_variable = { temp_boost_defense_value = temp_intercept_capacity_boost_land }
+			set_temp_variable = { temp_midcourse_defense_value = temp_intercept_capacity_midcourse_sea }
+			add_to_temp_variable = { temp_midcourse_defense_value = temp_intercept_capacity_midcourse_land }
+			#set_temp_variable = { temp_terminal_defense_value = temp_intercept_capacity_terminal_sea }
+			#add_to_temp_variable = { temp_terminal_defense_value = temp_intercept_capacity_terminal_land }
+		}
+		launch_point_ID = "[?ROOT.missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
+		#target_point_ID = "[?ROOT.missile_target_point_array^i.GetID]" # "[?var_target_point_ID.GetID]"
+		SAM_range = "[?var_SAM_range]"
+		ABM_range = "[?var_ABM_range]"
+	}
+}
+
+clear_eligible_launch_points = {
+	clear_array = ROOT.eligible_launch_point_state_array
+	clear_array = ROOT.eligible_launch_point_max_salvo_array
+	clear_array = ROOT.eligible_launch_point_boost_defense_array
+	clear_array = ROOT.eligible_launch_point_midcourse_defense_array
+}
+
+set_prioritize_alert_targets_defenses = {
+	meta_effect = {
+		text = {
+			#set_temp_variable = { temp_intercept_capacity_terminal_land = 0 }
+			#set_temp_variable = { temp_intercept_capacity_terminal_sea = 0 }
+			set_temp_variable = { temp_intercept_capacity_midcourse_land = 0 }
+			set_temp_variable = { temp_intercept_capacity_midcourse_sea = 0 }
+			set_temp_variable = { temp_intercept_capacity_terminal_land = 0 }
+			set_temp_variable = { temp_intercept_capacity_terminal_sea = 0 }
+
+			### set intercept capacity
+			### midcourse phase defense ###
+
+			every_controlled_state = {
+				limit = {
+					missile_defense_station > 0
+					NOT = {
+						has_state_flag = defend_land_launch_point
+					}
+					[target_point_ID] = {
+						distance_to = {
+							value < [ABM_range]
+							target = PREV
+						}
+					}
+				}
+				set_temp_variable = { temp1 = 0 }
+				add_to_temp_variable = { temp1 = non_damaged_building_level@missile_defense_station }
+				multiply_temp_variable = { temp1 = PREV.var_ABM_launcher_tech }
+
+				add_to_temp_variable = { temp_intercept_capacity_midcourse_land = temp1 }
+			}
+			every_controlled_state = {
+				clr_state_flag = defend_land_launch_point
+			}
+			### terminal phase defense ###
+			if = {
+				limit = {
+					has_country_flag = terminal_phase_defense
+				}
+				every_controlled_state = {
+					limit = {
+						anti_air_building > 0
+						[target_point_ID] = {
+							distance_to = {
+								value < [SAM_range]
+								target = PREV
+							}
+						}
+					}
+					set_temp_variable = { temp1 = 0 }
+					add_to_temp_variable = { temp1 = non_damaged_building_level@anti_air_building }
+					multiply_temp_variable = { temp1 = PREV.var_SAM_launcher_tech }
+
+					add_to_temp_variable = { temp_intercept_capacity_terminal_land = temp1 }
+				}
+			}
+
+			### seabased_missile_defense
+			if = {
+				limit = {
+					[target_point_ID] = {
+						has_state_flag = sea_launch_point
+					}
+				}
+				set_variable = { var_ship_number_AA = 9 }
+				while_loop_effect = {
+					break = temp3
+					limit = {
+						check_variable = { var_ship_number_AA > 1 }
+					}
+					if = {
+						limit = {
+							THIS = { sea_launch_point_defense_[target_point_ID] = yes }
+						}
+						set_temp_variable = { temp1 = 0 }
+						set_temp_variable = { temp2 = 0 }
+						### midcourse ###
+						add_to_temp_variable = { temp2 = var_ship_number_AA } # num of ships
+						add_to_temp_variable = { temp2 = 1 }
+	 					multiply_temp_variable = { temp2 = var_ship_ABM_launcher_tech }
+						add_to_temp_variable = { temp_intercept_capacity_midcourse_sea = temp2 }
+						### terminal ###
+						add_to_temp_variable = { temp1 = var_ship_number_AA } # num of ships
+						add_to_temp_variable = { temp1 = 1 }
+						multiply_temp_variable = { temp1 = var_ship_SAM_launcher_tech }
+						add_to_temp_variable = { temp_intercept_capacity_terminal_sea = temp1 }
+						###
+						set_temp_variable = { temp3 = 1 }
+						log = "set_seabased_missile_defense_cap target_point"
+					}
+					else = {
+						add_to_temp_variable = { temp_intercept_capacity_midcourse_sea = 0 }
+						add_to_temp_variable = { temp_intercept_capacity_terminal_sea = 0 }
+						log = "set_seabased_missile_defense_cap target_point no ships"
+					}
+					subtract_from_variable = { var_ship_number_AA = 1 }
+					log = "set_seabased_missile_defense_cap target_point var_ship_number_AA [?var_ship_number_AA]"
+				}
+			}
+			else = {
+				add_to_temp_variable = { temp_intercept_capacity_midcourse_sea = 0 }
+				add_to_temp_variable = { temp_intercept_capacity_terminal_sea = 0 }
+				log = "set_seabased_missile_defense_cap target_point no sea_launch_point"
+			}
+			clear_variable = var_ship_number_AA
+
+			### set intercept chance
+			### sea
+			#set_temp_variable = { temp_intercept_chance_boost_sea = var_SAM_intercept_chance_sea }
+			set_temp_variable = { temp_intercept_chance_midcourse_sea = var_ABM_intercept_chance_sea }
+			set_temp_variable = { temp_intercept_chance_terminal_sea = var_SAM_intercept_chance_sea }
+			### land
+			#set_temp_variable = { temp_intercept_chance_boost_land = var_SAM_intercept_chance_land }
+			set_temp_variable = { temp_intercept_chance_midcourse_land = var_ABM_intercept_chance_land }
+			set_temp_variable = { temp_intercept_chance_terminal_land = var_SAM_intercept_chance_land }
+
+			### set defense value
+			#multiply_temp_variable = { temp_intercept_capacity_boost_sea = temp_intercept_chance_boost_sea }
+			#multiply_temp_variable = { temp_intercept_capacity_boost_land = temp_intercept_chance_boost_land }
+			multiply_temp_variable = { temp_intercept_capacity_midcourse_sea = temp_intercept_chance_midcourse_sea }
+			multiply_temp_variable = { temp_intercept_capacity_midcourse_land = temp_intercept_chance_midcourse_land }
+			multiply_temp_variable = { temp_intercept_capacity_terminal_sea = temp_intercept_chance_terminal_sea }
+			multiply_temp_variable = { temp_intercept_capacity_terminal_land = temp_intercept_chance_terminal_land }
+
+			#set_temp_variable = { temp_boost_defense_value = temp_intercept_capacity_boost_sea }
+			#add_to_temp_variable = { temp_boost_defense_value = temp_intercept_capacity_boost_land }
+			set_temp_variable = { temp_midcourse_defense_value = temp_intercept_capacity_midcourse_sea }
+			add_to_temp_variable = { temp_midcourse_defense_value = temp_intercept_capacity_midcourse_land }
+			set_temp_variable = { temp_terminal_defense_value = temp_intercept_capacity_terminal_sea }
+			add_to_temp_variable = { temp_terminal_defense_value = temp_intercept_capacity_terminal_land }
+		}
+		#launch_point_ID = "[?ROOT.missile_launch_point_array^i.GetID]" # "[?var_launch_point_ID.GetID]"
+		target_point_ID = "[?ROOT.missile_target_point_array^i.GetID]" # "[?var_target_point_ID.GetID]"
+		SAM_range = "[?var_SAM_range]"
+		ABM_range = "[?var_ABM_range]"
+	}
+}
+
+check_nuclear_warheads_for_alert_targets = {
+	log = "[GetDateText]: [Root.GetName]: check_nuclear_warheads_for_alert_targets"
+	set_temp_variable = { temp_total_nukes = 0 }
+	for_each_loop = {
+		array = ROOT.nuclear_warhead_inventory_array
+		add_to_temp_variable = { temp_total_nukes = ROOT.nuclear_warhead_inventory_array^i }
+	}
+	for_each_loop = {
+		array = ROOT.eligible_launch_point_max_salvo_array
+		add_to_temp_variable = { temp_max_salvo = ROOT.eligible_launch_point_max_salvo_array^i }
+	}
+	if = {
+		limit = {
+			check_variable = {
+				temp_total_nukes < temp_max_salvo
+			}
+		}
+		#resize_array = { ROOT.prioritize_alert_targets_array = temp_total_nukes }
+		# NO = 1 # YES = 2
+		set_variable = { ROOT.var_enough_nukes = 1 }
+	}
+	else = {
+		# NO = 1 # YES = 2
+		set_variable = { ROOT.var_enough_nukes = 2 }
+	}
+}
+
+set_GLCM_on_alert = {
+	log = "[GetDateText]: [Root.GetName]: set_GLCM_on_alert"
+	set_temp_variable = { i2 = -1 }
+	### moved to first place (so first loop v2 i2, second loop v1 i1, thrid loop v3 i3)
+	for_loop_effect = {
+		start = 51
+		end = 59
+		value = v2
+		add_to_temp_variable = { i2 = 1 }
+		if = {
+			limit = {
+				check_variable = { ROOT.missile_inventory_array^v2 > 0 }
+				has_GNSS_mil_system_for_CM_AI_on_alert = yes
+			}
+			set_GLCM_eligible_launch_points = yes
+			set_AI_target_and_launch_points = yes
+		}
+	}
+	clear_eligible_launch_points = yes
+}
+
+set_ALCM_on_alert = {
+	log = "[GetDateText]: [Root.GetName]: set_ALCM_on_alert"
+	set_temp_variable = { i2 = -1 }
+	### moved to first place (so first loop v2 i2, second loop v1 i1, thrid loop v3 i3)
+	for_loop_effect = {
+		start = 41
+		end = 49
+		value = v2
+		add_to_temp_variable = { i2 = 1 }
+		if = {
+			limit = {
+				check_variable = { ROOT.missile_inventory_array^v2 > 0 }
+				has_GNSS_mil_system_for_CM_AI_on_alert = yes
+			}
+			set_ALCM_eligible_launch_points = yes
+			set_AI_target_and_launch_points = yes
+		}
+	}
+	clear_eligible_launch_points = yes
+}
+
+set_SLCM_on_alert = {
+	log = "[GetDateText]: [Root.GetName]: set_SLCM_on_alert"
+	set_temp_variable = { i2 = -1 }
+	### moved to first place (so first loop v2 i2, second loop v1 i1, thrid loop v3 i3)
+	for_loop_effect = {
+		start = 61
+		end = 69
+		value = v2
+		add_to_temp_variable = { i2 = 1 }
+		if = {
+			limit = {
+				check_variable = { ROOT.missile_inventory_array^v2 > 0 }
+				has_GNSS_mil_system_for_CM_AI_on_alert = yes
+			}
+			log = "v2 [?v2] ROOT.missile_inventory_array^v2 [?ROOT.missile_inventory_array^v2]"
+			set_SLCM_eligible_launch_points = yes
+			set_AI_target_and_launch_points = yes
+		}
+	}
+	clear_eligible_launch_points = yes
+}
+
+set_HSCM_on_alert = {
+	log = "[GetDateText]: [Root.GetName]: set_HSCM_on_alert"
+	set_temp_variable = { i2 = -1 }
+	### moved to first place (so first loop v2 i2, second loop v1 i1, thrid loop v3 i3)
+	for_loop_effect = {
+		start = 71
+		end = 73
+		value = v2
+		add_to_temp_variable = { i2 = 1 }
+		if = {
+			limit = {
+				check_variable = { ROOT.missile_inventory_array^v2 > 0 }
+				has_GNSS_mil_system_for_CM_AI_on_alert = yes
+			}
+			set_HSCM_eligible_launch_points = yes
+			set_AI_target_and_launch_points = yes
+		}
+	}
+	clear_eligible_launch_points = yes
+}
+
+set_IRBM_on_alert = {
+	log = "[GetDateText]: [Root.GetName]: set_IRBM_on_alert"
+	### moved to first place (so first loop v2, second loop v1 i1, thrid loop v3 i3)
+	for_loop_effect = {
+		start = 21
+		end = 29
+		value = v2
+		if = {
+			limit = {
+				check_variable = { ROOT.missile_inventory_array^v2 > 0 }
+			}
+			set_IRBM_eligible_launch_points = yes
+			set_AI_target_and_launch_points = yes
+		}
+	}
+	clear_eligible_launch_points = yes
+}
+
+set_ICBM_on_alert = {
+	log = "[GetDateText]: [Root.GetName]: set_ICBM_on_alert"
+	### moved to first place (so first loop v2, second loop v1 i1, thrid loop v3 i3)
+	for_loop_effect = {
+		start = 11
+		end = 19
+		value = v2
+		if = {
+			limit = {
+				check_variable = { ROOT.missile_inventory_array^v2 > 0 }
+			}
+			set_ICBM_eligible_launch_points = yes
+			set_AI_target_and_launch_points = yes
+		}
+	}
+	clear_eligible_launch_points = yes
+}
+
+set_SLBM_on_alert = {
+	log = "[GetDateText]: [Root.GetName]: set_SLBM_on_alert"
+	### moved to first place (so first loop v2, second loop v1 i1, thrid loop v3 i3)
+	for_loop_effect = {
+		start = 31
+		end = 39
+		value = v2
+		if = {
+			limit = {
+				check_variable = { ROOT.missile_inventory_array^v2 > 0 }
+			}
+			set_SLBM_eligible_launch_points = yes
+			set_AI_target_and_launch_points = yes
+		}
+	}
+	clear_eligible_launch_points = yes
+}
+
+###############
+###############
+###############
+
+set_AI_target_and_launch_points = {
+	for_each_loop = {
+		array = ROOT.prioritize_alert_targets_array
+		value = v1
+		index = i1
+		if = {
+			limit = {
+				NOT = {
+					is_in_array = {
+						array = ROOT.missile_target_point_array
+						value = v1
+					}
+				}
+			}
+			for_each_loop = {
+				array = ROOT.eligible_launch_point_state_array
+				value = v3
+				index = i3
+				break = break_eligible_launch_points
+				log = "launch_point i3 [?i3] [?ROOT.eligible_launch_point_state_array^i3.GetName]"
+				log = "target_point i1 [?i1] [?ROOT.prioritize_alert_targets_array^i1.GetName]"
+				if = {
+					limit = {
+						meta_trigger = {
+							text = {
+								NOT = {
+									is_in_array = {
+										array = ROOT.missile_launch_point_array
+										value = v3
+									}
+								}
+								[launch_point_ID] = {
+									distance_to = {
+										value < [range]
+										target = [target_point_ID]
+									}
+								}
+							}
+							launch_point_ID = "[?ROOT.eligible_launch_point_state_array^i3.GetID]"
+							target_point_ID = "[?ROOT.prioritize_alert_targets_array^i1.GetID]"
+							range = "[?global.missile_range_array^v2]"
+							debug = yes
+						}
+					}
+
+					var:ROOT.eligible_launch_point_state_array^i3 = {
+						log = "[THIS.GetName]"
+						ROOT = {
+							### launch point
+							add_to_array = {
+								array = missile_launch_point_array
+								value = PREV.id
+							}
+							add_to_variable = {
+								var_missile_trajectory_ID = 1
+							}
+							### target point
+							add_to_array = {
+								array = missile_target_point_array
+								value = ROOT.prioritize_alert_targets_array^i1
+								index = var_missile_trajectory_ID
+							}
+							### target point controller
+							var:ROOT.prioritize_alert_targets_array^i1 = {
+								controller = {
+									add_to_array = {
+										array = ROOT.missile_target_controller_array
+										value = THIS.id
+										index = ROOT.var_missile_trajectory_ID
+									}
+								}
+							}
+						}
+					}
+					set_variable = { ROOT.var_AI_missile_type = v2 }
+					log = "ROOT.var_AI_missile_type [?ROOT.var_AI_missile_type] v2 [?v2]"
+					###
+					set_variable = { ROOT.var_AI_salvo = 0 }
+					set_variable = { ROOT.var_AI_nuclear_warhead = 0 }
+					set_variable = { ROOT.var_AI_decoy = 0 }
+					set_variable = { ROOT.var_AI_MIRV = 0 }
+					set_variable = { ROOT.var_AI_conventional_warhead = 0 } ### we have nukes here, but just to pervent errors
+					set_variable = { ROOT.var_AI_nuke = 2 } # 2 = nuke
+					set_variable = { ROOT.var_AI_duration = 1 }
+					set_variable = { ROOT.var_AI_strike_type = 4 } # 4 = strategic
+					set_alert_trajectory_arrays = yes
+
+					### check defenses
+					set_temp_variable = { temp_defense = 0 }
+					add_to_temp_variable = { temp_defense = ROOT.eligible_launch_point_boost_defense_array^i3 }
+					add_to_temp_variable = { temp_defense = ROOT.prioritize_alert_targets_boost_defense_array^i1 }
+					if = {
+						limit = {
+							OR = {
+								#ICBM
+								AND = {
+									check_variable = { ROOT.var_AI_missile_type > 10 }
+									check_variable = { ROOT.var_AI_missile_type < 20 }
+								}
+								#IRBM
+								AND = {
+									check_variable = { ROOT.var_AI_missile_type > 20 }
+									check_variable = { ROOT.var_AI_missile_type < 30 }
+								}
+								#SLBM
+								AND = {
+									check_variable = { ROOT.var_AI_missile_type > 30 }
+									check_variable = { ROOT.var_AI_missile_type < 40 }
+								}
+							}
+						}
+						add_to_temp_variable = { temp_defense = ROOT.eligible_launch_point_midcourse_defense_array^i3 }
+						add_to_temp_variable = { temp_defense = ROOT.prioritize_alert_targets_midcourse_defense_array^i1 }
+					}
+					add_to_temp_variable = { temp_defense = ROOT.eligible_launch_point_terminal_defense_array^i3 }
+					add_to_temp_variable = { temp_defense = ROOT.prioritize_alert_targets_terminal_defense_array^i1 }
+
+					#set salvo
+					if = {
+						limit = {
+							OR = {
+								check_variable = { ROOT.missile_inventory_array^v2 > ROOT.eligible_launch_point_max_salvo_array^i3 }
+								check_variable = { ROOT.missile_inventory_array^v2 = ROOT.eligible_launch_point_max_salvo_array^i3 }
+							}
+						}
+						set_variable = { ROOT.var_AI_salvo = ROOT.eligible_launch_point_max_salvo_array^i3 }
+						# limit to defenses
+						if = {
+							limit = {
+								OR = {
+									check_variable = { ROOT.var_AI_salvo > temp_defense }
+									check_variable = { ROOT.var_AI_salvo = temp_defense }
+								}
+							}
+							set_variable = { ROOT.var_AI_salvo = temp_defense }
+							add_to_variable = { ROOT.var_AI_salvo = 1 }
+							# check target value
+							if = {
+								limit = {
+									check_variable = { ROOT.prioritize_alert_targets_value_array^i1 > ROOT.var_AI_salvo }
+									OR = {
+										check_variable = { ROOT.missile_inventory_array^v2 > ROOT.prioritize_alert_targets_value_array^i1 }
+										check_variable = { ROOT.missile_inventory_array^v2 = ROOT.prioritize_alert_targets_value_array^i1 }
+									}
+								}
+								set_variable = { ROOT.var_AI_salvo = ROOT.prioritize_alert_targets_value_array^i1 }
+							}
+						}
+						else = {
+							# limit to target value
+							if = {
+								limit = {
+									check_variable = { ROOT.var_AI_salvo > ROOT.prioritize_alert_targets_value_array^i1 }
+								}
+								set_variable = { ROOT.var_AI_salvo = ROOT.prioritize_alert_targets_value_array^i1 }
+							}
+						}
+					}
+					else = {
+						set_variable = { ROOT.var_AI_salvo = ROOT.missile_inventory_array^v2 }
+						# limit to defenses
+						if = {
+							limit = {
+								OR = {
+									check_variable = { ROOT.var_AI_salvo > temp_defense }
+									check_variable = { ROOT.var_AI_salvo = temp_defense }
+								}
+							}
+							set_variable = { ROOT.var_AI_salvo = temp_defense }
+							add_to_variable = { ROOT.var_AI_salvo = 1 }
+							# check target value
+							if = {
+								limit = {
+									check_variable = { ROOT.prioritize_alert_targets_value_array^i1 > ROOT.var_AI_salvo }
+									OR = {
+										check_variable = { ROOT.missile_inventory_array^v2 > ROOT.prioritize_alert_targets_value_array^i1 }
+										check_variable = { ROOT.missile_inventory_array^v2 = ROOT.prioritize_alert_targets_value_array^i1 }
+									}
+								}
+								set_variable = { ROOT.var_AI_salvo = ROOT.prioritize_alert_targets_value_array^i1 }
+							}
+						}
+						else = {
+							# limit to target value
+							if = {
+								limit = {
+									check_variable = { ROOT.var_AI_salvo > ROOT.prioritize_alert_targets_value_array^i1 }
+								}
+								set_variable = { ROOT.var_AI_salvo = ROOT.prioritize_alert_targets_value_array^i1 }
+							}
+						}
+					}
+
+					### set warhead
+					for_loop_effect = {
+						start = 0
+						end = 13
+						break = break_warhead
+						value = v4
+						set_temp_variable = { temp_WH = 12 }
+						subtract_from_temp_variable = { temp_WH = v4 }
+						if = {
+							limit = {
+								OR = {
+									check_variable = { ROOT.nuclear_warhead_inventory_array^temp_WH > ROOT.var_AI_salvo }
+									check_variable = { ROOT.nuclear_warhead_inventory_array^temp_WH = ROOT.var_AI_salvo }
+								}
+							}
+							set_variable = { ROOT.var_AI_nuclear_warhead = temp_WH }
+							### MIRV / decoy ### not relevant GLCM
+							set_variable = { ROOT.var_AI_decoy = 0 }
+							set_variable = { ROOT.var_AI_MIRV = 1 }
+							set_temp_variable = { break_warhead = 1 }
+						}
+					}
+					if = {
+						limit = {
+							check_variable = { ROOT.var_AI_MIRV < 1 }
+						}
+						for_loop_effect = {
+							start = 0
+							end = 13
+							break = break2_warhead
+							value = v5
+							set_temp_variable = { temp2_WH = 12 }
+							subtract_from_temp_variable = { temp2_WH = v5 }
+							if = {
+								limit = {
+									OR = {
+										check_variable = { ROOT.nuclear_warhead_inventory_array^temp2_WH > 1 }
+										check_variable = { ROOT.nuclear_warhead_inventory_array^temp2_WH = 1 }
+									}
+								}
+								set_variable = { ROOT.var_AI_nuclear_warhead = temp2_WH }
+								### MIRV / decoy ### not relevant GLCM
+								set_variable = { ROOT.var_AI_decoy = 0 }
+								set_variable = { ROOT.var_AI_MIRV = 1 }
+								set_variable = { ROOT.var_AI_salvo = ROOT.nuclear_warhead_inventory_array^temp2_WH }
+								set_temp_variable = { break2_warhead = 1 }
+							}
+						}
+					}
+					set_alert_trajectory_arrays_vars = yes
+
+					set_temp_variable = { break_eligible_launch_points = 1 }
+				}
+				### else do nothing
+			}
+		}
+		### else do nothing
+	}
+}
+
+
+###############
+###############
+###############
+
+
+
+
+
+
+set_alert_trajectory_arrays_vars = {
+	set_variable = { ROOT.missile_nuclear_warhead_array^ROOT.var_missile_trajectory_ID = ROOT.var_AI_nuclear_warhead }
+	set_variable = { ROOT.missile_MIRV_array^ROOT.var_missile_trajectory_ID = ROOT.var_AI_MIRV }
+	set_variable = { ROOT.missile_decoy_array^ROOT.var_missile_trajectory_ID = ROOT.var_AI_decoy }
+	set_variable = { ROOT.missile_salvo_array^ROOT.var_missile_trajectory_ID = ROOT.var_AI_salvo }
+	set_variable = { ROOT.missile_duration_array^ROOT.var_missile_trajectory_ID = ROOT.var_AI_duration }
+	set_variable = { ROOT.missile_strike_type_array^ROOT.var_missile_trajectory_ID = ROOT.var_AI_strike_type }
+	set_variable = { ROOT.missile_alert_array^ROOT.var_missile_trajectory_ID = 2 }
+}
+
+
+
+set_alert_trajectory_arrays = {
+	log = "[GetDateText]: [Root.GetName]: set_alert_trajectory_arrays"
+	add_to_array = {
+		array = ROOT.missile_type_array
+		value = ROOT.var_AI_missile_type
+		index = ROOT.var_missile_trajectory_ID
+	}
+	log = "[GetDateText]: [Root.GetName]: ROOT.var_AI_missile_type [ROOT.var_AI_missile_type?]"
+	log = "[GetDateText]: [Root.GetName]: ROOT.var_missile_trajectory_ID [ROOT.var_missile_trajectory_ID?]"
+	add_to_array = {
+		array = ROOT.missile_conventional_warhead_array
+		value = ROOT.var_AI_conventional_warhead
+		index = ROOT.var_missile_trajectory_ID
+	}
+	add_to_array = {
+		array = ROOT.missile_nuclear_warhead_array
+		value = ROOT.var_AI_nuclear_warhead
+		index = ROOT.var_missile_trajectory_ID
+	}
+	add_to_array = {
+		array = ROOT.missile_nuke_array
+		value = ROOT.var_AI_nuke
+		index = ROOT.var_missile_trajectory_ID
+	}
+	add_to_array = {
+		array = ROOT.missile_MIRV_array
+		value = ROOT.var_AI_MIRV
+		index = ROOT.var_missile_trajectory_ID
+	}
+	add_to_array = {
+		array = ROOT.missile_decoy_array
+		value = ROOT.var_AI_decoy
+		index = ROOT.var_missile_trajectory_ID
+	}
+	add_to_array = {
+		array = ROOT.missile_salvo_array
+		value = ROOT.var_AI_salvo
+		index = ROOT.var_missile_trajectory_ID
+	}
+	add_to_array = {
+		array = ROOT.missile_duration_array
+		value = ROOT.var_AI_duration
+		index = ROOT.var_missile_trajectory_ID
+	}
+	add_to_array = {
+		array = ROOT.missile_strike_type_array
+		value = ROOT.var_AI_strike_type
+		index = ROOT.var_missile_trajectory_ID
+	}
+	add_to_array = {
+		#### 1 = fire; 2 = alert
+		array = ROOT.missile_alert_array
+		value = 2
+		index = ROOT.var_missile_trajectory_ID
+	}
+	log = "[GetDateText]: [Root.GetName]: missile_type_array^num [?missile_type_array^num]"
+	log = "[GetDateText]: [Root.GetName]: missile_conventional_warhead_array^num [?missile_conventional_warhead_array^num]"
+	log = "[GetDateText]: [Root.GetName]: missile_nuclear_warhead_array^num [?missile_nuclear_warhead_array^num]"
+	log = "[GetDateText]: [Root.GetName]: missile_nuke_array^num [?missile_nuke_array^num]"
+	log = "[GetDateText]: [Root.GetName]: missile_MIRV_array^num [?missile_MIRV_array^num]"
+	log = "[GetDateText]: [Root.GetName]: missile_decoy_array^num [?missile_decoy_array^num]"
+	log = "[GetDateText]: [Root.GetName]: missile_salvo_array^num [?missile_salvo_array^num]"
+	log = "[GetDateText]: [Root.GetName]: missile_duration_array^num [?missile_duration_array^num]"
+	log = "[GetDateText]: [Root.GetName]: missile_strike_type_array^num [?missile_strike_type_array^num]"
+	log = "[GetDateText]: [Root.GetName]: missile_alert_array^num [?missile_alert_array^num]"
+}
+
 
 ###########################
 ### for on daily effect ###
@@ -11558,10 +13246,10 @@ missile_on_weekly = {
 			limit = {
 				### war check or ROOT
 				var:ROOT.missile_target_controller_array^i = {
-					OR = {
-						original_tag = ROOT
+					#OR = {
+					#	original_tag = ROOT # no nuclear tests on alert / don't nuke occupied states
 						has_war_with = ROOT
-					}
+					#}
 				}
 				check_variable = { missile_duration_array^i > 0 }
 				#### 1 = fire; 2 = alert
@@ -11620,6 +13308,10 @@ missile_on_weekly = {
 
 			### moved upwards in the effect, reactivated
 			set_missile_model = yes ### add modify intercept chance
+
+			#does it work ???
+			#set_mod_intercept_chance = yes
+
 			#OLD VERSION
 			#set_warhead = yes
 			set_temp_variable = { temp_missile_type = missile_type_array^i }

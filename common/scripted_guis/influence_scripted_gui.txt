@@ -6,6 +6,8 @@ scripted_gui = {
 
 		window_name = "influence_option_buttons"
 
+		dirty = global.update_influence_ui
+
 		properties = {
 			opt_influence_action_button = { image = "[select_influence_action_button]" }
 			opt_aid_button = { image = "[select_aid_button]" }
@@ -18,33 +20,62 @@ scripted_gui = {
 		}
 
 		triggers = {
+			# Column 1:
 			opt_influence_action_button_click_enabled = {
 				ROOT = { has_political_power > 50 }
 				# Recently Sent Aid
-				ROOT = { PREV = { ROOT = { NOT = { has_country_flag = spread_influence@PREV } } } }
+				custom_trigger_tooltip = {
+					tooltip = influence_spread_influence_TT
+					ROOT = { NOT = { has_country_flag = spread_influence@PREV } }
+				}
 			}
 
 			opt_aid_button_click_enabled = {
 				#our country is a top 7 influencer
 				is_influencer = yes
 				#selected country have lower GDP/C than us
-				check_variable = { gdp_per_capita < ROOT.gdp_per_capita }
+				custom_trigger_tooltip = {
+					tooltip = gdp_greater_than_other
+					check_variable = { gdp_per_capita < ROOT.gdp_per_capita }
+				}
 				#Num of Civ Greater
-				check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories }
+				custom_trigger_tooltip = {
+					tooltip = more_civs_than_other
+					check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories }
+				}
 				#Recently Sent Aid
-				ROOT = { PREV = { ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } } } }
+				custom_trigger_tooltip = {
+					tooltip = influence_aid_button_TT
+					ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
+				}
+			}
+
+			opt_target_other_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = is_top_three_influencer_tt
+					OR = {
+						check_variable = { influence_array^0 = ROOT }
+						check_variable = { influence_array^1 = ROOT }
+						check_variable = { influence_array^2 = ROOT }
+					}
+				}
+				ROOT = { has_political_power > 99 }
 			}
 
 			opt_aid_military_button_click_enabled = {
 				#Our Country is a top 7 influencer
 				is_influencer = yes
 				#ROOT has_war
-				OR = {
-					has_civil_war = yes
-					has_war = yes
-					has_country_flag = ai_yes_unit_build
-					has_country_flag = AI_is_threatened
-					threat > 0.50
+				PREV = {
+					OR = {
+						has_civil_war = yes
+						has_war = yes
+						hidden_trigger = {
+							has_country_flag = ai_yes_unit_build
+						}
+						has_country_flag = AI_is_threatened
+						threat > 0.50
+					}
 				}
 				#ROOT has_idea = defense_industry
 				OR = {
@@ -52,180 +83,92 @@ scripted_gui = {
 					ROOT = { num_of_military_factories > 10 }
 				}
 				#ROOT Has NOT Sent military aid in the past month
-				ROOT = { PREV = { ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } } } }
+				custom_trigger_tooltip = {
+					tooltip = influence_military_aid_TT
+					ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } }
+				}
 			}
 
 			opt_manipulate_politics_button_click_enabled = {
-				OR = {
-					AND = {
-						check_variable = { influence_array^0 = ROOT }
-						check_variable = { influence_array_val^0 > 19.999 }
-					}
-					AND = {
-						check_variable = { influence_array^1 = ROOT }
-						check_variable = { influence_array_val^1 > 19.999 }
-					}
-					AND = {
-						check_variable = { influence_array^2 = ROOT }
-						check_variable = { influence_array_val^2 > 19.999 }
+				custom_trigger_tooltip = {
+					tooltip = top_three_twenty_percent_influencer_tt
+					OR = {
+						AND = {
+							check_variable = { influence_array^0 = ROOT }
+							check_variable = { influence_array_val^0 > 19.999 }
+						}
+						AND = {
+							check_variable = { influence_array^1 = ROOT }
+							check_variable = { influence_array_val^1 > 19.999 }
+						}
+						AND = {
+							check_variable = { influence_array^2 = ROOT }
+							check_variable = { influence_array_val^2 > 19.999 }
+						}
 					}
 				}
-			}
-
-			opt_make_puppet_button_click_enabled = {
-				check_variable = { influence_array^0 = ROOT }
-				check_variable = { influence_array_val^0 > 79.999 }
-				is_same_government = yes
-				NOT = { is_subject_of = ROOT }
-				is_subject = no
-				NOT = { ROOT = { PREV = { has_war = yes } } }
 			}
 
 			opt_coup_button_click_enabled = {
-
-				NOT = { is_same_government = yes }
-				NOT = { is_puppet_of = ROOT }
-				#NOT = { has_war = yes }
-				OR = {
-					AND = {
-						has_idea = negligible_corruption
-						ROOT = { has_political_power > 280 }
-					}
-					AND = {
-						has_idea = slight_corruption
-						ROOT = { has_political_power > 260 }
-					}
-					AND = {
-						has_idea = modest_corruption
-						ROOT = { has_political_power > 240 }
-					}
-					AND = {
-						has_idea = medium_corruption
-						ROOT = { has_political_power > 220 }
-					}
-					AND = {
-						has_idea = widespread_corruption
-						ROOT = { has_political_power > 200 }
-					}
-					AND = {
-						has_idea = systematic_corruption
-						ROOT = { has_political_power > 180 }
-					}
-					AND = {
-						has_idea = unrestrained_corruption
-						ROOT = { has_political_power > 160 }
-					}
-					AND = {
-						has_idea = rampant_corruption
-						ROOT = { has_political_power > 140 }
-					}
-					AND = {
-						has_idea = crippling_corruption
-						ROOT = { has_political_power > 120 }
-					}
-					AND = {
-						has_idea = paralyzing_corruption
-						ROOT = { has_political_power > 100 }
-					}
+				PREV = {
+					NOT = { is_same_government = yes }
+					NOT = { is_puppet_of = ROOT }
 				}
-
-				OR = {
-					AND = {
-						check_variable = { influence_array^0 = ROOT }
-						check_variable = { influence_array_val^0 > 29.999 }
-					}
-					AND = {
-						check_variable = { influence_array^1 = ROOT }
-						check_variable = { influence_array_val^1 > 29.999 }
+				ROOT = { has_political_power > 200 }
+				custom_trigger_tooltip = {
+					tooltip = top_three_thirty_percent_influencer_tt
+					OR = {
+						AND = {
+							check_variable = { influence_array^0 = ROOT }
+							check_variable = { influence_array_val^0 > 29.999 }
+						}
+						AND = {
+							check_variable = { influence_array^1 = ROOT }
+							check_variable = { influence_array_val^1 > 29.999 }
+						}
+						AND = {
+							check_variable = { influence_array^2 = ROOT }
+							check_variable = { influence_array_val^2 > 29.999 }
+						}
 					}
 				}
 			}
 
 			opt_economic_exploitation_button_click_enabled = {
-				AND = {
+				custom_trigger_tooltip = {
+					tooltip = is_top_influencer_fifty_percent
 					check_variable = { influence_array^0 = ROOT }
 					check_variable = { influence_array_val^0 > 49.999 }
-					NOT = { is_puppet_of = ROOT }
-					OR = {
-						AND = {
-							has_idea = negligible_corruption
-							ROOT = { has_political_power > 140 }
-						}
-						AND = {
-							has_idea = slight_corruption
-							ROOT = { has_political_power > 130 }
-						}
-						AND = {
-							has_idea = modest_corruption
-							ROOT = { has_political_power > 120 }
-						}
-						AND = {
-							has_idea = medium_corruption
-							ROOT = { has_political_power > 110 }
-						}
-						AND = {
-							has_idea = widespread_corruption
-							ROOT = { has_political_power > 100 }
-						}
-						AND = {
-							has_idea = systematic_corruption
-							ROOT = { has_political_power > 90 }
-						}
-						AND = {
-							has_idea = unrestrained_corruption
-							ROOT = { has_political_power > 80 }
-						}
-						AND = {
-							has_idea = rampant_corruption
-							ROOT = { has_political_power > 70 }
-						}
-						AND = {
-							has_idea = crippling_corruption
-							ROOT = { has_political_power > 60 }
-						}
-						AND = {
-							has_idea = paralyzing_corruption
-							ROOT = { has_political_power > 50 }
-						}
-					}
 				}
+				NOT = { is_puppet_of = ROOT }
+				ROOT = { has_political_power > 150 }
 				#Not twice
 				NOT = { has_country_flag = country_exploited }
 			}
-			opt_target_other_button_click_enabled = {
-				OR = {
+
+			opt_make_puppet_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = is_top_influencer_eighty_percent
 					check_variable = { influence_array^0 = ROOT }
-					check_variable = { influence_array^1 = ROOT }
-					check_variable = { influence_array^2 = ROOT }
+					check_variable = { influence_array_val^0 > 79.999 }
 				}
-				ROOT = { has_political_power > 99 }
+				PREV = {
+					is_same_government = yes
+					NOT = { is_subject_of = ROOT }
+					is_subject = no
+					has_war = no
+				}
 			}
 
-			#hide for yourself
-			opt_influence_action_button_visible = {
-				NOT = { tag = ROOT }
-			}
-			opt_aid_button_visible = {
-				NOT = { tag = ROOT }
-			}
-			opt_aid_military_button_visible = {
-				NOT = { tag = ROOT }
-			}
-			opt_target_other_button_visible = {
-				NOT = { tag = ROOT }
-			}
-			opt_manipulate_politics_button_visible = {
-				NOT = { tag = ROOT }
-			}
-			opt_coup_button_visible = {
-				NOT = { tag = ROOT }
-			}
-			opt_economic_exploitation_button_visible = {
-				NOT = { tag = ROOT }
-			}
-			opt_make_puppet_button_visible = {
-				NOT = { tag = ROOT }
-			}
+			# Hide Influence Buttons
+			opt_influence_action_button_visible = { NOT = { tag = ROOT } }
+			opt_aid_button_visible = { NOT = { tag = ROOT } }
+			opt_aid_military_button_visible = { NOT = { tag = ROOT } }
+			opt_target_other_button_visible = { NOT = { tag = ROOT } }
+			opt_manipulate_politics_button_visible = { NOT = { tag = ROOT } }
+			opt_coup_button_visible = { NOT = { tag = ROOT } }
+			opt_economic_exploitation_button_visible = { NOT = { tag = ROOT } }
+			opt_make_puppet_button_visible = { NOT = { tag = ROOT } }
 		}
 
 		effects = {
@@ -233,33 +176,30 @@ scripted_gui = {
 			opt_influence_action_button_click = {
 				ROOT = {
 					add_political_power = -50
-					PREV = {
-						if = { limit = { has_global_flag = GAME_RULE_gain_0_5_percent_spread }
-							set_temp_variable = { percent_change = 0.5 }
-						}
-						else_if = { limit = { has_global_flag = GAME_RULE_gain_3_percent_spread }
-							set_temp_variable = { percent_change = 3 }
-						}
-						else_if = { limit = { has_global_flag = GAME_RULE_gain_4_percent_spread }
-							set_temp_variable = { percent_change = 4 }
-						}
-						else = {
-							set_temp_variable = { percent_change = 2 }
-						}
-						set_temp_variable = { tag_index = ROOT.id }
-						set_temp_variable = { influence_target = THIS.id }
-						change_influence_percentage = yes
-						ROOT = {
-							if = { limit = { has_global_flag = GAME_RULE_spread_influence_14_days }
-								set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
-							}
-							else_if = { limit = { has_global_flag = GAME_RULE_spread_influence_60_days }
-								set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
-							}
-							else_if = { limit = { has_global_flag = GAME_RULE_spread_influence_30_days }
-								set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
-							}
-						}
+
+					if = { limit = { has_global_flag = GAME_RULE_gain_0_5_percent_spread }
+						set_temp_variable = { percent_change = 0.5 }
+					}
+					else_if = { limit = { has_global_flag = GAME_RULE_gain_3_percent_spread }
+						set_temp_variable = { percent_change = 3 }
+					}
+					else_if = { limit = { has_global_flag = GAME_RULE_gain_4_percent_spread }
+						set_temp_variable = { percent_change = 4 }
+					}
+					else = {
+						set_temp_variable = { percent_change = 2 }
+					}
+					set_temp_variable = { tag_index = THIS.id }
+					set_temp_variable = { influence_target = PREV.id }
+					change_influence_percentage = yes
+					if = { limit = { has_global_flag = GAME_RULE_spread_influence_14_days }
+						set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
+					}
+					else_if = { limit = { has_global_flag = GAME_RULE_spread_influence_60_days }
+						set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
+					}
+					else_if = { limit = { has_global_flag = GAME_RULE_spread_influence_30_days }
+						set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
 					}
 				}
 			}
@@ -303,377 +243,51 @@ scripted_gui = {
 			}
 
 			opt_manipulate_politics_button_click = {
+				if = { limit = { has_idea = negligible_corruption }
+					set_temp_variable = { var_pop = 0.01 }
+				}
+				else_if = { limit = { has_idea = slight_corruption }
+					set_temp_variable = { var_pop = 0.02 }
+				}
+				else_if = { limit = { has_idea = modest_corruption }
+					set_temp_variable = { var_pop = 0.03 }
+				}
+				else_if = { limit = { has_idea = medium_corruption }
+					set_temp_variable = { var_pop = 0.04 }
+				}
+				else_if = { limit = { has_idea = widespread_corruption }
+					set_temp_variable = { var_pop = 0.05 }
+				}
+				else_if = { limit = { has_idea = systematic_corruption }
+					set_temp_variable = { var_pop = 0.06 }
+				}
+				else_if = { limit = { has_idea = unrestrained_corruption }
+					set_temp_variable = { var_pop = 0.07 }
+				}
+				else_if = { limit = { has_idea = rampant_corruption }
+					set_temp_variable = { var_pop = 0.08 }
+				}
+				else_if = { limit = { has_idea = crippling_corruption }
+					set_temp_variable = { var_pop = 0.09 }
+				}
+				else = {
+					set_temp_variable = { var_pop = 0.10 }
+				}
 
-				#Add +5 to our outlook
-				if = {
-					limit = {
-						ROOT = { has_government = fascism }
-					}
-					if = {
-						limit = { has_idea = negligible_corruption }
-						add_popularity = {
-							ideology = fascism
-							popularity = 0.01
-						}
-					}
-					else_if = {
-						limit = { has_idea = slight_corruption }
-						add_popularity = {
-							ideology = fascism
-							popularity = 0.02
-						}
-					}
-					else_if = {
-						limit = { has_idea = modest_corruption }
-						add_popularity = {
-							ideology = fascism
-							popularity = 0.03
-						}
-					}
-					else_if = {
-						limit = { has_idea = medium_corruption }
-						add_popularity = {
-							ideology = fascism
-							popularity = 0.04
-						}
-					}
-					else_if = {
-						limit = { has_idea = widespread_corruption }
-						add_popularity = {
-							ideology = fascism
-							popularity = 0.05
-						}
-					}
-					else_if = {
-						limit = { has_idea = systematic_corruption }
-						add_popularity = {
-							ideology = fascism
-							popularity = 0.06
-						}
-					}
-					else_if = {
-						limit = { has_idea = unrestrained_corruption }
-						add_popularity = {
-							ideology = fascism
-							popularity = 0.07
-						}
-					}
-					else_if = {
-						limit = { has_idea = rampant_corruption }
-						add_popularity = {
-							ideology = fascism
-							popularity = 0.08
-						}
-					}
-					else_if = {
-						limit = { has_idea = crippling_corruption }
-						add_popularity = {
-							ideology = fascism
-							popularity = 0.09
-						}
-					}
-					else = {
-						add_popularity = {
-							ideology = fascism
-							popularity = 0.10
-						}
-					}
+				if = { limit = { ROOT = { has_government = fascism } }
+					add_popularity = { ideology = fascism popularity = var_pop }
 				}
-				else_if = {
-					limit = {
-						ROOT = { has_government = neutrality }
-					}
-					if = {
-						limit = { has_idea = negligible_corruption }
-						add_popularity = {
-							ideology = neutrality
-							popularity = 0.01
-						}
-					}
-					else_if = {
-						limit = { has_idea = slight_corruption }
-						add_popularity = {
-							ideology = neutrality
-							popularity = 0.02
-						}
-					}
-					else_if = {
-						limit = { has_idea = modest_corruption }
-						add_popularity = {
-							ideology = neutrality
-							popularity = 0.03
-						}
-					}
-					else_if = {
-						limit = { has_idea = medium_corruption }
-						add_popularity = {
-							ideology = neutrality
-							popularity = 0.04
-						}
-					}
-					else_if = {
-						limit = { has_idea = widespread_corruption }
-						add_popularity = {
-							ideology = neutrality
-							popularity = 0.05
-						}
-					}
-					else_if = {
-						limit = { has_idea = systematic_corruption }
-						add_popularity = {
-							ideology = neutrality
-							popularity = 0.06
-						}
-					}
-					else_if = {
-						limit = { has_idea = unrestrained_corruption }
-						add_popularity = {
-							ideology = fascism
-							popularity = 0.07
-						}
-					}
-					else_if = {
-						limit = { has_idea = rampant_corruption }
-						add_popularity = {
-							ideology = neutrality
-							popularity = 0.08
-						}
-					}
-					else_if = {
-						limit = { has_idea = crippling_corruption }
-						add_popularity = {
-							ideology = neutrality
-							popularity = 0.09
-						}
-					}
-					else = {
-						add_popularity = {
-							ideology = neutrality
-							popularity = 0.10
-						}
-					}
+				else_if = { limit = { ROOT = { has_government = neutrality } }
+					add_popularity = { ideology = neutrality popularity = var_pop }
 				}
-				else_if = {
-					limit = {
-						ROOT = { has_government = communism }
-					}
-					if = {
-						limit = { has_idea = negligible_corruption }
-						add_popularity = {
-							ideology = communism
-							popularity = 0.01
-						}
-					}
-					else_if = {
-						limit = { has_idea = slight_corruption }
-						add_popularity = {
-							ideology = communism
-							popularity = 0.02
-						}
-					}
-					else_if = {
-						limit = { has_idea = modest_corruption }
-						add_popularity = {
-							ideology = communism
-							popularity = 0.03
-						}
-					}
-					else_if = {
-						limit = { has_idea = medium_corruption }
-						add_popularity = {
-							ideology = communism
-							popularity = 0.04
-						}
-					}
-					else_if = {
-						limit = { has_idea = widespread_corruption }
-						add_popularity = {
-							ideology = communism
-							popularity = 0.05
-						}
-					}
-					else_if = {
-						limit = { has_idea = systematic_corruption }
-						add_popularity = {
-							ideology = communism
-							popularity = 0.06
-						}
-					}
-					else_if = {
-						limit = { has_idea = unrestrained_corruption }
-						add_popularity = {
-							ideology = communism
-							popularity = 0.07
-						}
-					}
-					else_if = {
-						limit = { has_idea = rampant_corruption }
-						add_popularity = {
-							ideology = communism
-							popularity = 0.08
-						}
-					}
-					else_if = {
-						limit = { has_idea = crippling_corruption }
-						add_popularity = {
-							ideology = communism
-							popularity = 0.09
-						}
-					}
-					else = {
-						add_popularity = {
-							ideology = communism
-							popularity = 0.10
-						}
-					}
+				else_if = { limit = { ROOT = { has_government = communism } }
+					add_popularity = { ideology = communism popularity = var_pop }
 				}
-				else_if = {
-					limit = {
-						ROOT = { has_government = nationalist }
-					}
-					if = {
-						limit = { has_idea = negligible_corruption }
-						add_popularity = {
-							ideology = nationalist
-							popularity = 0.01
-						}
-					}
-					else_if = {
-						limit = { has_idea = slight_corruption }
-						add_popularity = {
-							ideology = nationalist
-							popularity = 0.02
-						}
-					}
-					else_if = {
-						limit = { has_idea = modest_corruption }
-						add_popularity = {
-							ideology = nationalist
-							popularity = 0.03
-						}
-					}
-					else_if = {
-						limit = { has_idea = medium_corruption }
-						add_popularity = {
-							ideology = nationalist
-							popularity = 0.04
-						}
-					}
-					else_if = {
-						limit = { has_idea = widespread_corruption }
-						add_popularity = {
-							ideology = nationalist
-							popularity = 0.05
-						}
-					}
-					else_if = {
-						limit = { has_idea = systematic_corruption }
-						add_popularity = {
-							ideology = nationalist
-							popularity = 0.06
-						}
-					}
-					else_if = {
-						limit = { has_idea = unrestrained_corruption }
-						add_popularity = {
-							ideology = nationalist
-							popularity = 0.07
-						}
-					}
-					else_if = {
-						limit = { has_idea = rampant_corruption }
-						add_popularity = {
-							ideology = nationalist
-							popularity = 0.08
-						}
-					}
-					else_if = {
-						limit = { has_idea = crippling_corruption }
-						add_popularity = {
-							ideology = nationalist
-							popularity = 0.09
-						}
-					}
-					else = {
-						add_popularity = {
-							ideology = nationalist
-							popularity = 0.10
-						}
-					}
+				else_if = { limit = { ROOT = { has_government = nationalist } }
+					add_popularity = { ideology = nationalist popularity = var_pop }
 				}
-				else_if = {
-					limit = {
-						ROOT = { has_government = democratic }
-					}
-					if = {
-						limit = { has_idea = negligible_corruption }
-						add_popularity = {
-							ideology = democratic
-							popularity = 0.01
-						}
-					}
-					else_if = {
-						limit = { has_idea = slight_corruption }
-						add_popularity = {
-							ideology = democratic
-							popularity = 0.02
-						}
-					}
-					else_if = {
-						limit = { has_idea = modest_corruption }
-						add_popularity = {
-							ideology = democratic
-							popularity = 0.03
-						}
-					}
-					else_if = {
-						limit = { has_idea = medium_corruption }
-						add_popularity = {
-							ideology = democratic
-							popularity = 0.04
-						}
-					}
-					else_if = {
-						limit = { has_idea = widespread_corruption }
-						add_popularity = {
-							ideology = democratic
-							popularity = 0.05
-						}
-					}
-					else_if = {
-						limit = { has_idea = systematic_corruption }
-						add_popularity = {
-							ideology = democratic
-							popularity = 0.06
-						}
-					}
-					else_if = {
-						limit = { has_idea = unrestrained_corruption }
-						add_popularity = {
-							ideology = democratic
-							popularity = 0.07
-						}
-					}
-					else_if = {
-						limit = { has_idea = rampant_corruption }
-						add_popularity = {
-							ideology = democratic
-							popularity = 0.08
-						}
-					}
-					else_if = {
-						limit = { has_idea = crippling_corruption }
-						add_popularity = {
-							ideology = democratic
-							popularity = 0.09
-						}
-					}
-					else = {
-						add_popularity = {
-							ideology = democratic
-							popularity = 0.10
-						}
-					}
+				else_if = { limit = { ROOT = { has_government = democratic } }
+					add_popularity = { ideology = democratic popularity = var_pop }
 				}
 
 				# Add Popularity to Our Party
@@ -681,60 +295,21 @@ scripted_gui = {
 					for_each_loop = {
 						array = ruling_party
 						value = v
-						if = {
-							limit = { has_idea = negligible_corruption }
-							add_to_variable = { PREV.party_pop_array^v = 0.01 }
-						}
-						else_if = {
-							limit = { has_idea = slight_corruption }
-							add_to_variable = { PREV.party_pop_array^v = 0.02 }
-						}
-						else_if = {
-							limit = { has_idea = modest_corruption }
-							add_to_variable = { PREV.party_pop_array^v = 0.03 }
-						}
-						else_if = {
-							limit = { has_idea = medium_corruption }
-							add_to_variable = { PREV.party_pop_array^v = 0.04 }
-						}
-						else_if = {
-							limit = { has_idea = widespread_corruption }
-							add_to_variable = { PREV.party_pop_array^v = 0.05 }
-						}
-						else_if = {
-							limit = { has_idea = systematic_corruption }
-							add_to_variable = { PREV.party_pop_array^v = 0.06 }
-						}
-						else_if = {
-							limit = { has_idea = unrestrained_corruption }
-							add_to_variable = { PREV.party_pop_array^v = 0.07 }
-						}
-						else_if = {
-							limit = { has_idea = rampant_corruption }
-							add_to_variable = { PREV.party_pop_array^v = 0.08 }
-						}
-						else_if = {
-							limit = { has_idea = crippling_corruption }
-							add_to_variable = { PREV.party_pop_array^v = 0.09 }
-						}
-						else = { add_to_variable = { PREV.party_pop_array^v = 0.10 } }
+						add_to_variable = { PREV.party_pop_array^v = var_pop }
 					}
 				}
 
+				# Reduce by -10%
 				set_temp_variable = { percent_change = -10 }
 				set_temp_variable = { tag_index = ROOT.id }
 				set_temp_variable = { influence_target = PREV.id }
 				change_influence_percentage = yes
-				#reduce relations if different gov
-				if = {
-					limit = {
-						NOT = { is_same_government = yes }
-					}
-					add_opinion_modifier = {
-							target = ROOT
-							modifier = supported_opposition
-					}
+				# Reduce Relations if different gov
+				if = { limit = { NOT = { is_same_government = yes } }
+					add_opinion_modifier = { target = ROOT modifier = supported_opposition }
 				}
+				# Recalculate Party for Targeted Nation
+				recalculate_party = yes
 			}
 			opt_coup_button_click = {
 				ROOT = {
@@ -765,10 +340,7 @@ scripted_gui = {
 						autonomy_state = autonomy_associated_state
 						freedom_level = 0.875
 					}
-					add_named_threat = {
-						threat = 3
-						name = created_puppet_loc
-					}
+					add_named_threat = { threat = 3 name = created_puppet_loc }
 					PREV = { gui_effect_puppet_match_ruling_party_to_overlord = yes }
 				}
 				every_neighbor_country = {
@@ -817,47 +389,64 @@ scripted_gui = {
 		parent_window_token = selected_country_view_diplomacy
 
 		window_name = "domestic_influence_diplo"
+
+		dirty = global.update_influence_ui
 	}
 	position_1_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
 
 		window_name = "position_1_diplo"
+
+		dirty = global.update_influence_ui
 	}
 	position_2_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
 
 		window_name = "position_2_diplo"
+
+		dirty = global.update_influence_ui
 	}
 	position_3_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
 
 		window_name = "position_3_diplo"
+
+		dirty = global.update_influence_ui
 	}
+
 	position_4_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
 
 		window_name = "position_4_diplo"
+
+		dirty = global.update_influence_ui
 	}
 	position_5_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
 
 		window_name = "position_5_diplo"
+
+		dirty = global.update_influence_ui
 	}
 	position_6_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
 
 		window_name = "position_6_diplo"
+
+		dirty = global.update_influence_ui
 	}
 	position_7_diplo = {
 		context_type = selected_country_context
 		parent_window_token = selected_country_view_diplomacy
 
 		window_name = "position_7_diplo"
+
+		dirty = global.update_influence_ui
 	}
 }

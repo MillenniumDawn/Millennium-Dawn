@@ -56,10 +56,6 @@ ingame_update_setup = {
 	update_health_rate = yes
 	update_social_rate = yes
 	calculate_interest_rate = yes
-	lease_civilian_complex_cost = yes
-	lease_military_factories_cost = yes
-	projects_scripted_effect = yes
-	propaganda_cost_scripted_effect = yes
 	calculate_additional_expense_rate = yes
 
 	#Various
@@ -73,6 +69,14 @@ ingame_update_setup = {
 	}
 	if = { limit = { is_ai = no }
 		force_update_map_mode = { mapmode = absolute_gdp_map_mode }
+	}
+
+	# Dirty UI
+	if = { limit = { NOT = { has_variable = global.update_monie_ui } }
+		set_variable = { global.update_monie_ui = 0 }
+	}
+	else = {
+		add_to_variable = { global.update_monie_ui = 1 }
 	}
 }
 
@@ -359,7 +363,32 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_BRA_plano_real }
 		}
 	}
+		#Liechtenstein
+	if = {
+		limit = { original_tag = LIC }
+		if = {
+			limit = { has_idea = LIC_idea_international_investments }
+			set_variable = { additional_income_LIC_international_investments = 0.4 }
+			add_to_variable = { additional_income_rate = additional_income_LIC_international_investments }
+		}
+		if = {
+			limit = { has_idea = LIC_idea_USA_cooperation }
+			set_variable = { additional_income_LIC_USA_cooperation = 0.1 }
+			add_to_variable = { additional_income_rate = additional_income_LIC_USA_cooperation }
+		}
+		if = {
+			limit = { has_idea = LIC_idea_EU_cooperation }
+			set_variable = { additional_income_LIC_EU_cooperation = 0.1 }
+			add_to_variable = { additional_income_rate = additional_income_LIC_EU_cooperation }
+		}
+		if = {
+			limit = { has_idea = LIC_idea_huge_tax_haven }
+			set_variable = { additional_income_LIC_huge_tax_haven = 0.075 }
+			add_to_variable = { additional_income_rate = additional_income_LIC_huge_tax_haven }
+		}
+	}
 }
+
 
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
 calculate_interest_rate = {
@@ -379,14 +408,6 @@ calculate_interest_rate = {
 		if = {
 			limit = { has_country_flag = SOV_overcoming_the_1998_financial_crisis }
 			subtract_from_variable = { interest_rate_multiplier = 2 }
-		}
-	}
-	# Italy
-	if = {
-		limit = { original_tag = ITA }
-		if = {
-			limit = { has_idea = ITA_debt_market_trust }
-			add_to_variable = { interest_rate_multiplier = bond_markets_trust }
 		}
 	}
 
@@ -480,13 +501,8 @@ update_military_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_defence_spend
 
-	#recreate the array
-	for_loop_effect = {
-		start = 0
-		end = 10 # < 10
-
-		add_to_array = { array_defence_spend = 0 }
-	}
+	# Recreate the Array
+	resize_array = { array = array_defence_spend size = 10 value = 0 }
 
 	#A variable that stores the current military law the player has
 	if = { limit = { has_idea = defence_00 }
@@ -829,11 +845,11 @@ update_military_rate = {
 	## strategic_bomber
 	# equipment
 	set_temp_variable = { temp_strategic_airforce_equipment = num_equipment@strategic_bomber_equipment }
-	multiply_temp_variable = { temp_strategic_airforce_equipment = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_strategic_airforce_equipment value = var_nuclear_status_planes_cost_factor }
 	divide_temp_variable = { temp_strategic_airforce_equipment = 4 }
 	# deployed
 	set_temp_variable = { temp_strategic_airforce_deployed = num_deployed_planes_with_type@strategic_bomber_equipment }
-	multiply_temp_variable = { temp_strategic_airforce_deployed = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_strategic_airforce_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { strategic_airforce = temp_strategic_airforce_equipment }
 	add_to_temp_variable = { strategic_airforce = temp_strategic_airforce_deployed }
@@ -842,33 +858,33 @@ update_military_rate = {
 	## MR_Fighter_equipment
 	# equipment
 	set_temp_variable = { temp_MR_Fighter_equipment = num_equipment@MR_Fighter_equipment }
-	multiply_temp_variable = { temp_MR_Fighter_equipment = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_MR_Fighter_equipment value = var_nuclear_status_planes_cost_factor }
 	divide_temp_variable = { temp_MR_Fighter_equipment = 4 }
 	# deployed
 	set_temp_variable = { temp_MR_Fighter_deployed = num_deployed_planes_with_type@MR_Fighter_equipment }
-	multiply_temp_variable = { temp_MR_Fighter_deployed = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_MR_Fighter_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { temp_regular_airforce = temp_MR_Fighter_equipment }
 	add_to_temp_variable = { temp_regular_airforce = temp_MR_Fighter_deployed }
 	## CV_MR_Fighter_equipment
 	# equipment
 	set_temp_variable = { temp_CV_MR_Fighter_equipment = num_equipment@CV_MR_Fighter_equipment }
-	multiply_temp_variable = { temp_CV_MR_Fighter_equipment = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_CV_MR_Fighter_equipment value = var_nuclear_status_planes_cost_factor }
 	divide_temp_variable = { temp_CV_MR_Fighter_equipment = 4 }
 	# deployed
 	set_temp_variable = { temp_CV_MR_Fighter_deployed = num_deployed_planes_with_type@CV_MR_Fighter_equipment }
-	multiply_temp_variable = { temp_CV_MR_Fighter_deployed = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_CV_MR_Fighter_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_equipment }
 	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_deployed }
 	## Strike_fighter_equipment
 	# equipment
 	set_temp_variable = { temp_Strike_fighter_equipment = num_equipment@Strike_fighter_equipment }
-	multiply_temp_variable = { temp_Strike_fighter_equipment = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_Strike_fighter_equipment value = var_nuclear_status_planes_cost_factor }
 	divide_temp_variable = { temp_Strike_fighter_equipment = 4 }
 	# deployed
 	set_temp_variable = { temp_Strike_fighter_deployed = num_deployed_planes_with_type@Strike_fighter_equipment }
-	multiply_temp_variable = { temp_Strike_fighter_deployed = var_nuclear_status_planes_cost_factor }
+	multiply_temp_variable = { var = temp_Strike_fighter_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_equipment }
 	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_deployed }
@@ -996,13 +1012,8 @@ update_bureaucracy_rate = {
 	#Set the base cost of bureaucracy (billion $ per 10 000 000 people)
 	set_temp_variable = { bureaucracy_base_cost = 0.008 }
 
-	#recreate the array
-	for_loop_effect = {
-		start = 0
-		end = 5 # < 10
-
-		add_to_array = { array_bureaucracy_spend = 0 }
-	}
+	# Recreate the Array
+	resize_array = { array = array_bureaucracy_spend size = 5 value = 0 }
 
 	#Calculate the base cost of bureaucracy levels
 	for_each_loop = {
@@ -1072,13 +1083,8 @@ update_police_rate = {
 	#Set the base cost of policing (billion $ per 10 000 000 people)
 	set_temp_variable = { police_base_cost = 0.010 }
 
-	#recreate the array
-	for_loop_effect = {
-		start = 0
-		end = 5 # < 10
-
-		add_to_array = { array_security_spend = 0 }
-	}
+	# Recreate the Array
+	resize_array = { array = array_security_spend size = 5 value = 0 }
 
 	#Calculate the base cost of police levels
 	for_each_loop = {
@@ -1147,13 +1153,8 @@ update_education_rate = {
 	#Set the base cost of education (billion $ per 10 000 000 people)
 	set_temp_variable = { education_base_cost = 0.033 }
 
-	#recreate the array
-	for_loop_effect = {
-		start = 0
-		end = 5
-
-		add_to_array = { array_education_spend = 0 }
-	}
+	# Recreate the Array
+	resize_array = { array = array_education_spend size = 5 value = 0 }
 
 	#Calculate the base cost of bureaucracy levels
 	for_each_loop = {
@@ -1229,12 +1230,8 @@ update_health_rate = {
 	#Set the base cost of health (billion $ per 10 000 000 people)
 	set_temp_variable = { health_base_cost = 0.007 }
 
-	#Create the array for manipulation purposes
-	for_loop_effect = {
-		start = 0
-		end = 6
-		add_to_array = { array_health_spend = 0 }
-	}
+	# Recreate the Array
+	resize_array = { array = array_health_spend size = 6 value = 0 }
 
 	#Calculate the base cost of health levels
 	for_each_loop = {
@@ -1274,6 +1271,18 @@ update_health_rate = {
 		set_temp_variable = { health_index = 5 }
 	}
 
+	# Bird Note: Ported Education Spending Logic 07-14
+	set_temp_variable = { gdp_health_cost_modifier = gdp_per_capita }
+	multiply_temp_variable = { gdp_health_cost_modifier = -0.086 }
+	add_to_temp_variable = { gdp_health_cost_modifier = 2.182 }
+	clamp_temp_variable = { var = gdp_health_cost_modifier min = 1 }
+
+	for_each_loop = {
+		array = array_health_spend
+		index = i
+		multiply_variable = { array_health_spend^i = gdp_health_cost_modifier }
+	}
+
 	#Additional additive modifiers
 	set_temp_variable = { health_cost_multiplier = 1 }
 	add_to_temp_variable = { health_cost_multiplier = modifier@health_cost_multiplier_modifier }
@@ -1307,13 +1316,8 @@ update_social_rate = {
 	#Set the base cost of welfare (billion $ per 10 000 000 people)
 	set_temp_variable = { social_base_cost = 0.018 }
 
-	#recreate the array
-	for_loop_effect = {
-		start = 0
-		end = 6
-
-		add_to_array = { array_social_spend = 0 }
-	}
+	# Recreate the Array
+	resize_array = { array = array_social_spend size = 6 value = 0 }
 
 	#Calculate the base cost of social levels
 	for_each_loop = {
@@ -1353,6 +1357,18 @@ update_social_rate = {
 		set_temp_variable = { social_index = 5 }
 	}
 
+	# Bird Note: Ported Education Spending Logic 07-14
+	set_temp_variable = { gdp_social_cost_modifier = gdp_per_capita }
+	multiply_temp_variable = { gdp_social_cost_modifier = -0.086 }
+	add_to_temp_variable = { gdp_social_cost_modifier = 2.182 }
+	clamp_temp_variable = { var = gdp_social_cost_modifier min = 1 }
+
+	for_each_loop = {
+		array = array_social_spend
+		index = i
+		multiply_variable = { array_social_spend^i = gdp_social_cost_modifier }
+	}
+
 	#Additional additive modifiers
 	set_temp_variable = { social_cost_multiplier = 1 }
 	add_to_temp_variable = { social_cost_multiplier = modifier@social_cost_multiplier_modifier }
@@ -1387,36 +1403,73 @@ calculate_additional_expense_rate = {
 		limit = { has_decision = promote_outlook_decision_support_pro_western_parties }
 		set_variable = { promote_outlook_western_costs = gdp_total_display }
 		multiply_variable = { promote_outlook_western_costs = 0.001 }
+
+		# Modifier
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@western_outlook_campaign_cost_modifier }
+		multiply_variable = { promote_outlook_western_costs = propaganda_campaign_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = promote_outlook_western_costs }
 	}
 	if = {
 		limit = { has_decision = promote_outlook_decision_support_emerging_parties }
 		set_variable = { promote_outlook_emerging_costs = gdp_total_display }
 		multiply_variable = { promote_outlook_emerging_costs = 0.001 }
+
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@emerging_outlook_campaign_cost_modifier }
+		multiply_variable = { promote_outlook_emerging_costs = propaganda_campaign_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = promote_outlook_emerging_costs }
 	}
 	if = {
 		limit = { has_decision = promote_outlook_decision_support_the_non_aligned_parties }
 		set_variable = { promote_outlook_nonaligned_costs = gdp_total_display }
 		multiply_variable = { promote_outlook_nonaligned_costs = 0.001 }
+
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@nonaligned_outlook_campaign_cost_modifier }
+		multiply_variable = { promote_outlook_nonaligned_costs = propaganda_campaign_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = promote_outlook_nonaligned_costs }
 	}
 	if = {
 		limit = { has_decision = promote_outlook_decision_support_the_nationalists }
 		set_variable = { promote_outlook_nationalist_costs = gdp_total_display }
 		multiply_variable = { promote_outlook_nationalist_costs = 0.001 }
+
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@nationalist_outlook_campaign_cost_modifier }
+		multiply_variable = { promote_outlook_nationalist_costs = propaganda_campaign_cost_modifier }
+
+
 		add_to_variable = { additional_expenses_rate = promote_outlook_nationalist_costs }
 	}
 	if = {
 		limit = { has_decision = promote_outlook_decision_support_the_salafists }
 		set_variable = { promote_outlook_salafist_costs = gdp_total_display }
 		multiply_variable = { promote_outlook_salafist_costs = 0.001 }
+
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@salafist_outlook_campaign_cost_modifier }
+		multiply_variable = { promote_outlook_salafist_costs = propaganda_campaign_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = promote_outlook_salafist_costs }
 	}
 	if = {
 		limit = { has_decision = propaganda_campaign_decision }
 		set_variable = { propaganda_campaign_influence_decision_costs = gdp_total_display }
 		multiply_variable = { propaganda_campaign_influence_decision_costs = 0.001 }
+
+		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+		multiply_variable = { propaganda_campaign_influence_decision_costs = propaganda_campaign_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = propaganda_campaign_influence_decision_costs }
 	}
 	if = {
@@ -1459,13 +1512,15 @@ calculate_additional_expense_rate = {
 		set_variable = { project_decisions_cost = gdp_total_display }
 		multiply_variable = { project_decisions_cost = 0.001 }
 		divide_variable = { project_decisions_cost = 0.5 }
+
+		set_temp_variable = { project_cost_multiplier = 1 }
+		add_to_temp_variable = { projects_cost_modifier = modifier@projects_cost_modifier }
+		multiply_temp_variable = { project_decisions_cost = projects_cost_modifier }
+
 		add_to_variable = { additional_expenses_rate = project_decisions_cost }
 	}
 	# European Union Contribution Expenses
-	if = {
-		limit = {
-			has_idea = EU_member
-		}
+	if = { limit = { has_idea = EU_member }
 		add_to_variable = { additional_expenses_rate = EU_budget_contribution_weekly }
 	}
 	# Country Specific
@@ -1524,6 +1579,14 @@ calculate_additional_expense_rate = {
 			limit = { has_idea = BOT_renewable_focused_energy }
 			set_variable = { additional_expense_BOT_renewable_focused_energy = 0.05 }
 			add_to_variable = { additional_expenses_rate = additional_expense_BOT_renewable_focused_energy }
+		}
+	}
+	if = {
+		limit = {original_tag = LIC}
+		if = {
+			limit = { has_idea = LIC_idea_foreign_workers }
+			set_variable = { additional_expense_LIC_foreign_workers= 0.01 }
+			add_to_variable = { additional_expenses_rate = additional_expense_LIC_foreign_workers }
 		}
 	}
 }
@@ -1656,8 +1719,8 @@ update_display = {
 
 update_economic_cycle_cost = {
 	#Base on size of economy
-	set_variable = { econ_cycle_upg_cost = gdp_total }
-	divide_variable = { econ_cycle_upg_cost = 660 }
+	set_variable = { econ_cycle_upg_cost = gdp_total_display }
+	multiply_variable = { econ_cycle_upg_cost = 0.075 } # 10% of GDP Total in billions
 
 	#Additional additive modifiers
 	set_temp_variable = { econ_cycle_upg_cost_multiplier = 1 }
@@ -1668,100 +1731,16 @@ update_economic_cycle_cost = {
 
 #Monthly tick actions
 automated_debt_taker = {
-	if = {
-		limit = { check_variable = { treasury < 0 } }
-		if = {
-			limit = { num_of_civilian_factories < 5 }
-			add_to_variable = { treasury = 0.2 }
-			add_to_variable = { debt = 0.2 }
-			if = {
-				limit = { check_variable = { treasury < -0.5 } }
-				set_temp_variable = { treasury_temp = treasury } #-5
-				multiply_temp_variable = { treasury_temp = -1 }
-				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
-				add_to_variable = { treasury = treasury_temp }
-				add_to_variable = { debt = treasury_temp }
-			}
-		}
-		#intentionally cycles through all to add appropriate total amount
-		if = {
-			limit = { num_of_civilian_factories > 4 }
-			add_to_variable = { treasury = 1 }
-			add_to_variable = { debt = 1 }
-			if = {
-				limit = { check_variable = { treasury < -5 } }
-				set_temp_variable = { treasury_temp = treasury } #-5
-				multiply_temp_variable = { treasury_temp = -1 }
-				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
-				add_to_variable = { treasury = treasury_temp }
-				add_to_variable = { debt = treasury_temp }
-			}
-		}
-		if = {
-			limit = { num_of_civilian_factories > 20 }
-			add_to_variable = { treasury = 4 }
-			add_to_variable = { debt = 4 }
-			if = {
-				limit = { check_variable = { treasury < -8 } }
-				set_temp_variable = { treasury_temp = treasury } #-5
-				multiply_temp_variable = { treasury_temp = -1 }
-				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
-				add_to_variable = { treasury = treasury_temp }
-				add_to_variable = { debt = treasury_temp }
-			}
-		}
-		if = {
-			limit = { num_of_civilian_factories > 40 }
-			add_to_variable = { treasury = 10 }
-			add_to_variable = { debt = 10 }
-			if = {
-				limit = { check_variable = { treasury < -15 } }
-				set_temp_variable = { treasury_temp = treasury } #-5
-				multiply_temp_variable = { treasury_temp = -1 }
-				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
-				add_to_variable = { treasury = treasury_temp }
-				add_to_variable = { debt = treasury_temp }
-			}
-		}
-		if = {
-			limit = { num_of_civilian_factories > 60 }
-			add_to_variable = { treasury = 15 }
-			add_to_variable = { debt = 15 }
-			if = {
-				limit = { check_variable = { treasury < -25 } }
-				set_temp_variable = { treasury_temp = treasury } #-5
-				multiply_temp_variable = { treasury_temp = -1 }
-				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
-				add_to_variable = { treasury = treasury_temp }
-				add_to_variable = { debt = treasury_temp }
-			}
-		}
-		if = {
-			limit = { num_of_civilian_factories > 90 }
-			add_to_variable = { treasury = 25 }
-			add_to_variable = { debt = 25 }
-			if = {
-				limit = { check_variable = { treasury < -50 } }
-				set_temp_variable = { treasury_temp = treasury } #-5
-				multiply_temp_variable = { treasury_temp = -1 }
-				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
-				add_to_variable = { treasury = treasury_temp }
-				add_to_variable = { debt = treasury_temp }
-			}
-		}
-		if = {
-			limit = { num_of_civilian_factories > 180 }
-			add_to_variable = { treasury = 70 }
-			add_to_variable = { debt = 70 }
-			if = {
-				limit = { check_variable = { treasury < -90 } }
-				set_temp_variable = { treasury_temp = treasury } #-5
-				multiply_temp_variable = { treasury_temp = -1 }
-				multiply_temp_variable = { treasury_temp = 1.25 } #25% increase to bring positive values back
-				add_to_variable = { treasury = treasury_temp }
-				add_to_variable = { debt = treasury_temp }
-			}
-		}
+	if = { limit = { check_variable = { treasury < 0 } }
+		set_temp_variable = { treasury_temp = treasury }
+		multiply_temp_variable = { treasury_temp = -1 }
+		multiply_temp_variable = { treasury_temp = 1.25 }
+		set_temp_variable = { gdp_adder = gdp_total }
+		multiply_temp_variable = { gdp_adder = 0.001 } # 0.1% of GDP
+		add_to_temp_variable = { treasury_temp = gdp_adder }
+
+		add_to_variable = { treasury = treasury_temp }
+		add_to_variable = { debt = treasury_temp }
 		calculate_interest_rate = yes
 	}
 }

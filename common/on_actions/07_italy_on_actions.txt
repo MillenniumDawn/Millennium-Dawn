@@ -66,16 +66,40 @@ on_actions = {
 						max = 1
 					}
 					update_mafia_strength = yes
+					add_to_variable = { lega_weekly_drift_store = mafia_strength_lega_drift_var }
 			}
 		}
 	}
 	on_weekly_ITA = {
 		effect = {
 			prevent_parties_disappearing = yes
+			if = {
+				limit = { has_idea = ITA_radio_radicale }
+				set_temp_variable = { radicali_weekly_drift = party_popularity@neutrality }
+				multiply_temp_variable = { radicali_weekly_drift = 0.014 }
+				add_to_variable = { party_pop_array^16 = radicali_weekly_drift }
+			}
+			if = {
+				limit = { has_idea = ITA_underdeveloped_south_1 }
+				set_temp_variable = { lega_nord_weekly_drift = party_popularity@neutrality }
+				multiply_temp_variable = { lega_nord_weekly_drift = 0.084 }
+				add_to_variable = { party_pop_array^14 = lega_nord_weekly_drift }
+			}
+			if = {
+				limit = { has_idea = ITA_underdeveloped_south_2 }
+				set_temp_variable = { lega_nord_weekly_drift = party_popularity@neutrality }
+				multiply_temp_variable = { lega_nord_weekly_drift = 0.042 }
+				add_to_variable = { party_pop_array^14 = lega_nord_weekly_drift }
+			}
+			recalculate_party = yes
 			if = { #infiltrations_var increase state construction time
 				limit = { has_idea = ITA_mafia }
 					update_police_effectivness = yes
 					mafia_event_counters = yes
+					multiply_variable = { lega_weekly_drift_store = party_popularity@neutrality }
+					multiply_variable = { lega_weekly_drift_store = 0.2 }
+					add_to_variable = { party_pop_array^14 = lega_weekly_drift_store }
+					set_variable = { lega_weekly_drift_store = 0 }
 					83 = {
 						set_variable = { cosa_nostra_infiltrations_var = ROOT.cosa_nostra_strength }
 						multiply_variable = { cosa_nostra_infiltrations_var = 100 }
@@ -113,32 +137,8 @@ on_actions = {
 					}
 					if = {
 						limit = { check_variable = { mafia_defeat_counter > 99 }}
-							if = {
-								limit = {
-									NOT = {
-										has_completed_focus = ITA_intensify_police_operations
-									}
-								}
-								add_0_5_ruling_party_drift = yes
-							}
-							if = {
-								limit = {
-									NOT = {
-										has_completed_focus = ITA_relax_legal_framework
-									}
-								}
-								add_0_5_ruling_party_drift = yes
-							}
-							if = {
-								limit = {
-									NOT = {
-										has_completed_focus = ITA_war_with_mafia
-									}
-								}
-								add_0_5_ruling_party_drift = yes
-							}
 							country_event = italy_md.32
-							set_variable = { mafia_defeat_counter = 0 }
+							clear_variable = mafia_defeat_counter
 					}
 			}
 			if = {
@@ -160,6 +160,17 @@ on_actions = {
 				}
 				small_parties_leave_coalition = yes
 			}
+			if = {
+				limit = {
+					NOT = {
+						OR = {
+							has_completed_focus = ITA_dismantle_parliament
+							has_completed_focus = ITA_seize_power
+						}
+					}
+				}
+				ITA_calculate_civil_war_size = yes
+			}
 			weekly_stability_dynamic_modifier_update = yes
 		}
 	}
@@ -167,16 +178,16 @@ on_actions = {
 		effect = {
 			if = { #space stuff
 				limit = { has_completed_focus = ITA_increase_ASI_funding }
-					multiply_variable = { ITA_space_income_var = 0.99 } #decay of space revenue
-					add_to_variable = { ITA_peoples_support = -3 } #space enthusiasm decay over time
-					if = {
-						limit = { has_completed_focus = ITA_fight_scientific_illiteracy }
-							add_to_variable = { ITA_peoples_support = 2 }
-					}
+				multiply_variable = { ITA_space_income_var = 0.99 } #decay of space revenue
+				add_to_variable = { ITA_peoples_support = -3 } #space enthusiasm decay over time
+				if = {
+					limit = { has_completed_focus = ITA_fight_scientific_illiteracy }
+					add_to_variable = { ITA_peoples_support = 2 }
+				}
 			}
 			if = {
 				limit = { has_idea = ITA_mafia }
-					mafia_monthly_drift = yes
+				mafia_monthly_drift = yes
 			}
 			if = {
 				limit = {
@@ -185,7 +196,42 @@ on_actions = {
 						has_country_flag = elections_in_progress
 					}
 				}
-					government_crisis_check = yes
+				government_crisis_check = yes
+			}
+			if = {
+				limit = {
+					has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
+				}
+				add_to_variable = { reform_expectance_from_situation_counter = 1 }
+				if = {
+					limit = {
+						check_variable = { reform_expectance_from_situation_counter > 11 }
+					}
+					reform_expectance_from_situation = yes
+					set_variable = { reform_expectance_from_situation_counter = 0 }
+				}
+				reforme_expectance_government_change_update = yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = privatized_alitalia
+					}
+				}
+				random_list = {
+					50 = {
+						add_to_variable = { alitalia_crisis_counter = 1 }
+					}
+					50 = {
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { alitalia_crisis_counter > 11 }
+					}
+					set_variable = { alitalia_crisis_counter = 0 }
+					country_event = italy_md.54
+				}
 			}
 		}
 	}

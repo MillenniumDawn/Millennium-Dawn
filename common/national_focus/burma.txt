@@ -302,15 +302,9 @@
 		y = 4
 		cost = 15
 
-		prerequisite = {
-		focus = BRM_allow_labour_strikes_and_unions
-		}
-		prerequisite = {
-		focus = BRM_relax_media_censorship
-		}
-		prerequisite = {
-		focus = BRM_release_opposition_figures
-		}
+		prerequisite = { focus = BRM_allow_labour_strikes_and_unions }
+		prerequisite = { focus = BRM_relax_media_censorship }
+		prerequisite = { focus = BRM_release_opposition_figures }
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY}
 		available = {
 			if = {
@@ -333,24 +327,7 @@
 					random = 4
 				}
 			}
-
-			hidden_effect = {
-				drop_cosmetic_tag = yes
-			}
-
 			add_stability = 0.1
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 16 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-			}
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = yes
-			}
 			create_country_leader = {
 				name = "Aung San Suu Kyi"
 				picture = "Western_Aung_San_Suu_Kyi.dds"
@@ -363,25 +340,44 @@
 					rational
 				}
 			}
-			set_variable = {
-				Neutral_Libertarian_leader = 1
+
+			set_country_flag = no_leader_change
+			hidden_effect = {
+				drop_cosmetic_tag = yes
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 16 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+				add_to_variable = { Neutral_Libertarian_leader = 1 } # Skips Aung in the Lineup
 			}
-			if = {
-				limit = {
-					has_idea = Reduced_Western_Sanctions
+			meta_effect = {
+				text = {
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = yes
+						last_election = "[YEAR].[MONTH].1"
+						election_frequency = 60
+					}
 				}
+				YEAR = global.year
+				MONTH = global.month
+			}
+			clr_country_flag = no_leader_change
+
+			if = { limit = { has_idea = Reduced_Western_Sanctions }
 				remove_ideas = Reduced_Western_Sanctions
 			}
-			if = {
-				limit = {
-					has_idea = Western_Sanctions
-				}
+			else_if = { limit = { has_idea = Western_Sanctions }
 				swap_ideas = {
 					remove_idea = Western_Sanctions
 					add_idea = Reduced_Western_Sanctions
 				}
 			}
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = -5 }
 			change_the_military_opinion = yes
 		}
 

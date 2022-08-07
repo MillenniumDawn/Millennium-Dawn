@@ -43,6 +43,139 @@ on_actions = {
 			if = { limit = { has_idea = child_soldiers }
 				add_to_variable = { child_soldiers = child_soldiers_recruitment }
 			}
+
+			# Raise/Lower Conservative Society
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							has_idea = conservative_society
+							check_variable = { social_conservatism_society > 90 }
+						}
+						AND = {
+							has_idea = moderately_conservative_society
+							check_variable = { social_conservatism_society > 64 }
+						}
+						AND = {
+							has_idea = moderately_liberal_society
+							check_variable = { social_conservatism_society > 49 }
+						}
+						AND = {
+							has_idea = liberal_society
+							check_variable = { social_conservatism_society > 29 }
+						}
+						AND = {
+							has_idea = extremely_liberal_society
+							check_variable = { social_conservatism_society > 9 }
+						}
+						AND = {
+							has_idea = shia_conservative_society
+							check_variable = { social_conservatism_society > 90 }
+						}
+						AND = {
+							has_idea = shia_moderately_conservative_society
+							check_variable = { social_conservatism_society > 64 }
+						}
+						AND = {
+							has_idea = shia_moderately_liberal_society
+							check_variable = { social_conservatism_society > 49 }
+						}
+						AND = {
+							has_idea = shia_liberal_society
+							check_variable = { social_conservatism_society > 29 }
+						}
+						AND = {
+							has_idea = shia_extremely_liberal_society
+							check_variable = { social_conservatism_society > 9 }
+						}
+					}
+				}
+				country_event = { id = radicalization.5 days = 1 }
+			}
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							has_idea = extremely_conservative_society
+							check_variable = { social_conservatism_society < 91 }
+						}
+						AND = {
+							has_idea = conservative_society
+							check_variable = { social_conservatism_society < 65 }
+						}
+						AND = {
+							has_idea = moderately_conservative_society
+							check_variable = { social_conservatism_society < 50 }
+						}
+						AND = {
+							has_idea = moderately_liberal_society
+							check_variable = { social_conservatism_society < 30 }
+						}
+						AND = {
+							has_idea = liberal_society
+							check_variable = { social_conservatism_society < 10 }
+						}
+						AND = {
+							has_idea = shia_extremely_conservative_society
+							check_variable = { social_conservatism_society < 91 }
+						}
+						AND = {
+							has_idea = shia_conservative_society
+							check_variable = { social_conservatism_society < 65 }
+						}
+						AND = {
+							has_idea = shia_moderately_conservative_society
+							check_variable = { social_conservatism_society < 50 }
+						}
+						AND = {
+							has_idea = shia_moderately_liberal_society
+							check_variable = { social_conservatism_society < 30 }
+						}
+						AND = {
+							has_idea = shia_liberal_society
+							check_variable = { social_conservatism_society < 10 }
+						}
+					}
+				}
+				country_event = { id = radicalization.6 days = 2 }
+			}
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							NOT = { has_idea = foreign_military_advisors1 }
+							check_variable = { foreign_advisors > 0 }
+							check_variable = { foreign_advisors < 6 }
+						}
+						AND = {
+							NOT = { has_idea = foreign_military_advisors2 }
+							check_variable = { foreign_advisors > 5 }
+							check_variable = { foreign_advisors < 11 }
+						}
+						AND = {
+							NOT = { has_idea = foreign_military_advisors3 }
+							check_variable = { foreign_advisors > 10 }
+						}
+						AND = {
+							OR = {
+								has_idea = foreign_military_advisors1
+								has_idea = foreign_military_advisors2
+								has_idea = foreign_military_advisors3
+							}
+							check_variable = { foreign_advisors = 0 }
+						}
+					}
+				}
+				country_event = { id = advisors.1 days = 2 }
+			}
+			if = {
+				limit = {
+					is_in_array = { global.ct_states = THIS }
+					has_country_flag = jihadist_uprising_imminent
+				}
+				country_event = { id = terror.14 }
+			}
+
 		}
 	}
 
@@ -55,15 +188,237 @@ on_actions = {
 				country_event = { id = low_stability.1 }
 				set_power_ranking_ideas_for_every_country = yes
 
+				# Counter Terror System
+				if = {
+					limit = {
+						OR = {
+							check_variable = { global.month = 4 }
+							check_variable = { global.month = 8 }
+							check_variable = { global.month = 12 }
+						}
+					}
+					random_scope_in_array = {
+						array = global.ct_states
+						limit = {
+							is_in_array = { global.ct_states = THIS }
+							no_jihadist_government = yes
+							has_country_flag = threat_level_critical
+							NOT = {
+								OR = {
+									tag = ROJ
+									tag = KUR
+									if = {
+										limit = { country_exists = SYR }
+										tag = FSA
+									}
+									if = {
+										limit = { country_exists = YEM }
+										tag = HOU
+									}
+								}
+							}
+							if = {
+								limit = {
+									OR = {
+										tag = SYR
+										tag = FSA
+									}
+								}
+								NOT = { country_exists = NUS }
+							}
+							if = {
+								limit = {
+									OR = {
+										tag = HOU
+										tag = YEM
+									}
+								}
+								NOT = { country_exists = AQY }
+							}
+							if = {
+								limit = {
+									tag = IRQ
+								}
+								NOT = { country_exists = ISI }
+							}
+							if = {
+								limit = {
+									tag = SOM
+								}
+								NOT = { country_exists = SHB }
+							}
+							if = {
+								limit = {
+									tag = AFG
+								}
+								NOT = { country_exists = TAL }
+							}
+							NOT = { has_country_flag = jihadist_uprising_imminent }
+							NOT = {
+								any_home_area_neighbor_country = {
+									OR = {
+										has_country_flag = jihadist_uprising_imminent
+										has_civil_war = yes
+									}
+								}
+							}
+						}
+						country_event = { id = terror.12 random_days = 50 }
+					}
+					random_scope_in_array = {
+						array = global.ct_states
+						limit = {
+							no_jihadist_government = yes
+							has_country_flag = threat_level_critical
+							if = {
+								limit = {
+									OR = {
+										tag = SYR
+										tag = FSA
+										tag = ROJ
+									}
+								}
+								NOT = { country_exists = NUS }
+							}
+							if = {
+								limit = {
+									OR = {
+										tag = HOU
+										tag = YEM
+									}
+								}
+								NOT = { country_exists = AQY }
+							}
+							if = {
+								limit = {
+									OR = {
+										tag = KUR
+										tag = IRQ
+									}
+								}
+								NOT = { country_exists = ISI }
+							}
+							if = {
+								limit = {
+									tag = SOM
+								}
+								NOT = { country_exists = SHB }
+							}
+							if = {
+								limit = {
+									tag = AFG
+								}
+								NOT = { country_exists = TAL }
+							}
+							has_country_flag = jihadist_uprising_imminent
+							NOT = {
+								any_home_area_neighbor_country = {
+									OR = {
+										has_country_flag = jihadist_uprising_imminent
+										has_civil_war = yes
+									}
+								}
+							}
+						}
+						country_event = { id = terror.13 random_days = 50 }
+					}
+
+				}
+
 				#killrabbit stuff
 				every_country = {
 					recalculate_party = yes
+
+					# Middle East Counter Terror
+					if = {
+						limit = {
+							any_of_scopes = {
+								array = global.middle_east_ct_states
+								no_jihadist_government = yes
+								is_top5_influencer_PREV = yes
+							}
+							NOT = { has_country_flag = middle_east_influencer }
+						}
+						set_country_flag = middle_east_influencer
+					}
+					else_if = {
+						limit = {
+							NOT = {
+								any_of = {
+									array = global.middle_east_ct_states
+									no_jihadist_government = yes
+									is_top5_influencer = yes
+								}
+							}
+							has_country_flag = middle_east_influencer
+						}
+						clr_country_flag = middle_east_influencer
+					}
+
+					# Africa Counter Terror
+					if = {
+						limit = {
+							any_of_scopes = {
+								array = global.africa_ct_states
+								no_jihadist_government = yes
+								is_top5_influencer_PREV = yes
+							}
+							NOT = { has_country_flag = africa_influencer }
+						}
+						set_country_flag = africa_influencer
+					}
+					else_if = {
+						limit = {
+							NOT = {
+								any_of_scopes = {
+									array = global.africa_ct_states
+									no_jihadist_government = yes
+									is_top5_influencer_PREV = yes
+								}
+							}
+							has_country_flag = africa_influencer
+						}
+						clr_country_flag = africa_influencer
+					}
+
+					# Asia Counter Terror
+					if = {
+						limit = {
+							any_of_scopes = {
+								array = global.asia_ct_states
+								no_jihadist_government = yes
+								is_top5_influencer_PREV = yes
+							}
+							NOT = { has_country_flag = asia_influencer }
+						}
+						set_country_flag = asia_influencer
+					}
+					else_if = {
+						limit = {
+							NOT = {
+								any_of_scopes = {
+									array = global.asia_ct_states
+									no_jihadist_government = yes
+									is_top5_influencer_PREV = yes
+								}
+							}
+							has_country_flag = asia_influencer
+						}
+						clr_country_flag = asia_influencer
+					}
 				}
 
+				# Jan = 1, Feb = 2, March = 3, April = 4, May = 5,
+				if = { limit = { check_variable = { global.month < 12 } }
+					add_to_variable = { global.month = 1 }
+				}
+				else = {
+					set_variable = { global.month = 1 }
+				}
 				# On Monthly Flag:
 				# Set this to 27 days to time out so that way February isn't missed
 				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
-				log = "[GetDateText]: [Root.GetName]: MD Monthly On_Action Triggered"
+				log = "[GetDateText]: [Root.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
 			}
 		}
 	}
