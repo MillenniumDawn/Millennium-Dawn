@@ -22,6 +22,8 @@ from tokenize import Ignore
 
 ddslist = []
 ddsdict = {}
+pnglist = []
+tgalist = []
 inputpath = ""
 
 def main():
@@ -47,6 +49,7 @@ def main():
 		return
 
 	print(f"{bcolors.OK}There are {bcolors.RESET}" + str(len(ddslist)) + f"{bcolors.OK} .dds, .png or .tga files available in this directory{bcolors.RESET}\n")
+	print("There are " + str(len(pnglist)) + " that are PNG.\nThere are " + str(len(tgalist)) + " that are TGA.\n")
 
 	# Variable Init
 	x = "" # X == the file name. It is only used to parse out the path
@@ -194,6 +197,11 @@ def main():
 					elif ".tga" in w:
 						w = w.replace (".tga", "")
 
+					if "idea_" in w:
+						w = w.replace("idea_", "")
+					if "GFX_idea_" in w:
+						w = w.replace("GFX_idea_", "")
+
 					ffile.write('\tspriteType ={\n\t\tname = \"GFX_idea_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
 				ffile.write('}')
 			print("Generation of the MD_ideas.gfx...")
@@ -224,9 +232,11 @@ def getfiles(path):
 			elif '.png' in f:
 				ddsdict[f] = filename
 				ddslist.append(filename)
+				pnglist.append(filename)
 			elif '.tga' in f:
 				ddsdict[f] = filename
 				ddslist.append(filename)
+				tgalist.append(filename)
 		else:
 			getfiles(f)
 
