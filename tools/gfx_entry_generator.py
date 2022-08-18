@@ -1,6 +1,7 @@
 #!/user/bin/python
 import os
 import shutil
+from tokenize import Ignore
 
 #############################
 ###
@@ -21,13 +22,15 @@ import shutil
 
 ddslist = []
 ddsdict = {}
+pnglist = []
+tgalist = []
 inputpath = ""
 
 def main():
 	path = os.path.abspath(os.path.join(os.path.dirname('Millennium_Dawn'),'..'))
 	modfolder = 'Millennium_Dawn\\'
 
-	selection = int(input("Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\nPlease enter the number of the option you'd like: "))
+	selection = int(input("Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\nPlease enter the number of the option you'd like: "))
 
 	if selection == 1:
 		path = os.path.abspath(os.path.join(os.path.dirname('Millennium_Dawn'),'..\gfx\interface\goals'))
@@ -37,8 +40,16 @@ def main():
 		path = os.path.abspath(os.path.join(os.path.dirname('Millennium_Dawn'),'..\gfx\event_pictures'))
 		print(path)
 		getfiles(path)
+	elif selection == 3:
+		path = os.path.abspath(os.path.join(os.path.dirname('Millennium_Dawn'),'..\gfx\interface\ideas'))
+		print(path)
+		getfiles(path)
+	else:
+		print(f"{bcolors.FAIL}1, 2 or 3 dumbfuck {bcolors.RESET}" + str(selection) + f"{bcolors.FAIL} isn't a fucking option.\n\nRun the script again cunt.\n{bcolors.RESET}")
+		return
 
 	print(f"{bcolors.OK}There are {bcolors.RESET}" + str(len(ddslist)) + f"{bcolors.OK} .dds, .png or .tga files available in this directory{bcolors.RESET}\n")
+	print("There are " + str(len(pnglist)) + " that are PNG.\nThere are " + str(len(tgalist)) + " that are TGA.\n")
 
 	# Variable Init
 	x = "" # X == the file name. It is only used to parse out the path
@@ -160,7 +171,8 @@ def main():
 			print("Script has completed the movement of the files.\n")
 			print("\neventpictures.gfx has been generated for " + str(len(ddslist)) + " event pictures.\n\nThe files have been outputted in into the interface files.")
 			return
-		elif selection == 3: # DOES NOT WORK DO NOT RUN
+		elif selection == 3:
+			print("Generating MD_ideas.gfx...")
 			with open ("MD_ideas.gfx", "w") as ffile:
 				ffile.write('spriteTypes = {\n')
 				for fname in ddsdict:
@@ -169,7 +181,7 @@ def main():
 					y = x[1] # Should Retrieve the Path
 					z = y
 					y = y.replace("\\", "/")
-					z = z.replace("gfx\\event_pictures\\", "")
+					z = z.replace("gfx\\interface\\ideas\\", "")
 					z = z.split("\\")
 					for i in range(len(z)):
 						if ".dds" in z[i]:
@@ -185,10 +197,21 @@ def main():
 					elif ".tga" in w:
 						w = w.replace (".tga", "")
 
+					if "idea_" in w:
+						w = w.replace("idea_", "")
+					if "GFX_idea_" in w:
+						w = w.replace("GFX_idea_", "")
+
+					ffile.write('\tspriteType ={\n\t\tname = \"GFX_idea_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
 				ffile.write('}')
+			print("Generation of the MD_ideas.gfx...")
+			shutil.copy('MD_ideas.gfx','../interface')
+			os.remove('MD_ideas.gfx')
+			print("Script has completed the movement of the files.\n")
+			print("\nMD_ideas.gfx has been generated for " + str(len(ddslist)) + " idea pictures.\n\nThe files have been outputted into the interface files.")
 			return
 		else:
-			print(f"{bcolors.FAIL}1 or 2 dumbfuck {bcolors.RESET}" + str(selection) + f"{bcolors.FAIL} isn't a fucking option.\n{bcolors.RESET}")
+			print(f"{bcolors.FAIL}1, 2 or 3 dumbfuck {bcolors.RESET}" + str(selection) + f"{bcolors.FAIL} isn't a fucking option.\n{bcolors.RESET}")
 			return
 
 class bcolors:
@@ -209,9 +232,11 @@ def getfiles(path):
 			elif '.png' in f:
 				ddsdict[f] = filename
 				ddslist.append(filename)
+				pnglist.append(filename)
 			elif '.tga' in f:
 				ddsdict[f] = filename
 				ddslist.append(filename)
+				tgalist.append(filename)
 		else:
 			getfiles(f)
 
