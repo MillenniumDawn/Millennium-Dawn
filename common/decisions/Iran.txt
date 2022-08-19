@@ -3571,3 +3571,123 @@ PER_prepare_shia_rebellions = {
 		}
 	}
 }
+#The secret secret
+form_HRM_category = {
+	### Integrate ###
+	#HRM
+	HRM_formable = {
+		icon = GFX_decision_generic_form_nation
+		cost = 250
+		days_remove = 365
+		ai_will_do = { factor = 10 }
+		allowed = { 
+		}
+		available = {
+				OR = {
+					AND = {
+						HRM = {
+						owns_state = 179
+						owns_state = 978
+						has_war = no
+						}
+					}
+					AND = {
+						PER = {
+							is_subject_of = ROOT
+							has_war = no
+							owns_state = 978
+						}
+					}
+					AND = {
+						UAE = {
+							is_subject_of = ROOT
+							has_war = no
+							owns_state = 179
+						}
+					}
+				}
+			}
+		visible = {
+			country_exists = HRM
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HRM_formable"
+
+			if = {
+				limit = {
+					HRM = { owns_state = 179 }
+				}
+				add_state_core = 179
+			}
+			else_if = {
+				limit = {
+					UAE = { owns_state = 179 is_subject_of = ROOT}
+				}
+				add_state_core = 179
+				annex_country = {
+					target = UAE
+					transfer_troops = yes
+				}
+			}
+			if = {
+				limit = { 
+					HRM { owns_state = 978 }
+				}
+				add_state_core = 978
+			}
+			else_if = {
+				limit = {
+					PER = { owns_state = 978 is_subject_of = ROOT}
+				}
+				add_state_core = 978
+				978 = {
+					set_state_owner_to = HRM
+					set_state_controller_to = HRM
+				}
+			}
+
+			if = {
+				limit = { NOT = {has_country_flag = is_HRM} }
+				set_country_flag = is_HRM
+			}
+			set_country_flag = integrated_UAE
+			set_cosmetic_tag = big_hrm
+		}
+	}
+	#POR
+	IBR_integrate_POR = {
+		icon = GFX_decision_generic_form_nation
+		cost = 250
+		days_remove = 365
+		ai_will_do = { factor = 10 }
+		allowed = { NOT = { TAG = POR } }
+		visible = {
+			country_exists = HRM
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IBR_integrate_POR"
+			add_state_core = 96
+			add_state_core = 97
+			if = {
+				limit = { owns_state = 98 }
+				add_state_core = 98
+			}
+			if = {
+				limit = { owns_state = 99 }
+				add_state_core = 99
+			}
+			annex_country = {
+				target = POR
+				transfer_troops = yes
+			}
+			if = {
+				limit = { NOT = {has_country_flag = is_IBR} }
+				set_country_flag = is_IBR
+				set_global_flag = IBR_exists
+				clr_country_flag = dynamic_flag
+				clr_country_flag = dynamic_rebel_flag
+			}
+			set_country_flag = integrated_POR
+		}
+	}
+}
