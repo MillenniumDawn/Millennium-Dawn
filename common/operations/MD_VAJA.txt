@@ -1,0 +1,197 @@
+sabotage_aramco = {
+	icon = GFX_sabotage_aramco
+	map_icon = GFX_sabotage_aramco_map
+	name = sabotage_aramco
+	desc = sabotage_aramco_desc
+	priority = 1
+
+	days = 60
+	network_strength = 80
+	operatives = 2
+
+	visible = {
+		num_of_operatives > 0
+		network_national_coverage = {
+			target = FROM
+			value > 0
+		}
+		FROM = {
+			original_tag = SAU
+			NOT = { has_country_flag = aramco_sabotage_flag }
+		}
+		has_completed_focus = PER_aramco_underfire
+	}
+
+	equipment = { 
+		civilian_factories = {
+			amount = 2
+			days = 10
+		}
+	}
+	required_tokens = { token_civilian }
+	awarded_tokens = {
+		token_civilian
+	}
+
+	risk_chance = 0.20
+	experience = 2
+	outcome_extra_chance = 0.25
+	risk_modifiers = { operation_risk }
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+	outcome_execute = {
+		SAU = {
+			add_timed_idea = {
+				idea = saudi_aramco_sabotage
+				days = 100
+			}
+			country_event = {
+				id = PER_contact_with_countries.40
+				days = 0
+			}
+			set_country_flag = aramco_sabotage_flag
+		}
+	}
+
+	phases = { #infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = { base = 25 }
+		infiltration_paradrop = {
+			base = 25
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						transport_plane_equipment < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		infiltration_diplomatic = {
+			base = 25
+			modifier = {
+				factor = 20
+				ROOT = { has_war = no }
+				FROM = {
+					has_war = no
+				}
+			}
+		}
+	}
+	phases = {
+		targeted_sabotage_burn_storage = { base = 33 }
+	}
+	phases = { #exfiltration
+		exfiltration_air_pickup = {
+			base = 15
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						transport_plane_equipment < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
+		exfiltration_submarine_pickup = { base = 25 }
+	}
+
+}
+blow_nahariya_weapon_storage = {
+	icon = GFX_blow_nahariya_weapon_storage
+	map_icon = GFX_blow_nahariya_weapon_storage_map
+	name = blow_nahariya_weapon_storage
+	desc = blow_nahariya_weapon_storage_desc
+	priority = 1
+
+	days = 60
+	network_strength = 80
+	operatives = 2
+
+	visible = {
+		num_of_operatives > 0
+		network_national_coverage = {
+			target = FROM
+			value > 0
+		}
+		has_completed_focus = PER_blow_nahariya_weapone_storage
+		FROM = {
+			original_tag = ISR
+			NOT = { has_country_flag = nahariya_sabotage_flag }
+		}
+	}
+
+	equipment = { 
+		civilian_factories = {
+			amount = 2
+			days = 10
+		}
+	}
+	required_tokens = { token_civilian }
+	awarded_tokens = {
+		token_civilian
+	}
+
+	risk_chance = 0.20
+	experience = 2
+	outcome_extra_chance = 0.25
+	risk_modifiers = { operation_risk }
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+	outcome_execute = {
+		ISR = {
+			add_timed_idea = {
+				idea = nahariya_weapon_storage_blown
+				days = 100
+			}
+			country_event = {
+				id = PER_contact_with_countries.42
+				days = 0
+			}
+			set_country_flag = nahariya_sabotage_flag
+		}
+		if = {
+			limit = { 205 = { is_controlled_by = ISR } }
+			205 = {
+				damage_building = {
+					type = arms_factory
+					damage = 3
+				}
+			}
+		}
+		if = {
+			limit = { 587 = { is_controlled_by = ISR } }
+			587 = {
+				damage_building = {
+					type = arms_factory
+					damage = 5
+				}
+			}
+		}
+
+	}
+
+	phases = { #infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = { base = 25 }
+		infiltration_paradrop = {
+			base = 25
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						transport_plane_equipment < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+	}
+	phases = {
+		targeted_sabotage_burn_storage = { base = 33 }
+	}
+	phases = { #exfiltration
+		exfiltration_go_to_ground = { base = 30 }
+	}
+}
