@@ -7884,9 +7884,65 @@ pol_distance_matrix_23 = {
 add_coalition_members_effect = {
 	custom_effect_tooltip = add_coalition_members_effect_TT
 	add_to_array = { gov_coalition_array = add_col_one }
+	update_government_coalition_strength = yes
+	set_coalition_drift = yes
 }
 
+# Remove Coalition Member
+# set_temp_variable = { add_col_one = 0-23 }
 remove_coalition_members_effect = {
 	custom_effect_tooltip = remove_coalition_members_effect_TT
 	remove_from_array = { gov_coalition_array = remove_col_one }
+	update_government_coalition_strength = yes
+	set_coalition_drift = yes
+}
+
+# Change Party Command
+# set_temp_variable = { rul_party_temp = 0-23 }
+# set_temp_variable = { col_one = 0 - 23 }  -- Optional
+# set_temp_variable = { col_two = 0 - 23 }  -- Optional
+# set_temp_variable = { col_three = 0 - 23 }  -- Optional
+# set_temp_variable = { change_leader_temp = 0-1 } -- Optional
+change_ruling_party_effect = {
+	# Do Not Retire Section
+	if = { limit = { check_variable = { change_leader_temp = 1 } }
+		set_country_flag = do_not_retire
+	}
+
+	# Clears the Parameters
+	clear_array = ruling_party
+	clear_array = gov_coalition_array
+
+	# Rul Party Addition
+	set_temp_variable = { add_col_one = rul_party_temp }
+	custom_effect_tooltip = ruling_party_changed_tt
+	add_to_array = { ruling_party = add_col_one }
+
+	# Coalition Array Parameters
+	if = { limit = { has_variable = col_one }
+		set_temp_variable = { add_col_one = col_one }
+		custom_effect_tooltip = add_coalition_members_effect_TT
+		add_to_array = { gov_coalition_array = add_col_one }
+	}
+	if = { limit = { has_variable = col_two }
+		set_temp_variable = { add_col_one = col_two }
+		custom_effect_tooltip = add_coalition_members_effect_TT
+		add_to_array = { gov_coalition_array = add_col_one }
+	}
+	if = { limit = { has_variable = col_three }
+		set_temp_variable = { add_col_one = col_three }
+		custom_effect_tooltip = add_coalition_members_effect_TT
+		add_to_array = { gov_coalition_array = add_col_one }
+	}
+
+	hidden_effect = {
+		update_government_coalition_strength = yes
+		update_party_name = yes
+		set_coalition_drift = yes
+		set_ruling_leader = yes
+		set_leader = yes
+	}
+	if = { limit = { check_variable = { change_leader_temp = 1 } }
+		clr_country_flag = do_not_retire
+	}
 }
