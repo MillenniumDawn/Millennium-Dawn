@@ -29,7 +29,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 80
+			factor = 320
 		}
 	}
 
@@ -38,7 +38,7 @@ focus_tree = {
 	focus = {
 		id = ITA_diplomatic_focus
 		icon = improve_relations
-		x = 105
+		x = 110
 		y = 0
 		cost = 1
 
@@ -53,9 +53,9 @@ focus_tree = {
 		id = ITA_abandon_the_west
 		icon = attack_nato
 		relative_position_id = ITA_diplomatic_focus
-		x = -2
+		x = -4
 		y = 1
-		cost = 10
+		cost = 5
 
 		search_filters = {FOCUS_FILTER_NATO FOCUS_FILTER_POLITICAL }
 
@@ -71,6 +71,7 @@ focus_tree = {
 
 		mutually_exclusive = {
 			focus = ITA_strenghten_ties_with_west
+			focus = ITA_strive_for_neutrality
 		}
 
 		bypass = {
@@ -103,7 +104,7 @@ focus_tree = {
 		id = ITA_strenghten_ties_with_west
 		icon = align_to_nato
 		relative_position_id = ITA_diplomatic_focus
-		x = 2
+		x = 4
 		y = 1
 		cost = 5
 
@@ -115,6 +116,7 @@ focus_tree = {
 
 		mutually_exclusive = {
 			focus = ITA_abandon_the_west
+			focus = ITA_strive_for_neutrality
 		}
 
 		available = {
@@ -151,12 +153,47 @@ focus_tree = {
 	}
 
 	focus = {
+		id = ITA_strive_for_neutrality
+		icon = align_to_italy
+		relative_position_id = ITA_diplomatic_focus
+		x = 0
+		y = 1
+		cost = 5
+
+		search_filters = {FOCUS_FILTER_NATO FOCUS_FILTER_POLITICAL}
+
+		prerequisite = {
+			focus = ITA_diplomatic_focus
+		}
+
+		mutually_exclusive = {
+			focus = ITA_abandon_the_west
+			focus = ITA_strenghten_ties_with_west
+		}
+		cancel_if_invalid = yes
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_strive_for_neutrality"
+			set_temp_variable = { ITA_foreign_influence_defense_modifier_change = 0.1 }
+			modify_foreign_influence_defense_modifier_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 20
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	focus = {
 		id = ITA_draw_closer_to_east
 		icon = align_to_russia
 		relative_position_id = ITA_abandon_the_west
 		x = -1
 		y = 1
-		cost = 10
+		cost = 5
 
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
@@ -207,18 +244,16 @@ focus_tree = {
 		relative_position_id = ITA_abandon_the_west
 		x = 1
 		y = 1
-		cost = 10
+		cost = 5
 
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
 		prerequisite = {
 			focus = ITA_abandon_the_west
 		}
-
 		available = {
+			country_exists = CHI
 			NOT = { has_war_with = CHI }
-			NOT = { has_war_with = JAP }
-			NOT = { has_war_with = RAJ }
 		}
 		cancel_if_invalid = yes
 
@@ -235,40 +270,51 @@ focus_tree = {
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 			}
-			JAP = {
-				add_opinion_modifier = {
-					target = ITA
-					modifier = declaration_of_friendship
-				}
-				set_country_flag = ITA_friendship_focus
-				set_temp_variable = { percent_change = 1 }
-				set_temp_variable = { tag_index = ROOT.id }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
-			}
-			RAJ = {
-				add_opinion_modifier = {
-					target = ITA
-					modifier = declaration_of_friendship
-				}
-				set_country_flag = ITA_friendship_focus
-				set_temp_variable = { percent_change = 1 }
-				set_temp_variable = { tag_index = ROOT.id }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
-			}
-			set_temp_variable = { percent_change = 1 }
-			set_temp_variable = { tag_index = RAJ.id }
-			set_temp_variable = { influence_target = THIS.id }
-			change_influence_percentage = yes
-			set_temp_variable = { percent_change = 1 }
-			set_temp_variable = { tag_index = JAP.id }
-			set_temp_variable = { influence_target = THIS.id }
-			change_influence_percentage = yes
 			set_temp_variable = { percent_change = 1 }
 			set_temp_variable = { tag_index = CHI.id }
 			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 40
+				OR = {
+					is_in_array = { ruling_party = 4 }
+					is_in_array = { ruling_party = 6 }
+					is_in_array = { ruling_party = 7 }
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = ITA_industrial_cooperation_with_japan
+		icon = align_to_japan
+		relative_position_id = ITA_strive_for_neutrality
+		x = 1
+		y = 1
+		cost = 5
+
+		search_filters = {FOCUS_FILTER_INFLUENCE}
+
+		prerequisite = {
+			focus = ITA_strenghten_ties_with_west
+			focus = ITA_strive_for_neutrality
+		}
+
+		available = {
+			country_exists = JAP
+			NOT = { has_war_with = JAP }
+		}
+		cancel_if_invalid = yes
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_draw_closer_to_far_east"
+			JAP = {
+				country_event = italy_md.17
+			}
 		}
 
 		ai_will_do = {
@@ -288,7 +334,7 @@ focus_tree = {
 		id = ITA_befriend_america
 		icon = align_to_america
 		relative_position_id = ITA_strenghten_ties_with_west
-		x = -1
+		x = 1
 		y = 1
 		cost = 5
 
@@ -324,10 +370,88 @@ focus_tree = {
 	}
 
 	focus = {
+		id = ITA_befriend_israel
+		icon = align_to_israel
+		relative_position_id = ITA_befriend_america
+		x = 0
+		y = 1
+		cost = 5
+
+		search_filters = {FOCUS_FILTER_INFLUENCE}
+
+		prerequisite = {
+			focus = ITA_befriend_america
+		}
+
+		available = {
+			NOT = { has_war_with = ISR }
+		}
+		cancel_if_invalid = yes
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_befriend_israel"
+			ISR = {
+				add_opinion_modifier = {
+					target = ITA
+					modifier = declaration_of_friendship
+				}
+				set_country_flag = ITA_friendship_focus
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = ISR.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+	}
+
+	focus = {
+		id = ITA_befriend_taiwan
+		icon = align_to_taiwan
+		relative_position_id = ITA_befriend_israel
+		x = 0
+		y = 1
+		cost = 5
+
+		search_filters = {FOCUS_FILTER_INFLUENCE}
+
+		prerequisite = {
+			focus = ITA_befriend_israel
+		}
+
+		available = {
+			NOT = { has_war_with = TAI }
+		}
+		cancel_if_invalid = yes
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_befriend_taiwan"
+			TAI = {
+				add_opinion_modifier = {
+					target = ITA
+					modifier = declaration_of_friendship
+				}
+				set_country_flag = ITA_friendship_focus
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = TAI.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+	}
+
+	focus = {
 		id = ITA_befriend_europeans
 		icon = align_to_france
 		relative_position_id = ITA_strenghten_ties_with_west
-		x = 1
+		x = -1
 		y = 1
 		cost = 5
 
@@ -420,7 +544,7 @@ focus_tree = {
 		relative_position_id = ITA_draw_closer_to_east
 		x = 0
 		y = 1
-		cost = 10
+		cost = 5
 
 		prerequisite = {
 			focus = ITA_draw_closer_to_east
@@ -466,18 +590,6 @@ focus_tree = {
 					set_country_flag = ITA_friendship_focus
 				}
 			}
-			if = {
-				limit = {
-					NOT = { has_war_with = ISR }
-				}
-				ISR = {
-					add_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-					set_country_flag = ITA_friendship_focus
-				}
-			}
 		}
 	}
 
@@ -487,7 +599,7 @@ focus_tree = {
 		relative_position_id = ITA_draw_closer_to_far_east
 		x = 0
 		y = 1
-		cost = 10
+		cost = 5
 
 		prerequisite = {
 			focus = ITA_draw_closer_to_far_east
@@ -524,43 +636,89 @@ focus_tree = {
 	}
 
 	focus = {
-		id = ITA_befriend_central_america
+		id = ITA_security_cooperation_with_mexico
 		icon = befriend_central_america
-		relative_position_id = ITA_befriend_america
+		relative_position_id = ITA_industrial_cooperation_with_japan
 		x = 0
 		y = 1
-		cost = 10
+		cost = 5
 
 		prerequisite = {
-			focus = ITA_befriend_america
+			focus = ITA_industrial_cooperation_with_japan
+		}
+		available = {
+			country_exists = MEX
+			NOT = { has_war_with = MEX }
 		}
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_befriend_central_america"
-			if = {
-				limit = {
-					NOT = { has_war_with = MEX }
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_security_cooperation_with_mexico"
+			MEX = {
+				add_opinion_modifier = {
+					target = ITA
+					modifier = declaration_of_friendship
 				}
-				MEX = {
-					add_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-					set_country_flag = ITA_friendship_focus
-				}
+				set_country_flag = ITA_friendship_focus
 			}
-			if = {
-				limit = {
-					NOT = { has_war_with = CUB }
+			custom_effect_tooltip = mafia_strength_decrease_tt
+		}
+	}
+
+	focus = {
+		id = ITA_trade_deal_with_australia
+		icon = align_to_australia
+		relative_position_id = ITA_security_cooperation_with_mexico
+		x = 0
+		y = 1
+		cost = 5
+
+		prerequisite = {
+			focus = ITA_security_cooperation_with_mexico
+		}
+		available = {
+			country_exists = AST
+			NOT = { has_war_with = AST }
+		}
+		search_filters = {FOCUS_FILTER_INFLUENCE}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_trade_deal_with_australia"
+			AST = {
+				add_opinion_modifier = {
+					target = ITA
+					modifier = declaration_of_friendship
 				}
-				CUB = {
-					add_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-					set_country_flag = ITA_friendship_focus
+				set_country_flag = ITA_friendship_focus
+			}
+		}
+	}
+
+	focus = {
+		id = ITA_trade_deal_with_canada
+		icon = align_to_canada
+		relative_position_id = ITA_trade_deal_with_australia
+		x = 0
+		y = 1
+		cost = 5
+
+		prerequisite = {
+			focus = ITA_trade_deal_with_australia
+		}
+		available = {
+			country_exists = CAN
+			NOT = { has_war_with = CAN }
+		}
+		search_filters = {FOCUS_FILTER_INFLUENCE}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_trade_deal_with_canada"
+			CAN = {
+				add_opinion_modifier = {
+					target = ITA
+					modifier = declaration_of_friendship
 				}
+				set_country_flag = ITA_friendship_focus
 			}
 		}
 	}
@@ -625,7 +783,7 @@ focus_tree = {
 		relative_position_id = ITA_befriend_middle_east
 		x = 0
 		y = 1
-		cost = 10
+		cost = 5
 
 		prerequisite = {
 			focus = ITA_befriend_middle_east
@@ -680,7 +838,7 @@ focus_tree = {
 		relative_position_id = ITA_befriend_south_east_asia
 		x = 0
 		y = 1
-		cost = 10
+		cost = 5
 
 		prerequisite = {
 			focus = ITA_befriend_south_east_asia
@@ -701,19 +859,32 @@ focus_tree = {
 					set_country_flag = ITA_friendship_focus
 				}
 			}
+			if = {
+				limit = {
+					NOT = { has_war_with = IND }
+				}
+				IND = {
+					add_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+					set_country_flag = ITA_friendship_focus
+				}
+			}
 		}
 	}
 
 	focus = {
 		id = ITA_befriend_south_america
 		icon = befriend_south_america
-		relative_position_id = ITA_befriend_central_america
-		x = 0
+		relative_position_id = ITA_strive_for_neutrality
+		x = -1
 		y = 1
-		cost = 10
+		cost = 5
 
 		prerequisite = {
-			focus = ITA_befriend_central_america
+			focus = ITA_strive_for_neutrality
+			focus = ITA_abandon_the_west
 		}
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
@@ -736,6 +907,199 @@ focus_tree = {
 					NOT = { has_war_with = BRA }
 				}
 				BRA = {
+					add_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+					set_country_flag = ITA_friendship_focus
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_war_with = CHL }
+				}
+				CHL = {
+					add_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+					set_country_flag = ITA_friendship_focus
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = ITA_befriend_india
+		icon = align_to_india
+		relative_position_id = ITA_befriend_south_america
+		x = 0
+		y = 1
+		cost = 5
+
+		prerequisite = {
+			focus = ITA_befriend_south_america
+		}
+		available = {
+			country_exists = RAJ
+			NOT = { has_war_with = RAJ }
+		}
+		search_filters = {FOCUS_FILTER_INFLUENCE}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_befriend_india"
+			RAJ = {
+				add_opinion_modifier = {
+					target = ITA
+					modifier = declaration_of_friendship
+				}
+				set_country_flag = ITA_friendship_focus
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = RAJ.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+	}
+
+	focus = {
+		id = ITA_befriend_north_african_countries
+		icon = align_to_egypt
+		relative_position_id = ITA_befriend_india
+		x = 0
+		y = 1
+		cost = 5
+
+		prerequisite = {
+			focus = ITA_befriend_india
+		}
+		search_filters = {FOCUS_FILTER_INFLUENCE}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_befriend_north_african_countries"
+			if = {
+				limit = {
+					NOT = { has_war_with = MOR }
+				}
+				MOR = {
+					add_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+					set_country_flag = ITA_friendship_focus
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_war_with = ALG }
+				}
+				ALG = {
+					add_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+					set_country_flag = ITA_friendship_focus
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_war_with = TUN }
+				}
+				TUN = {
+					add_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+					set_country_flag = ITA_friendship_focus
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_war_with = LBA }
+				}
+				LBA = {
+					add_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+					set_country_flag = ITA_friendship_focus
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_war_with = EGY }
+				}
+				EGY = {
+					add_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+					set_country_flag = ITA_friendship_focus
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = ITA_befriend_south_african_countries
+		icon = align_to_south_africa
+		relative_position_id = ITA_befriend_north_african_countries
+		x = 0
+		y = 1
+		cost = 5
+
+		prerequisite = {
+			focus = ITA_befriend_north_african_countries
+		}
+		search_filters = {FOCUS_FILTER_INFLUENCE}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_befriend_south_african_countries"
+			if = {
+				limit = {
+					NOT = { has_war_with = SAF }
+				}
+				SAF = {
+					add_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+					set_country_flag = ITA_friendship_focus
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_war_with = NIG }
+				}
+				NIG = {
+					add_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+					set_country_flag = ITA_friendship_focus
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_war_with = ETH }
+				}
+				ETH = {
+					add_opinion_modifier = {
+						target = ITA
+						modifier = declaration_of_friendship
+					}
+					set_country_flag = ITA_friendship_focus
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_war_with = DRC }
+				}
+				DRC = {
 					add_opinion_modifier = {
 						target = ITA
 						modifier = declaration_of_friendship
@@ -813,12 +1177,12 @@ focus_tree = {
 	}
 
 	focus = {
-		id = ITA_attempt_join_aedu
+		id = ITA_attempt_join_sco
 		icon = align_to_china
 		relative_position_id = ITA_befriend_malaya
 		x = -1
 		y = 1
-		cost = 10
+		cost = 5
 
 		prerequisite = {
 			focus = ITA_befriend_malaya
@@ -833,7 +1197,7 @@ focus_tree = {
 		cancel_if_invalid = yes
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_attempt_join_aedu"
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_attempt_join_sco"
 			CHI = { country_event = italy_md.12 }
 		}
 	}
@@ -841,18 +1205,15 @@ focus_tree = {
 	focus = {
 		id = ITA_the_nato
 		icon = align_to_nato
-		relative_position_id = ITA_befriend_south_america
-		x = 1
-		y = 1
+		relative_position_id = ITA_strenghten_ties_with_west
+		x = 0
+		y = 4
 		cost = 5
 
 		search_filters = {FOCUS_FILTER_NATO}
-
-		prerequisite = {
-			focus = ITA_befriend_south_america
-		}
 		prerequisite = {
 			focus = ITA_befriend_europeans3
+			focus = ITA_befriend_taiwan
 		}
 
 		available = {
@@ -883,7 +1244,7 @@ focus_tree = {
 		relative_position_id = ITA_divided_nation
 		x = 32
 		y = 0
-		cost = 5
+		cost = 4
 
 		search_filters = {FOCUS_FILTER_INDUSTRY  FOCUS_FILTER_RESEARCH}
 
@@ -895,11 +1256,10 @@ focus_tree = {
 				uses = 2
 				category = industry
 			}
-			add_political_power = 50
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 80
 		}
 	}
 
@@ -1047,38 +1407,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -1143,38 +1475,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -1351,38 +1655,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -1447,38 +1723,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -1543,38 +1791,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -1651,38 +1871,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -1746,38 +1938,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -1828,38 +1992,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -1910,38 +2046,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -1992,38 +2100,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -2089,38 +2169,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -2168,38 +2220,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -2243,38 +2267,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -2362,38 +2358,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -2438,38 +2406,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -2514,38 +2454,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -2588,7 +2500,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 20
+			factor = 40
 		}
 	}
 
@@ -2627,7 +2539,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 20
+			factor = 40
 		}
 	}
 
@@ -2646,7 +2558,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 20
+			factor = 40
 		}
 	}
 
@@ -2742,7 +2654,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 80
+			factor = 40
 		}
 	}
 
@@ -6672,9 +6584,6 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_what_we_are
 		}
-
-
-
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		completion_reward = {
@@ -16753,7 +16662,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 320
 		}
 	}
 
@@ -16856,7 +16765,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 80
+			factor = 160
 		}
 	}
 
@@ -17063,12 +16972,12 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 320
 		}
 	}
 
 	focus = {
-		id = ITA_abolish_the_regions
+		id = ITA_abolish_the_provinces
 		icon = renounce_treaty
 		relative_position_id = ITA_merge_small_municipalities
 		x = 0
@@ -17085,7 +16994,7 @@ focus_tree = {
 		cancel_if_invalid = yes
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_abolish_the_regions"
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_abolish_the_provinces"
 			swap_ideas = {
 				remove_idea = ITA_inefficient_administration_2
 				add_idea = ITA_inefficient_administration_1
@@ -17093,21 +17002,21 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 320
 		}
 	}
 
 	focus = {
 		id = ITA_abolish_perfect_bicameralism
 		icon = diplomatic_treaty
-		relative_position_id = ITA_abolish_the_regions
+		relative_position_id = ITA_abolish_the_provinces
 		x = 0
 		y = 2
 		cost = 10
 
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 		prerequisite = {
-			focus = ITA_abolish_the_regions
+			focus = ITA_abolish_the_provinces
 		}
 		available = {
 			absolute_majority_popularity = yes
@@ -17120,7 +17029,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 320
 		}
 	}
 
@@ -17163,7 +17072,7 @@ focus_tree = {
 			focus = ITA_block_municipalities_obstructionism
 		}
 		prerequisite = {
-			focus = ITA_abolish_the_regions
+			focus = ITA_abolish_the_provinces
 		}
 
 		completion_reward = {
@@ -18463,7 +18372,11 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
+			}
 		}
 	}
 
@@ -18538,38 +18451,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -18608,38 +18493,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -18678,38 +18535,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -18750,38 +18579,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -18823,38 +18624,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 50
 			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.4 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { cosa_nostra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { camorra_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { ndrangheta_strength > 0.5 }
-			}
-			modifier = {
-				factor = 0.5
-				check_variable = { sacra_corona_unita_strength > 0.5 }
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -18892,7 +18665,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 20
+			factor = 40
 		}
 	}
 
