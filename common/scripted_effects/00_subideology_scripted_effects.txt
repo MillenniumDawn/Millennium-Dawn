@@ -766,6 +766,18 @@ add_ruling_outlook_popularity = {
 	recalculate_party = yes
 }
 
+# Adjust Election Threshold
+# set_temp_variable = { threshold_change = +- }
+modify_election_threshold = {
+	add_to_variable = { election_threshold = threshold_change }
+	custom_effect_tooltip = modify_election_threshold_tt
+	clamp_variable = {
+		var = election_threshold
+		min = 0
+		max = 0.10
+	}
+}
+
 set_party_index_to_ruling_party = {
 	if = { limit = { is_in_array = { array = ruling_party value = 0 } }
 		set_temp_variable = { party_index = 0 }
@@ -1635,17 +1647,17 @@ add_up_party_totals = {
 	add_to_variable = { pop_total_democratic = party_pop_array^1 }
 	add_to_variable = { pop_total_democratic = party_pop_array^2 }
 	add_to_variable = { pop_total_democratic = party_pop_array^3 }
-	
+
 	add_to_variable = { pop_total_communism = party_pop_array^4 }
 	add_to_variable = { pop_total_communism = party_pop_array^5 }
 	add_to_variable = { pop_total_communism = party_pop_array^6 }
 	add_to_variable = { pop_total_communism = party_pop_array^7 }
 	add_to_variable = { pop_total_communism = party_pop_array^8 }
 	add_to_variable = { pop_total_communism = party_pop_array^9 }
-	
+
 	add_to_variable = { pop_total_fascism = party_pop_array^10 }
 	add_to_variable = { pop_total_fascism = party_pop_array^11 }
-	
+
 	add_to_variable = { pop_total_neutrality = party_pop_array^12 }
 	add_to_variable = { pop_total_neutrality = party_pop_array^13 }
 	add_to_variable = { pop_total_neutrality = party_pop_array^14 }
@@ -1654,12 +1666,12 @@ add_up_party_totals = {
 	add_to_variable = { pop_total_neutrality = party_pop_array^17 }
 	add_to_variable = { pop_total_neutrality = party_pop_array^18 }
 	add_to_variable = { pop_total_neutrality = party_pop_array^19 }
-	
+
 	add_to_variable = { pop_total_nationalist = party_pop_array^20 }
 	add_to_variable = { pop_total_nationalist = party_pop_array^21 }
 	add_to_variable = { pop_total_nationalist = party_pop_array^22 }
 	add_to_variable = { pop_total_nationalist = party_pop_array^23 }
-	
+
 	#Scale party popularity totals to match actual Outlook popularity
 	for_loop_effect = {
 		end = party_pop_array^num
@@ -1708,7 +1720,7 @@ add_up_party_totals = {
 		divide_variable = { party_pop_array^current_id = 1000 }
 		clamp_variable = { var = party_pop_array^current_id min = 0 max = 1 }
 	}
-	
+
 	#Make sure there are no Outlooks with popularity without any party popularities
 	#Make 1% the limit, as smaller than that isn't visible on the chart
 	if = {
@@ -1775,7 +1787,7 @@ add_up_party_totals = {
 			10 = { add_to_variable = { party_pop_array^23 = 0.01 } }
 		}
 	}
-	
+
 }
 
 set_party_positions = {
@@ -1908,7 +1920,7 @@ set_coalition_drift = {
 			add_to_variable = { coalition_nationalist = sum }
 		}
 	}
-	
+
 	#Don't get bonuses to ruling Outlook
 	if = {
 		limit = { has_government = democratic }
@@ -1930,7 +1942,7 @@ set_coalition_drift = {
 		limit = { has_government = nationalist }
 		set_variable = { coalition_nationalist = 0 }
 	}
-	
+
 	reset_democratic_coalition_ideas = yes
 	reset_neutrality_coalition_ideas = yes
 	reset_communism_coalition_ideas = yes
@@ -7864,5 +7876,73 @@ pol_distance_matrix_23 = {
 	}
 	else_if = { limit = { is_in_array = { ruling_party = 22 } } #Nat_Autocracy
 			set_variable = { pol_distance_current = 0.3 }
+	}
+}
+
+# Add Coalition Member
+# set_temp_variable = { add_col_one = 0-23 } -- Required
+add_coalition_members_effect = {
+	custom_effect_tooltip = add_coalition_members_effect_TT
+	add_to_array = { gov_coalition_array = add_col_one }
+	update_government_coalition_strength = yes
+	set_coalition_drift = yes
+}
+
+# Remove Coalition Member
+# set_temp_variable = { add_col_one = 0-23 }
+remove_coalition_members_effect = {
+	custom_effect_tooltip = remove_coalition_members_effect_TT
+	remove_from_array = { gov_coalition_array = remove_col_one }
+	update_government_coalition_strength = yes
+	set_coalition_drift = yes
+}
+
+# Change Party Command
+# set_temp_variable = { rul_party_temp = 0-23 }
+# set_temp_variable = { col_one = 0 - 23 }  -- Optional
+# set_temp_variable = { col_two = 0 - 23 }  -- Optional
+# set_temp_variable = { col_three = 0 - 23 }  -- Optional
+# set_temp_variable = { change_leader_temp = 0-1 } -- Optional
+change_ruling_party_effect = {
+	# Do Not Retire Section
+	if = { limit = { check_variable = { change_leader_temp = 1 } }
+		set_country_flag = do_not_retire
+	}
+
+	# Clears the Parameters
+	clear_array = ruling_party
+	clear_array = gov_coalition_array
+
+	# Rul Party Addition
+	set_temp_variable = { add_col_one = rul_party_temp }
+	custom_effect_tooltip = ruling_party_changed_tt
+	add_to_array = { ruling_party = add_col_one }
+
+	# Coalition Array Parameters
+	if = { limit = { has_variable = col_one }
+		set_temp_variable = { add_col_one = col_one }
+		custom_effect_tooltip = add_coalition_members_effect_TT
+		add_to_array = { gov_coalition_array = add_col_one }
+	}
+	if = { limit = { has_variable = col_two }
+		set_temp_variable = { add_col_one = col_two }
+		custom_effect_tooltip = add_coalition_members_effect_TT
+		add_to_array = { gov_coalition_array = add_col_one }
+	}
+	if = { limit = { has_variable = col_three }
+		set_temp_variable = { add_col_one = col_three }
+		custom_effect_tooltip = add_coalition_members_effect_TT
+		add_to_array = { gov_coalition_array = add_col_one }
+	}
+
+	hidden_effect = {
+		update_government_coalition_strength = yes
+		update_party_name = yes
+		set_coalition_drift = yes
+		set_ruling_leader = yes
+		set_leader = yes
+	}
+	if = { limit = { check_variable = { change_leader_temp = 1 } }
+		clr_country_flag = do_not_retire
 	}
 }
