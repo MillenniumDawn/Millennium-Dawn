@@ -38,7 +38,7 @@ focus_tree = {
 	focus = {
 		id = ITA_diplomatic_focus
 		icon = improve_relations
-		x = 110
+		x = 108
 		y = 0
 		cost = 1
 
@@ -46,6 +46,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_diplomatic_focus"
+			custom_effect_tooltip = ITA_diplomatic_focus_TT
+		}
+
+		ai_will_do = {
+			factor = 40
 		}
 	}
 
@@ -62,20 +67,11 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_diplomatic_focus
 		}
-
-		available = {
-			threat > 0.15
-			has_idea = NATO_member
-		}
 		cancel_if_invalid = yes
 
 		mutually_exclusive = {
 			focus = ITA_strenghten_ties_with_west
 			focus = ITA_strive_for_neutrality
-		}
-
-		bypass = {
-			NOT = { has_idea = NATO_member }
 		}
 
 		completion_reward = {
@@ -106,7 +102,7 @@ focus_tree = {
 		relative_position_id = ITA_diplomatic_focus
 		x = 4
 		y = 1
-		cost = 5
+		cost = 10
 
 		search_filters = {FOCUS_FILTER_NATO FOCUS_FILTER_POLITICAL}
 
@@ -120,19 +116,23 @@ focus_tree = {
 		}
 
 		available = {
-			threat > 0.15
 			has_idea = NATO_member
 		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_strenghten_ties_with_west"
-			add_political_power = 50
 			every_country = {
 				limit = { has_idea = NATO_member }
 				add_opinion_modifier = { target = ITA modifier = reaffirmed_NATO }
 				reverse_add_opinion_modifier = { target = ROOT modifier = reaffirmed_NATO }
 			}
+			set_temp_variable = { ITA_send_volunteer_divisions_required_change = -0.5 }
+			modify_send_volunteer_divisions_required_effect = yes
+			set_temp_variable = { ITA_send_volunteer_factor_change = 0.5 }
+			modify_send_volunteer_factor_effect = yes
+			set_temp_variable = { ITA_air_volunteer_cap_change = 100 }
+			modify_air_volunteer_cap_effect = yes
 		}
 
 		ai_will_do = {
@@ -179,10 +179,18 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 20
+			factor = 40
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0.25
+				has_east_aligned_government = yes
+			}
+			modifier = {
+				factor = 0.25
+				has_west_aligned_government = yes
 			}
 		}
 	}
@@ -193,7 +201,7 @@ focus_tree = {
 		relative_position_id = ITA_abandon_the_west
 		x = -1
 		y = 1
-		cost = 5
+		cost = 3
 
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
@@ -204,31 +212,24 @@ focus_tree = {
 		available = {
 			NOT = { has_war_with = SOV }
 		}
+		bypass = {
+			NOT = {
+				country_exists = SOV
+			}
+		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_draw_closer_to_east"
 			SOV = {
-				add_opinion_modifier = {
-					target = ITA
-					modifier = declaration_of_friendship
-				}
-				set_country_flag = ITA_friendship_focus
-				set_temp_variable = { percent_change = 1 }
-				set_temp_variable = { tag_index = ROOT.id }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
+				country_event = italy_md.44
 			}
-			set_temp_variable = { percent_change = 1 }
-			set_temp_variable = { tag_index = SOV.id }
-			set_temp_variable = { influence_target = THIS.id }
-			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
-			factor = 1
+			factor = 20
 			modifier = {
-				factor = 40
+				factor = 2
 				OR = {
 					is_in_array = { ruling_party = 4 }
 					is_in_array = { ruling_party = 7 }
@@ -244,7 +245,7 @@ focus_tree = {
 		relative_position_id = ITA_abandon_the_west
 		x = 1
 		y = 1
-		cost = 5
+		cost = 3
 
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
@@ -252,34 +253,26 @@ focus_tree = {
 			focus = ITA_abandon_the_west
 		}
 		available = {
-			country_exists = CHI
 			NOT = { has_war_with = CHI }
+		}
+		bypass = {
+			NOT = {
+				country_exists = CHI
+			}
 		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_draw_closer_to_far_east"
 			CHI = {
-				add_opinion_modifier = {
-					target = ITA
-					modifier = declaration_of_friendship
-				}
-				set_country_flag = ITA_friendship_focus
-				set_temp_variable = { percent_change = 1 }
-				set_temp_variable = { tag_index = ROOT.id }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
+				country_event = italy_md.44
 			}
-			set_temp_variable = { percent_change = 1 }
-			set_temp_variable = { tag_index = CHI.id }
-			set_temp_variable = { influence_target = THIS.id }
-			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
-			factor = 1
+			factor = 20
 			modifier = {
-				factor = 40
+				factor = 2
 				OR = {
 					is_in_array = { ruling_party = 4 }
 					is_in_array = { ruling_party = 6 }
@@ -295,7 +288,7 @@ focus_tree = {
 		relative_position_id = ITA_strive_for_neutrality
 		x = 1
 		y = 1
-		cost = 5
+		cost = 3
 
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
@@ -305,8 +298,12 @@ focus_tree = {
 		}
 
 		available = {
-			country_exists = JAP
 			NOT = { has_war_with = JAP }
+		}
+		bypass = {
+			NOT = {
+				country_exists = JAP
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -316,16 +313,11 @@ focus_tree = {
 				country_event = italy_md.17
 			}
 		}
-
 		ai_will_do = {
-			factor = 1
+			factor = 50
 			modifier = {
-				factor = 40
-				OR = {
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { ruling_party = 7 }
-					is_in_array = { ruling_party = 6 }
-				}
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -336,36 +328,31 @@ focus_tree = {
 		relative_position_id = ITA_strenghten_ties_with_west
 		x = 1
 		y = 1
-		cost = 5
+		cost = 3
 
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
 		prerequisite = {
 			focus = ITA_strenghten_ties_with_west
 		}
-
 		available = {
 			NOT = { has_war_with = USA }
+		}
+		bypass = {
+			NOT = {
+				country_exists = USA
+			}
 		}
 		cancel_if_invalid = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_befriend_america"
 			USA = {
-				add_opinion_modifier = {
-					target = ITA
-					modifier = declaration_of_friendship
-				}
-				set_country_flag = ITA_friendship_focus
-				set_temp_variable = { percent_change = 1 }
-				set_temp_variable = { tag_index = ROOT.id }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
+				country_event = italy_md.44
 			}
-			set_temp_variable = { percent_change = 1 }
-			set_temp_variable = { tag_index = USA.id }
-			set_temp_variable = { influence_target = THIS.id }
-			change_influence_percentage = yes
+		}
+		ai_will_do = {
+			factor = 40
 		}
 	}
 
@@ -382,9 +369,13 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_befriend_america
 		}
-
 		available = {
 			NOT = { has_war_with = ISR }
+		}
+		bypass = {
+			NOT = {
+				country_exists = ISR
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -394,6 +385,9 @@ focus_tree = {
 				country_event = italy_md.65
 			}
 			custom_effect_tooltip = ITA_befriend_israel_TT
+		}
+		ai_will_do = {
+			factor = 40
 		}
 	}
 
@@ -409,6 +403,14 @@ focus_tree = {
 
 		prerequisite = {
 			focus = ITA_befriend_israel
+		}
+		bypass = {
+			NOT = {
+				country_exists = TAI
+			}
+			NOT = {
+				country_exists = KOR
+			}
 		}
 		cancel_if_invalid = yes
 
@@ -431,6 +433,9 @@ focus_tree = {
 				}
 			}
 		}
+		ai_will_do = {
+			factor = 40
+		}
 	}
 
 	focus = {
@@ -439,7 +444,7 @@ focus_tree = {
 		relative_position_id = ITA_strenghten_ties_with_west
 		x = -1
 		y = 1
-		cost = 5
+		cost = 9
 
 		prerequisite = {
 			focus = ITA_strenghten_ties_with_west
@@ -474,6 +479,13 @@ focus_tree = {
 				}
 			}
 		}
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
+			}
+		}
 	}
 
 	focus = {
@@ -482,7 +494,7 @@ focus_tree = {
 		relative_position_id = ITA_draw_closer_to_east
 		x = 0
 		y = 1
-		cost = 5
+		cost = 9
 
 		prerequisite = {
 			focus = ITA_draw_closer_to_east
@@ -494,14 +506,10 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_befriend_middle_east"
 			if = {
 				limit = {
-					NOT = { has_war_with = TUR }
+					NOT = { has_war_with = IRQ }
 				}
-				TUR = {
-					add_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-					set_country_flag = ITA_friendship_focus
+				IRQ = {
+					country_event = italy_md.18
 				}
 			}
 			if = {
@@ -509,11 +517,7 @@ focus_tree = {
 					NOT = { has_war_with = SAU }
 				}
 				SAU = {
-					add_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-					set_country_flag = ITA_friendship_focus
+					country_event = italy_md.18
 				}
 			}
 			if = {
@@ -521,12 +525,15 @@ focus_tree = {
 					NOT = { has_war_with = PER }
 				}
 				PER = {
-					add_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-					set_country_flag = ITA_friendship_focus
+					country_event = italy_md.18
 				}
+			}
+		}
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -537,7 +544,7 @@ focus_tree = {
 		relative_position_id = ITA_draw_closer_to_far_east
 		x = 0
 		y = 1
-		cost = 5
+		cost = 6
 
 		prerequisite = {
 			focus = ITA_draw_closer_to_far_east
@@ -551,11 +558,7 @@ focus_tree = {
 					NOT = { has_war_with = VIE }
 				}
 				VIE = {
-					add_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-					set_country_flag = ITA_friendship_focus
+					country_event = italy_md.18
 				}
 			}
 			if = {
@@ -563,12 +566,15 @@ focus_tree = {
 					NOT = { has_war_with = SIA }
 				}
 				SIA = {
-					add_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-					set_country_flag = ITA_friendship_focus
+					country_event = italy_md.18
 				}
+			}
+		}
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -579,14 +585,18 @@ focus_tree = {
 		relative_position_id = ITA_industrial_cooperation_with_japan
 		x = 0
 		y = 1
-		cost = 5
+		cost = 3
 
 		prerequisite = {
 			focus = ITA_industrial_cooperation_with_japan
 		}
 		available = {
-			country_exists = MEX
 			NOT = { has_war_with = MEX }
+		}
+		bypass = {
+			NOT = {
+				country_exists = MEX
+			}
 		}
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
@@ -601,6 +611,9 @@ focus_tree = {
 			}
 			custom_effect_tooltip = mafia_strength_decrease_tt
 		}
+		ai_will_do = {
+			factor = 40
+		}
 	}
 
 	focus = {
@@ -609,14 +622,18 @@ focus_tree = {
 		relative_position_id = ITA_security_cooperation_with_mexico
 		x = 0
 		y = 1
-		cost = 5
+		cost = 3
 
 		prerequisite = {
 			focus = ITA_security_cooperation_with_mexico
 		}
 		available = {
-			country_exists = AST
 			NOT = { has_war_with = AST }
+		}
+		bypass = {
+			NOT = {
+				country_exists = AST
+			}
 		}
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
@@ -624,6 +641,13 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_trade_deal_with_australia"
 			AST = {
 				country_event = italy_md.18
+			}
+		}
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -634,14 +658,18 @@ focus_tree = {
 		relative_position_id = ITA_trade_deal_with_australia
 		x = 0
 		y = 1
-		cost = 5
+		cost = 3
 
 		prerequisite = {
 			focus = ITA_trade_deal_with_australia
 		}
 		available = {
-			country_exists = CAN
 			NOT = { has_war_with = CAN }
+		}
+		bypass = {
+			NOT = {
+				country_exists = CAN
+			}
 		}
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
@@ -649,6 +677,13 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_trade_deal_with_canada"
 			CAN = {
 				country_event = italy_md.18
+			}
+		}
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -659,7 +694,7 @@ focus_tree = {
 		relative_position_id = ITA_befriend_europeans
 		x = 0
 		y = 1
-		cost = 5
+		cost = 10
 
 		prerequisite = {
 			focus = ITA_befriend_europeans
@@ -673,11 +708,7 @@ focus_tree = {
 					NOT = { has_war_with = POL }
 				}
 				POL = {
-					add_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-					set_country_flag = ITA_friendship_focus
+					country_event = italy_md.64
 				}
 			}
 			if = {
@@ -685,25 +716,36 @@ focus_tree = {
 					NOT = { has_war_with = ROM }
 				}
 				ROM = {
-					add_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-					set_country_flag = ITA_friendship_focus
+					country_event = italy_md.64
 				}
 			}
 			if = {
 				limit = {
-					NOT = { has_war_with = CRO }
+					NOT = { has_war_with = BUL }
 				}
-				CRO = {
-					add_opinion_modifier = {
-						target = ITA
-						modifier = declaration_of_friendship
-					}
-					set_country_flag = ITA_friendship_focus
+				BUL = {
+					country_event = italy_md.64
 				}
 			}
+			if = {
+				limit = {
+					NOT = { has_war_with = ALB }
+				}
+				ALB = {
+					country_event = italy_md.64
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_war_with = MLV }
+				}
+				MLV = {
+					country_event = italy_md.64
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 40
 		}
 	}
 
@@ -713,7 +755,7 @@ focus_tree = {
 		relative_position_id = ITA_befriend_middle_east
 		x = 0
 		y = 1
-		cost = 5
+		cost = 8
 
 		prerequisite = {
 			focus = ITA_befriend_middle_east
@@ -724,40 +766,34 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_befriend_csto"
 			if = {
 				limit = {
-					OR = {
-						country_exists = SOV
-						country_exists = ARM
-						country_exists = KAZ
-						country_exists = KYR
-						country_exists = BLR
-						country_exists = TAJ
-					}
-					NOT = { has_war_with = ITA }
-				}
-				SOV = {
-					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship }
-					set_country_flag = ITA_friendship_focus
-				}
-				ARM = {
-					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship }
-					set_country_flag = ITA_friendship_focus
+					NOT = { has_war_with = KAZ }
 				}
 				KAZ = {
-					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship }
-					set_country_flag = ITA_friendship_focus
+					country_event = italy_md.18
 				}
-				KYR = {
-					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship }
-					set_country_flag = ITA_friendship_focus
+			}
+			if = {
+				limit = {
+					NOT = { has_war_with = BLR }
 				}
 				BLR = {
-					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship }
-					set_country_flag = ITA_friendship_focus
+					country_event = italy_md.64
 				}
-				TAJ = {
-					add_opinion_modifier = { target = FROM modifier = declaration_of_friendship }
-					set_country_flag = ITA_friendship_focus
+			}
+			if = {
+				limit = {
+					NOT = { has_war_with = UKR }
 				}
+				UKR = {
+					country_event = italy_md.17
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -792,6 +828,13 @@ focus_tree = {
 				IND = {
 					country_event = italy_md.18
 				}
+			}
+		}
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -837,6 +880,13 @@ focus_tree = {
 				}
 			}
 		}
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
+			}
+		}
 	}
 
 	focus = {
@@ -851,8 +901,12 @@ focus_tree = {
 			focus = ITA_befriend_south_america
 		}
 		available = {
-			country_exists = RAJ
 			NOT = { has_war_with = RAJ }
+		}
+		bypass = {
+			NOT = {
+				country_exists = RAJ
+			}
 		}
 		search_filters = {FOCUS_FILTER_INFLUENCE}
 
@@ -860,6 +914,13 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_befriend_india"
 			RAJ = {
 				country_event = italy_md.17
+			}
+		}
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -920,6 +981,9 @@ focus_tree = {
 				}
 			}
 		}
+		ai_will_do = {
+			factor = 40
+		}
 	}
 
 	focus = {
@@ -954,6 +1018,13 @@ focus_tree = {
 				}
 			}
 		}
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
+			}
+		}
 	}
 
 	focus = {
@@ -962,7 +1033,7 @@ focus_tree = {
 		relative_position_id = ITA_befriend_europeans2
 		x = 0
 		y = 1
-		cost = 5
+		cost = 6
 
 		prerequisite = {
 			focus = ITA_befriend_europeans2
@@ -986,6 +1057,13 @@ focus_tree = {
 				HOL = {
 					country_event = italy_md.63
 				}
+			}
+		}
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
 			}
 		}
 	}
@@ -9850,10 +9928,17 @@ focus_tree = {
 			has_idea = EU_member
 			NOT = { has_global_flag = the_path_towards_europe }
 			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_libertarians_are_in_power = yes
+				western_liberals_are_in_power = yes
 				AND = {
 					has_country_leader_with_trait = western_technocrat
-					neutrality_neutral_libertarians_are_in_coalition = yes
+					OR = {
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+					}
 				}
 			}
 		}
@@ -9883,25 +9968,21 @@ focus_tree = {
 		}
 		available = {
 			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_conservatism_are_in_power = yes
-				western_liberals_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
 				AND = {
 					has_country_leader_with_trait = western_technocrat
-					western_liberals_are_in_coalition = yes
-				}
-				AND = {
-					has_country_leader_with_trait = western_technocrat
-					western_conservatism_are_in_coalition = yes
-				}
-				AND = {
-					has_country_leader_with_trait = western_technocrat
-					western_social_democrats_are_in_coalition = yes
-				}
-				AND = {
-					has_country_leader_with_trait = western_technocrat
-					neutrality_neutral_conservatism_are_in_coalition = yes
+					OR = {
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_conservatism_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						neutrality_neutral_social_are_in_coalition = yes
+					}
 				}
 			}
 		}
@@ -9939,10 +10020,16 @@ focus_tree = {
 		}
 		available = {
 			OR = {
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_communism_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
 				AND = {
 					has_country_leader_with_trait = western_technocrat
-					neutrality_neutral_communism_are_in_coalition = yes
+					OR = {
+						neutrality_neutral_communism_are_in_coalition = yes
+						neutrality_neutral_green_are_in_coalition = yes
+					}
 				}
 			}
 		}
@@ -9974,25 +10061,23 @@ focus_tree = {
 		}
 		available = {
 			OR = {
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
 				nationalist_right_wing_populists_are_in_power = yes
 				emerging_anarchist_communism_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
 				emerging_communist_state_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
 				AND = {
 					has_country_leader_with_trait = western_technocrat
-					emerging_communist_state_are_in_coalition = yes
-				}
-				AND = {
-					has_country_leader_with_trait = western_technocrat
-					nationalist_right_wing_populists_are_in_coalition = yes
-				}
-				AND = {
-					has_country_leader_with_trait = western_technocrat
-					emerging_anarchist_communism_are_in_coalition = yes
-				}
-				AND = {
-					has_country_leader_with_trait = western_technocrat
-					emerging_reactionaries_are_in_coalition = yes
+					OR = {
+						emerging_communist_state_are_in_coalition = yes
+						nationalist_right_wing_populists_are_in_coalition = yes
+						emerging_anarchist_communism_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+						nationalist_fascist_are_in_coalition = yes
+					}
 				}
 			}
 		}
