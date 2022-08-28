@@ -17,6 +17,16 @@ startup_influence = {
 	sort_influence = yes
 }
 
+# Update
+update_dirty_influence_var = {
+	if = { limit = { NOT = { has_variable = global.update_influence_ui } }
+		set_variable = { global.update_influence_ui = 1 }
+	}
+	else = {
+		add_to_variable = { global.update_influence_ui = 1 }
+	}
+}
+
 # Recalculate Influence:
 # The main macro for influence sections.
 # Here we handle the deletion of influencers who fail the three basic conditions:
@@ -29,6 +39,8 @@ recalculate_influence = {
 		calculate_influence_percentage = yes
 		delete_influencer_check = yes
 		sort_influence = yes
+
+		update_dirty_influence_var = yes
 	}
 }
 
@@ -313,421 +325,50 @@ influence_coup_action = {
 # The delete influencer check handles the double checking to clean up the influence arrays.
 # First it checks if you are even
 delete_influencer_check = {
-	if = {
-		limit = {
-			check_variable = { influence_array_val^0 < 0.01 }
-			check_variable = { influence_array^0 > 0 } #Index 1 - Biggest Influencer
+	# Influence Array Indexer
+	# Purpose:
+	# The loop conditional is configured to remove a influencer if they fall below 0.01% influence
+	for_each_loop = {
+		array = influence_array_val
+		if = { limit = { check_variable = { influence_array_val^i < 0.01 } }
+			if = { limit = { check_variable = { influence_array^i > 0 } }
+				log = "[GetDateText]: [This.GetName]: Influencer Falling Below 0.01%. Debug Code: 1000. Influencer: [?var:influence_array^i.GetName] Index: [?i]"
+				remove_from_array = { array = influence_array index = i }
+				remove_from_array = { array = influence_array_val index = i }
+			}
 		}
-		remove_from_array = { array = influence_array index = 0 }
-		remove_from_array = { array = influence_array_val index = 0 }
-	}
-	if = {
-		limit = {
-			check_variable = { influence_array_val^1 < 0.01 }
-			check_variable = { influence_array^1 > 0 } #Index 2 - Second Largest Influencer
-		}
-		remove_from_array = { array = influence_array index = 1 }
-		remove_from_array = { array = influence_array_val index = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { influence_array_val^2 < 0.01 }
-			check_variable = { influence_array^2 > 0 } #Index 3 - Third Largest Influencer
-		}
-		remove_from_array = { array = influence_array index = 2 }
-		remove_from_array = { array = influence_array_val index = 2 }
-	}
-	if = {
-		limit = {
-			check_variable = { influence_array_val^3 < 0.01 }
-			check_variable = { influence_array^3 > 0 } #Index 4 - Fourth Largest Influencer
-		}
-		remove_from_array = { array = influence_array index = 3 }
-		remove_from_array = { array = influence_array_val index = 3 }
-	}
-	if = {
-		limit = {
-			check_variable = { influence_array_val^4 < 0.01 }
-			check_variable = { influence_array^4 > 0 } #Index 5 - Fifth Largest Influencer
-		}
-		remove_from_array = { array = influence_array index = 4 }
-		remove_from_array = { array = influence_array_val index = 4 }
-	}
-	if = {
-		limit = {
-			check_variable = { influence_array_val^5 < 0.01 }
-			check_variable = { influence_array^5 > 0 } #Index 6 - Sixth Largest Influencer
-		}
-		remove_from_array = { array = influence_array index = 5 }
-		remove_from_array = { array = influence_array_val index = 5 }
-	}
-	if = {
-		limit = {
-			check_variable = { influence_array_val^6 < 0.01 }
-			check_variable = { influence_array^6 > 0 } #Index 6 - Seventh Largest Influencer
-		}
-		remove_from_array = { array = influence_array index = 6 }
-		remove_from_array = { array = influence_array_val index = 6 }
 	}
 
 	# Delete Double Influencer
-	if = {
-		limit = {
-			OR = {
-				AND = {
-					check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^1 > 0 }
-					check_variable = { influence_array^0 = influence_array^1 }
+	# Purpose:
+	# Configured to remove "Double Influencer"
+	for_each_loop = {
+		array = influence_array
+		index = i
+		# Ensures the Index is Not Empty
+		if = { limit = { NOT = { check_variable = { i = 0 } } }
+			if = {
+				limit = {
+					any_of = {
+						array = influence_array
+						value = v
+						index = c
+						check_variable = { influence_array^c = influence_array^i }
+						NOT = { check_variable = { c = i } }
+					}
 				}
-				AND = {
-					check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^2 > 0 }
-					check_variable = { influence_array^0 = influence_array^2 }
-				}
-				AND = {
-					check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^3 > 0 }
-					check_variable = { influence_array^0 = influence_array^3 }
-				}
-				AND = {
-					check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^4 > 0 }
-					check_variable = { influence_array^0 = influence_array^4 }
-				}
-				AND = {
-					check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^5 > 0 }
-					check_variable = { influence_array^0 = influence_array^5 }
-				}
-				AND = {
-					check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^6 > 0 }
-					check_variable = { influence_array^0 = influence_array^6 }
-				}
+				log = "[GetDateText]: [This.GetName]: Double Influencer Present. Debug Code: 1001. Influencer: [?var:influence_array^i.GetName] Index: [?i], Duplicate Influencer: [?var:influence_array^i.GetName] Index: [?c]"
+				add_to_variable = { influence_array_val^i = influence_array_val^c }
+				remove_from_array = { array = influence_array index = c }
+				remove_from_array = { array = influence_array_val index = c }
 			}
-		}
-		log = "[GetDateText]: [This.GetName]: Double Influencer is Present. Error Code: 10000"
-		if = {
-			limit = {
-				check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^1 > 0 }
-				check_variable = { influence_array^0 = influence_array^1 }
-			}
-			add_to_variable = { influence_array_val^0 = influence_array_val^1 }
-			remove_from_array = { array = influence_array index = 1 }
-			remove_from_array = { array = influence_array_val index = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^2 > 0 }
-				check_variable = { influence_array^0 = influence_array^2 }
-			}
-			add_to_variable = { influence_array_val^0 = influence_array_val^2 }
-			remove_from_array = { array = influence_array index = 2 }
-			remove_from_array = { array = influence_array_val index = 2 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^3 > 0 }
-				check_variable = { influence_array^0 = influence_array^3 }
-			}
-			add_to_variable = { influence_array_val^0 = influence_array_val^3 }
-			remove_from_array = { array = influence_array index = 3 }
-			remove_from_array = { array = influence_array_val index = 3 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^4 > 0 }
-				check_variable = { influence_array^0 = influence_array^4 }
-			}
-			add_to_variable = { influence_array_val^0 = influence_array_val^4 }
-			remove_from_array = { array = influence_array index = 4 }
-			remove_from_array = { array = influence_array_val index = 4 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^5 > 0 }
-				check_variable = { influence_array^0 = influence_array^5 }
-			}
-			add_to_variable = { influence_array_val^0 = influence_array_val^5 }
-			remove_from_array = { array = influence_array index = 5 }
-			remove_from_array = { array = influence_array_val index = 5 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^0 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^6 > 0 }
-				check_variable = { influence_array^0 = influence_array^6 }
-			}
-			add_to_variable = { influence_array_val^0 = influence_array_val^6 }
-			remove_from_array = { array = influence_array index = 6 }
-			remove_from_array = { array = influence_array_val index = 6 }
-		}
-	}
-	if = {
-		limit = {
-			OR = {
-				AND = {
-					check_variable = { influence_array^1 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^2 > 0 }
-					check_variable = { influence_array^1 = influence_array^2 }
-				}
-				AND = {
-					check_variable = { influence_array^1 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^3 > 0 }
-					check_variable = { influence_array^1 = influence_array^3 }
-				}
-				AND = {
-					check_variable = { influence_array^1 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^4 > 0 }
-					check_variable = { influence_array^1 = influence_array^4 }
-				}
-				AND = {
-					check_variable = { influence_array^1 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^5 > 0 }
-					check_variable = { influence_array^1 = influence_array^5 }
-				}
-				AND = {
-					check_variable = { influence_array^1 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^6 > 0 }
-					check_variable = { influence_array^1 = influence_array^6 }
-				}
-			}
-		}
-		log = "[GetDateText]: [This.GetName]: Double Influencer is Present. Error Code: 10000"
-		if = {
-			limit = {
-				check_variable = { influence_array^1 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^2 > 0 }
-				check_variable = { influence_array^1 = influence_array^2 }
-			}
-			add_to_variable = { influence_array_val^1 = influence_array_val^2 }
-			remove_from_array = { array = influence_array index = 2 }
-			remove_from_array = { array = influence_array_val index = 2 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^1 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^3 > 0 }
-				check_variable = { influence_array^1 = influence_array^3 }
-			}
-			add_to_variable = { influence_array_val^1 = influence_array_val^3 }
-			remove_from_array = { array = influence_array index = 3 }
-			remove_from_array = { array = influence_array_val index = 3 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^1 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^4 > 0 }
-				check_variable = { influence_array^1 = influence_array^4 }
-			}
-			add_to_variable = { influence_array_val^1 = influence_array_val^4 }
-			remove_from_array = { array = influence_array index = 4 }
-			remove_from_array = { array = influence_array_val index = 4 }
-
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^1 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^5 > 0 }
-				check_variable = { influence_array^1 = influence_array^5 }
-			}
-			add_to_variable = { influence_array_val^1 = influence_array_val^5 }
-			remove_from_array = { array = influence_array index = 5 }
-			remove_from_array = { array = influence_array_val index = 5 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^1 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^6 > 0 }
-				check_variable = { influence_array^1 = influence_array^6 }
-			}
-			add_to_variable = { influence_array_val^1 = influence_array_val^6 }
-			remove_from_array = { array = influence_array index = 6 }
-			remove_from_array = { array = influence_array_val index = 6 }
-		}
-	}
-	if = {
-		limit = {
-			OR = {
-				AND = {
-					check_variable = { influence_array^2 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^3 > 0 }
-					check_variable = { influence_array^2 = influence_array^3 }
-				}
-				AND = {
-					check_variable = { influence_array^2 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^4 > 0 }
-					check_variable = { influence_array^2 = influence_array^4 }
-				}
-				AND = {
-					check_variable = { influence_array^2 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^5 > 0 }
-					check_variable = { influence_array^2 = influence_array^5 }
-				}
-				AND = {
-					check_variable = { influence_array^2 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^6 > 0 }
-					check_variable = { influence_array^2 = influence_array^6 }
-				}
-			}
-		}
-		log = "[GetDateText]: [This.GetName]: Double Influencer is Present. Error Code: 10000"
-		if = {
-			limit = {
-				check_variable = { influence_array^2 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^3 > 0 }
-				check_variable = { influence_array^2 = influence_array^3 }
-			}
-			add_to_variable = { influence_array_val^2 = influence_array_val^3 }
-			remove_from_array = { array = influence_array index = 3 }
-			remove_from_array = { array = influence_array_val index = 3 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^2 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^4 > 0 }
-				check_variable = { influence_array^2 = influence_array^4 }
-			}
-			add_to_variable = { influence_array_val^2 = influence_array_val^4 }
-			remove_from_array = { array = influence_array index = 4 }
-			remove_from_array = { array = influence_array_val index = 4 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^2 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^5 > 0 }
-				check_variable = { influence_array^2 = influence_array^5 }
-			}
-			add_to_variable = { influence_array_val^2 = influence_array_val^5 }
-			remove_from_array = { array = influence_array index = 5 }
-			remove_from_array = { array = influence_array_val index = 5 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^2 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^6 > 0 }
-				check_variable = { influence_array^2 = influence_array^6 }
-			}
-			add_to_variable = { influence_array_val^2 = influence_array_val^6 }
-			remove_from_array = { array = influence_array index = 6 }
-			remove_from_array = { array = influence_array_val index = 6 }
-		}
-	}
-	if = {
-		limit = {
-			OR = {
-				AND = {
-					check_variable = { influence_array^3 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^4 > 0 }
-					check_variable = { influence_array^3 = influence_array^4 }
-				}
-				AND = {
-					check_variable = { influence_array^3 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^5 > 0 }
-					check_variable = { influence_array^3 = influence_array^5 }
-				}
-				AND = {
-					check_variable = { influence_array^3 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^6 > 0 }
-					check_variable = { influence_array^3 = influence_array^6 }
-				}
-			}
-		}
-		log = "[GetDateText]: [This.GetName]: Double Influencer is Present. Error Code: 10000"
-		if = {
-			limit = {
-				check_variable = { influence_array^3 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^4 > 0 }
-				check_variable = { influence_array^3 = influence_array^4 }
-			}
-			add_to_variable = { influence_array_val^3 = influence_array_val^4 }
-			remove_from_array = { array = influence_array index = 4 }
-			remove_from_array = { array = influence_array_val index = 4 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^3 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^5 > 0 }
-				check_variable = { influence_array^3 = influence_array^5 }
-			}
-			add_to_variable = { influence_array_val^3 = influence_array_val^5 }
-			remove_from_array = { array = influence_array index = 5 }
-			remove_from_array = { array = influence_array_val index = 5 }
-			remove_from_array = { array = influence_array_calc index = 5 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^3 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^6 > 0 }
-				check_variable = { influence_array^3 = influence_array^6 }
-			}
-			add_to_variable = { influence_array_val^3 = influence_array_val^6 }
-			remove_from_array = { array = influence_array index = 6 }
-			remove_from_array = { array = influence_array_val index = 6 }
-		}
-	}
-	if = {
-		limit = {
-			OR = {
-				AND = {
-					check_variable = { influence_array^4 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^5 > 0 }
-					check_variable = { influence_array^4 = influence_array^5 }
-				}
-				AND = {
-					check_variable = { influence_array^4 > 0 } #Checks to ensure its not empty
-					check_variable = { influence_array^6 > 0 }
-					check_variable = { influence_array^4 = influence_array^6 }
-				}
-			}
-		}
-		log = "[GetDateText]: [This.GetName]: Double Influencer is Present. Error Code: 10000"
-		if = {
-			limit = {
-				check_variable = { influence_array^4 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^5 > 0 }
-				check_variable = { influence_array^4 = influence_array^5 }
-			}
-			add_to_variable = { influence_array_val^4 = influence_array_val^5 }
-			remove_from_array = { array = influence_array index = 5 }
-			remove_from_array = { array = influence_array_val index = 5 }
-		}
-		if = {
-			limit = {
-				check_variable = { influence_array^4 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^6 > 0 }
-				check_variable = { influence_array^4 = influence_array^6 }
-			}
-			add_to_variable = { influence_array_val^4 = influence_array_val^6 }
-			remove_from_array = { array = influence_array index = 6 }
-			remove_from_array = { array = influence_array_val index = 6 }
-		}
-	}
-	if = {
-		limit = {
-			check_variable = { influence_array^5 > 0 } #Checks to ensure its not empty
-			check_variable = { influence_array^6 > 0 } #Should skip if its not relevant
-			check_variable = { influence_array^5 = influence_array^6 }
-		}
-		log = "[GetDateText]: [This.GetName]: Double Influencer is Present. Error Code: 10000"
-		if = {
-			limit = {
-				check_variable = { influence_array^5 > 0 } #Checks to ensure its not empty
-				check_variable = { influence_array^6 > 0 } #Should skip if its not relevant
-				check_variable = { influence_array^5 = influence_array^6 }
-			}
-			add_to_variable = { influence_array_val^5 = influence_array_val^6 }
-			remove_from_array = { array = influence_array index = 6 }
-			remove_from_array = { array = influence_array_val index = 6 }
 		}
 	}
 
-	# Checks if the nation
+
+	# Delete Non-Existant Nation
+	# Purpose:
+	# Configured to remove nations that no longer exist. i.e. They have been annexed. It is a garbage collection event.
 	for_loop_effect = {
 		end = influence_array^num
 		value = v
