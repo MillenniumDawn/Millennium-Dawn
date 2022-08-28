@@ -4748,6 +4748,20 @@ focus_tree = {
 			}
 			set_temp_variable = { treasury_change = -7 }
 			modify_treasury_effect = yes
+			if = {
+				limit = {
+					PER = {
+						has_idea = PER_yeni_nabz_PER
+					}
+					407 = {
+						is_claimed_by = AZE
+					}
+				}
+				remove_ideas = { PER_yeni_nabz_PER }
+				407 = {
+					remove_claim_by = AZE
+				}
+			}
 		}
 	}
 	focus = {
@@ -11502,10 +11516,7 @@ focus_tree = {
 		completion_reward = {
 			AZE = {
 				add_stability = -0.05
-				add_popularity = { ideology = communism popularity = 0.10 }
-				set_temp_variable = { party_index = 9 }
-				set_temp_variable = { party_popularity_increase = 0.20 }
-				add_relative_party_popularity = yes
+				add_ideas = { PER_AZE_shia_influence }
 			}
 		}
 	}
@@ -11534,6 +11545,7 @@ focus_tree = {
 					modifier = small_decrease
 				}
 			}
+			add_ideas = { PER_hosting_huseyniyyun }
 		}
 	}
 	focus = {
@@ -11555,11 +11567,18 @@ focus_tree = {
 
 
 		completion_reward = {
+		custom_effect_tooltip = send_guns_for_aze_war
 			AZE = {
 				add_stability = -0.02
 				add_opinion_modifier = {
 					target = PER
 					modifier = medium_decrease
+				}
+			}
+			PER = {
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = -5000
 				}
 			}
 			set_temp_variable = { treasury_change = -2 }
@@ -11585,13 +11604,14 @@ focus_tree = {
 
 
 		completion_reward = {
+		custom_effect_tooltip = send_moni_for_aze_war
 			AZE = {
 				add_opinion_modifier = {
 					target = PER
 					modifier = medium_decrease
 				}
 			}
-			set_temp_variable = { treasury_change = -7.5 }
+			set_temp_variable = { treasury_change = -5.0 }
 			modify_treasury_effect = yes
 		}
 	}
@@ -11615,10 +11635,32 @@ focus_tree = {
 
 		completion_reward = {
 			AZE = {
-				add_popularity = { ideology = communism popularity = 0.05 }
-				set_temp_variable = { party_index = 9 }
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				add_relative_party_popularity = yes
+				swap_ideas = {
+					add_idea = PER_yeni_nabz
+					remove_idea = PER_AZE_shia_influence
+				}
+			}
+			if = {
+				limit = {
+					PER = {
+						has_completed_focus = PER_arrest_separatists_in_azerbaijan
+					}
+					407 = {
+						is_owned_and_controlled_by = PER
+					}
+				}
+				PER = {
+					add_ideas = { PER_yeni_nabz_PER }
+				}
+				407 = { 
+					add_claim_by = AZE
+				}
+			}
+			else = {
+				PER = {
+					add_ideas = { PER_yeni_nabz_PER }
+					add_stability = -0.05
+				}
 			}
 		}
 	}
@@ -11642,8 +11684,12 @@ focus_tree = {
 
 		completion_reward = {
 			AZE = {
+				swap_ideas = {
+					add_idea = PER_yeni_nabz_2
+					remove_idea = PER_yeni_nabz
+				}
 				set_temp_variable = { party_index = 9 }
-				set_temp_variable = { party_popularity_increase = 0.10 }
+				set_temp_variable = { party_popularity_increase = 0.05 }
 				add_relative_party_popularity = yes
 			}
 		}
@@ -11668,8 +11714,12 @@ focus_tree = {
 
 		completion_reward = {
 			AZE = {
+				swap_ideas = {
+					add_idea = PER_yeni_nabz_3
+					remove_idea = PER_yeni_nabz_2
+				}
 				set_temp_variable = { party_index = 9 }
-				set_temp_variable = { party_popularity_increase = 0.20 }
+				set_temp_variable = { party_popularity_increase = 0.05 }
 				add_relative_party_popularity = yes
 			}
 		}
@@ -11694,10 +11744,68 @@ focus_tree = {
 
 		cancel_if_invalid = no
 
-
+		available = {
+			AZE = {
+				communism > 0.5
+				has_stability < 0.5
+			}
+		}
+		
 		completion_reward = {
-			# WAITING FOR NEW AZERBAIJAN PROVINCES
-			#need
+			AZE = {
+				if = {
+					limit = { NOT = { is_in_array = { ruling_party = 9 } } }
+					hidden_effect = {
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						add_to_array = { ruling_party = 9 }
+						update_government_coalition_strength = yes
+						update_party_name = yes
+						set_coalition_drift = yes
+						set_ruling_leader = yes
+						set_leader = yes
+					}
+					set_politics = {
+						ruling_party = communism
+					}
+					set_temp_variable = { party_index = 9 }
+					set_temp_variable = { party_popularity_increase = 0.40 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+				}
+				start_civil_war = {
+					ideology = democratic
+					keep_political_leader = yes
+					keep_political_party_members = yes
+				}
+			}
+			if = {
+				limit = {
+					PER = {
+						has_completed_focus = PER_give_arms_to_huseyniyyun
+					}
+				}
+				AZE = {	
+					add_offsite_building = { type = arms_factory level = 1 }
+					add_equipment_to_stockpile = {
+						type = infantry_weapons1
+						amount = 5000
+						producer = PER
+					}
+				}
+			}
+			if = {
+				limit = {
+					PER = {
+						has_completed_focus = PER_give_them_financial_support
+					}
+				}
+				AZE = {	
+					add_offsite_building = { type = industrial_complex level = 1 }
+					set_temp_variable = { treasury_change = 5.0 }
+					modify_treasury_effect = yes
+				}
+			}			
 		}
 	}
 	focus = {
@@ -11722,7 +11830,15 @@ focus_tree = {
 
 
 		completion_reward = {
-			#need
+			set_autonomy = {
+				target = AZE
+				autonomy_state = autonomy_collaboration_government
+				end_wars = no
+				end_civil_wars = no
+			}
+			AZE = {
+				set_cosmetic_tag = AZE_PER_STATE
+			}
 		}
 	}
 	focus = {
@@ -11744,7 +11860,30 @@ focus_tree = {
 
 
 		completion_reward = {
-			#need
+			if = {
+				limit = {
+					AZE = {
+						has_government = communism
+					}
+				}
+				PER = {
+					send_equipment = {
+						equipment = Inf_equipment
+						amount = 10000
+						target = AZE
+					}
+					send_equipment = {
+						equipment = cnc_equipment
+						amount = 5000
+						target = AZE
+					}
+					send_equipment = {
+						equipment = util_vehicle_equipment
+						amount = 1000
+						target = AZE
+					}					
+				}
+			}
 		}
 	}
 	focus = {
@@ -11754,7 +11893,7 @@ focus_tree = {
 		x = -1
 		y = 1
 
-		relative_position_id =PER_republic_of_azarabadgan
+		relative_position_id = PER_republic_of_azarabadgan
 		prerequisite = {
 			focus = PER_republic_of_azarabadgan
 		}
@@ -11766,7 +11905,21 @@ focus_tree = {
 
 
 		completion_reward = {
-			#need
+			if = {
+				limit = {
+					AZE = {
+						has_government = communism
+					}
+				}
+				AZE = {
+					set_temp_variable = { treasury_change = 10 }
+					modify_treasury_effect = yes
+				}
+				PER = {
+					set_temp_variable = { treasury_change = -10 }
+					modify_treasury_effect = yes				
+				}
+			}
 		}
 	}
 	focus = {
@@ -11784,15 +11937,983 @@ focus_tree = {
 			focus = PER_military_support_for_the_resistance_front
 		}
 
-
-		cost = 10
+		available = {
+			AZE = {
+				has_government = communism
+				has_civil_war = yes
+				is_subject_of = PER
+			}
+			PER = {
+				has_war = no
+			}
+		}
+		
+		bypass = {
+			NOT = {
+				AZE = {
+					has_government = communism
+					has_civil_war = yes
+					is_subject_of = PER
+				}
+			}
+		}
+		cost = 2
 		search_filters = {}
 
 		cancel_if_invalid = no
 
 
 		completion_reward = {
-			#need
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D01 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D01
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D02 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D02
+					hostility_reason = asked_to_join
+				}
+			}	
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D03 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D03
+					hostility_reason = asked_to_join
+				}
+			}		
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D04 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D04
+					hostility_reason = asked_to_join
+				}
+			}	
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D05 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D05
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D06 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D06
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D07 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D07
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D08 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D08
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D09 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D09
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D10 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D10
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D11 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D11
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D12 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D12
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D13 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D13
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D14 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = 14
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D15 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D15
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D16 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D16
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D17 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D17
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D18 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D18
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D19 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D19
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D20 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D20
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D21 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D21
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D22 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D22
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D23 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D23
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D24 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D24
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D25 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D25
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D26 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D26
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D27 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D27
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D28 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D28
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D29 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D29
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D30 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D30
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D31 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D31
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D32 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D32
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D33 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D33
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D34 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D34
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D35 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D35
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D36 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D36
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D37 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D37
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D38 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D38
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D39 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D39
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D40 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D4
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D41 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D41
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D42 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D42
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D43 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D43
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D44 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D44
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D45 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D45
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D46 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D46
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D47 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D47
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D48 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D48
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D49 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D49
+					hostility_reason = asked_to_join
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						has_civil_war = yes
+					}
+					D50 = {
+						has_War_with = AZE
+						original_tag = AZE
+					}
+					PER = {
+						has_war = no
+					}
+				}
+				add_to_war = { 
+					targeted_alliance = AZE 
+					enemy = D50
+					hostility_reason = asked_to_join
+				}
+			}			
 		}
 	}
 	focus = {
@@ -11814,7 +12935,16 @@ focus_tree = {
 
 
 		completion_reward = {
-			#need
+			if = {
+				limit = {
+					AZE = {
+						is_subject_of = PER
+					}
+				}
+				AZE = {
+					add_ideas = { PER_eternal_support }
+				}
+			}			
 		}
 	}
 	focus = {
