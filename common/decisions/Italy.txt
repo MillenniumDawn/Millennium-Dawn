@@ -1508,7 +1508,7 @@ mafia_ITA = {
 		ai_will_do = {
 			factor = 1
 			modifier = {
-				factor = The_Clergy_opinion
+				factor = the_clergy_opinion
 				always = yes
 			}
 			modifier = {
@@ -1517,7 +1517,7 @@ mafia_ITA = {
 			}
 			modifier = {
 				factor = 0
-				check_variable = { The_Clergy_opinion < 50 }
+				check_variable = { the_clergy_opinion < 50 }
 			}
 		}
 	}
@@ -1543,7 +1543,7 @@ mafia_ITA = {
 		ai_will_do = {
 			factor = 1
 			modifier = {
-				factor = The_Clergy_opinion
+				factor = the_clergy_opinion
 				always = yes
 			}
 			modifier = {
@@ -1552,7 +1552,7 @@ mafia_ITA = {
 			}
 			modifier = {
 				factor = 0
-				check_variable = { The_Clergy_opinion < 50 }
+				check_variable = { the_clergy_opinion < 50 }
 			}
 		}
 	}
@@ -1578,7 +1578,7 @@ mafia_ITA = {
 		ai_will_do = {
 			factor = 1
 			modifier = {
-				factor = The_Clergy_opinion
+				factor = the_clergy_opinion
 				always = yes
 			}
 			modifier = {
@@ -1587,7 +1587,7 @@ mafia_ITA = {
 			}
 			modifier = {
 				factor = 0
-				check_variable = { The_Clergy_opinion < 50 }
+				check_variable = { the_clergy_opinion < 50 }
 			}
 		}
 	}
@@ -1613,7 +1613,7 @@ mafia_ITA = {
 		ai_will_do = {
 			factor = 1
 			modifier = {
-				factor = The_Clergy_opinion
+				factor = the_clergy_opinion
 				always = yes
 			}
 			modifier = {
@@ -1622,7 +1622,7 @@ mafia_ITA = {
 			}
 			modifier = {
 				factor = 0
-				check_variable = { The_Clergy_opinion < 50 }
+				check_variable = { the_clergy_opinion < 50 }
 			}
 		}
 	}
@@ -2005,11 +2005,11 @@ generic_ITA = {
 		available = {
 			tag = ITA
 			has_completed_focus = ITA_economic_support_for_the_church
-			has_idea = The_Clergy
+			has_idea = the_clergy
 		}
 		visible = {
 			has_completed_focus = ITA_economic_support_for_the_church
-			check_variable = { The_Clergy_opinion < 100 }
+			check_variable = { the_clergy_opinion < 100 }
         }
 
 		custom_cost_trigger = {
@@ -2038,7 +2038,7 @@ generic_ITA = {
 			}
 			modifier = {
 				factor = 0
-				check_variable = { The_Clergy_opinion > 95 }
+				check_variable = { the_clergy_opinion > 95 }
 			}
 		}
 	}
@@ -2111,7 +2111,7 @@ generic_ITA = {
 					elections_allowed = yes
 				}
 				random_list = {
-					50 = {
+					33 = {
 						create_country_leader = {
 							name = "Mario Monti"
 							picture = "mario_monti.dds"
@@ -2121,10 +2121,20 @@ generic_ITA = {
 							}
 						}
 					}
-					50 = {
+					33 = {
 						create_country_leader = {
 							name = "Mario Draghi"
 							picture = "mario_draghi.dds"
+							ideology = Western_Autocracy
+							traits = {
+								western_technocrat
+							}
+						}
+					}
+					33 = {
+						create_country_leader = {
+							name = "Carlo Cottarelli"
+							picture = "Carlo_Cottarelli.dds"
 							ideology = Western_Autocracy
 							traits = {
 								western_technocrat
@@ -3908,9 +3918,18 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_libertarians_are_in_power = yes
 				western_liberals_are_in_power = yes
-				has_country_leader_with_trait = western_technocrat
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+					}
+				}
 			}
 			OR = {
 				has_completed_focus = ITA_legalize_light_drugs
@@ -3996,654 +4015,14 @@ policies_ITA = {
 		}
 	}
 
-	ITA_let_companies_fail_decision = {
-		icon = generic_decision
-		cost = 50
-		available = {
-			OR = {
-				neutrality_neutral_libertarians_are_in_power = yes
-				western_liberals_are_in_power = yes
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					emerging_autocracy_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					neutrality_neutral_autocracy_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					neutrality_neutral_oligarch_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					western_autocrats_are_in_power = yes
-				}
-				has_country_leader_with_trait = western_technocrat
-			}
-			has_completed_focus = ITA_let_companies_fail
-			NOT = { has_idea = ITA_dynamic_economy }
-			NOT = { has_idea = ITA_zombie_companies }
-		}
-		visible = {
-			has_completed_focus = ITA_let_companies_fail
-			NOT = { has_idea = ITA_dynamic_economy }
-			NOT = { has_idea = ITA_zombie_companies }
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_let_companies_fail_decision executed"
-			set_temp_variable = { drift_switch_change = -0.01 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = -0.05 }
-			set_temp_variable = { temp_outlook_increase = -0.025 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { temp_opinion = -5 }
-			change_labour_unions_opinion = yes
-			add_ideas = ITA_dynamic_economy
-		}
-		ai_will_do = {
-			factor = 20
-		}
-	}
-
-	ITA_let_companies_fail_decision_repeal = {
-		icon = generic_decision
-		cost = 100
-		available = {
-			has_idea = ITA_dynamic_economy
-		}
-		visible = {
-			has_idea = ITA_dynamic_economy
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_let_companies_fail_decision_repeal executed"
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.05 }
-			set_temp_variable = { temp_outlook_increase = 0.025 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { temp_opinion = 5 }
-			change_labour_unions_opinion = yes
-			remove_ideas = ITA_dynamic_economy
-		}
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 5
-				OR = {
-					neutrality_neutral_green_are_in_power = yes
-					neutrality_neutral_social_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power = yes
-					emerging_anarchist_communism_are_in_power = yes
-					western_conservatism_are_in_power = yes
-					western_social_democrats_are_in_power = yes
-				}
-			}
-		}
-	}
-
-	ITA_modify_article_18_decision = {
-		icon = generic_decision
-		cost = 50
-		available = {
-			OR = {
-				neutrality_neutral_conservatism_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				western_liberals_are_in_power = yes
-				western_conservatism_are_in_power = yes
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					emerging_autocracy_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					neutrality_neutral_autocracy_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					neutrality_neutral_oligarch_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					western_autocrats_are_in_power = yes
-				}
-				has_country_leader_with_trait = western_technocrat
-			}
-			OR = {
-				has_completed_focus = ITA_modify_article_18
-				has_completed_focus = ITA_modify_article_18_2
-			}
-			NOT = { has_idea = ITA_flexible_labour_market }
-			NOT = { has_idea = ITA_rigid_labour_market }
-		}
-		visible = {
-			OR = {
-				has_completed_focus = ITA_modify_article_18
-				has_completed_focus = ITA_modify_article_18_2
-			}
-			NOT = { has_idea = ITA_flexible_labour_market }
-			NOT = { has_idea = ITA_rigid_labour_market }
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_modify_article_18_decision executed"
-			set_temp_variable = { drift_switch_change = -0.01 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = -0.05 }
-			set_temp_variable = { temp_outlook_increase = -0.025 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { temp_opinion = -5 }
-			change_labour_unions_opinion = yes
-			add_ideas = ITA_flexible_labour_market
-		}
-		ai_will_do = {
-			factor = 20
-		}
-	}
-
-	ITA_modify_article_18_decision_repeal = {
-		icon = generic_decision
-		cost = 100
-		available = {
-			has_idea = ITA_flexible_labour_market
-		}
-		visible = {
-			has_idea = ITA_flexible_labour_market
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_modify_article_18_decision_repeal executed"
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.05 }
-			set_temp_variable = { temp_outlook_increase = 0.025 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { temp_opinion = 5 }
-			change_labour_unions_opinion = yes
-			remove_ideas = ITA_flexible_labour_market
-		}
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 5
-				OR = {
-					neutrality_neutral_green_are_in_power = yes
-					neutrality_neutral_social_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power = yes
-					emerging_anarchist_communism_are_in_power = yes
-					western_conservatism_are_in_power = yes
-					western_social_democrats_are_in_power = yes
-				}
-			}
-		}
-	}
-
-	ITA_refound_IRI_decision = {
-		icon = generic_decision
-		cost = 50
-		available = {
-			OR = {
-				nationalist_right_wing_populists_are_in_power = yes
-				emerging_anarchist_communism_are_in_power = yes
-				nationalist_fascist_are_in_power = yes
-				neutrality_neutral_social_are_in_power = yes
-				emerging_reactionaries_are_in_power = yes
-			}
-			OR = {
-				has_completed_focus = ITA_refound_IRI
-				has_completed_focus = ITA_refound_IRI_2
-				has_completed_focus = ITA_refound_IRI_3
-			}
-			NOT = { has_idea = ITA_privatizations }
-			NOT = { has_idea = ITA_IRI }
-		}
-		visible = {
-			OR = {
-				has_completed_focus = ITA_refound_IRI
-				has_completed_focus = ITA_refound_IRI_2
-				has_completed_focus = ITA_refound_IRI_3
-			}
-			NOT = { has_idea = ITA_privatizations }
-			NOT = { has_idea = ITA_IRI }
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_refound_IRI_decision executed"
-			set_temp_variable = { drift_switch_change = 0.005 }
-			modify_reform_expectance_effect = yes
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = 0.25 }
-			modify_interest_rate_multiplier_modifier_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = -0.005 }
-			set_temp_variable = { treasury_change = money_amount }
-			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.04 }
-			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
-			add_political_power = 150
-			add_ideas = ITA_IRI
-		}
-		ai_will_do = {
-			factor = 20
-		}
-	}
-
-	ITA_refound_IRI_decision_repeal = {
-		icon = generic_decision
-		cost = 100
-		available = {
-			has_idea = ITA_IRI
-		}
-		visible = {
-			has_idea = ITA_IRI
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_refound_IRI_decision_repeal executed"
-			set_temp_variable = { drift_switch_change = -0.01 }
-			modify_reform_expectance_effect = yes
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = -0.25 }
-			modify_interest_rate_multiplier_modifier_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = 0.004 }
-			set_temp_variable = { treasury_change = money_amount }
-			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = -0.04 }
-			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
-			add_political_power = -150
-			remove_ideas = ITA_IRI
-		}
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 5
-				OR = {
-					western_conservatism_are_in_power = yes
-					western_social_democrats_are_in_power = yes
-					neutrality_neutral_libertarians_are_in_power = yes
-					western_liberals_are_in_power = yes
-				}
-			}
-		}
-	}
-
-	ITA_citizenship_income_decision = {
-		icon = generic_decision
-		cost = 50
-		available = {
-			emerging_anarchist_communism_are_in_power = yes
-			OR = {
-				has_completed_focus = ITA_citizenship_income
-				has_completed_focus = ITA_citizenship_income_2
-			}
-			NOT = { has_idea = ITA_citizenship_income_spirit }
-		}
-		visible = {
-			OR = {
-				has_completed_focus = ITA_citizenship_income
-				has_completed_focus = ITA_citizenship_income_2
-			}
-			NOT = { has_idea = ITA_citizenship_income_spirit }
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_citizenship_income_decision executed"
-			set_temp_variable = { drift_switch_change = 0.02 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.04 }
-			set_temp_variable = { temp_outlook_increase = 0.02 }
-			add_relative_party_popularity = yes
-			add_political_power = 150
-			add_ideas = ITA_citizenship_income_spirit
-		}
-		ai_will_do = {
-			factor = 20
-		}
-	}
-
-	ITA_citizenship_income_decision_repeal = {
-		icon = generic_decision
-		cost = 50
-		available = {
-			has_idea = ITA_citizenship_income_spirit
-		}
-		visible = {
-			has_idea = ITA_citizenship_income_spirit
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_citizenship_income_decision_repeal executed"
-			set_temp_variable = { drift_switch_change = -0.03 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = -0.04 }
-			set_temp_variable = { temp_outlook_increase = -0.02 }
-			add_relative_party_popularity = yes
-			add_political_power = -150
-			remove_ideas = ITA_citizenship_income_spirit
-		}
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 5
-				emerging_anarchist_communism_are_not_in_power = yes
-			}
-		}
-	}
-
-	ITA_sell_government_shares_in_companies_decision = {
-		icon = generic_decision
-		cost = 50
-		available = {
-			OR = {
-				western_conservatism_are_in_power = yes
-				western_social_democrats_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				western_liberals_are_in_power = yes
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					emerging_autocracy_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					neutrality_neutral_autocracy_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					neutrality_neutral_oligarch_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					western_autocrats_are_in_power = yes
-				}
-				has_country_leader_with_trait = western_technocrat
-			}
-			OR = {
-				has_completed_focus = ITA_sell_government_shares_in_companies
-				has_completed_focus = ITA_sell_government_shares_in_companies_2
-			}
-			NOT = { has_idea = ITA_privatizations }
-			NOT = { has_idea = ITA_IRI }
-		}
-		visible = {
-			OR = {
-				has_completed_focus = ITA_sell_government_shares_in_companies
-				has_completed_focus = ITA_sell_government_shares_in_companies_2
-			}
-			NOT = { has_idea = ITA_privatizations }
-			NOT = { has_idea = ITA_IRI }
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_sell_government_shares_in_companies_decision executed"
-			set_temp_variable = { drift_switch_change = -0.01 }
-			modify_reform_expectance_effect = yes
-			add_ideas = ITA_privatizations
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = -0.5 }
-			modify_interest_rate_multiplier_modifier_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = 0.005 }
-			set_temp_variable = { treasury_change = money_amount }
-			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = -0.10 }
-			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { temp_opinion = 5 }
-			change_international_bankers_opinion = yes
-		}
-		ai_will_do = {
-			factor = 20
-		}
-	}
-
-	ITA_sell_government_shares_in_companies_decision_repeal = {
-		icon = generic_decision
-		cost = 100
-		available = {
-			has_idea = ITA_privatizations
-		}
-		visible = {
-			has_idea = ITA_privatizations
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_sell_government_shares_in_companies_decision_repeal executed"
-			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = 0.5 }
-			modify_interest_rate_multiplier_modifier_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = -0.006 }
-			set_temp_variable = { treasury_change = money_amount }
-			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { temp_opinion = -5 }
-			change_international_bankers_opinion = yes
-			remove_ideas = ITA_privatizations
-		}
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 5
-				OR = {
-					nationalist_right_wing_populists_are_in_power = yes
-					emerging_anarchist_communism_are_in_power = yes
-					nationalist_fascist_are_in_power = yes
-					neutrality_neutral_social_are_in_power = yes
-				}
-			}
-		}
-	}
-
-	ITA_privatize_water_distribution_decision = {
-		icon = generic_decision
-		cost = 50
-		available = {
-			OR = {
-				western_conservatism_are_in_power = yes
-				western_social_democrats_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				western_liberals_are_in_power = yes
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					emerging_autocracy_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					neutrality_neutral_autocracy_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					neutrality_neutral_oligarch_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					western_autocrats_are_in_power = yes
-				}
-				has_country_leader_with_trait = western_technocrat
-			}
-			has_idea = ITA_privatizations
-			NOT = { has_country_flag = ITA_private_water }
-		}
-		visible = {
-			has_idea = ITA_privatizations
-			NOT = { has_country_flag = ITA_private_water }
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_water_distribution_decision executed"
-			set_temp_variable = { drift_switch_change = -0.01 }
-			modify_reform_expectance_effect = yes
-			set_temp_variable = { ITA_health_cost_multiplier_modifier_change = -0.15 }
-			modify_health_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { ITA_stability_factor_change = -0.1 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = 0.003 }
-			set_temp_variable = { treasury_change = money_amount }
-			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = -0.10 }
-			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
-			set_country_flag = ITA_private_water
-		}
-		ai_will_do = {
-			factor = 20
-		}
-	}
-
-	ITA_privatize_water_distribution_decision_repeal = {
-		icon = generic_decision
-		cost = 100
-		available = {
-			has_country_flag = ITA_private_water
-		}
-		visible = {
-			has_country_flag = ITA_private_water
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_water_distribution_decision_repeal executed"
-			set_temp_variable = { ITA_health_cost_multiplier_modifier_change = 0.15 }
-			modify_health_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { ITA_stability_factor_change = 0.1 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = -0.004 }
-			set_temp_variable = { treasury_change = money_amount }
-			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
-			clr_country_flag = ITA_private_water
-		}
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 5
-				has_statalist_government = yes
-			}
-		}
-	}
-
-	ITA_privatize_museum_system_decision = {
-		icon = generic_decision
-		cost = 50
-		available = {
-			OR = {
-				western_conservatism_are_in_power = yes
-				western_social_democrats_are_in_power = yes
-				neutrality_neutral_libertarians_are_in_power = yes
-				western_liberals_are_in_power = yes
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					emerging_autocracy_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					neutrality_neutral_autocracy_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					neutrality_neutral_oligarch_are_in_power = yes
-				}
-				AND = {
-					has_completed_focus = ITA_recognize_free_market_efficiency
-					western_autocrats_are_in_power = yes
-				}
-				has_country_leader_with_trait = western_technocrat
-			}
-			has_idea = ITA_privatizations
-			NOT = { has_country_flag = ITA_private_museums }
-		}
-		visible = {
-			has_idea = ITA_privatizations
-			NOT = { has_country_flag = ITA_private_museums }
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_museum_system_decision executed"
-			set_temp_variable = { ITA_education_cost_multiplier_modifier_change = -0.1 }
-			modify_education_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { drift_switch_change = -0.01 }
-			modify_reform_expectance_effect = yes
-			set_temp_variable = { ITA_stability_factor_change = -0.05 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = 0.003 }
-			set_temp_variable = { treasury_change = money_amount }
-			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = -0.10 }
-			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
-			set_country_flag = ITA_private_museums
-		}
-		ai_will_do = {
-			factor = 20
-		}
-	}
-
-	ITA_privatize_museum_system_decision_repeal = {
-		icon = generic_decision
-		cost = 100
-		available = {
-			has_country_flag = ITA_private_museums
-		}
-		visible = {
-			has_country_flag = ITA_private_museums
-        }
-
-		days_re_enable = 365
-		complete_effect = {
-			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_museum_system_decision_repeal executed"
-			set_temp_variable = { ITA_education_cost_multiplier_modifier_change = 0.1 }
-			modify_education_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { ITA_stability_factor_change = 0.05 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { money_amount = gdp_total }
-			multiply_temp_variable = { money_amount = -0.004 }
-			set_temp_variable = { treasury_change = money_amount }
-			modify_treasury_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
-			set_country_flag = ITA_private_museums
-		}
-		ai_will_do = {
-			factor = 20
-		}
-	}
-
 	ITA_legalize_all_drugs_decision = {
 		icon = generic_decision
 		cost = 50
 		available = {
 			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_libertarians_are_in_power = yes
 				AND = {
 					has_country_leader_with_trait = western_technocrat
@@ -4715,13 +4094,674 @@ policies_ITA = {
 		}
 	}
 
+	ITA_let_companies_fail_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				western_liberals_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_let_companies_fail
+			NOT = { has_idea = ITA_dynamic_economy }
+			NOT = { has_idea = ITA_zombie_companies }
+		}
+		visible = {
+			has_completed_focus = ITA_let_companies_fail
+			NOT = { has_idea = ITA_dynamic_economy }
+			NOT = { has_idea = ITA_zombie_companies }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_let_companies_fail_decision executed"
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.025 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+			add_ideas = ITA_dynamic_economy
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_let_companies_fail_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_idea = ITA_dynamic_economy
+		}
+		visible = {
+			has_idea = ITA_dynamic_economy
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_let_companies_fail_decision_repeal executed"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.025 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+			remove_ideas = ITA_dynamic_economy
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				OR = {
+					neutrality_neutral_green_are_in_power = yes
+					neutrality_neutral_social_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+		}
+	}
+
+	ITA_modify_article_18_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+						western_conservatism_are_in_coalition = yes
+						neutrality_neutral_conservatism_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_modify_article_18
+			NOT = { has_idea = ITA_flexible_labour_market }
+			NOT = { has_idea = ITA_rigid_labour_market }
+		}
+		visible = {
+			has_completed_focus = ITA_modify_article_18
+			NOT = { has_idea = ITA_flexible_labour_market }
+			NOT = { has_idea = ITA_rigid_labour_market }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_modify_article_18_decision executed"
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.025 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+			add_ideas = ITA_flexible_labour_market
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_modify_article_18_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_idea = ITA_flexible_labour_market
+		}
+		visible = {
+			has_idea = ITA_flexible_labour_market
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_modify_article_18_decision_repeal executed"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.025 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+			remove_ideas = ITA_flexible_labour_market
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				OR = {
+					neutrality_neutral_green_are_in_power = yes
+					neutrality_neutral_social_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+		}
+	}
+
+	ITA_refound_IRI_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				nationalist_monarchists_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						nationalist_right_wing_populists_are_in_coalition = yes
+						emerging_anarchist_communism_are_in_coalition = yes
+						nationalist_fascist_are_in_coalition = yes
+						neutrality_neutral_social_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_refound_IRI
+			NOT = { has_idea = ITA_privatizations }
+			NOT = { has_idea = ITA_IRI }
+		}
+		visible = {
+			has_completed_focus = ITA_refound_IRI
+			NOT = { has_idea = ITA_privatizations }
+			NOT = { has_idea = ITA_IRI }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_refound_IRI_decision executed"
+			set_temp_variable = { drift_switch_change = 0.005 }
+			modify_reform_expectance_effect = yes
+			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = 0.25 }
+			modify_interest_rate_multiplier_modifier_effect = yes
+			set_temp_variable = { money_amount = gdp_total }
+			multiply_temp_variable = { money_amount = -0.005 }
+			set_temp_variable = { treasury_change = money_amount }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			add_political_power = 150
+			add_ideas = ITA_IRI
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_refound_IRI_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_idea = ITA_IRI
+		}
+		visible = {
+			has_idea = ITA_IRI
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_refound_IRI_decision_repeal executed"
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = -0.25 }
+			modify_interest_rate_multiplier_modifier_effect = yes
+			set_temp_variable = { money_amount = gdp_total }
+			multiply_temp_variable = { money_amount = 0.004 }
+			set_temp_variable = { treasury_change = money_amount }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.04 }
+			set_temp_variable = { temp_outlook_increase = -0.02 }
+			add_relative_party_popularity = yes
+			add_political_power = -150
+			remove_ideas = ITA_IRI
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				OR = {
+					western_conservatism_are_in_power = yes
+					western_social_democrats_are_in_power = yes
+					neutrality_neutral_libertarians_are_in_power = yes
+					neutrality_neutral_conservatism_are_in_power = yes
+					western_liberals_are_in_power = yes
+				}
+			}
+		}
+	}
+
+	ITA_citizenship_income_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				nationalist_monarchists_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					emerging_anarchist_communism_are_in_coalition = yes
+				}
+			}
+			has_completed_focus = ITA_citizenship_income
+			NOT = { has_idea = ITA_citizenship_income_spirit }
+		}
+		visible = {
+			has_completed_focus = ITA_citizenship_income
+			NOT = { has_idea = ITA_citizenship_income_spirit }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_citizenship_income_decision executed"
+			set_temp_variable = { drift_switch_change = 0.02 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			add_political_power = 150
+			add_ideas = ITA_citizenship_income_spirit
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+	}
+
+	ITA_citizenship_income_decision_repeal = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			has_idea = ITA_citizenship_income_spirit
+		}
+		visible = {
+			has_idea = ITA_citizenship_income_spirit
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_citizenship_income_decision_repeal executed"
+			set_temp_variable = { drift_switch_change = -0.03 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.04 }
+			set_temp_variable = { temp_outlook_increase = -0.02 }
+			add_relative_party_popularity = yes
+			add_political_power = -150
+			remove_ideas = ITA_citizenship_income_spirit
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				NOT = {
+					OR = {
+						nationalist_monarchists_are_in_power = yes
+						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = roman_senate_trait
+							emerging_anarchist_communism_are_in_coalition = yes
+						}
+					}
+				}
+			}
+		}
+	}
+
+	ITA_sell_government_shares_in_companies_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				western_liberals_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						western_conservatism_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						neutrality_neutral_conservatism_are_in_coalition = yes
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_sell_government_shares_in_companies
+			NOT = { has_idea = ITA_privatizations }
+			NOT = { has_idea = ITA_IRI }
+		}
+		visible = {
+			has_completed_focus = ITA_sell_government_shares_in_companies
+			NOT = { has_idea = ITA_privatizations }
+			NOT = { has_idea = ITA_IRI }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_sell_government_shares_in_companies_decision executed"
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			add_ideas = ITA_privatizations
+			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = -0.5 }
+			modify_interest_rate_multiplier_modifier_effect = yes
+			set_temp_variable = { money_amount = gdp_total }
+			multiply_temp_variable = { money_amount = 0.005 }
+			set_temp_variable = { treasury_change = money_amount }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.10 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_sell_government_shares_in_companies_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_idea = ITA_privatizations
+		}
+		visible = {
+			has_idea = ITA_privatizations
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_sell_government_shares_in_companies_decision_repeal executed"
+			set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = 0.5 }
+			modify_interest_rate_multiplier_modifier_effect = yes
+			set_temp_variable = { money_amount = gdp_total }
+			multiply_temp_variable = { money_amount = -0.006 }
+			set_temp_variable = { treasury_change = money_amount }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_international_bankers_opinion = yes
+			remove_ideas = ITA_privatizations
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				NOT = {
+					OR = {
+						non_technocrats_western_autocrats_are_in_power = yes
+						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						western_conservatism_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						western_liberals_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = western_technocrat
+							OR = {
+								western_conservatism_are_in_coalition = yes
+								western_social_democrats_are_in_coalition = yes
+								neutrality_neutral_libertarians_are_in_coalition = yes
+								western_liberals_are_in_coalition = yes
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	ITA_privatize_water_distribution_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				western_liberals_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						western_conservatism_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+					}
+				}
+			}
+			has_idea = ITA_privatizations
+			has_completed_focus = ITA_privatize_water_distribution
+			NOT = { has_country_flag = ITA_private_water }
+		}
+		visible = {
+			has_idea = ITA_privatizations
+			has_completed_focus = ITA_privatize_water_distribution
+			NOT = { has_country_flag = ITA_private_water }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_water_distribution_decision executed"
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			set_temp_variable = { ITA_health_cost_multiplier_modifier_change = -0.15 }
+			modify_health_cost_multiplier_modifier_effect = yes
+			set_temp_variable = { ITA_stability_factor_change = -0.1 }
+			modify_stability_factor_effect = yes
+			set_temp_variable = { money_amount = gdp_total }
+			multiply_temp_variable = { money_amount = 0.003 }
+			set_temp_variable = { treasury_change = money_amount }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.10 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
+			set_country_flag = ITA_private_water
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_privatize_water_distribution_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_country_flag = ITA_private_water
+		}
+		visible = {
+			has_country_flag = ITA_private_water
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_water_distribution_decision_repeal executed"
+			set_temp_variable = { ITA_health_cost_multiplier_modifier_change = 0.15 }
+			modify_health_cost_multiplier_modifier_effect = yes
+			set_temp_variable = { ITA_stability_factor_change = 0.1 }
+			modify_stability_factor_effect = yes
+			set_temp_variable = { money_amount = gdp_total }
+			multiply_temp_variable = { money_amount = -0.004 }
+			set_temp_variable = { treasury_change = money_amount }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			clr_country_flag = ITA_private_water
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				has_statalist_government = yes
+			}
+		}
+	}
+
+	ITA_privatize_museum_system_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				western_liberals_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						western_conservatism_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_privatize_museum_system
+			has_idea = ITA_privatizations
+			NOT = { has_country_flag = ITA_private_museums }
+		}
+		visible = {
+			has_completed_focus = ITA_privatize_museum_system
+			has_idea = ITA_privatizations
+			NOT = { has_country_flag = ITA_private_museums }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_museum_system_decision executed"
+			set_temp_variable = { ITA_education_cost_multiplier_modifier_change = -0.1 }
+			modify_education_cost_multiplier_modifier_effect = yes
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			set_temp_variable = { ITA_stability_factor_change = -0.05 }
+			modify_stability_factor_effect = yes
+			set_temp_variable = { money_amount = gdp_total }
+			multiply_temp_variable = { money_amount = 0.003 }
+			set_temp_variable = { treasury_change = money_amount }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.10 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
+			set_country_flag = ITA_private_museums
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_privatize_museum_system_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_country_flag = ITA_private_museums
+		}
+		visible = {
+			has_country_flag = ITA_private_museums
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_privatize_museum_system_decision_repeal executed"
+			set_temp_variable = { ITA_education_cost_multiplier_modifier_change = 0.1 }
+			modify_education_cost_multiplier_modifier_effect = yes
+			set_temp_variable = { ITA_stability_factor_change = 0.05 }
+			modify_stability_factor_effect = yes
+			set_temp_variable = { money_amount = gdp_total }
+			multiply_temp_variable = { money_amount = -0.004 }
+			set_temp_variable = { treasury_change = money_amount }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_country_flag = ITA_private_museums
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				has_statalist_government = yes
+			}
+		}
+	}
+
 	ITA_protect_our_traditions_decision = {
 		icon = generic_decision
 		cost = 50
 		available = {
 			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				nationalist_right_wing_populists_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						nationalist_fascist_are_in_coalition = yes
+						nationalist_right_wing_populists_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+					}
+				}
 			}
 			has_completed_focus = ITA_protect_our_traditions
 			NOT = { has_idea = ITA_traditional_values }
@@ -4740,6 +4780,418 @@ policies_ITA = {
 		}
 		ai_will_do = {
 			factor = 20
+		}
+	}
+
+	ITA_protect_prisoners_rights_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				western_liberals_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						neutrality_neutral_green_are_in_coalition = yes
+						neutrality_neutral_social_are_in_coalition = yes
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_protect_prisoners_rights
+			NOT = { has_country_flag = ITA_prisoners_rights }
+		}
+		visible = {
+			has_completed_focus = ITA_protect_prisoners_rights
+			NOT = { has_country_flag = ITA_prisoners_rights }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_protect_prisoners_rights_decision executed"
+			set_temp_variable = { drift_switch_change = 0.01 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.04 }
+			set_temp_variable = { temp_outlook_increase = -0.02 }
+			add_relative_party_popularity = yes
+			set_country_flag = ITA_prisoners_rights
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_protect_prisoners_rights_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_country_flag = ITA_prisoners_rights
+			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
+		}
+		visible = {
+			has_country_flag = ITA_prisoners_rights
+			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_protect_prisoners_rights_decision_repeal executed"
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			clr_country_flag = ITA_prisoners_rights
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_allow_euthanasia_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				western_liberals_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						neutrality_neutral_green_are_in_coalition = yes
+						neutrality_neutral_social_are_in_coalition = yes
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_allow_euthanasia
+			NOT = { has_country_flag = ITA_allowed_euthanasia }
+		}
+		visible = {
+			has_completed_focus = ITA_allow_euthanasia
+			NOT = { has_country_flag = ITA_allowed_euthanasia }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_allow_euthanasia_decision executed"
+			set_temp_variable = { drift_switch_change = 0.01 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.04 }
+			set_temp_variable = { temp_outlook_increase = -0.02 }
+			add_relative_party_popularity = yes
+			set_country_flag = ITA_allowed_euthanasia
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_allow_euthanasia_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_country_flag = ITA_allowed_euthanasia
+			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
+		}
+		visible = {
+			has_country_flag = ITA_allowed_euthanasia
+			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_allow_euthanasia_decision_repeal executed"
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			clr_country_flag = ITA_allowed_euthanasia
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_allow_same_sex_marriage_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				western_liberals_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						neutrality_neutral_green_are_in_coalition = yes
+						neutrality_neutral_social_are_in_coalition = yes
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_allow_same_sex_marriage
+			NOT = { has_country_flag = ITA_gay_marriage }
+			NOT = { has_country_flag = ITA_banned_lgbt }
+		}
+		visible = {
+			has_completed_focus = ITA_allow_same_sex_marriage
+			NOT = { has_country_flag = ITA_gay_marriage }
+			NOT = { has_country_flag = ITA_banned_lgbt }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_allow_same_sex_marriage_decision executed"
+			set_temp_variable = { drift_switch_change = 0.01 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.04 }
+			set_temp_variable = { temp_outlook_increase = -0.02 }
+			add_relative_party_popularity = yes
+			set_country_flag = ITA_gay_marriage
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_allow_same_sex_marriage_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_country_flag = ITA_gay_marriage
+			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
+		}
+		visible = {
+			has_country_flag = ITA_gay_marriage
+			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_allow_same_sex_marriage_decision_repeal executed"
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			clr_country_flag = ITA_gay_marriage
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_outlaw_lgbt_behaviour_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						nationalist_fascist_are_in_coalition = yes
+						nationalist_right_wing_populists_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_outlaw_lgbt_behaviour
+			NOT = { has_country_flag = ITA_banned_lgbt }
+			NOT = { has_country_flag = ITA_gay_marriage }
+		}
+		visible = {
+			has_completed_focus = ITA_outlaw_lgbt_behaviour
+			NOT = { has_country_flag = ITA_banned_lgbt }
+			NOT = { has_country_flag = ITA_gay_marriage }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_outlaw_lgbt_behaviour_decision executed"
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			set_country_flag = ITA_banned_lgbt
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_outlaw_lgbt_behaviour_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_country_flag = ITA_banned_lgbt
+		}
+		visible = {
+			has_country_flag = ITA_banned_lgbt
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_outlaw_lgbt_behaviour_decision_repeal executed"
+			set_temp_variable = { drift_switch_change = 0.01 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.04 }
+			set_temp_variable = { temp_outlook_increase = -0.02 }
+			add_relative_party_popularity = yes
+			clr_country_flag = ITA_banned_lgbt
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 20
+				NOT = {
+					OR = {
+						nationalist_fascist_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_reactionaries_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = roman_senate_trait
+							OR = {
+								nationalist_fascist_are_in_coalition = yes
+								nationalist_right_wing_populists_are_in_coalition = yes
+								emerging_reactionaries_are_in_coalition = yes
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	ITA_repeal_law_194_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						nationalist_fascist_are_in_coalition = yes
+						nationalist_right_wing_populists_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_repeal_law_194
+			NOT = { has_country_flag = ITA_banned_abortion }
+			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
+		}
+		visible = {
+			has_completed_focus = ITA_repeal_law_194
+			NOT = { has_country_flag = ITA_banned_abortion }
+			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_repeal_law_194_decision executed"
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			set_country_flag = ITA_banned_abortion
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_repeal_law_194_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_country_flag = ITA_banned_abortion
+		}
+		visible = {
+			has_country_flag = ITA_banned_abortion
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_repeal_law_194_decision_repeal executed"
+			set_temp_variable = { drift_switch_change = 0.01 }
+			modify_reform_expectance_effect = yes
+			clr_country_flag = ITA_banned_abortion
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 20
+				NOT = {
+					OR = {
+						nationalist_fascist_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_reactionaries_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = roman_senate_trait
+							OR = {
+								nationalist_fascist_are_in_coalition = yes
+								nationalist_right_wing_populists_are_in_coalition = yes
+								emerging_reactionaries_are_in_coalition = yes
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -4762,6 +5214,26 @@ policies_ITA = {
 		}
 		ai_will_do = {
 			factor = 0
+			modifier = {
+				add = 5
+				NOT = {
+					OR = {
+						nationalist_fascist_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_reactionaries_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = roman_senate_trait
+							OR = {
+								nationalist_right_wing_populists_are_in_coalition = yes
+								emerging_reactionaries_are_in_coalition = yes
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -4770,33 +5242,26 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				western_conservatism_are_in_power = yes
 				neutrality_neutral_libertarians_are_in_power = yes
 				neutrality_neutral_conservatism_are_in_power = yes
 				AND = {
 					has_country_leader_with_trait = western_technocrat
-					neutrality_neutral_conservatism_are_in_coalition = yes
-				}
-				AND = {
-					has_country_leader_with_trait = western_technocrat
-					western_conservatism_are_in_coalition = yes
-				}
-				AND = {
-					has_country_leader_with_trait = western_technocrat
-					neutrality_neutral_libertarians_are_in_coalition = yes
+					OR = {
+						western_conservatism_are_in_coalition = yes
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						neutrality_neutral_conservatism_are_in_coalition = yes
+					}
 				}
 			}
-			OR = {
-				has_completed_focus = ITA_reopen_brothels
-				has_completed_focus = ITA_reopen_brothels_2
-			}
+			has_completed_focus = ITA_reopen_brothels
 			NOT = { has_idea = ITA_legalized_prostitution }
 		}
 		visible = {
-			OR = {
-				has_completed_focus = ITA_reopen_brothels
-				has_completed_focus = ITA_reopen_brothels_2
-			}
+			has_completed_focus = ITA_reopen_brothels
 			NOT = { has_idea = ITA_legalized_prostitution }
         }
 
@@ -4867,6 +5332,10 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_green_are_in_power = yes
 				neutrality_neutral_social_are_in_power = yes
 				nationalist_right_wing_populists_are_in_power = yes
@@ -4875,21 +5344,27 @@ policies_ITA = {
 				western_social_democrats_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
 				neutrality_neutral_conservatism_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						nationalist_fascist_are_in_coalition = yes
+						neutrality_neutral_green_are_in_coalition = yes
+						neutrality_neutral_social_are_in_coalition = yes
+						nationalist_right_wing_populists_are_in_coalition = yes
+						emerging_anarchist_communism_are_in_coalition = yes
+						western_conservatism_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+						neutrality_neutral_conservatism_are_in_coalition = yes
+					}
+				}
 			}
-			OR = {
-				has_completed_focus = ITA_save_struggling_companies
-				has_completed_focus = ITA_save_struggling_companies_2
-				has_completed_focus = ITA_save_struggling_companies_3
-			}
+			has_completed_focus = ITA_save_struggling_companies
 			NOT = { has_idea = ITA_zombie_companies }
 			NOT = { has_idea = ITA_dynamic_economy }
 		}
 		visible = {
-			OR = {
-				has_completed_focus = ITA_save_struggling_companies
-				has_completed_focus = ITA_save_struggling_companies_2
-				has_completed_focus = ITA_save_struggling_companies_3
-			}
+			has_completed_focus = ITA_save_struggling_companies
 			NOT = { has_idea = ITA_zombie_companies }
 			NOT = { has_idea = ITA_dynamic_economy }
         }
@@ -4941,26 +5416,35 @@ policies_ITA = {
 			factor = 0
 			modifier = {
 				add = 5
-				OR = {
-					neutrality_neutral_libertarians_are_in_power = yes
-					western_liberals_are_in_power = yes
-					AND = {
-						has_completed_focus = ITA_recognize_free_market_efficiency
-						emerging_autocracy_are_in_power = yes
-					}
-					AND = {
-						has_completed_focus = ITA_recognize_free_market_efficiency
-						neutrality_neutral_autocracy_are_in_power = yes
-					}
-					AND = {
-						has_completed_focus = ITA_recognize_free_market_efficiency
+				NOT = {
+					OR = {
+						nationalist_fascist_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
 						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						neutrality_neutral_green_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						western_conservatism_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						emerging_reactionaries_are_in_power = yes
+						neutrality_neutral_conservatism_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = roman_senate_trait
+							OR = {
+								nationalist_fascist_are_in_coalition = yes
+								neutrality_neutral_green_are_in_coalition = yes
+								neutrality_neutral_social_are_in_coalition = yes
+								nationalist_right_wing_populists_are_in_coalition = yes
+								emerging_anarchist_communism_are_in_coalition = yes
+								western_conservatism_are_in_coalition = yes
+								western_social_democrats_are_in_coalition = yes
+								emerging_reactionaries_are_in_coalition = yes
+								neutrality_neutral_conservatism_are_in_coalition = yes
+							}
+						}
 					}
-					AND = {
-						has_completed_focus = ITA_recognize_free_market_efficiency
-						western_autocrats_are_in_power = yes
-					}
-					has_country_leader_with_trait = western_technocrat
 				}
 			}
 		}
@@ -4972,16 +5456,25 @@ policies_ITA = {
 		available = {
 			has_idea = ITA_migrants_from_africa
 			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_social_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				western_liberals_are_in_power = yes
 				neutrality_neutral_libertarians_are_in_power = yes
-				has_country_leader_with_trait = western_technocrat
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						neutrality_neutral_social_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+						neutrality_neutral_libertarians_are_in_coalition = yes
+					}
+				}
 			}
 			OR = {
 				has_completed_focus = ITA_protect_migrant_rights
-				has_completed_focus = ITA_protect_migrant_rights_2
-				has_completed_focus = ITA_protect_migrant_rights_3
 				has_completed_focus = ITA_encourage_immigration
 			}
 			NOT = { has_idea = ITA_migration_tolerated }
@@ -4991,8 +5484,6 @@ policies_ITA = {
 			has_idea = ITA_migrants_from_africa
 			OR = {
 				has_completed_focus = ITA_protect_migrant_rights
-				has_completed_focus = ITA_protect_migrant_rights_2
-				has_completed_focus = ITA_protect_migrant_rights_3
 				has_completed_focus = ITA_encourage_immigration
 			}
 			NOT = { has_idea = ITA_migration_tolerated }
@@ -5057,8 +5548,11 @@ policies_ITA = {
 			modifier = {
 				add = 5
 				OR = {
+					nationalist_fascist_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
 					nationalist_right_wing_populists_are_in_power = yes
 					emerging_anarchist_communism_are_in_power = yes
+					emerging_reactionaries_are_in_power = yes
 				}
 			}
 		}
@@ -5069,6 +5563,9 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_libertarians_are_in_power = yes
 				AND = {
 					has_country_leader_with_trait = western_technocrat
@@ -5145,10 +5642,174 @@ policies_ITA = {
 			modifier = {
 				add = 5
 				OR = {
+					nationalist_fascist_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
 					nationalist_right_wing_populists_are_in_power = yes
 					emerging_anarchist_communism_are_in_power = yes
+					emerging_reactionaries_are_in_power = yes
 				}
 			}
+		}
+	}
+
+	ITA_ius_soli_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				western_liberals_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						neutrality_neutral_social_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+						neutrality_neutral_libertarians_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_ius_soli
+			OR = {
+				has_idea = ITA_migration_tolerated
+				has_idea = ITA_migrants_from_africa_encouraged
+			}
+			NOT = { has_idea = ITA_ius_scholae_spirit }
+		}
+		visible = {
+			has_completed_focus = ITA_ius_soli
+			OR = {
+				has_idea = ITA_migration_tolerated
+				has_idea = ITA_migrants_from_africa_encouraged
+			}
+			NOT = { has_idea = ITA_ius_scholae_spirit }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_ius_soli_decision executed"
+			set_temp_variable = { drift_switch_change = -0.02 }
+			modify_reform_expectance_effect = yes
+			add_ideas = ITA_ius_soli_spirit
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.1 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_ius_scholae_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				western_liberals_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						neutrality_neutral_social_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+						neutrality_neutral_libertarians_are_in_coalition = yes
+					}
+				}
+			}
+			has_completed_focus = ITA_ius_scholae
+			OR = {
+				has_idea = ITA_migration_tolerated
+				has_idea = ITA_migrants_from_africa_encouraged
+			}
+			NOT = { has_idea = ITA_ius_soli_spirit }
+		}
+		visible = {
+			has_completed_focus = ITA_ius_scholae
+			OR = {
+				has_idea = ITA_migration_tolerated
+				has_idea = ITA_migrants_from_africa_encouraged
+			}
+			NOT = { has_idea = ITA_ius_soli_spirit }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_ius_scholae_decision executed"
+			set_temp_variable = { drift_switch_change = -0.01 }
+			modify_reform_expectance_effect = yes
+			add_ideas = ITA_ius_scholae_spirit
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.025 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = {
+			factor = 20
+		}
+	}
+
+	ITA_encourage_births_decision = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						nationalist_fascist_are_in_coalition = yes
+						nationalist_right_wing_populists_are_in_coalition = yes
+						emerging_anarchist_communism_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+					}
+				}
+			}
+			has_idea = ITA_traditional_values
+			has_idea = ITA_migrants_from_africa_limited
+			has_country_flag = ITA_banned_abortion
+			has_completed_focus = ITA_encourage_births
+			NOT = { has_idea = ITA_ius_soli_spirit }
+			NOT = { has_idea = ITA_ius_scholae_spirit }
+		}
+		visible = {
+			has_completed_focus = ITA_encourage_births
+			NOT = { has_idea = ITA_ius_soli_spirit }
+			NOT = { has_idea = ITA_ius_scholae_spirit }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_encourage_births_decision executed"
+			set_temp_variable = { drift_switch_change = 0.02 }
+			modify_reform_expectance_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { ITA_social_cost_multiplier_modifier_change = 0.2 }
+			modify_social_cost_multiplier_modifier_effect = yes
+			remove_ideas = ITA_ageing_population
+		}
+		ai_will_do = {
+			factor = 20
 		}
 	}
 
@@ -5157,24 +5818,31 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				western_conservatism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_conservatism_are_in_power = yes
 				nationalist_right_wing_populists_are_in_power = yes
 				emerging_anarchist_communism_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						western_conservatism_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						neutrality_neutral_conservatism_are_in_coalition = yes
+						nationalist_right_wing_populists_are_in_coalition = yes
+						emerging_anarchist_communism_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+					}
+				}
 			}
-			OR = {
-				has_completed_focus = ITA_normalize_extraordinary_bonuses
-				has_completed_focus = ITA_normalize_extraordinary_bonuses_2
-			}
+			has_completed_focus = ITA_normalize_extraordinary_bonuses
 			NOT = { has_idea = ITA_election_tips }
 		}
 		visible = {
-			OR = {
-				has_completed_focus = ITA_normalize_extraordinary_bonuses
-				has_completed_focus = ITA_normalize_extraordinary_bonuses_2
-			}
+			has_completed_focus = ITA_normalize_extraordinary_bonuses
 			NOT = { has_idea = ITA_election_tips }
         }
 
@@ -5225,26 +5893,33 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_social_are_in_power = yes
 				nationalist_right_wing_populists_are_in_power = yes
 				emerging_anarchist_communism_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						nationalist_fascist_are_in_coalition = yes
+						neutrality_neutral_social_are_in_coalition = yes
+						nationalist_right_wing_populists_are_in_coalition = yes
+						emerging_anarchist_communism_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+					}
+				}
 			}
-			OR = {
-				has_completed_focus = ITA_further_protect_workers_rights
-				has_completed_focus = ITA_further_protect_workers_rights_2
-				has_completed_focus = ITA_further_protect_workers_rights_3
-			}
+			has_completed_focus = ITA_further_protect_workers_rights
 			NOT = { has_idea = ITA_rigid_labour_market }
 			NOT = { has_idea = ITA_flexible_labour_market }
 		}
 		visible = {
-			OR = {
-				has_completed_focus = ITA_further_protect_workers_rights
-				has_completed_focus = ITA_further_protect_workers_rights_2
-				has_completed_focus = ITA_further_protect_workers_rights_3
-			}
+			has_completed_focus = ITA_further_protect_workers_rights
 			NOT = { has_idea = ITA_rigid_labour_market }
 			NOT = { has_idea = ITA_flexible_labour_market }
         }
@@ -5296,27 +5971,29 @@ policies_ITA = {
 			factor = 0
 			modifier = {
 				add = 5
-				OR = {
-					neutrality_neutral_libertarians_are_in_power = yes
-					western_liberals_are_in_power = yes
-					western_conservatism_are_in_power = yes
-					AND = {
-						has_completed_focus = ITA_recognize_free_market_efficiency
-						emerging_autocracy_are_in_power = yes
-					}
-					AND = {
-						has_completed_focus = ITA_recognize_free_market_efficiency
-						neutrality_neutral_autocracy_are_in_power = yes
-					}
-					AND = {
-						has_completed_focus = ITA_recognize_free_market_efficiency
+				NOT = {
+					OR = {
+						nationalist_fascist_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
 						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						emerging_reactionaries_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = roman_senate_trait
+							OR = {
+								nationalist_fascist_are_in_coalition = yes
+								neutrality_neutral_social_are_in_coalition = yes
+								nationalist_right_wing_populists_are_in_coalition = yes
+								emerging_anarchist_communism_are_in_coalition = yes
+								western_social_democrats_are_in_coalition = yes
+								emerging_reactionaries_are_in_coalition = yes
+							}
+						}
 					}
-					AND = {
-						has_completed_focus = ITA_recognize_free_market_efficiency
-						western_autocrats_are_in_power = yes
-					}
-					has_country_leader_with_trait = western_technocrat
 				}
 			}
 		}
@@ -5327,21 +6004,25 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_green_are_in_power = yes
 				neutrality_neutral_social_are_in_power = yes
 				emerging_anarchist_communism_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						neutrality_neutral_green_are_in_coalition = yes
+						neutrality_neutral_social_are_in_coalition = yes
+						emerging_anarchist_communism_are_in_coalition = yes
+					}
+				}
 			}
-			OR = {
-				has_completed_focus = ITA_tax_the_rich
-				has_completed_focus = ITA_tax_the_rich_2
-			}
+			has_completed_focus = ITA_tax_the_rich
 			NOT = { has_idea = ITA_capital_flight }
 		}
 		visible = {
-			OR = {
-				has_completed_focus = ITA_tax_the_rich
-				has_completed_focus = ITA_tax_the_rich_2
-			}
+			has_completed_focus = ITA_tax_the_rich
 			NOT = { has_idea = ITA_capital_flight }
         }
 
@@ -5386,9 +6067,23 @@ policies_ITA = {
 			factor = 0
 			modifier = {
 				add = 5
-				neutrality_neutral_green_are_not_in_power = yes
-				neutrality_neutral_social_are_not_in_power = yes
-				emerging_anarchist_communism_are_not_in_power = yes
+				NOT = {
+					OR = {
+						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						neutrality_neutral_green_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = roman_senate_trait
+							OR = {
+								neutrality_neutral_green_are_in_coalition = yes
+								neutrality_neutral_social_are_in_coalition = yes
+								emerging_anarchist_communism_are_in_coalition = yes
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -5398,8 +6093,20 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				nationalist_right_wing_populists_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						nationalist_fascist_are_in_coalition = yes
+						nationalist_right_wing_populists_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+					}
+				}
 			}
 			has_completed_focus = ITA_flat_tax
 			NOT = { has_idea = ITA_flat_tax }
@@ -5447,10 +6154,27 @@ policies_ITA = {
 			remove_ideas = ITA_flat_tax
 		}
 		ai_will_do = {
-			factor = 5
+			factor = 0
 			modifier = {
-				factor = 0
-				nationalist_right_wing_populists_are_in_power = yes
+				add = 5
+				NOT = {
+					OR = {
+						nationalist_fascist_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_reactionaries_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = roman_senate_trait
+							OR = {
+								nationalist_fascist_are_in_coalition = yes
+								nationalist_right_wing_populists_are_in_coalition = yes
+								emerging_reactionaries_are_in_coalition = yes
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -5460,22 +6184,26 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_social_are_in_power = yes
 				neutrality_neutral_green_are_in_power = yes
 				western_liberals_are_in_power = yes
-				has_country_leader_with_trait = western_technocrat
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						neutrality_neutral_social_are_in_coalition = yes
+						neutrality_neutral_green_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+					}
+				}
 			}
-			OR = {
-				has_completed_focus = ITA_carbon_tax
-				has_completed_focus = ITA_carbon_tax_2
-			}
+			has_completed_focus = ITA_carbon_tax
 			NOT = { has_idea = ITA_carbon_tax }
 		}
 		visible = {
-			OR = {
-				has_completed_focus = ITA_carbon_tax
-				has_completed_focus = ITA_carbon_tax_2
-			}
+			has_completed_focus = ITA_carbon_tax
 			NOT = { has_idea = ITA_carbon_tax }
         }
 
@@ -5509,13 +6237,26 @@ policies_ITA = {
 			remove_ideas = ITA_carbon_tax
 		}
 		ai_will_do = {
-			factor = 5
+			factor = 0
 			modifier = {
-				factor = 0
-				OR = {
-					neutrality_neutral_social_are_in_power = yes
-					neutrality_neutral_green_are_in_power = yes
-					western_liberals_are_in_power = yes
+				add = 5
+				NOT = {
+					OR = {
+						non_technocrats_western_autocrats_are_in_power = yes
+						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_green_are_in_power = yes
+						western_liberals_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = western_technocrat
+							OR = {
+								neutrality_neutral_social_are_in_coalition = yes
+								neutrality_neutral_green_are_in_coalition = yes
+								western_liberals_are_in_coalition = yes
+							}
+						}
+					}
 				}
 			}
 		}
@@ -5525,7 +6266,21 @@ policies_ITA = {
 		icon = generic_decision
 		cost = 50
 		available = {
-			neutrality_neutral_social_are_in_power = yes
+			OR = {
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						neutrality_neutral_social_are_in_coalition = yes
+						neutrality_neutral_green_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+					}
+				}
+			}
 			has_completed_focus = ITA_raise_minimum_wage
 			NOT = { has_idea = ITA_high_minimum_wage }
 		}
@@ -5576,10 +6331,20 @@ policies_ITA = {
 			remove_ideas = ITA_high_minimum_wage
 		}
 		ai_will_do = {
-			factor = 5
+			factor = 0
 			modifier = {
-				factor = 0
-				neutrality_neutral_social_are_in_power = yes
+				add = 5
+				NOT = {
+					OR = {
+						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = roman_senate_trait
+							neutrality_neutral_social_are_in_coalition = yes
+						}
+					}
+				}
 			}
 		}
 	}
@@ -5588,13 +6353,23 @@ policies_ITA = {
 		icon = generic_decision
 		cost = 50
 		available = {
-			neutrality_neutral_green_are_in_power = yes
+			OR = {
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					neutrality_neutral_green_are_in_coalition = yes
+				}
+			}
 			has_completed_focus = ITA_ban_gmos
 			NOT = { has_idea = ITA_gmos_banned }
+			NOT = { has_idea = ITA_gmos_encouraged }
 		}
 		visible = {
 			has_completed_focus = ITA_ban_gmos
 			NOT = { has_idea = ITA_gmos_banned }
+			NOT = { has_idea = ITA_gmos_encouraged }
         }
 
 		days_re_enable = 365
@@ -5635,10 +6410,20 @@ policies_ITA = {
 			remove_ideas = ITA_gmos_banned
 		}
 		ai_will_do = {
-			factor = 30
+			factor = 0
 			modifier = {
-				factor = 0
-				neutrality_neutral_green_are_in_power = yes
+				add = 30
+				NOT = {
+					OR = {
+						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						neutrality_neutral_green_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = roman_senate_trait
+							neutrality_neutral_green_are_in_coalition = yes
+						}
+					}
+				}
 			}
 		}
 	}
@@ -5650,9 +6435,11 @@ policies_ITA = {
 			neutrality_neutral_green_are_not_in_power = yes
 			has_completed_focus = ITA_encourage_gmos
 			NOT = { has_idea = ITA_gmos_encouraged }
+			NOT = { has_idea = ITA_gmos_banned }
 		}
 		visible = {
 			has_completed_focus = ITA_encourage_gmos
+			NOT = { has_idea = ITA_gmos_banned }
 			NOT = { has_idea = ITA_gmos_encouraged }
         }
 
@@ -5694,7 +6481,15 @@ policies_ITA = {
 		icon = generic_decision
 		cost = 50
 		available = {
-			neutrality_neutral_green_are_in_power = yes
+			OR = {
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					neutrality_neutral_green_are_in_coalition = yes
+				}
+			}
 			has_completed_focus = ITA_ban_nuclear_power
 			NOT = { has_idea = ITA_nuclear_power_banned }
 		}
@@ -5719,7 +6514,11 @@ policies_ITA = {
 			add_ideas = ITA_nuclear_power_banned
 		}
 		ai_will_do = {
-			factor = 20
+			factor = 0
+			modifier = {
+				add = 5
+				neutrality_neutral_green_are_in_power = yes
+			}
 		}
 	}
 
@@ -5757,7 +6556,15 @@ policies_ITA = {
 		icon = generic_decision
 		cost = 50
 		available = {
-			neutrality_neutral_green_are_in_power = yes
+			OR = {
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					neutrality_neutral_green_are_in_coalition = yes
+				}
+			}
 			has_completed_focus = ITA_encourage_renewables
 			NOT = { has_idea = ITA_green_subsidies }
 		}
@@ -5778,7 +6585,11 @@ policies_ITA = {
 			add_ideas = ITA_green_subsidies
 		}
 		ai_will_do = {
-			factor = 20
+			factor = 0
+			modifier = {
+				add = 5
+				neutrality_neutral_green_are_in_power = yes
+			}
 		}
 	}
 
@@ -5804,7 +6615,7 @@ policies_ITA = {
 			remove_ideas = ITA_green_subsidies
 		}
 		ai_will_do = {
-			factor = 5
+			factor = 20
 			modifier = {
 				factor = 0
 				neutrality_neutral_green_are_in_power = yes
@@ -5816,7 +6627,13 @@ policies_ITA = {
 		icon = generic_decision
 		cost = 50
 		available = {
-			neutrality_neutral_green_are_in_power = yes
+			OR = {
+				neutrality_neutral_green_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					neutrality_neutral_green_are_in_coalition = yes
+				}
+			}
 			has_completed_focus = ITA_happy_degrowth
 			NOT = { has_idea = ITA_happy_degrowth_spirit }
 		}
@@ -5835,7 +6652,11 @@ policies_ITA = {
 			add_ideas = ITA_happy_degrowth_spirit
 		}
 		ai_will_do = {
-			factor = 20
+			factor = 0
+			modifier = {
+				add = 20
+				neutrality_neutral_green_are_in_power = yes
+			}
 		}
 	}
 
@@ -5859,10 +6680,12 @@ policies_ITA = {
 			remove_ideas = ITA_happy_degrowth_spirit
 		}
 		ai_will_do = {
-			factor = 1000
+			factor = 0
 			modifier = {
-				factor = 0
-				neutrality_neutral_green_are_in_power = yes
+				add = 1000
+				NOT = {
+					neutrality_neutral_green_are_in_power = yes
+				}
 			}
 		}
 	}
@@ -5872,9 +6695,26 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				nationalist_monarchists_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
 				nationalist_right_wing_populists_are_in_power = yes
 				emerging_anarchist_communism_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						nationalist_fascist_are_in_coalition = yes
+						nationalist_right_wing_populists_are_in_coalition = yes
+						emerging_anarchist_communism_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+					}
+				}
 			}
 			has_idea = ITA_migrants_from_africa
 			has_completed_focus = ITA_use_force
@@ -5934,12 +6774,32 @@ policies_ITA = {
 			}
 		}
 		ai_will_do = {
-			factor = 10
+			factor = 0
 			modifier = {
-				factor = 0
-				OR = {
-					nationalist_right_wing_populists_are_in_power = yes
-					emerging_anarchist_communism_are_in_power = yes
+				add = 20
+				NOT = {
+					OR = {
+						nationalist_monarchists_are_in_power = yes
+						neutrality_neutral_oligarch_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						emerging_autocracy_are_in_power = yes
+						neutrality_neutral_autocracy_are_in_power = yes
+						neutrality_neutral_oligarch_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						emerging_reactionaries_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						AND = {
+							has_country_leader_with_trait = roman_senate_trait
+							OR = {
+								nationalist_fascist_are_in_coalition = yes
+								nationalist_right_wing_populists_are_in_coalition = yes
+								emerging_anarchist_communism_are_in_coalition = yes
+								emerging_reactionaries_are_in_coalition = yes
+							}
+						}
+					}
 				}
 			}
 		}
@@ -5949,7 +6809,24 @@ policies_ITA = {
 		icon = generic_decision
 		cost = 50
 		available = {
-			western_conservatism_are_in_power = yes
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+				AND = {
+					has_country_leader_with_trait = roman_senate_trait
+					OR = {
+						nationalist_fascist_are_in_coalition = yes
+						western_conservatism_are_in_coalition = yes
+						emerging_reactionaries_are_in_coalition = yes
+						nationalist_right_wing_populists_are_in_coalition = yes
+					}
+				}
+			}
 			has_idea = ITA_building_abuse_1
 			has_completed_focus = ITA_building_amnesty
 			NOT = { has_idea = ITA_building_abuse_2 }
@@ -5967,13 +6844,17 @@ policies_ITA = {
 			modify_reform_expectance_effect = yes
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
 			add_political_power = 200
 			swap_ideas = {
 				remove_idea = ITA_building_abuse_1
 				add_idea = ITA_building_abuse_2
 			}
+			set_temp_variable = { recovered_amount = gdp_total }
+			multiply_temp_variable = { recovered_amount = 0.003 }
+			set_temp_variable = { treasury_change = recovered_amount }
+			modify_treasury_effect = yes
 		}
 		ai_will_do = {
 			factor = 20
@@ -5985,34 +6866,39 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_libertarians_are_in_power = yes
 				western_liberals_are_in_power = yes
 				western_social_democrats_are_in_power = yes
 				neutrality_neutral_green_are_in_power = yes
 				neutrality_neutral_social_are_in_power = yes
 				neutrality_neutral_conservatism_are_in_power = yes
-				has_country_leader_with_trait = western_technocrat
+				AND = {
+					has_country_leader_with_trait = western_technocrat
+					OR = {
+						neutrality_neutral_libertarians_are_in_coalition = yes
+						western_liberals_are_in_coalition = yes
+						western_social_democrats_are_in_coalition = yes
+						neutrality_neutral_green_are_in_coalition = yes
+						neutrality_neutral_social_are_in_coalition = yes
+						neutrality_neutral_conservatism_are_in_coalition = yes
+					}
+				}
 			}
 			OR = {
 				has_idea = ITA_building_abuse_1
 				has_idea = ITA_building_abuse_2
 			}
-			OR = {
-				has_completed_focus = ITA_stop_building_abuse
-				has_completed_focus = ITA_stop_building_abuse_2
-				has_completed_focus = ITA_stop_building_abuse_3
-			}
+			has_completed_focus = ITA_stop_building_abuse
 		}
 		visible = {
 			OR = {
 				has_idea = ITA_building_abuse_1
 				has_idea = ITA_building_abuse_2
 			}
-			OR = {
-				has_completed_focus = ITA_stop_building_abuse
-				has_completed_focus = ITA_stop_building_abuse_2
-				has_completed_focus = ITA_stop_building_abuse_3
-			}
+			has_completed_focus = ITA_stop_building_abuse
         }
 
 		days_re_enable = 365
@@ -6026,7 +6912,7 @@ policies_ITA = {
 			}
 		}
 		ai_will_do = {
-			factor = 20
+			factor = 80
 		}
 	}
 
@@ -6037,6 +6923,7 @@ policies_ITA = {
 			OR = {
 				neutrality_neutral_communism_are_in_power = yes
 				emerging_communist_state_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
 			}
 			has_completed_focus = ITA_widespread_expropriation
 			NOT = { has_idea = ITA_expropriations }
@@ -6088,12 +6975,15 @@ policies_ITA = {
 			remove_ideas = ITA_expropriations
 		}
 		ai_will_do = {
-			factor = 20
+			factor = 0
 			modifier = {
-				factor = 0
-				OR = {
-					neutrality_neutral_communism_are_in_power = yes
-					emerging_communist_state_are_in_power = yes
+				add = 20
+				NOT = {
+					OR = {
+						neutrality_neutral_communism_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_autocracy_are_in_power = yes
+					}
 				}
 			}
 		}
@@ -6106,6 +6996,7 @@ policies_ITA = {
 			OR = {
 				neutrality_neutral_communism_are_in_power = yes
 				emerging_communist_state_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
 			}
 			has_completed_focus = ITA_redistribution
 		}
@@ -6142,21 +7033,18 @@ policies_ITA = {
 				neutrality_neutral_communism_are_in_power = yes
 				emerging_communist_state_are_in_power = yes
 				nationalist_fascist_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
 			}
-			OR = {
-				has_completed_focus = ITA_abolish_capitalist_media
-				has_completed_focus = ITA_abolish_capitalist_media_2
-			}
+			has_completed_focus = ITA_abolish_capitalist_media
 			NOT = { has_idea = ITA_party_approved_media_c }
 			NOT = { has_idea = ITA_party_approved_media_f }
+			NOT = { has_idea = ITA_party_approved_media_n }
 		}
 		visible = {
-			OR = {
-				has_completed_focus = ITA_abolish_capitalist_media
-				has_completed_focus = ITA_abolish_capitalist_media_2
-			}
+			has_completed_focus = ITA_abolish_capitalist_media
 			NOT = { has_idea = ITA_party_approved_media_c }
 			NOT = { has_idea = ITA_party_approved_media_f }
+			NOT = { has_idea = ITA_party_approved_media_n }
         }
 
 		days_re_enable = 365
@@ -6165,8 +7053,8 @@ policies_ITA = {
 			if = {
 				limit = {
 					OR = {
-						neutrality_neutral_communism_are_in_power = yes
 						emerging_communist_state_are_in_power = yes
+						emerging_autocracy_are_in_power = yes
 					}
 				}
 				add_ideas = ITA_party_approved_media_c
@@ -6176,6 +7064,12 @@ policies_ITA = {
 					nationalist_fascist_are_in_power = yes
 				}
 				add_ideas = ITA_party_approved_media_f
+			}
+			else_if = {
+				limit = {
+					neutrality_neutral_communism_are_in_power = yes
+				}
+				add_ideas = ITA_party_approved_media_n
 			}
 		}
 		ai_will_do = {
@@ -6190,12 +7084,14 @@ policies_ITA = {
 			OR = {
 				has_idea = ITA_party_approved_media_c
 				has_idea = ITA_party_approved_media_f
+				has_idea = ITA_party_approved_media_n
 			}
 		}
 		visible = {
 			OR = {
 				has_idea = ITA_party_approved_media_c
 				has_idea = ITA_party_approved_media_f
+				has_idea = ITA_party_approved_media_n
 			}
         }
 
@@ -6214,6 +7110,12 @@ policies_ITA = {
 				}
 				remove_ideas = ITA_party_approved_media_f
 			}
+			else_if = {
+				limit = {
+					has_idea = ITA_party_approved_media_n
+				}
+				remove_ideas = ITA_party_approved_media_n
+			}
 		}
 		ai_will_do = {
 			factor = 20
@@ -6229,8 +7131,16 @@ policies_ITA = {
 					if = {
 						limit = {
 							has_idea = ITA_party_approved_media_c
+							OR = {
+								emerging_communist_state_are_in_power = yes
+								emerging_autocracy_are_in_power = yes
+							}
+						}
+					}
+					if = {
+						limit = {
+							has_idea = ITA_party_approved_media_n
 							neutrality_neutral_communism_are_in_power = yes
-							emerging_communist_state_are_in_power = yes
 						}
 					}
 				}
@@ -6243,24 +7153,18 @@ policies_ITA = {
 		cost = 50
 		available = {
 			OR = {
+				nationalist_fascist_are_in_power = yes
 				neutrality_neutral_communism_are_in_power = yes
 				emerging_communist_state_are_in_power = yes
-				western_autocrats_are_in_power = yes
 				emerging_autocracy_are_in_power = yes
 				neutrality_neutral_autocracy_are_in_power = yes
 				neutrality_neutral_oligarch_are_in_power = yes
 			}
-			OR = {
-				has_completed_focus = ITA_silence_defeatists
-				has_completed_focus = ITA_silence_defeatists_2
-			}
+			has_completed_focus = ITA_silence_defeatists
 			NOT = { has_idea = ITA_party_propaganda }
 		}
 		visible = {
-			OR = {
-				has_completed_focus = ITA_silence_defeatists
-				has_completed_focus = ITA_silence_defeatists_2
-			}
+			has_completed_focus = ITA_silence_defeatists
 			NOT = { has_idea = ITA_party_propaganda }
         }
 
@@ -6302,9 +7206,9 @@ policies_ITA = {
 			modifier = {
 				factor = 0
 				OR = {
+					nationalist_fascist_are_in_power = yes
 					neutrality_neutral_communism_are_in_power = yes
 					emerging_communist_state_are_in_power = yes
-					western_autocrats_are_in_power = yes
 					emerging_autocracy_are_in_power = yes
 					neutrality_neutral_autocracy_are_in_power = yes
 					neutrality_neutral_oligarch_are_in_power = yes
@@ -6320,6 +7224,7 @@ policies_ITA = {
 			OR = {
 				neutrality_neutral_communism_are_in_power = yes
 				emerging_communist_state_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
 			}
 			has_completed_focus = ITA_safeguard_the_revolution
 			NOT = { has_idea = ITA_closed_nation }
@@ -6358,12 +7263,13 @@ policies_ITA = {
 			add_political_power = -200
 		}
 		ai_will_do = {
-			factor = 20
+			factor = 100
 			modifier = {
 				factor = 0
 				OR = {
 					neutrality_neutral_communism_are_in_power = yes
 					emerging_communist_state_are_in_power = yes
+					emerging_autocracy_are_in_power = yes
 				}
 			}
 		}
@@ -6407,7 +7313,7 @@ policies_ITA = {
 			add_ideas = ITA_radio_radicale
 		}
 		ai_will_do = {
-			factor = 0
+			factor = 10
 		}
 	}
 
