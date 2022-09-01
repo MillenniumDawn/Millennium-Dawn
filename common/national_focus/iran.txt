@@ -5840,7 +5840,7 @@ focus_tree = {
 
 
 		completion_reward = {
-			add_war_support = 0.01
+			add_war_support = 0.02
 			add_intel = {
 				target = AZE
 				civilian_intel = 15
@@ -5850,6 +5850,7 @@ focus_tree = {
 			set_temp_variable = { tag_index = PER }
 			set_temp_variable = { influence_target = AZE }
 			change_influence_percentage = yes
+			AZE = { add_stability = -0.02 }
 		}
 	}
 	focus = {
@@ -5916,7 +5917,7 @@ focus_tree = {
  		icon = espionage
 
 		x = 0
-		y = 2
+		y = 1
 
 		relative_position_id = PER_sepah_imam_zaman
 		prerequisite = {
@@ -5951,11 +5952,14 @@ focus_tree = {
 			focus = PER_domestic_issues
 		}
 
-		cost = 10
+		cost = 7.15 # 50 Days
 		search_filters = {}
 
 		cancel_if_invalid = no
 
+		mutually_exclusive = {
+			focus = PER_tabriz_etelaat_base
+		}
 
 		completion_reward = {
 			if = {
@@ -5975,7 +5979,7 @@ focus_tree = {
 				upgrade_intelligence_agency = upgrade_passive_defense
 			}
 			else = {
-				add_political_power = 50
+				add_political_power = 100
 			}
 		}
 	}
@@ -5991,11 +5995,14 @@ focus_tree = {
 			focus = PER_domestic_issues
 		}
 
-		cost = 10
+		cost = 7.15 # 50 Days
 		search_filters = {}
 
 		cancel_if_invalid = no
 
+		mutually_exclusive = {
+			focus = PER_tehran_etelaat_base
+		}
 
 		completion_reward = {
 			if = {
@@ -6034,17 +6041,16 @@ focus_tree = {
 			focus = PER_tehran_etelaat_base
 		}
 
-		cost = 7.15 # 50 Days
+		cost = 4.29 # 30 Days
 		search_filters = {}
 
 		cancel_if_invalid = no
 
 		available = {
-			has_captured_operative = yes
 		}
 
 		completion_reward = {
-			#need
+			unlock_decision_category_tooltip = PER_trade_spies
 		}
 	}
 	focus = {
@@ -6527,7 +6533,7 @@ focus_tree = {
 			unlock_decision_category_tooltip = PER_streamline_resource_input
 			add_ideas = PER_streamlined_resource_input
 			hidden_effect = {
-			set_country_flag = PER_allow_resource_stuff
+				set_country_flag = PER_allow_resource_stuff
 			}
 		}
 	}
@@ -13380,7 +13386,20 @@ focus_tree = {
 
 
 		completion_reward = {
-			#need
+			add_doctrine_cost_reduction = {
+				cost_reduction = 0.5
+				uses = 1
+				category = naval_doctrine
+			}
+			navy_experience = 20
+			SOV = {
+				add_doctrine_cost_reduction = {
+					cost_reduction = 0.5
+					uses = 1
+					category = naval_doctrine
+				}
+				navy_experience = 20
+			}
 		}
 	}
 	focus = {
@@ -13403,13 +13422,70 @@ focus_tree = {
 
 
 		completion_reward = {
-			create_wargoal = {
-				type = topple_government
-				target = AZE
+			PER = {
+				declare_war_on = {
+					target = AZE
+					type = puppet_wargoal_focus
+				}
+			}
+
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = PER_armenia_refused_to_cooperate_against_azerbaijan
+					}
+				}
+				ARM = {
+					hidden_effect = {
+						give_military_access = PER
+					}
+					add_to_war = {
+						targeted_alliance = PER
+						enemy = AZE
+						hostility_reason = asked_to_join
+					}
+				}
+			}
+			if = {
+				limit = {
+					NKR = {
+						is_puppet_of = ARM
+					}
+					NOT = {
+						has_country_flag = PER_armenia_refused_to_cooperate_against_azerbaijan
+					}
+				}
+				NKR = {
+					hidden_effect = {
+						give_military_access = PER
+					}
+					add_to_war = {
+						targeted_alliance = ARM
+						enemy = AZE
+						hostility_reason = asked_to_join
+					}
+				}
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = PER_russia_refused_to_support_us_against_armenia
+					}
+				}
+				SOV = {
+					hidden_effect = {
+						give_military_access = PER
+					}
+					add_to_war = {
+						targeted_alliance = PER
+						enemy = AZE
+						hostility_reason = asked_to_join
+					}
+				}
 			}
 			add_named_threat = { 
 				threat = 5 
-				name = "Iran wants to invade Azerbaijan"
+				name = "Iran invades Azerbaijan"
 			}
 		}
 	}
