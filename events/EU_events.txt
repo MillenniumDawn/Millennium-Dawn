@@ -184,49 +184,39 @@ country_event = {
 	option = { #a
 		name = EUevent.3.a
 		log = "[GetDateText]: [Root.GetName]: event EUevent.3.a"
-		### bug fix
-		every_country = {
-			limit = {  has_idea = EU_member }
+		hidden_effect = {
 			EUU = {
-				inherit_technology = PREV
+				for_each_loop = {
+					array = researched_techs
+					if = {
+						limit = {
+							NOT = { is_in_array = { eu_technologies = v } }
+						}
+						add_to_temp_array = { eu_technologies = v }
+					}
+				}
 			}
-		}
-		EUU = {
 			for_each_loop = {
-				array = researched_techs
-				if = {
-					limit = {
-						NOT = { is_in_array = { eu_technologies = v } }
+				array = eu_technologies
+				meta_effect = {
+					text = {
+						set_technology = {
+							[TECH] = 1
+							popup = no
+						}
 					}
-					add_to_temp_array = { eu_technologies = v }
+					TECH = "[?v.GetTokenKey]"
 				}
 			}
-		}
-		for_each_loop = {
-			array = eu_technologies
-			meta_effect = {
-				text = {
-					set_technology = {
-						[TECH] = 1
-						popup = no
-					}
-				}
-				TECH = "[?v.GetTokenKey]"
-			}
-		}
-		### end of bug fix
-		every_country = {
-			limit = {  has_idea = EU_member }
-				#clr_country_flag = USoE_transfer_navy
+			every_country = {
+				limit = { has_idea = EU_member }
+				EUU = { inherit_technology = PREV }
 				set_country_flag = USoE_member
 				every_unit_leader = {
 					set_unit_leader_flag = USoE_unit_leader
 					set_nationality = ROOT
 					add_unit_leader_trait = military_reorganization
 				}
-		}
-		every_country = {
-			limit = {  has_idea = EU_member }
 				every_owned_state = {
 					limit = {
 						OR = {
@@ -242,17 +232,16 @@ country_event = {
 					}
 					add_core_of = ROOT
 				}
+				country_event = EUevent.4
+			}
+			ROOT = {
+				set_cosmetic_tag = USoE
+				clr_country_flag = dynamic_flag
+				set_country_flag = USoE
+				add_ideas = multi_ethnic_state_idea
+			}
 		}
-		every_country = {
-			limit = {  has_idea = EU_member }
-			country_event = EUevent.4
-		}
-		ROOT = {
-			set_cosmetic_tag = USoE
-			clr_country_flag = dynamic_flag
-			set_country_flag = USoE
-			add_ideas = multi_ethnic_state_idea
-		}
+		custom_effect_tooltip = form_USoE_tt
 	}
 }
 
@@ -268,25 +257,124 @@ country_event = {
 	option = { #a
 		name = EUevent.4.a
 		log = "[GetDateText]: [Root.GetName]: event EUevent.4.a"
-			if = {
-				limit = {
-					NOT = { original_tag = FROM }
-				}
-
-				FROM = {
-					annex_country = {
-						target = ROOT
-						transfer_troops = yes
-					}
-					#every_owned_state = {
-					#	limit = {
-					#		is_on_continent = Europe
-					#		NOT = { is_core_of = FROM }
-					#	}
-					#	add_core_of = FROM
-					#}
-				}
+		if = {
+			limit = {
+				NOT = { original_tag = FROM }
 			}
+			FROM = {
+				annex_country = {
+					target = ROOT
+					transfer_troops = yes
+				}
+				add_to_variable = { treasury = ROOT.treasury }
+				add_to_variable = { debt = ROOT.debt }
+				add_to_variable = { int_investments = ROOT.int_investments }
+
+				#Note: here all arrays with missiles id and below satellites, i don't know honestly how to fix this, current code does not works fine
+				#by Alexander Markelov, 2 september 2022
+
+				#add_to_temp_variable = { temp_missile_inventory = ROOT.missile_inventory_array^34 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^11 index = 11 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^12 index = 12 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^13 index = 13 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^14 index = 14 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^15 index = 15 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^16 index = 16 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^17 index = 17 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^18 index = 18 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^21 index = 21 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^22 index = 22 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^23 index = 23 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^24 index = 24 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^25 index = 25 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^26 index = 26 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^27 index = 27 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^28 index = 28 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^31 index = 31 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^32 index = 32 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^33 index = 33 }
+				#add_to_array = { array = FROM.missile_inventory_array value = temp_missile_inventory index = 34 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^35 index = 35 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^36 index = 36 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^37 index = 37 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^38 index = 38 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^41 index = 41 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^42 index = 42 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^43 index = 43 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^44 index = 44 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^45 index = 45 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^46 index = 46 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^47 index = 47 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^48 index = 48 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^51 index = 51 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^52 index = 52 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^53 index = 53 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^54 index = 54 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^55 index = 55 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^56 index = 56 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^57 index = 57 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^58 index = 58 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^61 index = 61 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^62 index = 62 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^63 index = 63 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^64 index = 64 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^65 index = 65 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^66 index = 66 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^67 index = 67 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^68 index = 68 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^71 index = 71 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^72 index = 72 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^80 index = 80 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^81 index = 81 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^82 index = 82 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^83 index = 83 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^84 index = 84 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^85 index = 85 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^86 index = 86 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^87 index = 87 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^90 index = 90 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^91 index = 91 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^92 index = 92 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^93 index = 93 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^94 index = 94 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^95 index = 95 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^96 index = 96 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^97 index = 97 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^101 index = 101 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^102 index = 102 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^103 index = 103 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^104 index = 104 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^105 index = 105 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^106 index = 106 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^107 index = 107 }
+				#add_to_array = { array = FROM.missile_inventory_array value = ROOT.missile_inventory_array^108 index = 108 }
+
+				#add_to_array = { array = FROM.GNSS_satellite_array value = ROOT.GNSS_satellite_array^0 index = 0 }
+				#add_to_array = { array = FROM.GNSS_satellite_array value = ROOT.GNSS_satellite_array^1 index = 1 }
+				#add_to_array = { array = FROM.GNSS_satellite_array value = ROOT.GNSS_satellite_array^2 index = 2 }
+				#add_to_array = { array = FROM.GNSS_satellite_array value = ROOT.GNSS_satellite_array^3 index = 3 }
+				#add_to_array = { array = FROM.GNSS_satellite_array value = ROOT.GNSS_satellite_array^4 index = 4 }
+				#add_to_array = { array = FROM.GNSS_satellite_array value = ROOT.GNSS_satellite_array^5 index = 5 }
+				#add_to_array = { array = FROM.GNSS_satellite_array value = ROOT.GNSS_satellite_array^6 index = 6 }
+				#add_to_array = { array = FROM.GNSS_satellite_array value = ROOT.GNSS_satellite_array^7 index = 7 }
+
+				#add_to_array = { array = FROM.COM_satellite_array value = ROOT.COM_satellite_array^1 index = 1 }
+				#add_to_array = { array = FROM.COM_satellite_array value = ROOT.COM_satellite_array^2 index = 2 }
+				#add_to_array = { array = FROM.COM_satellite_array value = ROOT.COM_satellite_array^3 index = 3 }
+				#add_to_array = { array = FROM.COM_satellite_array value = ROOT.COM_satellite_array^4 index = 4 }
+				#add_to_array = { array = FROM.COM_satellite_array value = ROOT.COM_satellite_array^5 index = 5 }
+				#add_to_array = { array = FROM.COM_satellite_array value = ROOT.COM_satellite_array^6 index = 6 }
+				#add_to_array = { array = FROM.COM_satellite_array value = ROOT.COM_satellite_array^7 index = 7 }
+
+				#add_to_array = { array = FROM.SPY_satellite_array value = ROOT.SPY_satellite_array^1 index = 1 }
+				#add_to_array = { array = FROM.SPY_satellite_array value = ROOT.SPY_satellite_array^2 index = 2 }
+				#add_to_array = { array = FROM.SPY_satellite_array value = ROOT.SPY_satellite_array^3 index = 3 }
+				#add_to_array = { array = FROM.SPY_satellite_array value = ROOT.SPY_satellite_array^4 index = 4 }
+				#add_to_array = { array = FROM.SPY_satellite_array value = ROOT.SPY_satellite_array^5 index = 5 }
+				#add_to_array = { array = FROM.SPY_satellite_array value = ROOT.SPY_satellite_array^6 index = 6 }
+				#add_to_array = { array = FROM.SPY_satellite_array value = ROOT.SPY_satellite_array^7 index = 7 }
+			}
+		}
 	}
 }
 
