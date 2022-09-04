@@ -14,12 +14,16 @@
 # debt_rate - How much money your country owes in debt
 # interest_rate - the interest  rate you pay DAILY on debt.
 # econ_cycle_upg_cost - cost to upgrade economic cycle
-# bureaucracy_gain cost for bureaucracy law
-# education_gain cost of education law
-# health_gain cost of health care law
-# welfare_gain cost of welfare law
-# military_rate cost of military law
+# bureaucracy_gain - cost for bureaucracy law
+# education_gain - cost of education law
+# health_gain - cost of health care law
+# welfare_gain - cost of welfare law
+# military_rate - cost of military law
 # personnel_cost - how much you pay soldiers and maintenance on equipment
+
+# treasury_cyber_small - cost of small investments in cyber security infrastructure
+# treasury_cyber_medium - cost of medium investments in cyber security infrastructure
+# treasury_cyber_large - cost of large investments in cyber security infrastructure
 
 # corporation_tax - Value of the Corporate taxes
 # population_tax - value of the population tax
@@ -60,6 +64,7 @@ ingame_update_setup = {
 
 	#Various
 	update_economic_cycle_cost = yes
+	update_cyber_cost = yes
 
 	#Visuals
 	update_display = yes
@@ -278,6 +283,11 @@ calculate_additional_income_rate = {
 		multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.20 } #per million
 		multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.50 }	#weekly
 		add_to_variable = { additional_income_rate = additional_income_AFG_idea_state_sponsored_opium_industry }
+	}
+	if = {
+		limit = { check_variable = { ROOT.pmc_profits > 0 } }
+		set_variable = { additional_income_pmc = ROOT.pmc_profits }
+		add_to_variable = { additional_income_rate = additional_income_pmc }
 	}
 
 	# EU
@@ -1636,6 +1646,11 @@ calculate_additional_expense_rate = {
 		limit = {original_tag = ITA}
 		add_to_variable = { additional_expenses_rate = ITA_additional_expenses_var }
 	}
+	if = {
+		limit = { check_variable = { ROOT.pmc_expenses > 0 } }
+		set_variable = { additional_expenses_pmc_salary = ROOT.pmc_expenses }
+		add_to_variable = { additional_expenses_rate = additional_expenses_pmc_salary }
+	}
 }
 
 #Income Related Stuff --- International Investments and Calculated Resource Sale Rate
@@ -1767,13 +1782,128 @@ update_display = {
 update_economic_cycle_cost = {
 	#Base on size of economy
 	set_variable = { econ_cycle_upg_cost = gdp_total_display }
-	multiply_variable = { econ_cycle_upg_cost = 0.075 } # 10% of GDP Total in billions
+	multiply_variable = { econ_cycle_upg_cost = 0.075 } # 7.5% of GDP Total in billions
 
 	#Additional additive modifiers
 	set_temp_variable = { econ_cycle_upg_cost_multiplier = 1 }
 	add_to_temp_variable = { econ_cycle_upg_cost_multiplier = modifier@econ_cycle_upg_cost_multiplier_modifier }
 
 	multiply_variable = { econ_cycle_upg_cost = econ_cycle_upg_cost_multiplier }
+}
+
+update_cyber_cost = {
+
+	if = { 
+		limit = {
+			check_variable = { gdp_total_display < 501 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total_display }
+		multiply_variable = { treasury_cyber_small = 0.006 }
+		set_variable = { treasury_cyber_medium = gdp_total_display }
+		multiply_variable = { treasury_cyber_medium = 0.011 }
+		multiply_variable = { treasury_cyber_medium = 0.85 }
+		set_variable = { treasury_cyber_large = gdp_total_display }
+		multiply_variable = { treasury_cyber_large = 0.015 }
+	}
+
+	if = { 
+		limit = {
+			check_variable = { gdp_total_display > 500 }
+			check_variable = { gdp_total_display < 1001 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total_display }
+		multiply_variable = { treasury_cyber_small = 0.005 }
+		multiply_variable = { treasury_cyber_small = 0.85 }
+		set_variable = { treasury_cyber_medium = gdp_total_display }
+		multiply_variable = { treasury_cyber_medium = 0.009 }
+		multiply_variable = { treasury_cyber_medium = 0.85 }
+		set_variable = { treasury_cyber_large = gdp_total_display }
+		multiply_variable = { treasury_cyber_large = 0.015 }
+		multiply_variable = { treasury_cyber_large = 0.90 }
+	}
+
+	if = { 
+		limit = {
+			check_variable = { gdp_total_display > 1000 }
+			check_variable = { gdp_total_display < 2001 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total_display }
+		multiply_variable = { treasury_cyber_small = 0.004 }
+		set_variable = { treasury_cyber_medium = gdp_total_display }
+		multiply_variable = { treasury_cyber_medium = 0.007 }
+		multiply_variable = { treasury_cyber_medium = 0.85 }
+		set_variable = { treasury_cyber_large = gdp_total_display }
+		multiply_variable = { treasury_cyber_large = 0.01 }
+	}
+
+	if = { 
+		limit = {
+			check_variable = { gdp_total_display > 2000 }
+			check_variable = { gdp_total_display < 5001 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total_display }
+		multiply_variable = { treasury_cyber_small = 0.003 }
+		multiply_variable = { treasury_cyber_small = 0.85 }
+		set_variable = { treasury_cyber_medium = gdp_total_display }
+		multiply_variable = { treasury_cyber_medium = 0.005 }
+		multiply_variable = { treasury_cyber_medium = 0.75 }
+		set_variable = { treasury_cyber_large = gdp_total_display }
+		multiply_variable = { treasury_cyber_large = 0.005 }
+	}
+
+	if = { 
+		limit = {
+			check_variable = { gdp_total_display > 5000 }
+			check_variable = { gdp_total_display < 10001 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total_display }
+		multiply_variable = { treasury_cyber_small = 0.002 }
+		multiply_variable = { treasury_cyber_small = 0.85 }
+		set_variable = { treasury_cyber_medium = gdp_total_display }
+		multiply_variable = { treasury_cyber_medium = 0.003 }
+		multiply_variable = { treasury_cyber_medium = 0.90 }
+		set_variable = { treasury_cyber_large = gdp_total_display }
+		multiply_variable = { treasury_cyber_large = 0.005 }
+		multiply_variable = { treasury_cyber_large = 0.80 }
+	}
+
+	if = { 
+		limit = {
+			check_variable = { gdp_total_display > 10000 }
+			check_variable = { gdp_total_display < 30001 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total_display }
+		multiply_variable = { treasury_cyber_small = 0.002 }
+		multiply_variable = { treasury_cyber_small = 0.70 }
+		set_variable = { treasury_cyber_medium = gdp_total_display }
+		multiply_variable = { treasury_cyber_medium = 0.003 }
+		multiply_variable = { treasury_cyber_medium = 0.65 }
+		set_variable = { treasury_cyber_large = gdp_total_display }
+		multiply_variable = { treasury_cyber_large = 0.003 }
+		multiply_variable = { treasury_cyber_large = 0.85 }
+	}
+
+	if = { 
+		limit = {
+			check_variable = { gdp_total_display > 30000 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total_display }
+		multiply_variable = { treasury_cyber_small = 0.001 }
+		set_variable = { treasury_cyber_medium = gdp_total_display }
+		multiply_variable = { treasury_cyber_medium = 0.002 }
+		multiply_variable = { treasury_cyber_medium = 0.70 }
+		set_variable = { treasury_cyber_large = gdp_total_display }
+		multiply_variable = { treasury_cyber_large = 0.002 }
+		multiply_variable = { treasury_cyber_large = 0.87 }
+	}
+
+	#Additional additive modifiers
+	set_temp_variable = { cyber_cost_multiplier = 1 }
+	add_to_temp_variable = { cyber_cost_multiplier = modifier@cyber_cost_multiplier_modifier }
+
+	multiply_variable = { treasury_cyber_small = cyber_cost_multiplier }
+	multiply_variable = { treasury_cyber_medium = cyber_cost_multiplier }
+	multiply_variable = { treasury_cyber_large = cyber_cost_multiplier }
 }
 
 #Monthly tick actions
