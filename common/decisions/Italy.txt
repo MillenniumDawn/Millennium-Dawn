@@ -2157,9 +2157,10 @@ generic_ITA = {
 		days_re_enable = 90
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision reshuffle_coalition executed"
+			set_country_flag = coalition_reshuffling
 			clear_array = gov_coalition_array
 			update_government_coalition_strength = yes
-			set_coalition_drift = yes
+			store_election_values = yes
 			recalculate_party_strength = yes
 			set_country_flag = coalition_forming
 			activate_mission = coalition_countdown
@@ -3421,10 +3422,8 @@ ITA_italian_space_decision_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ITA_rebalance_the_ASI_budget"
-			add_political_power = -50
-			set_temp_variable = { treasury_change = -1 }
-			modify_treasury_effect = yes
-			add_to_variable = { ITA_space_expenses_var = -1.0 }
+			add_political_power = -100
+			multiply_variable = { ITA_space_expenses_var = 0.9 }
 			add_to_variable = { ITA_peoples_support = 5 }
 			custom_effect_tooltip = ITA_rebalance_the_ASI_budget_TT
 		}
@@ -5945,12 +5944,18 @@ policies_ITA = {
 					neutrality_neutral_libertarians_are_in_coalition = yes
 				}
 			}
-			has_idea = ITA_migration_tolerated
+			OR = {
+				has_idea = ITA_ius_scholae_spirit
+				has_idea = ITA_ius_soli_spirit
+			}
 			has_completed_focus = ITA_encourage_immigration
 			NOT = { has_idea = ITA_migrants_from_africa_encouraged }
 		}
 		visible = {
-			has_idea = ITA_migration_tolerated
+			OR = {
+				has_idea = ITA_ius_scholae_spirit
+				has_idea = ITA_ius_soli_spirit
+			}
 			has_completed_focus = ITA_encourage_immigration
 			NOT = { has_idea = ITA_migrants_from_africa_encouraged }
         }
@@ -6052,19 +6057,13 @@ policies_ITA = {
 				}
 			}
 			has_completed_focus = ITA_ius_soli
-			OR = {
-				has_idea = ITA_migration_tolerated
-				has_idea = ITA_migrants_from_africa_encouraged
-			}
+			has_idea = ITA_migration_tolerated
 			NOT = { has_idea = ITA_ius_scholae_spirit }
 			NOT = { has_idea = ITA_ius_soli_spirit }
 		}
 		visible = {
 			has_completed_focus = ITA_ius_soli
-			OR = {
-				has_idea = ITA_migration_tolerated
-				has_idea = ITA_migrants_from_africa_encouraged
-			}
+			has_idea = ITA_migration_tolerated
 			NOT = { has_idea = ITA_ius_scholae_spirit }
 			NOT = { has_idea = ITA_ius_soli_spirit }
         }
@@ -6082,6 +6081,34 @@ policies_ITA = {
 		}
 		ai_will_do = {
 			factor = 40
+		}
+	}
+
+	ITA_ius_soli_decision_repeal = {
+		icon = generic_decision
+		cost = 100
+		available = {
+			has_idea = ITA_ius_soli_spirit
+			NOT = { has_idea = ITA_migrants_from_africa_encouraged }
+		}
+		visible = {
+			has_idea = ITA_ius_soli_spirit
+			NOT = { has_idea = ITA_migrants_from_africa_encouraged }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_ius_soli_decision_repeal executed"
+			set_temp_variable = { drift_switch_change = 0.015 }
+			modify_reform_expectance_effect = yes
+			remove_ideas = ITA_ius_soli_spirit
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.8 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = {
+			factor = 0
 		}
 	}
 
@@ -6108,19 +6135,13 @@ policies_ITA = {
 				}
 			}
 			has_completed_focus = ITA_ius_scholae
-			OR = {
-				has_idea = ITA_migration_tolerated
-				has_idea = ITA_migrants_from_africa_encouraged
-			}
+			has_idea = ITA_migration_tolerated
 			NOT = { has_idea = ITA_ius_soli_spirit }
 			NOT = { has_idea = ITA_ius_scholae_spirit }
 		}
 		visible = {
 			has_completed_focus = ITA_ius_scholae
-			OR = {
-				has_idea = ITA_migration_tolerated
-				has_idea = ITA_migrants_from_africa_encouraged
-			}
+			has_idea = ITA_migration_tolerated
 			NOT = { has_idea = ITA_ius_soli_spirit }
 			NOT = { has_idea = ITA_ius_scholae_spirit }
         }
@@ -6138,6 +6159,34 @@ policies_ITA = {
 		}
 		ai_will_do = {
 			factor = 0
+		}
+	}
+
+	ITA_ius_scholae_decision_repeal = {
+		icon = generic_decision
+		cost = 50
+		available = {
+			has_idea = ITA_ius_scholae_spirit
+			NOT = { has_idea = ITA_migrants_from_africa_encouraged }
+		}
+		visible = {
+			has_idea = ITA_ius_scholae_spirit
+			NOT = { has_idea = ITA_migrants_from_africa_encouraged }
+        }
+
+		days_re_enable = 365
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision ITA_ius_scholae_decision_repeal executed"
+			set_temp_variable = { drift_switch_change = 0.005 }
+			modify_reform_expectance_effect = yes
+			remove_ideas = ITA_ius_scholae_spirit
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = {
+			factor = 20
 		}
 	}
 
@@ -7947,7 +7996,7 @@ policies_ITA = {
 
 	ITA_recalculate_baby_pensions_decision_repeal = {
 		icon = generic_decision
-		cost = 50
+		cost = 100
 		available = {
 			NOT = { has_idea = ITA_unsustainable_pension_system_1 }
 			NOT = { has_idea = ITA_unsustainable_pension_system_2 }
