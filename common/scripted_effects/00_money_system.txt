@@ -65,6 +65,13 @@ ingame_update_setup = {
 	#Various
 	update_economic_cycle_cost = yes
 	update_cyber_cost = yes
+	
+	## AI Section
+	# This is for calculating the AIs desired economic tax law
+	if = { limit = { is_ai = yes }
+		calculate_ai_corporate_taxes_desire = yes
+		calculate_ai_population_taxes_desire = yes 
+	}
 
 	#Visuals
 	update_display = yes
@@ -2107,4 +2114,42 @@ calculate_gdp_modifiers = {
 	multiply_variable = { stability_factor_gdp_modifier = 0.001 }
 	add_to_variable = { stability_factor_gdp_modifier = -0.1 }
 
+}
+
+calculate_ai_population_taxes_desire = {
+	if = { limit = { check_variable = { treasury_rate < 0 } } 
+		set_temp_variable = { mather = treasury_rate } # -10.00
+		multiply_temp_variable = { mather = -2 } # 20.00
+		if = { limit = { num_of_available_civilian_factories < 15 }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+		set_variable = { ai_change_population_taxes = mather }
+	}
+	else = {
+		set_temp_variable = { mather = treasury_rate } # 5
+		multiply_temp_variable = { mather = 0.50 } # 2.5
+		if = { limit = { has_stability < 0.50 }
+			multiply_temp_variable = { mather = 2 }
+		}
+		set_variable = { ai_change_population_taxes = mather }  
+	}	
+}
+
+calculate_ai_corporate_taxes_desire = {
+	if = { limit = { check_variable = { treasury_rate < 0 } } 
+		set_temp_variable = { mather = treasury_rate } # -10.0
+		multiply_temp_variable = { mather = -3 } # 30 
+		if = { limit = { has_stability > 0.50 } 
+			multiply_temp_variable = { mather = 2 }
+		}
+		set_variable = { ai_change_corporate_taxes = mather } 
+	}
+	else = {
+		set_temp_variable = { mather = treasury_rate } # 5
+		multiply_temp_variable = { mather = 0.50 } # 2.5
+		if = { limit = { num_of_available_civilian_factories < 15 }
+			multiply_temp_variable = { mather = 3 } 	
+		}
+		set_variable = { ai_change_corporate_taxes = mather }
+	}
 }
