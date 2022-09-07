@@ -512,8 +512,8 @@
 	NDefines.NNavy.SUBMARINE_REVEAL_POW = 3.0		-- A scaling factor that is applied to the reveal chance in order to make large differences in detection vs visibility more pronounced
 	NDefines.NNavy.SUBMARINE_BASE_TORPEDO_REVEAL_CHANCE = 0.035		-- Chance of a submarine being revealed when it fires. 1.0 is 100%. this chance is then multiplied with modifier created by comparing firer's visibiility and target's detection
 
-	NDefines.NNavy.WARSCORE_GAIN_FOR_SUNK_SHIP_MANPOWER_FACTOR = 0.002						-- sunk ships will give enemy war score relative to max manpower of a ship that has been sunk
-	NDefines.NNavy.WARSCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.002				-- sunk ships will give enemy war score relative to cost of a ship that has been sunk
+	NDefines.NNavy.WARSCORE_GAIN_FOR_SUNK_SHIP_MANPOWER_FACTOR = 0.001						-- sunk ships will give enemy war score relative to max manpower of a ship that has been sunk
+	NDefines.NNavy.WARSCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.001				-- sunk ships will give enemy war score relative to cost of a ship that has been sunk
 
 	-- those two work together in the formula f(x) = Y(x/(x+X)) where Y is MAX and X is SLOPE
 	NDefines.NNavy.NAVAL_COMBAT_AIR_SUB_DETECTION_MAX = 10.0
