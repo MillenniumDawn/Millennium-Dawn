@@ -161,7 +161,7 @@
 	NDefines.NMilitary.SLOWEST_SPEED = 8 -- 4
 	NDefines.NMilitary.BASE_NIGHT_ATTACK_PENALTY = -0.6 -- -0.5
 	NDefines.NMilitary.UNIT_DIGIN_CAP = 10 -- 5
-	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.15 -- 0.25
+	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.25 -- 0.25
 	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.7 -- 1.00
 	NDefines.NMilitary.EQUIPMENT_COMBAT_LOSS_FACTOR = 0.7 -- 0.7
 	NDefines.NMilitary.BATALION_CHANGED_EXPERIENCE_DROP = 0.25 -- 0.5
@@ -217,7 +217,7 @@
 	NDefines.NMilitary.ANTI_AIR_ATTACK_TO_AMOUNT = 0.005 -- 0.005
 	NDefines.NMilitary.UNIT_EXPERIENCE_PER_COMBAT_HOUR = 0.0003 -- 0.0001
 	NDefines.NMilitary.UNIT_EXPERIENCE_SCALE = 0.25 -- 1.0
-	NDefines.NMilitary.UNIT_EXPERIENCE_PER_TRAINING_DAY = 0.001 -- 0.0015
+	NDefines.NMilitary.UNIT_EXPERIENCE_PER_TRAINING_DAY = 0.002 -- 0.0015
 	NDefines.NMilitary.TRAINING_EXPERIENCE_SCALE = 92.0 -- 62.0
 	NDefines.NMilitary.UNIT_EXP_LEVELS = {0.1, 0.3, 0.75, 0.9} -- {0.1, 0.3, 0.75, 0.9}
 	NDefines.NMilitary.FIELD_EXPERIENCE_SCALE = 0.001 -- 0.0015
@@ -512,8 +512,8 @@
 	NDefines.NNavy.SUBMARINE_REVEAL_POW = 3.0		-- A scaling factor that is applied to the reveal chance in order to make large differences in detection vs visibility more pronounced
 	NDefines.NNavy.SUBMARINE_BASE_TORPEDO_REVEAL_CHANCE = 0.035		-- Chance of a submarine being revealed when it fires. 1.0 is 100%. this chance is then multiplied with modifier created by comparing firer's visibiility and target's detection
 
-	NDefines.NNavy.WARSCORE_GAIN_FOR_SUNK_SHIP_MANPOWER_FACTOR = 0.002						-- sunk ships will give enemy war score relative to max manpower of a ship that has been sunk
-	NDefines.NNavy.WARSCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.002				-- sunk ships will give enemy war score relative to cost of a ship that has been sunk
+	NDefines.NNavy.WARSCORE_GAIN_FOR_SUNK_SHIP_MANPOWER_FACTOR = 0.001						-- sunk ships will give enemy war score relative to max manpower of a ship that has been sunk
+	NDefines.NNavy.WARSCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.001				-- sunk ships will give enemy war score relative to cost of a ship that has been sunk
 
 	-- those two work together in the formula f(x) = Y(x/(x+X)) where Y is MAX and X is SLOPE
 	NDefines.NNavy.NAVAL_COMBAT_AIR_SUB_DETECTION_MAX = 10.0
