@@ -11,6 +11,12 @@
 	#EU shared tree
 	shared_focus = EU001
 
+	#Norway Shit Tree
+	shared_focus = NOR_focus_international_relations
+	shared_focus = NOR_economy
+	shared_focus = NOR_bondevik_motion_of_confidence
+	shared_focus = NOR_military
+
 	#Political Reform
 	focus = {
 		id = GENERIC_political_reform
@@ -248,6 +254,13 @@
 			if = { limit = { has_idea = indonesia_divided }
 				remove_ideas = indonesia_divided
 			}
+			#Temporary way of getting rid of Palestine negative ideas
+			if = { limit = { has_idea = israeli_settlements }
+				remove_ideas = israeli_settlements
+			}
+			if = { limit = { has_idea = large_refugee_population }
+				remove_ideas = large_refugee_population
+			}
 		}
 
 		ai_will_do = {
@@ -307,6 +320,14 @@
 
 		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY}
 		prerequisite = { focus = GENERIC_expand_the_secret_service }
+
+		available = {
+			any_owned_state = {
+				radar_station < 6
+			}
+		}
+
+		bypass_if_unavailable = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_intelligence_stations"
@@ -395,6 +416,30 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_our_place"
 			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = GENERIC_anti_corruption_reforms
+		icon = government_beu
+
+		x = 8
+		y = 1
+		relative_position_id = GENERIC_political_reform
+
+		cost = 10
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = GENERIC_international_diplomacy }
+		prerequisite = { focus = GENERIC_political_reform }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_anti_corruption_reforms"
+			decrease_corruption = yes
 		}
 
 		ai_will_do = {
@@ -1096,7 +1141,7 @@
 		y = 2
 		relative_position_id = GENERIC_international_diplomacy
 
-		cost = 8.5
+		cost = 8.6
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = GENERIC_international_diplomacy }
@@ -1177,6 +1222,7 @@
 			NOT = { has_idea = neutrality_idea }
 			OR = {
 				has_government = nationalist
+				has_government = fascism
 				AND = {
 					threat > 0.2
 					has_war_support > 0.8
@@ -1338,6 +1384,14 @@
 
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
+		available = {
+			any_owned_state = {
+				infrastructure < 5
+			}
+		}
+
+		bypass_if_unavailable = yes
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_roads"
 			one_random_infrastructure = yes
@@ -1363,6 +1417,14 @@
 
 		prerequisite = { focus = GENERIC_build_roads }
 		search_filters = {FOCUS_FILTER_INDUSTRY}
+
+		available = {
+			any_owned_state = {
+				infrastructure < 5
+			}
+		}
+
+		bypass_if_unavailable = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_railways"
@@ -1390,6 +1452,14 @@
 
 		prerequisite = { focus = GENERIC_build_roads }
 		search_filters = {FOCUS_FILTER_INDUSTRY}
+
+		available = {
+			any_owned_state = {
+				infrastructure < 5
+			}
+		}
+
+		bypass_if_unavailable = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_highways"
@@ -2059,8 +2129,8 @@
 		available = {
 			OR = {
 				has_idea = the_priesthood
-				has_idea = The_Ulema
-				has_idea = The_Clergy
+				has_idea = the_ulema
+				has_idea = the_clergy
 			}
 		}
 		dynamic = yes
@@ -2087,7 +2157,7 @@
 		y = 1
 		relative_position_id = GENERIC_satisfy_the_middle_class
 
-		cost = 10
+		cost = 5
 
 		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY}
 		prerequisite = { focus = GENERIC_satisfy_the_middle_class }
@@ -2131,16 +2201,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_assure_intellectual_freedoms"
-			if = {
-				limit = { has_idea = scientific_advances }
-				swap_ideas = {
-					add_idea = scientific_advances2
-					remove_idea = scientific_advances
-				}
-				else = {
-					add_ideas = scientific_advances
-				}
-			}
+			generic_research_buff = yes
 		}
 
 		ai_will_do = {
@@ -2298,7 +2359,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_primary_schools"
-			add_research_slot = 1
+			generic_research_buff = yes
 		}
 
 		ai_will_do = {
@@ -2323,7 +2384,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_assure_access_to_education"
-			add_research_slot = 1
+			generic_research_buff = yes
 		}
 
 		ai_will_do = {
@@ -2347,26 +2408,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_expand_the_universities"
-			if = {
-				limit = { has_idea = scientific_advances }
-				swap_ideas = {
-					add_idea = scientific_advances2
-					remove_idea = scientific_advances
-				}
-				else = {
-					add_ideas = scientific_advances
-				}
-			}
-			else_if = {
-				limit = { has_idea = scientific_advances2 }
-				swap_ideas = {
-					add_idea = scientific_advances3
-					remove_idea = scientific_advances2
-				}
-				else = {
-					add_ideas = scientific_advances
-				}
-			}
+			generic_research_buff = yes
 		}
 
 		ai_will_do = {
@@ -2390,26 +2432,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_industrial_research_task_forces"
-			if = {
-				limit = { has_idea = scientific_advances }
-				swap_ideas = {
-					add_idea = scientific_advances2
-					remove_idea = scientific_advances
-				}
-				else = {
-					add_ideas = scientific_advances
-				}
-			}
-			else_if = {
-				limit = { has_idea = scientific_advances2 }
-				swap_ideas = {
-					add_idea = scientific_advances3
-					remove_idea = scientific_advances2
-				}
-				else = {
-					add_ideas = scientific_advances
-				}
-			}
+			generic_research_buff = yes
 		}
 
 		ai_will_do = {

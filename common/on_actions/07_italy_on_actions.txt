@@ -1,6 +1,15 @@
 on_actions = {
 	on_daily_ITA = {
 		effect = {
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+					check_variable = { party_pop_array^0 > 0 }
+				}
+				set_variable = { party_pop_array^0 = 0 }
+				recalculate_party = yes
+
+			}
 			if = { limit = { has_dynamic_modifier = { modifier = ITA_party_propaganda_modifier } }
 				set_variable = { party_propaganda_sub_var = fascism_propaganda_var }
 				add_to_variable = { party_propaganda_sub_var = communism_propaganda_var }
@@ -34,14 +43,11 @@ on_actions = {
 					add_to_variable = { party_pop_array^23 = party_propaganda_sub_var }
 				}
 			}
-			add_to_variable = { rsde_counter = 1 } #i have to do this because i can't add extra decimals
 			if = {
 				limit = {
-					check_variable = { rsde_counter > 19 }
 					has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
 				}
-					ruling_subparty_drift_effect = yes #related to reform expectance dynamic modifier
-					set_variable = { rsde_counter = 0 }
+				add_to_variable = { ruling_subparty_drift_store = drift_switch_var_base }
 			}
 			if = {
 				limit = { has_idea = ITA_mafia }
@@ -66,17 +72,47 @@ on_actions = {
 						max = 1
 					}
 					update_mafia_strength = yes
-					add_to_variable = { lega_drift_monthly_store_var = mafia_strength_lega_drift_var }
+					add_to_variable = { lega_weekly_drift_store = mafia_strength_lega_drift_var }
 			}
 		}
 	}
 	on_weekly_ITA = {
 		effect = {
 			prevent_parties_disappearing = yes
+			if = {
+				limit = {
+					has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
+				}
+				ruling_subparty_drift_effect = yes
+				set_variable = { ruling_subparty_drift_store = 0 }
+			}
+			if = {
+				limit = { has_idea = ITA_radio_radicale }
+				set_temp_variable = { radicali_weekly_drift = party_popularity@neutrality }
+				multiply_temp_variable = { radicali_weekly_drift = 0.005 }
+				add_to_variable = { party_pop_array^16 = radicali_weekly_drift }
+			}
+			if = {
+				limit = { has_idea = ITA_underdeveloped_south_1 }
+				set_temp_variable = { lega_weekly_drift = party_popularity@neutrality }
+				multiply_temp_variable = { lega_weekly_drift = 0.03 }
+				add_to_variable = { party_pop_array^14 = lega_weekly_drift }
+			}
+			if = {
+				limit = { has_idea = ITA_underdeveloped_south_2 }
+				set_temp_variable = { lega_weekly_drift = party_popularity@neutrality }
+				multiply_temp_variable = { lega_weekly_drift = 0.015 }
+				add_to_variable = { party_pop_array^14 = lega_weekly_drift }
+			}
+			recalculate_party = yes
 			if = { #infiltrations_var increase state construction time
 				limit = { has_idea = ITA_mafia }
 					update_police_effectivness = yes
 					mafia_event_counters = yes
+					multiply_variable = { lega_weekly_drift_store = party_popularity@neutrality }
+					multiply_variable = { lega_weekly_drift_store = 0.07 }
+					add_to_variable = { party_pop_array^14 = lega_weekly_drift_store }
+					set_variable = { lega_weekly_drift_store = 0 }
 					83 = {
 						set_variable = { cosa_nostra_infiltrations_var = ROOT.cosa_nostra_strength }
 						multiply_variable = { cosa_nostra_infiltrations_var = 100 }
@@ -164,9 +200,6 @@ on_actions = {
 			}
 			if = {
 				limit = { has_idea = ITA_mafia }
-				multiply_variable = { lega_drift_monthly_store_var = 0.01 }
-				add_to_variable = { party_pop_array^14 = lega_drift_monthly_store_var }
-				set_variable = { lega_drift_monthly_store_var = 0 }
 				mafia_monthly_drift = yes
 			}
 			if = {
@@ -191,6 +224,45 @@ on_actions = {
 					set_variable = { reform_expectance_from_situation_counter = 0 }
 				}
 				reforme_expectance_government_change_update = yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = privatized_alitalia
+					}
+				}
+				random_list = {
+					50 = {
+						add_to_variable = { alitalia_crisis_counter = 1 }
+					}
+					50 = {
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { alitalia_crisis_counter > 11 }
+					}
+					set_variable = { alitalia_crisis_counter = 0 }
+					country_event = italy_md.54
+				}
+			}
+			random_list = {
+				50 = {
+					add_to_variable = { ITA_drought_counter_var = 1 }
+					modifier = {
+						factor = 0.5
+						has_completed_focus = ITA_befriend_israel
+					}
+				}
+				50 = {
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { ITA_drought_counter_var > 15 }
+				}
+				country_event = italy_md.62
+				set_variable = { ITA_drought_counter_var = 0 }
 			}
 		}
 	}

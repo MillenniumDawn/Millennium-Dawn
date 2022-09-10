@@ -180,6 +180,18 @@ country_event = {
 		effect_tooltip = {
 			add_opinion_modifier = { target = BLR modifier = betrayed_our_cause }
 		}
+		if = {
+			limit = { BLR = { NOT = { is_subject_of = SOV } } }
+				every_state = { limit = { is_controlled_by = BLR }
+					SOV =  { add_state_core = PREV }
+				}
+			SOV = {
+				create_wargoal = {
+					target = BLR
+					type = annex_everything
+				}
+			}
+		}
 	}
 }
 
@@ -492,7 +504,7 @@ country_event = {
 			SOV = {
 				create_wargoal = {
 					target = BLR
-					type = annex_everything
+					type = take_state_focus
 				}
 			}
 		}
@@ -527,7 +539,7 @@ country_event = {
 	picture = GFX_southern_options
 	immediate = { log = "[GetDateText]: [Root.GetName]: event russia.11" }
 	is_triggered_only = yes
-	fire_only_once = yes
+	#fire_only_once = yes
 
 	##Accept the Integration
 	option = {
@@ -535,29 +547,29 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: russia.11.o1 executed"
 		if = {
 			limit = { tag = ABK }
+			SOV = { set_country_flag = ABK_accepts_annexation }
 			effect_tooltip = {
 				ABK = {
 					every_unit_leader = {
 						set_nationality = SOV
 					}
 				}
-				annex_country = { target = ABK transfer_troops = yes }
-				SOV = { set_country_flag = ABK_accepts_annexation }
+				SOV = { annex_country = { target = ABK transfer_troops = yes } }
 			}
 		}
 		if = {
 			limit = { tag = SOO }
+			SOV = { set_country_flag = SOO_accepts_annexation }
 			effect_tooltip = {
 				SOO = {
 					every_unit_leader = {
 						set_nationality = SOV
 					}
 				}
-				annex_country = { target = SOO transfer_troops = yes }
-				SOV = { set_country_flag = SOO_accepts_annexation }
+				SOV = { annex_country = { target = SOO transfer_troops = yes }}
 			}
 		}
-		SOV = { country_event = { id = russia.12 days = 3 } }
+		SOV = { country_event = { id = russia.12 days = 1 } }
 		ai_chance = {
 			factor = 50
 			modifier = {
@@ -612,25 +624,25 @@ country_event = {
 	id = russia.12
 	title = {
 		trigger = {
-			has_country_flag = ABK_accepts_annexation
+			SOV = { has_country_flag = ABK_accepts_annexation }
 		}
 		text = russia.12.t1
 	}
 	title = {
 		trigger = {
-			has_country_flag = SOO_accepts_annexation
+			SOV = { has_country_flag = SOO_accepts_annexation }
 		}
 		text = russia.12.t2
 	}
 	desc = {
 		trigger = {
-			has_country_flag = ABK_accepts_annexation
+			SOV = { has_country_flag = ABK_accepts_annexation }
 		}
 		text = russia.12.d1
 	}
 	desc = {
 		trigger = {
-			has_country_flag = SOO_accepts_annexation
+			SOV = { has_country_flag = SOO_accepts_annexation }
 		}
 		text = russia.12.d2
 	}
@@ -642,7 +654,7 @@ country_event = {
 		name = russia.12.o1
 		log = "[GetDateText]: [This.GetName]: russia.12.o1 executed"
 		if = {
-			limit = { has_country_flag = ABK_accepts_annexation }
+			limit = { SOV = { has_country_flag = ABK_accepts_annexation } }
 			ABK = {
 				if = {
 					limit = { any_owned_state = { NOT = { is_core_of = SOV } } }
@@ -654,10 +666,10 @@ country_event = {
 					set_nationality = SOV
 				}
 			}
-			annex_country = { target = ABK transfer_troops = yes }
+			SOV = { annex_country = { target = ABK transfer_troops = yes }}
 		}
 		if = {
-			limit = { has_country_flag = SOO_accepts_annexation }
+			limit = { SOV = { has_country_flag = SOO_accepts_annexation } }
 			SOO = {
 				if = {
 					limit = { any_owned_state = { NOT = { is_core_of = SOV } } }
@@ -669,7 +681,8 @@ country_event = {
 					set_nationality = SOV
 				}
 			}
-			annex_country = { target = SOO transfer_troops = yes }
+			SOV = { annex_country = { target = SOO transfer_troops = yes }}
+			clr_country_flag = SOO_accepts_annexation
 		}
 	}
 }
@@ -756,7 +769,8 @@ country_event = {
 		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
 		SOV = {
-			add_to_variable = { int_investments = 10.0 }
+			set_temp_variable = { int_investment_change = 10 }
+			modify_international_investment_effect = yes
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
 			country_event = { id = diplomatic_response.1 days = 1 }
