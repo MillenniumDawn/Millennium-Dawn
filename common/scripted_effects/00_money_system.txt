@@ -146,6 +146,12 @@ calculate_tax_gain = {
 		limit = { has_decision = lease_civilian_factories }
 		subtract_from_variable = { civil_fac_tax = 3 }
 	}
+	if = {
+		limit = {
+			is_in_array = { ruling_party = 15 }	#oligarchs
+		}
+		multiply_variable = { civil_fac_tax = 1.1 }
+	}
 	multiply_variable = { civil_fac_tax = 3 }
 	set_variable = { military_fac_tax = num_of_military_factories }
 	if = {
@@ -160,6 +166,15 @@ calculate_tax_gain = {
 	}
 	multiply_variable = { dockyard_tax = 1.5 }
 	set_variable = { office_tax = office_park_total }
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 2 }	#liberalism
+				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+			}
+		}
+		multiply_variable = { office_tax = 1.1 }
+	}
 	multiply_variable = { office_tax = 5 }
 	#Control factors
 	divide_variable = { civil_fac_tax = 4.2 }
@@ -417,6 +432,21 @@ calculate_additional_income_rate = {
 		limit = { has_idea = PER_irgc_black_market_exploits }
 		set_variable = { additional_income_summary_irgc_black_market = 0.03 }
 		add_to_variable = { additional_income_rate = additional_income_summary_irgc_black_market }  
+	}
+	#spain
+	if = { limit = { original_tag = SPR  }
+		if = {
+			limit = { has_idea = SPR_idea_tourist_industry_1 }
+			add_to_variable = { additional_income_rate = SPR_tourism_1_effect }
+		}
+		if = {
+			limit = { has_idea = SPR_idea_tourist_industry_2 }
+			add_to_variable = { additional_income_rate = SPR_tourism_2_effect }
+		}
+		if = {
+			limit = { has_idea = SPR_idea_tourist_industry_3 }
+			add_to_variable = { additional_income_rate = SPR_tourism_2_effect }
+		}
 	}
 }
 
@@ -1675,7 +1705,18 @@ calculate_additional_expense_rate = {
 #Update money gained from international investments
 calculate_int_investments_rate = {
 	#Set base ROI rate
-	set_variable = { roi_rate = 0.06 }	#6%
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 2 }	#liberalism
+				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+			}
+		}
+		set_variable = { roi_rate = 0.08 }	#8%
+	}
+	else = {
+		set_variable = { roi_rate = 0.06 }	#6%
+	}
 
 	# Modifier for ROI
 	add_to_variable = { roi_rate = modifier@return_on_investment_modifier }
