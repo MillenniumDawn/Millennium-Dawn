@@ -46,7 +46,12 @@
 	NDefines.NDiplomacy.TAKE_STATES_CHANGE_GOV_COST_MULT = 0.1
 	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 2
 	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 10
-	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.25  -- was -0.7
+	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.5  -- was -0.7
+
+	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_BASE = 0  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
+	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_FACTOR = 0.05  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
+	NDefines.NDiplomacy.LL_TO_PUPPET_AUTONOMY_DAILY_BASE = 0  -- If overlord lend leases equipment to puppet of higher tech level as they have, puppet losses autonomy
+	NDefines.NDiplomacy.LL_TO_PUPPET_AUTONOMY_DAILY_FACTOR = -0.001  -- If overlord lend leases equipment to puppet of higher tech level as they have, puppet losses autonomy
 
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 --Returned RSs back to normal from Vanilla - BIRD
 	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01 --0.01
@@ -87,7 +92,8 @@
 	NDefines.NProduction.BASE_FACTORY_SPEED_NAV = 8
 	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 20
 	NDefines.NProduction.BASE_CONSUMER_GOODS_NEED_FACTOR = 0
-	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 0.01
+	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 1
+	NDefines.NProduction.EQUIPMENT_LEND_LEASE_WEIGHT_FACTOR = 0.01
 	NDefines.NProduction.ANNEX_STOCKPILES_RATIO = 0.4
 	NDefines.NProduction.ANNEX_FIELD_EQUIPMENT_RATIO = 0.1
 	NDefines.NProduction.INFRA_MAX_CONSTRUCTION_COST_EFFECT = 0.75
