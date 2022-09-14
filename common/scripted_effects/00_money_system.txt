@@ -146,6 +146,12 @@ calculate_tax_gain = {
 		limit = { has_decision = lease_civilian_factories }
 		subtract_from_variable = { civil_fac_tax = 3 }
 	}
+	if = {
+		limit = {
+			is_in_array = { ruling_party = 15 }	#oligarchs
+		}
+		multiply_variable = { civil_fac_tax = 1.1 }
+	}
 	multiply_variable = { civil_fac_tax = 3 }
 	set_variable = { military_fac_tax = num_of_military_factories }
 	if = {
@@ -160,6 +166,15 @@ calculate_tax_gain = {
 	}
 	multiply_variable = { dockyard_tax = 1.5 }
 	set_variable = { office_tax = office_park_total }
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 2 }	#liberalism
+				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+			}
+		}
+		multiply_variable = { office_tax = 1.1 }
+	}
 	multiply_variable = { office_tax = 5 }
 	#Control factors
 	divide_variable = { civil_fac_tax = 4.2 }
@@ -407,6 +422,22 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_LIC_huge_tax_haven }
 		}
 	}
+	#spain
+	if = { limit = { original_tag = SPR  }
+		if = {
+			limit = { has_idea = SPR_idea_tourist_industry_1 }
+			add_to_variable = { additional_income_rate = SPR_tourism_1_effect }
+		}
+		if = {
+			limit = { has_idea = SPR_idea_tourist_industry_2 }
+			add_to_variable = { additional_income_rate = SPR_tourism_2_effect }
+		}
+		if = {
+			limit = { has_idea = SPR_idea_tourist_industry_3 }
+			add_to_variable = { additional_income_rate = SPR_tourism_2_effect }
+		}
+	}
+
 }
 
 
@@ -568,17 +599,17 @@ update_military_rate = {
 
 	#Set the base cost for each spending level based on size of military industry ( [num_of_mil_factories + num_of_naval_factories]/modifier )
 	divide_variable = { array_defence_spend^0 = 2175 }
-	divide_variable = { array_defence_spend^1 = 215 }
-	divide_variable = { array_defence_spend^2 = 110 }
-	divide_variable = { array_defence_spend^3 = 70 }
-	divide_variable = { array_defence_spend^4 = 55 }
-	divide_variable = { array_defence_spend^5 = 35 }
-	divide_variable = { array_defence_spend^6 = 27 }
-	divide_variable = { array_defence_spend^7 = 11 }
-	divide_variable = { array_defence_spend^8 = 7 }
-	divide_variable = { array_defence_spend^9 = 6 }
+	divide_variable = { array_defence_spend^1 = 200 }
+	divide_variable = { array_defence_spend^2 = 100 }
+	divide_variable = { array_defence_spend^3 = 67 }
+	divide_variable = { array_defence_spend^4 = 43 }
+	divide_variable = { array_defence_spend^5 = 33 }
+	divide_variable = { array_defence_spend^6 = 25 }
+	divide_variable = { array_defence_spend^7 = 20 }
+	divide_variable = { array_defence_spend^8 = 16 }
+	divide_variable = { array_defence_spend^9 = 10 }
 
-	#Update each item in the defence spending array based on your gdp/c, having a higher GDP makes defence more expensive
+	#Update each item in the defence spending array based on your gdp/c, having a higher GDP/c makes defence more expensive
 	set_temp_variable = { gdp_defence_modifier_industry = gdp_per_capita }
 	if = {		#Linear approximation -0.007 * gdp/c + 2.333
 		limit = { check_variable = { gdp_defence_modifier_industry > 50 } }
@@ -595,6 +626,7 @@ update_military_rate = {
 		multiply_temp_variable = { gdp_defence_modifier_industry = -0.3 }
 		add_to_temp_variable = { gdp_defence_modifier_industry = 8.1 }
 	}
+	multiply_temp_variable = { gdp_defence_modifier_industry = 1.33 } #tweak this to modify gdp/c impact on industrial cost without having to rewrite the whole system
 	clamp_temp_variable = { var = gdp_defence_modifier_industry min = 1 }
 	#Defence spending loop
 	for_each_loop = {
@@ -997,7 +1029,7 @@ update_military_rate = {
 
 	#Multiply personnel costs basde on GDP/c, higher GDP makes things more expensive (linear approximation 0.003 * gdp/c + 0.129)
 	set_temp_variable = { gdp_defence_modifier_personnel = gdp_per_capita }
-	multiply_temp_variable = { gdp_defence_modifier_personnel = 0.003 }
+	multiply_temp_variable = { gdp_defence_modifier_personnel = 0.004 }
 	add_to_temp_variable = { gdp_defence_modifier_personnel = 0.129 }
 	multiply_temp_variable = { land_count = gdp_defence_modifier_personnel }
 	multiply_temp_variable = { navy_count = gdp_defence_modifier_personnel }
@@ -1008,15 +1040,22 @@ update_military_rate = {
 	add_to_temp_variable = { gdp_defence_modifier_equipment = 1 }
 	multiply_variable = { equipment_operative_cost = gdp_defence_modifier_equipment }
 
-	set_temp_variable = { equipment_cost_mobilization_level_modifier = 0.07 }
+	set_temp_variable = { mobilization_level_modifier = 0.25 }
+	multiply_temp_variable = { mobilization_level_modifier = def_index }
+	add_to_temp_variable = { mobilization_level_modifier = 0.75 }
+	multiply_temp_variable = { land_count = mobilization_level_modifier }
+	multiply_temp_variable = { navy_count = mobilization_level_modifier }
+	multiply_temp_variable = { airforce_count = mobilization_level_modifier }
+
+	set_temp_variable = { equipment_cost_mobilization_level_modifier = 0.25 }
 	multiply_temp_variable = { equipment_cost_mobilization_level_modifier = def_index }
-	add_to_temp_variable = { equipment_cost_mobilization_level_modifier = 0.37 }
+	add_to_temp_variable = { equipment_cost_mobilization_level_modifier = 0.75 }
 	multiply_variable = { equipment_operative_cost = equipment_cost_mobilization_level_modifier }
 
 	#Divide by control factors (same for all!) - Use this if you want to scale cost of military personnel in relation to defence industry
-	divide_temp_variable = { land_count = 850 }
-	divide_temp_variable = { navy_count = 700 }
-	divide_temp_variable = { airforce_count = 1000 }
+	divide_temp_variable = { land_count = 1050 }
+	divide_temp_variable = { navy_count = 850 }
+	divide_temp_variable = { airforce_count = 1250 }
 
 	#Add up armed forces
 	set_temp_variable = { personnel_cost = land_count }
@@ -1050,10 +1089,10 @@ update_military_rate = {
 		value = v
 		add_to_variable = { array_defence_spend^i = personnel_cost }
 		multiply_variable = { array_defence_spend^i = 7 } #Multiply each index by 7 days
+		add_to_variable = { array_defence_spend^i = equipment_operative_cost }
 	}
 
 	set_variable = { defence_gain = array_defence_spend^def_index }
-	add_to_variable = { defence_gain = equipment_operative_cost }
 }
 
 #Update bureaucracy spending
@@ -1574,8 +1613,8 @@ calculate_additional_expense_rate = {
 		divide_variable = { project_decisions_cost = 0.5 }
 
 		set_temp_variable = { project_cost_multiplier = 1 }
-		add_to_temp_variable = { projects_cost_modifier = modifier@projects_cost_modifier }
-		multiply_temp_variable = { project_decisions_cost = projects_cost_modifier }
+		add_to_temp_variable = { project_cost_multiplier = modifier@projects_cost_modifier }
+		multiply_variable = { project_decisions_cost = project_cost_multiplier }
 
 		add_to_variable = { additional_expenses_rate = project_decisions_cost }
 	}
@@ -1674,7 +1713,18 @@ calculate_additional_expense_rate = {
 #Update money gained from international investments
 calculate_int_investments_rate = {
 	#Set base ROI rate
-	set_variable = { roi_rate = 0.06 }	#6%
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 2 }	#liberalism
+				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+			}
+		}
+		set_variable = { roi_rate = 0.08 }	#8%
+	}
+	else = {
+		set_variable = { roi_rate = 0.06 }	#6%
+	}
 
 	# Modifier for ROI
 	add_to_variable = { roi_rate = modifier@return_on_investment_modifier }
