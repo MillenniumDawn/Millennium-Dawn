@@ -46,7 +46,12 @@
 	NDefines.NDiplomacy.TAKE_STATES_CHANGE_GOV_COST_MULT = 0.1
 	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 2
 	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 10
-	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.25  -- was -0.7
+	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.5  -- was -0.7
+
+	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_BASE = 0  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
+	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_FACTOR = 0.05  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
+	NDefines.NDiplomacy.LL_TO_PUPPET_AUTONOMY_DAILY_BASE = 0  -- If overlord lend leases equipment to puppet of higher tech level as they have, puppet losses autonomy
+	NDefines.NDiplomacy.LL_TO_PUPPET_AUTONOMY_DAILY_FACTOR = -0.001  -- If overlord lend leases equipment to puppet of higher tech level as they have, puppet losses autonomy
 
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 --Returned RSs back to normal from Vanilla - BIRD
 	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01 --0.01
@@ -87,7 +92,8 @@
 	NDefines.NProduction.BASE_FACTORY_SPEED_NAV = 8
 	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 20
 	NDefines.NProduction.BASE_CONSUMER_GOODS_NEED_FACTOR = 0
-	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 0.01
+	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 1
+	NDefines.NProduction.EQUIPMENT_LEND_LEASE_WEIGHT_FACTOR = 0.01
 	NDefines.NProduction.ANNEX_STOCKPILES_RATIO = 0.4
 	NDefines.NProduction.ANNEX_FIELD_EQUIPMENT_RATIO = 0.1
 	NDefines.NProduction.INFRA_MAX_CONSTRUCTION_COST_EFFECT = 0.75
@@ -691,7 +697,7 @@
 	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 4					-- 25
 	NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 4					-- 25
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
-	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 8				-- 3
+	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 20				-- 3 is vanilla, updated this from 8 to 20 for more AI production control
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_FOR_FUEL_SAVING_MODE = 1.0			-- fuel consumptions will be limited by this ratio in fuel saving mode
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_REGULAR_FUEL_MODE = 2.0				-- fuel consumptions will be limited by this ratio in regular fuel mode
