@@ -975,6 +975,81 @@ scripted_gui = {
 				NOT = { has_country_flag = printed_money_recently }
 				has_political_power > 99
 			}
+
+			# - Lease Military Factories
+			# This action leases three military arms industry while this button is clicked
+			lease_military_factories_click_enabled = {
+				NOT = {
+					has_country_flag = lease_civilian_factories_flag
+					has_country_flag = lease_naval_dockyards_flag
+				}
+			}
+			# - Lease Civilian Industry
+			# This action leases three civilian military industry while this button is clicked
+			lease_civilian_factories_click_enabled = {
+				NOT = {
+					has_country_flag = lease_military_factories_flag
+					has_country_flag = lease_naval_dockyards_flag
+				}
+			}
+			# - Lease Naval Dockyards
+			# This action leases three naval dockyards while this button is clicked
+			lease_naval_dockyards_click_enabled = {
+				NOT = {
+					has_country_flag = lease_civilian_factories_flag
+					has_country_flag = lease_military_factories_flag
+				}
+			}
+			# - Industrial Projects
+			# This action triggers a hidden idea to increase industrial complex construction speed
+			industrial_projects_click_enabled = {
+				NOT = {
+					has_country_flag = infrastructure_investiture_flag
+					has_country_flag = service_constructions_flag
+					has_country_flag = arms_industry_stipends_flag
+					has_country_flag = retool_shipyards_flag
+				}
+			}
+			# - Service Constructions
+			# This action triggers a hidden idea to increase office construction speed
+			service_constructions_click_enabled = {
+				NOT = {
+					has_country_flag = infrastructure_investiture_flag
+					has_country_flag = industrial_projects_flag
+					has_country_flag = arms_industry_stipends_flag
+					has_country_flag = retool_shipyards_flag
+				}
+			}
+			# - Infrastructure Investiture
+			# This action triggers a hidden idea to increase infrastructure construction speed
+			infrastructure_investiture_click_enabled = {
+				NOT = {
+					has_country_flag = service_constructions_flag
+					has_country_flag = industrial_projects_flag
+					has_country_flag = arms_industry_stipends_flag
+					has_country_flag = retool_shipyards_flag
+				}
+			}
+			# - Arms Industry Stipends
+			# This action triggers a hidden idea to increase arms military construction speed
+			arms_industry_stipends_click_enabled = {
+				NOT = {
+					has_country_flag = infrastructure_investiture_flag
+					has_country_flag = industrial_projects_flag
+					has_country_flag = service_constructions_flag
+					has_country_flag = retool_shipyards_flag
+				}
+			}
+			# - Retool Shipyards
+			# This action triggers a hidden idea to increase naval dockyard construction speed
+			retool_shipyards_click_enabled = {
+				NOT = {
+					has_country_flag = infrastructure_investiture_flag
+					has_country_flag = industrial_projects_flag
+					has_country_flag = service_constructions_flag
+					has_country_flag = arms_industry_stipends_flag
+				}
+			}
 		}
 
 		effects = {
@@ -1154,7 +1229,128 @@ scripted_gui = {
 				add_to_variable =  { var = debt value = printing }
 				add_political_power = -100
 				set_country_flag = { flag = printed_money_recently value = 1 days = 45 }
+				ingame_update_setup = yes
+				refresh_gui = yes
 			}
+
+			# - Lease Military Factories
+			# This action leases three military arms industry while this button is clicked
+			lease_military_factories_click = {
+				if = { limit = { NOT = { has_country_flag = lease_military_factories_flag } }
+					set_country_flag = lease_military_factories_flag
+					add_offsite_building = { level = 3 type = arms_factory }
+				}
+				else = {
+					clr_country_flag = lease_military_factories_flag
+					add_offsite_building = { level = -3 type = arms_factory }
+				}
+				ingame_update_setup = yes
+				refresh_gui = yes
+			}
+			# - Lease Civilian Industry
+			# This action leases three civilian military industry while this button is clicked
+			lease_civilian_factories_click = {
+				if = { limit = { NOT = { has_country_flag = lease_civilian_factories_flag } }
+					set_country_flag = lease_civilian_factories_flag
+					add_offsite_building = { level = 3 type = industrial_complex }
+				}
+				else = {
+					clr_country_flag = lease_civilian_factories_flag
+					add_offsite_building = { level = -3 type = industrial_complex }
+				}
+				ingame_update_setup = yes
+				refresh_gui = yes
+			}
+			# - Lease Naval Dockyards
+			# This action leases three naval dockyards while this button is clicked
+			lease_naval_dockyards_click = {
+				if = { limit = { NOT = { has_country_flag = lease_naval_dockyards_flag } }
+					set_country_flag = lease_naval_dockyards_flag
+					add_offsite_building = { level = 3 type = dockyard }
+				}
+				else = {
+					clr_country_flag = lease_naval_dockyards_flag
+					add_offsite_building = { level = -3 type = dockyard }
+				}
+				ingame_update_setup = yes
+				refresh_gui = yes
+			}
+			# - Industrial Projects
+			# This action triggers a hidden idea to increase industrial complex construction speed
+			industrial_projects_click = {
+				custom_effect_tooltip = treasury_loss_projects_TT
+				if = { limit = { NOT = { has_country_flag = industrial_projects_flag } }
+					set_country_flag = industrial_projects_flag
+					add_ideas = industrial_projects_idea
+				}
+				else = {
+					clr_country_flag = industrial_projects_flag
+					remove_ideas = industrial_projects_idea
+				}
+				ingame_update_setup = yes
+				refresh_gui = yes
+			}
+			# - Service Constructions
+			# This action triggers a hidden idea to increase office construction speed
+			service_constructions_click = {
+				custom_effect_tooltip = treasury_loss_projects_TT
+				if = { limit = { NOT = { has_country_flag = service_constructions_flag } }
+					set_country_flag = service_constructions_flag
+					add_ideas = service_constructions_idea
+				}
+				else = {
+					clr_country_flag = service_constructions_flag
+					remove_ideas = service_constructions_idea
+				}
+				ingame_update_setup = yes
+				refresh_gui = yes
+			}
+			# - Infrastructure Investiture
+			# This action triggers a hidden idea to increase infrastructure construction speed
+			infrastructure_investiture_click = {
+				custom_effect_tooltip = treasury_loss_projects_TT
+				if = { limit = { NOT = { has_country_flag = infrastructure_investiture_flag } }
+					set_country_flag = infrastructure_investiture_flag
+					add_ideas = infrastructure_investiture_idea
+				}
+				else = {
+					clr_country_flag = infrastructure_investiture_flag
+					remove_ideas = infrastructure_investiture_idea
+				}
+				ingame_update_setup = yes
+				refresh_gui = yes
+			}
+			# - Arms Industry Stipends
+			# This action triggers a hidden idea to increase arms military construction speed
+			arms_industry_stipends_click = {
+				custom_effect_tooltip = treasury_loss_projects_TT
+				if = { limit = { NOT = { has_country_flag = arms_industry_stipends_flag } }
+					set_country_flag = arms_industry_stipends_flag
+					add_ideas = arms_industry_stipends_idea
+				}
+				else = {
+					clr_country_flag = arms_industry_stipends_flag
+					remove_ideas = arms_industry_stipends_idea
+				}
+				ingame_update_setup = yes
+				refresh_gui = yes
+			}
+			# - Retool Shipyards
+			# This action triggers a hidden idea to increase naval dockyard construction speed
+			retool_shipyards_click = {
+				custom_effect_tooltip = treasury_loss_projects_TT
+				if = { limit = { NOT = { has_country_flag = retool_shipyards_flag } }
+					set_country_flag = retool_shipyards_flag
+					add_ideas = retool_shipyards_idea
+				}
+				else = {
+					clr_country_flag = retool_shipyards_flag
+					remove_ideas = retool_shipyards_idea
+				}
+				ingame_update_setup = yes
+				refresh_gui = yes
+			}
+
 		}
 
 		# AI Section
@@ -1180,12 +1376,12 @@ scripted_gui = {
 					factor = 25
 					# General Economic Factors
 					modifier = {
-						set_temp_variable = { interest_rate_tmp = interest_rate } 
-						check_variable = { intrest_rate_tmp > -1 } 
+						set_temp_variable = { interest_rate_tmp = interest_rate }
+						check_variable = { intrest_rate_tmp > -1 }
 						add = interest_rate_tmp
 					}
 					modifier = {
-						check_variable = { treasury_rate < 0 } 
+						check_variable = { treasury_rate < 0 }
 						factor = ai_change_population_taxes
 					}
 					modifier = {
@@ -1212,7 +1408,7 @@ scripted_gui = {
 						factor = 0
 						OR = {
 							has_country_flag = no_personal_tax_rate_change
-							has_stability < 0.25 
+							has_stability < 0.25
 							check_variable = { treasury_rate > 9.99 }
 						}
 					}
@@ -1225,11 +1421,11 @@ scripted_gui = {
 					modifier = {
 						set_temp_variable = { negative_interest_rate = interest_rate }
 						multiply_temp_variable = { negative_interest_rate = -2 }
-						check_variable = { negative_interest_rate < 1 } 
+						check_variable = { negative_interest_rate < 1 }
 						add = negative_interest_rate
 					}
 					modifier = {
-						check_variable = { treasury_rate > 0 } 
+						check_variable = { treasury_rate > 0 }
 						factor = ai_change_population_taxes
 					}
 					modifier = {
@@ -1267,12 +1463,12 @@ scripted_gui = {
 					factor = 25
 					# Generic Economic
 					modifier = {
-						set_temp_variable = { interest_rate_tmp = interest_rate } 
-						check_variable = { intrest_rate_tmp > -1 } 
+						set_temp_variable = { interest_rate_tmp = interest_rate }
+						check_variable = { intrest_rate_tmp > -1 }
 						add = interest_rate_tmp
 					}
 					modifier = {
-						check_variable = { treasury_rate < 0 } 
+						check_variable = { treasury_rate < 0 }
 						factor = ai_change_corporate_taxes
 					}
 
@@ -1313,7 +1509,7 @@ scripted_gui = {
 						always = yes
 					}
 					modifier = {
-						check_variable = { treasury_rate > 0 } 
+						check_variable = { treasury_rate > 0 }
 						factor = ai_change_corporate_taxes
 					}
 					modifier = {
