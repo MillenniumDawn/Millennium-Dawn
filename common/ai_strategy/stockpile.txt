@@ -25,24 +25,27 @@ MD_excess_inf_equipment = {
 	}
 
 	ai_strategy = { type = equipment_variant_production_factor id = Inf_equipment value = -150 }
+	ai_strategy = { type = equipment_production_min_factories id = Inf_equipment value = -2 }
 }
 MD_ignore_command_equipment = {
 	allowed = {
 		disabled_ai_for_units = yes
 	}
-	enable = { has_equipment = { command_control_equipment > 2250 } }
-	abort = { has_equipment = { command_control_equipment < 750 } }
+	enable = { has_equipment = { cnc_equipment > 2250 } }
+	abort = { has_equipment = { cnc_equipment < 750 } }
 
 	ai_strategy = { type = equipment_variant_production_factor  id = cnc_equipment value = -150 }
+	ai_strategy = { type = equipment_production_min_factories id = cnc_equipment value = -2 }
 }
 
 MD_ignore_util_vehicles = {
 	allowed = {
 		disabled_ai_for_units = yes
 	}
-	enable = { has_equipment = { util_vehicle_equipment > 20000 } }
+	enable = { has_equipment = { util_vehicle_equipment > 10000 } }
 	abort = { has_equipment = { util_vehicle_equipment < 5000 } }
 	ai_strategy = { type = equipment_variant_production_factor id = util_vehicle_equipment value = -200 }
+	ai_strategy = { type = equipment_production_min_factories id = util_vehicle_equipment value = -2 }
 }
 
 MD_need_util_vehicles = {
@@ -50,8 +53,9 @@ MD_need_util_vehicles = {
 		disabled_ai_for_units = yes
 	}
 	enable = { has_equipment = { util_vehicle_equipment < 5000 } }
-	abort = { has_equipment = { util_vehicle_equipment < 20000 } }
+	abort = { has_equipment = { util_vehicle_equipment < 10000 } }
 	ai_strategy = { type = equipment_variant_production_factor id = util_vehicle_equipment value = 50 }
+	ai_strategy = { type = equipment_production_min_factories id = util_vehicle_equipment value = 2 }
 }
 
 
@@ -59,9 +63,10 @@ MD_build_command_equipment = {
 	allowed = {
 		disabled_ai_for_units = yes
 	}
-	enable = { has_equipment = { command_control_equipment < 1000 } }
-	abort = { has_equipment = { command_control_equipment > 15000 } }
+	enable = { has_equipment = { cnc_equipment < 1000 } }
+	abort = { has_equipment = { cnc_equipment > 15000 } }
 	ai_strategy = { type = equipment_variant_production_factor  id = cnc_equipment value = 150 }
+	ai_strategy = { type = equipment_production_min_factories id = cnc_equipment value = 2 }
 }
 MD_shortage_InfEqp = {
 	allowed = {
@@ -70,12 +75,14 @@ MD_shortage_InfEqp = {
 	enable = {
 		OR = {
 			has_equipment = { Inf_equipment < 1000 }
-			has_equipment = { command_control_equipment < 500 }
+			has_equipment = { cnc_equipment < 500 }
 		}
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = equipment_variant_production_factor id = Inf_equipment value = 100 }
+	ai_strategy = { type = equipment_production_min_factories id = Inf_equipment value = 5 }
+	ai_strategy = { type = equipment_production_min_factories id = command_control_equipment value = 5 }
 	ai_strategy = { type = equipment_variant_production_factor id = command_control_equipment value = 100 }
 	ai_strategy = { type = role_ratio id = L_Inf value = -500 }
 	ai_strategy = { type = role_ratio id = infantry value = -500 }
@@ -91,22 +98,24 @@ MD_arty_shortage = {
 		disabled_ai_for_units = yes
 	}
 	enable = {
-		has_equipment = { artillery_equipment < 1000 }
+		has_equipment = { artillery < 1000 }
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = equipment_production_factor id = artillery value = 50 }
+	ai_strategy = { type = equipment_production_min_factories id = artillery value = 2 }
 }
 MD_arty_no_needed = {
 	allowed = {
 		disabled_ai_for_units = yes
 	}
 	enable = {
-		has_equipment = { artillery_equipment > 2000 }
+		has_equipment = { artillery > 2000 }
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = equipment_production_factor id = artillery value = -100 }
+	ai_strategy = { type = equipment_production_min_factories id = artillery value = -2 }
 }
 MD_excess_AT = {
 	allowed = {
@@ -118,6 +127,8 @@ MD_excess_AT = {
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = equipment_production_factor id = anti_tank value = -150 }
+
+	ai_strategy = { type = equipment_production_min_factories id = anti_tank value = -2 }
 }
 MD_shortage_AT = {
 	allowed = {
@@ -139,6 +150,8 @@ MD_shortage_AT = {
 	ai_strategy = { type = role_ratio id = marines value = -500 }
 	ai_strategy = { type = role_ratio id = Air_assault value = -500 }
 	ai_strategy = { type = role_ratio id = Special_Forces value = -500 }
+	ai_strategy = { type = equipment_production_min_factories id = artillery value = -2 }
+	ai_strategy = { type = equipment_production_min_factories id = anti_tank value = 2 }
 }
 default_stockpile_management = {
 	enable = { has_war = no }
@@ -148,42 +161,32 @@ default_stockpile_management = {
 }
 
 ##AI Make Less
-MD_ai_make_less_ifv_apc_cuz_too_many = {
+MD_ai_make_less_apc = {
 	allowed = {
 		disabled_ai_for_units = yes
 	}
 	enable = {
-		AND = {
-			has_equipment = { APC_Equipment > 2000 }
-			has_equipment = { IFV_Equipment > 2000 }
-		}
+		has_equipment = { APC_Equipment > 5000 }
 	}
 	abort = {
-		OR = {
-			has_equipment = { APC_Equipment < 1500 }
-			has_equipment = { IFV_Equipment < 1500 }
-		}
+		has_equipment = { APC_Equipment < 1500 }
 	}
-	ai_strategy = { type = equipment_production_factor id = mechanized value = -100 }
+
+	ai_strategy = { type = equipment_variant_production_factor id = APC_Equipment value = -100 }
 }
 
-MD_mechanized_here_we_come = {
+MD_ai_make_more_apc = {
 	allowed = {
 		disabled_ai_for_units = yes
 	}
 	enable = {
-		OR = {
-			has_equipment = { APC_Equipment < 1500 }
-			has_equipment = { IFV_Equipment < 1500 }
-		}
+		has_equipment = { APC_Equipment > 5000 }
 	}
 	abort = {
-		AND = {
-			has_equipment = { APC_Equipment > 2000 }
-			has_equipment = { IFV_Equipment > 2000 }
-		}
+		has_equipment = { APC_Equipment < 1500 }
 	}
-	ai_strategy = { type = equipment_production_factor id = mechanized value = 100 }
+
+	ai_strategy = { type = equipment_variant_production_factor id = APC_Equipment value = 100 }
 }
 
 MD_need_armor = {
@@ -253,14 +256,23 @@ MD_no_useless_plane_types = {
 	}
 
 	ai_strategy = { type = equipment_variant_production_factor id = awacs_equipment value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = awacs_equipment value = -2 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_awacs_equipment value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = cv_awacs_equipment value = -2 }
 	ai_strategy = { type = equipment_variant_production_factor id = Air_UAV_equipment value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = Air_UAV_equipment value = -2 }
 	ai_strategy = { type = equipment_variant_production_factor id = CV_L_Strike_fighter_equipment value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = CV_L_Strike_fighter_equipment value = -2 }
 	ai_strategy = { type = equipment_variant_production_factor id = L_Strike_fighter_equipment value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = L_Strike_fighter_equipment value = -2 }
 	ai_strategy = { type = equipment_variant_production_factor id = Strike_fighter_equipment value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = Strike_fighter_equipment value = -2 }
 	ai_strategy = { type = equipment_variant_production_factor id = attack_helicopter_equipment value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = attack_helicopter_equipment value = -2 }
 	ai_strategy = { type = equipment_variant_production_factor id = CAS_equipment value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = CAS_equipment value = -2 }
 	ai_strategy = { type = equipment_variant_production_factor id = AS_Fighter_equipment value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = AS_Fighter_equipment value = -2 }
 }
 
 MD_no_carrier_mr_variants = {
@@ -279,6 +291,7 @@ MD_no_carrier_mr_variants = {
 		has_equipment = { CV_MR_Fighter_equipment < 1000 }
 	}
 	ai_strategy = { type = equipment_variant_production_factor id = CV_MR_Fighter_equipment value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = CV_MR_Fighter_equipment value = -2 }
 }
 
 MD_ok_carrier_mr_variants = {
@@ -338,4 +351,32 @@ MD_no_more_mbts = {
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = equipment_variant_production_factor id = mbt_hull value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = mbt_hull value = -2 }
 }
+
+MD_dont_build_transport_helis = {
+	allowed = {
+		disabled_ai_for_units = yes
+	}
+	enable = {
+		has_equipment = { transport_helicopter_equipment > 5000 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = transport_helicopter_equipment value = -1000 }
+	ai_strategy = { type = equipment_production_min_factories id = transport_helicopter_equipment value = -2 }
+}
+
+MD_build_transport_helis = {
+	allowed = {
+		disabled_ai_for_units = yes
+	}
+	enable = {
+		has_equipment = { transport_helicopter_equipment < 0 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = transport_helicopter_equipment value = 50 }
+	ai_strategy = { type = equipment_production_min_factories id = transport_helicopter_equipment value = 2 }
+}
+
