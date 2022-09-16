@@ -570,7 +570,6 @@
 	NDefines.NAI.JOIN_ALLY_FASCIST_DESIRE = 25				-- -10
 	NDefines.NAI.JOIN_ALLY_COMMUNIST_DESIRE = 25				-- 75
 	NDefines.NAI.LENDLEASE_FRACTION_OF_PRODUCTION = 0.6		-- 0.5
-	NDefines.NAI.PLAN_MOVE_MIN_ORG_TO_ENEMY_PROVINCE = 5.0	-- 20
 	NDefines.NAI.PLAN_ATTACK_MIN_ORG_FACTOR_LOW = 0.85		-- 0.85
 	NDefines.NAI.PLAN_FRONTUNIT_DISTANCE_FACTOR = 20			-- 10
 	NDefines.NAI.PLAN_ATTACK_DEPTH_FACTOR = 1.2				-- 0.5
@@ -598,11 +597,11 @@
 	NDefines.NAI.DEMOCRACIES_BEFRIEND_COMMUNISTS = -75
 	NDefines.NAI.DEMOCRACIES_ALLY_DEMOCRACIES = -25
 	NDefines.NAI.DEMOCRACIES_ALLY_COMMUNISTS = -100
-	NDefines.NAI.DEMOCRACIES_ANTAGONIZE_FASCISTS = 40
-	NDefines.NAI.DEMOCRACIES_ANTAGONIZE_COMMUNISTS = 75
+	NDefines.NAI.DEMOCRACIES_ANTAGONIZE_FASCISTS = 20
+	NDefines.NAI.DEMOCRACIES_ANTAGONIZE_COMMUNISTS = 50
 	NDefines.NAI.COMMUNISTS_ALLY_COMMUNISTS = -25
-	NDefines.NAI.COMMUNISTS_ANTAGONIZE_FASCISTS = 40
-	NDefines.NAI.COMMUNISTS_ANTAGONIZE_DEMOCRACIES = 50
+	NDefines.NAI.COMMUNISTS_ANTAGONIZE_FASCISTS = 25
+	NDefines.NAI.COMMUNISTS_ANTAGONIZE_DEMOCRACIES = 30
 	NDefines.NAI.COMMUNISTS_ANTAGONIZE_COMMUNISTS = -50
 	NDefines.NAI.CALL_ALLY_WT_LIMIT = 0.6 -- 0.8
 	NDefines.NAI.AIR_WING_REINFORCEMENT_LIMIT = 25					-- 150
@@ -848,6 +847,7 @@
 	NDefines.NAI.DIPLOMACY_AT_WAR_WITH_ALLY_RELUCTANCE = -1000
 	NDefines.NAI.DIPLOMACY_FACTION_JOIN_COUP_INITIATOR_BONUS = 70	-- If a country initiated coup on an another country, civil war revolter is more likely to join initiator's faction
 	NDefines.NAI.DEMOCRATIC_AI_FACTION_KICKING_PLAYER_THREAT_DIFFERENCE = 6.0 -- World threat generation difference needed to kick a player from a democratic faction
+	NDefines.NAI.GENERATE_WARGOAL_ANTAGONIZE_SCALE = 0.10    -- works to scale the AIs antagonize value vs the threat baseline for when it should act on existing claims: threat used for baseline is min_threat - antagonize * scale
 
 	--Character defines
 	NDefines.NCharacter.OFFICER_CORP_ADVISOR_ENTRIES_IN_MENU = { "high_command", "theorist", "army_chief", "air_chief", "navy_chief" }
