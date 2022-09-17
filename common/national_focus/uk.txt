@@ -1724,11 +1724,12 @@ focus_tree = {
 				}
 			}
 		}
+		cancel = { NOT = { has_idea = EU_member } }
 
 		search_filters = {FOCUS_FILTER_EUROPEAN_UNION}
 
 		available = {
-				has_idea = EU_member
+			has_idea = EU_member
 		}
 
 		completion_reward = {
@@ -2200,6 +2201,8 @@ focus_tree = {
 			NOT = { has_idea = EU_member }
 		}
 
+		cancel = { NOT = { has_idea = EU_member } }
+
 		search_filters = {FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL}
 
 		available = {
@@ -2211,17 +2214,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_defy_remain"
-			set_temp_variable = { modify_eurosceptic = 0.05 }
-			EU_eurosceptic_change = yes
-			set_temp_variable = { modify_eurosceptic = 0.25 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
-			add_ideas = {
-				ENG_irish_nationalism_idea
+			if = {
+				limit = { has_idea = EU_member }
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				EU_eurosceptic_change = yes
+				set_temp_variable = { modify_eurosceptic = 0.25 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
-			add_ideas = {
-				ENG_scottish_nationalism_idea
-			}
+			add_ideas = ENG_irish_nationalism_idea
+			add_ideas =	ENG_scottish_nationalism_idea
 			create_country_leader = {
 				name = "Boris Johnson"
 				picture = "Boris_Johnson.dds"
@@ -2251,21 +2253,18 @@ focus_tree = {
 				elections_allowed = yes
 			}
 			clr_country_flag = no_leader_change
-
-
-
 		}
 
 		ai_will_do = {
 			factor = 1
-				modifier = {
-					factor = 5
-					gov_is_eurosceptical = yes
-				}
-				modifier = {
-					factor = 0
-					NOT = { gov_is_eurosceptical = yes }
-				}
+			modifier = {
+				factor = 5
+				gov_is_eurosceptical = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { gov_is_eurosceptical = yes }
+			}
 		}
 	}
 
@@ -2285,74 +2284,74 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_irish_referendum"
 			custom_effect_tooltip = tooltip_ENG_irish_referendum
 			hidden_effect = {
-			if = {
-				limit = {
-					check_variable = {
-						var = global.var_europeanism
-						value = 0.6
-						compare = less_than
-					}
-				}
-				remove_ideas = {
-					ENG_irish_nationalism_idea
-				}
-				news_event = {
-					id = britain_news.65
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						var = global.var_europeanism
-						value = 0.90
-						compare = greater_than_or_equals
-					}
-				}
-				random_list = {
-					70 = {
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.65
+				if = {
+					limit = {
+						check_variable = {
+							var = global.var_europeanism
+							value = 0.6
+							compare = less_than
 						}
 					}
-					30 = {
-						IRE = {
-							transfer_state = 17
-						}
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.66
-						}
+					remove_ideas = {
+						ENG_irish_nationalism_idea
+					}
+					news_event = {
+						id = britain_news.65
 					}
 				}
-			}
-			else = {
-				random_list = {
-					90 = {
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.65
+				else_if = {
+					limit = {
+						check_variable = {
+							var = global.var_europeanism
+							value = 0.90
+							compare = greater_than_or_equals
 						}
 					}
-					10 = {
-						IRE = {
-							transfer_state = 17
+					random_list = {
+						70 = {
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.65
+							}
 						}
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.66
+						30 = {
+							IRE = {
+								transfer_state = 17
+							}
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.66
+							}
 						}
 					}
 				}
-			}
+				else = {
+					random_list = {
+						90 = {
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.65
+							}
+						}
+						10 = {
+							IRE = {
+								transfer_state = 17
+							}
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.66
+							}
+						}
+					}
+				}
 			} ### End of hidden_effect
 		}
 
@@ -2472,6 +2471,9 @@ focus_tree = {
 				has_idea = no_deal_exit
 			}
 		}
+
+		cancel = { has_idea = EU_member }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_global_britain"
 			add_ideas = ENG_global_britain_idea
@@ -3977,7 +3979,7 @@ focus_tree = {
 		x = -1
 		y = 1
 		relative_position_id = ENG_investments_abroad_2
-		cost = 10
+		cost = 7.86
 
 		prerequisite = {
 			focus = ENG_investments_abroad_2
@@ -3987,27 +3989,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_develop_infrastructure"
-			every_owned_state = {
-				limit = {
-					OR = {
-						region = 1
-						region = 2
-						region = 3
-						region = 4
-					}
-					free_building_slots = {
-						building = infrastructure
-						size > 0
-					}
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { treasury_change = -42 }
-			modify_treasury_effect = yes
+			one_random_infrastructure = yes
+			one_random_infrastructure = yes
+			one_random_infrastructure = yes
+			one_random_infrastructure = yes
+			one_random_infrastructure = yes
+			one_random_infrastructure = yes
+			one_random_infrastructure = yes
 		}
 
 		ai_will_do = {
