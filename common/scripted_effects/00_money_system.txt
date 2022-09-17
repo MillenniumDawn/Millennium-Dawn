@@ -647,13 +647,14 @@ update_military_rate = {
 		multiply_temp_variable = { gdp_defence_modifier_industry = -0.3 }
 		add_to_temp_variable = { gdp_defence_modifier_industry = 8.1 }
 	}
-	multiply_temp_variable = { gdp_defence_modifier_industry = 0.10 } #tweak this to modify gdp/c impact on industrial cost without having to rewrite the whole system
+	multiply_temp_variable = { gdp_defence_modifier_industry = 1.1 } #tweak this to modify gdp/c impact on industrial cost without having to rewrite the whole system
 	clamp_temp_variable = { var = gdp_defence_modifier_industry min = 1 }
 	#Defence spending loop
 	for_each_loop = {
 		array = array_defence_spend
 		index = i
 		divide_variable = { array_defence_spend^i = gdp_defence_modifier_industry }
+		multiply_variable = { array_defence_spend^i = 1.1 } #tweak this to modify industrial cost spending in relations to everything else
 	}
 
 	#Air & Missile Defense - Papinian7
@@ -827,6 +828,12 @@ update_military_rate = {
 	multiply_variable = { equipment_operative_cost = equipment_operative_cost_multiplier }
 	divide_variable = { equipment_operative_cost = 52 } #from milions yearly to milions weekly
 	multiply_variable = { equipment_operative_cost = 0.001 } #from milions weekly to bilions weekly
+	if = {
+		limit = {
+			has_war = yes
+		}
+		multiply_variable = { equipment_operative_cost = 3 }
+	}
 
 	### Navy ###
 	#Below sets the cost for ships based on the number of ships (divided into carriers, capitals, destroyers and minors - children are cheap)
@@ -1073,10 +1080,19 @@ update_military_rate = {
 	add_to_temp_variable = { equipment_cost_mobilization_level_modifier = 0.75 }
 	multiply_variable = { equipment_operative_cost = equipment_cost_mobilization_level_modifier }
 
+	if = {
+		limit = {
+			has_war = yes
+		}
+		multiply_temp_variable = { land_count = 1.5 }
+		multiply_temp_variable = { navy_count = 2.5 }
+		multiply_temp_variable = { airforce_count = 2.5 }
+	}
+
 	#Divide by control factors (same for all!) - Use this if you want to scale cost of military personnel in relation to defence industry
-	divide_temp_variable = { land_count = 950 }
-	divide_temp_variable = { navy_count = 500 }
-	divide_temp_variable = { airforce_count = 1150 }
+	divide_temp_variable = { land_count = 1250 }
+	divide_temp_variable = { navy_count = 1000 }
+	divide_temp_variable = { airforce_count = 1500 }
 
 	#Add up armed forces
 	set_temp_variable = { personnel_cost = land_count }
