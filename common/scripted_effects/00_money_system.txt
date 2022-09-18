@@ -143,7 +143,7 @@ calculate_tax_gain = {
 	#Base tax from various buildings
 	set_variable = { civil_fac_tax = num_of_civilian_factories }
 	if = {
-		limit = { has_decision = lease_civilian_factories }
+		limit = { has_country_flag = lease_civilian_factories_flag }
 		subtract_from_variable = { civil_fac_tax = 3 }
 	}
 	if = {
@@ -155,13 +155,13 @@ calculate_tax_gain = {
 	multiply_variable = { civil_fac_tax = 3 }
 	set_variable = { military_fac_tax = num_of_military_factories }
 	if = {
-		limit = { has_decision = lease_military_factories }
+		limit = { 	has_country_flag = lease_military_factories_flag }
 		subtract_from_variable = { military_fac_tax = 3 }
 	}
 	multiply_variable = { military_fac_tax = 2 }
 	set_variable = { dockyard_tax = num_of_naval_factories }
 	if = {
-		limit = { has_decision = lease_naval_factories }
+		limit = { has_country_flag = lease_naval_dockyards_flag }
 		subtract_from_variable = { dockyard_tax = 3 }
 	}
 	multiply_variable = { dockyard_tax = 1.5 }
@@ -169,13 +169,14 @@ calculate_tax_gain = {
 	if = {
 		limit = {
 			OR = {
+				has_country_leader_with_trait = western_technocrat
 				is_in_array = { ruling_party = 2 }	#liberalism
-				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+				is_in_array = { ruling_party = 16 }	#Neutral_Libertarianca
 			}
 		}
 		multiply_variable = { office_tax = 1.1 }
 	}
-	multiply_variable = { office_tax = 5 }
+	multiply_variable = { office_tax = 4.80 }
 	#Control factors
 	divide_variable = { civil_fac_tax = 4.2 }
 	divide_variable = { military_fac_tax = 4.2 }
@@ -253,6 +254,11 @@ calculate_additional_income_rate = {
 
 	#Additional incomes, set income amount as a variable (weekly gain)
 	if = {
+		limit = { has_idea = PER_irgc_black_market_exploits }
+		set_variable = { additional_income_irgc_black_market = 0.5 }
+		add_to_variable = { additional_income_rate = additional_income_irgc_black_market }
+	}
+	if = {
 		limit = { has_idea = full_control_of_suez }
 		set_variable = { additional_income_suez = 0.1 }
 		add_to_variable = { additional_income_rate = additional_income_suez }
@@ -266,6 +272,11 @@ calculate_additional_income_rate = {
 		limit = { has_idea = full_control_of_panama }
 		set_variable = { additional_income_panama = 0.05 }
 		add_to_variable = { additional_income_rate = additional_income_panama }
+	}
+	if = {
+		limit = { has_idea = MICROSTATE_fix }
+		set_variable = { additional_income_microstate_fix_var = 0.5 }
+		add_to_variable = { additional_income_rate = additional_income_microstate_fix_var }
 	}
 	if = {
 		limit = { has_idea = saudi_aid }
@@ -310,6 +321,11 @@ calculate_additional_income_rate = {
 		limit = { check_variable = { ROOT.pmc_profits > 0 } }
 		set_variable = { additional_income_pmc = ROOT.pmc_profits }
 		add_to_variable = { additional_income_rate = additional_income_pmc }
+	}
+	if = {
+		limit = { has_idea = AZE_indian_ports_idea }
+		set_variable = { AZE_indian_ports_idea_gain = 0.25 }
+		add_to_variable = { additional_income_rate = AZE_indian_ports_idea_gain }
 	}
 
 	# EU
@@ -422,6 +438,12 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_LIC_huge_tax_haven }
 		}
 	}
+	#Iran
+	if = {
+		limit = { has_idea = PER_irgc_black_market_exploits }
+		set_variable = { additional_income_summary_irgc_black_market = 0.03 }
+		add_to_variable = { additional_income_rate = additional_income_summary_irgc_black_market }
+	}
 	#spain
 	if = { limit = { original_tag = SPR  }
 		if = {
@@ -437,7 +459,6 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = SPR_tourism_2_effect }
 		}
 	}
-
 }
 
 
@@ -626,13 +647,14 @@ update_military_rate = {
 		multiply_temp_variable = { gdp_defence_modifier_industry = -0.3 }
 		add_to_temp_variable = { gdp_defence_modifier_industry = 8.1 }
 	}
-	multiply_temp_variable = { gdp_defence_modifier_industry = 1.33 } #tweak this to modify gdp/c impact on industrial cost without having to rewrite the whole system
+	multiply_temp_variable = { gdp_defence_modifier_industry = 1.1 } #tweak this to modify gdp/c impact on industrial cost without having to rewrite the whole system
 	clamp_temp_variable = { var = gdp_defence_modifier_industry min = 1 }
 	#Defence spending loop
 	for_each_loop = {
 		array = array_defence_spend
 		index = i
 		divide_variable = { array_defence_spend^i = gdp_defence_modifier_industry }
+		multiply_variable = { array_defence_spend^i = 1.1 } #tweak this to modify industrial cost spending in relations to everything else
 	}
 
 	#Air & Missile Defense - Papinian7
@@ -806,6 +828,12 @@ update_military_rate = {
 	multiply_variable = { equipment_operative_cost = equipment_operative_cost_multiplier }
 	divide_variable = { equipment_operative_cost = 52 } #from milions yearly to milions weekly
 	multiply_variable = { equipment_operative_cost = 0.001 } #from milions weekly to bilions weekly
+	if = {
+		limit = {
+			has_war = yes
+		}
+		multiply_variable = { equipment_operative_cost = 3 }
+	}
 
 	### Navy ###
 	#Below sets the cost for ships based on the number of ships (divided into carriers, capitals, destroyers and minors - children are cheap)
@@ -1052,10 +1080,19 @@ update_military_rate = {
 	add_to_temp_variable = { equipment_cost_mobilization_level_modifier = 0.75 }
 	multiply_variable = { equipment_operative_cost = equipment_cost_mobilization_level_modifier }
 
+	if = {
+		limit = {
+			has_war = yes
+		}
+		multiply_temp_variable = { land_count = 1.5 }
+		multiply_temp_variable = { navy_count = 2.5 }
+		multiply_temp_variable = { airforce_count = 2.5 }
+	}
+
 	#Divide by control factors (same for all!) - Use this if you want to scale cost of military personnel in relation to defence industry
-	divide_temp_variable = { land_count = 1050 }
-	divide_temp_variable = { navy_count = 850 }
-	divide_temp_variable = { airforce_count = 1250 }
+	divide_temp_variable = { land_count = 1250 }
+	divide_temp_variable = { navy_count = 1000 }
+	divide_temp_variable = { airforce_count = 1500 }
 
 	#Add up armed forces
 	set_temp_variable = { personnel_cost = land_count }
@@ -1327,7 +1364,7 @@ update_health_rate = {
 	clear_array = array_health_spend
 
 	#Set the base cost of health (billion $ per 10 000 000 people)
-	set_temp_variable = { health_base_cost = 0.007 }
+	set_temp_variable = { health_base_cost = 0.009 }
 
 	# Recreate the Array
 	resize_array = { array = array_health_spend size = 6 value = 0 }
@@ -1585,32 +1622,32 @@ calculate_additional_expense_rate = {
 	}
 	# Generic Economic Decisions
 	if = {
-		limit = { has_decision = lease_civilian_factories }
+		limit = { has_country_flag = lease_civilian_factories_flag }
 		set_variable = { lease_civilian_factories_cost = 0.3 }
 		add_to_variable = { additional_expenses_rate = lease_civilian_factories_cost }
 	}
 	if = {
-		limit = { has_decision = lease_military_factories }
+		limit = { has_country_flag = lease_military_factories_flag }
 		set_variable = { lease_military_factories_cost = 0.3 }
 		add_to_variable = { additional_expenses_rate = lease_military_factories_cost }
 	}
 	if = {
-		limit = { has_decision = lease_naval_factories }
+		limit = { has_country_flag = lease_naval_dockyards_flag }
 		set_variable = { lease_naval_factories_cost = 0.3 }
 		add_to_variable = { additional_expenses_rate = lease_naval_factories_cost }
 	}
 	if = {
 		limit = {
 			OR = {
-				has_decision = infrastructure_projects
-				has_decision = industrial_projects
-				has_decision = arms_factory_projects
-				has_decision = dockyard_projects
+				has_country_flag = infrastructure_investiture_flag
+				has_country_flag = industrial_projects_flag
+				has_country_flag = service_constructions_flag
+				has_country_flag = arms_industry_stipends_flag
+				has_country_flag = retool_shipyards_flag
 			}
 		}
 		set_variable = { project_decisions_cost = gdp_total_display }
 		multiply_variable = { project_decisions_cost = 0.001 }
-		divide_variable = { project_decisions_cost = 0.5 }
 
 		set_temp_variable = { project_cost_multiplier = 1 }
 		add_to_temp_variable = { project_cost_multiplier = modifier@projects_cost_modifier }
@@ -1706,6 +1743,7 @@ calculate_int_investments_rate = {
 	if = {
 		limit = {
 			OR = {
+				has_country_leader_with_trait = western_technocrat
 				is_in_array = { ruling_party = 2 }	#liberalism
 				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
 			}
@@ -2020,19 +2058,19 @@ calculate_gdp = {
 	set_variable = { var = civil_fac value = num_of_civilian_factories }
 	#Remove leased factories
 	if = {
-		limit = { has_decision = lease_civilian_factories }
+		limit = { has_country_flag = lease_civilian_factories_flag }
 		subtract_from_variable = { civil_fac = 3 }
 	}
 	set_variable = { var = military_fac value = num_of_military_factories }
 	#Remove leased factories
 	if = {
-		limit = { has_decision = lease_military_factories }
+		limit = { has_country_flag = lease_military_factories_flag }
 		subtract_from_variable = { military_fac = 3 }
 	}
 	set_variable = { var = dockyard_fac value = num_of_naval_factories }
 	#Remove leased factories
 	if = {
-		limit = { has_decision = lease_naval_factories }
+		limit = { has_country_flag = lease_naval_dockyards_flag }
 		subtract_from_variable = { dockyard_fac = 3 }
 	}
 	set_variable = { var = office_fac value = office_park_total }
@@ -2199,6 +2237,9 @@ calculate_ai_corporate_taxes_desire = {
 		multiply_temp_variable = { mather = 0.50 } # 2.5
 		if = { limit = { num_of_available_civilian_factories < 15 }
 			multiply_temp_variable = { mather = 3 }
+		}
+		if = { limit = { num_of_available_civilian_factories > 30 }
+			multiply_temp_variable = { mather = 0 }
 		}
 		set_variable = { ai_change_corporate_taxes = mather }
 	}
