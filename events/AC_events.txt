@@ -90,11 +90,9 @@ country_event = {
 
 			# THIS Nation
 			# take 10% of the cost of the project
-			custom_effect_tooltip = AC_event.1.o1_TT
-
-			set_temp_variable = { temp_investment = FROM.project_monetary_cost_effect }
-			multiply_temp_variable = { temp_investment = 0.10 }
-			add_to_variable = { treasury = temp_investment }
+			set_temp_variable = { treasury_change = FROM.project_monetary_cost_effect }
+			multiply_temp_variable = { treasury_change = 0.1 }
+			modify_treasury_effect = yes
 		}
 
 		# AI Chance of taking the Investment Project
@@ -154,6 +152,10 @@ country_event = {
 				}
 			}
 			modifier = {
+				factor = 50
+				is_subject_of = FROM
+			}
+			modifier = {
 				factor = 2
 				check_variable = { gdp_per_capita < 15 }
 			}
@@ -177,7 +179,6 @@ country_event = {
 				factor = 0
 				OR = {
 					check_variable = { influence_array_val^0 > 59.999 }
-					check_variable = { debt_ratio > 0.90 }
 					check_variable = { interest_rate > 9.999 }
 					has_country_flag = recently_refused@FROM
 				}
@@ -268,6 +269,10 @@ country_event = {
 					NOT = { check_variable = { influence_array^2 = FROM } }
 				}
 			}
+			modifier = {
+				factor = 0.25
+				is_subject_of = FROM
+			}
 			# Tag Specific Rejections
 			modifier = {
 				add = 20
@@ -294,9 +299,6 @@ country_event = {
 		name = AC_event.2.o1
 		log = "[GetDateText]: [This.GetName]: AC_event.11.o1 executed"
 		clr_country_flag = this_investment_offer_pending@FROM
-		add_to_variable = { var = treasury value = AC_build_cost }
-		subtract_from_variable = { var = int_investments value = AC_build_cost }
-		calculate_int_investments_rate = yes
 	}
 }
 
@@ -553,23 +555,6 @@ country_event = {
 					AI_get_infrastructure_score = yes
 					# Offices - Building Type - 5
 					AI_get_offices_score = yes
-					# # SAM - Building Type - 6
-					# if = { limit = { ROOT = { has_idea = defense_industry } }
-
-					# }
-					# # Radar - Building Type - 7
-					# if = { limit = { ROOT = { has_idea = defense_industry } }
-
-					# }
-					# # Air Bases - Building Type - 8
-					# if = { limit = { ROOT = { has_idea = defense_industry } }
-
-					# }
-					# Fuel Silo - Building Type - 9
-
-					# Internet Station - Building Type - 10
-
-					# Biofuel Refineries - Building Type - 11
 				}
 			}
 		}
@@ -598,7 +583,7 @@ country_event = {
 					}
 					ROOT = { country_event = { id = AC_event.3 } }
 				}
-				log = "AC - [GetDate] [This.GetTag] project type [?project_building_type^-1] (x [?project_build_amount^-1]) in [?AI_best_target.GetName], Nation [?ROOT.AC_nation_target.GetName], score = [?AC_AI_best_score]"
+				log = "AI Investment Succeeded [GetDate] [ROOT.GetName]: project type [?project_building_type^-1] (x [?project_build_amount^-1]) in [?AI_best_target.GetName], Nation [?ROOT.AC_nation_target.GetName], score = [?AC_AI_best_score]"
 				else = {
 					log = "AI Investment Failed [ROOT.GetName]: No valid state target found. [?AI_best_target.GetName] scored a [?AC_AI_best_score] which falls below [?AI_MIN_STATE_SCORE_FOR_PROJECT]. Skipping this investment pulse."
 				}
