@@ -1,0 +1,161 @@
+AZE_economy_decisions = {
+	eat_up_doomsday_fund = {
+		fire_only_once = yes
+		cost = 50
+
+		visible = {
+			original_tag = AZE
+			has_completed_focus = AZE_aze_prepare_for_worst
+		}
+
+		complete_effect = {
+			# how many days fund lasted?
+			set_temp_variable = { fund_days = num_days }
+			subtract_from_variable = { fund_days = AZE.doomsday_fund_created }
+
+			# I would like to define var in front just in case
+			set_temp_variable = { fund_multiplier = 3 }
+			if = {
+				limit = { check_variable = { fund_days > 3650 } }
+
+				set_temp_variable = { fund_multiplier = 10 }
+			}
+			else_if = {
+				limit = { check_variable = { fund_days > 1825 } }
+
+				set_temp_variable = { fund_multiplier = 7 }
+			}
+			else_if = {
+				limit = { check_variable = { fund_days > 1095 } }
+
+				set_temp_variable = { fund_multiplier = 5 }
+			}
+			else_if = {
+				limit = { check_variable = { fund_days > 720 } }
+
+				set_temp_variable = { fund_multiplier = 4 }
+			}
+
+			set_temp_variable = { initial_fund = 35 }
+			set_temp_variable = { profit = initial_fund }
+
+			# profit = (sum * procent * days / 365) / 100
+			multiply_temp_variable = { profit = fund_multiplier }
+			multiply_temp_variable = { profit = fund_days }
+			# 1 / 365 = 0.0027 we cant do 4 digits
+			multiply_temp_variable = { profit = 0.027 }
+			multiply_temp_variable = { profit = 0.1 }
+
+			set_temp_variable = { treasury_change = initial_fund }
+			add_to_temp_variable = { treasury_change = profit }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+AZE_aliev_propaganda_category = {
+	AZE_buy_support_PP = {
+		cost = 50
+
+		days_remove = 7
+		days_re_enable = 30
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AZE_buy_support"
+		}
+
+		remove_effect = {
+			set_temp_variable = { modify_aliev_cult = 3 }
+			modify_aliev_suppport = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+
+			modifier = {
+				add = 3
+				OR = {
+					has_idea = AZE_aliev_cult_weak
+					has_idea = AZE_aliev_cult_very_weak
+				}
+			}
+		}
+	}
+
+	AZE_buy_support = {
+		days_remove = 7
+		days_re_enable = 30
+		fire_only_once = no
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.9 }
+		}
+
+		custom_cost_text = cost_2_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AZE_buy_support"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			set_temp_variable = { modify_aliev_cult = 5 }
+			modify_aliev_suppport = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+
+			modifier = {
+				add = 3
+				OR = {
+					has_idea = AZE_aliev_cult_weak
+					has_idea = AZE_aliev_cult_very_weak
+				}
+			}
+		}
+	}
+
+	AZE_aliev_countdown = {
+		allowed = { always = no }
+		available = { always = no }
+		fire_only_once = no
+		is_good = yes
+		selectable_mission = no
+		days_mission_timeout = 30
+
+		timeout_effect = {
+			custom_effect_tooltip = AZE_aliev_cult_mission_TT
+			hidden_effect = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = AZE_aliev_cult_weak
+							has_idea = AZE_aliev_cult_very_weak
+							has_idea = AZE_aliev_cult_medium
+							has_idea = AZE_aliev_cult_strong
+							has_idea = AZE_aliev_cult_very_strong
+						}
+					}
+
+					activate_mission = AZE_aliev_countdown
+					random_list = {
+						60 = {
+							# nothing happens
+						}
+						30 = {
+							set_temp_variable = { modify_aliev_cult = -5 }
+							modify_aliev_suppport = yes
+						}
+						10 = {
+							set_temp_variable = { modify_aliev_cult = 5 }
+							modify_aliev_suppport = yes
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -46,7 +46,12 @@
 	NDefines.NDiplomacy.TAKE_STATES_CHANGE_GOV_COST_MULT = 0.1
 	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 2
 	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 10
-	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.25  -- was -0.7
+	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.5  -- was -0.7
+
+	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_BASE = 0  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
+	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_FACTOR = 0.05  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
+	NDefines.NDiplomacy.LL_TO_PUPPET_AUTONOMY_DAILY_BASE = 0  -- If overlord lend leases equipment to puppet of higher tech level as they have, puppet losses autonomy
+	NDefines.NDiplomacy.LL_TO_PUPPET_AUTONOMY_DAILY_FACTOR = -0.001  -- If overlord lend leases equipment to puppet of higher tech level as they have, puppet losses autonomy
 
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 --Returned RSs back to normal from Vanilla - BIRD
 	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01 --0.01
@@ -87,7 +92,8 @@
 	NDefines.NProduction.BASE_FACTORY_SPEED_NAV = 8
 	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 20
 	NDefines.NProduction.BASE_CONSUMER_GOODS_NEED_FACTOR = 0
-	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 0.01
+	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 1
+	NDefines.NProduction.EQUIPMENT_LEND_LEASE_WEIGHT_FACTOR = 0.01
 	NDefines.NProduction.ANNEX_STOCKPILES_RATIO = 0.4
 	NDefines.NProduction.ANNEX_FIELD_EQUIPMENT_RATIO = 0.1
 	NDefines.NProduction.INFRA_MAX_CONSTRUCTION_COST_EFFECT = 0.75
@@ -445,8 +451,8 @@
 	NDefines.NNavy.ATTRITION_DAMAGE_STR = 0.09 -- 0.03
 	NDefines.NNavy.ATTRITION_STR_DAMAGE_CHANCE = 0.4 -- 0.2
 	NDefines.NNavy.TRAINING_ACCIDENT_CHANCES = 0.005 -- 0.02
-	NDefines.NNavy.TRAINING_EXPERIENCE_FACTOR = 0.04 -- 0.3
-	NDefines.NNavy.UNIT_EXPERIENCE_PER_COMBAT_HOUR = 7 -- 10
+	NDefines.NNavy.TRAINING_EXPERIENCE_FACTOR = 0.15 -- 0.3
+	NDefines.NNavy.UNIT_EXPERIENCE_PER_COMBAT_HOUR = 15 -- 10
 	NDefines.NNavy.SHIP_TO_FLEET_ANTI_AIR_RATIO = 0.25 -- 0.2
 	NDefines.NNavy.ANTI_AIR_POW_ON_INCOMING_AIR_DAMAGE = 0.25 -- 0.2
 	NDefines.NNavy.ANTI_AIR_MULT_ON_INCOMING_AIR_DAMAGE = 0.2 -- 0.15
@@ -564,7 +570,6 @@
 	NDefines.NAI.JOIN_ALLY_FASCIST_DESIRE = 25				-- -10
 	NDefines.NAI.JOIN_ALLY_COMMUNIST_DESIRE = 25				-- 75
 	NDefines.NAI.LENDLEASE_FRACTION_OF_PRODUCTION = 0.6		-- 0.5
-	NDefines.NAI.PLAN_MOVE_MIN_ORG_TO_ENEMY_PROVINCE = 5.0	-- 20
 	NDefines.NAI.PLAN_ATTACK_MIN_ORG_FACTOR_LOW = 0.85		-- 0.85
 	NDefines.NAI.PLAN_FRONTUNIT_DISTANCE_FACTOR = 20			-- 10
 	NDefines.NAI.PLAN_ATTACK_DEPTH_FACTOR = 1.2				-- 0.5
@@ -592,11 +597,11 @@
 	NDefines.NAI.DEMOCRACIES_BEFRIEND_COMMUNISTS = -75
 	NDefines.NAI.DEMOCRACIES_ALLY_DEMOCRACIES = -25
 	NDefines.NAI.DEMOCRACIES_ALLY_COMMUNISTS = -100
-	NDefines.NAI.DEMOCRACIES_ANTAGONIZE_FASCISTS = 40
-	NDefines.NAI.DEMOCRACIES_ANTAGONIZE_COMMUNISTS = 75
+	NDefines.NAI.DEMOCRACIES_ANTAGONIZE_FASCISTS = 20
+	NDefines.NAI.DEMOCRACIES_ANTAGONIZE_COMMUNISTS = 50
 	NDefines.NAI.COMMUNISTS_ALLY_COMMUNISTS = -25
-	NDefines.NAI.COMMUNISTS_ANTAGONIZE_FASCISTS = 40
-	NDefines.NAI.COMMUNISTS_ANTAGONIZE_DEMOCRACIES = 50
+	NDefines.NAI.COMMUNISTS_ANTAGONIZE_FASCISTS = 25
+	NDefines.NAI.COMMUNISTS_ANTAGONIZE_DEMOCRACIES = 30
 	NDefines.NAI.COMMUNISTS_ANTAGONIZE_COMMUNISTS = -50
 	NDefines.NAI.CALL_ALLY_WT_LIMIT = 0.6 -- 0.8
 	NDefines.NAI.AIR_WING_REINFORCEMENT_LIMIT = 25					-- 150
@@ -691,7 +696,7 @@
 	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 4					-- 25
 	NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 4					-- 25
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
-	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 8				-- 3
+	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 20				-- 3 is vanilla, updated this from 8 to 20 for more AI production control
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_FOR_FUEL_SAVING_MODE = 1.0			-- fuel consumptions will be limited by this ratio in fuel saving mode
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_REGULAR_FUEL_MODE = 2.0				-- fuel consumptions will be limited by this ratio in regular fuel mode
@@ -842,6 +847,7 @@
 	NDefines.NAI.DIPLOMACY_AT_WAR_WITH_ALLY_RELUCTANCE = -1000
 	NDefines.NAI.DIPLOMACY_FACTION_JOIN_COUP_INITIATOR_BONUS = 70	-- If a country initiated coup on an another country, civil war revolter is more likely to join initiator's faction
 	NDefines.NAI.DEMOCRATIC_AI_FACTION_KICKING_PLAYER_THREAT_DIFFERENCE = 6.0 -- World threat generation difference needed to kick a player from a democratic faction
+	NDefines.NAI.GENERATE_WARGOAL_ANTAGONIZE_SCALE = 0.10    -- works to scale the AIs antagonize value vs the threat baseline for when it should act on existing claims: threat used for baseline is min_threat - antagonize * scale
 
 	--Character defines
 	NDefines.NCharacter.OFFICER_CORP_ADVISOR_ENTRIES_IN_MENU = { "high_command", "theorist", "army_chief", "air_chief", "navy_chief" }
