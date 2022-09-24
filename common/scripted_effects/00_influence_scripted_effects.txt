@@ -17,10 +17,6 @@ startup_influence = {
 	sort_influence = yes
 }
 
-startup_influence_new = {
-	sort_influence_new = yes
-}
-
 # Update
 update_dirty_influence_var = {
 	if = { limit = { NOT = { has_variable = global.update_influence_ui } }
@@ -120,55 +116,6 @@ sort_influence = {
 		add_to_variable = { domestic_influence_amount = difference }
 		clamp_variable = { var = domestic_influence_amount min = 0 }
 	}
-}
-
-sort_influence_new = {
-	# Creation of temp arrays.
-	# The arrays are "copied" from influence_array and influence_array_val for sorting
-	resize_temp_array = {
-		array = influence_array_val_temp
-		size = influence_array_val^num
-	}
-	resize_temp_array = {
-		array = influence_array_temp
-		size = influence_array_val^num
-	}
-	# Sort the values by largest influencer
-	for_loop_effect = {
-		end = influence_array_val^num
-		value = v
-		find_highest_in_array = {
-			array = influence_array_val
-			value = max
-			index = max_index
-		}
-		set_temp_variable = { influence_array_val_temp^v = max } #sets biggest at the earliest available position
-		set_temp_variable = { influence_array_temp^v = influence_array^max_index } #sets biggest TAG at the earliest available position
-		set_variable = { influence_array_val^max_index = -1 } #removes it from selection
-	}
-
-	# Clears the Values
-	init_influence = yes
-
-	for_each_loop = {
-		array = influence_array_val_temp
-		add_to_array = { influence_array_val = v }
-	}
-	for_each_loop = {
-		array = influence_array_temp
-		add_to_array = { influence_array = v }
-	}
-
-	set_variable = { domestic_influence_amount = 100 }
-
-	for_each_loop = {
-		array = influence_array_val
-		value = influence_array_val_temp
-		subtract_from_variable = { domestic_influence_amount = influence_array_val_temp }
-	}
-
-	clear_temp_array = influence_array_val_temp
-	clear_temp_array = influence_array_temp
 }
 
 # Calculates the Influence Drift Percentage:
