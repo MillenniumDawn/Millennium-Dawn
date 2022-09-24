@@ -8145,3 +8145,161 @@ policies_ITA = {
 		}
 	}
 }
+
+low_stability_protests_category = {
+	lsp_raise_stability_mission = {
+		icon = generic_decision
+		available = {
+			has_stability > 0.5
+		}
+		activation = {
+			has_country_flag = low_stability_protests_flag
+		}
+		is_good = no
+		days_mission_timeout = 90
+		days_remove = 0
+		timeout_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision timeout lsp_raise_stability_mission"
+			clr_country_flag = low_stability_protests_flag
+			set_temp_variable = { ITA_civil_war_size_var_2 = party_pop_array^5 }
+			add_to_temp_variable = { ITA_civil_war_size_var_2 = party_pop_array^6 }
+			add_to_temp_variable = { ITA_civil_war_size_var_2 = party_pop_array^20 }
+			start_civil_war = {
+				ruling_party = democratic
+				ideology = communism
+				size = ITA_civil_war_size_var_2
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision lsp_raise_stability_mission"
+			clr_country_flag = low_stability_protests_flag
+			set_temp_variable = { ITA_stability_factor_change = 0.05 }
+			modify_stability_factor_effect = yes
+			remove_ideas = ITA_low_stability_protests_spirit
+		}
+	}
+	lsp_lower_pop_taxes = {
+		icon = generic_decision
+		available = {
+			has_country_flag = low_stability_protests_flag
+		}
+		visible = {
+			has_country_flag = low_stability_protests_flag
+        }
+		ai_will_do = {
+			factor = 0
+		}
+		days_re_enable = 1000
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision lsp_lower_pop_taxes executed"
+			set_temp_variable = { pop_change = -10 }
+			modify_population_tax_rate_effect = yes
+			set_country_flag = {
+				flag = no_personal_tax_rate_change
+				days = 365
+				value = 1
+			}
+			custom_effect_tooltip = disables_personal_tax_rate_change
+			set_temp_variable = { ITA_stability_factor_change = 0.05 }
+			modify_stability_factor_effect = yes
+		}
+	}
+	lsp_increase_spending_welfare = {
+		icon = generic_decision
+		available = {
+			has_country_flag = low_stability_protests_flag
+		}
+		visible = {
+			NOT = {
+				has_idea = social_06
+			}
+			has_country_flag = low_stability_protests_flag
+        }
+		ai_will_do = {
+			factor = 1
+		}
+		days_re_enable = 1000
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision lsp_increase_spending_welfare executed"
+			increase_social_spending = yes
+			block_social_decrease = yes
+			set_temp_variable = { ITA_stability_factor_change = 0.05 }
+			modify_stability_factor_effect = yes
+		}
+	}
+	lsp_increase_spending_healthcare = {
+		icon = generic_decision
+		available = {
+			has_country_flag = low_stability_protests_flag
+		}
+		visible = {
+			NOT = {
+				has_idea = health_06
+			}
+			has_country_flag = low_stability_protests_flag
+        }
+		ai_will_do = {
+			factor = 1
+		}
+		days_re_enable = 1000
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision lsp_increase_spending_healthcare executed"
+			increase_healthcare_budget = yes
+			block_health_decrease = yes
+			set_temp_variable = { ITA_stability_factor_change = 0.05 }
+			modify_stability_factor_effect = yes
+		}
+	}
+	lsp_snap_election = {
+		icon = generic_decision
+		available = {
+			has_country_flag = low_stability_protests_flag
+		}
+		visible = {
+			NOT = {
+				has_country_flag = coalition_forming
+				has_country_flag = coalition_reshuffling
+				has_country_flag = elections_in_progress
+			}
+			has_country_flag = low_stability_protests_flag
+        }
+		ai_will_do = {
+			factor = 1
+		}
+		days_re_enable = 1000
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision lsp_snap_election executed"
+			set_temp_variable = { drift_switch_change = -0.02 }
+			modify_reform_expectance_effect = yes
+			set_temp_variable = { ITA_stability_factor_change = 0.05 }
+			modify_stability_factor_effect = yes
+			country_event = MD4_election_campaign.0
+		}
+	}
+	lsp_bonus_to_stimulate_consumption = {
+		icon = generic_decision
+		available = {
+			has_country_flag = low_stability_protests_flag
+		}
+		visible = {
+			has_country_flag = low_stability_protests_flag
+        }
+		days_re_enable = 1000
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision lsp_bonus_to_stimulate_consumption executed"
+			add_to_variable = { bonus_to_stimulate_consumption_times_taken_var = 1 }
+			set_temp_variable = { bonus_to_stimulate_consumption_cost = bonus_to_stimulate_consumption_times_taken_var }
+			set_temp_variable = { decision_gdp_cost = gdp_total }
+			multiply_temp_variable = { decision_gdp_cost = -0.001 }
+			divide_temp_variable = { decision_gdp_cost = 8 }
+			multiply_temp_variable = { bonus_to_stimulate_consumption_cost = decision_gdp_cost }
+			set_temp_variable = { ITA_stability_factor_change = 0.05 }
+			modify_stability_factor_effect = yes
+			set_temp_variable = { treasury_change = bonus_to_stimulate_consumption_cost }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = {
+			factor = 10
+		}
+	}
+}
