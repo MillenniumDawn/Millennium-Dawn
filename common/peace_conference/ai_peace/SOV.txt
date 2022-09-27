@@ -1,0 +1,103 @@
+# Scripted AI desire for peace actions.
+# See documentation.info file for more detailed scripting information.
+
+peace_ai_desires = {
+
+     # Soviet really wants that Königsberg place for themselves, don't they?
+    SOV_wants_konigsberg = {
+        peace_action_type = take_states
+        enable = {
+            tag = SOV  # Negotiatior is soviet union
+            FROM = { tag = ROOT }  # And the negotiator is also taking for themselves
+            FROM.FROM.FROM = { state = 763 }  # Königsberg
+        }
+
+        ai_desire = 50  # 50 percent higher desire
+    }
+
+
+    SOV_czech_puppet_histo = {
+        peace_action_type = puppet
+        enable = {
+            is_historical_focus_on = yes
+            ROOT.FROM = { tag = CZE }
+            ROOT.FROM.FROM.FROM = { is_core_of = CZE }
+            tag = SOV
+        }
+        ai_desire = 150
+    }
+
+
+    SOV_claims_histo = {
+        peace_action_type = take_state
+        enable = {
+            is_historical_focus_on = yes
+            ROOT.FROM.FROM.FROM = {
+                OR = {
+                    state = 73
+                    state = 763
+                    state = 5
+                }
+            }
+            ROOT.FROM = { tag = SOV }
+        }
+        ai_desire = 400
+    }
+
+
+    SOV_leave_austria_alone = {
+        peace_action_type = { take_states puppet liberate force_government }
+        enable = {
+            is_historical_focus_on = yes
+            ROOT = { tag = SOV }
+            ROOT.FROM.FROM.FROM = { is_core_of = AUS }
+        }
+        ai_desire = -50
+    }
+
+
+    # Create a Korean puppet in North Korea.
+    SOV_puppet_n_korea = {
+        peace_action_type = { puppet }
+        enable = {
+            FROM.FROM.FROM = {
+                state = 527
+            }
+            FROM = {
+                original_tag = KOR
+            }
+            ROOT = {
+                original_tag = SOV
+                has_government = communism
+            }
+        }
+        ai_desire = 75
+    }
+
+
+    # The 38th parallell - don't take South Korea if the US are on the same side
+    SOV_not_puppet_s_korea = {
+        peace_action_type = { puppet take_states liberate force_government}
+        enable = {
+            is_historical_focus_on = yes
+            FROM.FROM.FROM = {
+                state = 525
+            }
+            FROM = {
+                original_tag = KOR
+            }
+            ROOT = {
+                original_tag = SOV
+                has_government = communism
+            }
+            USA = {
+                OR = {
+                    has_war_with = JAP
+                    has_war_with = KOR
+                }
+                NOT = { has_war_with = ROOT }
+            }
+        }
+        ai_desire = -100
+    }
+}
