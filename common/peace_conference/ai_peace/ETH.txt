@@ -1,0 +1,90 @@
+# Scripted AI desire for peace actions.
+# See documentation.info file for more detailed scripting information.
+
+peace_ai_desires = {
+
+    # Non-aligned or fascist Ethiopia should not be afraid of expansion in the Horn of Africa and on the Arabian Peninsula
+    ETH_ethiopian_empire_expansion = {
+        peace_action_type = take_states
+        enable = {
+            original_tag = ETH
+            OR = {
+                has_government = neutrality
+                has_government = fascism
+            }
+            FROM = { tag = ROOT }  # And the negotiator is also taking for themselves
+            FROM.FROM.FROM = {
+                OR = {
+                    region = 17 #Ethiopian Highlands
+                    region = 273 #Danakil
+                    region = 274 #Ogaden
+                    region = 236 #South Arabia
+                    region = 238 #East Arabia
+                    region = 237 #Hejaz
+                    region = 196 #Central Arabia
+                    region = 216 #Upper Nile
+                    region = 217 #Lake Victoria
+                }
+                any_neighbor_state = {
+                    OR = {
+                        is_owned_by = ROOT
+                        pc_is_state_claimed_by = ROOT
+                        AND = {
+                            is_coastal = yes
+                            ROOT = {
+                                any_owned_state = { is_coastal = yes }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        ai_desire = 75  # 75 percent higher desire - to counter the negative modifier from generic non-aligned modifier
+    }
+
+
+    # To make ETH more interested in gettimng the right states
+    ETH_end_of_civil_war = {
+        peace_action_type = take_states
+        enable = {
+            original_tag = ETH
+            has_civil_War = yes
+            FROM = { tag = ROOT }  # And the negotiator is also taking for themselves
+            FROM.FROM.FROM = {
+                is_core_of = ETH
+                NOT = { has_state_flag = ETH_cede_state_flag }
+            }
+        }
+
+        ai_desire = 100
+    }
+
+
+    # Take agreed on states for Ethiopia if possible
+    ETH_agreed_expansion = {
+        peace_action_type = take_states
+        enable = {
+            OR = {
+                check_variable = { ETH.host_nation = ROOT }
+                ROOT = {
+                    OR = {
+                        tag = ETH
+                        is_in_faction_with = ETH
+                    }
+                }
+            }
+            FROM = {
+                OR = {
+                    tag = ETH # taking states for Ethiopia
+                    tag = ROOT # taking for self, for tranfer after PC
+                }
+            }
+            FROM.FROM.FROM = {
+                has_dynamic_modifier = { modifier = ETH_arranged_expansion_modifier }
+            }
+        }
+
+        ai_desire = 75
+    }
+}
