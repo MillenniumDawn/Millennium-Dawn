@@ -2002,6 +2002,10 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = { # Killswitch
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
@@ -3309,6 +3313,7 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
+			40_percent_government_popularity = yes
 		}
 
 		prerequisite = { focus = SPR_demand_the_rock }
@@ -3338,7 +3343,7 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
-			30_percent_government_popularity = yes
+			40_percent_government_popularity = yes
 		}
 
 		prerequisite = { focus = SPR_plus_ultra }
@@ -3379,6 +3384,7 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
+			40_percent_government_popularity = yes
 			has_completed_focus = SPR_expand_royal_guard
 			NOT = { has_idea = no_military }
 		}
@@ -3443,6 +3449,7 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
+			40_percent_government_popularity = yes
 		}
 
 		prerequisite = { focus = SPR_plus_ultra }
@@ -3475,6 +3482,7 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
+			40_percent_government_popularity = yes
 		}
 
 		prerequisite = { focus = SPR_the_spanish_empire_revived }
@@ -3483,8 +3491,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_the_hand_that_reaches"
-			add_war_support = 0.03
-			add_stability = 0.03
+			add_war_support = 0.05
+			add_stability = 0.05
 		}
 
 		ai_will_do = {
@@ -3503,24 +3511,81 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
+			40_percent_government_popularity = yes
+			is_subject = no
+			OR = {
+				country_exists = SHA
+				country_exists = MAU
+				country_exists = MOR
+				country_exists = ALG
+			}
 		}
-
 		bypass = {
-			has_war_with = MOR
-			has_war_with = MAU
+			OR = {
+				AND = {
+					has_war_with = SHA
+					has_war_with = MOR
+					has_war_with = MAU
+					has_war_with = ALG
+				}
+				AND = {
+					NOT = { country_exists = SHA }
+					NOT = { country_exists = MAU }
+					NOT = { country_exists = MOR }
+					NOT = { country_exists = ALG }
+				}
+				AND = {
+					SHA = { is_subject_of = SPR }
+					MAU = { is_subject_of = SPR }
+					MOR = { is_subject_of = SPR }
+					ALG = { is_subject_of = SPR }
+				}
+			}
 		}
 
 		prerequisite = { focus = SPR_the_hand_that_reaches }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_seize_the_maghreb"
-			create_wargoal = {
-				type = annex_everything
-				target = MOR
+			if = {
+				limit = {
+					NOT = { MOR = { is_subject_of = SPR } }
+					country_exists = MOR
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = MOR
+				}
 			}
-			create_wargoal = {
-				type = annex_everything
-				target = MAU
+			if = {
+				limit = {
+					NOT = { MAU = { is_subject_of = SPR } }
+					country_exists = MAU
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = MAU
+				}
+			}
+			if = {
+				limit = {
+					NOT = { SHA = { is_subject_of = SPR } }
+					country_exists = SHA
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = SHA
+				}
+			}
+			if = {
+				limit = {
+					NOT = { ALG = { is_subject_of = SPR } }
+					country_exists = ALG
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ALG
+				}
 			}
 		}
 
@@ -3547,7 +3612,6 @@ focus_tree = {
 		bypass = {
 			OR = {
 				has_war_with = ARG
-				ARG = { is_subject_of = SPR }
 				NOT = { country_exists = ARG }
 			}
 		}
@@ -3556,9 +3620,25 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_burn_buenos_aires"
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = ARG
+			if = { limit = { ARG = { is_subject_of = SPR } }
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
+				ARG = {
+					capital_scope = {
+						add_extra_state_shared_building_slots = 1
+						add_building_construction = {
+							type = industrial_complex
+							level = 1
+							instant_build = yes
+						}
+					}
+				}
+			}
+			else = {
+				create_wargoal = {
+					type = puppet_wargoal_focus
+					target = ARG
+				}
 			}
 		}
 
@@ -3578,10 +3658,8 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
-		}
-
-		bypass = {
-			has_war_with = CUB
+			40_percent_government_popularity = yes
+			is_subject = no
 		}
 
 		prerequisite = { focus = SPR_the_hand_that_reaches }
@@ -3641,17 +3719,39 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
+			40_percent_government_popularity = yes
+			is_subject = no
+			country_exists = COL
 		}
 
 		bypass = {
-			has_war_with = COL
+			OR = {
+				has_war_with = COL
+				NOT = { country_exists = COL }
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_seize_colombia"
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = COL
+			if = { limit = { COL = { is_subject_of = SPR } }
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
+				ARG = {
+					capital_scope = {
+						add_extra_state_shared_building_slots = 1
+						add_building_construction = {
+							type = industrial_complex
+							level = 1
+							instant_build = yes
+						}
+					}
+				}
+			}
+			else = {
+				create_wargoal = {
+					type = puppet_wargoal_focus
+					target = COL
+				}
 			}
 		}
 
@@ -3674,6 +3774,8 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
+			40_percent_government_popularity = yes
+			is_subject = no
 		}
 
 		bypass = {
@@ -3687,55 +3789,164 @@ focus_tree = {
 			has_war_with = DOM
 			has_war_with = HAI
 			has_war_with = VEN
+			has_war_with = PAN
+			has_war_with = CHL
+			has_war_with = PRU
+			has_war_with = ECU
+			has_war_with = BOL
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_the_crown_jewel"
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = MEX
+			if = {
+				limit = {
+					NOT = { MEX = { is_subject_of = SPR } }
+					country_exists = MEX
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = MEX
+				}
 			}
-
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = GUA
+			if = {
+				limit = {
+					NOT = { GUA = { is_subject_of = SPR } }
+					country_exists = GUA
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = GUA
+				}
 			}
-
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = BLZ
+			if = {
+				limit = {
+					NOT = { BLZ = { is_subject_of = SPR } }
+					country_exists = BLZ
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = BLZ
+				}
 			}
-
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = HON
+			if = {
+				limit = {
+					NOT = { HON = { is_subject_of = SPR } }
+					country_exists = HON
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = HON
+				}
 			}
-
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = ELS
+			if = {
+				limit = {
+					NOT = { ELS = { is_subject_of = SPR } }
+					country_exists = ELS
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ELS
+				}
 			}
-
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = NIC
+			if = {
+				limit = {
+					NOT = { NIC = { is_subject_of = SPR } }
+					country_exists = NIC
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = NIC
+				}
 			}
-
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = COS
+			if = {
+				limit = {
+					NOT = { COS = { is_subject_of = SPR } }
+					country_exists = COS
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = COS
+				}
 			}
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = DOM
+			if = {
+				limit = {
+					NOT = { DOM = { is_subject_of = SPR } }
+					country_exists = DOM
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = DOM
+				}
 			}
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = HAI
+			if = {
+				limit = {
+					NOT = { HAI = { is_subject_of = SPR } }
+					country_exists = HAI
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = HAI
+				}
 			}
-			create_wargoal = {
-				type = puppet_wargoal_focus
-				target = VEN
+			if = {
+				limit = {
+					NOT = { VEN = { is_subject_of = SPR } }
+					country_exists = VEN
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = VEN
+				}
+			}
+			if = {
+				limit = {
+					NOT = { PAN = { is_subject_of = SPR } }
+					country_exists = PAN
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = PAN
+				}
+			}
+			if = {
+				limit = {
+					NOT = { CHL = { is_subject_of = SPR } }
+					country_exists = CHL
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = CHL
+				}
+			}
+			if = {
+				limit = {
+					NOT = { PRU = { is_subject_of = SPR } }
+					country_exists = PRU
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = PRU
+				}
+			}
+			if = {
+				limit = {
+					NOT = { ECU = { is_subject_of = SPR } }
+					country_exists = ECU
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ECU
+				}
+			}
+			if = {
+				limit = {
+					NOT = { BOL = { is_subject_of = SPR } }
+					country_exists = BOL
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = BOL
+				}
 			}
 		}
 
@@ -3744,8 +3955,8 @@ focus_tree = {
 		}
 	}
 
+	## Spain has no corruption. None whatsoever.
 	##corruption?? wtf is this bird
-
 	focus = {
 		id = SPR_anti_corruption_campaigns
 		icon = political_arrests2
@@ -3771,7 +3982,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 1
+			factor = 3
 		}
 	}
 
@@ -3804,7 +4015,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_undermine_the_republic"
 			add_political_power = 100
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 15 }
 			change_industrial_conglomerates_opinion = yes
 			change_landowners_opinion = yes
 			change_oligarchs_opinion = yes
@@ -3905,30 +4116,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_conservative_leanings }
@@ -4002,30 +4190,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_the_welfare_state }
@@ -4069,30 +4234,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_the_welfare_state }
@@ -4117,30 +4259,7 @@ focus_tree = {
 		cost = 5 # Reduced form 7.86 - 09/02
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 			OR = {
 				has_idea = labour_unions
 				has_idea = communist_cadres
@@ -4182,30 +4301,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_conservative_leanings }
@@ -4240,30 +4336,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_party_of_the_people }
@@ -4300,30 +4373,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 			has_idea = christian
 		}
 
@@ -4358,30 +4408,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_party_of_the_people }
@@ -4408,30 +4435,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_the_lgbtqa_stance }
@@ -4459,30 +4463,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_corporate_tax_heaven }
@@ -4514,30 +4495,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
@@ -4564,30 +4522,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_minimize_bureaucracy }
@@ -4632,30 +4567,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 			has_idea = christian
 		}
 
@@ -4691,30 +4603,7 @@ focus_tree = {
 		cost =  5 # Reduced from 7.86 to 5 - 09/02
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 			OR = {
 				has_idea = labour_unions
 				has_idea = communist_cadres
@@ -4757,30 +4646,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 			OR = {
 				has_idea = labour_unions
 				has_idea = communist_cadres
@@ -4819,30 +4685,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 			OR = {
 				has_idea = labour_unions
 				has_idea = communist_cadres
@@ -4878,30 +4721,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_bible_study }
@@ -4930,30 +4750,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 			has_idea = christian
 		}
 
@@ -4988,30 +4785,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_environmental_deregulations }
@@ -5038,30 +4812,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_pull_yourself_up_by_the_bootstrap }
@@ -5162,30 +4913,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_officer_investiture }
@@ -5221,30 +4949,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_conservatism_are_in_power_or_coalition = yes
-						neutrality_neutral_conservatism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_conservatism_are_in_power_or_coalition = yes
-					neutrality_neutral_conservatism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			conservative_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_union_of_church_and_state }
@@ -5864,21 +5569,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_renacimiento_nacionalista }
@@ -5906,21 +5597,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_renacimiento_nacionalista }
@@ -5945,21 +5622,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_renacimiento_nacionalista }
@@ -5986,21 +5649,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_renacimiento_nacionalista }
@@ -6031,21 +5680,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_the_natalist_view }
@@ -6073,21 +5708,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_reject_the_progressive_dictatorship }
@@ -6117,21 +5738,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_reject_the_progressive_dictatorship }
@@ -6156,21 +5763,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_reinforce_protectionism }
@@ -6706,21 +6299,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_the_natalist_view }
@@ -6746,21 +6325,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_authoritarianism_by_law }
@@ -6787,21 +6352,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_funding_for_police }
@@ -6831,21 +6382,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_rise_of_nativism }
@@ -6873,21 +6410,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_anti_immigration_policies }
@@ -6923,21 +6446,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_rise_of_nativism }
@@ -6970,21 +6479,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_anti_immigration_policies }
@@ -7019,21 +6514,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_right_wing_populists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			right_wing_populists_focus_available_trigger = yes
 		}
 
 		prerequisite = { focus = SPR_minority_rights }
@@ -7303,21 +6784,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_nacion_unidad_imperio }
@@ -7344,21 +6811,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_nacion_unidad_imperio }
@@ -7383,21 +6836,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_nacion_unidad_imperio }
@@ -7427,21 +6866,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 			if = { limit = { is_ai = no }
 				divisions_in_state = {
 					size > 2
@@ -7476,21 +6901,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_the_catalonian_cancer }
@@ -7522,21 +6933,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_unify_the_faiths }
@@ -7598,21 +6995,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_return_of_francoism }
@@ -7638,21 +7021,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 			if = { limit = { is_ai = no }
 				divisions_in_state = {
 					size > 2
@@ -7686,21 +7055,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_eliminate_the_euskara }
@@ -7734,21 +7089,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_solidify_the_paramilitaries }
@@ -7802,21 +7143,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_the_hands_of_the_few }
@@ -7883,21 +7210,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_nationalize_the_banks }
@@ -8497,21 +7810,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_eliminate_the_euskara }
@@ -8536,21 +7835,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_the_hands_of_the_few }
@@ -8611,21 +7896,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_role_of_the_woman }
@@ -8657,21 +7928,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_the_catalonian_cancer }
@@ -8739,21 +7996,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		bypass = {
@@ -8787,21 +8030,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_nuestra_familia }
@@ -8832,21 +8061,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-				else = {
-					nationalist_fascists_are_in_power_or_coalition = yes
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-				30_percent_government_popularity = yes
-			}
+			fascists_focus_available_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_return_of_francoism }
@@ -8941,36 +8156,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_socialism_rising }
@@ -9004,36 +8190,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_address_inequality }
@@ -9072,36 +8229,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_left_wing_populism }
@@ -9131,36 +8259,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_left_wing_populism }
@@ -9186,36 +8285,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 		bypass = {
 			has_idea = negligible_corruption
@@ -9251,36 +8321,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_tackle_oppression }
@@ -9314,36 +8355,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_address_inequality }
@@ -9368,36 +8380,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_socialism_rising }
@@ -9430,36 +8413,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_socialism_rising }
@@ -9505,36 +8459,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_the_post_capitalism_ideology }
@@ -9563,36 +8488,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 		bypass = {
 			has_idea = negligible_corruption
@@ -9622,36 +8518,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_the_peoples_government }
@@ -10186,36 +9053,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_socialism_rising }
@@ -10242,36 +9080,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_a_keynesian_take }
@@ -10300,36 +9109,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_industry_for_the_people }
@@ -10366,36 +9146,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_industry_for_the_people }
@@ -10430,36 +9181,7 @@ focus_tree = {
 		cost = 7.86 # 55 Days
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_support_the_small_businesses }
@@ -10494,36 +9216,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_pro_europeanism }
@@ -10549,36 +9242,7 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_socialism_rising }
@@ -10613,36 +9277,7 @@ focus_tree = {
 		cost = 5
 
 		available = {
-			if = { limit = { has_completed_focus = SPR_the_new_elections }
-				if = { limit = { western_autocrats_are_in_power = yes }
-					western_autocrats_are_in_power = yes
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-				else = {
-					OR = {
-						western_socialism_are_in_power_or_coalition = yes
-						western_liberal_are_in_power_or_coalition = yes
-						neutrality_neutral_social_in_power_or_coalition = yes
-						emerging_anarchist_communism_in_power_or_coalition = yes
-					}
-					30_percent_government_popularity = yes
-				}
-			}
-			else = {
-				OR = {
-					western_socialism_are_in_power_or_coalition = yes
-					western_liberal_are_in_power_or_coalition = yes
-					neutrality_neutral_social_in_power_or_coalition = yes
-					emerging_anarchist_communism_in_power_or_coalition = yes
-				}
-				30_percent_government_popularity = yes
-			}
+			socialism_rising_coalition_trigger= yes
 		}
 
 		prerequisite = { focus = SPR_reconnecting_with_our_roots }
