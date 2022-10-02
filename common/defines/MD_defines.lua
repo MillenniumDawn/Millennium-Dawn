@@ -546,6 +546,11 @@
 	NDefines.NNavy.NAVAL_COMBAT_AIR_STRENGTH_TARGET_SCORE = 5                         -- how much score factor from low health (scales between 0->this number)
 	NDefines.NNavy.NAVAL_COMBAT_AIR_LOW_AA_TARGET_SCORE = 5                           -- how much score factor from low AA guns (scales between 0->this number)
 
+	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_MANPOWER_FACTOR = 0.02                        -- war score gained for every manpower killed when sinking a ship
+	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.02   --0.04                       -- war score gained for every IC of the sunk ship
+	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_CONVOY = 4  --10                       -- war score gained for every sunk convoy
+	NDefines.NNavy.WAR_SCORE_DECAY_FOR_BUILT_CONVOY = 2  --5                         -- war score deducted when convoy-raided enemy produces one new convoy
+
 
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
 	NDefines.NTrade.BASE_LAND_TRADE_RANGE = 350 -- 1000
