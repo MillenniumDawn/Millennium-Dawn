@@ -849,7 +849,11 @@
 	NDefines.NSupply.MAX_RAILWAY_LEVEL = 6 -- update railway texture as well, each frame corresponds to a level
 	NDefines.NSupply.DEFAULT_STARTING_TRUCK_RATIO = 1 -- countries get this ratio of starting truck in their buffers compared to their need -- vanilla 1.5
 
-	 -- MD new nukes
-	 NDefines.NMilitary.NUKE_MIN_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
-	 NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
-	 NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
+	-- MD new nukes
+	NDefines.NMilitary.NUKE_MIN_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
+	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
+	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
+	
+	-- No slowdown
+	NDefines.NGame.LAG_DAYS_FOR_LOWER_SPEED = 500
+    NDefines.NGame.LAG_DAYS_FOR_PAUSE = 100
