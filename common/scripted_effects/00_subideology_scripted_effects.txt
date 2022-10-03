@@ -779,8 +779,37 @@ modify_election_threshold = {
 }
 
 set_party_index_to_ruling_party = {
-	if = { limit = { is_in_array = { array = ruling_party value = 0 } }
+	if = {
+		limit = {
+			is_in_array = {
+				array = ruling_party
+				value = 0
+			}
+			NOT = {
+				has_country_leader_with_trait = western_technocrat
+			}
+		}
 		set_temp_variable = { party_index = 0 }
+	}
+	if = {
+		limit = {
+			is_in_array = {
+				array = ruling_party
+				value = 0
+			}
+			has_country_leader_with_trait = western_technocrat
+		}
+		for_each_loop = {
+			array = gov_coalition_array
+			if = {
+				limit = {
+					check_variable = { party_pop_array^v > biggest_party_in_coalition_popularity }
+				}
+				set_temp_variable = { biggest_party_in_coalition_popularity = party_pop_array^v }
+				set_temp_variable = { biggest_party_in_coalition = v }
+			}
+		}
+		set_temp_variable = { party_index = biggest_party_in_coalition }
 	}
 	if = {
 		limit = { is_in_array = { array = ruling_party value = 1 } }
