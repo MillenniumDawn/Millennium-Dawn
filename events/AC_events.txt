@@ -103,28 +103,10 @@ country_event = {
 				ai_has_same_organization = yes
 			}
 			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 10 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 30 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 60 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 100 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 140 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 180 }
+				set_temp_variable = { opinion_calculator = opinion@FROM }
+				multiply_temp_variable = { opinion_calculator = 0.05 }
+				check_variable = { opinion_calculator > -30 }
+				add = opinion_calculator
 			}
 			modifier = {
 				add = 1
@@ -152,7 +134,7 @@ country_event = {
 				}
 			}
 			modifier = {
-				factor = 50
+				factor = 2
 				is_subject_of = FROM
 			}
 			modifier = {
@@ -173,12 +155,12 @@ country_event = {
 					check_variable = { influence_array^0 = FROM }
 					check_variable = { influence_array^1 = FROM }
 					check_variable = { influence_array^2 = FROM }
+					check_variable = { influence_array^3 = FROM }
 				}
 			}
 			modifier = {
 				factor = 0
 				OR = {
-					check_variable = { influence_array_val^0 > 59.999 }
 					check_variable = { interest_rate > 9.999 }
 					has_country_flag = recently_refused@FROM
 				}
@@ -201,32 +183,10 @@ country_event = {
 		ai_chance = {
 			base = 0
 			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < 0 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -10 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -30 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -60 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -100 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -140 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -180 }
+				set_temp_variable = { opinion_calculator = opinion@FROM }
+				multiply_temp_variable = { opinion_calculator = -0.05 }
+				check_variable = { opinion_calculator > -30 }
+				add = opinion_calculator
 			}
 			modifier = {
 				factor = 2
@@ -261,25 +221,39 @@ country_event = {
 					}
 				}
 			}
-			modifier = { #More likely if you are a top influencer
+			modifier = { #Less likely is not a top influencer
 				add = 1
 				OR = {
 					NOT = { check_variable = { influence_array^0 = FROM } }
 					NOT = { check_variable = { influence_array^1 = FROM } }
 					NOT = { check_variable = { influence_array^2 = FROM } }
+					NOT = { check_variable = { influence_array^3 = FROM } }
 				}
-			}
-			modifier = {
-				factor = 0.25
-				is_subject_of = FROM
 			}
 			# Tag Specific Rejections
 			modifier = {
 				add = 20
-				tag = NKO
+				OR = {
+					AND = {
+						original_tag = NKO
+						FROM = { NOT = { original_tag = CHI } }
+					}
+					AND = {
+						original_tag = PER
+						FROM = { NOT = { has_government = communism } }
+					}
+					AND = {
+						OR = {
+							original_tag = CHI
+							original_tag = SOV
+						}
+						FROM = { original_tag = USA }
+					}
+				}
 			}
+			# Reject ALL investments if I recently rejected an offer
 			modifier = {
-				factor = 500
+				factor = 1000
 				has_country_flag = recently_refused@FROM
 			}
 		}
