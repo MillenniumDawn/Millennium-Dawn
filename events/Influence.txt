@@ -79,7 +79,7 @@ country_event = {
 
 		# AI Section
 		ai_chance = {
-			factor = 0.50
+			factor = 0.25
 			modifier = {
 				add = 1
 				ai_has_same_organization = no
@@ -127,94 +127,38 @@ country_event = {
 			}
 			# Lower GDP nations accept
 			modifier = {
-				factor = 1.25
+				factor = 3
 				check_variable = { gdp_per_capita < 15.000 }
 			}
 			# If they have lower domestic influence trigger fight or flight
 			modifier = {
-				factor = 0.90
-				check_variable = { domestic_influence_amount < 80 }
-			}
-			modifier = {
-				factor = 0.75
-				check_variable = { domestic_influence_amount < 60 }
-			}
-			modifier = {
-				factor = 0.60
-				check_variable = { domestic_influence_amount < 45 }
-			}
-			modifier = {
-				factor = 0.15
-				check_variable = { domestic_influence_amount < 20 }
+				set_temp_variable = { domestic_influence_amount_tmp = domestic_influence_amount }
+				divide_temp_variable = { domestic_influence_amount_tmp = 100 }
+				factor = domestic_influence_amount_tmp
 			}
 			# Massive Nations such as USA/China should be less likely to take on Economic Aid
 			modifier = {
-				factor = 0.50
+				factor = 0.75
 				OR = {
 					has_idea = superpower
 					has_idea = great_power
 				}
 			}
-			# AI has acceptable_budget
-			# AI will be 10% less likely to accept
-			modifier = {
-				factor = 0.90
-				OR = {
-					ai_has_acceptable_deficit_factories = yes
-					ai_has_acceptable_surplus_factories = yes
-				}
-			}
 			# Reduce Based on Opinion
 			# Keep going if each continues to be true
 			modifier = {
-				factor = 1.50
-				has_opinion = { target = FROM value > 99 }
-			}
-			modifier = {
-				factor = 1.35
-				has_opinion = { target = FROM value > 49 }
-			}
-			modifier = {
-				factor = 1.25
-				has_opinion = { target = FROM value > 24 }
-			}
-			modifier = {
-				factor = 1.10
-				has_opinion = { target = FROM value > 9 }
-			}
-			modifier = {
-				factor = 0.90
-				has_opinion = { target = FROM value < 10 }
-			}
-			modifier = {
-				factor = 0.80
-				has_opinion = { target = FROM value < -10 }
-			}
-			modifier = {
-				factor = 0.65
-				has_opinion = { target = FROM value < -30 }
-			}
-			modifier = {
-				factor = 0.40
-				has_opinion = { target = FROM value < -60 }
-			}
-			modifier = {
-				factor = 0.30
-				has_opinion = { target = FROM value < -80 }
-			}
-			modifier = {
-				factor = 0.10
-				has_opinion = { target = FROM value < -90 }
+				set_temp_variable = { opinion_calculator = opinion@FROM }
+				multiply_temp_variable = { opinion_calculator = 0.05 }
+				check_variable = { opinion_calculator > -30 }
+				factor = opinion_calculator
 			}
 			# Killswitch
 			# Do not accept under any of these conditions
 			modifier = {
 				factor = 0
 				OR = {
-					has_opinion = { target = FROM value < -100 }
-					ai_has_high_treasury = yes
-					check_variable = { interest_rate < 8.00 }
-					check_variable = { debt_ratio < 1.20 }
+					check_variable = { interest_rate < 5.50 }
+					check_variable = { debt_ratio < 1.00 }
 				}
 			}
 		}
@@ -247,20 +191,9 @@ country_event = {
 			factor = 1
 			# If they have lower domestic influence trigger fight or flight
 			modifier = {
-				factor = 1.50
-				check_variable = { domestic_influence_amount < 80 }
-			}
-			modifier = {
-				factor = 2.50
-				check_variable = { domestic_influence_amount < 60 }
-			}
-			modifier = {
-				factor = 3.00
-				check_variable = { domestic_influence_amount < 45 }
-			}
-			modifier = {
-				factor = 5.00
-				check_variable = { domestic_influence_amount < 20 }
+				set_temp_variable = { domestic_influence_amount_tmp = domestic_influence_amount }
+				divide_temp_variable = { domestic_influence_amount_tmp = 10 }
+				factor = domestic_influence_amount_tmp
 			}
 			# If Superpower or Major Power
 			# Reject if needed
@@ -273,7 +206,7 @@ country_event = {
 			}
 			# Nationalists should try and reject whenever they get it
 			modifier = {
-				factor = 25
+				factor = 5
 				has_government = nationalist
 			}
 			# Autocrats and Totalitarians will try and avoid it
@@ -285,59 +218,13 @@ country_event = {
 				has_totalitarian_government_or_in_coalition = yes
 				factor = 5
 			}
-			# AI will be half as likely to reject if they don't have acceptable deficit or surplus
-			modifier = {
-				factor = 0.50
-				OR = {
-					ai_has_acceptable_deficit_factories = no
-					ai_has_acceptable_surplus_factories = no
-				}
-			}
 			# Opinion Section
 			# If the AI has a low opinion be more likely to reject
 			modifier = {
-				factor = 0.25
-				has_opinion = { target = FROM value > 99 }
-			}
-			modifier = {
-				factor = 0.50
-				has_opinion = { target = FROM value > 49 }
-			}
-			modifier = {
-				factor = 0.75
-				has_opinion = { target = FROM value > 24 }
-			}
-			modifier = {
-				factor = 0.90
-				has_opinion = { target = FROM value > 9 }
-			}
-			modifier = {
-				factor = 1.10
-				has_opinion = { target = FROM value < 10 }
-			}
-			modifier = {
-				factor = 1.25
-				has_opinion = { target = FROM value < -10 }
-			}
-			modifier = {
-				factor = 1.35
-				has_opinion = { target = FROM value < -30 }
-			}
-			modifier = {
-				factor = 1.50
-				has_opinion = { target = FROM value < -60 }
-			}
-			modifier = {
-				factor = 1.60
-				has_opinion = { target = FROM value < -80 }
-			}
-			modifier = {
-				factor = 2.0
-				has_opinion = { target = FROM value < -90 }
-			}
-			modifier = { #Never Accept the issue if they hate each other
-				factor = 100
-				has_opinion = { target = FROM value < -100 }
+				set_temp_variable = { opinion_calculator = opinion@FROM }
+				multiply_temp_variable = { opinion_calculator = -0.05 }
+				check_variable = { opinion_calculator > -30 }
+				factor = opinion_calculator
 			}
 			# Rejection Killswitch
 			modifier = {
@@ -347,6 +234,7 @@ country_event = {
 					has_idea = bankrupcy
 					has_country_flag = AI_economic_downspiral
 					check_variable = { interest_rate > 15.000 }
+					is_subject_of = FROM
 				}
 			}
 		}
@@ -736,8 +624,7 @@ country_event = {
 				set_country_flag = set_Neutral_green
 			}
 		}
-		else_if = {
-			limit = { event_target:influence_sender = { has_government = communism } }
+		else_if = { limit = { event_target:influence_sender = { has_government = communism } }
 			set_variable = { success_factor_biggest = party_popularity@communism }
 			multiply_variable = { success_factor_biggest = influence_communism }
 
@@ -942,11 +829,6 @@ country_event = {
 
 		event_target:influence_sender = { country_event = { id = influence.5 } }
 	}
-
-	option = {
-		name = influence.44.a
-		log = "[GetDateText]: [This.GetName]: influence.4.a executed"
-	}
 }
 
 #root
@@ -1085,20 +967,15 @@ country_event = {
 						set_leader = yes
 						recalculate_party = yes
 						hold_elections = yes
+
+						add_opinion_modifier = { target = ROOT modifier = succeded_coup }
+						news_event = { id = News_influence.3 }
 					}
 					#add 20% to ROOT influence
 					set_temp_variable = { percent_change = 10 }
 					set_temp_variable = { tag_index = ROOT.id }
 					set_temp_variable = { influence_target = THIS.id }
 					change_influence_percentage = yes
-
-					hidden_effect = {
-						add_opinion_modifier = {
-							target = ROOT
-							modifier = succeded_coup
-						}
-						news_event = { id = News_influence.3 }
-					}
 				}
 				#add event to country and world
 				hidden_effect = {
@@ -1115,7 +992,6 @@ country_event = {
 				custom_effect_tooltip = influence_coup_largest_discovered_TT
 
 				FROM = {
-
 					#remove a LOT of influence
 					set_temp_variable = { percent_change = -15 }
 					set_temp_variable = { tag_index = ROOT.id }
