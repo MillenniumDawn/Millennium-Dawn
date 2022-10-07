@@ -582,7 +582,7 @@ country_event = {
 	option = {
 		name = italy_md.1.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.1.o1 executed"
-		add_political_power = 10
+		add_ideas = ITA_vatican_support
 		set_temp_variable = { temp_opinion = 5 }
 		change_the_clergy_opinion = yes
 		add_opinion_modifier = {
@@ -625,7 +625,7 @@ country_event = {
 		name = italy_md.3.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.3.o1 executed"
 		add_named_threat = {
-			name = threat_ITA_demands_subjugation
+			name = demanded_subjugation
 			threat = 1
 		}
 		ITA = { country_event = italy_md.4 }
@@ -640,7 +640,7 @@ country_event = {
 		name = italy_md.3.o2
 		log = "[GetDateText]: [This.GetName]: italy_md.3.o2 executed"
 		add_named_threat = {
-			name = threat_ITA_demands_subjugation
+			name = demanded_subjugation
 			threat = 1
 		}
 		add_opinion_modifier = {
@@ -941,7 +941,7 @@ country_event = {
 				add = 20
 				strength_ratio  = {
 					tag = ITA
-					ratio > 1.2
+					ratio > 1
 				}
 			}
 		}
@@ -1246,54 +1246,275 @@ country_event = {
 		}
 	}
 }
-#Mass Migration
+#industrial cooperation trade deal
 country_event = {
 	id = italy_md.17
 	title = italy_md.17.t
 	desc = italy_md.17.d
-	picture = GFX_report_event_Human_Traffic
-	fire_only_once = yes
+	picture = GFX_report_event_Tavolo_Trattative_1
 	is_triggered_only = yes
 
-	option = {
+	option = { #accept
 		name = italy_md.17.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.17.o1 executed"
-		add_ideas = ITA_migrants_from_africa
-		if = {
-			limit = {
-				OR = {
-					has_completed_focus = ITA_march_on_rome
-					has_completed_focus = ITA_reestablish_rome
-					has_completed_focus = ITA_empower_the_king
+		add_opinion_modifier = {
+			target = ITA
+			modifier = declaration_of_friendship
+		}
+		set_country_flag = ITA_friendship_focus
+		set_temp_variable = { treasury_change = -8.5 }
+		modify_treasury_effect = yes
+		random_owned_state = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+		ITA = {
+			country_event = diplomatic_response.1
+			set_temp_variable = { mafia_industrial_focus_base_cost = -8.5 }
+			mafia_industrial_focus_north_effect = yes
+			random_owned_state = {
+				limit = {
+					region = 23
 				}
-				NOT = {
-					OR = {
-						has_completed_focus = ITA_repeal_former_government_measures_6
-						has_completed_focus = ITA_repeal_former_government_measures_7
-						has_completed_focus = ITA_repeal_former_government_measures_8
-						has_completed_focus = ITA_repeal_former_government_measures_9
-					}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
 				}
 			}
-				country_event = italy_md.18
+		}
+		ai_chance = {
+			factor = 2
+		}
+	}
+	option = { #refuse
+		name = italy_md.17.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.17.o2 executed"
+		ITA = {
+			country_event = diplomatic_response.2
+		}
+		ai_chance = {
+			factor = 0
 		}
 	}
 }
-#Immediately Stop Mass Migration if going Undemocratic Route
+#resource trade deal
 country_event = {
 	id = italy_md.18
 	title = italy_md.18.t
 	desc = italy_md.18.d
-	picture = GFX_report_event_Human_Traffic
-
+	picture = GFX_report_event_Tavolo_Trattative_1
 	is_triggered_only = yes
 
 	option = {
 		name = italy_md.18.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.18.o1 executed"
-		swap_ideas = {
-			remove_idea = ITA_migrants_from_africa
-			add_idea = ITA_migrants_from_africa_limited
+		add_opinion_modifier = {
+			target = ITA
+			modifier = declaration_of_friendship
+		}
+		random_owned_state = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+		set_country_flag = ITA_friendship_focus
+		if = {
+			limit = {
+				OR = {
+					tag = CHL
+					tag = AST
+					tag = ARG
+				}
+			}
+			random_owned_state = {
+				limit = {
+					has_resources_amount = {
+						resource = tungsten
+						amount > 7
+					}
+				}
+				add_resource = {
+					type = tungsten
+					amount = -8
+				}
+			}
+			ITA = {
+				country_event = diplomatic_response.1
+				set_temp_variable = { mafia_industrial_focus_base_cost = -7.5 }
+				mafia_industrial_focus_north_effect = yes
+				capital_scope = {
+					add_resource = {
+						type = tungsten
+						amount = 8
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					tag = SAF
+					tag = DRC
+					tag = CAN
+				}
+			}
+			random_owned_state = {
+				limit = {
+					has_resources_amount = {
+						resource = chromium
+						amount > 7
+					}
+				}
+				add_resource = {
+					type = chromium
+					amount = -8
+				}
+			}
+			ITA = {
+				country_event = diplomatic_response.1
+				set_temp_variable = { mafia_industrial_focus_base_cost = -7.5 }
+				mafia_industrial_focus_north_effect = yes
+				capital_scope = {
+					add_resource = {
+						type = chromium
+						amount = 8
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					tag = IND
+					tag = MAY
+					tag = SIA
+					tag = VIE
+				}
+			}
+			random_owned_state = {
+				limit = {
+					has_resources_amount = {
+						resource = rubber
+						amount > 7
+					}
+				}
+				add_resource = {
+					type = rubber
+					amount = -8
+				}
+			}
+			ITA = {
+				country_event = diplomatic_response.1
+				set_temp_variable = { mafia_industrial_focus_base_cost = -7.5 }
+				mafia_industrial_focus_north_effect = yes
+				capital_scope = {
+					add_resource = {
+						type = rubber
+						amount = 8
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					tag = SAU
+					tag = IRQ
+					tag = PER
+				}
+			}
+			random_owned_state = {
+				limit = {
+					has_resources_amount = {
+						resource = oil
+						amount > 7
+					}
+				}
+				add_resource = {
+					type = oil
+					amount = -8
+				}
+			}
+			ITA = {
+				country_event = diplomatic_response.1
+				set_temp_variable = { mafia_industrial_focus_base_cost = -7.5 }
+				mafia_industrial_focus_north_effect = yes
+				capital_scope = {
+					add_resource = {
+						type = oil
+						amount = 8
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					tag = KAZ
+				}
+			}
+			random_owned_state = {
+				limit = {
+					has_resources_amount = {
+						resource = tungsten
+						amount > 3
+					}
+				}
+				add_resource = {
+					type = tungsten
+					amount = -4
+				}
+			}
+			random_owned_state = {
+				limit = {
+					has_resources_amount = {
+						resource = oil
+						amount > 3
+					}
+				}
+				add_resource = {
+					type = oil
+					amount = -4
+				}
+			}
+			ITA = {
+				country_event = diplomatic_response.1
+				set_temp_variable = { mafia_industrial_focus_base_cost = -7.5 }
+				mafia_industrial_focus_north_effect = yes
+				capital_scope = {
+					add_resource = {
+						type = oil
+						amount = 4
+					}
+					add_resource = {
+						type = tungsten
+						amount = 4
+					}
+				}
+			}
+		}
+		ai_chance = {
+			factor = 2
+		}
+	}
+
+	option = {
+		name = italy_md.18.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.18.o1 executed"
+		ITA = {
+			country_event = diplomatic_response.2
+		}
+		ai_chance = {
+			factor = 0
 		}
 	}
 }
@@ -1374,9 +1595,12 @@ country_event = {
 	option = {
 		name = italy_md.20.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.20.o1 executed"
-		add_stability = -0.05
+		set_temp_variable = { ITA_stability_factor_change = -0.05 }
+		modify_stability_factor_effect = yes
 		set_country_flag = italeave_referendum_leave
-		ROOT_eurosceptic_rise_20_percent = yes
+		set_temp_variable = { modify_eurosceptic = 0.20 }
+		set_temp_variable = { modify_eurosceptic_target = ROOT }
+		eurosceptic_change = yes
 	}
 }
 #Italeave: Remain
@@ -1393,9 +1617,12 @@ country_event = {
 	option = {
 		name = italy_md.21.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.21.o1 executed"
-		add_stability = 0.05
+		set_temp_variable = { ITA_stability_factor_change = 0.05 }
+		modify_stability_factor_effect = yes
 		set_country_flag = italeave_referendum_remain
-		ROOT_eurosceptic_decline_10_percent = yes
+		set_temp_variable = { modify_eurosceptic = -0.10 }
+		set_temp_variable = { modify_eurosceptic_target = ROOT }
+		eurosceptic_change = yes
 	}
 }
 #Tutorial for Reform Expectance
@@ -1521,7 +1748,7 @@ country_event = {
 				has_country_flag = ITA_replace_clergy_flag
 			}
 			swap_ideas = {
-				remove_idea = The_Clergy
+				remove_idea = the_clergy
 				add_idea = industrial_conglomerates
 			}
 			clr_country_flag = ITA_replace_clergy_flag
@@ -1551,7 +1778,7 @@ country_event = {
 				has_country_flag = ITA_replace_clergy_flag
 			}
 			swap_ideas = {
-				remove_idea = The_Clergy
+				remove_idea = the_clergy
 				add_idea = international_bankers
 			}
 			clr_country_flag = ITA_replace_clergy_flag
@@ -1581,7 +1808,7 @@ country_event = {
 				has_country_flag = ITA_replace_clergy_flag
 			}
 			swap_ideas = {
-				remove_idea = The_Clergy
+				remove_idea = the_clergy
 				add_idea = defense_industry
 			}
 			clr_country_flag = ITA_replace_clergy_flag
@@ -1611,7 +1838,7 @@ country_event = {
 				has_country_flag = ITA_replace_clergy_flag
 			}
 			swap_ideas = {
-				remove_idea = The_Clergy
+				remove_idea = the_clergy
 				add_idea = farmers
 			}
 			clr_country_flag = ITA_replace_clergy_flag
@@ -1885,6 +2112,7 @@ country_event = {
 		clear_variable = monthly_drift_events_camorra
 		clear_variable = monthly_drift_events_ndrangheta
 		clear_variable = monthly_drift_events_sacra_corona_unita
+		clear_variable = mafia_strength_ai_factor_var
 	}
 }
 #lateran treaties
@@ -1904,6 +2132,16 @@ country_event = {
 		ITA = {
 			set_country_flag = HLS_lateran_treaties
 			country_event = italy_md.1
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = ITA
+					value < 0
+				}
+			}
 		}
 	}
 	option = {
@@ -1949,17 +2187,19 @@ country_event = {
 		}
 		else_if = {
 			limit = { NOT = { tag = CHI } }
-				ITA = {
-					random_owned_controlled_state = {
-						invest_cic = yes
-					}
-					THIS_eurosceptic_decline_5_percent = yes
-					country_event = italy_md.35
-					add_opinion_modifier = {
-						target = ROOT
-						modifier = accepted_investment_request
-					}
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			set_temp_variable = { modify_eurosceptic_target = ITA }
+			eurosceptic_change = yes
+			ITA = {
+				random_owned_controlled_state = {
+					invest_cic = yes
 				}
+				country_event = italy_md.35
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = accepted_investment_request
+				}
+			}
 		}
 	}
 	option = {
@@ -1985,7 +2225,7 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-		name = italy_md.34.o1
+		name = italy_md.35.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.35.o1 executed"
 	}
 }
@@ -2048,9 +2288,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: italy_md.38.o2 executed"
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.10 }
-		set_temp_variable = { temp_outlook_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
 		add_relative_party_popularity = yes
-		set_temp_variable = { ITA_stability_factor_change = -0.03 }
+		set_temp_variable = { ITA_stability_factor_change = -0.04 }
 		modify_stability_factor_effect = yes
 		if = {
 			limit = { has_country_flag = delayed_government_crisis_1 }
@@ -2073,23 +2313,7 @@ country_event = {
 				factor = 100
 				OR = {
 					focus_progress = {
-						focus = ITA_reform_the_judiciary
-						progress < 0.9
-					}
-					focus_progress = {
 						focus = ITA_anti_corruption_measures
-						progress < 0.9
-					}
-					focus_progress = {
-						focus = ITA_abolish_perfect_bicameralism
-						progress < 0.9
-					}
-					focus_progress = {
-						focus = ITA_merge_small_municipalities
-						progress < 0.9
-					}
-					focus_progress = {
-						focus = ITA_abolish_the_regions
 						progress < 0.9
 					}
 					focus_progress = {
@@ -2109,18 +2333,6 @@ country_event = {
 						progress < 0.9
 					}
 					focus_progress = {
-						focus = ITA_intensify_money_transfer
-						progress < 0.9
-					}
-					focus_progress = {
-						focus = ITA_hire_more_government_employees
-						progress < 0.9
-					}
-					focus_progress = {
-						focus = ITA_citizenship_income
-						progress < 0.9
-					}
-					focus_progress = {
 						focus = ITA_reduce_expenses
 						progress < 0.9
 					}
@@ -2133,35 +2345,11 @@ country_event = {
 						progress < 0.9
 					}
 					focus_progress = {
-						focus = ITA_Quota_100
-						progress < 0.9
-					}
-					focus_progress = {
 						focus = ITA_recalculate_baby_pensions
 						progress < 0.9
 					}
 					focus_progress = {
-						focus = ITA_reintroduce_baby_pensions
-						progress < 0.9
-					}
-					focus_progress = {
-						focus = ITA_classical_education
-						progress < 0.9
-					}
-					focus_progress = {
 						focus = ITA_modern_education
-						progress < 0.9
-					}
-					focus_progress = {
-						focus = ITA_defund_school_laboratories
-						progress < 0.9
-					}
-					focus_progress = {
-						focus = ITA_increase_funding_for_professional_schools
-						progress < 0.9
-					}
-					focus_progress = {
-						focus = ITA_increase_funding_for_research
 						progress < 0.9
 					}
 				}
@@ -2188,7 +2376,7 @@ country_event = {
 	id = italy_md.39
 	title = italy_md.39.t
 	desc = italy_md.39.d
-	picture = GFX_report_event_italy
+	picture = GFX_report_event_Italy
 
 	is_triggered_only = yes
 
@@ -2214,6 +2402,7 @@ country_event = {
 	option = {
 		name = italy_md.40.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.40.o1 executed"
+		add_ideas = ITA_russian_propaganda
 		set_country_flag = ITA_salvini_took_over_lega
 		set_temp_variable = { negative_lega_popularity = party_pop_array^14 }
 		multiply_temp_variable = { negative_lega_popularity = -1 }
@@ -2280,6 +2469,9 @@ country_event = {
 	}
 
 	option = {
+		trigger = {
+			has_idea = ITA_mafia
+		}
 		name = italy_md.42.o3
 		log = "[GetDateText]: [This.GetName]: italy_md.42.o3 executed"
 		set_temp_variable = { treasury_change = -5 }
@@ -2320,6 +2512,9 @@ country_event = {
 	}
 
 	option = {
+		trigger = {
+			has_idea = ITA_mafia
+		}
 		name = italy_md.43.o3
 		log = "[GetDateText]: [This.GetName]: italy_md.43.o3 executed"
 		set_temp_variable = { treasury_change = -5 }
@@ -2327,611 +2522,157 @@ country_event = {
 		add_to_variable = { camorra_strength = 0.05}
 	}
 }
-#policy change repel policy events
-#PD FI
+#military cooperation diplo focuses
 country_event = {
 	id = italy_md.44
 	title = italy_md.44.t
 	desc = italy_md.44.d
 	picture = GFX_report_event_Tavolo_Trattative_1
-
 	is_triggered_only = yes
 
 	option = {
 		name = italy_md.44.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.44.o1 executed"
-		if = {
-			limit = { has_idea = ITA_election_tips }
-				add_political_power = -75
-				set_temp_variable = { drift_switch_change = -0.06 }
-				modify_reform_expectance_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.10 }
-				set_temp_variable = { temp_outlook_increase = -0.05 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_election_tips
+		add_opinion_modifier = {
+			target = ITA
+			modifier = declaration_of_friendship
 		}
+		set_temp_variable = { treasury_change = 20 }
+		modify_treasury_effect = yes
+		set_country_flag = ITA_friendship_focus
 		if = {
-			limit = { has_idea = ITA_rigid_labour_market }
-				add_political_power = -75
-				set_temp_variable = { drift_switch_change = -0.03 }
-				modify_reform_expectance_effect = yes
-				set_temp_variable = { temp_opinion = -5 }
-				change_labour_unions_opinion = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				add_political_power = -100
-				remove_ideas = ITA_rigid_labour_market
-		}
-		if = {
-			limit = { has_idea = ITA_migration_tolerated }
-				swap_ideas = {
-					add_idea = ITA_migrants_from_africa
-					remove_idea = ITA_migration_tolerated
-				}
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				set_temp_variable = { temp_outlook_increase = 0.025 }
-				add_relative_party_popularity = yes
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_zombie_companies }
-				set_temp_variable = { drift_switch_change = -0.03 }
-				modify_reform_expectance_effect = yes
-				set_temp_variable = { temp_opinion = -5 }
-				change_labour_unions_opinion = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				add_political_power = -100
-				remove_ideas = ITA_zombie_companies
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_flexible_labour_market }
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				set_temp_variable = { temp_outlook_increase = 0.025 }
-				add_relative_party_popularity = yes
-				set_temp_variable = { temp_opinion = 5 }
-				change_labour_unions_opinion = yes
-				remove_ideas = ITA_flexible_labour_market
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_privatizations	}
-				set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = 0.5 }
-				modify_interest_rate_multiplier_modifier_effect = yes
-				set_temp_variable = { money_amount = gdp_total }
-				multiply_temp_variable = { money_amount = -0.06 }
-				set_temp_variable = { treasury_change = money_amount }
+			limit = {
+				tag = CHI
+			}
+			ITA = {
+				country_event = diplomatic_response.1
+				set_temp_variable = { treasury_change = -15 }
 				modify_treasury_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = 0.10 }
-				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
-				set_temp_variable = { temp_opinion = -5 }
-				change_international_bankers_opinion = yes
-				remove_ideas = ITA_privatizations
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_legalized_prostitution	}
-				if = { limit = { has_idea = ITA_mafia }
-					add_to_variable = { cosa_nostra_strength = 0.05 }
-					add_to_variable = { camorra_strength = 0.05 }
-					add_to_variable = { ndrangheta_strength = 0.05 }
-					add_to_variable = { sacra_corona_unita_strength = 0.05 }
-					add_to_variable = { police_effectivness_base = -0.05 }
-					update_police_effectivness = yes
+				add_equipment_to_stockpile = {
+					type = AS_Fighter2
+					amount = 50
+					producer = CHI
 				}
-				set_temp_variable = { drift_switch_change = -0.02 }
-				modify_reform_expectance_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_legalized_prostitution
-				add_political_power = -75
+				add_equipment_to_stockpile = {
+					type = APC_2
+					amount = 1000
+					producer = CHI
+				}
+				add_equipment_to_stockpile = {
+					type = IFV_2
+					amount = 1000
+					producer = CHI
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				tag = SOV
+			}
+			ITA = {
+				country_event = diplomatic_response.1
+				set_temp_variable = { treasury_change = -15 }
+				modify_treasury_effect = yes
+				add_equipment_to_stockpile = {
+					type = AS_Fighter2
+					amount = 50
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = APC_2
+					amount = 1000
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = IFV_2
+					amount = 1000
+					producer = SOV
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				tag = USA
+			}
+			ITA = {
+				country_event = diplomatic_response.1
+				set_temp_variable = { treasury_change = -20 }
+				modify_treasury_effect = yes
+				add_equipment_to_stockpile = {
+					type = AS_Fighter3
+					amount = 100
+					producer = USA
+				}
+			}
+		}
+		ai_chance = {
+			factor = 2
 		}
 	}
 
 	option = {
 		name = italy_md.44.o2
-		log = "[GetDateText]: [This.GetName]: italy_md.44.o2 executed"
+		log = "[GetDateText]: [This.GetName]: italy_md.44.o1 executed"
+		ITA = {
+			country_event = diplomatic_response.2
+		}
+		ai_chance = {
+			factor = 0
+		}
 	}
 }
-#m5s alleanza nazionale
+#restored roman borders
 country_event = {
 	id = italy_md.45
 	title = italy_md.45.t
 	desc = italy_md.45.d
-	picture = GFX_report_event_Tavolo_Trattative_1
-
+	picture = GFX_report_event_Vittoriano
 	is_triggered_only = yes
 
 	option = {
 		name = italy_md.45.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.45.o1 executed"
-		if = {
-			limit = { has_idea = ITA_flat_tax }
-				set_temp_variable = { drift_switch_change = -0.03 }
-				modify_reform_expectance_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_flat_tax
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_traditional_values }
-				set_temp_variable = { drift_switch_change = -0.02 }
-				modify_reform_expectance_effect = yes
-				add_stability = -0.05
-				remove_ideas = ITA_traditional_values
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_capital_flight }
-				set_temp_variable = { drift_switch_change = -0.04 }
-				modify_reform_expectance_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.10 }
-				set_temp_variable = { temp_outlook_increase = -0.05 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_capital_flight
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_rigid_labour_market }
-				set_temp_variable = { drift_switch_change = -0.03 }
-				modify_reform_expectance_effect = yes
-				set_temp_variable = { temp_opinion = -5 }
-				change_labour_unions_opinion = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				add_political_power = -100
-				remove_ideas = ITA_rigid_labour_market
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_election_tips }
-				set_temp_variable = { drift_switch_change = -0.06 }
-				modify_reform_expectance_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.10 }
-				set_temp_variable = { temp_outlook_increase = -0.05 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_election_tips
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_IRI }
-				set_temp_variable = { drift_switch_change = -0.01 }
-				modify_reform_expectance_effect = yes
-				set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = -0.25 }
-				modify_interest_rate_multiplier_modifier_effect = yes
-				set_temp_variable = { money_amount = gdp_total }
-				multiply_temp_variable = { money_amount = 0.04 }
-				set_temp_variable = { treasury_change = money_amount }
-				modify_treasury_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				add_political_power = -150
-				remove_ideas = ITA_IRI
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_zombie_companies }
-				set_temp_variable = { drift_switch_change = -0.03 }
-				modify_reform_expectance_effect = yes
-				set_temp_variable = { temp_opinion = -5 }
-				change_labour_unions_opinion = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				add_political_power = -100
-				remove_ideas = ITA_zombie_companies
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_migrants_from_africa_limited }
-				set_temp_variable = { drift_switch_change = -0.04 }
-				modify_reform_expectance_effect = yes
-				swap_ideas = {
-					add_idea = ITA_migrants_from_africa
-					remove_idea = ITA_migrants_from_africa_limited
-				}
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_citizenship_income_spirit }
-				set_temp_variable = { drift_switch_change = -0.03 }
-				modify_reform_expectance_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				add_political_power = -150
-				remove_ideas = ITA_citizenship_income_spirit
-				add_political_power = -75
-		}
-	}
-
-	option = {
-		name = italy_md.45.o2
-		log = "[GetDateText]: [This.GetName]: italy_md.45.o2 executed"
+		add_ideas = ITA_roma_invicta
 	}
 }
-#greens leu
+#restored all monuments
 country_event = {
 	id = italy_md.46
 	title = italy_md.46.t
 	desc = italy_md.46.d
-	picture = GFX_report_event_Tavolo_Trattative_1
-
+	picture = GFX_report_event_Vittoriano
 	is_triggered_only = yes
 
 	option = {
 		name = italy_md.46.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.46.o1 executed"
-		if = {
-			limit = { has_idea = ITA_IRI }
-				set_temp_variable = { drift_switch_change = -0.01 }
-				modify_reform_expectance_effect = yes
-				set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = -0.25 }
-				modify_interest_rate_multiplier_modifier_effect = yes
-				set_temp_variable = { money_amount = gdp_total }
-				multiply_temp_variable = { money_amount = 0.04 }
-				set_temp_variable = { treasury_change = money_amount }
-				modify_treasury_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				add_political_power = -150
-				remove_ideas = ITA_IRI
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_zombie_companies }
-				set_temp_variable = { drift_switch_change = -0.03 }
-				modify_reform_expectance_effect = yes
-				set_temp_variable = { temp_opinion = -5 }
-				change_labour_unions_opinion = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				add_political_power = -100
-				remove_ideas = ITA_zombie_companies
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_capital_flight }
-				set_temp_variable = { drift_switch_change = -0.04 }
-				modify_reform_expectance_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.10 }
-				set_temp_variable = { temp_outlook_increase = -0.05 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_capital_flight
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_carbon_tax }
-				set_temp_variable = { drift_switch_change = -0.02 }
-				modify_reform_expectance_effect = yes
-				remove_ideas = ITA_carbon_tax
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_rigid_labour_market }
-				set_temp_variable = { drift_switch_change = -0.03 }
-				modify_reform_expectance_effect = yes
-				set_temp_variable = { temp_opinion = -5 }
-				change_labour_unions_opinion = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				add_political_power = -100
-				remove_ideas = ITA_rigid_labour_market
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_high_minimum_wage }
-				set_temp_variable = { temp_opinion = -5 }
-				change_labour_unions_opinion = yes
-				set_temp_variable = { drift_switch_change = -0.04 }
-				modify_reform_expectance_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_high_minimum_wage
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_happy_degrowth_spirit }
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_happy_degrowth_spirit
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_green_subsidies }
-				set_temp_variable = { drift_switch_change = -0.02 }
-				modify_reform_expectance_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.10 }
-				set_temp_variable = { temp_outlook_increase = -0.05 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_green_subsidies
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_gmos_banned }
-				set_temp_variable = { drift_switch_change = -0.02 }
-				modify_reform_expectance_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.10 }
-				set_temp_variable = { temp_outlook_increase = -0.05 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_gmos_banned
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_migration_tolerated }
-				swap_ideas = {
-					add_idea = ITA_migrants_from_africa
-					remove_idea = ITA_migration_tolerated
-				}
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				set_temp_variable = { temp_outlook_increase = 0.025 }
-				add_relative_party_popularity = yes
-				add_political_power = -75
-		}
-	}
-
-	option = {
-		name = italy_md.46.o2
-		log = "[GetDateText]: [This.GetName]: italy_md.46.o2 executed"
+		add_ideas = ITA_architectural_masters
 	}
 }
-#liberals libertarians
+#a party has left the coalition
 country_event = {
 	id = italy_md.47
 	title = italy_md.47.t
 	desc = italy_md.47.d
 	picture = GFX_report_event_Tavolo_Trattative_1
-
 	is_triggered_only = yes
 
 	option = {
 		name = italy_md.47.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.47.o1 executed"
-		if = {
-			limit = {
-				has_idea = ITA_legalized_light_drugs
-			}
-			if = { limit = { has_idea = ITA_mafia }
-				add_to_variable = { cosa_nostra_strength = 0.1 }
-				add_to_variable = { camorra_strength = 0.1 }
-				add_to_variable = { ndrangheta_strength = 0.1 }
-				add_to_variable = { sacra_corona_unita_strength = 0.1 }
-				add_to_variable = { police_effectivness_base = -0.1 }
-				update_police_effectivness = yes
-			}
-			set_temp_variable = { drift_switch_change = -0.02 }
-			modify_reform_expectance_effect = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = -0.1 }
-			set_temp_variable = { temp_outlook_increase = -0.05 }
-			add_relative_party_popularity = yes
-			remove_ideas = ITA_legalized_light_drugs
-		}
-		if = {
-			limit = {
-				has_idea = ITA_legalize_all_drugs
-			}
-			if = { limit = { has_idea = ITA_mafia }
-				add_to_variable = { cosa_nostra_strength = 0.1 }
-				add_to_variable = { camorra_strength = 0.1 }
-				add_to_variable = { ndrangheta_strength = 0.1 }
-				add_to_variable = { sacra_corona_unita_strength = 0.1 }
-				add_to_variable = { police_effectivness_base = -0.05 }
-				update_police_effectivness = yes
-			}
-			add_ideas = ITA_legalized_light_drugs
-			remove_ideas = ITA_legalized_all_drugs
-		}
-		if = {
-			limit = { has_idea = ITA_flexible_labour_market }
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				set_temp_variable = { temp_outlook_increase = 0.025 }
-				add_relative_party_popularity = yes
-				set_temp_variable = { temp_opinion = 5 }
-				change_labour_unions_opinion = yes
-				remove_ideas = ITA_flexible_labour_market
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_dynamic_economy }
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				set_temp_variable = { temp_outlook_increase = 0.025 }
-				add_relative_party_popularity = yes
-				set_temp_variable = { temp_opinion = 5 }
-				change_labour_unions_opinion = yes
-				remove_ideas = ITA_dynamic_economy
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_legalized_prostitution }
-				if = { limit = { has_idea = ITA_mafia }
-					add_to_variable = { cosa_nostra_strength = 0.05 }
-					add_to_variable = { camorra_strength = 0.05 }
-					add_to_variable = { ndrangheta_strength = 0.05 }
-					add_to_variable = { sacra_corona_unita_strength = 0.05 }
-					add_to_variable = { police_effectivness_base = -0.05 }
-					update_police_effectivness = yes
-				}
-				set_temp_variable = { drift_switch_change = -0.02 }
-				modify_reform_expectance_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				set_temp_variable = { temp_outlook_increase = -0.02 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_legalized_prostitution
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_carbon_tax }
-				set_temp_variable = { drift_switch_change = -0.02 }
-				modify_reform_expectance_effect = yes
-				remove_ideas = ITA_carbon_tax
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_privatizations }
-				set_temp_variable = { ITA_interest_rate_multiplier_modifier_change = 0.5 }
-				modify_interest_rate_multiplier_modifier_effect = yes
-				set_temp_variable = { money_amount = gdp_total }
-				multiply_temp_variable = { money_amount = -0.06 }
-				set_temp_variable = { treasury_change = money_amount }
-				modify_treasury_effect = yes
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = 0.10 }
-				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
-				set_temp_variable = { temp_opinion = -5 }
-				change_international_bankers_opinion = yes
-				remove_ideas = ITA_privatizations
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_migration_tolerated }
-				swap_ideas = {
-					add_idea = ITA_migrants_from_africa
-					remove_idea = ITA_migration_tolerated
-				}
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				set_temp_variable = { temp_outlook_increase = 0.025 }
-				add_relative_party_popularity = yes
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_migrants_from_africa_encouraged }
-				set_temp_variable = { drift_switch_change = 0.01 }
-				modify_reform_expectance_effect = yes
-				swap_ideas = {
-					add_idea = ITA_migration_tolerated
-					remove_idea = ITA_migrants_from_africa_encouraged
-				}
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				set_temp_variable = { temp_outlook_increase = 0.025 }
-				add_relative_party_popularity = yes
-				add_political_power = -75
-		}
-	}
-
-	option = {
-		name = italy_md.47.o2
-		log = "[GetDateText]: [This.GetName]: italy_md.47.o2 executed"
 	}
 }
-#communists
+#romanization decision complete notification
 country_event = {
 	id = italy_md.48
 	title = italy_md.48.t
 	desc = italy_md.48.d
-	picture = GFX_report_event_Tavolo_Trattative_1
-
+	picture = GFX_report_event_Vittoriano
 	is_triggered_only = yes
 
 	option = {
 		name = italy_md.48.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.48.o1 executed"
-		if = {
-			limit = { has_idea = md_closed_economy }
-				swap_ideas = {
-					remove_idea = md_closed_economy
-					add_idea = consumption_economy
-				}
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_expropriations }
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.10 }
-				set_temp_variable = { temp_outlook_increase = -0.05 }
-				add_relative_party_popularity = yes
-				set_temp_variable = { expropriated_amount = gdp_total }
-				multiply_temp_variable = { expropriated_amount = -0.05 }
-				set_temp_variable = { treasury_change = expropriated_amount }
-				modify_treasury_effect = yes
-				remove_ideas = ITA_expropriations
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = Planned_Economy_ITA }
-				remove_ideas = Planned_Economy_ITA
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_party_approved_media_c }
-				if = {
-					limit = {
-						has_idea = ITA_party_approved_media_c
-					}
-					remove_ideas = ITA_party_approved_media_c
-				}
-				else_if = {
-					limit = {
-						has_idea = ITA_party_approved_media_f
-					}
-					remove_ideas = ITA_party_approved_media_f
-				}
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_party_propaganda }
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.10 }
-				set_temp_variable = { temp_outlook_increase = -0.05 }
-				add_relative_party_popularity = yes
-				remove_ideas = ITA_party_propaganda
-				add_political_power = -75
-		}
-		if = {
-			limit = { has_idea = ITA_closed_nation }
-				remove_ideas = ITA_closed_nation
-				allow_elections = yes
-				add_political_power = -200
-				add_political_power = -75
-		}
-	}
-
-	option = {
-		name = italy_md.48.o2
-		log = "[GetDateText]: [This.GetName]: italy_md.48.o2 executed"
 	}
 }
 #Italy threatens neighbour for territory
@@ -2940,7 +2681,6 @@ country_event = {
 	title = italy_md.49.t
 	desc = italy_md.49.d
 	picture = GFX_report_event_Parata_2_Giugno
-
 	is_triggered_only = yes
 
 	option = { #Accept
@@ -2950,6 +2690,9 @@ country_event = {
 			limit = { is_core_of = ITA }
 			transfer_state_to = ITA
 		}
+		ITA = {
+			country_event = diplomatic_response.1
+		}
 
 		ai_chance = {
 			factor = 10
@@ -2957,7 +2700,7 @@ country_event = {
 				factor = 0
 				strength_ratio  = {
 					tag = ITA
-					ratio > 1.2
+					ratio > 1
 				}
 			}
 		}
@@ -2966,19 +2709,19 @@ country_event = {
 		name = italy_md.49.o2
 		log = "[GetDateText]: [This.GetName]: italy_md.49.o2 executed"
 		ITA = {
+			country_event = diplomatic_response.2
 			create_wargoal = {
 				type = take_core_state
 				target = ROOT
 			}
 		}
-
 		ai_chance = {
 			factor = 0
 			modifier = {
 				add = 10
 				strength_ratio  = {
 					tag = ITA
-					ratio > 1.2
+					ratio > 1
 				}
 			}
 		}
@@ -3000,23 +2743,43 @@ country_event = {
 			limit = { is_core_of = ITA }
 			transfer_state_to = ITA
 			ITA = {
+				country_event = diplomatic_response.1
 				set_temp_variable = { treasury_change = -50 }
 				modify_treasury_effect = yes
 			}
-			set_temp_variable = { treasury_change = 50 }
-			modify_treasury_effect = yes
 		}
-
+		set_temp_variable = { treasury_change = 50 }
+		modify_treasury_effect = yes
 		ai_chance = {
-			factor = 1
+			factor = 10
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = ITA
+					value > 0
+				}
+			}
 		}
 	}
 	option = { #Refuse
 		name = italy_md.50.o2
 		log = "[GetDateText]: [This.GetName]: italy_md.50.o2 executed"
-
+		ITA = {
+			country_event = diplomatic_response.2
+			create_wargoal = {
+				type = take_core_state
+				target = ROOT
+			}
+		}
 		ai_chance = {
 			factor = 0
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = ITA
+					value < 0
+				}
+			}
 		}
 	}
 }
@@ -3033,7 +2796,7 @@ country_event = {
 		name = italy_md.51.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.51.o1 executed"
 		add_named_threat = {
-			name = threat_ITA_demands_subjugation
+			name = demanded_subjugation
 			threat = 1
 		}
 		124 = {
@@ -3048,7 +2811,7 @@ country_event = {
 				factor = 0
 				strength_ratio  = {
 					tag = SLV
-					ratio < 1.2
+					ratio < 1
 				}
 			}
 		}
@@ -3080,7 +2843,7 @@ country_event = {
 		name = italy_md.52.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.52.o1 executed"
 		add_named_threat = {
-			name = threat_ITA_demands_subjugation
+			name = demanded_subjugation
 			threat = 1
 		}
 		127 = {
@@ -3095,7 +2858,7 @@ country_event = {
 				factor = 0
 				strength_ratio  = {
 					tag = CRO
-					ratio < 1.2
+					ratio < 1
 				}
 			}
 		}
@@ -3127,7 +2890,7 @@ country_event = {
 		name = italy_md.53.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.53.o1 executed"
 		add_named_threat = {
-			name = threat_ITA_demands_subjugation
+			name = demanded_subjugation
 			threat = 1
 		}
 		857 = {
@@ -3150,7 +2913,7 @@ country_event = {
 				factor = 0
 				strength_ratio  = {
 					tag = FRA
-					ratio < 1.2
+					ratio < 1
 				}
 			}
 		}
@@ -3175,7 +2938,6 @@ country_event = {
 	title = italy_md.54.t
 	desc = italy_md.54.d
 	picture = GFX_passenger_plane
-
 	is_triggered_only = yes
 
 	option = {
@@ -3191,6 +2953,7 @@ country_event = {
 	option = {
 		trigger = {
 			has_idea = ITA_privatizations
+			has_idea = ITA_dynamic_economy
 		}
 		name = italy_md.54.o2
 		log = "[GetDateText]: [This.GetName]: italy_md.54.o2 executed"
@@ -3218,7 +2981,7 @@ country_event = {
 		name = italy_md.55.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.55.o1 executed"
 		add_named_threat = {
-			name = threat_ITA_demands_subjugation
+			name = demanded_subjugation
 			threat = 1
 		}
 		73 = {
@@ -3233,7 +2996,7 @@ country_event = {
 				factor = 0
 				strength_ratio  = {
 					tag = SWI
-					ratio < 1.2
+					ratio < 1
 				}
 			}
 		}
@@ -3265,7 +3028,7 @@ country_event = {
 		name = italy_md.56.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.56.o1 executed"
 		add_named_threat = {
-			name = threat_ITA_demands_subjugation
+			name = demanded_subjugation
 			threat = 1
 		}
 		65 = {
@@ -3288,7 +3051,7 @@ country_event = {
 				factor = 0
 				strength_ratio  = {
 					tag = FRA
-					ratio < 1.2
+					ratio < 1
 				}
 			}
 		}
@@ -3320,7 +3083,7 @@ country_event = {
 		name = italy_md.57.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.57.o1 executed"
 		add_named_threat = {
-			name = threat_ITA_demands_subjugation
+			name = demanded_subjugation
 			threat = 1
 		}
 		1000 = {
@@ -3343,7 +3106,7 @@ country_event = {
 				factor = 0
 				strength_ratio  = {
 					tag = FRA
-					ratio < 1.2
+					ratio < 1
 				}
 			}
 		}
@@ -3375,7 +3138,7 @@ country_event = {
 		name = italy_md.58.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.58.o1 executed"
 		add_named_threat = {
-			name = threat_ITA_demands_subjugation
+			name = demanded_subjugation
 			threat = 1
 		}
 		1062 = {
@@ -3398,7 +3161,7 @@ country_event = {
 				factor = 0
 				strength_ratio  = {
 					tag = GRE
-					ratio < 1.2
+					ratio < 1
 				}
 			}
 		}
@@ -3547,7 +3310,315 @@ country_event = {
 		}
 	}
 }
+#tourism trade deal
+country_event = {
+	id = italy_md.63
+	title = italy_md.63.t
+	desc = italy_md.63.d
+	picture = GFX_report_event_Tavolo_Trattative_1
+	is_triggered_only = yes
 
+	option = { #accept
+		name = italy_md.63.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.63.o1 executed"
+		add_opinion_modifier = {
+			target = ITA
+			modifier = declaration_of_friendship
+		}
+		set_country_flag = ITA_friendship_focus
+		set_temp_variable = { treasury_change = -13 }
+		modify_treasury_effect = yes
+		random_owned_state = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = offices
+				level = 1
+				instant_build = yes
+			}
+		}
+		ITA = {
+			country_event = diplomatic_response.1
+			set_temp_variable = { mafia_industrial_focus_base_cost = -13 }
+			mafia_industrial_focus_north_effect = yes
+			random_owned_state = {
+				limit = {
+					region = 23
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_chance = {
+			factor = 2
+		}
+	}
+	option = { #refuse
+		name = italy_md.63.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.63.o2 executed"
+		ITA = {
+			country_event = diplomatic_response.2
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+#migration deal
+country_event = {
+	id = italy_md.64
+	title = italy_md.64.t
+	desc = italy_md.64.d
+	picture = GFX_report_event_Tavolo_Trattative_1
+	is_triggered_only = yes
+
+	option = { #accept
+		name = italy_md.64.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.64.o1 executed"
+		add_opinion_modifier = {
+			target = ITA
+			modifier = declaration_of_friendship
+		}
+		set_country_flag = ITA_friendship_focus
+		set_temp_variable = { treasury_change = 5 }
+		modify_treasury_effect = yes
+		ITA = {
+			country_event = diplomatic_response.1
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			if = {
+				limit = {
+					OR = {
+						has_idea = ITA_migrants_from_africa
+						has_idea = ITA_migrants_from_africa_limited
+					}
+				}
+				set_temp_variable = { ITA_police_cost_multiplier_modifier_change = -0.025 }
+				modify_police_cost_multiplier_modifier_effect = yes
+			}
+			else_if = {
+				limit = {
+					OR = {
+						has_idea = ITA_migrants_from_africa_encouraged
+						has_idea = ITA_migration_tolerated
+					}
+				}
+				set_temp_variable = { ITA_MONTHLY_POPULATION_change = 0.05 }
+				modify_MONTHLY_POPULATION_effect = yes
+			}
+		}
+		ai_chance = {
+			factor = 2
+		}
+	}
+	option = { #refuse
+		name = italy_md.64.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.64.o2 executed"
+		ITA = {
+			country_event = diplomatic_response.2
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+#tech deal
+country_event = {
+	id = italy_md.65
+	title = italy_md.65.t
+	desc = italy_md.65.d
+	picture = GFX_report_event_Tavolo_Trattative_1
+	is_triggered_only = yes
+
+	option = { #accept
+		name = italy_md.65.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.65.o1 executed"
+		add_opinion_modifier = {
+			target = ITA
+			modifier = declaration_of_friendship
+		}
+		set_country_flag = ITA_friendship_focus
+		set_temp_variable = { treasury_change = 10 }
+		modify_treasury_effect = yes
+		if = {
+			limit = {
+				tag = TAI
+			}
+			ITA = {
+				add_tech_bonus = {
+					bonus = 1
+					uses = 1
+					category = computing_tech
+				}
+			}
+		}
+		if = {
+			limit = {
+				tag = ISR
+			}
+			ITA = {
+				add_tech_bonus = {
+					bonus = 1
+					uses = 1
+					category = Cat_GENES
+				}
+			}
+		}
+		ITA = {
+			country_event = diplomatic_response.1
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			set_temp_variable = { ITA_research_speed_factor_change = 0.05 }
+			modify_research_speed_factor_effect = yes
+		}
+		ai_chance = {
+			factor = 2
+		}
+	}
+	option = { #refuse
+		name = italy_md.65.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.65.o2 executed"
+		ITA = {
+			country_event = diplomatic_response.2
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+#leu is founded
+country_event = {
+	id = italy_md.66
+	title = italy_md.66.t
+	desc = italy_md.66.d
+	picture = GFX_report_event_Tavolo_Trattative_2
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = italy_md.66.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.66.o1 executed"
+		set_country_flag = ITA_leu_founded
+		set_temp_variable = { pd_popularity = party_pop_array^3 }
+		multiply_temp_variable = { pd_popularity = 0.25 }
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = pd_popularity }
+		set_temp_variable = { temp_outlook_increase = pd_popularity }
+		add_relative_party_popularity = yes
+		multiply_temp_variable = { pd_popularity = -1 }
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = pd_popularity }
+		set_temp_variable = { temp_outlook_increase = pd_popularity }
+		add_relative_party_popularity = yes
+	}
+}
+#choose technocrat
+country_event = {
+	id = italy_md.67
+	title = italy_md.67.t
+	desc = italy_md.67.d
+	picture = GFX_report_event_Tavolo_Trattative_2
+	is_triggered_only = yes
+
+	option = {
+		name = italy_md.67.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.67.o1 executed"
+		clear_array = ruling_party
+		clear_array = gov_coalition_array
+		add_to_array = { ruling_party = 0 }
+		update_government_coalition_strength = yes
+		set_coalition_drift = yes
+		set_ruling_leader = yes
+		set_leader = yes
+		set_politics = {
+			ruling_party = democratic
+			elections_allowed = yes
+		}
+		create_country_leader = {
+			name = "Mario Monti"
+			picture = "mario_monti.dds"
+			ideology = Western_Autocracy
+			traits = {
+				western_technocrat
+				experienced_banker
+				economist
+			}
+		}
+		recalculate_party_strength = yes
+		set_country_flag = coalition_forming
+		activate_mission = coalition_countdown
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = italy_md.67.o2
+		log = "[GetDateText]: [This.GetName]: italy_md.67.o2 executed"
+		clear_array = ruling_party
+		clear_array = gov_coalition_array
+		add_to_array = { ruling_party = 0 }
+		update_government_coalition_strength = yes
+		set_coalition_drift = yes
+		set_ruling_leader = yes
+		set_leader = yes
+		set_politics = {
+			ruling_party = democratic
+			elections_allowed = yes
+		}
+		create_country_leader = {
+			name = "Mario Draghi"
+			picture = "mario_draghi.dds"
+			ideology = Western_Autocracy
+			traits = {
+				western_technocrat
+				experienced_banker
+				economist
+			}
+		}
+		recalculate_party_strength = yes
+		set_country_flag = coalition_forming
+		activate_mission = coalition_countdown
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = italy_md.67.o3
+		log = "[GetDateText]: [This.GetName]: italy_md.67.o3 executed"
+		clear_array = ruling_party
+		clear_array = gov_coalition_array
+		add_to_array = { ruling_party = 0 }
+		update_government_coalition_strength = yes
+		set_coalition_drift = yes
+		set_ruling_leader = yes
+		set_leader = yes
+		set_politics = {
+			ruling_party = democratic
+			elections_allowed = yes
+		}
+		create_country_leader = {
+			name = "Carlo Cottarelli"
+			picture = "Carlo_Cottarelli.dds"
+			ideology = Western_Autocracy
+			traits = {
+				western_technocrat
+				experienced_banker
+				economist
+			}
+		}
+		recalculate_party_strength = yes
+		set_country_flag = coalition_forming
+		activate_mission = coalition_countdown
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
 
 add_namespace = mafia
 #success in provoking infighting

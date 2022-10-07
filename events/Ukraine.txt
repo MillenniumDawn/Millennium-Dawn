@@ -429,78 +429,10 @@ country_event = {
 				has_completed_focus = UKR_apply_to_join_csto
 				add = 20
 			}
-		}
-	}
-}
-
-country_event = { ##Ukraine Trying to Join the CSTO!
-	id = ukraine_md.7
-	title = ukraine_md.7.t
-	desc = ukraine_md.7.d
-	picture = GFX_join_the_csto
-	is_triggered_only = yes
-
-	option = {
-		name = ukraine_md.7.a
-		log = "[GetDateText]: [This.GetName]: ukraine_md.7.a executed"
-		UKR = {
-			country_event = diplomatic_response.1
-			add_ideas = { CSTO_member }
-			random_country = {
-				limit = {
-					has_idea = CSTO_member
-					is_faction_leader = yes 
-				}
-				add_to_faction = UKR
-			}
-		}
-		news_event = ukraine_news.6
-
-		ai_chance = {
-			factor = 15
-		}
-	}
-	option = {
-		name = ukraine_md.7.b
-		log = "[GetDateText]: [This.GetName]: ukraine_md.7.b executed"
-		UKR = { country_event = diplomatic_response.2 }
-
-		ai_chance = {
-			factor = 5
-
-		}
-	}
-}
-
-news_event = { ##Ukraine Joins the CSTO
-	id = ukraine_news.6
-	title = ukraine_news.6.t
-	desc = ukraine_news.6.d
-	picture = GFX_news_csto
-
-	is_triggered_only = yes
-
-	option = {
-		name = ukraine_news.6.a
-		log = "[GetDateText]: [This.GetName]: ukraine_news.6.a executed"
-		trigger = {
-			original_tag = UKR
-		}
-	}
-	option = {
-		name = ukraine_news.6.b
-		log = "[GetDateText]: [This.GetName]: ukraine_news.6.b executed"
-		trigger = {
-			original_tag = SOV
-		}
-	}
-	option = {
-		name = ukraine_news.6.c
-		log = "[GetDateText]: [This.GetName]: ukraine_news.6.c executed"
-		trigger = {
-			NOT = {
-				original_tag = UKR
-				original_tag = SOV
+			# Ukraine shouldn't go pro-Russian
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
 			}
 		}
 	}
@@ -572,7 +504,7 @@ country_event = { ###Ukraine Aligns with the EU
 	id = ukraine_md.9
 	title = ukraine_md.9.t
 	desc = ukraine_md.9.d
-	picture = GFX_eu
+	picture = GFX_UKR_generic # TODO: Create a EU specific event picture file
 
 	is_triggered_only = yes
 
@@ -694,14 +626,12 @@ country_event = {
 			NATO_leave = yes
 		}
 		if = {
-			limit = { is_in_faction = yes }
+			limit = { is_in_faction = yes NOT = { original_tag = UKR } }
 			leave_faction = yes
 		}
 		add_ideas = faction_baltic_black_sea_union_member
 		UKR = { add_to_faction = ROOT }
 		UKR = { country_event = diplomatic_response.1 }
-		add_ai_strategy = { type = befriend id = "UKR" value = 200 }
-		add_ai_strategy = { type = alliance id = "UKR" value = 200 }
 		hidden_effect = {
 			if = {
 				limit = {
@@ -882,6 +812,7 @@ country_event = { ##Ukrainian Civil War
 		news_event = ukraine_news.7
 		NOV = {
 			transfer_state = 693
+			transfer_state = 1075
 			set_country_flag = NOV_civil_war_in_the_donbass_flag
 			declare_war_on = {
 				target = UKR
@@ -1268,6 +1199,7 @@ country_event = { ##Reign in the Donbas
 			add_stability = 0.02
 			add_war_support = -0.02
 			transfer_state = 693
+			transfer_state = 1075
 			country_event = { id = diplomatic_response.1 hours = 4 }
 		}
 		ai_chance = {
@@ -1293,7 +1225,7 @@ country_event = { ##Reign in the Donbas
 			create_wargoal = {
 				type = take_state_focus
 				target = NOV
-				generator = { 693 }
+				generator = { 693 1075 }
 			}
 		}
 		ai_chance = {

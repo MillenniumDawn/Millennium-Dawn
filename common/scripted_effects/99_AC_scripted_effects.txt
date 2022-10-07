@@ -113,7 +113,7 @@ update_gui = {
 	clear_variable = project
 }
 
-project_monetary_cost_calculation = { # Replaces AC_calc_pp_cost in the section
+project_monetary_cost_calculation = { #Replaces AC_calc_pp_cost in the section
 	if = { limit = { check_variable = { project_building_type^-1 = 1 } }
 		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_CIVILIAN_FACTORY }
 	}
@@ -194,12 +194,22 @@ project_monetary_cost_calculation = { # Replaces AC_calc_pp_cost in the section
 	}
 	divide_variable = { corporate_cost_modifier = 100 }
 	add_to_temp_variable = { AC_cost_modifier = corporate_cost_modifier }
+	#50% more expensive for communists
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 4 }
+				is_in_array = { ruling_party = 19 }
+			}
+		}
+		add_to_temp_variable = { AC_cost_modifier = 0.5 }
+	}
+
 	# if you wish to make investments cheaper via focus or other effect
 	# Example :
 	# Raises investment for Canada by 5% just for being Canada
 	# if = { limit = { tag = CAN } }
-	# 	add_to_temp_variable = { AC_cost_modifier = 0.05 }
-	# }
+	# add_to_temp_variable = { AC_cost_modifier = 0.05 }
 
 	# Calculates modified Build Cost
 	set_variable = { displayable_monetary_cost_modifier = AC_cost_modifier }
