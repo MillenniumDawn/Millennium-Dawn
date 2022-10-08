@@ -20,9 +20,7 @@
 
 		cost = 10
 
-		cancel_if_invalid = no
-		continue_if_invalid = yes
-		available_if_capitulated = no
+
 
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
@@ -43,37 +41,24 @@
 		y = 1
 		relative_position_id = JAP_economic_reform
 
-		cost = 12
+		cost = 8.6
 
 		prerequisite = { focus = JAP_economic_reform }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = {FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_INDUSTRY}
 
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_invest_in_toyota"
-			set_temp_variable = { treasury_change = -14 }
+			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
 			613 = {
 				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
 					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
+					level = 2
 					instant_build = yes
 				}
 			}
@@ -81,11 +66,15 @@
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
 		}
 	}
 	focus = {
 		id = JAP_expand_the_automotive_industry
-		icon = production
+		icon = zaibatsu1
 
 		x = -2
 		y = 2
@@ -94,36 +83,53 @@
 		cost = 10
 
 		prerequisite = { focus = JAP_invest_in_toyota }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
 		cancel_if_invalid = no
 		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_expand_the_automotive_industry"
-			set_temp_variable = { treasury_change = -11 }
-			modify_treasury_effect = yes
-			615 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
+			if = {
+				limit = {
+					615 = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+							include_locked = yes
+						}
+					}
 				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
+				615 = {
+					set_temp_variable = { treasury_change = -7.50 }
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+					if = {
+						limit = {
+							free_building_slots = {
+								building = infrastructure
+								size > 0
+								include_locked = yes
+							}
+						}
+						add_to_temp_variable = { treasury_change = -3.50 }
+						add_building_construction = {
+							type = infrastructure
+							level = 1
+							instant_build = yes
+						}
+					}
 				}
+				modify_treasury_effect = yes
+			}
+			else = {
+				one_random_industrial_complex = yes
+				one_random_infrastructure = yes
 			}
 		}
 
@@ -142,25 +148,14 @@
 		cost = 7
 
 		prerequisite = { focus = JAP_invest_in_toyota }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
-		continue_if_invalid = yes
-		available_if_capitulated = no
+
 
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_reform_the_economic_ministry"
-			add_ideas = {
-				JAP_reformed_economic_ministry
-			}
+			add_ideas = JAP_reformed_economic_ministry
 		}
 
 		ai_will_do = {
@@ -175,29 +170,27 @@
 		y = 3
 		relative_position_id = JAP_economic_reform
 
-		cost = 12
+		cost = 8.6
 
+		available = {
+			is_subject = no
+			NOT = { has_idea = bankrupcy }
+		}
 		prerequisite = { focus = JAP_reform_the_economic_ministry }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = no
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = {FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_POLITICAL}
 
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_investments_in_south_east_asia"
-			add_political_power = 50
+			add_political_power = 100
 
-			set_temp_variable = { int_investment_change = 20 }
+			set_temp_variable = { int_investment_change = gdp_total_display }
+			multiply_temp_variable = { int_investment_change = 0.008 }
 			modify_international_investment_effect = yes
+
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = -0.004 }
+			modify_treasury_effect = yes
 
 		}
 
@@ -213,28 +206,17 @@
 		y = 3
 		relative_position_id = JAP_economic_reform
 
-		cost = 12
+		cost = 7.86
 
 		prerequisite = { focus = JAP_reform_the_economic_ministry }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
-		continue_if_invalid = yes
-		available_if_capitulated = no
+
 
 		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
 
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_support_stagnant_businesses"
-			add_ideas = {
-				JAP_support_business
-			}
+			add_ideas = JAP_support_business
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
 			set_temp_variable = { temp_opinion = 5 }
@@ -253,29 +235,22 @@
 		y = 4
 		relative_position_id = JAP_economic_reform
 
-		cost = 12
+		cost = 7.86
 
+		available = {
+			is_subject = no
+			NOT = { has_idea = bankrupcy }
+		}
 		prerequisite = { focus = JAP_investments_in_south_east_asia }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = no
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = {FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_POLITICAL}
 
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_support_agriculture_abroad"
-			add_political_power = 50
-			set_temp_variable = { int_investment_change = 20 }
+			set_temp_variable = { int_investment_change = gdp_total_display }
+			multiply_temp_variable = { int_investment_change = 0.03 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_farmers_opinion = yes
 			change_small_medium_business_owners_opinion = yes
 			change_international_bankers_opinion = yes
@@ -297,20 +272,9 @@
 		cost = 10
 
 		prerequisite = { focus = JAP_investments_in_south_east_asia }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = no
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_cultural_revitalization"
 			add_political_power = 100
@@ -333,22 +297,11 @@
 		y = 5
 		relative_position_id = JAP_economic_reform
 
-		cost = 12
+		cost = 7.86
 
 		prerequisite = { focus = JAP_support_agriculture_abroad }
-		mutually_exclusive = { }
 		search_filters = {FOCUS_FILTER_INDUSTRY}
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = no
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_devalue_personal_savings_accounts"
 			add_timed_idea = {
@@ -372,25 +325,12 @@
 		cost = 10
 
 		prerequisite = { focus = JAP_cultural_revitalization }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = no
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = {FOCUS_FILTER_RESEARCH}
 
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_invite_asian_scientists"
-			add_research_buff = yes
-			set_temp_variable = { treasury_change = -8 }
-			modify_treasury_effect = yes
+			add_ideas = JAP_idea_invite_asian_scientists
 		}
 
 		ai_will_do = {
@@ -401,30 +341,27 @@
 		id = JAP_break_the_deflation
 		icon = money_on_fire
 
-		x = -2
+		x = -1
 		y = 6
 		relative_position_id = JAP_economic_reform
 
-		cost = 12
+		cost = 7.86
 
 		prerequisite = { focus = JAP_devalue_personal_savings_accounts }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		prerequisite = { focus = JAP_invite_asian_scientists }
 
-		cancel_if_invalid = no
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		available = {
+			NOT = { has_idea = JAP_devalued_personal_savings }
+		}
 
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_break_the_deflation"
-			remove_ideas = JAP_deflation
+			swap_ideas = {
+				remove_idea = JAP_deflation
+				add_idea = JAP_break_the_deflation_idea
+			}
 		}
 
 		ai_will_do = {
@@ -438,7 +375,7 @@
 		icon = industry
 		x = 5
 		y = 1
-		cost = 15
+		cost = 10
 
 		prerequisite = { focus = JAP_economic_reform }
 
@@ -483,30 +420,38 @@
 		x = -1
 		y = 1
 		relative_position_id = JAP_develop_honshu
-		cost = 10
+		cost = 7.86
 
 		available = {
-			has_full_control_of_state = 611
-			has_full_control_of_state = 612
-			has_full_control_of_state = 613
-			has_full_control_of_state = 615
-			has_full_control_of_state = 616
+			OR = {
+				has_full_control_of_state = 611
+				has_full_control_of_state = 612
+				has_full_control_of_state = 613
+				has_full_control_of_state = 615
+				has_full_control_of_state = 616
+			}
+		}
+		bypass = {
+			NOT = {
+				has_full_control_of_state = 611
+				has_full_control_of_state = 612
+				has_full_control_of_state = 613
+				has_full_control_of_state = 615
+				has_full_control_of_state = 616
+			}
 		}
 
-		prerequisite = {
-			focus = JAP_develop_honshu
-		}
-
+		prerequisite = { focus = JAP_develop_honshu }
 		search_filters = {FOCUS_FILTER_RESOURCE}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_honshu_steel"
-			611 = { add_resource = { type = steel amount = 1 } }
-			612 = { add_resource = { type = steel amount = 1 } }
-			613 = { add_resource = { type = steel amount = 1 } }
-			616 = { add_resource = { type = steel amount = 1 } }
-			615 = { add_resource = { type = steel amount = 3 } }
-			set_temp_variable = { treasury_change = -7.5 }
+			611 = { add_resource = { type = steel amount = 6 } }
+			612 = { add_resource = { type = steel amount = 6 } }
+			613 = { add_resource = { type = steel amount = 6 } }
+			616 = { add_resource = { type = steel amount = 6 } }
+			615 = { add_resource = { type = steel amount = 18 } }
+			set_temp_variable = { treasury_change = -30 }
 			modify_treasury_effect = yes
 		}
 
@@ -520,13 +465,13 @@
 		x = 0
 		y = 2
 		relative_position_id = JAP_develop_honshu
-		cost = 15
+		cost = 7.86
 
-		available = { has_full_control_of_state = 609 }
-
-		prerequisite = {
-			focus = JAP_develop_honshu
+		available = {
+			has_full_control_of_state = 609
 		}
+
+		prerequisite = { focus = JAP_develop_honshu }
 
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
@@ -559,7 +504,7 @@
 		x = -1
 		y = 3
 		relative_position_id = JAP_develop_honshu
-		cost = 15
+		cost = 7.86
 
 		prerequisite = {
 			focus = JAP_develop_kyushu
@@ -604,48 +549,73 @@
 
 		available = { has_full_control_of_state = 615 }
 
-		prerequisite = {
-			focus = JAP_develop_kyushu
-		}
+		prerequisite = { focus = JAP_develop_kyushu }
 
 		search_filters = {FOCUS_FILTER_RESOURCE}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_oil_production"
-			set_temp_variable = { treasury_change = -7 }
-			modify_treasury_effect = yes
-			615 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = fuel_silo
-					level = 1
-					instant_build = yes
+			set_temp_variable = { treasury_change = 0 }
+			if = {
+				limit = {
+					615 = {
+						free_building_slots = {
+							building = fuel_silo
+							size > 0
+							include_locked = yes
+						}
+					}
 				}
-				add_building_construction = {
-					type = synthetic_refinery
-					level = 1
-					instant_build = yes
+				615 = {
+					add_extra_state_shared_building_slots = 1
+					if = {
+						limit = {
+							free_building_slots = {
+								building = fuel_silo
+								size > 0
+								include_locked = yes
+							}
+						}
+						add_to_temp_variable = { treasury_change = -3.00 }
+						add_building_construction = {
+							type = fuel_silo
+							level = 1
+							instant_build = yes
+						}
+					}
+					add_building_construction = {
+						type = synthetic_refinery
+						level = 1
+						instant_build = yes
+					}
+					add_to_temp_variable = { treasury_change = -4.25 }
 				}
 			}
+			add_resource = {
+				type = oil
+				amount = 16
+				state = 618
+			}
+			add_to_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			factor = 1
 		}
 	}
+
 	focus = {
 		id = JAP_develop_hokkaido
 		icon = construction3
 		x = -1
 		y = 4
 		relative_position_id = JAP_develop_honshu
-		cost = 15
+		cost = 7.86
 
 		available = { has_full_control_of_state = 617 }
 
-		prerequisite = {
-			focus = JAP_develop_shikoku
-		}
+		prerequisite = { focus = JAP_develop_shikoku }
 
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
@@ -680,19 +650,17 @@
 		relative_position_id = JAP_develop_honshu
 		cost = 10
 
-		prerequisite = {
-			focus = JAP_oil_production
-		}
+		prerequisite = { focus = JAP_oil_production }
 
 		search_filters = {FOCUS_FILTER_RESOURCE}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_rare_metal_production"
-			random_owned_state = { add_resource = { type = steel amount = 2 } }
-			random_owned_state = { add_resource = { type = steel amount = 2 } }
+			random_owned_state = { add_resource = { type = steel amount = 6 } }
+			random_owned_state = { add_resource = { type = tungsten amount = 2 } }
 			random_owned_state = { add_resource = { type = aluminium amount = 2 } }
-			random_owned_state = { add_resource = { type = aluminium amount = 2 } }
-			set_temp_variable = { treasury_change = -8 }
+			random_owned_state = { add_resource = { type = chromium amount = 2 } }
+			set_temp_variable = { treasury_change = -14 }
 			modify_treasury_effect = yes
 		}
 
@@ -708,19 +676,13 @@
 		relative_position_id = JAP_develop_honshu
 		cost = 10
 
-		prerequisite = {
-			focus = JAP_develop_hokkaido
-		}
-		prerequisite = {
-			focus = JAP_rare_metal_production
-		}
+		prerequisite = { focus = JAP_develop_hokkaido }
+		prerequisite = { focus = JAP_rare_metal_production }
 		search_filters = {FOCUS_FILTER_RESEARCH}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_extra_research_slot"
-			add_research_buff = yes
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
+			add_ideas = JAP_idea_expanding_our_research
 		}
 
 		ai_will_do = {
@@ -747,7 +709,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_national_renewal"
-			add_political_power = 50
+			add_political_power = 200
 			add_stability = 0.05
 		}
 
@@ -757,19 +719,14 @@
 	}
 	focus = {
 		id = JAP_path_of_peace
-		icon = demand_territory2
+		icon = democracy_in_japan
 		x = -1
 		y = 1
 		relative_position_id = JAP_national_renewal
 		cost = 10
 
-		prerequisite = {
-			focus = JAP_national_renewal
-		}
-
-		mutually_exclusive = {
-			focus = JAP_path_of_war
-		}
+		prerequisite = { focus = JAP_national_renewal }
+		mutually_exclusive = { focus = JAP_path_of_war }
 
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY}
 
@@ -808,13 +765,8 @@
 		relative_position_id = JAP_national_renewal
 		cost = 10
 
-		prerequisite = {
-			focus = JAP_national_renewal
-		}
-
-		mutually_exclusive = {
-			focus = JAP_path_of_peace
-		}
+		prerequisite = { focus = JAP_national_renewal }
+		mutually_exclusive = { focus = JAP_path_of_peace }
 
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT}
 
@@ -822,6 +774,14 @@
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_path_of_war"
 			add_stability = -0.05
 			add_war_support = 0.05
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			set_temp_variable = { party_index = 22 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
@@ -844,17 +804,19 @@
 		relative_position_id = JAP_national_renewal
 		cost = 10
 
-		prerequisite = {
-			focus = JAP_path_of_peace
-		}
+		prerequisite = { focus = JAP_path_of_peace }
 
 		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_national_industrial_project"
 			add_ideas = idea_focus_industrial_development_program
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_industrial_conglomerates_opinion = yes
+			change_small_medium_business_owners_opinion = yes
+			change_international_bankers_opinion = yes
+			change_farmers_opinion = yes
+			one_random_industrial_complex = yes
 		}
 
 		ai_will_do = {
@@ -869,15 +831,14 @@
 		relative_position_id = JAP_national_renewal
 		cost = 10
 
-		prerequisite = {
-			focus = JAP_path_of_war
-		}
+		prerequisite = { focus = JAP_path_of_war }
 
 		search_filters = {FOCUS_FILTER_MANPOWER}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_recruitment_programs"
 			add_ideas = militarism
+			one_random_arms_factory = yes
 		}
 
 		ai_will_do = {
@@ -914,11 +875,9 @@
 		x = 0
 		y = 5
 		relative_position_id = JAP_national_renewal
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_political_renewal
-		}
+		prerequisite = { focus = JAP_political_renewal }
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -941,7 +900,7 @@
 		icon = japanese_imperial_glory
 		x = 14
 		y = 0
-		cost = 10
+		cost = 7.86
 
 		search_filters = {FOCUS_FILTER_RESEARCH}
 
@@ -949,22 +908,61 @@
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_bushido"
 			add_doctrine_cost_reduction = {
 				name = JAP_bushido
-                category = land_doctrine
-                uses = 1
-                cost_reduction = 0.15
-            }
+				category = land_doctrine
+				uses = 1
+				cost_reduction = 0.25
+			}
 			add_doctrine_cost_reduction = {
 				name = JAP_bushido
-                category = Cat_naval_doctrine
-                uses = 1
-                cost_reduction = 0.15
-            }
+				category = Cat_naval_doctrine
+				uses = 1
+				cost_reduction = 0.25
+			}
 			add_doctrine_cost_reduction = {
 				name = JAP_bushido
-                category = air_doctrine
-                uses = 1
-                cost_reduction = 0.15
-            }
+				category = air_doctrine
+				uses = 1
+				cost_reduction = 0.25
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = JAP_agency_stuff
+		icon = espionage
+		x = 0
+		y = 5
+		relative_position_id = JAP_bushido
+		cost = 7.86
+
+		prerequisite = {
+			focus = JAP_army_exercises
+			focus = JAP_naval_production
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus JAP_continental_campaigns"
+			set_temp_variable = { temp_opinion = 10 }
+			change_intelligence_community_opinion = yes
+			change_vevak_opinion = yes
+			change_isi_pakistan_opinion = yes
+			change_the_military_opinion = yes
+			if = { limit = { has_dlc = "La Resistance" }
+				add_ideas = idea_focus_expanded_secret_services_lar
+				if = { limit = { has_intelligence_agency = no }
+					create_intelligence_agency = {
+						name = "Public Security Intelligence Agency"
+						icon = GFX_intelligence_agency_logo_jap
+					}
+				}
+			}
+			else = {
+				add_ideas = idea_focus_expanded_secret_services
+			}
 		}
 
 		ai_will_do = {
@@ -979,15 +977,13 @@
 		x = -2
 		y = 1
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_bushido
-		}
+		prerequisite = { focus = JAP_bushido }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_continental_campaigns"
-			army_experience = 10
+			army_experience = 100
 		}
 
 		ai_will_do = {
@@ -1000,15 +996,15 @@
 		x = 2
 		y = 1
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_bushido
-		}
+		prerequisite = { focus = JAP_bushido }
+
+		search_filters = {FOCUS_FILTER_NAVY_XP FOCUS_FILTER_NAVY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_ocean_campaigns"
-			navy_experience = 10
+			navy_experience = 100
 		}
 
 		ai_will_do = {
@@ -1021,15 +1017,15 @@
 		x = 5
 		y = 1
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_bushido
-		}
+		prerequisite = { focus = JAP_bushido }
+
+		search_filters = {FOCUS_FILTER_AIR_XP FOCUS_FILTER_AIRCRAFT }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_air_force_focus"
-			air_experience = 10
+			air_experience = 100
 		}
 
 		ai_will_do = {
@@ -1045,9 +1041,7 @@
 		relative_position_id = JAP_bushido
 		cost = 10
 
-		prerequisite = {
-			focus = JAP_continental_campaigns
-		}
+		prerequisite = { focus = JAP_continental_campaigns }
 
 		search_filters = {FOCUS_FILTER_RESEARCH}
 
@@ -1074,17 +1068,13 @@
 		relative_position_id = JAP_bushido
 		cost = 10
 
-		prerequisite = {
-			focus = JAP_continental_campaigns
-		}
+		prerequisite = { focus = JAP_continental_campaigns }
 
 		search_filters = {FOCUS_FILTER_MILITARY_LAWS}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_officer_school"
-			add_ideas = {
-				JAP_officer_schools
-			}
+			add_ideas = JAP_officer_schools
 		}
 
 		ai_will_do = {
@@ -1098,19 +1088,17 @@
 		x = 1
 		y = 2
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_ocean_campaigns
-		}
+		prerequisite = { focus = JAP_ocean_campaigns }
 
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		search_filters = {FOCUS_FILTER_RESEARCH FOCUS_FILTER_NAVY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_destroyer_program"
 			add_tech_bonus = {
 				name = JAP_destroyer_program
-				bonus = 0.25
+				bonus = 0.50
 				uses = 2
 				category = Cat_DESTROYER
 			}
@@ -1127,7 +1115,7 @@
 		x = 3
 		y = 2
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
 		prerequisite = {
 			focus = JAP_ocean_campaigns
@@ -1139,7 +1127,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_cruiser_program"
 			add_tech_bonus = {
 				name = JAP_cruiser_program
-				bonus = 0.3
+				bonus = 0.50
 				uses = 2
 				category = Cat_N_CRUISER
 			}
@@ -1156,13 +1144,11 @@
 		x = 5
 		y = 2
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_air_force_focus
-		}
+		prerequisite = { focus = JAP_air_force_focus }
 
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		search_filters = {FOCUS_FILTER_RESEARCH FOCUS_FILTER_AIRCRAFT }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_light_planes"
@@ -1186,24 +1172,20 @@
 		x = -2
 		y = 3
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_artillery_training
-		}
-		prerequisite = {
-			focus = JAP_officer_school
-		}
+		prerequisite = { focus = JAP_artillery_training }
+		prerequisite = { focus = JAP_officer_school }
 		search_filters = {FOCUS_FILTER_RESEARCH}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_infantry_training"
-			army_experience = 20
-			add_tech_bonus = {
-				name = JAP_infantry_training
+			army_experience = 75
+			add_doctrine_cost_reduction = {
+				name = JAP_army_doctrine_school
+				category = land_doctrine
 				uses = 1
-				bonus = 0.75
-				category = CAT_INF_WEP
+				cost_reduction = 0.5
 			}
 		}
 
@@ -1218,20 +1200,17 @@
 		x = 1
 		y = 3
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_destroyer_program
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		prerequisite = { focus = JAP_destroyer_program }
+		search_filters = {FOCUS_FILTER_RESEARCH FOCUS_FILTER_NAVY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_submarine_program"
 			add_tech_bonus = {
 				name = JAP_submarine_program
 				bonus = 0.25
-				uses = 3
+				uses = 2
 				category = Cat_SUB
 			}
 		}
@@ -1247,13 +1226,11 @@
 		x = 3
 		y = 3
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_cruiser_program
-		}
+		prerequisite = { focus = JAP_cruiser_program }
 
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		search_filters = {FOCUS_FILTER_RESEARCH FOCUS_FILTER_NAVY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_carrier_program"
@@ -1276,21 +1253,20 @@
 		x = 5
 		y = 3
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_light_planes
-		}
+		prerequisite = { focus = JAP_light_planes }
 
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		search_filters = {FOCUS_FILTER_RESEARCH FOCUS_FILTER_AIRCRAFT }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_heavy_planes"
+			add_ideas = bomber_production_bonus
 			add_tech_bonus = {
 				name = fighter_bonus
-				bonus = 0.35
+				bonus = 0.5
 				uses = 2
-				category = Cat_STR_BOMBER
+				category = Cat_FIGHTER
 			}
 		}
 
@@ -1305,11 +1281,9 @@
 		x = -3
 		y = 4
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_infantry_training
-		}
+		prerequisite = { focus = JAP_infantry_training }
 
 		search_filters = {FOCUS_FILTER_RESEARCH}
 
@@ -1317,10 +1291,11 @@
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_tank_program"
 			add_tech_bonus = {
 				name = armor_bonus
-				bonus = 0.2
-				uses = 2
+				bonus = 0.50
+				uses = 1
 				category = Cat_ARMOR
 			}
+			add_ideas = combined_arms_idea
 		}
 
 		ai_will_do = {
@@ -1334,15 +1309,13 @@
 		x = -1
 		y = 4
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_infantry_training
-		}
+		prerequisite = { focus = JAP_infantry_training }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_army_exercises"
-			army_experience = 25
+			army_experience = 75
 		}
 
 		ai_will_do = {
@@ -1367,19 +1340,13 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_naval_production"
-			navy_experience = 50
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-			random_owned_state = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = dockyard
-					level = 2
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { temp_opinion = 5 }
+			two_random_dockyards = yes
+			set_temp_variable = { temp_opinion = 10 }
 			change_maritime_industry_opinion = yes
+			add_timed_idea = {
+				idea = naval_production_bonus
+				days = 730
+			}
 		}
 
 		ai_will_do = {
@@ -1400,9 +1367,18 @@
 			focus = JAP_carrier_program
 		}
 
+		search_filters = {FOCUS_FILTER_RESEARCH FOCUS_FILTER_NAVY }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_naval_invasion_protocols"
 			navy_experience = 50
+			add_tech_bonus = {
+				name = JAP_naval_invasion_protocols
+				bonus = 0.5
+				uses = 2
+				category = Cat_NAVAL_MISC
+			}
+			add_ideas = amphibious_expertise3
 		}
 
 		ai_will_do = {
@@ -1416,40 +1392,69 @@
 		x = 6
 		y = 4
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_light_planes
+		available = {
+			any_owned_state = {
+				free_building_slots = {
+					building = air_base
+					size > 0
+				}
+			}
 		}
-		prerequisite = {
-			focus = JAP_northern_expressways
-		}
+
+		prerequisite = { focus = JAP_light_planes }
+		prerequisite = { focus = JAP_northern_expressways }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_air_base_project"
-			set_temp_variable = { treasury_change = -13 }
+			set_temp_variable = { treasury_change = 0 }
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = air_base
+						size > 1
+						include_locked = yes
+					}
+				}
+				add_to_temp_variable = { treasury_change = -5 }
+				add_building_construction = {
+					type = air_base
+					level = 2
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = air_base
+						size > 1
+						include_locked = yes
+					}
+				}
+				add_to_temp_variable = { treasury_change = -5 }
+				add_building_construction = {
+					type = air_base
+					level = 2
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = air_base
+						size > 1
+						include_locked = yes
+					}
+				}
+				add_to_temp_variable = { treasury_change = -5 }
+				add_building_construction = {
+					type = air_base
+					level = 2
+					instant_build = yes
+				}
+			}
 			modify_treasury_effect = yes
-			random_owned_state = {
-				add_building_construction = {
-					type = air_base
-					level = 2
-					instant_build = yes
-				}
-			}
-			random_owned_state = {
-				add_building_construction = {
-					type = air_base
-					level = 2
-					instant_build = yes
-				}
-			}
-			random_owned_state = {
-				add_building_construction = {
-					type = air_base
-					level = 2
-					instant_build = yes
-				}
-			}
 		}
 
 		ai_will_do = {
@@ -1462,14 +1467,13 @@
 	focus = {
 		id = JAP_army_doctrine_school
 		icon = army_doctrine
-		x = -1
+		x = -2
 		y = 5
 		relative_position_id = JAP_bushido
-		cost = 10
+		cost = 5
 
-		prerequisite = {
-			focus = JAP_army_exercises
-		}
+		prerequisite = { focus = JAP_army_exercises }
+		prerequisite = { focus = JAP_tank_program }
 
 		search_filters = {FOCUS_FILTER_RESEARCH}
 
@@ -1477,10 +1481,10 @@
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_army_doctrine_school"
 			add_doctrine_cost_reduction = {
 				name = JAP_army_doctrine_school
-                category = land_doctrine
-                uses = 1
-                cost_reduction = 0.5
-            }
+				category = land_doctrine
+				uses = 1
+				cost_reduction = 0.5
+			}
 		}
 
 		ai_will_do = {
@@ -1491,16 +1495,15 @@
 	focus = {
 		id = JAP_navy_doctrine_school
 		icon = naval_doctrine
-		x = 1
+		x = 2
 		y = 5
 		relative_position_id = JAP_bushido
 		cost = 10
 
-		prerequisite = {
-			focus = JAP_naval_production
-		}
+		prerequisite = { focus = JAP_naval_production }
+		prerequisite = { focus = JAP_naval_invasion_protocols }
 
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		search_filters = {FOCUS_FILTER_RESEARCH FOCUS_FILTER_NAVY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_navy_doctrine_school"
@@ -1523,33 +1526,81 @@
 		icon = infrastructure
 		x = 22
 		y = 0
-		cost = 12
+		cost = 7.86
 
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
 		available = {
-			has_full_control_of_state = 610
-			has_full_control_of_state = 612
+			OR = {
+				has_full_control_of_state = 610
+				has_full_control_of_state = 612
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = {
+					has_full_control_of_state = 610
+					has_full_control_of_state = 612
+				}
+				AND = {
+					610 = {
+						free_building_slots = {
+							building = infrastructure
+							size < 0
+						}
+					}
+					612 = {
+						free_building_slots = {
+							building = infrastructure
+							size < 0
+						}
+					}
+				}
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_finish_nishiseto"
-			set_temp_variable = { treasury_change = -14 }
+			set_temp_variable = { treasury_change = 0 }
+			if = {
+				limit = {
+					610 = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+							include_locked = yes
+						}
+					}
+				}
+				610 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+				add_to_temp_variable = { treasury_change = -3.5 }
+			}
+			if = {
+				limit = {
+					612 = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+							include_locked = yes
+						}
+					}
+				}
+				612 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+				add_to_temp_variable = { treasury_change = -3.5 }
+			}
 			modify_treasury_effect = yes
-			610 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 2
-					instant_build = yes
-				}
-			}
-			612 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
 		}
 
 		ai_will_do = {
@@ -1562,25 +1613,83 @@
 		x = -1
 		y = 1
 		relative_position_id = JAP_finish_nishiseto
-		cost = 10
+		cost = 7.86
 
 		available = {
-			has_full_control_of_state = 611
-			has_full_control_of_state = 612
+			OR = {
+				has_full_control_of_state = 611
+				has_full_control_of_state = 612
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = {
+					has_full_control_of_state = 611
+					has_full_control_of_state = 612
+				}
+				AND = {
+					611 = {
+						free_building_slots = {
+							building = infrastructure
+							size < 0
+						}
+					}
+					612 = {
+						free_building_slots = {
+							building = infrastructure
+							size < 0
+						}
+					}
+				}
+			}
 		}
 
-		prerequisite = {
-			focus = JAP_finish_nishiseto
-		}
+		prerequisite = { focus = JAP_finish_nishiseto }
 
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_southern_expressways"
-			set_temp_variable = { treasury_change = -7 }
+			set_temp_variable = { treasury_change = 0 }
+			if = {
+				limit = {
+					612 = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+							include_locked = yes
+						}
+					}
+				}
+				612 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+				add_to_temp_variable = { treasury_change = -3.5 }
+			}
+			if = {
+				limit = {
+					611 = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+							include_locked = yes
+						}
+					}
+				}
+				611 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+				add_to_temp_variable = { treasury_change = -3.5 }
+			}
 			modify_treasury_effect = yes
-			612 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
-			611 = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
 		}
 
 		ai_will_do = {
@@ -1595,12 +1704,14 @@
 		relative_position_id = JAP_finish_nishiseto
 		cost = 10
 
-		prerequisite = {
-			focus = JAP_finish_nishiseto
-		}
+		prerequisite = { focus = JAP_finish_nishiseto }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_new_trade_policy"
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = JAP.id }
 			every_country = {
 				limit = {
 					NOT = {
@@ -1610,16 +1721,15 @@
 						original_tag = KOR
 					}
 					NOT = { has_war_with = ROOT }
-					has_opinion = {
-						target = ROOT
-						value > 5
-					}
+					has_opinion = { target = ROOT value > 5 }
+					NOT = { original_tag = ROOT }
 				}
-				add_opinion_modifier = {
-					target = JAP
-					modifier = improve_trade
-				}
+				add_opinion_modifier = { target = JAP modifier = improve_trade }
+				reverse_add_opinion_modifier = { target = JAP modifier = improve_trade }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
+			increase_exports = yes
 		}
 
 		ai_will_do = {
@@ -1632,45 +1742,110 @@
 		x = -1
 		y = 2
 		relative_position_id = JAP_finish_nishiseto
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_southern_expressways
-		}
+		prerequisite = { focus = JAP_southern_expressways }
 
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
 		available = {
-			has_full_control_of_state = 615
-			has_full_control_of_state = 616
-			has_full_control_of_state = 617
+			OR = {
+				has_full_control_of_state = 615
+				has_full_control_of_state = 616
+				has_full_control_of_state = 617
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = {
+					has_full_control_of_state = 615
+					has_full_control_of_state = 616
+					has_full_control_of_state = 617
+				}
+				AND = {
+					615 = {
+						free_building_slots = {
+							building = infrastructure
+							size < 0
+						}
+					}
+					616 = {
+						free_building_slots = {
+							building = infrastructure
+							size < 0
+						}
+					}
+					617 = {
+						free_building_slots = {
+							building = infrastructure
+							size < 0
+						}
+					}
+				}
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_northern_expressways"
-			set_temp_variable = { treasury_change = -10 }
+			set_temp_variable = { treasury_change = 0 }
+			if = {
+				limit = {
+					615 = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+							include_locked = yes
+						}
+					}
+				}
+				615 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+				add_to_temp_variable = { treasury_change = -3.5 }
+			}
+			if = {
+				limit = {
+					616 = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+							include_locked = yes
+						}
+					}
+				}
+				616 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+				add_to_temp_variable = { treasury_change = -3.5 }
+			}
+			if = {
+				limit = {
+					617 = {
+						free_building_slots = {
+							building = infrastructure
+							size > 0
+							include_locked = yes
+						}
+					}
+				}
+				617 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
+				add_to_temp_variable = { treasury_change = -3.5 }
+			}
 			modify_treasury_effect = yes
-			615 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			616 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			617 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
 		}
 
 		ai_will_do = {
@@ -1683,15 +1858,18 @@
 		x = 1
 		y = 2
 		relative_position_id = JAP_finish_nishiseto
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_new_trade_policy
+		available = {
+			is_subject = no
+			NOT = { has_war_with = USA }
+			NOT = { is_in_faction_with = CHI }
 		}
 
-		mutually_exclusive = {
-			focus = JAP_trade_with_china
-		}
+		prerequisite = { focus = JAP_new_trade_policy }
+		mutually_exclusive = { focus = JAP_trade_with_china }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_trade_with_america"
@@ -1704,7 +1882,15 @@
 					target = JAP
 					modifier = improve_trade
 				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = THIS.id }
+				set_temp_variable = { influence_target = JAP.id }
+				change_influence_percentage = yes
 			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = JAP.id }
+			set_temp_variable = { influence_target = USA.id }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -1717,15 +1903,18 @@
 		x = 3
 		y = 2
 		relative_position_id = JAP_finish_nishiseto
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = JAP_new_trade_policy
+		available = {
+			is_subject = no
+			NOT = { has_war_with = CHI }
+			NOT = { is_in_faction_with = USA }
 		}
 
-		mutually_exclusive = {
-			focus = JAP_trade_with_america
-		}
+		prerequisite = { focus = JAP_new_trade_policy }
+		mutually_exclusive = { focus = JAP_trade_with_america }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_trade_with_china"
@@ -1738,7 +1927,15 @@
 					target = JAP
 					modifier = improve_trade
 				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = THIS.id }
+				set_temp_variable = { influence_target = JAP.id }
+				change_influence_percentage = yes
 			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = JAP.id }
+			set_temp_variable = { influence_target = CHI.id }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -1755,20 +1952,42 @@
 		x = 1
 		y = 3
 		relative_position_id = JAP_finish_nishiseto
-		cost = 10
+		cost = 7.86
 
 		prerequisite = {
 			focus = JAP_trade_with_america
+			focus = JAP_trade_with_china
 		}
+		mutually_exclusive = { focus = JAP_trade_with_north_korea }
 
-		available = { NOT = { has_war_with = KOR } }
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
+
+		available = {
+			is_subject = no
+			NOT = { has_war_with = KOR }
+			NOT = { is_in_faction_with = NKO }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_trade_with_south_korea"
 			KOR = {
-				add_opinion_modifier = { target = JAP modifier = improve_trade }
-				reverse_add_opinion_modifier = { target = JAP modifier = improve_trade }
+				add_opinion_modifier = {
+					target = JAP
+					modifier = improve_trade
+				}
+				reverse_add_opinion_modifier = {
+					target = JAP
+					modifier = improve_trade
+				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = THIS.id }
+				set_temp_variable = { influence_target = JAP.id }
+				change_influence_percentage = yes
 			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = JAP.id }
+			set_temp_variable = { influence_target = KOR.id }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -1781,20 +2000,42 @@
 		x = 3
 		y = 3
 		relative_position_id = JAP_finish_nishiseto
-		cost = 10
+		cost = 7.86
 
 		prerequisite = {
+			focus = JAP_trade_with_america
 			focus = JAP_trade_with_china
 		}
+		mutually_exclusive = { focus = JAP_trade_with_south_korea }
 
-		available = { NOT = { has_war_with = NKO } }
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
+
+		available = {
+			is_subject = no
+			NOT = { has_war_with = NKO }
+			NOT = { is_in_faction_with = KOR }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_trade_with_north_korea"
 			NKO = {
-				add_opinion_modifier = { target = JAP modifier = improve_trade }
-				reverse_add_opinion_modifier = { target = JAP modifier = improve_trade }
+				add_opinion_modifier = {
+					target = JAP
+					modifier = improve_trade
+				}
+				reverse_add_opinion_modifier = {
+					target = JAP
+					modifier = improve_trade
+				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = THIS.id }
+				set_temp_variable = { influence_target = JAP.id }
+				change_influence_percentage = yes
 			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = JAP.id }
+			set_temp_variable = { influence_target = NKO.id }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -1810,7 +2051,7 @@
 		icon = japanese_pacific_guardian
 		x = 14
 		y = 7
-		cost = 10
+		cost = 7.86
 
 		prerequisite = { focus = JAP_ideological_debate }
 		prerequisite = {
@@ -1822,6 +2063,8 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_the_future_of_japan"
 			add_political_power = 150
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -1865,38 +2108,9 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_aggressive_strategies"
 			news_event = japan_classic.74
-			add_political_power = -50
-			add_war_support = -0.05
-			CHI = {
-				add_ai_strategy = { type = befriend id = "NKO" value = 100 }
-				add_ai_strategy = { type = protect id = "NKO" value = 100 }
-				add_ai_strategy = { type = support id = "NKO" value = 150 }
-				add_ai_strategy = { type = befriend id = "KOR" value = 100 }
-				add_ai_strategy = { type = protect id = "KOR" value = 100 }
-				add_ai_strategy = { type = support id = "KOR" value = 150 }
-				add_ai_strategy = { type = antagonize id = "JAP" value = 200 }
-				add_ai_strategy = { type = contain id = "JAP" value = 200 }
-			}
-			KOR = {
-				add_ai_strategy = { type = befriend id = "CHI" value = 100 }
-				add_ai_strategy = { type = protect id = "CHI" value = 100 }
-				add_ai_strategy = { type = support id = "CHI" value = 150 }
-				add_ai_strategy = { type = befriend id = "NKO" value = 100 }
-				add_ai_strategy = { type = protect id = "NKO" value = 100 }
-				add_ai_strategy = { type = support id = "NKO" value = 150 }
-				add_ai_strategy = { type = antagonize id = "JAP" value = 200 }
-				add_ai_strategy = { type = contain id = "JAP" value = 200 }
-			}
-			NKO = {
-				add_ai_strategy = { type = befriend id = "CHI" value = 100 }
-				add_ai_strategy = { type = protect id = "CHI" value = 100 }
-				add_ai_strategy = { type = support id = "CHI" value = 150 }
-				add_ai_strategy = { type = befriend id = "KOR" value = 100 }
-				add_ai_strategy = { type = protect id = "KOR" value = 100 }
-				add_ai_strategy = { type = support id = "KOR" value = 150 }
-				add_ai_strategy = { type = antagonize id = "JAP" value = 200 }
-				add_ai_strategy = { type = contain id = "JAP" value = 200 }
-			}
+			add_political_power = 150
+			add_war_support = 0.05
+			add_stability = -0.05
 		}
 
 		ai_will_do = {
@@ -2001,7 +2215,7 @@
 		icon = defense
 		x = -3
 		y = 2
-		cost = 10
+		cost = 7.86
 		relative_position_id = JAP_the_future_of_japan
 
 		prerequisite = { focus = JAP_defensive_strategies }
@@ -2010,30 +2224,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_defensive_arms_industry"
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-			random_owned_state = {
-				limit = {
-					region = 154
-				}
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 1
-			}
-			random_owned_state = {
-				limit = {
-					region = 154
-				}
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 1
-			}
+			two_random_arms_factory = yes
 		}
 
 		ai_will_do = {
@@ -2079,31 +2270,25 @@
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 
-		prerequisite = {
-			focus = JAP_aggressive_strategies
-		}
+		prerequisite = { focus = JAP_aggressive_strategies }
 
-		mutually_exclusive = {
-			focus = JAP_democratic_state
-		}
-		mutually_exclusive = {
-			focus = JAP_warrior_state
-		}
+		mutually_exclusive = { focus = JAP_democratic_state }
+		mutually_exclusive = { focus = JAP_warrior_state }
+
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_popular_state"
-
 			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.075 }
-			set_temp_variable = { temp_outlook_increase = 0.075 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
 			add_relative_party_popularity = yes
 			set_temp_variable = { party_index = 19 }
-			set_temp_variable = { party_popularity_increase = 0.025 }
-			set_temp_variable = { temp_outlook_increase = 0.025 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			add_stability = -0.03
-			add_war_support = 0.03
+			add_stability = -0.06
+			add_war_support = 0.06
 		}
 
 		ai_will_do = {
@@ -2117,7 +2302,7 @@
 
 	focus = {
 		id = JAP_warrior_state
-		icon = japanese_imperial_glory
+		icon = risng_sun
 		x = 10
 		y = 2
 		cost = 10
@@ -2195,15 +2380,13 @@
 
 	focus = {
 		id = JAP_interventionism
-		icon = infantry_india
+		icon = japan_authoritarinism
 		x = 0
 		y = 3
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 
-		prerequisite = {
-			focus = JAP_democratic_state
-		}
+		prerequisite = { focus = JAP_democratic_state }
 
 		search_filters = {FOCUS_FILTER_MILITARY_LAWS}
 
@@ -2215,10 +2398,7 @@
 				remove_ideas = article_nine_jap
 				increase_intervention_law_effect = yes
 			}
-			if = {
-				limit = { NOT = { has_idea = article_nine_jap } }
-				increase_intervention_law_effect = yes
-			}
+			increase_intervention_law_effect = yes
 		}
 
 		ai_will_do = {
@@ -2234,9 +2414,7 @@
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 
-		prerequisite = {
-			focus = JAP_popular_state
-		}
+		prerequisite = { focus = JAP_popular_state }
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -2270,9 +2448,7 @@
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 
-		prerequisite = {
-			focus = JAP_popular_state
-		}
+		prerequisite = { focus = JAP_popular_state }
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -2333,7 +2509,7 @@
 
 	focus = {
 		id = JAP_government_authority
-		icon = fascism
+		icon = japan_militar
 		x = 11
 		y = 3
 		cost = 10
@@ -2369,13 +2545,11 @@
 		id = JAP_mobilize_the_population
 		icon = katana
 		x = 13
-		y = 3
+		y = 2
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 
-		prerequisite = {
-			focus = JAP_warrior_state
-		}
+		prerequisite = { focus = JAP_aggressive_strategies }
 		search_filters = {FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_WAR_SUPPORT}
 		available = {
 			OR = {
@@ -2511,14 +2685,8 @@
 		search_filters = {FOCUS_FILTER_ANNEXATION}
 		available = {
 			OR = {
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 4 }
-					tooltip = has_communist_state_government_TT
-				}
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 19 }
-					tooltip = has_neutral_communism_government_TT
-				}
+				emerging_communist_state_in_power_or_coalition = yes
+				neutrality_neutral_communism_in_power_or_coalition = yes
 			}
 		}
 		will_lead_to_war_with = NKO
@@ -2740,8 +2908,9 @@
 
 		available = {
 			USA = {
-				has_elections = yes
+				has_government = democratic
 			}
+			has_government = democratic
 		}
 		search_filters = {FOCUS_FILTER_NATO}
 		mutually_exclusive = {
@@ -2750,25 +2919,13 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_ally_the_united_states"
-			if = {
-				limit = {
-					USA = {
-						is_in_faction = yes
-						NOT = { has_idea = NATO_member }
-					}
-				}
-				USA = {
-					add_to_faction = JAP
-				}
-				else = {
-					USA = {
-						give_guarantee = JAP
-					}
-					JAP = {
-						give_guarantee = USA
-					}
-				}
+			USA = {
+				give_guarantee = JAP
 			}
+			JAP = {
+				give_guarantee = USA
+			}
+
 		}
 		ai_will_do = {
 			factor = 1
@@ -2841,9 +2998,7 @@
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 
-		prerequisite = {
-			focus = JAP_protect_our_nation
-		}
+		prerequisite = { focus = JAP_protect_our_nation }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_vanguard_of_democracy"
@@ -2868,14 +3023,8 @@
 		search_filters = {FOCUS_FILTER_ANNEXATION}
 		available = {
 			OR = {
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 4 }
-					tooltip = has_communist_state_government_TT
-				}
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 19 }
-					tooltip = has_neutral_communism_government_TT
-				}
+				emerging_communist_state_in_power_or_coalition = yes
+				neutrality_neutral_communism_in_power_or_coalition = yes
 			}
 		}
 
@@ -2919,10 +3068,7 @@
 		relative_position_id = JAP_the_future_of_japan
 
 		available = {
-			custom_trigger_tooltip = {
-				is_in_array = { ruling_party = 23 }
-				tooltip = has_monarchist_government_TT
-			}
+			nationalist_monarchists_are_in_power = yes
 		}
 		prerequisite = { focus = JAP_new_imperial_society }
 		search_filters = {FOCUS_FILTER_ANNEXATION}
@@ -3052,10 +3198,8 @@
 						has_idea = NATO_member
 					}
 				}
-				add_opinion_modifier = {
-					target = JAP
-					modifier = declaration_of_friendship
-				}
+				add_opinion_modifier = { target = JAP modifier = declaration_of_friendship }
+				reverse_add_opinion_modifier = { target = JAP modifier = declaration_of_friendship }
 			}
 		}
 
@@ -3072,9 +3216,7 @@
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 
-		prerequisite = {
-			focus = JAP_chinese_unification_ultimatum
-		}
+		prerequisite = { focus = JAP_chinese_unification_ultimatum }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -3094,19 +3236,15 @@
 				tooltip = TT_china_united_under_democracy
 				OR = {
 					AND = {
-						NOT = { country_exists = CHI }
+						NOT = { country_exists = TAI }
 						CHI = { has_elections = yes }
 					}
 					AND = {
 						NOT = { country_exists = CHI }
-						CHI = { has_elections = yes }
+						TAI = { has_elections = yes }
 					}
 				}
 			}
-		}
-
-		bypass = {
-			is_faction_leader = yes
 		}
 
 		completion_reward = {
@@ -3169,32 +3307,20 @@
 
 		available = {
 			OR = {
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 4 }
-					tooltip = has_communist_state_government_TT
-				}
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 19 }
-					tooltip = has_neutral_communism_government_TT
-				}
+				emerging_communist_state_in_power_or_coalition = yes
+				neutrality_neutral_communism_in_power_or_coalition = yes
 			}
-			is_puppet = no
+			is_subject = no
 			CHI = {
 				OR = {
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 4 }
-					tooltip = has_communist_state_government_TT
-					}
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 19 }
-					tooltip = has_neutral_communism_government_TT
-					}
+					emerging_communist_state_in_power_or_coalition = yes
+					neutrality_neutral_communism_in_power_or_coalition = yes
 				}
 			}
 
 			OR = {
-				CHI = { is_puppet = no }
-				CHI = { is_puppet_of = JAP }
+				CHI = { is_subject = no }
+				CHI = { is_subject_of = JAP }
 			}
 		}
 
@@ -3203,9 +3329,7 @@
 			NOT = { CHI = { has_government = communism } }
 		}
 
-		mutually_exclusive = {
-			focus = JAP_red_prosperity_sphere
-		}
+		mutually_exclusive = { focus = JAP_red_prosperity_sphere }
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -3242,27 +3366,17 @@
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 
-		prerequisite = {
-			focus = JAP_revolution_in_taiwan
-		}
+		prerequisite = { focus = JAP_revolution_in_taiwan }
 
 		available = {
 			OR = {
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 4 }
-					tooltip = has_communist_state_government_TT
-				}
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 19 }
-					tooltip = has_neutral_communism_government_TT
-				}
+				emerging_communist_state_in_power_or_coalition = yes
+				neutrality_neutral_communism_in_power_or_coalition = yes
 			}
 			is_in_faction = no
 		}
 
-		mutually_exclusive = {
-			focus = JAP_beijing_and_tokyo
-		}
+		mutually_exclusive = { focus = JAP_beijing_and_tokyo }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_red_prosperity_sphere"
@@ -3276,17 +3390,14 @@
 
 	focus = {
 		id = JAP_colonize_china
-		icon = attack_china
+		icon = hirohito
 		x = 9
 		y = 6
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 
 		available = {
-			custom_trigger_tooltip = {
-				is_in_array = { ruling_party = 23 }
-				tooltip = has_monarchist_government_TT
-			}
+			nationalist_monarchists_are_in_power = yes
 		}
 
 		prerequisite = {
@@ -3322,7 +3433,7 @@
 
 	focus = {
 		id = JAP_subjugate_china
-		icon = attack_china
+		icon = manchurian_gamble
 		x = 11
 		y = 6
 		cost = 10
@@ -3364,9 +3475,7 @@
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 
-		prerequisite = {
-			focus = JAP_allies_in_indochina
-		}
+		prerequisite = { focus = JAP_allies_in_indochina }
 
 		available = {
 			is_in_faction = yes
@@ -3376,8 +3485,6 @@
 				has_elections = yes
 			}
 		}
-
-		bypass = { }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_ally_taiwan"
@@ -3398,9 +3505,7 @@
 		cost = 10
 		relative_position_id = JAP_the_future_of_japan
 
-		prerequisite = {
-			focus = JAP_approach_NATO
-		}
+		prerequisite = { focus = JAP_approach_NATO }
 
 		search_filters = {FOCUS_FILTER_NATO}
 
@@ -3426,6 +3531,10 @@
 
 		prerequisite = { focus = JAP_east_asian_pact }
 		prerequisite = { focus = JAP_democratic_militias }
+
+		available = {
+			is_faction_leader = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_allies_across_asia"
@@ -3495,6 +3604,13 @@
 			focus = JAP_beijing_and_tokyo
 		}
 
+		available = {
+			OR = {
+				emerging_communist_state_in_power_or_coalition = yes
+				neutrality_neutral_communism_in_power_or_coalition = yes
+			}
+		}
+
 		search_filters = {FOCUS_FILTER_ANNEXATION}
 
 		completion_reward = {
@@ -3507,6 +3623,7 @@
 						NOT = { is_in_array = { ruling_party = 4 } }
 					}
 					NOT = { tag = JAP }
+					NOT = { is_subject_of = JAP }
 				}
 				JAP = {
 					create_wargoal = {
@@ -3568,7 +3685,7 @@
 
 	focus = {
 		id = JAP_ally_indonesia
-		icon = tripartite_pact
+		icon = align_to_indonesia
 		x = -6
 		y = 7
 		cost = 10
@@ -3596,7 +3713,7 @@
 
 	focus = {
 		id = JAP_ally_mongolia
-		icon = improve_relations
+		icon = align_to_mongolia
 		x = -4
 		y = 7
 		cost = 10
@@ -3643,9 +3760,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_asian_research_compact"
-			add_research_buff = yes
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
+			add_ideas = JAP_idea_research_compact
 		}
 
 		ai_will_do = {
@@ -3666,13 +3781,18 @@
 			focus = JAP_red_prosperity_sphere
 		}
 
+		available = {
+			OR = {
+				emerging_communist_state_in_power_or_coalition = yes
+				neutrality_neutral_communism_in_power_or_coalition = yes
+			}
+		}
+
 		search_filters = {FOCUS_FILTER_RESEARCH}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_red_association_of_science"
-			add_research_buff = yes
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
+			add_ideas = JAP_idea_communist_research
 		}
 
 		ai_will_do = {
@@ -3695,17 +3815,11 @@
 		search_filters = {FOCUS_FILTER_MANPOWER}
 		available = {
 			OR = {
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 4 }
-					tooltip = has_communist_state_government_TT
-				}
-				custom_trigger_tooltip = {
-					is_in_array = { ruling_party = 19 }
-					tooltip = has_neutral_communism_government_TT
-				}
+				emerging_communist_state_in_power_or_coalition = yes
+				neutrality_neutral_communism_in_power_or_coalition = yes
 			}
 			OR = {
-				threat > 0.8
+				threat > 0.5
 				has_war = yes
 			}
 		}
