@@ -1,8 +1,12 @@
-	-- NGAme ssection
+-- Last Modified 09/10/2022 - Bird: Refactored the Defines so it is no organized by section
+
+	-- NGame ssection
 	NDefines.NGame.START_DATE = "2000.1.1.12"
 	NDefines.NGame.END_DATE = "2070.1.1.1"
+	NDefines.NGame.LAG_DAYS_FOR_LOWER_SPEED = 500
+    NDefines.NGame.LAG_DAYS_FOR_PAUSE = 100
 
-	-- NDiplomacy
+	-- NDiplomacy Defines
 	NDefines.NDiplomacy.MAX_OPINION_VALUE = 250
 	NDefines.NDiplomacy.MIN_OPINION_VALUE = -250
 	NDefines.NDiplomacy.BASE_NEGATIVE_OPINION_AFTER_BEING_KICKED = 50
@@ -72,7 +76,8 @@
 	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_MANPOWER_WEIGHT = 2			-- Importance of manpower in field when determining how close a faction member is to being able to assume leadership.
 	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_FACTORY_WEIGHT = 2			-- Importance of factory count when determining how close a faction member is to being able to assume leadership.
 
-	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 --Returned RSs back to normal from Vanilla - BIRD
+	-- NCountry Releated Defines
+	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 -- Maintains Vanilla's 2 RS default. RSs are handled via the dynamic system
 	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01 --0.01
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_UNIT = 0.002
@@ -103,7 +108,10 @@
 	NDefines.NCountry.BASE_MAX_COMMAND_POWER = 250.0                       -- base value for maximum command power -- 200 in vanilla
 	NDefines.NCountry.AIR_VOLUNTEER_PLANES_RATIO = 0.25				-- Ratio for volunteer planes available for sending in relation to sender air force
 	NDefines.NCountry.AIR_VOLUNTEER_BASES_CAPACITY_LIMIT = 0.2		-- Ratio for volunteer planes available for sending in relation to receiver air base capacity
-
+	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
+	NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 13						-- base amount of fuel gained hourly per excess oil
+	NDefines.NCountry.BASE_FUEL_GAIN = 0.1							-- base amount of fuel gained hourly, independent of excess oil
+	NDefines.NCountry.BASE_FUEL_CAPACITY = 500000
 
 	NDefines.NProduction.MAX_EQUIPMENT_RESOURCES_NEED = 4
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
@@ -279,6 +287,9 @@
 	NDefines.NMilitary.WAR_SCORE_AIR_WORTH_CAP = 500				-- the warscore liit we get from strategic bombing
 	NDefines.NMilitary.WAR_SCORE_AIR_MONTHLY_FALLOFF = 20			-- how much the warscore we got from the strategic bombing falls off every month.
 	NDefines.NMilitary.WAR_SCORE_LOSSES_RATIO = 4	         	-- Scale how much losses will affect warscore ( per 1000 losses ).
+	NDefines.NMilitary.NUKE_MIN_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
+	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
+	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
 	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 250 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 600 -- 100
@@ -481,24 +492,6 @@
         0.10  -- 10% for level two
               -- 0% for level three to ten
     }
-
-	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
-	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.2
-	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.005		-- ai will try to build a silo per this ratio of civ factories
-	NDefines.NAI.NUM_SILOS_PER_MILITARY_FACTORIES = 0.020		-- ai will try to build a silo per this ratio of mil factories
-	NDefines.NAI.NUM_SILOS_PER_DOCKYARDS = 0.03
-	NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
-		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
-		250, -- PATROL
-		100, -- STRIKE FORCE
-		100, -- CONVOY RAIDING
-		150, -- CONVOY ESCORT
-		50, -- MINES PLANTING
-		50, -- MINES SWEEPING
-		200, -- TRAIN
-		0, -- RESERVE_FLEET
-		100, -- NAVAL INVASION SUPPORT
-	}
 	NDefines.NNavy.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 1 		-- optimum carrier count for carrier taskforces
 	NDefines.NNavy.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 6 		-- optimum capital count for capital taskforces
 	NDefines.NNavy.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 2			-- optimum screen count for screen taskforces
@@ -558,11 +551,12 @@
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_CONVOY = 4  --10                       -- war score gained for every sunk convoy
 	NDefines.NNavy.WAR_SCORE_DECAY_FOR_BUILT_CONVOY = 2  --5                         -- war score deducted when convoy-raided enemy produces one new convoy
 
-
+	-- NTrade Defines
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
 	NDefines.NTrade.BASE_LAND_TRADE_RANGE = 350 -- 1000
 	NDefines.NTrade.ANTI_MONOPOLY_TRADE_FACTOR_THRESHOLD = 0.7 -- 0.5
 
+	-- NAI Defines
 	NDefines.NAI.BASE_RELUCTANCE = 40 -- 20
 	NDefines.NAI.DIPLOMATIC_ACTION_PROPOSE_SCORE = 25 -- 50
 	NDefines.NAI.DILPOMATIC_ACTION_DECLARE_WAR_WARGOAL_BASE = 75 -- 50
@@ -662,11 +656,9 @@
 	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 5				-- 20
 	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 5				-- 25
 	NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 5				-- 15
-
 	NDefines.NAI.RECON_PLANES_NAVAL = 5						-- 50
 	NDefines.NAI.RECON_PLANES_LAND_COMBAT = 5					-- 25
 	NDefines.NAI.RECON_PLANES_STRATEGIC = 5						-- 50
-
 	NDefines.NAI.MAX_CARRIER_OVERFILL = 1.25					-- 1.85
 	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2				-- 4
 	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 6				-- 12
@@ -675,10 +667,7 @@
 	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 4				-- 10
 	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 4					-- 1.5
 	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 2					-- 4.0
-
 	NDefines.NAI.FRONT_EVAL_UNIT_ACCURACY = 0.85					-- 0.7
-
-
 	NDefines.NAI.HIGH_PRIO_NAVAL_MISSION_SCORES = {
 		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		100000, -- PATROL
@@ -729,98 +718,6 @@
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
 	NDefines.NAI.NAVAL_MIN_EXCORT_PLANES = 0 --Updated AI Air prioties
 	NDefines.NAI.TRADEABLE_FACTORIES_FRACTION = 0.65 -- Updated from 0.80
-
-	--Country Defines
-	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
-	NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 13						-- base amount of fuel gained hourly per excess oil
-	NDefines.NCountry.BASE_FUEL_GAIN = 0.1							-- base amount of fuel gained hourly, independent of excess oil
-	NDefines.NCountry.BASE_FUEL_CAPACITY = 500000
-	NDefines.NAI.LAND_COMBAT_OUR_ARMIES_AIR_IMPORTANCE = 100
-	NDefines.NAI.LAND_COMBAT_OUR_COMBATS_AIR_IMPORTANCE = 200		-- Strategic importance of our armies in the combats
-	NDefines.NAI.LAND_COMBAT_FRIEND_ARMIES_AIR_IMPORTANCE = 25
-
-	NDefines.NAI.NUM_AI_MESSAGES = 250
-	NDefines.NAI.AIR_ACTUAL_FUEL_USAGE_WEIGHT_ON_OIL_REQUEST = 0.05
-	NDefines.NAI.LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 0.5
-	NDefines.NAI.LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 0.7
-	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.2
-	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
-	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of pirority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
-		'industrial_complex'
-	}
-
-	-- LaResistance AI Tweaks
-	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 20.0 --25 in Vanilla
-	NDefines.NOperatives.AGENCY_AI_PER_UPGRADE_FACTORIES = 10.0 -- 6 in Vanilla
-	NDefines.NOperatives.AGENCY_UPGRADE_DAYS = 75 -- 20 in Vanilla
-	NDefines.NResistance.GARRISON_MANPOWER_LOST_BY_ATTACK = 0.02 	-- Ratio of manpower lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
-	NDefines.NResistance.GARRISON_EQUIPMENT_LOST_BY_ATTACK = 0.04 	-- Ratio of equipment lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
-	NDefines.NResistance.RESISTANCE_GROWTH_BASE = 0.1 --base resistance growth
-	NDefines.NResistance.COMPLIANCE_GROWTH_BASE = 0.1 --base compliance gain
-	NDefines.NOperatives.BASE_COUNTER_INTELLIGENCE_RATING = 1.0 -- Set to 1 to prevent weird negatives
-	NDefines.NOperatives.AGENCY_UPGRADE_PER_OPERATIVE_SLOT = 6 -- Reduced from vanilla
-	NDefines.NOperatives.BECOME_SPYMASTER_MIN_UPGRADES = 10 -- Boosted from 3
-
-	NDefines.NOperatives.MAX_OPERATIVE_SLOT_FROM_AGENCY_UPGRADES = 4					-- (normaly 1) max operative slots gained from upgrades
-	NDefines.NOperatives.INTEL_NETWORK_GAIN_RATE_ON_WRONG_CONTROLLER = -9.9				-- (normaly -10.0) Amount of network strength lost in a state when it does not have the right controller anymore
-	NDefines.NOperatives.INTEL_NETWORK_GAIN_RATE_ON_OUT_OF_RANGE = -1.57				-- (normaly -1.75) Amount of network strength lost in a state that has the right controller but is out of range of any operative
-				--may come back to below, but makes much more of a diffrence than i thaught
-			--NDefines.NOperatives.INTEL_NETWORK_MIN_VP_TO_TARGET = 10,					-- (normaly 15) The minimum value of the highest VP in a state to consider the state as a valid target to start building an intel network
-	NDefines.NOperatives.INTEL_NETWORK_OPERATIVE_GAIN_STACKING_FACTOR = 0.6				-- (normaly 0.5) When multiple operative are present in the same location, this factor is applied for each operative with a lower gain than the max. So if operatives have the gain [ 3, 1, 2 ] in the same location, it is sorted to [ 1, 2, 3 ] then converted to [ 1*D^2, 2*D^1, 3 ], with D being this define, so if D=0.5 we have [ 0.25, 1, 3 ] and the final gain from operative at this location will be 4.25. Putting this define to 0 is equivalent to considering the maximum value only.
-
-	NDefines.NOperatives.QUIET_INTEL_NETWORK_DAILY_XP_GAIN = 0.112						-- (normaly 0.0)
-
-		-- used for calculating how many operatives will a spy master gain from its faction members
-		-- first number in every now is number of operatives gained
-		-- second number is total factory needed (mil and civ) for giving previous ratio
-		-- NORMAL BELOW
-		--0.0, 		0.0, 	-- 0 operative for [0, 10)
-		--0.25,  	10.0,	-- 0.25 operative for [10, 50)
-		--0.5, 		50.0,	-- 0.5 operative for >= 50
-
-	NDefines.NOperatives.OPERATIVE_SLOTS_FROM_FACTION_MEMBERS_FOR_SPY_MASTER = {
-			0.0, 	0.0, -- 0 operative for [0, 5)
-			0.1,  	5.0, -- 0.1 operative for [5, 10)
-			0.25, 	10.0, -- 0.25 operative for [10, 25)
-			0.5,  	25.0, -- 0.5 operative for [25, 50)
-			0.75,  	50.0, -- 0.75 operative for [50, 75)
-			1.0,  	75.0, -- 1 operative for [75, 100)
-			1.5,  	100.0, -- 1.5 operative for >= 100
-		}
-
-	NDefines.NOperatives.OPERATIVE_BASE_INTEL_NETWORK_GAIN = 0.32				-- (normaly 0.4) Base amount of network strength gain per day provided by an operative
-	NDefines.NOperatives.COUNTER_INTELLIGENCE_STACKING_FACTOR = 0.6								-- (normaly 0.5) Multiplier applied to each operative after the first one. So if we have the following counter intelligence rating values [ 0.1, 0.3, 0.2 ], the factor is applied twice for the lowest value and once for the 2nd lowest one as such : [ 0.3, 0.2 * D, 0.1 * D * D ] and then the result is summed up to give the final rating value
-				--no change made, but kept in case i change my mind
-			--NDefines.NOperatives.COUNTER_INTELLIGENCE_DAILY_XP_GAIN = 0.112,
-
-	NDefines.NOperatives.BOOST_IDEOLOGY_MAX_DRIFT_BY_OPERATIVE = 0.2			-- (normaly 0.25) the maximum drift an operative can cause, a negative value means no maximum
-	NDefines.NOperatives.BOOST_IDEOLOGY_DRIFT_STACKING_FACTOR = 0.6				-- (Normaly 0.5) multiplied to the drift of an operative for each operative after the first one, with the greatest drift. So if we have the following drift values [ 0.1, 0.3, 0.2 ], the factor is applied twice for the lowest value and once for the 2nd lowest one as such : [ 0.3, 0.2 * D, 0.1 * D * D ] and then the result is summed up to give the final drift value.
-	NDefines.NOperatives.BOOST_IDEOLOGY_DAILY_XP_GAIN = 0.3						-- (normaly 0.274)
-	NDefines.NOperatives.OPERATIVE_BASE_BOOST_IDEOLOGY = 0.08					-- (normaly 0.1) Base amount of daily ideology drift provoked by an operative
-	NDefines.NOperatives.OPERATIVE_BASE_PROPAGANDA_POWER = 0.0004				-- (normaly 0.0005) Base amount of daily war support and stability change when an operative is assigned to propaganda
-	NDefines.NOperatives.PROPAGANDA_OPERATIVE_STACKING_FACTOR = 0.6				-- (normaly 0.5) Multiplied to the Stability/WarSupport drift values of each operative after the one with the greatest values. The process is done separatly for Stability and WarSupport
-				--no change made, but kept in case i change my mind
-			--NDefines.NOperatives.PROPAGANDA_COUNTRY_STACKING_FACTOR = 0.5,			-- Multiplied to the Stability/WarSupport drift values of each country after the one with the greatest values. The process is done separatly for Stability and WarSupport
-	NDefines.NOperatives.PROPAGANDA_DAILY_XP_GAIN = 0.420						-- (normaly 0.35
-				--no change made, but kept in case i change my mind
-			--NDefines.NOperatives.OPERATIVE_BASE_ROOT_OUT_RESISTANCE_EFFICIENCY = 1.0,	-- The base efficiency of an operative at the RootOutResistance mission (this is a percentage, 1.0 == 100%)
-	NDefines.NOperatives.OPERATIVE_BASE_ROOT_OUT_RESISTANCE_EFFICIENCY = 0.9	-- (normaly 1.0) The base efficiency of an operative at the RootOutResistance mission (this is a percentage, 1.0 == 100%)
-	NDefines.NOperatives.ROOT_OUT_RESISTANCE_STACKING_FACTOR = 0.6				-- (normaly 0.5) Multiplied to each operative efficiency after the first one
-	NDefines.NOperatives.ROOT_OUT_RESISTANCE_RANGE_STEP_FACTOR = 0.6			-- (normaly 0.5) Multiplied to the summed up efficiency from all operative operating in a same state to determine the efficiency in neighboring states
-	NDefines.NOperatives.ROOT_OUT_RESISTANCE_DAILY_XP_GAIN = 0.08				-- (normaly 0.068)
-	NDefines.NOperatives.OPERATIVE_BASE_CONTROL_TRADE_DRIFT = 0.4				-- (normaly 0.5) The base daily drift in trade influence caused by an operative
-	NDefines.NOperatives.CONTROL_TRADE_STACKING_FACTOR = 0.6					-- (normaly 0.6) Multiplied to the drift of each operative after the first one
-	NDefines.NOperatives.CONTROL_TRADE_DAILY_XP_GAIN = 0.164					-- (normaly 0.137)
-
-	NDefines.NOperatives.DIPLOMATIC_PRESSURE_OPERATIVE_STACKING_FACTOR = 0.6	-- (normaly 0.5) The diminishing return factor to apply to operative working for the same faction after the first one. Operatives operating for a same faction are ranked by their efficiency and their opinion and tension drift are individually applyied a stacking factor like so: DRIFT * STACKING_FACTOR^RANK where RANK is a value from 0 to the number of operative -1 where the opperative with the highest drift value has rank 0
-	NDefines.NOperatives.DIPLOMATIC_PRESSURE_DAILY_XP_GAIN = 0.164				-- (Normaly 0.137)
-	NDefines.NOperatives.MAX_RECRUITED_OPERATIVES = 10							-- (Normaly 10)
-	NDefines.NOperatives.OPERATION_COMPLETION_XP = 24							-- (normaly 18)
-	NDefines.NOperatives.ON_CAPTURE_COUNTERINTELLIGENCE_OPERATIVE_XP_GAIN = 120	-- (normaly 100) Xp gain when an enemy operative is captured in the country the operative is assigned to counter intelligence to. Apply to a single randomly selected operative
-	NDefines.NIntel.RADAR_INTEL_STACKING_FACTOR = 0.6							-- (Normaly 0.5) Used when multiple radars cover the same province
-
-	NDefines.NIntel.RECON_PLANE_INTEL_BASE = 0.024								-- (normaly 0.02) intel base amount for a strategic area per plane
-
 	NDefines.NAI.DIPLOMACY_CREATE_FACTION_FACTOR = 1.25 --0.75 in Vanilla		-- Factor for AI desire to create a new faction. Val < 1.0 makes it less likely to create than to join.
 	NDefines.NAI.DIPLOMACY_FACTION_WRONG_IDEOLOGY_PENALTY = 60 -- AI penalty for diplomatic faction acitons between nations of different ideologies
 	NDefines.NAI.DIPLOMACY_FACTION_SAME_IDEOLOGY_MAJOR = 10 -- AI bonus acceptance when being asked about faction is a major of the same ideology
@@ -843,19 +740,111 @@
 	NDefines.NAI.DIPLOMACY_FACTION_JOIN_COUP_INITIATOR_BONUS = 70	-- If a country initiated coup on an another country, civil war revolter is more likely to join initiator's faction
 	NDefines.NAI.DEMOCRATIC_AI_FACTION_KICKING_PLAYER_THREAT_DIFFERENCE = 6.0 -- World threat generation difference needed to kick a player from a democratic faction
 	NDefines.NAI.GENERATE_WARGOAL_ANTAGONIZE_SCALE = 0.10    -- works to scale the AIs antagonize value vs the threat baseline for when it should act on existing claims: threat used for baseline is min_threat - antagonize * scale
+	NDefines.NAI.LAND_COMBAT_OUR_ARMIES_AIR_IMPORTANCE = 100
+	NDefines.NAI.LAND_COMBAT_OUR_COMBATS_AIR_IMPORTANCE = 200		-- Strategic importance of our armies in the combats
+	NDefines.NAI.LAND_COMBAT_FRIEND_ARMIES_AIR_IMPORTANCE = 25
+	NDefines.NAI.NUM_AI_MESSAGES = 250
+	NDefines.NAI.AIR_ACTUAL_FUEL_USAGE_WEIGHT_ON_OIL_REQUEST = 0.05
+	NDefines.NAI.LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 0.5
+	NDefines.NAI.LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 0.7
+	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.2
+	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
+	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of pirority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
+		'industrial_complex', 'offices', 'arms_factory'
+	}
+	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
+	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.2
+	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.005		-- ai will try to build a silo per this ratio of civ factories
+	NDefines.NAI.NUM_SILOS_PER_MILITARY_FACTORIES = 0.020		-- ai will try to build a silo per this ratio of mil factories
+	NDefines.NAI.NUM_SILOS_PER_DOCKYARDS = 0.03
+	NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
+		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+		250, -- PATROL
+		100, -- STRIKE FORCE
+		100, -- CONVOY RAIDING
+		150, -- CONVOY ESCORT
+		50, -- MINES PLANTING
+		50, -- MINES SWEEPING
+		200, -- TRAIN
+		0, -- RESERVE_FLEET
+		100, -- NAVAL INVASION SUPPORT
+	}
 
-	--Character defines
+	-- NOperatives Defines
+	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 20.0 --25 in Vanilla
+	NDefines.NOperatives.AGENCY_AI_PER_UPGRADE_FACTORIES = 10.0 -- 6 in Vanilla
+	NDefines.NOperatives.AGENCY_UPGRADE_DAYS = 75 -- 20 in Vanilla
+	NDefines.NResistance.GARRISON_MANPOWER_LOST_BY_ATTACK = 0.02 	-- Ratio of manpower lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
+	NDefines.NResistance.GARRISON_EQUIPMENT_LOST_BY_ATTACK = 0.04 	-- Ratio of equipment lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
+	NDefines.NResistance.RESISTANCE_GROWTH_BASE = 0.1 --base resistance growth
+	NDefines.NResistance.COMPLIANCE_GROWTH_BASE = 0.1 --base compliance gain
+	NDefines.NOperatives.BASE_COUNTER_INTELLIGENCE_RATING = 1.0 -- Set to 1 to prevent weird negatives
+	NDefines.NOperatives.AGENCY_UPGRADE_PER_OPERATIVE_SLOT = 6 -- Reduced from vanilla
+	NDefines.NOperatives.BECOME_SPYMASTER_MIN_UPGRADES = 8 -- Boosted from 3
+
+	NDefines.NOperatives.MAX_OPERATIVE_SLOT_FROM_AGENCY_UPGRADES = 4					-- (normaly 1) max operative slots gained from upgrades
+	NDefines.NOperatives.INTEL_NETWORK_GAIN_RATE_ON_WRONG_CONTROLLER = -9.9				-- (normaly -10.0) Amount of network strength lost in a state when it does not have the right controller anymore
+	NDefines.NOperatives.INTEL_NETWORK_GAIN_RATE_ON_OUT_OF_RANGE = -1.57				-- (normaly -1.75) Amount of network strength lost in a state that has the right controller but is out of range of any operative
+				--may come back to below, but makes much more of a diffrence than i thaught
+			--NDefines.NOperatives.INTEL_NETWORK_MIN_VP_TO_TARGET = 10,					-- (normaly 15) The minimum value of the highest VP in a state to consider the state as a valid target to start building an intel network
+	NDefines.NOperatives.INTEL_NETWORK_OPERATIVE_GAIN_STACKING_FACTOR = 0.6				-- (normaly 0.5) When multiple operative are present in the same location, this factor is applied for each operative with a lower gain than the max. So if operatives have the gain [ 3, 1, 2 ] in the same location, it is sorted to [ 1, 2, 3 ] then converted to [ 1*D^2, 2*D^1, 3 ], with D being this define, so if D=0.5 we have [ 0.25, 1, 3 ] and the final gain from operative at this location will be 4.25. Putting this define to 0 is equivalent to considering the maximum value only.
+
+	NDefines.NOperatives.QUIET_INTEL_NETWORK_DAILY_XP_GAIN = 0.112						-- (normaly 0.0)
+
+	-- used for calculating how many operatives will a spy master gain from its faction members
+	-- first number in every now is number of operatives gained
+	-- second number is total factory needed (mil and civ) for giving previous ratio
+	-- NORMAL BELOW
+	--0.0, 		0.0, 	-- 0 operative for [0, 10)
+	--0.25,  	10.0,	-- 0.25 operative for [10, 50)
+	--0.5, 		50.0,	-- 0.5 operative for >= 50
+
+	NDefines.NOperatives.OPERATIVE_SLOTS_FROM_FACTION_MEMBERS_FOR_SPY_MASTER = {
+		0.0, 	0.0, -- 0 operative for [0, 5)
+		0.1,  	5.0, -- 0.1 operative for [5, 10)
+		0.25, 	10.0, -- 0.25 operative for [10, 25)
+		0.5,  	25.0, -- 0.5 operative for [25, 50)
+		0.75,  	50.0, -- 0.75 operative for [50, 75)
+		1.0,  	75.0, -- 1 operative for [75, 100)
+		1.5,  	100.0, -- 1.5 operative for >= 100
+	}
+
+	NDefines.NOperatives.OPERATIVE_BASE_INTEL_NETWORK_GAIN = 0.32				-- (normaly 0.4) Base amount of network strength gain per day provided by an operative
+	NDefines.NOperatives.COUNTER_INTELLIGENCE_STACKING_FACTOR = 0.6								-- (normaly 0.5) Multiplier applied to each operative after the first one. So if we have the following counter intelligence rating values [ 0.1, 0.3, 0.2 ], the factor is applied twice for the lowest value and once for the 2nd lowest one as such : [ 0.3, 0.2 * D, 0.1 * D * D ] and then the result is summed up to give the final rating value
+
+	NDefines.NOperatives.BOOST_IDEOLOGY_MAX_DRIFT_BY_OPERATIVE = 0.25			-- (normaly 0.25) the maximum drift an operative can cause, a negative value means no maximum
+	NDefines.NOperatives.BOOST_IDEOLOGY_DRIFT_STACKING_FACTOR = 0.65				-- (Normaly 0.5) multiplied to the drift of an operative for each operative after the first one, with the greatest drift. So if we have the following drift values [ 0.1, 0.3, 0.2 ], the factor is applied twice for the lowest value and once for the 2nd lowest one as such : [ 0.3, 0.2 * D, 0.1 * D * D ] and then the result is summed up to give the final drift value.
+	NDefines.NOperatives.BOOST_IDEOLOGY_DAILY_XP_GAIN = 0.35						-- (normaly 0.274)
+	NDefines.NOperatives.OPERATIVE_BASE_BOOST_IDEOLOGY = 0.15					-- (normaly 0.1) Base amount of daily ideology drift provoked by an operative
+	NDefines.NOperatives.OPERATIVE_BASE_PROPAGANDA_POWER = 0.0004				-- (normaly 0.0005) Base amount of daily war support and stability change when an operative is assigned to propaganda
+	NDefines.NOperatives.PROPAGANDA_OPERATIVE_STACKING_FACTOR = 0.6				-- (normaly 0.5) Multiplied to the Stability/WarSupport drift values of each operative after the one with the greatest values. The process is done separatly for Stability and WarSupport
+				--no change made, but kept in case i change my mind
+			--NDefines.NOperatives.PROPAGANDA_COUNTRY_STACKING_FACTOR = 0.5,			-- Multiplied to the Stability/WarSupport drift values of each country after the one with the greatest values. The process is done separatly for Stability and WarSupport
+	NDefines.NOperatives.PROPAGANDA_DAILY_XP_GAIN = 0.420						-- (normaly 0.35
+				--no change made, but kept in case i change my mind
+			--NDefines.NOperatives.OPERATIVE_BASE_ROOT_OUT_RESISTANCE_EFFICIENCY = 1.0,	-- The base efficiency of an operative at the RootOutResistance mission (this is a percentage, 1.0 == 100%)
+	NDefines.NOperatives.OPERATIVE_BASE_ROOT_OUT_RESISTANCE_EFFICIENCY = 0.9	-- (normaly 1.0) The base efficiency of an operative at the RootOutResistance mission (this is a percentage, 1.0 == 100%)
+	NDefines.NOperatives.ROOT_OUT_RESISTANCE_STACKING_FACTOR = 0.6				-- (normaly 0.5) Multiplied to each operative efficiency after the first one
+	NDefines.NOperatives.ROOT_OUT_RESISTANCE_RANGE_STEP_FACTOR = 0.6			-- (normaly 0.5) Multiplied to the summed up efficiency from all operative operating in a same state to determine the efficiency in neighboring states
+	NDefines.NOperatives.ROOT_OUT_RESISTANCE_DAILY_XP_GAIN = 0.08				-- (normaly 0.068)
+	NDefines.NOperatives.OPERATIVE_BASE_CONTROL_TRADE_DRIFT = 0.4				-- (normaly 0.5) The base daily drift in trade influence caused by an operative
+	NDefines.NOperatives.CONTROL_TRADE_STACKING_FACTOR = 0.6					-- (normaly 0.6) Multiplied to the drift of each operative after the first one
+	NDefines.NOperatives.CONTROL_TRADE_DAILY_XP_GAIN = 0.164					-- (normaly 0.137)
+
+	NDefines.NOperatives.DIPLOMATIC_PRESSURE_OPERATIVE_STACKING_FACTOR = 0.6	-- (normaly 0.5) The diminishing return factor to apply to operative working for the same faction after the first one. Operatives operating for a same faction are ranked by their efficiency and their opinion and tension drift are individually applyied a stacking factor like so: DRIFT * STACKING_FACTOR^RANK where RANK is a value from 0 to the number of operative -1 where the opperative with the highest drift value has rank 0
+	NDefines.NOperatives.DIPLOMATIC_PRESSURE_DAILY_XP_GAIN = 0.164				-- (Normaly 0.137)
+	NDefines.NOperatives.MAX_RECRUITED_OPERATIVES = 10							-- (Normaly 10)
+	NDefines.NOperatives.OPERATION_COMPLETION_XP = 24							-- (normaly 18)
+	NDefines.NOperatives.ON_CAPTURE_COUNTERINTELLIGENCE_OPERATIVE_XP_GAIN = 120	-- (normaly 100) Xp gain when an enemy operative is captured in the country the operative is assigned to counter intelligence to. Apply to a single randomly selected operative
+
+	-- NIntel Defines
+	NDefines.NIntel.RADAR_INTEL_STACKING_FACTOR = 0.6							-- (Normaly 0.5) Used when multiple radars cover the same province
+	NDefines.NIntel.RECON_PLANE_INTEL_BASE = 0.024								-- (normaly 0.02) intel base amount for a strategic area per plane
+
+	-- NChracter defines
 	NDefines.NCharacter.OFFICER_CORP_ADVISOR_ENTRIES_IN_MENU = { "high_command", "theorist", "army_chief", "air_chief", "navy_chief" }
 	NDefines.NCharacter.OFFICER_CORP_HIGH_COMMAND_SLOTS_IN_MENU = 3 --For Alert manager to count the number of High Command Slots in the UI
 
+	-- NSupply Defines
 	NDefines.NSupply.MAX_RAILWAY_LEVEL = 6 -- update railway texture as well, each frame corresponds to a level
 	NDefines.NSupply.DEFAULT_STARTING_TRUCK_RATIO = 1 -- countries get this ratio of starting truck in their buffers compared to their need -- vanilla 1.5
-
-	-- MD new nukes
-	NDefines.NMilitary.NUKE_MIN_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
-	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
-	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
-	
-	-- No slowdown
-	NDefines.NGame.LAG_DAYS_FOR_LOWER_SPEED = 500
-    NDefines.NGame.LAG_DAYS_FOR_PAUSE = 100
