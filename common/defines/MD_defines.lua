@@ -292,17 +292,17 @@
 	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
-	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 250 -- 100
-	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 600 -- 100
-	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 350 -- 100
-	NDefines.NAir.AIR_WING_MAX_STATS_SPEED = 4000 -- 150
-	NDefines.NAir.AIR_WING_MAX_STATS_BOMBING = 500 -- 100
+	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 999 -- 100
+	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 999 -- 100
+	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 999 -- 100
+	NDefines.NAir.AIR_WING_MAX_STATS_SPEED = 4000 -- 800
+	NDefines.NAir.AIR_WING_MAX_STATS_BOMBING = 999 -- 100
 	NDefines.NAir.AIR_WING_AVERAGE_SIZE = 50 -- Eyeballed average amount of airplanes in the airwings
 	NDefines.NAir.AIR_WING_BOMB_DAMAGE_FACTOR = 45 -- 2
 	NDefines.NAir.BIGGEST_AGILITY_FACTOR_DIFF = 5 -- 2.5
 	NDefines.NAir.COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.80 -- 0.45
 	NDefines.NAir.COMBAT_MULTIPLANE_CAP = 2.0 -- 3.0
-	NDefines.NAir.COMBAT_DAMAGE_SCALE = 0.075 -- 0.1
+	NDefines.NAir.COMBAT_DAMAGE_SCALE = 0.5 -- 0.25
 	NDefines.NAir.COMBAT_DAMAGE_SCALE_CARRIER = 1 -- 6
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 10000 -- 10000 --Upped the count to ensure more airusages and coverage
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 6000 -- 10000
@@ -454,13 +454,13 @@
 	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.015
 	NDefines.NNavy.GUN_HIT_PROFILES = { -- hit profiles for guns, if target ih profile is lower the gun will have lower accuracy
 		999.0,	-- big guns
-		40.0,	-- torpedos  #anti ship guided weapons
-		30.0,	-- small guns
+		25.0,	-- torpedos  #anti ship guided weapons
+		20.0,	-- small guns
 	}
 	NDefines.NNavy.BASE_GUN_COOLDOWNS = { -- number of hours for a gun to be ready after shooting
 		999.0,	-- big guns
 		4.0,	-- torpedos #anti ship guided weapons
-		3.0,	-- small guns
+		4.0,	-- small guns
 	}
 
 	NDefines.NNavy.DEPTH_CHARGES_HIT_CHANCE_MULT = 1.5 -- multiplies hit chance of depth charges
@@ -508,7 +508,7 @@
 
 	NDefines.NNavy.BASE_POSITIONING = 0.75 -- 1.0
 	NDefines.NNavy.RELATIVE_SURFACE_DETECTION_TO_POSITIONING_FACTOR = 0.01 -- 0.01
-	NDefines.NNavy.MAX_POSITIONING_BONUS_FROM_SURFACE_DETECTION = 0.15 -- 0.0
+	NDefines.NNavy.MAX_POSITIONING_BONUS_FROM_SURFACE_DETECTION = 0 -- 0.0
 	NDefines.NNavy.HIGHER_SHIP_RATIO_POSITIONING_PENALTY_FACTOR = 0.4 -- 0.25
 	NDefines.NNavy.MAX_POSITIONING_PENALTY_FROM_HIGHER_SHIP_RATIO = 1.2 -- 0.5
 	NDefines.NNavy.HIGHER_CARRIER_RATIO_POSITIONING_PENALTY_FACTOR = 0.2 -- 0.2
