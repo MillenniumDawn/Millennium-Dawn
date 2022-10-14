@@ -454,8 +454,8 @@
 	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.015
 	NDefines.NNavy.GUN_HIT_PROFILES = { -- hit profiles for guns, if target ih profile is lower the gun will have lower accuracy
 		999.0,	-- big guns
-		20.0,	-- torpedos  #anti ship guided weapons
-		15.0,	-- small guns
+		40.0,	-- torpedos  #anti ship guided weapons
+		30.0,	-- small guns
 	}
 	NDefines.NNavy.BASE_GUN_COOLDOWNS = { -- number of hours for a gun to be ready after shooting
 		999.0,	-- big guns
