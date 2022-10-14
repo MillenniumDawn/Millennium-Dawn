@@ -454,8 +454,8 @@
 	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.015
 	NDefines.NNavy.GUN_HIT_PROFILES = { -- hit profiles for guns, if target ih profile is lower the gun will have lower accuracy
 		999.0,	-- big guns
-		25.0,	-- torpedos  #anti ship guided weapons
-		20.0,	-- small guns
+		20.0,	-- torpedos  #anti ship guided weapons
+		15.0,	-- small guns
 	}
 	NDefines.NNavy.BASE_GUN_COOLDOWNS = { -- number of hours for a gun to be ready after shooting
 		999.0,	-- big guns
@@ -506,11 +506,11 @@
 	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 4				-- capital to carrier count in carrier taskfoces
 	NDefines.NNavy.SCREENS_TO_CAPITAL_RATIO = 2				-- screens to capital/carrier count in carrier & capital taskforces
 
-	NDefines.NNavy.BASE_POSITIONING = 0.75 -- 1.0
+	NDefines.NNavy.BASE_POSITIONING = 0.70 -- 1.0
 	NDefines.NNavy.RELATIVE_SURFACE_DETECTION_TO_POSITIONING_FACTOR = 0.01 -- 0.01
 	NDefines.NNavy.MAX_POSITIONING_BONUS_FROM_SURFACE_DETECTION = 0 -- 0.0
-	NDefines.NNavy.HIGHER_SHIP_RATIO_POSITIONING_PENALTY_FACTOR = 0.4 -- 0.25
-	NDefines.NNavy.MAX_POSITIONING_PENALTY_FROM_HIGHER_SHIP_RATIO = 1.2 -- 0.5
+	NDefines.NNavy.HIGHER_SHIP_RATIO_POSITIONING_PENALTY_FACTOR = 0.5 -- 0.25
+	NDefines.NNavy.MAX_POSITIONING_PENALTY_FROM_HIGHER_SHIP_RATIO = 1 -- 0.5
 	NDefines.NNavy.HIGHER_CARRIER_RATIO_POSITIONING_PENALTY_FACTOR = 0.2 -- 0.2
 	NDefines.NNavy.MAX_CARRIER_RATIO_POSITIONING_PENALTY_FACTOR = 0.2 -- 0.2
 	NDefines.NNavy.POSITIONING_PENALTY_FOR_SHIPS_JOINED_COMBAT_AFTER_IT_STARTS = 0.025 -- 0.05
