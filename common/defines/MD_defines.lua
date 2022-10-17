@@ -467,7 +467,7 @@
 	NDefines.NNavy.DEPTH_CHARGES_DAMAGE_MULT = 2 	-- multiplies damage of depth charges
 	NDefines.NNavy.DEPTH_CHARGES_HIT_PROFILE = 24.0	-- hit profile for depth charges
 	NDefines.NNavy.CARRIER_STACK_PENALTY = 2
-	NDefines.NNavy.CARRIER_STACK_PENALTY_EFFECT = 0.8
+	NDefines.NNavy.CARRIER_STACK_PENALTY_EFFECT = 0.5
 	NDefines.NNavy.CARRIER_ONLY_COMBAT_ACTIVATE_TIME = 0 -- 0
 	NDefines.NNavy.CAPITAL_ONLY_COMBAT_ACTIVATE_TIME = 6
 	NDefines.NNavy.ALL_SHIPS_ACTIVATE_TIME = 8 -- 8
