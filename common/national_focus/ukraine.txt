@@ -1,7 +1,7 @@
-﻿# Author(s): Angriest Bird
+# Author(s): Angriest Bird
 # Last Modified: Feb. 5th, 2022
 focus_tree = {
-	id = ukraine
+	id = ukraine_focus
 	country = {
 		factor = 0
 		modifier = { add = 15 tag = UKR }
@@ -179,9 +179,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_baltic_black_sea_union"
 			add_ideas = faction_baltic_black_sea_union_member
 			create_faction = UKR_baltic_black_sea_union_faction
-			for_each_scope_loop = {
+			for_each_scope_loop = { # Prevents Ukraine from getting this
 				array = global.baltic_black_sea_union_member
-				country_event = { id = ukraine_md.11 days = 1 }
+				if = {
+					limit = {
+						NOT = { original_tag = UKR }
+					}
+					country_event = { id = ukraine_md.11 days = 1 }
+				}
 			}
 		}
 
@@ -218,8 +223,11 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_WAR_SUPPORT }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_euroscepticism"
-			EU_potential_eurosceptic_rise_5_percent = yes
-			ROOT_eurosceptic_rise_15_percent = yes
+			set_temp_variable = { modify_eurosceptic = 0.05 }
+			EU_potential_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = 0.15 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			add_war_support = 0.05
 		}
 
@@ -329,8 +337,11 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EUROPEAN_UNION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_western_doctrine"
-			EU_potential_eurosceptic_decline_3_percent = yes
-			ROOT_eurosceptic_decline_5_percent = yes
+			set_temp_variable = { modify_eurosceptic = -0.03 }
+			EU_potential_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			every_country = {
 				limit = {
 					OR = {
@@ -384,8 +395,11 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_EUROPEAN_UNION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_closer_ties_with_eu"
-			EU_potential_eurosceptic_decline_5_percent = yes
-			ROOT_eurosceptic_decline_10_percent = yes
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			EU_potential_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.10 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			for_each_scope_loop = {
 				array = global.EU_member
 				country_event = { id = ukraine_md.9 days = 1 }
@@ -427,8 +441,11 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_UKR_EAST_WEST FOCUS_FILTER_EUROPEAN_UNION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_association_agreement"
-			EU_potential_eurosceptic_decline_5_percent = yes
-			ROOT_eurosceptic_decline_10_percent = yes
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			EU_potential_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.10 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			every_country = {
 				limit = { has_idea = EU_member }
 				add_opinion_modifier = { target = UKR modifier = european_commitment }
@@ -472,7 +489,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_european_union_integration"
 			UKR_wve_rivlary_alignment_to_the_west = yes
-			EU_potential_eurosceptic_decline_5_percent = yes
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			EU_potential_eurosceptic_change = yes
 			if = {
 				limit = {
 					ROM = {
@@ -832,6 +850,10 @@ focus_tree = {
 				factor = 5
 				has_country_flag = UKR_supported_russian_parties_flag
 			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
@@ -937,18 +959,6 @@ focus_tree = {
 		relative_position_id = UKR_pro_russian_government_in_power
 		cost = 10
 
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 5
-				has_country_flag = UKR_supported_russian_parties_flag
-			}
-			modifier = {
-				factor = 0
-				SOV = { NOT = { has_government = communism } }
-			}
-		}
-
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = UKR_east_major_influence_greater_than_10_perecnt_TT
@@ -967,10 +977,19 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_apply_to_join_csto"
 			UKR_wve_rivlary_alignment_to_the_east = yes
 			SOV = { country_event = { id = CSTO.1 days = 1 } }
-			add_ai_strategy = { type = alliance id = "SOV" value = 100 }
-			add_ai_strategy = { type = befriend id = "SOV" value = 100 }
 		}
 
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				has_country_flag = UKR_supported_russian_parties_flag
+			}
+			modifier = {
+				factor = 0
+				SOV = { NOT = { has_government = communism } }
+			}
+		}
 	}
 
 	### East Trade Cooperation
@@ -980,15 +999,8 @@ focus_tree = {
 		x = -4
 		y = 2
 		relative_position_id = UKR_pro_russian_government_in_power
-		cost = 10
 
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 5
-				has_country_flag = UKR_supported_russian_parties_flag
-			}
-		}
+		cost = 10
 
 		prerequisite = { focus = UKR_eastern_doctrine }
 
@@ -1012,6 +1024,13 @@ focus_tree = {
 			change_small_medium_business_owners_opinion = yes
 		}
 
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				has_country_flag = UKR_supported_russian_parties_flag
+			}
+		}
 	}
 
 	### EACU Integration
@@ -1021,15 +1040,8 @@ focus_tree = {
 		x = -4
 		y = 3
 		relative_position_id = UKR_pro_russian_government_in_power
-		cost = 10
 
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 5
-				has_country_flag = UKR_supported_russian_parties_flag
-			}
-		}
+		cost = 10
 
 		prerequisite = { focus = UKR_expand_the_east_trade_cooperation }
 
@@ -1056,6 +1068,13 @@ focus_tree = {
 			change_small_medium_business_owners_opinion = yes
 		}
 
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				has_country_flag = UKR_supported_russian_parties_flag
+			}
+		}
 	}
 
 	### Increasing Popularity
@@ -2009,6 +2028,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_bet_on_small_business"
+			set_temp_variable = { treasury_change = -3.00 }
+			modify_treasury_effect = yes
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 1
 			}
@@ -3281,7 +3302,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_srdsc"
-			add_research_buff = yes
+			add_ideas = UKR_idea_expanding_military_research
 		}
 	}
 
@@ -3552,6 +3573,21 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_cars_production_licenses"
+			set_temp_variable = { debt_change = 5 }
+			modify_debt_effect = yes
+
+			UKR = {
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = USA.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			UKR = {
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = JAP.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
 			if = {
 				limit = { has_dlc = "Death or Dishonor" }
 				USA = {
@@ -3576,7 +3612,7 @@ focus_tree = {
 					type = industrial_complex
 					level = 2
 				}
-				add_research_buff = yes
+				add_ideas = UKR_idea_foreign_assistance
 			}
 			else_if = {
 				limit = { NOT = { has_dlc = "Death or Dishonor" } }
@@ -3585,7 +3621,7 @@ focus_tree = {
 					type = industrial_complex
 					level = 2
 				}
-				add_research_buff = yes
+				add_ideas = UKR_idea_foreign_assistance
 			}
 		}
 	}
@@ -3608,6 +3644,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_own_automobile_production"
+			set_temp_variable = { treasury_change = -3.00 }
+			modify_treasury_effect = yes
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 1
 			}
