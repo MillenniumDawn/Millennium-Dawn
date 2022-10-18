@@ -145,6 +145,7 @@
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
 	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 100
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 24
+	NDefines.NBuildings.NAVALBASE_REPAIR_MULT = 0.075 -- 0.05 -- Each level of navalbase building repairs X strength and can repair as many ships as its level
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
 	NDefines.NBuildings.RADAR_INTEL_EFFECT = 60 -- 40
 	NDefines.NBuildings.BASE_FACTORY_REPAIR = 0.25
@@ -263,7 +264,7 @@
 	NDefines.NMilitary.MAX_ARMY_EXPERIENCE = 1000 --500 --Increased Max Experience cuz reasons
 	NDefines.NMilitary.MAX_AIR_EXPERIENCE = 1000 --500
 	NDefines.NMilitary.MAX_NAVY_EXPERIENCE = 1000 --500
-	NDefines.NMilitary.SHIP_MORALE_TO_ORG_REGAIN_BASE = 0.25 -- buffed from 0.2 -- Handles the Hourly Reorganization
+	NDefines.NMilitary.SHIP_MORALE_TO_ORG_REGAIN_BASE = 0.5 -- buffed from 0.2 -- Handles the Hourly Reorganization
 	NDefines.NMilitary.ENGAGEMENT_WIDTH_PER_WIDTH = 3.0			-- how much enemy combat width we are allowed to engage per width of our own -- vanilla is 2.0
 
 	NDefines.NMilitary.NEW_ARMY_LEADER_LEVEL_CHANCES = {			-- chances for new army leaders to start at a given level
@@ -291,18 +292,18 @@
 	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
-	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 250 -- 100
-	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 600 -- 100
-	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 350 -- 100
-	NDefines.NAir.AIR_WING_MAX_STATS_SPEED = 4000 -- 150
-	NDefines.NAir.AIR_WING_MAX_STATS_BOMBING = 500 -- 100
+	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 999 -- 100
+	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 999 -- 100
+	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 999 -- 100
+	NDefines.NAir.AIR_WING_MAX_STATS_SPEED = 4000 -- 800
+	NDefines.NAir.AIR_WING_MAX_STATS_BOMBING = 999 -- 100
 	NDefines.NAir.AIR_WING_AVERAGE_SIZE = 50 -- Eyeballed average amount of airplanes in the airwings
 	NDefines.NAir.AIR_WING_BOMB_DAMAGE_FACTOR = 45 -- 2
 	NDefines.NAir.BIGGEST_AGILITY_FACTOR_DIFF = 5 -- 2.5
 	NDefines.NAir.COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.80 -- 0.45
 	NDefines.NAir.COMBAT_MULTIPLANE_CAP = 2.0 -- 3.0
-	NDefines.NAir.COMBAT_DAMAGE_SCALE = 0.075 -- 0.1
-	NDefines.NAir.COMBAT_DAMAGE_SCALE_CARRIER = 3 -- 6
+	NDefines.NAir.COMBAT_DAMAGE_SCALE = 0.5 -- 0.25
+	NDefines.NAir.COMBAT_DAMAGE_SCALE_CARRIER = 1 -- 6
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 10000 -- 10000 --Upped the count to ensure more airusages and coverage
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 6000 -- 10000
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 5000 -- 10000
@@ -311,14 +312,14 @@
 	NDefines.NAir.DETECT_CHANCE_FROM_AIRCRAFTS = 0.975 -- 0.8
 	NDefines.NAir.DETECT_CHANCE_FROM_AIRCRAFTS_EFFECTIVE_COUNT = 100 -- 3000
 	NDefines.NAir.DETECT_CHANCE_FROM_NIGHT = -0.10 -- -0.2
-	NDefines.NAir.CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 1 -- 4
+	NDefines.NAir.CARRIER_HOURS_DELAY_AFTER_EACH_COMBAT = 4 -- 4
 	NDefines.NAir.HOURS_DELAY_AFTER_EACH_COMBAT = 4 -- 4
-	NDefines.NAir.NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 0.55 -- 0.3
+	NDefines.NAir.NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 0.3 -- 0.3
 	NDefines.NAir.NAVAL_STRIKE_DETECTION_BALANCE_FACTOR = 0.65 -- 0.7
 	NDefines.NAir.NAVAL_RECON_DETECTION_BALANCE_FACTOR = 0.875 -- 0.7
-	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_STR = 4 -- 2
-	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_ORG = 2 -- 3
-	NDefines.NAir.NAVAL_STRIKE_CARRIER_MULTIPLIER = 12.5 -- 5.0
+	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_STR = 0.7 -- 2
+	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_ORG = 1 -- 3
+	NDefines.NAir.NAVAL_STRIKE_CARRIER_MULTIPLIER = 5 -- 5.0
 	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.025 -- 0.05
 	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 0.875 -- 2.0
 	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.25 -- 0.5
@@ -367,17 +368,15 @@
 	NDefines.NNavy.BEST_CAPITALS_TO_SCREENS_RATIO = 0.5 -- 0.25
 	NDefines.NNavy.DETECTION_CHANCE_BALANCE = 1.5 -- 2.5
 	NDefines.NNavy.DECRYPTION_SPOTTING_BONUS = 0.3 -- 0.2
-	NDefines.NNavy.COMBAT_TORPEDO_ATTACK_MAX_RANGE = 10.0 -- 4
-	NDefines.NNavy.COMBAT_TORPEDO_ATTACK_USE_CHANCE = 0.2 -- 0.25
-	NDefines.NNavy.COMBAT_EVASION_TO_HIT_CHANCE_TORPEDO_MULT = 45 -- 40
+	NDefines.NNavy.COMBAT_EVASION_TO_HIT_CHANCE_TORPEDO_MULT = 1 -- 40
 	NDefines.NNavy.COMBAT_LOW_ORG_HIT_CHANCE_PENALTY = -0.8 -- -0.5
 	NDefines.NNavy.COMBAT_TORPEDO_CRITICAL_CHANCE = 0.85 -- 0.2
 	NDefines.NNavy.COMBAT_TORPEDO_CRITICAL_DAMAGE_MULT = 5.0 -- 2.0
-	NDefines.NNavy.COMBAT_DAMAGE_TO_STR_FACTOR = 1.4-- 1.6
-	NDefines.NNavy.COMBAT_DAMAGE_TO_ORG_FACTOR = 1.8 -- 1.9
-	NDefines.NNavy.COMBAT_DAMAGE_REDUCTION_ON_RETREAT = 0.6 -- 0.8
+	NDefines.NNavy.COMBAT_DAMAGE_TO_STR_FACTOR = 2-- 1.6
+	NDefines.NNavy.COMBAT_DAMAGE_TO_ORG_FACTOR = 2.5 -- 1.9
+	NDefines.NNavy.COMBAT_DAMAGE_REDUCTION_ON_RETREAT = 0.75 -- 0.8
 	NDefines.NNavy.COMBAT_ESCAPING_SPEED_BALANCE = 0.9 -- 0.8
-	NDefines.NNavy.COMBAT_SHIP_SPEED_TO_FIELD_FACTOR = 0.3 -- 0.03
+	NDefines.NNavy.COMBAT_SHIP_SPEED_TO_FIELD_FACTOR = 0.15 -- 0.03
 	NDefines.NNavy.COMBAT_MAX_DISTANCE_TO_CENTER_LINE = 350 -- 50
 	NDefines.NNavy.COMBAT_MAX_DISTANCE_TO_ARRIVE = 600 -- 80
 	NDefines.NNavy.COMBAT_MIN_DURATION = 16 -- 8
@@ -385,16 +384,20 @@
 	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_LOW = 0.25 -- 0.2
 	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_MEDIUM = 0.55 -- 0.5
 	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_HIGH = 0.85 -- 0.9
-	NDefines.NNavy.NAVY_EXPENSIVE_IC = 15000 -- 5500
+	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_LOW_COMBAT = 0.25 -- 0.6
+	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_MEDIUM_COMBAT = 0.5 -- 0.3
+	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_HIGH_COMBAT = 0.75 -- 0.1
+	NDefines.NNavy.REPAIR_AND_RETURN_UNIT_DYING_STR = 0.5 -- 0.2
+	NDefines.NNavy.NAVY_EXPENSIVE_IC = 18000 -- 5500
 	NDefines.NNavy.CONVOY_EFFICIENCY_MIN_VALUE = 0.1 -- 0.05
 	NDefines.NNavy.AMPHIBIOUS_LANDING_PENALTY = -0.5 -- -0.7
-	NDefines.NNavy.BASE_CARRIER_SORTIE_EFFICIENCY = 0.7 -- 0.5
+	NDefines.NNavy.BASE_CARRIER_SORTIE_EFFICIENCY = 0.5 -- 0.5
 	NDefines.NNavy.NAVAL_SPEED_MODIFIER = 0.1 -- 0.1
 	NDefines.NNavy.NAVAL_TRANSFER_BASE_SPEED = 12 -- 6
 	NDefines.NNavy.NAVAL_INVASION_PREPARE_HOURS = 96 -- 168
-	NDefines.NNavy.ANTI_AIR_TARGETING = 1.15 -- 0.9
-	NDefines.NNavy.ANTI_AIR_TARGETTING_TO_CHANCE = 0.30 -- 0.2
-	NDefines.NNavy.ANTI_AIR_ATTACK_TO_AMOUNT = 0.004 -- 0.01
+	NDefines.NNavy.ANTI_AIR_TARGETING = 1 -- 0.9
+	NDefines.NNavy.ANTI_AIR_TARGETTING_TO_CHANCE = 0.8 -- 0.2
+	NDefines.NNavy.ANTI_AIR_ATTACK_TO_AMOUNT = 0.002 -- 0.01
 	NDefines.NNavy.ENEMY_AIR_SUPERIORITY_IMPACT = -1.25
 
 	NDefines.NNavy.MISSION_FUEL_COSTS = {
@@ -445,24 +448,24 @@
 	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2 -- 2.0
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_POW_EFFECT = 1.01
 	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 1 -- Reduced to 100% from 200% -- 25% is vanilla
-	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.05
-	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.025
-
+	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.04
+	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.015
+	NDefines.NNavy.COMBAT_MIN_HIT_CHANCE = 0.05	-- never less hit chance then this?
+	NDefines.NNavy.MIN_HIT_PROFILE_MULT = 0.1 -- largest hit profile penalty to hitting (higher value of the define makes ships easier to hit, i assume by reducing the penalty caused by small hit profile of target ship)
 	NDefines.NNavy.GUN_HIT_PROFILES = { -- hit profiles for guns, if target ih profile is lower the gun will have lower accuracy
-		120.0,	-- big guns
-		40.0,	-- torpedos  #anti ship guided weapons
-		30.0,	-- small guns
+		999.0,	-- big guns
+		50.0,	-- torpedos  #anti ship guided weapons
+		20.0,	-- small guns
 	}
 	NDefines.NNavy.BASE_GUN_COOLDOWNS = { -- number of hours for a gun to be ready after shooting
-		1.0,	-- big guns
+		999.0,	-- big guns
 		4.0,	-- torpedos #anti ship guided weapons
-		2.0,	-- small guns
+		3.0,	-- small guns
 	}
 
 	NDefines.NNavy.DEPTH_CHARGES_HIT_CHANCE_MULT = 1.5 -- multiplies hit chance of depth charges
 	NDefines.NNavy.DEPTH_CHARGES_DAMAGE_MULT = 2 	-- multiplies damage of depth charges
 	NDefines.NNavy.DEPTH_CHARGES_HIT_PROFILE = 24.0	-- hit profile for depth charges
-	NDefines.NNavy.SHIP_TO_FLEET_ANTI_AIR_RATIO = 0.4
 	NDefines.NNavy.CARRIER_STACK_PENALTY = 2
 	NDefines.NNavy.CARRIER_STACK_PENALTY_EFFECT = 0.5
 	NDefines.NNavy.CARRIER_ONLY_COMBAT_ACTIVATE_TIME = 0 -- 0
@@ -477,11 +480,11 @@
 	NDefines.NNavy.TRAINING_ACCIDENT_STRENGTH_LOSS_FACTOR = 0.02 -- 0.05
 	NDefines.NNavy.TRAINING_EXPERIENCE_FACTOR = 0.15 -- 0.3
 	NDefines.NNavy.UNIT_EXPERIENCE_PER_COMBAT_HOUR = 15 -- 10
-	NDefines.NNavy.LEADER_EXPERIENCE_SCALE = 3 -- 1
-	NDefines.NNavy.SHIP_TO_FLEET_ANTI_AIR_RATIO = 0.25 -- 0.2
-	NDefines.NNavy.ANTI_AIR_POW_ON_INCOMING_AIR_DAMAGE = 0.25 -- 0.2
+	NDefines.NNavy.LEADER_EXPERIENCE_SCALE = 2 -- 1
+	NDefines.NNavy.SHIP_TO_FLEET_ANTI_AIR_RATIO = 0.1 -- 0.2
+	NDefines.NNavy.ANTI_AIR_POW_ON_INCOMING_AIR_DAMAGE = 0.2 -- 0.2
 	NDefines.NNavy.ANTI_AIR_MULT_ON_INCOMING_AIR_DAMAGE = 0.2 -- 0.15
-	NDefines.NNavy.MAX_ANTI_AIR_REDUCTION_EFFECT_ON_INCOMING_AIR_DAMAGE = 0.65 -- 0.5
+	NDefines.NNavy.MAX_ANTI_AIR_REDUCTION_EFFECT_ON_INCOMING_AIR_DAMAGE = 0.99 -- 0.75
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT = 0.25 -- 0.1
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT_FROM_AIR = 0.2 -- 0.1
 	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CAPITALS = 1.5 -- 3.0
@@ -503,11 +506,11 @@
 	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 4				-- capital to carrier count in carrier taskfoces
 	NDefines.NNavy.SCREENS_TO_CAPITAL_RATIO = 2				-- screens to capital/carrier count in carrier & capital taskforces
 
-	NDefines.NNavy.BASE_POSITIONING = 0.75 -- 1.0
+	NDefines.NNavy.BASE_POSITIONING = 0.70 -- 1.0
 	NDefines.NNavy.RELATIVE_SURFACE_DETECTION_TO_POSITIONING_FACTOR = 0.01 -- 0.01
-	NDefines.NNavy.MAX_POSITIONING_BONUS_FROM_SURFACE_DETECTION = 0.15 -- 0.0
-	NDefines.NNavy.HIGHER_SHIP_RATIO_POSITIONING_PENALTY_FACTOR = 0.4 -- 0.25
-	NDefines.NNavy.MAX_POSITIONING_PENALTY_FROM_HIGHER_SHIP_RATIO = 1.2 -- 0.5
+	NDefines.NNavy.MAX_POSITIONING_BONUS_FROM_SURFACE_DETECTION = 0 -- 0.0
+	NDefines.NNavy.HIGHER_SHIP_RATIO_POSITIONING_PENALTY_FACTOR = 0.5 -- 0.25
+	NDefines.NNavy.MAX_POSITIONING_PENALTY_FROM_HIGHER_SHIP_RATIO = 1 -- 0.5
 	NDefines.NNavy.HIGHER_CARRIER_RATIO_POSITIONING_PENALTY_FACTOR = 0.2 -- 0.2
 	NDefines.NNavy.MAX_CARRIER_RATIO_POSITIONING_PENALTY_FACTOR = 0.2 -- 0.2
 	NDefines.NNavy.POSITIONING_PENALTY_FOR_SHIPS_JOINED_COMBAT_AFTER_IT_STARTS = 0.025 -- 0.05
@@ -546,10 +549,10 @@
 	NDefines.NNavy.NAVAL_COMBAT_AIR_STRENGTH_TARGET_SCORE = 5                         -- how much score factor from low health (scales between 0->this number)
 	NDefines.NNavy.NAVAL_COMBAT_AIR_LOW_AA_TARGET_SCORE = 5                           -- how much score factor from low AA guns (scales between 0->this number)
 
-	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_MANPOWER_FACTOR = 0.02                        -- war score gained for every manpower killed when sinking a ship
-	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.02   --0.04                       -- war score gained for every IC of the sunk ship
-	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_CONVOY = 4  --10                       -- war score gained for every sunk convoy
-	NDefines.NNavy.WAR_SCORE_DECAY_FOR_BUILT_CONVOY = 2  --5                         -- war score deducted when convoy-raided enemy produces one new convoy
+	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_MANPOWER_FACTOR = 0.01                        -- war score gained for every manpower killed when sinking a ship
+	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.01   --0.04                       -- war score gained for every IC of the sunk ship
+	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_CONVOY = 2  --10                       -- war score gained for every sunk convoy
+	NDefines.NNavy.WAR_SCORE_DECAY_FOR_BUILT_CONVOY = 1  --5                         -- war score deducted when convoy-raided enemy produces one new convoy
 
 	-- NTrade Defines
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
