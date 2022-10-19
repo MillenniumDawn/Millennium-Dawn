@@ -53,7 +53,7 @@
 		y = 1
 		relative_position_id = GENERIC_political_reform
 
-		cost = 10
+		cost = 8.6
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = GENERIC_political_reform }
@@ -76,7 +76,7 @@
 		y = 1
 		relative_position_id = GENERIC_political_reform
 
-		cost = 10
+		cost = 8.6
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = GENERIC_political_reform }
@@ -99,7 +99,7 @@
 		y = 2
 		relative_position_id = GENERIC_political_reform
 
-		cost = 10
+		cost = 8.6
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = GENERIC_cabinet_reform }
@@ -126,7 +126,7 @@
 		y = 3
 		relative_position_id = GENERIC_political_reform
 
-		cost = 10
+		cost = 8.6
 
 		search_filters = {FOCUS_FILTER_STABILITY FOCUS_FILTER_WAR_SUPPORT}
 		prerequisite = { focus = GENERIC_political_games }
@@ -150,7 +150,7 @@
 		y = 3
 		relative_position_id = GENERIC_political_reform
 
-		cost = 10
+		cost = 8.6
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 		prerequisite = { focus = GENERIC_political_games }
@@ -176,7 +176,7 @@
 		y = 4
 		relative_position_id = GENERIC_political_reform
 
-		cost = 10
+		cost = 8.6
 
 		search_filters = {FOCUS_FILTER_STABILITY}
 		prerequisite = { focus = GENERIC_public_service_annoucement }
@@ -347,7 +347,9 @@
 			}
 
 			custom_effect_tooltip = influence_on_neighbors_tt
-
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = 0.03 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -370,7 +372,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_our_place"
-			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { percent_change = 8 }
 			change_domestic_influence_percentage = yes
 		}
 
@@ -388,14 +390,59 @@
 		relative_position_id = GENERIC_political_reform
 
 		cost = 10
-		search_filters = { FOCUS_FILTER_EXPENDITURE }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 		prerequisite = { focus = GENERIC_international_diplomacy }
-		prerequisite = { focus = GENERIC_political_reform }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_anti_corruption_reforms"
 			decrease_corruption = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = GENERIC_decentralization
+		icon = decentralized_economy
+
+		x = 9
+		y = 2
+		relative_position_id = GENERIC_political_reform
+
+		cost = 10
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		prerequisite = { focus = GENERIC_anti_corruption_reforms }
+		mutually_exclusive = { focus = GENERIC_centralization }
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_anti_corruption_reforms"
+			add_ideas = generic_decentralization
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = GENERIC_centralization
+		icon = centralization
+
+		x = 7
+		y = 2
+		relative_position_id = GENERIC_political_reform
+
+		cost = 10
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		prerequisite = { focus = GENERIC_anti_corruption_reforms }
+		mutually_exclusive = { focus = GENERIC_decentralization }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_anti_corruption_reforms"
+			add_ideas = generic_centralization
 		}
 
 		ai_will_do = {
@@ -963,7 +1010,7 @@
 		x = 4
 		y = 0
 
-		cost = 10
+		cost = 5
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
@@ -1039,14 +1086,14 @@
 					add_opinion_modifier = { target = ROOT modifier = political_outreach }
 				}
 			}
-
-
+			add_political_power = 75
 		}
 
 		ai_will_do = {
 			factor = 1
 		}
 	}
+
 	focus = {
 		id = GENERIC_trade_with_the_neighbors
 		icon = liberalization
@@ -1145,12 +1192,14 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_neutrality"
-			set_temp_variable = { temp_opinion = -5 }
+			set_temp_variable = { temp_opinion = -10 }
 			change_the_military_opinion = yes
 			change_foreign_jihadis_opinion = yes
+			change_defense_industry_opinion = yes
 			add_popularity = { ideology = neutrality popularity = 0.05 }
 			recalculate_party = yes
 			add_ideas = neutrality_idea
+			decrease_intervention_law_effect = yes
 		}
 
 		ai_will_do = {
@@ -1286,9 +1335,10 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_peaceful_emergence"
 			add_ideas = peaceful_emergence
-			set_temp_variable = { temp_opinion = -5 }
+			set_temp_variable = { temp_opinion = -10 }
 			change_the_military_opinion = yes
 			change_foreign_jihadis_opinion = yes
+			change_defense_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1363,7 +1413,7 @@
 	}
 	focus = {
 		id = GENERIC_build_railways
-		icon = infrastructure
+		icon = Generic_Railroads
 
 		x = 1
 		y = 1
@@ -1374,17 +1424,9 @@
 		prerequisite = { focus = GENERIC_build_roads }
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
-		available = {
-			any_owned_state = {
-				infrastructure < 5
-			}
-		}
-
-		bypass_if_unavailable = yes
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_railways"
-			one_random_infrastructure = yes
+			add_ideas = railway_construction_effort
 			one_random_infrastructure = yes
 		}
 
@@ -1438,7 +1480,7 @@
 		y = 2
 		relative_position_id = GENERIC_build_roads
 
-		cost = 10
+		cost = 7.86
 
 		prerequisite = { focus = GENERIC_build_railways }
 		prerequisite = { focus = GENERIC_mobilize_the_working_class }
@@ -1446,17 +1488,27 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_expand_urban_areas"
+			set_temp_variable = { treasury_change = 0 }
 			random_owned_state = {
 				limit = { state_population > 1000000 }
 				add_extra_state_shared_building_slots = 2
+				add_to_temp_variable = { treasury_change = -2 }
 			}
 			if = {
 				limit = { all_owned_state = { state_population < 1000000 } }
-				capital_scope = { add_extra_state_shared_building_slots = 2 }
+				capital_scope = {
+					add_extra_state_shared_building_slots = 2
+					add_to_temp_variable = { treasury_change = -2 }
+				}
 			}
+			modify_treasury_effect = yes
 
 			set_temp_variable = { temp_opinion = -10 }
 			change_farmers_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
+			change_industrial_conglomerates_opinion = yes
+			change_international_bankers_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1466,13 +1518,13 @@
 
 	focus = {
 		id = GENERIC_developmentalism
-		icon = construction2
+		icon = brick_laying
 
 		x = 1
 		y = 3
 		relative_position_id = GENERIC_build_roads
 
-		cost = 10
+		cost = 7.86
 
 		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = GENERIC_build_highways }
@@ -1496,13 +1548,13 @@
 	}
 	focus = {
 		id = GENERIC_increase_resource_production
-		icon = steel_production2
+		icon = resource_extraction
 
 		x = 1
 		y = 4
 		relative_position_id = GENERIC_build_roads
 
-		cost = 10
+		cost = 7.86
 
 		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESOURCE}
 		prerequisite = { focus = GENERIC_developmentalism }
@@ -1510,7 +1562,7 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_increase_resource_production"
 			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = 0.001 }
+			multiply_temp_variable = { treasury_change = -0.001 }
 			modify_treasury_effect = yes
 			if = {
 				limit = {
@@ -1581,7 +1633,7 @@
 		y = 3
 		relative_position_id = GENERIC_build_roads
 
-		cost = 10
+		cost = 7.86
 
 		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE}
 		prerequisite = { focus = GENERIC_expand_urban_areas }
@@ -1597,26 +1649,71 @@
 	}
 	focus = {
 		id = GENERIC_autarky
-		icon = agriculture
+		icon = GENERIC_austerity_measures
 
 		x = 3
 		y = 4
 		relative_position_id = GENERIC_build_roads
 
-		cost = 10
+		cost = 7.86
 
 		search_filters = {FOCUS_FILTER_RESOURCE}
 		prerequisite = { focus = GENERIC_economic_autonomy }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_autarky"
-			add_ideas = autarchy_focus
+			swap_ideas = {
+				remove_idea = economic_autonomy
+				add_idea = economic_autonomy2
+			}
 		}
 
 		ai_will_do = {
 			factor = 1
 		}
 	}
+
+	focus = {
+		id = GENERIC_economic_measures
+		icon = economic_prosperity
+
+		x = 2
+		y = 5
+		relative_position_id = GENERIC_build_roads
+
+		cost = 7.86
+
+		search_filters = {FOCUS_FILTER_RESOURCE}
+		prerequisite = { focus = GENERIC_increase_resource_production }
+		prerequisite = { focus = GENERIC_autarky }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_autarky"
+			if = {
+				limit = {
+					NOT = {
+						has_idea = economic_boom
+						has_idea = fast_growth
+						has_idea = stable_growth
+					}
+				}
+				increase_economic_growth = yes
+			}
+			swap_ideas = {
+				remove_idea = economic_autonomy2
+				add_idea = economic_autonomy3
+			}
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.03 }
+			modify_debt_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
 	focus = {
 		id = GENERIC_assure_the_national_fuel_reserve
 		icon = oil_trade
@@ -1643,7 +1740,7 @@
 					level = 1
 				}
 			}
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_fossil_fuel_industry_opinion = yes
 		}
 
@@ -1671,7 +1768,7 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_ease_of_business_reforms"
 			capital_scope = { add_extra_state_shared_building_slots = 1 }
-			add_political_power = 75
+			add_political_power = 100
 		}
 
 		ai_will_do = {
@@ -1686,7 +1783,7 @@
 		y = 1
 		relative_position_id = GENERIC_ease_of_business_reforms
 
-		cost = 10
+		cost = 7.86
 
 		prerequisite = { focus = GENERIC_ease_of_business_reforms }
 		search_filters = {FOCUS_FILTER_INDUSTRY }
@@ -1797,6 +1894,10 @@
 				factor = 0.5
 				check_variable = { interest_rate > 14.99 }
 			}
+			modifier = {
+				factor = 2
+				num_of_civilian_factories < 5
+			}
 		}
 	}
 	focus = {
@@ -1811,6 +1912,162 @@
 
 		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = GENERIC_light_industry_investments }
+		available = {
+			num_of_factories > 7
+			has_war = no
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_heavy_industry_investments"
+			if = { limit = { num_of_factories > 0 }
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
+				capital_scope = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else_if = { limit = { num_of_factories > 20 }
+				set_temp_variable = { treasury_change = -15 }
+				modify_treasury_effect = yes
+				capital_scope = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 1
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else_if = { limit = { num_of_factories > 35 }
+				set_temp_variable = { treasury_change = -22.5 }
+				modify_treasury_effect = yes
+				capital_scope = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 1
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 1
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			else_if = {
+				limit = { num_of_factories > 70 }
+				set_temp_variable = { treasury_change = -30 }
+				modify_treasury_effect = yes
+				capital_scope = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 1
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+				random_owned_controlled_state = {
+					limit = {
+						free_building_slots = {
+							building = arms_factory
+							size > 1
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_defense_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				disabled_ai_unit_list = yes
+			}
+		}
+	}
+
+	focus = {
+		id = GENERIC_refitting_the_military_industry
+		icon = tank_production
+
+		x = 2
+		y = 2
+		relative_position_id = GENERIC_light_industry_investments
+
+		cost = 10
+
+		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
+		prerequisite = { focus = GENERIC_heavy_industry_investments }
 		available = {
 			num_of_factories > 7
 			has_war = no
@@ -1982,7 +2239,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_satisfy_the_middle_class"
 			add_stability = 0.05
 			one_office_construction = yes
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_industrial_conglomerates_opinion = yes
 			change_small_medium_business_owners_opinion = yes
 			change_the_bazaar_opinion = yes
@@ -2003,7 +2260,7 @@
 		y = 1
 		relative_position_id = GENERIC_satisfy_the_middle_class
 
-		cost = 10
+		cost = 7.86
 
 		search_filters = {FOCUS_FILTER_INTERNAL_FACTION}
 		prerequisite = { focus = GENERIC_satisfy_the_middle_class }
@@ -2037,7 +2294,7 @@
 		y = 1
 		relative_position_id = GENERIC_satisfy_the_middle_class
 
-		cost = 5
+		cost = 7.86
 
 		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY}
 		prerequisite = { focus = GENERIC_satisfy_the_middle_class }
@@ -2048,10 +2305,11 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_please_the_upper_class"
-			add_stability = 0.02
-			set_temp_variable = { temp_opinion = 5 }
+			add_stability = 0.05
+			set_temp_variable = { temp_opinion = 10 }
 			change_oligarchs_opinion = yes
 			change_landowners_opinion = yes
+
 		}
 
 		ai_will_do = {
@@ -2129,18 +2387,19 @@
 		y = 3
 		relative_position_id = GENERIC_satisfy_the_middle_class
 
-		cost = 10
+		cost = 7.86
 
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH}
 		prerequisite = { focus = GENERIC_please_the_upper_class }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_import_foreign_automobiles"
-			add_political_power = 50
+			add_political_power = 100
 			add_tech_bonus = {
 				name = Cat_AFV
-				category = Cat_ENG_EQP
+				category = Cat_UTIL
 				category = Cat_AFV
+				category = Cat_IFV
 				bonus = 0.25
 				uses = 2
 			}
@@ -2158,7 +2417,7 @@
 		y = 4
 		relative_position_id = GENERIC_satisfy_the_middle_class
 
-		cost = 10
+		cost = 7.86
 
 		available = {
 			num_of_factories > 10
@@ -2325,7 +2584,7 @@
 		id = GENERIC_naval_reform
 		icon = navy
 
-		x = 18
+		x = 21
 		y = 0
 
 		cost = 10
@@ -2335,7 +2594,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_reform"
-			navy_experience = 25
+			navy_experience = 50
 			add_doctrine_cost_reduction = {
 				name = GENERIC_naval_reform
 				category = Cat_naval_doctrine
@@ -2392,6 +2651,10 @@
 			modifier = {
 				factor = 0
 				disabled_ai_unit_list = yes
+			}
+			modifier = {
+				factor = 0
+				num_of_civilian_factories < 10
 			}
 		}
 	}
@@ -2518,6 +2781,10 @@
 				factor = 0
 				disabled_ai_unit_list = yes
 			}
+			modifier = {
+				factor = 0
+				num_of_civilian_factories < 10
+			}
 		}
 	}
 	focus = {
@@ -2606,6 +2873,33 @@
 	}
 
 	focus = {
+		id = GENERIC_vessel_production
+		icon = naval_industry
+
+		x = -3
+		y = 3
+		relative_position_id = GENERIC_naval_reform
+
+		cost = 5
+
+		search_filters = {FOCUS_FILTER_RESEARCH}
+		prerequisite = { focus = GENERIC_nuclear_submarines }
+		prerequisite = { focus = GENERIC_dockyards }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_doctrine_expertise"
+			add_timed_idea = {
+				idea = naval_production_bonus4
+				days = 730
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
 		id = GENERIC_naval_doctrine_expertise
 		icon = naval_doctrine
 
@@ -2638,7 +2932,7 @@
 		id = GENERIC_air_force_reform
 		icon = air_force
 
-		x = 22
+		x = 25
 		y = 0
 
 		cost = 10
@@ -2647,7 +2941,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_air_force_reform"
-			air_experience = 25
+			air_experience = 50
 			add_tech_bonus = {
 				name = GENERIC_air_force_reform
 				uses = 1
@@ -2805,6 +3099,7 @@
 				uses = 2
 				bonus = 0.5
 				category = Cat_L_DRONE
+				category = Cat_A_UAV
 			}
 		}
 
@@ -2845,7 +3140,7 @@
 		id = GENERIC_army_reform
 		icon = infantry_allies
 
-		x = 27
+		x = 30
 		y = 0
 
 		cost = 10
@@ -2853,7 +3148,7 @@
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_army_reform"
-			army_experience = 25
+			army_experience = 50
 			add_command_power = 20
 			increase_military_spending = yes
 		}
@@ -2950,7 +3245,7 @@
 		y = 1
 		relative_position_id = GENERIC_army_reform
 
-		cost = 10
+		cost = 7.86
 
 		search_filters = {FOCUS_FILTER_MILITARY_LAWS}
 		prerequisite = { focus = GENERIC_army_reform }
@@ -2985,6 +3280,10 @@
 				uses = 2
 				bonus = 0.5
 				category = Cat_INF_WEP
+			}
+			add_timed_idea = {
+				days = 365
+				idea = rifle_production_bonus2
 			}
 		}
 
