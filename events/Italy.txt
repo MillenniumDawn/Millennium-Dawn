@@ -3629,16 +3629,23 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-		name = italy_md.67.o1
+		name = italy_md.68.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.68.o1 executed"
-		81 = { remove_core_of = ITA }
-		release = ITA
-		ITA = { change_tag_from = ROOT }
-		ITA = {
-			set_temp_variable = { ITA_stability_factor_change = 0.4 }
-			modify_stability_factor_effect = yes
-			set_temp_variable = { ITA_stability_weekly_change = 0.002 }
-			modify_stability_weekly_effect = yes
+		every_owned_state = {
+			limit = {
+				is_capital = no
+				is_core_of = ROOT
+			}
+			add_core_of = SCL
+		}
+		release = SCL
+		SCL = {
+			for_each_loop = {
+				array = missile_inventory_array
+				value = v
+				index = i
+				add_to_variable = { missile_inventory_array^i = ROOT.missile_inventory_array^i }
+			}
 			for_each_loop = {
 				array = party_pop_array
 				value = v
@@ -3650,9 +3657,9 @@ country_event = {
 					ROOT = {
 						has_government = democratic
 					}
-					set_politics = {
-						ruling_party = democratic
-					}
+				}
+				set_politics = {
+					ruling_party = democratic
 				}
 			}
 			if = {
@@ -3660,9 +3667,9 @@ country_event = {
 					ROOT = {
 						has_government = fascism
 					}
-					set_politics = {
-						ruling_party = fascism
-					}
+				}
+				set_politics = {
+					ruling_party = fascism
 				}
 			}
 			if = {
@@ -3670,9 +3677,9 @@ country_event = {
 					ROOT = {
 						has_government = communism
 					}
-					set_politics = {
-						ruling_party = communism
-					}
+				}
+				set_politics = {
+					ruling_party = communism
 				}
 			}
 			if = {
@@ -3680,9 +3687,9 @@ country_event = {
 					ROOT = {
 						has_government = neutrality
 					}
-					set_politics = {
-						ruling_party = neutrality
-					}
+				}
+				set_politics = {
+					ruling_party = neutrality
 				}
 			}
 			if = {
@@ -3690,9 +3697,9 @@ country_event = {
 					ROOT = {
 						has_government = nationalist
 					}
-					set_politics = {
-						ruling_party = nationalist
-					}
+				}
+				set_politics = {
+					ruling_party = nationalist
 				}
 			}
 			for_each_loop = {
@@ -3708,30 +3715,145 @@ country_event = {
 				set_variable = { gov_coalition_array^i = ROOT.gov_coalition_array^i }
 			}
 		}
-		81 = { add_core_of = ITA }
 		transfer_units_fraction= {
-			target = ITA
+			target = SCL
 			size = 1
 			stockpile_ratio = 1
 			army_ratio = 1
 			navy_ratio = 1
 			air_ratio = 1
 		}
-		ITA = {
-			for_each_loop = {
-				array = missile_inventory_array
-				value = v
-				index = i
-				set_variable = { missile_inventory_array^i = ROOT.missile_inventory_array^i }
-			}
+		SCL = {
 			annex_country = {
 				target = ROOT
 				transfer_troops = yes
 			}
 		}
 
+		SCL = {
+			every_owned_state = {
+				limit = {
+					is_capital = yes
+				}
+				remove_core_of = ITA
+			}
+			every_owned_state = {
+				limit = {
+					is_capital = no
+					is_core_of = SCL
+				}
+				add_core_of = ITA
+				remove_core_of = SCL
+			}
+			release = ITA
+			ITA = {
+				set_temp_variable = { ITA_stability_factor_change = 0.4 }
+				modify_stability_factor_effect = yes
+				set_temp_variable = { ITA_stability_weekly_change = 0.002 }
+				modify_stability_weekly_effect = yes
+				for_each_loop = {
+					array = party_pop_array
+					value = v
+					index = i
+					set_variable = { party_pop_array^i = SCL.party_pop_array^i }
+				}
+				if = {
+					limit = {
+						SCL = {
+							has_government = democratic
+						}
+					}
+					set_politics = {
+						ruling_party = democratic
+					}
+				}
+				if = {
+					limit = {
+						SCL = {
+							has_government = fascism
+						}
+					}
+					set_politics = {
+						ruling_party = fascism
+					}
+				}
+				if = {
+					limit = {
+						SCL = {
+							has_government = communism
+						}
+					}
+					set_politics = {
+						ruling_party = communism
+					}
+				}
+				if = {
+					limit = {
+						SCL = {
+							has_government = neutrality
+						}
+					}
+					set_politics = {
+						ruling_party = neutrality
+					}
+				}
+				if = {
+					limit = {
+						SCL = {
+							has_government = nationalist
+						}
+					}
+					set_politics = {
+						ruling_party = nationalist
+					}
+				}
+				for_each_loop = {
+					array = ruling_party
+					value = v
+					index = i
+					set_variable = { ruling_party^i = SCL.ruling_party^i }
+				}
+				for_each_loop = {
+					array = gov_coalition_array
+					value = v
+					index = i
+					set_variable = { gov_coalition_array^i = SCL.gov_coalition_array^i }
+				}
+			}
+			SCL = {
+				every_owned_state = {
+					limit = {
+						is_capital = yes
+					}
+					add_core_of = ITA
+				}
+			}
+			transfer_units_fraction= {
+				target = ITA
+				size = 1
+				stockpile_ratio = 1
+				army_ratio = 1
+				navy_ratio = 1
+				air_ratio = 1
+			}
+			ITA = { change_tag_from = ROOT }
+			ITA = {
+				for_each_loop = {
+					array = missile_inventory_array
+					value = v
+					index = i
+					add_to_variable = { missile_inventory_array^i = SCL.missile_inventory_array^i }
+				}
+				annex_country = {
+					target = SCL
+					transfer_troops = yes
+				}
+				set_leader_ITA = yes
+			}
+		}
+
 		ai_chance = {
-			factor = 1
+			factor = 10
 		}
 	}
 }
