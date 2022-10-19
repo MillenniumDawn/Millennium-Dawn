@@ -3620,6 +3620,122 @@ country_event = {
 	}
 }
 
+#civil war winner revolter tag switches to ita
+country_event = {
+	id = italy_md.68
+	title = italy_md.68.t
+	desc = italy_md.68.d
+	picture = GFX_report_event_Tavolo_Trattative_2
+	is_triggered_only = yes
+
+	option = {
+		name = italy_md.67.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.68.o1 executed"
+		81 = { remove_core_of = ITA }
+		release = ITA
+		ITA = { change_tag_from = ROOT }
+		ITA = {
+			set_temp_variable = { ITA_stability_factor_change = 0.4 }
+			modify_stability_factor_effect = yes
+			set_temp_variable = { ITA_stability_weekly_change = 0.002 }
+			modify_stability_weekly_effect = yes
+			for_each_loop = {
+				array = party_pop_array
+				value = v
+				index = i
+				set_variable = { party_pop_array^i = ROOT.party_pop_array^i }
+			}
+			if = {
+				limit = {
+					ROOT = {
+						has_government = democratic
+					}
+					set_politics = {
+						ruling_party = democratic
+					}
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						has_government = fascism
+					}
+					set_politics = {
+						ruling_party = fascism
+					}
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						has_government = communism
+					}
+					set_politics = {
+						ruling_party = communism
+					}
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						has_government = neutrality
+					}
+					set_politics = {
+						ruling_party = neutrality
+					}
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						has_government = nationalist
+					}
+					set_politics = {
+						ruling_party = nationalist
+					}
+				}
+			}
+			for_each_loop = {
+				array = ruling_party
+				value = v
+				index = i
+				set_variable = { ruling_party^i = ROOT.ruling_party^i }
+			}
+			for_each_loop = {
+				array = gov_coalition_array
+				value = v
+				index = i
+				set_variable = { gov_coalition_array^i = ROOT.gov_coalition_array^i }
+			}
+		}
+		81 = { add_core_of = ITA }
+		transfer_units_fraction= {
+			target = ITA
+			size = 1
+			stockpile_ratio = 1
+			army_ratio = 1
+			navy_ratio = 1
+			air_ratio = 1
+		}
+		ITA = {
+			for_each_loop = {
+				array = missile_inventory_array
+				value = v
+				index = i
+				set_variable = { missile_inventory_array^i = ROOT.missile_inventory_array^i }
+			}
+			annex_country = {
+				target = ROOT
+				transfer_troops = yes
+			}
+		}
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
 add_namespace = mafia
 #success in provoking infighting
 country_event = {
