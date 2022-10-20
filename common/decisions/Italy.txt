@@ -1655,6 +1655,7 @@ mafia_ITA = {
 		icon = generic_decision
 		available = {
 			has_idea = ITA_mafia
+			ITA_more_than_50_clergy_opinion = yes
 			has_completed_focus = ITA_seek_support_of_the_church
 		}
 		visible = {
@@ -1690,6 +1691,7 @@ mafia_ITA = {
 		icon = generic_decision
 		available = {
 			has_idea = ITA_mafia
+			ITA_more_than_50_clergy_opinion = yes
 			has_completed_focus = ITA_seek_support_of_the_church
 		}
 		visible = {
@@ -1725,6 +1727,7 @@ mafia_ITA = {
 		icon = generic_decision
 		available = {
 			has_idea = ITA_mafia
+			ITA_more_than_50_clergy_opinion = yes
 			has_completed_focus = ITA_seek_support_of_the_church
 		}
 		visible = {
@@ -1760,6 +1763,7 @@ mafia_ITA = {
 		icon = generic_decision
 		available = {
 			has_idea = ITA_mafia
+			ITA_more_than_50_clergy_opinion = yes
 			has_completed_focus = ITA_seek_support_of_the_church
 		}
 		visible = {
@@ -2228,12 +2232,11 @@ generic_ITA = {
 	extraordinary_church_donation = {
 		icon = generic_decision
 		available = {
-			has_completed_focus = ITA_economic_support_for_the_church
+			ITA_less_than_100_clergy_opinion = yes
 			has_idea = the_clergy
 		}
 		visible = {
 			has_completed_focus = ITA_economic_support_for_the_church
-			check_variable = { the_clergy_opinion < 100 }
         }
 
 		custom_cost_trigger = {
@@ -2263,6 +2266,55 @@ generic_ITA = {
 			modifier = {
 				factor = 0
 				check_variable = { the_clergy_opinion > 95 }
+			}
+		}
+	}
+
+	call_in_favours_with_unions = {
+		icon = generic_decision
+		available = {
+			ITA_more_than_50_labour_unions_opinion = yes
+			has_idea = labour_unions
+		}
+		visible = {
+			has_idea = labour_unions
+        }
+		days_re_enable = 180
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision call_in_favours_with_unions executed"
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { ITA_stability_factor_change = 0.05 }
+			modify_stability_factor_effect = yes
+		}
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	provide_political_positions_to_union_men = {
+		icon = generic_decision
+		available = {
+			ITA_less_than_100_labour_unions_opinion = yes
+			has_idea = labour_unions
+		}
+		visible = {
+			has_idea = labour_unions
+        }
+		days_re_enable = 180
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision provide_political_positions_to_union_men executed"
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+			add_to_variable = { provide_political_positions_to_union_men_times_taken_var = 1 }
+			set_temp_variable = { provide_political_positions_to_union_men_cost = provide_political_positions_to_union_men_times_taken_var }
+			multiply_temp_variable = { provide_political_positions_to_union_men_cost = -50 }
+			add_political_power = provide_political_positions_to_union_men_cost
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+
 			}
 		}
 	}
@@ -4243,12 +4295,7 @@ policies_ITA = {
 			NOT = { has_idea = ITA_legalized_all_drugs }
 		}
 		visible = {
-			OR = {
-				has_completed_focus = ITA_legalize_light_drugs
-				has_completed_focus = ITA_legalize_all_drugs
-			}
 			NOT = { has_idea = ITA_legalized_light_drugs }
-			NOT = { has_idea = ITA_legalized_all_drugs }
         }
 
 		days_re_enable = 365
@@ -4338,8 +4385,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_legalized_all_drugs }
 		}
 		visible = {
-			has_completed_focus = ITA_legalize_all_drugs
-			has_idea = ITA_legalized_light_drugs
 			NOT = { has_idea = ITA_legalized_all_drugs }
         }
 
@@ -4421,9 +4466,7 @@ policies_ITA = {
 			NOT = { has_idea = ITA_unemployment_wave }
 		}
 		visible = {
-			has_completed_focus = ITA_let_companies_fail
 			NOT = { has_idea = ITA_dynamic_economy }
-			NOT = { has_idea = ITA_zombie_companies }
         }
 
 		days_re_enable = 365
@@ -4519,9 +4562,7 @@ policies_ITA = {
 			NOT = { has_idea = ITA_unemployment_wave }
 		}
 		visible = {
-			has_completed_focus = ITA_modify_article_18
 			NOT = { has_idea = ITA_flexible_labour_market }
-			NOT = { has_idea = ITA_rigid_labour_market }
         }
 
 		days_re_enable = 365
@@ -4619,8 +4660,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_IRI }
 		}
 		visible = {
-			has_completed_focus = ITA_refound_IRI
-			NOT = { has_idea = ITA_privatizations }
 			NOT = { has_idea = ITA_IRI }
         }
 
@@ -4716,7 +4755,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_citizenship_income_spirit }
 		}
 		visible = {
-			has_completed_focus = ITA_citizenship_income
 			NOT = { has_idea = ITA_citizenship_income_spirit }
         }
 
@@ -4818,11 +4856,10 @@ policies_ITA = {
 			has_completed_focus = ITA_sell_government_shares_in_companies
 			NOT = { has_idea = ITA_privatizations }
 			NOT = { has_idea = ITA_unemployment_wave }
+			NOT = { has_idea = ITA_IRI }
 		}
 		visible = {
-			has_completed_focus = ITA_sell_government_shares_in_companies
 			NOT = { has_idea = ITA_privatizations }
-			NOT = { has_idea = ITA_IRI }
         }
 
 		days_re_enable = 365
@@ -4943,8 +4980,6 @@ policies_ITA = {
 			NOT = { has_country_flag = ITA_private_water }
 		}
 		visible = {
-			has_idea = ITA_privatizations
-			has_completed_focus = ITA_privatize_water_distribution
 			NOT = { has_country_flag = ITA_private_water }
         }
 
@@ -5043,8 +5078,6 @@ policies_ITA = {
 			NOT = { has_country_flag = ITA_private_museums }
 		}
 		visible = {
-			has_completed_focus = ITA_privatize_museum_system
-			has_idea = ITA_privatizations
 			NOT = { has_country_flag = ITA_private_museums }
         }
 
@@ -5140,7 +5173,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_traditional_values }
 		}
 		visible = {
-			has_completed_focus = ITA_protect_our_traditions
 			NOT = { has_idea = ITA_traditional_values }
         }
 
@@ -5234,7 +5266,6 @@ policies_ITA = {
 			NOT = { has_country_flag = ITA_prisoners_rights }
 		}
 		visible = {
-			has_completed_focus = ITA_protect_prisoners_rights
 			NOT = { has_country_flag = ITA_prisoners_rights }
         }
 
@@ -5310,7 +5341,6 @@ policies_ITA = {
 			NOT = { has_country_flag = ITA_allowed_euthanasia }
 		}
 		visible = {
-			has_completed_focus = ITA_allow_euthanasia
 			NOT = { has_country_flag = ITA_allowed_euthanasia }
         }
 
@@ -5387,9 +5417,7 @@ policies_ITA = {
 			NOT = { has_country_flag = ITA_banned_lgbt }
 		}
 		visible = {
-			has_completed_focus = ITA_allow_same_sex_marriage
 			NOT = { has_country_flag = ITA_gay_marriage }
-			NOT = { has_country_flag = ITA_banned_lgbt }
         }
 
 		days_re_enable = 365
@@ -5459,11 +5487,11 @@ policies_ITA = {
 			has_completed_focus = ITA_outlaw_lgbt_behaviour
 			NOT = { has_country_flag = ITA_banned_lgbt }
 			NOT = { has_country_flag = ITA_gay_marriage }
+			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
 		}
 		visible = {
-			has_completed_focus = ITA_outlaw_lgbt_behaviour
 			NOT = { has_country_flag = ITA_banned_lgbt }
-			NOT = { has_country_flag = ITA_gay_marriage }
+			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
         }
 
 		days_re_enable = 365
@@ -5554,7 +5582,6 @@ policies_ITA = {
 			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
 		}
 		visible = {
-			has_completed_focus = ITA_repeal_law_194
 			NOT = { has_country_flag = ITA_banned_abortion }
 			NOT = { has_completed_focus = ITA_constitutionalise_social_rights }
         }
@@ -5642,7 +5669,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_legalized_prostitution }
 		}
 		visible = {
-			has_completed_focus = ITA_reopen_brothels
 			NOT = { has_idea = ITA_legalized_prostitution }
         }
 
@@ -5745,9 +5771,7 @@ policies_ITA = {
 			NOT = { has_idea = ITA_dynamic_economy }
 		}
 		visible = {
-			has_completed_focus = ITA_save_struggling_companies
 			NOT = { has_idea = ITA_zombie_companies }
-			NOT = { has_idea = ITA_dynamic_economy }
         }
 
 		days_re_enable = 365
@@ -5870,13 +5894,7 @@ policies_ITA = {
 			NOT = { has_idea = ITA_migrants_from_africa_encouraged }
 		}
 		visible = {
-			has_idea = ITA_migrants_from_africa
-			OR = {
-				has_completed_focus = ITA_protect_migrant_rights
-				has_completed_focus = ITA_encourage_immigration
-			}
 			NOT = { has_idea = ITA_migration_tolerated }
-			NOT = { has_idea = ITA_migrants_from_africa_encouraged }
         }
 
 		days_re_enable = 365
@@ -5973,11 +5991,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_migrants_from_africa_encouraged }
 		}
 		visible = {
-			OR = {
-				has_idea = ITA_ius_scholae_spirit
-				has_idea = ITA_ius_soli_spirit
-			}
-			has_completed_focus = ITA_encourage_immigration
 			NOT = { has_idea = ITA_migrants_from_africa_encouraged }
         }
 
@@ -6083,9 +6096,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_ius_soli_spirit }
 		}
 		visible = {
-			has_completed_focus = ITA_ius_soli
-			has_idea = ITA_migration_tolerated
-			NOT = { has_idea = ITA_ius_scholae_spirit }
 			NOT = { has_idea = ITA_ius_soli_spirit }
         }
 
@@ -6161,9 +6171,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_ius_scholae_spirit }
 		}
 		visible = {
-			has_completed_focus = ITA_ius_scholae
-			has_idea = ITA_migration_tolerated
-			NOT = { has_idea = ITA_ius_soli_spirit }
 			NOT = { has_idea = ITA_ius_scholae_spirit }
         }
 
@@ -6242,9 +6249,6 @@ policies_ITA = {
 			has_idea = ITA_ageing_population
 		}
 		visible = {
-			has_completed_focus = ITA_encourage_births
-			NOT = { has_idea = ITA_ius_soli_spirit }
-			NOT = { has_idea = ITA_ius_scholae_spirit }
 			has_idea = ITA_ageing_population
         }
 
@@ -6295,7 +6299,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_election_tips }
 		}
 		visible = {
-			has_completed_focus = ITA_normalize_extraordinary_bonuses
 			NOT = { has_idea = ITA_election_tips }
         }
 
@@ -6380,9 +6383,7 @@ policies_ITA = {
 			NOT = { has_idea = ITA_flexible_labour_market }
 		}
 		visible = {
-			has_completed_focus = ITA_further_protect_workers_rights
 			NOT = { has_idea = ITA_rigid_labour_market }
-			NOT = { has_idea = ITA_flexible_labour_market }
         }
 
 		days_re_enable = 365
@@ -6491,7 +6492,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_capital_flight }
 		}
 		visible = {
-			has_completed_focus = ITA_tax_the_rich
 			NOT = { has_idea = ITA_capital_flight }
         }
 
@@ -6589,7 +6589,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_flat_tax }
 		}
 		visible = {
-			has_completed_focus = ITA_flat_tax
 			NOT = { has_idea = ITA_flat_tax }
         }
 
@@ -6688,7 +6687,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_carbon_tax }
 		}
 		visible = {
-			has_completed_focus = ITA_carbon_tax
 			NOT = { has_idea = ITA_carbon_tax }
         }
 
@@ -6749,7 +6747,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_high_minimum_wage }
 		}
 		visible = {
-			has_completed_focus = ITA_raise_minimum_wage
 			NOT = { has_idea = ITA_high_minimum_wage }
         }
 
@@ -6841,9 +6838,7 @@ policies_ITA = {
 			NOT = { has_idea = ITA_gmos_encouraged }
 		}
 		visible = {
-			has_completed_focus = ITA_ban_gmos
 			NOT = { has_idea = ITA_gmos_banned }
-			NOT = { has_idea = ITA_gmos_encouraged }
         }
 
 		days_re_enable = 365
@@ -6906,8 +6901,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_gmos_banned }
 		}
 		visible = {
-			has_completed_focus = ITA_encourage_gmos
-			NOT = { has_idea = ITA_gmos_banned }
 			NOT = { has_idea = ITA_gmos_encouraged }
         }
 
@@ -6964,7 +6957,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_nuclear_power_banned }
 		}
 		visible = {
-			has_completed_focus = ITA_ban_nuclear_power
 			NOT = { has_idea = ITA_nuclear_power_banned }
         }
 
@@ -7001,7 +6993,6 @@ policies_ITA = {
 		}
 		visible = {
 			has_idea = ITA_nuclear_power_banned
-			has_completed_focus = ITA_bypass_the_1987_referendum
         }
 
 		days_re_enable = 365
@@ -7041,7 +7032,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_green_subsidies }
 		}
 		visible = {
-			has_completed_focus = ITA_encourage_renewables
 			NOT = { has_idea = ITA_green_subsidies }
         }
 
@@ -7110,7 +7100,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_happy_degrowth_spirit }
 		}
 		visible = {
-			has_completed_focus = ITA_happy_degrowth
 			NOT = { has_idea = ITA_happy_degrowth_spirit }
         }
 
@@ -7193,8 +7182,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_migrants_from_africa_limited }
 		}
 		visible = {
-			has_idea = ITA_migrants_from_africa
-			has_completed_focus = ITA_use_force
 			NOT = { has_idea = ITA_migrants_from_africa_limited }
         }
 
@@ -7305,7 +7292,6 @@ policies_ITA = {
 		}
 		visible = {
 			has_idea = ITA_building_abuse_1
-			has_completed_focus = ITA_building_amnesty
 			NOT = { has_idea = ITA_building_abuse_2 }
         }
 
@@ -7372,7 +7358,6 @@ policies_ITA = {
 				has_idea = ITA_building_abuse_1
 				has_idea = ITA_building_abuse_2
 			}
-			has_completed_focus = ITA_stop_building_abuse
         }
 
 		days_re_enable = 365
@@ -7403,7 +7388,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_expropriations }
 		}
 		visible = {
-			has_completed_focus = ITA_widespread_expropriation
 			NOT = { has_idea = ITA_expropriations }
         }
 
@@ -7475,7 +7459,7 @@ policies_ITA = {
 			has_completed_focus = ITA_redistribution
 		}
 		visible = {
-			has_completed_focus = ITA_redistribution
+			always = yes
         }
 
 		days_re_enable = 365
@@ -7515,7 +7499,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_party_approved_media_n }
 		}
 		visible = {
-			has_completed_focus = ITA_abolish_capitalist_media
 			NOT = { has_idea = ITA_party_approved_media_c }
 			NOT = { has_idea = ITA_party_approved_media_f }
 			NOT = { has_idea = ITA_party_approved_media_n }
@@ -7638,7 +7621,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_party_propaganda }
 		}
 		visible = {
-			has_completed_focus = ITA_silence_defeatists
 			NOT = { has_idea = ITA_party_propaganda }
         }
 
@@ -7697,7 +7679,6 @@ policies_ITA = {
 			NOT = { has_idea = ITA_closed_nation }
 		}
 		visible = {
-			has_completed_focus = ITA_safeguard_the_revolution
 			NOT = { has_idea = ITA_closed_nation }
         }
 
@@ -7750,7 +7731,6 @@ policies_ITA = {
 			has_idea = ITA_radio_radicale
 		}
 		visible = {
-			has_completed_focus = ITA_defund_radio_radicale
 			has_idea = ITA_radio_radicale
         }
 
@@ -7795,7 +7775,6 @@ policies_ITA = {
 			has_idea = ITA_unsustainable_pension_system_2
 		}
 		visible = {
-			has_completed_focus = ITA_Quota_100
 			NOT = { has_idea = ITA_unsustainable_pension_system_3 }
 			has_idea = ITA_unsustainable_pension_system_2
         }
@@ -7887,7 +7866,6 @@ policies_ITA = {
 			has_idea = ITA_unsustainable_pension_system_2
 		}
 		visible = {
-			has_completed_focus = ITA_increase_pension_age_requirements
 			NOT = { has_idea = ITA_unsustainable_pension_system_1 }
 			has_idea = ITA_unsustainable_pension_system_2
         }
@@ -7980,7 +7958,6 @@ policies_ITA = {
 			has_idea = ITA_unsustainable_pension_system_1
 		}
 		visible = {
-			has_completed_focus = ITA_recalculate_baby_pensions
 			has_idea = ITA_unsustainable_pension_system_1
         }
 
@@ -8069,7 +8046,6 @@ policies_ITA = {
 			has_idea = ITA_unsustainable_pension_system_3
 		}
 		visible = {
-			has_completed_focus = ITA_reintroduce_baby_pensions
 			has_idea = ITA_unsustainable_pension_system_3
         }
 
