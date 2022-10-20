@@ -460,7 +460,7 @@
 	NDefines.NNavy.BASE_GUN_COOLDOWNS = { -- number of hours for a gun to be ready after shooting
 		999.0,	-- big guns
 		4.0,	-- torpedos #anti ship guided weapons
-		4.0,	-- small guns
+		3.0,	-- small guns
 	}
 
 	NDefines.NNavy.DEPTH_CHARGES_HIT_CHANCE_MULT = 1.5 -- multiplies hit chance of depth charges
