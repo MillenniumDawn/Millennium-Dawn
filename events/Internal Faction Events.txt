@@ -93,7 +93,7 @@ country_event = {
 	id = internal_factions_events.1
 	title = internal_factions_events.1.t
 	desc = internal_factions_events.1.d
-
+	immediate = { }
 	picture = GFX_internal_faction_business_purchase
 
 	is_triggered_only = yes
@@ -191,7 +191,7 @@ country_event = {
 	id = internal_factions_events.2
 	title = internal_factions_events.2.t
 	desc = internal_factions_events.2.d
-
+	immediate = { }
 	picture = GFX_internal_faction_too_much_bureaucracy
 
 	is_triggered_only = yes
@@ -239,7 +239,7 @@ country_event = {
 	id = internal_factions_events.3
 	title = internal_factions_events.3.t
 	desc = internal_factions_events.3.d
-
+	immediate = { }
 	picture = GFX_internal_faction_money
 
 	is_triggered_only = yes
@@ -308,7 +308,7 @@ country_event = {
 	id = internal_factions_events.4
 	title = internal_factions_events.4.t
 	desc = internal_factions_events.4.d
-
+	immediate = { }
 	picture = GFX_internal_faction_money
 
 	is_triggered_only = yes
@@ -439,7 +439,7 @@ country_event = {
 	id = internal_factions_events.6
 	title = internal_factions_events.6.t
 	desc = internal_factions_events.6.d
-
+	immediate = { }
 	picture = GFX_internal_faction_business_purchase
 
 	is_triggered_only = yes
@@ -512,7 +512,7 @@ country_event = {
 	id = internal_factions_events.7
 	title = internal_factions_events.7.t
 	desc = internal_factions_events.7.d
-
+	immediate = { }
 	picture = GFX_internal_faction_labour_dispute
 
 	is_triggered_only = yes
@@ -722,32 +722,10 @@ country_event = {
 	option = {
 		name = internal_factions_events.10.o1
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.10.o1 executed"	#Great
-
-		if = { limit = { NOT = { has_idea = internal_faction_economic_boom } }
-			add_timed_idea = {
-				idea = internal_faction_economic_boom
-				days = 360
-			}
-		}
-		else = {
-			modify_timed_idea = {
-				idea = internal_faction_economic_boom
-				days = 180
-			}
-		}
-
-		if = {
-			limit = {
-				NOT = {
-					has_idea = economic_boom
-					has_idea = fast_growth
-				}
-			}
-			increase_economic_growth = yes
-		}
-
-		ai_chance = {
-			factor = 1
+		ai_chance = { factor = 1 }
+		add_timed_idea = {
+			idea = internal_faction_economic_boom
+			days = 360
 		}
 	}
 }
@@ -770,6 +748,7 @@ country_event = {
 	option = {
 		name = internal_factions_events.11.o1
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.0.o1 executed"	#Damn
+		ai_chance = { factor = 1 }
 		random_list = {
 			20 = {
 				if = {
@@ -838,23 +817,20 @@ country_event = {
 			}
 		}
 		country_event = { id = internal_factions_events.1 }
-
-		ai_chance = {
-			factor = 1
-		}
 	}
 }
 country_event = {
 	id = internal_factions_events.12
 	title = internal_factions_events.12.t
 	desc = internal_factions_events.12.d
-
+	immediate = { }
 	picture = GFX_internal_faction_political_conflict
 	is_triggered_only = yes
 
 	option = {
 		name = internal_factions_events.12.o1
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.12.o1 executed"	#Damn
+		ai_chance = { factor = 1 }
 		if = {
 			limit = {
 				OR = {
@@ -878,10 +854,6 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		add_relative_party_popularity = yes
 		clear_variable = party_to_be_boosted
-
-		ai_chance = {
-			factor = 1
-		}
 	}
 }
 
@@ -1244,630 +1216,5 @@ country_event = {
 		name = internal_factions_events.18.c
 		set_temp_variable = { temp_opinion = -5 }
 		change_farmers_opinion = yes
-	}
-}
-
-# The military demand additional SAM sites after an air border incursion
-country_event = {
-	id = internal_factions_events.19
-	title = internal_factions_events.19.t
-	desc = internal_factions_events.19.d
-	picture = GFX_fighter_jet
-	is_triggered_only = yes
-
-	trigger = {
-		any_of_scopes = {
-			array = neighbors
-			has_added_tension_amount > 0.19
-		}
-		has_idea = the_military
-		NOT = { # Can only demand if military spending is Large or lower but not abolished
-			has_idea = defence_09
-			has_idea = defence_08
-			has_idea = defence_07
-			has_idea = defence_06
-			has_idea = no_military
-		}
-	}
-
-	option = { # build more SAM sites
-		name = internal_factions_events.19.o1
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.19.o1 executed"
-		set_temp_variable = { temp_opinion = 15 }
-		change_the_military_opinion = yes
-		set_temp_variable = { treasury_change = -13.00 }
-		modify_treasury_effect = yes
-
-		random_neighbor_country = { # adds negative opinion modifier to a random neighbour
-			limit = {
-				has_added_tension_amount > 0.19
-				NOT = { # excludes countries with abolished military
-					has_idea = no_military
-				}
-			}
-			add_opinion_modifier = { target = PREV modifier = air_incursions }
-			reverse_add_opinion_modifier = { target = PREV modifier = air_incursions }
-		}
-
-		random_owned_state = { # adds two SAM sites in any region
-			limit = {
-				free_building_slots = {
-					building = anti_air_building
-					size > 2
-					include_locked = no
-				}
-			}
-			add_building_construction = {
-				type = anti_air_building
-				level = 2
-				instant_build = yes
-			}
-		}
-
-		random_owned_state = { # adds two SAM sites in any region
-			limit = {
-				free_building_slots = {
-					building = anti_air_building
-					size > 2
-					include_locked = no
-				}
-			}
-			add_building_construction = {
-				type = anti_air_building
-				level = 2
-				instant_build = yes
-			}
-		}
-	}
-
-	option = { # build more military industry
-		name = internal_factions_events.19.o2
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.19.o2 executed"
-		set_temp_variable = { temp_opinion = -5 }
-		change_the_military_opinion = yes
-		set_temp_variable = { temp_opinion = 10 }
-		change_defense_industry_opinion = yes
-		set_temp_variable = { treasury_change = -15.00 }
-		modify_treasury_effect = yes
-
-		random_neighbor_country = { # adds negative opinion modifier to a random neighbour
-			limit = {
-				has_added_tension_amount > 0.19
-				NOT = { # excludes countries with abolished military
-					has_idea = no_military
-				}
-			}
-			add_opinion_modifier = { target = PREV modifier = air_incursions }
-			reverse_add_opinion_modifier = { target = PREV modifier = air_incursions }
-		}
-
-		random_owned_state = { # adds a military industry in any region
-			limit = {
-				free_building_slots = {
-					building = arms_factory
-					size > 1
-					include_locked = no
-				}
-			}
-			add_building_construction = {
-				type = arms_factory
-				level = 1
-				instant_build = yes
-			}
-		}
-
-		random_owned_state = { # adds a military industry in any region
-			limit = {
-				free_building_slots = {
-					building = arms_factory
-					size > 1
-					include_locked = no
-				}
-			}
-			add_building_construction = {
-				type = arms_factory
-				level = 1
-				instant_build = yes
-			}
-		}
-	}
-
-	option = { # build military industry and SAM sites
-		name = internal_factions_events.19.o3
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.19.o3 executed"
-		set_temp_variable = { temp_opinion = 5 }
-		change_the_military_opinion = yes
-		set_temp_variable = { temp_opinion = 5 }
-		change_defense_industry_opinion = yes
-		set_temp_variable = { treasury_change = -10.75 }
-		modify_treasury_effect = yes
-
-		random_neighbor_country = { # adds negative opinion modifier to a random neighbour
-			limit = {
-				has_added_tension_amount > 0.19
-				NOT = { # excludes countries with abolished military
-					has_idea = no_military
-				}
-			}
-			add_opinion_modifier = { target = PREV modifier = air_incursions }
-			reverse_add_opinion_modifier = { target = PREV modifier = air_incursions }
-		}
-
-		random_owned_state = { # adds one SAM site in any region
-			limit = {
-				free_building_slots = {
-					building = anti_air_building
-					size > 1
-					include_locked = no
-				}
-			}
-			add_building_construction = {
-				type = anti_air_building
-				level = 1
-				instant_build = yes
-			}
-		}
-
-		random_owned_state = { # adds a military industry in any region
-			limit = {
-				free_building_slots = {
-					building = arms_factory
-					size > 1
-					include_locked = no
-				}
-			}
-			add_building_construction = {
-				type = arms_factory
-				level = 1
-				instant_build = yes
-			}
-		}
-	}
-
-	option = { # ignore the demands
-		name = internal_factions_events.19.o4
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.19.o4 executed"
-		set_temp_variable = { temp_opinion = -10 }
-		change_the_military_opinion = yes
-
-		add_political_power = 150
-
-		random_neighbor_country = { # adds negative opinion modifier to a random neighbour
-			limit = {
-				has_added_tension_amount > 0.19
-				NOT = { # excludes countries with abolished military
-					has_idea = no_military
-				}
-			}
-			add_opinion_modifier = { target = PREV modifier = air_incursions }
-			reverse_add_opinion_modifier = { target = PREV modifier = air_incursions }
-		}
-	}
-
-	option = { # preserve relations
-		name = internal_factions_events.19.o5
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.19.o4 executed"
-		set_temp_variable = { temp_opinion = -10 }
-		change_the_military_opinion = yes
-
-		add_political_power = 100
-	}
-}
-country_event = {
-	id = internal_factions_events.20
-	title = internal_factions_events.20.t
-	desc = internal_factions_events.20.d
-	picture = GFX_carrier
-	is_triggered_only = yes
-	trigger = {
-		has_idea = maritime_industry
-		NOT = { has_country_flag = MAR_industry_subsidies }
-	}
-
-	# Accept the Subsidies
-	option = {
-		name = internal_factions_events.20.o1
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.20.o1 executed"
-		set_temp_variable = { temp_opinion = 10 }
-		change_maritime_industry_opinion = yes
-
-		set_temp_variable = { mar_industry_calculator = gdp_total_display }
-		multiply_temp_variable = { mar_industry_calculator = 0.002 }
-		custom_effect_tooltip = internal_factions_events_additional_expense_tt
-
-		set_country_flag = { flag = MAR_industry_subsidies days = 180 value = 1 }
-	}
-
-	# Deny the Subsidies
-	option = {
-		name = internal_factions_events.20.o2
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.20.o2 executed"
-		set_temp_variable = { temp_opinion = -5 }
-		change_maritime_industry_opinion = yes
-		add_political_power = 75
-	}
-}
-
-# Farmers Push for Biofuel Investment
-country_event = {
-	id = internal_factions_events.21
-	title = internal_factions_events.21.t
-	desc = internal_factions_events.21.d
-	picture = GFX_internal_faction_energy
-	is_triggered_only = yes
-	trigger = {
-		OR = {
-			has_idea = farmers
-			has_idea = fossil_fuel_industry
-		}
-	}
-
-	mean_time_to_happen = {
-		modifier = {
-			factor = 5
-			AND = {
-				has_idea = farmers
-				has_idea = fossil_fuel_industry
-			}
-		}
-		modifier = {
-			factor = 2
-			has_idea = farmers
-		}
-	}
-
-	option = { # Do Nothing
-		name = internal_factions_events.21.o1
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.21.o1 executed"
-		set_temp_variable = { temp_opinion = -10 }
-		change_fossil_fuel_industry_opinion = yes
-		change_farmers_opinion = yes
-
-	}
-	option = { # Pay for a biofuel plant
-		name = internal_factions_events.21.o2
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.21.o2 executed"
-		set_temp_variable = { temp_opinion = -5 }
-		change_fossil_fuel_industry_opinion = yes
-		set_temp_variable = { temp_opinion = 2 }
-		change_farmers_opinion = yes
-		set_temp_variable = { treasury_change = -4.25 }
-		modify_treasury_effect = yes
-
-		random_owned_state = { # Build a refinery
-			limit = {
-				free_building_slots = {
-					building = synthetic_refinery
-					size > 0
-					include_locked = no
-				}
-			}
-			add_building_construction = {
-				type = synthetic_refinery
-				instant_build = yes
-				level = 1
-			}
-		}
-	}
-	option = { # Smoothe Things Over With the Fossil Fuel Industry
-		name = internal_factions_events.21.o3
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.21.o3 executed"
-		set_temp_variable = { temp_opinion = 5 }
-		change_farmers_opinion = yes
-		set_temp_variable = { treasury_change = -6.25 }
-		modify_treasury_effect = yes
-		add_political_power = -150
-
-		random_owned_state = { # Build a refinery
-			limit = {
-				free_building_slots = {
-					building = synthetic_refinery
-					size > 0
-					include_locked = no
-				}
-			}
-			add_building_construction = {
-				type = synthetic_refinery
-				level = 1
-				instant_build = yes
-			}
-		}
-	}
-}
-
-# Intelligence services caught spying on citizens
-country_event = {
-	id = internal_factions_events.22
-	title = internal_factions_events.22.t
-	desc = internal_factions_events.22.d
-	picture = GFX_politics_surveillence
-	is_triggered_only = yes
-	trigger = {
-		has_idea = intelligence_community
-		NOT = { has_idea = police_05 }
-		OR = {
-			has_idea = negligible_corruption
-			has_idea = slight_corruption
-			has_idea = modest_corruption
-			has_idea = medium_corruption
-		}
-	}
-	option = { # Ignore Complaints
-		name = internal_factions_events.22.o1
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.22.o1 executed"
-		add_political_power = -150
-		add_stability = -0.03
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.03 }
-		add_relative_party_popularity = yes
-	}
-	option = { # Launch an Investigation
-		name = internal_factions_events.22.o2
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.22.o2 executed"
-		set_temp_variable = { temp_opinion = -10 }
-		change_intelligence_community_opinion = yes
-		add_stability = 0.02
-	}
-	option = { # Cover Up the Leak
-		name = internal_factions_events.22.o3
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.22.o3 executed"
-		add_political_power = -250
-		set_temp_variable = { treasury_change = -0.5 }
-		modify_treasury_effect = yes
-		set_temp_variable = {temp_opinion = 5}
-		change_intelligence_community_opinion = yes
-	}
-	option = { # Punish the Whistleblower
-		name = internal_factions_events.22.o4
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.22.o4 executed"
-		set_temp_variable = { temp_opinion = 10 }
-		change_intelligence_community_opinion = yes
-		add_stability = -0.05
-		add_political_power = -100
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.05 }
-		add_relative_party_popularity = yes
-	}
-}
-
-# Intel Service Caught Oligarch Making Illegal Deals
-country_event = {
-	id = internal_factions_events.23
-	title = internal_factions_events.23.t
-	desc = internal_factions_events.23.d
-	picture = GFX_politics_speak
-	is_triggered_only = yes
-	trigger = {
-		has_idea = intelligence_community
-		has_idea = oligarchs
-	}
-
-	option = { # Keep This Quiet
-		name = internal_factions_events.23.o1
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.23.o1 executed"
-		add_political_power = -200
-	}
-	option = { # Stage a Public Trial
-		name = internal_factions_events.23.o2
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.23.o2 executed"
-		set_temp_variable = {temp_opinion = -10}
-		change_oligarchs_opinion = yes
-		set_temp_variable = {temp_opinion = 5}
-		change_intelligence_community_opinion = yes
-		decrease_corruption = yes
-	}
-	option = { # Dissuade future investigations of Oligarchs
-		name = internal_factions_events.23.o3
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.23.o3 executed"
-		set_temp_variable = {temp_opinion = -5}
-		change_intelligence_community_opinion = yes
-		set_temp_variable = {temp_opinion = 10}
-		change_oligarchs_opinion = yes
-		increase_corruption = yes
-	}
-}
-
-country_event = { # Businesses Want Tax Cuts
-	id = internal_factions_events.24
-	title = internal_factions_events.24.t
-	desc = internal_factions_events.24.d
-	picture = GFX_politics_cut_taxes
-	is_triggered_only = yes
-	trigger = {
-		OR = {
-			has_idea = oligarchs
-			has_idea = landowners
-		}
-	}
-
-	option = { # Ignore their demands
-		name = internal_factions_events.24.o1
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.24.o1 executed"
-		add_political_power = -150
-		set_temp_variable = {temp_opinion = -3}
-		change_oligarchs_opinion = yes
-	}
-
-	option = { # Cut personal taxes
-		name = internal_factions_events.24.o2
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.24.o2 executed"
-		set_temp_variable = { temp_opinion = 4 }
-		change_oligarchs_opinion = yes
-		change_landowners_opinion = yes
-		set_temp_variable = { pop_change = -4 }
-		modify_population_tax_rate_effect = yes
-	}
-
-	option = { # Cut corporate taxes
-		name = internal_factions_events.24.o3
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.24.o3 executed"
-		set_temp_variable = { temp_opinion = 4 }
-		change_oligarchs_opinion = yes
-		change_landowners_opinion = yes
-		set_temp_variable = { corp_change = -3 }
-		modify_corporate_tax_rate_effect = yes
-	}
-	option = { # Cut all taxes
-		name = internal_factions_events.24.o4
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.24.o4 executed"
-		set_temp_variable = { temp_opinion = 10 }
-		change_oligarchs_opinion = yes
-		change_landowners_opinion = yes
-		set_temp_variable = { pop_change = -3 }
-		modify_population_tax_rate_effect = yes
-		set_temp_variable = { corp_change = -3 }
-		modify_corporate_tax_rate_effect = yes
-	}
-}
-
-country_event = { # Maritime Industry Subsidies
-	id = internal_factions_events.25
-	title = internal_factions_events.25.t
-	desc = internal_factions_events.25.d
-	picture = GFX_politics_talks
-	is_triggered_only = yes
-	trigger = {
-		has_idea = maritime_industry
-		NOT = {
-			has_country_flag = MAR_industry_subsidies
-			has_idea = internal_faction_subsidize_convoy_production
-		}
-	}
-
-	option = { # Subsidize Convoy Production Speed
-		name = internal_factions_events.25.o1
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.25.o1 executed"
-		set_temp_variable = { temp_opinion = 10 }
-		change_maritime_industry_opinion = yes
-
-		set_temp_variable = { mar_industry_calculator = gdp_total_display }
-		multiply_temp_variable = { mar_industry_calculator = 0.002 }
-		custom_effect_tooltip = internal_factions_events_additional_expense_tt
-
-		set_country_flag = { flag = MAR_industry_subsidies days = 180 value = 1 }
-		add_timed_idea = {
-			idea = internal_faction_subsidize_convoy_production
-			days = 365
-		}
-	}
-	option = { # Purchase Convoys
-		name = internal_factions_events.25.o2
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.25.o2 executed"
-		set_temp_variable = { temp_opinion = 3 }
-		change_maritime_industry_opinion = yes
-		set_temp_variable = { treasury_change = -0.750 }
-		modify_treasury_effect = yes
-		add_equipment_to_stockpile = {
-			type = convoy
-			amount = 10
-		}
-
-	}
-	option = { # Purchase Many Convoys
-		name = internal_factions_events.25.o3
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.25.o3 executed"
-		set_temp_variable = { temp_opinion = 6 }
-		change_maritime_industry_opinion = yes
-		set_temp_variable = { treasury_change = -1.750 }
-		modify_treasury_effect = yes
-		add_equipment_to_stockpile = {
-			type = convoy
-			amount = 30
-		}
-
-	}
-	option = { # Do Nothing
-		name = internal_factions_events.25.o4
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.25.o4 executed"
-		set_temp_variable = { temp_opinion = -10 }
-		change_maritime_industry_opinion = yes
-	}
-}
-
-# The Military Opposes our Government
-country_event = {
-	id = internal_factions_events.26
-	title = internal_factions_events.26.t
-	desc = internal_factions_events.26.d
-	picture = GFX_weapons_arms1
-	is_triggered_only = yes
-	trigger = {
-		has_idea = the_military
-		OR = {
-			western_liberals_are_in_power = yes
-			neutrality_neutral_libertarians_are_in_power = yes
-			western_social_democrats_are_in_power = yes
-			neutrality_neutral_green_are_in_power = yes
-			emerging_anarchist_communism_are_in_power = yes
-			neutrality_neutral_social_are_in_power = yes
-		}
-		NOT = { has_country_flag = recent_military_opposes_our_government }
-	}
-
-	option = {
-		name = internal_factions_events.26.o1
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.26.o1 executed"
-		block_defence_decrease = yes
-		increase_military_spending = yes
-
-		set_temp_variable = { temp_opinion = 10 }
-		change_the_military_opinion = yes
-
-		set_country_flag = { flag = recent_military_opposes_our_government days = 365 value = 1 }
-	}
-	option = {
-		name = internal_factions_events.26.o2
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.26.o2 executed"
-
-		set_temp_variable = { temp_opinion = -10 }
-		change_the_military_opinion = yes
-		set_country_flag = { flag = recent_military_opposes_our_government days = 180 value = 1 }
-	}
-	option = {
-		name = internal_factions_events.26.o3
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.26.o3 executed"
-
-		set_temp_variable = { temp_opinion = -5 }
-		change_the_military_opinion = yes
-		add_political_power = -100
-		set_country_flag = { flag = recent_military_opposes_our_government days = 180 value = 1 }
-	}
-}
-
-# Military Industry Thriving
-country_event = {
-	id = internal_factions_events.27
-	title = internal_factions_events.27.t
-	desc = internal_factions_events.27.d
-	picture = GFX_weapons_arms1
-	is_triggered_only = yes
-	trigger = {
-		has_idea = defense_industry
-	}
-
-	option = {
-		name = internal_factions_events.27.o1
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.27.o1 executed"
-
-		set_temp_variable = { mar_industry_calculator = gdp_total_display }
-		multiply_temp_variable = { mar_industry_calculator = 0.002 }
-		custom_effect_tooltip = internal_factions_events_additional_expense_tt # Calculator Tooltip
-
-		set_temp_variable = { temp_opinion = 5 }
-		change_defense_industry_opinion = yes
-	}
-
-	option = {
-		name = internal_factions_events.27.o2
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.27.o2 executed"
-
-		set_temp_variable = { temp_opinion = 10 }
-		change_defense_industry_opinion = yes
-		add_political_power = -150
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = 0.04 }
-		set_temp_variable = { temp_outlook_increase = 0.04 }
-		add_relative_party_popularity = yes
-
 	}
 }
