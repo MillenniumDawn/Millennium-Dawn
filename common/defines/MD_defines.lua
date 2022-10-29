@@ -317,9 +317,9 @@
 	NDefines.NAir.NAVAL_STRIKE_TARGETTING_TO_AMOUNT = 0.3 -- 0.3
 	NDefines.NAir.NAVAL_STRIKE_DETECTION_BALANCE_FACTOR = 0.65 -- 0.7
 	NDefines.NAir.NAVAL_RECON_DETECTION_BALANCE_FACTOR = 0.875 -- 0.7
-	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_STR = 0.7 -- 2
-	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_ORG = 1 -- 3
-	NDefines.NAir.NAVAL_STRIKE_CARRIER_MULTIPLIER = 5 -- 5.0
+	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_STR = 1 -- 2
+	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_ORG = 1.5 -- 3
+	NDefines.NAir.NAVAL_STRIKE_CARRIER_MULTIPLIER = 7.5 -- 5.0
 	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.025 -- 0.05
 	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 0.875 -- 2.0
 	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.25 -- 0.5
@@ -372,8 +372,8 @@
 	NDefines.NNavy.COMBAT_LOW_ORG_HIT_CHANCE_PENALTY = -0.8 -- -0.5
 	NDefines.NNavy.COMBAT_TORPEDO_CRITICAL_CHANCE = 0.85 -- 0.2
 	NDefines.NNavy.COMBAT_TORPEDO_CRITICAL_DAMAGE_MULT = 5.0 -- 2.0
-	NDefines.NNavy.COMBAT_DAMAGE_TO_STR_FACTOR = 2-- 1.6
-	NDefines.NNavy.COMBAT_DAMAGE_TO_ORG_FACTOR = 2.5 -- 1.9
+	NDefines.NNavy.COMBAT_DAMAGE_TO_STR_FACTOR = 1.6-- 1.6
+	NDefines.NNavy.COMBAT_DAMAGE_TO_ORG_FACTOR = 1.6 -- 1.9
 	NDefines.NNavy.COMBAT_DAMAGE_REDUCTION_ON_RETREAT = 0.75 -- 0.8
 	NDefines.NNavy.COMBAT_ESCAPING_SPEED_BALANCE = 0.9 -- 0.8
 	NDefines.NNavy.COMBAT_SHIP_SPEED_TO_FIELD_FACTOR = 0.15 -- 0.03
@@ -381,13 +381,13 @@
 	NDefines.NNavy.COMBAT_MAX_DISTANCE_TO_ARRIVE = 600 -- 80
 	NDefines.NNavy.COMBAT_MIN_DURATION = 16 -- 8
 	NDefines.NNavy.COMBAT_CHASE_RESIGNATION_HOURS = 6 -- 8
-	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_LOW = 0.25 -- 0.2
+	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_LOW = 0.35 -- 0.2
 	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_MEDIUM = 0.55 -- 0.5
 	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_HIGH = 0.85 -- 0.9
-	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_LOW_COMBAT = 0.25 -- 0.6
+	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_LOW_COMBAT = 0.35 -- 0.6
 	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_MEDIUM_COMBAT = 0.5 -- 0.3
 	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_HIGH_COMBAT = 0.75 -- 0.1
-	NDefines.NNavy.REPAIR_AND_RETURN_UNIT_DYING_STR = 0.5 -- 0.2
+	NDefines.NNavy.REPAIR_AND_RETURN_UNIT_DYING_STR = 0.35 -- 0.2
 	NDefines.NNavy.NAVY_EXPENSIVE_IC = 18000 -- 5500
 	NDefines.NNavy.CONVOY_EFFICIENCY_MIN_VALUE = 0.1 -- 0.05
 	NDefines.NNavy.AMPHIBIOUS_LANDING_PENALTY = -0.5 -- -0.7
@@ -395,9 +395,13 @@
 	NDefines.NNavy.NAVAL_SPEED_MODIFIER = 0.1 -- 0.1
 	NDefines.NNavy.NAVAL_TRANSFER_BASE_SPEED = 12 -- 6
 	NDefines.NNavy.NAVAL_INVASION_PREPARE_HOURS = 96 -- 168
-	NDefines.NNavy.ANTI_AIR_TARGETING = 1 -- 0.9
-	NDefines.NNavy.ANTI_AIR_TARGETTING_TO_CHANCE = 0.8 -- 0.2
-	NDefines.NNavy.ANTI_AIR_ATTACK_TO_AMOUNT = 0.002 -- 0.01
+	NDefines.NNavy.ANTI_AIR_TARGETING = 1.25 -- 0.9
+	NDefines.NNavy.ANTI_AIR_TARGETTING_TO_CHANCE = 1 -- 0.2
+	NDefines.NNavy.ANTI_AIR_ATTACK_TO_AMOUNT = 0.001 -- 0.01
+	NDefines.NNavy.SHIP_TO_FLEET_ANTI_AIR_RATIO = 0.1 -- 0.2
+	NDefines.NNavy.ANTI_AIR_POW_ON_INCOMING_AIR_DAMAGE = 0.2 -- 0.2
+	NDefines.NNavy.ANTI_AIR_MULT_ON_INCOMING_AIR_DAMAGE = 0.25 -- 0.15
+	NDefines.NNavy.MAX_ANTI_AIR_REDUCTION_EFFECT_ON_INCOMING_AIR_DAMAGE = 0.99 -- 0.75
 	NDefines.NNavy.ENEMY_AIR_SUPERIORITY_IMPACT = -1.25
 
 	NDefines.NNavy.MISSION_FUEL_COSTS = {
@@ -460,14 +464,14 @@
 	NDefines.NNavy.BASE_GUN_COOLDOWNS = { -- number of hours for a gun to be ready after shooting
 		999.0,	-- big guns
 		4.0,	-- torpedos #anti ship guided weapons
-		4.0,	-- small guns
+		3.0,	-- small guns
 	}
 
 	NDefines.NNavy.DEPTH_CHARGES_HIT_CHANCE_MULT = 1.5 -- multiplies hit chance of depth charges
 	NDefines.NNavy.DEPTH_CHARGES_DAMAGE_MULT = 2 	-- multiplies damage of depth charges
 	NDefines.NNavy.DEPTH_CHARGES_HIT_PROFILE = 24.0	-- hit profile for depth charges
 	NDefines.NNavy.CARRIER_STACK_PENALTY = 2
-	NDefines.NNavy.CARRIER_STACK_PENALTY_EFFECT = 0.8
+	NDefines.NNavy.CARRIER_STACK_PENALTY_EFFECT = 0.5
 	NDefines.NNavy.CARRIER_ONLY_COMBAT_ACTIVATE_TIME = 0 -- 0
 	NDefines.NNavy.CAPITAL_ONLY_COMBAT_ACTIVATE_TIME = 6
 	NDefines.NNavy.ALL_SHIPS_ACTIVATE_TIME = 8 -- 8
@@ -481,15 +485,10 @@
 	NDefines.NNavy.TRAINING_EXPERIENCE_FACTOR = 0.15 -- 0.3
 	NDefines.NNavy.UNIT_EXPERIENCE_PER_COMBAT_HOUR = 15 -- 10
 	NDefines.NNavy.LEADER_EXPERIENCE_SCALE = 2 -- 1
-	NDefines.NNavy.SHIP_TO_FLEET_ANTI_AIR_RATIO = 0.1 -- 0.2
-	NDefines.NNavy.ANTI_AIR_POW_ON_INCOMING_AIR_DAMAGE = 0.2 -- 0.2
-	NDefines.NNavy.ANTI_AIR_MULT_ON_INCOMING_AIR_DAMAGE = 0.2 -- 0.15
-	NDefines.NNavy.MAX_ANTI_AIR_REDUCTION_EFFECT_ON_INCOMING_AIR_DAMAGE = 0.99 -- 0.75
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT = 0.25 -- 0.1
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT_FROM_AIR = 0.2 -- 0.1
 	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CAPITALS = 1.5 -- 3.0
 	NDefines.NNavy.CAPITAL_RATIO_FOR_FULL_SCREENING_FOR_CARRIERS = 2.0 -- 1.0
-	NDefines.NNavy.NAVAL_COMBAT_AIR_CONVOY_TARGET_SCORE = 3.0 -- 1.0
 	NDefines.NNavy.NEW_NAVY_LEADER_LEVEL_CHANCES = {                                -- chances for new navy leaders to start at a given level
         0.90, -- 90% for level one
         0.10  -- 10% for level two
@@ -543,7 +542,7 @@
 	NDefines.NNavy.NAVAL_COMBAT_AIR_SUB_DETECTION_FACTOR = 0.0						-- A global factor that applies after all others, right before the sub detection contributed by plane is added to the global sub detection of a combatant
 
 	NDefines.NNavy.NAVAL_COMBAT_AIR_SUB_TARGET_SCORE = 10                             -- scoring for target picking for planes inside naval combat, one define per ship typ
-	NDefines.NNavy.NAVAL_COMBAT_AIR_CAPITAL_TARGET_SCORE = 50
+	NDefines.NNavy.NAVAL_COMBAT_AIR_CAPITAL_TARGET_SCORE = 25
 	NDefines.NNavy.NAVAL_COMBAT_AIR_CARRIER_TARGET_SCORE = 200
 	NDefines.NNavy.NAVAL_COMBAT_AIR_CONVOY_TARGET_SCORE = 1.0
 	NDefines.NNavy.NAVAL_COMBAT_AIR_STRENGTH_TARGET_SCORE = 5                         -- how much score factor from low health (scales between 0->this number)
@@ -560,6 +559,18 @@
 	NDefines.NTrade.ANTI_MONOPOLY_TRADE_FACTOR_THRESHOLD = 0.7 -- 0.5
 
 	-- NAI Defines
+	-- BAI fix test
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_ATTACK_FACTOR = 3.0                   -- Importance of unit's terrain adjusted attack stat when assigning to a front
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_DEFENSE_FACTOR = 1.0                  -- Importance of unit's terrain adjusted defense stat when assigning to a front
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_MOVEMENT_FACTOR = 2.0                 -- Importance of unit's terrain adjusted movement stat when assigning to a front
+	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_ATTACK_FACTOR = 0.5                 -- Importance of unit's terrain adjusted attack stat when assigning to an area defense order
+	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_DEFENSE_FACTOR = 4.0               -- Importance of unit's terrain adjusted defense stat when assigning to an area defense order
+	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_MOVEMENT_FACTOR = 0.5               -- Importance of unit's terrain adjusted movement stat when assigning to an area defense order
+	NDefines.NAI.ASSIGN_MOUNTAINEERS_TO_MOUNTAINS = 10.0                    -- factor for assigning mountaineer divisions to fronts with mountains (proportional to how much of that terrain type)
+	NDefines.NAI.ASSIGN_TANKS_TO_MOUNTAINS = -26.0                           -- factor for assigning tank divisions to fronts with mountains (proportional to how much of that terrain type)
+	NDefines.NAI.ASSIGN_TANKS_TO_JUNGLE = -6.0                              -- factor for assigning tank divisions to fronts with jungle (proportional to how much of that terrain type)
+	NDefines.NAI.UNIT_ASSIGNMENT_TERRAIN_IMPORTANCE = 10.0                  -- Terrain score for units are multiplied by this when the AI is deciding which front they should be assigned to
+	-- 
 	NDefines.NAI.BASE_RELUCTANCE = 40 -- 20
 	NDefines.NAI.DIPLOMATIC_ACTION_PROPOSE_SCORE = 25 -- 50
 	NDefines.NAI.DILPOMATIC_ACTION_DECLARE_WAR_WARGOAL_BASE = 75 -- 50
@@ -601,7 +612,7 @@
 	NDefines.NAI.FRONT_TERRAIN_ATTACK_FACTOR = 8.0			-- 5
 	NDefines.NAI.BASE_DISTANCE_TO_CARE = 200.0				-- 600
 	NDefines.NAI.MIN_FORCE_RATIO_TO_PROTECT = 1.5			-- 0.5
-	NDefines.NAI.STR_UNIT_STRONG = 0.65						-- 0.75
+	NDefines.NAI.STR_UNIT_STRONG = 0.85						-- 0.75
 	NDefines.NAI.MIN_STATE_VALUE_TO_PROTECT = 3.5			-- 7.5
 	NDefines.NAI.FASCISTS_BEFRIEND_COMMUNISTS = -50
 	NDefines.NAI.FASCISTS_ALLY_FASCISTS = -25
@@ -638,10 +649,10 @@
 	NDefines.NAI.REQUEST_LEND_LEASE_STOCKPILE_RATIO_NAVAL = 0.3			-- 0.1
 	NDefines.NAI.INVASION_DISTANCE_RANDOMNESS = 200					-- 300
 	NDefines.NAI.NAVAL_TRANSFER_AIR_IMPORTANCE = 1.0				-- 0
-	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_SHIP = 5 					--20 reduced by 50% to reduce the AI spamming planes over naval battles
+	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_SHIP = 30 					--20 reduced by 50% to reduce the AI spamming planes over naval battles
 	NDefines.NAI.FOCUS_TREE_CONTINUE_FACTOR = 1		-- Factor for score of how likely the AI is to keep going down a focus tree rather than starting a new path.
 
-	NDefines.NAI.NAVY_PREFERED_MAX_SIZE = 10						-- 20
+	NDefines.NAI.NAVY_PREFERED_MAX_SIZE = 999						-- 20 #Now AI like big fleet
 	NDefines.NAI.MAX_DISTANCE_NALAV_INVASION = 400.0				-- 200.0
 	NDefines.NAI.INVASION_COASTAL_PROVS_PER_ORDER = 8				-- 12
 	NDefines.NAI.NAVAL_COMBAT_AIR_IMPORTANCE = 24.0					-- 12.0
@@ -656,17 +667,17 @@
 	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 10				-- 20
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 50					-- 150
 
-	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 5				-- 20
-	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 5				-- 25
+	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 25				-- 20
+	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 30				-- 25
 	NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 5				-- 15
 	NDefines.NAI.RECON_PLANES_NAVAL = 5						-- 50
 	NDefines.NAI.RECON_PLANES_LAND_COMBAT = 5					-- 25
 	NDefines.NAI.RECON_PLANES_STRATEGIC = 5						-- 50
-	NDefines.NAI.MAX_CARRIER_OVERFILL = 1.25					-- 1.85
-	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2				-- 4
-	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 6				-- 12
+	NDefines.NAI.MAX_CARRIER_OVERFILL = 2.25					-- 1.85
+	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 3				-- 4
+	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 16				-- 12
 	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 2				-- 12
-	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 4					-- 16
+	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 3					-- 16
 	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 4				-- 10
 	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 4					-- 1.5
 	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 2					-- 4.0
@@ -674,8 +685,8 @@
 	NDefines.NAI.HIGH_PRIO_NAVAL_MISSION_SCORES = {
 		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		100000, -- PATROL
-		1000, -- STRIKE FORCE
-		1500, -- CONVOY RAIDING
+		5000, -- STRIKE FORCE
+		10000, -- CONVOY RAIDING
 		1000, -- CONVOY ESCORT
 		-1, -- MINES PLANTING
 		300, -- MINES SWEEPING
@@ -686,21 +697,21 @@
 	NDefines.NAI.MAX_MISSION_PER_TASKFORCE = {
 		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		3.5, -- PATROL
-		4, -- STRIKE FORCE
-		1.5, -- CONVOY RAIDING
+		1, -- STRIKE FORCE
+		3, -- CONVOY RAIDING
 		4, -- CONVOY ESCORT
-		2, -- MINES PLANTING
-		2, -- MINES SWEEPING
+		1, -- MINES PLANTING
+		1, -- MINES SWEEPING
 		1, -- TRAIN
 		0, -- RESERVE_FLEET
-		10, -- NAVAL INVASION SUPPORT
+		4, -- NAVAL INVASION SUPPORT
 	}
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_LAND_FORT_LEVEL = 7			-- 15
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5		-- 10
 	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.4
-	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 4					-- 20
-	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 4					-- 25
-	NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 4					-- 25
+	-- NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 4					-- 20
+	-- NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 4					-- 25
+	-- NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 4					-- 25
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
 	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 20				-- 3 is vanilla, updated this from 8 to 20 for more AI production control
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
@@ -753,25 +764,25 @@
 	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.2
 	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of pirority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
-		'industrial_complex', 'offices', 'arms_factory'
+		'internet_station','industrial_complex', 'offices', 'arms_factory'
 	}
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.2
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.005		-- ai will try to build a silo per this ratio of civ factories
 	NDefines.NAI.NUM_SILOS_PER_MILITARY_FACTORIES = 0.020		-- ai will try to build a silo per this ratio of mil factories
 	NDefines.NAI.NUM_SILOS_PER_DOCKYARDS = 0.03
-	NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
-		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
-		250, -- PATROL
-		100, -- STRIKE FORCE
-		100, -- CONVOY RAIDING
-		150, -- CONVOY ESCORT
-		50, -- MINES PLANTING
-		50, -- MINES SWEEPING
-		200, -- TRAIN
-		0, -- RESERVE_FLEET
-		100, -- NAVAL INVASION SUPPORT
-	}
+	-- NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
+	--	0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+	--	250, -- PATROL
+	--	100, -- STRIKE FORCE
+	--	100, -- CONVOY RAIDING
+	--	150, -- CONVOY ESCORT
+	--	50, -- MINES PLANTING
+	--	50, -- MINES SWEEPING
+	--	200, -- TRAIN
+	--	0, -- RESERVE_FLEET
+	--	100, -- NAVAL INVASION SUPPORT
+	-- }
 
 	-- NOperatives Defines
 	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 20.0 --25 in Vanilla
@@ -851,3 +862,31 @@
 	-- NSupply Defines
 	NDefines.NSupply.MAX_RAILWAY_LEVEL = 6 -- update railway texture as well, each frame corresponds to a level
 	NDefines.NSupply.DEFAULT_STARTING_TRUCK_RATIO = 1 -- countries get this ratio of starting truck in their buffers compared to their need -- vanilla 1.5
+
+	NDefines.NAI.SHIPS_PRODUCTION_BASE_COST = 15000					-- Used by the AI to normalize IC values when picking what ship to build.
+	NDefines.NAI.NEEDED_NAVAL_FACTORIES_EXPENSIVE_SHIP_BONUS = 10    -- Amount of naval yards you need to get a bonus to building really expensive ships
+	NDefines.NAI.PRODUCTION_MAX_PROGRESS_TO_SWITCH_NAVAL = 0.2		-- AI will not replace ships being built by newer types if progress is above this
+	NDefines.NAI.AREA_DEFENSE_SETTING_AIRBASES = true
+
+	NDefines.NAI.MIN_MAIN_SHIP_RATIO = 0.1                      -- if main ship ratio is below this, steal other ships.
+	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO = 0.7                   -- if support ship ratio is below this, steal other ships.
+	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_REINFORCE = 0.5         -- the main ships will be tried to reinforce this level.
+	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO_TO_REINFORCE = 0.9      -- the support ships will be tried to reinforce this level.
+	NDefines.NAI.MIN_MAIN_SHIP_TO_SPARE = 0.7                   -- can only steal ships from a task force if their main ship ratio is above this.
+	NDefines.NAI.MIN_SUPPORT_SHIP_TO_SPARE = 1.0                -- can only steal ships from a task force if their support ship ratio is above this.
+	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_MERGE = 1.0             -- try merge task force if main ship ratio is lower than this.
+	NDefines.NAI.MAX_MAIN_SHIP_RATIO_TO_MERGE = 1.002           -- if resulting main ship ratio would be at most this, allow merging into this task force.
+	NDefines.NAI.MAIN_SHIP_RATIO_TO_SPLIT = 3.6                 -- if main ship ratio in a task force is larger than this, split it. (If a carrier TF wants 4 carriers (see defines above), but it has more than [this * 4] carriers, then we try to split the TF.)
+	
+	NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
+		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+		200, -- PATROL
+		1000, -- STRIKE FORCE
+		400, -- CONVOY RAIDING
+		200, -- CONVOY ESCORT
+		100, -- MINES PLANTING
+		100, -- MINES SWEEPING
+		0, -- TRAIN
+		100, -- RESERVE_FLEET
+		200, -- NAVAL INVASION SUPPORT
+	}

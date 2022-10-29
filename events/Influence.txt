@@ -144,14 +144,6 @@ country_event = {
 					has_idea = great_power
 				}
 			}
-			# Reduce Based on Opinion
-			# Keep going if each continues to be true
-			modifier = {
-				set_temp_variable = { opinion_calculator = ROOT.opinion@FROM }
-				multiply_temp_variable = { opinion_calculator = 0.05 }
-				check_variable = { opinion_calculator > -30 }
-				factor = opinion_calculator
-			}
 			# Killswitch
 			# Do not accept under any of these conditions
 			modifier = {
@@ -221,9 +213,9 @@ country_event = {
 			# Opinion Section
 			# If the AI has a low opinion be more likely to reject
 			modifier = {
+				check_variable = { ROOT.opinion@FROM < 0 }
 				set_temp_variable = { opinion_calculator = ROOT.opinion@FROM }
 				multiply_temp_variable = { opinion_calculator = -0.05 }
-				check_variable = { opinion_calculator > -30 }
 				factor = opinion_calculator
 			}
 			# Rejection Killswitch
@@ -256,11 +248,11 @@ country_event = {
 #Target Influences
 country_event = {
 	id = influence.3
-
 	title = influence.3.t
 	desc = influence.3.d
 	picture = GFX_politics_surveillence
 	is_triggered_only = yes
+
 	#Target domestic influence
 	option = {
 		name = influence.3.a
@@ -971,12 +963,12 @@ country_event = {
 						add_opinion_modifier = { target = ROOT modifier = succeded_coup }
 						news_event = { id = News_influence.3 }
 					}
-					#add 20% to ROOT influence
-					set_temp_variable = { percent_change = 10 }
-					set_temp_variable = { tag_index = ROOT.id }
-					set_temp_variable = { influence_target = THIS.id }
-					change_influence_percentage = yes
 				}
+				#add 20% to ROOT influence
+				set_temp_variable = { percent_change = 10 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = FROM.id }
+				change_influence_percentage = yes
 				#add event to country and world
 				hidden_effect = {
 					every_country = {
@@ -992,13 +984,6 @@ country_event = {
 				custom_effect_tooltip = influence_coup_largest_discovered_TT
 
 				FROM = {
-					#remove a LOT of influence
-					set_temp_variable = { percent_change = -15 }
-					set_temp_variable = { tag_index = ROOT.id }
-					set_temp_variable = { influence_target = THIS.id }
-					change_influence_percentage = yes
-
-
 					hidden_effect = {
 						add_opinion_modifier = {
 							target = ROOT
@@ -1006,6 +991,11 @@ country_event = {
 						}
 					}
 				}
+				#remove a LOT of influence
+				set_temp_variable = { percent_change = -15 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = FROM.id }
+				change_influence_percentage = yes
 				#add event to country and world
 				hidden_effect = {
 					every_country = {
@@ -1689,12 +1679,10 @@ country_event = {
 			}
 		}
 		effect_tooltip = {
-			FROM.FROM = {
-				set_temp_variable = { percent_change = 4 }
-				set_temp_variable = { tag_index = ROOT.id }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
-			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = FROM.FROM.id }
+			change_influence_percentage = yes
 		}
 		FROM.FROM = { #Targeted Influencer should recieve this
 			country_event = { id = influence.53 } #Infantry Equipment
@@ -1776,12 +1764,10 @@ country_event = {
 			}
 		}
 		effect_tooltip = {
-			FROM.FROM = {
-				set_temp_variable = { percent_change = 4 }
-				set_temp_variable = { tag_index = ROOT.id }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
-			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = FROM.FROM.id }
+			change_influence_percentage = yes
 		}
 		FROM.FROM = { #Targeted Influencer should receive this
 			country_event = { id = influence.53 } #Infantry Equipment
@@ -1855,7 +1841,7 @@ country_event = {
 				producer = FROM
 			}
 		}
-		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { percent_change = 3 }
 		set_temp_variable = { tag_index = FROM.id }
 		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
@@ -1898,7 +1884,7 @@ country_event = {
 			modifier = {
 				factor = 0.01
 				has_government = fascism
-				ROOT = { NOT = { has_government = fascism }}
+				ROOT = { NOT = { has_government = fascism } }
 			}
 			modifier = {
 				factor = 0.90
@@ -1983,7 +1969,7 @@ country_event = {
 				producer = FROM
 			}
 		}
-		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { percent_change = 3 }
 		set_temp_variable = { tag_index = FROM.id }
 		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
