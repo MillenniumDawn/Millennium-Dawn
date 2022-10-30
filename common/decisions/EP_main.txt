@@ -1,121 +1,301 @@
-
 EP_main_cat = {
+	
+	order_number_0_mission = {
+		allowed = { always = no }
+		activation = { always = no }
+		#available = {custom_trigger_tooltip = {tooltip = USA_recognition_BRM_tt}}
 
-	#Collapse ALL (Will close all tabs)
-
-	#EP_close_cats = {
-
-	#	icon = GFX_decision_generic_prepare_civil_war
-
-		##############SECTION INCOMPLETE#########################
-
-	#	complete_effect = {
-	#		log = "[GetDateText]: [Root.GetName]: Decision EP_close_cats"
-			#Close all tabs
-	#		clr_country_flag = EP_open_cats
-	#		clr_country_flag = inf_cat_open
-	#		clr_country_flag = vhc_cat_open
-	#		clr_country_flag = air_cat_open
-	#		clr_country_flag = navy_cat_open
-
-			#Close all sub-tabs
-	#		##Small Arms
-	#		clr_country_flag = show_small_arms
-	#		clr_country_flag = show_cc_equi
-	#		clr_country_flag = show_anti_air
-	#		clr_country_flag = show_atgm
-	#		clr_country_flag = show_arty
-	#		clr_country_flag = show_transport_helicopter
-			##Vehicles
-	#		clr_country_flag = show_APC
-	#		clr_country_flag = show_IFV
-	#		clr_country_flag = show_H_anti_tank
-	#		clr_country_flag = show_rec
-	#		clr_country_flag = show_mbt
-			##Aircraft
-	#		clr_country_flag = show_ASF
-	#		clr_country_flag = show_MR
-	#		clr_country_flag = show_interceptor
-	#		clr_country_flag = show_CAS
-	#		clr_country_flag = show_strike
-	#		clr_country_flag = show_attack_helicopter
-	#		clr_country_flag = show_trainer
-	#		clr_country_flag = show_UAV
-	#		clr_country_flag = show_STR
-	#		clr_country_flag = show_TRA
-	#		clr_country_flag = show_MAR
-	#		clr_country_flag = show_CV_MR
-	#		clr_country_flag = show_CV_trainer
-	#	}
-	#}
-	###########################################################
-
-	EP_infantry_open = {
-
-		icon = GFX_decision_generic_prepare_civil_war
-
-		visible = {
-			hidden_trigger = {
-				NOT = {
-					has_country_flag = inf_cat_open
-				}
-			}
-		}
+		is_good = yes
+		days_mission_timeout = order_delivery_time^0
+		#days_re_enable = 123
+		selectable_mission = yes
+		fire_only_once = no
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision EP_infantry_open"
-			set_country_flag = inf_cat_open
+			set_variable = { order_equipment_type^0 = 0 }
+			set_variable = { order_equipment_amount^0 = 0 } 
+			set_variable = { order_equipment_producer^0 = 0 }
+			
+			subtract_from_variable = { active_equipment_orders = 1 }
+			set_variable = { order_number^0 = 0 }
+			
+			remove_mission = order_number_0_mission
+		}
+
+		timeout_effect = {
+			set_temp_variable = { equipment_selected_index = order_equipment_type^0 }
+			set_temp_variable = { amount_selected = order_equipment_amount^0 }
+			set_temp_variable = { purchaser_tag = order_equipment_producer^0 }
+			
+			add_equipment_to_purchaser_effect = yes
+			
+			set_temp_variable = { treasury_change = 0 }
+			subtract_from_temp_variable = { treasury_change = order_delivery_price^0 }
+			modify_treasury_effect = yes
+
+			if = { limit = { AND = { check_variable = { purchaser_tag = USA } NOT = { is_embargoed_by = USA } } } 
+				activate_mission = order_number_0_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = SOV } NOT = { is_embargoed_by = SOV } } } 
+				activate_mission = order_number_0_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = FRA } NOT = { is_embargoed_by = FRA } } } 
+				activate_mission = order_number_0_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = GER } NOT = { is_embargoed_by = GER } } } 
+				activate_mission = order_number_0_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = CHI } NOT = { is_embargoed_by = CHI } } } 
+				activate_mission = order_number_0_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = ENG } NOT = { is_embargoed_by = ENG } } } 
+				activate_mission = order_number_0_mission
+			}
+			else = {
+				remove_mission = order_number_0_mission
+				subtract_from_variable = { active_equipment_orders = 1 }
+				set_variable = { order_number^0 = 0 }
+			}
 		}
 	}
 
-	EP_vhc_open = {
-		icon = GFX_decision_generic_prepare_civil_war
-		visible = {
-			hidden_trigger = {
-				NOT = {
-					has_country_flag = vhc_cat_open
-				}
-			}
-		}
+	order_number_1_mission = {
+		allowed = { always = no }
+		activation = { always = no }
+
+		is_good = yes
+		days_mission_timeout = order_delivery_time^1
+		#days_re_enable = 123
+		selectable_mission = yes
+		fire_only_once = no
+
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision EP_vhc_open"
-			set_country_flag = vhc_cat_open
+			set_variable = { order_equipment_type^1 = 0 }
+			set_variable = { order_equipment_amount^1 = 0 } 
+			set_variable = { order_equipment_producer^1 = 0 }
+			
+			subtract_from_variable = { active_equipment_orders = 1 }
+			set_variable = { order_number^1 = 0 }
+			
+			remove_mission = order_number_1_mission
+		}
+
+		timeout_effect = {
+			set_temp_variable = { equipment_selected_index = order_equipment_type^1 }
+			set_temp_variable = { amount_selected = order_equipment_amount^1 }
+			set_temp_variable = { purchaser_tag = order_equipment_producer^1 }
+			
+			add_equipment_to_purchaser_effect = yes
+			#subtract_from_variable = { active_equipment_orders = 1 }
+			#set_variable = { order_number^1 = 0 }
+			
+			set_temp_variable = { treasury_change = 0 }
+			subtract_from_temp_variable = { treasury_change = order_delivery_price^1 }
+			modify_treasury_effect = yes
+				
+			if = { limit = { AND = { check_variable = { purchaser_tag = USA } NOT = { is_embargoed_by = USA } } } 
+				activate_mission = order_number_1_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = SOV } NOT = { is_embargoed_by = SOV } } } 
+				activate_mission = order_number_1_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = FRA } NOT = { is_embargoed_by = FRA } } } 
+				activate_mission = order_number_1_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = GER } NOT = { is_embargoed_by = GER } } } 
+				activate_mission = order_number_1_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = CHI } NOT = { is_embargoed_by = CHI } } } 
+				activate_mission = order_number_1_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = ENG } NOT = { is_embargoed_by = ENG } } } 
+				activate_mission = order_number_1_mission
+			}
+			else = {
+				remove_mission = order_number_1_mission
+				subtract_from_variable = { active_equipment_orders = 1 }
+				set_variable = { order_number^1 = 0 }
+			}
 		}
 	}
 
-	EP_air_open = {
+	order_number_2_mission = {
+		allowed = { always = no }
+		activation = { always = no }
 
-		icon = GFX_decision_generic_prepare_civil_war
-
-		visible = {
-			is_debug = yes ##Only show up on debug
-			hidden_trigger = {
-				NOT = {
-					has_country_flag = air_cat_open
-				}
-			}
-		}
+		is_good = yes
+		days_mission_timeout = order_delivery_time^2
+		#days_re_enable = 123
+		selectable_mission = yes
+		fire_only_once = no
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision EP_air_open"
-			set_country_flag = air_cat_open
+			set_variable = { order_equipment_type^2 = 0 }
+			set_variable = { order_equipment_amount^2 = 0 } 
+			set_variable = { order_equipment_producer^2 = 0 }
+			
+			subtract_from_variable = { active_equipment_orders = 1 }
+			set_variable = { order_number^2 = 0 }
+			
+			remove_mission = order_number_2_mission
 		}
-	 }
 
-	#EP_navy_open = {
+		timeout_effect = {
+			set_temp_variable = { equipment_selected_index = order_equipment_type^2 }
+			set_temp_variable = { amount_selected = order_equipment_amount^2 }
+			set_temp_variable = { purchaser_tag = order_equipment_producer^2 }
+			
+			add_equipment_to_purchaser_effect = yes
+			#subtract_from_variable = { active_equipment_orders = 1 }
+			#set_variable = { order_number^2 = 0 }
+			
+			set_temp_variable = { treasury_change = 0 }
+			subtract_from_temp_variable = { treasury_change = order_delivery_price^2 }
+			modify_treasury_effect = yes
+				
+			if = { limit = { AND = { check_variable = { purchaser_tag = USA } NOT = { is_embargoed_by = USA } } } 
+				activate_mission = order_number_2_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = SOV } NOT = { is_embargoed_by = SOV } } } 
+				activate_mission = order_number_2_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = FRA } NOT = { is_embargoed_by = FRA } } } 
+				activate_mission = order_number_2_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = GER } NOT = { is_embargoed_by = GER } } } 
+				activate_mission = order_number_2_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = CHI } NOT = { is_embargoed_by = CHI } } } 
+				activate_mission = order_number_2_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = ENG } NOT = { is_embargoed_by = ENG } } } 
+				activate_mission = order_number_2_mission
+			}
+			else = {
+				remove_mission = order_number_2_mission
+				subtract_from_variable = { active_equipment_orders = 1 }
+				set_variable = { order_number^2 = 0 }
+			}
+		}
+	}
 
-	#	icon = GFX_decision_generic_prepare_civil_war
+	order_number_3_mission = {
+		allowed = { always = no }
+		activation = { always = no }
 
-	#	visible = {
-	#		hidden_trigger = {
-	#			NOT = {
-	#				has_country_flag = navy_cat_open
-	#			}
-	#		}
-	#	}
+		is_good = yes
+		days_mission_timeout = order_delivery_time^3
+		#days_re_enable = 123
+		selectable_mission = yes
+		fire_only_once = no
 
-	#	complete_effect = {
-	#		set_country_flag = navy_cat_open
-	#	}
-	#}
+		complete_effect = {
+			set_variable = { order_equipment_type^3 = 0 }
+			set_variable = { order_equipment_amount^3 = 0 } 
+			set_variable = { order_equipment_producer^3 = 0 }
+			
+			subtract_from_variable = { active_equipment_orders = 1 }
+			set_variable = { order_number^3 = 0 }
+			
+			remove_mission = order_number_3_mission
+		}
+
+		timeout_effect = {
+			set_temp_variable = { equipment_selected_index = order_equipment_type^3 }
+			set_temp_variable = { amount_selected = order_equipment_amount^3 }
+			set_temp_variable = { purchaser_tag = order_equipment_producer^3 }
+			
+			add_equipment_to_purchaser_effect = yes
+			#subtract_from_variable = { active_equipment_orders = 1 }
+			#set_variable = { order_number^3 = 0 }
+			
+			set_temp_variable = { treasury_change = 0 }
+			subtract_from_temp_variable = { treasury_change = order_delivery_price^3 }
+			modify_treasury_effect = yes
+				
+			if = { limit = { AND = { check_variable = { purchaser_tag = USA } NOT = { is_embargoed_by = USA } } } 
+				activate_mission = order_number_3_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = SOV } NOT = { is_embargoed_by = SOV } } } 
+				activate_mission = order_number_3_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = FRA } NOT = { is_embargoed_by = FRA } } } 
+				activate_mission = order_number_3_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = GER } NOT = { is_embargoed_by = GER } } } 
+				activate_mission = order_number_3_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = CHI } NOT = { is_embargoed_by = CHI } } } 
+				activate_mission = order_number_3_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = ENG } NOT = { is_embargoed_by = ENG } } } 
+				activate_mission = order_number_3_mission
+			}
+			else = {
+				remove_mission = order_number_3_mission
+				subtract_from_variable = { active_equipment_orders = 1 }
+				set_variable = { order_number^3 = 0 }
+			}
+		}
+	}
+
+	order_number_4_mission = {
+		allowed = { always = no }
+		activation = { always = no }
+
+		is_good = yes
+		days_mission_timeout = order_delivery_time^4
+		#days_re_enable = 123
+		selectable_mission = yes
+		fire_only_once = no
+
+		complete_effect = {
+			set_variable = { order_equipment_type^4 = 0 }
+			set_variable = { order_equipment_amount^4 = 0 } 
+			set_variable = { order_equipment_producer^4 = 0 }
+			
+			subtract_from_variable = { active_equipment_orders = 1 }
+			set_variable = { order_number^4 = 0 }
+			
+			remove_mission = order_number_4_mission
+		}
+
+		timeout_effect = {
+			set_temp_variable = { equipment_selected_index = order_equipment_type^4 }
+			set_temp_variable = { amount_selected = order_equipment_amount^4 }
+			set_temp_variable = { purchaser_tag = order_equipment_producer^4 }
+			
+			add_equipment_to_purchaser_effect = yes
+			#subtract_from_variable = { active_equipment_orders = 1 }
+			#set_variable = { order_number^4 = 0 }
+			
+			set_temp_variable = { treasury_change = 0 }
+			subtract_from_temp_variable = { treasury_change = order_delivery_price^4 }
+			modify_treasury_effect = yes
+				
+			if = { limit = { AND = { check_variable = { purchaser_tag = USA } NOT = { is_embargoed_by = USA } } } 
+				activate_mission = order_number_4_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = SOV } NOT = { is_embargoed_by = SOV } } } 
+				activate_mission = order_number_4_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = FRA } NOT = { is_embargoed_by = FRA } } } 
+				activate_mission = order_number_4_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = GER } NOT = { is_embargoed_by = GER } } } 
+				activate_mission = order_number_4_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = CHI } NOT = { is_embargoed_by = CHI } } } 
+				activate_mission = order_number_4_mission
+			}
+			else_if = { limit = { AND = { check_variable = { purchaser_tag = ENG } NOT = { is_embargoed_by = ENG } } } 
+				activate_mission = order_number_4_mission
+			}
+			else = {
+				remove_mission = order_number_4_mission
+				subtract_from_variable = { active_equipment_orders = 1 }
+				set_variable = { order_number^4 = 0 }
+			}
+		}
+	}	
 }
