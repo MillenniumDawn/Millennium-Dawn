@@ -58,17 +58,18 @@ init_investment_system = {
 	set_variable = { global.BUILD_CONST_COST_REFINERY = 27500 }
 
 	### BUILDING MONETARY COST
-	set_variable = { global.BUILD_COST_CIVILIAN_FACTORY = 9.375 }
-	set_variable = { global.BUILD_COST_MILITARY_FACTORY = 10.0 }
-	set_variable = { global.BUILD_COST_DOCKYARD = 9.375 }
-	set_variable = { global.BUILD_COST_INFRASTRUCTURE = 4.375 }
-	set_variable = { global.BUILD_COST_OFFICES = 16.0 }
-	set_variable = { global.BUILD_COST_ANTIAIR = 4.25 }
-	set_variable = { global.BUILD_COST_RADAR = 3.75 }
-	set_variable = { global.BUILD_COST_AIRBASE = 4.250 }
-	set_variable = { global.BUILD_COST_FUEL_SILO = 4.50 }
-	set_variable = { global.BUILD_COST_INTERNET_STATION = 4.00 }
-	set_variable = { global.BUILD_COST_REFINERY = 6.375 }
+	# Balance Change: Cost increased by 60% from standardization
+	set_variable = { global.BUILD_COST_CIVILIAN_FACTORY = 12 }
+	set_variable = { global.BUILD_COST_MILITARY_FACTORY = 12.50 }
+	set_variable = { global.BUILD_COST_DOCKYARD = 12 }
+	set_variable = { global.BUILD_COST_INFRASTRUCTURE = 5.5 }
+	set_variable = { global.BUILD_COST_OFFICES = 20 }
+	set_variable = { global.BUILD_COST_ANTIAIR = 5.50 }
+	set_variable = { global.BUILD_COST_RADAR = 4.50 }
+	set_variable = { global.BUILD_COST_AIRBASE = 5.25 }
+	set_variable = { global.BUILD_COST_FUEL_SILO = 5.25 }
+	set_variable = { global.BUILD_COST_INTERNET_STATION = 4.65 }
+	set_variable = { global.BUILD_COST_REFINERY = 7.25 }
 
 	every_country = {
 		if = { limit = { is_ai = no }
@@ -91,12 +92,11 @@ ingame_init_investment_system = {
 }
 
 refresh_gui = {
-	if = {
-		limit = { check_variable = { ROOT.refresh_gui = 0 } }
-		set_variable = { ROOT.refresh_gui = 1 }
+	if = { limit = { check_variable = { global.refresh_gui = 500 } }
+		set_variable = { global.refresh_gui = 1 }
 	}
 	else = {
-		set_variable = { ROOT.refresh_gui = 0 }
+		add_to_variable = { global.refresh_gui = 1 }
 	}
 }
 
@@ -113,7 +113,7 @@ update_gui = {
 	clear_variable = project
 }
 
-project_monetary_cost_calculation = { # Replaces AC_calc_pp_cost in the section
+project_monetary_cost_calculation = { #Replaces AC_calc_pp_cost in the section
 	if = { limit = { check_variable = { project_building_type^-1 = 1 } }
 		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_CIVILIAN_FACTORY }
 	}
@@ -150,52 +150,14 @@ project_monetary_cost_calculation = { # Replaces AC_calc_pp_cost in the section
 
 	# AC Build Cost Modifiers
 	set_temp_variable = { AC_cost_modifier = 1 }
-	if = {
-		limit = { PREV = { CONTROLLER = { has_idea = paralyzing_corruption } } }
-		add_to_temp_variable = { AC_cost_modifier = 0.45 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = crippling_corruption } } }
-		add_to_temp_variable = { AC_cost_modifier = 0.40 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = rampant_corruption } } }
-		add_to_temp_variable = { AC_cost_modifier = 0.35 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = unrestrained_corruption } } }
-		add_to_temp_variable = { AC_cost_modifier = 0.30 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = systematic_corruption } } }
-		add_to_temp_variable = { AC_cost_modifier = 0.25 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = widespread_corruption } } }
-		add_to_temp_variable = { AC_cost_modifier = 0.20 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = medium_corruption } } }
-		add_to_temp_variable = { AC_cost_modifier = 0.15 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = modest_corruption } } }
-		add_to_temp_variable = { AC_cost_modifier = 0.10 }
-	}
-	else_if = {
-		limit = { PREV = { CONTROLLER = { has_idea = slight_corruption } } }
-		add_to_temp_variable = { AC_cost_modifier = 0.05 }
-	}
-
 	PREV = {
 		CONTROLLER = {
-			set_variable = { ROOT.corporate_cost_modifier = corporate_tax_rate }
+			add_to_temp_variable = { AC_cost_modifier = THIS.modifier@receiving_investment_cost_modifier }
 		}
 	}
-	divide_variable = { corporate_cost_modifier = 100 }
-	add_to_temp_variable = { AC_cost_modifier = corporate_cost_modifier }
-	
-	#50% more expensive for communists
+	add_to_temp_variable = { AC_cost_modifier = ROOT.modifier@investment_cost_modifier }
+
+	# 50% more expensive for communists
 	if = {
 		limit = {
 			OR = {
@@ -205,13 +167,6 @@ project_monetary_cost_calculation = { # Replaces AC_calc_pp_cost in the section
 		}
 		add_to_temp_variable = { AC_cost_modifier = 0.5 }
 	}
-			
-	# if you wish to make investments cheaper via focus or other effect
-	# Example :
-	# Raises investment for Canada by 5% just for being Canada
-	# if = { limit = { tag = CAN } }
-	# 	add_to_temp_variable = { AC_cost_modifier = 0.05 }
-	# }
 
 	# Calculates modified Build Cost
 	set_variable = { displayable_monetary_cost_modifier = AC_cost_modifier }
@@ -343,9 +298,7 @@ add_finished_buildings = {
 	}
 }
 
-# init_project
-#
-#
+# init_project:
 init_project = {
 	ROOT = {
 		# Get Construction Speed Modifiers and Set Building Cost
@@ -382,7 +335,17 @@ init_project = {
 
 		# Sets and round build cost
 		set_variable = { project_construction_duration^project = building_cost }
+		set_temp_variable = { receiving_investment_duration_temp = 1 }
+		PREV = {
+			CONTROLLER = {
+				add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
+			}
+		}
+
+		add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@investment_duration_modifier }
+		multiply_variable = { project_construction_duration^project = receiving_investment_duration_temp }
 		round_variable = project_construction_duration^project
+		set_variable = { displayable_construction_modifier = receiving_investment_duration_temp }
 
 		# Decision tooltip for total time to build
 		set_variable = { project_total_construction_duration_display^project = project_construction_duration^project }
@@ -410,6 +373,16 @@ init_project_two = {
 	set_variable = { project_construction_speed_display^project = 1 }
 	multiply_variable = { project_construction_speed_display^project = 100 }
 	round_variable = project_construction_speed_display^project
+
+	# Duration Multiplier
+	set_temp_variable = { receiving_investment_duration_temp = 1 }
+	PREV = {
+		CONTROLLER = {
+			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
+		}
+	}
+	add_to_temp_variable = { receiving_investment_duration_temp = ROOT.modifier@investment_duration_modifier }
+	multiply_temp_variable = { construction_speed = receiving_investment_duration_temp }
 
 	# Total Factory Output
 	multiply_temp_variable = { construction_speed = 100 }
@@ -470,13 +443,7 @@ start_project_two = {
 		clear_variable = new_project
 	}
 
-	if = {
-		limit = { check_variable = { refresh_gui = 0 } }
-		set_variable = { refresh_gui = 1 }
-	}
-	else = {
-		set_variable = { refresh_gui = 0 }
-	}
+	refresh_gui = yes
 }
 
 # Either FROM or Country
