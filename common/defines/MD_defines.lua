@@ -613,7 +613,7 @@
 	NDefines.NAI.FRONT_TERRAIN_ATTACK_FACTOR = 8.0			-- 5
 	NDefines.NAI.BASE_DISTANCE_TO_CARE = 200.0				-- 600
 	NDefines.NAI.MIN_FORCE_RATIO_TO_PROTECT = 1.5			-- 0.5
-	NDefines.NAI.STR_UNIT_STRONG = 0.65						-- 0.75
+	NDefines.NAI.STR_UNIT_STRONG = 0.85						-- 0.75
 	NDefines.NAI.MIN_STATE_VALUE_TO_PROTECT = 3.5			-- 7.5
 	NDefines.NAI.FASCISTS_BEFRIEND_COMMUNISTS = -50
 	NDefines.NAI.FASCISTS_ALLY_FASCISTS = -25
@@ -650,10 +650,10 @@
 	NDefines.NAI.REQUEST_LEND_LEASE_STOCKPILE_RATIO_NAVAL = 0.3			-- 0.1
 	NDefines.NAI.INVASION_DISTANCE_RANDOMNESS = 200					-- 300
 	NDefines.NAI.NAVAL_TRANSFER_AIR_IMPORTANCE = 1.0				-- 0
-	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_SHIP = 5 					--20 reduced by 50% to reduce the AI spamming planes over naval battles
+	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_SHIP = 30 					--20 reduced by 50% to reduce the AI spamming planes over naval battles
 	NDefines.NAI.FOCUS_TREE_CONTINUE_FACTOR = 1		-- Factor for score of how likely the AI is to keep going down a focus tree rather than starting a new path.
 
-	NDefines.NAI.NAVY_PREFERED_MAX_SIZE = 10						-- 20
+	NDefines.NAI.NAVY_PREFERED_MAX_SIZE = 999						-- 20 #Now AI like big fleet
 	NDefines.NAI.MAX_DISTANCE_NALAV_INVASION = 400.0				-- 200.0
 	NDefines.NAI.INVASION_COASTAL_PROVS_PER_ORDER = 8				-- 12
 	NDefines.NAI.NAVAL_COMBAT_AIR_IMPORTANCE = 24.0					-- 12.0
@@ -668,17 +668,17 @@
 	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 10				-- 20
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 50					-- 150
 
-	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 5				-- 20
-	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 5				-- 25
+	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 25				-- 20
+	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 30				-- 25
 	NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 5				-- 15
 	NDefines.NAI.RECON_PLANES_NAVAL = 5						-- 50
 	NDefines.NAI.RECON_PLANES_LAND_COMBAT = 5					-- 25
 	NDefines.NAI.RECON_PLANES_STRATEGIC = 5						-- 50
-	NDefines.NAI.MAX_CARRIER_OVERFILL = 1.25					-- 1.85
-	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2				-- 4
-	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 6				-- 12
+	NDefines.NAI.MAX_CARRIER_OVERFILL = 2.25					-- 1.85
+	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 3				-- 4
+	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 16				-- 12
 	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 2				-- 12
-	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 4					-- 16
+	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 3					-- 16
 	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 4				-- 10
 	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 4					-- 1.5
 	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 2					-- 4.0
@@ -686,8 +686,8 @@
 	NDefines.NAI.HIGH_PRIO_NAVAL_MISSION_SCORES = {
 		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		100000, -- PATROL
-		1000, -- STRIKE FORCE
-		1500, -- CONVOY RAIDING
+		5000, -- STRIKE FORCE
+		10000, -- CONVOY RAIDING
 		1000, -- CONVOY ESCORT
 		-1, -- MINES PLANTING
 		300, -- MINES SWEEPING
@@ -698,21 +698,21 @@
 	NDefines.NAI.MAX_MISSION_PER_TASKFORCE = {
 		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		3.5, -- PATROL
-		4, -- STRIKE FORCE
-		1.5, -- CONVOY RAIDING
+		1, -- STRIKE FORCE
+		3, -- CONVOY RAIDING
 		4, -- CONVOY ESCORT
-		2, -- MINES PLANTING
-		2, -- MINES SWEEPING
+		1, -- MINES PLANTING
+		1, -- MINES SWEEPING
 		1, -- TRAIN
 		0, -- RESERVE_FLEET
-		10, -- NAVAL INVASION SUPPORT
+		4, -- NAVAL INVASION SUPPORT
 	}
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_LAND_FORT_LEVEL = 7			-- 15
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5		-- 10
 	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.4
-	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 4					-- 20
-	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 4					-- 25
-	NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 4					-- 25
+	-- NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 4					-- 20
+	-- NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 4					-- 25
+	-- NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 4					-- 25
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
 	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 20				-- 3 is vanilla, updated this from 8 to 20 for more AI production control
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
@@ -765,25 +765,25 @@
 	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.2
 	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of pirority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
-		'industrial_complex', 'offices', 'arms_factory'
+		'internet_station','industrial_complex', 'offices', 'arms_factory'
 	}
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.2
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.005		-- ai will try to build a silo per this ratio of civ factories
 	NDefines.NAI.NUM_SILOS_PER_MILITARY_FACTORIES = 0.020		-- ai will try to build a silo per this ratio of mil factories
 	NDefines.NAI.NUM_SILOS_PER_DOCKYARDS = 0.03
-	NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
-		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
-		250, -- PATROL
-		100, -- STRIKE FORCE
-		100, -- CONVOY RAIDING
-		150, -- CONVOY ESCORT
-		50, -- MINES PLANTING
-		50, -- MINES SWEEPING
-		200, -- TRAIN
-		0, -- RESERVE_FLEET
-		100, -- NAVAL INVASION SUPPORT
-	}
+	-- NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
+	--	0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+	--	250, -- PATROL
+	--	100, -- STRIKE FORCE
+	--	100, -- CONVOY RAIDING
+	--	150, -- CONVOY ESCORT
+	--	50, -- MINES PLANTING
+	--	50, -- MINES SWEEPING
+	--	200, -- TRAIN
+	--	0, -- RESERVE_FLEET
+	--	100, -- NAVAL INVASION SUPPORT
+	-- }
 
 	-- NOperatives Defines
 	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 20.0 --25 in Vanilla
@@ -863,3 +863,31 @@
 	-- NSupply Defines
 	NDefines.NSupply.MAX_RAILWAY_LEVEL = 6 -- update railway texture as well, each frame corresponds to a level
 	NDefines.NSupply.DEFAULT_STARTING_TRUCK_RATIO = 1 -- countries get this ratio of starting truck in their buffers compared to their need -- vanilla 1.5
+
+	NDefines.NAI.SHIPS_PRODUCTION_BASE_COST = 15000					-- Used by the AI to normalize IC values when picking what ship to build.
+	NDefines.NAI.NEEDED_NAVAL_FACTORIES_EXPENSIVE_SHIP_BONUS = 10    -- Amount of naval yards you need to get a bonus to building really expensive ships
+	NDefines.NAI.PRODUCTION_MAX_PROGRESS_TO_SWITCH_NAVAL = 0.2		-- AI will not replace ships being built by newer types if progress is above this
+	NDefines.NAI.AREA_DEFENSE_SETTING_AIRBASES = true
+
+	NDefines.NAI.MIN_MAIN_SHIP_RATIO = 0.1                      -- if main ship ratio is below this, steal other ships.
+	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO = 0.7                   -- if support ship ratio is below this, steal other ships.
+	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_REINFORCE = 0.5         -- the main ships will be tried to reinforce this level.
+	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO_TO_REINFORCE = 0.9      -- the support ships will be tried to reinforce this level.
+	NDefines.NAI.MIN_MAIN_SHIP_TO_SPARE = 0.7                   -- can only steal ships from a task force if their main ship ratio is above this.
+	NDefines.NAI.MIN_SUPPORT_SHIP_TO_SPARE = 1.0                -- can only steal ships from a task force if their support ship ratio is above this.
+	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_MERGE = 1.0             -- try merge task force if main ship ratio is lower than this.
+	NDefines.NAI.MAX_MAIN_SHIP_RATIO_TO_MERGE = 1.002           -- if resulting main ship ratio would be at most this, allow merging into this task force.
+	NDefines.NAI.MAIN_SHIP_RATIO_TO_SPLIT = 3.6                 -- if main ship ratio in a task force is larger than this, split it. (If a carrier TF wants 4 carriers (see defines above), but it has more than [this * 4] carriers, then we try to split the TF.)
+	
+	NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
+		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+		200, -- PATROL
+		1000, -- STRIKE FORCE
+		400, -- CONVOY RAIDING
+		200, -- CONVOY ESCORT
+		100, -- MINES PLANTING
+		100, -- MINES SWEEPING
+		0, -- TRAIN
+		100, -- RESERVE_FLEET
+		200, -- NAVAL INVASION SUPPORT
+	}
