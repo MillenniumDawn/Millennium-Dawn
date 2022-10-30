@@ -560,6 +560,18 @@
 	NDefines.NTrade.ANTI_MONOPOLY_TRADE_FACTOR_THRESHOLD = 0.7 -- 0.5
 
 	-- NAI Defines
+	-- BAI fix test
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_ATTACK_FACTOR = 3.0                   -- Importance of unit's terrain adjusted attack stat when assigning to a front
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_DEFENSE_FACTOR = 1.0                  -- Importance of unit's terrain adjusted defense stat when assigning to a front
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_MOVEMENT_FACTOR = 2.0                 -- Importance of unit's terrain adjusted movement stat when assigning to a front
+	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_ATTACK_FACTOR = 0.5                 -- Importance of unit's terrain adjusted attack stat when assigning to an area defense order
+	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_DEFENSE_FACTOR = 4.0               -- Importance of unit's terrain adjusted defense stat when assigning to an area defense order
+	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_MOVEMENT_FACTOR = 0.5               -- Importance of unit's terrain adjusted movement stat when assigning to an area defense order
+	NDefines.NAI.ASSIGN_MOUNTAINEERS_TO_MOUNTAINS = 10.0                    -- factor for assigning mountaineer divisions to fronts with mountains (proportional to how much of that terrain type)
+	NDefines.NAI.ASSIGN_TANKS_TO_MOUNTAINS = -26.0                           -- factor for assigning tank divisions to fronts with mountains (proportional to how much of that terrain type)
+	NDefines.NAI.ASSIGN_TANKS_TO_JUNGLE = -6.0                              -- factor for assigning tank divisions to fronts with jungle (proportional to how much of that terrain type)
+	NDefines.NAI.UNIT_ASSIGNMENT_TERRAIN_IMPORTANCE = 10.0                  -- Terrain score for units are multiplied by this when the AI is deciding which front they should be assigned to
+	-- 
 	NDefines.NAI.BASE_RELUCTANCE = 40 -- 20
 	NDefines.NAI.DIPLOMATIC_ACTION_PROPOSE_SCORE = 25 -- 50
 	NDefines.NAI.DILPOMATIC_ACTION_DECLARE_WAR_WARGOAL_BASE = 75 -- 50
