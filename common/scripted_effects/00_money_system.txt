@@ -100,7 +100,9 @@ calculate_tax_rate = {
 			add_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit }
 		}
 		set_variable = { consumer_goods_from_corporate_tax = corporate_tax_rate }
+		set_variable = { receiving_investment_cost_form_corporate_tax = corporate_tax_rate }
 		divide_variable = { consumer_goods_from_corporate_tax = 100 }
+		divide_variable = { receiving_investment_cost_form_corporate_tax = 100 }
 		multiply_variable = { consumer_goods_from_corporate_tax = 1.5 } # Doubles the Consumer Goods Penalty
 
 		if = {
@@ -1660,6 +1662,10 @@ calculate_additional_expense_rate = {
 
 		add_to_variable = { additional_expenses_rate = project_decisions_cost }
 	}
+	if = {
+		limit = { has_idea = china_travel_ban }
+		add_to_variable = { additional_expenses_rate = 0.5 }
+	}
 	# European Union Contribution Expenses
 	if = { limit = { has_idea = EU_member }
 		add_to_variable = { additional_expenses_rate = EU_budget_contribution_weekly }
@@ -1738,6 +1744,12 @@ calculate_additional_expense_rate = {
 		limit = { check_variable = { ROOT.pmc_expenses > 0 } }
 		set_variable = { additional_expenses_pmc_salary = ROOT.pmc_expenses }
 		add_to_variable = { additional_expenses_rate = additional_expenses_pmc_salary }
+	}
+	if = {
+		limit = { has_country_flag = MAR_industry_subsidies }
+		set_variable = { additional_expense_maritime_industry = gdp_total_display }
+		multiply_variable = { additional_expense_maritime_industry = 0.002 }
+		add_to_variable = { additional_expenses_rate = additional_expense_maritime_industry }
 	}
 }
 
@@ -2148,7 +2160,7 @@ calculate_gdp = {
 
 # Enable/Disable Personal Tax Rate Change
 disable_personal_tax_rate_change = {
-	set_country_flag = no_personal_tax_rate_change
+	set_country_flag = { flag = no_personal_tax_rate_change days = 365 value = 1 }
 	custom_effect_tooltip = disables_personal_tax_rate_change
 }
 enable_personal_tax_rate_change = {
@@ -2157,7 +2169,7 @@ enable_personal_tax_rate_change = {
 }
 # Enable/Disable Corporate Tax Rate Change
 disable_corporate_tax_rate_change = {
-	set_country_flag = no_corporate_tax_rate_change
+	set_country_flag = { flag = no_corporate_tax_rate_change days = 365 value = 1 }
 	custom_effect_tooltip = disables_corporate_tax_rate_change
 }
 enable_corporate_tax_rate_change = {
