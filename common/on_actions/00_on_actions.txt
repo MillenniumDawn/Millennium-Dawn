@@ -2181,28 +2181,53 @@ on_actions = {
 	}
 
 	#ROOT is winner #FROM gets annexed
-	on_civil_war_end = {
+	on_civil_war_end_before_annexation = {
 		effect = {
 			if = {
 				limit = {
 					FROM = {
-						original_tag = ITA
+						tag = ITA
+					}
+				}
+				FROM = {
+					transfer_units_fraction= {
+						target = ROOT
+						size = 1
+						stockpile_ratio = 1
+						army_ratio = 1
+						navy_ratio = 1
+						air_ratio = 1
 					}
 				}
 				ROOT = {
-					load_focus_tree = italy_focus
+					for_each_loop = {
+						array = missile_inventory_array
+						value = v
+						index = i
+						add_to_variable = { missile_inventory_array^i = FROM.missile_inventory_array^i }
+					}
+					country_event = { id = italy_md.68 days = 2 }
+					change_tag_from = FROM
 				}
 			}
+		}
+	}
+
+	#ROOT is winner #FROM gets annexed
+	on_civil_war_end = {
+		effect = {
 			if = {
 				limit = {
 					ROOT = {
-						original_tag = ITA
+						tag = ITA
 					}
 				}
-				set_temp_variable = { ITA_stability_factor_change = 0.4 }
-				modify_stability_factor_effect = yes
-				set_temp_variable = { ITA_stability_weekly_change = 0.002 }
-				modify_stability_weekly_effect = yes
+				ROOT = {
+					set_temp_variable = { ITA_stability_factor_change = 0.4 }
+					modify_stability_factor_effect = yes
+					set_temp_variable = { ITA_stability_weekly_change = 0.002 }
+					modify_stability_weekly_effect = yes
+				}
 			}
 			ROOT = {
 				if = {
@@ -2473,18 +2498,12 @@ on_actions = {
 					give_AI_templates = yes
 					ai_update_build_units = yes
 					if = {
-						limit = { disabled_ai_unit_list = yes }
+						limit = { gifted_income_list = yes }
 						set_variable = { population_tax_rate = 35 }
 						set_variable = { corporate_tax_rate = 20 }
 						add_ideas = MICROSTATE_fix
 					}
 				}
-			}
-
-			# Missile Configuration Effect
-			# Reference common/scripted_effects/01_missiles_history_configuration.txt
-			random_country = {
-				startup_missile_configuration_effect = yes
 			}
 
 			# Organizational Arrays & Continent Arrays
