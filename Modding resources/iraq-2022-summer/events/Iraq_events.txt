@@ -1,0 +1,1106 @@
+add_namespace = IRQ_border_war_won_attacker
+
+country_event = {
+	id = IRQ_border_war_won_attacker.1
+	title = IRQ_border_war_won_attacker.1.t
+	desc = IRQ_border_war_won_attacker.1.desc
+
+	picture = GFX_report_event_chinese_soldiers_city_ruin
+
+	is_triggered_only = yes
+
+	immediate = {
+		save_event_target_as = our_country
+		FROM = {
+			save_event_target_as = our_state
+			clr_state_flag = border_incident_active
+		}
+		FROM.FROM = { save_event_target_as = their_country }
+		FROM.FROM.FROM = {
+			save_event_target_as = their_state
+			clr_state_flag = border_incident_active
+		}
+        if = {
+            limit = {
+				IRQ = { has_country_flag = IRQ_sinjar_op_completed }
+			}
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war }
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war_cancelled }
+        }
+		if = {
+            limit = {
+				IRQ = { has_country_flag = IRQ_kirkuk_op_completed }
+			}
+            remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war }
+            remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war_cancelled }
+        }
+	}
+
+	option = {
+		name = IRQ_border_war_won_attacker.1.a
+		log = "[GetDateText]: [This.GetName]: IRQ_border_war_won_attacker.1.a executed"
+		add_political_power = 100
+		if = {
+			limit = {
+				check_variable = {
+					FROM.FROM.num_owned_states > 1
+				}
+			}
+			transfer_state = FROM.FROM.FROM
+		}
+		else = {
+			FROM.FROM = { ROOT = { annex_country = { target = PREV } } }
+		}
+	}
+}
+
+add_namespace = IRQ_border_war_won_defender
+
+country_event = {
+	id = IRQ_border_war_won_defender.1
+	title = IRQ_border_war_won_defender.1.t
+	desc = IRQ_border_war_won_defender.1.desc
+
+	picture = GFX_report_event_chinese_soldiers_mountain
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			save_event_target_as = our_country
+			FROM = {
+				save_event_target_as = our_state
+				clr_state_flag = border_incident_active
+			}
+			FROM.FROM = { save_event_target_as = their_country }
+			FROM.FROM.FROM = {
+				save_event_target_as = their_state
+				clr_state_flag = border_incident_active
+			}
+			set_country_flag = show_effect_tooltips
+			clear_variable = attacker_state_vs_@FROM.FROM
+			clear_variable = defender_state_vs_@FROM.FROM
+			#remove_targeted_decision = { target = event_target:their_country decision = md4_border_conflict_time_until_cancelled }
+		}
+        if = {
+            limit = { has_decision = IRQ_sinjar_border_war_cancelled }
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war }
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war_cancelled }
+            else = {
+                remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war }
+                remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war_cancelled }
+            }
+        }
+	}
+
+	#Same effect as attacker. Tooltip for their effects
+	option = {
+		name = IRQ_border_war_won_defender.1.a
+		log = "[GetDateText]: [This.GetName]: IRQ_border_war_won_defender.1.a executed"
+		add_political_power = 150
+		army_experience = 30
+		add_tech_bonus = {
+			name = defensive_border_conflict_won
+			category = land_doctrine
+			bonus = 0.5
+		}
+		if = {
+			limit = { has_country_flag = show_effect_tooltips }
+			event_target:their_country = {
+				effect_tooltip = {
+					add_political_power = -150
+					army_experience = 10
+				}
+			}
+			clr_country_flag = show_effect_tooltips
+		}
+	}
+}
+
+add_namespace = IRQ_border_war_lost_attacker
+
+country_event = {
+	id = IRQ_border_war_lost_attacker.1
+	title = IRQ_border_war_lost_attacker.1.t
+	desc = IRQ_border_war_lost_attacker.1.desc
+
+	picture = GFX_report_event_dead_soldiers
+
+	is_triggered_only = yes
+
+	immediate = {
+		save_event_target_as = our_country
+		FROM = { save_event_target_as = our_state }
+		FROM.FROM = { save_event_target_as = their_country }
+		FROM.FROM.FROM = { save_event_target_as = their_state }
+		set_country_flag = show_effect_tooltips
+		#remove_targeted_decision = { target = event_target:their_country decision = md4_border_conflict_time_until_cancelled }
+        if = {
+            limit = { has_decision = IRQ_sinjar_border_war_cancelled }
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war }
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war_cancelled }
+            else = {
+                remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war }
+                remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war_cancelled }
+            }
+        }
+	}
+
+	#Same effect as defender. Tooltip for their effects
+	option = {
+		name = IRQ_border_war_lost_attacker.1.a
+		log = "[GetDateText]: [This.GetName]: IRQ_border_war_lost_attacker.1.a executed"
+		add_political_power = -150
+		army_experience = 10
+		if = {
+			limit = { has_country_flag = show_effect_tooltips }
+			event_target:their_country = {
+				effect_tooltip = {
+					add_political_power = 150
+					army_experience = 30
+					add_tech_bonus = {
+						name = defensive_border_conflict_won
+						category = land_doctrine
+						bonus = 0.5
+					}
+				}
+			}
+			clr_country_flag = show_effect_tooltips
+		}
+	}
+}
+
+add_namespace = IRQ_border_war_lost_defender
+
+country_event = {
+	id = IRQ_border_war_lost_defender.1
+	title = IRQ_border_war_lost_defender.1.t
+	desc = IRQ_border_war_lost_defender.1.desc
+
+	picture = GFX_report_event_dead_soldiers
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			save_event_target_as = our_country
+			FROM = {
+				save_event_target_as = our_state
+				clr_state_flag = border_incident_active
+			}
+			FROM.FROM = { save_event_target_as = their_country }
+			FROM.FROM.FROM = {
+				save_event_target_as = their_state
+				clr_state_flag = border_incident_active
+			}
+			set_country_flag = show_effect_tooltips
+			clear_variable = attacker_state_vs_@FROM.FROM
+			clear_variable = defender_state_vs_@FROM.FROM
+			#remove_targeted_decision = { target = event_target:their_country decision = md4_border_conflict_time_until_cancelled }
+		}
+        if = {
+            limit = { has_decision = IRQ_sinjar_border_war_cancelled }
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war }
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war_cancelled }
+            else = {
+                remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war }
+                remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war_cancelled }
+            }
+        }
+	}
+
+	#Same effect as attacker. Tooltip for their effects
+	option = {
+		name = IRQ_border_war_lost_defender.1.a
+		log = "[GetDateText]: [This.GetName]: IRQ_border_war_lost_defender.1.a executed"
+		if = {
+			limit = { has_country_flag = show_effect_tooltips }
+			effect_tooltip = {
+				add_political_power = 100
+				if = {
+					limit = {
+						check_variable = {
+							num_owned_states > 1
+						}
+					}
+					FROM.FROM = { transfer_state = FROM }
+				}
+				else = {
+					FROM.FROM = { annex_country = { target = ROOT } }
+				}
+			}
+			clr_country_flag = show_effect_tooltips
+		}
+	}
+}
+
+add_namespace = IRQ_border_war_canceled_attacker
+
+country_event = {
+	id = IRQ_border_war_canceled_attacker.1
+	title = IRQ_border_war_canceled_attacker.1.t
+	desc = IRQ_border_war_canceled_attacker.1.desc
+
+	picture = GFX_report_event_chinese_soldiers_mountain
+
+	is_triggered_only = yes
+
+	immediate = {
+		save_event_target_as = our_country
+		FROM = { save_event_target_as = our_state }
+		FROM.FROM = { save_event_target_as = their_country }
+		FROM.FROM.FROM = { save_event_target_as = their_state }
+		set_country_flag = show_effect_tooltips
+        if = {
+            limit = { has_decision = IRQ_sinjar_border_war_cancelled }
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war }
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war_cancelled }
+            else = {
+                remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war }
+                remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war_cancelled }
+            }
+        }
+	}
+
+	option = {
+		name = IRQ_border_war_canceled_attacker.1.a
+		log = "[GetDateText]: [This.GetName]: IRQ_border_war_canceled_attacker.1.a executed"
+		army_experience = 15
+		if = {
+			limit = { has_country_flag = show_effect_tooltips }
+			event_target:their_country = {
+				effect_tooltip = {
+					army_experience = 30
+					add_political_power = 50
+				}
+			}
+			clr_country_flag = show_effect_tooltips
+		}
+	}
+}
+
+add_namespace = IRQ_border_war_canceled_defender
+
+country_event = {
+	id = IRQ_border_war_canceled_defender.1
+	title = IRQ_border_war_canceled_defender.1.t
+	desc = IRQ_border_war_canceled_defender.1.desc
+
+	picture = GFX_report_event_chinese_soldiers_mountain
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			save_event_target_as = our_country
+			FROM = {
+				save_event_target_as = our_state
+				clr_state_flag = border_incident_active
+			}
+			FROM.FROM = { save_event_target_as = their_country }
+			FROM.FROM.FROM = {
+				save_event_target_as = their_state
+				clr_state_flag = border_incident_active
+			}
+			set_country_flag = show_effect_tooltips
+			clear_variable = attacker_state_vs_@FROM.FROM
+			clear_variable = defender_state_vs_@FROM.FROM
+		}
+        if = {
+            limit = { has_decision = IRQ_sinjar_border_war_cancelled }
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war }
+            remove_targeted_decision = { target = KUR decision = IRQ_sinjar_border_war_cancelled }
+            else = {
+                remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war }
+                remove_targeted_decision = { target = KUR decision = IRQ_kirkuk_border_war_cancelled }
+            }
+        }
+	}
+
+	option = {
+		name = IRQ_border_war_canceled_defender.1.a
+		log = "[GetDateText]: [This.GetName]: IRQ_border_war_canceled_defender.1.a executed"
+		army_experience = 30
+		add_political_power = 50
+		if = {
+			limit = { has_country_flag = show_effect_tooltips }
+			event_target:their_country = {
+				effect_tooltip = {
+					army_experience = 15
+				}
+			}
+			clr_country_flag = show_effect_tooltips
+		}
+	}
+}
+
+add_namespace = Iraq
+
+#Delegation arrives in Turkey#
+country_event = {
+
+	id = Iraq.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Iraq.1" }
+
+	title = Iraq.1.t
+	desc = Iraq.1.d
+	picture = GFX_kurdistan
+
+	is_triggered_only = yes
+
+	option = {
+		name = Iraq.1.a
+		log = "[GetDateText]: [This.GetName]: Iraq.1.a executed"		#Agree to oppose Kurdish independence
+		trigger = {
+			NOT = {
+				TUR = { has_country_flag = TUR_accepted_kurdish_independence }
+			}
+		}
+		ai_chance = {
+			factor = 150
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = IRQ
+					value > 50
+				}
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { influence_array^2 = IRQ }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { influence_array^1 = IRQ }
+			}
+			modifier = {
+				factor = 3
+				check_variable = { influence_array^0 = IRQ }
+			}
+		}
+		KUR = {
+			add_to_variable = { KUR_blockade_trade_opinion_factor = -0.1 }
+			add_to_variable = { KUR_blockade_political_power_factor = -0.1 }
+			add_to_variable = { KUR_blockade_stability_weekly = -0.01 }
+			add_to_variable = { KUR_blockade_war_support_factor = -0.05 }
+			add_to_variable = { KUR_blockade_consumer_goods_factor = 0.1 }
+			add_to_variable = { KUR_blockade_production_speed_buildings_factor = -0.2 }
+		}
+		IRQ = { set_country_flag = TUR_oppose_kurdish_independence }
+		hidden_effect = {
+			IRQ = { news_event = { id = IraqNews.1 hours = 6 } }
+			KUR = { news_event = { id = IraqNews.8 hours = 6 } }
+		}
+		TUR = {
+			add_opinion_modifier = {
+				target = KUR
+				modifier = TUR_Dont_Support_Kurdish_Independence
+			}
+			reverse_add_opinion_modifier = {
+				target = KUR
+				modifier = TUR_Dont_Support_Kurdish_Independence
+			}
+		}
+	}
+
+	option = {
+		name = Iraq.1.b
+		log = "[GetDateText]: [This.GetName]: Iraq.1.b executed"		#Oppose independence + volunteers
+		trigger = {
+			NOT = {
+				TUR = { has_country_flag = TUR_accepted_kurdish_independence }
+			}
+		}
+		ai_chance = {
+			factor = 200
+			modifier = {
+				factor = 100
+				KUR = {
+					is_in_array = { ruling_party = 19 }
+				}
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { influence_array^2 = IRQ }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { influence_array^1 = IRQ }
+			}
+			modifier = {
+				factor = 3
+				check_variable = { influence_array^0 = IRQ }
+			}
+			modifier = {
+				factor = 0.01
+				SYR = { has_civil_war = yes }
+			}
+		}
+		KUR = {
+			add_to_variable = { KUR_blockade_trade_opinion_factor = -0.1 }
+			add_to_variable = { KUR_blockade_political_power_factor = -0.1 }
+			add_to_variable = { KUR_blockade_stability_weekly = -0.01 }
+			add_to_variable = { KUR_blockade_war_support_factor = -0.05 }
+			add_to_variable = { KUR_blockade_consumer_goods_factor = 0.1 }
+			add_to_variable = { KUR_blockade_production_speed_buildings_factor = -0.2 }
+		}
+		IRQ = { set_country_flag = TUR_oppose_kurdish_independence }
+		hidden_effect = {
+			IRQ = { news_event = { id = IraqNews.2 hours = 6 } }
+			KUR = { news_event = { id = IraqNews.9 hours = 6 } }
+		}
+		TUR = {
+			add_ai_strategy = {
+				type = send_volunteers_desire
+				id = "IRQ"
+				value = 1000
+			}
+			add_opinion_modifier = {
+				target = KUR
+				modifier = TUR_Dont_Support_Kurdish_Independence
+			}
+			reverse_add_opinion_modifier = {
+				target = KUR
+				modifier = TUR_Dont_Support_Kurdish_Independence
+			}
+		}
+	}
+
+
+	option = {
+		name = Iraq.1.c
+		log = "[GetDateText]: [This.GetName]: Iraq.1.c executed"		#Reject delegation
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 1000
+				TUR = { has_country_flag = TUR_accepted_kurdish_independence }
+			}
+			modifier = {
+				factor = 1.5
+				TUR = {
+					has_opinion = {
+						target = KUR
+						value > 100
+					}
+				}
+			}
+		}
+		hidden_effect = {
+			IRQ = { news_event = { id = IraqNews.3 hours = 6 } }
+			KUR = { news_event = { id = IraqNews.10 hours = 6 } }
+		}
+	}
+}
+
+#Delegation arrives in Iran#
+country_event = {
+
+	id = Iraq.2
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Iraq.2" }
+
+	title = Iraq.2.t
+	desc = Iraq.2.d
+	picture = GFX_kurdistan
+
+	is_triggered_only = yes
+
+	option = {
+		name = Iraq.2.a
+		log = "[GetDateText]: [This.GetName]: Iraq.2.a executed"		#Agree to oppose Kurdish independence
+		trigger = {
+			NOT = {
+				PER = { has_country_flag = PER_accepted_kurdish_independence }
+			}
+		}
+		ai_chance = {
+			factor = 150
+			modifier = {
+				factor = 2
+				has_opinion = {
+					target = IRQ
+					value > 50
+				}
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { influence_array^2 = IRQ }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { influence_array^1 = IRQ }
+			}
+			modifier = {
+				factor = 3
+				check_variable = { influence_array^0 = IRQ }
+			}
+		}
+		KUR = {
+			add_to_variable = { KUR_blockade_trade_opinion_factor = -0.1 }
+			add_to_variable = { KUR_blockade_political_power_factor = -0.1 }
+			add_to_variable = { KUR_blockade_stability_weekly = -0.01 }
+			add_to_variable = { KUR_blockade_war_support_factor = -0.05 }
+			add_to_variable = { KUR_blockade_consumer_goods_factor = 0.075 }
+			add_to_variable = { KUR_blockade_production_speed_buildings_factor = -0.1 }
+		}
+		IRQ = { set_country_flag = PER_oppose_kurdish_independence }
+		hidden_effect = {
+			IRQ = { news_event = { id = IraqNews.1 hours = 6 } }
+			KUR = { news_event = { id = IraqNews.8 hours = 6 } }
+		}
+		PER = {
+			add_opinion_modifier = {
+				target = KUR
+				modifier = PER_Dont_Support_Kurdish_Independence
+			}
+			reverse_add_opinion_modifier = {
+				target = KUR
+				modifier = PER_Dont_Support_Kurdish_Independence
+			}
+		}
+	}
+
+	option = {
+		name = Iraq.2.b
+		log = "[GetDateText]: [This.GetName]: Iraq.2.b executed"		#Oppose independence + volunteers
+		trigger = {
+			NOT = {
+				PER = { has_country_flag = PER_accepted_kurdish_independence }
+			}
+		}
+		ai_chance = {
+			factor = 200
+			modifier = {
+				factor = 100
+				KUR = {
+					is_in_array = { ruling_party = 19 }
+				}
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { influence_array^2 = IRQ }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { influence_array^1 = IRQ }
+			}
+			modifier = {
+				factor = 3
+				check_variable = { influence_array^0 = IRQ }
+			}
+			modifier = {
+				factor = 0.01
+				SYR = { has_civil_war = yes }
+			}
+		}
+		KUR = {
+			add_to_variable = { KUR_blockade_trade_opinion_factor = -0.1 }
+			add_to_variable = { KUR_blockade_political_power_factor = -0.1 }
+			add_to_variable = { KUR_blockade_stability_weekly = -0.01 }
+			add_to_variable = { KUR_blockade_war_support_factor = -0.05 }
+			add_to_variable = { KUR_blockade_consumer_goods_factor = 0.075 }
+			add_to_variable = { KUR_blockade_production_speed_buildings_factor = -0.1 }
+		}
+		hidden_effect = {
+			IRQ = { news_event = { id = IraqNews.2 hours = 6 } }
+			KUR = { news_event = { id = IraqNews.9 hours = 6 } }
+		}
+		IRQ = { set_country_flag = PER_oppose_kurdish_independence }
+		PER = {
+			add_ai_strategy = {
+				type = send_volunteers_desire
+				id = "IRQ"
+				value = 1000
+			}
+			add_opinion_modifier = {
+				target = KUR
+				modifier = PER_Dont_Support_Kurdish_Independence
+			}
+			reverse_add_opinion_modifier = {
+				target = KUR
+				modifier = PER_Dont_Support_Kurdish_Independence
+			}
+		}
+	}
+
+
+	option = {
+		name = Iraq.2.c
+		log = "[GetDateText]: [This.GetName]: Iraq.2.c executed"		#Reject delegation
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 1000
+				PER = { has_country_flag = PER_accepted_kurdish_independence }
+			}
+			modifier = {
+				factor = 1.5
+				PER = {
+					has_opinion = {
+						target = KUR
+						value > 100
+					}
+				}
+			}
+		}
+		hidden_effect = {
+			IRQ = { news_event = { id = IraqNews.3 hours = 6 } }
+			KUR = { news_event = { id = IraqNews.10 hours = 6 } }
+		}
+	}
+}
+
+#Delegation arrives in Syria#
+country_event = {
+
+	id = Iraq.3
+	immediate = { log = "[GetDateText]: [Root.GetName]: event Iraq.3" }
+
+	title = Iraq.3.t
+	desc = Iraq.3.d
+	picture = GFX_kurdistan
+
+	is_triggered_only = yes
+
+	option = {
+		name = Iraq.3.a
+		log = "[GetDateText]: [This.GetName]: Iraq.3.a executed"		#Agree to oppose Kurdish independence
+		trigger = {
+			NOT = {
+				SYR = { has_country_flag = SYR_accepted_kurdish_independence }
+			}
+		}
+		ai_chance = {
+			factor = 150
+			modifier = {
+				factor = 2
+				has_opinion = {
+					target = IRQ
+					value > 50
+				}
+			}
+			modifier = {
+				factor = 1.5
+				check_variable = { influence_array^2 = IRQ }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { influence_array^1 = IRQ }
+			}
+			modifier = {
+				factor = 3
+				check_variable = { influence_array^0 = IRQ }
+			}
+		}
+		KUR = {
+			add_to_variable = { KUR_blockade_trade_opinion_factor = -0.05 }
+			add_to_variable = { KUR_blockade_political_power_factor = -0.05 }
+			add_to_variable = { KUR_blockade_stability_weekly = -0.005 }
+			add_to_variable = { KUR_blockade_consumer_goods_factor = 0.025 }
+			add_to_variable = { KUR_blockade_production_speed_buildings_factor = -0.05 }
+		}
+		IRQ = { set_country_flag = SYR_oppose_kurdish_independence }
+		hidden_effect = {
+			IRQ = { news_event = { id = IraqNews.1 hours = 6 } }
+			KUR = { news_event = { id = IraqNews.8 hours = 6 } }
+		}
+		SYR = {
+			add_opinion_modifier = {
+				target = KUR
+				modifier = SYR_Dont_Support_Kurdish_Independence
+			}
+			reverse_add_opinion_modifier = {
+				target = KUR
+				modifier = SYR_Dont_Support_Kurdish_Independence
+			}
+		}
+	}
+
+	option = {
+		name = Iraq.3.b
+		log = "[GetDateText]: [This.GetName]: Iraq.3.b executed"		#Oppose independence + volunteers
+		trigger = {
+			NOT = {
+				SYR = { has_country_flag = SYR_accepted_kurdish_independence }
+			}
+		}
+		ai_chance = {
+			factor = 200
+			modifier = {
+				factor = 1.5
+				check_variable = { influence_array^2 = IRQ }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { influence_array^1 = IRQ }
+			}
+			modifier = {
+				factor = 3
+				check_variable = { influence_array^0 = IRQ }
+			}
+			modifier = {
+				factor = 0.0001
+				SYR = { has_civil_war = yes }
+			}
+		}
+		hidden_effect = {
+			IRQ = { news_event = { id = IraqNews.2 hours = 6 } }
+			KUR = { news_event = { id = IraqNews.9 hours = 6 } }
+		}
+		IRQ = { set_country_flag = SYR_oppose_kurdish_independence }
+		SYR = {
+			add_ai_strategy = {
+				type = send_volunteers_desire
+				id = "IRQ"
+				value = 1000
+			}
+			add_opinion_modifier = {
+				target = KUR
+				modifier = SYR_Dont_Support_Kurdish_Independence
+			}
+			reverse_add_opinion_modifier = {
+				target = KUR
+				modifier = SYR_Dont_Support_Kurdish_Independence
+			}
+		}
+		KUR = {
+			add_to_variable = { KUR_blockade_trade_opinion_factor = -0.05 }
+			add_to_variable = { KUR_blockade_political_power_factor = -0.05 }
+			add_to_variable = { KUR_blockade_stability_weekly = -0.005 }
+			add_to_variable = { KUR_blockade_consumer_goods_factor = 0.025 }
+			add_to_variable = { KUR_blockade_production_speed_buildings_factor = -0.05 }
+		}
+	}
+
+
+	option = {
+		name = Iraq.3.c
+		log = "[GetDateText]: [This.GetName]: Iraq.3.c executed"		#Reject delegation
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 1000
+				SYR = { has_country_flag = SYR_accepted_kurdish_independence }
+			}
+			modifier = {
+				factor = 1.5
+				SYR = {
+					has_opinion = {
+						target = KUR
+						value > 100
+					}
+				}
+			}
+		}
+		hidden_effect = {
+			IRQ = { news_event = { id = IraqNews.3 hours = 6 } }
+			KUR = { news_event = { id = IraqNews.10 hours = 6 } }
+		}
+	}
+}
+
+add_namespace = IRQFocus
+
+## Focuses ##
+country_event = {
+	id = IRQFocus.1
+	title = IRQFocus.1.t
+	desc = IRQFocus.1.desc
+
+	picture = GFX_generic_factory
+
+	is_triggered_only = yes
+
+	option = {
+		name = IRQ_our_economy.a
+	}
+}
+
+add_namespace = IraqNews
+
+## News Events ##
+news_event = {
+
+	id = IraqNews.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.1" }
+
+	title = IraqNews.1.t
+	desc = IraqNews.1.d
+	picture = GFX_news_fate_of_iraq
+
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.1.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.1.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {
+
+	id = IraqNews.2
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.2" }
+
+	title = IraqNews.2.t
+	desc = IraqNews.2.d
+	picture = GFX_news_fate_of_iraq
+
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.2.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.2.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {
+
+	id = IraqNews.3
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.3" }
+
+	title = IraqNews.3.t
+	desc = IraqNews.3.d
+	picture = GFX_news_fate_of_iraq
+
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.3.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.3.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {			# Event for Kurdistan about Kirkuk border war preparation
+
+	id = IraqNews.4
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.4" }
+
+	title = IraqNews.4.t
+	desc = IraqNews.4.d
+	picture = GFX_news_fate_of_iraq
+
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.4.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.4.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {			# Event for Kurdistan about Sinjar border war preparation
+
+	id = IraqNews.5
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.5" }
+
+	title = IraqNews.5.t
+	desc = IraqNews.5.d
+	picture = GFX_news_fate_of_iraq
+
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.5.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.5.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {			# Event for Kurdistan about Kirkuk border war
+
+	id = IraqNews.6
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.6" }
+
+	title = IraqNews.6.t
+	desc = IraqNews.6.d
+	picture = GFX_news_fate_of_iraq
+
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.6.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.6.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {			# Event for Kurdistan about Sinjar border war
+
+	id = IraqNews.7
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.7" }
+
+	title = IraqNews.7.t
+	desc = IraqNews.7.d
+	picture = GFX_news_fate_of_iraq
+
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.7.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.7.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {			# Event for Kurdistan about FROM opposing Kurdish independence
+
+	id = IraqNews.8
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.8" }
+
+	title = IraqNews.8.t
+	desc = IraqNews.8.d
+	picture = GFX_news_fate_of_iraq
+
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.8.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.8.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {			# Event for Kurdistan about FROM opposing Kurdish independence and giving military support to Iraq
+
+	id = IraqNews.9
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.9" }
+
+	title = IraqNews.9.t
+	desc = IraqNews.9.d
+	picture = GFX_news_fate_of_iraq
+
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.9.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.9.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {			# Event for Kurdistan about FROM rejecting Iraqi delegation
+
+	id = IraqNews.10
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.10" }
+
+	title = IraqNews.10.t
+	desc = IraqNews.10.d
+	picture = GFX_news_fate_of_iraq
+
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.10.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.10.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {					#news about regional blockade
+
+	id = IraqNews.11
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.11" }
+
+	title = IraqNews.11.t
+	desc = IraqNews.11.d
+	picture = GFX_news_fate_of_iraq
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.11.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.11.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {					#news about Iraqi blockade alone
+
+	id = IraqNews.12
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.12" }
+
+	title = IraqNews.12.t
+	desc = IraqNews.12.d
+	picture = GFX_news_fate_of_iraq
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.12.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.12.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {					#news about Iraqi war against Kurdistan
+
+	id = IraqNews.13
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.13" }
+
+	title = IraqNews.13.t
+	desc = IraqNews.13.d
+	picture = GFX_news_fate_of_iraq
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.13.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.13.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+
+news_event = {					#news about Iraqi blockade alone
+
+	id = IraqNews.14
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.14" }
+
+	title = IraqNews.14.t
+	desc = IraqNews.14.d
+	picture = GFX_news_fate_of_iraq
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.14.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.14.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+news_event = {					#TEST  = bribe_the_tribal_leaders    THIS EVENT need to be supplemented
+
+	id = IraqNews.20
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.20" }
+
+	title = IraqNews.20.t
+	desc = IraqNews.20.d
+	picture = GFX_news_fate_of_iraq
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.20.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.20.a executed"
+		ai_chance = { factor = 100 }
+	}
+}
+news_event = {					#TEST  = bribe_the_tribal_leaders    THIS EVENT need to be supplemented
+
+	id = IraqNews.21
+	immediate = { log = "[GetDateText]: [Root.GetName]: event IraqNews.21" }
+
+	title = IraqNews.21.t
+	desc = IraqNews.21.d
+	picture = GFX_news_fate_of_iraq
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = IraqNews.21.a
+		log = "[GetDateText]: [This.GetName]: IraqNews.21.a executed"
+		ai_chance = { factor = 100 }
+	}
+}							#TEST  = bribe_the_tribal_leaders    THIS EVENT need to be supplemented
